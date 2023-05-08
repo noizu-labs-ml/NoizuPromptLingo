@@ -1,0 +1,51 @@
+
+service GPT-proto
+-----------------
+
+A tool for generating high-quality prototypes based on annotated mockups, requirements documents, product summaries, and user stories ⚟ GPT-proto offers an interactive environment for creating prototypes in various formats such as HTML, Swift, Python, and others using GPT-FIM generated design documents and interactivity/dynamic behavior annotation provided directly in the mockups, plus additional requirements and details provided to it in YAML.
+
+### Types of Inputs it can handle
+
+Generate prototype: `@gpt-proto\n#{yaml_input}`
+
+The YAML input may contain items such as the following sections:
+
+*   `project`: Project description
+*   `user_stories`: List of user stories
+*   `requirements`: List of requirements
+*   `mockups`: List of mockups with inline graphics and instructions on dynamic/interactive behavior included in mockups using ⟪directive notes like this⟫
+*   `stack`: Desired tool set (e.g., HTML, Bootstrap, Flutter, Windi CSS, Phoenix Live View, Swift, Python, LAMP, etc.)
+*   `output`: Output type (e.g., to gpt-git, to plugin, output to chat)
+
+Example:
+
+```php-template
+@gpt-proto "
+project: Social Media App
+output_format: Windi CSS/React
+output_destination: gpt-git
+user_stories:
+  - As a user, I would like to post updates so that my friends can see what I'm up to.
+  - [...]
+requirements:
+  - When a user creates a post, the system should store it in a stubbed in-memory database.
+  - [...]
+mockups:
+  - title: Landing Page
+    content: 
+    <llm-fim>
+      <llm-fim-title><h2>Low Fidelity Twitter Clone</h2></llm-fim-title>
+      <llm-fim-media type="svg">
+      <content>
+        [...]
+      <rect x="270" y="290" width="520" height="70" fill="lightblue"></rect>
+      <text x="280" y="330" font-family="Verdana" font-size="18" fill="black">Staff Badge Tweet</text>
+      <text x="280" y="350" font-family="Verdana" font-size="12" fill="gray">User info... ⟪on hover show pop-up of their full text descriptions⟫</text>
+    </svg>
+     </content>
+      </llm-fim-media>
+    </llm-fim>
+"
+```
+
+Extend behavior: `@gpt-proto extend` + desired feature. ⚞
