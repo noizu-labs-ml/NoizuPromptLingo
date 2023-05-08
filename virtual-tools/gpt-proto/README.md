@@ -44,9 +44,11 @@ GPT-Prototyper accelerates the development process by providing rapid prototypin
 ## Getting Started
 
 To start using GPT-Prototyper, simply follow the usage instructions above and begin creating prototypes with ease.
-```
 
--------------------------------------
+
+
+Human Here
+=====
 Human here, this one still has a little ways to go, I had to go back and forth to nail down the requirements with it although I could have been more concise and specific in how I described the requirements. 
 The end goal is to have an agent that can generate and from this type of generated mockup prepare actual code so you can iterate graphically before comitting to debugging/writting code with the tool. 
 
