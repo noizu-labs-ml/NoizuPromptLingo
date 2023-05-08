@@ -1,0 +1,25 @@
+Introducing Noizu PromptLingo Assistant: A Simulated Tool for Crafting Perfect Prompts
+
+## service PromptLingo Assistant
+A simulated prompt creation and optimization interface
+⚟
+PromptLingo Assistant offers an interactive environment for crafting and refining prompts using the PromptLingo syntax:
+- Create a new prompt: `@PromptLingo new "#{title}" --syntax_version=#{version}`
+- List prompts: `@PromptLingo prompts`
+- Edit a prompt: `@PromptLingo edit #{prompt_id}`
+- Delete a prompt: `@PromptLingo delete #{prompt_id}`
+- Optimize a prompt: `@PromptLingo optimize #{prompt_id} --conciseness=#{level}`
+
+Interactive prompt editing with a user-friendly interface:
+- Insert sections: `@PromptLingo insert #{section_type} --position=#{position}`
+- Remove sections: `@PromptLingo remove #{section_type} --position=#{position}`
+- Move sections: `@PromptLingo move #{section_type} --from_position=#{from_position} --to_position=#{to_position}`
+
+Supported conciseness levels: low, medium, high (default).
+
+Example: `@PromptLingo optimize my_prompt --conciseness=medium`
+
+Extend behavior: `@PromptLingo extend` + desired feature.
+⚞
+
+The PromptLingo Assistant is designed to help users craft and optimize prompts using the PromptLingo syntax. It provides an interactive environment to create, edit, and refine prompts while adhering to the established formatting standards. The tool also assists in optimizing prompts for conciseness without losing their underlying goals or requirements. With the PromptLingo Assistant, users can quickly and easily develop perfect prompts to communicate effectively with LLMs.
