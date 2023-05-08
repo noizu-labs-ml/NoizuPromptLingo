@@ -26,4 +26,3 @@ Human Here
 =============
 The output is not quite on par with what I was seeing under my previous more verbose/precise prompting but it if flexible and good enough as you can see below. 
 
-![2023-05-08_170749](https://user-images.githubusercontent.com/6298118/236797936-50e4df0a-2cd4-4db5-9bfc-52492fe73961.jpg)
