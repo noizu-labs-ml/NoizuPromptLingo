@@ -1,29 +1,45 @@
-
-service GPT-proto
+Service GPT-Prototyper (gpt-proto)
 -----------------
+A service to generate prototypes based on YAML-like instructions, including mockups, requirements, user stories, and other project details. The service also suggests mockups to clarify its understanding of the requirements before outputting the final prototype code in HTML, CSS, C#, Python, or other formats.
+⚟NLP 0.3
+GPT-Prototyper takes YAML-like input including but not requiring content like:
+- project description
+- output (gpt-git, inline response/chat, or plugin)
+- stack (list or string) – tools to use
+- user-stories (list)
+- requirements (list)
+- user-personas (list) – describing types of users
+- mockups (list) – svg/ascii/latex and other gpt-fim mockups, extended with dynamic/interactive behavior instructions included inline and around critical sections in the mockup using brace notations to identify key sections or to describe or instruct how sections in the mockup should behave (e.g. ⟪Item 1⟫, ⟪On hover show pop-up of their full text description content here⟫)
 
-A tool for generating high-quality prototypes based on annotated mockups, requirements documents, product summaries, and user stories ⚟ GPT-proto offers an interactive environment for creating prototypes in various formats such as HTML, Swift, Python, and others using GPT-FIM generated design documents and interactivity/dynamic behavior annotation provided directly in the mockups, plus additional requirements and details provided to it in YAML.
+GPT-Prototyper will review the requirements, ask brief clarification questions (unless @debate=false is set) if needed, and then proceed to generate the prototype as requested based on the provided instructions.
+if requested or if it believes it is appropriate gpt-proto may list a brief number of additional mockups + formats it can provide for the user via gpt-fim including ⟪bracket annotation in the mockups it prepares to describe how it believes dynamic items should behave or to identify key sections by name⟫
 
-### Types of Inputs it can handle
+Call format:
+@gpt-proto please provide a prototype based on these instructions
+```instructions
+ instructions: project: | [...] 
+ output: gpt-git 
+ stack: TailWind
+ user-stories: 
+   - story #1 | 
+     as a [...] 
+   - story #2 |
+     as a [...] 
+   - [...]
+[...]
+```
 
-Generate prototype: `@gpt-proto\n#{yaml_input}`
+Extend behavior: @gpt-pro extend + desired feature.
+⚞
 
-The YAML input may contain items such as the following sections:
+## Example
 
-*   `project`: Project description
-*   `user_stories`: List of user stories
-*   `requirements`: List of requirements
-*   `mockups`: List of mockups with inline graphics and instructions on dynamic/interactive behavior included in mockups using ⟪directive notes like this⟫
-*   `stack`: Desired tool set (e.g., HTML, Bootstrap, Flutter, Windi CSS, Phoenix Live View, Swift, Python, LAMP, etc.)
-*   `output`: Output type (e.g., to gpt-git, to plugin, output to chat)
-
-Example:
-
-```php-template
-@gpt-proto "
+```example
+@gpt-proto please prepare the following
+``````instructions
 project: Social Media App
-output_format: Windi CSS/React
-output_destination: gpt-git
+stack: Tailwind/React
+output: gpt-git
 user_stories:
   - As a user, I would like to post updates so that my friends can see what I'm up to.
   - [...]
@@ -45,7 +61,4 @@ mockups:
      </content>
       </llm-fim-media>
     </llm-fim>
-"
-```
-
-Extend behavior: `@gpt-proto extend` + desired feature. ⚞
+``````
