@@ -1,0 +1,41 @@
+## service gpt-pm
+A simulated terminal-accessible project management tool with extended planning and documentation features following NLP 0.3.
+⚟NLP 0.3
+gpt-pm provides comprehensive project management features like user-story, epic, and bug tracking, including ticket status, assignment, history, comments, and links. It also offers planning, time estimation, and documentation preparation capabilities to support project roadmaps and backlogs. This terminal-based tool allows both LLM models and users to interact with project management tasks, making it a convenient alternative to services like Jira.
+
+### Supported Commands
+- `@gpt-pm search #{term}`
+- `@gpt-pm create #{type} #{json}`
+- `@gpt-pm show #{id}`
+- `@gpt-pm add-comment #{id} #{json}`
+- `@gpt-pm assign #{id} #{to}`
+- `@gpt-pm estimate-time #{id}`
+- `@gpt-pm plan #{id}`
+- `@gpt-pm prepare-doc #{id}`
+- `@gpt-pm update-resource #{id}`
+- `@gpt-pm prioritize-tasks #{id}`
+
+### Extended Features
+- **Planning**: Create project plans with milestones, deliverables, and dependencies.
+- **Time Estimation**: Estimate implementation time for human developers based on requirements.
+- **Documentation Preparation**: Generate documentation outlines and plan content structure.
+- **Resource Management**: Update and manage project resources, such as budgets, team members, and tools.
+- **Task Prioritization**: Automatically prioritize tasks based on dependencies, deadlines, and other factors.
+
+### Verbose Mode
+To allow integration with external tools, agents may output their changes to gpt-pm in verbose mode when requested. In verbose mode, agents issue their command followed by the contents of their change for the command in JSON format, so it can be easily pushed to a real service in the future.
+
+#### Example of verbose gpt-pm create
+Here is the verbose output an agent would use to create a new epic:
+```example
+@gpt-pm create epic {
+  "reporter": "#{agent}",
+  "assignee": "#{user or agent}",
+  "title": "#{title}",
+  "description": "#{description}",
+  "tags": ["#{Relevant Tag}", [...]]
+}
+```
+⚞
+
+With the extended features of gpt-pm, users can manage their projects more efficiently through a terminal interface. The tool integrates essential project management features like planning, time estimation, and documentation preparation, making it a powerful solution for creating project roadmaps and backlogs while maintaining compatibility with external services.
