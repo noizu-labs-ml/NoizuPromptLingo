@@ -26,7 +26,7 @@ llm-error:
 
 # Agent Response Format
 ```
-&lt;agent/tool&gt;:
+<agent/tool>:
 [...|content]
 
 ```yaml
@@ -41,10 +41,12 @@ meta-note:
 - Start responses with the agent name.
 - Define agents/tools with ⚟ prompt blocks ⚞ containing YAML and plain prompt directions.
 - Use backticks (`) for essential terms/sections, and `|` for extending markup.
-- Employ `#{var}` for variable injection, and `&lt;term&gt;` for input/output types.
+- Employ `#{var}` for variable injection, and `<term>` for input/output types.
 - Utilize code blocks (\```) to define crucial sections.
-- Insert `[...]` for omitted content, `&lt;--` for qualifying statements, and self-reflection meta-notes in YAML.
-- Incorporate HTA syntax version after ⚟ to ensure the model processes the specific version, and middleware can inject instructions on older models.
+- Insert `[...]` for omitted content, `<--` for qualifying statements, and self-reflection meta-notes in YAML.
+- Incorporate HTA syntax version after ⚟ to ensure the model processes the specific version, and middleware can inject instructions on older models. `<NLP 0.3
+- ⟪Bracket Notation⟫ is used in agent and service definitions to identify key sections of a template/mockup/instruction ⟪Item1⟫ or to fine dynamic/interactive behavior in examples, or mockups ⟪if no content ask user for input⟫
+- Extension all agents and services may be extended by using `@<handle> extend + desired feature`
 
 ## External Service Definition
 - Interact with external services/tools using agent/tool definitions and specific syntax for the service.
@@ -53,24 +55,25 @@ meta-note:
 - Represent tabular data using a specific syntax for tables.
 
 ## Self Reflection
-Agents should reflect on the contents of their message before returning it.
+Agents should reflect on the contents of their message before returning it. If they believe there is room for improvement/things that can be done better they should then include a meta-note block.
 
 - Self Reflection should be placed in a meta-note yaml block.
 - The block must be wrapped in a yaml code block.
+- Agent may include multiple notes. under meta-note.notes
 
 ## Syntax
 ````syntax
 ```yaml
-    meta-note: &lt;-- valid yaml
+    meta-note: <-- valid yaml
         agent: #{agent}
-        notes: &lt;-- array of notes
-            - name: &lt;glyph| indicate type of issue&gt; &lt;unique-identifier&gt;
+        notes: <-- array of notes
+            - name: <glyph| indicate type of issue> <unique-identifier>
               priority: 0-100
               note: [...|briefly describe issue/note]
-              comments: &lt;-- optional list of one or more possible resolutions/comments on note
-                - comment: &lt;glyph| type of request&gt; [...|comment on addressing/improving/leveraging issue/opportunity raised by note]
-        overview: [...| general note/overview of response] &lt;-- optional
-        revise: &lt;true|false | would you like to edit your response before returning to user&gt;
+              comments: <-- optional list of one or more possible resolutions/comments on note
+                - comment: <glyph| type of request> [...|comment on addressing/improving/leveraging issue/opportunity raised by note]
+        overview: [...| general note/overview of response] <-- optional
+        revise: <true|false | would you like to edit your response before returning to user>
 
 ```
 ````
@@ -102,7 +105,7 @@ To request user to provide/run the following console command/information.
         id: "#{unique-id}" 
         title: "what/why you need"
         note: "optional note, if for example command/tool may be slow/cause issues"
-        command: | &lt;- command or question or both
+        command: | <- command or question or both
           Console Script
         question: What is your birthday?
         tool: tool <args><- request output from simulated or plugin tool
