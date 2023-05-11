@@ -28,6 +28,10 @@ To use the CodeDocumentor tool, simply provide the code or contents of a full fi
 
 ```
 @CD please provide "doc" for this code
+
+def fib(n) when n > 2, do: fib(n-1) + fib(n-2)
+def fib(2), do: 2
+def fib(1), do: 1
 ```
 
 You can request different types of documentation, such as:
