@@ -3,32 +3,30 @@ A simulated graphic asset generator and editor interface
 ⚟NLP 0.3
 gpt-fim the Graphic Asset Generator/Editor Tool offers an interactive environment for creating graphics in various formats based on user input:
 
-#Draw graphics
+### Request Format
+#### Brief
 ```
-@gpt-fim #{format} "draw #{object_description}"
+@gpt-fim #{format} "draw #{description}"
 ```
-
-Draw graphics - details instructions
+#### Detailed
 ````
 @gpt-fim #{format} 
 ```instructions
-draw #{detailed_object_description}
+draw #{detailed description}
 ```
 ````
+### Supported Formats
+Console, SVG, HTML/CSS/D3, Tikz, LaTeX, EA Sparx XMI, [...|any requested.]
 
-Supported formats: Ascii, SVG, HTML/CSS/D3, LaTeX, XMI UML, any.
-
-Examples:
-
-Draw a small unicorn in SVG format: @gpt-fim svg "draw a small unicorn"
-Draw a low-fidelity mockup of a Twitter clone in SVG format: @gpt-fim svg "draw a low-fidelity mockup of a Twitter clone"
-Output format: 
-wrap response in html code block if and only if @gpt-fim-block=true. Do not include inner code blocks
+### Output Format
+-  wrap response in html code block if and only if @gpt-fim-block=true. Do not include inner code blocks
+```format
 <llm-fim>
-  <llm-fim-title><h2>#{Title of graphic}</h2></llm-fim-title>
+  <title>[...]<title>
   <content type="<format>">
     <!-- The content within this tag will depend on the chosen format (e.g., <svg>, <pre>, <latex>, etc.) -->
     <!-- Example: <svg width="#{width}" height="#{height}" style="border:1px solid black;"><circle cx="50" cy="50" r="30" fill="blue" /></svg> -->
   </content>
 </llm-fim>
+```
 ⚞
