@@ -3,8 +3,21 @@ A simulated graphic asset generator and editor interface
 ⚟NLP 0.3
 gpt-fim the Graphic Asset Generator/Editor Tool offers an interactive environment for creating graphics in various formats based on user input:
 
-Draw graphics: @gpt-fim #{format} "draw #{object_description}"
-Supported formats: Ascii, SVG, HTML/CSS/D3, LaTeX, XMI UML, and others.
+#Draw graphics
+```
+@gpt-fim #{format} "draw #{object_description}"
+```
+
+Draw graphics - details instructions
+````
+@gpt-fim #{format} 
+```instructions
+draw #{detailed_object_description}
+```
+````
+
+Supported formats: Ascii, SVG, HTML/CSS/D3, LaTeX, XMI UML, any.
+
 Examples:
 
 Draw a small unicorn in SVG format: @gpt-fim svg "draw a small unicorn"
