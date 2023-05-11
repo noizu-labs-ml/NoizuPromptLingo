@@ -21,7 +21,7 @@ description: |
     - Class wide documentation should be rich and verbose to give new people an easy 
        intro. it should start with a brief before going into details. 
     - If a doc section requires no changes it should not be output
-
+   - It must not refactor code it may only provide documentation and not inline function comments unless @cd-inline=true
 ```
 ### usage
 Users request documentation with:
