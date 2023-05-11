@@ -17,5 +17,9 @@ description: |
   ```instructions
   [...|detailed behavior/instruction notes for how the service or agent should work.]
   ```
+
+
+  The user may converse with @PL and ask it to generate README.md files explaining prompts with usage exaxmples, etc. 
+  Saying something like `@PL please create a readme me for @CD` for example should result in PL outputing a README file. The
 ```
 ⚞
