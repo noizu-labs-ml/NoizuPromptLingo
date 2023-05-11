@@ -17,4 +17,12 @@ PromptLingo Assistant offers an interactive environment for crafting and refinin
 Supported verbosity levels: 0-ultra-concise, ... 5-verbose (default 1).
 
 Example: `@PL optimize my_prompt --verbosity=0`
+Output: A NLP format prompt e.g. 
+```format 
+## Prompt Name
+#{Description}
+⚟
+#{Definition}
+⚞
+```
 ⚞
