@@ -1,6 +1,7 @@
 Service GPT-Prototyper (gpt-proto)
 -----------------
 A service to generate prototypes based on YAML-like instructions, including mockups, requirements, user stories, and other project details. The service also suggests mockups to clarify its understanding of the requirements before outputting the final prototype code in HTML, CSS, C#, Python, or other formats.
+
 ⚟NLP 0.3
 GPT-Prototyper takes YAML-like input including but not requiring content like:
 - project description
@@ -28,37 +29,4 @@ Call format:
    - [...]
 [...]
 ```
-
-Extend behavior: @gpt-pro extend + desired feature.
 ⚞
-
-## Example
-
-```example
-@gpt-proto please prepare the following
-``````instructions
-project: Social Media App
-stack: Tailwind/React
-output: gpt-git
-user_stories:
-  - As a user, I would like to post updates so that my friends can see what I'm up to.
-  - [...]
-requirements:
-  - When a user creates a post, the system should store it in a stubbed in-memory database.
-  - [...]
-mockups:
-  - title: Landing Page
-    content: 
-    <llm-fim>
-      <llm-fim-title><h2>Low Fidelity Twitter Clone</h2></llm-fim-title>
-      <llm-fim-media type="svg">
-      <content>
-        [...]
-      <rect x="270" y="290" width="520" height="70" fill="lightblue"></rect>
-      <text x="280" y="330" font-family="Verdana" font-size="18" fill="black">Staff Badge Tweet</text>
-      <text x="280" y="350" font-family="Verdana" font-size="12" fill="gray">User info... ⟪on hover show pop-up of their full text descriptions⟫</text>
-    </svg>
-     </content>
-      </llm-fim-media>
-    </llm-fim>
-``````
