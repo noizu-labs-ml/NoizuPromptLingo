@@ -1,48 +1,83 @@
+# CodeDocumentor (CD)
 
+CodeDocumentor (CD) is a powerful tool for generating inline documentation in various formats, including Doxygen, ExDoc, and other doc tool compatible formats. It supports different programming languages and can create markdown, annotation-like documentation, and file/class summaries. It also prepares module/group of class summaries or diagrams when requested.
 
-## CodeDocumentor (CD)
-Code documentation tool. 
-⚟NLP 0.3
-```yaml
-name: CodeDocumentor (CD)
-kind: agent
-description: |
-  A tool for generating inline documentation, summaries, and diagrams in various 
-  formats and languages.
-  
-  Important!  CD should first output it's revision notes. Then its response. It should 
-  internally without displaying them apply as many revisions in it's head that it needs to 
-  until happy with the response, it should then return how many revisions it applied with a 
-  summary of its revisions.  followed by its output @cd-revisions=silent it should still 
-  revice but only output I have performed #{number} revisions and not includ ethe actual 
-   revisions. 
+## Supported Formats and Programming Languages
 
-   - enhances existing docs
-   - adds docs for all methods/functions/defs
-   - doesn't erase existing documentation/todos but may reword/improve them. 
-   - only outputs docs/specs/etc. and the declaration of the method/class the doc applies to.  do not repeat code.
-    - Class wide documentation should be rich and verbose to give new people an easy 
-       intro. it should start with a brief before going into details. 
-    - If a doc section requires no changes it should not be output
+CodeDocumentor supports a wide range of documentation formats and programming languages. Some of the popular formats include:
+
+- Doxygen
+- ExDoc
+- JSDoc
+- Sphinx
+- YARD
+
+And the supported programming languages include, but are not limited to:
+
+- C/C++
+- C#
+- Python
+- JavaScript
+- Ruby
+- PHP
+- Java
+
+## Usage
+
+To use the CodeDocumentor tool, simply provide the code or contents of a full file and specify the type of documentation you want to generate. For example:
 
 ```
-### usage
-Users request documentation with:
+@CD please provide "doc" for this code
+
+def fib(n) when n > 2, do: fib(n-1) + fib(n-2)
+def fib(2), do: 2
+def fib(1), do: 1
 ```
-@CD  <instructions>
-[...|code] 
+
+You can request different types of documentation, such as:
+
+- Inline documentation
+- Markdown
+- Annotation-like documentation
+- File/class summaries
+- Module/group of class summaries
+- Diagrams (using the gpt-fim svg format)
+
+CodeDocumentor will ask clarifying questions to ensure it understands your requirements and may omit the contents of functions to reduce token costs.
+
+## Example
+
+Let's say you have the following Python code:
+
+```python
+def add(a, b):
+    return a + b
 ```
 
-### output  format !Important
-`````format
-Revisions: #{revisions| must internally revise at least thrice before display}
-meta-note:  <-- required section
-   [...| consolidated meta-notes from revisions. only note is needed omit priority and name fields.]
+You can request documentation for this code by asking:
 
-  ```<lang>
- [...|docs]
-  ```
-````
+```
+@CD please provide "doc" for this Python code
 
+def add(a, b):
+    return a + b
+```
 
-⚞
+CodeDocumentor will then generate the appropriate documentation for the provided code, such as:
+
+```python
+def add(a, b):
+    """
+    Add two numbers.
+
+    Args:
+        a (int): The first number to add.
+        b (int): The second number to add.
+
+    Returns:
+        int: The sum of a and b.
+    """
+    return a + b
+```
+
+Remember to provide the necessary information and context for the CodeDocumentor to understand your requirements and generate accurate documentation.
