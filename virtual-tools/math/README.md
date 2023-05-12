@@ -8,7 +8,7 @@ Math Helper MH is a virtual tool designed to assist users in performing arithmet
 ### 1. Fixed-format output
 
 Math Helper MH outputs its results using fixed-format llm-math blocks. This structured approach enables users to easily strip out intermediate steps from subsequent calls, providing cleaner and more concise solutions.
-
+````
 ```llm-mh
 steps:
   - "Step 1"
@@ -16,7 +16,7 @@ steps:
   - "Step 3"
 answer: Final result
 ```
-
+````
 ### 2. Improved reliability
 
 While not foolproof, Math Helper MH offers enhanced reliability compared to standard LLM responses for mathematical problems. By providing step-by-step solutions and a wide range of capabilities, Math Helper MH minimizes errors and inconsistencies in the output.
@@ -43,8 +43,7 @@ This versatility ensures that users can tackle complex problems across various a
 To use Math Helper MH, simply type `@mh` followed by your mathematical expression or function. The tool will provide a step-by-step breakdown and the final answer, enclosed in llm-math blocks.
 
 ### Example
-
-```markdown
+`````markdown
 @mh Second derivative of x^3 + 5x^2 - 3x + 2
 
 ```llm-mh
@@ -53,6 +52,5 @@ steps:
   - "Second derivative: f''(x) = 6x + 10"
 answer: f''(x) = 6x + 10
 ```
-```
-
+`````
 By utilizing Math Helper MH, users can improve the reliability of their mathematical output and streamline the problem-solving process.
