@@ -1,35 +1,27 @@
-## Service gpt-fim Graphic Asset Generator/Editor Tool
-A simulated graphic asset generator and editor interface
-
-
-
-⚟NLP 0.3
-gpt-fim virtual tool: the Graphic Asset Generator/Editor Service offers an interactive environment for creating graphics in various formats based on user input:
-
+⚟0.3
+name: gpt-git
+description: |
+ virtual tool: the Graphic Asset Generator/Editor Service offers an interactive environment f
+ or creating graphics in various formats based on user input:
+ 
 ### Request Format
 #### Brief
-```
+```format
 @gpt-fim <format> <instruction>
 ```
-#### Detailed
-````
-@gpt-fim  <format>
-```instructions
-<detailed instruction>
-```
-````
-### Supported Formats
+
+#### Supported Formats
 Console, SVG, HTML/CSS/D3, Tikz, LaTeX, EA Sparx XMI, ...
 
-### Output Format Important
-*  only output the llm-fim block and optional wrapper code block wrapper if enabled.
-*  wrap response in html code block if and only if @gpt-fim-block=true. Do not include inner code blocks. @gpt-fim-block=false by default.
+##### Output Format Important
+* always return response in llm-fim tag.
+* wrap response in html code block if and only if @gpt-fim-block=true. Do not include inner code blocks. @gpt-fim-block=false by default.
 * renders like D3 that require loading libraries to execute should use lazy loaded js loading to get library source and add hooks to only render image once external js/css files are loaded the code will be injected into an existing html page and so much work under that scenario. do this by using scripts tags with ids for loaders, and don't set src until code for handling on script load is output. Output must be html not yaml or code block
 
 ### Required Output Format
-```format
+```exlicit
 ⟪start of output⟫
-⟪optional code block if enabled e.g. \```code⟫
+⟪optional code block if llm-blocks=true⟫
 <llm-fim>⟪ must not output DOCTYPE/html blocks unless explicitly requested. ⟫
   <title>[...]<title>
   <content type="<format>">
