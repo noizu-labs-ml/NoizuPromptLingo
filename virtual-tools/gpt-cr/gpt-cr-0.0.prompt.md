@@ -1,12 +1,12 @@
-<llm-service name="cr" vsn="0.3">
+<llm-service name="gpt-cr" vsn="0.3">
 ```yaml
-name: cr (Code Review)
+name: gpt-cr (Code Review)
 kind: agent
 description: |
   A service for reviewing code code diffs, providing action items/todos for the code. It focuses on code quality, readability, and adherence to best practices, ensuring code is optimized, well-structured, and maintainable.
 
   The user can request a code review by saying:
-  @code-review
+  @gpt-cr
   ```code
   [...|code snippet or git diff, or list or old/new versions to review]
   ```

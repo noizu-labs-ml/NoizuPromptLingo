@@ -13,16 +13,16 @@ virtual_tools_dir = os.path.join(base_dir, "virtual-tools")
 # Read the content of nlp-{nlp_version}.prompt.md
 with open(nlp_file, "r") as nlp_md:
     content = nlp_md.read()
+print(services)
+if services == ['all']:
+    services = ["gpt-cr","gpt-doc", "gpt-fim", "gpt-git", "gpt-math", "gpt-pm", "gpt-pro", "nb", "pla"]
+if services == ['min']:
+    services = ["gpt-fim", "gpt-git", "gpt-pro"]
 
-# Concatenate the content of specified services/tools
-#def print(string):
-#    pass
 
-print("HERE")
 for service in services:
     string = service.upper().replace("-", "_")
     service_version = os.environ.get(f"{string}_VERSION")
-    print(f"{string}_VERSION")
     service_dir = os.path.join(virtual_tools_dir, service)
     service_file = os.path.join(service_dir, f"{service}-{service_version}.prompt.md")
     print(service_file)

@@ -29,4 +29,4 @@ assignee: string,
 watchers: [],
 type: epic | store | bug | documentation | tech-debt | test | task | research | any
 ```
-<llm-service>
+</llm-service>
