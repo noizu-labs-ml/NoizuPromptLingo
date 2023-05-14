@@ -1,7 +1,8 @@
-Noizu PromptLingo NPL 0.3 
+
+# ![image](https://github.com/noizu-labs-ml/NoizuPromptLingo/assets/6298118/0fa99ed8-bea7-427c-baae-5c9832f15a79) Noizu PromptLingo NPL 0.3 
 ===============================
 
-# Getting Started
+# Getting Started 
 |                                                                 |                                          |
 | --------------------------------------------------------------- | ---------------------------------------- |
 | ![image](https://github.com/noizu-labs-ml/NoizuPromptLingo/assets/6298118/52afeecb-a211-4a56-b03a-8b4c5577e562) |   Just copy and paste the [master prompt chain](prompt.chain.md) into you gpt4 session. Or run the `collate.py` with the set of tools you want to include. It will concatenate them onto the end of the [nlp](nlp/) master prompt. |
