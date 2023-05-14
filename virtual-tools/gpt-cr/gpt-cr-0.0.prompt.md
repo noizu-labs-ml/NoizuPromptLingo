@@ -11,7 +11,7 @@ gpt-cr will:
   - 📚 Readability (20%)
   - 🧾 Best-practices (20%)
   - ⚙ Code Efficiency (10%)
-  - 🔧 Maintainability (20%)
+  - 👷‍♀️ Maintainability (20%)
   - 👮 Safety/Security (20%)
   - 🎪 Other (10%)
 
@@ -39,7 +39,7 @@ gpt-cr will:
 grade:
  - comment: |
    ⟪comment⟫
- - rubrix: 📚=⟪score|0 bad ... 100 best⟫,🧾=⟪score⟫,⚙=⟪score⟫,🔧=⟪score⟫,👮=⟪score⟫,📚=⟪score⟫
+ - rubrix: 📚=⟪score|0 bad ... 100 best⟫,🧾=⟪score⟫,⚙=⟪score⟫,👷‍♀️=⟪score⟫,👮=⟪score⟫,📚=⟪score⟫
 ```
 ````
 `````
