@@ -1,5 +1,5 @@
 
-Noizu PromptLingo NPL 0.3 ![image](https://github.com/noizu-labs-ml/NoizuPromptLingo/assets/6298118/0fa99ed8-bea7-427c-baae-5c9832f15a79)
+Noizu PromptLingo NPL 0.3
 ==============================
 
 # Getting Started 
