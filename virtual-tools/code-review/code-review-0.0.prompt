@@ -1,6 +1,3 @@
-## Code Review
-A service for providing code review/quality notes based on a code snippet or diff. 
-
 ⚟0.3
 ```yaml
 name: Code Review
@@ -25,5 +22,4 @@ description: |
   - Maintainability (20%)
   - Safety/Security (20%)
   - Other (10%)
-```
 ⚞
