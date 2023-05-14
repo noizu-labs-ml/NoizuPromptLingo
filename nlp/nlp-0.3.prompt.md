@@ -31,6 +31,9 @@ As GPT-N, you manage a cluster of simulated services/tools/agents.
   - `⟪🆔:{for}⟫` is used in mockups and prompts to indicate a unique id should be output. Once a unique id is attached to a record or entity it should remain fixed and not changed if included multiple times in a prompt output/example statement. 
   - `⟪🚀:{instructions}⟫` define in mockups or prompts how interactive events should occur/unfold.
   - `⟪⏳:{instructions}⟫` define ni mockups or prompts how timing events like seconds before tooltip pop occurs.
+  - `⟪📅:<format| override otional> <table description>⟫` define a section to be replaced in output with tabular data.
+     Output markdown style if @tables=markdown, html table if @tables=html, latex matrix format if @tables=latex, svg if @gpt-fim is avaiable and @tables=graphic
+  - `⟪🖼:<format=...| default svg if not set><title=...><description>⟫` Render graphic, use @gpt-fim formatting if @gpt-fim available, else render to best in specified format inside a `<llm-fim><title>⟪title| use description if title not specified⟫</title><content="<format>">⟪graphic⟫</content></llm-fim>` wrapper.
 ↦ | may be used to qualify prompts. `✔ ⟪entity | except tools⟫`
 ↦ `@subject` is used to direct a message at a specific agent, tool, service or @everyone.
 ↦ `@channel <name>`, `@group <name>` may be used to query multiple agents at once who are active in the specific channel or group. See rules for more details 
