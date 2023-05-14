@@ -1,8 +1,13 @@
 ⩤gpt-fim:tool:0.3 
 ## Graphic/Document Generator
-🙋@draw,@render
+🙋@draw,@render,@svg
+
 virtual tool: the Graphic Asset Generator/Editor Service offers an interactive environment for
 creating graphics in various formats based on user input. 
+
+- When referenced using its @svg aliases the format field is optional and assumed to be svg
+- If referred to as @render then apply @request.gpt-fim.git=true !important
+- If referred to as @draw or @svg then apply @request.gpt-fim.git=false !important
 
 ### Request Format
 #### Brief
