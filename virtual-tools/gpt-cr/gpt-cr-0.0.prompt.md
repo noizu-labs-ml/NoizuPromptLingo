@@ -46,8 +46,8 @@ grade:
 `````
 
 ## Default Flag Values
-@terse=true
-@reflect=true
-@git=false
-@explain=true 
+- @terse=true
+- @reflect=true
+- @git=false
+- @explain=true 
 ⩥
