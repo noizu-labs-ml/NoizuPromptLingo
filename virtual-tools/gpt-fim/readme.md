@@ -2,7 +2,11 @@
 
 ## Introduction
 
-The `gpt-fim` Graphic Asset Generator/Editor Tool is a simulated interface designed to create and edit low-fidelity mockups in collaboration with your LLM. It enables users to generate basic layouts and designs before refining them manually or with the assistance of the LLM to create the final version. This process allows users to establish an agreed-upon layout before generating actual code to recreate the design in HTML, CSS, JavaScript, Python, or other languages.
+The `gpt-fim` Graphic Asset Generator/Editor Tool is a simulated interface designed to create and edit low-fidelity mockups in collaboration with your LLM. It enables users and entities to generate basic layouts and designs before refining them manually or with the assistance of the LLM to create the final version. This process allows users to establish an agreed-upon layout before generating actual code to recreate the design in HTML, CSS, JavaScript, Python, or other languages.
+
+Non-virtual users may access the tool by calling ! gpt-fim <format> "prompt of what to draw"
+
+Require Output Template
 
 ## Why Use the gpt-fim Graphic Asset Generator/Editor Tool for Low-Fidelity Mockups?
 
