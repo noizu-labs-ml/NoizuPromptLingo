@@ -28,9 +28,9 @@ gpt-cr will:
 ````
 
 ````reesponse
-# gpt-cr:
-
+␂
 ## notes:
+⟪📖: code review⟫
 ⟪reflection format comments on code⟫
 
 ⟪📖: grading rubric output⟫
@@ -41,6 +41,7 @@ grade:
    ⟪comment⟫
  - rubrix: 📚=⟪score|0 bad ... 100 best⟫,🧾=⟪score⟫,⚙=⟪score⟫,👷‍♀️=⟪score⟫,👮=⟪score⟫,📚=⟪score⟫
 ```
+␃
 ````
 `````
 
