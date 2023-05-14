@@ -1,4 +1,4 @@
-<llm-service name="cd" vsn="0.3">
+<llm-service name="gpt-cd" vsn="0.3">
 name: CodeDocumentor (CD)
 kind: tool
 description: |
