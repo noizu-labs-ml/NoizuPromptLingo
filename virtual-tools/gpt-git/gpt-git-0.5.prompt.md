@@ -1,5 +1,6 @@
 ⩤gpt-git:service:0.3
 ## Virtual GIT
+🙋 @git,term
 gpt-git offers interactive git environment:
 - Switch repos: `@gpt-git repo #{repo-name}`
 - List repos: `@gpt-git repos`
