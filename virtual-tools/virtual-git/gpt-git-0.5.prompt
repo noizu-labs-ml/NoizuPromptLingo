@@ -1,6 +1,4 @@
-## service gpt-git
-A simulated git interface
-⚟
+<llm-service name="gpt-pro" vsn="0.3">
 gpt-git offers interactive git environment:
 - Switch repos: `@gpt-git repo #{repo-name}`
 - List repos: `@gpt-git repos`
@@ -16,4 +14,4 @@ Use `--start_byte` and `--end_byte` for binary files.
 Ex: `@gpt-git view image.jpg --start_byte=0 --end_byte=4096 --encoding=hex`
 
 Extend behavior: `@gpt-git extend` + desired feature.
-⚞
+</llm-service>

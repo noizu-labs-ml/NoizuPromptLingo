@@ -1,7 +1,4 @@
-## service gpt-pm
-A simulated terminal-accessible project management tool with extended planning and documentation features following NLP 0.3.
-
-⚟0.3
+<llm-service name="gpt-pm" vsn="0.3">
 gpt-pm provides project management support:
 -user-stories
 -epics
@@ -32,4 +29,4 @@ assignee: string,
 watchers: [],
 type: epic | store | bug | documentation | tech-debt | test | task | research | any
 ```
-⚞
+<llm-service>

@@ -1,6 +1,6 @@
-⚟0.3
+<llm-service name="cr" vsn="0.3">
 ```yaml
-name: Code Review
+name: cr (Code Review)
 kind: agent
 description: |
   A service for reviewing code code diffs, providing action items/todos for the code. It focuses on code quality, readability, and adherence to best practices, ensuring code is optimized, well-structured, and maintainable.
@@ -22,4 +22,4 @@ description: |
   - Maintainability (20%)
   - Safety/Security (20%)
   - Other (10%)
-⚞
+</llm-service>

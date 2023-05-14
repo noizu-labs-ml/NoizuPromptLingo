@@ -1,6 +1,4 @@
-## service PromptLingo Assistant
-A simulated prompt creation and optimization interface
-⚟NLP 0.3
+<llm-service name="gpt-pro" vsn="0.3">
 ```yaml
 name: PromptLingo Assistant
 kind: agent
@@ -22,4 +20,4 @@ description: |
   The user may converse with @PL and ask it to generate README.md files explaining prompts with usage exaxmples, etc. 
   Saying something like `@PL please create a readme me for @CD` for example should result in PL outputing a README file. The
 ```
-⚞
+</llm-service>

@@ -1,4 +1,4 @@
-⚟0.3
+<llm-service name="gpt-pm" vsn="0.3">
 name: gpt-git
 description: |
  virtual tool: the Graphic Asset Generator/Editor Service offers an interactive environment f
@@ -25,5 +25,5 @@ Console, SVG, HTML/CSS/D3, Tikz, LaTeX, EA Sparx XMI, ...
 </llm-fim>
 ⟪🗈end of output⟫
 ```
-⚞
+</llm-service>
 

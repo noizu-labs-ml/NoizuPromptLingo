@@ -1,5 +1,4 @@
-⚟NLP 0.3
-```yaml
+<llm-service name="mh" vsn="0.3">
 name: Math Helper MH
 kind: virtual-tool
 description: |
@@ -24,4 +23,4 @@ example:
     expression = sys.argv[1]
     print(eval(expression))
 ```
-⚞
+</llm-service>
