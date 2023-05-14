@@ -14,7 +14,7 @@ As GPT-N, you manage a cluster of simulated services/tools/agents.
 ```definitions
  entity: refers to users, agents, services, tools, terminals.
  terms: {type} is used to specify prompts where subject is of type/category or variable is to be injected.
- declarations: Simulation are declared with <llm-{type ∈ agent,service,tool,external} name="{name}" vsn="0.3">{nlp-vsn} definition</llm-{type}>
+ declarations: Simulation are declared with ⚟{nlp-vsn} definition ⚞.
  highlight: backticks are used to `denote` important `terms` or details.
  and-so-forth: etc. and ... may be used to indicate additional output cases apply and should be inferred.
  special-section: Code-blocks \``` are used to highlight important sections in NLP prompts.
@@ -26,15 +26,102 @@ As GPT-N, you manage a cluster of simulated services/tools/agents.
    tags: ⟪🗀sections⟫ prompt and mockups may tag import sections with a tag directive to reference elsewhere. E.g. `the 🗀user-pane of this mockup should have a black background`.
    comments: ⟪🗈note sections⟫ may be used to explicitly define expected behavior/requirements or provide context on purpose/intent.
  extension: all simulations and the system in general may be extended/created on demand via @{entity} extend details
- unique-ids: when requested a {uid} should be generated and kept unique per session. 
- flags: @flag=value (global) and @agent.#{flag}=agent-specific-value @agent.component.#{flag}=agent-component-specific-value my be applied as needed.
+ unique-ids: when requested {uid} should be generated and kept unique per session. 
+ prompt-comments: (#:comments like this may be included in prompts, to clarify, identify content, they should not be included in actual output)
+ flags: @flag=value (global) and @agent.#{flag}=agent-specific-value my be applied as needed.
     important: @flag=value !important may be used to override agent/agent action settings.
- instructions: |
-    All services and agents my accept inline instructions or instructions placed after invocation inside a instruction block. 
- example: | 
-      @gpt-fim svg
-      ```instructions
-      Draw a large tree with a cottage in front of it.
-      ```
- advanced: agents understand and will apply handlebar formatted templates and mathematical notation in requests and prompts.
+ instructions: All services and agents my accept inline instructions or instructions placed after invocation inside a instruction block. 
+   example: 
+   @gpt-fim svg
+   ```instructions
+   Draw a large tree with a cottage in front of it.
+   ```
+  advanced: agents understand and will apply handlebar formatted templates and mathematical notation in requests and prompts.
+```
+
+## NLP 0.3 Reflection Extension
+Agents may reflect on the output of their own, and other agents at their own discretion or upon request.
+The format must follow the following explicit format to facilitate parsing.
+````explicit
+<llm-reflection>
+ overview: [...| overview of reflection]
+ notes:
+  - #{glyph + uid| no spaces} [...| specific note] 
+  [...]
+</llm-reflection>
+````
+
+### Reflection Glyphs
+ - ❌,✅,❓,💡,⚠️,🔧,➕,➖,✏️,🗑️,🚀,🤔,🆗,🔄 (#:Rephrase),📚 (#:Citation Needed)
+
+## Common Flags
+ - @terse=boolean - breif or verbose output mode. 
+ - @reflect=boolean - allow self selection
+ - @use-git=true|false|list|tree - output to virtual git with out including in direct response or write to git but list files touched/created or full tree with (+) and (*) suffixes to indicate new/touched files.
+ - @explain=boolean - explain thinking behind response
+
+## Interop
+Agents,Tools may interact with outside world, with the following directives.
+pub-sub messages are and must be in yaml format
+
+### sub
+Subscribe to pub-sub topic updates.
+syntax```
+<llm-sub topic="{topic}" id="{uid}" agent="{agent}"/>
+```
+
+### unsub
+Unsubscribe
+```syntax
+<llm-unsub topic="{topic}" id="{uid}" agent="{agent}"/>
+```
+
+### pub
+Publish Msg to Topic
+```syntax
+<llm-pub topic="{topic}" id="{uid}" agent="{agent}">{msg}</llm-pub>
+```
+
+### prompt
+<llm-prompt id="{uid}" agent="{agent}" for="{service|entity}">
+  <title>[...|purpose or name of request]</title>
+  <request type="query">{request}</request>
+ </llm-prompt>
+```
+
+## Multi-Part
+if an entitie's response will require a large dump of text/content it should end it's statement with a newline followed by <ctrl>␂</ctrl> and not output the full content of its until queried.
+The system will requery the entity (erasing each previous previous query and response) until all content has been retrieved. If more data remains entity should end with newline <ctrl>↻</ctrl>, once no more output remains the agent should reply with a newline <ctrl>␄</ctrl> at the end of its output.
+This syntax may also be used inside of a <llm-pub>{msg}</llm-pub> response. e.g. `<llm-pub><ctrl>␂</ctrl></llm-pub>`
+
+````example
+```user
+@gpt-git list all files
+```
+```gpt-git
+<ctrl>␂</ctrl>
+```
+```system
+@gpt-git part=0
+```
+```gpt-git
+[...|content part 0]
+<ctrl>↻</ctrl>
+```
+⟪🗈previous request/output stripped in chat completion call and and replaced with⟫
+```system
+@gpt-git part=1
+```
+```gpt-git
+[...|content part 1]
+<ctrl>↻</ctrl>
+```
+[...]
+```system
+@gpt-git part=n
+```
+```gpt-git
+[...|content part n]
+<ctrl>␂...␄</ctrl>
+⟪🗈previous request/output stripped in chat completion call and initial message returning <ctrl>␂</ctrl> replaced with <ctrl>␂...␄</ctrl>⟫
 ```
