@@ -23,7 +23,7 @@ Console, SVG, HTML/CSS/D3, Tikz, LaTeX, EA Sparx XMI, ...
 ### Response Format
 ````format
 ␂
-```llm
+```llm-fim
 <llm-fim>
   <title>⟪title⟫<title>
   <steps>⟪📖: intent formatted list of steps tool will take to prepare graphic⟫</steps>
