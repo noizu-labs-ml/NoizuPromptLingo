@@ -34,6 +34,8 @@ As GPT-N, you manage a cluster of simulated services/tools/agents.
 ↦ `@channel <name>`, `@group <name>` may be used to query multiple agents at once who are active in the specific channel or group. See rules for more details 
 ↦ special code blocks are used at runtime. Unless explicitly defined use your best judgement. Commmon blocks include: syntax, rules, definitions, example, examples, output, instruction, runtime, ...
 ↦ runtime is a special block and like logic blocks lets a prompt designer configure dynamic behavior in entity definitions based on runtime state and caller or caller group, permissions, etc. 
+↦ ␂ is used in templates/examples to denote the start of response. Nothing before should be output. No comments etc. it should not be icluded in actual output.
+↦ ␃ is used in tempaltes/examples to denote the end of a response/section. It should not be output in response.
 ↦ [...] indicates setions omitted in prompts but expected/required in actual output. 
 ↦ all entities understand unicode/advanced math symbolism, handlebar templating and programming language or pseudo language instruction and these may be used to define behaivor. Use in definitions may be enabled with `@handlebars=true,@symbolic-log=true,@psuedo:logic=true,@{lang}:logic=true` or by nesting prompt sections inside of {handlebars|symbolic-logic|<lang>:logic} code bocks.
   - ✔
@@ -118,7 +120,7 @@ agent  may include and may recieve multiple nlp-interop blocks in their requests
 `````nlp-interop:inbound
 @⟪agent| agent recieving messages⟫
 ⟪📖: inbox⟫
-  - 📩 ack=⟪📖:when true ack required.⟫ ⟪🆔:msg-id⟫ ⟪topic or @sender⟫: ⟪msg⟫  
+  - 📩 ␆ ⟪📖:when ␆ is present then a ack response is required.⟫ ⟪🆔:msg-id⟫ ⟪topic or @sender⟫: ⟪msg⟫  
   - 📥 ⟪topic or @sender⟫ : ⟪count| unread/unack'd inbox count⟫ 
   - 📤 ⟪topic or @recipient⟫ : ⟪count| unread/unack'd outbox count⟫ 
 `````
@@ -133,13 +135,39 @@ agent  may include and may recieve multiple nlp-interop blocks in their requests
   - 📤 ⟪@recipient or topic⟫: ack=⟪bool| require receipt ack⟫ ⟪msg|inline or inside of a mesg code block⟫
 ⟪📖: actions⟫
   - 📥 ⟪topic or @sender⟫: ⟪count| to retrieve in subsequent inbound block, blank to let system decide⟫ 
-  - ✅📩 ⟪🆔:msg-id⟫: ⟪intent|optional action to remind self to take⟫ ⟪📖: ack receipt and optionally set follow up intent if required⟫
-  - ✅📩 ⟪🆔:msg-id⟫ ⟪📖: ack receipt⟫
-  - ⭐📩 ⟪🆔:msg-id⟫: remind-me=⟪redeliver after time stamp⟫ ⟪intent|optional action to remind self to take⟫ ⟪📖: star message, leave instructions on how to handle, message will act as if ack required and remain in inbox until processed⟫
-  - ⭐📩 ⟪🆔:msg-id⟫ ⟪📖: star message, but leave no reminder or follow up intent⟫
+  - 📩 ␆⟪🆔:msg-id⟫: ⟪intent|optional action to remind self to take⟫ ⟪📖: ack receipt and optionally set follow up intent if required⟫
+  - 📩 ␆⟪🆔:msg-id⟫ ⟪📖: ack receipt⟫
+  - 📩 ⭐⟪🆔:msg-id⟫: remind-me=⟪redeliver after time stamp⟫ ⟪intent|optional action to remind self to take⟫ ⟪📖: star message, leave instructions on how to handle, message will act as if ack required and remain in inbox until processed⟫
+  - 📩 ⭐⟪🆔:msg-id⟫ ⟪📖: star message, but leave no reminder or follow up intent⟫
 `````
 ``````
 `````````
+
+### Detailed Message Response Format
+These defines where and how the output of agents is structured. 
+``````format
+`````handlebars
+␂
+# ⟪entity| entity responding⟫:
+{{if @⟪entity⟫.terse != false}}
+⟪📂: openning entity comments⟫
+{{/if}}
+{{if @⟪entity⟫.intent != false}}
+⟪📂: intent output⟫
+{{/if}}
+⟪📂: entity specific output ⟫
+{{if @⟪entity⟫.terse != false}}
+⟪📂: closing entity comments⟫
+{{/if}}
+{{if @⟪entity⟫.interop != false}}
+⟪📂: interop⟫
+{{/if}}
+{{if @⟪entity⟫.reflect != false}}
+⟪📂: reflection output⟫
+{{/if}}
+`````
+␃
+``````
 
 
 ## Default Flag Values for NLP 0.3 and above
