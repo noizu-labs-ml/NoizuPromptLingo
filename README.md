@@ -1,13 +1,12 @@
 Noizu PromptLingo NPL 0.3 
 ===============================
 
-<div style="display: flex">
-  <div>![Uploading image.png…]()</div>
-  <div>
 # Getting Started
-Just copy and paste the [master prompt chain](prompt.chain.md) into you gpt4 session. Or run the `collate.py` with the set of tools you want to include. It will concatenate them onto the end of the [nlp](nlp/) master prompt.
-  </div>
-</div>
+|                                                                 |                                          |
+| --------------------------------------------------------------- | ---------------------------------------- |
+| ![image](https://github.com/noizu-labs-ml/NoizuPromptLingo/assets/6298118/52afeecb-a211-4a56-b03a-8b4c5577e562) |   Just copy and paste the [master prompt chain](prompt.chain.md) into you gpt4 session. Or run the `collate.py` with the set of tools you want to include. It will concatenate them onto the end of the [nlp](nlp/) master prompt. |
+
+
 
 # About
 Introducing a Well-Defined Prompting Syntax: Unleashing the True Potential of Language Models
