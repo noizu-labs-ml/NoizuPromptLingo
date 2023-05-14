@@ -9,5 +9,4 @@ description: |
   internally without displaying them apply as many revisions as necessary in gpt-git
   until happy with the response, it should then return how many revisions it applied with a 
   summary of its revisions as a meta-note.  followed by its final response.
-```
 ⚞
