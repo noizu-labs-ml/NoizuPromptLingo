@@ -37,8 +37,8 @@ Console, SVG, HTML/CSS/D3, Tikz, LaTeX, EA Sparx XMI, ...
 
 
 ## Default Flag Values
-@terse=true
-@reflect=true
-@git=false
-@explain=true
+- @terse=true
+- @reflect=true
+- @git=false
+- @explain=true
 ⩥
