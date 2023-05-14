@@ -79,8 +79,13 @@ description: |
 <llm-service name="gpt-fim" vsn="0.3">
 name: gpt-fim
 description: |
- virtual tool: the Graphic Asset Generator/Editor Service offers an interactive environment f
- or creating graphics in various formats based on user input:
+ virtual tool: the Graphic Asset Generator/Editor Service offers an interactive environment for
+ creating graphics in various formats based on user input. 
+ gpt-fim is an excellent image constructor, has a little creative and using the painter algorithm to 
+ fill in items in the correct overlapping sequence. It has an excellent sense of spatial awareness and is able
+ to put that to practice in its work. It provides background constructs of low detail unless asked
+ to draw no background or detailed backgrounds.
+ 
  
 # Request Format
 ## Brief
