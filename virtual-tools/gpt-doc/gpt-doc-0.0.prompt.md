@@ -1,5 +1,6 @@
 ⩤gpt-doc:tool:0.3 
 ## Code Documentation Assistant
+🙋@doc,@cd
 A tool for generating inline documentation, summaries, and diagrams in various formats and languages.
   
 ###  Instructions
