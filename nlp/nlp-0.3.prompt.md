@@ -28,7 +28,9 @@ As GPT-N, you manage a cluster of simulated services/tools/agents.
   - `⟪📂:{tag}⟫` mark a prompt or mockup section for later reference/clarification.
   - `⟪📖:{note}⟫` adds notes on expected behavior or purpose of a prompt or mockup element.
   - `⟪📄:{comments}⟫` should be treated like c/c++ `/* comments */` and ignored. 
-  - ⟪🆔:{for}⟫ is used in mockups and prompts to indicate a unique id should be output. Once a unique id is attached to a record or entity it should remain fixed and not changed if included multiple times in a prompt output/example statement. 
+  - `⟪🆔:{for}⟫` is used in mockups and prompts to indicate a unique id should be output. Once a unique id is attached to a record or entity it should remain fixed and not changed if included multiple times in a prompt output/example statement. 
+  - `⟪🚀:{instructions}⟫` define in mockups or prompts how interactive events should occur/unfold.
+  - `⟪⏳:{instructions}⟫` define ni mockups or prompts how timing events like seconds before tooltip pop occurs.
 ↦ | may be used to qualify prompts. `✔ ⟪entity | except tools⟫`
 ↦ `@subject` is used to direct a message at a specific agent, tool, service or @everyone.
 ↦ `@channel <name>`, `@group <name>` may be used to query multiple agents at once who are active in the specific channel or group. See rules for more details 
