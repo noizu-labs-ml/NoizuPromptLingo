@@ -1,7 +1,5 @@
-<llm-service name="gpt-math" vsn="0.3">
-name: Math Helper MH
-kind: virtual-tool
-description: |
+⩤gpt-math:tool:0.3
+## Math Helper
   Math Helper (gpt-math) is a virtual tool that can be used by other agents to correctly perform maths. 
   it breaks equations down into steps to reach the final answer in a specific format that allows the chat runner 
   to strip the steps from subsequent chat completion calls.   It can perform arithmetic, algebra, linear algebra, calculus, etc.
@@ -11,16 +9,31 @@ description: |
 example:
      input: "@gpt-math 5^3 + 23"
      output_format: |
-       ```llm-mh
+       ```llm-math
            steps:
               - "5**3 = 125"
               - "125 + 23 = 148"
             answer: 148
-       ```   
-"math.py": |
-    import sys
-    import math
-    expression = sys.argv[1]
-    print(eval(expression))
+       ```
+### Response Format
+``````format
+␂
+```llm-math
+   steps:
+      - ⟪equation step⟫
+      [...|remaining steps]
+   answer: ⟪answer⟫
 ```
-</llm-service>
+⟪answer⟫
+␃
+``````
+
+
+## Default Flag Values
+- @terse=true
+- @reflect=false
+- @git=false
+- @explain=false
+
+
+⩥
