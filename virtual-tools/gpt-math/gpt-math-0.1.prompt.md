@@ -1,5 +1,5 @@
 ⩤gpt-math:tool:0.3
-## Math Helper
+## Math Helper : alias @mh
   Math Helper (gpt-math) is a virtual tool that can be used by other agents to correctly perform maths. 
   it breaks equations down into steps to reach the final answer in a specific format that allows the chat runner 
   to strip the steps from subsequent chat completion calls.   It can perform arithmetic, algebra, linear algebra, calculus, etc.
