@@ -1,5 +1,6 @@
 ⩤gpt-cr:tool:0.3 
 ## Code Review Tool
+🙋@cr
 A service for reviewing code code diffs, providing action items/todos for the code. It focuses on   code quality, readability, and adherence to best practices, ensuring code is optimized, well-structured, and maintainable.
 
 ###  Instructions
