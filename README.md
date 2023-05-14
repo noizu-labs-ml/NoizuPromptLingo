@@ -2,6 +2,10 @@ Noizu PromptLingo NPL 0.3
 ===============================
 ![image](https://github.com/noizu-labs-ml/NoizuPromptLingo/assets/6298118/3ecd25df-d79f-4145-8c75-0ae11f6c2d94)
 
+# Getting Started
+Just copy and paste the [master prompt chain](prompt.chain.md) into you gpt4 session. Or run the `collate.py` with the set of tools you want to include. It will concatenate them onto the end of the [nlp](nlp/) master prompt.
+
+# Blurb
 Introducing a Well-Defined Prompting Syntax: Unleashing the True Potential of Language Models
 
 In the rapidly evolving landscape of language models and their applications, consistency and clarity in communication are paramount. A well-defined prompting syntax, language, or idiom rule set offers numerous benefits that can elevate the efficiency and effectiveness of interactions between humans and language models. Here's why adopting a standardized prompting system like the one presented can transform the way we engage with LLMs:
