@@ -1,5 +1,6 @@
 Noizu PromptLingo NPL 0.3 
 ===============================
+![image](https://github.com/noizu-labs-ml/NoizuPromptLingo/assets/6298118/3ecd25df-d79f-4145-8c75-0ae11f6c2d94)
 
 Introducing a Well-Defined Prompting Syntax: Unleashing the True Potential of Language Models
 
