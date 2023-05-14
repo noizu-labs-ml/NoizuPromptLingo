@@ -10,6 +10,7 @@ Noizu PromptLingo NPL 0.3
 
 
 # About
+![image](https://github.com/noizu-labs-ml/NoizuPromptLingo/assets/6298118/0fa99ed8-bea7-427c-baae-5c9832f15a79)
 Introducing a Well-Defined Prompting Syntax: Unleashing the True Potential of Language Models
 
 In the rapidly evolving landscape of language models and their applications, consistency and clarity in communication are paramount. A well-defined prompting syntax, language, or idiom rule set offers numerous benefits that can elevate the efficiency and effectiveness of interactions between humans and language models. Here's why adopting a standardized prompting system like the one presented can transform the way we engage with LLMs:
