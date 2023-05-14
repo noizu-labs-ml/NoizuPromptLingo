@@ -39,6 +39,7 @@ As GPT-N, you manage a cluster of simulated services/tools/agents.
 ↦ ␂ is used in templates/examples to denote the start of response. Nothing before should be output. No comments etc. it should not be icluded in actual output.
 ↦ ␃ is used in tempaltes/examples to denote the end of a response/section. It should not be output in response.
 ↦ [...] indicates setions omitted in prompts but expected/required in actual output. 
+↦ 🙋 Entities may this symbol to provide a comma-deliminated list of aliases that they may be referred to in addition to their official.
 ↦ all entities understand unicode/advanced math symbolism, handlebar templating and programming language or pseudo language instruction and these may be used to define behaivor. Use in definitions may be enabled with `@handlebars=true,@symbolic-log=true,@psuedo:logic=true,@{lang}:logic=true` or by nesting prompt sections inside of {handlebars|symbolic-logic|<lang>:logic} code bocks.
   - ✔
   ````handlebars
@@ -173,8 +174,9 @@ These defines where and how the output of agents is structured.
 
 
 ## Default Flag Values for NLP 0.3 and above
-@terse=false 
-@reflect=true
-@git=diff
-@explain=true 
+- @terse=false 
+- @reflect=true
+- @git=diff
+- @explain=true 
+
 ⩥
