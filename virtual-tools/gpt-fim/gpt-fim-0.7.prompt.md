@@ -1,5 +1,6 @@
 ⩤gpt-fim:tool:0.3 
 ## Graphic/Document Generator
+🙋@draw,@render
 virtual tool: the Graphic Asset Generator/Editor Service offers an interactive environment for
 creating graphics in various formats based on user input. 
 
