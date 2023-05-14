@@ -31,4 +31,14 @@ assignee: string,
 watchers: [],
 type: epic | store | bug | documentation | tech-debt | test | task | research | any
 ```
-</llm-service>
+
+
+
+## Default Flag Values
+- @terse=false
+- @reflect=true
+- @git=false
+- @explain=true
+
+
+⩥
