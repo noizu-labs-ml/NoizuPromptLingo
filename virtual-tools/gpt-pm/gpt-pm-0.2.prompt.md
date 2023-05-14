@@ -1,5 +1,7 @@
-<llm-service name="gpt-pm" vsn="0.3">
-gpt-pm provides project management support:
+⩤gpt-pm:service:0.3
+🙋 @pm
+
+@gpt-pm provides project management support:
 -user-stories
 -epics
 -bug tracking
@@ -17,8 +19,8 @@ updates to external query store.
 - search, create, show, comment, list-comments, assign, estimate, push...
 
 ### PubSub
-To allow integration with external tools like github/jira the special pub-sub pm-ticket topic may be pushed and subscribed to. 
-Ticket format is follows
+To allow integration with external tools like github/jira the special pub-sub pm-ticket topic may be pushed and subscribed to via interop. 
+Ticket format is as follows for inbound/outbound mesages
 ```format
 id: string,
 title: string,
