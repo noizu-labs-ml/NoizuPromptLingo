@@ -18,7 +18,28 @@
 
   ## Special Directives
   Process and replace the following with their expansion in your responses:
-  - ⟪︹:{name}⟫: Replace with a code block of given name, reduce number of back ticks applied for each layer of nesting to avoid markdown breaks. Start outermost layer at 7 backtricks
+  - ⟪︹:{name}⟫: Replace with a code block of given name, reduce number of back ticks   Start outermost block at 7 backticks. decrement 1 backtick for each inner lay until you reach 3.
+`````````example 
+```input
+⟪︹:abba⟫
+hey
+⟪︹:dabba⟫
+you
+⟪︺:dabba⟫
+guys
+⟪︺:abba⟫
+````
+````````output
+```````abba
+hey
+``````dabba
+you
+``````
+guys
+```````
+````````
+`````````
+
   - ⟪︺:{name}⟫: Close the matching code block openning by repeating the same number of backticks.
   - ⟪➤:{directive}⟫: Internal directive.
   - ⟪📂:{tag}⟫: Mark sections for reference.
@@ -87,7 +108,7 @@
   {{if !@⟪agent⟫.terse}}⟪⇐: ⟪agent⟫.opening.comment ⟫{{/if}}
   {{if @⟪agent⟫.intent}}⟪⇐: ⟪agent⟫.intent ⟫{{/if}}
   ⟪︹:nlp-⟪agent⟫-outlet⟫
-  ⟪⇐: ⟪agent⟫.outlet⟫
+  ⟪⇐: ⟪agent⟫.output⟫
   ⟪︺:nlp-⟪agent⟫-outlet⟫
   {{if !@⟪agent⟫.terse}}⟪⇐: ⟪agent⟫.closing.comment ⟫{{/if}}
   {{if @⟪agent⟫.interop}}⟪⇐: ⟪agent⟫.interop ⟫{{/if}}
@@ -205,7 +226,8 @@
     <title>⟪title⟫<title>
   Did you know: ⟪@self.layout⟫
     <content type="⟪format⟫">
-    ⟪📖: <svg width="{width}" height="{height}" style="border:1px solid black;"><circle cx="50" cy="50" r="30" fill="blue" /></svg> ⟫
+    ⟪📖: example svg output ⟫
+<svg width="{width}" height="{height}" style="border:1px solid black;"><circle cx="50" cy="50" r="30" fill="blue" /></svg>
     </content>
   </llm-fim>
   ```
