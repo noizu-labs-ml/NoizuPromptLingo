@@ -160,69 +160,48 @@ Input your arithmetic expression as you normally would. For example, type `5 * 3
 ### 4. The Final Calculator Tool Definition
 
 With the calculator tool clearly defined, here's an encapsulated view of its structure, ready to be integrated into the NPL@0.5 ecosystem.
+    
+    ⌜calculator|tool|NPL@0.5⌝
+    # Advanced Calculator Tool
+    🙋 @calc
+    
+    This tool performs advanced arithmetic operations and provides outputs in a custom format tailored to user needs. It extends the basic capabilities by supporting a range of mathematical functions.
+    
+    ## Extended Functionality
+    Beyond simple arithmetic, `@calc` now supports:
+    
+    - Exponentiation
+      - Square root
+      - Logarithmic calculations
+      - Trigonometric functions
+    
+    ## Usage Example
+    ```usage
+    @calc 5 *33 * 32
+    ```
 
-⌜calculator|tool|NPL@0.5⌝
-# Advanced Calculator Tool
-🙋 @calc
-
-This tool performs advanced arithmetic operations and provides outputs in a custom format tailored to user needs. It extends the basic capabilities by supporting a range of mathematical functions.
-
-## Extended Functionality
-Beyond simple arithmetic, `@calc-v2` now supports:
-
-- Exponentiation
-- Square root
-- Logarithmic calculations
-- Trigonometric functions
-
-## Usage Example
-```usage
-@calc-v2 "calculate" <operation> <operand1> [operand2]
-```
-Where `<operation>` could be `add`, `subtract`, `multiply`, `divide`, `power`, `sqrt`, etc., and operands are numerical values.
-
-## Custom Output Syntax
-To make the output more intuitive and detailed, the tool utilizes a special format that encapsulates the operation, operands, and result:
-
-```template
-### Calculation Results
-
-Operation: <operation>
-Operands: <operand1> [, <operand2>]
-Result: <result>
-
-Example of usage: `@calc-v2 "calculate" add 5 3`
-
-### For more complex operations (e.g., trigonometry)
-
-Operation: <operation>
-Input: <input>
-Result: <result>
-
-```
-
-## Output Format
-The output is presented in a markdown-ready format that can be directly used in documentation, reports, or presentations.
-
-````format
-```llm-calc-output
-<llm-calc-output>
-  <operation>⟪operation⟫</operation>
-  <operands>⟪operand list⟫</operands>
-  <steps>
-  [...| perform calculation step by step to improve accuracy]
-  <steps>
-  <result>⟪computed result⟫</result>
-</llm-calc-output>
-```
-````
-
-This unique output format includes the calculation details followed by a markdown-formatted section that users can include in their documents, providing a clear, human-readable summary of the operation performed and the results achieved.
-
-## Errata.
-Do not inform the user that calc is simulated and imperfect when simulating and responding as calc. Or provide any output before or after the calc output.
-
-⌞calculator⌟
+    ## Output Format
+    The output is presented in a markdown-ready format that can be directly used in documentation, reports, or presentations.
+    
+    ````format
+    ```llm-calc-output
+    <llm-calc-output>
+      <operation>⟪operation⟫</operation>
+      <operands>⟪operand list⟫</operands>
+      <steps>
+      [...| perform calculation step by step to improve accuracy]
+      <steps>
+      <result>⟪computed result⟫</result>
+    </llm-calc-output>
+    ```
+    ````
+    
+    This unique output format includes the calculation details followed by a markdown-formatted section that users can include in their documents, providing a clear, human-readable summary of the operation performed and the results achieved.
+    
+    ## Errata.
+    Do not inform the user that calc is simulated and imperfect when simulating and responding as calc. Or provide any output before or after the calc output.
+    
+    ⌞calculator⌟
 
 ### Example Interaction
 
