@@ -57,6 +57,26 @@ This ecosystem transforms the traditional approach to AI assistance by providing
 - **Anti-Patterns**: Actively removes marketing language, unnecessary qualifiers, verbose explanations
 - **Integration**: House style system, template-driven generation, review annotations
 
+### Data Visualization and Analytics
+
+#### **npl-fim** - Fill-In-the-Middle Visualization Agent
+**Purpose**: Comprehensive visualization specialist generating interactive, data-driven visualizations across modern web visualization tools.
+
+- **Capabilities**: 13+ visualization libraries (D3.js, Chart.js, Plotly.js, Three.js, Mermaid, etc.), NPL semantic enhancement, interactive dashboards
+- **Best For**: Business analytics, scientific visualization, network analysis, creative data art
+- **Features**: NPL semantic patterns for 15-30% AI comprehension improvement, responsive designs, accessibility compliance
+- **Integration**: Works with grader for quality assessment, templater for reusable visualization patterns
+
+### Security and Risk Management
+
+#### **npl-threat-modeler** - Defensive Security Analysis Agent
+**Purpose**: Specialized defensive security analysis tool that identifies vulnerabilities, assesses security risks, and designs secure architectures using established threat modeling methodologies.
+
+- **Capabilities**: STRIDE methodology, risk assessment, architecture security review, compliance mapping (SOC 2, ISO 27001, NIST), security documentation
+- **Best For**: Enterprise security assessment, compliance preparation, secure architecture design, security policy development
+- **Features**: Systematic threat identification, quantitative risk analysis, defensive-only security practices, industry framework alignment
+- **Integration**: Works with thinker for strategic security planning, grader for security assessment validation
+
 ### Collaboration and Analysis Agents
 
 #### **npl-persona** - Multi-Perspective AI Personas
@@ -326,6 +346,49 @@ flowchart TD
 @npl-templater "Create templates for consistent code structure across projects"
 ```
 
+### Scenario 4: Data Visualization and Analytics Platform
+
+**Context**: Creating comprehensive analytics dashboard with security assessment for financial services company.
+
+```bash
+# 1. Threat Analysis and Security Requirements
+@npl-threat-modeler analyze "financial analytics platform with customer data visualization" --compliance=SOX,PCI-DSS --focus="data privacy, access controls"
+
+# 2. Visualization Development with Security Integration
+@npl-fim compose "Executive financial dashboard with real-time trading data" --libraries="d3,plotly" --security=compliant --audit-trail
+
+# 3. Multi-Perspective Quality Assessment
+{
+    @npl-grader evaluate dashboard/ --rubric=financial-software-quality.md &
+    @npl-persona security-architect "Review dashboard security implementation" &
+    @npl-persona financial-analyst "Validate dashboard usability for financial analysis" &
+    wait
+}
+
+# 4. Comprehensive Documentation and Compliance
+@npl-technical-writer "Document dashboard security controls and compliance features"
+@npl-threat-modeler generate-compliance-report --dashboard-assessment --frameworks="SOX,PCI-DSS"
+```
+
+### Scenario 5: Enterprise Security Program with Visualization
+
+**Context**: Implementing organization-wide security monitoring with executive dashboards.
+
+```bash
+# 1. Security Architecture Analysis
+@npl-threat-modeler assess-enterprise "multi-cloud security monitoring system" --scope="identity management, network security, data protection" --compliance=ISO27001
+
+# 2. Security Metrics Visualization
+@npl-fim security-dashboard "Real-time security metrics with threat indicators and compliance status" --libraries="d3,chart" --realtime --alerting
+
+# 3. Strategic Security Planning
+@npl-thinker "Analyze optimal security investment priorities based on threat model and dashboard metrics"
+
+# 4. Implementation Validation
+@tdd-driven-builder "Implement security controls identified in threat model with comprehensive testing"
+@npl-grader evaluate security-implementation/ --rubric=enterprise-security-standards.md
+```
+
 ## Advanced Orchestration
 
 ### Feedback Loops and Iterative Refinement
@@ -567,12 +630,22 @@ mkdir -p .claude/workflow-state
 - **Feature Development**: Use `@tdd-driven-builder` + `@gpt-qa` + `@npl-grader`
 - **System Analysis**: Use `@gopher-scout` + `@system-digest` + `@npl-thinker`
 - **Content Creation**: Use `@npl-marketing-writer` + `@npl-technical-writer`
+- **Data Visualization**: Use `@npl-fim` + `@npl-grader` + `@npl-templater`
+- **Security Assessment**: Use `@npl-threat-modeler` + `@npl-thinker` + `@npl-grader`
 
 #### 2. Start Simple
 ```bash
 # Begin with two-agent workflows
 @npl-technical-writer generate readme --project-type=python
 @npl-grader evaluate README.md --rubric=documentation-quality-rubric.md
+
+# Data visualization workflow
+@npl-fim "Create sales dashboard with monthly trends" --library=chart
+@npl-grader evaluate dashboard.html --rubric=visualization-quality-rubric.md
+
+# Security assessment workflow
+@npl-threat-modeler analyze "web application with user authentication" --framework=STRIDE
+@npl-grader evaluate threat-model.md --rubric=security-assessment-rubric.md
 ```
 
 #### 3. Expand Gradually
@@ -582,12 +655,22 @@ mkdir -p .claude/workflow-state
 @gpt-qa "Generate test cases for authentication specification"
 @npl-grader evaluate auth-spec.md --rubric=specification-rubric.md
 @tdd-driven-builder "Implement authentication following specification and tests"
+
+# Secure analytics dashboard workflow
+@npl-threat-modeler analyze "analytics dashboard with user data" --compliance=GDPR
+@npl-fim "Create secure data visualization dashboard" --library=d3 --privacy-compliant
+@npl-grader evaluate dashboard-security.md --rubric=secure-software-rubric.md
+@npl-technical-writer "Document dashboard security features and compliance controls"
 ```
 
 #### 4. Create Templates
 ```bash
 # Template successful workflows for reuse
 @npl-templater "Create template from this successful documentation workflow"
+
+# Template visualization and security workflows
+@npl-templater "Create reusable template for secure dashboard development workflow"
+@npl-templater "Create template for compliance-driven threat modeling process"
 ```
 
 ### Best Practices for Orchestration

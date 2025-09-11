@@ -4,81 +4,79 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-The Noizu PromptLingo (NPL) project is a comprehensive framework for structured prompting with language models, developed by Noizu Labs ML. This Python-based project provides a well-defined prompting syntax and ecosystem of virtual tools/agents to enhance consistency and effectiveness in language model interactions.
+The Noizu PromptLingo (NPL) project is a comprehensive framework for structured prompting with language models, developed by Noizu Labs ML. This project provides a well-defined prompting syntax and ecosystem of NPL agents to enhance consistency and effectiveness in language model interactions with Claude Code.
 
-The project includes a master prompt chain system, modular virtual tools (gpt-pro, gpt-fim, gpt-git, etc.), and NPL agentic scaffolding for structured AI interactions. It's designed to standardize prompting approaches and enable scalable, collaborative development of language model applications.
+The project focuses on NPL agentic scaffolding for structured AI interactions, providing ready-to-use agents and templates that can be quickly deployed to Claude Code. It's designed to standardize prompting approaches and enable scalable, collaborative development of language model applications through the Claude Code agent system.
 
 ## Architecture Overview
 
-This is a modular prompt engineering framework with the following key characteristics:
+This is an agentic framework designed specifically for Claude Code with the following key characteristics:
 
-- **Prompt Chain System**: Collation system (`collate.py`) that combines base NLP prompts with selected virtual tools
-- **Virtual Tools Ecosystem**: Modular prompt-based tools for different AI capabilities (code review, documentation, git operations, math, project management, etc.)
+- **NPL Agentic System**: Pre-built agents that implement NPL syntax for specialized tasks
+- **Agent Scaffolding**: Ready-to-deploy agent files with NPL-structured behavior definitions
+- **Template System**: Reusable agent templates that can be hydrated for project-specific needs
 - **NPL Syntax Framework**: Structured syntax using Unicode symbols for precise prompt communication
-- **Agentic Scaffolding**: NPL-enabled agents with templates for various AI personas and capabilities
-- **Version Management**: Versioned prompt definitions supporting multiple NPL versions (0.3, 0.4, 0.5)
+- **House Style Integration**: Dynamic loading of project-specific writing and coding styles
 
 ## Key Modules
 
-- `nlp/` - Core NLP prompt definitions and versioned syntax rules
-- `virtual-tools/` - Modular AI tools including gpt-pro, gpt-fim, gpt-git, gpt-doc, gpt-cr, gpt-math, gpt-pm, nb, pla, gpt-qa
-- `npl/agentic/` - NPL agentic framework with scaffolding and agent templates
-- `npl/agentic/scaffolding/agents/` - Pre-built agent personas (npl-templater, npl-grader, npl-persona, npl-thinker)
-- `npl/agentic/scaffolding/agent-templates/` - Reusable agent templates for different use cases
+- `agentic/` - Main agentic system with setup instructions and NPL documentation
+- `agentic/scaffolding/agents/` - Pre-built NPL agents (npl-templater, npl-grader, npl-persona, npl-thinker, etc.)
+- `agentic/scaffolding/agent-templates/` - Reusable agent templates for project-specific conversion
+- `agentic/npl/` - NPL documentation in verbose and concise versions
+- `npl/agentic/scaffolding/additional-agents/` - Extended library of specialized agents
 
-## Development Commands
+## Setup Instructions
 
-### Prompt Chain Generation
+Follow the setup workflow to deploy NPL agents to your Claude Code environment:
+
+### Step 1: Copy Agent Files
 ```bash
-# Generate full prompt chain with all tools
-python collate.py all
-
-# Generate minimal prompt chain
-python collate.py min
-
-# Generate custom tool combination
-python collate.py gpt-pro gpt-git gpt-fim
-
-# Set specific versions (via environment variables)
-export NLP_VERSION=0.5
-export GPT_PRO_VERSION=0.1
-python collate.py gpt-pro
+cp agentic/scaffolding/agents/* ~/.claude/agents/
 ```
 
-### Environment Setup
-```bash
-# Set NPL version
-export NLP_VERSION=0.5
+### Step 2: Copy NPL Documentation
+Choose your preferred NPL verbosity level:
 
-# Set individual tool versions
-export GPT_PRO_VERSION=0.1
-export GPT_FIM_VERSION=0.5
-export GPT_GIT_VERSION=0.5
+**For verbose version (recommended):**
+```bash
+cp agentic/npl/verbose/npl.md ~/.claude/npl.md
 ```
 
-### Working with Virtual Tools
+**For concise version (experimental):**
 ```bash
-# List available tools
-ls virtual-tools/
+cp agentic/npl/concise/npl.md ~/.claude/npl.md
+```
 
-# View tool documentation
-cat virtual-tools/gpt-pro/README.md
+### Step 3: Reload Claude Code
+Restart your Claude Code session to load the new agents.
 
-# Check tool versions
-ls virtual-tools/gpt-pro/
+### Step 4: Generate Project-Specific CLAUDE.md
+Use the npl-templater agent to convert the NPL template:
+```
+@npl-templater Please read and hydrate the scaffolding/CLAUDE.npl.template.md file, converting it to CLAUDE.npl.md for this project, and copy to CLAUDE.md if not present or edit the existing CLAUDE.md file with instructions to load CLAUDE.npl.md
+```
+
+### Step 5: Convert Agent Templates
+Convert all agent templates for project-specific use:
+```
+@npl-templater Please read the CLAUDE.md file for context, then convert all the agent template files in agentic/scaffolding/agent-templates/ into actual agent files and place them in ~/.claude/agents/. Process all templates in parallel for efficiency.
 ```
 
 ## Key Configuration
 
-### Settings Location
-- Main config: Environment variables for version management
-- Prompt definitions: `nlp/nlp-{version}.prompt.md`
-- Tool definitions: `virtual-tools/{tool}/{tool}-{version}.prompt.md`
+### File Locations
+- Agent files: `~/.claude/agents/`
+- NPL documentation: `~/.claude/npl.md`
+- Project config: `CLAUDE.md` (this file)
+- House styles: `.claude/npl-m/house-style/` (when using NPL house style system)
 
-### Important Settings
-- NPL Version: Controlled via `NLP_VERSION` environment variable
-- Tool Versions: Individual `{TOOL}_VERSION` environment variables
-- Output: Generated `prompt.chain.md` combines selected components
+### Available Agent Templates
+- `gopher-scout.npl-template.md` - Code exploration and analysis agent
+- `gpt-qa.npl-template.md` - Question answering and documentation agent
+- `system-digest.npl-template.md` - System analysis and summarization agent
+- `tdd-driven-builder.npl-template.md` - Test-driven development agent
+- `tool-forge.npl-template.md` - Custom tool creation agent
 
 ## Using Claude Code Agents for NPL Development
 
@@ -111,20 +109,20 @@ ls virtual-tools/gpt-pro/
 @npl-templater "Create a CLAUDE.md template for this Django project"
 
 # Validate NPL syntax compliance
-@npl-grader "Review the prompt syntax in nlp/nlp-0.5.prompt.md"
+@npl-grader "Review the NPL syntax in agentic/npl/verbose/npl.md"
 
 # Create specialized agent persona
 @npl-persona "Design an AI agent for code documentation in this NPL project"
 
-# Analyze prompt chain effectiveness
-@npl-thinker "Analyze the effectiveness of combining gpt-pro with gpt-git tools"
+# Analyze agent effectiveness and workflows
+@npl-thinker "Analyze the effectiveness of our current NPL agent setup"
 ```
 
 ### Running Agents in Parallel for NPL Development
 
 ```bash
-# Parallel analysis of prompt components
-@npl-grader "Review nlp/nlp-0.5.prompt.md syntax" & @npl-thinker "Analyze prompt chain complexity"
+# Parallel analysis of NPL components
+@npl-grader "Review agentic/npl/verbose/npl.md syntax" & @npl-thinker "Analyze NPL framework effectiveness"
 
 # Template generation with validation
 @npl-templater "Create agent template for code review" & @npl-grader "Validate resulting template syntax"
@@ -141,17 +139,18 @@ ls virtual-tools/gpt-pro/
 - Implement versioned syntax evolution
 - Follow NLP directive patterns for structured communication
 
-### Virtual Tool Development
-- Create versioned tool definitions in dedicated directories
-- Include README.md documentation for each tool
-- Use consistent naming patterns: `{tool}-{version}.prompt.md`
-- Implement modular, composable tool functionality
+### Agent Development Patterns
+- Use NPL syntax for structured agent behavior definition
+- Implement clear separation between agent logic and templates
+- Include comprehensive documentation within agent files
+- Follow consistent naming patterns for agent identification
 
-### Agent Template Patterns
-- Use NPL syntax for dynamic content generation
+### Template System Patterns
+- Use NPL template syntax for dynamic content generation
 - Implement conditional sections with `{{#if}}` blocks
 - Include clear instruction blocks for template hydration
 - Follow project-specific naming and structure conventions
+- Store templates in `agentic/scaffolding/agent-templates/` for reuse
 
 ## Branch Strategy
 
@@ -159,30 +158,37 @@ The project uses a `main` branch as the primary development branch. Development 
 
 ## Common Development Workflows
 
-### Adding New Virtual Tools
-1. Create new directory under `virtual-tools/`
-2. Add versioned prompt definition file
-3. Include README.md with tool documentation
-4. Test tool integration with collate.py
-5. Update documentation as needed
+### Setting Up NPL Agents for New Projects
+1. Follow the setup instructions above to copy agents and NPL documentation
+2. Use `@npl-templater` to generate project-specific CLAUDE.md
+3. Convert agent templates using `@npl-templater` for project customization
+4. Test agent functionality with project-specific contexts
+5. Document any project-specific agent modifications
 
 ### Creating New Agents
-1. Define agent persona in `npl/agentic/scaffolding/agents/`
+1. Create agent definition in `agentic/scaffolding/agents/`
 2. Use NPL syntax for structured behavior definition
-3. Create supporting templates if needed
-4. Test agent behavior and effectiveness
+3. Test agent behavior and effectiveness in Claude Code
+4. Add to template system if reusable across projects
 5. Document usage patterns and examples
 
-### Updating NPL Syntax
-1. Create new version file in `nlp/` directory
-2. Update syntax definitions and rules
-3. Test backward compatibility with existing tools
-4. Update agent templates to use new syntax features
-5. Update documentation and examples
+### Developing Agent Templates
+1. Create template file in `agentic/scaffolding/agent-templates/`
+2. Use NPL template syntax with `{{}}` placeholders
+3. Include clear hydration instructions
+4. Test template conversion using `@npl-templater`
+5. Add to template library for reuse
 
-### Prompt Chain Development
-1. Modify or add virtual tools as needed
-2. Test individual tool functionality
-3. Use collate.py to generate combined prompt chains
-4. Test full chain effectiveness
-5. Document optimal tool combinations for different use cases
+### Updating NPL Documentation
+1. Modify files in `agentic/npl/verbose/` or `agentic/npl/concise/`
+2. Test changes with existing agents
+3. Update agent behavior if syntax changes affect them
+4. Validate with `@npl-grader` for compliance
+5. Update examples and documentation
+
+### Contributing Additional Agents
+1. Add specialized agents to `npl/agentic/scaffolding/additional-agents/`
+2. Organize by category (infrastructure, marketing, qa, research, etc.)
+3. Follow established patterns for agent structure
+4. Include comprehensive documentation and usage examples
+5. Consider promoting successful agents to main scaffolding

@@ -1,29 +1,134 @@
+# Noizu PromptLingo (NPL) - Agentic Framework
 
-Noizu PromptLingo NPL 0.3
-==============================
+A simplified agentic framework for Claude Code that provides structured prompting syntax and pre-built AI agents for enhanced language model interactions.
 
-# Getting Started 
-|                                                                 |                                          |
-| --------------------------------------------------------------- | ---------------------------------------- |
-| ![image](https://github.com/noizu-labs-ml/NoizuPromptLingo/assets/6298118/52afeecb-a211-4a56-b03a-8b4c5577e562) |   Just copy and paste the [master prompt chain](prompt.chain.md) into you gpt4 session. Or run the `collate.py` with the set of tools you want to include. It will concatenate them onto the end of the [nlp](nlp/) master prompt. |
+## Quick Setup
 
-# Unicode
-You will notice that I make heavy use of special unicode symbols in my prompt framework. I find that due to these being less commonly seen by the models it is easier for them to understand when and how to use them with out becoming confused to isure proper output needed for parsing and forwarding model output by systems built on top of these prompts. I recommend you follow this aporach as well in your on prompt extensions you will find unicode search sites such as [this](http://xahlee.info/comp/unicode_index.html) very useful in this endeavor.
+1. **Copy Repository**
+   ```bash
+   # Copy this entire repository to your local workspace
+   cp -r NoizuPromptLingo /your/workspace/
+   cd /your/workspace/NoizuPromptLingo
+   ```
 
-# About
-![image](https://github.com/noizu-labs-ml/NoizuPromptLingo/assets/6298118/0fa99ed8-bea7-427c-baae-5c9832f15a79)
-Introducing a Well-Defined Prompting Syntax: Unleashing the True Potential of Language Models
+2. **Follow Setup Instructions**
+   ```bash
+   # Run the instructions in agentic/INSTRUCTIONS.md with Claude
+   # This will copy agents and NPL documentation to your Claude Code environment
+   ```
 
-In the rapidly evolving landscape of language models and their applications, consistency and clarity in communication are paramount. A well-defined prompting syntax, language, or idiom rule set offers numerous benefits that can elevate the efficiency and effectiveness of interactions between humans and language models. Here's why adopting a standardized prompting system like the one presented can transform the way we engage with LLMs:
+3. **Generate Project Configuration**
+   ```
+   @npl-templater Please read and hydrate the scaffolding/CLAUDE.npl.npl-template.md file
+   ```
 
-1. Enhanced Comprehensibility: A unified syntax ensures that both humans and LLMs have a clear understanding of the prompts and expected responses. This minimizes confusion and misinterpretations, leading to more accurate and relevant responses from the LLMs.
+4. **Hydrate Agent Templates** (Optional)
+   ```
+   @npl-templater Please convert all agent templates in scaffolding/agent-templates/
+   ```
 
-2. Streamlined Training: With a standardized prompting system, training LLMs becomes more efficient as they can be specifically tailored to understand and adhere to the established format. This reduces the learning curve and accelerates the development of new applications.
+## Project Structure
 
-3. Improved Collaboration: The adoption of a common syntax allows users and developers to collaborate more effectively, sharing ideas, methodologies, and best practices within the community. This fosters innovation and accelerates the advancement of LLM-based solutions.
+```
+├── .claude/                    # Claude Code integration files
+│   ├── agents/                 # Claude agent definitions
+│   └── npl-m/                  # NPL module system
+├── agentic/                    # Main agentic framework
+│   ├── INSTRUCTIONS.md         # Setup instructions for Claude
+│   ├── npl/                    # NPL documentation (verbose/concise)
+│   └── scaffolding/            # Agent scaffolding and templates
+│       ├── agents/             # Pre-built NPL agents
+│       ├── agent-templates/    # Reusable agent templates
+│       └── CLAUDE.npl.template.md # Project template
+├── demo/                       # Usage examples and demonstrations
+└── doc/                        # Technical documentation
+```
 
-4. Facilitated Debugging and Error Handling: A well-defined prompting syntax provides a robust framework for error handling and debugging. It simplifies the identification of issues in prompts and responses, enabling users to quickly address and resolve any problems that may arise.
+## Key Components
 
-5. Scalability and Flexibility: A standardized prompting system is inherently scalable and adaptable, allowing it to accommodate new features, enhancements, and use cases. As the field of LLMs continues to grow, a consistent syntax will be instrumental in seamlessly integrating future advancements.
+### Core Agents (`agentic/scaffolding/agents/`)
+- **npl-templater**: Template creation and hydration
+- **npl-grader**: NPL syntax and structure evaluation  
+- **npl-persona**: AI persona development and management
+- **npl-thinker**: Complex reasoning and analysis
+- **npl-technical-writer**: Technical documentation specialist
+- **npl-fim**: Fill-in-middle code completion
+- **npl-threat-modeler**: Security analysis and threat modeling
 
-Adopting a well-defined prompting syntax, language, or idiom rule set is a game-changer that unlocks the true potential of language models. By providing a solid foundation for communication, collaboration, and innovation, this standardized approach promises to revolutionize the way we interact with and benefit from LLMs.
+### Agent Templates (`agentic/scaffolding/agent-templates/`)
+- **gopher-scout**: System exploration and analysis
+- **gpt-qa**: Question answering specialist
+- **system-digest**: System analysis and reporting
+- **tdd-driven-builder**: Test-driven development assistant
+- **tool-forge**: Custom tool creation
+
+### NPL Documentation (`agentic/npl/`)
+- **verbose/**: Complete NPL syntax reference
+- **concise/**: Streamlined NPL documentation
+
+## NPL Syntax Framework
+
+NPL uses Unicode symbols for precise semantic communication:
+
+- `⌜⌝`: Agent definition boundaries
+- `⟪⟫`: Dynamic content placeholders  
+- `↦`: Directive mappings
+- `␂␃`: Content delimiters
+- `{{#if}}`: Conditional logic blocks
+
+## Workflow
+
+### Initial Setup
+1. Copy repository to workspace
+2. Follow `agentic/INSTRUCTIONS.md` setup process
+3. Generate project-specific `CLAUDE.md` using npl-templater
+4. Optionally hydrate additional agent templates
+
+### Daily Usage
+1. Use pre-built agents for common tasks:
+   ```
+   @npl-technical-writer generate spec --component=auth-module
+   @npl-grader review prompt-definitions/ --syntax-check
+   @npl-persona create debugging-assistant --domain=python
+   ```
+
+2. Create custom agents from templates:
+   ```
+   @npl-templater hydrate tool-forge.npl-template.md --tool=api-client
+   ```
+
+3. Validate and iterate on agent definitions:
+   ```
+   @npl-grader evaluate custom-agent.md --rubric=npl-compliance
+   ```
+
+## Benefits
+
+### Consistency
+Standardized prompting syntax eliminates ambiguity between humans and language models, reducing misinterpretations and improving response accuracy.
+
+### Modularity  
+Pre-built agents and templates provide reusable components for common AI tasks, accelerating development of language model applications.
+
+### Collaboration
+Shared NPL syntax enables team coordination and knowledge transfer, fostering innovation through common prompting standards.
+
+### Debugging
+Well-defined syntax framework simplifies identification and resolution of prompt-related issues through structured error handling.
+
+### Scalability
+Template-based approach accommodates new features and use cases while maintaining consistency across growing language model implementations.
+
+## Requirements
+
+- Claude Code environment
+- Access to Claude API
+- Basic understanding of prompt engineering concepts
+
+## License
+
+MIT License - see LICENSE file for details.
+
+## Support
+
+NPL is developed by Noizu Labs ML. This framework provides foundational tools for structured language model interactions through proven prompting methodologies.
