@@ -13,12 +13,12 @@ Choose your preferred NPL verbosity level and copy the core NPL documentation:
 
 **For verbose version:**
 ```bash
-cp scaffolding/npl/verbose/npl.md ~/.claude/npl.md
+cp npl/verbose/npl.md ~/.claude/npl.md
 ```
 
 **For concise version (if available):**
 ```bash
-cp scaffolding/npl/concise/npl.md ~/.claude/npl.md
+cp npl/concise/npl.md ~/.claude/npl.md
 ```
 
 ## Step 3: Reload Claude Code Session
