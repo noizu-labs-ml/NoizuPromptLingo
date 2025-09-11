@@ -2,6 +2,11 @@
 
 A simplified agentic framework for Claude Code that provides structured prompting syntax and pre-built AI agents for enhanced language model interactions.
 
+## Getting Started
+|                                                                 |                                          |
+| --------------------------------------------------------------- | ---------------------------------------- |
+| ![image](https://github.com/noizu-labs-ml/NoizuPromptLingo/assets/6298118/52afeecb-a211-4a56-b03a-8b4c5577e562) | Download: https://github.com/noizu-labs-ml/NoizuPromptLingo/archive/refs/heads/main.zip <br> Follow setup: `agentic/INSTRUCTIONS.md` |
+
 ## Quick Setup
 
 1. **Copy Repository**
