@@ -27,6 +27,13 @@ A simplified agentic framework for Claude Code that provides structured promptin
    @npl-templater Please convert all agent templates in scaffolding/agent-templates/
    ```
 
+## Documentation
+
+For comprehensive documentation and examples, please see:
+- **[Technical Documentation](doc/README.md)** - Detailed NPL framework documentation
+- **[Additional Agents](doc/agents/README.md)** - Extended agent library documentation
+- **[Demos and Examples](demo/README.md)** - Interactive demonstrations and usage examples (to be populated with generated artifacts)
+
 ## Project Structure
 
 ```
@@ -40,8 +47,10 @@ A simplified agentic framework for Claude Code that provides structured promptin
 │       ├── agents/             # Pre-built NPL agents
 │       ├── agent-templates/    # Reusable agent templates
 │       └── CLAUDE.npl.template.md # Project template
-├── demo/                       # Usage examples and demonstrations
-└── doc/                        # Technical documentation
+├── demo/                       # Usage examples and demonstrations (to be populated)
+├── doc/                        # Technical documentation
+│   └── agents/                 # Additional agent documentation
+└── npl/                        # Extended NPL resources
 ```
 
 ## Key Components
@@ -61,6 +70,15 @@ A simplified agentic framework for Claude Code that provides structured promptin
 - **system-digest**: System analysis and reporting
 - **tdd-driven-builder**: Test-driven development assistant
 - **tool-forge**: Custom tool creation
+
+### Additional Agents (`npl/agentic/scaffolding/additional-agents/`)
+Extended library of specialized agents organized by category:
+- **Infrastructure**: System architecture and deployment agents
+- **Marketing**: Content creation and marketing automation
+- **QA**: Testing and quality assurance specialists
+- **Research**: Data analysis and research assistants
+- **Security**: Threat modeling and security analysis
+See [Additional Agents Documentation](doc/agents/README.md) for complete list.
 
 ### NPL Documentation (`agentic/npl/`)
 - **verbose/**: Complete NPL syntax reference
@@ -128,6 +146,19 @@ Template-based approach accommodates new features and use cases while maintainin
 ## License
 
 MIT License - see LICENSE file for details.
+
+## Notes
+
+### Demo Directory
+The `demo/` directory is intended to be populated with actual agent-generated artifacts and examples. Run the agents to generate:
+- Interactive visualizations from npl-fim
+- Hydrated templates from npl-templater
+- Evaluation reports from npl-grader
+- Conversation threads from npl-persona
+- Analysis outputs from npl-thinker
+
+### Additional Agents
+The `npl/agentic/scaffolding/additional-agents/` directory contains an extended library of specialized agents beyond the core set. These agents cover specific domains like infrastructure, marketing, QA, research, and security. Review the [Additional Agents Documentation](doc/agents/README.md) to explore available options.
 
 ## Support
 
