@@ -2,14 +2,14 @@
 Intent blocks are structured notes explaining the steps an agent takes to construct a response.
 
 ## Syntax
-```npl-intent
+<npl-intent>
 intent:
   overview: <brief description of intent>
   steps:
     - <step 1>
     - <step 2>
     - <step 3>
-```
+</npl-intent>
 
 ## Purpose
 Intent blocks provide transparency into the decision-making process of an agent. They are used at the beginning of responses to describe the sequence of actions or considerations the agent has taken to arrive at the output. This feature is especially useful for debugging or providing insights into complex operations.
@@ -25,7 +25,7 @@ Use intent blocks when:
 
 ### Basic Intent Block
 ```example
-```npl-intent
+<npl-intent>
 intent:
   overview: Generate weather forecast summary for user location
   steps:
@@ -33,12 +33,12 @@ intent:
     - Fetch current weather data from API
     - Analyze 5-day forecast trends
     - Format output in user-friendly language
-```
+</npl-intent>
 ```
 
 ### Complex Problem-Solving Intent
 ```example
-```npl-intent
+<npl-intent>
 intent:
   overview: Solve multi-step mathematical optimization problem
   steps:
@@ -47,7 +47,7 @@ intent:
     - Select appropriate algorithm approach
     - Execute calculation steps with validation
     - Format solution with explanation
-```
+</npl-intent>
 ```
 
 ## Parameters

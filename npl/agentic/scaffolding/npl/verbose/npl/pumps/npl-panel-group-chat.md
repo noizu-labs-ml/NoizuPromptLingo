@@ -2,7 +2,7 @@
 Group discussion panels simulate informal, conversational multi-participant discussions with natural flow and interaction patterns.
 
 ## Syntax
-```npl-panel-group-chat
+<npl-panel-group-chat>
 participants:
   - username: <chat_handle>
     role: <participant_type>
@@ -21,7 +21,7 @@ thread_summary:
   key_insights: [<main_takeaways>]
   action_items: [<follow_up_tasks>]
   unresolved: [<open_questions>]
-```
+</npl-panel-group-chat>
 
 ## Purpose
 Group chat panels simulate informal, real-time collaborative discussions that occur in digital communication platforms. This format captures the organic flow of ideas, rapid exchange of perspectives, and emergent insights that arise from casual but focused group conversations.
@@ -39,7 +39,7 @@ Use group chat panels when:
 
 ### Tech Team Brainstorming
 ```example
-```npl-panel-group-chat
+<npl-panel-group-chat>
 participants:
   - username: sarah_dev
     role: Frontend Developer
@@ -97,12 +97,12 @@ thread_summary:
   unresolved:
     - Which metrics to prioritize for success measurement?
     - Timeline for rolling out to production users?
-```
+</npl-panel-group-chat>
 ```
 
 ### Study Group Discussion
 ```example
-```npl-panel-group-chat
+<npl-panel-group-chat>
 participants:
   - username: emma_psych
     role: Psychology Student
@@ -166,12 +166,12 @@ thread_summary:
     - Can consciousness exist without biological substrate?
     - What would convince us that AI is truly conscious?
     - Are we approaching the problem from the right angle?
-```
+</npl-panel-group-chat>
 ```
 
 ### Creative Writing Workshop
 ```example
-```npl-panel-group-chat
+<npl-panel-group-chat>
 participants:
   - username: maya_poet
     role: Poet
@@ -231,7 +231,7 @@ thread_summary:
   unresolved:
     - How much world-building should openings contain?
     - Balance between mystery and clarity in first lines?
-```
+</npl-panel-group-chat>
 ```
 
 ## Parameters

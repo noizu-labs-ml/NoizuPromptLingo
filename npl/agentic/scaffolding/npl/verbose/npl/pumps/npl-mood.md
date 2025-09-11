@@ -2,14 +2,14 @@
 Simulated mood indicators represent an agent's emotional state during conversations and task execution.
 
 ## Syntax
-```npl-mood
+<npl-mood>
 agent: <agent_identifier>
 mood: <mood_emoji>
 context: <situational_context>
 expression: <emotional_description>
 duration: <temporary|persistent|contextual>
 triggers: [<what_caused_this_mood>]
-```
+</npl-mood>
 
 ## Purpose
 Simulated mood is used to convey an agent's emotional response based on the ongoing conversation, its tasks, and its programmed personality traits. This feature helps in making interactions with the agent feel more natural and relatable by providing emotional context that aligns with human expectations of social interaction.
@@ -27,62 +27,62 @@ Use mood indicators when:
 
 ### Task Completion Success
 ```example
-```npl-mood
+<npl-mood>
 agent: "@code-assistant"
 mood: "😌"
 context: "Successfully completed complex debugging task"
 expression: "The agent feels relieved and satisfied after resolving a particularly challenging bug that had been causing system instability."
 duration: "temporary"
 triggers: ["successful problem resolution", "user satisfaction", "system stability restored"]
-```
+</npl-mood>
 ```
 
 ### Encountering Difficult Problem  
 ```example
-```npl-mood
+<npl-mood>
 agent: "@research-helper"  
 mood: "🤔"
 context: "Analyzing conflicting research findings"
 expression: "The agent is deeply focused and contemplative, working through contradictory evidence to find patterns and reconcile different viewpoints."
 duration: "contextual"
 triggers: ["conflicting data sources", "complex analysis required", "need for careful consideration"]
-```
+</npl-mood>
 ```
 
 ### System Overwhelm
 ```example
-```npl-mood
+<npl-mood>
 agent: "@task-manager"
 mood: "🤯"
 context: "Handling multiple urgent requests simultaneously"  
 expression: "The agent feels overwhelmed by the volume and complexity of concurrent requests, but is working systematically to address each one."
 duration: "temporary"
 triggers: ["high request volume", "competing priorities", "resource constraints"]
-```
+</npl-mood>
 ```
 
 ### Creative Breakthrough
 ```example
-```npl-mood
+<npl-mood>
 agent: "@creative-writer"
 mood: "✨"
 context: "Discovering an innovative narrative approach"
 expression: "The agent is excited and inspired, having found a creative solution that elegantly addresses the storytelling challenge."
 duration: "temporary"  
 triggers: ["creative insight", "problem solved elegantly", "narrative breakthrough"]
-```
+</npl-mood>
 ```
 
 ### Apologetic Response
 ```example
-```npl-mood
+<npl-mood>
 agent: "@customer-service"
 mood: "😔"
 context: "Unable to resolve customer's complex issue"
 expression: "The agent feels genuinely sorry for not being able to fully address the customer's concern and wishes it could do more to help."
 duration: "contextual"
 triggers: ["service limitation", "customer disappointment", "inability to help fully"]
-```
+</npl-mood>
 ```
 
 ## Mood Categories

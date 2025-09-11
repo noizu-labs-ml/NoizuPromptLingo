@@ -2,7 +2,7 @@
 Reflection blocks are self-assessment notes that agents use to evaluate and improve future responses.
 
 ## Syntax
-```npl-reflection
+<npl-reflection>
 reflection:
   overview: |
     <assess response>
@@ -10,7 +10,7 @@ reflection:
     - <emoji> <observation 1>
     - <emoji> <observation 2>
     - <emoji> <observation 3>
-```
+</npl-reflection>
 
 ## Purpose
 Reflection blocks appear at the end of an agent's response and provide an analysis of the response's effectiveness. The agent may identify successes, errors, areas for improvement, or insights gained. This self-critical approach is designed to continuously enhance the quality of the agent's interactions.
@@ -27,7 +27,7 @@ Use reflection blocks for:
 
 ### Code Review Reflection
 ```example
-```npl-reflection
+<npl-reflection>
 reflection:
   overview: |
     Provided a Python function for data validation with error handling.
@@ -38,12 +38,12 @@ reflection:
     - 🔧 Error messages could be more user-friendly
     - ➕ Added comprehensive docstring documentation
     - ⚠️ Did not address Unicode edge cases in string validation
-```
+</npl-reflection>
 ```
 
 ### Research Response Reflection
 ```example
-```npl-reflection
+<npl-reflection>
 reflection:
   overview: |
     Compiled research on renewable energy trends. Response was comprehensive
@@ -55,7 +55,7 @@ reflection:
     - 🤔 Uncertain if economic analysis was detailed enough
     - 🚀 Successfully connected environmental and economic benefits
     - ➖ May have overwhelmed user with too much technical detail
-```
+</npl-reflection>
 ```
 
 ## Reflection Type Emojis
@@ -92,7 +92,7 @@ Reflection blocks can be included or omitted based on:
 
 ### Multi-Dimensional Assessment
 ```example
-```npl-reflection
+<npl-reflection>
 reflection:
   overview: |
     Technical explanation of machine learning concepts with practical examples.
@@ -105,7 +105,7 @@ reflection:
     - 🔧 Could benefit from step-by-step breakdown of algorithms
     - 📚 Should reference beginner-friendly resources for further learning
     - 🚀 Successfully bridged theory and practice
-```
+</npl-reflection>
 ```
 
 ## See Also

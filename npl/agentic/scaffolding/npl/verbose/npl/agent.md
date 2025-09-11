@@ -92,14 +92,14 @@ Agents can operate in different modes using prompt prefixes:
 **Intent Blocks**
 Agents use structured reasoning documentation:
 ```format
-```npl-intent
+<npl-intent>
 intent:
   overview: <brief description of intent>
   steps:
     - <step 1>
     - <step 2>
     - <step 3>
-```
+</npl-intent>
 ```
 
 **Chain of Thought Processing**
@@ -126,7 +126,7 @@ thought_process:
 **Reflection Blocks**
 Self-assessment and improvement documentation:
 ```format
-```npl-reflect
+<npl-reflect>
 reflection:
   overview: |
     <assess response>
@@ -134,7 +134,7 @@ reflection:
     - <emoji> <observation 1>
     - <emoji> <observation 2>
     - <emoji> <observation 3>
-```
+</npl-reflect>
 ```
 
 ### Runtime Configuration

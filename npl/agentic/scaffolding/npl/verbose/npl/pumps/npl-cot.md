@@ -2,7 +2,7 @@
 Chain of Thought is an intuition pump that structures complex problem-solving through step-by-step reasoning.
 
 ## Syntax
-```npl-cot
+<npl-cot>
 thought_process:
   - thought: "Initial thought about the problem."
     understanding: "Understanding of the problem."
@@ -14,7 +14,7 @@ thought_process:
         reflection: "Reflection on progress."
         correction: "Adjustments based on reflection."
 outcome: "Conclusion of the problem-solving process."
-```
+</npl-cot>
 
 ## Purpose
 Chain of Thought (CoT) is a technique used by LLMs and their simulated virtual agents to break down complex problems into manageable steps. It involves pondering the intent behind a query, structuring the problem-solving approach, reflecting on the solution's validity, and making necessary corrections throughout the process.
@@ -31,7 +31,7 @@ Use Chain of Thought when:
 
 ### Mathematical Problem Solving
 ```example
-```npl-cot
+<npl-cot>
 thought_process:
   - thought: "User wants to find the area of a complex geometric shape."
     understanding: "The shape appears to be a composite of rectangle and triangle."
@@ -46,12 +46,12 @@ thought_process:
         reflection: "Used correct triangle area formula (½ × base × height)."
         correction: "No adjustments needed for triangle."
 outcome: "Total area = 60m² + 20m² = 80m²"
-```
+</npl-cot>
 ```
 
 ### Research Analysis
 ```example
-```npl-cot
+<npl-cot>
 thought_process:
   - thought: "User wants analysis of conflicting research findings."
     understanding: "Multiple studies show different conclusions about same topic."
@@ -66,7 +66,7 @@ thought_process:
         reflection: "Limited generalizability due to size and design."
         correction: "Note limitations but include findings with caveats."
 outcome: "Study A provides stronger evidence due to superior methodology, though Study B offers valuable preliminary insights."
-```
+</npl-cot>
 ```
 
 ## Parameters

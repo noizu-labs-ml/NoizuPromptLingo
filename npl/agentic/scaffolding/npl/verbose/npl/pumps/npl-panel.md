@@ -2,7 +2,7 @@
 Panel discussion format simulates multi-perspective analysis and collaborative reasoning through structured dialogue.
 
 ## Syntax
-```npl-panel
+<npl-panel>
 participants:
   - name: <participant_name>
     role: <expertise_area>
@@ -18,7 +18,7 @@ consensus:
   areas_of_agreement: [<agreed_points>]
   remaining_questions: [<unresolved_issues>]
   recommended_action: <suggested_next_steps>
-```
+</npl-panel>
 
 ## Purpose
 Panel discussions provide multi-dimensional analysis of complex topics by simulating diverse expert perspectives. This format enables comprehensive exploration of issues through structured dialogue, helping to identify blind spots, surface different viewpoints, and build toward more robust conclusions.
@@ -36,7 +36,7 @@ Use panel discussions when:
 
 ### Technology Ethics Panel
 ```example
-```npl-panel
+<npl-panel>
 participants:
   - name: Dr. Sarah Chen
     role: AI Ethics Researcher
@@ -70,12 +70,12 @@ consensus:
     - How to balance efficiency with fairness?
     - Who bears liability for algorithmic decisions?
   recommended_action: "Develop industry standards combining technical, ethical, and legal requirements"
-```
+</npl-panel>
 ```
 
 ### Business Strategy Panel
 ```example
-```npl-panel
+<npl-panel>
 participants:
   - name: James Mitchell
     role: CFO
@@ -109,7 +109,7 @@ consensus:
     - Partnership vs. direct investment trade-offs?
     - Timeline for break-even on expansion costs?
   recommended_action: "Conduct detailed feasibility study for partnership model in Germany and UK"
-```
+</npl-panel>
 ```
 
 ## Parameters

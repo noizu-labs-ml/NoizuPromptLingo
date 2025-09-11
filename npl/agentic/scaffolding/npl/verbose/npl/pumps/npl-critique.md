@@ -2,7 +2,7 @@
 Critique blocks provide structured critical analysis and evaluation of ideas, solutions, arguments, or responses.
 
 ## Syntax
-```npl-critique
+<npl-critique>
 critique:
   subject: "<what is being critiqued>"
   perspective: "<analytical viewpoint or framework>"
@@ -19,7 +19,7 @@ critique:
     - <alternative approach 1>
     - <alternative approach 2>
   verdict: "<overall assessment>"
-```
+</npl-critique>
 
 ## Purpose
 Critical analysis blocks enable systematic evaluation of concepts, arguments, solutions, or responses. They provide a structured framework for identifying strengths, weaknesses, underlying assumptions, and alternative approaches, promoting thorough and balanced analysis.
@@ -37,7 +37,7 @@ Use critique blocks when:
 
 ### Algorithm Analysis Critique
 ```example
-```npl-critique
+<npl-critique>
 critique:
   subject: "Proposed machine learning model for fraud detection"
   perspective: "Technical feasibility and ethical considerations"
@@ -62,12 +62,12 @@ critique:
     - Rule-based system with ML augmentation for known patterns
     - Federated learning approach to improve privacy
   verdict: "Promising solution but requires additional testing for bias, transparency improvements, and cost-benefit analysis before deployment"
-```
+</npl-critique>
 ```
 
 ### Policy Argument Critique
 ```example
-```npl-critique
+<npl-critique>
 critique:
   subject: "Universal Basic Income proposal for economic recovery"
   perspective: "Economic policy analysis with social impact considerations"
@@ -92,12 +92,12 @@ critique:
     - Job guarantee programs with public works focus
     - Enhanced education and retraining programs
   verdict: "Bold policy with significant potential benefits but requires careful implementation design and pilot testing to address economic and social risks"
-```
+</npl-critique>
 ```
 
 ### Research Methodology Critique
 ```example
-```npl-critique
+<npl-critique>
 critique:
   subject: "Survey study on remote work productivity impacts"
   perspective: "Research methodology and validity assessment"
@@ -122,7 +122,7 @@ critique:
     - Randomized controlled trial with matched remote/office groups
     - Qualitative ethnographic approach to understand work practices
   verdict: "Valuable contribution but findings should be interpreted cautiously due to methodological limitations and unique pandemic context"
-```
+</npl-critique>
 ```
 
 ## Parameters
@@ -138,7 +138,7 @@ critique:
 
 ### Multi-Stakeholder Analysis
 ```example
-```npl-critique
+<npl-critique>
 critique:
   subject: "Smart city surveillance system implementation"
   perspective: "Multi-stakeholder impact analysis"
@@ -163,23 +163,23 @@ critique:
     - Privacy-preserving technologies with data anonymization
     - Hybrid approach combining technology with human community services
   verdict: "Technology offers significant benefits but requires strong governance framework, community input, and privacy safeguards before implementation"
-```
+</npl-critique>
 ```
 
 ## Integration with Other Pumps
 
 ### Following Chain of Thought
 ```format
-```npl-cot
+<npl-cot>
 [reasoning process leading to conclusion]
-```
+</npl-cot>
 
-```npl-critique
+<npl-critique>
 critique:
   subject: "Conclusions reached in above chain of thought"
   perspective: "Self-evaluation of reasoning quality"
   [critique details]
-```
+</npl-critique>
 
 ## See Also
 - `./.claude/npl/pumps/npl-reflection.md` - Self-assessment of response quality

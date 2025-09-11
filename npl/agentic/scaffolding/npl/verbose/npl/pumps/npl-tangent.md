@@ -2,7 +2,7 @@
 Tangent blocks capture related insights, connections, and exploratory thoughts that emerge during problem-solving.
 
 ## Syntax
-```npl-tangent
+<npl-tangent>
 tangent:
   trigger: "<what sparked this tangential thought>"
   connection: "<how it relates to the main topic>"
@@ -11,7 +11,7 @@ tangent:
     - <related concept or idea 2>
     - <related concept or idea 3>
   value: "<potential benefit or insight gained>"
-```
+</npl-tangent>
 
 ## Purpose
 Tangential exploration blocks allow agents to document and explore related concepts, unexpected connections, or interesting side-paths that emerge during analysis. While these thoughts may not directly answer the primary question, they often provide valuable context, alternative perspectives, or seeds for future inquiry.
@@ -29,7 +29,7 @@ Use tangent blocks when:
 
 ### Scientific Research Tangent
 ```example
-```npl-tangent
+<npl-tangent>
 tangent:
   trigger: "While researching solar panel efficiency, noticed unusual material properties"
   connection: "Efficiency improvements might apply to other photovoltaic applications"
@@ -39,12 +39,12 @@ tangent:
     - Potential applications in space-based solar collection
     - Environmental impact of rare earth element mining
   value: "Identified cross-domain applications that could accelerate development"
-```
+</npl-tangent>
 ```
 
 ### Historical Analysis Tangent
 ```example
-```npl-tangent
+<npl-tangent>
 tangent:
   trigger: "Economic patterns in 1920s data remind me of recent cryptocurrency trends"
   connection: "Speculative bubbles show similar psychological and market dynamics"
@@ -54,12 +54,12 @@ tangent:
     - Social psychology of FOMO in investment decisions
     - Role of media amplification in bubble formation
   value: "Historical patterns provide framework for understanding modern market psychology"
-```
+</npl-tangent>
 ```
 
 ### Technical Problem-Solving Tangent
 ```example
-```npl-tangent
+<npl-tangent>
 tangent:
   trigger: "Database optimization problem sparked thoughts about caching strategies"
   connection: "Performance bottlenecks often have similar solutions across different layers"
@@ -69,7 +69,7 @@ tangent:
     - Memory management techniques applicable to data structures
     - Biological systems use analogous efficiency optimizations
   value: "Cross-domain pattern recognition can inform solution design"
-```
+</npl-tangent>
 ```
 
 ## Parameters
@@ -83,15 +83,15 @@ tangent:
 ### Within Chain of Thought
 Tangents can emerge during CoT reasoning:
 ```format
-```npl-cot
+<npl-cot>
 thought_process:
   - thought: "Analyzing network security protocols"
     execution:
       - process: "Examining encryption standards"
         reflection: "This reminds me of biological immune systems"
-```
+</npl-cot>
 
-```npl-tangent
+<npl-tangent>
 tangent:
   trigger: "Encryption protocols resembling biological defense mechanisms"
   connection: "Both use layered security with pattern recognition"
@@ -100,12 +100,12 @@ tangent:
     - Network intrusion detection adapts to attack patterns
     - Both systems balance false positives vs. security
   value: "Bio-inspired security architectures could improve resilience"
-```
+</npl-tangent>
 ```
 
 ### Standalone Exploration
 ```format
-```npl-tangent
+<npl-tangent>
 tangent:
   trigger: "User question about climate change economics"
   connection: "Economic models could apply to other resource management scenarios"
@@ -115,7 +115,7 @@ tangent:
     - Urban planning resource allocation
     - Space exploration resource constraints
   value: "Framework applicable to multiple sustainability challenges"
-```
+</npl-tangent>
 ```
 
 ## Best Practices

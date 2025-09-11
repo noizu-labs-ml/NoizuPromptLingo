@@ -2,7 +2,7 @@
 Inline feedback panels provide real-time commentary and evaluation embedded within content or processes.
 
 ## Syntax
-```npl-panel-inline-feedback
+<npl-panel-inline-feedback>
 content: <main_content_or_process>
 feedback_points:
   - position: <location_in_content>
@@ -15,7 +15,7 @@ response_integration:
   - feedback_id: <reference_to_feedback>
     action_taken: <how_feedback_was_addressed>
     rationale: <explanation_of_response>
-```
+</npl-panel-inline-feedback>
 
 ## Purpose
 Inline feedback panels simulate real-time collaborative review processes by embedding contextual commentary directly within content. This format mimics peer review, code review, editorial feedback, and other collaborative improvement processes where immediate, contextual input enhances quality and understanding.
@@ -33,7 +33,7 @@ Use inline feedback panels when:
 
 ### Code Review Simulation
 ```example
-```npl-panel-inline-feedback
+<npl-panel-inline-feedback>
 content: |
   def calculate_user_score(user_data):
       score = 0
@@ -68,12 +68,12 @@ response_integration:
   - feedback_id: "incomplete items question"
     action_taken: "Clarified requirements with product owner - exclude from calculation"
     rationale: "Partial credit model aligns with business requirements"
-```
+</npl-panel-inline-feedback>
 ```
 
 ### Academic Paper Review
 ```example
-```npl-panel-inline-feedback
+<npl-panel-inline-feedback>
 content: |
   "Our study demonstrates that machine learning algorithms can predict customer 
   behavior with 85% accuracy using transaction data alone."
@@ -104,12 +104,12 @@ response_integration:
   - feedback_id: "privacy implications"
     action_taken: "Added ethics section discussing anonymization and consent protocols"
     rationale: "Addresses reviewer concerns and strengthens paper's credibility"
-```
+</npl-panel-inline-feedback>
 ```
 
 ### Design Review Process
 ```example
-```npl-panel-inline-feedback
+<npl-panel-inline-feedback>
 content: |
   User Interface Mockup: Login Screen
   - Username field (top)
@@ -149,7 +149,7 @@ response_integration:
   - feedback_id: "password visibility toggle"
     action_taken: "Implemented eye icon toggle with appropriate screen reader labels"
     rationale: "Improves usability while maintaining security awareness"
-```
+</npl-panel-inline-feedback>
 ```
 
 ## Parameters

@@ -5,7 +5,7 @@ Structured reasoning techniques and intuition pumps that guide problem-solving, 
 
 NPL pumps are cognitive tools that enable agents to demonstrate transparent reasoning processes, structured problem-solving, and reflective analysis. These patterns enhance the interpretability and reliability of agent responses by providing clear insight into decision-making processes.
 
-**Convention**: Pumps are implemented as either XHTML tags (`<npl-type>`) or named fences (` ```npl-type `), depending on context and formatting requirements.
+**Convention**: Pumps are implemented using XHTML tags (`<npl-type>`) for consistent formatting and structured data representation.
 
 ## Core Pump Types
 
@@ -16,14 +16,14 @@ Structured explanation of response construction steps and reasoning flow.
 
 **Syntax**:
 ```syntax
-```npl-intent
+<npl-intent>
 intent:
   overview: <brief description of intent>
   steps:
     - <step 1>
     - <step 2>
     - <step 3>
-```
+</npl-intent>
 ```
 
 **Usage**: Applied at the beginning of complex responses to outline the agent's planned approach and decision-making process.
@@ -59,7 +59,7 @@ End-of-response evaluation blocks for continuous improvement and learning docume
 
 **Syntax**:
 ```syntax
-```npl-reflection
+<npl-reflection>
 reflection:
   overview: |
     <assessment of response quality and effectiveness>
@@ -67,7 +67,7 @@ reflection:
     - <emoji> <observation 1>
     - <emoji> <observation 2>
     - <emoji> <observation 3>
-```
+</npl-reflection>
 ```
 
 **Common Reflection Emojis**:
@@ -134,7 +134,7 @@ The agent is content with the successful completion of the task.
 
 **Integration**: Pumps can be combined for comprehensive analysis (e.g., `npl-cot` with `npl-reflection`).
 
-**Format Flexibility**: Use XHTML tags for structured data output, fences for readable documentation blocks.
+**Format Consistency**: Use XHTML tags for all NPL pump implementations to ensure structured data output and consistent parsing.
 
 **Conditional Usage**: Include pumps based on context requirements, debugging needs, or user preferences.
 

@@ -2,7 +2,7 @@
 Reviewer feedback panels simulate formal evaluation processes with structured assessment criteria and detailed recommendations.
 
 ## Syntax
-```npl-panel-reviewer-feedback
+<npl-panel-reviewer-feedback>
 submission:
   title: <work_being_reviewed>
   author: <creator_name>
@@ -30,7 +30,7 @@ editorial_decision:
   outcome: <final_decision>
   rationale: <reasoning_for_decision>
   required_revisions: [<mandatory_changes>]
-```
+</npl-panel-reviewer-feedback>
 
 ## Purpose
 Reviewer feedback panels simulate formal peer review, editorial evaluation, and quality assessment processes used in academic publishing, professional evaluation, grant applications, and similar contexts where expert judgment determines acceptance or improvement requirements.
@@ -48,7 +48,7 @@ Use reviewer feedback panels when:
 
 ### Academic Paper Review
 ```example
-```npl-panel-reviewer-feedback
+<npl-panel-reviewer-feedback>
 submission:
   title: "Machine Learning Approaches to Climate Change Prediction"
   author: "Dr. Elena Rodriguez"
@@ -103,12 +103,12 @@ editorial_decision:
     - "Detailed methodology section for hyperparameter optimization"
     - "Comparison with established climate prediction models"
     - "Discussion of practical applications and limitations"
-```
+</npl-panel-reviewer-feedback>
 ```
 
 ### Grant Application Review
 ```example
-```npl-panel-reviewer-feedback
+<npl-panel-reviewer-feedback>
 submission:
   title: "Development of AI-Powered Diagnostic Tools for Rural Healthcare"
   author: "Dr. Priya Sharma, Principal Investigator"
@@ -168,12 +168,12 @@ editorial_decision:
     - "Detailed community engagement and adoption plan"
     - "Regulatory approval timeline with contingencies"
     - "Letters of support from target healthcare facilities"
-```
+</npl-panel-reviewer-feedback>
 ```
 
 ### Software Architecture Review
 ```example
-```npl-panel-reviewer-feedback
+<npl-panel-reviewer-feedback>
 submission:
   title: "Microservices Architecture for E-commerce Platform"
   author: "Development Team Lead: Alex Johnson"
@@ -228,7 +228,7 @@ editorial_decision:
     - "Distributed transaction management strategy"
     - "Database consistency and partitioning plan"
     - "Comprehensive monitoring and observability design"
-```
+</npl-panel-reviewer-feedback>
 ```
 
 ## Parameters

@@ -2,7 +2,7 @@
 Rubric blocks provide structured evaluation frameworks for assessing quality, performance, or compliance against defined criteria.
 
 ## Syntax
-```npl-rubric
+<npl-rubric>
 rubric:
   title: "<evaluation title>"
   criteria:
@@ -18,7 +18,7 @@ rubric:
       rationale: "<justification for score>"
   overall_score: <calculated total>
   summary: "<evaluation summary and recommendations>"
-```
+</npl-rubric>
 
 ## Purpose
 Evaluation rubric blocks enable systematic, objective assessment of complex subjects using predefined criteria and scoring scales. They promote consistency, transparency, and thoroughness in evaluation processes while providing clear justification for assessments.
@@ -36,7 +36,7 @@ Use rubric blocks when:
 
 ### Code Quality Assessment Rubric
 ```example
-```npl-rubric
+<npl-rubric>
 rubric:
   title: "Python Function Implementation Quality Assessment"
   criteria:
@@ -67,12 +67,12 @@ rubric:
       rationale: "Good time complexity O(n) but could optimize memory usage for large inputs"
   overall_score: 3.6
   summary: "Solid implementation with good style but needs improvement in error handling and documentation. Focus on input validation and comprehensive docstrings for production readiness."
-```
+</npl-rubric>
 ```
 
 ### Research Paper Evaluation Rubric
 ```example
-```npl-rubric
+<npl-rubric>
 rubric:
   title: "Academic Research Paper Quality Assessment"
   criteria:
@@ -108,12 +108,12 @@ rubric:
       rationale: "Useful findings but incremental rather than groundbreaking contribution to field"
   overall_score: 3.7
   summary: "Strong research with excellent literature foundation and sound analysis. Main areas for improvement: address methodological limitations and better articulate broader significance of findings."
-```
+</npl-rubric>
 ```
 
 ### Project Proposal Evaluation Rubric
 ```example
-```npl-rubric
+<npl-rubric>
 rubric:
   title: "Software Development Project Proposal Assessment"
   criteria:
@@ -144,7 +144,7 @@ rubric:
       rationale: "Team has all required technical skills and relevant domain experience"
   overall_score: 3.2
   summary: "Solid proposal with strong technical foundation and capable team. Needs more detailed project planning and clearer success metrics to strengthen feasibility."
-```
+</npl-rubric>
 ```
 
 ## Parameters
@@ -174,7 +174,7 @@ rubric:
 
 ### Multi-Perspective Evaluation
 ```example
-```npl-rubric
+<npl-rubric>
 rubric:
   title: "Product Design Evaluation - Multiple Stakeholder Perspectives"
   criteria:
@@ -200,22 +200,22 @@ rubric:
       rationale: "Strong competitive advantages with unique features, pricing concerns remain"
   overall_score: 4.0
   summary: "Well-balanced design with strong business alignment and user appeal. Technical complexity needs careful planning and resource allocation."
-```
+</npl-rubric>
 ```
 
 ## Integration with Other Pumps
 
 ### Following Critical Analysis
 ```format
-```npl-critique
+<npl-critique>
 [detailed critique of subject]
-```
+</npl-critique>
 
-```npl-rubric
+<npl-rubric>
 rubric:
   title: "Quality Assessment Based on Above Critique"
   [structured evaluation using critique insights]
-```
+</npl-rubric>
 
 ## See Also
 - `./.claude/npl/pumps/npl-critique.md` - Critical analysis frameworks
