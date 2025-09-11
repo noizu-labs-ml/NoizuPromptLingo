@@ -11,6 +11,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 [...2-3p| State the intended purpose, ownership and basic stack details of this project.]
 
+## Support MCPs and scripts
+[...|scan .claude/scripts and .claude/mcp to provide information on whats available. head the files -n 20 to see if there are readms if not read the whole file for context.]
+
 ## Architecture Overview
 
 ````@npl-templater

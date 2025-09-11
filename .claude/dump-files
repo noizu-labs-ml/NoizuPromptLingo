@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# -----------------------------------------------------------------------------
+# dump-files
+#
+# Description:
+#   Dumps the contents of all files under a given target folder in a Git
+#   repository, respecting .gitignore. Each file is preceded by a formatted
+#   header showing its path, followed by a separator.
+#
+# Usage:
+#   dump-files <target-folder>
+#
+# Examples:
+#   dump-files src/
+#   dump-files deployments/impact-simulation
+#
+# Requirements:
+#   - Must be run inside a Git repository
+#   - Uses `git ls-files` to respect .gitignore
+# -----------------------------------------------------------------------------
+
+set -euo pipefail
+
+TARGET="${1:-}"
+
+if [[ -z "$TARGET" ]]; then
+  echo "Usage: $0 <target-folder>"
+  exit 1
+fi
+
+# List tracked + untracked but not ignored files, then dump with headers
+git ls-files --cached --others --exclude-standard "$TARGET" \
+  | while read -r f; do
+      echo -e "\n# $f\n---"
+      cat "$f"
+      echo -e "\n* * *"
+    done
+

@@ -10,6 +10,7 @@ The framework consists of:
 - Module loading system (NPL-M) for dynamic configuration
 - Template hydration for project-specific customization
 - Pump mechanisms for structured reasoning patterns
+- Git-aware utility scripts with intelligent filtering support
 
 ## Architecture
 

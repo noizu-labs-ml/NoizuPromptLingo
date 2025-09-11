@@ -1,4 +1,4 @@
-# CLAUDE.md
+CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -7,6 +7,53 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 The Noizu PromptLingo (NPL) project is a comprehensive framework for structured prompting with language models, developed by Noizu Labs ML. This project provides a well-defined prompting syntax and ecosystem of NPL agents to enhance consistency and effectiveness in language model interactions with Claude Code.
 
 The project focuses on NPL agentic scaffolding for structured AI interactions, providing ready-to-use agents and templates that can be quickly deployed to Claude Code. It's designed to standardize prompting approaches and enable scalable, collaborative development of language model applications through the Claude Code agent system.
+
+## Support MCPs and Scripts
+
+This project includes comprehensive support utilities and scripts to enhance the development workflow:
+
+### Available Scripts
+
+**Project Scripts** (`.claude/scripts/`):
+- `dump-dir` - Directory content dumping utility
+- `dump-files` - Enhanced file dumping with Git integration and intelligent filtering. Supports `-g`/`--glob` options for filtering files by shell patterns (e.g., `-g "*.md"` for Markdown files)
+- `git-dir-depth` - Git directory depth analysis tool
+- `git-tree` - Enhanced Git tree visualization
+
+**Scaffolding Scripts** (`agentic/scaffolding/scripts/`):
+- `dump-files` - File content extraction for agent analysis with Git-aware filtering. Supports `-g`/`--glob` options for filtering files by shell patterns
+- `git-dir-depth` - Repository structure analysis
+- `git-tree` - Tree structure visualization for NPL workflows
+
+**Filtering Support**:
+- the dump-files, git-dir-gepth git-tree scripts use `git ls-files --cached --others --exclude-standard` for intelligent file filtering:
+- Includes tracked files and untracked files not in `.gitignore`
+- Respects `.gitignore`, `.git/info/exclude`, and standard Git exclusion patterns
+- Provides clean output focused on relevant repository content
+
+### Available MCPs
+No MCPs are currently configured in this project. The `.claude/mcp/` directory is not present.
+
+### Script Integration with NPL Workflows
+
+These utilities are designed to work seamlessly with NPL agents for enhanced development workflows:
+
+```bash
+# Generate comprehensive project analysis
+./.claude/scripts/git-dir-depth
+
+# Export files for NPL agent processing  
+./.claude/scripts/dump-files target-directory/
+
+# Export only Markdown files
+./.claude/scripts/dump-files . -g "*.md"
+
+# Export multiple file types
+./.claude/scripts/dump-files . -g "*.md" -g "src/*.ts"
+
+# Visualize project structure for agent context
+./.claude/scripts/git-tree
+```
 
 ## Architecture Overview
 
