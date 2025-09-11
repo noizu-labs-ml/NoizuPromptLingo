@@ -11,6 +11,13 @@ This ecosystem transforms the traditional approach to AI assistance by providing
 - **Quality Assurance**: Built-in validation and grading systems ensure consistent output
 - **Adaptive Intelligence**: Agents adapt to project contexts and organizational patterns
 
+## Agent Sources
+
+This documentation covers agents from two main sources:
+
+- **Core Agents**: Located in `agentic/scaffolding/agents/` - Production-ready agents with comprehensive documentation
+- **Additional Agents**: Located in `agentic/scaffolding/additional-agents/` - Extended collection of 25+ specialized agents organized by functional area (infrastructure, quality-assurance, user-experience, marketing, project-management, research, security)
+
 ## Agent Directory
 
 ### Core NPL Agents

@@ -1,0 +1,764 @@
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+     viewBox="0 0 1200 4800" style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);">
+  
+  <!-- Definitions for reusable elements -->
+  <defs>
+    <!-- Gradients -->
+    <linearGradient id="primaryGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="cardGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f8fafc;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Drop Shadow Filter -->
+    <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity="0.1"/>
+    </filter>
+    
+    <!-- Glow Effect -->
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- Connection Line Animation -->
+    <animate id="pulseAnimation" attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite" />
+  </defs>
+
+  <!-- HEADER SECTION -->
+  <g id="header">
+    <!-- Header Background -->
+    <rect width="1200" height="80" fill="#ffffff" filter="url(#dropShadow)" opacity="0.95"/>
+    
+    <!-- Logo/Brand Mark -->
+    <g id="logo" transform="translate(60, 20)">
+      <!-- MCP Icon -->
+      <circle cx="20" cy="20" r="15" fill="url(#primaryGradient)"/>
+      <circle cx="20" cy="20" r="8" fill="#ffffff"/>
+      <text x="20" y="26" font-family="Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="url(#primaryGradient)">MCP</text>
+      
+      <!-- Brand Text -->
+      <text x="50" y="18" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#1e293b">MCPaaS</text>
+      <text x="50" y="32" font-family="Arial, sans-serif" font-size="10" fill="#64748b">Model Context Protocol as a Service</text>
+    </g>
+    
+    <!-- Navigation Menu -->
+    <g id="navigation" transform="translate(400, 25)">
+      <text x="0" y="15" font-family="Arial, sans-serif" font-size="14" fill="#475569" cursor="pointer">Features</text>
+      <text x="80" y="15" font-family="Arial, sans-serif" font-size="14" fill="#475569" cursor="pointer">Architecture</text>
+      <text x="180" y="15" font-family="Arial, sans-serif" font-size="14" fill="#475569" cursor="pointer">Pricing</text>
+      <text x="250" y="15" font-family="Arial, sans-serif" font-size="14" fill="#475569" cursor="pointer">Docs</text>
+      <text x="310" y="15" font-family="Arial, sans-serif" font-size="14" fill="#475569" cursor="pointer">Support</text>
+    </g>
+    
+    <!-- Header CTA Buttons -->
+    <g id="headerCTA" transform="translate(950, 15)">
+      <!-- Sign In Button -->
+      <rect x="0" y="0" width="80" height="35" rx="6" fill="transparent" stroke="#e2e8f0" stroke-width="1"/>
+      <text x="40" y="23" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="#475569">Sign In</text>
+      
+      <!-- Get Started Button -->
+      <rect x="100" y="0" width="100" height="35" rx="6" fill="url(#primaryGradient)" filter="url(#dropShadow)"/>
+      <text x="150" y="23" font-family="Arial, sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#ffffff">Get Started</text>
+    </g>
+  </g>
+
+  <!-- HERO SECTION -->
+  <g id="hero" transform="translate(0, 120)">
+    <!-- Hero Background -->
+    <rect width="1200" height="600" fill="url(#cardGradient)"/>
+    
+    <!-- Hero Content -->
+    <g id="heroContent" transform="translate(100, 80)">
+      <!-- Main Headline -->
+      <text x="0" y="60" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#1e293b">
+        Connect Everything with
+      </text>
+      <text x="0" y="120" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="url(#primaryGradient)">
+        Model Context Protocol
+      </text>
+      
+      <!-- Subheading -->
+      <text x="0" y="180" font-family="Arial, sans-serif" font-size="20" fill="#64748b">
+        Seamlessly integrate AI models, tools, and services with our scalable
+      </text>
+      <text x="0" y="210" font-family="Arial, sans-serif" font-size="20" fill="#64748b">
+        MCP infrastructure. Build connected AI experiences in minutes, not months.
+      </text>
+      
+      <!-- Hero CTA Buttons -->
+      <g id="heroCTA" transform="translate(0, 280)">
+        <!-- Primary CTA -->
+        <rect x="0" y="0" width="180" height="55" rx="8" fill="url(#primaryGradient)" filter="url(#dropShadow)"/>
+        <text x="90" y="35" font-family="Arial, sans-serif" font-size="16" font-weight="600" text-anchor="middle" fill="#ffffff">Start Building</text>
+        
+        <!-- Secondary CTA -->
+        <rect x="200" y="0" width="160" height="55" rx="8" fill="transparent" stroke="#e2e8f0" stroke-width="2"/>
+        <text x="280" y="35" font-family="Arial, sans-serif" font-size="16" font-weight="600" text-anchor="middle" fill="#475569">View Demo</text>
+        
+        <!-- Play Icon for Demo -->
+        <circle cx="250" cy="28" r="8" fill="url(#accentGradient)"/>
+        <polygon points="247,25 247,31 252,28" fill="#ffffff"/>
+      </g>
+      
+      <!-- Trust Indicators -->
+      <g id="trustIndicators" transform="translate(0, 380)">
+        <text x="0" y="20" font-family="Arial, sans-serif" font-size="12" fill="#94a3b8">Trusted by 500+ developers and organizations</text>
+        
+        <!-- Company Logos Placeholder -->
+        <g transform="translate(0, 40)">
+          <rect x="0" y="0" width="80" height="30" rx="4" fill="#f1f5f9" stroke="#e2e8f0"/>
+          <text x="40" y="20" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#64748b">Company A</text>
+          
+          <rect x="100" y="0" width="80" height="30" rx="4" fill="#f1f5f9" stroke="#e2e8f0"/>
+          <text x="140" y="20" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#64748b">Company B</text>
+          
+          <rect x="200" y="0" width="80" height="30" rx="4" fill="#f1f5f9" stroke="#e2e8f0"/>
+          <text x="240" y="20" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#64748b">Company C</text>
+        </g>
+      </g>
+    </g>
+    
+    <!-- Hero Visual - MCP Connection Diagram -->
+    <g id="heroVisual" transform="translate(650, 120)">
+      <!-- Central Hub -->
+      <circle cx="200" cy="180" r="50" fill="url(#primaryGradient)" filter="url(#dropShadow)"/>
+      <text x="200" y="190" font-family="Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#ffffff">MCP</text>
+      
+      <!-- Connected Nodes -->
+      <!-- AI Model Node -->
+      <circle cx="100" cy="80" r="30" fill="url(#accentGradient)" filter="url(#dropShadow)"/>
+      <text x="100" y="87" font-family="Arial, sans-serif" font-size="10" font-weight="600" text-anchor="middle" fill="#ffffff">AI Model</text>
+      
+      <!-- Tools Node -->
+      <circle cx="300" cy="80" r="30" fill="#f59e0b" filter="url(#dropShadow)"/>
+      <text x="300" y="87" font-family="Arial, sans-serif" font-size="10" font-weight="600" text-anchor="middle" fill="#ffffff">Tools</text>
+      
+      <!-- Database Node -->
+      <circle cx="80" cy="250" r="30" fill="#8b5cf6" filter="url(#dropShadow)"/>
+      <text x="80" y="257" font-family="Arial, sans-serif" font-size="10" font-weight="600" text-anchor="middle" fill="#ffffff">Database</text>
+      
+      <!-- API Node -->
+      <circle cx="320" cy="250" r="30" fill="#ef4444" filter="url(#dropShadow)"/>
+      <text x="320" y="257" font-family="Arial, sans-serif" font-size="10" font-weight="600" text-anchor="middle" fill="#ffffff">APIs</text>
+      
+      <!-- Connection Lines with Animation -->
+      <line x1="130" y1="110" x2="175" y2="155" stroke="url(#primaryGradient)" stroke-width="3" opacity="0.6">
+        <animate attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite"/>
+      </line>
+      <line x1="270" y1="110" x2="225" y2="155" stroke="url(#primaryGradient)" stroke-width="3" opacity="0.6">
+        <animate attributeName="opacity" values="0.3;1;0.3" dur="2.5s" repeatCount="indefinite"/>
+      </line>
+      <line x1="105" y1="220" x2="175" y2="205" stroke="url(#primaryGradient)" stroke-width="3" opacity="0.6">
+        <animate attributeName="opacity" values="0.3;1;0.3" dur="1.8s" repeatCount="indefinite"/>
+      </line>
+      <line x1="295" y1="220" x2="225" y2="205" stroke="url(#primaryGradient)" stroke-width="3" opacity="0.6">
+        <animate attributeName="opacity" values="0.3;1;0.3" dur="2.2s" repeatCount="indefinite"/>
+      </line>
+      
+      <!-- Data Flow Indicators -->
+      <g id="dataFlow">
+        <circle cx="150" cy="130" r="3" fill="#10b981">
+          <animateMotion dur="3s" repeatCount="indefinite">
+            <path d="M0,0 L50,-50 L50,50 Z"/>
+          </animateMotion>
+        </circle>
+        <circle cx="250" cy="130" r="3" fill="#10b981">
+          <animateMotion dur="3s" repeatCount="indefinite" begin="0.5s">
+            <path d="M0,0 L-50,-50 L-50,50 Z"/>
+          </animateMotion>
+        </circle>
+      </g>
+    </g>
+  </g>
+
+  <!-- FEATURES SECTION -->
+  <g id="features" transform="translate(0, 780)">
+    <!-- Section Header -->
+    <g id="featuresHeader" transform="translate(100, 60)">
+      <text x="500" y="40" font-family="Arial, sans-serif" font-size="36" font-weight="bold" text-anchor="middle" fill="#1e293b">
+        Why Choose MCPaaS?
+      </text>
+      <text x="500" y="80" font-family="Arial, sans-serif" font-size="18" text-anchor="middle" fill="#64748b">
+        Everything you need to build connected AI experiences at scale
+      </text>
+    </g>
+    
+    <!-- Features Grid -->
+    <g id="featuresGrid" transform="translate(100, 160)">
+      <!-- Feature 1: Seamless Integration -->
+      <g id="feature1">
+        <rect x="0" y="0" width="320" height="220" rx="12" fill="url(#cardGradient)" filter="url(#dropShadow)"/>
+        
+        <!-- Feature Icon -->
+        <circle cx="50" cy="50" r="25" fill="url(#primaryGradient)" opacity="0.1"/>
+        <g transform="translate(37.5, 37.5)">
+          <rect x="0" y="0" width="10" height="10" rx="2" fill="url(#primaryGradient)"/>
+          <rect x="15" y="0" width="10" height="10" rx="2" fill="url(#primaryGradient)"/>
+          <rect x="7.5" y="15" width="10" height="10" rx="2" fill="url(#primaryGradient)"/>
+          <line x1="5" y1="15" x2="5" y2="10" stroke="url(#primaryGradient)" stroke-width="2"/>
+          <line x1="20" y1="15" x2="20" y2="10" stroke="url(#primaryGradient)" stroke-width="2"/>
+          <line x1="5" y1="15" x2="12.5" y2="15" stroke="url(#primaryGradient)" stroke-width="2"/>
+          <line x1="17.5" y1="15" x2="20" y2="15" stroke="url(#primaryGradient)" stroke-width="2"/>
+        </g>
+        
+        <text x="30" y="110" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#1e293b">
+          Seamless Integration
+        </text>
+        <text x="30" y="140" font-family="Arial, sans-serif" font-size="14" fill="#64748b">
+          Connect any AI model, tool, or service
+        </text>
+        <text x="30" y="160" font-family="Arial, sans-serif" font-size="14" fill="#64748b">
+          with our standardized protocol.
+        </text>
+        <text x="30" y="180" font-family="Arial, sans-serif" font-size="14" fill="#64748b">
+          No complex setup required.
+        </text>
+      </g>
+      
+      <!-- Feature 2: Scalable Architecture -->
+      <g id="feature2" transform="translate(340, 0)">
+        <rect x="0" y="0" width="320" height="220" rx="12" fill="url(#cardGradient)" filter="url(#dropShadow)"/>
+        
+        <!-- Feature Icon -->
+        <circle cx="50" cy="50" r="25" fill="url(#accentGradient)" opacity="0.1"/>
+        <g transform="translate(35, 35)">
+          <rect x="0" y="10" width="8" height="15" rx="1" fill="url(#accentGradient)"/>
+          <rect x="10" y="5" width="8" height="20" rx="1" fill="url(#accentGradient)"/>
+          <rect x="20" y="0" width="8" height="25" rx="1" fill="url(#accentGradient)"/>
+        </g>
+        
+        <text x="30" y="110" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#1e293b">
+          Scalable Architecture
+        </text>
+        <text x="30" y="140" font-family="Arial, sans-serif" font-size="14" fill="#64748b">
+          From prototype to production,
+        </text>
+        <text x="30" y="160" font-family="Arial, sans-serif" font-size="14" fill="#64748b">
+          our infrastructure scales with
+        </text>
+        <text x="30" y="180" font-family="Arial, sans-serif" font-size="14" fill="#64748b">
+          your growing needs.
+        </text>
+      </g>
+      
+      <!-- Feature 3: Secure Protocol -->
+      <g id="feature3" transform="translate(680, 0)">
+        <rect x="0" y="0" width="320" height="220" rx="12" fill="url(#cardGradient)" filter="url(#dropShadow)"/>
+        
+        <!-- Feature Icon -->
+        <circle cx="50" cy="50" r="25" fill="#f59e0b" opacity="0.1"/>
+        <g transform="translate(37.5, 35)">
+          <rect x="5" y="5" width="15" height="10" rx="2" fill="transparent" stroke="#f59e0b" stroke-width="2"/>
+          <circle cx="12.5" cy="0" r="5" fill="transparent" stroke="#f59e0b" stroke-width="2"/>
+          <circle cx="12.5" cy="10" r="2" fill="#f59e0b"/>
+        </g>
+        
+        <text x="30" y="110" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#1e293b">
+          Enterprise Security
+        </text>
+        <text x="30" y="140" font-family="Arial, sans-serif" font-size="14" fill="#64748b">
+          End-to-end encryption, compliance
+        </text>
+        <text x="30" y="160" font-family="Arial, sans-serif" font-size="14" fill="#64748b">
+          certifications, and audit trails
+        </text>
+        <text x="30" y="180" font-family="Arial, sans-serif" font-size="14" fill="#64748b">
+          keep your data secure.
+        </text>
+      </g>
+      
+      <!-- Feature 4: Developer Experience -->
+      <g id="feature4" transform="translate(0, 260)">
+        <rect x="0" y="0" width="320" height="220" rx="12" fill="url(#cardGradient)" filter="url(#dropShadow)"/>
+        
+        <!-- Feature Icon -->
+        <circle cx="50" cy="50" r="25" fill="#8b5cf6" opacity="0.1"/>
+        <g transform="translate(35, 35)">
+          <rect x="0" y="0" width="20" height="15" rx="2" fill="transparent" stroke="#8b5cf6" stroke-width="2"/>
+          <line x1="3" y1="5" x2="12" y2="5" stroke="#8b5cf6" stroke-width="1"/>
+          <line x1="3" y1="8" x2="15" y2="8" stroke="#8b5cf6" stroke-width="1"/>
+          <line x1="3" y1="11" x2="9" y2="11" stroke="#8b5cf6" stroke-width="1"/>
+          <circle cx="17" cy="20" r="3" fill="#8b5cf6"/>
+        </g>
+        
+        <text x="30" y="110" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#1e293b">
+          Developer First
+        </text>
+        <text x="30" y="140" font-family="Arial, sans-serif" font-size="14" fill="#64748b">
+          Comprehensive documentation,
+        </text>
+        <text x="30" y="160" font-family="Arial, sans-serif" font-size="14" fill="#64748b">
+          SDKs, and tools designed
+        </text>
+        <text x="30" y="180" font-family="Arial, sans-serif" font-size="14" fill="#64748b">
+          for developer productivity.
+        </text>
+      </g>
+      
+      <!-- Feature 5: Real-time Monitoring -->
+      <g id="feature5" transform="translate(340, 260)">
+        <rect x="0" y="0" width="320" height="220" rx="12" fill="url(#cardGradient)" filter="url(#dropShadow)"/>
+        
+        <!-- Feature Icon -->
+        <circle cx="50" cy="50" r="25" fill="#ef4444" opacity="0.1"/>
+        <g transform="translate(35, 35)">
+          <circle cx="12.5" cy="12.5" r="10" fill="transparent" stroke="#ef4444" stroke-width="2"/>
+          <line x1="12.5" y1="12.5" x2="12.5" y2="5" stroke="#ef4444" stroke-width="2"/>
+          <line x1="12.5" y1="12.5" x2="18" y2="12.5" stroke="#ef4444" stroke-width="2"/>
+          <circle cx="12.5" cy="12.5" r="2" fill="#ef4444"/>
+        </g>
+        
+        <text x="30" y="110" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#1e293b">
+          Real-time Monitoring
+        </text>
+        <text x="30" y="140" font-family="Arial, sans-serif" font-size="14" fill="#64748b">
+          Monitor performance, track
+        </text>
+        <text x="30" y="160" font-family="Arial, sans-serif" font-size="14" fill="#64748b">
+          usage, and get alerts with
+        </text>
+        <text x="30" y="180" font-family="Arial, sans-serif" font-size="14" fill="#64748b">
+          our built-in observability.
+        </text>
+      </g>
+      
+      <!-- Feature 6: Global Infrastructure -->
+      <g id="feature6" transform="translate(680, 260)">
+        <rect x="0" y="0" width="320" height="220" rx="12" fill="url(#cardGradient)" filter="url(#dropShadow)"/>
+        
+        <!-- Feature Icon -->
+        <circle cx="50" cy="50" r="25" fill="#06b6d4" opacity="0.1"/>
+        <g transform="translate(35, 35)">
+          <circle cx="12.5" cy="12.5" r="10" fill="transparent" stroke="#06b6d4" stroke-width="2"/>
+          <circle cx="8" cy="8" r="1.5" fill="#06b6d4"/>
+          <circle cx="17" cy="8" r="1.5" fill="#06b6d4"/>
+          <circle cx="12.5" cy="17" r="1.5" fill="#06b6d4"/>
+          <line x1="8" y1="8" x2="17" y2="8" stroke="#06b6d4" stroke-width="1"/>
+          <line x1="12.5" y1="8" x2="12.5" y2="17" stroke="#06b6d4" stroke-width="1"/>
+        </g>
+        
+        <text x="30" y="110" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#1e293b">
+          Global Infrastructure
+        </text>
+        <text x="30" y="140" font-family="Arial, sans-serif" font-size="14" fill="#64748b">
+          Deploy across multiple regions
+        </text>
+        <text x="30" y="160" font-family="Arial, sans-serif" font-size="14" fill="#64748b">
+          with low latency and high
+        </text>
+        <text x="30" y="180" font-family="Arial, sans-serif" font-size="14" fill="#64748b">
+          availability guarantees.
+        </text>
+      </g>
+    </g>
+  </g>
+
+  <!-- ARCHITECTURE SECTION -->
+  <g id="architecture" transform="translate(0, 1560)">
+    <!-- Section Header -->
+    <g id="architectureHeader" transform="translate(100, 60)">
+      <text x="500" y="40" font-family="Arial, sans-serif" font-size="36" font-weight="bold" text-anchor="middle" fill="#1e293b">
+        MCP Architecture Overview
+      </text>
+      <text x="500" y="80" font-family="Arial, sans-serif" font-size="18" text-anchor="middle" fill="#64748b">
+        See how Model Context Protocol connects your AI ecosystem
+      </text>
+    </g>
+    
+    <!-- Architecture Diagram -->
+    <g id="architectureDiagram" transform="translate(100, 160)">
+      <!-- Background -->
+      <rect x="0" y="0" width="1000" height="600" rx="12" fill="url(#cardGradient)" filter="url(#dropShadow)"/>
+      
+      <!-- Client Layer -->
+      <g id="clientLayer" transform="translate(50, 80)">
+        <text x="0" y="20" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#1e293b">Client Applications</text>
+        
+        <!-- Client Nodes -->
+        <rect x="50" y="40" width="120" height="60" rx="8" fill="#ddd6fe" stroke="#8b5cf6" stroke-width="2"/>
+        <text x="110" y="60" font-family="Arial, sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#5b21b6">Web App</text>
+        <text x="110" y="80" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#7c3aed">React/Vue/Angular</text>
+        
+        <rect x="200" y="40" width="120" height="60" rx="8" fill="#fde68a" stroke="#f59e0b" stroke-width="2"/>
+        <text x="260" y="60" font-family="Arial, sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#92400e">Mobile App</text>
+        <text x="260" y="80" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#b45309">iOS/Android</text>
+        
+        <rect x="350" y="40" width="120" height="60" rx="8" fill="#bfdbfe" stroke="#3b82f6" stroke-width="2"/>
+        <text x="410" y="60" font-family="Arial, sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#1d4ed8">CLI Tool</text>
+        <text x="410" y="80" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#2563eb">Python/Node.js</text>
+      </g>
+      
+      <!-- MCP Protocol Layer -->
+      <g id="mcpLayer" transform="translate(50, 240)">
+        <text x="0" y="20" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#1e293b">MCP Protocol Layer</text>
+        
+        <!-- MCP Hub -->
+        <rect x="200" y="40" width="300" height="80" rx="12" fill="url(#primaryGradient)" filter="url(#dropShadow)"/>
+        <text x="350" y="70" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#ffffff">MCP Hub</text>
+        <text x="350" y="90" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="#dbeafe">Connection Management</text>
+        <text x="350" y="105" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="#dbeafe">Protocol Translation</text>
+        
+        <!-- Connection arrows from clients to MCP -->
+        <line x1="110" y1="140" x2="230" y2="200" stroke="url(#primaryGradient)" stroke-width="3" opacity="0.8" marker-end="url(#arrowhead)"/>
+        <line x1="260" y1="140" x2="320" y2="200" stroke="url(#primaryGradient)" stroke-width="3" opacity="0.8" marker-end="url(#arrowhead)"/>
+        <line x1="410" y1="140" x2="470" y2="200" stroke="url(#primaryGradient)" stroke-width="3" opacity="0.8" marker-end="url(#arrowhead)"/>
+      </g>
+      
+      <!-- Service Layer -->
+      <g id="serviceLayer" transform="translate(50, 420)">
+        <text x="0" y="20" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#1e293b">Connected Services</text>
+        
+        <!-- AI Models -->
+        <rect x="20" y="40" width="100" height="60" rx="8" fill="#d1fae5" stroke="#10b981" stroke-width="2"/>
+        <text x="70" y="60" font-family="Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle" fill="#047857">AI Models</text>
+        <text x="70" y="75" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#065f46">GPT, Claude</text>
+        <text x="70" y="87" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#065f46">Llama, etc.</text>
+        
+        <!-- Databases -->
+        <rect x="140" y="40" width="100" height="60" rx="8" fill="#fecaca" stroke="#ef4444" stroke-width="2"/>
+        <text x="190" y="60" font-family="Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle" fill="#dc2626">Databases</text>
+        <text x="190" y="75" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#b91c1c">PostgreSQL</text>
+        <text x="190" y="87" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#b91c1c">MongoDB</text>
+        
+        <!-- APIs -->
+        <rect x="260" y="40" width="100" height="60" rx="8" fill="#fed7aa" stroke="#f97316" stroke-width="2"/>
+        <text x="310" y="60" font-family="Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle" fill="#ea580c">External APIs</text>
+        <text x="310" y="75" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#c2410c">REST/GraphQL</text>
+        <text x="310" y="87" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#c2410c">Webhooks</text>
+        
+        <!-- Tools -->
+        <rect x="380" y="40" width="100" height="60" rx="8" fill="#e0e7ff" stroke="#6366f1" stroke-width="2"/>
+        <text x="430" y="60" font-family="Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle" fill="#4f46e5">Tools</text>
+        <text x="430" y="75" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#3730a3">Calculators</text>
+        <text x="430" y="87" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#3730a3">Validators</text>
+        
+        <!-- File Systems -->
+        <rect x="500" y="40" width="100" height="60" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="2"/>
+        <text x="550" y="60" font-family="Arial, sans-serif" font-size="11" font-weight="600" text-anchor="middle" fill="#7c2d12">File Systems</text>
+        <text x="550" y="75" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b21a8">Local/Cloud</text>
+        <text x="550" y="87" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#6b21a8">Storage</text>
+        
+        <!-- Connection arrows from MCP to services -->
+        <line x1="280" y1="360" x2="70" y2="420" stroke="url(#accentGradient)" stroke-width="2" opacity="0.7"/>
+        <line x1="320" y1="360" x2="190" y2="420" stroke="url(#accentGradient)" stroke-width="2" opacity="0.7"/>
+        <line x1="350" y1="360" x2="310" y2="420" stroke="url(#accentGradient)" stroke-width="2" opacity="0.7"/>
+        <line x1="380" y1="360" x2="430" y2="420" stroke="url(#accentGradient)" stroke-width="2" opacity="0.7"/>
+        <line x1="420" y1="360" x2="550" y2="420" stroke="url(#accentGradient)" stroke-width="2" opacity="0.7"/>
+      </g>
+      
+      <!-- Data Flow Indicators -->
+      <g id="dataFlowArch">
+        <circle cx="200" cy="300" r="4" fill="#10b981" filter="url(#glow)">
+          <animateMotion dur="4s" repeatCount="indefinite">
+            <path d="M0,0 L100,-100 L200,0 L300,100"/>
+          </animateMotion>
+        </circle>
+        <circle cx="400" cy="300" r="4" fill="#3b82f6" filter="url(#glow)">
+          <animateMotion dur="4s" repeatCount="indefinite" begin="1s">
+            <path d="M0,0 L-100,-100 L-200,0 L-300,100"/>
+          </animateMotion>
+        </circle>
+      </g>
+    </g>
+  </g>
+
+  <!-- PRICING SECTION -->
+  <g id="pricing" transform="translate(0, 2400)">
+    <!-- Section Header -->
+    <g id="pricingHeader" transform="translate(100, 60)">
+      <text x="500" y="40" font-family="Arial, sans-serif" font-size="36" font-weight="bold" text-anchor="middle" fill="#1e293b">
+        Simple, Transparent Pricing
+      </text>
+      <text x="500" y="80" font-family="Arial, sans-serif" font-size="18" text-anchor="middle" fill="#64748b">
+        Choose the plan that fits your needs. Scale up or down anytime.
+      </text>
+    </g>
+    
+    <!-- Pricing Cards -->
+    <g id="pricingCards" transform="translate(100, 160)">
+      <!-- Starter Plan -->
+      <g id="starterPlan">
+        <rect x="0" y="0" width="300" height="480" rx="12" fill="url(#cardGradient)" filter="url(#dropShadow)"/>
+        
+        <!-- Plan Header -->
+        <text x="150" y="40" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="#1e293b">Starter</text>
+        <text x="150" y="65" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#64748b">Perfect for prototyping</text>
+        
+        <!-- Price -->
+        <text x="150" y="110" font-family="Arial, sans-serif" font-size="40" font-weight="bold" text-anchor="middle" fill="#1e293b">$29</text>
+        <text x="150" y="135" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#64748b">per month</text>
+        
+        <!-- Features -->
+        <g transform="translate(40, 170)">
+          <g transform="translate(0, 0)">
+            <circle cx="6" cy="6" r="3" fill="#10b981"/>
+            <text x="20" y="11" font-family="Arial, sans-serif" font-size="14" fill="#475569">10K requests/month</text>
+          </g>
+          <g transform="translate(0, 30)">
+            <circle cx="6" cy="6" r="3" fill="#10b981"/>
+            <text x="20" y="11" font-family="Arial, sans-serif" font-size="14" fill="#475569">5 connected services</text>
+          </g>
+          <g transform="translate(0, 60)">
+            <circle cx="6" cy="6" r="3" fill="#10b981"/>
+            <text x="20" y="11" font-family="Arial, sans-serif" font-size="14" fill="#475569">Community support</text>
+          </g>
+          <g transform="translate(0, 90)">
+            <circle cx="6" cy="6" r="3" fill="#10b981"/>
+            <text x="20" y="11" font-family="Arial, sans-serif" font-size="14" fill="#475569">Basic monitoring</text>
+          </g>
+          <g transform="translate(0, 120)">
+            <circle cx="6" cy="6" r="3" fill="#10b981"/>
+            <text x="20" y="11" font-family="Arial, sans-serif" font-size="14" fill="#475569">99.5% uptime SLA</text>
+          </g>
+        </g>
+        
+        <!-- CTA Button -->
+        <rect x="40" y="400" width="220" height="45" rx="8" fill="transparent" stroke="#e2e8f0" stroke-width="2"/>
+        <text x="150" y="428" font-family="Arial, sans-serif" font-size="14" font-weight="600" text-anchor="middle" fill="#475569">Get Started</text>
+      </g>
+      
+      <!-- Pro Plan (Popular) -->
+      <g id="proPlan" transform="translate(350, 0)">
+        <!-- Popular Badge -->
+        <rect x="100" y="-15" width="100" height="25" rx="12" fill="url(#primaryGradient)"/>
+        <text x="150" y="2" font-family="Arial, sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#ffffff">POPULAR</text>
+        
+        <rect x="0" y="0" width="300" height="480" rx="12" fill="url(#cardGradient)" filter="url(#dropShadow)" stroke="url(#primaryGradient)" stroke-width="2"/>
+        
+        <!-- Plan Header -->
+        <text x="150" y="40" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="#1e293b">Pro</text>
+        <text x="150" y="65" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#64748b">For growing teams</text>
+        
+        <!-- Price -->
+        <text x="150" y="110" font-family="Arial, sans-serif" font-size="40" font-weight="bold" text-anchor="middle" fill="#1e293b">$99</text>
+        <text x="150" y="135" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#64748b">per month</text>
+        
+        <!-- Features -->
+        <g transform="translate(40, 170)">
+          <g transform="translate(0, 0)">
+            <circle cx="6" cy="6" r="3" fill="#10b981"/>
+            <text x="20" y="11" font-family="Arial, sans-serif" font-size="14" fill="#475569">100K requests/month</text>
+          </g>
+          <g transform="translate(0, 30)">
+            <circle cx="6" cy="6" r="3" fill="#10b981"/>
+            <text x="20" y="11" font-family="Arial, sans-serif" font-size="14" fill="#475569">50 connected services</text>
+          </g>
+          <g transform="translate(0, 60)">
+            <circle cx="6" cy="6" r="3" fill="#10b981"/>
+            <text x="20" y="11" font-family="Arial, sans-serif" font-size="14" fill="#475569">Priority support</text>
+          </g>
+          <g transform="translate(0, 90)">
+            <circle cx="6" cy="6" r="3" fill="#10b981"/>
+            <text x="20" y="11" font-family="Arial, sans-serif" font-size="14" fill="#475569">Advanced monitoring</text>
+          </g>
+          <g transform="translate(0, 120)">
+            <circle cx="6" cy="6" r="3" fill="#10b981"/>
+            <text x="20" y="11" font-family="Arial, sans-serif" font-size="14" fill="#475569">99.9% uptime SLA</text>
+          </g>
+          <g transform="translate(0, 150)">
+            <circle cx="6" cy="6" r="3" fill="#10b981"/>
+            <text x="20" y="11" font-family="Arial, sans-serif" font-size="14" fill="#475569">Custom integrations</text>
+          </g>
+        </g>
+        
+        <!-- CTA Button -->
+        <rect x="40" y="400" width="220" height="45" rx="8" fill="url(#primaryGradient)" filter="url(#dropShadow)"/>
+        <text x="150" y="428" font-family="Arial, sans-serif" font-size="14" font-weight="600" text-anchor="middle" fill="#ffffff">Start Free Trial</text>
+      </g>
+      
+      <!-- Enterprise Plan -->
+      <g id="enterprisePlan" transform="translate(700, 0)">
+        <rect x="0" y="0" width="300" height="480" rx="12" fill="url(#cardGradient)" filter="url(#dropShadow)"/>
+        
+        <!-- Plan Header -->
+        <text x="150" y="40" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="#1e293b">Enterprise</text>
+        <text x="150" y="65" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#64748b">For large organizations</text>
+        
+        <!-- Price -->
+        <text x="150" y="110" font-family="Arial, sans-serif" font-size="32" font-weight="bold" text-anchor="middle" fill="#1e293b">Custom</text>
+        <text x="150" y="135" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#64748b">Contact sales</text>
+        
+        <!-- Features -->
+        <g transform="translate(40, 170)">
+          <g transform="translate(0, 0)">
+            <circle cx="6" cy="6" r="3" fill="#10b981"/>
+            <text x="20" y="11" font-family="Arial, sans-serif" font-size="14" fill="#475569">Unlimited requests</text>
+          </g>
+          <g transform="translate(0, 30)">
+            <circle cx="6" cy="6" r="3" fill="#10b981"/>
+            <text x="20" y="11" font-family="Arial, sans-serif" font-size="14" fill="#475569">Unlimited services</text>
+          </g>
+          <g transform="translate(0, 60)">
+            <circle cx="6" cy="6" r="3" fill="#10b981"/>
+            <text x="20" y="11" font-family="Arial, sans-serif" font-size="14" fill="#475569">24/7 dedicated support</text>
+          </g>
+          <g transform="translate(0, 90)">
+            <circle cx="6" cy="6" r="3" fill="#10b981"/>
+            <text x="20" y="11" font-family="Arial, sans-serif" font-size="14" fill="#475569">Custom monitoring</text>
+          </g>
+          <g transform="translate(0, 120)">
+            <circle cx="6" cy="6" r="3" fill="#10b981"/>
+            <text x="20" y="11" font-family="Arial, sans-serif" font-size="14" fill="#475569">99.99% uptime SLA</text>
+          </g>
+          <g transform="translate(0, 150)">
+            <circle cx="6" cy="6" r="3" fill="#10b981"/>
+            <text x="20" y="11" font-family="Arial, sans-serif" font-size="14" fill="#475569">On-premise deployment</text>
+          </g>
+        </g>
+        
+        <!-- CTA Button -->
+        <rect x="40" y="400" width="220" height="45" rx="8" fill="url(#accentGradient)" filter="url(#dropShadow)"/>
+        <text x="150" y="428" font-family="Arial, sans-serif" font-size="14" font-weight="600" text-anchor="middle" fill="#ffffff">Contact Sales</text>
+      </g>
+    </g>
+    
+    <!-- Pricing FAQ -->
+    <g id="pricingFAQ" transform="translate(100, 720)">
+      <text x="500" y="30" font-family="Arial, sans-serif" font-size="18" font-weight="600" text-anchor="middle" fill="#1e293b">
+        Frequently Asked Questions
+      </text>
+      
+      <g transform="translate(200, 60)">
+        <text x="0" y="20" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="#475569">• Can I change plans anytime?</text>
+        <text x="20" y="40" font-family="Arial, sans-serif" font-size="12" fill="#64748b">Yes, upgrade or downgrade your plan at any time.</text>
+        
+        <text x="0" y="80" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="#475569">• What happens if I exceed my limits?</text>
+        <text x="20" y="100" font-family="Arial, sans-serif" font-size="12" fill="#64748b">We'll notify you and provide options to upgrade or throttle.</text>
+        
+        <text x="0" y="140" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="#475569">• Is there a free tier?</text>
+        <text x="20" y="160" font-family="Arial, sans-serif" font-size="12" fill="#64748b">We offer a 14-day free trial on all plans.</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- FOOTER -->
+  <g id="footer" transform="translate(0, 4200)">
+    <!-- Footer Background -->
+    <rect width="1200" height="400" fill="#1e293b"/>
+    
+    <!-- Footer Content -->
+    <g id="footerContent" transform="translate(100, 60)">
+      <!-- Company Info -->
+      <g id="companyInfo">
+        <!-- Logo -->
+        <g transform="translate(0, 0)">
+          <circle cx="20" cy="20" r="15" fill="url(#primaryGradient)"/>
+          <circle cx="20" cy="20" r="8" fill="#ffffff"/>
+          <text x="20" y="26" font-family="Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="url(#primaryGradient)">MCP</text>
+          
+          <text x="50" y="18" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#ffffff">MCPaaS</text>
+          <text x="50" y="32" font-family="Arial, sans-serif" font-size="10" fill="#94a3b8">Model Context Protocol as a Service</text>
+        </g>
+        
+        <text x="0" y="80" font-family="Arial, sans-serif" font-size="14" fill="#cbd5e1">
+          Connect your AI ecosystem with the power
+        </text>
+        <text x="0" y="100" font-family="Arial, sans-serif" font-size="14" fill="#cbd5e1">
+          of standardized protocol communication.
+        </text>
+        
+        <!-- Social Links -->
+        <g transform="translate(0, 130)">
+          <circle cx="15" cy="15" r="12" fill="#374151"/>
+          <text x="15" y="20" font-family="Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#9ca3af">T</text>
+          
+          <circle cx="45" cy="15" r="12" fill="#374151"/>
+          <text x="45" y="20" font-family="Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#9ca3af">G</text>
+          
+          <circle cx="75" cy="15" r="12" fill="#374151"/>
+          <text x="75" y="20" font-family="Arial, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#9ca3af">L</text>
+        </g>
+      </g>
+      
+      <!-- Footer Links -->
+      <g id="footerLinks" transform="translate(350, 0)">
+        <!-- Product Column -->
+        <g>
+          <text x="0" y="20" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="#ffffff">Product</text>
+          <text x="0" y="45" font-family="Arial, sans-serif" font-size="12" fill="#94a3b8" cursor="pointer">Features</text>
+          <text x="0" y="65" font-family="Arial, sans-serif" font-size="12" fill="#94a3b8" cursor="pointer">Pricing</text>
+          <text x="0" y="85" font-family="Arial, sans-serif" font-size="12" fill="#94a3b8" cursor="pointer">Integrations</text>
+          <text x="0" y="105" font-family="Arial, sans-serif" font-size="12" fill="#94a3b8" cursor="pointer">API Reference</text>
+        </g>
+        
+        <!-- Resources Column -->
+        <g transform="translate(120, 0)">
+          <text x="0" y="20" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="#ffffff">Resources</text>
+          <text x="0" y="45" font-family="Arial, sans-serif" font-size="12" fill="#94a3b8" cursor="pointer">Documentation</text>
+          <text x="0" y="65" font-family="Arial, sans-serif" font-size="12" fill="#94a3b8" cursor="pointer">Tutorials</text>
+          <text x="0" y="85" font-family="Arial, sans-serif" font-size="12" fill="#94a3b8" cursor="pointer">Community</text>
+          <text x="0" y="105" font-family="Arial, sans-serif" font-size="12" fill="#94a3b8" cursor="pointer">Blog</text>
+        </g>
+        
+        <!-- Company Column -->
+        <g transform="translate(240, 0)">
+          <text x="0" y="20" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="#ffffff">Company</text>
+          <text x="0" y="45" font-family="Arial, sans-serif" font-size="12" fill="#94a3b8" cursor="pointer">About Us</text>
+          <text x="0" y="65" font-family="Arial, sans-serif" font-size="12" fill="#94a3b8" cursor="pointer">Careers</text>
+          <text x="0" y="85" font-family="Arial, sans-serif" font-size="12" fill="#94a3b8" cursor="pointer">Contact</text>
+          <text x="0" y="105" font-family="Arial, sans-serif" font-size="12" fill="#94a3b8" cursor="pointer">Press Kit</text>
+        </g>
+        
+        <!-- Support Column -->
+        <g transform="translate(360, 0)">
+          <text x="0" y="20" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="#ffffff">Support</text>
+          <text x="0" y="45" font-family="Arial, sans-serif" font-size="12" fill="#94a3b8" cursor="pointer">Help Center</text>
+          <text x="0" y="65" font-family="Arial, sans-serif" font-size="12" fill="#94a3b8" cursor="pointer">Status Page</text>
+          <text x="0" y="85" font-family="Arial, sans-serif" font-size="12" fill="#94a3b8" cursor="pointer">Security</text>
+          <text x="0" y="105" font-family="Arial, sans-serif" font-size="12" fill="#94a3b8" cursor="pointer">Privacy Policy</text>
+        </g>
+      </g>
+      
+      <!-- Newsletter Signup -->
+      <g id="newsletter" transform="translate(700, 0)">
+        <text x="0" y="20" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="#ffffff">Stay Updated</text>
+        <text x="0" y="45" font-family="Arial, sans-serif" font-size="12" fill="#94a3b8">Get the latest updates and news</text>
+        
+        <g transform="translate(0, 65)">
+          <rect x="0" y="0" width="180" height="40" rx="6" fill="#374151" stroke="#4b5563"/>
+          <text x="10" y="25" font-family="Arial, sans-serif" font-size="12" fill="#9ca3af">Enter your email</text>
+          
+          <rect x="190" y="0" width="80" height="40" rx="6" fill="url(#primaryGradient)"/>
+          <text x="230" y="25" font-family="Arial, sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#ffffff">Subscribe</text>
+        </g>
+      </g>
+    </g>
+    
+    <!-- Footer Bottom -->
+    <g id="footerBottom" transform="translate(100, 280)">
+      <line x1="0" y1="0" x2="1000" y2="0" stroke="#374151"/>
+      
+      <text x="0" y="30" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">
+        © 2024 MCPaaS. All rights reserved.
+      </text>
+      
+      <g transform="translate(800, 15)">
+        <text x="0" y="15" font-family="Arial, sans-serif" font-size="12" fill="#6b7280" cursor="pointer">Terms</text>
+        <text x="60" y="15" font-family="Arial, sans-serif" font-size="12" fill="#6b7280" cursor="pointer">Privacy</text>
+        <text x="120" y="15" font-family="Arial, sans-serif" font-size="12" fill="#6b7280" cursor="pointer">Cookies</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Arrow Marker for Connection Lines -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="url(#primaryGradient)"/>
+    </marker>
+  </defs>
+
+</svg>
