@@ -16,10 +16,13 @@ Choose your preferred NPL verbosity level and copy the core NPL documentation:
 cp npl/verbose/npl.md ~/.claude/npl.md
 ```
 
-**For concise version (if available):**
+**For concise version (if available):**[^1]
+
 ```bash
 cp npl/concise/npl.md ~/.claude/npl.md
 ```
+
+[^1]:  Concise is experimental, use verbose unless instructed.
 
 ## Step 3: Reload Claude Code Session
 Restart your Claude Code session to load the new agents.
