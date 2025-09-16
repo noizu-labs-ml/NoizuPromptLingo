@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # -----------------------------------------------------------------------------
-# dump_files.sh
+# dump_files.sh (Unicode-safe)
 #
 # Description:
 #   Dumps the contents of files under a given target folder in a Git repository,
@@ -11,23 +11,20 @@
 # Usage:
 #   ./dump_files.sh <target-folder> [--glob GLOB ...]
 #
-# Examples:
-#   # Dump everything under src/
-#   ./dump_files.sh src/
-#
-#   # Only Markdown files anywhere under docs/
-#   ./dump_files.sh docs/ -g "*.md"
-#
-#   # Multiple patterns (Markdown + TS)
-#   ./dump_files.sh . -g "*.md" -g "src/*.ts"
-#
 # Notes:
 #   - Respects .gitignore via `git ls-files --cached --others --exclude-standard`
-#   - You can pass multiple -g/--glob options. A file matches if it matches ANY.
-#   - Globs are matched against repo-relative paths (e.g., "src/utils/a.ts").
+#   - Matches ANY of the provided -g/--glob patterns (repo-relative paths).
+#   - Fully Unicode-safe: UTF-8 locale, Git non-ASCII quoting disabled,
+#     NUL-delimited file lists, safe printf, and `cat -- "$f"`.
 # -----------------------------------------------------------------------------
 
 set -euo pipefail
+
+# --- Unicode/UTF-8 safety ---
+export LC_ALL="${LC_ALL:-en_US.UTF-8}"
+export LANG="${LANG:-en_US.UTF-8}"
+# If your system lacks en_US.UTF-8, change to a UTF-8 locale that exists (e.g. C.UTF-8).
+# ----------------------------
 
 print_help() {
   sed -n '2,40p' "$0" | sed 's/^# \{0,1\}//'
@@ -39,28 +36,28 @@ if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
 fi
 
 if [[ $# -lt 1 ]]; then
-  echo "Usage: $0 <target-folder> [--glob GLOB ...]" >&2
+  printf 'Usage: %s <target-folder> [--glob GLOB ...]\n' "$0" >&2
   exit 1
 fi
 
 TARGET=""
-GLOBS=()
+declare -a GLOBS=()
 
 # --- Parse args ---
 TARGET="$1"; shift || true
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -g|--glob)
-      shift
-      [[ $# -gt 0 ]] || { echo "Error: --glob requires a pattern" >&2; exit 1; }
+      shift || true
+      [[ $# -gt 0 ]] || { printf 'Error: --glob requires a pattern\n' >&2; exit 1; }
       GLOBS+=("$1")
       ;;
     -h|--help)
       print_help; exit 0
       ;;
     *)
-      echo "Unknown argument: $1" >&2
-      echo "Usage: $0 <target-folder> [--glob GLOB ...]" >&2
+      printf 'Unknown argument: %s\n' "$1" >&2
+      printf 'Usage: %s <target-folder> [--glob GLOB ...]\n' "$0" >&2
       exit 1
       ;;
   esac
@@ -68,10 +65,10 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Ensure we're in a git repo and use repo root for stable relative paths
-git rev-parse --is-inside-work-tree >/dev/null 2>&1 || {
-  echo "Error: not inside a git repository." >&2
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  printf 'Error: not inside a git repository.\n' >&2
   exit 1
-}
+fi
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
 
@@ -84,7 +81,7 @@ matches_globs() {
   fi
   local g
   for g in "${GLOBS[@]}"; do
-    # Use [[ string == pattern ]] for shell-style glob matching
+    # [[ string == pattern ]] does shell-style glob matching (UTF-8 aware under our locale)
     if [[ "$path" == $g ]]; then
       return 0
     fi
@@ -92,12 +89,17 @@ matches_globs() {
   return 1
 }
 
-# List tracked + untracked but not ignored files, then dump with headers
-git ls-files --cached --others --exclude-standard -- "$TARGET" \
-  | while read -r f; do
+# Use NUL-delimited listing to be safe with any characters in filenames
+# Also disable Git's C-style quoting for non-ASCII names.
+git -c core.quotepath=false ls-files -z --cached --others --exclude-standard -- "$TARGET" \
+  | while IFS= read -r -d '' f; do
       if matches_globs "$f"; then
-        echo -e "\n# $f\n---"
-        cat "$f"
-        echo -e "\n* * *"
+        printf '\n# %s\n---\n' "%s" "$f"
+        # Use -- to stop option parsing in case filename starts with '-'
+        if ! cat -- "$f"; then
+          printf '<< Failed to read: %s >>\n' "$f" >&2
+        fi
+        printf '\n* * *\n'
       fi
     done
+

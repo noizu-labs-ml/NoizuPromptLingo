@@ -19,6 +19,10 @@
 #   - Uses `git ls-files` to respect .gitignore
 # -----------------------------------------------------------------------------
 
+# --- Unicode/UTF-8 safety ---
+export LC_ALL="${LC_ALL:-en_US.UTF-8}"
+export LANG="${LANG:-en_US.UTF-8}"
+
 set -euo pipefail
 
 TARGET="${1:-}"
