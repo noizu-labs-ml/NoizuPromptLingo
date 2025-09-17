@@ -1,43 +1,51 @@
 # Python Code Generation
-Generate Python scripts for data analysis, visualization, automation, and scientific computing using NPL-FIM.
+Generate Python code artifacts for automation, web development, data processing, and system integration using NPL-FIM.
 [Documentation](https://docs.python.org/3/)
 
 ## WWHW
-**What:** Create Python scripts for analysis, visualization, automation, and scientific tasks
-**Why:** Automate repetitive tasks, analyze data efficiently, and build reproducible workflows
-**How:** Generate pandas, matplotlib, numpy, or specialized library code through NPL-FIM
-**When:** Data analysis projects, automation scripts, scientific computing, or prototype development
+**What:** Create Python scripts, modules, packages, and applications across diverse domains
+**Why:** Accelerate development, ensure code consistency, and implement best practices automatically
+**How:** Transform requirements into production-ready Python code through NPL-FIM structured prompting
+**When:** Building APIs, automating workflows, processing data, or developing any Python-based solution
 
 ## When to Use
-- Automating data processing and analysis workflows
-- Creating custom visualization scripts for specific datasets
-- Building scientific computing and numerical analysis tools
-- Generating boilerplate code for common data science tasks
-- Converting analysis requirements into executable Python code
+- Creating web applications with Flask/Django/FastAPI frameworks
+- Building command-line tools and system automation scripts
+- Developing REST APIs and microservices architectures
+- Implementing data pipelines and ETL processes
+- Generating test suites and documentation utilities
 
 ## Key Outputs
-`pandas`, `matplotlib`, `numpy`, `scikit-learn`, `jupyter`, `streamlit`
+`.py scripts`, `modules/`, `packages/`, `.ipynb notebooks`, `CLI tools`, `API endpoints`
 
 ## Quick Example
 ```python
-import pandas as pd
-import matplotlib.pyplot as plt
+#!/usr/bin/env python3
+"""Configuration-driven task automation script."""
 
-# Load and analyze data
-df = pd.read_csv('data.csv')
-summary = df.groupby('category').agg({'value': ['mean', 'std']})
+import argparse
+import logging
+from pathlib import Path
 
-# Create visualization
-plt.figure(figsize=(10, 6))
-df.boxplot(column='value', by='category')
-plt.title('Value Distribution by Category')
-plt.show()
+def process_files(src_dir: Path, pattern: str) -> int:
+    """Process matching files with configurable operations."""
+    matches = list(src_dir.glob(pattern))
+    logging.info(f"Processing {len(matches)} files")
+
+    for filepath in matches:
+        # Apply transformations
+        pass
+    return len(matches)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--src", type=Path, required=True)
+    parser.add_argument("--pattern", default="*.txt")
+    args = parser.parse_args()
+
+    result = process_files(args.src, args.pattern)
+    print(f"Processed {result} files")
 ```
 
 ## Extended Reference
-- [Pandas Documentation](https://pandas.pydata.org/docs/)
-- [Matplotlib Gallery](https://matplotlib.org/stable/gallery/index.html)
-- [NumPy User Guide](https://numpy.org/doc/stable/user/)
-- [Scikit-learn Examples](https://scikit-learn.org/stable/auto_examples/)
-- [Jupyter Notebook Documentation](https://jupyter-notebook.readthedocs.io/)
-- [Python Data Science Handbook](https://jakevdp.github.io/PythonDataScienceHandbook/)
+[Python Patterns](https://python-patterns.guide/) | [FastAPI](https://fastapi.tiangolo.com/) | [Packaging](https://packaging.python.org/) | [Effective Python](https://effectivepython.com/) | [Real Python](https://realpython.com/) | [Stdlib](https://docs.python.org/3/library/)

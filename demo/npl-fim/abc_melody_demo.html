@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Little Ditty - ABC.js Sheet Music Demo</title>
+    <script src="https://paulrosen.github.io/abcjs/bin/abcjs-basic-min.js"></script>
+    <style>
+        body {
+            font-family: 'Georgia', serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #faf8f5;
+            color: #333;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #8b4513;
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            color: #8b4513;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            color: #666;
+            font-style: italic;
+            font-size: 1.2em;
+        }
+
+        #notation {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin: 30px 0;
+            border: 2px solid #e0e0e0;
+        }
+
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        button {
+            background: #8b4513;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            margin: 0 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background: #a0522d;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .info {
+            background: #f0f8ff;
+            padding: 20px;
+            border-radius: 5px;
+            border-left: 4px solid #4682b4;
+            margin: 20px 0;
+        }
+
+        .abc-source {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            margin: 20px 0;
+        }
+
+        .abc-source h3 {
+            margin-top: 0;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎵 Morning Sunshine 🎵</h1>
+        <div class="subtitle">A cheerful little ditty in C major</div>
+    </div>
+
+    <div class="info">
+        <strong>About this melody:</strong> "Morning Sunshine" is a 16-bar composition in 4/4 time, designed to evoke the feeling of a bright, cheerful morning. The melody features a rising motif that repeats and develops, creating a sense of optimism and energy.
+    </div>
+
+    <div class="controls">
+        <button onclick="playTune()" id="playBtn">▶️ Play</button>
+        <button onclick="stopTune()" id="stopBtn" disabled>⏹️ Stop</button>
+        <button onclick="toggleSource()" id="sourceBtn">📝 Show ABC Source</button>
+    </div>
+
+    <div id="notation"></div>
+
+    <div id="abc-source" class="abc-source" style="display: none;">
+        <h3>ABC Notation Source:</h3>
+        <pre id="abc-text"></pre>
+    </div>
+
+    <script>
+        // ABC notation for "Morning Sunshine" - a cheerful 16-bar melody
+        const abcNotation = `X:1
+T:Morning Sunshine
+C:NPL-FIM Demo
+M:4/4
+L:1/8
+K:C
+% A cheerful 16-bar melody in C major
+% Part A (8 bars) - Main theme
+|: C2 E2 G2 c2 | B2 A2 G4 | F2 A2 c2 A2 | G6 E2 |
+| C2 E2 G2 c2 | d2 c2 B2 A2 | G2 F2 E2 D2 | C6 z2 :|
+% Part B (8 bars) - Development
+| e2 d2 c2 B2 | A2 G2 F2 E2 | D2 F2 A2 c2 | B6 G2 |
+| e2 d2 c2 B2 | A2 G2 F2 E2 | G2 F2 E2 D2 | C6 z2 |]`;
+
+        let synthControl;
+        let isPlaying = false;
+
+        // Initialize the sheet music display
+        function initializeMusic() {
+            try {
+                // Render the notation
+                const visualObj = ABCJS.renderAbc("notation", abcNotation, {
+                    responsive: "resize",
+                    staffwidth: 800,
+                    scale: 1.2,
+                    paddingleft: 20,
+                    paddingright: 20,
+                    paddingtop: 20,
+                    paddingbottom: 20
+                });
+
+                // Initialize synth for playback
+                if (ABCJS.synth.supportsAudio()) {
+                    synthControl = new ABCJS.synth.SynthController();
+                    synthControl.load("#notation", null, {
+                        displayLoop: true,
+                        displayRestart: true,
+                        displayPlay: false,
+                        displayProgress: true,
+                        displayWarp: true
+                    });
+                } else {
+                    document.getElementById('playBtn').disabled = true;
+                    document.getElementById('playBtn').textContent = "🚫 Audio not supported";
+                }
+
+                // Display the ABC source
+                document.getElementById('abc-text').textContent = abcNotation;
+
+                console.log("ABC.js initialized successfully");
+            } catch (error) {
+                console.error("Error initializing ABC.js:", error);
+                document.getElementById('notation').innerHTML = '<p style="color: red;">Error loading sheet music. Please check your internet connection.</p>';
+            }
+        }
+
+        // Play the tune
+        function playTune() {
+            if (synthControl && !isPlaying) {
+                synthControl.play().then(() => {
+                    console.log("Playback started");
+                    isPlaying = true;
+                    document.getElementById('playBtn').disabled = true;
+                    document.getElementById('stopBtn').disabled = false;
+                }).catch((error) => {
+                    console.error("Playback error:", error);
+                    alert("Could not start playback. Please ensure your browser supports Web Audio API.");
+                });
+            }
+        }
+
+        // Stop the tune
+        function stopTune() {
+            if (synthControl && isPlaying) {
+                synthControl.stop();
+                isPlaying = false;
+                document.getElementById('playBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
+                console.log("Playback stopped");
+            }
+        }
+
+        // Toggle ABC source display
+        function toggleSource() {
+            const sourceDiv = document.getElementById('abc-source');
+            const button = document.getElementById('sourceBtn');
+
+            if (sourceDiv.style.display === 'none') {
+                sourceDiv.style.display = 'block';
+                button.textContent = '📝 Hide ABC Source';
+            } else {
+                sourceDiv.style.display = 'none';
+                button.textContent = '📝 Show ABC Source';
+            }
+        }
+
+        // Handle playback completion
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeMusic();
+
+            // Listen for when playback finishes
+            setInterval(() => {
+                if (synthControl && isPlaying && !synthControl.isPlaying()) {
+                    isPlaying = false;
+                    document.getElementById('playBtn').disabled = false;
+                    document.getElementById('stopBtn').disabled = true;
+                }
+            }, 500);
+        });
+
+        // Handle window resize for responsive display
+        window.addEventListener('resize', function() {
+            if (document.getElementById('notation').innerHTML !== '') {
+                initializeMusic();
+            }
+        });
+    </script>
+
+    <div class="info">
+        <h3>🎼 About ABC.js:</h3>
+        <p>ABC.js is a JavaScript library that renders ABC music notation in web browsers. ABC notation is a simple, text-based format for writing music that's particularly popular for folk tunes and traditional music.</p>
+
+        <h3>🎹 Melody Analysis:</h3>
+        <ul>
+            <li><strong>Key:</strong> C major (no sharps or flats)</li>
+            <li><strong>Time Signature:</strong> 4/4 (four quarter notes per bar)</li>
+            <li><strong>Structure:</strong> A-A-B format (first section repeats, then a contrasting section)</li>
+            <li><strong>Range:</strong> From middle C to high E (comfortable vocal range)</li>
+            <li><strong>Character:</strong> Bright and optimistic, perfect for a morning tune</li>
+        </ul>
+    </div>
+</body>
+</html>

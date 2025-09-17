@@ -1,47 +1,41 @@
 # Document Processing
-Generate reports, technical papers, documentation, and structured documents using NPL-FIM.
-[Documentation](https://pandoc.org/MANUAL.html)
-
-## WWHW
-**What:** Create structured documents, reports, technical papers, and documentation formats
-**Why:** Automate document generation, ensure consistent formatting, and streamline publishing workflows
-**How:** Use Markdown, LaTeX, Pandoc, or specialized document formats through NPL-FIM
-**When:** Technical writing, report generation, documentation automation, or publishing workflows
+Transform structured data into formatted documents, reports, and publications. [Documentation](https://github.com/noizu/npl-fim/docs/document-processing)
 
 ## When to Use
-- Generating technical reports from data analysis results
-- Creating consistent documentation across projects
-- Converting between document formats (Markdown to PDF, LaTeX to HTML)
-- Automating periodic report generation
-- Building structured academic or business documents
+- Converting data analysis results into formatted reports
+- Generating documentation from code annotations or metadata
+- Creating multi-format publications from single source content
+- Building parameterized documents with dynamic content insertion
+- Producing standardized reports from variable data sources
 
 ## Key Outputs
-`markdown`, `latex`, `html`, `pdf`, `docx`, `rst`
+- **Documents**: PDF, DOCX, ODT, RTF, EPUB
+- **Markup**: HTML, Markdown, reStructuredText, AsciiDoc
+- **Structured**: LaTeX, DocBook XML, JATS, TEI
+- **Presentation**: PPTX, reveal.js, Beamer slides
+- **Data Reports**: CSV summaries, JSON metadata, YAML configs
 
 ## Quick Example
-```markdown
-# Technical Report
-**Date:** 2024-01-15
-**Author:** Data Science Team
+```yaml
+document:
+  type: quarterly_sales_report
+  template: corporate_standard
 
-## Executive Summary
-Analysis of Q4 performance metrics shows 15% improvement in key indicators.
+inputs:
+  - data: q4_revenue.json
+    sample: {revenue: "$4.2M", growth: "+18%", units: 42750}
+  - metadata: company_info.yaml
+    fields: [logo, address, fiscal_year: "2024"]
+  - content: sections/executive_summary.md
 
-## Methodology
-- Data collection: API endpoints
-- Analysis: Python pandas, scipy
-- Visualization: matplotlib, seaborn
-
-## Results
-| Metric | Q3 | Q4 | Change |
-|--------|----|----|--------|
-| Revenue| 100K| 115K| +15% |
+outputs:
+  - format: pdf
+    style: boardroom_presentation
+    features: [toc, charts, watermark]
+  - format: html
+    style: interactive_dashboard
+    features: [drill_down, live_data]
+  - format: docx
+    style: editable_draft
+    features: [track_changes, comments]
 ```
-
-## Extended Reference
-- [Pandoc User's Guide](https://pandoc.org/MANUAL.html)
-- [Markdown Guide](https://www.markdownguide.org/)
-- [LaTeX Documentation](https://www.latex-project.org/help/documentation/)
-- [Sphinx Documentation](https://www.sphinx-doc.org/)
-- [GitBook Documentation](https://docs.gitbook.com/)
-- [Jupyter Book](https://jupyterbook.org/en/stable/intro.html)

@@ -1,45 +1,48 @@
 # Data Visualization
 Interactive charts, graphs, and dashboards for data exploration and presentation.
-[Documentation](https://d3js.org/getting-started)
-
-## WWHW
-**What**: Creating interactive charts, graphs, and dashboards to visualize datasets and metrics.
-**Why**: Transform raw data into comprehensible visual insights for decision-making and analysis.
-**How**: Using D3.js, Chart.js, or SVG with NPL-FIM for dynamic data binding and interactivity.
-**When**: Data analysis, reporting, monitoring dashboards, business intelligence presentations.
 
 ## When to Use
-- Need to display quantitative data patterns and trends
-- Building interactive dashboards for real-time monitoring
-- Creating statistical visualizations for reports
-- Developing business intelligence tools
-- Presenting financial data, sales metrics, or performance indicators
+- Display quantitative data patterns and trends
+- Build interactive dashboards for real-time monitoring
+- Create statistical visualizations for reports
+- Develop business intelligence tools
+- Present financial data, sales metrics, or performance indicators
 
 ## Key Outputs
 `svg`, `canvas`, `html+css`, `json-data`
 
-## Quick Example
-```javascript
-// D3.js bar chart with NPL-FIM data binding
-const data = [30, 86, 168, 281, 303, 365];
-const svg = d3.select("svg")
-  .attr("width", 420)
-  .attr("height", 200);
+## Dependencies
+Choose one visualization approach:
+- **SVG/CSS**: Native browser support, no dependencies
+- **Chart.js**: `npm install chart.js` - Simple charts
+- **D3.js**: `npm install d3` - Advanced visualizations
+- **Canvas API**: Native browser support for performance-critical graphics
 
-svg.selectAll("rect")
-  .data(data)
-  .enter().append("rect")
-  .attr("x", (d, i) => i * 70)
-  .attr("y", d => 200 - d)
-  .attr("width", 65)
-  .attr("height", d => d)
-  .attr("fill", "steelblue");
+## Quick Examples
+
+**SVG Bar Chart (No Dependencies)**
+```html
+<svg width="420" height="200">
+  <rect x="0" y="130" width="65" height="70" fill="steelblue"/>
+  <rect x="70" y="114" width="65" height="86" fill="steelblue"/>
+  <rect x="140" y="32" width="65" height="168" fill="steelblue"/>
+</svg>
 ```
 
-## Extended Reference
-- [D3.js Gallery](https://observablehq.com/@d3/gallery) - Comprehensive visualization examples
-- [Chart.js Documentation](https://www.chartjs.org/docs/) - Simple chart library
-- [Observable Plot](https://observablehq.com/plot/) - Grammar of graphics approach
-- [Vega-Lite](https://vega.github.io/vega-lite/) - Declarative visualization grammar
-- [React + D3](https://2019.wattenberger.com/blog/react-and-d3) - Integration patterns
-- [Data Visualization Handbook](https://datavizhandbook.info/) - Design principles
+**Chart.js Line Chart**
+```javascript
+// Requires: chart.js
+new Chart(ctx, {
+  type: 'line',
+  data: { labels: ['Jan', 'Feb', 'Mar'], datasets: [{ data: [30, 86, 168] }] }
+});
+```
+
+**Canvas Scatter Plot**
+```javascript
+// Native browser API
+const ctx = canvas.getContext('2d');
+data.forEach(([x, y]) => {
+  ctx.fillRect(x * 10, y * 5, 3, 3);
+});
+```

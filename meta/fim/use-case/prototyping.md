@@ -4,8 +4,8 @@ Generate mockups, wireframes, and interactive prototypes for rapid design iterat
 
 ## WWHW
 **What**: Create visual mockups, wireframes, and interactive prototype code
-**Why**: Rapid design iteration, stakeholder communication, user testing preparation
-**How**: Generate HTML/CSS prototypes, SVG wireframes, React components
+**Why**: Rapid design iteration, stakeholder communication, user testing
+**How**: Generate HTML/CSS prototypes, SVG wireframes, component patterns
 **When**: Early design phase, user research, design validation, developer handoff
 
 ## When to Use
@@ -13,56 +13,38 @@ Generate mockups, wireframes, and interactive prototypes for rapid design iterat
 - Interactive prototype development
 - Design system component creation
 - User flow visualization
-- Stakeholder design presentations
+- Stakeholder presentations
 
 ## Key Outputs
-`html-prototypes`, `svg-wireframes`, `react-components`, `figma-plugins`
+`html-prototypes`, `svg-wireframes`, `component-patterns`, `figma-plugins`
 
 ## Quick Example
 ```html
-<!-- Quick wireframe prototype -->
+<!-- Universal wireframe prototype pattern -->
 <!DOCTYPE html>
-<html>
-<head>
-    <style>
-        .wireframe { border: 2px solid #ccc; margin: 10px; padding: 20px; }
-        .header { height: 60px; background: #f0f0f0; }
-        .nav { height: 40px; background: #e0e0e0; }
-        .content { min-height: 300px; background: #f8f8f8; }
-        .sidebar { width: 200px; float: right; background: #eee; }
-    </style>
-</head>
-<body>
-    <div class="wireframe">
-        <div class="header">Header Section</div>
-        <div class="nav">Navigation</div>
-        <div class="sidebar">Sidebar</div>
-        <div class="content">Main Content Area</div>
-    </div>
-</body>
-</html>
-```
-
-```jsx
-// React prototype component
-const PrototypeCard = ({ title, content, actions }) => (
-  <div className="prototype-card">
-    <h3>{title}</h3>
-    <p>{content}</p>
-    <div className="actions">
-      {actions.map(action =>
-        <button key={action.id} onClick={action.handler}>
-          {action.label}
-        </button>
-      )}
-    </div>
+<style>
+  .wire { border: 2px solid #ccc; margin: 10px; padding: 20px; }
+  .block { background: #f0f0f0; padding: 10px; margin: 5px 0; }
+</style>
+<div class="wire">
+  <div class="block" style="height:60px">Header</div>
+  <div class="block" style="height:40px">Navigation</div>
+  <div style="display:flex">
+    <div class="block" style="flex:1; min-height:200px">Content</div>
+    <div class="block" style="width:200px">Sidebar</div>
   </div>
-);
+</div>
 ```
 
-## Extended Reference
-- [Storybook Documentation](https://storybook.js.org/docs)
-- [Framer Motion](https://www.framer.com/motion/)
-- [React Prototype Tools](https://react-proto.github.io/react-proto/)
-- [Don't Make Me Think by Steve Krug](https://www.amazon.com/Dont-Make-Think-Revisited-Usability/dp/0321965515)
-- [Atomic Design by Brad Frost](https://atomicdesign.bradfrost.com/)
+```pseudo
+// Universal component prototype pattern
+Component(title, content, actions) {
+  container {
+    header: title
+    body: content
+    footer: actions.map(action => Button(action))
+  }
+  state: { expanded: false, selected: null }
+  behavior: { toggle(), select(), render() }
+}
+```

@@ -1,11 +1,11 @@
 # 3D Graphics
 WebGL scenes, 3D data visualization, and volumetric rendering.
-[Documentation](https://threejs.org/docs/)
+[Documentation](https://webglfundamentals.org/)
 
 ## WWHW
 **What**: Creating interactive 3D scenes, volumetric visualizations, and immersive graphics experiences.
 **Why**: Represent complex spatial data, create engaging user experiences, and visualize 3D concepts.
-**How**: Using Three.js, WebGL, or specialized 3D libraries with NPL-FIM for data-driven 3D content.
+**How**: Using WebGL APIs or 3D libraries with NPL-FIM for data-driven spatial content generation.
 **When**: Scientific visualization, CAD previews, gaming interfaces, architectural walkthroughs.
 
 ## When to Use
@@ -19,35 +19,29 @@ WebGL scenes, 3D data visualization, and volumetric rendering.
 `webgl`, `gltf-models`, `canvas-3d`, `shader-code`
 
 ## Quick Example
-```javascript
-// Three.js scene with NPL-FIM data integration
-import * as THREE from 'three';
+```pseudocode
+// Conceptual 3D scene with NPL-FIM data integration
+Scene scene = create_3d_scene()
+Camera camera = create_perspective_camera(fov: 75, aspect_ratio: viewport)
+Renderer renderer = create_webgl_renderer()
 
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-const renderer = new THREE.WebGLRenderer();
+// Data-driven 3D object generation
+For each data_point in dataset:
+    Geometry shape = generate_geometry(data_point.type)
+    Material surface = create_material(
+        color: map_value_to_color(data_point.value),
+        properties: data_point.attributes
+    )
+    Mesh object = create_mesh(shape, surface)
+    position = calculate_3d_position(data_point)
+    scene.add(object, position)
 
-// Create data-driven 3D visualization
-const geometry = new THREE.BoxGeometry();
-const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-const cube = new THREE.Mesh(geometry, material);
-scene.add(cube);
+// Animation loop
+Function render_frame():
+    update_scene_based_on_interactions()
+    apply_transformations(time_delta)
+    renderer.render(scene, camera)
+    request_next_frame(render_frame)
 
-camera.position.z = 5;
-
-function animate() {
-    requestAnimationFrame(animate);
-    cube.rotation.x += 0.01;
-    cube.rotation.y += 0.01;
-    renderer.render(scene, camera);
-}
-animate();
+render_frame()
 ```
-
-## Extended Reference
-- [Three.js Documentation](https://threejs.org/docs/index.html) - 3D JavaScript library
-- [WebGL Fundamentals](https://webglfundamentals.org/) - Low-level 3D graphics
-- [A-Frame](https://aframe.io/) - Web VR framework
-- [Babylon.js](https://www.babylonjs.com/) - 3D engine for web
-- [D3.js 3D Examples](https://bl.ocks.org/vasturiano/02affe306ce445e423f992faeea13521) - Data-driven 3D
-- [WebGL2 Samples](https://www.khronos.org/webgl/wiki/WebGL2) - Advanced techniques

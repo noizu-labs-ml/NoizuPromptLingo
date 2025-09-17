@@ -1,2205 +1,1758 @@
-# NPL-FIM Network and Graph Visualization: Comprehensive Guide
+# NPL-FIM Network Visualization: Production Guide
 
 ## Table of Contents
 
-1. [Overview and Background](#overview-and-background)
-2. [Graph Theory Fundamentals](#graph-theory-fundamentals)
-3. [Network Visualization Types](#network-visualization-types)
-4. [Layout Algorithms](#layout-algorithms)
-5. [Interactive Network Design](#interactive-network-design)
-6. [Tool Recommendations](#tool-recommendations)
-7. [Performance Optimization](#performance-optimization)
-8. [Accessibility Guidelines](#accessibility-guidelines)
-9. [Code Examples](#code-examples)
-10. [Best Practices](#best-practices)
-11. [Troubleshooting](#troubleshooting)
-12. [Learning Resources](#learning-resources)
+### 1. [Foundation](#foundation)
+   - [Quality Pattern Recognition Framework](#quality-pattern-recognition-framework)
+   - [Critical Success Metrics](#critical-success-metrics)
 
-## Overview and Background
+### 2. [Graph Data Structures](#graph-data-structures)
+   - [Adjacency Matrix Representation](#adjacency-matrix-representation)
+   - [Adjacency List Implementation](#adjacency-list-implementation)
+   - [Edge List Structures](#edge-list-structures)
 
-Network and graph visualization represents one of the most complex and powerful forms of data visualization, enabling the exploration of relationships, hierarchies, and connections between entities. In the NPL-FIM (Noizu PromptLingo - Fill-in-the-Middle) context, network visualization leverages structured prompting to create sophisticated, interactive graph representations that can handle everything from small social networks to large-scale infrastructure mappings.
+### 3. [Layout Algorithms](#layout-algorithms)
+   - [Force-Directed Algorithms](#force-directed-algorithms)
+   - [Hierarchical Layout Methods](#hierarchical-layout-methods)
+   - [Circular and Arc Diagrams](#circular-and-arc-diagrams)
+   - [Algorithm Selection Matrix](#algorithm-selection-matrix)
 
-### Why Network Visualization Matters
+### 4. [D3.js Implementation Patterns](#d3js-implementation-patterns)
+   - [Basic Force Simulation](#basic-force-simulation)
+   - [Advanced Force Configurations](#advanced-force-configurations)
+   - [Custom Layout Algorithms](#custom-layout-algorithms)
 
-Networks are everywhere in our modern world:
-- **Social Networks**: Understanding human connections and influence patterns
-- **Infrastructure Networks**: Mapping system dependencies and communication flows
-- **Biological Networks**: Protein interactions, neural networks, ecological relationships
-- **Information Networks**: Knowledge graphs, citation networks, hyperlink structures
-- **Business Networks**: Supply chains, organizational structures, market relationships
+### 5. [Cytoscape.js Integration](#cytoscapejs-integration)
+   - [Configuration Patterns](#configuration-patterns)
+   - [Custom Extensions](#custom-extensions)
+   - [Performance Optimization](#performance-optimization)
 
-### NPL-FIM Advantages for Network Visualization
+### 6. [Example Progression](#example-progression)
+   - [Simple Network (5-20 nodes)](#simple-network-5-20-nodes)
+   - [Medium Network (100-500 nodes)](#medium-network-100-500-nodes)
+   - [Large Network (1000+ nodes)](#large-network-1000-nodes)
+   - [Enterprise Network (10,000+ nodes)](#enterprise-network-10000-nodes)
 
-1. **Semantic Relationship Modeling**: Use NPL syntax to define complex relationship types
-2. **Dynamic Graph Generation**: Leverage FIM capabilities for real-time network updates
-3. **Multi-Scale Visualization**: Automatically adapt detail levels based on graph size
-4. **Context-Aware Layouts**: Intelligently choose layout algorithms based on graph characteristics
-5. **Interactive Exploration**: Generate responsive interfaces for network navigation
+### 7. [Production Templates](#production-templates)
+   - [Interactive Behavior Patterns](#interactive-behavior-patterns)
+   - [Visual Encoding Guidelines](#visual-encoding-guidelines)
+   - [Performance Optimization Patterns](#performance-optimization-patterns)
 
-### Historical Context
+### 8. [Quality Assurance](#quality-assurance)
+   - [Validation Frameworks](#validation-frameworks)
+   - [Debugging Workflows](#debugging-workflows)
+   - [Success Patterns](#success-patterns)
 
-Graph visualization has evolved from simple node-link diagrams drawn by hand to sophisticated interactive systems capable of handling millions of nodes and edges. The field combines insights from graph theory, human-computer interaction, and visual perception research to create effective representations of complex relational data.
+---
 
-Key milestones include:
-- **1960s**: Early computer-generated graph drawings
-- **1980s**: Development of fundamental layout algorithms (spring-embedder)
-- **1990s**: Web-based network visualization emergence
-- **2000s**: Large-scale network analysis tools
-- **2010s**: Interactive web-based graph libraries
-- **2020s**: AI-assisted graph layout and analysis
+## Foundation
 
-## Graph Theory Fundamentals
+## Quality Pattern Recognition Framework
 
-### Basic Concepts
+### Visual Quality Indicators
+⟪quality-patterns⟫
+  ↦ excellent: Clear node separation, readable labels, logical clustering, smooth edges
+  ↦ good: Identifiable structure, minimal overlap, consistent sizing
+  ↦ acceptable: Readable at target zoom level, functional navigation
+  ↦ poor: Overlapping nodes, illegible text, tangled edges
+  ↦ unacceptable: Incomprehensible layout, missing elements, broken interactions
+⟪/quality-patterns⟫
 
-#### Nodes and Edges
-- **Nodes (Vertices)**: Individual entities in the network
-- **Edges (Links)**: Connections or relationships between nodes
-- **Directed vs. Undirected**: Whether relationships have direction
-- **Weighted vs. Unweighted**: Whether connections have associated values
+### Critical Success Metrics
+- **Node clarity**: All nodes visible and distinguishable
+- **Edge readability**: Connections clear without excessive crossing
+- **Label legibility**: Text readable at intended zoom levels
+- **Interactive responsiveness**: Smooth pan/zoom under 16ms
+- **Information hierarchy**: Important elements prominently displayed
 
-#### Graph Types
+## Graph Data Structures
 
-**Simple Graphs**:
-- Undirected, unweighted connections
-- Examples: Friendship networks, collaboration networks
-
-**Directed Graphs (Digraphs)**:
-- Connections have direction (source → target)
-- Examples: Twitter follows, web page links, workflow processes
-
-**Weighted Graphs**:
-- Connections have associated values
-- Examples: Transportation networks (distances), communication frequency
-
-**Multipartite Graphs**:
-- Nodes divided into distinct groups
-- Examples: Author-paper relationships, actor-movie connections
-
-#### Graph Properties
-
-**Connectivity Measures**:
-- **Degree**: Number of connections per node
-- **Path Length**: Distance between nodes
-- **Clustering Coefficient**: Local connectivity density
-- **Betweenness Centrality**: Node importance in shortest paths
-
-**Global Properties**:
-- **Density**: Ratio of actual to possible edges
-- **Diameter**: Maximum shortest path length
-- **Components**: Disconnected subgraphs
-- **Small-World Property**: High clustering with short path lengths
-
-### NPL Syntax for Graph Definition
-
+### Adjacency Matrix Representation
 ```npl
-⟪network-graph⟫
-  ↦ nodes: [
-    {
-      ↦ id: "${node_id}"
-      ↦ label: "${node_label}"
-      ↦ type: "${node_type}"
-      ↦ properties: ${node_properties}
-    }
-  ]
-  ↦ edges: [
-    {
-      ↦ source: "${source_id}"
-      ↦ target: "${target_id}"
-      ↦ type: "${edge_type}"
-      ↦ weight: ${edge_weight}
-      ↦ properties: ${edge_properties}
-    }
-  ]
-  ↦ layout: "${layout_algorithm}"
-  ↦ styling: ${visual_encoding}
-⟪/network-graph⟫
+⟪adjacency-matrix⟫
+  ↦ definition: 2D array where matrix[i][j] represents edge weight between nodes i and j
+  ↦ space-complexity: O(V²) where V = number of vertices
+  ↦ time-complexity: {
+    edge-lookup: O(1),
+    add-edge: O(1),
+    get-neighbors: O(V)
+  }
+  ↦ best-for: dense-graphs, weighted-edges, mathematical-operations
+  ↦ worst-for: sparse-graphs, memory-constrained-environments
+⟪/adjacency-matrix⟫
 ```
 
-### Mathematical Foundations
+**Implementation Pattern:**
+```javascript
+// Optimized adjacency matrix for network visualization
+class AdjacencyMatrix {
+  constructor(nodeCount) {
+    this.size = nodeCount;
+    this.matrix = Array(nodeCount).fill().map(() => Array(nodeCount).fill(0));
+    this.nodeLabels = new Map(); // id -> index mapping
+  }
 
-#### Adjacency Representations
+  addEdge(source, target, weight = 1) {
+    const srcIdx = this.nodeLabels.get(source);
+    const tgtIdx = this.nodeLabels.get(target);
+    this.matrix[srcIdx][tgtIdx] = weight;
+    // For undirected graphs: this.matrix[tgtIdx][srcIdx] = weight;
+  }
 
-**Adjacency Matrix**:
-```
-A[i][j] = {
-  1 if edge exists between node i and j
-  0 otherwise
+  getNeighbors(nodeId) {
+    const idx = this.nodeLabels.get(nodeId);
+    return this.matrix[idx].map((weight, i) =>
+      weight > 0 ? this.getNodeIdByIndex(i) : null
+    ).filter(Boolean);
+  }
 }
 ```
 
-**Adjacency List**:
+### Adjacency List Implementation
+```npl
+⟪adjacency-list⟫
+  ↦ definition: Array of lists where each index contains neighbors of that vertex
+  ↦ space-complexity: O(V + E) where V = vertices, E = edges
+  ↦ time-complexity: {
+    edge-lookup: O(degree(v)),
+    add-edge: O(1),
+    get-neighbors: O(degree(v))
+  }
+  ↦ best-for: sparse-graphs, memory-efficiency, traversal-algorithms
+  ↦ worst-for: frequent-edge-queries, dense-graphs
+⟪/adjacency-list⟫
 ```
-adjacencyList = {
-  nodeA: [nodeB, nodeC, nodeD],
-  nodeB: [nodeA, nodeE],
-  ...
+
+**Implementation Pattern:**
+```javascript
+// Production-ready adjacency list for large networks
+class AdjacencyList {
+  constructor() {
+    this.nodes = new Map(); // nodeId -> Set of neighbors
+    this.nodeData = new Map(); // nodeId -> node attributes
+    this.edgeData = new Map(); // edgeKey -> edge attributes
+  }
+
+  addNode(id, data = {}) {
+    if (!this.nodes.has(id)) {
+      this.nodes.set(id, new Set());
+      this.nodeData.set(id, data);
+    }
+  }
+
+  addEdge(source, target, data = {}) {
+    this.addNode(source);
+    this.addNode(target);
+    this.nodes.get(source).add(target);
+    this.edgeData.set(`${source}-${target}`, data);
+    // For undirected: this.nodes.get(target).add(source);
+  }
+
+  getNeighbors(nodeId) {
+    return Array.from(this.nodes.get(nodeId) || []);
+  }
+
+  getDegree(nodeId) {
+    return this.nodes.get(nodeId)?.size || 0;
+  }
+
+  // Optimized for visualization frameworks
+  toD3Format() {
+    const nodes = Array.from(this.nodeData.entries()).map(([id, data]) => ({
+      id, ...data
+    }));
+
+    const links = [];
+    this.edgeData.forEach((data, edgeKey) => {
+      const [source, target] = edgeKey.split('-');
+      links.push({ source, target, ...data });
+    });
+
+    return { nodes, links };
+  }
 }
 ```
 
-#### Common Algorithms
+### Edge List Structures
+```npl
+⟪edge-list⟫
+  ↦ definition: Simple array of edge objects, each containing source and target
+  ↦ space-complexity: O(E) where E = number of edges
+  ↦ time-complexity: {
+    edge-lookup: O(E),
+    add-edge: O(1),
+    get-neighbors: O(E)
+  }
+  ↦ best-for: simple-storage, file-formats, streaming-data
+  ↦ worst-for: frequent-neighbor-queries, large-graphs
+⟪/edge-list⟫
+```
 
-**Traversal Algorithms**:
-- Breadth-First Search (BFS)
-- Depth-First Search (DFS)
-- Dijkstra's shortest path
+**Implementation Pattern:**
+```javascript
+// Lightweight edge list for simple networks
+class EdgeList {
+  constructor() {
+    this.edges = [];
+    this.nodeSet = new Set();
+  }
 
-**Centrality Measures**:
-- Degree centrality
-- Betweenness centrality
-- Closeness centrality
-- PageRank
+  addEdge(source, target, weight = 1) {
+    this.edges.push({ source, target, weight });
+    this.nodeSet.add(source);
+    this.nodeSet.add(target);
+  }
 
-**Community Detection**:
-- Modularity optimization
-- Hierarchical clustering
-- Label propagation
+  getNodes() {
+    return Array.from(this.nodeSet);
+  }
 
-## Network Visualization Types
+  getNeighbors(nodeId) {
+    return this.edges
+      .filter(edge => edge.source === nodeId)
+      .map(edge => edge.target);
+  }
 
-### Node-Link Diagrams
-
-#### Standard Network Layouts
-**Best for**: General-purpose network visualization
-**Characteristics**:
-- Nodes represented as shapes (circles, squares, etc.)
-- Edges as lines or curves connecting nodes
-- Flexible positioning based on layout algorithms
-
-**Use Cases**:
-- Social network analysis
-- Organizational charts
-- System architecture diagrams
-- Citation networks
-
-#### Hierarchical Networks
-**Best for**: Tree structures and directed acyclic graphs
-**Characteristics**:
-- Clear parent-child relationships
-- Levels representing hierarchy depth
-- Often uses vertical or radial layouts
-
-**Layout Options**:
-- **Tree Layout**: Traditional top-down hierarchy
-- **Radial Layout**: Circular arrangement from center
-- **Indented Layout**: File-system style representation
-- **Icicle Layout**: Nested rectangles showing hierarchy
-
-### Matrix-Based Visualization
-
-#### Adjacency Matrices
-**Best for**: Dense networks and pattern detection
-**Characteristics**:
-- Rows and columns represent nodes
-- Cell values represent edge weights or existence
-- Effective for pattern recognition in dense graphs
-
-**Advantages**:
-- Scalable to large networks
-- Clear pattern visibility
-- No edge crossing issues
-- Quantitative relationship display
-
-#### Node-Link Hybrid
-**Best for**: Combined overview and detail exploration
-**Characteristics**:
-- Matrix view for dense regions
-- Node-link for sparse regions
-- Interactive switching between representations
-
-### Specialized Network Types
-
-#### Bipartite Graphs
-**Structure**: Two distinct node types with connections only between types
-**Applications**:
-- Author-publication networks
-- Actor-movie relationships
-- Gene-disease associations
-- Customer-product interactions
-
-**Visualization Approaches**:
-- **Two-Column Layout**: Separate columns for each node type
-- **Circular Layout**: Node types on opposite sides
-- **Layered Layout**: Horizontal separation with vertical positioning
-
-#### Multilayer Networks
-**Structure**: Multiple relationship types or time slices
-**Applications**:
-- Social networks with different relationship types
-- Transportation networks with multiple modes
-- Temporal networks showing evolution over time
-
-**Visualization Strategies**:
-- **Layer Separation**: Side-by-side network views
-- **Edge Bundling**: Group similar edge types
-- **Animation**: Show temporal changes
-- **Lens Effects**: Focus on specific layers
-
-#### Geographic Networks
-**Structure**: Nodes with geographic coordinates
-**Applications**:
-- Transportation networks
-- Communication infrastructure
-- Disease spread patterns
-- Trade relationships
-
-**Visualization Features**:
-- **Map Integration**: Overlay on geographic maps
-- **Great Circle Paths**: Curved edges following Earth's surface
-- **Choropleth Combination**: Color-coded regions with network overlay
-- **Multi-Scale Views**: Country, regional, and local levels
+  // Convert to more efficient structure for large datasets
+  toAdjacencyList() {
+    const adjList = new AdjacencyList();
+    this.edges.forEach(({ source, target, weight }) => {
+      adjList.addEdge(source, target, { weight });
+    });
+    return adjList;
+  }
+}
+```
 
 ## Layout Algorithms
 
 ### Force-Directed Algorithms
+```npl
+⟪force-directed-algorithms⟫
+  ↦ principle: Physical simulation using attraction and repulsion forces
+  ↦ variants: {
+    fruchterman-reingold: global-temperature-cooling,
+    kamada-kawai: energy-minimization,
+    force-atlas2: modularity-optimization,
+    d3-force: customizable-force-composition
+  }
+  ↦ parameters: {
+    charge-strength: repulsion-between-nodes,
+    link-distance: ideal-edge-length,
+    alpha: simulation-temperature,
+    alpha-decay: cooling-rate
+  }
+  ↦ convergence-criteria: alpha < threshold OR max-iterations
+⟪/force-directed-algorithms⟫
+```
 
-#### Spring-Embedder Model
-**Principle**: Treat edges as springs and nodes as masses
-**Behavior**:
-- Connected nodes attract each other
-- All nodes repel each other
-- System seeks equilibrium state
-
-**Advantages**:
-- Natural-looking layouts
-- Reveals community structure
-- Works well for medium-sized graphs
-
-**Limitations**:
-- Can be slow for large graphs
-- May not converge to stable layout
-- Sensitive to initial positioning
-
-#### Implementation Example
+**Advanced D3 Force Configuration:**
 ```javascript
-function forceSimulation(nodes, edges) {
+// Production force simulation with quality optimizations
+function createOptimizedForceSimulation(nodes, links) {
   const simulation = d3.forceSimulation(nodes)
-    .force("link", d3.forceLink(edges)
-      .id(d => d.id)
-      .distance(100)
-      .strength(0.1))
+    // Repulsion between nodes (prevents overlap)
     .force("charge", d3.forceManyBody()
-      .strength(-300)
-      .distanceMax(500))
+      .strength(d => -300 * Math.sqrt(d.weight || 1))
+      .distanceMax(500)) // Limit force calculation distance
+
+    // Attraction along edges
+    .force("link", d3.forceLink(links)
+      .id(d => d.id)
+      .distance(d => d.distance || 100)
+      .strength(d => d.strength || 0.1))
+
+    // Center the graph
     .force("center", d3.forceCenter(width / 2, height / 2))
+
+    // Prevent node overlap
     .force("collision", d3.forceCollide()
-      .radius(d => d.radius + 5));
+      .radius(d => (d.radius || 5) + 2)
+      .strength(0.7))
+
+    // Boundary forces (keep nodes in viewport)
+    .force("x", d3.forceX(width / 2).strength(0.01))
+    .force("y", d3.forceY(height / 2).strength(0.01));
+
+  // Quality convergence settings
+  simulation
+    .alphaTarget(0.1) // Maintain slight motion
+    .alphaDecay(0.02) // Slower cooling for better layout
+    .velocityDecay(0.4); // Damping for stability
 
   return simulation;
 }
 ```
 
-#### Fruchterman-Reingold Algorithm
-**Improvements over basic spring model**:
-- Temperature system for gradual convergence
-- Adaptive step sizes
-- Better edge length uniformity
-
-**Parameters**:
-- **k**: Optimal edge length
-- **Temperature**: Controls movement magnitude
-- **Iterations**: Number of simulation steps
-
-### Hierarchical Layouts
-
-#### Tree Layouts
-**Reingold-Tilford Algorithm**:
-- Optimizes space usage in tree drawings
-- Ensures no node overlaps
-- Maintains aesthetic tree properties
-
-**Layered Approach**:
-1. Assign nodes to levels based on distance from root
-2. Order nodes within levels to minimize crossings
-3. Adjust positions for aesthetic improvement
-
-#### Radial Layouts
-**Characteristics**:
-- Root node at center
-- Children arranged in concentric circles
-- Angular positioning based on subtree size
-
-**Advantages**:
-- Compact representation
-- Natural focus on root
-- Good for exploring tree structure
-
-### Specialized Algorithms
-
-#### Circular Layouts
-**Applications**:
-- Chord diagrams
-- Network cycles
-- Periodic structures
-
-**Implementation Considerations**:
-- Node ordering strategies
-- Arc length optimization
-- Label placement
-
-#### Grid-Based Layouts
-**Applications**:
-- Regular network structures
-- Lattice graphs
-- Spatial networks
-
-**Features**:
-- Predictable positioning
-- Easy navigation
-- Clear spatial relationships
-
-#### Multi-Level Algorithms
-**Approach**:
-1. Coarsen graph through node merging
-2. Apply layout algorithm to coarsened graph
-3. Refine layout by expanding merged nodes
-
-**Benefits**:
-- Handles large graphs efficiently
-- Maintains global structure
-- Reduces local minima problems
-
-### Layout Selection Criteria
-
-#### Graph Characteristics
-- **Size**: Number of nodes and edges
-- **Density**: Ratio of edges to possible edges
-- **Structure**: Tree, cycle, clique, or general graph
-- **Clustering**: Presence of distinct communities
-
-#### Visualization Goals
-- **Overview**: Global structure understanding
-- **Detail**: Local relationship exploration
-- **Pattern Detection**: Identifying specific structures
-- **Navigation**: Moving through large networks
-
-#### Performance Requirements
-- **Real-time Updates**: Dynamic graph changes
-- **Interaction Responsiveness**: User manipulation feedback
-- **Memory Constraints**: Available computational resources
-- **Rendering Speed**: Frame rate requirements
-
-## Interactive Network Design
-
-### User Interaction Patterns
-
-#### Navigation and Exploration
-
-**Pan and Zoom**:
-- **Semantic Zoom**: Adjust detail level based on zoom factor
-- **Constrained Navigation**: Prevent navigation beyond graph bounds
-- **Smooth Transitions**: Animated movement between views
-- **Reset Controls**: Return to overview state
-
-**Node Selection and Highlighting**:
-- **Single Selection**: Focus on individual nodes
-- **Multi-Selection**: Compare multiple nodes
-- **Neighborhood Highlighting**: Show connected nodes
-- **Path Highlighting**: Visualize shortest paths
-
-**Filtering and Search**:
-- **Attribute Filtering**: Show/hide based on node/edge properties
-- **Topological Filtering**: Filter by structural properties
-- **Text Search**: Find nodes by label or attributes
-- **Pattern Matching**: Identify structural motifs
-
-#### Data Manipulation
-
-**Dynamic Updates**:
-- **Incremental Updates**: Add/remove nodes and edges
-- **Batch Updates**: Process multiple changes efficiently
-- **Animation**: Smooth transitions during updates
-- **State Management**: Undo/redo capabilities
-
-**Layout Adjustment**:
-- **Manual Positioning**: Drag nodes to desired locations
-- **Layout Switching**: Change between different algorithms
-- **Parameter Tuning**: Adjust layout algorithm settings
-- **Constraint Application**: Pin nodes in fixed positions
-
-### Advanced Interaction Techniques
-
-#### Lens and Focus Techniques
-
-**Fisheye Distortion**:
-- Magnify focus area while maintaining context
-- Smooth distortion transition
-- Preserve global structure awareness
-
-**Detail-in-Context**:
-- Show detailed view within overview
-- Multiple simultaneous focus regions
-- Coordinated highlighting between views
-
-#### Temporal Navigation
-
-**Time Slider Controls**:
-- Navigate through network evolution
-- Play/pause animation controls
-- Speed adjustment
-- Bookmark significant time points
-
-**Temporal Brushing**:
-- Select time ranges for analysis
-- Aggregate temporal data
-- Compare different time periods
-- Identify temporal patterns
-
-### Information Display
-
-#### Node Information
-
-**Tooltip Systems**:
-- On-demand attribute display
-- Rich content including images and links
-- Responsive positioning
-- Contextual information based on selection
-
-**Panel Integration**:
-- Dedicated information panels
-- Tabbed interface for different data types
-- Synchronized highlighting
-- Editable attributes
-
-#### Edge Information
-
-**Edge Bundling**:
-- Group similar edges to reduce visual clutter
-- Hierarchical bundling for multi-level structures
-- Interactive bundle expansion
-- Curve-based routing for aesthetic appeal
-
-**Edge Filtering**:
-- Threshold-based display
-- Type-based filtering
-- Dynamic edge opacity
-- Pattern-based selection
-
-### Multi-View Coordination
-
-#### Linked Views
-- **Selection Linking**: Coordinate selections across views
-- **Navigation Linking**: Synchronized pan and zoom
-- **Filter Linking**: Apply filters across multiple representations
-- **Highlight Linking**: Coordinated element highlighting
-
-#### Overview + Detail
-- **Minimap Navigation**: Small overview with current view indicator
-- **Zoom Slider**: Dedicated zoom control
-- **Breadcrumb Navigation**: Show current focus path
-- **Quick Navigation**: Jump to specific graph regions
-
-## Tool Recommendations
-
-### JavaScript Libraries
-
-| Tool | Strengths | Best For | Learning Curve | NPL-FIM Integration |
-|------|-----------|----------|----------------|-------------------|
-| D3.js | Maximum customization, performance | Custom network visualizations | Steep | Excellent |
-| Cytoscape.js | Rich API, layout algorithms | Interactive graph applications | Moderate | Good |
-| Vis.js | Easy setup, good documentation | Quick prototypes, dashboards | Gentle | Good |
-| Sigma.js | Performance, WebGL rendering | Large networks | Moderate | Good |
-| Graphology | Modern architecture, algorithms | Analysis-heavy applications | Moderate | Excellent |
-
-### Specialized Tools
-
-| Tool | Strengths | Best For | Platform | Cost |
-|------|-----------|----------|----------|------|
-| Gephi | Advanced analytics, plugins | Research, large-scale analysis | Desktop | Free |
-| Cytoscape | Biological networks, research | Scientific visualization | Desktop | Free |
-| yEd | Professional diagrams | Business process mapping | Desktop | Free/Paid |
-| Neo4j Browser | Graph database integration | Database visualization | Web/Desktop | Free/Paid |
-| Graphviz | Programmatic generation | Automated diagram creation | Command-line | Free |
-
-### Web-Based Platforms
-
-| Platform | Strengths | Best For | Accessibility | Integration |
-|----------|-----------|----------|---------------|-------------|
-| Observable | Collaborative development | Rapid prototyping | High | D3.js |
-| Flourish | No-code creation | Non-technical users | High | Limited |
-| Kumu | Social network analysis | Community mapping | Medium | Good |
-| Linkurious | Enterprise features | Business analytics | Medium | Excellent |
-| Graph Commons | Collaborative mapping | Public research projects | High | Limited |
-
-### Python Libraries
-
-| Library | Strengths | Best For | Ecosystem | Performance |
-|---------|-----------|----------|-----------|-------------|
-| NetworkX | Comprehensive algorithms | Analysis and computation | Scientific Python | Good |
-| Plotly | Interactive web visualizations | Jupyter notebooks | Dash ecosystem | Good |
-| Bokeh | Interactive applications | Complex dashboards | PyData | Good |
-| Pyvis | Easy network visualization | Quick exploration | Limited | Fair |
-| Graph-tool | High performance | Large-scale analysis | GTK/Qt | Excellent |
-
-### R Libraries
-
-| Package | Strengths | Best For | Integration | Documentation |
-|---------|-----------|----------|-------------|---------------|
-| igraph | Comprehensive analysis | Statistical analysis | R ecosystem | Excellent |
-| ggraph | Grammar of graphics | Publication graphics | ggplot2 | Good |
-| visNetwork | Interactive visualizations | Shiny applications | htmlwidgets | Good |
-| networkD3 | D3.js integration | Web applications | R/JavaScript | Fair |
-| tidygraph | Tidy data principles | Data pipeline integration | Tidyverse | Good |
-
-## Performance Optimization
-
-### Large Network Handling
-
-#### Level-of-Detail Rendering
-
-**Distance-Based LOD**:
-- Adjust node detail based on zoom level
-- Simplify edge rendering at overview levels
-- Progressive enhancement as users zoom in
-
-**Importance-Based LOD**:
-- Show high-degree nodes at all zoom levels
-- Filter low-importance edges
-- Maintain network skeleton structure
-
-**Implementation Strategy**:
-```javascript
-class LODNetworkRenderer {
-  constructor(graph, viewport) {
-    this.graph = graph;
-    this.viewport = viewport;
-    this.lodLevels = this.calculateLODLevels();
+### Hierarchical Layout Methods
+```npl
+⟪hierarchical-layouts⟫
+  ↦ tree-layout: {
+    algorithm: reingold-tilford,
+    time-complexity: O(n),
+    best-for: strict-hierarchies
   }
-
-  calculateLODLevels() {
-    return {
-      overview: { maxNodes: 1000, maxEdges: 2000 },
-      intermediate: { maxNodes: 5000, maxEdges: 10000 },
-      detail: { maxNodes: 20000, maxEdges: 50000 }
-    };
+  ↦ layered-layout: {
+    algorithm: sugiyama-framework,
+    phases: [cycle-removal, layer-assignment, crossing-reduction, positioning],
+    best-for: directed-acyclic-graphs
   }
-
-  getCurrentLOD() {
-    const zoomLevel = this.viewport.getZoom();
-    if (zoomLevel < 0.5) return 'overview';
-    if (zoomLevel < 2.0) return 'intermediate';
-    return 'detail';
+  ↦ radial-layout: {
+    algorithm: concentric-circles,
+    center-selection: highest-degree OR specified-root,
+    best-for: ego-networks
   }
-
-  filterGraphForLOD(lod) {
-    const config = this.lodLevels[lod];
-
-    // Filter nodes by importance
-    const importantNodes = this.graph.nodes
-      .sort((a, b) => b.degree - a.degree)
-      .slice(0, config.maxNodes);
-
-    // Filter edges by weight and node inclusion
-    const relevantEdges = this.graph.edges
-      .filter(edge =>
-        importantNodes.includes(edge.source) &&
-        importantNodes.includes(edge.target))
-      .sort((a, b) => b.weight - a.weight)
-      .slice(0, config.maxEdges);
-
-    return { nodes: importantNodes, edges: relevantEdges };
-  }
-}
+⟪/hierarchical-layouts⟫
 ```
 
-#### Virtualization Techniques
-
-**Viewport Culling**:
-- Only render visible elements
-- Implement spatial indexing for efficient queries
-- Update visible set during pan/zoom operations
-
-**Batched Rendering**:
-- Group similar rendering operations
-- Minimize state changes
-- Use instanced rendering for similar elements
-
-**Incremental Updates**:
-- Track changed elements only
-- Implement dirty flagging system
-- Optimize re-layout calculations
-
-### Memory Management
-
-#### Data Structure Optimization
-
-**Efficient Graph Representation**:
+**Tree Layout Implementation:**
 ```javascript
-class OptimizedGraph {
-  constructor() {
-    // Use typed arrays for better memory efficiency
-    this.nodePositions = new Float32Array(maxNodes * 2);
-    this.nodeIds = new Int32Array(maxNodes);
-    this.edgeIndices = new Int32Array(maxEdges * 2);
-
-    // Spatial indexing for fast queries
-    this.spatialIndex = new QuadTree();
-
-    // Adjacency list for efficient traversal
-    this.adjacencyList = new Map();
-  }
-
-  addNode(id, x, y) {
-    const index = this.nodeCount++;
-    this.nodeIds[index] = id;
-    this.nodePositions[index * 2] = x;
-    this.nodePositions[index * 2 + 1] = y;
-    this.spatialIndex.insert({ id, x, y, index });
-  }
-
-  getNodesInRegion(bounds) {
-    return this.spatialIndex.query(bounds);
-  }
-}
-```
-
-#### Garbage Collection Optimization
-
-**Object Pooling**:
-- Reuse DOM elements and data objects
-- Implement element recycling systems
-- Minimize object creation during interactions
-
-**Reference Management**:
-- Clean up event listeners
-- Remove unused data references
-- Implement proper cleanup procedures
-
-### Rendering Performance
-
-#### Canvas vs. SVG vs. WebGL
-
-**Canvas Optimization**:
-```javascript
-class CanvasNetworkRenderer {
-  constructor(canvas, graph) {
-    this.canvas = canvas;
-    this.ctx = canvas.getContext('2d');
-    this.graph = graph;
-    this.renderQueue = [];
-  }
-
-  render() {
-    // Clear canvas
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-    // Batch similar operations
-    this.renderEdges();
-    this.renderNodes();
-    this.renderLabels();
-  }
-
-  renderEdges() {
-    this.ctx.save();
-    this.ctx.strokeStyle = '#cccccc';
-    this.ctx.lineWidth = 1;
-    this.ctx.beginPath();
-
-    // Batch all edge drawing operations
-    this.graph.edges.forEach(edge => {
-      this.ctx.moveTo(edge.source.x, edge.source.y);
-      this.ctx.lineTo(edge.target.x, edge.target.y);
+// Optimized tree layout with collision detection
+function createTreeLayout(rootNode, nodes, links) {
+  const tree = d3.tree()
+    .size([height, width])
+    .separation((a, b) => {
+      // Dynamic separation based on node size
+      const aRadius = a.data.radius || 10;
+      const bRadius = b.data.radius || 10;
+      return (aRadius + bRadius) / 10 + 1;
     });
 
-    this.ctx.stroke();
-    this.ctx.restore();
-  }
+  // Build hierarchy from flat data
+  const root = d3.stratify()
+    .id(d => d.id)
+    .parentId(d => d.parent)
+    (nodes);
 
-  renderNodes() {
-    this.ctx.save();
+  // Apply layout
+  tree(root);
 
-    // Group nodes by visual properties
-    const nodeGroups = this.groupNodesByStyle();
+  // Extract positioned nodes and links
+  const layoutNodes = root.descendants().map(d => ({
+    ...d.data,
+    x: d.y, // Swap for horizontal layout
+    y: d.x,
+    depth: d.depth
+  }));
 
-    nodeGroups.forEach(group => {
-      this.ctx.fillStyle = group.color;
-      group.nodes.forEach(node => {
-        this.ctx.beginPath();
-        this.ctx.arc(node.x, node.y, node.radius, 0, 2 * Math.PI);
-        this.ctx.fill();
-      });
-    });
+  const layoutLinks = root.links().map(d => ({
+    source: d.source.data.id,
+    target: d.target.data.id
+  }));
 
-    this.ctx.restore();
-  }
+  return { nodes: layoutNodes, links: layoutLinks };
 }
 ```
 
-**WebGL Acceleration**:
-- Use Three.js or raw WebGL for massive networks
-- Implement shader-based rendering
-- Utilize GPU parallel processing
-- Handle fallback to Canvas/SVG
+### Circular and Arc Diagrams
+```npl
+⟪circular-layouts⟫
+  ↦ chord-diagram: {
+    best-for: flow-visualization,
+    encoding: arc-length-represents-magnitude,
+    interactions: hover-highlight-connections
+  }
+  ↦ circular-network: {
+    positioning: equal-angular-spacing,
+    edge-rendering: bezier-curves,
+    optimization: minimize-edge-crossings
+  }
+  ↦ arc-diagram: {
+    layout: linear-node-arrangement,
+    edges: semicircular-arcs,
+    best-for: temporal-networks
+  }
+⟪/circular-layouts⟫
+```
 
-#### Layout Algorithm Performance
+### Algorithm Selection Matrix
+```npl
+⟪algorithm-selection-matrix⟫
+  ↦ small-networks (< 100 nodes): force-directed OR hierarchical
+  ↦ medium-networks (100-1000): force-directed WITH clustering
+  ↦ large-networks (1000-10000): layered-hierarchy OR matrix-view
+  ↦ huge-networks (> 10000): node-link PLUS overview+detail
+  ↦ temporal-data: arc-diagram OR animated-force-directed
+  ↦ geographic-data: map-overlay WITH force-constraints
+  ↦ dense-graphs: matrix-visualization OR bundled-edges
+  ↦ sparse-trees: radial OR tree-layout
+⟪/algorithm-selection-matrix⟫
+```
 
-**Multi-Threading**:
+## D3.js Implementation Patterns
+
+### Basic Force Simulation
 ```javascript
-class ThreadedLayoutEngine {
-  constructor(graph) {
-    this.graph = graph;
-    this.worker = new Worker('layout-worker.js');
-    this.setupWorkerCommunication();
-  }
+// Minimal viable D3 network visualization
+function createBasicNetwork(containerId, data) {
+  const container = d3.select(containerId);
+  const width = container.node().getBoundingClientRect().width;
+  const height = 400;
 
-  setupWorkerCommunication() {
-    this.worker.onmessage = (event) => {
-      const { positions, iteration } = event.data;
-      this.updateNodePositions(positions);
-      this.onLayoutProgress(iteration);
-    };
-  }
+  // Clear previous content
+  container.selectAll("*").remove();
 
-  startLayout(algorithm, parameters) {
-    this.worker.postMessage({
-      command: 'start',
-      algorithm: algorithm,
-      nodes: this.graph.nodes,
-      edges: this.graph.edges,
-      parameters: parameters
-    });
-  }
+  const svg = container.append("svg")
+    .attr("width", width)
+    .attr("height", height);
 
-  updateNodePositions(positions) {
-    positions.forEach((pos, index) => {
-      this.graph.nodes[index].x = pos.x;
-      this.graph.nodes[index].y = pos.y;
-    });
-    this.requestRender();
-  }
-}
-```
+  // Create force simulation
+  const simulation = d3.forceSimulation(data.nodes)
+    .force("link", d3.forceLink(data.links).id(d => d.id))
+    .force("charge", d3.forceManyBody().strength(-300))
+    .force("center", d3.forceCenter(width / 2, height / 2));
 
-**Algorithm Optimization**:
-- Implement multi-level algorithms
-- Use spatial data structures for neighbor queries
-- Apply early termination conditions
-- Cache expensive calculations
+  // Draw edges
+  const link = svg.selectAll(".link")
+    .data(data.links)
+    .enter().append("line")
+    .attr("class", "link")
+    .style("stroke", "#999")
+    .style("stroke-width", 2);
 
-## Accessibility Guidelines
+  // Draw nodes
+  const node = svg.selectAll(".node")
+    .data(data.nodes)
+    .enter().append("circle")
+    .attr("class", "node")
+    .attr("r", 8)
+    .style("fill", "#69b3a2")
+    .call(d3.drag()
+      .on("start", dragstarted)
+      .on("drag", dragged)
+      .on("end", dragended));
 
-### Screen Reader Support
+  // Update positions on simulation tick
+  simulation.on("tick", () => {
+    link
+      .attr("x1", d => d.source.x)
+      .attr("y1", d => d.source.y)
+      .attr("x2", d => d.target.x)
+      .attr("y2", d => d.target.y);
 
-#### Semantic Structure
-
-**Alternative Text Generation**:
-```javascript
-function generateNetworkDescription(graph) {
-  const stats = calculateGraphStatistics(graph);
-
-  return `
-    Network visualization with ${stats.nodeCount} nodes and ${stats.edgeCount} connections.
-    The network has ${stats.componentCount} separate components.
-    Average node degree is ${stats.averageDegree.toFixed(1)}.
-    Most connected node: ${stats.maxDegreeNode.label} with ${stats.maxDegreeNode.degree} connections.
-  `;
-}
-
-function generateNodeDescription(node, graph) {
-  const neighbors = getNodeNeighbors(node, graph);
-
-  return `
-    ${node.label}: ${node.type || 'Node'} with ${neighbors.length} connections.
-    Connected to: ${neighbors.map(n => n.label).join(', ')}.
-    ${node.description || ''}
-  `;
-}
-```
-
-**ARIA Implementation**:
-```html
-<div role="img" aria-labelledby="network-title" aria-describedby="network-desc">
-  <h2 id="network-title">Social Network Analysis</h2>
-  <p id="network-desc">Interactive network showing relationships between 150 individuals...</p>
-
-  <div role="application" aria-label="Network navigation controls">
-    <button aria-label="Zoom in">+</button>
-    <button aria-label="Zoom out">-</button>
-    <button aria-label="Reset view">Reset</button>
-  </div>
-
-  <div role="region" aria-label="Network visualization" tabindex="0">
-    <!-- SVG content with proper ARIA labels -->
-  </div>
-</div>
-```
-
-#### Data Table Alternative
-
-**Structured Data Presentation**:
-```javascript
-class AccessibleNetworkTable {
-  constructor(graph, container) {
-    this.graph = graph;
-    this.container = container;
-    this.createTable();
-  }
-
-  createTable() {
-    const table = document.createElement('table');
-    table.setAttribute('role', 'table');
-    table.setAttribute('aria-label', 'Network data in tabular format');
-
-    // Create header
-    const header = table.createTHead();
-    const headerRow = header.insertRow();
-    ['Node', 'Type', 'Connections', 'Connected To'].forEach(text => {
-      const th = document.createElement('th');
-      th.textContent = text;
-      th.setAttribute('scope', 'col');
-      headerRow.appendChild(th);
-    });
-
-    // Create body
-    const tbody = table.createTBody();
-    this.graph.nodes.forEach(node => {
-      const row = tbody.insertRow();
-      const neighbors = this.getNodeNeighbors(node);
-
-      row.insertCell().textContent = node.label;
-      row.insertCell().textContent = node.type || 'Node';
-      row.insertCell().textContent = neighbors.length;
-      row.insertCell().textContent = neighbors.map(n => n.label).join(', ');
-    });
-
-    this.container.appendChild(table);
-  }
-}
-```
-
-### Keyboard Navigation
-
-#### Focus Management
-
-**Sequential Navigation**:
-```javascript
-class KeyboardNavigableNetwork {
-  constructor(svg, graph) {
-    this.svg = svg;
-    this.graph = graph;
-    this.focusedElement = null;
-    this.setupKeyboardHandlers();
-    this.createFocusIndicators();
-  }
-
-  setupKeyboardHandlers() {
-    this.svg.addEventListener('keydown', (event) => {
-      switch(event.key) {
-        case 'Tab':
-          this.handleTabNavigation(event);
-          break;
-        case 'ArrowUp':
-        case 'ArrowDown':
-        case 'ArrowLeft':
-        case 'ArrowRight':
-          this.handleArrowNavigation(event);
-          break;
-        case 'Enter':
-        case ' ':
-          this.handleSelection(event);
-          break;
-        case 'Escape':
-          this.handleEscape(event);
-          break;
-      }
-    });
-  }
-
-  handleTabNavigation(event) {
-    event.preventDefault();
-
-    if (!this.focusedElement) {
-      this.focusFirstNode();
-    } else {
-      const direction = event.shiftKey ? -1 : 1;
-      this.moveToNextFocusableElement(direction);
-    }
-  }
-
-  handleArrowNavigation(event) {
-    event.preventDefault();
-
-    if (!this.focusedElement) return;
-
-    const neighbors = this.getNodeNeighbors(this.focusedElement);
-    if (neighbors.length === 0) return;
-
-    // Navigate to spatially closest neighbor in arrow direction
-    const targetNeighbor = this.findNeighborInDirection(
-      this.focusedElement,
-      neighbors,
-      event.key
-    );
-
-    if (targetNeighbor) {
-      this.setFocus(targetNeighbor);
-    }
-  }
-
-  createFocusIndicators() {
-    this.focusRing = this.svg.append('circle')
-      .attr('class', 'focus-ring')
-      .attr('r', 0)
-      .style('fill', 'none')
-      .style('stroke', '#0066cc')
-      .style('stroke-width', 3)
-      .style('stroke-dasharray', '5,5')
-      .style('opacity', 0);
-  }
-
-  setFocus(element) {
-    this.focusedElement = element;
-
-    // Update focus ring
-    this.focusRing
-      .transition()
-      .duration(200)
-      .attr('cx', element.x)
-      .attr('cy', element.y)
-      .attr('r', element.radius + 5)
-      .style('opacity', 1);
-
-    // Update screen reader
-    this.announceElement(element);
-  }
-}
-```
-
-#### Shortcut Keys
-
-**Common Shortcuts**:
-- **Ctrl/Cmd + F**: Search nodes
-- **Ctrl/Cmd + A**: Select all nodes
-- **Ctrl/Cmd + Z**: Undo last action
-- **Space**: Pan mode toggle
-- **+/-**: Zoom in/out
-- **0**: Reset zoom
-- **H**: Show/hide help
-
-### Color and Contrast
-
-#### Color-Blind Friendly Palettes
-
-**Accessible Color Schemes**:
-```javascript
-const accessiblePalettes = {
-  colorBlindSafe: [
-    '#1f77b4', // Blue
-    '#ff7f0e', // Orange
-    '#2ca02c', // Green
-    '#d62728', // Red
-    '#9467bd', // Purple
-    '#8c564b', // Brown
-    '#e377c2', // Pink
-    '#7f7f7f', // Gray
-    '#bcbd22', // Olive
-    '#17becf'  // Cyan
-  ],
-
-  highContrast: [
-    '#000000', // Black
-    '#ffffff', // White
-    '#ff0000', // Red
-    '#00ff00', // Green
-    '#0000ff', // Blue
-    '#ffff00', // Yellow
-    '#ff00ff', // Magenta
-    '#00ffff'  // Cyan
-  ],
-
-  monochrome: [
-    '#000000', '#333333', '#666666', '#999999',
-    '#cccccc', '#ffffff'
-  ]
-};
-
-function applyAccessibleColors(graph, palette = 'colorBlindSafe') {
-  const colors = accessiblePalettes[palette];
-  const nodeTypes = [...new Set(graph.nodes.map(n => n.type))];
-
-  const colorMap = new Map();
-  nodeTypes.forEach((type, index) => {
-    colorMap.set(type, colors[index % colors.length]);
+    node
+      .attr("cx", d => d.x)
+      .attr("cy", d => d.y);
   });
 
-  graph.nodes.forEach(node => {
-    node.color = colorMap.get(node.type);
-  });
-}
-```
-
-#### Pattern and Shape Alternatives
-
-**Visual Encoding Alternatives**:
-```javascript
-const shapeEncodings = {
-  circle: 'M 0,5 A 5,5 0 1,1 0,-5 A 5,5 0 1,1 0,5',
-  square: 'M -5,-5 L 5,-5 L 5,5 L -5,5 Z',
-  triangle: 'M 0,-5 L 5,5 L -5,5 Z',
-  diamond: 'M 0,-5 L 5,0 L 0,5 L -5,0 Z',
-  star: 'M 0,-5 L 1.5,-1.5 L 5,0 L 1.5,1.5 L 0,5 L -1.5,1.5 L -5,0 L -1.5,-1.5 Z'
-};
-
-const patternEncodings = {
-  solid: 'none',
-  striped: 'url(#stripe-pattern)',
-  dotted: 'url(#dot-pattern)',
-  crosshatch: 'url(#crosshatch-pattern)'
-};
-
-function createPatternDefinitions(svg) {
-  const defs = svg.append('defs');
-
-  // Stripe pattern
-  const stripePattern = defs.append('pattern')
-    .attr('id', 'stripe-pattern')
-    .attr('patternUnits', 'userSpaceOnUse')
-    .attr('width', 8)
-    .attr('height', 8);
-
-  stripePattern.append('rect')
-    .attr('width', 8)
-    .attr('height', 8)
-    .attr('fill', '#ffffff');
-
-  stripePattern.append('path')
-    .attr('d', 'M 0,8 L 8,0')
-    .attr('stroke', '#000000')
-    .attr('stroke-width', 1);
-}
-```
-
-## Code Examples
-
-### Basic Network Visualization
-
-#### Simple Force-Directed Graph
-```javascript
-class BasicNetworkViz {
-  constructor(container, data) {
-    this.container = container;
-    this.data = data;
-    this.width = 800;
-    this.height = 600;
-
-    this.init();
+  // Drag functions
+  function dragstarted(event, d) {
+    if (!event.active) simulation.alphaTarget(0.3).restart();
+    d.fx = d.x; d.fy = d.y;
   }
 
-  init() {
+  function dragged(event, d) {
+    d.fx = event.x; d.fy = event.y;
+  }
+
+  function dragended(event, d) {
+    if (!event.active) simulation.alphaTarget(0);
+    d.fx = null; d.fy = null;
+  }
+}
+```
+
+### Advanced Force Configurations
+```javascript
+// Enterprise-grade force simulation with advanced features
+class AdvancedNetworkVisualization {
+  constructor(containerId, options = {}) {
+    this.container = d3.select(containerId);
+    this.options = {
+      width: 800,
+      height: 600,
+      nodeRadius: d => Math.sqrt(d.size || 1) * 5,
+      linkDistance: d => d.distance || 100,
+      chargeStrength: d => -300 * Math.sqrt(d.size || 1),
+      ...options
+    };
+
     this.setupSVG();
-    this.setupSimulation();
-    this.render();
-  }
-
-  setupSVG() {
-    this.svg = d3.select(this.container)
-      .append('svg')
-      .attr('width', this.width)
-      .attr('height', this.height)
-      .attr('viewBox', `0 0 ${this.width} ${this.height}`);
-
-    // Add zoom behavior
-    this.zoom = d3.zoom()
-      .scaleExtent([0.1, 10])
-      .on('zoom', (event) => {
-        this.g.attr('transform', event.transform);
-      });
-
-    this.svg.call(this.zoom);
-
-    this.g = this.svg.append('g');
-  }
-
-  setupSimulation() {
-    this.simulation = d3.forceSimulation(this.data.nodes)
-      .force('link', d3.forceLink(this.data.edges)
-        .id(d => d.id)
-        .distance(100)
-        .strength(0.1))
-      .force('charge', d3.forceManyBody()
-        .strength(-300))
-      .force('center', d3.forceCenter(
-        this.width / 2,
-        this.height / 2))
-      .force('collision', d3.forceCollide()
-        .radius(d => d.radius || 20));
-  }
-
-  render() {
-    // Render edges
-    this.edges = this.g.selectAll('.edge')
-      .data(this.data.edges)
-      .enter().append('line')
-      .attr('class', 'edge')
-      .style('stroke', '#999')
-      .style('stroke-opacity', 0.6)
-      .style('stroke-width', d => Math.sqrt(d.weight || 1));
-
-    // Render nodes
-    this.nodes = this.g.selectAll('.node')
-      .data(this.data.nodes)
-      .enter().append('circle')
-      .attr('class', 'node')
-      .attr('r', d => d.radius || 10)
-      .style('fill', d => d.color || '#69b3a2')
-      .call(this.dragBehavior());
-
-    // Add labels
-    this.labels = this.g.selectAll('.label')
-      .data(this.data.nodes)
-      .enter().append('text')
-      .attr('class', 'label')
-      .text(d => d.label)
-      .style('text-anchor', 'middle')
-      .style('dy', 3)
-      .style('font-size', '12px')
-      .style('pointer-events', 'none');
-
-    // Update positions on simulation tick
-    this.simulation.on('tick', () => {
-      this.edges
-        .attr('x1', d => d.source.x)
-        .attr('y1', d => d.source.y)
-        .attr('x2', d => d.target.x)
-        .attr('y2', d => d.target.y);
-
-      this.nodes
-        .attr('cx', d => d.x)
-        .attr('cy', d => d.y);
-
-      this.labels
-        .attr('x', d => d.x)
-        .attr('y', d => d.y);
-    });
-  }
-
-  dragBehavior() {
-    return d3.drag()
-      .on('start', (event, d) => {
-        if (!event.active) this.simulation.alphaTarget(0.3).restart();
-        d.fx = d.x;
-        d.fy = d.y;
-      })
-      .on('drag', (event, d) => {
-        d.fx = event.x;
-        d.fy = event.y;
-      })
-      .on('end', (event, d) => {
-        if (!event.active) this.simulation.alphaTarget(0);
-        d.fx = null;
-        d.fy = null;
-      });
-  }
-}
-
-// Usage
-const networkData = {
-  nodes: [
-    { id: 'A', label: 'Node A', radius: 15, color: '#ff6b6b' },
-    { id: 'B', label: 'Node B', radius: 12, color: '#4ecdc4' },
-    { id: 'C', label: 'Node C', radius: 18, color: '#45b7d1' },
-    { id: 'D', label: 'Node D', radius: 10, color: '#96ceb4' }
-  ],
-  edges: [
-    { source: 'A', target: 'B', weight: 2 },
-    { source: 'B', target: 'C', weight: 1 },
-    { source: 'C', target: 'D', weight: 3 },
-    { source: 'D', target: 'A', weight: 1 }
-  ]
-};
-
-const viz = new BasicNetworkViz('#network-container', networkData);
-```
-
-### Intermediate: Hierarchical Network
-
-#### Tree Visualization with Collapsible Nodes
-```javascript
-class HierarchicalNetwork {
-  constructor(container, data) {
-    this.container = container;
-    this.data = data;
-    this.width = 1000;
-    this.height = 800;
-    this.margin = { top: 20, right: 20, bottom: 20, left: 20 };
-
-    this.init();
-  }
-
-  init() {
-    this.setupSVG();
-    this.setupTree();
-    this.render();
-  }
-
-  setupSVG() {
-    this.svg = d3.select(this.container)
-      .append('svg')
-      .attr('width', this.width)
-      .attr('height', this.height);
-
-    this.g = this.svg.append('g')
-      .attr('transform', `translate(${this.margin.left},${this.margin.top})`);
-
-    this.innerWidth = this.width - this.margin.left - this.margin.right;
-    this.innerHeight = this.height - this.margin.top - this.margin.bottom;
-  }
-
-  setupTree() {
-    this.tree = d3.tree()
-      .size([this.innerWidth, this.innerHeight]);
-
-    this.root = d3.hierarchy(this.data);
-    this.root.x0 = this.innerWidth / 2;
-    this.root.y0 = 0;
-
-    // Collapse all children initially except first level
-    this.root.children.forEach(d => this.collapse(d));
-  }
-
-  collapse(d) {
-    if (d.children) {
-      d._children = d.children;
-      d._children.forEach(child => this.collapse(child));
-      d.children = null;
-    }
-  }
-
-  expand(d) {
-    if (d._children) {
-      d.children = d._children;
-      d._children = null;
-    }
-  }
-
-  render() {
-    const treeData = this.tree(this.root);
-    const nodes = treeData.descendants();
-    const links = treeData.descendants().slice(1);
-
-    // Update node positions
-    nodes.forEach((d, i) => {
-      d.y = d.depth * 180;
-    });
-
-    this.updateNodes(nodes);
-    this.updateLinks(links);
-  }
-
-  updateNodes(nodes) {
-    const node = this.g.selectAll('.node')
-      .data(nodes, d => d.id || (d.id = ++this.nodeCounter));
-
-    // Enter new nodes
-    const nodeEnter = node.enter().append('g')
-      .attr('class', 'node')
-      .attr('transform', d => `translate(${this.root.x0},${this.root.y0})`)
-      .on('click', (event, d) => this.toggleNode(d));
-
-    // Add circles for nodes
-    nodeEnter.append('circle')
-      .attr('r', 1e-6)
-      .style('fill', d => d._children ? '#lightsteelblue' : '#fff')
-      .style('stroke', 'steelblue')
-      .style('stroke-width', '3px');
-
-    // Add labels
-    nodeEnter.append('text')
-      .attr('dy', '.35em')
-      .attr('x', d => d.children || d._children ? -13 : 13)
-      .style('text-anchor', d => d.children || d._children ? 'end' : 'start')
-      .text(d => d.data.name)
-      .style('font-size', '14px')
-      .style('fill-opacity', 1e-6);
-
-    // Update existing nodes
-    const nodeUpdate = nodeEnter.merge(node);
-
-    nodeUpdate.transition()
-      .duration(750)
-      .attr('transform', d => `translate(${d.x},${d.y})`);
-
-    nodeUpdate.select('circle')
-      .transition()
-      .duration(750)
-      .attr('r', 10)
-      .style('fill', d => d._children ? '#lightsteelblue' : '#fff');
-
-    nodeUpdate.select('text')
-      .transition()
-      .duration(750)
-      .style('fill-opacity', 1);
-
-    // Remove exiting nodes
-    const nodeExit = node.exit().transition()
-      .duration(750)
-      .attr('transform', d => `translate(${this.root.x},${this.root.y})`)
-      .remove();
-
-    nodeExit.select('circle')
-      .attr('r', 1e-6);
-
-    nodeExit.select('text')
-      .style('fill-opacity', 1e-6);
-  }
-
-  updateLinks(links) {
-    const diagonal = d3.linkHorizontal()
-      .x(d => d.x)
-      .y(d => d.y);
-
-    const link = this.g.selectAll('.link')
-      .data(links, d => d.id);
-
-    // Enter new links
-    const linkEnter = link.enter().insert('path', 'g')
-      .attr('class', 'link')
-      .style('fill', 'none')
-      .style('stroke', '#ccc')
-      .style('stroke-width', '2px')
-      .attr('d', d => {
-        const o = { x: this.root.x0, y: this.root.y0 };
-        return diagonal({ source: o, target: o });
-      });
-
-    // Update existing links
-    const linkUpdate = linkEnter.merge(link);
-
-    linkUpdate.transition()
-      .duration(750)
-      .attr('d', d => diagonal({ source: d.parent, target: d }));
-
-    // Remove exiting links
-    link.exit().transition()
-      .duration(750)
-      .attr('d', d => {
-        const o = { x: this.root.x, y: this.root.y };
-        return diagonal({ source: o, target: o });
-      })
-      .remove();
-  }
-
-  toggleNode(d) {
-    if (d.children) {
-      d._children = d.children;
-      d.children = null;
-    } else {
-      d.children = d._children;
-      d._children = null;
-    }
-
-    this.render();
-  }
-}
-
-// Usage
-const hierarchicalData = {
-  name: "Root",
-  children: [
-    {
-      name: "Branch 1",
-      children: [
-        { name: "Leaf 1.1" },
-        { name: "Leaf 1.2" },
-        {
-          name: "Sub-branch 1.3",
-          children: [
-            { name: "Leaf 1.3.1" },
-            { name: "Leaf 1.3.2" }
-          ]
-        }
-      ]
-    },
-    {
-      name: "Branch 2",
-      children: [
-        { name: "Leaf 2.1" },
-        { name: "Leaf 2.2" }
-      ]
-    }
-  ]
-};
-
-const hierarchicalViz = new HierarchicalNetwork('#tree-container', hierarchicalData);
-```
-
-### Advanced: Multi-Layer Network Analysis
-
-#### Complex Network with Community Detection
-```javascript
-class MultiLayerNetworkAnalyzer {
-  constructor(container, config) {
-    this.container = container;
-    this.config = config;
-    this.layers = config.layers;
-    this.width = config.width || 1200;
-    this.height = config.height || 800;
-
-    this.currentLayer = 0;
-    this.communities = new Map();
-    this.nodeMetrics = new Map();
-
-    this.init();
-  }
-
-  init() {
-    this.setupDOM();
-    this.setupAnalytics();
-    this.setupVisualization();
-    this.calculateMetrics();
-    this.render();
-  }
-
-  setupDOM() {
-    this.wrapper = d3.select(this.container)
-      .append('div')
-      .attr('class', 'network-analyzer');
-
-    // Control panel
-    this.controls = this.wrapper.append('div')
-      .attr('class', 'controls')
-      .style('display', 'flex')
-      .style('align-items', 'center')
-      .style('margin-bottom', '20px');
-
-    // Layer selector
-    this.layerSelect = this.controls.append('select')
-      .on('change', (event) => this.switchLayer(event.target.value));
-
-    this.layerSelect.selectAll('option')
-      .data(this.layers)
-      .enter().append('option')
-      .attr('value', (d, i) => i)
-      .text(d => d.name);
-
-    // Metrics panel
-    this.metricsPanel = this.controls.append('div')
-      .style('margin-left', '20px');
-
-    // Main visualization
-    this.svg = this.wrapper.append('svg')
-      .attr('width', this.width)
-      .attr('height', this.height)
-      .attr('viewBox', `0 0 ${this.width} ${this.height}`);
-
     this.setupZoom();
-    this.g = this.svg.append('g');
+    this.setupForces();
+  }
+
+  setupSVG() {
+    this.svg = this.container.append("svg")
+      .attr("width", this.options.width)
+      .attr("height", this.options.height);
+
+    this.g = this.svg.append("g");
+
+    // Add defs for markers and patterns
+    const defs = this.svg.append("defs");
+
+    // Arrow marker for directed edges
+    defs.append("marker")
+      .attr("id", "arrowhead")
+      .attr("viewBox", "0 -5 10 10")
+      .attr("refX", 15)
+      .attr("refY", 0)
+      .attr("markerWidth", 6)
+      .attr("markerHeight", 6)
+      .attr("orient", "auto")
+      .append("path")
+      .attr("d", "M0,-5L10,0L0,5")
+      .style("fill", "#999");
   }
 
   setupZoom() {
     this.zoom = d3.zoom()
       .scaleExtent([0.1, 10])
-      .on('zoom', (event) => {
-        this.g.attr('transform', event.transform);
+      .on("zoom", (event) => {
+        this.g.attr("transform", event.transform);
       });
 
     this.svg.call(this.zoom);
   }
 
-  setupAnalytics() {
-    this.analytics = {
-      centrality: new CentralityAnalyzer(),
-      community: new CommunityDetector(),
-      clustering: new ClusteringAnalyzer(),
-      pathfinding: new PathfindingAnalyzer()
-    };
-  }
-
-  setupVisualization() {
-    this.colorScale = d3.scaleOrdinal(d3.schemeCategory10);
-
+  setupForces() {
     this.simulation = d3.forceSimulation()
-      .force('link', d3.forceLink().id(d => d.id))
-      .force('charge', d3.forceManyBody().strength(-300))
-      .force('center', d3.forceCenter(this.width / 2, this.height / 2))
-      .force('collision', d3.forceCollide().radius(20));
+      .force("link", d3.forceLink().id(d => d.id))
+      .force("charge", d3.forceManyBody())
+      .force("center", d3.forceCenter(this.options.width / 2, this.options.height / 2))
+      .force("collision", d3.forceCollide())
+      .on("tick", () => this.tick());
   }
 
-  calculateMetrics() {
-    this.layers.forEach((layer, index) => {
-      const graph = this.buildGraphFromLayer(layer);
+  render(data) {
+    // Process data
+    this.nodes = data.nodes.map(d => ({ ...d }));
+    this.links = data.links.map(d => ({ ...d }));
 
-      // Calculate centrality measures
-      const centrality = this.analytics.centrality.calculate(graph);
+    // Update forces with data
+    this.simulation.nodes(this.nodes);
+    this.simulation.force("link").links(this.links);
 
-      // Detect communities
-      const communities = this.analytics.community.detect(graph);
+    // Configure force parameters
+    this.simulation.force("charge")
+      .strength(this.options.chargeStrength);
+    this.simulation.force("link")
+      .distance(this.options.linkDistance);
+    this.simulation.force("collision")
+      .radius(d => this.options.nodeRadius(d) + 2);
 
-      // Calculate clustering coefficient
-      const clustering = this.analytics.clustering.calculate(graph);
+    this.renderLinks();
+    this.renderNodes();
 
-      layer.metrics = {
-        centrality: centrality,
-        communities: communities,
-        clustering: clustering,
-        density: this.calculateDensity(graph),
-        diameter: this.calculateDiameter(graph)
-      };
-
-      // Store community assignments
-      communities.forEach((community, nodeId) => {
-        if (!this.communities.has(nodeId)) {
-          this.communities.set(nodeId, []);
-        }
-        this.communities.get(nodeId)[index] = community;
-      });
-    });
-  }
-
-  buildGraphFromLayer(layer) {
-    const nodeMap = new Map();
-    layer.nodes.forEach(node => nodeMap.set(node.id, node));
-
-    const adjacencyList = new Map();
-    layer.nodes.forEach(node => adjacencyList.set(node.id, []));
-
-    layer.edges.forEach(edge => {
-      adjacencyList.get(edge.source).push(edge.target);
-      if (!edge.directed) {
-        adjacencyList.get(edge.target).push(edge.source);
-      }
-    });
-
-    return { nodes: layer.nodes, edges: layer.edges, adjacencyList };
-  }
-
-  switchLayer(layerIndex) {
-    this.currentLayer = parseInt(layerIndex);
-    this.render();
-    this.updateMetricsDisplay();
-  }
-
-  render() {
-    const layer = this.layers[this.currentLayer];
-
-    // Update simulation
-    this.simulation
-      .nodes(layer.nodes)
-      .force('link')
-      .links(layer.edges);
-
-    this.renderEdges(layer.edges);
-    this.renderNodes(layer.nodes);
-    this.renderCommunities();
-
+    // Restart simulation
     this.simulation.alpha(1).restart();
   }
 
-  renderEdges(edges) {
-    this.edges = this.g.selectAll('.edge')
-      .data(edges, d => `${d.source.id}-${d.target.id}`);
+  renderLinks() {
+    this.linkGroup = this.g.selectAll(".links")
+      .data([1])
+      .enter().append("g")
+      .attr("class", "links");
 
-    this.edges.exit().remove();
+    this.link = this.linkGroup.selectAll("line")
+      .data(this.links);
 
-    const edgesEnter = this.edges.enter()
-      .append('line')
-      .attr('class', 'edge')
-      .style('stroke', '#999')
-      .style('stroke-opacity', 0.6);
+    this.link.exit().remove();
 
-    this.edges = edgesEnter.merge(this.edges)
-      .style('stroke-width', d => Math.sqrt(d.weight || 1));
+    this.link = this.link.enter().append("line")
+      .merge(this.link)
+      .style("stroke", d => d.color || "#999")
+      .style("stroke-width", d => Math.sqrt(d.weight || 1))
+      .style("stroke-opacity", 0.8)
+      .attr("marker-end", d => d.directed ? "url(#arrowhead)" : null);
   }
 
-  renderNodes(nodes) {
-    this.nodes = this.g.selectAll('.node')
-      .data(nodes, d => d.id);
+  renderNodes() {
+    this.nodeGroup = this.g.selectAll(".nodes")
+      .data([1])
+      .enter().append("g")
+      .attr("class", "nodes");
 
-    this.nodes.exit().remove();
+    this.node = this.nodeGroup.selectAll("circle")
+      .data(this.nodes);
 
-    const nodesEnter = this.nodes.enter()
-      .append('g')
-      .attr('class', 'node')
-      .call(this.dragBehavior());
+    this.node.exit().remove();
 
-    nodesEnter.append('circle')
-      .attr('r', d => this.getNodeRadius(d))
-      .style('fill', d => this.getNodeColor(d))
-      .style('stroke', '#fff')
-      .style('stroke-width', 2);
-
-    nodesEnter.append('text')
-      .attr('dy', 3)
-      .style('text-anchor', 'middle')
-      .style('font-size', '10px')
-      .style('pointer-events', 'none')
-      .text(d => d.label);
-
-    this.nodes = nodesEnter.merge(this.nodes);
-
-    // Update node appearance based on metrics
-    this.nodes.select('circle')
-      .style('fill', d => this.getNodeColor(d))
-      .attr('r', d => this.getNodeRadius(d));
+    this.node = this.node.enter().append("circle")
+      .merge(this.node)
+      .attr("r", this.options.nodeRadius)
+      .style("fill", d => d.color || "#69b3a2")
+      .style("stroke", "#fff")
+      .style("stroke-width", 2)
+      .call(this.setupDrag())
+      .on("mouseover", (event, d) => this.showTooltip(event, d))
+      .on("mouseout", () => this.hideTooltip());
   }
 
-  renderCommunities() {
-    const layer = this.layers[this.currentLayer];
-    const communities = layer.metrics.communities;
-
-    // Group nodes by community
-    const communityGroups = new Map();
-    layer.nodes.forEach(node => {
-      const community = communities.get(node.id);
-      if (!communityGroups.has(community)) {
-        communityGroups.set(community, []);
-      }
-      communityGroups.get(community).push(node);
-    });
-
-    // Calculate convex hulls for communities
-    const hulls = [];
-    communityGroups.forEach((nodes, community) => {
-      if (nodes.length > 2) {
-        const points = nodes.map(d => [d.x, d.y]);
-        const hull = d3.polygonHull(points);
-        if (hull) {
-          hulls.push({
-            community: community,
-            hull: hull,
-            color: this.colorScale(community)
-          });
-        }
-      }
-    });
-
-    // Render community hulls
-    this.communityHulls = this.g.selectAll('.community-hull')
-      .data(hulls);
-
-    this.communityHulls.exit().remove();
-
-    this.communityHulls.enter()
-      .append('path')
-      .attr('class', 'community-hull')
-      .merge(this.communityHulls)
-      .attr('d', d => `M${d.hull.join('L')}Z`)
-      .style('fill', d => d.color)
-      .style('fill-opacity', 0.1)
-      .style('stroke', d => d.color)
-      .style('stroke-width', 2)
-      .style('stroke-opacity', 0.3);
-  }
-
-  getNodeColor(node) {
-    const layer = this.layers[this.currentLayer];
-    const community = layer.metrics.communities.get(node.id);
-    return this.colorScale(community);
-  }
-
-  getNodeRadius(node) {
-    const layer = this.layers[this.currentLayer];
-    const centrality = layer.metrics.centrality.betweenness.get(node.id) || 0;
-    return 5 + Math.sqrt(centrality) * 10;
-  }
-
-  updateMetricsDisplay() {
-    const layer = this.layers[this.currentLayer];
-    const metrics = layer.metrics;
-
-    this.metricsPanel.html(`
-      <div>
-        <strong>Network Metrics:</strong><br>
-        Density: ${metrics.density.toFixed(3)}<br>
-        Diameter: ${metrics.diameter}<br>
-        Communities: ${new Set(metrics.communities.values()).size}<br>
-        Avg Clustering: ${d3.mean(Array.from(metrics.clustering.values())).toFixed(3)}
-      </div>
-    `);
-  }
-
-  dragBehavior() {
+  setupDrag() {
     return d3.drag()
-      .on('start', (event, d) => {
+      .on("start", (event, d) => {
         if (!event.active) this.simulation.alphaTarget(0.3).restart();
-        d.fx = d.x;
-        d.fy = d.y;
+        d.fx = d.x; d.fy = d.y;
       })
-      .on('drag', (event, d) => {
-        d.fx = event.x;
-        d.fy = event.y;
+      .on("drag", (event, d) => {
+        d.fx = event.x; d.fy = event.y;
       })
-      .on('end', (event, d) => {
+      .on("end", (event, d) => {
         if (!event.active) this.simulation.alphaTarget(0);
-        d.fx = null;
-        d.fy = null;
+        d.fx = null; d.fy = null;
       });
   }
 
-  // Update positions during simulation
-  updatePositions() {
-    this.simulation.on('tick', () => {
-      this.edges
-        .attr('x1', d => d.source.x)
-        .attr('y1', d => d.source.y)
-        .attr('x2', d => d.target.x)
-        .attr('y2', d => d.target.y);
+  tick() {
+    this.link
+      .attr("x1", d => d.source.x)
+      .attr("y1", d => d.source.y)
+      .attr("x2", d => d.target.x)
+      .attr("y2", d => d.target.y);
 
-      this.nodes
-        .attr('transform', d => `translate(${d.x},${d.y})`);
+    this.node
+      .attr("cx", d => d.x)
+      .attr("cy", d => d.y);
+  }
 
-      this.renderCommunities();
-    });
+  showTooltip(event, d) {
+    // Implement tooltip logic
+  }
+
+  hideTooltip() {
+    // Implement tooltip hiding
   }
 }
+```
 
-// Analytics classes (simplified implementations)
-class CentralityAnalyzer {
-  calculate(graph) {
-    return {
-      degree: this.calculateDegree(graph),
-      betweenness: this.calculateBetweenness(graph),
-      closeness: this.calculateCloseness(graph),
-      pagerank: this.calculatePageRank(graph)
-    };
-  }
+## Example Progression
 
-  calculateDegree(graph) {
-    const degree = new Map();
-    graph.nodes.forEach(node => {
-      degree.set(node.id, graph.adjacencyList.get(node.id).length);
-    });
-    return degree;
-  }
-
-  calculateBetweenness(graph) {
-    // Simplified betweenness centrality calculation
-    const betweenness = new Map();
-    graph.nodes.forEach(node => {
-      betweenness.set(node.id, Math.random()); // Placeholder
-    });
-    return betweenness;
-  }
-
-  calculateCloseness(graph) {
-    // Simplified closeness centrality calculation
-    const closeness = new Map();
-    graph.nodes.forEach(node => {
-      closeness.set(node.id, Math.random()); // Placeholder
-    });
-    return closeness;
-  }
-
-  calculatePageRank(graph) {
-    // Simplified PageRank calculation
-    const pagerank = new Map();
-    graph.nodes.forEach(node => {
-      pagerank.set(node.id, Math.random()); // Placeholder
-    });
-    return pagerank;
-  }
-}
-
-class CommunityDetector {
-  detect(graph) {
-    // Simplified community detection (random assignment)
-    const communities = new Map();
-    const numCommunities = Math.max(1, Math.floor(graph.nodes.length / 10));
-
-    graph.nodes.forEach(node => {
-      communities.set(node.id, Math.floor(Math.random() * numCommunities));
-    });
-
-    return communities;
-  }
-}
-
-class ClusteringAnalyzer {
-  calculate(graph) {
-    const clustering = new Map();
-
-    graph.nodes.forEach(node => {
-      const neighbors = graph.adjacencyList.get(node.id);
-      if (neighbors.length < 2) {
-        clustering.set(node.id, 0);
-        return;
-      }
-
-      let triangles = 0;
-      const possibleTriangles = neighbors.length * (neighbors.length - 1) / 2;
-
-      // Count triangles (simplified)
-      for (let i = 0; i < neighbors.length; i++) {
-        for (let j = i + 1; j < neighbors.length; j++) {
-          const neighbor1 = neighbors[i];
-          const neighbor2 = neighbors[j];
-          if (graph.adjacencyList.get(neighbor1).includes(neighbor2)) {
-            triangles++;
-          }
-        }
-      }
-
-      clustering.set(node.id, triangles / possibleTriangles);
-    });
-
-    return clustering;
-  }
-}
-
-// Usage
-const multiLayerConfig = {
-  width: 1200,
-  height: 800,
-  layers: [
-    {
-      name: "Social Layer",
-      nodes: [...], // Node data
-      edges: [...]  // Edge data
-    },
-    {
-      name: "Professional Layer",
-      nodes: [...],
-      edges: [...]
-    },
-    {
-      name: "Communication Layer",
-      nodes: [...],
-      edges: [...]
-    }
+### Simple Network (5-20 nodes)
+```javascript
+// Educational example: Social network of friends
+const simpleNetworkData = {
+  nodes: [
+    { id: "Alice", size: 10, group: "family" },
+    { id: "Bob", size: 8, group: "work" },
+    { id: "Carol", size: 12, group: "family" },
+    { id: "David", size: 6, group: "hobby" },
+    { id: "Eve", size: 9, group: "work" }
+  ],
+  links: [
+    { source: "Alice", target: "Bob", weight: 3 },
+    { source: "Alice", target: "Carol", weight: 5 },
+    { source: "Bob", target: "David", weight: 2 },
+    { source: "Carol", target: "Eve", weight: 4 }
   ]
 };
 
-const analyzer = new MultiLayerNetworkAnalyzer('#network-analyzer', multiLayerConfig);
+// Simple visualization focusing on clarity
+function renderSimpleNetwork() {
+  const viz = new AdvancedNetworkVisualization("#simple-network", {
+    width: 400,
+    height: 300,
+    nodeRadius: d => d.size,
+    linkDistance: 80
+  });
+
+  viz.render(simpleNetworkData);
+}
 ```
 
-## Best Practices
-
-### Design Guidelines
-
-#### Visual Clarity
-- **Node Size Encoding**: Use size to represent node importance or attributes
-- **Edge Weight Visualization**: Vary line thickness for edge weights
-- **Color Consistency**: Maintain consistent color schemes across views
-- **Label Management**: Show/hide labels based on zoom level and importance
-
-#### Layout Optimization
-- **Algorithm Selection**: Choose appropriate layout based on graph structure
-- **Parameter Tuning**: Adjust force simulation parameters for stability
-- **Performance Scaling**: Use LOD techniques for large networks
-- **Interactive Refinement**: Allow manual node positioning for fine-tuning
-
-### Data Management
-
-#### Graph Data Structures
+### Medium Network (100-500 nodes)
 ```javascript
-class OptimizedGraphData {
+// Business application: Organizational chart
+class OrganizationalNetwork {
+  constructor(containerId) {
+    this.viz = new AdvancedNetworkVisualization(containerId, {
+      width: 800,
+      height: 600,
+      nodeRadius: d => 5 + Math.sqrt(d.reports || 0) * 2,
+      chargeStrength: d => -200 - (d.reports || 0) * 20
+    });
+
+    this.setupClustering();
+  }
+
+  setupClustering() {
+    // Add clustering force to group by department
+    this.viz.simulation.force("cluster", this.clusteringForce());
+  }
+
+  clusteringForce() {
+    const strength = 0.1;
+    let nodes;
+
+    function force(alpha) {
+      const centroids = this.calculateDepartmentCentroids(nodes);
+
+      for (let node of nodes) {
+        const centroid = centroids[node.department];
+        if (centroid) {
+          node.vx += (centroid.x - node.x) * strength * alpha;
+          node.vy += (centroid.y - node.y) * strength * alpha;
+        }
+      }
+    }
+
+    force.initialize = function(n) { nodes = n; };
+    return force;
+  }
+
+  calculateDepartmentCentroids(nodes) {
+    const depts = d3.group(nodes, d => d.department);
+    const centroids = {};
+
+    depts.forEach((deptNodes, dept) => {
+      centroids[dept] = {
+        x: d3.mean(deptNodes, d => d.x),
+        y: d3.mean(deptNodes, d => d.y)
+      };
+    });
+
+    return centroids;
+  }
+}
+```
+
+### Large Network (1000+ nodes)
+```javascript
+// Performance-optimized large network visualization
+class LargeNetworkRenderer {
+  constructor(containerId) {
+    this.container = d3.select(containerId);
+    this.setupCanvas();
+    this.setupQuadtree();
+  }
+
+  setupCanvas() {
+    // Use Canvas for better performance with many nodes
+    this.canvas = this.container.append("canvas")
+      .attr("width", 1000)
+      .attr("height", 800);
+
+    this.context = this.canvas.node().getContext("2d");
+    this.transform = d3.zoomIdentity;
+
+    this.canvas.call(d3.zoom()
+      .scaleExtent([0.1, 10])
+      .on("zoom", (event) => {
+        this.transform = event.transform;
+        this.render();
+      }));
+  }
+
+  setupQuadtree() {
+    // Spatial indexing for efficient collision detection
+    this.quadtree = d3.quadtree()
+      .x(d => d.x)
+      .y(d => d.y);
+  }
+
+  render() {
+    const { width, height } = this.canvas.node();
+
+    // Clear canvas
+    this.context.save();
+    this.context.clearRect(0, 0, width, height);
+    this.context.translate(this.transform.x, this.transform.y);
+    this.context.scale(this.transform.k, this.transform.k);
+
+    // Level of detail rendering
+    const scale = this.transform.k;
+    this.renderLinks(scale);
+    this.renderNodes(scale);
+
+    this.context.restore();
+  }
+
+  renderNodes(scale) {
+    // Only render nodes visible in viewport
+    const visibleNodes = this.getVisibleNodes();
+
+    for (let node of visibleNodes) {
+      this.context.beginPath();
+      this.context.arc(node.x, node.y, node.radius / scale, 0, 2 * Math.PI);
+      this.context.fillStyle = node.color;
+      this.context.fill();
+
+      // Only show labels at high zoom levels
+      if (scale > 2) {
+        this.context.fillStyle = "#333";
+        this.context.fillText(node.id, node.x + 10, node.y);
+      }
+    }
+  }
+
+  getVisibleNodes() {
+    // Use quadtree for efficient viewport culling
+    const [x0, y0, x1, y1] = this.getViewportBounds();
+    const visible = [];
+
+    this.quadtree.visit((node, x0q, y0q, x1q, y1q) => {
+      if (!node.length) {
+        if (node.data.x >= x0 && node.data.x < x1 &&
+            node.data.y >= y0 && node.data.y < y1) {
+          visible.push(node.data);
+        }
+      }
+      return x0q >= x1 || y0q >= y1 || x1q < x0 || y1q < y0;
+    });
+
+    return visible;
+  }
+}
+```
+
+### Enterprise Network (10,000+ nodes)
+```javascript
+// Multi-level visualization with overview + detail
+class EnterpriseNetworkSystem {
+  constructor(containerId) {
+    this.container = d3.select(containerId);
+    this.setupMultiLevel();
+    this.currentLevel = 0; // 0: overview, 1: community, 2: detail
+  }
+
+  setupMultiLevel() {
+    // Create overview panel
+    this.overview = this.container.append("div")
+      .attr("class", "overview-panel")
+      .style("width", "300px")
+      .style("height", "200px")
+      .style("float", "left");
+
+    // Create detail panel
+    this.detail = this.container.append("div")
+      .attr("class", "detail-panel")
+      .style("width", "700px")
+      .style("height", "600px")
+      .style("float", "left");
+
+    this.overviewViz = new MatrixView(this.overview.node());
+    this.detailViz = new LargeNetworkRenderer(this.detail.node());
+  }
+
+  loadData(networkData) {
+    // Preprocess data into multiple representations
+    this.communityData = this.detectCommunities(networkData);
+    this.matrixData = this.createAdjacencyMatrix(this.communityData);
+
+    // Render overview
+    this.overviewViz.render(this.matrixData);
+
+    // Set up community selection
+    this.overviewViz.onCommunitySelect((communityId) => {
+      const subgraph = this.extractSubgraph(networkData, communityId);
+      this.detailViz.loadData(subgraph);
+    });
+  }
+
+  detectCommunities(data) {
+    // Implement Louvain algorithm or similar
+    // Return data with community assignments
+  }
+}
+```
+
+## Cytoscape.js Integration
+
+### Configuration Patterns
+```npl
+⟪cytoscape-config⟫
+  ↦ initialization: {
+    container: DOM-element,
+    elements: [nodes, edges],
+    style: stylesheet-array,
+    layout: algorithm-config
+  }
+  ↦ performance-settings: {
+    pixelRatio: 'auto',
+    motionBlur: true,
+    textureOnViewport: false,
+    wheelSensitivity: 0.2
+  }
+  ↦ interaction-settings: {
+    minZoom: 0.1,
+    maxZoom: 5,
+    zoomingEnabled: true,
+    panningEnabled: true
+  }
+⟪/cytoscape-config⟫
+```
+
+**Production Cytoscape Setup:**
+```javascript
+// Enterprise-ready Cytoscape configuration
+function createCytoscapeNetwork(containerId, data) {
+  const cy = cytoscape({
+    container: document.getElementById(containerId),
+
+    elements: [
+      // Nodes
+      ...data.nodes.map(node => ({
+        data: {
+          id: node.id,
+          label: node.label || node.id,
+          weight: node.weight || 1,
+          category: node.category || 'default'
+        },
+        position: node.position || undefined
+      })),
+
+      // Edges
+      ...data.edges.map(edge => ({
+        data: {
+          id: `${edge.source}-${edge.target}`,
+          source: edge.source,
+          target: edge.target,
+          weight: edge.weight || 1,
+          type: edge.type || 'default'
+        }
+      }))
+    ],
+
+    style: [
+      // Node styles
+      {
+        selector: 'node',
+        style: {
+          'background-color': 'data(category)',
+          'width': 'mapData(weight, 0, 100, 10, 50)',
+          'height': 'mapData(weight, 0, 100, 10, 50)',
+          'label': 'data(label)',
+          'text-valign': 'center',
+          'text-halign': 'center',
+          'color': '#333',
+          'font-size': '12px',
+          'font-weight': 'bold'
+        }
+      },
+
+      // Edge styles
+      {
+        selector: 'edge',
+        style: {
+          'width': 'mapData(weight, 0, 10, 1, 8)',
+          'line-color': '#ccc',
+          'target-arrow-color': '#ccc',
+          'target-arrow-shape': 'triangle',
+          'curve-style': 'bezier'
+        }
+      },
+
+      // Selected styles
+      {
+        selector: 'node:selected',
+        style: {
+          'border-width': 3,
+          'border-color': '#ff6b6b'
+        }
+      },
+
+      // Hover styles
+      {
+        selector: 'node:active',
+        style: {
+          'overlay-opacity': 0.2,
+          'overlay-color': '#000'
+        }
+      }
+    ],
+
+    layout: {
+      name: 'cose',
+      nodeRepulsion: function(node) { return 400000; },
+      nodeOverlap: 10,
+      idealEdgeLength: function(edge) { return 100; },
+      edgeElasticity: function(edge) { return 100; },
+      nestingFactor: 5,
+      gravity: 80,
+      numIter: 1000,
+      initialTemp: 200,
+      coolingFactor: 0.95,
+      minTemp: 1.0
+    },
+
+    // Performance optimizations
+    pixelRatio: 'auto',
+    motionBlur: true,
+    wheelSensitivity: 0.2,
+    minZoom: 0.1,
+    maxZoom: 5
+  });
+
+  // Add interaction handlers
+  setupCytoscapeInteractions(cy);
+
+  return cy;
+}
+
+function setupCytoscapeInteractions(cy) {
+  // Node selection
+  cy.on('tap', 'node', function(evt) {
+    const node = evt.target;
+    const neighbors = node.neighborhood().add(node);
+
+    cy.elements().addClass('faded');
+    neighbors.removeClass('faded');
+  });
+
+  // Background tap to clear selection
+  cy.on('tap', function(evt) {
+    if (evt.target === cy) {
+      cy.elements().removeClass('faded');
+    }
+  });
+
+  // Double-click to fit
+  cy.on('dblclick', function(evt) {
+    if (evt.target === cy) {
+      cy.fit();
+    }
+  });
+}
+```
+
+### Custom Extensions
+```javascript
+// Custom Cytoscape extension for community detection
+cytoscape.use(function(cytoscape) {
+  cytoscape('collection', 'communityDetection', function() {
+    const nodes = this.nodes();
+    const edges = this.edges();
+
+    // Implement modularity optimization
+    const communities = detectCommunitiesLouvain(nodes, edges);
+
+    // Apply community colors
+    communities.forEach((community, index) => {
+      const color = d3.schemeCategory10[index % 10];
+      community.forEach(nodeId => {
+        cy.getElementById(nodeId).style('background-color', color);
+      });
+    });
+
+    return communities;
+  });
+});
+
+// Usage
+const communities = cy.nodes().communityDetection();
+```
+
+### Performance Optimization
+```javascript
+// Large dataset optimization strategies
+class OptimizedCytoscapeRenderer {
+  constructor(containerId, options = {}) {
+    this.options = {
+      nodeLimit: 1000,
+      edgeLimit: 5000,
+      useWebGL: false,
+      levelOfDetail: true,
+      ...options
+    };
+
+    this.setupRenderer(containerId);
+  }
+
+  setupRenderer(containerId) {
+    if (this.options.useWebGL) {
+      // Use cytoscape-webgl for massive datasets
+      this.cy = cytoscape({
+        container: document.getElementById(containerId),
+        renderer: {
+          name: 'webgl'
+        }
+      });
+    } else {
+      this.cy = cytoscape({
+        container: document.getElementById(containerId)
+      });
+    }
+
+    if (this.options.levelOfDetail) {
+      this.setupLevelOfDetail();
+    }
+  }
+
+  setupLevelOfDetail() {
+    let isRendering = false;
+
+    this.cy.on('zoom pan', () => {
+      if (isRendering) return;
+
+      isRendering = true;
+      requestAnimationFrame(() => {
+        const zoom = this.cy.zoom();
+
+        // Hide labels at low zoom
+        if (zoom < 0.5) {
+          this.cy.style().selector('node').style('label', '').update();
+        } else {
+          this.cy.style().selector('node').style('label', 'data(label)').update();
+        }
+
+        // Simplify edges at low zoom
+        if (zoom < 0.3) {
+          this.cy.style().selector('edge').style('curve-style', 'straight').update();
+        } else {
+          this.cy.style().selector('edge').style('curve-style', 'bezier').update();
+        }
+
+        isRendering = false;
+      });
+    });
+  }
+
+  loadLargeDataset(data) {
+    // Batch processing for large datasets
+    const batchSize = 100;
+    const totalNodes = data.nodes.length;
+
+    let processed = 0;
+
+    const processBatch = () => {
+      const batch = data.nodes.slice(processed, processed + batchSize);
+
+      const elements = batch.map(node => ({
+        data: { id: node.id, label: node.label }
+      }));
+
+      this.cy.add(elements);
+      processed += batchSize;
+
+      if (processed < totalNodes) {
+        setTimeout(processBatch, 10); // Allow UI updates
+      } else {
+        this.addEdgesInBatches(data.edges);
+      }
+    };
+
+    processBatch();
+  }
+
+  addEdgesInBatches(edges) {
+    const batchSize = 200;
+    let processed = 0;
+
+    const processBatch = () => {
+      const batch = edges.slice(processed, processed + batchSize);
+
+      const elements = batch.map(edge => ({
+        data: {
+          id: `${edge.source}-${edge.target}`,
+          source: edge.source,
+          target: edge.target
+        }
+      }));
+
+      this.cy.add(elements);
+      processed += batchSize;
+
+      if (processed < edges.length) {
+        setTimeout(processBatch, 10);
+      } else {
+        // Run layout after all elements are added
+        this.cy.layout({ name: 'cose' }).run();
+      }
+    };
+
+    processBatch();
+  }
+}
+```
+
+## Production Templates
+
+### Basic Network Template
+```npl
+⟪network-basic⟫
+  ↦ structure: force-directed
+  ↦ node-encoding: {
+    size: importance_score * base_radius,
+    color: category_classification,
+    border: selection_state
+  }
+  ↦ edge-encoding: {
+    width: relationship_strength,
+    opacity: confidence_level,
+    style: relationship_type
+  }
+  ↦ layout-params: {
+    charge: -300,
+    link-distance: 100,
+    iterations: 300
+  }
+⟪/network-basic⟫
+```
+
+### Hierarchical Template
+```npl
+⟪network-hierarchy⟫
+  ↦ structure: tree-layout
+  ↦ orientation: top-down
+  ↦ spacing: {
+    level-gap: 120,
+    sibling-gap: 80,
+    min-node-distance: 40
+  }
+  ↦ interaction: {
+    collapse: click-to-toggle,
+    expand: hover-preview,
+    navigation: breadcrumb-trail
+  }
+⟪/network-hierarchy⟫
+```
+
+### Multi-Layer Template
+```npl
+⟪network-multilayer⟫
+  ↦ layers: relationship_types[]
+  ↦ view-mode: {
+    overlay: blend-all-layers,
+    focus: highlight-single-layer,
+    compare: side-by-side-panels
+  }
+  ↦ transitions: {
+    layer-switch: fade-animation-300ms,
+    focus-change: zoom-to-fit-500ms
+  }
+⟪/network-multilayer⟫
+```
+
+## Layout Algorithm Selection
+
+### Decision Matrix
+```npl
+⟪layout-selection⟫
+  ↦ force-directed: nodes < 1000, general-purpose, dynamic-data
+  ↦ circular: nodes < 200, cycle-detection, temporal-patterns
+  ↦ hierarchical: tree-structure, clear-hierarchy, top-down-flow
+  ↦ matrix: dense-graphs, pattern-analysis, nodes > 500
+  ↦ geographic: spatial-coordinates, location-based, map-overlay
+⟪/layout-selection⟫
+```
+
+### Performance Thresholds
+- **SVG**: < 500 nodes (DOM manipulation advantages)
+- **Canvas**: 500-5000 nodes (rendering performance)
+- **WebGL**: > 5000 nodes (GPU acceleration required)
+
+## Interactive Behavior Patterns
+
+### Navigation Controls
+```npl
+⟪navigation-controls⟫
+  ↦ pan: drag-background OR arrow-keys
+  ↦ zoom: mouse-wheel OR +/- keys OR pinch-gesture
+  ↦ reset: double-click-background OR home-key
+  ↦ fit-to-view: automatic-on-load OR fit-button
+⟪/navigation-controls⟫
+```
+
+### Selection Modes
+```npl
+⟪selection-modes⟫
+  ↦ single-select: click-node → highlight-neighbors
+  ↦ multi-select: ctrl-click → aggregate-selection
+  ↦ path-select: shift-click-two-nodes → shortest-path
+  ↦ area-select: drag-rectangle → lasso-selection
+⟪/selection-modes⟫
+```
+
+## Visual Encoding Guidelines
+
+### Color Strategy
+```npl
+⟪color-encoding⟫
+  ↦ categorical: distinct-hues, max-8-categories
+  ↦ sequential: single-hue-gradient, continuous-values
+  ↦ diverging: two-hue-gradient, positive-negative-scale
+  ↦ accessibility: colorblind-safe-palette, contrast-ratio > 4.5
+⟪/color-encoding⟫
+```
+
+### Size Encoding
+- **Nodes**: Linear scale for importance, min 8px, max 40px
+- **Edges**: Log scale for weights, min 1px, max 8px
+- **Labels**: Responsive to zoom level, 10-16px range
+
+## Performance Optimization Patterns
+
+### Level-of-Detail Strategy
+```npl
+⟪lod-strategy⟫
+  ↦ overview-level: show-high-degree-nodes, bundle-edges, hide-labels
+  ↦ intermediate-level: show-community-structure, selective-labels
+  ↦ detail-level: full-resolution, all-labels, rich-tooltips
+⟪/lod-strategy⟫
+```
+
+### Memory Management
+- **Object pooling**: Reuse DOM elements and data objects
+- **Viewport culling**: Only render visible elements
+- **Progressive loading**: Stream data based on user exploration
+
+## Quality Evaluation Checklist
+
+### Layout Quality
+- [ ] No overlapping nodes at target zoom level
+- [ ] Edge crossings minimized (< 20% of possible crossings)
+- [ ] Community structure visually apparent
+- [ ] Aspect ratio balanced (not extremely tall/wide)
+- [ ] Stable layout (converged simulation)
+
+### Interaction Quality
+- [ ] Smooth zoom transitions (< 16ms frame time)
+- [ ] Responsive selection feedback (< 100ms)
+- [ ] Consistent interaction metaphors
+- [ ] Clear affordances for interactive elements
+- [ ] Robust error handling for edge cases
+
+### Information Design
+- [ ] Visual hierarchy supports task goals
+- [ ] Legend/documentation provided where needed
+- [ ] Progressive disclosure of complexity
+- [ ] Contextual information on demand
+- [ ] Accessibility features implemented
+
+## Common Anti-Patterns
+
+### Layout Failures
+❌ **Hairball Effect**: Dense, unreadable node clusters
+✅ **Solution**: Use community detection, hierarchical bundling
+
+❌ **Edge Spaghetti**: Excessive edge crossings
+✅ **Solution**: Edge bundling, curved routing, layer separation
+
+❌ **Unstable Animation**: Layout never converges
+✅ **Solution**: Temperature cooling, iteration limits, manual positioning
+
+### Interaction Failures
+❌ **Navigation Chaos**: Unpredictable zoom/pan behavior
+✅ **Solution**: Constrained viewport, smooth transitions, reset controls
+
+❌ **Selection Confusion**: Unclear what's selected/selectable
+✅ **Solution**: Clear visual feedback, consistent interaction modes
+
+## Tool Integration Patterns
+
+### D3.js Implementation
+```javascript
+// Quality-focused force simulation
+const simulation = d3.forceSimulation(nodes)
+  .force("link", d3.forceLink(edges).distance(100).strength(0.1))
+  .force("charge", d3.forceManyBody().strength(-300))
+  .force("center", d3.forceCenter(width/2, height/2))
+  .force("collision", d3.forceCollide().radius(20))
+  .alphaTarget(0.1).alphaDecay(0.02); // Ensure convergence
+```
+
+### Cytoscape.js Configuration
+```javascript
+// Production-ready network setup
+const cy = cytoscape({
+  container: document.getElementById('network'),
+  style: cytoscapeStyles,
+  layout: { name: 'cose', nodeRepulsion: 400000 },
+  minZoom: 0.1, maxZoom: 3,
+  wheelSensitivity: 0.2
+});
+```
+
+## Output Validation
+
+### Automated Quality Checks
+```npl
+⟪validation-checks⟫
+  ↦ layout-convergence: alpha < 0.01 OR max-iterations-reached
+  ↦ visual-clarity: node-overlap-ratio < 0.05
+  ↦ performance: frame-rate > 30fps
+  ↦ accessibility: keyboard-navigable AND screen-reader-compatible
+⟪/validation-checks⟫
+```
+
+### User Testing Metrics
+- **Task completion rate**: > 90% for primary scenarios
+- **Error recovery**: < 3 steps to return to valid state
+- **Learning curve**: Productive use within 5 minutes
+- **Satisfaction**: SUS score > 70
+
+## Quality Assurance
+
+### Validation Frameworks
+```npl
+⟪validation-frameworks⟫
+  ↦ layout-quality-metrics: {
+    node-overlap-ratio: overlapping-area / total-node-area,
+    edge-crossing-ratio: crossings / potential-crossings,
+    aspect-ratio-balance: width / height ∈ [0.5, 2.0],
+    visual-balance: distribution-variance-across-quadrants
+  }
+  ↦ performance-benchmarks: {
+    initial-render-time: < 2000ms,
+    interaction-response: < 16ms,
+    memory-usage: < 100MB-per-1000-nodes,
+    frame-rate: > 30fps-during-animation
+  }
+  ↦ accessibility-compliance: {
+    keyboard-navigation: tab-through-nodes,
+    screen-reader: aria-labels-present,
+    color-contrast: > 4.5-ratio,
+    focus-indicators: visible-outlines
+  }
+⟪/validation-frameworks⟫
+```
+
+**Automated Quality Testing:**
+```javascript
+// Comprehensive network visualization testing suite
+class NetworkQualityAssurance {
+  constructor(networkInstance) {
+    this.network = networkInstance;
+    this.qualityMetrics = {};
+  }
+
+  runFullQualityAssessment() {
+    return {
+      layout: this.assessLayoutQuality(),
+      performance: this.measurePerformance(),
+      accessibility: this.checkAccessibility(),
+      interaction: this.testInteractionPatterns(),
+      overall: this.calculateOverallScore()
+    };
+  }
+
+  assessLayoutQuality() {
+    const nodes = this.network.getNodes();
+    const edges = this.network.getEdges();
+
+    return {
+      nodeOverlap: this.calculateNodeOverlapRatio(nodes),
+      edgeCrossings: this.calculateEdgeCrossingRatio(edges),
+      aspectRatio: this.calculateAspectRatioBalance(),
+      visualBalance: this.calculateVisualBalance(nodes),
+      stability: this.measureLayoutStability()
+    };
+  }
+
+  calculateNodeOverlapRatio(nodes) {
+    let overlappingArea = 0;
+    let totalArea = 0;
+
+    for (let i = 0; i < nodes.length; i++) {
+      const nodeA = nodes[i];
+      totalArea += Math.PI * nodeA.radius * nodeA.radius;
+
+      for (let j = i + 1; j < nodes.length; j++) {
+        const nodeB = nodes[j];
+        const distance = Math.sqrt(
+          Math.pow(nodeA.x - nodeB.x, 2) + Math.pow(nodeA.y - nodeB.y, 2)
+        );
+
+        if (distance < nodeA.radius + nodeB.radius) {
+          // Calculate overlapping area using circle intersection formula
+          overlappingArea += this.calculateCircleIntersection(
+            nodeA.radius, nodeB.radius, distance
+          );
+        }
+      }
+    }
+
+    return totalArea > 0 ? overlappingArea / totalArea : 0;
+  }
+
+  measurePerformance() {
+    const startTime = performance.now();
+    let frameCount = 0;
+    let totalFrameTime = 0;
+
+    return new Promise((resolve) => {
+      const measureFrame = () => {
+        const frameStart = performance.now();
+
+        // Trigger a render
+        this.network.render();
+
+        const frameEnd = performance.now();
+        const frameTime = frameEnd - frameStart;
+
+        totalFrameTime += frameTime;
+        frameCount++;
+
+        if (frameCount < 60) {
+          requestAnimationFrame(measureFrame);
+        } else {
+          const endTime = performance.now();
+          resolve({
+            totalTime: endTime - startTime,
+            averageFrameTime: totalFrameTime / frameCount,
+            frameRate: 1000 / (totalFrameTime / frameCount),
+            memoryUsage: this.getMemoryUsage()
+          });
+        }
+      };
+
+      requestAnimationFrame(measureFrame);
+    });
+  }
+
+  checkAccessibility() {
+    const container = this.network.getContainer();
+
+    return {
+      keyboardNavigation: this.testKeyboardNavigation(),
+      ariaLabels: this.validateAriaLabels(container),
+      colorContrast: this.checkColorContrast(),
+      focusIndicators: this.validateFocusIndicators(container)
+    };
+  }
+
+  testInteractionPatterns() {
+    return {
+      zoomResponsiveness: this.testZoomBehavior(),
+      panSmoothness: this.testPanBehavior(),
+      selectionFeedback: this.testSelectionBehavior(),
+      tooltipBehavior: this.testTooltipBehavior()
+    };
+  }
+
+  generateQualityReport() {
+    const assessment = this.runFullQualityAssessment();
+
+    return `
+# Network Visualization Quality Report
+
+## Overall Score: ${assessment.overall.score}/100
+
+### Layout Quality (${assessment.layout.score}/25)
+- Node Overlap: ${(assessment.layout.nodeOverlap * 100).toFixed(1)}% ${assessment.layout.nodeOverlap < 0.05 ? '✅' : '❌'}
+- Edge Crossings: ${(assessment.layout.edgeCrossings * 100).toFixed(1)}% ${assessment.layout.edgeCrossings < 0.20 ? '✅' : '❌'}
+- Aspect Ratio: ${assessment.layout.aspectRatio.toFixed(2)} ${this.isAspectRatioGood(assessment.layout.aspectRatio) ? '✅' : '❌'}
+- Visual Balance: ${assessment.layout.visualBalance.toFixed(2)} ${assessment.layout.visualBalance < 0.3 ? '✅' : '❌'}
+
+### Performance (${assessment.performance.score}/25)
+- Frame Rate: ${assessment.performance.frameRate.toFixed(1)} fps ${assessment.performance.frameRate > 30 ? '✅' : '❌'}
+- Average Frame Time: ${assessment.performance.averageFrameTime.toFixed(1)} ms ${assessment.performance.averageFrameTime < 16 ? '✅' : '❌'}
+- Memory Usage: ${(assessment.performance.memoryUsage / 1024 / 1024).toFixed(1)} MB
+
+### Accessibility (${assessment.accessibility.score}/25)
+- Keyboard Navigation: ${assessment.accessibility.keyboardNavigation ? '✅' : '❌'}
+- ARIA Labels: ${assessment.accessibility.ariaLabels ? '✅' : '❌'}
+- Color Contrast: ${assessment.accessibility.colorContrast ? '✅' : '❌'}
+- Focus Indicators: ${assessment.accessibility.focusIndicators ? '✅' : '❌'}
+
+### Interaction Quality (${assessment.interaction.score}/25)
+- Zoom Responsiveness: ${assessment.interaction.zoomResponsiveness ? '✅' : '❌'}
+- Pan Smoothness: ${assessment.interaction.panSmoothness ? '✅' : '❌'}
+- Selection Feedback: ${assessment.interaction.selectionFeedback ? '✅' : '❌'}
+- Tooltip Behavior: ${assessment.interaction.tooltipBehavior ? '✅' : '❌'}
+
+## Recommendations
+${this.generateRecommendations(assessment)}
+    `;
+  }
+}
+```
+
+### Debugging Workflows
+```npl
+⟪debugging-workflows⟫
+  ↦ visual-debug-modes: [force-vectors, bounding-boxes, performance-overlay, interaction-zones]
+  ↦ performance-profiling: {
+    render-time-analysis: frame-by-frame-breakdown,
+    memory-leak-detection: heap-snapshot-comparison,
+    layout-convergence: force-simulation-monitoring
+  }
+  ↦ interaction-testing: {
+    automated-user-flows: selenium-webdriver-scripts,
+    performance-under-load: stress-testing-frameworks,
+    cross-browser-compatibility: browserstack-integration
+  }
+⟪/debugging-workflows⟫
+```
+
+**Debug Mode Implementation:**
+```javascript
+// Production debugging tools for network visualizations
+class NetworkDebugger {
+  constructor(networkInstance) {
+    this.network = networkInstance;
+    this.debugModes = {
+      forceVectors: false,
+      boundingBoxes: false,
+      performanceOverlay: false,
+      interactionZones: false
+    };
+  }
+
+  enableDebugMode(mode) {
+    this.debugModes[mode] = true;
+
+    switch (mode) {
+      case 'forceVectors':
+        this.showForceVectors();
+        break;
+      case 'boundingBoxes':
+        this.showBoundingBoxes();
+        break;
+      case 'performanceOverlay':
+        this.showPerformanceOverlay();
+        break;
+      case 'interactionZones':
+        this.showInteractionZones();
+        break;
+    }
+  }
+
+  showForceVectors() {
+    const simulation = this.network.getSimulation();
+
+    simulation.on('tick', () => {
+      const nodes = this.network.getNodes();
+
+      nodes.forEach(node => {
+        if (node.vx || node.vy) {
+          this.drawVector(node.x, node.y, node.vx * 100, node.vy * 100, 'red');
+        }
+      });
+    });
+  }
+
+  showPerformanceOverlay() {
+    const overlay = document.createElement('div');
+    overlay.id = 'performance-overlay';
+    overlay.style.cssText = `
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 12px;
+      z-index: 1000;
+    `;
+
+    document.body.appendChild(overlay);
+
+    let frameCount = 0;
+    let lastTime = performance.now();
+
+    const updateOverlay = () => {
+      const currentTime = performance.now();
+      frameCount++;
+
+      if (currentTime - lastTime >= 1000) {
+        const fps = Math.round((frameCount * 1000) / (currentTime - lastTime));
+        const memory = performance.memory ?
+          (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(1) + ' MB' :
+          'N/A';
+
+        overlay.innerHTML = `
+          FPS: ${fps}<br>
+          Memory: ${memory}<br>
+          Nodes: ${this.network.getNodes().length}<br>
+          Edges: ${this.network.getEdges().length}
+        `;
+
+        frameCount = 0;
+        lastTime = currentTime;
+      }
+
+      if (this.debugModes.performanceOverlay) {
+        requestAnimationFrame(updateOverlay);
+      }
+    };
+
+    updateOverlay();
+  }
+}
+```
+
+### Success Patterns
+```npl
+⟪success-patterns⟫
+  ↦ exemplary-implementations: {
+    linkedin-network: [clean-hierarchy, progressive-disclosure, smooth-navigation],
+    github-dependencies: [clear-edges, logical-grouping, filterable-views],
+    neo4j-browser: [scalable-rendering, smooth-interactions, query-integration],
+    gephi-layouts: [community-emphasis, publication-quality, export-options]
+  }
+  ↦ quality-indicators: {
+    cognitive-load: key-relationships-identifiable-in-10s,
+    navigation: natural-predictable-interaction-patterns,
+    information-density: appropriate-for-viewport-size,
+    visual-encoding: supports-analytical-tasks,
+    performance: smooth-during-all-interactions
+  }
+  ↦ best-practices: {
+    progressive-enhancement: basic-functionality-without-js,
+    responsive-design: adapts-to-screen-sizes,
+    data-integrity: visualizes-source-data-faithfully,
+    user-guidance: clear-affordances-and-help-text
+  }
+⟪/success-patterns⟫
+```
+
+### Performance Benchmarking
+```javascript
+// Comprehensive performance benchmarking suite
+class NetworkPerformanceBenchmark {
   constructor() {
-    this.nodes = new Map();
-    this.edges = new Map();
-    this.adjacencyList = new Map();
-    this.nodeIndex = new QuadTree();
+    this.benchmarks = [];
   }
 
-  addNode(node) {
-    this.nodes.set(node.id, node);
-    this.adjacencyList.set(node.id, new Set());
-    this.nodeIndex.insert(node);
-  }
+  async runBenchmarkSuite(networkConfigs) {
+    const results = {};
 
-  addEdge(edge) {
-    const edgeId = `${edge.source}-${edge.target}`;
-    this.edges.set(edgeId, edge);
-
-    this.adjacencyList.get(edge.source).add(edge.target);
-    if (!edge.directed) {
-      this.adjacencyList.get(edge.target).add(edge.source);
-    }
-  }
-
-  getNeighbors(nodeId) {
-    return Array.from(this.adjacencyList.get(nodeId) || []);
-  }
-
-  getNodesInRegion(bounds) {
-    return this.nodeIndex.query(bounds);
-  }
-}
-```
-
-#### Memory Optimization
-- **Lazy Loading**: Load graph data progressively
-- **Data Compression**: Use efficient data structures
-- **Garbage Collection**: Clean up unused references
-- **Streaming Updates**: Handle real-time data efficiently
-
-### Performance Guidelines
-
-#### Rendering Optimization
-- **Canvas for Large Graphs**: Use Canvas API for >1000 nodes
-- **WebGL for Massive Graphs**: GPU acceleration for >10000 nodes
-- **SVG for Small Graphs**: DOM manipulation for <1000 nodes
-- **Hybrid Approaches**: Combine techniques based on graph regions
-
-#### Interaction Performance
-- **Debounced Events**: Prevent excessive event handling
-- **Efficient Hit Testing**: Use spatial indexing for click detection
-- **Smooth Animations**: Optimize transition performance
-- **Progressive Loading**: Load details on demand
-
-### Accessibility Implementation
-
-#### Screen Reader Support
-```javascript
-class AccessibleNetwork {
-  constructor(svg, graph) {
-    this.svg = svg;
-    this.graph = graph;
-    this.setupAccessibility();
-  }
-
-  setupAccessibility() {
-    // Add role and labels
-    this.svg
-      .attr('role', 'img')
-      .attr('aria-labelledby', 'network-title')
-      .attr('aria-describedby', 'network-description');
-
-    // Create text alternatives
-    this.createTextAlternatives();
-
-    // Setup keyboard navigation
-    this.setupKeyboardNavigation();
-  }
-
-  createTextAlternatives() {
-    const description = this.generateNetworkDescription();
-
-    d3.select(this.svg.node().parentNode)
-      .insert('div', ':first-child')
-      .attr('id', 'network-description')
-      .attr('class', 'sr-only')
-      .text(description);
-  }
-
-  generateNetworkDescription() {
-    const nodeCount = this.graph.nodes.length;
-    const edgeCount = this.graph.edges.length;
-    const components = this.calculateComponents();
-
-    return `Network visualization with ${nodeCount} nodes and ${edgeCount} connections. The network has ${components} separate components.`;
-  }
-}
-```
-
-#### Keyboard Navigation
-- **Tab Order**: Logical navigation sequence
-- **Arrow Keys**: Spatial navigation between connected nodes
-- **Enter/Space**: Selection and activation
-- **Escape**: Reset selection and return to overview
-
-## Troubleshooting
-
-### Common Issues
-
-#### Layout Problems
-
-**Symptoms**: Poor node positioning, overlapping elements, unstable layouts
-**Causes**:
-- Inappropriate algorithm selection
-- Poor parameter tuning
-- Insufficient simulation time
-- Graph structure issues
-
-**Solutions**:
-```javascript
-// Adaptive parameter tuning
-function tuneForceParameters(graph) {
-  const nodeCount = graph.nodes.length;
-  const edgeCount = graph.edges.length;
-  const density = (2 * edgeCount) / (nodeCount * (nodeCount - 1));
-
-  return {
-    linkDistance: density > 0.1 ? 50 : 100,
-    chargeStrength: -300 / Math.sqrt(nodeCount),
-    alphaDecay: nodeCount > 1000 ? 0.05 : 0.0228,
-    velocityDecay: density > 0.05 ? 0.6 : 0.4
-  };
-}
-```
-
-#### Performance Issues
-
-**Symptoms**: Slow rendering, browser freezing, memory leaks
-**Causes**:
-- Large graph size without optimization
-- Inefficient event handling
-- Memory leaks from simulation
-- Excessive DOM manipulation
-
-**Solutions**:
-```javascript
-// Performance monitoring
-class PerformanceMonitor {
-  constructor(threshold = 16) {
-    this.threshold = threshold; // 60 FPS
-    this.frameCount = 0;
-    this.lastTime = performance.now();
-  }
-
-  tick() {
-    const currentTime = performance.now();
-    const frameTime = currentTime - this.lastTime;
-
-    if (frameTime > this.threshold) {
-      console.warn(`Slow frame: ${frameTime.toFixed(2)}ms`);
-      this.onSlowFrame(frameTime);
+    for (const config of networkConfigs) {
+      console.log(`Running benchmark: ${config.name}`);
+      results[config.name] = await this.runSingleBenchmark(config);
     }
 
-    this.lastTime = currentTime;
-    this.frameCount++;
+    return this.generateBenchmarkReport(results);
   }
 
-  onSlowFrame(frameTime) {
-    // Reduce quality or switch to simpler rendering
-    this.adaptQuality(frameTime);
+  async runSingleBenchmark(config) {
+    const startTime = performance.now();
+
+    // Create network instance
+    const network = new config.networkClass(config.containerId, config.options);
+
+    const initTime = performance.now();
+
+    // Load data
+    await network.loadData(config.testData);
+
+    const loadTime = performance.now();
+
+    // Measure interaction performance
+    const interactionMetrics = await this.measureInteractionPerformance(network);
+
+    const endTime = performance.now();
+
+    return {
+      initialization: initTime - startTime,
+      dataLoading: loadTime - initTime,
+      totalSetup: loadTime - startTime,
+      interactions: interactionMetrics,
+      memoryUsage: this.getMemoryUsage(),
+      nodeCount: config.testData.nodes.length,
+      edgeCount: config.testData.edges.length
+    };
   }
 
-  adaptQuality(frameTime) {
-    if (frameTime > 50) {
-      // Switch to canvas or reduce detail
-      this.switchToLowQuality();
-    }
-  }
-}
-```
+  generateBenchmarkReport(results) {
+    let report = '# Network Visualization Performance Benchmark\n\n';
 
-#### Data Loading Problems
-
-**Symptoms**: Missing nodes/edges, incorrect relationships, format errors
-**Causes**:
-- Malformed data files
-- Incorrect parsing logic
-- Missing node references
-- Data type mismatches
-
-**Solutions**:
-```javascript
-// Data validation
-function validateGraphData(data) {
-  const errors = [];
-
-  // Validate nodes
-  if (!Array.isArray(data.nodes)) {
-    errors.push('Nodes must be an array');
-  } else {
-    data.nodes.forEach((node, index) => {
-      if (!node.id) {
-        errors.push(`Node at index ${index} missing ID`);
-      }
+    Object.entries(results).forEach(([name, metrics]) => {
+      report += `## ${name}\n`;
+      report += `- Nodes: ${metrics.nodeCount}, Edges: ${metrics.edgeCount}\n`;
+      report += `- Initialization: ${metrics.initialization.toFixed(1)}ms\n`;
+      report += `- Data Loading: ${metrics.dataLoading.toFixed(1)}ms\n`;
+      report += `- Memory Usage: ${(metrics.memoryUsage / 1024 / 1024).toFixed(1)}MB\n`;
+      report += `- Zoom Performance: ${metrics.interactions.zoom.toFixed(1)}ms\n`;
+      report += `- Pan Performance: ${metrics.interactions.pan.toFixed(1)}ms\n\n`;
     });
-  }
 
-  // Validate edges
-  if (!Array.isArray(data.edges)) {
-    errors.push('Edges must be an array');
-  } else {
-    const nodeIds = new Set(data.nodes.map(n => n.id));
-    data.edges.forEach((edge, index) => {
-      if (!nodeIds.has(edge.source)) {
-        errors.push(`Edge at index ${index} references unknown source: ${edge.source}`);
-      }
-      if (!nodeIds.has(edge.target)) {
-        errors.push(`Edge at index ${index} references unknown target: ${edge.target}`);
-      }
-    });
+    return report;
   }
-
-  return errors;
 }
 ```
 
-### Debugging Strategies
-
-#### Visual Debugging
-- **Force Visualization**: Show force vectors and node velocities
-- **Spatial Index Overlay**: Display quadtree or spatial structures
-- **Performance Overlay**: Show frame rate and render times
-- **Data Inspector**: Interactive exploration of node/edge data
-
-#### Development Tools
-- **Browser DevTools**: Performance profiling and memory analysis
-- **D3 Selection Inspector**: Examine D3 selections and data binding
-- **Network Analysis Tools**: Validate graph properties and metrics
-- **Accessibility Testing**: Screen reader and keyboard navigation testing
-
-## Learning Resources
-
-### Foundational Knowledge
-
-#### Graph Theory
-- **"Introduction to Graph Theory" by Richard Trudeau**: Accessible introduction
-- **"Graph Theory with Applications" by Bondy and Murty**: Comprehensive reference
-- **"Networks, Crowds, and Markets" by Easley and Kleinberg**: Applied network analysis
-- **MIT OpenCourseWare: Graph Theory**: Free online course materials
-
-#### Network Analysis
-- **"Networks: An Introduction" by Mark Newman**: Comprehensive network science
-- **"Social Network Analysis" by Wasserman and Faust**: Classical reference
-- **"Linked" by Albert-László Barabási**: Popular introduction to network science
-- **"The Structure and Dynamics of Networks" by Newman, Barabási, and Watts**: Collected papers
-
-### Technical Implementation
-
-#### D3.js and Web Development
-- **"D3.js in Action" by Elijah Meeks**: Comprehensive D3.js guide
-- **"Interactive Data Visualization for the Web" by Scott Murray**: Beginner-friendly introduction
-- **Observable Notebooks**: Interactive D3.js examples and tutorials
-- **D3.js API Documentation**: Official reference and examples
-
-#### Specialized Libraries
-- **Cytoscape.js Documentation**: Comprehensive API reference
-- **Vis.js Network Documentation**: Examples and tutorials
-- **Sigma.js Examples**: Performance-oriented network visualization
-- **Three.js Documentation**: 3D and WebGL network visualization
-
-### Online Courses
-
-#### Network Visualization
-- **"Information Visualization" (University of Edinburgh)**: Coursera course
-- **"Applied Plotting, Charting & Data Representation in Python"**: University of Michigan
-- **"Social Network Analysis" (University of California, Davis)**: Coursera specialization
-- **"Network Analysis in Systems Biology"**: Cytoscape tutorials
-
-#### Web Development
-- **"D3.js Data Visualization Fundamentals"**: Pluralsight course
-- **"Interactive Data Visualization with D3.js"**: Frontend Masters workshop
-- **"SVG Essentials & Animation"**: Various online platforms
-- **"Canvas API for Graphics"**: Mozilla Developer Network
-
-### Communities and Forums
-
-#### Professional Networks
-- **Network Science Society**: Academic community
-- **International Network for Social Network Analysis (INSNA)**: Research community
-- **IEEE Visualization Community**: Technical visualization focus
-- **ACM SIGCHI**: Human-computer interaction research
-
-#### Developer Communities
-- **D3.js Community**: GitHub discussions and Stack Overflow
-- **Observable Community**: Collaborative notebook platform
-- **Reddit r/dataviz**: Visualization showcase and discussions
-- **Visualization Twitter Community**: Real-time discussions and examples
-
-### Tools and Datasets
-
-#### Development Tools
-- **Observable**: Interactive development environment
-- **CodePen**: Quick prototyping and sharing
-- **JSFiddle**: Online code editor
-- **GitHub Pages**: Free hosting for visualization projects
-
-#### Practice Datasets
-- **Stanford Large Network Dataset Collection**: Academic research datasets
-- **NetworkRepository**: Comprehensive network data repository
-- **Gephi Dataset Collection**: Ready-to-use network files
-- **Facebook Social Network Data**: Anonymized social network datasets
-- **Citation Networks**: Academic paper citation data
-
-#### Software Tools
-- **Gephi**: Desktop network analysis and visualization
-- **Cytoscape**: Biological network analysis platform
-- **NodeXL**: Excel plugin for network analysis
-- **NetworkX**: Python library for network analysis
-- **igraph**: R and Python library for network analysis
-
-This comprehensive guide provides the foundation for creating sophisticated network and graph visualizations using NPL-FIM approaches. The combination of structured prompting, advanced algorithms, and interactive design creates powerful tools for exploring and understanding complex relational data.
+This comprehensive guide prioritizes immediate production value over theoretical completeness, focusing on patterns that consistently produce high-quality network visualizations in real-world applications. The enhanced content now includes complete data structure implementations, advanced algorithm explanations, detailed D3.js and Cytoscape.js patterns, progressive example complexity, and robust quality assurance frameworks.
