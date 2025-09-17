@@ -1,29 +1,53 @@
 ## NPL Load Directive
 
-When encountering the command `npl_load(item)`, in prompts/agent definitions load the specified item into context if not already loaded.
-npl_load() with no arguments indicates to load $NPL_HOME/npl.md if not already in context.
+### Environment Variables
 
-in addition to `npl_load(item)` there is `npl_meta_load(item)` which loads data under .npl/meta and should search first for project dir then $NPL_HOME/meta if no project level file found.
-npl_meta_load(persona.steve-k-ux-guru) -> (./.npl/meta/persona.md || $NPL_HOME/meta/persona.md) , then  ./.npl/meta/persona/steve-k-ux-guru.md or $NPL_HOME/meta/persona/steve-k-ux-guru.md 
+NPL uses optional environment variables to locate resources, allowing projects to override only what they need:
 
+**$NPL_HOME**
+: Base path for NPL definitions. Fallback: `./.npl`, `~/.npl`, `/etc/npl/`
 
-### Loading Rules
+**$NPL_META**  
+: Path for metadata files. Fallback: `./.npl/meta`, `~/.npl/meta`, `/etc/npl/meta`
 
-1. **Parse Item Path**: 
-   - Simple item: `npl_load(pumps)` → load `$NPL_HOME/npl/pumps.md`
-   - Nested item: `npl_load(pumps.cot)` → load `$NPL_HOME/npl/pumps.md` (if not loaded) + `$NPL_HOME/npl/pumps/cot.md`
-2. **Skip if Loaded**: Do not reload items already in context
+**$NPL_STYLE_GUIDE**
+: Path for style conventions. Fallback: `./.npl/conventions/`, `~/.npl/conventions/`, `/etc/npl/conventions/`
 
-### Path Resolution
+**$NPL_THEME**
+: Theme name for style loading (e.g., "dark-mode", "corporate")
 
-- Base path: `${NPL_HOME}/npl/`
-- Dot notation creates subdirectories: `item.subitem` → `item/subitem.md`
-- Parent items are loaded before children
+### Loading Dependencies
 
-### Examples
+Prompts may specify dependencies to load using the `npl-load` command-line tool:
 
+```bash
+npl-load -c "syntax,agent" --skip {@npl.loaded} -m "persona.qa-engineer" --skip {@npl.meta.loaded} -s "house-style" --skip {@npl.style.loaded}
 ```
-npl_load(agents)           → $NPL_HOME/npl/agents.md
-npl_load(agents.reasoning) → $NPL_HOME/npl/agents.md + $NPL_HOME/npl/agents/reasoning.md
-npl_load(tools.git.status) → $NPL_HOME/npl/tools.md + $NPL_HOME/npl/tools/git.md + $NPL_HOME/npl/tools/git/status.md
+
+The tool searches paths in order (environment → project → user → system) and tracks what's loaded to prevent duplicates.
+
+**Critical:** When `npl-load` returns content, it includes headers that set global flags for tracking what is in context:
+- `npl.loaded=syntax,agent`
+- `npl.meta.loaded=persona.qa-engineer`  
+- `npl.style.loaded=house-style`
+
+These flags **must** be passed back via `--skip` on subsequent calls to prevent reloading:
+
+```bash
+# First load sets flags
+npl-load -c "syntax,agent" --skip ""
+# Returns: npl.loaded=syntax,agent
+
+# Next load uses --skip to avoid reloading
+npl-load -c "syntax,agent,pumps" --skip "syntax,agent"
 ```
+
+### Purpose
+
+This hierarchical loading system allows:
+- **Organizations** to set company-wide standards via environment variables
+- **Projects** to override specific components in `./.npl/`  
+- **Users** to maintain personal preferences in `~/.npl/`
+- **Fine-tuning** only the sections that need customization
+
+Projects typically only need to create files for components they're modifying, inheriting everything else from parent paths. This keeps project-specific NPL directories minimal and focused.
