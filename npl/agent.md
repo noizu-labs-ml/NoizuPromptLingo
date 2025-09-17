@@ -1,3 +1,5 @@
+npl-load c syntax
+---
 # Agent Definition and Behavior Specifications
 Comprehensive documentation for defining agents using NPL syntax, including capabilities, constraints, communication patterns, and lifecycle management.
 

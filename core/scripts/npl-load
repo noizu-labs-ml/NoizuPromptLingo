@@ -1,0 +1,337 @@
+#!/usr/bin/env python3
+"""
+npl-load - Load NPL components, metadata, and style guides with dependency tracking
+"""
+
+import os
+import sys
+import argparse
+import glob
+import fnmatch
+import re
+from pathlib import Path
+from typing import List, Set, Tuple, Optional
+
+class NPLLoader:
+    def __init__(self):
+        # Environment variables with fallbacks
+        self.npl_home = os.environ.get('NPL_HOME', None)
+        self.npl_meta = os.environ.get('NPL_META', None)
+        self.npl_style_guide = os.environ.get('NPL_STYLE_GUIDE', None)
+        self.npl_theme = os.environ.get('NPL_THEME', 'default')
+        
+        # Track loaded items
+        self.loaded_components = set()
+        self.loaded_meta = set()
+        self.loaded_style = set()
+        
+
+    def get_search_paths(self, resource_type='component'):
+        """Get search paths based on resource type"""
+        paths = []
+
+        # Platform-specific global config
+        if sys.platform.startswith('win'):
+            global_npl = Path(os.environ.get('PROGRAMDATA', 'C:\\ProgramData')) / 'npl'
+        elif sys.platform == 'darwin':
+            global_npl = Path('/Library/Application Support/npl')
+        else:
+            global_npl = Path('/etc/npl')
+
+        if resource_type == 'component':
+            if self.npl_home:
+                paths.append(Path(self.npl_home) / 'npl')
+            paths.extend([
+                Path('./.npl/npl'),
+                Path.home() / '.npl/npl',
+                global_npl / 'npl'
+            ])
+        elif resource_type == 'meta':
+            if self.npl_meta:
+                paths.append(Path(self.npl_meta))
+            paths.extend([
+                Path('./.npl/meta'),
+                Path.home() / '.npl/meta',
+                global_npl / 'meta'
+            ])
+        elif resource_type == 'style':
+            if self.npl_style_guide:
+                paths.append(Path(self.npl_style_guide))
+            paths.extend([
+                Path('./.npl/conventions'),
+                Path.home() / '.npl/conventions',
+                global_npl / 'conventions'
+            ])
+
+        return paths
+        
+    def resolve_path(self, item: str, resource_type: str) -> Optional[Tuple[Path, Path]]:
+        """Convert dot notation to path and find first existing file, returning (base_dir, file_path)"""
+        path_parts = item.split('.')
+        relative_path = Path(*path_parts[:-1]) / f"{path_parts[-1]}.md" if len(path_parts) > 1 else Path(f"{item}.md")
+        search_paths = self.get_search_paths(resource_type)
+
+        if resource_type == 'style':
+            # Try theme-specific first (if not default), then default
+            if self.npl_theme and self.npl_theme != 'default':
+                for base_path in search_paths:
+                    theme_path = base_path / self.npl_theme / relative_path
+                    if theme_path.exists():
+                        return (base_path / self.npl_theme, theme_path)
+            # Fallback to default
+            for base_path in search_paths:
+                full_path = base_path / 'default' / relative_path
+                if full_path.exists():
+                    return (base_path / 'default', full_path)
+            return None
+
+        # component/meta
+        for base_path in search_paths:
+            full_path = base_path / relative_path
+            if full_path.exists():
+                return (base_path, full_path)
+        return None
+
+    def load_file_with_patch(self, base: Path, file: Path, source_type: str, item: str) -> str:
+        """
+        Load content from file and apply patch if available.
+        - base: the root directory under which 'file' was found (e.g., .../.npl/npl, .../.npl/meta, .../conventions/<theme>)
+        - file: the absolute path to the discovered file
+        - source_type: 'component' | 'meta' | 'style'
+        - item: the dot-notation name used to look up the file (for labeling)
+        """
+        try:
+            with open(file, 'r', encoding='utf-8') as f:
+                content = f.read()
+        except Exception as e:
+            print(f"Error loading {file}: {e}")
+            return ""
+
+        # Compute relative path of the file under its discovery base
+        try:
+            rel_path = file.relative_to(base)
+        except Exception:
+            # As a fallback, just use the filename
+            rel_path = file.name
+
+        # Patch search bases (project, user, system)
+        if source_type == 'component':
+            patch_bases = [
+                Path('./.npl/npl'),
+                Path.home() / '.npl/npl',
+                Path('/etc/npl/npl')
+            ]
+        elif source_type == 'meta':
+            patch_bases = [
+                Path('./.npl/meta'),
+                Path.home() / '.npl/meta',
+                Path('/etc/npl/meta')
+            ]
+        elif source_type == 'style':
+            patch_bases = [
+                Path('./.npl/conventions'),
+                Path.home() / '.npl/conventions',
+                Path('/etc/npl/conventions')
+            ]
+        else:
+            patch_bases = []
+
+        # Theme-aware search for styles
+        candidates: List[Path] = []
+        if source_type == 'style':
+            # If base is .../conventions/<theme>, include theme segment in rel path for patches
+            theme_dir = base.name if base.parent.name == 'conventions' else None
+            for b in patch_bases:
+                if theme_dir:
+                    candidates.append((b / theme_dir / rel_path).with_suffix('.patch.md'))
+                    if theme_dir != 'default':
+                        candidates.append((b / 'default' / rel_path).with_suffix('.patch.md'))
+                # Also allow no-theme patch override
+                candidates.append((b / rel_path).with_suffix('.patch.md'))
+        else:
+            # Components/meta: straight relative placement
+            for b in patch_bases:
+                candidates.append((b / rel_path).with_suffix('.patch.md'))
+
+        for patch_file in candidates:
+            if patch_file.exists():
+                try:
+                    with open(patch_file, 'r', encoding='utf-8') as pf:
+                        patch_content = pf.read()
+                    return f"# {item}:\n『(patch)\n{patch_content}\n』\n{content}␜\n"
+                except Exception as e:
+                    print(f"Error loading patch {patch_file}: {e}")
+
+        return f"# {item}:\n{content}␜\n"
+
+    def is_skipped(self, item: str, skip_patterns: Set[str]) -> bool:
+        """Check if item matches any skip pattern (supports wildcards)"""
+        for pattern in skip_patterns:
+            if fnmatch.fnmatch(item, pattern):
+                return True
+        return False
+
+    def load_components(self, components: List[str], skip: Set[str]) -> List[Tuple[str, str]]:
+        """Load component files with patch support"""
+        loaded = []
+        for pattern in components:
+            if '*' in pattern:
+                base_paths = self.get_search_paths('component')
+                for base_path in base_paths:
+                    glob_pattern = pattern.replace('.', '/')
+                    for match in base_path.glob(f"{glob_pattern}.md"):
+                        relative = match.relative_to(base_path)
+                        item = str(relative).replace('/', '.').replace('.md', '')
+                        if not self.is_skipped(item, skip) and item not in self.loaded_components:
+                            content = self.load_file_with_patch(base_path, match, 'component', item)
+                            if content:
+                                loaded.append((item, content))
+                                self.loaded_components.add(item)
+            else:
+                if not self.is_skipped(pattern, skip) and pattern not in self.loaded_components:
+                    result = self.resolve_path(pattern, 'component')
+                    if result:
+                        base_path, file_path = result
+                        content = self.load_file_with_patch(base_path, file_path, 'component', pattern)
+                        if content:
+                            loaded.append((pattern, content))
+                            self.loaded_components.add(pattern)
+                    else:
+                        print(f"Warning: Component '{pattern}' not found")
+        return loaded
+
+    def load_meta(self, items: List[str], skip: Set[str]) -> List[Tuple[str, str]]:
+        """Load metadata files with patch support"""
+        loaded = []
+        for pattern in items:
+            if '*' in pattern:
+                base_paths = self.get_search_paths('meta')
+                for base_path in base_paths:
+                    glob_pattern = pattern.replace('.', '/')
+                    for match in base_path.glob(f"{glob_pattern}.md"):
+                        relative = match.relative_to(base_path)
+                        item = str(relative).replace('/', '.').replace('.md', '')
+                        if not self.is_skipped(item, skip) and item not in self.loaded_meta:
+                            content = self.load_file_with_patch(base_path, match, 'meta', item)
+                            if content:
+                                loaded.append((item, content))
+                                self.loaded_meta.add(item)
+            else:
+                if not self.is_skipped(pattern, skip) and pattern not in self.loaded_meta:
+                    result = self.resolve_path(pattern, 'meta')
+                    if result:
+                        base_path, file_path = result
+                        content = self.load_file_with_patch(base_path, file_path, 'meta', pattern)
+                        if content:
+                            loaded.append((pattern, content))
+                            self.loaded_meta.add(pattern)
+                    else:
+                        print(f"Warning: Metadata '{pattern}' not found")
+        return loaded
+
+    def load_style(self, items: List[str], skip: Set[str]) -> List[Tuple[str, str]]:
+        """Load style guide files with patch support"""
+        loaded = []
+        for pattern in items:
+            if '*' in pattern:
+                base_paths = self.get_search_paths('style')
+                for base_path in base_paths:
+                    for theme_dir in [self.npl_theme, 'default']:
+                        theme_path = base_path / theme_dir
+                        if theme_path.exists():
+                            glob_pattern = pattern.replace('.', '/')
+                            for match in theme_path.glob(f"{glob_pattern}.md"):
+                                relative = match.relative_to(theme_path)
+                                item = str(relative).replace('/', '.').replace('.md', '')
+                                if not self.is_skipped(item, skip) and item not in self.loaded_style:
+                                    content = self.load_file_with_patch(theme_path, match, 'style', item)
+                                    if content:
+                                        loaded.append((item, content))
+                                        self.loaded_style.add(item)
+            else:
+                if not self.is_skipped(pattern, skip) and pattern not in self.loaded_style:
+                    result = self.resolve_path(pattern, 'style')
+                    if result:
+                        base_path, file_path = result
+                        content = self.load_file_with_patch(base_path, file_path, 'style', pattern)
+                        if content:
+                            loaded.append((pattern, content))
+                            self.loaded_style.add(pattern)
+                    else:
+                        print(f"Warning: Style guide '{pattern}' not found")
+        return loaded
+
+def _parse_skip_list(values) -> Set[str]:
+    """Accept '--skip a b c' or '--skip a,b,c'."""
+    if not values:
+        return set()
+    if isinstance(values, str):
+        raw = values
+    else:
+        raw = " ".join(values)
+    return {t for t in re.split(r'[,\s]+', raw) if t}
+
+def main():
+    parser = argparse.ArgumentParser(description='Load NPL resources with dependency tracking')
+    parser.add_argument('--quiet', action='store_true',
+                        help='Only output tracking flags, not content')
+
+    subparsers = parser.add_subparsers(dest='command', required=True)
+
+    sp_c = subparsers.add_parser('c', help='Load components')
+    sp_c.add_argument('items', nargs='*', help='Components to load (supports glob patterns)')
+    sp_c.add_argument('--skip', nargs='*', default=[], help='Skip patterns (wildcards allowed)')
+
+    sp_m = subparsers.add_parser('m', help='Load metadata')
+    sp_m.add_argument('items', nargs='*', help='Metadata to load (supports glob patterns)')
+    sp_m.add_argument('--skip', nargs='*', default=[], help='Skip patterns (wildcards allowed)')
+
+    sp_s = subparsers.add_parser('s', help='Load style guides')
+    sp_s.add_argument('items', nargs='*', help='Style guides to load (supports glob patterns)')
+    sp_s.add_argument('--skip', nargs='*', default=[], help='Skip patterns (wildcards allowed)')
+
+
+    args = parser.parse_args()
+
+    loader = NPLLoader()
+    loaded_content = []
+
+    if args.command == 'c':
+        skip = _parse_skip_list(args.skip)
+        if args.items:
+            components = loader.load_components(args.items, skip)
+            for name, content in components:
+                loaded_content.append(('COMPONENT', name, content))
+
+    elif args.command == 'm':
+        skip = _parse_skip_list(args.skip)
+        if args.items:
+            meta = loader.load_meta(args.items, skip)
+            for name, content in meta:
+                loaded_content.append(('META', name, content))
+
+    elif args.command == 's':
+        skip = _parse_skip_list(args.skip)
+        if args.items:
+            styles = loader.load_style(args.items, skip)
+            for name, content in styles:
+                loaded_content.append(('STYLE', name, content))
+
+    if loader.loaded_components or loader.loaded_meta or loader.loaded_style:
+        print("# Flag Update")
+        print("\n```🏳️\n")
+        if loader.loaded_components:
+            print(f"@npl.loaded+=\"{','.join(sorted(loader.loaded_components))}\"")
+        if loader.loaded_meta:
+            print(f"@npl.meta.loaded+=\"{','.join(sorted(loader.loaded_meta))}\"")
+        if loader.loaded_style:
+            print(f"2npl.style.loaded+=\"{','.join(sorted(loader.loaded_style))}\"")
+        print("\n\n```\n")
+        print("\n---")
+
+    if not args.quiet:       
+        for resource_type, name, content in loaded_content:
+            print(content)
+
+if __name__ == '__main__':
+    main()

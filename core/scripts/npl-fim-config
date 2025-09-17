@@ -1,0 +1,340 @@
+#!/usr/bin/env python3
+"""
+npl-fim-config - Configuration and query tool for NPL-FIM agent
+"""
+
+import os
+import sys
+import json
+import argparse
+import subprocess
+import tempfile
+from pathlib import Path
+from typing import List, Dict, Optional, Tuple
+import re
+
+class NPLFIMConfig:
+    def __init__(self):
+        self.artifact_dir = os.environ.get('NPL_FIM_ARTIFACTS', './artifacts')
+        self.npl_meta = os.environ.get('NPL_META', None)
+        
+        # Tool-task compatibility matrix (subset for demonstration)
+        self.compatibility_matrix = {
+            'data-visualization': ['d3_js', 'plotly_js', 'chart_js', 'vega-lite', 'matplotlib', 'seaborn', 'apache-echarts'],
+            'network-graphs': ['cytoscape_js', 'd3_js', 'sigma_js', 'vis_js', 'networkx', 'graphviz'],
+            'diagram-generation': ['mermaid', 'plantuml', 'graphviz', 'drawio-xml', 'nomnoml', 'yuml'],
+            '3d-graphics': ['three_js', 'babylon_js', 'a-frame', 'vtk_js', 'cesium_js'],
+            'music-notation': ['vexflow', 'osmd', 'abcjs', 'lilypond', 'alphatab'],
+            'mathematical-scientific': ['latex', 'mathjax', 'katex', 'tikz-pgf', 'matplotlib', 'sympy'],
+            'geospatial-mapping': ['leaflet_js', 'mapbox-gl-js', 'deck_gl', 'cesium_js', 'folium'],
+            'prototyping': ['react', 'vue', 'html', 'tailwind', 'bootstrap'],
+        }
+        
+        # Tool descriptions for queries
+        self.tool_descriptions = {
+            'd3_js': 'Data-driven documents for custom visualizations',
+            'plotly_js': 'Interactive scientific and 3D charts',
+            'chart_js': 'Simple, flexible charting library',
+            'mermaid': 'Markdown-based diagram generation',
+            'plantuml': 'Text-based UML diagrams',
+            'three_js': 'JavaScript 3D graphics library',
+            'cytoscape_js': 'Graph/network visualization',
+            'vexflow': 'Music notation rendering',
+            'leaflet_js': 'Mobile-friendly interactive maps',
+            'latex': 'Professional typesetting system',
+        }
+        
+        # Preferred solutions by use case
+        self.preferred_solutions = {
+            'data-visualization': ['plotly_js', 'd3_js'],
+            'network-graphs': ['cytoscape_js', 'd3_js'],
+            'diagram-generation': ['mermaid', 'plantuml'],
+            '3d-graphics': ['three_js'],
+            'music-notation': ['vexflow'],
+            'mathematical-scientific': ['latex', 'mathjax'],
+            'geospatial-mapping': ['leaflet_js', 'mapbox-gl-js'],
+            'prototyping': ['react', 'html'],
+        }
+    
+    def get_metadata_paths(self) -> List[Path]:
+        """Get search paths for metadata"""
+        paths = []
+        if self.npl_meta:
+            paths.append(Path(self.npl_meta) / 'fim')
+        paths.extend([
+            Path('./.npl/meta/fim'),
+            Path.home() / '.npl/meta/fim',
+            Path('/etc/npl/meta/fim')
+        ])
+        return paths
+    
+    def find_local_override(self, item: str) -> Optional[Path]:
+        """Find local override file for item"""
+        # Convert dot notation to path
+        parts = item.split('.')
+        if len(parts) >= 2 and parts[0] == 'solution':
+            # solution.tool.use-case.task -> solution/tool/use-case/task.local.md
+            relative_path = Path(*parts[:-1]) / f"{parts[-1]}.local.md"
+        else:
+            relative_path = Path(*parts[:-1]) / f"{parts[-1]}.local.md" if len(parts) > 1 else f"{item}.local.md"
+        
+        # Check in project directory first
+        local_path = Path('./.npl/meta/fim') / relative_path
+        if local_path.exists():
+            return local_path
+        
+        return None
+    
+    def query_solution(self, query: str) -> List[Tuple[str, float]]:
+        """Natural language query for best solution"""
+        query_lower = query.lower()
+        results = []
+        
+        # Keywords to look for
+        keywords = {
+            'org': ['org', 'organization', 'hierarchy', 'chart'],
+            'react': ['react', 'component', 'jsx'],
+            'interactive': ['interactive', 'clickable', 'dynamic'],
+            'website': ['web', 'website', 'embed', 'html'],
+            'network': ['network', 'graph', 'connection', 'node'],
+            '3d': ['3d', 'three', 'dimension', 'webgl'],
+            'map': ['map', 'geographic', 'location', 'spatial'],
+            'music': ['music', 'note', 'score', 'sheet'],
+            'math': ['math', 'equation', 'formula', 'latex'],
+        }
+        
+        # Score each tool based on keyword matches
+        tool_scores = {}
+        
+        for category, words in keywords.items():
+            if any(word in query_lower for word in words):
+                # Add tools from relevant categories
+                if category == 'org':
+                    use_case = 'diagram-generation'
+                elif category == 'network':
+                    use_case = 'network-graphs'
+                elif category == '3d':
+                    use_case = '3d-graphics'
+                elif category == 'map':
+                    use_case = 'geospatial-mapping'
+                elif category == 'music':
+                    use_case = 'music-notation'
+                elif category == 'math':
+                    use_case = 'mathematical-scientific'
+                else:
+                    use_case = 'data-visualization'
+                
+                if use_case in self.compatibility_matrix:
+                    for tool in self.compatibility_matrix[use_case]:
+                        if tool not in tool_scores:
+                            tool_scores[tool] = 0
+                        tool_scores[tool] += 1
+        
+        # Special handling for specific requirements
+        if 'react' in query_lower:
+            if 'd3_js' in tool_scores:
+                tool_scores['d3_js'] += 2  # D3 works well with React
+            if 'plotly_js' in tool_scores:
+                tool_scores['plotly_js'] += 1
+        
+        if 'org' in query_lower and 'chart' in query_lower:
+            tool_scores['mermaid'] = tool_scores.get('mermaid', 0) + 3
+            tool_scores['go_js'] = tool_scores.get('go_js', 0) + 2
+            
+        # Sort by score
+        sorted_tools = sorted(tool_scores.items(), key=lambda x: x[1], reverse=True)
+        return sorted_tools[:5]  # Return top 5 matches
+    
+    def display_table(self, filter_tool: Optional[str] = None, filter_task: Optional[str] = None):
+        """Display compatibility matrix as table"""
+        print("\nNPL-FIM Tool-Task Compatibility Matrix")
+        print("=" * 80)
+        
+        # Filter if specified
+        tasks = [filter_task] if filter_task else sorted(self.compatibility_matrix.keys())
+        
+        for task in tasks:
+            if task in self.compatibility_matrix:
+                tools = self.compatibility_matrix[task]
+                if filter_tool:
+                    tools = [t for t in tools if filter_tool in t]
+                
+                if tools:
+                    print(f"\n{task}:")
+                    for tool in tools:
+                        desc = self.tool_descriptions.get(tool, "")
+                        print(f"  • {tool}: {desc}")
+    
+    def get_preferred_solution(self, use_case: str) -> List[str]:
+        """Get preferred solutions for a use case"""
+        return self.preferred_solutions.get(use_case, [])
+    
+    def get_style_guide(self, solution: str, use_case: str) -> str:
+        """Get style guide command for solution.use-case"""
+        return f"npl-load -s fim.{solution}.{use_case}"
+    
+    def list_overrides(self, scope: Optional[str] = None):
+        """List local override files"""
+        local_dir = Path('./.npl/meta/fim')
+        overrides = []
+        
+        if local_dir.exists():
+            pattern = f"{scope}/**/*.local.md" if scope else "**/*.local.md"
+            for override in local_dir.glob(pattern):
+                relative = override.relative_to(local_dir)
+                overrides.append(str(relative))
+        
+        return overrides
+    
+    def patch_local(self, item: str, content: str, replace: bool = False):
+        """Patch or replace local override file"""
+        parts = item.split('.')
+        if len(parts) >= 2:
+            relative_path = Path(*parts[:-1]) / f"{parts[-1]}.local.md"
+        else:
+            relative_path = f"{item}.local.md"
+        
+        local_path = Path('./.npl/meta/fim') / relative_path
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        if replace or not local_path.exists():
+            # Replace or create new
+            with open(local_path, 'w') as f:
+                f.write(content)
+            print(f"{'Replaced' if local_path.exists() else 'Created'}: {local_path}")
+        else:
+            # Append to existing
+            with open(local_path, 'a') as f:
+                f.write(f"\n\n<!-- PATCH: {os.environ.get('USER', 'unknown')} -->\n")
+                f.write(content)
+            print(f"Patched: {local_path}")
+    
+    def edit_local(self, item: str):
+        """Open local override in editor"""
+        parts = item.split('.')
+        if len(parts) >= 2:
+            relative_path = Path(*parts[:-1]) / f"{parts[-1]}.local.md"
+        else:
+            relative_path = f"{item}.local.md"
+        
+        local_path = Path('./.npl/meta/fim') / relative_path
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        if not local_path.exists():
+            # Create with template
+            with open(local_path, 'w') as f:
+                f.write(f"# Local Override: {item}\n\n")
+                f.write("## Additional Instructions\n\n")
+                f.write("## Corrections\n\n")
+        
+        # Open in editor
+        editor = os.environ.get('EDITOR', 'vi')
+        subprocess.call([editor, str(local_path)])
+
+def main():
+    parser = argparse.ArgumentParser(description='NPL-FIM configuration and query tool')
+    
+    # Main commands
+    parser.add_argument('item', nargs='?', help='Item to query (e.g., solution.tool.use-case)')
+    parser.add_argument('--query', '-q', help='Natural language query for solution')
+    parser.add_argument('--table', action='store_true', help='Display compatibility matrix')
+    parser.add_argument('--artifact-dir', action='store_true', help='Show artifact output directory')
+    parser.add_argument('--preferred-solution', action='store_true', help='Get preferred solutions')
+    parser.add_argument('--style-guide', action='store_true', help='Get style guide command')
+    parser.add_argument('--overrides', action='store_true', help='List override files')
+    
+    # Local override management
+    parser.add_argument('--local', action='store_true', help='Work with local overrides')
+    parser.add_argument('--patch', action='store_true', help='Patch local override')
+    parser.add_argument('--replace', action='store_true', help='Replace local override')
+    parser.add_argument('--edit', action='store_true', help='Edit local override')
+    parser.add_argument('--prompt', help='Content for patch/replace')
+    parser.add_argument('--prompt-file', help='File containing content for patch/replace')
+    
+    args = parser.parse_args()
+    
+    config = NPLFIMConfig()
+    
+    # Handle artifact directory query
+    if args.artifact_dir:
+        print(config.artifact_dir)
+        return
+    
+    # Handle natural language query
+    if args.query:
+        results = config.query_solution(args.query)
+        if results:
+            print(f"\nRecommended solutions for: {args.query}")
+            print("-" * 50)
+            for tool, score in results:
+                desc = config.tool_descriptions.get(tool, "Tool for visualization")
+                print(f"• {tool}: {desc}")
+                if tool in ['mermaid', 'd3_js', 'go_js'] and 'org' in args.query.lower():
+                    print(f"  ✓ Excellent for organizational charts")
+                if tool == 'd3_js' and 'react' in args.query.lower():
+                    print(f"  ✓ Works well with React")
+        else:
+            print("No matching solutions found. Try different keywords.")
+        return
+    
+    # Handle table display
+    if args.table:
+        filter_tool = args.item.split('.')[1] if args.item and '.' in args.item else None
+        filter_task = args.item.split('.')[2] if args.item and args.item.count('.') >= 2 else None
+        config.display_table(filter_tool, filter_task)
+        return
+    
+    # Handle preferred solutions
+    if args.preferred_solution and args.item:
+        use_case = args.item if '.' not in args.item else args.item.split('.')[-1]
+        solutions = config.get_preferred_solution(use_case)
+        if solutions:
+            print(f"Preferred solutions for {use_case}:")
+            for sol in solutions:
+                print(f"  • {sol}")
+        else:
+            print(f"No preferred solutions configured for {use_case}")
+        return
+    
+    # Handle style guide
+    if args.style_guide and args.item:
+        parts = args.item.split('.')
+        if len(parts) >= 2:
+            print(config.get_style_guide(parts[0], parts[1]))
+        return
+    
+    # Handle overrides listing
+    if args.overrides:
+        scope = args.item if args.item else None
+        overrides = config.list_overrides(scope)
+        if overrides:
+            print(f"Local overrides{' for ' + scope if scope else ''}:")
+            for override in overrides:
+                print(f"  • {override}")
+        else:
+            print("No local overrides found")
+        return
+    
+    # Handle local override operations
+    if args.local and args.item:
+        if args.edit:
+            config.edit_local(args.item)
+        elif args.patch or args.replace:
+            content = ""
+            if args.prompt:
+                content = args.prompt
+            elif args.prompt_file:
+                with open(args.prompt_file, 'r') as f:
+                    content = f.read()
+            else:
+                print("Error: --prompt or --prompt-file required for patch/replace", file=sys.stderr)
+                sys.exit(1)
+            
+            config.patch_local(args.item, content, replace=args.replace)
+        return
+    
+    # Default: show help
+    parser.print_help()
+
+if __name__ == '__main__':
+    main()
