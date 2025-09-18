@@ -21,7 +21,7 @@ NPL uses optional environment variables to locate resources, allowing projects t
 Prompts may specify dependencies to load using the `npl-load` command-line tool:
 
 ```bash
-npl-load c "syntax,agent" --skip {@npl.loaded} m "persona.qa-engineer" --skip {@npl.meta.loaded} s "house-style" --skip {@npl.style.loaded}
+npl-load c "syntax,agent" --skip {@npl.def.loaded} m "persona.qa-engineer" --skip {@npl.meta.loaded} s "house-style" --skip {@npl.style.loaded}
 ```
 
 The tool searches paths in order (environment → project → user → system) and tracks what's loaded to prevent duplicates.

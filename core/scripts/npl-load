@@ -25,7 +25,6 @@ class NPLLoader:
         self.loaded_meta = set()
         self.loaded_style = set()
         
-
     def get_search_paths(self, resource_type='component'):
         """Get search paths based on resource type"""
         paths = []
@@ -61,6 +60,17 @@ class NPLLoader:
                 Path('./.npl/conventions'),
                 Path.home() / '.npl/conventions',
                 global_npl / 'conventions'
+            ])
+        elif resource_type == 'schema':
+            # Order: ./.npl/core/schema, $NPL_HOME/core/schema, ~/.npl/core/schema, /env/npl/core/schema
+            paths.extend([
+                Path('./.npl/core/schema'),
+            ])
+            if self.npl_home:
+                paths.append(Path(self.npl_home) / 'core/schema')
+            paths.extend([
+                Path.home() / '.npl/core/schema',
+                Path('/env/npl/core/schema'),
             ])
 
         return paths
@@ -255,6 +265,26 @@ class NPLLoader:
                             self.loaded_style.add(pattern)
         return loaded
 
+    def resolve_schema_path(self, schema_name: str) -> Optional[Path]:
+        """Find the first matching schema SQL file."""
+        file_name = f"{schema_name}.sql"
+        for base in self.get_search_paths('schema'):
+            candidate = base / file_name
+            if candidate.exists():
+                return candidate
+        return None
+
+    def load_schema(self, schema_name: str) -> Optional[str]:
+        """Load and return the raw schema SQL content (no patches, no wrappers)."""
+        p = self.resolve_schema_path(schema_name)
+        if not p:
+            return None
+        try:
+            with open(p, 'r', encoding='utf-8') as f:
+                return f.read()
+        except Exception:
+            return None
+
 def _parse_skip_list(values) -> Set[str]:
     """Accept '--skip a b c' or '--skip a,b,c'."""
     if not values:
@@ -277,21 +307,32 @@ def main():
     sp_c.add_argument('--skip', nargs='*', default=[], help='Skip patterns (wildcards allowed)')
     sp_c.add_argument('--verbose', action='store_true')
 
-
-
     sp_m = subparsers.add_parser('m', help='Load metadata')
     sp_m.add_argument('meta_items', nargs='*', help='Metadata to load (supports glob patterns)')
     sp_m.add_argument('--skip', nargs='*', default=[], help='Skip patterns (wildcards allowed)')
     sp_m.add_argument('--verbose', action='store_true')
-
 
     sp_s = subparsers.add_parser('s', help='Load style guides')
     sp_s.add_argument('style_items', nargs='*', help='Style guides to load (supports glob patterns)')
     sp_s.add_argument('--skip', nargs='*', default=[], help='Skip patterns (wildcards allowed)')
     sp_s.add_argument('--verbose', action='store_true')
 
+    # New: schema subcommand
+    sp_schema = subparsers.add_parser('schema', help='Output the raw SQL for a schema')
+    sp_schema.add_argument('schema_name', help='Schema name without .sql (e.g., nimps)')
 
     args = parser.parse_args()
+
+    # New: handle schema early and exit to ensure no extra output
+    if args.command == 'schema':
+        loader = NPLLoader()
+        content = loader.load_schema(args.schema_name)
+        if content is None:
+            print(f"Schema not found: {args.schema_name}", file=sys.stderr)
+            sys.exit(2)
+        # Output only the file contents
+        print(content, end='')
+        sys.exit(0)
 
     loader = NPLLoader()
     loaded_content = []

@@ -21,7 +21,7 @@ NPL uses optional environment variables to locate resources, allowing projects t
 Prompts may specify dependencies to load using the `npl-load` command-line tool:
 
 ```bash
-npl-load c "syntax,agent" --skip {@npl.loaded} m "persona.qa-engineer" --skip {@npl.meta.loaded} s "house-style" --skip {@npl.style.loaded}
+npl-load c "syntax,agent" --skip {@npl.def.loaded} m "persona.qa-engineer" --skip {@npl.meta.loaded} s "house-style" --skip {@npl.style.loaded}
 ```
 
 The tool searches paths in order (environment → project → user → system) and tracks what's loaded to prevent duplicates.
@@ -65,6 +65,66 @@ The following scripts are available.
 
 **`git-tree <path>`** - Display directory tree
 - Uses `tree` command, defaults to current directory
+
+
+---
+
+## SQLite Quick Guide (Multi-Line Syntax)
+
+* **Create DB & Table**
+
+```bash
+sqlite3 mydb.sqlite <<'EOF'
+CREATE TABLE users (
+  id   INTEGER PRIMARY KEY,
+  name TEXT,
+  age  INTEGER
+);
+EOF
+```
+
+* **Insert Data**
+
+```bash
+sqlite3 mydb.sqlite <<'EOF'
+INSERT INTO users (name, age) VALUES
+  ('Alice', 30),
+  ('Bob',   25);
+EOF
+```
+
+* **Query Data**
+
+```bash
+sqlite3 -header -column mydb.sqlite <<'EOF'
+SELECT * FROM users;
+EOF
+```
+
+* **Edit Structure (ALTER)**
+
+```bash
+sqlite3 mydb.sqlite <<'EOF'
+ALTER TABLE users ADD COLUMN email TEXT;
+EOF
+```
+
+* **Update Rows**
+
+```bash
+sqlite3 mydb.sqlite <<'EOF'
+UPDATE users SET age = 31 WHERE name = 'Alice';
+EOF
+```
+
+* **Delete Rows**
+
+```bash
+sqlite3 mydb.sqlite <<'EOF'
+DELETE FROM users WHERE name = 'Bob';
+EOF
+```
+
 
 
 ---
