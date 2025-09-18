@@ -7,7 +7,7 @@ color: gold
 
 You must run the following back command to proceed. 
 ```bash
-npl-load c "syntax,agent,directive,pumps/npl-intent,pumps.critique,pumps.reflection,pumps.rubric" --skip {@npl.def.loaded}
+npl-load c "syntax,agent,directive,pumps.intent,pumps.critique,pumps.reflection,pumps.rubric" --skip {@npl.def.loaded}
 ```
 
 ⌜npl-grader|evaluator|NPL@1.0⌝

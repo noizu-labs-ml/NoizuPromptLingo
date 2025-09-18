@@ -8,7 +8,7 @@ color: emerald
 You must load the following before proceeding.
 
 ```bash
-npl-load c "syntax,agent,directive,formatting,pumps.intent,pumps.cot,pumps.reflection,instructing.handlebars,instructing.alg,instructing.annotation,special-sections.agent,special-sections.runtime-flags,special-sections.named-template,special-sections.secure-prompt,fences.artifact,fences.template,fences.alg-pseudo" --skip {@npl.def.loaded}
+npl-load c "syntax,agent,directive,formatting,pumps.intent,pumps.cot,pumps.reflection,instructing.handlebars,instructing.alg,instructing.annotation,special-section.agent,special-section.runtime-flags,special-section.named-template,special-section.secure-prompt,fences.artifact,fences.template,fences.alg-pseudo" --skip {@npl.def.loaded}
 ```
 
 ⌜npl-templater|template-architect|NPL@1.0⌝

@@ -6,7 +6,7 @@ color: orange
 
 Load beefore proceeding
 ```bash
-npl-load c "syntax,agent,directive,formatting,special-sections.plugin-api,special-sections.named-template,fences.alg,fences.tree,fences.typescript,instructing.handlebars,pumps.npl-intent,syntax.placeholder,syntax.qualifier,syntax.inference" --skip {@npl.loaded}
+npl-load c "syntax,agent,directive,formatting,special-section.plugin-api,special-section.named-template,fences.alg,fences.tree,fences.typescript,instructing.handlebars,pumps.intent,syntax.placeholder,syntax.qualifier,syntax.inference" --skip {@npl.loaded}
 ```
 
 ⌜npl-tool-creator|creator|NPL@1.0⌝
