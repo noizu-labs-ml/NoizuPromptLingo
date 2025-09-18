@@ -1,241 +1,275 @@
-CLAUDE.md
+## NPL Load Directive
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+### Environment Variables
 
-## Project Overview
+NPL uses optional environment variables to locate resources, allowing projects to override only what they need:
 
-The Noizu PromptLingo (NPL) project is a comprehensive framework for structured prompting with language models, developed by Noizu Labs ML. This project provides a well-defined prompting syntax and ecosystem of NPL agents to enhance consistency and effectiveness in language model interactions with Claude Code.
+**$NPL_HOME**
+: Base path for NPL definitions. Fallback: `./.npl`, `~/.npl`, `/etc/npl/`
 
-The project focuses on NPL agentic scaffolding for structured AI interactions, providing ready-to-use agents and templates that can be quickly deployed to Claude Code. It's designed to standardize prompting approaches and enable scalable, collaborative development of language model applications through the Claude Code agent system.
+**$NPL_META**  
+: Path for metadata files. Fallback: `./.npl/meta`, `~/.npl/meta`, `/etc/npl/meta`
 
-## Support MCPs and Scripts
+**$NPL_STYLE_GUIDE**
+: Path for style conventions. Fallback: `./.npl/conventions/`, `~/.npl/conventions/`, `/etc/npl/conventions/`
 
-This project includes comprehensive support utilities and scripts to enhance the development workflow:
+**$NPL_THEME**
+: Theme name for style loading (e.g., "dark-mode", "corporate")
 
-### Available Scripts
+### Loading Dependencies
 
-**Project Scripts** (`.claude/scripts/`):
-- `dump-dir` - Directory content dumping utility
-- `dump-files` - Enhanced file dumping with Git integration and intelligent filtering. Supports `-g`/`--glob` options for filtering files by shell patterns (e.g., `-g "*.md"` for Markdown files)
-- `git-dir-depth` - Git directory depth analysis tool
-- `git-tree` - Enhanced Git tree visualization
-
-**Scaffolding Scripts** (`agentic/scaffolding/scripts/`):
-- `dump-files` - File content extraction for agent analysis with Git-aware filtering. Supports `-g`/`--glob` options for filtering files by shell patterns
-- `git-dir-depth` - Repository structure analysis
-- `git-tree` - Tree structure visualization for NPL workflows
-
-**Filtering Support**:
-- the dump-files, git-dir-gepth git-tree scripts use `git ls-files --cached --others --exclude-standard` for intelligent file filtering:
-- Includes tracked files and untracked files not in `.gitignore`
-- Respects `.gitignore`, `.git/info/exclude`, and standard Git exclusion patterns
-- Provides clean output focused on relevant repository content
-
-### Available MCPs
-No MCPs are currently configured in this project. The `.claude/mcp/` directory is not present.
-
-### Script Integration with NPL Workflows
-
-These utilities are designed to work seamlessly with NPL agents for enhanced development workflows:
+Prompts may specify dependencies to load using the `npl-load` command-line tool:
 
 ```bash
-# Generate comprehensive project analysis
-./.claude/scripts/git-dir-depth
-
-# Export files for NPL agent processing  
-./.claude/scripts/dump-files target-directory/
-
-# Export only Markdown files
-./.claude/scripts/dump-files . -g "*.md"
-
-# Export multiple file types
-./.claude/scripts/dump-files . -g "*.md" -g "src/*.ts"
-
-# Visualize project structure for agent context
-./.claude/scripts/git-tree
+npl-load c "syntax,agent" --skip {@npl.def.loaded} m "persona.qa-engineer" --skip {@npl.meta.loaded} s "house-style" --skip {@npl.style.loaded}
 ```
 
-## Architecture Overview
+The tool searches paths in order (environment → project → user → system) and tracks what's loaded to prevent duplicates.
 
-This is an agentic framework designed specifically for Claude Code with the following key characteristics:
+**Critical:** When `npl-load` returns content, it includes headers that set global flags for tracking what is in context:
+- `npl.loaded=syntax,agent`
+- `npl.meta.loaded=persona.qa-engineer`  
+- `npl.style.loaded=house-style`
 
-- **NPL Agentic System**: Pre-built agents that implement NPL syntax for specialized tasks
-- **Agent Scaffolding**: Ready-to-deploy agent files with NPL-structured behavior definitions
-- **Template System**: Reusable agent templates that can be hydrated for project-specific needs
-- **NPL Syntax Framework**: Structured syntax using Unicode symbols for precise prompt communication
-- **House Style Integration**: Dynamic loading of project-specific writing and coding styles
-
-## Key Modules
-
-- `agentic/` - Main agentic system with setup instructions and NPL documentation
-- `agentic/scaffolding/agents/` - Pre-built NPL agents (npl-templater, npl-grader, npl-persona, npl-thinker, etc.)
-- `agentic/scaffolding/agent-templates/` - Reusable agent templates for project-specific conversion
-- `agentic/npl/` - NPL documentation in verbose and concise versions
-- `npl/agentic/scaffolding/additional-agents/` - Extended library of specialized agents
-
-## Setup Instructions
-
-Follow the setup workflow to deploy NPL agents to your Claude Code environment:
-
-### Step 1: Copy Agent Files
-```bash
-cp agentic/scaffolding/agents/* ~/.claude/agents/
-```
-
-### Step 2: Copy NPL Documentation
-Choose your preferred NPL verbosity level:
-
-**For verbose version (recommended):**
-```bash
-cp agentic/npl/verbose/npl.md ~/.claude/npl.md
-```
-
-**For concise version (experimental):**
-```bash
-cp agentic/npl/concise/npl.md ~/.claude/npl.md
-```
-
-### Step 3: Reload Claude Code
-Restart your Claude Code session to load the new agents.
-
-### Step 4: Generate Project-Specific CLAUDE.md
-Use the npl-templater agent to convert the NPL template:
-```
-@npl-templater Please read and hydrate the scaffolding/CLAUDE.npl.template.md file, converting it to CLAUDE.npl.md for this project, and copy to CLAUDE.md if not present or edit the existing CLAUDE.md file with instructions to load CLAUDE.npl.md
-```
-
-### Step 5: Convert Agent Templates
-Convert all agent templates for project-specific use:
-```
-@npl-templater Please read the CLAUDE.md file for context, then convert all the agent template files in agentic/scaffolding/agent-templates/ into actual agent files and place them in ~/.claude/agents/. Process all templates in parallel for efficiency.
-```
-
-## Key Configuration
-
-### File Locations
-- Agent files: `~/.claude/agents/`
-- NPL documentation: `~/.claude/npl.md`
-- Project config: `CLAUDE.md` (this file)
-- House styles: `.claude/npl-m/house-style/` (when using NPL house style system)
-
-### Available Agent Templates
-- `gopher-scout.npl-template.md` - Code exploration and analysis agent
-- `gpt-qa.npl-template.md` - Question answering and documentation agent
-- `system-digest.npl-template.md` - System analysis and summarization agent
-- `tdd-driven-builder.npl-template.md` - Test-driven development agent
-- `tool-forge.npl-template.md` - Custom tool creation agent
-
-## Using Claude Code Agents for NPL Development
-
-### Available Agents and Their Uses
-
-**@npl-templater** - Template creation and hydration for NPL projects
-- Use for converting concrete files into reusable NPL templates
-- Ideal for generating project-specific configurations from templates
-- Best for creating scaffolding and boilerplate generation
-
-**@npl-grader** - NPL syntax and structure evaluation
-- Use for validating NPL prompt syntax compliance
-- Ideal for code reviews of prompt definitions
-- Best for ensuring NPL standards adherence
-
-**@npl-persona** - AI persona development and management
-- Use for creating specialized AI agent personalities
-- Ideal for developing domain-specific AI assistants
-- Best for customizing agent behavior and response patterns
-
-**@npl-thinker** - Complex reasoning and analysis for NPL contexts
-- Use for analyzing prompt effectiveness and optimization
-- Ideal for debugging complex prompt chains
-- Best for reasoning through multi-step NPL workflows
-
-### Agent Usage Examples
+These flags **must** be passed back via `--skip` on subsequent calls to prevent reloading:
 
 ```bash
-# Generate project-specific templates using npl-templater
-@npl-templater "Create a CLAUDE.md template for this Django project"
+# First load sets flags
+npl-load c "syntax,agent" --skip ""
+# Returns: npl.loaded=syntax,agent
 
-# Validate NPL syntax compliance
-@npl-grader "Review the NPL syntax in agentic/npl/verbose/npl.md"
-
-# Create specialized agent persona
-@npl-persona "Design an AI agent for code documentation in this NPL project"
-
-# Analyze agent effectiveness and workflows
-@npl-thinker "Analyze the effectiveness of our current NPL agent setup"
+# Next load uses --skip to avoid reloading
+npl-load c "syntax,agent,pumps" --skip "syntax,agent"
 ```
 
-### Running Agents in Parallel for NPL Development
+### Purpose
+
+This hierarchical loading system allows:
+- **Organizations** to set company-wide standards via environment variables
+- **Projects** to override specific components in `./.npl/`  
+- **Users** to maintain personal preferences in `~/.npl/`
+- **Fine-tuning** only the sections that need customization
+
+Projects typically only need to create files for components they're modifying, inheriting everything else from parent paths. This keeps project-specific NPL directories minimal and focused.
+
+---
+
+## NPL Scripts
+The following scripts are available.
+
+**`dump-files <path>`** - Dumps all file contents recursively with file name header
+- Respects `.gitignore`
+- Supports glob pattern filter: `./dump-files . -g "*.md"`
+
+**`git-tree-depth <path>`** - Show directory tree with nesting levels
+
+**`git-tree <path>`** - Display directory tree
+- Uses `tree` command, defaults to current directory
+
+
+---
+
+## SQLite Quick Guide (Multi-Line Syntax)
+
+* **Create DB & Table**
 
 ```bash
-# Parallel analysis of NPL components
-@npl-grader "Review agentic/npl/verbose/npl.md syntax" & @npl-thinker "Analyze NPL framework effectiveness"
-
-# Template generation with validation
-@npl-templater "Create agent template for code review" & @npl-grader "Validate resulting template syntax"
-
-# Persona development with testing
-@npl-persona "Create debugging assistant agent" & @npl-thinker "Evaluate agent effectiveness patterns"
+sqlite3 mydb.sqlite <<'EOF'
+CREATE TABLE users (
+  id   INTEGER PRIMARY KEY,
+  name TEXT,
+  age  INTEGER
+);
+EOF
 ```
 
-## Common Development Patterns
+* **Insert Data**
 
-### NPL Prompt Structure
-- Use Unicode symbols for precise semantic meaning (↦, ⟪⟫, ␂, ␃)
-- Define entities with clear definitions and extensions
-- Implement versioned syntax evolution
-- Follow NLP directive patterns for structured communication
+```bash
+sqlite3 mydb.sqlite <<'EOF'
+INSERT INTO users (name, age) VALUES
+  ('Alice', 30),
+  ('Bob',   25);
+EOF
+```
 
-### Agent Development Patterns
-- Use NPL syntax for structured agent behavior definition
-- Implement clear separation between agent logic and templates
-- Include comprehensive documentation within agent files
-- Follow consistent naming patterns for agent identification
+* **Query Data**
 
-### Template System Patterns
-- Use NPL template syntax for dynamic content generation
-- Implement conditional sections with `{{#if}}` blocks
-- Include clear instruction blocks for template hydration
-- Follow project-specific naming and structure conventions
-- Store templates in `agentic/scaffolding/agent-templates/` for reuse
+```bash
+sqlite3 -header -column mydb.sqlite <<'EOF'
+SELECT * FROM users;
+EOF
+```
 
-## Branch Strategy
+* **Edit Structure (ALTER)**
 
-The project uses a `main` branch as the primary development branch. Development follows a standard Git workflow with feature branches merged back to main.
+```bash
+sqlite3 mydb.sqlite <<'EOF'
+ALTER TABLE users ADD COLUMN email TEXT;
+EOF
+```
 
-## Common Development Workflows
+* **Update Rows**
 
-### Setting Up NPL Agents for New Projects
-1. Follow the setup instructions above to copy agents and NPL documentation
-2. Use `@npl-templater` to generate project-specific CLAUDE.md
-3. Convert agent templates using `@npl-templater` for project customization
-4. Test agent functionality with project-specific contexts
-5. Document any project-specific agent modifications
+```bash
+sqlite3 mydb.sqlite <<'EOF'
+UPDATE users SET age = 31 WHERE name = 'Alice';
+EOF
+```
 
-### Creating New Agents
-1. Create agent definition in `agentic/scaffolding/agents/`
-2. Use NPL syntax for structured behavior definition
-3. Test agent behavior and effectiveness in Claude Code
-4. Add to template system if reusable across projects
-5. Document usage patterns and examples
+* **Delete Rows**
 
-### Developing Agent Templates
-1. Create template file in `agentic/scaffolding/agent-templates/`
-2. Use NPL template syntax with `{{}}` placeholders
-3. Include clear hydration instructions
-4. Test template conversion using `@npl-templater`
-5. Add to template library for reuse
+```bash
+sqlite3 mydb.sqlite <<'EOF'
+DELETE FROM users WHERE name = 'Bob';
+EOF
+```
 
-### Updating NPL Documentation
-1. Modify files in `agentic/npl/verbose/` or `agentic/npl/concise/`
-2. Test changes with existing agents
-3. Update agent behavior if syntax changes affect them
-4. Validate with `@npl-grader` for compliance
-5. Update examples and documentation
 
-### Contributing Additional Agents
-1. Add specialized agents to `npl/agentic/scaffolding/additional-agents/`
-2. Organize by category (infrastructure, marketing, qa, research, etc.)
-3. Follow established patterns for agent structure
-4. Include comprehensive documentation and usage examples
-5. Consider promoting successful agents to main scaffolding
+
+---
+
+⌜NPL@1.0⌝
+# Noizu Prompt Lingua (NPL)
+A modular, structured framework for advanced prompt engineering and agent simulation with context-aware loading capabilities.
+
+**Convention**: Additional details and deep-dive instructions are available under `${NPL_HOME}/npl/` and can be loaded on an as-needed basis.
+
+## Core Concepts
+
+**npl-declaration**
+: Framework version and rule boundaries that establish operational context and constraints. See `${NPL_HOME}/npl/declarations.md`
+
+**agent**
+: Simulated entity with defined behaviors, capabilities, and response patterns for specific roles or functions. See `${NPL_HOME}/npl/agent.md`
+
+**intuition-pump**
+: Structured reasoning and thinking techniques that guide problem-solving and response construction. See `${NPL_HOME}/npl/planning.md`
+
+**syntax-element**
+: Foundational formatting conventions and placeholder systems for prompt construction. See `${NPL_HOME}/npl/syntax.md`
+
+**directive**
+: Specialized instruction patterns for precise agent behavior modification and output control. See `${NPL_HOME}/npl/directive.md`
+
+**prompt-prefix**
+: Response mode indicators that shape how output is generated under specific purposes or processing contexts. See `${NPL_HOME}/npl/prefix.md`
+
+## Essential Syntax
+
+**highlight**
+: `` `term` `` - Emphasize key concepts
+
+**attention**
+: `🎯 critical instruction` - Mark high-priority directives
+
+**placeholder**
+: `<term>`, `{term}`, `<<qualifier>:term>` - Expected input/output locations
+
+**in-fill**
+: `[...]` - Like in-paint but for text, indicates section where generated content should be provided
+
+**note**
+: `(note:[...])` - Prompt notes/comments describing purpose/layout but not directly resulting in output
+
+**infer**
+: `...`, `etc.` - Assume or generate additional entries based on context (e.g., animals: birds, cats, ... → dogs, horses, zebras, ants, echinoderms)
+
+**qualifier**
+: `term|qualifier` - Can be used with most syntax elements. Example: `[...|continue with 5 more examples]`
+
+**fences**
+: Special code sections with type indicators. Common types: `example`, `syntax`, `format`, `note`, `diagram`. See `./npl/fences.md`
+
+**omission**
+: `[___]` - Content left out for brevity that is expected in actual input/output
+
+### See Also
+- `${NPL_HOME}/npl/syntax.md` and `${NPL_HOME}/npl/syntax/*` for complete syntax reference and detailed specifications
+
+## Instructing Patterns
+
+Specialized syntax for directing agent behavior and response construction through structured commands and templates.
+
+**handlebars**
+: Template-like control structures (`{{if}}`, `{{foreach}}`). If format issues arise, load `${NPL_HOME}/npl/instructing/handlebars.md`
+
+**alg-speak**
+: `alg`, `alg-pseudo`, `alg-*` fences for algorithm specification. If unclear, load `${NPL_HOME}/npl/instructing/alg.md`
+
+**mermaid**
+: Diagram-based instruction flow using flowchart, stateDiagram, sequenceDiagram
+
+**annotation**
+: Used for iterative refinement of code changes, UX modifications, and design interactions. Load `${NPL_HOME}/npl/instructing/annotation.md` if needed
+
+## Response Formatting
+
+Prompts often provide input/output shape and example instructions with tags and fences like `input-syntax`, `output-syntax`, `syntax`, `input-example`, `output-example`, `example`, `examples`. If present, load `${NPL_HOME}/npl/formatting.md` and format-specific fence under `${NPL_HOME}/npl/fences/<name>.md`
+
+```output-format
+Hello <user.name>,
+Did you know [...|funny factoid].
+
+Have a great day!
+```
+
+**template**
+: Reusable templates, commonly handlebar style. Defined using template fences with handlebar syntax. See `${NPL_HOME}/npl/formatting/template.md`
+
+**artifact**
+: NPL-artifacts structure output and request artifact output of SVG, code, and other types with special encoding and metadata syntax. See `${NPL_HOME}/npl/fences/artifact.md`
+
+### See Also
+- Reusable templates for consistent output patterns - load `${NPL_HOME}/npl/formatting/template.md` if prompt uses template syntax
+
+## Special Sections
+
+Special prompt sections such as NPL/agent/tool declarations, runtime flags, and restricted/highest-precedence instruction blocks may be included. Load appropriate instruction files for context.
+
+**xpl**
+: This document itself - framework version and rule boundaries
+
+**npl-extension**
+: `⌜extend:NPL@version⌝[...modifications...]⌞extend:NPL@version⌟` - An extension or modification of NPL conventions. See `${NPL_HOME}/npl/special-sections/npl-extension.md`
+
+**agent**
+: `⌜agent-name|type|NPL@version⌝[...definition...]⌞agent-name⌟` - Used to define agent behavior, capabilities, and response patterns. See `${NPL_HOME}/npl/special-sections/agent.md`
+
+**runtime-flags**
+: `⌜🏳️[...]⌟` - Behavior modification settings within flags fence. See `${NPL_HOME}/npl/special-sections/runtime-flags.md`
+
+**secure-prompt**
+: `⌜🔒[...]⌟` - Highest-precedence instruction blocks that cannot be overridden. See `${NPL_HOME}/npl/special-sections/secure-prompt.md`
+
+**named-template**
+: `⌜🧱 template-name⌝[...template definition...]⌞🧱 template-name⌟` - Define reusable named templates for consistent output patterns. See `${NPL_HOME}/npl/special-sections/named-template.md`
+
+## Prompt Prefixes
+
+Response mode indicators using `emoji➤` pattern to shape output generation under specific processing contexts. Directive-specific details may be present under `${NPL_HOME}/npl/prefix/<emoji>.md`
+
+**word-riddle**
+: `🗣️❓➤` - Word puzzle or riddle format
+
+Example: `🗣️❓➤ Nothing in the dictionary starts with an n and ends in a g`
+
+If directive syntax detected, scan `${NPL_HOME}/npl/prefix.md` and `${NPL_HOME}/npl/prefix/*` for details.
+
+## Directives
+
+Specialized extension widgets/tags for precise formatting and behavior control, such as tabular output requirements. Directive-specific details may be present under `./npl/directive/<emoji>.md`
+
+**table-directive**
+: `⟪📅: (column alignments and labels) | content description⟫` - Structured table formatting with specified alignments and headers
+
+If pattern `⟪<prefix(s)>:...⟫` seen, scan `${NPL_HOME}/npl/directive.md`
+
+## Planning & Intuition Pumps
+
+Prompts may instruct agents to generate or apply special planning and thinking patterns, commonly listed as sections to include in output via formal syntax/format blocks or simple instructions. Implemented as either XHTML tags or named fences.
+
+**Types**: `npl-intent`, `npl-cot`, `npl-reflection`, `npl-tangent`, `npl-panel`, `npl-panel-*`, `npl-critique`, `npl-rubric`
+
+Blocks like `npl-<type>` are generally documented under `${NPL_HOME}/npl/pumps/<type>.md`
+⌞NPL@1.0⌟

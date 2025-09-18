@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" width="400" height="500">
+  <defs>
+    <!-- Rain animation -->
+    <style>
+      @keyframes rain {
+        0% { transform: translateY(-20px); opacity: 0; }
+        10% { opacity: 1; }
+        90% { opacity: 1; }
+        100% { transform: translateY(520px); opacity: 0; }
+      }
+      .raindrop {
+        animation: rain 1.5s linear infinite;
+      }
+      .raindrop:nth-child(2n) { animation-delay: 0.2s; }
+      .raindrop:nth-child(3n) { animation-delay: 0.4s; }
+      .raindrop:nth-child(5n) { animation-delay: 0.6s; }
+      .raindrop:nth-child(7n) { animation-delay: 0.8s; }
+    </style>
+
+    <!-- Gradient for sky -->
+    <linearGradient id="skyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#5c6b7a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8892a0;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Gradient for puddles -->
+    <radialGradient id="puddleGradient">
+      <stop offset="0%" style="stop-color:#6b7d8f;stop-opacity:0.6" />
+      <stop offset="100%" style="stop-color:#4a5868;stop-opacity:0.8" />
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="500" fill="url(#skyGradient)"/>
+
+  <!-- Clouds -->
+  <g id="clouds">
+    <ellipse cx="80" cy="60" rx="45" ry="25" fill="#4a5560" opacity="0.8"/>
+    <ellipse cx="100" cy="55" rx="50" ry="28" fill="#525d69" opacity="0.8"/>
+    <ellipse cx="130" cy="62" rx="40" ry="22" fill="#4a5560" opacity="0.8"/>
+
+    <ellipse cx="280" cy="80" rx="55" ry="30" fill="#525d69" opacity="0.8"/>
+    <ellipse cx="310" cy="75" rx="45" ry="25" fill="#4a5560" opacity="0.8"/>
+    <ellipse cx="330" cy="82" rx="40" ry="20" fill="#525d69" opacity="0.8"/>
+  </g>
+
+  <!-- Ground/Street -->
+  <rect x="0" y="400" width="400" height="100" fill="#4a5157"/>
+  <rect x="0" y="400" width="400" height="5" fill="#3a4147"/>
+
+  <!-- Puddles -->
+  <ellipse cx="100" cy="450" rx="60" ry="15" fill="url(#puddleGradient)"/>
+  <ellipse cx="300" cy="470" rx="45" ry="12" fill="url(#puddleGradient)"/>
+
+  <!-- Girl -->
+  <g id="girl" transform="translate(200, 280)">
+    <!-- Body -->
+    <rect x="-30" y="40" width="60" height="80" rx="5" fill="#f4d03f"/>
+
+    <!-- Arms -->
+    <rect x="-45" y="50" width="15" height="50" rx="7" fill="#f4b896" transform="rotate(-10 -37 75)"/>
+    <rect x="30" y="50" width="15" height="45" rx="7" fill="#f4b896" transform="rotate(25 37 72)"/>
+
+    <!-- Legs -->
+    <rect x="-20" y="115" width="18" height="60" rx="9" fill="#f4b896"/>
+    <rect x="2" y="115" width="18" height="60" rx="9" fill="#f4b896"/>
+
+    <!-- Shoes -->
+    <ellipse cx="-11" cy="175" rx="12" ry="8" fill="#e74c3c"/>
+    <ellipse cx="11" cy="175" rx="12" ry="8" fill="#e74c3c"/>
+
+    <!-- Head -->
+    <circle cx="0" cy="15" r="30" fill="#f4b896"/>
+
+    <!-- Hair -->
+    <path d="M -30 5 Q -30 -10 -20 -15 Q -10 -20 0 -18 Q 10 -20 20 -15 Q 30 -10 30 5 Q 25 0 20 0 L 20 10 Q 15 5 10 8 Q 5 5 0 7 Q -5 5 -10 8 Q -15 5 -20 10 L -20 0 Q -25 0 -30 5" fill="#8b4513"/>
+
+    <!-- Eyes -->
+    <circle cx="-8" cy="12" r="2" fill="#2c3e50"/>
+    <circle cx="8" cy="12" r="2" fill="#2c3e50"/>
+
+    <!-- Smile -->
+    <path d="M -8 22 Q 0 26 8 22" stroke="#e74c3c" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <!-- Ice cream cone in hand -->
+    <g transform="translate(38, 45) rotate(25)">
+      <!-- Cone -->
+      <path d="M 0 0 L -8 25 L 8 25 Z" fill="#d4a574" stroke="#b8935f" stroke-width="1"/>
+      <!-- Waffle pattern -->
+      <line x1="-2" y1="5" x2="2" y2="5" stroke="#b8935f" stroke-width="0.5"/>
+      <line x1="-4" y1="10" x2="4" y2="10" stroke="#b8935f" stroke-width="0.5"/>
+      <line x1="-6" y1="15" x2="6" y2="15" stroke="#b8935f" stroke-width="0.5"/>
+      <line x1="-7" y1="20" x2="7" y2="20" stroke="#b8935f" stroke-width="0.5"/>
+
+      <!-- Ice cream scoops -->
+      <circle cx="0" cy="-8" r="10" fill="#ffb3d9"/>
+      <circle cx="0" cy="-18" r="9" fill="#b3ffb3"/>
+      <circle cx="0" cy="-27" r="8" fill="#ffffb3"/>
+
+      <!-- Sprinkles -->
+      <rect x="-2" y="-30" width="1" height="4" rx="0.5" fill="#ff6b6b" transform="rotate(20)"/>
+      <rect x="1" y="-25" width="1" height="4" rx="0.5" fill="#4ecdc4" transform="rotate(-30)"/>
+      <rect x="-3" y="-22" width="1" height="4" rx="0.5" fill="#45aaf2" transform="rotate(45)"/>
+      <rect x="2" y="-18" width="1" height="4" rx="0.5" fill="#fd79a8" transform="rotate(-10)"/>
+    </g>
+  </g>
+
+  <!-- Rain drops -->
+  <g id="raindrops">
+    <rect class="raindrop" x="30" y="0" width="2" height="15" rx="1" fill="#a0c4e0" opacity="0.6"/>
+    <rect class="raindrop" x="80" y="0" width="2" height="15" rx="1" fill="#a0c4e0" opacity="0.6"/>
+    <rect class="raindrop" x="130" y="0" width="2" height="15" rx="1" fill="#a0c4e0" opacity="0.6"/>
+    <rect class="raindrop" x="180" y="0" width="2" height="15" rx="1" fill="#a0c4e0" opacity="0.6"/>
+    <rect class="raindrop" x="230" y="0" width="2" height="15" rx="1" fill="#a0c4e0" opacity="0.6"/>
+    <rect class="raindrop" x="280" y="0" width="2" height="15" rx="1" fill="#a0c4e0" opacity="0.6"/>
+    <rect class="raindrop" x="330" y="0" width="2" height="15" rx="1" fill="#a0c4e0" opacity="0.6"/>
+    <rect class="raindrop" x="370" y="0" width="2" height="15" rx="1" fill="#a0c4e0" opacity="0.6"/>
+
+    <rect class="raindrop" x="55" y="0" width="2" height="15" rx="1" fill="#a0c4e0" opacity="0.6"/>
+    <rect class="raindrop" x="105" y="0" width="2" height="15" rx="1" fill="#a0c4e0" opacity="0.6"/>
+    <rect class="raindrop" x="155" y="0" width="2" height="15" rx="1" fill="#a0c4e0" opacity="0.6"/>
+    <rect class="raindrop" x="205" y="0" width="2" height="15" rx="1" fill="#a0c4e0" opacity="0.6"/>
+    <rect class="raindrop" x="255" y="0" width="2" height="15" rx="1" fill="#a0c4e0" opacity="0.6"/>
+    <rect class="raindrop" x="305" y="0" width="2" height="15" rx="1" fill="#a0c4e0" opacity="0.6"/>
+    <rect class="raindrop" x="355" y="0" width="2" height="15" rx="1" fill="#a0c4e0" opacity="0.6"/>
+
+    <rect class="raindrop" x="40" y="0" width="1.5" height="12" rx="0.75" fill="#a0c4e0" opacity="0.5"/>
+    <rect class="raindrop" x="90" y="0" width="1.5" height="12" rx="0.75" fill="#a0c4e0" opacity="0.5"/>
+    <rect class="raindrop" x="140" y="0" width="1.5" height="12" rx="0.75" fill="#a0c4e0" opacity="0.5"/>
+    <rect class="raindrop" x="190" y="0" width="1.5" height="12" rx="0.75" fill="#a0c4e0" opacity="0.5"/>
+    <rect class="raindrop" x="240" y="0" width="1.5" height="12" rx="0.75" fill="#a0c4e0" opacity="0.5"/>
+    <rect class="raindrop" x="290" y="0" width="1.5" height="12" rx="0.75" fill="#a0c4e0" opacity="0.5"/>
+    <rect class="raindrop" x="340" y="0" width="1.5" height="12" rx="0.75" fill="#a0c4e0" opacity="0.5"/>
+  </g>
+
+  <!-- Splash effects near puddles -->
+  <g id="splashes" opacity="0.4">
+    <circle cx="85" cy="445" r="2" fill="none" stroke="#a0c4e0" stroke-width="1">
+      <animate attributeName="r" values="2;8;2" dur="2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="1;0;1" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="115" cy="455" r="2" fill="none" stroke="#a0c4e0" stroke-width="1">
+      <animate attributeName="r" values="2;6;2" dur="1.8s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="1;0;1" dur="1.8s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="290" cy="468" r="2" fill="none" stroke="#a0c4e0" stroke-width="1">
+      <animate attributeName="r" values="2;7;2" dur="2.2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="1;0;1" dur="2.2s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+</svg>
