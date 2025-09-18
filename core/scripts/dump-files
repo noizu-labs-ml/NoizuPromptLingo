@@ -20,8 +20,8 @@
 # -----------------------------------------------------------------------------
 
 # --- Unicode/UTF-8 safety ---
-export LC_ALL="${LC_ALL:-en_US.UTF-8}"
-export LANG="${LANG:-en_US.UTF-8}"
+#export LC_ALL="${LC_ALL:-en_US.UTF-8}"
+#export LANG="${LANG:-en_US.UTF-8}"
 
 set -euo pipefail
 
@@ -33,7 +33,7 @@ if [[ -z "$TARGET" ]]; then
 fi
 
 # List tracked + untracked but not ignored files, then dump with headers
-git ls-files --cached --others --exclude-standard "$TARGET" \
+git -c core.quotepath=false ls-files --cached --others --exclude-standard "$TARGET" \
   | while read -r f; do
       echo -e "\n# $f\n---"
       cat "$f"
