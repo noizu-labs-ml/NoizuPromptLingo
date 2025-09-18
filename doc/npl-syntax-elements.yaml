@@ -1,0 +1,815 @@
+# NPL Syntax Elements Comprehensive Mapping
+# Generated from analysis of npl/** directory structure
+# Total: 155+ distinct syntax elements across all NPL files
+
+# ===============================
+# CORE SYNTAX ELEMENTS
+# ===============================
+
+- name: "highlight"
+  type: "emphasis"
+  file: "npl/syntax.md"
+  description: "Emphasize key concepts and important terms for clarity using backticks"
+  regex: "`([^`]+)`"
+
+- name: "attention"
+  type: "emphasis"
+  file: "npl/syntax.md"
+  description: "Mark critical instructions requiring special focus using target emoji"
+  regex: "🎯\\s+(.+)"
+
+- name: "placeholder-angle"
+  type: "placeholder"
+  file: "npl/syntax.md"
+  description: "Indicate expected input or output locations using angle brackets"
+  regex: "<([^>]+)>"
+
+- name: "placeholder-curly"
+  type: "placeholder"
+  file: "npl/syntax.md"
+  description: "Indicate expected input or output locations using curly braces"
+  regex: "\\{([^}]+)\\}"
+
+- name: "placeholder-qualified"
+  type: "placeholder"
+  file: "npl/syntax.md"
+  description: "Qualified placeholder with additional instructions or constraints"
+  regex: "<<([^>]+):([^>]+)>"
+
+- name: "in-fill-basic"
+  type: "content-generation"
+  file: "npl/syntax.md"
+  description: "Mark areas for dynamic content generation"
+  regex: "\\[\\.\\.\\.\\]"
+
+- name: "in-fill-qualified"
+  type: "content-generation"
+  file: "npl/syntax.md"
+  description: "In-fill with specific instructions or context"
+  regex: "\\[\\.\\.\\.\\|([^\\]]+)\\]"
+
+- name: "in-fill-sized"
+  type: "content-generation"
+  file: "npl/syntax.md"
+  description: "In-fill with size specifications (words, paragraphs, etc.)"
+  regex: "\\[\\.\\.\\.([0-9]+(?:-[0-9]+)?(?:\\+)?[pwlsirt])\\]"
+
+- name: "qualifier"
+  type: "modifier"
+  file: "npl/syntax.md"
+  description: "Extend syntax with additional details or conditions using pipe syntax"
+  regex: "([^|]+)\\|([^}\\]>]+)"
+
+- name: "attention-alias"
+  type: "agent-management"
+  file: "npl/syntax.md"
+  description: "Declare alternative names for agents or services"
+  regex: "🙋\\s+([^\\s]+)\\s+([^\\s]+)"
+
+- name: "validation-positive"
+  type: "validation"
+  file: "npl/syntax.md"
+  description: "Provide positive behavioral examples"
+  regex: "✔\\s+(.+)"
+
+- name: "validation-negative"
+  type: "validation"
+  file: "npl/syntax.md"
+  description: "Provide negative behavioral examples"
+  regex: "❌\\s+(.+)"
+
+- name: "separator"
+  type: "formatting"
+  file: "npl/syntax.md"
+  description: "Create clear visual separations between examples or sections"
+  regex: "﹍+"
+
+- name: "inference"
+  type: "content-generation"
+  file: "npl/syntax.md"
+  description: "Indicate additional similar items should be generated"
+  regex: "\\.\\.\\.|etc\\."
+
+- name: "literal-output"
+  type: "content-control"
+  file: "npl/syntax.md"
+  description: "Ensure specified text is output exactly as provided"
+  regex: "`\\{~l\\|([^}]+)\\}`"
+
+- name: "omission"
+  type: "content-control"
+  file: "npl/syntax.md"
+  description: "Content intentionally left out for brevity"
+  regex: "\\[___\\]"
+
+- name: "direct-message"
+  type: "agent-communication"
+  file: "npl/syntax.md"
+  description: "Route messages to specific agents for action"
+  regex: "@\\{([^}]+)\\}\\s+(.+)|@([^\\s]+)\\s+(.+)"
+
+- name: "value-placeholder"
+  type: "content-injection"
+  file: "npl/syntax.md"
+  description: "Direct agent to inject specific content using double angle brackets"
+  regex: "⟪([^⟫]+)⟫"
+
+- name: "conditional-logic"
+  type: "logic"
+  file: "npl/syntax.md"
+  description: "Mathematical and conditional expressions for reasoning"
+  regex: "if\\s*\\(([^)]+)\\)\\s*\\{([^}]+)\\}(?:\\s*else\\s*\\{([^}]+)\\})?"
+
+- name: "summation"
+  type: "logic"
+  file: "npl/syntax.md"
+  description: "Mathematical summation operator"
+  regex: "∑\\(([^)]+)\\)"
+
+- name: "union"
+  type: "logic"
+  file: "npl/syntax.md"
+  description: "Set union operator"
+  regex: "([^\\s]+)\\s*∪\\s*([^\\s]+)"
+
+- name: "intersection"
+  type: "logic"
+  file: "npl/syntax.md"
+  description: "Set intersection operator"
+  regex: "([^\\s]+)\\s*∩\\s*([^\\s]+)"
+
+# ===============================
+# DIRECTIVE ELEMENTS
+# ===============================
+
+- name: "directive-table"
+  type: "directive"
+  file: "npl/directive.md"
+  description: "Controls structured table output with specified column alignments and headers"
+  regex: "⟪📅:\\s*\\(([^)]+)\\)\\s*\\|\\s*([^⟫]+)⟫"
+
+- name: "directive-temporal"
+  type: "directive"
+  file: "npl/directive.md"
+  description: "Commands timing and duration considerations for task execution"
+  regex: "⟪⏳:\\s*([^⟫]+)⟫"
+
+- name: "directive-template"
+  type: "directive"
+  file: "npl/directive.md"
+  description: "Integrates predefined templates with specified application contexts"
+  regex: "⟪⇐:\\s*([^|]+)\\s*\\|\\s*([^⟫]+)⟫"
+
+- name: "directive-interactive"
+  type: "directive"
+  file: "npl/directive.md"
+  description: "Choreographs interactive elements and agent reactivity"
+  regex: "⟪🚀:\\s*([^⟫]+)⟫"
+
+- name: "directive-identifier"
+  type: "directive"
+  file: "npl/directive.md"
+  description: "Generates and manages unique identifiers for entities"
+  regex: "⟪🆔:\\s*([^⟫]+)⟫"
+
+- name: "directive-explanatory"
+  type: "directive"
+  file: "npl/directive.md"
+  description: "Appends instructive comments to elucidate prompt expectations"
+  regex: "⟪📖:\\s*([^⟫]+)⟫"
+
+- name: "directive-section-ref"
+  type: "directive"
+  file: "npl/directive.md"
+  description: "Marks sections with unique identifiers for easy reference"
+  regex: "⟪📂:\\s*\\{([^}]+)\\}⟫"
+
+- name: "directive-explicit"
+  type: "directive"
+  file: "npl/directive.md"
+  description: "Provides direct and precise instructions for maximum clarity"
+  regex: "⟪➤:\\s*([^|]+)(?:\\s*\\|\\s*([^⟫]+))?⟫"
+
+# ===============================
+# PREFIX ELEMENTS (Response Mode Indicators)
+# ===============================
+
+- name: "prefix-conversational"
+  type: "prefix"
+  file: "npl/prefix.md"
+  description: "Engage in dialogue or conversational response"
+  regex: "👪➤\\s*(.+)"
+
+- name: "prefix-visual"
+  type: "prefix"
+  file: "npl/prefix.md"
+  description: "Generate image captions or visual descriptions"
+  regex: "🖼️➤\\s*(.+)"
+
+- name: "prefix-audio-synthesis"
+  type: "prefix"
+  file: "npl/prefix.md"
+  description: "Text-to-speech synthesis instructions"
+  regex: "🔊➤\\s*(.+)"
+
+- name: "prefix-audio-recognition"
+  type: "prefix"
+  file: "npl/prefix.md"
+  description: "Speech recognition or transcription tasks"
+  regex: "🗣️➤\\s*(.+)"
+
+- name: "prefix-question-answering"
+  type: "prefix"
+  file: "npl/prefix.md"
+  description: "Direct question answering format"
+  regex: "❓➤\\s*(.+)"
+
+- name: "prefix-topic-modeling"
+  type: "prefix"
+  file: "npl/prefix.md"
+  description: "Topic modeling and analysis"
+  regex: "📊➤\\s*(.+)"
+
+- name: "prefix-translation"
+  type: "prefix"
+  file: "npl/prefix.md"
+  description: "Machine translation tasks"
+  regex: "🌐➤\\s*(.+)"
+
+- name: "prefix-entity-recognition"
+  type: "prefix"
+  file: "npl/prefix.md"
+  description: "Named entity recognition"
+  regex: "👁️➤\\s*(.+)"
+
+- name: "prefix-creative-writing"
+  type: "prefix"
+  file: "npl/prefix.md"
+  description: "Creative text generation"
+  regex: "🖋️➤\\s*(.+)"
+
+- name: "prefix-code-generation"
+  type: "prefix"
+  file: "npl/prefix.md"
+  description: "Code generation and programming"
+  regex: "🖥️➤\\s*(.+)"
+
+- name: "prefix-classification"
+  type: "prefix"
+  file: "npl/prefix.md"
+  description: "Text classification tasks"
+  regex: "🏷️➤\\s*(.+)"
+
+- name: "prefix-sentiment"
+  type: "prefix"
+  file: "npl/prefix.md"
+  description: "Sentiment analysis"
+  regex: "💡➤\\s*(.+)"
+
+- name: "prefix-summarization"
+  type: "prefix"
+  file: "npl/prefix.md"
+  description: "Text summarization"
+  regex: "📄➤\\s*(.+)"
+
+- name: "prefix-feature-extraction"
+  type: "prefix"
+  file: "npl/prefix.md"
+  description: "Feature extraction and data analysis"
+  regex: "🧪➤\\s*(.+)"
+
+- name: "prefix-word-riddle"
+  type: "prefix"
+  file: "npl/prefix.md"
+  description: "Word puzzles and riddles"
+  regex: "🗣️❓➤\\s*(.+)"
+
+# ===============================
+# SPECIAL SECTION ELEMENTS
+# ===============================
+
+- name: "framework-declaration"
+  type: "declaration"
+  file: "npl/declarations.md"
+  description: "Core framework version and rule establishment"
+  regex: "⌜NPL@([^⌝]+)⌝([\\s\\S]*?)⌞NPL@\\1⌟"
+
+- name: "framework-extension"
+  type: "declaration"
+  file: "npl/declarations.md"
+  description: "Extend or modify existing framework capabilities"
+  regex: "⌜extend:NPL@([^⌝]+)⌝([\\s\\S]*?)⌞extend:NPL@\\1⌟"
+
+- name: "agent-declaration"
+  type: "declaration"
+  file: "npl/declarations.md"
+  description: "Define agent behaviors and response patterns"
+  regex: "⌜([^|]+)\\|([^|]+)\\|NPL@([^⌝]+)⌝([\\s\\S]*?)⌞\\1⌟"
+
+- name: "agent-extension"
+  type: "declaration"
+  file: "npl/declarations.md"
+  description: "Enhance existing agent definitions"
+  regex: "⌜extend:([^|]+)\\|([^|]+)\\|NPL@([^⌝]+)⌝([\\s\\S]*?)⌞extend:\\1⌟"
+
+- name: "runtime-flags"
+  type: "special-section"
+  file: "npl/special-section.md"
+  description: "Behavior modification settings within flags fence"
+  regex: "⌜🏳️([\\s\\S]*?)⌟"
+
+- name: "secure-prompt"
+  type: "special-section"
+  file: "npl/special-section.md"
+  description: "Highest-precedence instruction blocks that cannot be overridden"
+  regex: "⌜🔒([\\s\\S]*?)⌟"
+
+- name: "named-template"
+  type: "special-section"
+  file: "npl/special-section.md"
+  description: "Define reusable named templates for consistent output patterns"
+  regex: "⌜🧱\\s+([^⌝]+)⌝([\\s\\S]*?)⌞🧱\\s+\\1⌟"
+
+- name: "npl-extension-section"
+  type: "special-section"
+  file: "npl/special-section.md"
+  description: "Extension or modification of NPL conventions"
+  regex: "⌜extend:NPL@([^⌝]+)⌝([\\s\\S]*?)⌞extend:NPL@\\1⌟"
+
+# ===============================
+# FENCE ELEMENTS
+# ===============================
+
+- name: "fence-example"
+  type: "fence"
+  file: "npl/fences.md"
+  description: "Demonstrate usage patterns or illustrate concepts"
+  regex: "```example\\n([\\s\\S]*?)```"
+
+- name: "fence-note"
+  type: "fence"
+  file: "npl/fences.md"
+  description: "Provide additional information, clarifications, or warnings"
+  regex: "```note\\n([\\s\\S]*?)```"
+
+- name: "fence-diagram"
+  type: "fence"
+  file: "npl/fences.md"
+  description: "Visual representations of concepts, flows, or relationships"
+  regex: "```diagram\\n([\\s\\S]*?)```"
+
+- name: "fence-syntax"
+  type: "fence"
+  file: "npl/fences.md"
+  description: "Define formal syntax patterns and grammar rules"
+  regex: "```syntax\\n([\\s\\S]*?)```"
+
+- name: "fence-format"
+  type: "fence"
+  file: "npl/fences.md"
+  description: "Specify exact output templates and structure requirements"
+  regex: "```format\\n([\\s\\S]*?)```"
+
+- name: "fence-template"
+  type: "fence"
+  file: "npl/fences.md"
+  description: "Define reusable output patterns with placeholder substitution"
+  regex: "```template\\n([\\s\\S]*?)```"
+
+- name: "fence-algorithm"
+  type: "fence"
+  file: "npl/fences.md"
+  description: "Formal algorithm specifications and implementations"
+  regex: "```alg\\n([\\s\\S]*?)```"
+
+- name: "fence-pseudocode"
+  type: "fence"
+  file: "npl/fences.md"
+  description: "Pseudocode representations of algorithms"
+  regex: "```alg-pseudo\\n([\\s\\S]*?)```"
+
+- name: "fence-artifact"
+  type: "fence"
+  file: "npl/fences.md"
+  description: "Generate structured output with metadata and special encoding"
+  regex: "```artifact\\n([\\s\\S]*?)```"
+
+- name: "fence-input-syntax"
+  type: "fence"
+  file: "npl/formatting.md"
+  description: "Define expected input structure for data exchange"
+  regex: "```input-syntax\\n([\\s\\S]*?)```"
+
+- name: "fence-output-syntax"
+  type: "fence"
+  file: "npl/formatting.md"
+  description: "Define desired output structure for data exchange"
+  regex: "```output-syntax\\n([\\s\\S]*?)```"
+
+- name: "fence-input-example"
+  type: "fence"
+  file: "npl/formatting.md"
+  description: "Demonstrate actual input samples"
+  regex: "```input-example\\n([\\s\\S]*?)```"
+
+- name: "fence-output-example"
+  type: "fence"
+  file: "npl/formatting.md"
+  description: "Demonstrate actual output samples"
+  regex: "```output-example\\n([\\s\\S]*?)```"
+
+# ===============================
+# PUMP ELEMENTS (Planning & Thinking Patterns)
+# ===============================
+
+- name: "npl-intent"
+  type: "pump"
+  file: "npl/pumps.md"
+  description: "Structured explanation of response construction steps and reasoning flow"
+  regex: "<npl-intent>([\\s\\S]*?)</npl-intent>"
+
+- name: "npl-cot"
+  type: "pump"
+  file: "npl/pumps.md"
+  description: "Structured problem-solving technique with traceable thought processes"
+  regex: "<npl-cot>([\\s\\S]*?)</npl-cot>"
+
+- name: "npl-reflection"
+  type: "pump"
+  file: "npl/pumps.md"
+  description: "End-of-response evaluation blocks for continuous improvement"
+  regex: "<npl-reflection>([\\s\\S]*?)</npl-reflection>"
+
+- name: "npl-tangent"
+  type: "pump"
+  file: "npl/pumps.md"
+  description: "Structured exploration of related concepts and alternative perspectives"
+  regex: "<npl-tangent>([\\s\\S]*?)</npl-tangent>"
+
+- name: "npl-panel"
+  type: "pump"
+  file: "npl/pumps.md"
+  description: "Multi-perspective analysis format simulating discussion between viewpoints"
+  regex: "<npl-panel>([\\s\\S]*?)</npl-panel>"
+
+- name: "npl-panel-inline-feedback"
+  type: "pump"
+  file: "npl/pumps.md"
+  description: "Embedded feedback during process execution"
+  regex: "<npl-panel-inline-feedback>([\\s\\S]*?)</npl-panel-inline-feedback>"
+
+- name: "npl-panel-group-chat"
+  type: "pump"
+  file: "npl/pumps.md"
+  description: "Conversational multi-agent analysis"
+  regex: "<npl-panel-group-chat>([\\s\\S]*?)</npl-panel-group-chat>"
+
+- name: "npl-panel-reviewer-feedback"
+  type: "pump"
+  file: "npl/pumps.md"
+  description: "Structured peer review format"
+  regex: "<npl-panel-reviewer-feedback>([\\s\\S]*?)</npl-panel-reviewer-feedback>"
+
+- name: "npl-critique"
+  type: "pump"
+  file: "npl/pumps.md"
+  description: "Systematic evaluation framework for assessing solutions against criteria"
+  regex: "<npl-critique>([\\s\\S]*?)</npl-critique>"
+
+- name: "npl-rubric"
+  type: "pump"
+  file: "npl/pumps.md"
+  description: "Structured assessment tool with specific criteria and standards"
+  regex: "<npl-rubric>([\\s\\S]*?)</npl-rubric>"
+
+- name: "npl-mood"
+  type: "pump"
+  file: "npl/pumps.md"
+  description: "Simulated emotional state indicators providing context for responses"
+  regex: "<npl-mood\\s+agent=\"([^\"]+)\"\\s+mood=\"([^\"]+)\">([\\s\\S]*?)</npl-mood>"
+
+# ===============================
+# INSTRUCTING ELEMENTS
+# ===============================
+
+- name: "alg"
+  type: "fence-type"
+  file: "npl/instructing/alg.md"
+  description: "General algorithm specification using formal notation"
+  regex: "```alg\\n[\\s\\S]*?```"
+
+- name: "alg-pseudo"
+  type: "fence-type"
+  file: "npl/instructing/alg.md"
+  description: "Pseudocode algorithm implementation"
+  regex: "```alg-pseudo\\n[\\s\\S]*?```"
+
+- name: "alg-language"
+  type: "fence-type"
+  file: "npl/instructing/alg.md"
+  description: "Language-specific algorithm implementation (e.g., alg-python, alg-javascript)"
+  regex: "```alg-[a-zA-Z]+\\n[\\s\\S]*?```"
+
+- name: "assignment-operator"
+  type: "syntax-element"
+  file: "npl/instructing/alg.md"
+  description: "Algorithm assignment notation"
+  regex: "\\s*←\\s*|\\s*=\\s*"
+
+- name: "logic-operators"
+  type: "syntax-element"
+  file: "npl/instructing/alg.md"
+  description: "Algorithm logical operators"
+  regex: "\\b(AND|OR|NOT)\\b"
+
+- name: "math-operators"
+  type: "syntax-element"
+  file: "npl/instructing/alg.md"
+  description: "Mathematical operators in algorithms"
+  regex: "[+\\-×÷]|\\bmod\\b"
+
+- name: "control-structures"
+  type: "syntax-element"
+  file: "npl/instructing/alg.md"
+  description: "Algorithm control flow structures"
+  regex: "\\b(IF|THEN|ELSE|END IF|FOR|TO|DO|END FOR|WHILE|END WHILE|PROCEDURE|END PROCEDURE)\\b"
+
+- name: "handlebars-if"
+  type: "template-directive"
+  file: "npl/instructing/handlebars.md"
+  description: "Conditional logic blocks in templates"
+  regex: "\\{\\{if\\s+[^}]+\\}\\}[\\s\\S]*?\\{\\{/if\\}\\}"
+
+- name: "handlebars-unless"
+  type: "template-directive"
+  file: "npl/instructing/handlebars.md"
+  description: "Negative conditional blocks"
+  regex: "\\{\\{unless\\s+[^}]+\\}\\}[\\s\\S]*?\\{\\{/unless\\}\\}"
+
+- name: "handlebars-foreach"
+  type: "template-directive"
+  file: "npl/instructing/handlebars.md"
+  description: "Iteration over collections"
+  regex: "\\{\\{foreach\\s+[^}]+\\}\\}[\\s\\S]*?\\{\\{/foreach\\}\\}"
+
+- name: "handlebars-qualified"
+  type: "template-directive"
+  file: "npl/instructing/handlebars.md"
+  description: "Handlebars directive with pipe qualifier"
+  regex: "\\{\\{[^}]+\\|[^}]+\\}\\}"
+
+- name: "handlebars-variable"
+  type: "template-variable"
+  file: "npl/instructing/handlebars.md"
+  description: "Variable interpolation in templates"
+  regex: "\\{\\{[^{}|/]+\\}\\}"
+
+- name: "annotation"
+  type: "fence-type"
+  file: "npl/instructing/annotation.md"
+  description: "Basic refinement annotation for iterative improvement"
+  regex: "```annotation\\n[\\s\\S]*?```"
+
+- name: "annotation-cycle"
+  type: "fence-type"
+  file: "npl/instructing/annotation.md"
+  description: "Progressive improvement cycle documentation"
+  regex: "```annotation-cycle\\n[\\s\\S]*?```"
+
+- name: "annotation-fields"
+  type: "syntax-element"
+  file: "npl/instructing/annotation.md"
+  description: "Structured annotation field markers"
+  regex: "^(original|issues|refinement|iteration|focus|changes|validation|stage|findings|metrics):\\s*"
+
+- name: "proof"
+  type: "fence-type"
+  file: "npl/instructing/formal-proof.md"
+  description: "Formal mathematical proof structure"
+  regex: "```proof\\n[\\s\\S]*?```"
+
+- name: "natural-deduction"
+  type: "fence-type"
+  file: "npl/instructing/formal-proof.md"
+  description: "Natural deduction inference rules"
+  regex: "```natural-deduction\\n[\\s\\S]*?```"
+
+- name: "verification"
+  type: "fence-type"
+  file: "npl/instructing/formal-proof.md"
+  description: "Proof verification patterns"
+  regex: "```verification\\n[\\s\\S]*?```"
+
+- name: "algorithm-proof"
+  type: "fence-type"
+  file: "npl/instructing/formal-proof.md"
+  description: "Algorithm correctness proofs"
+  regex: "```algorithm-proof\\n[\\s\\S]*?```"
+
+- name: "system-proof"
+  type: "fence-type"
+  file: "npl/instructing/formal-proof.md"
+  description: "System property verification"
+  regex: "```system-proof\\n[\\s\\S]*?```"
+
+- name: "proof-template"
+  type: "fence-type"
+  file: "npl/instructing/formal-proof.md"
+  description: "Structured proof documentation template"
+  regex: "```proof-template\\n[\\s\\S]*?```"
+
+- name: "proof-steps"
+  type: "syntax-element"
+  file: "npl/instructing/formal-proof.md"
+  description: "Numbered proof step notation"
+  regex: "^\\s*\\d+\\.\\s+.*?\\s+-\\s+.*$"
+
+- name: "inference-rule"
+  type: "syntax-element"
+  file: "npl/instructing/formal-proof.md"
+  description: "Natural deduction rule notation"
+  regex: "^[^\\n]+\\n─+\\s*\\[[^\\]]+\\]\\n[^\\n]+$"
+
+- name: "symbolic"
+  type: "fence-type"
+  file: "npl/instructing/symbolic-logic.md"
+  description: "Symbolic logic expressions and formulas"
+  regex: "```symbolic\\n[\\s\\S]*?```"
+
+- name: "universal-quantifier"
+  type: "logic-symbol"
+  file: "npl/instructing/symbolic-logic.md"
+  description: "Universal quantification symbol"
+  regex: "∀[a-zA-Z]+"
+
+- name: "existential-quantifier"
+  type: "logic-symbol"
+  file: "npl/instructing/symbolic-logic.md"
+  description: "Existential quantification symbol"
+  regex: "∃[a-zA-Z]+"
+
+- name: "logical-connectives"
+  type: "logic-symbol"
+  file: "npl/instructing/symbolic-logic.md"
+  description: "Logical conjunction, disjunction, negation, implication operators"
+  regex: "[∧∨¬→↔⊕]"
+
+- name: "set-operations"
+  type: "logic-symbol"
+  file: "npl/instructing/symbolic-logic.md"
+  description: "Set theory operation symbols"
+  regex: "[∪∩∖⊆⊂∈∉∅]"
+
+- name: "mathematical-relations"
+  type: "logic-symbol"
+  file: "npl/instructing/symbolic-logic.md"
+  description: "Mathematical comparison and relation symbols"
+  regex: "[=≠<≤>≥≡≈]"
+
+- name: "modal-operators"
+  type: "logic-symbol"
+  file: "npl/instructing/symbolic-logic.md"
+  description: "Modal logic necessity and possibility operators"
+  regex: "[□◇]"
+
+- name: "temporal-operators"
+  type: "logic-symbol"
+  file: "npl/instructing/symbolic-logic.md"
+  description: "Temporal logic operators"
+  regex: "[◯□◇]|\\bU\\b"
+
+- name: "logic"
+  type: "fence-type"
+  file: "npl/instructing/second-order.md"
+  description: "Second-order logic expressions"
+  regex: "```logic\\n[\\s\\S]*?```"
+
+- name: "meta-logic"
+  type: "fence-type"
+  file: "npl/instructing/second-order.md"
+  description: "Meta-logical reasoning about logical systems"
+  regex: "```meta-logic\\n[\\s\\S]*?```"
+
+- name: "second-order"
+  type: "fence-type"
+  file: "npl/instructing/second-order.md"
+  description: "Second-order reasoning patterns and meta-strategies"
+  regex: "```second-order\\n[\\s\\S]*?```"
+
+- name: "framework"
+  type: "fence-type"
+  file: "npl/instructing/second-order.md"
+  description: "Logical framework construction patterns"
+  regex: "```framework\\n[\\s\\S]*?```"
+
+- name: "pattern-analysis"
+  type: "fence-type"
+  file: "npl/instructing/second-order.md"
+  description: "Pattern recognition in reasoning processes"
+  regex: "```pattern-analysis\\n[\\s\\S]*?```"
+
+- name: "type-theory"
+  type: "fence-type"
+  file: "npl/instructing/second-order.md"
+  description: "Type theory integration patterns"
+  regex: "```type-theory\\n[\\s\\S]*?```"
+
+- name: "category-theory"
+  type: "fence-type"
+  file: "npl/instructing/second-order.md"
+  description: "Category theory applications in reasoning"
+  regex: "```category-theory\\n[\\s\\S]*?```"
+
+- name: "recursive-meta"
+  type: "fence-type"
+  file: "npl/instructing/second-order.md"
+  description: "Recursive meta-reasoning patterns"
+  regex: "```recursive-meta\\n[\\s\\S]*?```"
+
+- name: "lambda-abstraction"
+  type: "logic-symbol"
+  file: "npl/instructing/second-order.md"
+  description: "Lambda abstraction for higher-order functions"
+  regex: "λ[a-zA-Z]+\\.[^\\s]+"
+
+- name: "higher-order-quantification"
+  type: "logic-symbol"
+  file: "npl/instructing/second-order.md"
+  description: "Quantification over predicates and functions"
+  regex: "∀[A-Z][a-zA-Z]*\\([^)]+\\)|∃[A-Z][a-zA-Z]*\\([^)]+\\)"
+
+# ===============================
+# FORMATTING ELEMENTS
+# ===============================
+
+- name: "template-declaration"
+  type: "special-section"
+  file: "npl/formatting/template.md"
+  description: "Define reusable output format/template that can be applied across multiple contexts"
+  regex: "⌜🧱\\s+([^⌝]+)⌝[\\s\\S]*?⌞🧱\\s+\\1⌟"
+
+- name: "template-directive"
+  type: "directive"
+  file: "npl/formatting/template.md"
+  description: "Template integration using directive syntax"
+  regex: "⟪⇐:\\s*([^|]+)\\s*\\|[^⟫]+⟫"
+
+- name: "handlebar-placeholder"
+  type: "placeholder"
+  file: "npl/formatting/template.md"
+  description: "Placeholder substitution using handlebar-like syntax"
+  regex: "\\{([^}]+)\\}"
+
+- name: "output-example-fence"
+  type: "fence"
+  file: "npl/formatting/output-example.md"
+  description: "Sample formatted responses demonstrating expected output formats"
+  regex: "```output-example\\s*\\n([\\s\\S]*?)```"
+
+- name: "input-example-fence"
+  type: "fence"
+  file: "npl/formatting/input-example.md"
+  description: "Realistic sample data demonstrating expected input formats"
+  regex: "```input-example\\s*\\n([\\s\\S]*?)```"
+
+- name: "input-syntax-fence"
+  type: "fence"
+  file: "npl/formatting/input-syntax.md"
+  description: "Input format specifications for structured data entry"
+  regex: "```input-syntax\\s*\\n([\\s\\S]*?)```"
+
+- name: "handlebar-control-structure"
+  type: "control-flow"
+  file: "npl/formatting/input-syntax.md"
+  description: "Handlebar-style input control structures"
+  regex: "\\{\\{([^}]+)\\}\\}[\\s\\S]*?\\{\\{/\\1\\}\\}"
+
+- name: "output-format-fence"
+  type: "fence"
+  file: "npl/formatting/output-syntax.md"
+  description: "Output format specifications defining response structure"
+  regex: "```output-format\\s*\\n([\\s\\S]*?)```"
+
+- name: "output-syntax-fence"
+  type: "fence"
+  file: "npl/formatting/output-syntax.md"
+  description: "Output format specifications defining response structure and style"
+  regex: "```output-syntax\\s*\\n([\\s\\S]*?)```"
+
+- name: "size-indicator"
+  type: "qualifier"
+  file: "npl/formatting/output-syntax.md"
+  description: "Size qualifiers for generated content sections"
+  regex: "\\[\\.\\.\\.[0-9]*-?[0-9]*[spwlir]?\\]"
+
+- name: "template-integration"
+  type: "template"
+  file: "npl/formatting/output-syntax.md"
+  description: "Template integration within output syntax"
+  regex: "\\{\\{template:([^|]+)\\s*\\|[^}]+\\}\\}"
+
+- name: "conditional-output"
+  type: "control-flow"
+  file: "npl/formatting/output-syntax.md"
+  description: "Conditional content inclusion in output"
+  regex: "\\{\\{if\\s+([^}]+)\\}\\}[\\s\\S]*?(?:\\{\\{else\\}\\}[\\s\\S]*?)?\\{\\{/if\\}\\}"

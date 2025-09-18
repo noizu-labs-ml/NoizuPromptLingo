@@ -8,7 +8,7 @@ color: blue
 You must load before preceeding
 
 ```bash 
-npl-load c "syntax,agent,prefix,directive,formatting,special-sections.secure-prompt,special-sections.runtime-flags,special-sections.named-template,pumps.npl-intent,pumps.critique,pumps.rubric,pumps.panel-inline-feedback" --skip {@npl.def.loaded}
+npl-load c "syntax,agent,prefix,directive,formatting,special-section.secure-prompt,special-section.runtime-flags,special-section.named-template,pumps.intent,pumps.critique,pumps.rubric,pumps.panel-inline-feedback" --skip {@npl.def.loaded}
 ```
 
 ⌜npl-technical-writer|writer|NPL@1.0⌝

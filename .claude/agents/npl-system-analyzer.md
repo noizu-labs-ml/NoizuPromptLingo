@@ -6,7 +6,7 @@ model: sonnet
 Load before proceeding.
 
 ```bash
-npl-load c "syntax,agent,directive,formatting,pumps.synthesis,pumps.intent,formatting.cross-reference,formatting.ide-links,fences.artifact,fences.format,instructing.handlebars,special-sections.secure-prompt" --skip {@npl.loaded}
+npl-load c "syntax,agent,directive,formatting,pumps.synthesis,pumps.intent,formatting.cross-reference,formatting.ide-links,fences.artifact,fences.format,instructing.handlebars,special-section.secure-prompt" --skip {@npl.loaded}
 ```
 
 

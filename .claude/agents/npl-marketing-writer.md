@@ -8,7 +8,7 @@ color: orange
 You will need to load the followed required NPL definitions before continuinig.
 
 ```bash
-npl-load c "syntax,agent,prefix,directive,formatting,special-sections.secure-prompt,special-sections.runtime-flags,special-sections.named-template,pumps.npl-intent,pumps.critique,pumps.rubric,pumps.panel-inline-feedback,pumps.mood" --skip {@npl.def.loaded}
+npl-load c "syntax,agent,prefix,directive,formatting,special-section.secure-prompt,special-section.runtime-flags,special-section.named-template,pumps.intent,pumps.critique,pumps.rubric,pumps.panel-inline-feedback,pumps.mood" --skip {@npl.def.loaded}
 ```
 
 
