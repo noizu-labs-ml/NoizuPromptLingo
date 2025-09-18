@@ -196,8 +196,6 @@ class NPLLoader:
                         if content:
                             loaded.append((pattern, content))
                             self.loaded_components.add(pattern)
-                    else:
-                        print(f"Warning: Component '{pattern}' not found")
         return loaded
 
     def load_meta(self, items: List[str], skip: Set[str]) -> List[Tuple[str, str]]:
@@ -225,8 +223,6 @@ class NPLLoader:
                         if content:
                             loaded.append((pattern, content))
                             self.loaded_meta.add(pattern)
-                    else:
-                        print(f"Warning: Metadata '{pattern}' not found")
         return loaded
 
     def load_style(self, items: List[str], skip: Set[str]) -> List[Tuple[str, str]]:
@@ -257,8 +253,6 @@ class NPLLoader:
                         if content:
                             loaded.append((pattern, content))
                             self.loaded_style.add(pattern)
-                    else:
-                        print(f"Warning: Style guide '{pattern}' not found")
         return loaded
 
 def _parse_skip_list(values) -> Set[str]:
@@ -279,16 +273,22 @@ def main():
     subparsers = parser.add_subparsers(dest='command', required=True)
 
     sp_c = subparsers.add_parser('c', help='Load components')
-    sp_c.add_argument('items', nargs='*', help='Components to load (supports glob patterns)')
+    sp_c.add_argument('def_items', nargs='*', help='Components to load (supports glob patterns)')
     sp_c.add_argument('--skip', nargs='*', default=[], help='Skip patterns (wildcards allowed)')
+    sp_c.add_argument('--verbose', action='store_true')
+
+
 
     sp_m = subparsers.add_parser('m', help='Load metadata')
-    sp_m.add_argument('items', nargs='*', help='Metadata to load (supports glob patterns)')
+    sp_m.add_argument('meta_items', nargs='*', help='Metadata to load (supports glob patterns)')
     sp_m.add_argument('--skip', nargs='*', default=[], help='Skip patterns (wildcards allowed)')
+    sp_m.add_argument('--verbose', action='store_true')
+
 
     sp_s = subparsers.add_parser('s', help='Load style guides')
-    sp_s.add_argument('items', nargs='*', help='Style guides to load (supports glob patterns)')
+    sp_s.add_argument('style_items', nargs='*', help='Style guides to load (supports glob patterns)')
     sp_s.add_argument('--skip', nargs='*', default=[], help='Skip patterns (wildcards allowed)')
+    sp_s.add_argument('--verbose', action='store_true')
 
 
     args = parser.parse_args()
@@ -298,22 +298,22 @@ def main():
 
     if args.command == 'c':
         skip = _parse_skip_list(args.skip)
-        if args.items:
-            components = loader.load_components(args.items, skip)
+        if args.def_items:
+            components = loader.load_components(args.def_items, skip)
             for name, content in components:
                 loaded_content.append(('COMPONENT', name, content))
 
     elif args.command == 'm':
         skip = _parse_skip_list(args.skip)
-        if args.items:
-            meta = loader.load_meta(args.items, skip)
+        if args.meta_items:
+            meta = loader.load_meta(args.meta_items, skip)
             for name, content in meta:
                 loaded_content.append(('META', name, content))
 
     elif args.command == 's':
         skip = _parse_skip_list(args.skip)
-        if args.items:
-            styles = loader.load_style(args.items, skip)
+        if args.style_items:
+            styles = loader.load_style(args.style_items, skip)
             for name, content in styles:
                 loaded_content.append(('STYLE', name, content))
 
@@ -321,11 +321,11 @@ def main():
         print("# Flag Update")
         print("\n```🏳️\n")
         if loader.loaded_components:
-            print(f"@npl.loaded+=\"{','.join(sorted(loader.loaded_components))}\"")
+            print(f"@npl.def.loaded+=\"{','.join(sorted(loader.loaded_components))}\"")
         if loader.loaded_meta:
             print(f"@npl.meta.loaded+=\"{','.join(sorted(loader.loaded_meta))}\"")
         if loader.loaded_style:
-            print(f"2npl.style.loaded+=\"{','.join(sorted(loader.loaded_style))}\"")
+            print(f"@npl.style.loaded+=\"{','.join(sorted(loader.loaded_style))}\"")
         print("\n\n```\n")
         print("\n---")
 

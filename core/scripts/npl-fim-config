@@ -15,7 +15,7 @@ import re
 
 class NPLFIMConfig:
     def __init__(self):
-        self.artifact_dir = os.environ.get('NPL_FIM_ARTIFACTS', './artifacts')
+        self.artifact_path = os.environ.get('NPL_FIM_ARTIFACTS', './artifacts')
         self.npl_meta = os.environ.get('NPL_META', None)
         
         # Tool-task compatibility matrix (subset for demonstration)
@@ -238,7 +238,7 @@ def main():
     parser.add_argument('item', nargs='?', help='Item to query (e.g., solution.tool.use-case)')
     parser.add_argument('--query', '-q', help='Natural language query for solution')
     parser.add_argument('--table', action='store_true', help='Display compatibility matrix')
-    parser.add_argument('--artifact-dir', action='store_true', help='Show artifact output directory')
+    parser.add_argument('--artifact-path', action='store_true', help='Show artifact output directory')
     parser.add_argument('--preferred-solution', action='store_true', help='Get preferred solutions')
     parser.add_argument('--style-guide', action='store_true', help='Get style guide command')
     parser.add_argument('--overrides', action='store_true', help='List override files')
@@ -250,15 +250,74 @@ def main():
     parser.add_argument('--edit', action='store_true', help='Edit local override')
     parser.add_argument('--prompt', help='Content for patch/replace')
     parser.add_argument('--prompt-file', help='File containing content for patch/replace')
+
+    # New: delegation and verbosity
+    parser.add_argument('--verbose', '-v', action='store_true', help='Enable verbose output (forwarded to npl-load)')
+    parser.add_argument('--skip', action='store_true', help='Forward --skip to npl-load')
+    parser.add_argument('--load', nargs='?', const='', metavar='ENTRY',
+                        help='Delegate to npl-load: load ENTRY (e.g., fim.solution.use-case). '
+                             'If omitted, derive from --item as fim.<solution>.<use-case>.')
     
     args = parser.parse_args()
     
     config = NPLFIMConfig()
     
     # Handle artifact directory query
-    if args.artifact_dir:
-        print(config.artifact_dir)
+    if args.artifact_path:
+        print(config.artifact_path)
         return
+
+    # New: delegate to npl-load
+    if args.load is not None:
+        entries = []
+
+        if isinstance(args.load, str) and args.load.strip():
+            # Allow single or whitespace/comma-separated entries
+            entries = [e.strip() for e in re.split(r'[,\s]+', args.load.strip()) if e.strip()]
+        else:
+            if not args.item:
+                print("Error: --load requires ENTRY or --item", file=sys.stderr)
+                sys.exit(2)
+
+            item = args.item.strip()
+            if item.startswith('fim.'):
+                item = item.removeprefix('fim.')
+            parts = [p for p in item.split('.') if p]
+            if len(parts) == 0:
+                print("Error: invalid --item", file=sys.stderr)
+                sys.exit(2)
+            if len(parts) == 1:
+                # Ambiguous
+                entries = [f"fim.solution.{parts[0]}", f"fim.use-case.{parts[0]}"]
+            else:
+                solution = parts[0]
+                use_case = parts[1]
+                derived = [
+                    f"fim.solution.{solution}",
+                    f"fim.use-case.{use_case}",
+                    f"fim.solution.{solution}.use-case.{use_case}",
+                ]
+                track = f"fim.solution.{solution}.use-case.{use_case}"
+                for j in range(2, len(parts)):
+                    track = f"{track}.{parts[j]}"
+                    derived.append(track)
+                entries = derived
+
+        cmd = ['npl-load']
+        for e in entries:
+            cmd.extend(['m', e])
+        if args.skip:
+            cmd.append('--skip')
+            cmd.append(args.skip)
+        if args.verbose:
+            cmd.append('--verbose')
+            
+        try:
+            rc = subprocess.call(cmd)
+            sys.exit(rc)
+        except FileNotFoundError:
+            print("Error: 'npl-load' not found in PATH", file=sys.stderr)
+            sys.exit(127)
     
     # Handle natural language query
     if args.query:
