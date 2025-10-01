@@ -129,11 +129,11 @@ Custom glyphs can be added through the `custom_glyphs` template section.
 
 ```mermaid
 flowchart TD
-    A[Code Analysis] --> B[@gpt-qa Generate Tests]
+    A[Code Analysis] --> B[@npl-qa Generate Tests]
     B --> C[@npl-grader Evaluate Coverage]
     C --> D[@npl-technical-writer Document Results]
     D --> E[Implementation Phase]
-    E --> F[@gpt-qa Validate Tests]
+    E --> F[@npl-qa Validate Tests]
     F --> G[Deploy to CI/CD]
 ```
 
@@ -141,7 +141,7 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-    A[New Feature Code] --> B[@gpt-qa Test Generation]
+    A[New Feature Code] --> B[@npl-qa Test Generation]
     A --> C[@npl-grader Code Review]
     A --> D[@npl-technical-writer Documentation]
     B --> E[Merge Results]
@@ -154,14 +154,14 @@ flowchart LR
 
 ```bash
 # Complete QA workflow with multiple agents
-@gpt-qa "Analyze the user authentication module and generate comprehensive test cases"
+@npl-qa "Analyze the user authentication module and generate comprehensive test cases"
 @npl-grader "Evaluate test coverage completeness using testing-rubric.md"
 @npl-technical-writer "Document the testing strategy and implementation guide"
 
 # Iterative test refinement
-@gpt-qa "Generate initial test cases for payment processing"
+@npl-qa "Generate initial test cases for payment processing"
 @npl-thinker "Analyze test case effectiveness and suggest improvements"
-@gpt-qa "Refine test cases based on analysis recommendations"
+@npl-qa "Refine test cases based on analysis recommendations"
 ```
 
 ## Example Instantiation Scenarios
@@ -252,7 +252,7 @@ flowchart TD
 ```mermaid
 sequenceDiagram
     participant Dev as Developer
-    participant QA as @gpt-qa
+    participant QA as @npl-qa
     participant Grader as @npl-grader  
     participant Writer as @npl-technical-writer
     
@@ -270,16 +270,16 @@ sequenceDiagram
 
 ```mermaid
 flowchart LR
-    A[Code Commit] --> B[@gpt-qa Auto-Generate Tests]
+    A[Code Commit] --> B[@npl-qa Auto-Generate Tests]
     B --> C[Execute Test Suite]
     C --> D{All Tests Pass?}
-    D -->|No| E[@gpt-qa Analyze Failures]
+    D -->|No| E[@npl-qa Analyze Failures]
     D -->|Yes| F[Deploy to Staging]
     E --> G[Generate Failure Report]
     G --> H[Developer Review]
     H --> I[Code Fixes]
     I --> A
-    F --> J[@gpt-qa Smoke Tests]
+    F --> J[@npl-qa Smoke Tests]
     J --> K[Production Deploy]
 ```
 
@@ -348,7 +348,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Generate Test Analysis
         run: |
-          @gpt-qa "Analyze changed files for test coverage gaps"
+          @npl-qa "Analyze changed files for test coverage gaps"
           @npl-grader "Evaluate test completeness using qa-rubric.md"
 ```
 
@@ -362,19 +362,19 @@ jobs:
 #### 2. Batch Processing
 ```bash
 # Analyze multiple modules simultaneously
-@gpt-qa "Generate test cases for modules: auth, payment, reporting, notification"
+@npl-qa "Generate test cases for modules: auth, payment, reporting, notification"
 
 # Parallel agent execution
-@gpt-qa "Analyze auth module" & @gpt-qa "Analyze payment module" &
+@npl-qa "Analyze auth module" & @npl-qa "Analyze payment module" &
 ```
 
 #### 3. Integration with Development Tools
 ```bash
 # VS Code integration
-echo '@gpt-qa' >> .vscode/claude-agents.json
+echo '@npl-qa' >> .vscode/claude-agents.json
 
 # Git hooks integration  
-echo '@gpt-qa analyze-changed-files' >> .git/hooks/pre-commit
+echo '@npl-qa analyze-changed-files' >> .git/hooks/pre-commit
 ```
 
 ### Quality Assurance for QA Agents
@@ -389,7 +389,7 @@ echo '@gpt-qa analyze-changed-files' >> .git/hooks/pre-commit
 #### 2. Continuous Improvement
 ```bash
 # Regular agent assessment
-@gpt-qa "Analyze recent test case generation accuracy"
+@npl-qa "Analyze recent test case generation accuracy"
 @npl-persona "Enhance QA agent with domain expertise patterns"
 ```
 

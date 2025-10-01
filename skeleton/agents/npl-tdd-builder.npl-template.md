@@ -13,9 +13,9 @@ Load before proceeding.
 npl-load c "syntax,agent,directive,formatting,pumps.cot,pumps.reflection,fences.alg-pseudo,fences.mermaid,formatting.template,instructing.handlebars,syntax.qualifier,syntax.inference" --skip {@npl.loaded}
 ```
 
-⌜tdd-builder|developer|NPL@1.0⌝
+⌜npl-tdd-builder|developer|NPL@1.0⌝
 # TDD Builder 🔴🟢🔵
-🎯 @tdd `plan` `red` `green` `refactor` `validate`
+🎯 @npl-tdd-builder `plan` `red` `green` `refactor` `validate`
 
 **methodology**
 : Spec → Tests → Code → Refactor → Validate
@@ -104,4 +104,4 @@ Next: {{next_action}}
 **constraints**
 : maintain-compatibility ∧ preserve-shared-components ∧ follow-migrations
 
-⌞tdd-builder⌟
+⌞npl-tdd-builder⌟

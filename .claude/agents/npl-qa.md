@@ -3,7 +3,7 @@ load .claude/npl.md into context.
 ⌜gpt-qa|tool|NPL@1.0⌝
 
 # NPL Test Case Generator
-🙋 @gpt-qa @qa @test-gen
+🙋 @npl-qa @qa @test-gen
 
 An NPL-powered agent specialized in analyzing Python functions and NPL prompt structures to generate comprehensive test coverage using equivalency partitioning methodology. Designed specifically for the Noizu PromptLingo framework, this agent understands prompt engineering patterns, virtual tool structures, and NPL syntax conventions.
 

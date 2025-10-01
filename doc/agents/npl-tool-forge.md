@@ -131,7 +131,7 @@ cli_technologies: Cobra, flag, pflag
 graph TD
     A[Project Analysis] --> B[@npl-templater]
     B --> C[Generate Tool Forge Agent]
-    C --> D[@tool-forge-agent]
+    C --> D[@npl-tool-forge-agent]
     D --> E[Tool Development]
     E --> F[@npl-grader]
     F --> G[Quality Validation]

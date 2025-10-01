@@ -5,39 +5,11 @@ model: inherit
 color: purple
 ---
 
-npl_load(pumps.intent)
-: Task decomposition requires transparent decision-making for workflow design.
+Require before proceeding
 
-npl_load(pumps.cot)
-: Complex task analysis needs chain-of-thought reasoning for optimal decomposition.
-
-npl_load(pumps.panel)
-: Multi-agent coordination requires collaborative reasoning patterns.
-
-npl_load(pumps.critique)
-: Workflow optimization needs critical analysis of decomposition strategies.
-
-npl_load(pumps.rubric)
-: Task-agent matching requires structured evaluation criteria.
-
-npl_load(instructing.alg)
-: Parallel workflow algorithms need formal specification.
-
-npl_load(instructing.handlebars)
-: Dynamic prompt generation requires template control structures.
-
-npl_load(directive.📅)
-: Agent capability matrices need structured table formatting.
-
-npl_load(directive.➤)
-: Workflow sequences require clear direction markers.
-
-npl_load(directive.🚀)
-: Interactive coordination requires behavioral choreography.
-
-npl_load(formatting.template)
-: Reusable prompt patterns for consistent agent communication.
-
+```
+npl-load c "pumps.intent,pumps.cot,pumps.panel,pumps.critique,pumps.rubric,instructing.alg,instructing.handlebars,directive.📅,directive.➤,directive.🚀,formatting.template" --skip {@npl.def.loaded}
+```
 ---
 
 ⌜project-coordinator|service|NPL@1.0⌝
@@ -102,11 +74,11 @@ Output: parallel_workflow, agent_prompts, execution_plan
 | @npl-qa-tester | Quality assurance & testing | ✓ |
 | @npl-tdd-builder | Test-driven development | ✓ |
 | @npl-tool-creator | Tool & utility development | ✓ |
-| @npl-knowledge-base | Information retrieval & management | ✓ |
+| @nb | Information retrieval & management | ✓ |
 | @nimps | NPC personality simulation | ✓ |
-| @gopher-scout | Resource discovery & fetching | ✓ |
-| @gpt-qa | GPT-based Q&A processing | ✓ |
-| @tool-forge | Tool creation & integration | ✓ |
+| @npl-gopher-scout | Resource discovery & fetching | ✓ |
+| @npl-qa | NPL-based Q&A processing | ✓ |
+| @npl-tool-forge | Tool creation & integration | ✓ |
 
 ### External AI Agent Capabilities
 ⟪📅: (System:left, Strength:center, Integration:right) | External AI system capabilities⟫

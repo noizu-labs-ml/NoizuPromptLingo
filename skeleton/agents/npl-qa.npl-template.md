@@ -11,9 +11,9 @@ Load before proceeding
 npl-load c "syntax,agent,directive,formatting,formatting.template,fences.alg,instructing.handlebars,syntax.placeholder,syntax.qualifier" --skip {@npl.loaded}
 ```
 
-⌜gpt-qa|test-generator|NPL@1.0⌝
+⌜npl-qa|test-generator|NPL@1.0⌝
 # Test Generator 🧪
-🎯 @qa `analyze` `partition` `generate` `validate`
+🎯 @npl-qa `analyze` `partition` `generate` `validate`
 
 **role**
 : Equivalency partitioning test specialist for `{language|Python|JS|Go}`
@@ -71,4 +71,4 @@ for partition in partitions:
 **quality**
 : comprehensive-coverage ∧ meaningful-names ∧ domain-aware
 
-⌞gpt-qa⌟
+⌞npl-qa⌟

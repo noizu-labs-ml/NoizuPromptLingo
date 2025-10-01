@@ -173,7 +173,7 @@ flowchart LR
 @npl-technical-writer generate spec --component=user-authentication
 
 # Step 2: Create comprehensive test cases
-@gpt-qa "Generate test cases for user authentication specification"
+@npl-qa "Generate test cases for user authentication specification"
 
 # Step 3: Evaluate documentation quality
 @npl-grader evaluate spec.md --rubric=technical-documentation-rubric.md
@@ -227,7 +227,7 @@ parallel --line-buffer ::: \
 {
     @npl-grader evaluate src/ --rubric=code-quality-rubric.md &
     @npl-technical-writer review src/ --mode=annotate --focus=documentation &
-    @gpt-qa "Analyze test coverage gaps in src/" &
+    @npl-qa "Analyze test coverage gaps in src/" &
     wait
 }
 ```
@@ -263,12 +263,12 @@ flowchart TD
 } > requirements-analysis.md
 
 # Phase 2: Sequential implementation
-@tdd-driven-builder "Implement payment processing using analyzed requirements"
+@npl-tdd-builder "Implement payment processing using analyzed requirements"
 @npl-grader evaluate payment-feature/ --rubric=feature-complete-rubric.md
 @npl-technical-writer "Document payment processing implementation and API"
 
 # Phase 3: Final validation and deployment preparation
-@gpt-qa "Generate comprehensive test suite for payment processing"
+@npl-qa "Generate comprehensive test suite for payment processing"
 @npl-marketing-writer "Create release notes and feature announcement"
 ```
 
@@ -292,13 +292,13 @@ flowchart TD
 }
 
 # 3. Implementation with Quality Assurance
-@tdd-driven-builder "Implement analytics API endpoints using TDD methodology"
-@gpt-qa "Generate comprehensive test cases for analytics calculations"
+@npl-tdd-builder "Implement analytics API endpoints using TDD methodology"
+@npl-qa "Generate comprehensive test cases for analytics calculations"
 @npl-technical-writer "Create API documentation and integration guides"
 
 # 4. Content and Deployment
 @npl-marketing-writer "Create feature announcement and user onboarding content"
-@system-digest "Update system architecture documentation with analytics components"
+@npl-system-digest "Update system architecture documentation with analytics components"
 ```
 
 ### Scenario 2: Legacy System Documentation
@@ -307,8 +307,8 @@ flowchart TD
 
 ```bash
 # 1. System Discovery and Analysis
-@gopher-scout "Perform comprehensive reconnaissance of microservices architecture"
-@system-digest "Analyze service dependencies and communication patterns"
+@npl-gopher-scout "Perform comprehensive reconnaissance of microservices architecture"
+@npl-system-digest "Analyze service dependencies and communication patterns"
 
 # 2. Multi-Perspective Documentation
 {
@@ -332,21 +332,21 @@ flowchart TD
 
 ```bash
 # 1. Comprehensive Analysis
-@gopher-scout "Analyze codebase for quality issues and improvement opportunities"
+@npl-gopher-scout "Analyze codebase for quality issues and improvement opportunities"
 @npl-thinker "Develop systematic approach for code quality improvement"
 
 # 2. Multi-Agent Quality Assessment
 {
     @npl-grader evaluate src/ --rubric=enterprise-code-quality-rubric.md &
-    @gpt-qa "Identify test coverage gaps and generate missing test cases" &
+    @npl-qa "Identify test coverage gaps and generate missing test cases" &
     @npl-persona security-expert "Audit code for security vulnerabilities" &
     @npl-persona performance-expert "Identify performance optimization opportunities" &
     wait
 }
 
 # 3. Improvement Implementation
-@tdd-driven-builder "Implement quality improvements using test-driven approach"
-@tool-forge "Create custom linting and validation tools for ongoing quality maintenance"
+@npl-tdd-builder "Implement quality improvements using test-driven approach"
+@npl-tool-forge "Create custom linting and validation tools for ongoing quality maintenance"
 
 # 4. Process and Documentation
 @npl-technical-writer "Document coding standards and quality processes"
@@ -392,7 +392,7 @@ flowchart TD
 @npl-thinker "Analyze optimal security investment priorities based on threat model and dashboard metrics"
 
 # 4. Implementation Validation
-@tdd-driven-builder "Implement security controls identified in threat model with comprehensive testing"
+@npl-tdd-builder "Implement security controls identified in threat model with comprehensive testing"
 @npl-grader evaluate security-implementation/ --rubric=enterprise-security-standards.md
 ```
 
@@ -458,15 +458,15 @@ if [[ $complexity == "high" ]]; then
     # Complex implementation path
     @npl-persona security-architect "Design OAuth2 security architecture"
     @npl-persona backend-lead "Plan technical implementation approach"
-    @gopher-scout "Research existing OAuth2 implementations in similar projects"
-    @tdd-driven-builder "Implement OAuth2 with comprehensive testing strategy"
+    @npl-gopher-scout "Research existing OAuth2 implementations in similar projects"
+    @npl-tdd-builder "Implement OAuth2 with comprehensive testing strategy"
 elif [[ $complexity == "medium" ]]; then
     # Standard implementation path
     @npl-technical-writer "Research OAuth2 best practices and create implementation guide"
-    @tdd-driven-builder "Implement OAuth2 following standard patterns"
+    @npl-tdd-builder "Implement OAuth2 following standard patterns"
 else
     # Simple implementation path
-    @tool-forge "Create simple OAuth2 integration utility"
+    @npl-tool-forge "Create simple OAuth2 integration utility"
 fi
 
 # Common validation regardless of path
@@ -479,7 +479,7 @@ Workflows that select specific agents based on project context or requirements:
 
 ```bash
 # Detect project type and select appropriate agents
-project_type=$(@system-digest analyze --detect-project-type)
+project_type=$(@npl-system-digest analyze --detect-project-type)
 
 case $project_type in
     "django")
@@ -634,8 +634,8 @@ mkdir -p .claude/workflow-state
 
 #### 1. Identify Your Use Case
 - **Documentation**: Use `@npl-technical-writer` + `@npl-grader`
-- **Feature Development**: Use `@tdd-driven-builder` + `@gpt-qa` + `@npl-grader`
-- **System Analysis**: Use `@gopher-scout` + `@system-digest` + `@npl-thinker`
+- **Feature Development**: Use `@npl-tdd-builder` + `@npl-qa` + `@npl-grader`
+- **System Analysis**: Use `@npl-gopher-scout` + `@npl-system-digest` + `@npl-thinker`
 - **Content Creation**: Use `@npl-marketing-writer` + `@npl-technical-writer`
 - **Data Visualization**: Use `@npl-fim` + `@npl-grader` + `@npl-templater`
 - **Security Assessment**: Use `@npl-threat-modeler` + `@npl-thinker` + `@npl-grader`
@@ -659,9 +659,9 @@ mkdir -p .claude/workflow-state
 ```bash
 # Add more agents as you gain experience
 @npl-technical-writer generate spec --component=auth
-@gpt-qa "Generate test cases for authentication specification"
+@npl-qa "Generate test cases for authentication specification"
 @npl-grader evaluate auth-spec.md --rubric=specification-rubric.md
-@tdd-driven-builder "Implement authentication following specification and tests"
+@npl-tdd-builder "Implement authentication following specification and tests"
 
 # Secure analytics dashboard workflow
 @npl-threat-modeler analyze "analytics dashboard with user data" --compliance=GDPR

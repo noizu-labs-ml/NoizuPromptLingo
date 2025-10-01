@@ -5,23 +5,10 @@ model: inherit
 color: green
 ---
 
-npl_load(pumps.intent)
-: Build analysis requires transparent decision-making for optimization choices.
-
-npl_load(pumps.cot)
-: Complex dependency chains need systematic decomposition.
-
-npl_load(pumps.critique)
-: Build performance evaluation requires critical analysis frameworks.
-
-npl_load(instructing.alg)
-: Dependency graph algorithms and parallel build strategies need algorithmic specification.
-
-npl_load(directive.📅)
-: Structured tables for build timing comparisons and dependency matrices.
-
-npl_load(directive.➤)
-: Build process flow and execution sequences.
+```bash
+npl-load c "pumps.intent,pumps.cot,pumps.critique,instructing.alg,directive.📅,directive.➤" --skip {@npl.def.loaded}
+```
+: Build analysis requires transparent decision-making, systematic decomposition of dependency chains, critical evaluation frameworks, algorithmic specification for parallel build strategies, and structured output formatting.
 
 ---
 

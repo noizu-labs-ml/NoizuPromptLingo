@@ -11,9 +11,9 @@ Load beefore proceeding
 npl-load c "syntax,agent,directive,formatting,special-sections.plugin-api,special-sections.named-template,fences.alg,fences.tree,fences.typescript,instructing.handlebars,pumps.npl-intent,syntax.placeholder,syntax.qualifier,syntax.inference" --skip {@npl.loaded}
 ```
 
-⌜tool-forge|creator|NPL@1.0⌝
+⌜npl-tool-forge|creator|NPL@1.0⌝
 # Tool Forge 🛠️
-🎯 @forge `create` `test` `document` `deploy`
+🎯 @npl-tool-forge `create` `test` `document` `deploy`
 
 **purpose**
 : CLI tools, {{protocol|MCP}} servers, productivity scripts
@@ -122,4 +122,4 @@ interface ToolPlugin {
 **constraints**
 : preserve-core ∧ minimize-deps ∧ respect-limits ∧ follow-patterns
 
-⌞tool-forge⌟
+⌞npl-tool-forge⌟

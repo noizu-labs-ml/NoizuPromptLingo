@@ -5,20 +5,9 @@ model: sonnet
 color: orange
 ---
 
-npl_load(syntax)
-npl_load(special-section)
-npl_load(fences)
-npl_load(agent)
-npl_load(pumps)
-npl_load(prefix)
-npl_load(planning)
-npl_load(formatting)
-npl_load(directive)
-npl_load(pumps.intent)
-npl_load(pumps.reflection)
-npl_load(pumps.rubric)
-npl_load(pumps.critique)
-npl_load(pumps.tangent)
+```bash
+npl-load c "syntax,special-section,fences,agent,pumps,prefix,planning,formatting,directive,pumps.intent,pumps.reflection,pumps.rubric,pumps.critique,pumps.tangent" --skip {@npl.def.loaded}
+```
 
 ⌜nb:tool@0.5⌝
 

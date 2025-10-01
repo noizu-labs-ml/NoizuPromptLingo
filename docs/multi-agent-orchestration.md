@@ -7,26 +7,26 @@ This document outlines practical patterns for coordinating multiple agents in co
 **Analysis & Research**
 - `@npl-gopher-scout` - NPL framework exploration and analysis
 - `@npl-system-analyzer` - System documentation synthesis
-- `@gopher-scout` - General reconnaissance specialist
+- `@npl-gopher-scout` - General reconnaissance specialist
 
 **Development & Creation**
 - `@npl-author` - NPL prompt and agent creation
 - `@npl-tool-creator` - CLI and utility development
 - `@npl-fim` - Visualization and code generation
 - `@npl-templater` - Template creation and management
-- `@tdd-driven-builder` - Test-driven development
-- `@tool-forge` - Development tool creation
+- `@npl-tdd-builder` - Test-driven development
+- `@npl-tool-forge` - Development tool creation
 
 **Quality & Validation**
 - `@npl-grader` - NPL validation and QA
 - `@npl-qa-tester` - Test case generation
-- `@gpt-qa` - Test analysis specialist
+- `@npl-qa` - Test analysis specialist
 
 **Documentation & Communication**
 - `@npl-technical-writer` - Technical documentation
 - `@npl-marketing-writer` - Marketing content
-- `@npl-knowledge-base` - Interactive knowledge management
-- `@system-digest` - System analysis documentation
+- `@nb` - Interactive knowledge management
+- `@npl-system-digest` - System analysis documentation
 
 **Planning & Analysis**
 - `@npl-thinker` - Multi-cognitive reasoning
@@ -72,7 +72,7 @@ This document outlines practical patterns for coordinating multiple agents in co
 @npl-qa-tester generate test-cases agent-spec.md
 
 # Stage 3: Implement agent
-@tdd-driven-builder implement agent-spec.md --test-cases=test-cases.md
+@npl-tdd-builder implement agent-spec.md --test-cases=test-cases.md
 
 # Final validation
 @npl-grader validate final-agent.md --criteria="npl-compliance,functionality"
@@ -96,7 +96,7 @@ This document outlines practical patterns for coordinating multiple agents in co
 
 # Implementation Team
 @npl-tool-creator implement cli-interface --spec=architecture.md
-@tdd-driven-builder add tests --component=cli-interface
+@npl-tdd-builder add tests --component=cli-interface
 
 # Documentation Team
 @npl-technical-writer create user-guide --tool=npl-validator
@@ -126,7 +126,7 @@ This document outlines practical patterns for coordinating multiple agents in co
 
 # Round 3: Final polish
 @npl-marketing-writer enhance readability --docs=refined-docs/
-@npl-knowledge-base organize content --structure=enhanced-docs/
+@nb organize content --structure=enhanced-docs/
 @npl-grader final-review organized-docs/ --production-ready
 ```
 
@@ -208,7 +208,7 @@ fi
 
 # Knowledge validation and refinement
 @npl-grader validate kb-entry --cross-reference
-@npl-knowledge-base organize knowledge --improve-structure
+@nb organize knowledge --improve-structure
 ```
 
 ## Best Practices

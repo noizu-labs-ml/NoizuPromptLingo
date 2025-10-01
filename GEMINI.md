@@ -11,10 +11,10 @@ This section outlines the setup for sub-agents. It is designed to be generic and
 ## Agents:
 The following agents are available, but do not load them unless requested/until needed as they wll instruct you to load additional formatting definitions.
 
-@gopher-scout
+@npl-gopher-scout
 : Elite reconnaissance specialist for exploring NPL framework structures, prompt chains, virtual tools, and documentation hierarchies in the NoizuPromptLingo ecosystem
 
-@gpt-qa
+@npl-qa
 : NPL-powered test case generator that analyzes Python functions and NPL prompt structures using equivalency partitioning methodology for comprehensive test coverage
 
 @nimps
@@ -34,7 +34,7 @@ comprehension improvements.
 @npl-grader
 : NPL validation & QA agent with syntax validation, edge testing, & integration verification
 
-@npl-knowledge-base
+@nb
 : Interactive e-book style terminal-based knowledge base that generates on-demand articles with remembered article IDs for consistent reference and dynamic content
 extension
 
@@ -75,14 +75,14 @@ data. Applies established methodologies like STRIDE for comprehensive threat ass
 @npl-tool-creator
 : NPL framework tool creation specialist for developing CLI utilities, NPL processing scripts, and agent development tools that enhance NPL workflow productivity
 
-@system-digest
+@npl-system-digest
 : NPL Framework System Analysis and Documentation Synthesis Agent that aggregates information from multiple sources, creates navigational maps, and provides detailed
 cross-referenced system documentation
 
-@tdd-driven-builder
+@npl-tdd-builder
 : TDD methodology specialist for NPL framework development that implements features using strict Red-Green-Refactor cycles with comprehensive test coverage
 
-@tool-forge
+@npl-tool-forge
 : Tool creation and development productivity specialist for NPL project environments that designs CLI tools, utility scripts, and integration tools to streamline
 development workflows
 

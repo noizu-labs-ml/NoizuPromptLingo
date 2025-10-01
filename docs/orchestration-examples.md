@@ -25,7 +25,7 @@ wait
 
 # Phase 4: Implementation (TDD approach)
 @npl-qa-tester generate test-plan spec-v2.md --output=test-plan.md
-@tdd-driven-builder implement spec-v2.md --test-plan=test-plan.md --output=agent-implementation/
+@npl-tdd-builder implement spec-v2.md --test-plan=test-plan.md --output=agent-implementation/
 
 # Phase 5: Documentation (Multi-perspective)
 @npl-technical-writer create user-guide --agent=code-reviewer --output=docs/user-guide.md &
@@ -106,7 +106,7 @@ done
 
 # Phase 4: Implementation (Iterative with Validation)
 for control in $(extract-controls security-controls.md); do
-    @tdd-driven-builder implement-control $control --test-first --output=implementations/$control/
+    @npl-tdd-builder implement-control $control --test-first --output=implementations/$control/
     @npl-threat-modeler validate-control implementations/$control/ --effectiveness
     @npl-grader integration-test implementations/$control/ --with-existing-system
 done
@@ -114,7 +114,7 @@ done
 # Phase 5: Documentation and Training
 @npl-technical-writer security-guide implementations/ --audience="developers" --output=docs/security-guide.md
 @npl-marketing-writer security-overview --audience="management" --output=docs/security-overview.md
-@npl-knowledge-base create-training security-guide.md --interactive --output=training/
+@nb create-training security-guide.md --interactive --output=training/
 
 # Phase 6: Verification and Monitoring
 @npl-threat-modeler final-assessment --post-implementation --output=final-security-report.md
@@ -157,7 +157,7 @@ wait
 # Phase 4: Implementation (Coordinated Development)
 for tool in validator builder debug test deploy monitor; do
     (
-        @tdd-driven-builder implement specs/$tool.md --api-standards=api-standards.md --output=tools/$tool/ &
+        @npl-tdd-builder implement specs/$tool.md --api-standards=api-standards.md --output=tools/$tool/ &
         @npl-technical-writer docs specs/$tool.md --output=docs/$tool.md &
     ) &
 done
@@ -189,12 +189,12 @@ wait
 @npl-persona user-research --focus="knowledge-seeking-behavior" --output=user-research.md
 
 # Phase 2: Knowledge Architecture Design
-@npl-knowledge-base design-structure knowledge-gaps.md user-research.md --output=kb-architecture.md
+@nb design-structure knowledge-gaps.md user-research.md --output=kb-architecture.md
 @npl-technical-writer information-architecture kb-architecture.md --navigation-design --output=ia-spec.md
 @npl-marketing-writer content-strategy ia-spec.md --audience-focused --output=content-strategy.md
 
 # Phase 3: Content Creation (Swarm Approach)
-@npl-knowledge-base create-articles content-strategy.md --batch=fundamentals --output=articles/fundamentals/ &
+@nb create-articles content-strategy.md --batch=fundamentals --output=articles/fundamentals/ &
 @npl-technical-writer create-tutorials content-strategy.md --step-by-step --output=articles/tutorials/ &
 @npl-gopher-scout research-topics content-strategy.md --deep-dive --output=articles/advanced/ &
 @npl-marketing-writer create-examples content-strategy.md --practical --output=articles/examples/ &
@@ -207,7 +207,7 @@ wait
 
 # Phase 5: Interactive Features and Search
 @npl-tool-creator search-engine articles/ --semantic-search --output=search-system/
-@npl-knowledge-base interactive-features articles/ --quizzes-examples --output=interactive/
+@nb interactive-features articles/ --quizzes-examples --output=interactive/
 @npl-technical-writer api-documentation search-system/ interactive/ --output=kb-api.md
 
 # Phase 6: Quality Assurance and Launch Preparation

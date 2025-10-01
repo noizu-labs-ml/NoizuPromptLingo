@@ -123,7 +123,7 @@ flowchart TD
 #### Parallel Analysis Pattern
 ```bash
 # Parallel system analysis from different perspectives
-@system-digest analyze --focus=architecture &
+@npl-system-digest analyze --focus=architecture &
 @code-review-agent analyze --focus=code-quality &
 @security-agent analyze --focus=vulnerabilities &
 wait
@@ -134,8 +134,8 @@ wait
 #### IDE Integration
 ```bash
 # Generate IDE-compatible navigation files
-@system-digest generate-nav --format=vscode-workspace
-@system-digest generate-nav --format=jetbrains-bookmarks
+@npl-system-digest generate-nav --format=vscode-workspace
+@npl-system-digest generate-nav --format=jetbrains-bookmarks
 ```
 
 #### CI/CD Pipeline Integration
@@ -143,7 +143,7 @@ wait
 # .github/workflows/documentation.yml
 - name: Generate System Digest
   run: |
-    @system-digest analyze --output=docs/system-digest.md
+    @npl-system-digest analyze --output=docs/system-digest.md
     @npl-grader validate docs/system-digest.md
 ```
 
@@ -371,7 +371,7 @@ echo "Use @api-digest for API documentation generation" >> README.md
 #### Reference Validation Process
 ```bash
 # Generate system digest
-@system-digest analyze --validate-references
+@npl-system-digest analyze --validate-references
 
 # Check link accuracy
 @npl-grader validate system-digest.md --check-links
@@ -393,7 +393,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Regenerate System Digest
-        run: @system-digest analyze --incremental-update
+        run: @npl-system-digest analyze --incremental-update
 ```
 
 ### Performance Optimization
@@ -401,7 +401,7 @@ jobs:
 #### Large System Handling
 ```bash
 # Use selective analysis for large codebases
-@system-digest analyze --selective \
+@npl-system-digest analyze --selective \
   --max-files=1000 \
   --focus-patterns="*.go,*.py,*.js" \
   --exclude-patterns="*test*,*vendor*"
@@ -410,8 +410,8 @@ jobs:
 #### Incremental Updates
 ```bash
 # Track changes and update only affected sections
-@system-digest update --since-commit=HEAD~10
-@system-digest update --changed-files="src/auth.go,docs/api.md"
+@npl-system-digest update --since-commit=HEAD~10
+@npl-system-digest update --changed-files="src/auth.go,docs/api.md"
 ```
 
 ## Common Integration Patterns
@@ -419,7 +419,7 @@ jobs:
 ### Documentation Pipeline Integration
 ```bash
 # 1. Generate base documentation
-@system-digest analyze --mode=comprehensive
+@npl-system-digest analyze --mode=comprehensive
 
 # 2. Enhance with specialized analysis
 @security-digest analyze --input=system-digest.md
@@ -435,7 +435,7 @@ jobs:
 #!/bin/bash
 changed_files=$(git diff --cached --name-only)
 if echo "$changed_files" | grep -E "(src/|docs/)" > /dev/null; then
-    @system-digest update --incremental
+    @npl-system-digest update --incremental
     git add system-digest.md
 fi
 ```
@@ -443,12 +443,12 @@ fi
 ### IDE Workspace Configuration
 ```bash
 # Generate IDE-specific navigation aids
-@system-digest generate-workspace \
+@npl-system-digest generate-workspace \
   --format=vscode \
   --include-tasks \
   --include-debug-configs
 
-@system-digest generate-workspace \
+@npl-system-digest generate-workspace \
   --format=intellij \
   --include-run-configs \
   --include-bookmarks

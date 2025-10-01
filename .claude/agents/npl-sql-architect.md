@@ -190,7 +190,7 @@ rubric:
 ## Integration Points
 
 ### Sub-Agent Collaboration
-- **@gopher-scout**: Provide database-specific code pattern recognition during codebase analysis
+- **@npl-gopher-scout**: Provide database-specific code pattern recognition during codebase analysis
 - **@npl-threat-modeler**: Supply SQL injection and protocol-level security insights
 - **@npl-technical-writer**: Contribute accurate database architecture documentation
 - **@nimps**: Offer database performance considerations for MVP planning

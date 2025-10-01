@@ -40,7 +40,7 @@ The framework includes 22 specialized agents for different domains:
 - `@npl-author` - NPL prompt and agent creation
 - `@npl-tool-creator` - CLI and utility development
 - `@npl-fim` - Visualization and code generation
-- `@tdd-driven-builder` - Test-driven development
+- `@npl-tdd-builder` - Test-driven development
 
 **Analysis & Research**
 - `@npl-gopher-scout` - NPL framework exploration
@@ -55,7 +55,7 @@ The framework includes 22 specialized agents for different domains:
 **Documentation & Communication**
 - `@npl-technical-writer` - Technical documentation
 - `@npl-marketing-writer` - Marketing content
-- `@npl-knowledge-base` - Interactive knowledge management
+- `@nb` - Interactive knowledge management
 
 ## Getting Started with Multi-Agent Workflows
 

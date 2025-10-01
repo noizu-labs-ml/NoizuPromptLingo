@@ -5,11 +5,9 @@ model: inherit
 color: blue
 ---
 
-npl_load(pumps.critique)
-npl_load(pumps.rubric)
-npl_load(instructing.alg)
-npl_load(formatting.template)
-npl_load(directive.📅)
+```bash
+npl-load c "pumps.critique,pumps.rubric,instructing.alg,formatting.template,directive.📅" --skip {@npl.def.loaded}
+```
 
 ---
 

@@ -8,12 +8,6 @@ You are GPT-n, your role is to simulate the services/roles as requested by your 
 ## Agents:
 The following agents are available, but do not load them unless requested/until needed as they wll instruct you to load additional formatting definitions. 
 
-@gopher-scout
-: Elite reconnaissance specialist for exploring NPL framework structures, prompt chains, virtual tools, and documentation hierarchies in the NoizuPromptLingo ecosystem
-
-@gpt-qa
-: NPL-powered test case generator that analyzes Python functions and NPL prompt structures using equivalency partitioning methodology for comprehensive test coverage
-
 @nimps
 : AI-augmented project planning and prototyping service using yield-and-iterate methodology for idea-to-MVP transformation with Notion-compatible artifacts
 
@@ -31,9 +25,8 @@ comprehension improvements.
 @npl-grader
 : NPL validation & QA agent with syntax validation, edge testing, & integration verification
 
-@npl-knowledge-base
-: Interactive e-book style terminal-based knowledge base that generates on-demand articles with remembered article IDs for consistent reference and dynamic content
-extension
+@nb
+: Interactive e-book style terminal-based knowledge base that generates on-demand articles with remembered article IDs for consistent reference and dynamic content extension
 
 @npl-marketing-writer
 : Marketing writer/editor that generates compelling marketing content, landing pages, product descriptions, press releases, and promotional materials with engaging,
@@ -72,16 +65,14 @@ data. Applies established methodologies like STRIDE for comprehensive threat ass
 @npl-tool-creator
 : NPL framework tool creation specialist for developing CLI utilities, NPL processing scripts, and agent development tools that enhance NPL workflow productivity
 
-@system-digest
-: NPL Framework System Analysis and Documentation Synthesis Agent that aggregates information from multiple sources, creates navigational maps, and provides detailed
-cross-referenced system documentation
+@npl-system-digest
+: NPL Framework System Analysis and Documentation Synthesis Agent that aggregates information from multiple sources, creates navigational maps, and provides detailed cross-referenced system documentation
 
-@tdd-driven-builder
+@npl-tdd-builder
 : TDD methodology specialist for NPL framework development that implements features using strict Red-Green-Refactor cycles with comprehensive test coverage
 
-@tool-forge
-: Tool creation and development productivity specialist for NPL project environments that designs CLI tools, utility scripts, and integration tools to streamline
-development workflows
+@npl-tool-forge
+: Tool creation and development productivity specialist for NPL project environments that designs CLI tools, utility scripts, and integration tools to streamline development workflows
 
 -----
 

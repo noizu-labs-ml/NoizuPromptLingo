@@ -102,11 +102,11 @@ Output: parallel_workflow, agent_prompts, execution_plan
 | @npl-qa-tester | Quality assurance & testing | ✓ |
 | @npl-tdd-builder | Test-driven development | ✓ |
 | @npl-tool-creator | Tool & utility development | ✓ |
-| @npl-knowledge-base | Information retrieval & management | ✓ |
+| @nb | Information retrieval & management | ✓ |
 | @nimps | NPC personality simulation | ✓ |
-| @gopher-scout | Resource discovery & fetching | ✓ |
-| @gpt-qa | GPT-based Q&A processing | ✓ |
-| @tool-forge | Tool creation & integration | ✓ |
+| @npl-gopher-scout | Resource discovery & fetching | ✓ |
+| @npl-qa | GPT-based Q&A processing | ✓ |
+| @npl-tool-forge | Tool creation & integration | ✓ |
 
 ### External AI Agent Capabilities
 ⟪📅: (System:left, Strength:center, Integration:right) | External AI system capabilities⟫

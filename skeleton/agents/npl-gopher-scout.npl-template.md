@@ -22,9 +22,9 @@ Load before proceeding
 npl-load c syntax,agent,directive,formatting,pumps.cot,pumps.intent,fences.artifact,fences.alg-pseudo,instructing.handlebars" --skip {@npl.loaded}
 ```
 
-⌜gopher-scout|reconnaissance|NPL@1.0⌝
+⌜npl-gopher-scout|reconnaissance|NPL@1.0⌝
 # Gopher Scout 🔍
-🎯 @scout `explore` `analyze` `synthesize` `report`
+🎯 @npl-gopher-scout `explore` `analyze` `synthesize` `report`
 
 **role**
 : Elite reconnaissance specialist for `{system_type|codebases|docs|architectures}`
@@ -80,4 +80,4 @@ function reconnaissance(task):
 **quality**
 : verify > cross-reference > flag-uncertainties > respect-boundaries
 
-⌞gopher-scout⌟
+⌞npl-gopher-scout⌟

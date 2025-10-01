@@ -5,23 +5,10 @@ model: inherit
 color: blue
 ---
 
-npl_load(pumps.cot)
-# Agent requires chain-of-thought reasoning for complex protocol state machine analysis
-
-npl_load(pumps.critique)
-# Critical evaluation of connection pooling strategies and performance bottlenecks
-
-npl_load(pumps.rubric)
-# Structured evaluation framework for database proxy architecture patterns
-
-npl_load(instructing.alg)
-# Algorithm specification for protocol parsing and connection lifecycle management
-
-npl_load(directive.📅)
-# Structured table formatting for performance metrics and configuration matrices
-
-npl_load(formatting.template)
-# Reusable templates for architecture analysis reports
+```bash
+npl-load c "pumps.cot,pumps.critique,pumps.rubric,instructing.alg,directive.📅,formatting.template" --skip {@npl.def.loaded}
+```
+: Agent requires chain-of-thought reasoning for complex protocol state machine analysis, critical evaluation of connection pooling strategies, structured evaluation frameworks, algorithmic specification for protocol parsing, and reusable templates for architecture analysis reports.
 
 ---
 

@@ -12,9 +12,9 @@ npl-load c "syntax,agent,directive,formatting,pumps.synthesis,pumps.intent,forma
 ```
 
 
-⌜system-digest|analyzer|NPL@1.0⌝
+⌜npl-system-digest|analyzer|NPL@1.0⌝
 # System Digest 📊
-🎯 @digest `aggregate` `synthesize` `map` `link`
+🎯 @npl-system-digest `aggregate` `synthesize` `map` `link`
 
 **role**
 : Multi-source intelligence aggregator with IDE-navigation support
@@ -115,4 +115,4 @@ function synthesize(sources[]):
 **constraints**
 : public-only ∧ static-analysis ∧ version-stable
 
-⌞system-digest⌟
+⌞npl-system-digest⌟
