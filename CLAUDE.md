@@ -16,6 +16,15 @@ NPL uses optional environment variables to locate resources, allowing projects t
 **$NPL_THEME**
 : Theme name for style loading (e.g., "dark-mode", "corporate")
 
+**$NPL_PERSONA_DIR**
+: Base path for persona definitions and data. Fallback: `./.npl/personas`, `~/.npl/personas`, `/etc/npl/personas/`
+
+**$NPL_PERSONA_TEAMS**
+: Path for team definitions. Fallback: `./.npl/teams`, `~/.npl/teams`, `/etc/npl/teams`
+
+**$NPL_PERSONA_SHARED**
+: Path for shared persona resources. Fallback: `./.npl/shared`, `~/.npl/shared`, `/etc/npl/shared`
+
 ### Loading Dependencies
 
 Prompts may specify dependencies to load using the `npl-load` command-line tool:
@@ -56,6 +65,23 @@ Projects typically only need to create files for components they're modifying, i
 
 ## NPL Scripts
 The following scripts are available.
+
+**`npl-load <type> <items>`** - Load NPL definitions with hierarchical search
+- Types: `c` (core), `m` (meta), `s` (style)
+- Supports `--skip` flag for tracking loaded items
+- Searches: project → user → system paths
+
+**`npl-persona <command> [options]`** - Comprehensive persona management tool
+- **Lifecycle**: `init`, `get`, `list`, `remove` - Create and manage personas
+- **Journal**: `journal <id> add|view|archive` - Track persona experiences
+- **Tasks**: `task <id> add|update|complete|list` - Manage persona tasks and goals
+- **Knowledge**: `kb <id> add|search|get` - Maintain persona knowledge bases
+- **Health**: `health <id>`, `sync <id>`, `backup <id>` - File integrity and maintenance
+- **Teams**: `team create|add|list|synthesize` - Multi-persona collaboration
+- **Analytics**: `analyze <id>`, `report <id>` - Insights and reporting
+- **Multi-tier support**: Respects `$NPL_PERSONA_DIR`, `$NPL_PERSONA_TEAMS`, `$NPL_PERSONA_SHARED`
+- **Tracking flags**: `--skip {@npl.personas.loaded}` prevents reloading
+- See `agents/npl-persona.md` for complete interface documentation
 
 **`dump-files <path>`** - Dumps all file contents recursively with file name header
 - Respects `.gitignore`

@@ -1,5 +1,5 @@
 ---
-name: project-coordinator
+name: npl-project-coordinator
 description: Intelligent orchestrator that analyzes complex tasks, decomposes them into parallel workflows, and coordinates execution across heterogeneous agent systems (NPL agents and external AI agents)
 model: inherit
 color: purple
@@ -12,7 +12,7 @@ npl-load c "pumps.intent,pumps.cot,pumps.panel,pumps.critique,pumps.rubric,instr
 ```
 ---
 
-⌜project-coordinator|service|NPL@1.0⌝
+⌜npl-project-coordinator|service|NPL@1.0⌝
 # Project Coordinator - Intelligent Task Orchestrator 🎯
 Advanced orchestration agent that analyzes complex tasks, designs optimal parallel workflows, and coordinates execution across heterogeneous agent ecosystems including NPL agents and external AI systems.
 
@@ -427,4 +427,4 @@ The coordinator maintains detailed execution logs and performance metrics:
 
 These are published to `.npl/meta/coordinator/` for analysis and improvement.
 
-⌞project-coordinator⌟
+⌞npl-project-coordinator⌟

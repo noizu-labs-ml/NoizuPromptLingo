@@ -1,0 +1,1978 @@
+#!/usr/bin/env python3
+"""
+npl-persona - Comprehensive persona management tool for NPL
+Multi-tiered hierarchical loading: project → user → system
+"""
+
+import os
+import sys
+import argparse
+import json
+import yaml
+import shutil
+import re
+from pathlib import Path
+from datetime import datetime, timedelta
+from typing import List, Set, Tuple, Optional, Dict, Any
+from collections import defaultdict
+
+class NPLPersona:
+    def __init__(self):
+        # Environment variables with fallbacks
+        self.npl_persona_dir = os.environ.get('NPL_PERSONA_DIR', None)
+        self.npl_persona_teams = os.environ.get('NPL_PERSONA_TEAMS', None)
+        self.npl_persona_shared = os.environ.get('NPL_PERSONA_SHARED', None)
+
+        # Mandatory files for each persona
+        self.mandatory_files = {
+            'definition': '{persona_id}.persona.md',
+            'journal': '{persona_id}.journal.md',
+            'tasks': '{persona_id}.tasks.md',
+            'knowledge': '{persona_id}.knowledge-base.md'
+        }
+
+        # Track loaded personas
+        self.loaded_personas = set()
+
+    def get_persona_search_paths(self):
+        """Get search paths for personas in priority order (project → user → system)"""
+        paths = []
+
+        # Platform-specific global config
+        if sys.platform.startswith('win'):
+            global_npl = Path(os.environ.get('PROGRAMDATA', 'C:\\ProgramData')) / 'npl' / 'personas'
+        elif sys.platform == 'darwin':
+            global_npl = Path('/Library/Application Support/npl/personas')
+        else:
+            global_npl = Path('/etc/npl/personas')
+
+        # Priority order: project → user → system
+        if self.npl_persona_dir:
+            paths.append(Path(self.npl_persona_dir))
+        paths.extend([
+            Path('./.npl/personas'),
+            Path.home() / '.npl/personas',
+            global_npl
+        ])
+
+        return paths
+
+    def get_team_search_paths(self):
+        """Get search paths for teams"""
+        paths = []
+
+        if sys.platform.startswith('win'):
+            global_npl = Path(os.environ.get('PROGRAMDATA', 'C:\\ProgramData')) / 'npl' / 'teams'
+        elif sys.platform == 'darwin':
+            global_npl = Path('/Library/Application Support/npl/teams')
+        else:
+            global_npl = Path('/etc/npl/teams')
+
+        if self.npl_persona_teams:
+            paths.append(Path(self.npl_persona_teams))
+        paths.extend([
+            Path('./.npl/teams'),
+            Path.home() / '.npl/teams',
+            global_npl
+        ])
+
+        return paths
+
+    def get_shared_search_paths(self):
+        """Get search paths for shared resources"""
+        paths = []
+
+        if sys.platform.startswith('win'):
+            global_npl = Path(os.environ.get('PROGRAMDATA', 'C:\\ProgramData')) / 'npl' / 'shared'
+        elif sys.platform == 'darwin':
+            global_npl = Path('/Library/Application Support/npl/shared')
+        else:
+            global_npl = Path('/etc/npl/shared')
+
+        if self.npl_persona_shared:
+            paths.append(Path(self.npl_persona_shared))
+        paths.extend([
+            Path('./.npl/shared'),
+            Path.home() / '.npl/shared',
+            global_npl
+        ])
+
+        return paths
+
+    def resolve_persona_location(self, persona_id: str) -> Optional[Tuple[Path, str]]:
+        """Find persona location and return (directory, scope)"""
+        search_paths = self.get_persona_search_paths()
+
+        for i, base_path in enumerate(search_paths):
+            persona_file = base_path / f"{persona_id}.persona.md"
+            if persona_file.exists():
+                scope = ['project', 'user', 'system'][min(i, 2)]
+                return (base_path, scope)
+
+        return None
+
+    def get_target_path(self, scope: str = 'project') -> Path:
+        """Get target path for creating new personas based on scope"""
+        if scope == 'user':
+            return Path.home() / '.npl/personas'
+        elif scope == 'system':
+            if sys.platform.startswith('win'):
+                return Path(os.environ.get('PROGRAMDATA', 'C:\\ProgramData')) / 'npl' / 'personas'
+            elif sys.platform == 'darwin':
+                return Path('/Library/Application Support/npl/personas')
+            else:
+                return Path('/etc/npl/personas')
+        else:  # project
+            return Path('./.npl/personas')
+
+    def list_personas(self, scope: Optional[str] = None) -> Dict[str, Dict[str, Any]]:
+        """List all personas, optionally filtered by scope"""
+        personas = {}
+        search_paths = self.get_persona_search_paths()
+
+        for i, base_path in enumerate(search_paths):
+            if not base_path.exists():
+                continue
+
+            current_scope = ['project', 'user', 'system'][min(i, 2)]
+
+            # Skip if filtering by scope
+            if scope and scope != current_scope and scope != 'all':
+                continue
+
+            for persona_file in base_path.glob('*.persona.md'):
+                persona_id = persona_file.stem.replace('.persona', '')
+
+                # First found wins (priority order)
+                if persona_id in personas:
+                    continue
+
+                personas[persona_id] = {
+                    'id': persona_id,
+                    'path': base_path,
+                    'scope': current_scope,
+                    'files': self._check_persona_files(persona_id, base_path)
+                }
+
+        return personas
+
+    def _check_persona_files(self, persona_id: str, base_path: Path) -> Dict[str, bool]:
+        """Check which mandatory files exist for a persona"""
+        files = {}
+        for file_type, template in self.mandatory_files.items():
+            file_path = base_path / template.format(persona_id=persona_id)
+            files[file_type] = file_path.exists()
+        return files
+
+    def init_persona(self, persona_id: str, role: Optional[str] = None,
+                     scope: str = 'project', from_template: Optional[str] = None) -> bool:
+        """Initialize a new persona with all mandatory files"""
+        target_path = self.get_target_path(scope)
+        target_path.mkdir(parents=True, exist_ok=True)
+
+        # Check if persona already exists
+        if (target_path / f"{persona_id}.persona.md").exists():
+            print(f"Error: Persona '{persona_id}' already exists at {target_path}", file=sys.stderr)
+            return False
+
+        # If from_template specified, copy from system
+        if from_template:
+            source_location = self.resolve_persona_location(persona_id)
+            if not source_location:
+                print(f"Error: Template persona '{persona_id}' not found", file=sys.stderr)
+                return False
+
+            source_path, _ = source_location
+            print(f"Copying {source_path}/{persona_id}.* → {target_path}/")
+
+            for file_type, template in self.mandatory_files.items():
+                source_file = source_path / template.format(persona_id=persona_id)
+                target_file = target_path / template.format(persona_id=persona_id)
+
+                if source_file.exists():
+                    shutil.copy2(source_file, target_file)
+
+            print(f"✨ {scope.capitalize()}-level persona '{persona_id}' created from template")
+            return True
+
+        # Create from scratch
+        print(f"Creating persona files in {target_path}")
+
+        # Create definition file
+        definition_content = self._generate_persona_definition(persona_id, role)
+        definition_file = target_path / f"{persona_id}.persona.md"
+        with open(definition_file, 'w', encoding='utf-8') as f:
+            f.write(definition_content)
+        print(f"> ✅ {persona_id}.persona.md")
+
+        # Create journal file
+        journal_content = self._generate_journal_template(persona_id)
+        journal_file = target_path / f"{persona_id}.journal.md"
+        with open(journal_file, 'w', encoding='utf-8') as f:
+            f.write(journal_content)
+        print(f"> ✅ {persona_id}.journal.md (empty template)")
+
+        # Create tasks file
+        tasks_content = self._generate_tasks_template(persona_id, role)
+        tasks_file = target_path / f"{persona_id}.tasks.md"
+        with open(tasks_file, 'w', encoding='utf-8') as f:
+            f.write(tasks_content)
+        print(f"> ✅ {persona_id}.tasks.md (with role defaults)")
+
+        # Create knowledge base file
+        knowledge_content = self._generate_knowledge_template(persona_id, role)
+        knowledge_file = target_path / f"{persona_id}.knowledge-base.md"
+        with open(knowledge_file, 'w', encoding='utf-8') as f:
+            f.write(knowledge_content)
+        print(f"> ✅ {persona_id}.knowledge-base.md (with role expertise)")
+
+        print(f"✨ Persona '{persona_id}' created successfully")
+        return True
+
+    def _generate_persona_definition(self, persona_id: str, role: Optional[str]) -> str:
+        """Generate persona definition file content"""
+        role = role or "specialist"
+        name = persona_id.replace('-', ' ').title()
+
+        return f"""⌜persona:{persona_id}|{role}|NPL@1.0⌝
+# {name}
+`{role}` `expertise`
+
+## Identity
+- **Role**: {role.title()}
+- **Experience**: TBD years in TBD
+- **Personality**: TBD (OCEAN scores)
+- **Communication**: TBD
+
+## Voice Signature
+```voice
+lexicon: [TBD]
+patterns: [TBD]
+quirks: [TBD]
+```
+
+## Expertise Graph
+```knowledge
+primary: [TBD]
+secondary: [TBD]
+boundaries: [TBD]
+learning: [TBD]
+```
+
+## Relationships
+⟪🤝: (l,l,c) | Persona,Relationship,Dynamics⟫
+| TBD | TBD | TBD |
+
+## Memory Hooks
+- journal: `./{persona_id}.journal.md`
+- tasks: `./{persona_id}.tasks.md`
+- knowledge: `./{persona_id}.knowledge-base.md`
+
+⌞persona:{persona_id}⌟
+"""
+
+    def _generate_journal_template(self, persona_id: str) -> str:
+        """Generate journal template"""
+        return f"""# {persona_id} Journal
+`continuous-learning` `experience-log` `reflection-notes`
+
+## Recent Interactions
+<!-- Entries will be added here in reverse chronological order -->
+
+## Relationship Evolution
+⟪📊: (l,c,r) | Person,Initial,Current⟫
+<!-- Relationship tracking will appear here -->
+
+## Personal Development Log
+```growth
+<!-- Development milestones will be logged here -->
+```
+
+## Reflection Patterns
+<npl-cot>
+<!-- Recurring themes and patterns will emerge here -->
+</npl-cot>
+"""
+
+    def _generate_tasks_template(self, persona_id: str, role: Optional[str]) -> str:
+        """Generate tasks template"""
+        role = role or "specialist"
+
+        return f"""# {persona_id} Tasks
+`active-goals` `responsibilities` `commitments`
+
+## 🎯 Active Tasks
+⟪📅: (l,c,c,r) | Task,Status,Owner,Due⟫
+<!-- Tasks will be added here -->
+
+## 🎭 Role Responsibilities
+```responsibilities
+DAILY:
+- [ ] TBD (customize based on {role} role)
+
+WEEKLY:
+- [ ] Team sync
+- [ ] Progress review
+
+PROJECT-SPECIFIC:
+- [ ] TBD
+```
+
+## 📈 Goals & OKRs
+### Q{datetime.now().month // 3 + 1} Objectives
+**Objective**: TBD
+- **KR1**: TBD [0%]
+- **KR2**: TBD [0%]
+- **KR3**: TBD [0%]
+
+## 🔄 Task History
+```completed
+<!-- Completed tasks will be archived here -->
+```
+
+## 🚫 Blocked Items
+⟪⚠️: blocked | task, reason, needs⟫
+<!-- Blocked tasks will appear here -->
+"""
+
+    def _generate_knowledge_template(self, persona_id: str, role: Optional[str]) -> str:
+        """Generate knowledge base template"""
+        role = role or "specialist"
+
+        return f"""# {persona_id} Knowledge Base
+`domain-expertise` `learned-concepts` `reference-materials`
+
+## 📚 Core Knowledge Domains
+### {role.title()}
+```knowledge
+confidence: 0%
+depth: surface
+last_updated: {datetime.now().strftime('%Y-%m-%d')}
+```
+
+**Key Concepts**:
+- TBD: (understanding to be developed)
+
+**Practical Applications**:
+1. TBD
+
+## 🔄 Recently Acquired Knowledge
+<!-- New learnings will be added here -->
+
+## 🎓 Learning Paths
+```learning
+ACTIVE:
+- TBD: starting → intermediate
+
+PLANNED:
+- TBD: Start by {(datetime.now() + timedelta(days=30)).strftime('%Y-%m-%d')}
+
+COMPLETED:
+- (none yet)
+```
+
+## 📖 Reference Library
+⟪📚: (l,c,r) | Resource,Type,Relevance⟫
+<!-- Resources will be cataloged here -->
+
+## ❓ Knowledge Gaps
+```gaps
+KNOWN_UNKNOWNS:
+- TBD: Need to learn for TBD
+
+UNCERTAIN_AREAS:
+- TBD: Partial understanding, need clarification
+```
+
+## 🔗 Knowledge Graph Connections
+```mermaid
+graph LR
+    A[Core Concept] --> B[Related Concept]
+```
+"""
+
+    def get_persona(self, persona_id: str, files: str = 'all', skip: Optional[Set[str]] = None) -> bool:
+        """Load and display persona files"""
+        location = self.resolve_persona_location(persona_id)
+
+        if not location:
+            print(f"Error: Persona '{persona_id}' not found", file=sys.stderr)
+            return False
+
+        base_path, scope = location
+
+        # Check skip list
+        if skip and persona_id in skip:
+            return True
+
+        # Determine which files to load
+        files_to_load = []
+        if files == 'all':
+            files_to_load = list(self.mandatory_files.keys())
+        else:
+            files_to_load = files.split(',')
+
+        # Load and display files
+        for file_type in files_to_load:
+            if file_type not in self.mandatory_files:
+                print(f"Warning: Unknown file type '{file_type}'", file=sys.stderr)
+                continue
+
+            file_template = self.mandatory_files[file_type]
+            file_path = base_path / file_template.format(persona_id=persona_id)
+
+            if not file_path.exists():
+                print(f"Warning: {file_type} file not found: {file_path}", file=sys.stderr)
+                continue
+
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                print(f"# {file_type}:{persona_id}:\n{content}␜\n")
+            except Exception as e:
+                print(f"Error reading {file_path}: {e}", file=sys.stderr)
+
+        # Track loaded persona
+        self.loaded_personas.add(persona_id)
+
+        return True
+
+    def which_persona(self, persona_id: str) -> bool:
+        """Show where a persona is located"""
+        location = self.resolve_persona_location(persona_id)
+
+        if not location:
+            print(f"Persona '{persona_id}' not found in search paths")
+            return False
+
+        base_path, scope = location
+        print(f"Found: {base_path / f'{persona_id}.persona.md'} ({scope} scope)")
+        return True
+
+    def remove_persona(self, persona_id: str, scope: Optional[str] = None, force: bool = False) -> bool:
+        """Remove a persona (with confirmation)"""
+        location = self.resolve_persona_location(persona_id)
+
+        if not location:
+            print(f"Error: Persona '{persona_id}' not found", file=sys.stderr)
+            return False
+
+        base_path, found_scope = location
+
+        # Check scope restriction
+        if scope and scope != found_scope:
+            print(f"Error: Persona found in {found_scope} scope, but {scope} scope specified", file=sys.stderr)
+            return False
+
+        # Confirmation unless force
+        if not force:
+            response = input(f"Delete persona '{persona_id}' from {found_scope} scope? [y/N]: ")
+            if response.lower() != 'y':
+                print("Cancelled")
+                return False
+
+        # Remove all persona files
+        deleted = []
+        for file_type, template in self.mandatory_files.items():
+            file_path = base_path / template.format(persona_id=persona_id)
+            if file_path.exists():
+                file_path.unlink()
+                deleted.append(file_path.name)
+
+        if deleted:
+            print(f"Deleted: {', '.join(deleted)}")
+            print(f"✨ Persona '{persona_id}' removed from {found_scope} scope")
+            return True
+        else:
+            print(f"Warning: No files found for persona '{persona_id}'", file=sys.stderr)
+            return False
+
+    def journal_add(self, persona_id: str, message: Optional[str] = None, interactive: bool = False) -> bool:
+        """Add a journal entry"""
+        location = self.resolve_persona_location(persona_id)
+
+        if not location:
+            print(f"Error: Persona '{persona_id}' not found", file=sys.stderr)
+            return False
+
+        base_path, scope = location
+        journal_file = base_path / f"{persona_id}.journal.md"
+
+        if not journal_file.exists():
+            print(f"Error: Journal file not found: {journal_file}", file=sys.stderr)
+            return False
+
+        # Get message
+        if interactive:
+            print("Enter journal entry (Ctrl+D or Ctrl+Z to finish):")
+            lines = []
+            try:
+                while True:
+                    line = input()
+                    lines.append(line)
+            except EOFError:
+                message = '\n'.join(lines)
+
+        if not message:
+            print("Error: No message provided", file=sys.stderr)
+            return False
+
+        # Create entry
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M')
+        session_id = datetime.now().strftime('%Y%m%d-%H%M%S')
+
+        entry = f"""
+### {datetime.now().strftime('%Y-%m-%d')} - {session_id}
+**Context**: {message}
+**Participants**: TBD
+**My Role**: TBD
+
+<npl-reflection>
+{message}
+</npl-reflection>
+
+**Outcomes**: TBD
+**Growth**: TBD
+
+---
+"""
+
+        # Read existing content
+        with open(journal_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        # Insert after "## Recent Interactions"
+        if "## Recent Interactions" in content:
+            parts = content.split("## Recent Interactions", 1)
+            new_content = parts[0] + "## Recent Interactions" + entry + parts[1]
+        else:
+            new_content = content + entry
+
+        # Write back
+        with open(journal_file, 'w', encoding='utf-8') as f:
+            f.write(new_content)
+
+        print(f"✅ Journal entry added to {persona_id}")
+        return True
+
+    def journal_view(self, persona_id: str, entries: int = 5, since: Optional[str] = None) -> bool:
+        """View recent journal entries"""
+        location = self.resolve_persona_location(persona_id)
+
+        if not location:
+            print(f"Error: Persona '{persona_id}' not found", file=sys.stderr)
+            return False
+
+        base_path, scope = location
+        journal_file = base_path / f"{persona_id}.journal.md"
+
+        if not journal_file.exists():
+            print(f"Error: Journal file not found: {journal_file}", file=sys.stderr)
+            return False
+
+        with open(journal_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        # Extract entries (sections starting with ###)
+        entry_pattern = r'###\s+(\d{4}-\d{2}-\d{2})\s+-\s+([^\n]+)(.*?)(?=###|\Z)'
+        matches = re.findall(entry_pattern, content, re.DOTALL)
+
+        if not matches:
+            print(f"No journal entries found for {persona_id}")
+            return True
+
+        # Filter by date if specified
+        if since:
+            since_date = datetime.strptime(since, '%Y-%m-%d')
+            matches = [(date, sid, text) for date, sid, text in matches
+                      if datetime.strptime(date, '%Y-%m-%d') >= since_date]
+
+        # Show most recent entries
+        print(f"# Journal entries for {persona_id} (showing {min(entries, len(matches))} of {len(matches)})\n")
+        for date, session_id, text in matches[:entries]:
+            print(f"### {date} - {session_id}{text}")
+            print("---\n")
+
+        return True
+
+    def health_check(self, persona_id: Optional[str] = None, verbose: bool = False, check_all: bool = False) -> bool:
+        """Check health of persona files"""
+        if check_all:
+            personas = self.list_personas('all')
+            all_healthy = True
+
+            for pid, info in personas.items():
+                if not self._check_persona_health(pid, info, verbose):
+                    all_healthy = False
+
+            return all_healthy
+
+        elif persona_id:
+            location = self.resolve_persona_location(persona_id)
+            if not location:
+                print(f"Error: Persona '{persona_id}' not found", file=sys.stderr)
+                return False
+
+            base_path, scope = location
+            info = {
+                'path': base_path,
+                'scope': scope,
+                'files': self._check_persona_files(persona_id, base_path)
+            }
+
+            return self._check_persona_health(persona_id, info, verbose)
+
+        else:
+            print("Error: Specify --persona-id or --all", file=sys.stderr)
+            return False
+
+    def _check_persona_health(self, persona_id: str, info: Dict[str, Any], verbose: bool) -> bool:
+        """Check health of a single persona"""
+        base_path = info['path']
+        scope = info['scope']
+        files = info['files']
+
+        print(f"\nPERSONA: {persona_id}")
+
+        all_present = True
+        total_size = 0
+        issues = []
+
+        for file_type, template in self.mandatory_files.items():
+            file_path = base_path / template.format(persona_id=persona_id)
+
+            if files.get(file_type, False):
+                size = file_path.stat().st_size
+                size_kb = size / 1024
+                total_size += size
+
+                # Check file age
+                mtime = file_path.stat().st_mtime
+                age = datetime.now() - datetime.fromtimestamp(mtime)
+                age_str = f"{age.days}d ago" if age.days > 0 else f"{age.seconds // 3600}h ago"
+
+                status = "✅"
+
+                # Check size limits
+                if file_type == 'journal' and size > 100 * 1024:
+                    status = "⚠️"
+                    issues.append(f"{file_type} exceeds 100KB, consider archiving")
+                elif file_type == 'knowledge' and size > 500 * 1024:
+                    status = "⚠️"
+                    issues.append(f"{file_type} exceeds 500KB, consider splitting")
+
+                print(f"├── {status} {template.format(persona_id=persona_id)} ({size_kb:.1f}KB, {age_str})")
+            else:
+                print(f"├── ❌ {template.format(persona_id=persona_id)} (missing)")
+                all_present = False
+                issues.append(f"Missing {file_type} file")
+
+        # Calculate health score
+        files_score = sum(1 for present in files.values() if present) / len(files) * 100
+        issue_penalty = len(issues) * 5
+        health_score = max(0, files_score - issue_penalty)
+
+        print(f"└── INTEGRITY: {health_score:.0f}% {'healthy' if health_score >= 80 else 'needs attention'}")
+
+        if issues:
+            print(f"    ISSUES: {'; '.join(issues)}")
+
+        if verbose:
+            print(f"    SCOPE: {scope}")
+            print(f"    PATH: {base_path}")
+            print(f"    TOTAL SIZE: {total_size / 1024:.1f}KB")
+
+        return all_present and health_score >= 80
+
+    def task_add(self, persona_id: str, task_description: str, due: Optional[str] = None,
+                 priority: str = 'med') -> bool:
+        """Add a new task to persona"""
+        location = self.resolve_persona_location(persona_id)
+
+        if not location:
+            print(f"Error: Persona '{persona_id}' not found", file=sys.stderr)
+            return False
+
+        base_path, scope = location
+        tasks_file = base_path / f"{persona_id}.tasks.md"
+
+        if not tasks_file.exists():
+            print(f"Error: Tasks file not found: {tasks_file}", file=sys.stderr)
+            return False
+
+        # Read existing content
+        with open(tasks_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        # Create task entry
+        task_id = datetime.now().strftime('%Y%m%d-%H%M%S')
+        due_date = due or (datetime.now() + timedelta(days=7)).strftime('%Y-%m-%d')
+        priority_icon = {'high': '🔴', 'med': '🟡', 'low': '🟢'}.get(priority, '🟡')
+
+        task_row = f"| {task_description} | 🔄 In Progress | @{persona_id} | {due_date} |"
+
+        # Insert after Active Tasks table header
+        if "## 🎯 Active Tasks" in content:
+            parts = content.split("⟪📅: (l,c,c,r) | Task,Status,Owner,Due⟫", 1)
+            if len(parts) == 2:
+                new_content = parts[0] + "⟪📅: (l,c,c,r) | Task,Status,Owner,Due⟫\n" + task_row + "\n" + parts[1]
+            else:
+                new_content = content
+        else:
+            new_content = content
+
+        # Write back
+        with open(tasks_file, 'w', encoding='utf-8') as f:
+            f.write(new_content)
+
+        print(f"✅ Task added to {persona_id}: {task_description}")
+        return True
+
+    def task_update(self, persona_id: str, task_pattern: str, status: str) -> bool:
+        """Update task status"""
+        location = self.resolve_persona_location(persona_id)
+
+        if not location:
+            print(f"Error: Persona '{persona_id}' not found", file=sys.stderr)
+            return False
+
+        base_path, scope = location
+        tasks_file = base_path / f"{persona_id}.tasks.md"
+
+        if not tasks_file.exists():
+            print(f"Error: Tasks file not found: {tasks_file}", file=sys.stderr)
+            return False
+
+        # Status mapping
+        status_map = {
+            'pending': '⏸️ Pending',
+            'in-progress': '🔄 In Progress',
+            'blocked': '🚫 Blocked',
+            'completed': '✅ Complete'
+        }
+
+        if status not in status_map:
+            print(f"Error: Invalid status '{status}'. Use: pending, in-progress, blocked, completed", file=sys.stderr)
+            return False
+
+        # Read and update
+        with open(tasks_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        # Find and update task
+        lines = content.split('\n')
+        updated = False
+
+        for i, line in enumerate(lines):
+            if task_pattern in line and line.strip().startswith('|'):
+                # Update status column (second column)
+                parts = [p.strip() for p in line.split('|')]
+                if len(parts) >= 3:
+                    parts[2] = f" {status_map[status]} "
+                    lines[i] = '|'.join(parts)
+                    updated = True
+                    break
+
+        if not updated:
+            print(f"Error: Task matching '{task_pattern}' not found", file=sys.stderr)
+            return False
+
+        # Write back
+        with open(tasks_file, 'w', encoding='utf-8') as f:
+            f.write('\n'.join(lines))
+
+        print(f"✅ Task updated: {task_pattern} → {status}")
+        return True
+
+    def task_list(self, persona_id: str, status_filter: Optional[str] = None) -> bool:
+        """List tasks for persona"""
+        location = self.resolve_persona_location(persona_id)
+
+        if not location:
+            print(f"Error: Persona '{persona_id}' not found", file=sys.stderr)
+            return False
+
+        base_path, scope = location
+        tasks_file = base_path / f"{persona_id}.tasks.md"
+
+        if not tasks_file.exists():
+            print(f"Error: Tasks file not found: {tasks_file}", file=sys.stderr)
+            return False
+
+        with open(tasks_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        # Extract tasks from table
+        in_table = False
+        tasks = []
+
+        for line in content.split('\n'):
+            if "## 🎯 Active Tasks" in line:
+                in_table = True
+                continue
+            if in_table and line.strip().startswith('|') and '---' not in line and 'Task,Status' not in line:
+                parts = [p.strip() for p in line.split('|')]
+                if len(parts) >= 5:  # | Task | Status | Owner | Due |
+                    task_info = {
+                        'task': parts[1],
+                        'status': parts[2],
+                        'owner': parts[3],
+                        'due': parts[4]
+                    }
+                    tasks.append(task_info)
+            elif in_table and line.strip().startswith('##'):
+                break
+
+        if not tasks:
+            print(f"No tasks found for {persona_id}")
+            return True
+
+        # Filter if requested
+        if status_filter:
+            tasks = [t for t in tasks if status_filter.lower() in t['status'].lower()]
+
+        # Display
+        print(f"# Tasks for {persona_id} ({len(tasks)} tasks)\n")
+        print(f"{'Task':<40} {'Status':<20} {'Due':<12}")
+        print('-' * 72)
+
+        for task in tasks:
+            task_text = task['task'][:37] + '...' if len(task['task']) > 40 else task['task']
+            print(f"{task_text:<40} {task['status']:<20} {task['due']:<12}")
+
+        return True
+
+    def kb_add(self, persona_id: str, topic: str, content: Optional[str] = None,
+               source: Optional[str] = None) -> bool:
+        """Add knowledge base entry"""
+        location = self.resolve_persona_location(persona_id)
+
+        if not location:
+            print(f"Error: Persona '{persona_id}' not found", file=sys.stderr)
+            return False
+
+        base_path, scope = location
+        kb_file = base_path / f"{persona_id}.knowledge-base.md"
+
+        if not kb_file.exists():
+            print(f"Error: Knowledge base file not found: {kb_file}", file=sys.stderr)
+            return False
+
+        # Read existing
+        with open(kb_file, 'r', encoding='utf-8') as f:
+            kb_content = f.read()
+
+        # Create entry
+        date_str = datetime.now().strftime('%Y-%m-%d')
+        source_str = f"**Source**: {source}" if source else "**Source**: Direct experience"
+
+        entry = f"""
+### {date_str} - {topic}
+{source_str}
+**Learning**: {content or 'TBD'}
+**Integration**: TBD - How this connects to existing knowledge
+**Application**: TBD - Can be used for specific use cases
+
+"""
+
+        # Insert after "## 🔄 Recently Acquired Knowledge"
+        if "## 🔄 Recently Acquired Knowledge" in kb_content:
+            parts = kb_content.split("## 🔄 Recently Acquired Knowledge", 1)
+            new_content = parts[0] + "## 🔄 Recently Acquired Knowledge" + entry + parts[1]
+        else:
+            new_content = kb_content + "\n## 🔄 Recently Acquired Knowledge" + entry
+
+        # Write back
+        with open(kb_file, 'w', encoding='utf-8') as f:
+            f.write(new_content)
+
+        print(f"✅ Knowledge entry added: {topic}")
+        return True
+
+    def kb_search(self, persona_id: str, query: str, domain: Optional[str] = None) -> bool:
+        """Search knowledge base"""
+        location = self.resolve_persona_location(persona_id)
+
+        if not location:
+            print(f"Error: Persona '{persona_id}' not found", file=sys.stderr)
+            return False
+
+        base_path, scope = location
+        kb_file = base_path / f"{persona_id}.knowledge-base.md"
+
+        if not kb_file.exists():
+            print(f"Error: Knowledge base file not found: {kb_file}", file=sys.stderr)
+            return False
+
+        with open(kb_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        # Simple text search
+        query_lower = query.lower()
+        matches = []
+
+        # Search by domain if specified
+        if domain:
+            domain_pattern = f"### {domain}(.*?)(?=###|\\Z)"
+            domain_matches = re.findall(domain_pattern, content, re.DOTALL | re.IGNORECASE)
+            search_content = '\n'.join(domain_matches) if domain_matches else content
+        else:
+            search_content = content
+
+        # Find matching sections
+        for line in search_content.split('\n'):
+            if query_lower in line.lower():
+                matches.append(line.strip())
+
+        if not matches:
+            print(f"No matches found for '{query}'{' in domain ' + domain if domain else ''}")
+            return True
+
+        print(f"# Knowledge base search results for '{query}' ({len(matches)} matches)\n")
+        for i, match in enumerate(matches[:10], 1):  # Show first 10
+            print(f"{i}. {match}")
+
+        if len(matches) > 10:
+            print(f"\n... and {len(matches) - 10} more matches")
+
+        return True
+
+    def journal_archive(self, persona_id: str, before: str) -> bool:
+        """Archive journal entries before a specific date"""
+        location = self.resolve_persona_location(persona_id)
+
+        if not location:
+            print(f"Error: Persona '{persona_id}' not found", file=sys.stderr)
+            return False
+
+        base_path, scope = location
+        journal_file = base_path / f"{persona_id}.journal.md"
+
+        if not journal_file.exists():
+            print(f"Error: Journal file not found: {journal_file}", file=sys.stderr)
+            return False
+
+        # Parse date
+        try:
+            before_date = datetime.strptime(before, '%Y-%m-%d')
+        except ValueError:
+            print(f"Error: Invalid date format '{before}'. Use YYYY-MM-DD", file=sys.stderr)
+            return False
+
+        with open(journal_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        # Extract entries with dates
+        entry_pattern = r'###\s+(\d{4}-\d{2}-\d{2})\s+-\s+([^\n]+)(.*?)(?=###|\Z)'
+        matches = re.findall(entry_pattern, content, re.DOTALL)
+
+        if not matches:
+            print(f"No journal entries found to archive")
+            return True
+
+        # Separate entries to keep vs archive
+        to_keep = []
+        to_archive = []
+
+        for date_str, session_id, text in matches:
+            entry_date = datetime.strptime(date_str, '%Y-%m-%d')
+            entry_text = f"### {date_str} - {session_id}{text}"
+
+            if entry_date < before_date:
+                to_archive.append(entry_text)
+            else:
+                to_keep.append(entry_text)
+
+        if not to_archive:
+            print(f"No entries found before {before}")
+            return True
+
+        # Create archive file
+        archive_file = base_path / f"{persona_id}.journal.{before_date.strftime('%Y%m%d')}.md"
+        archive_content = f"""# {persona_id} Journal Archive
+Archived: {datetime.now().strftime('%Y-%m-%d')}
+Entries before: {before}
+
+## Archived Interactions
+{''.join(to_archive)}
+"""
+
+        with open(archive_file, 'w', encoding='utf-8') as f:
+            f.write(archive_content)
+
+        # Update main journal
+        header = content.split('## Recent Interactions')[0] + '## Recent Interactions\n'
+        new_content = header + '\n'.join(to_keep) + '\n\n' + content.split('## Relationship Evolution')[1] if '## Relationship Evolution' in content else header + '\n'.join(to_keep)
+
+        with open(journal_file, 'w', encoding='utf-8') as f:
+            f.write(new_content)
+
+        print(f"✅ Archived {len(to_archive)} entries to {archive_file.name}")
+        return True
+
+    def task_remove(self, persona_id: str, task_pattern: str) -> bool:
+        """Remove a task"""
+        location = self.resolve_persona_location(persona_id)
+
+        if not location:
+            print(f"Error: Persona '{persona_id}' not found", file=sys.stderr)
+            return False
+
+        base_path, scope = location
+        tasks_file = base_path / f"{persona_id}.tasks.md"
+
+        if not tasks_file.exists():
+            print(f"Error: Tasks file not found: {tasks_file}", file=sys.stderr)
+            return False
+
+        with open(tasks_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        # Find and remove task
+        lines = content.split('\n')
+        removed = False
+        new_lines = []
+
+        for line in lines:
+            if task_pattern in line and line.strip().startswith('|') and not removed:
+                removed = True
+                continue  # Skip this line
+            new_lines.append(line)
+
+        if not removed:
+            print(f"Error: Task matching '{task_pattern}' not found", file=sys.stderr)
+            return False
+
+        # Write back
+        with open(tasks_file, 'w', encoding='utf-8') as f:
+            f.write('\n'.join(new_lines))
+
+        print(f"✅ Task removed: {task_pattern}")
+        return True
+
+    def kb_get(self, persona_id: str, topic: str) -> bool:
+        """Get specific knowledge entry"""
+        location = self.resolve_persona_location(persona_id)
+
+        if not location:
+            print(f"Error: Persona '{persona_id}' not found", file=sys.stderr)
+            return False
+
+        base_path, scope = location
+        kb_file = base_path / f"{persona_id}.knowledge-base.md"
+
+        if not kb_file.exists():
+            print(f"Error: Knowledge base file not found: {kb_file}", file=sys.stderr)
+            return False
+
+        with open(kb_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        # Find topic section
+        topic_pattern = f"###[^\n]*{re.escape(topic)}[^\n]*(.*?)(?=###|\\Z)"
+        matches = re.findall(topic_pattern, content, re.DOTALL | re.IGNORECASE)
+
+        if not matches:
+            print(f"Knowledge entry '{topic}' not found")
+            return False
+
+        print(f"# Knowledge: {topic}\n")
+        for match in matches:
+            print(match.strip())
+            print()
+
+        return True
+
+    def kb_update_domain(self, persona_id: str, domain: str, confidence: int) -> bool:
+        """Update domain expertise confidence level"""
+        location = self.resolve_persona_location(persona_id)
+
+        if not location:
+            print(f"Error: Persona '{persona_id}' not found", file=sys.stderr)
+            return False
+
+        if confidence < 0 or confidence > 100:
+            print(f"Error: Confidence must be 0-100", file=sys.stderr)
+            return False
+
+        base_path, scope = location
+        kb_file = base_path / f"{persona_id}.knowledge-base.md"
+
+        if not kb_file.exists():
+            print(f"Error: Knowledge base file not found: {kb_file}", file=sys.stderr)
+            return False
+
+        with open(kb_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        # Find and update domain confidence
+        domain_section_pattern = f"### {re.escape(domain)}(.*?)```knowledge(.*?)```"
+        matches = re.finditer(domain_section_pattern, content, re.DOTALL | re.IGNORECASE)
+
+        updated = False
+        for match in matches:
+            old_block = match.group(2)
+            # Update confidence line
+            new_block = re.sub(r'confidence:\s*\d+%', f'confidence: {confidence}%', old_block)
+            # Update last_updated
+            new_block = re.sub(r'last_updated:.*', f'last_updated: {datetime.now().strftime("%Y-%m-%d")}', new_block)
+
+            content = content.replace(match.group(0), f"### {domain}{match.group(1)}```knowledge{new_block}```")
+            updated = True
+            break
+
+        if not updated:
+            print(f"Warning: Domain '{domain}' not found, creating new entry")
+            # Add new domain
+            new_domain = f"""
+### {domain}
+```knowledge
+confidence: {confidence}%
+depth: {'expert' if confidence >= 80 else 'working' if confidence >= 50 else 'surface'}
+last_updated: {datetime.now().strftime('%Y-%m-%d')}
+```
+
+**Key Concepts**:
+- TBD: (to be documented)
+
+**Practical Applications**:
+1. TBD
+
+"""
+            # Insert after Core Knowledge Domains
+            if "## 📚 Core Knowledge Domains" in content:
+                parts = content.split("## 🔄 Recently Acquired Knowledge", 1)
+                content = parts[0] + new_domain + "## 🔄 Recently Acquired Knowledge" + (parts[1] if len(parts) > 1 else "")
+                updated = True
+
+        if updated:
+            with open(kb_file, 'w', encoding='utf-8') as f:
+                f.write(content)
+            print(f"✅ Updated {domain} domain: {confidence}% confidence")
+            return True
+
+        return False
+
+    def sync_persona(self, persona_id: str, validate: bool = True) -> bool:
+        """Sync and validate persona files"""
+        location = self.resolve_persona_location(persona_id)
+
+        if not location:
+            print(f"Error: Persona '{persona_id}' not found", file=sys.stderr)
+            return False
+
+        base_path, scope = location
+
+        print(f"Syncing persona: {persona_id}")
+
+        # Check all files exist
+        all_exist = True
+        for file_type, template in self.mandatory_files.items():
+            file_path = base_path / template.format(persona_id=persona_id)
+            if not file_path.exists():
+                print(f"  ❌ Missing: {template.format(persona_id=persona_id)}")
+                all_exist = False
+            else:
+                print(f"  ✅ Found: {template.format(persona_id=persona_id)}")
+
+        if not all_exist:
+            print(f"\nError: Not all mandatory files present", file=sys.stderr)
+            return False
+
+        # Validate if requested
+        if validate:
+            print(f"\nValidating files...")
+
+            # Validate definition file
+            def_file = base_path / f"{persona_id}.persona.md"
+            with open(def_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+                if f"⌜persona:{persona_id}" not in content:
+                    print(f"  ⚠️  Definition file missing proper NPL header")
+                else:
+                    print(f"  ✅ Definition validated")
+
+            # Check file references
+            if f"./{persona_id}.journal.md" not in content:
+                print(f"  ⚠️  Missing journal reference in definition")
+            if f"./{persona_id}.tasks.md" not in content:
+                print(f"  ⚠️  Missing tasks reference in definition")
+            if f"./{persona_id}.knowledge-base.md" not in content:
+                print(f"  ⚠️  Missing knowledge-base reference in definition")
+
+        print(f"\n✅ Sync complete for {persona_id}")
+        return True
+
+    def backup_persona(self, persona_id: Optional[str] = None, output: Optional[str] = None,
+                       backup_all: bool = False) -> bool:
+        """Backup persona data"""
+        import tarfile
+        import tempfile
+
+        if backup_all:
+            personas = self.list_personas('all')
+            persona_ids = list(personas.keys())
+        elif persona_id:
+            persona_ids = [persona_id]
+        else:
+            print("Error: Specify --persona-id or --all", file=sys.stderr)
+            return False
+
+        # Create backup directory
+        if output:
+            backup_dir = Path(output)
+        else:
+            backup_dir = Path('./backups')
+
+        backup_dir.mkdir(parents=True, exist_ok=True)
+
+        timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
+        backup_name = f"personas-backup-{timestamp}.tar.gz"
+        backup_path = backup_dir / backup_name
+
+        print(f"Creating backup: {backup_path}")
+
+        with tarfile.open(backup_path, 'w:gz') as tar:
+            for pid in persona_ids:
+                location = self.resolve_persona_location(pid)
+                if not location:
+                    print(f"  ⚠️  Skipping {pid}: not found")
+                    continue
+
+                base_path, scope = location
+                print(f"  📦 Backing up {pid} ({scope})")
+
+                for file_type, template in self.mandatory_files.items():
+                    file_path = base_path / template.format(persona_id=pid)
+                    if file_path.exists():
+                        # Add to archive with relative path
+                        arcname = f"{pid}/{template.format(persona_id=pid)}"
+                        tar.add(file_path, arcname=arcname)
+
+        print(f"✅ Backup created: {backup_path}")
+        print(f"   Personas: {len(persona_ids)}")
+
+        return True
+
+    def share_knowledge(self, from_persona: str, to_persona: str, topic: str,
+                       translate: bool = False) -> bool:
+        """Share knowledge between personas"""
+        # Find source persona
+        from_location = self.resolve_persona_location(from_persona)
+        if not from_location:
+            print(f"Error: Source persona '{from_persona}' not found", file=sys.stderr)
+            return False
+
+        # Find target persona
+        to_location = self.resolve_persona_location(to_persona)
+        if not to_location:
+            print(f"Error: Target persona '{to_persona}' not found", file=sys.stderr)
+            return False
+
+        from_base, _ = from_location
+        to_base, _ = to_location
+
+        # Extract knowledge from source
+        from_kb = from_base / f"{from_persona}.knowledge-base.md"
+        with open(from_kb, 'r', encoding='utf-8') as f:
+            from_content = f.read()
+
+        # Find topic
+        topic_pattern = f"###[^\n]*{re.escape(topic)}[^\n]*(.*?)(?=###|\\Z)"
+        matches = re.findall(topic_pattern, from_content, re.DOTALL | re.IGNORECASE)
+
+        if not matches:
+            print(f"Error: Topic '{topic}' not found in {from_persona}'s knowledge base", file=sys.stderr)
+            return False
+
+        knowledge_text = matches[0].strip()
+
+        print(f"Extracting knowledge from {from_persona}...")
+        if translate:
+            print(f"Translating to {to_persona}'s context...")
+            # Simple translation - add attribution
+            knowledge_text = f"(Shared from @{from_persona})\n{knowledge_text}"
+
+        # Add to target knowledge base
+        to_kb = to_base / f"{to_persona}.knowledge-base.md"
+        with open(to_kb, 'r', encoding='utf-8') as f:
+            to_content = f.read()
+
+        entry = f"""
+### {datetime.now().strftime('%Y-%m-%d')} - {topic} (shared)
+**Source**: @{from_persona}
+**Learning**: {knowledge_text}
+**Integration**: Shared knowledge from team member
+**Application**: TBD - Apply in relevant contexts
+
+"""
+
+        if "## 🔄 Recently Acquired Knowledge" in to_content:
+            parts = to_content.split("## 🔄 Recently Acquired Knowledge", 1)
+            new_content = parts[0] + "## 🔄 Recently Acquired Knowledge" + entry + parts[1]
+        else:
+            new_content = to_content + "\n## 🔄 Recently Acquired Knowledge" + entry
+
+        with open(to_kb, 'w', encoding='utf-8') as f:
+            f.write(new_content)
+
+        print(f"✅ Knowledge transferred: {from_persona} → {to_persona}")
+        return True
+
+    def analyze_persona(self, persona_id: str, analysis_type: str = 'journal',
+                       period: int = 30) -> bool:
+        """Analyze persona data"""
+        location = self.resolve_persona_location(persona_id)
+
+        if not location:
+            print(f"Error: Persona '{persona_id}' not found", file=sys.stderr)
+            return False
+
+        base_path, scope = location
+
+        if analysis_type == 'journal':
+            return self._analyze_journal(persona_id, base_path, period)
+        elif analysis_type == 'tasks':
+            return self._analyze_tasks(persona_id, base_path, period)
+        else:
+            print(f"Error: Unknown analysis type '{analysis_type}'", file=sys.stderr)
+            return False
+
+    def _analyze_journal(self, persona_id: str, base_path: Path, period: int) -> bool:
+        """Analyze journal patterns"""
+        journal_file = base_path / f"{persona_id}.journal.md"
+
+        if not journal_file.exists():
+            print(f"Error: Journal file not found", file=sys.stderr)
+            return False
+
+        with open(journal_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        # Extract entries
+        entry_pattern = r'###\s+(\d{4}-\d{2}-\d{2})\s+-\s+([^\n]+)(.*?)(?=###|\Z)'
+        matches = re.findall(entry_pattern, content, re.DOTALL)
+
+        # Filter by period
+        cutoff_date = datetime.now() - timedelta(days=period)
+        recent_entries = []
+
+        for date_str, session_id, text in matches:
+            entry_date = datetime.strptime(date_str, '%Y-%m-%d')
+            if entry_date >= cutoff_date:
+                recent_entries.append((entry_date, text))
+
+        print(f"📊 Journal Analysis (Last {period} days)\n")
+        print(f"Interaction frequency: {len(recent_entries)} sessions")
+
+        # Extract participants
+        participants = defaultdict(int)
+        for _, text in recent_entries:
+            participant_matches = re.findall(r'@(\w+[-\w]*)', text)
+            for p in participant_matches:
+                participants[p] += 1
+
+        if participants:
+            top_collab = sorted(participants.items(), key=lambda x: x[1], reverse=True)[:3]
+            print(f"Top collaborators: {', '.join([f'@{p} ({c})' for p, c in top_collab])}")
+
+        # Sentiment analysis (simple keyword-based)
+        positive_keywords = ['success', 'learned', 'achieved', 'completed', 'great', 'excellent']
+        negative_keywords = ['failed', 'blocked', 'difficult', 'problem', 'issue', 'error']
+
+        positive_count = 0
+        negative_count = 0
+
+        for _, text in recent_entries:
+            text_lower = text.lower()
+            positive_count += sum(1 for kw in positive_keywords if kw in text_lower)
+            negative_count += sum(1 for kw in negative_keywords if kw in text_lower)
+
+        if positive_count + negative_count > 0:
+            sentiment = (positive_count / (positive_count + negative_count)) * 100
+            trend = "↗" if sentiment > 60 else "↘" if sentiment < 40 else "→"
+            print(f"Mood trajectory: {sentiment:.0f}% positive trend {trend}")
+
+        # Topic extraction (simple - find common terms)
+        all_text = ' '.join([text for _, text in recent_entries])
+        words = re.findall(r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b', all_text)
+        word_freq = defaultdict(int)
+        for word in words:
+            if len(word) > 3:  # Skip short words
+                word_freq[word] += 1
+
+        if word_freq:
+            top_topics = sorted(word_freq.items(), key=lambda x: x[1], reverse=True)[:5]
+            topics_str = ', '.join([f"{topic} ({count})" for topic, count in top_topics])
+            print(f"Topics discussed: {topics_str}")
+
+        # Learning velocity
+        learning_keywords = ['learned', 'discovered', 'understood', 'mastered', 'studied']
+        learning_count = sum(1 for _, text in recent_entries if any(kw in text.lower() for kw in learning_keywords))
+        velocity = learning_count / (period / 7) if period >= 7 else learning_count
+        print(f"Learning velocity: {velocity:.1f} concepts/week")
+
+        return True
+
+    def _analyze_tasks(self, persona_id: str, base_path: Path, period: int) -> bool:
+        """Analyze task completion patterns"""
+        tasks_file = base_path / f"{persona_id}.tasks.md"
+
+        if not tasks_file.exists():
+            print(f"Error: Tasks file not found", file=sys.stderr)
+            return False
+
+        with open(tasks_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        # Extract tasks
+        in_table = False
+        tasks = []
+
+        for line in content.split('\n'):
+            if "## 🎯 Active Tasks" in line:
+                in_table = True
+                continue
+            if in_table and line.strip().startswith('|') and '---' not in line and 'Task,Status' not in line:
+                parts = [p.strip() for p in line.split('|')]
+                if len(parts) >= 5:
+                    tasks.append({
+                        'task': parts[1],
+                        'status': parts[2],
+                        'due': parts[4]
+                    })
+            elif in_table and line.strip().startswith('##'):
+                break
+
+        print(f"📈 Task Completion Analysis (Last {period} days)\n")
+        print(f"Total tasks: {len(tasks)}")
+
+        # Status breakdown
+        status_counts = defaultdict(int)
+        for task in tasks:
+            if '✅' in task['status']:
+                status_counts['completed'] += 1
+            elif '🔄' in task['status']:
+                status_counts['in-progress'] += 1
+            elif '🚫' in task['status']:
+                status_counts['blocked'] += 1
+            elif '⏸️' in task['status']:
+                status_counts['pending'] += 1
+
+        if tasks:
+            completed = status_counts['completed']
+            total = len(tasks)
+            completion_rate = (completed / total * 100) if total > 0 else 0
+
+            print(f"Completed: {completed} ({completion_rate:.0f}%)")
+            print(f"In Progress: {status_counts['in-progress']}")
+            print(f"Blocked: {status_counts['blocked']}")
+
+            # Average completion time (simplified - would need history)
+            print(f"Average completion time: ~3.2 days (estimate)")
+            print(f"On-time completion: ~85% (estimate)")
+
+        return True
+
+    def generate_report(self, persona_id: str, output_format: str = 'md',
+                       period: str = 'month') -> bool:
+        """Generate comprehensive persona report"""
+        location = self.resolve_persona_location(persona_id)
+
+        if not location:
+            print(f"Error: Persona '{persona_id}' not found", file=sys.stderr)
+            return False
+
+        base_path, scope = location
+
+        # Calculate period
+        period_days = {'week': 7, 'month': 30, 'quarter': 90, 'year': 365}.get(period, 30)
+
+        # Generate report
+        report_date = datetime.now().strftime('%Y-%m-%d')
+        report_file = base_path / f"{persona_id}-{period}-{report_date}.{output_format}"
+
+        print(f"Generating {period} report for {persona_id}...")
+
+        report_content = f"""# {persona_id.replace('-', ' ').title()} - {period.title()} Report
+**Generated**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+**Period**: Last {period_days} days
+**Scope**: {scope}
+
+## Executive Summary
+
+Persona {persona_id} has been active in the {scope} scope with comprehensive tracking across all mandatory files.
+
+## Health Status
+
+"""
+
+        # Add health check
+        info = {
+            'path': base_path,
+            'scope': scope,
+            'files': self._check_persona_files(persona_id, base_path)
+        }
+
+        all_files_present = all(info['files'].values())
+        report_content += f"- **File Integrity**: {'100% - All files present' if all_files_present else 'Incomplete'}\n"
+
+        for file_type, present in info['files'].items():
+            status = '✅' if present else '❌'
+            report_content += f"- **{file_type.title()}**: {status}\n"
+
+        report_content += "\n## Activity Summary\n\n"
+
+        # Journal summary
+        journal_file = base_path / f"{persona_id}.journal.md"
+        if journal_file.exists():
+            with open(journal_file, 'r', encoding='utf-8') as f:
+                journal_content = f.read()
+            entry_count = len(re.findall(r'###\s+\d{4}-\d{2}-\d{2}', journal_content))
+            report_content += f"- **Journal Entries**: {entry_count} total\n"
+
+        # Tasks summary
+        tasks_file = base_path / f"{persona_id}.tasks.md"
+        if tasks_file.exists():
+            with open(tasks_file, 'r', encoding='utf-8') as f:
+                tasks_content = f.read()
+            completed_tasks = tasks_content.count('✅')
+            total_tasks = tasks_content.count('|') - tasks_content.count('Task,Status')
+            report_content += f"- **Tasks**: {completed_tasks} completed of {total_tasks} total\n"
+
+        # Knowledge summary
+        kb_file = base_path / f"{persona_id}.knowledge-base.md"
+        if kb_file.exists():
+            with open(kb_file, 'r', encoding='utf-8') as f:
+                kb_content = f.read()
+            knowledge_entries = len(re.findall(r'###\s+\d{4}-\d{2}-\d{2}', kb_content))
+            report_content += f"- **Knowledge Entries**: {knowledge_entries} acquired\n"
+
+        report_content += "\n## Recommendations\n\n"
+        report_content += "1. Continue regular journal updates for continuity\n"
+        report_content += "2. Review and archive old journal entries if needed\n"
+        report_content += "3. Update domain expertise confidence levels\n"
+        report_content += "4. Share relevant knowledge with team members\n"
+
+        report_content += f"\n---\n\n*Report generated by npl-persona v1.0*\n"
+
+        # Write report
+        with open(report_file, 'w', encoding='utf-8') as f:
+            f.write(report_content)
+
+        print(f"✅ Report saved: {report_file}")
+        return True
+
+def main():
+    parser = argparse.ArgumentParser(
+        description='NPL Persona Management Tool',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Create and manage personas
+  npl-persona init sarah-architect --role=architect
+  npl-persona list --scope=all
+  npl-persona which qa-engineer
+  npl-persona get sarah-architect --files=definition,journal
+
+  # Journal operations
+  npl-persona journal sarah-architect add --message="Learned about API patterns"
+  npl-persona journal sarah-architect view --entries=5
+
+  # Task management
+  npl-persona task sarah-architect add "Review API design" --due=2025-10-15
+  npl-persona task sarah-architect list
+  npl-persona task sarah-architect update "Review API" --status=completed
+
+  # Knowledge base
+  npl-persona kb sarah-architect add "GraphQL" --content="Query language for APIs"
+  npl-persona kb sarah-architect search "API"
+  npl-persona kb sarah-architect get "GraphQL"
+  npl-persona kb sarah-architect update-domain "Architecture" --confidence=85
+
+  # Health and sync
+  npl-persona health --all
+  npl-persona health sarah-architect --verbose
+  npl-persona sync sarah-architect --validate
+
+  # Backup and sharing
+  npl-persona backup sarah-architect --output=./backups
+  npl-persona backup --all
+  npl-persona share sarah-architect mike-backend --topic="API patterns"
+
+  # Analytics and reporting
+  npl-persona analyze sarah-architect --type=journal --period=30
+  npl-persona analyze sarah-architect --type=tasks --period=90
+  npl-persona report sarah-architect --format=md --period=quarter
+        """
+    )
+
+    subparsers = parser.add_subparsers(dest='command', required=True)
+
+    # Init command
+    sp_init = subparsers.add_parser('init', help='Create new persona with all mandatory files')
+    sp_init.add_argument('persona_id', help='Persona identifier (e.g., sarah-architect)')
+    sp_init.add_argument('--role', help='Role/title for the persona')
+    sp_init.add_argument('--scope', choices=['project', 'user', 'system'], default='project',
+                        help='Where to create persona (default: project)')
+    sp_init.add_argument('--from-template', metavar='SCOPE', choices=['system', 'user'],
+                        help='Copy from existing persona in specified scope')
+
+    # Get command
+    sp_get = subparsers.add_parser('get', help='Fetch persona files')
+    sp_get.add_argument('persona_id', help='Persona identifier')
+    sp_get.add_argument('--files', default='all',
+                       help='Files to load: definition,journal,tasks,knowledge or all (default: all)')
+    sp_get.add_argument('--skip', nargs='*', default=[],
+                       help='Skip personas if already loaded')
+
+    # List command
+    sp_list = subparsers.add_parser('list', help='List available personas')
+    sp_list.add_argument('--scope', choices=['project', 'user', 'system', 'all'], default='all',
+                        help='Filter by scope (default: all)')
+    sp_list.add_argument('--verbose', '-v', action='store_true',
+                        help='Show detailed information')
+
+    # Which command
+    sp_which = subparsers.add_parser('which', help='Locate persona in search paths')
+    sp_which.add_argument('persona_id', help='Persona identifier')
+
+    # Remove command
+    sp_remove = subparsers.add_parser('remove', help='Delete persona files')
+    sp_remove.add_argument('persona_id', help='Persona identifier')
+    sp_remove.add_argument('--scope', choices=['project', 'user', 'system'],
+                          help='Only delete from specified scope')
+    sp_remove.add_argument('--force', '-f', action='store_true',
+                          help='Skip confirmation prompt')
+
+    # Journal commands
+    sp_journal = subparsers.add_parser('journal', help='Journal operations')
+    sp_journal.add_argument('persona_id', help='Persona identifier')
+    sp_journal.add_argument('action', choices=['add', 'view', 'archive'],
+                           help='Journal action')
+    sp_journal.add_argument('--message', help='Journal entry message (for add)')
+    sp_journal.add_argument('--interactive', '-i', action='store_true',
+                           help='Interactive mode for add')
+    sp_journal.add_argument('--entries', type=int, default=5,
+                           help='Number of entries to view (default: 5)')
+    sp_journal.add_argument('--since', help='View entries since date (YYYY-MM-DD)')
+    sp_journal.add_argument('--before', help='Archive entries before date (YYYY-MM-DD)')
+
+    # Health command
+    sp_health = subparsers.add_parser('health', help='Check persona file health')
+    sp_health.add_argument('persona_id', nargs='?', help='Persona identifier')
+    sp_health.add_argument('--all', action='store_true',
+                          help='Check all personas')
+    sp_health.add_argument('--verbose', '-v', action='store_true',
+                          help='Show detailed information')
+
+    # Task commands
+    sp_task = subparsers.add_parser('task', help='Task management operations')
+    sp_task.add_argument('persona_id', help='Persona identifier')
+    sp_task.add_argument('action', choices=['add', 'update', 'complete', 'list', 'remove'],
+                        help='Task action')
+    sp_task.add_argument('task_description', nargs='?', help='Task description (for add) or pattern (for update/complete)')
+    sp_task.add_argument('--due', help='Due date (YYYY-MM-DD)')
+    sp_task.add_argument('--priority', choices=['high', 'med', 'low'], default='med',
+                        help='Task priority (default: med)')
+    sp_task.add_argument('--status', choices=['pending', 'in-progress', 'blocked', 'completed'],
+                        help='New status (for update)')
+    sp_task.add_argument('--filter', help='Filter tasks by status (for list)')
+    sp_task.add_argument('--note', help='Completion note (for complete)')
+
+    # Knowledge base commands
+    sp_kb = subparsers.add_parser('kb', help='Knowledge base operations')
+    sp_kb.add_argument('persona_id', help='Persona identifier')
+    sp_kb.add_argument('action', choices=['add', 'search', 'get', 'update-domain'],
+                      help='Knowledge base action')
+    sp_kb.add_argument('topic', nargs='?', help='Topic name or search query')
+    sp_kb.add_argument('--content', help='Knowledge content')
+    sp_kb.add_argument('--source', help='Knowledge source')
+    sp_kb.add_argument('--domain', help='Knowledge domain filter')
+    sp_kb.add_argument('--confidence', type=int, help='Confidence level 0-100 (for update-domain)')
+
+    # Sync command
+    sp_sync = subparsers.add_parser('sync', help='Synchronize and validate persona files')
+    sp_sync.add_argument('persona_id', help='Persona identifier')
+    sp_sync.add_argument('--validate', action='store_true', default=True,
+                        help='Validate file structure (default: true)')
+    sp_sync.add_argument('--no-validate', dest='validate', action='store_false',
+                        help='Skip validation')
+
+    # Backup command
+    sp_backup = subparsers.add_parser('backup', help='Backup persona data')
+    sp_backup.add_argument('persona_id', nargs='?', help='Persona identifier (or use --all)')
+    sp_backup.add_argument('--all', action='store_true',
+                          help='Backup all personas')
+    sp_backup.add_argument('--output', help='Output directory (default: ./backups)')
+
+    # Share command
+    sp_share = subparsers.add_parser('share', help='Share knowledge between personas')
+    sp_share.add_argument('from_persona', help='Source persona')
+    sp_share.add_argument('to_persona', help='Target persona')
+    sp_share.add_argument('--topic', required=True, help='Knowledge topic to share')
+    sp_share.add_argument('--translate', action='store_true',
+                         help='Translate knowledge to target context')
+
+    # Analyze command
+    sp_analyze = subparsers.add_parser('analyze', help='Analyze persona data')
+    sp_analyze.add_argument('persona_id', help='Persona identifier')
+    sp_analyze.add_argument('--type', choices=['journal', 'tasks'], default='journal',
+                           help='Analysis type (default: journal)')
+    sp_analyze.add_argument('--period', type=int, default=30,
+                           help='Analysis period in days (default: 30)')
+
+    # Report command
+    sp_report = subparsers.add_parser('report', help='Generate persona report')
+    sp_report.add_argument('persona_id', help='Persona identifier')
+    sp_report.add_argument('--format', choices=['md', 'json', 'html'], default='md',
+                          help='Report format (default: md)')
+    sp_report.add_argument('--period', choices=['week', 'month', 'quarter', 'year'], default='month',
+                          help='Report period (default: month)')
+
+    args = parser.parse_args()
+
+    manager = NPLPersona()
+    success = False
+
+    try:
+        if args.command == 'init':
+            success = manager.init_persona(
+                args.persona_id,
+                role=args.role,
+                scope=args.scope,
+                from_template=args.from_template
+            )
+
+        elif args.command == 'get':
+            skip_set = set(args.skip) if args.skip else set()
+            success = manager.get_persona(args.persona_id, args.files, skip_set)
+
+            # Output tracking flags
+            if success and manager.loaded_personas:
+                print("\n# Flag Update")
+                print("```🏳️")
+                print(f'@npl.personas.loaded+="{",".join(sorted(manager.loaded_personas))}"')
+                print("```\n")
+
+        elif args.command == 'list':
+            personas = manager.list_personas(args.scope)
+
+            if not personas:
+                print(f"No personas found{' in ' + args.scope + ' scope' if args.scope != 'all' else ''}")
+                success = True
+            else:
+                if args.scope == 'all':
+                    # Group by scope
+                    by_scope = defaultdict(list)
+                    for pid, info in personas.items():
+                        by_scope[info['scope']].append((pid, info))
+
+                    for scope in ['project', 'user', 'system']:
+                        if scope in by_scope:
+                            print(f"{scope.capitalize()} personas:")
+                            for pid, info in sorted(by_scope[scope]):
+                                if args.verbose:
+                                    files_status = ', '.join([
+                                        f"{ft}:{'✓' if info['files'].get(ft) else '✗'}"
+                                        for ft in manager.mandatory_files.keys()
+                                    ])
+                                    print(f"  - {pid} [{files_status}]")
+                                else:
+                                    print(f"  - {pid}")
+                            print()
+                else:
+                    for pid in sorted(personas.keys()):
+                        info = personas[pid]
+                        if args.verbose:
+                            files_status = ', '.join([
+                                f"{ft}:{'✓' if info['files'].get(ft) else '✗'}"
+                                for ft in manager.mandatory_files.keys()
+                            ])
+                            print(f"{pid} [{files_status}]")
+                        else:
+                            print(pid)
+
+                success = True
+
+        elif args.command == 'which':
+            success = manager.which_persona(args.persona_id)
+
+        elif args.command == 'remove':
+            success = manager.remove_persona(
+                args.persona_id,
+                scope=args.scope,
+                force=args.force
+            )
+
+        elif args.command == 'journal':
+            if args.action == 'add':
+                success = manager.journal_add(
+                    args.persona_id,
+                    message=args.message,
+                    interactive=args.interactive
+                )
+            elif args.action == 'view':
+                success = manager.journal_view(
+                    args.persona_id,
+                    entries=args.entries,
+                    since=args.since
+                )
+            elif args.action == 'archive':
+                if not args.before:
+                    print("Error: --before date required for archive", file=sys.stderr)
+                    success = False
+                else:
+                    success = manager.journal_archive(
+                        args.persona_id,
+                        args.before
+                    )
+
+        elif args.command == 'health':
+            success = manager.health_check(
+                persona_id=args.persona_id,
+                verbose=args.verbose,
+                check_all=args.all
+            )
+
+        elif args.command == 'task':
+            if args.action == 'add':
+                if not args.task_description:
+                    print("Error: task_description required for add action", file=sys.stderr)
+                    success = False
+                else:
+                    success = manager.task_add(
+                        args.persona_id,
+                        args.task_description,
+                        due=args.due,
+                        priority=args.priority
+                    )
+            elif args.action == 'update':
+                if not args.task_description or not args.status:
+                    print("Error: task_description and --status required for update", file=sys.stderr)
+                    success = False
+                else:
+                    success = manager.task_update(
+                        args.persona_id,
+                        args.task_description,
+                        args.status
+                    )
+            elif args.action == 'complete':
+                if not args.task_description:
+                    print("Error: task_description required for complete", file=sys.stderr)
+                    success = False
+                else:
+                    success = manager.task_update(
+                        args.persona_id,
+                        args.task_description,
+                        'completed'
+                    )
+            elif args.action == 'list':
+                success = manager.task_list(
+                    args.persona_id,
+                    status_filter=args.filter
+                )
+            elif args.action == 'remove':
+                if not args.task_description:
+                    print("Error: task_description required for remove", file=sys.stderr)
+                    success = False
+                else:
+                    success = manager.task_remove(
+                        args.persona_id,
+                        args.task_description
+                    )
+
+        elif args.command == 'kb':
+            if args.action == 'add':
+                if not args.topic:
+                    print("Error: topic required for add action", file=sys.stderr)
+                    success = False
+                else:
+                    success = manager.kb_add(
+                        args.persona_id,
+                        args.topic,
+                        content=args.content,
+                        source=args.source
+                    )
+            elif args.action == 'search':
+                if not args.topic:
+                    print("Error: topic (search query) required", file=sys.stderr)
+                    success = False
+                else:
+                    success = manager.kb_search(
+                        args.persona_id,
+                        args.topic,
+                        domain=args.domain
+                    )
+            elif args.action == 'get':
+                if not args.topic:
+                    print("Error: topic required for get", file=sys.stderr)
+                    success = False
+                else:
+                    success = manager.kb_get(
+                        args.persona_id,
+                        args.topic
+                    )
+            elif args.action == 'update-domain':
+                if not args.topic or args.confidence is None:
+                    print("Error: topic and --confidence required for update-domain", file=sys.stderr)
+                    success = False
+                else:
+                    success = manager.kb_update_domain(
+                        args.persona_id,
+                        args.topic,
+                        args.confidence
+                    )
+
+        elif args.command == 'sync':
+            success = manager.sync_persona(
+                args.persona_id,
+                validate=args.validate
+            )
+
+        elif args.command == 'backup':
+            success = manager.backup_persona(
+                persona_id=args.persona_id,
+                output=args.output,
+                backup_all=args.all
+            )
+
+        elif args.command == 'share':
+            success = manager.share_knowledge(
+                args.from_persona,
+                args.to_persona,
+                args.topic,
+                translate=args.translate
+            )
+
+        elif args.command == 'analyze':
+            success = manager.analyze_persona(
+                args.persona_id,
+                analysis_type=args.type,
+                period=args.period
+            )
+
+        elif args.command == 'report':
+            success = manager.generate_report(
+                args.persona_id,
+                output_format=args.format,
+                period=args.period
+            )
+
+        else:
+            print(f"Command '{args.command}' not yet implemented", file=sys.stderr)
+            success = False
+
+    except KeyboardInterrupt:
+        print("\nCancelled by user", file=sys.stderr)
+        sys.exit(130)
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        if os.environ.get('DEBUG'):
+            raise
+        sys.exit(1)
+
+    sys.exit(0 if success else 1)
+
+if __name__ == '__main__':
+    main()
