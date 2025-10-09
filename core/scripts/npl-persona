@@ -1563,6 +1563,727 @@ Persona {persona_id} has been active in the {scope} scope with comprehensive tra
         print(f"✅ Report saved: {report_file}")
         return True
 
+    def get_team_search_paths_resolved(self):
+        """Get resolved team search paths"""
+        paths = []
+
+        if sys.platform.startswith('win'):
+            global_npl = Path(os.environ.get('PROGRAMDATA', 'C:\\ProgramData')) / 'npl' / 'teams'
+        elif sys.platform == 'darwin':
+            global_npl = Path('/Library/Application Support/npl/teams')
+        else:
+            global_npl = Path('/etc/npl/teams')
+
+        if self.npl_persona_teams:
+            paths.append(Path(self.npl_persona_teams))
+        paths.extend([
+            Path('./.npl/teams'),
+            Path.home() / '.npl/teams',
+            global_npl
+        ])
+
+        return paths
+
+    def resolve_team_location(self, team_id: str) -> Optional[Tuple[Path, str]]:
+        """Find team location and return (directory, scope)"""
+        search_paths = self.get_team_search_paths_resolved()
+
+        for i, base_path in enumerate(search_paths):
+            team_file = base_path / f"{team_id}.team.md"
+            if team_file.exists():
+                scope = ['project', 'user', 'system'][min(i, 2)]
+                return (base_path, scope)
+
+        return None
+
+    def create_team(self, team_id: str, members: Optional[List[str]] = None,
+                   scope: str = 'project') -> bool:
+        """Create a new team"""
+        # Determine target path
+        if scope == 'user':
+            team_path = Path.home() / '.npl/teams'
+        elif scope == 'system':
+            if sys.platform.startswith('win'):
+                team_path = Path(os.environ.get('PROGRAMDATA', 'C:\\ProgramData')) / 'npl' / 'teams'
+            elif sys.platform == 'darwin':
+                team_path = Path('/Library/Application Support/npl/teams')
+            else:
+                team_path = Path('/etc/npl/teams')
+        else:  # project
+            team_path = Path('./.npl/teams')
+
+        team_path.mkdir(parents=True, exist_ok=True)
+        team_file = team_path / f"{team_id}.team.md"
+
+        if team_file.exists():
+            print(f"Error: Team '{team_id}' already exists at {team_path}", file=sys.stderr)
+            return False
+
+        # Validate members if provided
+        member_list = []
+        if members:
+            for member_id in members:
+                location = self.resolve_persona_location(member_id)
+                if not location:
+                    print(f"Warning: Persona '{member_id}' not found, adding anyway", file=sys.stderr)
+                member_list.append(member_id)
+
+        # Create team definition file
+        created_date = datetime.now().strftime('%Y-%m-%d')
+
+        team_content = f"""⌜team:{team_id}|NPL@1.0⌝
+# {team_id.replace('-', ' ').title()}
+`team` `collaboration` `knowledge-sharing`
+
+**Created**: {created_date}
+**Scope**: {scope}
+**Status**: Active
+
+## Team Composition
+
+⟪👥: (l,l,c,r) | Persona,Role,Joined,Status⟫
+"""
+
+        if member_list:
+            for member_id in member_list:
+                # Try to get role from persona definition
+                location = self.resolve_persona_location(member_id)
+                role = "Member"
+                if location:
+                    base_path, _ = location
+                    def_file = base_path / f"{member_id}.persona.md"
+                    if def_file.exists():
+                        with open(def_file, 'r', encoding='utf-8') as f:
+                            content = f.read()
+                            # Extract role from first lines
+                            for line in content.split('\n')[:10]:
+                                if '**Role**:' in line:
+                                    role = line.split('**Role**:')[1].strip()
+                                    break
+
+                team_content += f"| @{member_id} | {role} | {created_date} | Active |\n"
+        else:
+            team_content += "| <!-- Members will be added here --> | | | |\n"
+
+        team_content += f"""
+## Team Purpose
+
+{team_id.replace('-', ' ').title()} focuses on collaborative work across multiple personas.
+
+**Mission**: TBD
+**Goals**:
+- TBD
+- TBD
+
+## Collaboration Patterns
+
+```patterns
+DAILY:
+- Stand-ups and sync meetings
+- Knowledge sharing sessions
+
+WEEKLY:
+- Sprint planning
+- Retrospectives
+- Knowledge synthesis
+
+MONTHLY:
+- Team health review
+- Skills assessment
+- Goal alignment
+```
+
+## Team Dynamics
+
+**Communication Style**: TBD
+**Decision Making**: TBD
+**Conflict Resolution**: TBD
+
+## Knowledge Areas
+
+⟪📚: (l,c,c) | Domain,Primary Owner,Team Proficiency⟫
+| <!-- Domains will be tracked here --> | | |
+
+## Team Metrics
+
+- **Collaboration Index**: N/A
+- **Knowledge Sharing**: N/A
+- **Velocity**: N/A
+- **Member Satisfaction**: N/A
+
+## Resources
+
+- **Team History**: `./{team_id}.history.md`
+- **Shared Knowledge**: `../shared/team-knowledge-{team_id}.md`
+
+⌞team:{team_id}⌟
+"""
+
+        # Write team file
+        with open(team_file, 'w', encoding='utf-8') as f:
+            f.write(team_content)
+
+        print(f"✨ Team '{team_id}' created successfully at {scope} scope")
+        if member_list:
+            print(f"   Members: {', '.join([f'@{m}' for m in member_list])}")
+
+        # Create team history file
+        history_file = team_path / f"{team_id}.history.md"
+        history_content = f"""# {team_id.replace('-', ' ').title()} - Collaboration History
+`team-interactions` `knowledge-sharing` `evolution`
+
+## Team Formation
+
+**Date**: {created_date}
+**Initial Members**: {', '.join([f'@{m}' for m in member_list]) if member_list else 'None'}
+
+---
+
+## Interaction Log
+
+<!-- Team interactions will be logged here -->
+
+## Milestones
+
+<!-- Team milestones will be tracked here -->
+
+## Evolution
+
+<!-- Team growth and changes will be documented here -->
+"""
+
+        with open(history_file, 'w', encoding='utf-8') as f:
+            f.write(history_content)
+
+        print(f"   Created team history: {team_id}.history.md")
+
+        return True
+
+    def add_to_team(self, team_id: str, persona_id: str) -> bool:
+        """Add a persona to an existing team"""
+        # Find team
+        location = self.resolve_team_location(team_id)
+        if not location:
+            print(f"Error: Team '{team_id}' not found", file=sys.stderr)
+            return False
+
+        # Verify persona exists
+        persona_location = self.resolve_persona_location(persona_id)
+        if not persona_location:
+            print(f"Warning: Persona '{persona_id}' not found in persona paths")
+
+        base_path, scope = location
+        team_file = base_path / f"{team_id}.team.md"
+
+        with open(team_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        # Check if already member
+        if f"@{persona_id}" in content:
+            print(f"Warning: @{persona_id} is already a member of {team_id}")
+            return False
+
+        # Get role
+        role = "Member"
+        if persona_location:
+            persona_base, _ = persona_location
+            def_file = persona_base / f"{persona_id}.persona.md"
+            if def_file.exists():
+                with open(def_file, 'r', encoding='utf-8') as f:
+                    persona_content = f.read()
+                    for line in persona_content.split('\n')[:10]:
+                        if '**Role**:' in line:
+                            role = line.split('**Role**:')[1].strip()
+                            break
+
+        # Add to team composition table
+        joined_date = datetime.now().strftime('%Y-%m-%d')
+        new_row = f"| @{persona_id} | {role} | {joined_date} | Active |"
+
+        # Find the table and add row after the last existing member row
+        lines = content.split('\n')
+        new_lines = []
+        table_found = False
+        last_row_index = -1
+
+        for i, line in enumerate(lines):
+            if '⟪👥:' in line:
+                table_found = True
+            elif table_found and line.strip().startswith('|') and '@' in line:
+                # This is a member row - track the last one
+                last_row_index = i
+
+        if not table_found:
+            print(f"Error: Could not find team composition table in {team_id}", file=sys.stderr)
+            return False
+
+        # Insert the new row after the last member row
+        if last_row_index >= 0:
+            new_lines = lines[:last_row_index+1] + [new_row] + lines[last_row_index+1:]
+        else:
+            # No existing members, find table header and add after it
+            for i, line in enumerate(lines):
+                if '⟪👥:' in line:
+                    new_lines = lines[:i+1] + [new_row] + lines[i+1:]
+                    break
+
+        # Write back
+        with open(team_file, 'w', encoding='utf-8') as f:
+            f.write('\n'.join(new_lines))
+
+        print(f"✅ Added @{persona_id} ({role}) to team '{team_id}'")
+
+        # Log to history
+        history_file = base_path / f"{team_id}.history.md"
+        if history_file.exists():
+            with open(history_file, 'a', encoding='utf-8') as f:
+                f.write(f"\n### {joined_date} - Member Joined\n")
+                f.write(f"**New Member**: @{persona_id} ({role})\n\n---\n")
+
+        return True
+
+    def list_team(self, team_id: str, verbose: bool = False) -> bool:
+        """List team members"""
+        location = self.resolve_team_location(team_id)
+        if not location:
+            print(f"Error: Team '{team_id}' not found", file=sys.stderr)
+            return False
+
+        base_path, scope = location
+        team_file = base_path / f"{team_id}.team.md"
+
+        with open(team_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        # Extract members from table
+        members = []
+        in_table = False
+
+        for line in content.split('\n'):
+            if '⟪👥:' in line:
+                in_table = True
+                continue
+            if in_table and line.strip().startswith('|') and '@' in line:
+                parts = [p.strip() for p in line.split('|')]
+                if len(parts) >= 5 and parts[1].startswith('@'):
+                    persona_id = parts[1].replace('@', '')
+                    role = parts[2]
+                    joined = parts[3]
+                    status = parts[4]
+                    members.append({
+                        'id': persona_id,
+                        'role': role,
+                        'joined': joined,
+                        'status': status
+                    })
+            elif in_table and line.strip().startswith('##'):
+                break
+
+        # Display
+        print(f"\n# Team: {team_id.replace('-', ' ').title()}")
+        print(f"**Scope**: {scope}")
+        print(f"**Members**: {len(members)}\n")
+
+        if not members:
+            print("No members in this team yet.")
+            return True
+
+        if verbose:
+            print(f"{'Persona':<25} {'Role':<20} {'Joined':<12} {'Status':<10}")
+            print('-' * 67)
+            for member in members:
+                print(f"@{member['id']:<24} {member['role']:<20} {member['joined']:<12} {member['status']:<10}")
+        else:
+            for member in members:
+                print(f"  - @{member['id']} ({member['role']})")
+
+        print()
+        return True
+
+    def synthesize_team_knowledge(self, team_id: str, output: Optional[str] = None) -> bool:
+        """Synthesize knowledge from all team members into unified document"""
+        location = self.resolve_team_location(team_id)
+        if not location:
+            print(f"Error: Team '{team_id}' not found", file=sys.stderr)
+            return False
+
+        base_path, scope = location
+        team_file = base_path / f"{team_id}.team.md"
+
+        # Get team members
+        with open(team_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        members = []
+        in_table = False
+
+        for line in content.split('\n'):
+            if '⟪👥:' in line:
+                in_table = True
+                continue
+            if in_table and line.strip().startswith('|') and '@' in line:
+                parts = [p.strip() for p in line.split('|')]
+                if len(parts) >= 2 and parts[1].startswith('@'):
+                    persona_id = parts[1].replace('@', '')
+                    members.append(persona_id)
+            elif in_table and line.strip().startswith('##'):
+                break
+
+        if not members:
+            print(f"Error: No members in team '{team_id}'", file=sys.stderr)
+            return False
+
+        print(f"Synthesizing knowledge from {len(members)} team members...")
+
+        # Collect knowledge from each member
+        all_knowledge = {}
+        domain_experts = defaultdict(list)
+
+        for member_id in members:
+            persona_location = self.resolve_persona_location(member_id)
+            if not persona_location:
+                print(f"  ⚠️  Skipping {member_id}: not found")
+                continue
+
+            persona_base, _ = persona_location
+            kb_file = persona_base / f"{member_id}.knowledge-base.md"
+
+            if not kb_file.exists():
+                print(f"  ⚠️  Skipping {member_id}: no knowledge base")
+                continue
+
+            print(f"  📚 Processing @{member_id}...")
+
+            with open(kb_file, 'r', encoding='utf-8') as f:
+                kb_content = f.read()
+
+            # Extract domains and confidence
+            domain_pattern = r'### ([^\n]+)\s*```knowledge\s*confidence:\s*(\d+)%'
+            domains = re.findall(domain_pattern, kb_content, re.MULTILINE)
+
+            for domain, confidence in domains:
+                domain = domain.strip()
+                confidence = int(confidence)
+
+                if domain not in all_knowledge:
+                    all_knowledge[domain] = []
+
+                all_knowledge[domain].append({
+                    'persona': member_id,
+                    'confidence': confidence
+                })
+
+                # Track experts (confidence >= 70%)
+                if confidence >= 70:
+                    domain_experts[domain].append((member_id, confidence))
+
+        # Generate synthesis document
+        synthesis_date = datetime.now().strftime('%Y-%m-%d')
+
+        if output:
+            output_file = Path(output)
+        else:
+            output_file = Path('./.npl/shared') / f"team-knowledge-{team_id}.md"
+            output_file.parent.mkdir(parents=True, exist_ok=True)
+
+        synthesis_content = f"""# {team_id.replace('-', ' ').title()} - Team Knowledge Synthesis
+**Generated**: {synthesis_date}
+**Team Members**: {len(members)}
+**Knowledge Domains**: {len(all_knowledge)}
+
+## Team Expertise Matrix
+
+⟪📊: (l,l,c,r) | Domain,Expert(s),Confidence,Coverage⟫
+"""
+
+        for domain, experts_list in sorted(all_knowledge.items()):
+            # Find highest confidence
+            highest = max(experts_list, key=lambda x: x['confidence'])
+
+            # Count how many members know this
+            coverage = len(experts_list)
+            coverage_pct = (coverage / len(members)) * 100
+
+            expert_names = ', '.join([f"@{e[0]} ({e[1]}%)"
+                                     for e in sorted(domain_experts.get(domain, []),
+                                                   key=lambda x: x[1], reverse=True)])
+            if not expert_names:
+                expert_names = f"@{highest['persona']} ({highest['confidence']}%)"
+
+            synthesis_content += f"| {domain} | {expert_names} | {highest['confidence']}% | {coverage}/{len(members)} |\n"
+
+        synthesis_content += f"""
+
+## Knowledge Distribution
+
+"""
+
+        # Domain coverage analysis
+        for domain, experts_list in sorted(all_knowledge.items(), key=lambda x: len(x[1]), reverse=True):
+            synthesis_content += f"\n### {domain}\n"
+            synthesis_content += f"**Team Coverage**: {len(experts_list)}/{len(members)} members\n\n"
+
+            for expert in sorted(experts_list, key=lambda x: x['confidence'], reverse=True):
+                bar = '█' * (expert['confidence'] // 10)
+                synthesis_content += f"- @{expert['persona']}: {bar} {expert['confidence']}%\n"
+
+        # Identify gaps
+        synthesis_content += "\n## Knowledge Gaps\n\n"
+
+        single_expert_domains = [d for d, e in all_knowledge.items() if len(e) == 1]
+        if single_expert_domains:
+            synthesis_content += "**Single Point of Knowledge** (bus factor = 1):\n"
+            for domain in single_expert_domains:
+                expert = all_knowledge[domain][0]
+                synthesis_content += f"- {domain} (only @{expert['persona']})\n"
+        else:
+            synthesis_content += "✅ No single points of knowledge - good distribution!\n"
+
+        synthesis_content += f"\n## Team Strengths\n\n"
+
+        strong_domains = [(d, e) for d, e in all_knowledge.items()
+                         if len(e) >= len(members) // 2 and max(x['confidence'] for x in e) >= 80]
+
+        if strong_domains:
+            for domain, experts_list in strong_domains[:5]:
+                synthesis_content += f"- **{domain}**: {len(experts_list)} members, max confidence {max(x['confidence'] for x in experts_list)}%\n"
+        else:
+            synthesis_content += "Team is building expertise across domains.\n"
+
+        synthesis_content += f"\n## Recommendations\n\n"
+        synthesis_content += "1. **Knowledge Sharing**: Schedule sessions for single-expert domains\n"
+        synthesis_content += "2. **Cross-Training**: Pair members with complementary skills\n"
+        synthesis_content += "3. **Documentation**: Capture knowledge in shared resources\n"
+        synthesis_content += "4. **Regular Synthesis**: Re-run synthesis monthly to track growth\n"
+
+        synthesis_content += f"\n---\n\n*Generated by npl-persona v1.0 on {synthesis_date}*\n"
+
+        # Write synthesis
+        with open(output_file, 'w', encoding='utf-8') as f:
+            f.write(synthesis_content)
+
+        print(f"\n✅ Team knowledge synthesized: {output_file}")
+        print(f"   Domains covered: {len(all_knowledge)}")
+        print(f"   Total expertise entries: {sum(len(e) for e in all_knowledge.values())}")
+
+        return True
+
+    def team_matrix(self, team_id: str) -> bool:
+        """Display team expertise matrix"""
+        location = self.resolve_team_location(team_id)
+        if not location:
+            print(f"Error: Team '{team_id}' not found", file=sys.stderr)
+            return False
+
+        base_path, scope = location
+        team_file = base_path / f"{team_id}.team.md"
+
+        # Get team members
+        with open(team_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        members = []
+        in_table = False
+
+        for line in content.split('\n'):
+            if '⟪👥:' in line:
+                in_table = True
+                continue
+            if in_table and line.strip().startswith('|') and '@' in line:
+                parts = [p.strip() for p in line.split('|')]
+                if len(parts) >= 2 and parts[1].startswith('@'):
+                    persona_id = parts[1].replace('@', '')
+                    members.append(persona_id)
+            elif in_table and line.strip().startswith('##'):
+                break
+
+        if not members:
+            print(f"Error: No members in team '{team_id}'", file=sys.stderr)
+            return False
+
+        print(f"\n# Team Expertise Matrix: {team_id.replace('-', ' ').title()}\n")
+
+        # Collect all domains and expertise levels
+        domain_data = defaultdict(lambda: {'expert': [], 'proficient': [], 'learning': []})
+
+        for member_id in members:
+            persona_location = self.resolve_persona_location(member_id)
+            if not persona_location:
+                continue
+
+            persona_base, _ = persona_location
+            kb_file = persona_base / f"{member_id}.knowledge-base.md"
+
+            if not kb_file.exists():
+                continue
+
+            with open(kb_file, 'r', encoding='utf-8') as f:
+                kb_content = f.read()
+
+            # Extract domains and confidence
+            domain_pattern = r'### ([^\n]+)\s*```knowledge\s*confidence:\s*(\d+)%'
+            domains = re.findall(domain_pattern, kb_content, re.MULTILINE)
+
+            for domain, confidence in domains:
+                domain = domain.strip()
+                confidence = int(confidence)
+
+                if confidence >= 80:
+                    domain_data[domain]['expert'].append(member_id)
+                elif confidence >= 50:
+                    domain_data[domain]['proficient'].append(member_id)
+                else:
+                    domain_data[domain]['learning'].append(member_id)
+
+        # Display matrix
+        if not domain_data:
+            print("No domain expertise data found for team members.")
+            return True
+
+        print(f"{'Domain':<30} {'Expert':<20} {'Proficient':<20} {'Learning':<20}")
+        print('-' * 90)
+
+        for domain in sorted(domain_data.keys()):
+            data = domain_data[domain]
+
+            experts = ', '.join([f"@{p}" for p in data['expert']]) or '-'
+            proficient = ', '.join([f"@{p}" for p in data['proficient']]) or '-'
+            learning = ', '.join([f"@{p}" for p in data['learning']]) or '-'
+
+            # Truncate if too long
+            experts = experts[:18] + '..' if len(experts) > 20 else experts
+            proficient = proficient[:18] + '..' if len(proficient) > 20 else proficient
+            learning = learning[:18] + '..' if len(learning) > 20 else learning
+
+            print(f"{domain:<30} {experts:<20} {proficient:<20} {learning:<20}")
+
+        print()
+        return True
+
+    def analyze_team(self, team_id: str, period: int = 30) -> bool:
+        """Analyze team collaboration patterns"""
+        location = self.resolve_team_location(team_id)
+        if not location:
+            print(f"Error: Team '{team_id}' not found", file=sys.stderr)
+            return False
+
+        base_path, scope = location
+
+        # Get team members
+        team_file = base_path / f"{team_id}.team.md"
+        with open(team_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        members = []
+        in_table = False
+
+        for line in content.split('\n'):
+            if '⟪👥:' in line:
+                in_table = True
+                continue
+            if in_table and line.strip().startswith('|') and '@' in line:
+                parts = [p.strip() for p in line.split('|')]
+                if len(parts) >= 2 and parts[1].startswith('@'):
+                    persona_id = parts[1].replace('@', '')
+                    members.append(persona_id)
+            elif in_table and line.strip().startswith('##'):
+                break
+
+        if not members:
+            print(f"Error: No members in team '{team_id}'", file=sys.stderr)
+            return False
+
+        print(f"📊 Team Collaboration Analysis: {team_id.replace('-', ' ').title()}")
+        print(f"Period: Last {period} days\n")
+
+        # Analyze each member's journal for team interactions
+        cutoff_date = datetime.now() - timedelta(days=period)
+
+        interaction_count = 0
+        collaboration_pairs = defaultdict(int)
+        member_activity = defaultdict(int)
+        topics_discussed = defaultdict(int)
+
+        for member_id in members:
+            persona_location = self.resolve_persona_location(member_id)
+            if not persona_location:
+                continue
+
+            persona_base, _ = persona_location
+            journal_file = persona_base / f"{member_id}.journal.md"
+
+            if not journal_file.exists():
+                continue
+
+            with open(journal_file, 'r', encoding='utf-8') as f:
+                journal_content = f.read()
+
+            # Extract entries
+            entry_pattern = r'###\s+(\d{4}-\d{2}-\d{2})\s+-\s+([^\n]+)(.*?)(?=###|\Z)'
+            matches = re.findall(entry_pattern, journal_content, re.DOTALL)
+
+            for date_str, session_id, text in matches:
+                entry_date = datetime.strptime(date_str, '%Y-%m-%d')
+
+                if entry_date >= cutoff_date:
+                    interaction_count += 1
+                    member_activity[member_id] += 1
+
+                    # Find other team members mentioned
+                    for other_member in members:
+                        if other_member != member_id and f"@{other_member}" in text:
+                            pair = tuple(sorted([member_id, other_member]))
+                            collaboration_pairs[pair] += 1
+
+                    # Extract topics (capitalized words/phrases)
+                    topic_matches = re.findall(r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b', text)
+                    for topic in topic_matches:
+                        if len(topic) > 3:
+                            topics_discussed[topic] += 1
+
+        # Display results
+        print(f"**Total Interactions**: {interaction_count}")
+        print(f"**Active Members**: {len([m for m, c in member_activity.items() if c > 0])}/{len(members)}\n")
+
+        if member_activity:
+            print("**Member Activity**:")
+            for member, count in sorted(member_activity.items(), key=lambda x: x[1], reverse=True):
+                bar = '█' * (count // 2) if count > 0 else ''
+                print(f"  @{member}: {bar} {count} interactions")
+            print()
+
+        if collaboration_pairs:
+            print("**Top Collaboration Pairs**:")
+            top_pairs = sorted(collaboration_pairs.items(), key=lambda x: x[1], reverse=True)[:5]
+            for (m1, m2), count in top_pairs:
+                print(f"  @{m1} ↔ @{m2}: {count} interactions")
+            print()
+
+        if topics_discussed:
+            print("**Frequently Discussed Topics**:")
+            top_topics = sorted(topics_discussed.items(), key=lambda x: x[1], reverse=True)[:10]
+            for topic, count in top_topics:
+                print(f"  - {topic} ({count})")
+            print()
+
+        # Team health metrics
+        if len(members) > 1:
+            # Calculate collaboration index (how well connected the team is)
+            possible_pairs = len(members) * (len(members) - 1) // 2
+            actual_pairs = len(collaboration_pairs)
+            collaboration_index = (actual_pairs / possible_pairs * 100) if possible_pairs > 0 else 0
+
+            print(f"**Team Health Metrics**:")
+            print(f"  Collaboration Index: {collaboration_index:.0f}% ({actual_pairs}/{possible_pairs} pairs active)")
+
+            if interaction_count > 0:
+                avg_interactions = interaction_count / len(members)
+                print(f"  Average Interactions per Member: {avg_interactions:.1f}")
+
+            print()
+
+        return True
+
 def main():
     parser = argparse.ArgumentParser(
         description='NPL Persona Management Tool',
@@ -1729,6 +2450,21 @@ Examples:
                           help='Report format (default: md)')
     sp_report.add_argument('--period', choices=['week', 'month', 'quarter', 'year'], default='month',
                           help='Report period (default: month)')
+
+    # Team commands
+    sp_team = subparsers.add_parser('team', help='Team management operations')
+    sp_team.add_argument('action', choices=['create', 'add', 'list', 'synthesize', 'matrix', 'analyze'],
+                        help='Team action')
+    sp_team.add_argument('team_id', help='Team identifier')
+    sp_team.add_argument('persona_id', nargs='?', help='Persona to add (for add action)')
+    sp_team.add_argument('--members', help='Comma-separated list of persona IDs (for create)')
+    sp_team.add_argument('--scope', choices=['project', 'user', 'system'], default='project',
+                        help='Scope for team creation (default: project)')
+    sp_team.add_argument('--output', help='Output file path (for synthesize)')
+    sp_team.add_argument('--period', type=int, default=30,
+                        help='Analysis period in days (for analyze, default: 30)')
+    sp_team.add_argument('--verbose', '-v', action='store_true',
+                        help='Show detailed information (for list)')
 
     args = parser.parse_args()
 
@@ -1958,6 +2694,108 @@ Examples:
                 output_format=args.format,
                 period=args.period
             )
+
+        elif args.command == 'team':
+            if args.action == 'create':
+                # Parse members list if provided
+                members_list = None
+                if args.members:
+                    members_list = [m.strip() for m in args.members.split(',')]
+                    if args.verbose:
+                        print(f"Creating team '{args.team_id}' with members: {', '.join(members_list)}")
+                else:
+                    if args.verbose:
+                        print(f"Creating empty team '{args.team_id}'")
+
+                success = manager.create_team(
+                    args.team_id,
+                    members=members_list,
+                    scope=args.scope
+                )
+
+                if success and args.verbose:
+                    print(f"✅ Team '{args.team_id}' created successfully in {args.scope} scope")
+
+            elif args.action == 'add':
+                if not args.persona_id:
+                    print("Error: persona_id required for 'add' action", file=sys.stderr)
+                    print("Usage: npl-persona team add <team_id> <persona_id>", file=sys.stderr)
+                    success = False
+                else:
+                    if args.verbose:
+                        print(f"Adding persona '{args.persona_id}' to team '{args.team_id}'...")
+
+                    success = manager.add_to_team(
+                        args.team_id,
+                        args.persona_id
+                    )
+
+                    if success and args.verbose:
+                        print(f"✅ Persona '{args.persona_id}' added to team '{args.team_id}'")
+
+            elif args.action == 'list':
+                if args.verbose:
+                    print(f"Listing members of team '{args.team_id}'...")
+
+                success = manager.list_team(
+                    args.team_id,
+                    verbose=args.verbose
+                )
+
+            elif args.action == 'synthesize':
+                if args.verbose:
+                    print(f"Synthesizing knowledge for team '{args.team_id}'...")
+                    print("This will merge knowledge bases from all team members and generate:")
+                    print("  - Unified knowledge base")
+                    print("  - Expertise matrix")
+                    print("  - Knowledge distribution analysis")
+                    print("  - Gap identification")
+                    print("  - Team strengths assessment")
+                    print("  - Recommendations for improvement")
+
+                success = manager.synthesize_team_knowledge(
+                    args.team_id,
+                    output=args.output
+                )
+
+                if success:
+                    if args.output:
+                        print(f"✅ Team knowledge synthesized to: {args.output}")
+                    else:
+                        print(f"✅ Team knowledge synthesis displayed above")
+
+            elif args.action == 'matrix':
+                if args.verbose:
+                    print(f"Generating expertise matrix for team '{args.team_id}'...")
+                    print("Matrix shows: Expert | Proficient | Learning")
+
+                success = manager.team_matrix(
+                    args.team_id
+                )
+
+            elif args.action == 'analyze':
+                if args.verbose:
+                    print(f"Analyzing team '{args.team_id}' collaboration patterns...")
+                    print(f"Period: Last {args.period} days")
+                    print("\nAnalyzing:")
+                    print("  - Total team interactions")
+                    print("  - Member activity levels")
+                    print("  - Collaboration pairs")
+                    print("  - Discussion topics")
+                    print("  - Team health metrics")
+
+                success = manager.analyze_team(
+                    args.team_id,
+                    period=args.period
+                )
+
+                if success and args.verbose:
+                    print("\n✅ Team analysis complete")
+
+            else:
+                print(f"Error: Unknown team action '{args.action}'", file=sys.stderr)
+                print("Valid actions: create, add, list, synthesize, matrix, analyze", file=sys.stderr)
+                success = False
 
         else:
             print(f"Command '{args.command}' not yet implemented", file=sys.stderr)
