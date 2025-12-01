@@ -1,3 +1,5 @@
+* * *
+
 ## NPL Load Directive
 
 ### Environment Variables
