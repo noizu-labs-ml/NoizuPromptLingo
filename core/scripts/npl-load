@@ -29,6 +29,10 @@ class NPLLoader:
         self.loaded_meta = set()
         self.loaded_style = set()
         self.loaded_agents = set()
+        self.loaded_specs = set()
+        self.loaded_personas = set()
+        self.loaded_prds = set()
+        self.loaded_stories = set()
         
     def get_search_paths(self, resource_type='component'):
         """Get search paths based on resource type"""
@@ -89,6 +93,40 @@ class NPLLoader:
                 Path('./.npl/core/agents'),
                 Path.home() / '.npl/core/agents',
                 global_npl / 'core/agents'
+            ])
+        elif resource_type == 'spec':
+            # Specifications: project first, then core/specifications fallback
+            paths.extend([
+                Path('./.npl/specifications'),
+                Path.home() / '.npl/specifications',
+            ])
+            if self.npl_home:
+                paths.append(Path(self.npl_home) / 'core/specifications')
+            paths.extend([
+                Path('./.npl/core/specifications'),
+                Path.home() / '.npl/core/specifications',
+                global_npl / 'core/specifications'
+            ])
+        elif resource_type == 'persona':
+            # Personas: project-local only
+            paths.extend([
+                Path('./.npl/personas'),
+                Path.home() / '.npl/personas',
+                global_npl / 'personas'
+            ])
+        elif resource_type == 'prd':
+            # PRD documents: project-local only
+            paths.extend([
+                Path('./.npl/prds'),
+                Path.home() / '.npl/prds',
+                global_npl / 'prds'
+            ])
+        elif resource_type == 'story':
+            # User stories: project-local only
+            paths.extend([
+                Path('./.npl/user-stories'),
+                Path.home() / '.npl/user-stories',
+                global_npl / 'user-stories'
             ])
 
         return paths
@@ -305,6 +343,114 @@ class NPLLoader:
                         if content:
                             loaded.append((pattern, content))
                             self.loaded_style.add(pattern)
+        return loaded
+
+    def load_specs(self, items: List[str], skip: Set[str]) -> List[Tuple[str, str]]:
+        """Load specification files"""
+        loaded = []
+        for pattern in items:
+            if '*' in pattern:
+                base_paths = self.get_search_paths('spec')
+                for base_path in base_paths:
+                    glob_pattern = pattern.replace('.', '/')
+                    for match in base_path.glob(f"{glob_pattern}.md"):
+                        relative = match.relative_to(base_path)
+                        item = str(relative).replace('/', '.').replace('.md', '')
+                        if not self.is_skipped(item, skip) and item not in self.loaded_specs:
+                            content = self.load_file_with_patch(base_path, match, 'spec', item)
+                            if content:
+                                loaded.append((item, content))
+                                self.loaded_specs.add(item)
+            else:
+                if not self.is_skipped(pattern, skip) and pattern not in self.loaded_specs:
+                    result = self.resolve_path(pattern, 'spec')
+                    if result:
+                        base_path, file_path = result
+                        content = self.load_file_with_patch(base_path, file_path, 'spec', pattern)
+                        if content:
+                            loaded.append((pattern, content))
+                            self.loaded_specs.add(pattern)
+        return loaded
+
+    def load_personas(self, items: List[str], skip: Set[str]) -> List[Tuple[str, str]]:
+        """Load persona files"""
+        loaded = []
+        for pattern in items:
+            if '*' in pattern:
+                base_paths = self.get_search_paths('persona')
+                for base_path in base_paths:
+                    glob_pattern = pattern.replace('.', '/')
+                    for match in base_path.glob(f"{glob_pattern}.md"):
+                        relative = match.relative_to(base_path)
+                        item = str(relative).replace('/', '.').replace('.md', '')
+                        if not self.is_skipped(item, skip) and item not in self.loaded_personas:
+                            content = self.load_file_with_patch(base_path, match, 'persona', item)
+                            if content:
+                                loaded.append((item, content))
+                                self.loaded_personas.add(item)
+            else:
+                if not self.is_skipped(pattern, skip) and pattern not in self.loaded_personas:
+                    result = self.resolve_path(pattern, 'persona')
+                    if result:
+                        base_path, file_path = result
+                        content = self.load_file_with_patch(base_path, file_path, 'persona', pattern)
+                        if content:
+                            loaded.append((pattern, content))
+                            self.loaded_personas.add(pattern)
+        return loaded
+
+    def load_prds(self, items: List[str], skip: Set[str]) -> List[Tuple[str, str]]:
+        """Load PRD document files"""
+        loaded = []
+        for pattern in items:
+            if '*' in pattern:
+                base_paths = self.get_search_paths('prd')
+                for base_path in base_paths:
+                    glob_pattern = pattern.replace('.', '/')
+                    for match in base_path.glob(f"{glob_pattern}.md"):
+                        relative = match.relative_to(base_path)
+                        item = str(relative).replace('/', '.').replace('.md', '')
+                        if not self.is_skipped(item, skip) and item not in self.loaded_prds:
+                            content = self.load_file_with_patch(base_path, match, 'prd', item)
+                            if content:
+                                loaded.append((item, content))
+                                self.loaded_prds.add(item)
+            else:
+                if not self.is_skipped(pattern, skip) and pattern not in self.loaded_prds:
+                    result = self.resolve_path(pattern, 'prd')
+                    if result:
+                        base_path, file_path = result
+                        content = self.load_file_with_patch(base_path, file_path, 'prd', pattern)
+                        if content:
+                            loaded.append((pattern, content))
+                            self.loaded_prds.add(pattern)
+        return loaded
+
+    def load_stories(self, items: List[str], skip: Set[str]) -> List[Tuple[str, str]]:
+        """Load user story files"""
+        loaded = []
+        for pattern in items:
+            if '*' in pattern:
+                base_paths = self.get_search_paths('story')
+                for base_path in base_paths:
+                    glob_pattern = pattern.replace('.', '/')
+                    for match in base_path.glob(f"{glob_pattern}.md"):
+                        relative = match.relative_to(base_path)
+                        item = str(relative).replace('/', '.').replace('.md', '')
+                        if not self.is_skipped(item, skip) and item not in self.loaded_stories:
+                            content = self.load_file_with_patch(base_path, match, 'story', item)
+                            if content:
+                                loaded.append((item, content))
+                                self.loaded_stories.add(item)
+            else:
+                if not self.is_skipped(pattern, skip) and pattern not in self.loaded_stories:
+                    result = self.resolve_path(pattern, 'story')
+                    if result:
+                        base_path, file_path = result
+                        content = self.load_file_with_patch(base_path, file_path, 'story', pattern)
+                        if content:
+                            loaded.append((pattern, content))
+                            self.loaded_stories.add(pattern)
         return loaded
 
     def load_agent(self, agent_name: str) -> Optional[Tuple[str, str]]:
@@ -921,6 +1067,30 @@ def main():
     sp_syntax.add_argument('--file', help='File to analyze')
     sp_syntax.add_argument('--matches', action='store_true', help='Show actual matches')
 
+    # Specifications subcommand
+    sp_spec = subparsers.add_parser('spec', help='Load specifications')
+    sp_spec.add_argument('spec_items', nargs='*', help='Specifications to load (supports glob patterns)')
+    sp_spec.add_argument('--skip', nargs='*', default=[], help='Skip patterns (wildcards allowed)')
+    sp_spec.add_argument('--verbose', action='store_true')
+
+    # Personas subcommand
+    sp_persona = subparsers.add_parser('persona', help='Load personas')
+    sp_persona.add_argument('persona_items', nargs='*', help='Personas to load (supports glob patterns)')
+    sp_persona.add_argument('--skip', nargs='*', default=[], help='Skip patterns (wildcards allowed)')
+    sp_persona.add_argument('--verbose', action='store_true')
+
+    # PRD subcommand
+    sp_prd = subparsers.add_parser('prd', help='Load PRD documents')
+    sp_prd.add_argument('prd_items', nargs='*', help='PRDs to load (supports glob patterns)')
+    sp_prd.add_argument('--skip', nargs='*', default=[], help='Skip patterns (wildcards allowed)')
+    sp_prd.add_argument('--verbose', action='store_true')
+
+    # User stories subcommand
+    sp_story = subparsers.add_parser('story', help='Load user stories')
+    sp_story.add_argument('story_items', nargs='*', help='User stories to load (supports glob patterns)')
+    sp_story.add_argument('--skip', nargs='*', default=[], help='Skip patterns (wildcards allowed)')
+    sp_story.add_argument('--verbose', action='store_true')
+
     args = parser.parse_args()
 
     # New: handle schema early and exit to ensure no extra output
@@ -1027,7 +1197,40 @@ def main():
             for name, content in styles:
                 loaded_content.append(('STYLE', name, content))
 
-    if loader.loaded_components or loader.loaded_meta or loader.loaded_style:
+    elif args.command == 'spec':
+        skip = _parse_skip_list(args.skip)
+        if args.spec_items:
+            specs = loader.load_specs(args.spec_items, skip)
+            for name, content in specs:
+                loaded_content.append(('SPEC', name, content))
+
+    elif args.command == 'persona':
+        skip = _parse_skip_list(args.skip)
+        if args.persona_items:
+            personas = loader.load_personas(args.persona_items, skip)
+            for name, content in personas:
+                loaded_content.append(('PERSONA', name, content))
+
+    elif args.command == 'prd':
+        skip = _parse_skip_list(args.skip)
+        if args.prd_items:
+            prds = loader.load_prds(args.prd_items, skip)
+            for name, content in prds:
+                loaded_content.append(('PRD', name, content))
+
+    elif args.command == 'story':
+        skip = _parse_skip_list(args.skip)
+        if args.story_items:
+            stories = loader.load_stories(args.story_items, skip)
+            for name, content in stories:
+                loaded_content.append(('STORY', name, content))
+
+    # Check if any content was loaded
+    has_loaded = (loader.loaded_components or loader.loaded_meta or loader.loaded_style or
+                  loader.loaded_specs or loader.loaded_personas or loader.loaded_prds or
+                  loader.loaded_stories)
+
+    if has_loaded:
         print("# Flag Update")
         print("\n```🏳️\n")
         if loader.loaded_components:
@@ -1036,6 +1239,14 @@ def main():
             print(f"@npl.meta.loaded+=\"{','.join(sorted(loader.loaded_meta))}\"")
         if loader.loaded_style:
             print(f"@npl.style.loaded+=\"{','.join(sorted(loader.loaded_style))}\"")
+        if loader.loaded_specs:
+            print(f"@npl.spec.loaded+=\"{','.join(sorted(loader.loaded_specs))}\"")
+        if loader.loaded_personas:
+            print(f"@npl.persona.loaded+=\"{','.join(sorted(loader.loaded_personas))}\"")
+        if loader.loaded_prds:
+            print(f"@npl.prd.loaded+=\"{','.join(sorted(loader.loaded_prds))}\"")
+        if loader.loaded_stories:
+            print(f"@npl.story.loaded+=\"{','.join(sorted(loader.loaded_stories))}\"")
         print("\n\n```\n")
         print("\n---")
 

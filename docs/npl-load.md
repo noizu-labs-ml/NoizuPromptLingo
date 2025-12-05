@@ -15,6 +15,10 @@ npl-load <command> [options]
 | `c` | Load NPL components |
 | `m` | Load metadata files |
 | `s` | Load style guides |
+| `spec` | Load specifications |
+| `persona` | Load persona definitions |
+| `prd` | Load PRD documents |
+| `story` | Load user stories |
 | `schema` | Load raw SQL schema |
 | `init` | Load the main `npl.md` file |
 | `agent` | Load or list agent definitions |
@@ -108,6 +112,51 @@ Search paths for SQL schemas:
 | 3 | `~/.npl/core/schema/` |
 | 4 | `/env/npl/core/schema/` |
 
+#### Specifications (`spec`)
+
+Search paths for specification documents:
+
+| Priority | Path |
+|----------|------|
+| 1 | `./.npl/specifications/` |
+| 2 | `~/.npl/specifications/` |
+| 3 | `$NPL_HOME/core/specifications/` |
+| 4 | `./.npl/core/specifications/` |
+| 5 | `~/.npl/core/specifications/` |
+| 6 | `<system>/core/specifications/` |
+
+**Note:** Project-local specifications take priority, with fallback to core/specifications for shared specs.
+
+#### Personas (`persona`)
+
+Search paths for persona definitions:
+
+| Priority | Path |
+|----------|------|
+| 1 | `./.npl/personas/` |
+| 2 | `~/.npl/personas/` |
+| 3 | `<system>/personas/` |
+
+#### PRD Documents (`prd`)
+
+Search paths for PRD documents:
+
+| Priority | Path |
+|----------|------|
+| 1 | `./.npl/prds/` |
+| 2 | `~/.npl/prds/` |
+| 3 | `<system>/prds/` |
+
+#### User Stories (`story`)
+
+Search paths for user stories:
+
+| Priority | Path |
+|----------|------|
+| 1 | `./.npl/user-stories/` |
+| 2 | `~/.npl/user-stories/` |
+| 3 | `<system>/user-stories/` |
+
 ## Environment Variables
 
 | Variable | Description | Fallback |
@@ -163,6 +212,61 @@ NPL_THEME=corporate npl-load s formatting
 ```bash
 # Output raw SQL content
 npl-load schema nimps
+```
+
+### Loading Specifications
+
+```bash
+# Load project architecture spec
+npl-load spec project-arch-spec
+
+# Load multiple specs
+npl-load spec project-arch-spec project-layout-spec
+
+# Load all specs matching pattern
+npl-load spec "*-spec"
+
+# Skip already-loaded specs
+npl-load spec project-arch-spec --skip project-arch-spec
+```
+
+### Loading Personas
+
+```bash
+# Load a persona definition
+npl-load persona qa-engineer
+
+# Load multiple personas
+npl-load persona qa-engineer dev-lead product-owner
+
+# Load all personas
+npl-load persona "*"
+```
+
+### Loading PRD Documents
+
+```bash
+# Load a PRD
+npl-load prd user-authentication
+
+# Load multiple PRDs
+npl-load prd user-authentication payment-system
+
+# Load all PRDs matching pattern
+npl-load prd "phase-*"
+```
+
+### Loading User Stories
+
+```bash
+# Load a user story
+npl-load story user-login
+
+# Load multiple stories
+npl-load story user-login user-registration
+
+# Load all stories for a feature
+npl-load story "auth-*"
 ```
 
 ### Loading Main NPL Definition

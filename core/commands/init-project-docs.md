@@ -2,9 +2,24 @@
 
 Generate `docs/PROJECT-ARCH.md` and `docs/PROJECT-LAYOUT.md` for the current project.
 
+## Prerequisites
+
+Load NPL dependencies and specifications before proceeding:
+
+```bash
+# Load NPL syntax elements for documentation generation
+npl-load c "syntax,fences,directive,formatting.template" --skip {@npl.def.loaded}
+
+# Load specification documents
+npl-load spec "project-arch-spec,project-layout-spec" --skip {@npl.spec.loaded}
+```
+
+---
+
 ## Workflow
 
 ### Phase 1: Reconnaissance
+
 Use `@npl-gopher-scout` to explore the codebase:
 
 ```
@@ -30,7 +45,8 @@ Report findings in structured format for documentation generation.
 ```
 
 ### Phase 2: Generate Architecture Documentation
-Based on reconnaissance findings, generate `docs/PROJECT-ARCH.md` following the specification at `core/specifications/project-arch-spec.md`.
+
+Based on reconnaissance findings, generate `docs/PROJECT-ARCH.md` following the loaded `project-arch-spec`.
 
 **Key Requirements:**
 - Main file ~200-400 lines max
@@ -48,7 +64,8 @@ Based on reconnaissance findings, generate `docs/PROJECT-ARCH.md` following the 
 - `api.md` - If public API documentation needed
 
 ### Phase 3: Generate Layout Documentation
-Generate `docs/PROJECT-LAYOUT.md` following the specification at `core/specifications/project-layout-spec.md`.
+
+Generate `docs/PROJECT-LAYOUT.md` following the loaded `project-layout-spec`.
 
 **Key Requirements:**
 - Single file ~300-500 lines
@@ -58,11 +75,15 @@ Generate `docs/PROJECT-LAYOUT.md` following the specification at `core/specifica
 - Provide "Finding Files" quick reference
 
 ### Phase 4: Verify
+
 1. Ensure both files are complete and consistent
 2. Verify sub-file references resolve correctly
 3. Check that critical architectural decisions are captured
 
+---
+
 ## Output
+
 - `docs/PROJECT-ARCH.md`
 - `docs/PROJECT-ARCH/*.md` (sub-files as needed)
 - `docs/PROJECT-LAYOUT.md`
