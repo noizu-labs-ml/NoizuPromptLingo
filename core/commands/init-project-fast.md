@@ -378,9 +378,35 @@ Target: **150-250 lines** (vs. original 1200-2000)
 
 ## Architectural Layers
 
+```mermaid
+flowchart TB
+    subgraph Consumer["Consumer Layer"]
+        C1[Claude Code]
+        C2[LLM Clients]
+        C3[MCP Tools]
+    end
+
+    subgraph Interface["Interface Layer"]
+        I1[MCP Server]
+        I2[CLI Scripts]
+        I3[CLAUDE.md]
+    end
+
+    subgraph Definition["Definition Layer"]
+        D1[NPL Syntax]
+        D2[Agents]
+        D3[Personas]
+    end
+
+    subgraph Storage["Storage Layer"]
+        S1[(SQLite)]
+    end
+
+    Consumer --> Interface
+    Interface --> Definition
+    Definition --> Storage
 ```
-[ASCII layer diagram from Foundation report]
-```
+[Mermaid layer diagram from Foundation report - adjust subgraphs and nodes based on detected architecture]
 
 ### <Layer summaries - 3-5 lines each>
 
