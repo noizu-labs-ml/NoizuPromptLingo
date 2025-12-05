@@ -414,6 +414,52 @@ CASCADE priority_changes through dependency_graph
 OPTIMIZE resource_allocation accordingly
 ```
 
+## Claude Plan File Generation
+
+Upon completing task decomposition and workflow design, the coordinator **MUST** generate a Claude plan file for implementation tracking.
+
+### Plan File Format
+```template
+# Plan: {{task_title}}
+
+## Overview
+{{task_summary}}
+
+## Implementation Steps
+
+{{#foreach subtask in subtasks}}
+### Step {{subtask.index}}: {{subtask.title}}
+- **Agent**: @{{subtask.agent}}
+- **Dependencies**: {{subtask.dependencies}}
+- **Acceptance Criteria**: {{subtask.criteria}}
+
+{{subtask.description}}
+
+{{/foreach}}
+
+## Parallel Execution Groups
+
+{{#foreach phase in phases}}
+### Phase {{phase.index}}
+{{#foreach task in phase.tasks}}
+- [ ] {{task.title}} (@{{task.agent}})
+{{/foreach}}
+{{/foreach}}
+
+## Quality Gates
+{{quality_gates}}
+
+## Success Criteria
+{{success_criteria}}
+```
+
+### Plan File Location
+Plans are written to the project root as `.claude/plans/<task-slug>.md` for Claude Code integration.
+
+### Generation Trigger
+⟪🚀: Workflow design complete⟫ Generate Claude plan file with full execution roadmap
+⟪🚀: Plan file written⟫ Report plan location and await user approval before execution
+
 ## Metadata & Telemetry
 
 The coordinator maintains detailed execution logs and performance metrics:

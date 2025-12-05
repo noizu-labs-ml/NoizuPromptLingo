@@ -16,6 +16,67 @@ import concurrent.futures
 from pathlib import Path
 from typing import List, Set, Tuple, Optional, Dict, Any
 
+# Resource type configuration - defines search paths and environment variables for each type
+RESOURCE_CONFIG = {
+    'component': {
+        'env_var': 'NPL_HOME',
+        'env_suffix': 'npl',  # Append to env var path
+        'subdirs': ['npl'],
+    },
+    'meta': {
+        'env_var': 'NPL_META',
+        'subdirs': ['meta'],
+    },
+    'style': {
+        'env_var': 'NPL_STYLE_GUIDE',
+        'subdirs': ['conventions'],
+        'themed': True,  # Uses theme directories
+    },
+    'schema': {
+        'env_var': 'NPL_HOME',
+        'env_suffix': 'core/schema',
+        'subdirs': ['core/schema'],
+        'extra_paths': ['/env/npl/core/schema'],
+    },
+    'agent': {
+        'extra_paths': ['./.claude/agents', '~/.claude/agents'],
+        'env_var': 'NPL_HOME',
+        'env_suffix': 'core/agents',
+        'subdirs': ['core/agents'],
+    },
+    'spec': {
+        'subdirs': ['specifications'],
+        'env_var': 'NPL_HOME',
+        'env_suffix': 'core/specifications',
+        'core_subdirs': ['core/specifications'],
+    },
+    'persona': {
+        'env_var': 'NPL_PERSONA_DIR',
+        'subdirs': ['personas'],
+    },
+    'user-persona': {
+        'env_var': 'NPL_USER_PERSONA_DIR',
+        'subdirs': ['user-personas'],
+    },
+    'prd': {
+        'subdirs': ['prds'],
+    },
+    'story': {
+        'subdirs': ['user-stories'],
+    },
+    'prompt': {
+        'subdirs': ['prompts'],
+        'env_var': 'NPL_HOME',
+        'env_suffix': 'core/prompts',
+        'core_subdirs': ['core/prompts'],
+    },
+    'workflow': {
+        'env_var': 'NPL_WORKFLOW_DIR',
+        'subdirs': ['workflows'],
+    },
+}
+
+
 class NPLLoader:
     def __init__(self):
         # Environment variables with fallbacks
@@ -23,87 +84,74 @@ class NPLLoader:
         self.npl_meta = os.environ.get('NPL_META', None)
         self.npl_style_guide = os.environ.get('NPL_STYLE_GUIDE', None)
         self.npl_theme = os.environ.get('NPL_THEME', 'default')
-        
+
+        # Platform-specific global config (computed once)
+        if sys.platform.startswith('win'):
+            self.global_npl = Path(os.environ.get('PROGRAMDATA', 'C:\\ProgramData')) / 'npl'
+        elif sys.platform == 'darwin':
+            self.global_npl = Path('/Library/Application Support/npl')
+        else:
+            self.global_npl = Path('/etc/npl')
+
         # Track loaded items
         self.loaded_components = set()
         self.loaded_meta = set()
         self.loaded_style = set()
         self.loaded_agents = set()
+        self.loaded_specs = set()
+        self.loaded_personas = set()
+        self.loaded_user_personas = set()
+        self.loaded_prds = set()
+        self.loaded_stories = set()
+        self.loaded_prompts = set()
+        self.loaded_workflows = set()
         
-    def get_search_paths(self, resource_type='component'):
-        """Get search paths based on resource type"""
+    def _build_search_paths(self, config: Dict[str, Any]) -> List[Path]:
+        """Build search paths from resource config"""
         paths = []
 
-        # Platform-specific global config
-        if sys.platform.startswith('win'):
-            global_npl = Path(os.environ.get('PROGRAMDATA', 'C:\\ProgramData')) / 'npl'
-        elif sys.platform == 'darwin':
-            global_npl = Path('/Library/Application Support/npl')
-        else:
-            global_npl = Path('/etc/npl')
+        # Add extra paths first (highest priority, e.g., .claude/agents)
+        for p in config.get('extra_paths', []):
+            expanded = Path(p).expanduser() if '~' in p else Path(p)
+            paths.append(expanded)
 
-        if resource_type == 'component':
-            if self.npl_home:
-                paths.append(Path(self.npl_home) / 'npl')
+        # Add environment variable override path
+        env_var = config.get('env_var')
+        if env_var:
+            env_value = os.environ.get(env_var)
+            if env_value:
+                base = Path(env_value)
+                suffix = config.get('env_suffix')
+                paths.append(base / suffix if suffix else base)
+
+        # Add standard hierarchy for each subdir
+        for subdir in config.get('subdirs', []):
             paths.extend([
-                Path('./.npl/npl'),
-                Path.home() / '.npl/npl',
-                global_npl / 'npl'
+                Path('./.npl') / subdir,
+                Path.home() / '.npl' / subdir,
+                self.global_npl / subdir
             ])
-        elif resource_type == 'meta':
-            if self.npl_meta:
-                paths.append(Path(self.npl_meta))
+
+        # Add core subdirs (for types that have separate core paths)
+        for core_subdir in config.get('core_subdirs', []):
             paths.extend([
-                Path('./.npl/meta'),
-                Path.home() / '.npl/meta',
-                global_npl / 'meta'
-            ])
-        elif resource_type == 'style':
-            if self.npl_style_guide:
-                paths.append(Path(self.npl_style_guide))
-            paths.extend([
-                Path('./.npl/conventions'),
-                Path.home() / '.npl/conventions',
-                global_npl / 'conventions'
-            ])
-        elif resource_type == 'schema':
-            # Order: ./.npl/core/schema, $NPL_HOME/core/schema, ~/.npl/core/schema, /env/npl/core/schema
-            paths.extend([
-                Path('./.npl/core/schema'),
-            ])
-            if self.npl_home:
-                paths.append(Path(self.npl_home) / 'core/schema')
-            paths.extend([
-                Path.home() / '.npl/core/schema',
-                Path('/env/npl/core/schema'),
-            ])
-        elif resource_type == 'agent':
-            # Agent search paths in priority order
-            paths.extend([
-                Path('./.claude/agents'),
-                Path.home() / '.claude/agents'
-            ])
-            if self.npl_home:
-                paths.append(Path(self.npl_home) / 'core/agents')
-            paths.extend([
-                Path('./.npl/core/agents'),
-                Path.home() / '.npl/core/agents',
-                global_npl / 'core/agents'
+                Path('./.npl') / core_subdir,
+                Path.home() / '.npl' / core_subdir,
+                self.global_npl / core_subdir
             ])
 
         return paths
 
+    def get_search_paths(self, resource_type='component') -> List[Path]:
+        """Get search paths based on resource type using config-driven approach"""
+        config = RESOURCE_CONFIG.get(resource_type)
+        if not config:
+            return []
+        return self._build_search_paths(config)
+
     def get_npl_init_paths(self):
         """Get search paths for the main npl.md file (one level up from search paths)"""
         paths = []
-
-        # Platform-specific global config
-        if sys.platform.startswith('win'):
-            global_npl = Path(os.environ.get('PROGRAMDATA', 'C:\\ProgramData')) / 'npl'
-        elif sys.platform == 'darwin':
-            global_npl = Path('/Library/Application Support/npl')
-        else:
-            global_npl = Path('/etc/npl')
 
         # Search paths are one level up from the component search paths
         if self.npl_home:
@@ -111,7 +159,7 @@ class NPLLoader:
         paths.extend([
             Path('./.npl'),
             Path.home() / '.npl',
-            global_npl,
+            self.global_npl,
             Path('.')  # Also check current directory
         ])
 
@@ -210,11 +258,11 @@ class NPLLoader:
                 try:
                     with open(patch_file, 'r', encoding='utf-8') as pf:
                         patch_content = pf.read()
-                    return f"# {item}:\n『(patch)\n{patch_content}\n』\n{content}␜\n"
+                    return f"# {item}:\n『(patch)\n{patch_content}\n』\n{content}"
                 except Exception as e:
                     print(f"Error loading patch {patch_file}: {e}")
 
-        return f"# {item}:\n{content}␜\n"
+        return f"# {item}:\n{content}"
 
     def is_skipped(self, item: str, skip_patterns: Set[str]) -> bool:
         """Check if item matches any skip pattern (supports wildcards)"""
@@ -223,89 +271,173 @@ class NPLLoader:
                 return True
         return False
 
-    def load_components(self, components: List[str], skip: Set[str]) -> List[Tuple[str, str]]:
-        """Load component files with patch support"""
+    def _get_tracking_set(self, resource_type: str) -> Set[str]:
+        """Get the tracking set for a given resource type"""
+        tracking_sets = {
+            'component': self.loaded_components,
+            'meta': self.loaded_meta,
+            'style': self.loaded_style,
+            'spec': self.loaded_specs,
+            'persona': self.loaded_personas,
+            'user-persona': self.loaded_user_personas,
+            'prd': self.loaded_prds,
+            'story': self.loaded_stories,
+            'prompt': self.loaded_prompts,
+            'workflow': self.loaded_workflows,
+        }
+        return tracking_sets.get(resource_type, set())
+
+    def load_resources(self, items: List[str], resource_type: str, skip: Set[str]) -> List[Tuple[str, str]]:
+        """Generic resource loader for any resource type"""
         loaded = []
-        for pattern in components:
+        tracking_set = self._get_tracking_set(resource_type)
+        config = RESOURCE_CONFIG.get(resource_type, {})
+        is_themed = config.get('themed', False)
+
+        for pattern in items:
             if '*' in pattern:
-                base_paths = self.get_search_paths('component')
+                base_paths = self.get_search_paths(resource_type)
                 for base_path in base_paths:
-                    glob_pattern = pattern.replace('.', '/')
-                    for match in base_path.glob(f"{glob_pattern}.md"):
-                        relative = match.relative_to(base_path)
-                        item = str(relative).replace('/', '.').replace('.md', '')
-                        if not self.is_skipped(item, skip) and item not in self.loaded_components:
-                            content = self.load_file_with_patch(base_path, match, 'component', item)
-                            if content:
-                                loaded.append((item, content))
-                                self.loaded_components.add(item)
+                    if is_themed:
+                        # Theme-aware glob for style resources
+                        for theme_dir in [self.npl_theme, 'default']:
+                            theme_path = base_path / theme_dir
+                            if theme_path.exists():
+                                glob_pattern = pattern.replace('.', '/')
+                                for match in theme_path.glob(f"{glob_pattern}.md"):
+                                    relative = match.relative_to(theme_path)
+                                    item = str(relative).replace('/', '.').replace('.md', '')
+                                    if not self.is_skipped(item, skip) and item not in tracking_set:
+                                        content = self.load_file_with_patch(theme_path, match, resource_type, item)
+                                        if content:
+                                            loaded.append((item, content))
+                                            tracking_set.add(item)
+                    else:
+                        glob_pattern = pattern.replace('.', '/')
+                        for match in base_path.glob(f"{glob_pattern}.md"):
+                            relative = match.relative_to(base_path)
+                            item = str(relative).replace('/', '.').replace('.md', '')
+                            if not self.is_skipped(item, skip) and item not in tracking_set:
+                                content = self.load_file_with_patch(base_path, match, resource_type, item)
+                                if content:
+                                    loaded.append((item, content))
+                                    tracking_set.add(item)
             else:
-                if not self.is_skipped(pattern, skip) and pattern not in self.loaded_components:
-                    result = self.resolve_path(pattern, 'component')
+                if not self.is_skipped(pattern, skip) and pattern not in tracking_set:
+                    result = self.resolve_path(pattern, resource_type)
                     if result:
                         base_path, file_path = result
-                        content = self.load_file_with_patch(base_path, file_path, 'component', pattern)
+                        content = self.load_file_with_patch(base_path, file_path, resource_type, pattern)
                         if content:
                             loaded.append((pattern, content))
-                            self.loaded_components.add(pattern)
+                            tracking_set.add(pattern)
         return loaded
+
+    # Backward-compatible wrapper methods
+    def load_components(self, components: List[str], skip: Set[str]) -> List[Tuple[str, str]]:
+        """Load component files with patch support"""
+        return self.load_resources(components, 'component', skip)
 
     def load_meta(self, items: List[str], skip: Set[str]) -> List[Tuple[str, str]]:
         """Load metadata files with patch support"""
-        loaded = []
-        for pattern in items:
-            if '*' in pattern:
-                base_paths = self.get_search_paths('meta')
-                for base_path in base_paths:
-                    glob_pattern = pattern.replace('.', '/')
-                    for match in base_path.glob(f"{glob_pattern}.md"):
-                        relative = match.relative_to(base_path)
-                        item = str(relative).replace('/', '.').replace('.md', '')
-                        if not self.is_skipped(item, skip) and item not in self.loaded_meta:
-                            content = self.load_file_with_patch(base_path, match, 'meta', item)
-                            if content:
-                                loaded.append((item, content))
-                                self.loaded_meta.add(item)
-            else:
-                if not self.is_skipped(pattern, skip) and pattern not in self.loaded_meta:
-                    result = self.resolve_path(pattern, 'meta')
-                    if result:
-                        base_path, file_path = result
-                        content = self.load_file_with_patch(base_path, file_path, 'meta', pattern)
-                        if content:
-                            loaded.append((pattern, content))
-                            self.loaded_meta.add(pattern)
-        return loaded
+        return self.load_resources(items, 'meta', skip)
 
     def load_style(self, items: List[str], skip: Set[str]) -> List[Tuple[str, str]]:
         """Load style guide files with patch support"""
-        loaded = []
-        for pattern in items:
-            if '*' in pattern:
-                base_paths = self.get_search_paths('style')
-                for base_path in base_paths:
-                    for theme_dir in [self.npl_theme, 'default']:
-                        theme_path = base_path / theme_dir
-                        if theme_path.exists():
-                            glob_pattern = pattern.replace('.', '/')
-                            for match in theme_path.glob(f"{glob_pattern}.md"):
-                                relative = match.relative_to(theme_path)
-                                item = str(relative).replace('/', '.').replace('.md', '')
-                                if not self.is_skipped(item, skip) and item not in self.loaded_style:
-                                    content = self.load_file_with_patch(theme_path, match, 'style', item)
-                                    if content:
-                                        loaded.append((item, content))
-                                        self.loaded_style.add(item)
+        return self.load_resources(items, 'style', skip)
+
+    def load_specs(self, items: List[str], skip: Set[str]) -> List[Tuple[str, str]]:
+        """Load specification files"""
+        return self.load_resources(items, 'spec', skip)
+
+    def load_personas(self, items: List[str], skip: Set[str]) -> List[Tuple[str, str]]:
+        """Load persona files (agent personas)"""
+        return self.load_resources(items, 'persona', skip)
+
+    def load_user_personas(self, items: List[str], skip: Set[str]) -> List[Tuple[str, str]]:
+        """Load user persona files (for user story planning)"""
+        return self.load_resources(items, 'user-persona', skip)
+
+    def load_prds(self, items: List[str], skip: Set[str]) -> List[Tuple[str, str]]:
+        """Load PRD document files"""
+        return self.load_resources(items, 'prd', skip)
+
+    def load_stories(self, items: List[str], skip: Set[str]) -> List[Tuple[str, str]]:
+        """Load user story files"""
+        return self.load_resources(items, 'story', skip)
+
+    def load_prompts(self, items: List[str], skip: Set[str]) -> List[Tuple[str, str]]:
+        """Load prompt files"""
+        return self.load_resources(items, 'prompt', skip)
+
+    def load_workflows(self, items: List[str], skip: Set[str]) -> List[Tuple[str, str]]:
+        """Load workflow files"""
+        return self.load_resources(items, 'workflow', skip)
+
+    def init_claude(self, target_path: str = './CLAUDE.md',
+                    prompts: List[str] = None) -> Tuple[int, int]:
+        """
+        Append standard prompts to CLAUDE.md file.
+        Returns (added_count, skipped_count).
+        """
+        if prompts is None:
+            prompts = ['npl_load', 'scripts', 'sql-lite']
+
+        # Define prompt identifiers for duplicate detection
+        identifiers = {
+            'npl_load': '## NPL Load Directive',
+            'scripts': '## NPL Scripts',
+            'sql-lite': '# SQLite Quick Guide'
+        }
+
+        # Read existing CLAUDE.md or create empty
+        existing_content = ''
+        target = Path(target_path)
+        if target.exists():
+            try:
+                existing_content = target.read_text(encoding='utf-8')
+            except Exception as e:
+                print(f"Error reading {target_path}: {e}", file=sys.stderr)
+                return (0, 0)
+
+        # Collect prompts to append
+        to_append = []
+        skipped = 0
+        for prompt_name in prompts:
+            # Check for duplicates using identifier
+            identifier = identifiers.get(prompt_name)
+            if identifier and identifier in existing_content:
+                skipped += 1
+                print(f"Skipping {prompt_name}: already present in {target_path}", file=sys.stderr)
+                continue
+
+            # Resolve prompt path
+            result = self.resolve_path(prompt_name, 'prompt')
+            if result:
+                _, file_path = result
+                try:
+                    content = file_path.read_text(encoding='utf-8')
+                    to_append.append((prompt_name, content))
+                except Exception as e:
+                    print(f"Error reading prompt {file_path}: {e}", file=sys.stderr)
             else:
-                if not self.is_skipped(pattern, skip) and pattern not in self.loaded_style:
-                    result = self.resolve_path(pattern, 'style')
-                    if result:
-                        base_path, file_path = result
-                        content = self.load_file_with_patch(base_path, file_path, 'style', pattern)
-                        if content:
-                            loaded.append((pattern, content))
-                            self.loaded_style.add(pattern)
-        return loaded
+                print(f"Prompt not found: {prompt_name}", file=sys.stderr)
+
+        # Append with separator
+        if to_append:
+            try:
+                with open(target_path, 'a', encoding='utf-8') as f:
+                    for i, (name, content) in enumerate(to_append):
+                        # Add separator if there's existing content or previous prompts
+                        if i > 0 or existing_content.strip():
+                            f.write('\n\n* * *\n\n')
+                        f.write(content)
+                        print(f"Added {name} to {target_path}", file=sys.stderr)
+            except Exception as e:
+                print(f"Error writing to {target_path}: {e}", file=sys.stderr)
+                return (0, skipped)
+
+        return (len(to_append), skipped)
 
     def load_agent(self, agent_name: str) -> Optional[Tuple[str, str]]:
         """Load agent by name from search paths"""
@@ -320,7 +452,7 @@ class NPLLoader:
                     with open(agent_file, 'r', encoding='utf-8') as f:
                         content = f.read()
                     self.loaded_agents.add(agent_name)
-                    return (agent_name, f"# agent:{agent_name}:\n{content}␜\n")
+                    return (agent_name, f"# agent:{agent_name}:\n{content}")
                 except Exception as e:
                     print(f"Error loading agent {agent_file}: {e}", file=sys.stderr)
                     continue
@@ -875,6 +1007,31 @@ def _parse_skip_list(values) -> Set[str]:
         raw = " ".join(values)
     return {t for t in re.split(r'[,\s]+', raw) if t}
 
+
+def _add_resource_subparser(subparsers, name: str, help_text: str, items_name: str):
+    """Factory function to create resource subparsers with standard arguments"""
+    sp = subparsers.add_parser(name, help=help_text)
+    sp.add_argument(items_name, nargs='*', help=f'{name.title()} to load (supports glob patterns)')
+    sp.add_argument('--skip', nargs='*', default=[], help='Skip patterns (wildcards allowed)')
+    sp.add_argument('--verbose', action='store_true')
+    return sp
+
+
+# Command configuration: maps command name to (resource_type, items_attr, label)
+RESOURCE_COMMANDS = {
+    'c': ('component', 'def_items', 'COMPONENT'),
+    'm': ('meta', 'meta_items', 'META'),
+    's': ('style', 'style_items', 'STYLE'),
+    'spec': ('spec', 'spec_items', 'SPEC'),
+    'persona': ('persona', 'persona_items', 'PERSONA'),
+    'user-persona': ('user-persona', 'user_persona_items', 'USER-PERSONA'),
+    'prd': ('prd', 'prd_items', 'PRD'),
+    'story': ('story', 'story_items', 'STORY'),
+    'prompt': ('prompt', 'prompt_items', 'PROMPT'),
+    'workflow': ('workflow', 'workflow_items', 'WORKFLOW'),
+}
+
+
 def main():
     parser = argparse.ArgumentParser(description='Load NPL resources with dependency tracking')
     parser.add_argument('--quiet', action='store_true',
@@ -882,29 +1039,26 @@ def main():
 
     subparsers = parser.add_subparsers(dest='command', required=True)
 
-    sp_c = subparsers.add_parser('c', help='Load components')
-    sp_c.add_argument('def_items', nargs='*', help='Components to load (supports glob patterns)')
-    sp_c.add_argument('--skip', nargs='*', default=[], help='Skip patterns (wildcards allowed)')
-    sp_c.add_argument('--verbose', action='store_true')
+    # Resource loading subcommands (using factory function)
+    _add_resource_subparser(subparsers, 'c', 'Load components', 'def_items')
+    _add_resource_subparser(subparsers, 'm', 'Load metadata', 'meta_items')
+    _add_resource_subparser(subparsers, 's', 'Load style guides', 'style_items')
+    _add_resource_subparser(subparsers, 'spec', 'Load specifications', 'spec_items')
+    _add_resource_subparser(subparsers, 'persona', 'Load agent personas', 'persona_items')
+    _add_resource_subparser(subparsers, 'user-persona', 'Load user personas (for user story planning)', 'user_persona_items')
+    _add_resource_subparser(subparsers, 'prd', 'Load PRD documents', 'prd_items')
+    _add_resource_subparser(subparsers, 'story', 'Load user stories', 'story_items')
+    _add_resource_subparser(subparsers, 'prompt', 'Load prompts', 'prompt_items')
+    _add_resource_subparser(subparsers, 'workflow', 'Load workflows', 'workflow_items')
 
-    sp_m = subparsers.add_parser('m', help='Load metadata')
-    sp_m.add_argument('meta_items', nargs='*', help='Metadata to load (supports glob patterns)')
-    sp_m.add_argument('--skip', nargs='*', default=[], help='Skip patterns (wildcards allowed)')
-    sp_m.add_argument('--verbose', action='store_true')
-
-    sp_s = subparsers.add_parser('s', help='Load style guides')
-    sp_s.add_argument('style_items', nargs='*', help='Style guides to load (supports glob patterns)')
-    sp_s.add_argument('--skip', nargs='*', default=[], help='Skip patterns (wildcards allowed)')
-    sp_s.add_argument('--verbose', action='store_true')
-
-    # New: schema subcommand
+    # Schema subcommand
     sp_schema = subparsers.add_parser('schema', help='Output the raw SQL for a schema')
     sp_schema.add_argument('schema_name', help='Schema name without .sql (e.g., nimps)')
 
-    # New: init subcommand
+    # Init subcommand
     sp_init = subparsers.add_parser('init', help='Load the main npl.md file')
 
-    # New: agent subcommand
+    # Agent subcommand
     sp_agent = subparsers.add_parser('agent', help='Load agent definitions')
     sp_agent.add_argument('agent_name', nargs='?', help='Name of agent to load')
     sp_agent.add_argument('--list', action='store_true', help='List all available agents')
@@ -915,11 +1069,20 @@ def main():
     sp_agent.add_argument('--definition', action='store_true',
                          help='Get agent with NPL syntax documentation')
 
-    # New: syntax subcommand
+    # Syntax subcommand
     sp_syntax = subparsers.add_parser('syntax', help='Analyze NPL syntax elements in content')
     sp_syntax.add_argument('content', nargs='?', help='Content to analyze (use - for stdin)')
     sp_syntax.add_argument('--file', help='File to analyze')
     sp_syntax.add_argument('--matches', action='store_true', help='Show actual matches')
+
+    # init-claude subcommand
+    sp_init_claude = subparsers.add_parser('init-claude',
+        help='Initialize/append NPL prompts to CLAUDE.md')
+    sp_init_claude.add_argument('--target', default='./CLAUDE.md',
+        help='Target CLAUDE.md path (default: ./CLAUDE.md)')
+    sp_init_claude.add_argument('--prompts', nargs='*',
+        default=['npl_load', 'scripts', 'sql-lite'],
+        help='Prompts to append (default: npl_load scripts sql-lite)')
 
     args = parser.parse_args()
 
@@ -1003,45 +1166,67 @@ def main():
         loader.print_syntax_analysis(content_to_analyze, args.matches)
         sys.exit(0)
 
+    # Handle init-claude command early and exit
+    if args.command == 'init-claude':
+        loader = NPLLoader()
+        added, skipped = loader.init_claude(args.target, args.prompts)
+        if added > 0:
+            print(f"Added {added} prompt(s) to {args.target}")
+        if skipped > 0:
+            print(f"Skipped {skipped} prompt(s) (already present)")
+        if added == 0 and skipped == 0:
+            print(f"No prompts added to {args.target}")
+        sys.exit(0)
+
     loader = NPLLoader()
     loaded_content = []
 
-    if args.command == 'c':
+    # Handle resource commands using dispatch pattern
+    if args.command in RESOURCE_COMMANDS:
+        resource_type, items_attr, label = RESOURCE_COMMANDS[args.command]
         skip = _parse_skip_list(args.skip)
-        if args.def_items:
-            components = loader.load_components(args.def_items, skip)
-            for name, content in components:
-                loaded_content.append(('COMPONENT', name, content))
+        # Parse items - support both space-separated args and comma-separated strings
+        raw_items = getattr(args, items_attr, [])
+        items = []
+        for item in raw_items:
+            items.extend([i.strip() for i in item.split(',') if i.strip()])
+        if items:
+            resources = loader.load_resources(items, resource_type, skip)
+            for name, content in resources:
+                loaded_content.append((label, name, content))
 
-    elif args.command == 'm':
-        skip = _parse_skip_list(args.skip)
-        if args.meta_items:
-            meta = loader.load_meta(args.meta_items, skip)
-            for name, content in meta:
-                loaded_content.append(('META', name, content))
+    # Flag output configuration: maps tracking set attr to flag name
+    FLAG_CONFIG = [
+        ('loaded_components', 'npl.def.loaded'),
+        ('loaded_meta', 'npl.meta.loaded'),
+        ('loaded_style', 'npl.style.loaded'),
+        ('loaded_specs', 'npl.spec.loaded'),
+        ('loaded_personas', 'npl.persona.loaded'),
+        ('loaded_user_personas', 'npl.user-persona.loaded'),
+        ('loaded_prds', 'npl.prd.loaded'),
+        ('loaded_stories', 'npl.story.loaded'),
+        ('loaded_prompts', 'npl.prompt.loaded'),
+        ('loaded_workflows', 'npl.workflow.loaded'),
+    ]
 
-    elif args.command == 's':
-        skip = _parse_skip_list(args.skip)
-        if args.style_items:
-            styles = loader.load_style(args.style_items, skip)
-            for name, content in styles:
-                loaded_content.append(('STYLE', name, content))
+    # Check if any content was loaded
+    has_loaded = any(getattr(loader, attr, None) for attr, _ in FLAG_CONFIG)
 
-    if loader.loaded_components or loader.loaded_meta or loader.loaded_style:
+    if has_loaded:
         print("# Flag Update")
         print("\n```🏳️\n")
-        if loader.loaded_components:
-            print(f"@npl.def.loaded+=\"{','.join(sorted(loader.loaded_components))}\"")
-        if loader.loaded_meta:
-            print(f"@npl.meta.loaded+=\"{','.join(sorted(loader.loaded_meta))}\"")
-        if loader.loaded_style:
-            print(f"@npl.style.loaded+=\"{','.join(sorted(loader.loaded_style))}\"")
+        for attr, flag_name in FLAG_CONFIG:
+            tracking_set = getattr(loader, attr, None)
+            if tracking_set:
+                print(f"@{flag_name}+=\"{','.join(sorted(tracking_set))}\"")
         print("\n\n```\n")
         print("\n---")
 
-    if not args.quiet:       
-        for resource_type, name, content in loaded_content:
+    if not args.quiet:
+        for i, (resource_type, name, content) in enumerate(loaded_content):
             print(content)
+            if i < len(loaded_content) - 1:
+                print("\n\n* * *\n")
 
 if __name__ == '__main__':
     main()
