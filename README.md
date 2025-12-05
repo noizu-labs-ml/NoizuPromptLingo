@@ -8,36 +8,91 @@ Download: https://github.com/noizu-labs-ml/NoizuPromptLingo/archive/refs/heads/m
 
 ## Quick Setup
 
-1. **Clone or Copy Repository**
-   ```bash
-   git clone https://github.com/noizu-labs-ml/NoizuPromptLingo.git
-   cd NoizuPromptLingo
-   ```
+### 1. Install NPL Framework
 
-2. **Enable Scripts** (add to your shell profile or use direnv)
-   ```bash
-   # Option A: Use direnv (if installed)
-   direnv allow
+Clone or copy the repository to `~/.npl`:
 
-   # Option B: Add to PATH manually
-   export PATH="$PATH:$(pwd)/.claude/scripts"
-   ```
+```bash
+git clone https://github.com/noizu-labs-ml/NoizuPromptLingo.git ~/.npl
+```
 
-3. **Verify Installation**
-   ```bash
-   npl-load --help      # Should show NPL loader options
-   npl-persona --help   # Should show persona management options
-   ```
+### 2. Add Scripts to PATH
 
-4. **Generate Project Configuration** (Optional)
-   ```
-   @npl-templater Please read and hydrate skeleton/CLAUDE.md for my project
-   ```
+Add to your shell profile (`.bashrc`, `.zshrc`, etc.):
 
-5. **Hydrate Agent Templates** (Optional)
-   ```
-   @npl-templater Please convert agent templates in skeleton/agents/
-   ```
+```bash
+export PATH="$PATH:$HOME/.npl/core/scripts"
+```
+
+Then reload your shell or run `source ~/.bashrc` (or equivalent).
+
+### 3. Install Core Agents and Commands
+
+Copy or symlink core agents to Claude's agent directory:
+
+```bash
+# Create Claude directories if they don't exist
+mkdir -p ~/.claude/agents ~/.claude/commands
+
+# Symlink core agents
+ln -s ~/.npl/core/agents/*.md ~/.claude/agents/
+
+# Optionally add additional agents you want globally available
+# ln -s ~/.npl/core/additional-agents/category/agent-name.md ~/.claude/agents/
+
+# Symlink slash commands
+ln -s ~/.npl/core/commands ~/.claude/commands
+```
+
+### 4. Verify Installation
+
+```bash
+npl-load --help      # Should show NPL loader options
+npl-persona --help   # Should show persona management options
+```
+
+## Project Setup
+
+For each project where you want to use NPL:
+
+### 1. Initialize Project Configuration
+
+In your target repository, run these Claude Code slash commands:
+
+```
+/init-project-fast    # Sets up initial CLAUDE.md sections
+/update-arch          # Generates docs/PROJECT-ARCH.md and docs/PROJECT-LAYOUT.md
+```
+
+### 2. Hydrate Project-Specific Agents (Optional)
+
+Use the `/hydrate-agents` command (pending) to customize agent definitions for your project:
+
+```
+/hydrate-agents       # Tailors agents and places them in .claude/available-agents/
+```
+
+This uses `@npl-templater` to create project-specific agent definitions.
+
+### 3. Configure Git and Local Agents
+
+```bash
+# Add available-agents to your repo
+git add .claude/available-agents/
+
+# Add to .gitignore (ignore the overall .claude and .npl folders except available-agents)
+echo ".claude/" >> .gitignore
+echo "!.claude/available-agents/" >> .gitignore
+echo ".npl/" >> .gitignore
+
+# Create local agents directory and symlink agents you want to use
+mkdir -p .claude/agents
+ln -s ../available-agents/agent-name.md .claude/agents/
+```
+
+### 4. Restart Claude Code
+
+Restart Claude Code to make the new agents available in your session.
 
 ## Documentation
 
@@ -85,13 +140,13 @@ These scripts are specifically designed to work seamlessly with NPL agents, prov
 
 ```bash
 # Generate API documentation from codebase analysis
-./.claude/scripts/dump-files src/api/ | @npl-technical-writer generate api-doc
+dump-files src/api/ | @npl-technical-writer generate api-doc
 
 # Analyze project structure for architecture decisions
-./.claude/scripts/git-tree | @npl-thinker evaluate architecture-patterns
+git-tree | @npl-thinker evaluate architecture-patterns
 
 # Assess code organization complexity
-./.claude/scripts/git-dir-depth src/ | @npl-grader assess --criteria=organization
+git-dir-depth src/ | @npl-grader assess --criteria=organization
 
 # Extract documentation for content review
 dump-files docs/ | @npl-technical-writer review --mode=annotate
@@ -102,7 +157,7 @@ dump-files docs/ | @npl-technical-writer review --mode=annotate
 **View Complete Project Structure**
 ```bash
 # Visual tree of entire project
-./.claude/scripts/git-tree
+git-tree
 
 # Focus on specific module
 git-tree core/agents/
@@ -111,7 +166,7 @@ git-tree core/agents/
 **Analyze Directory Complexity**
 ```bash
 # Get depth metrics for project organization
-./.claude/scripts/git-dir-depth .
+git-dir-depth .
 
 # Focus on specific component
 git-tree-depth core/
@@ -120,13 +175,13 @@ git-tree-depth core/
 **Extract Code for Analysis**
 ```bash
 # Dump all files in source directory
-./.claude/scripts/dump-files src/
+dump-files src/
 
 # Extract only Markdown files
-./.claude/scripts/dump-files . -g "*.md"
+dump-files . -g "*.md"
 
 # Extract multiple file types
-./.claude/scripts/dump-files . -g "*.md" -g "src/*.ts"
+dump-files . -g "*.md" -g "src/*.ts"
 
 # Extract specific module for documentation
 dump-files npl/ > npl-docs.txt
@@ -134,7 +189,7 @@ dump-files npl/ > npl-docs.txt
 
 #### Script Locations
 
-**Available Scripts** (`.claude/scripts/` → symlinks to `core/scripts/`)
+**Available Scripts** (`~/.npl/core/scripts/` - add to PATH)
 - `dump-files` - Git-aware file dumping with `-g`/`--glob` pattern filtering
 - `git-tree` - Visual directory tree (requires `tree` command)
 - `git-tree-depth` - Directory depth analysis
@@ -168,34 +223,44 @@ All scripts include comprehensive error checking and will exit gracefully if req
 ## Project Structure
 
 ```
-├── .claude/                    # Claude Code integration
-│   ├── agents/                 # Claude agent definitions (18 agents)
-│   ├── scripts/                # Utility scripts (symlinks to core/scripts/)
-│   └── npl-m/                  # NPL module system
-├── core/                       # Core framework
-│   ├── agents/                 # Core agent definitions (16+ agents)
-│   ├── scripts/                # Primary utility scripts
-│   ├── additional-agents/      # Extended agent library (30+ agents)
-│   └── prompts/                # Prompt templates
-├── npl/                        # NPL syntax documentation
-│   ├── directive/              # Directive definitions
-│   ├── fences/                 # Code fence types
-│   ├── formatting/             # Output formatting specs
-│   ├── instructing/            # Instruction patterns
-│   ├── pumps/                  # Thinking/reasoning patterns
-│   └── prefix/                 # Response mode indicators
-├── skeleton/                   # Project scaffolding templates
-│   ├── CLAUDE.md               # Template for project CLAUDE.md
-│   └── agents/                 # Agent templates (.npl-template.md)
-├── demo/                       # Examples and demonstrations
-├── doc/                        # Technical documentation
-├── mcp-server/                 # MCP server implementation
-└── meta/                       # Organization/team metadata
+~/.npl/                          # NPL Framework (installed here)
+├── core/                        # Core framework
+│   ├── agents/                  # Core agent definitions (16+ agents)
+│   ├── commands/                # Slash commands (/init-project-fast, /update-arch, etc.)
+│   ├── scripts/                 # Utility scripts (add to PATH)
+│   ├── additional-agents/       # Extended agent library (30+ agents)
+│   └── prompts/                 # Prompt templates
+├── npl/                         # NPL syntax documentation
+│   ├── directive/               # Directive definitions
+│   ├── fences/                  # Code fence types
+│   ├── formatting/              # Output formatting specs
+│   ├── instructing/             # Instruction patterns
+│   ├── pumps/                   # Thinking/reasoning patterns
+│   └── prefix/                  # Response mode indicators
+├── skeleton/                    # Project scaffolding templates
+│   ├── CLAUDE.md                # Template for project CLAUDE.md
+│   └── agents/                  # Agent templates (.npl-template.md)
+├── demo/                        # Examples and demonstrations
+├── doc/                         # Technical documentation
+├── mcp-server/                  # MCP server implementation
+└── meta/                        # Organization/team metadata
+
+~/.claude/                       # Claude Code configuration
+├── agents/                      # Symlinks to core/agents/ and selected additional agents
+└── commands/                    # Symlink to core/commands/
+
+<your-project>/                  # Per-project structure
+├── .claude/
+│   ├── available-agents/        # Project-tailored agents (committed to repo)
+│   └── agents/                  # Symlinks to available-agents/ (gitignored)
+└── docs/
+    ├── PROJECT-ARCH.md          # Generated by /update-arch
+    └── PROJECT-LAYOUT.md        # Generated by /update-arch
 ```
 
 ## Key Components
 
-### Core Agents (`core/agents/` and `.claude/agents/`)
+### Core Agents (`~/.npl/core/agents/` → symlinked to `~/.claude/agents/`)
 - **npl-templater**: Template creation and hydration
 - **npl-grader**: NPL syntax and structure evaluation
 - **npl-persona**: AI persona development and management
@@ -204,14 +269,14 @@ All scripts include comprehensive error checking and will exit gracefully if req
 - **npl-fim**: Fill-in-middle code completion
 - **npl-threat-modeler**: Security analysis and threat modeling
 
-### Agent Templates (`skeleton/agents/`)
+### Agent Templates (`~/.npl/skeleton/agents/`)
 - **npl-gopher-scout**: System exploration and analysis
 - **npl-qa**: Question answering specialist
 - **npl-system-digest**: System analysis and reporting
 - **npl-tdd-builder**: Test-driven development assistant
 - **npl-tool-forge**: Custom tool creation
 
-### Additional Agents (`core/additional-agents/`)
+### Additional Agents (`~/.npl/core/additional-agents/`)
 Extended library of specialized agents organized by category:
 - **Infrastructure**: System architecture and deployment agents
 - **Marketing**: Content creation and marketing automation
@@ -220,7 +285,7 @@ Extended library of specialized agents organized by category:
 - **Security**: Threat modeling and security analysis
 See [Additional Agents Documentation](doc/agents/README.md) for complete list.
 
-### NPL Documentation (`npl/`)
+### NPL Documentation (`~/.npl/npl/`)
 Complete NPL syntax reference including directives, fences, formatting, instruction patterns, and thinking pumps.
 
 ## NPL Syntax Framework
@@ -235,11 +300,19 @@ NPL uses Unicode symbols for precise semantic communication:
 
 ## Workflow
 
-### Initial Setup
-1. Copy repository to workspace
-2. Enable scripts via direnv or add `.claude/scripts/` to PATH
-3. Generate project-specific `CLAUDE.md` using npl-templater
-4. Optionally hydrate additional agent templates
+### Initial Setup (One-time)
+1. Clone repository to `~/.npl`
+2. Add `~/.npl/core/scripts` to PATH
+3. Symlink core agents to `~/.claude/agents/`
+4. Symlink core commands to `~/.claude/commands/`
+5. Restart Claude Code
+
+### Per-Project Setup
+1. Run `/init-project-fast` to initialize CLAUDE.md
+2. Run `/update-arch` to generate PROJECT-ARCH.md and PROJECT-LAYOUT.md
+3. Run `/hydrate-agents` to create project-tailored agents in `.claude/available-agents/`
+4. Symlink desired agents from `available-agents/` to `.claude/agents/`
+5. Restart Claude Code
 
 ### Daily Usage
 1. Use pre-built agents for common tasks:
@@ -278,8 +351,10 @@ Template-based approach accommodates new features and use cases while maintainin
 
 ## Requirements
 
-- Claude Code environment
-- Access to Claude API
+- Claude Code CLI
+- Unix-like environment (Linux, macOS, WSL)
+- Git (for repository operations and git-aware scripts)
+- `tree` command (optional, for `git-tree` script)
 - Basic understanding of prompt engineering concepts
 
 ## License
@@ -297,7 +372,15 @@ The `demo/` directory is intended to be populated with actual agent-generated ar
 - Analysis outputs from npl-thinker
 
 ### Additional Agents
-The `core/additional-agents/` directory contains an extended library of specialized agents beyond the core set. These agents cover specific domains like infrastructure, marketing, QA, research, and security. Review the [Additional Agents Documentation](doc/agents/README.md) to explore available options.
+The `~/.npl/core/additional-agents/` directory contains an extended library of specialized agents beyond the core set. These agents cover specific domains like infrastructure, marketing, QA, research, and security. Review the [Additional Agents Documentation](doc/agents/README.md) to explore available options.
+
+### Slash Commands
+NPL provides slash commands for common setup tasks:
+- `/init-project-fast` - Quick project initialization
+- `/init-project` - Full interactive project setup
+- `/update-arch` - Generate/update PROJECT-ARCH.md and PROJECT-LAYOUT.md
+- `/update-layout` - Update PROJECT-LAYOUT.md only
+- `/hydrate-agents` - Create project-tailored agents (pending)
 
 ## Support
 
