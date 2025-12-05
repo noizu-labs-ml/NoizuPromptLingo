@@ -90,7 +90,8 @@ The following scripts are available.
 **`git-tree-depth <path>`** - Show directory tree with nesting levels
 
 **`git-tree <path>`** - Display directory tree
-- Uses `tree` command, defaults to current directory
+- Uses `tree` command if available, with pure-bash fallback
+- Defaults to current directory
 
 
 ---
