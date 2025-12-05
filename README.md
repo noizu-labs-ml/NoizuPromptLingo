@@ -3,33 +3,40 @@
 A simplified agentic framework for Claude Code that provides structured prompting syntax and pre-built AI agents for enhanced language model interactions.
 
 ## Getting Started
-|                                                                 |                                          |
-| --------------------------------------------------------------- | ---------------------------------------- |
-| ![image](https://github.com/noizu-labs-ml/NoizuPromptLingo/assets/6298118/52afeecb-a211-4a56-b03a-8b4c5577e562) | Download: https://github.com/noizu-labs-ml/NoizuPromptLingo/archive/refs/heads/main.zip <br> Follow setup: `agentic/INSTRUCTIONS.md` |
+
+Download: https://github.com/noizu-labs-ml/NoizuPromptLingo/archive/refs/heads/main.zip
 
 ## Quick Setup
 
-1. **Copy Repository**
+1. **Clone or Copy Repository**
    ```bash
-   # Copy this entire repository to your local workspace
-   cp -r NoizuPromptLingo /your/workspace/
-   cd /your/workspace/NoizuPromptLingo
+   git clone https://github.com/noizu-labs-ml/NoizuPromptLingo.git
+   cd NoizuPromptLingo
    ```
 
-2. **Follow Setup Instructions**
+2. **Enable Scripts** (add to your shell profile or use direnv)
    ```bash
-   # Run the instructions in agentic/INSTRUCTIONS.md with Claude
-   # This will copy agents and NPL documentation to your Claude Code environment
+   # Option A: Use direnv (if installed)
+   direnv allow
+
+   # Option B: Add to PATH manually
+   export PATH="$PATH:$(pwd)/.claude/scripts"
    ```
 
-3. **Generate Project Configuration**
-   ```
-   @npl-templater Please read and hydrate the scaffolding/CLAUDE.npl.npl-template.md file
+3. **Verify Installation**
+   ```bash
+   npl-load --help      # Should show NPL loader options
+   npl-persona --help   # Should show persona management options
    ```
 
-4. **Hydrate Agent Templates** (Optional)
+4. **Generate Project Configuration** (Optional)
    ```
-   @npl-templater Please convert all agent templates in scaffolding/agent-templates/
+   @npl-templater Please read and hydrate skeleton/CLAUDE.md for my project
+   ```
+
+5. **Hydrate Agent Templates** (Optional)
+   ```
+   @npl-templater Please convert agent templates in skeleton/agents/
    ```
 
 ## Documentation
@@ -87,7 +94,7 @@ These scripts are specifically designed to work seamlessly with NPL agents, prov
 ./.claude/scripts/git-dir-depth src/ | @npl-grader assess --criteria=organization
 
 # Extract documentation for content review
-./agentic/scaffolding/scripts/dump-files docs/ | @npl-technical-writer review --mode=annotate
+dump-files docs/ | @npl-technical-writer review --mode=annotate
 ```
 
 #### Quick Usage Examples
@@ -98,7 +105,7 @@ These scripts are specifically designed to work seamlessly with NPL agents, prov
 ./.claude/scripts/git-tree
 
 # Focus on specific module
-./agentic/scaffolding/scripts/git-tree agentic/scaffolding/
+git-tree core/agents/
 ```
 
 **Analyze Directory Complexity**
@@ -107,7 +114,7 @@ These scripts are specifically designed to work seamlessly with NPL agents, prov
 ./.claude/scripts/git-dir-depth .
 
 # Focus on specific component
-./agentic/scaffolding/scripts/git-dir-depth src/components/
+git-tree-depth core/
 ```
 
 **Extract Code for Analysis**
@@ -122,23 +129,18 @@ These scripts are specifically designed to work seamlessly with NPL agents, prov
 ./.claude/scripts/dump-files . -g "*.md" -g "src/*.ts"
 
 # Extract specific module for documentation
-./agentic/scaffolding/scripts/dump-files agentic/npl/ > npl-docs.txt
+dump-files npl/ > npl-docs.txt
 ```
 
-#### Script Locations and Versions
+#### Script Locations
 
-**Primary Scripts** (`.claude/scripts/`)
-- `dump-dir` - Directory content extraction
-- `dump-files` - Enhanced file dumping with Git integration. Supports `-g`/`--glob` options for filtering files by shell patterns (e.g., `-g "*.md"` for Markdown files)
-- `git-dir-depth` - Directory depth analysis  
-- `git-tree` - Git-aware tree visualization
-
-**Scaffolding Scripts** (`agentic/scaffolding/scripts/`)
-- `dump-files` - File content extraction for agent workflows. Supports `-g`/`--glob` options for filtering files by shell patterns
-- `git-dir-depth` - Repository structure analysis
-- `git-tree` - Tree visualization for NPL contexts
-
-Both locations provide identical core functionality, with scaffolding versions optimized for NPL agent integration and template generation workflows.
+**Available Scripts** (`.claude/scripts/` → symlinks to `core/scripts/`)
+- `dump-files` - Git-aware file dumping with `-g`/`--glob` pattern filtering
+- `git-tree` - Visual directory tree (requires `tree` command)
+- `git-tree-depth` - Directory depth analysis
+- `npl-load` - NPL component/metadata/style loader with dependency tracking
+- `npl-persona` - Comprehensive persona management (lifecycle, journals, tasks, KB)
+- `npl-fim-config` - FIM visualization configuration tool
 
 #### Development Benefits
 
@@ -166,42 +168,50 @@ All scripts include comprehensive error checking and will exit gracefully if req
 ## Project Structure
 
 ```
-├── .claude/                    # Claude Code integration files
-│   ├── agents/                 # Claude agent definitions
-│   ├── scripts/                # Project utility scripts
+├── .claude/                    # Claude Code integration
+│   ├── agents/                 # Claude agent definitions (18 agents)
+│   ├── scripts/                # Utility scripts (symlinks to core/scripts/)
 │   └── npl-m/                  # NPL module system
-├── agentic/                    # Main agentic framework
-│   ├── INSTRUCTIONS.md         # Setup instructions for Claude
-│   ├── npl/                    # NPL documentation (verbose/concise)
-│   └── scaffolding/            # Agent scaffolding and templates
-│       ├── agents/             # Pre-built NPL agents
-│       ├── agent-templates/    # Reusable agent templates
-│       └── CLAUDE.npl.template.md # Project template
-├── demo/                       # Usage examples and demonstrations (to be populated)
+├── core/                       # Core framework
+│   ├── agents/                 # Core agent definitions (16+ agents)
+│   ├── scripts/                # Primary utility scripts
+│   ├── additional-agents/      # Extended agent library (30+ agents)
+│   └── prompts/                # Prompt templates
+├── npl/                        # NPL syntax documentation
+│   ├── directive/              # Directive definitions
+│   ├── fences/                 # Code fence types
+│   ├── formatting/             # Output formatting specs
+│   ├── instructing/            # Instruction patterns
+│   ├── pumps/                  # Thinking/reasoning patterns
+│   └── prefix/                 # Response mode indicators
+├── skeleton/                   # Project scaffolding templates
+│   ├── CLAUDE.md               # Template for project CLAUDE.md
+│   └── agents/                 # Agent templates (.npl-template.md)
+├── demo/                       # Examples and demonstrations
 ├── doc/                        # Technical documentation
-│   └── agents/                 # Additional agent documentation
-└── npl/                        # Extended NPL resources
+├── mcp-server/                 # MCP server implementation
+└── meta/                       # Organization/team metadata
 ```
 
 ## Key Components
 
-### Core Agents (`agentic/scaffolding/agents/`)
+### Core Agents (`core/agents/` and `.claude/agents/`)
 - **npl-templater**: Template creation and hydration
-- **npl-grader**: NPL syntax and structure evaluation  
+- **npl-grader**: NPL syntax and structure evaluation
 - **npl-persona**: AI persona development and management
 - **npl-thinker**: Complex reasoning and analysis
 - **npl-technical-writer**: Technical documentation specialist
 - **npl-fim**: Fill-in-middle code completion
 - **npl-threat-modeler**: Security analysis and threat modeling
 
-### Agent Templates (`agentic/scaffolding/agent-templates/`)
-- **gopher-scout**: System exploration and analysis
-- **gpt-qa**: Question answering specialist
-- **system-digest**: System analysis and reporting
-- **tdd-driven-builder**: Test-driven development assistant
-- **tool-forge**: Custom tool creation
+### Agent Templates (`skeleton/agents/`)
+- **npl-gopher-scout**: System exploration and analysis
+- **npl-qa**: Question answering specialist
+- **npl-system-digest**: System analysis and reporting
+- **npl-tdd-builder**: Test-driven development assistant
+- **npl-tool-forge**: Custom tool creation
 
-### Additional Agents (`npl/agentic/scaffolding/additional-agents/`)
+### Additional Agents (`core/additional-agents/`)
 Extended library of specialized agents organized by category:
 - **Infrastructure**: System architecture and deployment agents
 - **Marketing**: Content creation and marketing automation
@@ -210,9 +220,8 @@ Extended library of specialized agents organized by category:
 - **Security**: Threat modeling and security analysis
 See [Additional Agents Documentation](doc/agents/README.md) for complete list.
 
-### NPL Documentation (`agentic/npl/`)
-- **verbose/**: Complete NPL syntax reference
-- **concise/**: Streamlined NPL documentation
+### NPL Documentation (`npl/`)
+Complete NPL syntax reference including directives, fences, formatting, instruction patterns, and thinking pumps.
 
 ## NPL Syntax Framework
 
@@ -228,7 +237,7 @@ NPL uses Unicode symbols for precise semantic communication:
 
 ### Initial Setup
 1. Copy repository to workspace
-2. Follow `agentic/INSTRUCTIONS.md` setup process
+2. Enable scripts via direnv or add `.claude/scripts/` to PATH
 3. Generate project-specific `CLAUDE.md` using npl-templater
 4. Optionally hydrate additional agent templates
 
@@ -288,7 +297,7 @@ The `demo/` directory is intended to be populated with actual agent-generated ar
 - Analysis outputs from npl-thinker
 
 ### Additional Agents
-The `npl/agentic/scaffolding/additional-agents/` directory contains an extended library of specialized agents beyond the core set. These agents cover specific domains like infrastructure, marketing, QA, research, and security. Review the [Additional Agents Documentation](doc/agents/README.md) to explore available options.
+The `core/additional-agents/` directory contains an extended library of specialized agents beyond the core set. These agents cover specific domains like infrastructure, marketing, QA, research, and security. Review the [Additional Agents Documentation](doc/agents/README.md) to explore available options.
 
 ## Support
 

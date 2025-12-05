@@ -69,13 +69,17 @@ git-tree-depth <path>
 
 git-tree <path>
 : - Display directory tree
-- Uses `tree` command, defaults to current directory
+- Uses `tree` command if available, with pure-bash fallback
+- Defaults to current directory
 
 npl-fim-config [item] [options]
 : Configuration and query tool for NPL-FIM agent - finds best visualization solutions via natural language queries
 
 npl-load <command> [items...] [options]
 : Loads NPL components, metadata, and style guides with dependency tracking and patch support
+
+npl-persona <command> [options]
+: Comprehensive persona management tool for lifecycle, journals, tasks, knowledge bases, health checks, teams, and analytics
 
 ### npl-fim-config
 
