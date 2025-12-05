@@ -26,13 +26,43 @@ npl-load spec "project-arch-spec,project-layout-spec" --skip {@npl.spec.loaded}
 
 ## Phase 2: Parallel Reconnaissance
 
-Use `@npl-project-coordinator` to orchestrate parallel exploration:
+Use `@npl-project-coordinator` to orchestrate parallel exploration.
+
+### Critical: Delegation-First Scanning
+
+🎯 **The coordinator MUST NOT perform deep codebase exploration directly.**
+
+Instead:
+1. **Quick Surface Scan** - Coordinator performs only lightweight initial analysis:
+   - `ls` top-level directories
+   - Read `package.json`, `Cargo.toml`, or equivalent manifest
+   - Check for existing `README.md` or docs
+   - Identify project type and tech stack (~30 seconds max)
+
+2. **Immediate Delegation** - Deploy scouts for all detailed exploration:
+   - Do NOT recursively read files
+   - Do NOT grep through entire codebase
+   - Do NOT analyze individual source files
+   - Let scouts handle domain-specific deep dives in parallel
+
+3. **Speed Through Parallelism** - Launch all scouts simultaneously:
+   - Each scout operates independently
+   - Scouts return structured findings
+   - Coordinator synthesizes results (doesn't re-scan)
+
+**Why**: A coordinator scanning sequentially takes 10-20x longer than parallel scouts. The coordinator's job is orchestration, not exploration.
 
 ```
 @npl-project-coordinator
 
 ## Task
 Coordinate parallel reconnaissance of this codebase to generate PROJECT-ARCH.md and PROJECT-LAYOUT.md.
+
+## Pre-Scout Analysis (30 seconds max)
+- Identify project type from manifest files
+- Note top-level structure
+- Determine tech stack
+- Then IMMEDIATELY deploy scouts
 
 ## Scout Deployment (Parallel)
 
@@ -55,6 +85,15 @@ Each scout should:
 2. Return structured findings with file:line references
 3. Flag uncertainties and gaps
 4. Estimate confidence per finding
+
+## Execution Rules
+
+🎯 **All scouts MUST be launched in a single parallel batch.**
+
+- Use ONE Task tool call per scout, ALL in the same message
+- Do NOT wait for one scout before launching the next
+- Do NOT have the coordinator read files between scout launches
+- Scouts operate independently - no inter-scout dependencies
 
 ## Synchronization
 BARRIER: All scouts must complete before synthesis phase.
