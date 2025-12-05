@@ -2,22 +2,24 @@
 
 A modular prompt engineering framework (NPL - Noizu Prompt Lingua) for advanced AI agent simulation and structured prompting with Claude Code integration.
 
+⟪📐 arch-overview: layered-documentation | markdown-as-code, hierarchical-loading, event-sourced-collaboration⟫
+
 ## Quick Reference
+
+⟪🗺️ layers: Consumer → Interface → Definition → Storage⟫
 
 | Layer | Purpose | Key Components |
 |:------|:--------|:---------------|
-| NPL Core | Syntax definitions | `npl/`, `npl.md` |
-| Agents | AI agent definitions | `core/agents/`, `core/additional-agents/` |
-| MCP Server | Runtime tooling | `mcp-server/src/npl_mcp/` |
-| Scripts | CLI utilities | `core/scripts/` |
-| Documentation | Usage guides | `docs/` |
+| Consumer | Runtime environments | Claude Code, LLM Clients, MCP Tools |
+| Interface | Access patterns | MCP Server (23 tools), CLI Scripts, CLAUDE.md |
+| Definition | Language specs | NPL Syntax (80+), Agents (45+), Personas |
+| Storage | Persistence | SQLite (MCP, NIMPS, KB), File artifacts |
+
+⟪🔧 services: sqlite-mcp, sqlite-nimps, sqlite-kb, npl-mcp, cli-tools | local pip install⟫
 
 ---
 
 ## Architecture Overview
-
-**style**: Layered/Documentation-First
-**confidence**: high
 
 ```mermaid
 flowchart TB
@@ -29,120 +31,163 @@ flowchart TB
 
     subgraph Interface["Interface Layer"]
         I1["MCP Server<br/>(23 tools)"]
-        I2["CLI Scripts<br/>(npl-load, dump-files)"]
+        I2["CLI Scripts<br/>(npl-load, npl-persona)"]
         I3["CLAUDE.md<br/>(config)"]
     end
 
     subgraph Definition["Definition Layer"]
-        D1["NPL Syntax<br/>(npl/)"]
-        D2["Agents<br/>(core/agents/)"]
-        D3["Personas<br/>(npl-m/)"]
+        D1["NPL Syntax<br/>(80+ definitions)"]
+        D2["Agents<br/>(45+ definitions)"]
+        D3["Personas<br/>(file-backed state)"]
     end
 
     subgraph Storage["Storage Layer"]
-        S1[("SQLite<br/>artifacts, chat,<br/>reviews, KB")]
+        S1[("SQLite DBs")]
+        S2[("File Artifacts")]
     end
 
     Consumer --> Interface
     Interface --> Definition
-    Definition --> Storage
+    Interface --> Storage
+    Definition -.-> Storage
 ```
+
+→ See: [docs/PROJECT-ARCH/layers.md](PROJECT-ARCH/layers.md)
 
 ---
 
 ## Architectural Layers
 
-### NPL Core (`/npl/`)
-Framework syntax specification including directives, fences, pumps (reasoning patterns), prefixes (response modes), and special sections. Unicode-heavy syntax using boundary markers (`⌜`, `⌝`, `⌞`, `⌟`) and emoji prefixes.
+### Consumer Layer
+Runtime environments (Claude Code, LLM clients, MCP-compatible tools) that interpret NPL definitions. No NPL source code—all customization through CLAUDE.md injection or MCP invocations.
 
-### Agent Definitions (`/core/agents/`, `/core/additional-agents/`)
-45+ markdown-based agent specifications organized by domain: marketing, QA, infrastructure, UX, research, project management. Each agent defines capabilities, response patterns, and behavioral constraints.
+### Interface Layer
+**MCP Server** (23 tools): Script wrappers, artifact management, review system, chat rooms
+**CLI Scripts**: `npl-load` (hierarchical loading), `npl-persona` (persona management), `dump-files`, `git-tree`
+**CLAUDE.md**: Project configuration with NPL framework injection
 
-### MCP Server (`/mcp-server/`)
-Python FastMCP server exposing 23 tools across 4 categories:
-- **Script wrappers**: `npl_load`, `dump_files`, `git_tree`
-- **Artifact management**: create, revise, retrieve with version control
-- **Review system**: inline comments, overlay annotations
-- **Chat rooms**: persona-based collaboration with @mentions
+### Definition Layer
+**NPL Syntax** (`/npl/`): 80+ files covering syntax, directives, fences, pumps, prefixes, special sections
+**Agents** (`/core/agents/`, `/core/additional-agents/`): 45+ markdown-based agent specifications
+**Personas**: File-backed AI identities with journals, tasks, and knowledge bases
 
-### CLI Scripts (`/core/scripts/`)
-Bash utilities for NPL operations: `npl-load` (hierarchical component loading), `dump-files` (git-aware file extraction), `git-tree` (structure visualization), `npl-persona` (persona management).
+### Storage Layer
+SQLite databases (MCP artifacts/chat, NIMPS project management, KB full-text search) plus file-based artifact storage.
+
+→ See: [docs/PROJECT-ARCH/layers.md](PROJECT-ARCH/layers.md)
 
 ---
 
 ## Domain Model
 
+⟪📂: {domain-model}⟫
+
 ### Bounded Contexts
 
-- **NPL Framework**: Syntax definitions, directives, formatting rules
-  - Entities: Agents, Directives, Prefixes, Pumps, Fences
+**NPL Framework**
+: Core prompt syntax and agent definitions
+: Entities: Agents, Directives, Prefixes, Pumps, Fences, Templates, SpecialSections
+: Aggregate Root: Agent (name, type, version, capabilities, constraints)
 
-- **MCP Tooling**: Runtime artifact and collaboration management
-  - Entities: Artifacts, Revisions, Reviews, ChatRooms, Notifications
+**MCP Tooling**
+: Runtime artifact and collaboration management
+: Entities: Artifacts, Revisions, Reviews, InlineComments, ChatRooms, ChatEvents, Notifications
+: Aggregate Roots: Artifact, Review, ChatRoom
 
-- **Personas**: AI persona definitions for multi-agent workflows
-  - Entities: Personas, Teams, Journals, Knowledge Bases
+**Personas**
+: AI identity management for multi-agent workflows
+: Entities: Personas, Teams, Journals, Tasks, KnowledgeBases, Relationships
+: Aggregate Roots: Persona, Team
+
+→ See: [docs/PROJECT-ARCH/domain.md](PROJECT-ARCH/domain.md)
 
 ---
 
 ## Key Patterns
 
 ### Markdown-as-Code
-Agent definitions, syntax rules, and personas are structured markdown files with special syntax blocks. The "codebase" is documentation that defines LLM behavior.
+Agent definitions and syntax rules are structured markdown interpreted by LLMs as behavioral specifications. Human-readable and machine-parseable.
+→ Location: `/npl/`, `/core/agents/`
 
 ### Hierarchical Loading
-NPL uses environment variable-based path resolution (`$NPL_HOME`, `$NPL_META`, `$NPL_STYLE_GUIDE`) with fallback chains: project → user → system.
+Multi-tier path resolution (environment → project → user → system) with skip-tracking for deduplication.
+→ Location: `/core/scripts/npl-load`
 
 ### Event-Sourced Chat
-Chat system stores all interactions as events (message, reaction, artifact_share, todo_create) with JSON payloads, enabling replay and notification generation.
+All chat interactions stored as immutable typed events (message, reaction, artifact_share, todo_create) with JSON payloads.
+→ Location: `/mcp-server/src/npl_mcp/chat/rooms.py`
+
+### Manager/Service Pattern
+Domain managers (ArtifactManager, ReviewManager, ChatManager) encapsulate business logic, initialized via FastMCP lifespan.
+→ Location: `/mcp-server/src/npl_mcp/artifacts/`, `/chat/`
+
+### Unicode Boundary Markers
+Corner brackets (⌜⌝⌞⌟) delineate agent definitions with embedded metadata (name|type|version).
+→ Location: `/npl/agent.md`
+
+→ See: [docs/PROJECT-ARCH/patterns.md](PROJECT-ARCH/patterns.md)
 
 ---
 
 ## Infrastructure
 
-| Service | Type | Config |
-|:--------|:-----|:-------|
-| SQLite (MCP) | db | `mcp-server/src/npl_mcp/storage/schema.sql` |
-| SQLite (NIMPS) | db | `core/schema/nimps.sql` |
-| SQLite (KB) | db | `core/schema/nb.sql` |
+⟪🔧 services: sqlite-mcp, sqlite-nimps, sqlite-kb, npl-mcp, npl-installer, npl-load, npl-persona, dump-files, git-tree⟫
 
-**Deployment**: Local installation only (no containers, no CI/CD)
+| Service | Type | Config Location |
+|:--------|:-----|:----------------|
+| SQLite (MCP) | database | `mcp-server/src/npl_mcp/storage/schema.sql` |
+| SQLite (NIMPS) | database | `core/schema/nimps.sql` |
+| SQLite (KB) | database | `core/schema/nb.sql` |
+| npl-mcp | Python pkg | `mcp-server/pyproject.toml` |
+| npl-installer | Python pkg (stub) | `installer/pyproject.toml` |
+
+**Deployment**: Local pip install only (no containers, no CI/CD)
+
+→ See: [docs/PROJECT-ARCH/infrastructure.md](PROJECT-ARCH/infrastructure.md)
 
 ---
 
 ## Technology Stack
 
-| Component | Technology |
-|:----------|:-----------|
-| Primary Format | Markdown/NPL |
-| Runtime | Python >=3.10 |
-| MCP Framework | FastMCP |
-| Database | SQLite/aiosqlite |
-| Build System | Hatchling |
+| Component | Technology | Version |
+|:----------|:-----------|:--------|
+| Primary Format | Markdown/NPL | NPL@1.0 |
+| Runtime | Python | >=3.10 |
+| MCP Framework | FastMCP | >=0.1.0 |
+| Database | SQLite/aiosqlite | >=0.19.0 |
+| Build System | Hatchling | latest |
+| YAML Parsing | PyYAML | >=6.0 |
+| Image Processing | Pillow | >=10.0 |
 
 ---
 
 ## Critical Gaps
 
-- No CI/CD pipeline (tests exist but not automated)
-- No containerization
-- Installer module is a stub
-- No database migration system
-- No CONTRIBUTING.md
+🎯 **No CI/CD Pipeline**: Tests exist but are not automated
+- Affected: `mcp-server/tests/`
+- Mitigation: Manual test execution
+
+🎯 **Installer Stub**: `npl-installer` package returns "Hello, world!"
+- Affected: `/installer/`
+- Mitigation: Manual installation via pip
+
+🎯 **No Migration System**: Database schemas applied directly, no version tracking
+- Affected: All SQLite databases
+- Mitigation: Schema recreation on changes
+
+🎯 **No Containerization**: Local-only deployment model
+- Affected: Production deployment scenarios
+- Mitigation: N/A (design decision for local-first)
 
 ---
 
 ## Summary
 
-**Strengths**:
-- Comprehensive agent library (45+ agents)
-- Well-structured syntax framework
-- Deep Claude Code integration
-- Extensible hierarchical loading
+**architecture-strengths**
+: Comprehensive agent library (45+ agents across 8 categories); well-structured syntax framework with 80+ definition files; deep Claude Code integration via CLAUDE.md; extensible hierarchical loading with multi-tier path resolution
 
-**Gaps**:
-- Missing CI/CD and automation
-- Incomplete installer
-- No migration strategy
+**known-tradeoffs**
+: Local-only deployment limits production use; no migration system requires manual schema updates; stub installer requires manual setup
 
-**Next Steps**: Run `/update-arch` for detailed sub-file generation
+**evolution-path**
+: Complete installer implementation; add CI/CD pipeline; consider containerization for team deployments
