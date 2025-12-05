@@ -19,6 +19,8 @@ npl-load <command> [options]
 | `persona` | Load persona definitions |
 | `prd` | Load PRD documents |
 | `story` | Load user stories |
+| `prompt` | Load prompts |
+| `init-claude` | Append NPL prompts to CLAUDE.md |
 | `schema` | Load raw SQL schema |
 | `init` | Load the main `npl.md` file |
 | `agent` | Load or list agent definitions |
@@ -157,6 +159,21 @@ Search paths for user stories:
 | 2 | `~/.npl/user-stories/` |
 | 3 | `<system>/user-stories/` |
 
+#### Prompts (`prompt`)
+
+Search paths for prompts:
+
+| Priority | Path |
+|----------|------|
+| 1 | `./.npl/prompts/` |
+| 2 | `~/.npl/prompts/` |
+| 3 | `$NPL_HOME/core/prompts/` |
+| 4 | `./.npl/core/prompts/` |
+| 5 | `~/.npl/core/prompts/` |
+| 6 | `<system>/core/prompts/` |
+
+**Note:** Prompts are reusable content fragments for CLAUDE.md files. Project-local prompts take priority, with fallback to core/prompts for shared prompts.
+
 ## Environment Variables
 
 | Variable | Description | Fallback |
@@ -268,6 +285,36 @@ npl-load story user-login user-registration
 # Load all stories for a feature
 npl-load story "auth-*"
 ```
+
+### Loading Prompts
+
+```bash
+# Load a prompt
+npl-load prompt npl_load
+
+# Load multiple prompts
+npl-load prompt npl_load scripts sql-lite
+
+# Load all prompts
+npl-load prompt "*"
+```
+
+### Initializing CLAUDE.md
+
+```bash
+# Append standard NPL prompts to CLAUDE.md (creates if doesn't exist)
+npl-load init-claude
+
+# Specify target file
+npl-load init-claude --target ./project/CLAUDE.md
+
+# Specify which prompts to append
+npl-load init-claude --prompts npl_load scripts
+
+# Default prompts: npl_load, scripts, sql-lite
+```
+
+**Note:** `init-claude` automatically detects if prompts are already present and skips duplicates.
 
 ### Loading Main NPL Definition
 

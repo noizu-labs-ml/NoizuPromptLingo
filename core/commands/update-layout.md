@@ -2,6 +2,20 @@
 
 Refresh `docs/PROJECT-LAYOUT.md` to reflect current directory structure while preserving user annotations.
 
+## Prerequisites
+
+Load NPL dependencies and specification before proceeding:
+
+```bash
+# Load NPL syntax elements
+npl-load c "syntax,fences" --skip {@npl.def.loaded}
+
+# Load layout specification
+npl-load spec "project-layout-spec" --skip {@npl.spec.loaded}
+```
+
+---
+
 ## Workflow
 
 ### Phase 1: Load Existing Documentation

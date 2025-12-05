@@ -33,6 +33,7 @@ class NPLLoader:
         self.loaded_personas = set()
         self.loaded_prds = set()
         self.loaded_stories = set()
+        self.loaded_prompts = set()
         
     def get_search_paths(self, resource_type='component'):
         """Get search paths based on resource type"""
@@ -127,6 +128,19 @@ class NPLLoader:
                 Path('./.npl/user-stories'),
                 Path.home() / '.npl/user-stories',
                 global_npl / 'user-stories'
+            ])
+        elif resource_type == 'prompt':
+            # Prompts: project first, then core/prompts fallback
+            paths.extend([
+                Path('./.npl/prompts'),
+                Path.home() / '.npl/prompts',
+            ])
+            if self.npl_home:
+                paths.append(Path(self.npl_home) / 'core/prompts')
+            paths.extend([
+                Path('./.npl/core/prompts'),
+                Path.home() / '.npl/core/prompts',
+                global_npl / 'core/prompts'
             ])
 
         return paths
@@ -248,11 +262,11 @@ class NPLLoader:
                 try:
                     with open(patch_file, 'r', encoding='utf-8') as pf:
                         patch_content = pf.read()
-                    return f"# {item}:\n『(patch)\n{patch_content}\n』\n{content}␜\n"
+                    return f"# {item}:\n『(patch)\n{patch_content}\n』\n{content}\n\n* * *\n"
                 except Exception as e:
                     print(f"Error loading patch {patch_file}: {e}")
 
-        return f"# {item}:\n{content}␜\n"
+        return f"# {item}:\n{content}\n\n* * *\n"
 
     def is_skipped(self, item: str, skip_patterns: Set[str]) -> bool:
         """Check if item matches any skip pattern (supports wildcards)"""
@@ -453,6 +467,98 @@ class NPLLoader:
                             self.loaded_stories.add(pattern)
         return loaded
 
+    def load_prompts(self, items: List[str], skip: Set[str]) -> List[Tuple[str, str]]:
+        """Load prompt files"""
+        loaded = []
+        for pattern in items:
+            if '*' in pattern:
+                base_paths = self.get_search_paths('prompt')
+                for base_path in base_paths:
+                    glob_pattern = pattern.replace('.', '/')
+                    for match in base_path.glob(f"{glob_pattern}.md"):
+                        relative = match.relative_to(base_path)
+                        item = str(relative).replace('/', '.').replace('.md', '')
+                        if not self.is_skipped(item, skip) and item not in self.loaded_prompts:
+                            content = self.load_file_with_patch(base_path, match, 'prompt', item)
+                            if content:
+                                loaded.append((item, content))
+                                self.loaded_prompts.add(item)
+            else:
+                if not self.is_skipped(pattern, skip) and pattern not in self.loaded_prompts:
+                    result = self.resolve_path(pattern, 'prompt')
+                    if result:
+                        base_path, file_path = result
+                        content = self.load_file_with_patch(base_path, file_path, 'prompt', pattern)
+                        if content:
+                            loaded.append((pattern, content))
+                            self.loaded_prompts.add(pattern)
+        return loaded
+
+    def init_claude(self, target_path: str = './CLAUDE.md',
+                    prompts: List[str] = None) -> Tuple[int, int]:
+        """
+        Append standard prompts to CLAUDE.md file.
+        Returns (added_count, skipped_count).
+        """
+        if prompts is None:
+            prompts = ['npl_load', 'scripts', 'sql-lite']
+
+        # Define prompt identifiers for duplicate detection
+        identifiers = {
+            'npl_load': '## NPL Load Directive',
+            'scripts': '## NPL Scripts',
+            'sql-lite': '# SQLite Quick Guide'
+        }
+
+        # Read existing CLAUDE.md or create empty
+        existing_content = ''
+        target = Path(target_path)
+        if target.exists():
+            try:
+                existing_content = target.read_text(encoding='utf-8')
+            except Exception as e:
+                print(f"Error reading {target_path}: {e}", file=sys.stderr)
+                return (0, 0)
+
+        # Collect prompts to append
+        to_append = []
+        skipped = 0
+        for prompt_name in prompts:
+            # Check for duplicates using identifier
+            identifier = identifiers.get(prompt_name)
+            if identifier and identifier in existing_content:
+                skipped += 1
+                print(f"Skipping {prompt_name}: already present in {target_path}", file=sys.stderr)
+                continue
+
+            # Resolve prompt path
+            result = self.resolve_path(prompt_name, 'prompt')
+            if result:
+                _, file_path = result
+                try:
+                    content = file_path.read_text(encoding='utf-8')
+                    to_append.append((prompt_name, content))
+                except Exception as e:
+                    print(f"Error reading prompt {file_path}: {e}", file=sys.stderr)
+            else:
+                print(f"Prompt not found: {prompt_name}", file=sys.stderr)
+
+        # Append with separator
+        if to_append:
+            try:
+                with open(target_path, 'a', encoding='utf-8') as f:
+                    for i, (name, content) in enumerate(to_append):
+                        # Add separator if there's existing content or previous prompts
+                        if i > 0 or existing_content.strip():
+                            f.write('\n\n* * *\n\n')
+                        f.write(content)
+                        print(f"Added {name} to {target_path}", file=sys.stderr)
+            except Exception as e:
+                print(f"Error writing to {target_path}: {e}", file=sys.stderr)
+                return (0, skipped)
+
+        return (len(to_append), skipped)
+
     def load_agent(self, agent_name: str) -> Optional[Tuple[str, str]]:
         """Load agent by name from search paths"""
         if agent_name in self.loaded_agents:
@@ -466,7 +572,7 @@ class NPLLoader:
                     with open(agent_file, 'r', encoding='utf-8') as f:
                         content = f.read()
                     self.loaded_agents.add(agent_name)
-                    return (agent_name, f"# agent:{agent_name}:\n{content}␜\n")
+                    return (agent_name, f"# agent:{agent_name}:\n{content}\n\n* * *\n")
                 except Exception as e:
                     print(f"Error loading agent {agent_file}: {e}", file=sys.stderr)
                     continue
@@ -1091,6 +1197,21 @@ def main():
     sp_story.add_argument('--skip', nargs='*', default=[], help='Skip patterns (wildcards allowed)')
     sp_story.add_argument('--verbose', action='store_true')
 
+    # Prompts subcommand
+    sp_prompt = subparsers.add_parser('prompt', help='Load prompts')
+    sp_prompt.add_argument('prompt_items', nargs='*', help='Prompts to load (supports glob patterns)')
+    sp_prompt.add_argument('--skip', nargs='*', default=[], help='Skip patterns (wildcards allowed)')
+    sp_prompt.add_argument('--verbose', action='store_true')
+
+    # init-claude subcommand
+    sp_init_claude = subparsers.add_parser('init-claude',
+        help='Initialize/append NPL prompts to CLAUDE.md')
+    sp_init_claude.add_argument('--target', default='./CLAUDE.md',
+        help='Target CLAUDE.md path (default: ./CLAUDE.md)')
+    sp_init_claude.add_argument('--prompts', nargs='*',
+        default=['npl_load', 'scripts', 'sql-lite'],
+        help='Prompts to append (default: npl_load scripts sql-lite)')
+
     args = parser.parse_args()
 
     # New: handle schema early and exit to ensure no extra output
@@ -1173,6 +1294,18 @@ def main():
         loader.print_syntax_analysis(content_to_analyze, args.matches)
         sys.exit(0)
 
+    # Handle init-claude command early and exit
+    if args.command == 'init-claude':
+        loader = NPLLoader()
+        added, skipped = loader.init_claude(args.target, args.prompts)
+        if added > 0:
+            print(f"Added {added} prompt(s) to {args.target}")
+        if skipped > 0:
+            print(f"Skipped {skipped} prompt(s) (already present)")
+        if added == 0 and skipped == 0:
+            print(f"No prompts added to {args.target}")
+        sys.exit(0)
+
     loader = NPLLoader()
     loaded_content = []
 
@@ -1225,10 +1358,17 @@ def main():
             for name, content in stories:
                 loaded_content.append(('STORY', name, content))
 
+    elif args.command == 'prompt':
+        skip = _parse_skip_list(args.skip)
+        if args.prompt_items:
+            prompts = loader.load_prompts(args.prompt_items, skip)
+            for name, content in prompts:
+                loaded_content.append(('PROMPT', name, content))
+
     # Check if any content was loaded
     has_loaded = (loader.loaded_components or loader.loaded_meta or loader.loaded_style or
                   loader.loaded_specs or loader.loaded_personas or loader.loaded_prds or
-                  loader.loaded_stories)
+                  loader.loaded_stories or loader.loaded_prompts)
 
     if has_loaded:
         print("# Flag Update")
@@ -1247,6 +1387,8 @@ def main():
             print(f"@npl.prd.loaded+=\"{','.join(sorted(loader.loaded_prds))}\"")
         if loader.loaded_stories:
             print(f"@npl.story.loaded+=\"{','.join(sorted(loader.loaded_stories))}\"")
+        if loader.loaded_prompts:
+            print(f"@npl.prompt.loaded+=\"{','.join(sorted(loader.loaded_prompts))}\"")
         print("\n\n```\n")
         print("\n---")
 

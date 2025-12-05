@@ -2,6 +2,20 @@
 
 Refresh `docs/PROJECT-ARCH.md` to reflect current codebase state while preserving user-added content.
 
+## Prerequisites
+
+Load NPL dependencies and specification before proceeding:
+
+```bash
+# Load NPL syntax elements
+npl-load c "syntax,fences,directive" --skip {@npl.def.loaded}
+
+# Load architecture specification
+npl-load spec "project-arch-spec" --skip {@npl.spec.loaded}
+```
+
+---
+
 ## Workflow
 
 ### Phase 1: Load Existing Documentation
