@@ -1042,6 +1042,15 @@ When framework conventions differ significantly:
 
 ## See Also
 
-- `${NPL_HOME}/npl/formatting.md` - Output formatting patterns
-- `${NPL_HOME}/npl/fences.md` - Fence type reference
-- `${NPL_HOME}/npl/syntax.md` - Core NPL syntax elements
+Load additional NPL references as needed:
+
+```bash
+# Output formatting patterns
+npl-load c "formatting" --skip {@npl.def.loaded}
+
+# Fence type reference
+npl-load c "fences" --skip {@npl.def.loaded}
+
+# Core NPL syntax elements
+npl-load c "syntax" --skip {@npl.def.loaded}
+```

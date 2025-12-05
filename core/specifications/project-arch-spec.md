@@ -953,7 +953,18 @@ When generating PROJECT-ARCH.md, project-coordinator should:
 
 ## See Also
 
-- `${NPL_HOME}/npl/directive.md` - Directive syntax reference
-- `${NPL_HOME}/npl/syntax.md` - Core NPL syntax elements
-- `${NPL_HOME}/npl/fences/diagram.md` - Diagram fence specifications
-- `${NPL_HOME}/npl/formatting.md` - Output formatting patterns
+Load additional NPL references as needed:
+
+```bash
+# Directive syntax reference
+npl-load c "directive" --skip {@npl.def.loaded}
+
+# Core NPL syntax elements
+npl-load c "syntax" --skip {@npl.def.loaded}
+
+# Diagram fence specifications
+npl-load c "fences.diagram" --skip {@npl.def.loaded}
+
+# Output formatting patterns
+npl-load c "formatting" --skip {@npl.def.loaded}
+```
