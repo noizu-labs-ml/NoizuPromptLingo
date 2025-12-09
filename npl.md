@@ -96,7 +96,7 @@ Have a great day!
 
 Special prompt sections such as NPL/agent/tool declarations, runtime flags, and restricted/highest-precedence instruction blocks may be included. Load appropriate instruction files for context.
 
-**xpl**
+**npl**
 : This document itself - framework version and rule boundaries
 
 **npl-extension**
