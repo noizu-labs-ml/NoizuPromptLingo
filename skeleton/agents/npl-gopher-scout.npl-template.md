@@ -16,11 +16,9 @@ model: {model_preference|Model to use: sonnet, opus, haiku}
 color: {color_choice|Color for the agent interface: pink, blue, purple, etc.}
 ---
 
-Load before proceeding
+Load NPL definitions before proceeding[^cli]:
 
-```bash
-npl-load c syntax,agent,directive,formatting,pumps.cot,pumps.intent,fences.artifact,fences.alg-pseudo,instructing.handlebars" --skip {@npl.loaded}
-```
+`mcp__npl-mcp__npl_load("c", "syntax,agent,directive,formatting,pumps.cot,pumps.intent,fences.artifact,fences.alg-pseudo,instructing.handlebars", skip)`
 
 ⌜npl-gopher-scout|reconnaissance|NPL@1.0⌝
 # Gopher Scout 🔍
@@ -81,3 +79,6 @@ function reconnaissance(task):
 : verify > cross-reference > flag-uncertainties > respect-boundaries
 
 ⌞npl-gopher-scout⌟
+
+---
+[^cli]: CLI available: `npl-load c "syntax,agent,..." --skip {@npl.loaded}`

@@ -1,11 +1,20 @@
 npl-instructions:
    name: npl-scripts
-   version: 1.1.0
+   version: 1.2.0
 ---
 
 ## NPL Scripts
 
-The following scripts are available in `core/scripts/`.
+The following scripts are available in `core/scripts/`. MCP equivalents are available via `mcp__npl-mcp__*` tools.
+
+### MCP Tool Equivalents
+
+| CLI Script | MCP Tool | Notes |
+|:-----------|:---------|:------|
+| `dump-files` | `mcp__npl-mcp__dump_files(path, glob_filter?)` | Full parity |
+| `git-tree` | `mcp__npl-mcp__git_tree(path?)` | Full parity |
+| `git-tree-depth` | `mcp__npl-mcp__git_tree_depth(path)` | Full parity |
+| `npl-load c/m/s` | `mcp__npl-mcp__npl_load(resource_type, items, skip?)` | c/m/s types only |
 
 ### npl-load
 
@@ -37,23 +46,25 @@ Creates and manages persistent personas with journals, tasks, and knowledge base
 | Teams | `team create\|add\|list\|synthesize` | Multi-persona collaboration and synthesis |
 | Maintenance | `health`, `sync`, `backup` | File integrity, state sync, backups |
 
-### npl-session
+### npl-worklog
 
-**Session and worklog management for cross-agent communication.**
+**Worklog management for cross-agent communication.**
 
 Provides shared worklogs for parent agents and sub-agents. Each reader maintains its own cursor.
 
 | Command | Purpose | Example |
 |:--------|:--------|:--------|
-| `init [--task=X]` | Create new session | `npl-session init --task="Implement auth"` |
-| `current` | Get current session ID | `npl-session current` |
-| `log --agent=X --action=Y --summary="..."` | Append entry to worklog | `npl-session log --agent=explore-001 --action=found --summary="auth.ts"` |
-| `read --agent=X [--peek] [--since=N]` | Read entries since this agent's cursor | `npl-session read --agent=primary` |
-| `status` | Show session stats | `npl-session status --json` |
-| `list [--all]` | List sessions | `npl-session list` |
-| `close [--archive]` | Close current session | `npl-session close --archive` |
+| `init [--task=X]` | Create new worklog | `npl-worklog init --task="Implement auth"` |
+| `current` | Get current worklog ID | `npl-worklog current` |
+| `log --agent=X --action=Y --summary="..."` | Append entry to worklog | `npl-worklog log --agent=explore-001 --action=found --summary="auth.ts"` |
+| `read --agent=X [--peek] [--since=N]` | Read entries since this agent's cursor | `npl-worklog read --agent=primary` |
+| `status` | Show worklog stats | `npl-worklog status --json` |
+| `list [--all]` | List worklogs | `npl-worklog list` |
+| `close [--archive]` | Close current worklog | `npl-worklog close --archive` |
 
 Each reader agent maintains its own cursor at `.cursors/<agent-id>.cursor`, allowing multiple agents to independently track their read position. Use `--peek` to read without advancing cursor.
+
+**Note**: MCP sessions (`mcp__npl-mcp__create_session`) serve a different purpose—grouping artifacts and chat rooms for collaboration. Use `npl-worklog` for inter-agent JSONL communication.
 
 ### npl-fim-config
 
@@ -69,8 +80,19 @@ Queries the tool-task compatibility matrix to find appropriate visualization lib
 
 ### Codebase Exploration
 
-| Script | Purpose | Example |
-|:-------|:--------|:--------|
-| `dump-files <path>` | Dump all file contents with headers (respects .gitignore) | `dump-files src/ -g "*.md"` |
-| `git-tree [path]` | Display directory tree (uses `tree` or bash fallback) | `git-tree core/` |
-| `git-tree-depth <path>` | List directories with nesting depth relative to target | `git-tree-depth src/` |
+| Script | MCP Equivalent | Example |
+|:-------|:---------------|:--------|
+| `dump-files <path>` | `mcp__npl-mcp__dump_files(path, glob?)` | `dump-files src/ -g "*.md"` |
+| `git-tree [path]` | `mcp__npl-mcp__git_tree(path?)` | `git-tree core/` |
+| `git-tree-depth <path>` | `mcp__npl-mcp__git_tree_depth(path)` | `git-tree-depth src/` |
+
+### MCP-Only Features
+
+These features are only available via MCP tools:
+
+| Feature | Tools | Purpose |
+|:--------|:------|:--------|
+| **Artifacts** | `create_artifact`, `add_revision`, `get_artifact`, `list_artifacts`, `get_artifact_history` | Version-controlled documents |
+| **Reviews** | `create_review`, `add_inline_comment`, `add_overlay_annotation`, `complete_review`, `generate_annotated_artifact` | Collaborative review with annotations |
+| **Sessions** | `create_session`, `get_session`, `list_sessions`, `update_session` | Group artifacts and chat rooms |
+| **Chat** | `create_chat_room`, `send_message`, `react_to_message`, `share_artifact`, `create_todo`, `get_chat_feed`, `get_notifications` | Team collaboration with @mentions |

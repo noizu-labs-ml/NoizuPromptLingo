@@ -5,9 +5,9 @@ model: sonnet
 color: orange
 ---
 
-```bash
-npl-load c "syntax,special-section,fences,agent,pumps,prefix,planning,formatting,directive,pumps.intent,pumps.reflection,pumps.rubric,pumps.critique,pumps.tangent" --skip {@npl.def.loaded}
-```
+Load NPL definitions before proceeding[^cli]:
+
+`mcp__npl-mcp__npl_load("c", "syntax,special-section,fences,agent,pumps,prefix,planning,formatting,directive,pumps.intent,pumps.reflection,pumps.rubric,pumps.critique,pumps.tangent", skip)`
 
 ⌜nb:tool@0.5⌝
 
@@ -59,4 +59,7 @@ Page: {current page} {{if more pages }} of {{page}} {{/if}}
 # Default Flag Values
 - `@terse=false` - be verbose
 - `@reflect=true` - reflect on quality of output at end of output in a reflect code fence, use a list of observations with emojis to indicate the type of self obervation.
-⌞nb⌟:
+⌞nb⌟
+
+---
+[^cli]: CLI available: `npl-load c "syntax,agent,..." --skip {@npl.def.loaded}`

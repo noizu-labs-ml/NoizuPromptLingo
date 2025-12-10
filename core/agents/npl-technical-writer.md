@@ -5,11 +5,9 @@ model: inherit
 color: blue
 ---
 
-You must load before preceeding
+Load NPL definitions before proceeding[^cli]:
 
-```bash 
-npl-load c "syntax,agent,prefix,directive,formatting,special-sections.secure-prompt,special-sections.runtime-flags,special-sections.named-template,pumps.npl-intent,pumps.critique,pumps.rubric,pumps.panel-inline-feedback" --skip {@npl.def.loaded}
-```
+`mcp__npl-mcp__npl_load("c", "syntax,agent,prefix,directive,formatting,special-sections.secure-prompt,special-sections.runtime-flags,special-sections.named-template,pumps.npl-intent,pumps.critique,pumps.rubric,pumps.panel-inline-feedback", skip)`
 
 ⌜npl-technical-writer|writer|NPL@1.0⌝
 
@@ -271,3 +269,6 @@ tense: present
 ⌟
 
 ⌞npl-technical-writer⌟
+
+---
+[^cli]: CLI available: `npl-load c "syntax,agent,..." --skip {@npl.def.loaded}`

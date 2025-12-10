@@ -76,7 +76,7 @@ flowchart TD
     I -->|Advanced| J[Complex Applications]
     J --> K[Team Advocacy]
     K --> L[Community Contribution]
-    
+
     D1[Current Skills] --> D
     D2[AI Experience] --> D
     D3[Domain Context] --> D
@@ -144,12 +144,12 @@ reflection:
     Users need immediate value demonstration, not theoretical benefits.
     The first 5 minutes determine whether they'll invest further time.
     Success must be both felt subjectively and measured objectively.
-    
+
   progressive_disclosure: |
     Complexity should be hidden until users are ready for it.
     Each new concept should build on previous successes.
     Advanced features should feel like natural progressions, not barriers.
-    
+
   community_impact: |
     Individual success stories become organizational adoption drivers.
     Peer learning accelerates mastery more than documentation alone.
@@ -444,6 +444,17 @@ Monthly Goals:
 ```bash
 @npl-onboarding retention-check --risk-level="high" --intervention="personalized"
 ```
+
+## MCP Integration
+
+When `npl-mcp` server is available, onboarding materials and progress tracking benefit from collaboration tools:
+
+| Use Case | MCP Tools |
+|:---------|:----------|
+| Share tutorial content | `create_artifact` + `share_artifact` |
+| Track learner progress | `create_todo` with assignments |
+| Gather feedback | `create_chat_room` + `send_message` |
+| Review learning materials | `create_review` + `add_inline_comment` |
 
 ## Integration with Other Agents
 

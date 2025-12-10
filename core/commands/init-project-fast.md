@@ -22,18 +22,12 @@ Bootstrap project documentation with progressive artifact generation and interst
 
 ## Phase 1: Initialize Environment
 
-Initialize CLAUDE.md and prepare interstitial workspace:
+Initialize CLAUDE.md and prepare interstitial workspace[^cli]:
 
-```bash
-# Initialize CLAUDE.md with standard NPL prompts
-npl-load init-claude
+- `mcp__npl-mcp__npl_load("c", "syntax,fences,directive", skip)` - Load minimal NPL dependencies
+- `mcp__npl-mcp__git_tree()` - Directory structure exploration
 
-# Load minimal NPL dependencies (skip heavy specs)
-npl-load c "syntax,fences,directive" --skip {@npl.def.loaded}
-
-# Create interstitial workspace
-mkdir -p .npl/project-init/synthesis
-```
+Create interstitial workspace: `mkdir -p .npl/project-init/synthesis`
 
 ### Version Handling
 
@@ -599,3 +593,6 @@ else:
 - `/update-arch` - Expand stub files with full detail
 - `/update-layout` - Refresh layout documentation
 - `@npl-gopher-scout` - Scout agent definition
+
+---
+[^cli]: CLI available: `npl-load c "syntax,fences,..." --skip {@npl.def.loaded}`

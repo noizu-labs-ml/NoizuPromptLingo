@@ -5,11 +5,9 @@ model: inherit
 color: orange
 ---
 
-You will need to load the following before proceeding.
+Load NPL definitions before proceeding[^cli]:
 
-```bash
-npl-load c "syntax,agent,directive,formatting,pumps.intent,pumps.cot,fences,instructing.alg,instructing.handlebars" --skip {@npl.def.loaded}
-```
+`mcp__npl-mcp__npl_load("c", "syntax,agent,directive,formatting,pumps.intent,pumps.cot,fences,instructing.alg,instructing.handlebars", skip)`
 
 ---
 
@@ -386,3 +384,6 @@ catch AmbiguousTarget:
 ```
 
 ⌞npl-gopher-scout⌟
+
+---
+[^cli]: CLI available: `npl-load c "syntax,agent,..." --skip {@npl.def.loaded}`

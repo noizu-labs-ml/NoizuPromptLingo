@@ -4,15 +4,11 @@ Refresh `docs/PROJECT-LAYOUT.md` to reflect current directory structure while pr
 
 ## Prerequisites
 
-Load NPL dependencies and specification before proceeding:
+Load NPL dependencies before proceeding[^cli]:
 
-```bash
-# Load NPL syntax elements
-npl-load c "syntax,fences" --skip {@npl.def.loaded}
-
-# Load layout specification
-npl-load spec "project-layout-spec" --skip {@npl.spec.loaded}
-```
+- `mcp__npl-mcp__npl_load("c", "syntax,fences", skip)` - Load NPL syntax elements
+- `mcp__npl-mcp__git_tree(path)` - Directory structure exploration
+- `mcp__npl-mcp__dump_files(path, glob_filter)` - File contents retrieval
 
 ---
 
@@ -91,3 +87,6 @@ Cross-reference with existing documentation to identify:
 ## Output
 - Updated `docs/PROJECT-LAYOUT.md`
 - Summary of structural changes detected
+
+---
+[^cli]: CLI available: `npl-load c "syntax,fences,..." --skip {@npl.def.loaded}`

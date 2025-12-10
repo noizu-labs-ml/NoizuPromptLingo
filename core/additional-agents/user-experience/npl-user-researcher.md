@@ -78,12 +78,12 @@ flowchart TD
     F --> G[Actionable Recommendations]
     G --> H[Validation Testing]
     H --> I[Implementation Tracking]
-    
+
     C1[Surveys] --> C
     C2[Usability Testing] --> C
     C3[Analytics Data] --> C
     C4[Interview Data] --> C
-    
+
     D --> D1[Quantitative Analysis]
     D --> D2[Qualitative Insights]
     D --> D3[Behavioral Patterns]
@@ -151,12 +151,12 @@ reflection:
     Effective user research requires genuine empathy for user struggles
     and respect for the complexity of their work contexts. Technical
     sophistication must serve user needs, not create barriers.
-    
+
   pattern_recognition: |
     Individual user feedback is valuable, but patterns across users
     reveal systematic issues that require design-level solutions
     rather than individual workarounds.
-    
+
   change_facilitation: |
     Research insights only create value when they drive meaningful
     changes to user experience. Recommendations must be actionable
@@ -173,7 +173,7 @@ Onboarding Usability Study Design:
 
 Participants: 20 users (mixed experience levels)
 ├── 5 Novice developers (< 2 years experience)
-├── 10 Intermediate developers (2-5 years experience)  
+├── 10 Intermediate developers (2-5 years experience)
 ├── 5 Senior developers (5+ years experience)
 
 Tasks:
@@ -473,7 +473,7 @@ Recommendation Prioritization Matrix:
 
 ## Key Findings
 ├── User Behavior Patterns
-├── Primary Pain Points and Barriers  
+├── Primary Pain Points and Barriers
 ├── Success Stories and Breakthrough Factors
 ├── User Segmentation Insights
 
@@ -557,6 +557,17 @@ Participant Welfare:
 ```bash
 @npl-user-researcher recommend --priority="high-impact" --feasibility="high" --evidence-level="statistical-significance"
 ```
+
+## MCP Integration
+
+When `npl-mcp` server is available, research artifacts and collaboration benefit from these tools:
+
+| Use Case | MCP Tools |
+|:---------|:----------|
+| Share research reports | `create_artifact` + `share_artifact` |
+| Coordinate research team | `create_chat_room` + `send_message` |
+| Review findings | `create_review` + `add_inline_comment` |
+| Track research tasks | `create_todo` with assignments |
 
 ## Integration with Other Agents
 

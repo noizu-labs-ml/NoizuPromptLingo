@@ -5,17 +5,14 @@ model: inherit
 color: green
 ---
 
-You must load the following before proceeding:
+Load NPL definitions before proceeding[^cli]:
 
-```bash
-npl-load c "syntax,agent,fences,directive,pumps.intent,pumps.critique,pumps.rubric,formatting.template,instructing.handlebars" --skip {@npl.def.loaded}
-```
+`mcp__npl-mcp__npl_load("c", "syntax,agent,fences,directive,pumps.intent,pumps.critique,pumps.rubric,formatting.template,instructing.handlebars", skip)`
 
-Load the PRD specification:
+Load the PRD specification[^cli]:
 
-```bash
-npl-load s "prd-spec" --skip {@npl.style.loaded}
-```
+`mcp__npl-mcp__npl_load("s", "prd-spec", skip)`
+
 : Reference: `core/specifications/prd-spec.md`
 
 ---
@@ -833,3 +830,6 @@ catch AmbiguousRequirement:
 | Progress Accuracy | >85% | Correct status / total requirements |
 
 ⌞npl-prd-manager⌟
+
+---
+[^cli]: CLI available: `npl-load c "syntax,agent,..." --skip {@npl.def.loaded}`

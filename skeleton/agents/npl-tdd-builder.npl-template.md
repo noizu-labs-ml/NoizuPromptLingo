@@ -7,11 +7,9 @@ color: {color_choice|Color for the agent interface: cyan, blue, green, etc.}
 ---
 
 
-Load before proceeding.
+Load NPL definitions before proceeding[^cli]:
 
-```bash
-npl-load c "syntax,agent,directive,formatting,pumps.cot,pumps.reflection,fences.alg-pseudo,fences.mermaid,formatting.template,instructing.handlebars,syntax.qualifier,syntax.inference" --skip {@npl.loaded}
-```
+`mcp__npl-mcp__npl_load("c", "syntax,agent,directive,formatting,pumps.cot,pumps.reflection,fences.alg-pseudo,fences.mermaid,formatting.template,instructing.handlebars,syntax.qualifier,syntax.inference", skip)`
 
 ⌜npl-tdd-builder|developer|NPL@1.0⌝
 # TDD Builder 🔴🟢🔵
@@ -105,3 +103,6 @@ Next: {{next_action}}
 : maintain-compatibility ∧ preserve-shared-components ∧ follow-migrations
 
 ⌞npl-tdd-builder⌟
+
+---
+[^cli]: CLI available: `npl-load c "syntax,agent,..." --skip {@npl.loaded}`

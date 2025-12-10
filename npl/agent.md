@@ -245,39 +245,67 @@ Agents read only NEW entries since their last check using cursor files:
 
 Reading with `--peek` returns entries without updating the cursor.
 
-### npl-session CLI
+### npl-worklog CLI
 
 | Command | Purpose |
 |:--------|:--------|
-| `npl-session init [--task=X]` | Create new session |
-| `npl-session current` | Get current session ID |
-| `npl-session log --agent=X --action=Y --summary="..."` | Append entry |
-| `npl-session read --agent=X [--peek]` | Read new entries since cursor |
-| `npl-session status` | Show session stats |
-| `npl-session list [--all]` | List sessions |
-| `npl-session close [--archive]` | Close current session |
+| `npl-worklog init [--task=X]` | Create new worklog |
+| `npl-worklog current` | Get current worklog ID |
+| `npl-worklog log --agent=X --action=Y --summary="..."` | Append entry |
+| `npl-worklog read --agent=X [--peek]` | Read new entries since cursor |
+| `npl-worklog status` | Show worklog stats |
+| `npl-worklog list [--all]` | List worklogs |
+| `npl-worklog close [--archive]` | Close current worklog |
 
 ### Example Workflow
 
 ```bash
-# Session auto-created on first sub-agent spawn, or explicitly:
-npl-session init --task="Implement auth feature"
+# Worklog auto-created on first sub-agent spawn, or explicitly:
+npl-worklog init --task="Implement auth feature"
 
 # Sub-agent logs findings
-npl-session log --agent=explore-auth-001 --type=Explore \
+npl-worklog log --agent=explore-auth-001 --type=Explore \
     --action=file_found --summary="Found auth.ts, auth.test.ts"
 
 # Parent reads new entries
-npl-session read --agent=primary
+npl-worklog read --agent=primary
 # → [1] 2025-12-10T08:01:30Z explore-auth-001: file_found - Found auth.ts...
 
 # Monitor in real-time
-tail -F .npl/sessions/$(npl-session current)/worklog.jsonl
+tail -F .npl/worklogs/$(npl-worklog current)/worklog.jsonl
 ```
 
 ### Disabling Tracking
 
-Set `@track-work=false` to disable all session logging.
+Set `@track-work=false` to disable all worklog tracking.
+
+## MCP Server Integration
+
+The `npl-mcp` server provides collaboration tools for agents. Features are discoverable via the `mcp__npl-mcp__*` prefix.
+
+### MCP Sessions vs Worklogs
+
+| Feature | npl-worklog (CLI) | MCP Sessions |
+|:--------|:------------------|:-------------|
+| Purpose | Inter-agent JSONL communication | Group artifacts and chat rooms |
+| Storage | File-based (`.npl/worklogs/`) | SQLite database |
+| Use case | Sub-agent coordination | Collaboration workflows |
+
+### MCP Collaboration Tools
+
+| Category | Tools | Purpose |
+|:---------|:------|:--------|
+| **Artifacts** | `create_artifact`, `add_revision`, `get_artifact`, `list_artifacts` | Version-controlled documents |
+| **Reviews** | `create_review`, `add_inline_comment`, `complete_review` | Collaborative review |
+| **Sessions** | `create_session`, `get_session`, `list_sessions` | Group artifacts and chat rooms |
+| **Chat** | `create_chat_room`, `send_message`, `get_notifications` | Team collaboration with @mentions |
+
+### When to Use MCP
+
+- **Document sharing**: Use `create_artifact` + `share_artifact` for documents that need revision tracking
+- **Code reviews**: Use `create_review` + `add_inline_comment` for structured feedback
+- **Team discussions**: Use `create_chat_room` + `send_message` with @mentions
+- **Session grouping**: Use `create_session` to organize related artifacts and discussions
 
 ## Agent Lifecycle
 

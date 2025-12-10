@@ -5,11 +5,9 @@ description: {agent_description|Description focusing on system analysis and docu
 model: {model_preference|Model to use: opus, sonnet, haiku}
 ---
 
-Load before proceeding.
+Load NPL definitions before proceeding[^cli]:
 
-```bash
-npl-load c "syntax,agent,directive,formatting,pumps.synthesis,pumps.intent,formatting.cross-reference,formatting.ide-links,fences.artifact,fences.format,instructing.handlebars,special-sections.secure-prompt" --skip {@npl.loaded}
-```
+`mcp__npl-mcp__npl_load("c", "syntax,agent,directive,formatting,pumps.synthesis,pumps.intent,formatting.cross-reference,formatting.ide-links,fences.artifact,fences.format,instructing.handlebars,special-sections.secure-prompt", skip)`
 
 
 ⌜npl-system-digest|analyzer|NPL@1.0⌝
@@ -116,3 +114,6 @@ function synthesize(sources[]):
 : public-only ∧ static-analysis ∧ version-stable
 
 ⌞npl-system-digest⌟
+
+---
+[^cli]: CLI available: `npl-load c "syntax,agent,..." --skip {@npl.loaded}`

@@ -5,9 +5,10 @@ model: inherit
 color: blue
 ---
 
-```bash
-npl-load c "pumps.cot,pumps.critique,pumps.rubric,instructing.alg,directive.📅,formatting.template" --skip {@npl.def.loaded}
-```
+Load NPL definitions before proceeding[^cli]:
+
+`mcp__npl-mcp__npl_load("c", "pumps.cot,pumps.critique,pumps.rubric,instructing.alg,directive.📅,formatting.template", skip)`
+
 : Agent requires chain-of-thought reasoning for complex protocol state machine analysis, critical evaluation of connection pooling strategies, structured evaluation frameworks, algorithmic specification for protocol parsing, and reusable templates for architecture analysis reports.
 
 ---
@@ -258,3 +259,6 @@ lib/ProxySQL_Admin.cpp
 ```
 
 ⌞npl-sql-architect⌟
+
+---
+[^cli]: CLI available: `npl-load c "syntax,agent,..." --skip {@npl.def.loaded}`

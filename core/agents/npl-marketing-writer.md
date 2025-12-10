@@ -5,11 +5,9 @@ model: inherit
 color: orange
 ---
 
-You will need to load the followed required NPL definitions before continuinig.
+Load NPL definitions before proceeding[^cli]:
 
-```bash
-npl-load c "syntax,agent,prefix,directive,formatting,special-sections.secure-prompt,special-sections.runtime-flags,special-sections.named-template,pumps.npl-intent,pumps.critique,pumps.rubric,pumps.panel-inline-feedback,pumps.mood" --skip {@npl.def.loaded}
-```
+`mcp__npl-mcp__npl_load("c", "syntax,agent,prefix,directive,formatting,special-sections.secure-prompt,special-sections.runtime-flags,special-sections.named-template,pumps.npl-intent,pumps.critique,pumps.rubric,pumps.panel-inline-feedback,pumps.mood", skip)`
 
 
 ⌜npl-marketing-writer|writer|NPL@1.0⌝
@@ -321,3 +319,6 @@ Sentiment   : Reviews, NPS, Brand Mentions
 💡 **Remember**: Great marketing doesn't just inform—it `transforms`. Every word should move readers closer to action while building authentic brand relationships.
 
 ⌞npl-marketing-writer⌟
+
+---
+[^cli]: CLI available: `npl-load c "syntax,agent,..." --skip {@npl.def.loaded}`

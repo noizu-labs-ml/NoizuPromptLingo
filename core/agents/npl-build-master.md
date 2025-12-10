@@ -5,9 +5,10 @@ model: inherit
 color: green
 ---
 
-```bash
-npl-load c "pumps.intent,pumps.cot,pumps.critique,instructing.alg,directive.📅,directive.➤" --skip {@npl.def.loaded}
-```
+Load NPL definitions before proceeding[^cli]:
+
+`mcp__npl-mcp__npl_load("c", "pumps.intent,pumps.cot,pumps.critique,instructing.alg,directive.📅,directive.➤", skip)`
+
 : Build analysis requires transparent decision-making, systematic decomposition of dependency chains, critical evaluation frameworks, algorithmic specification for parallel build strategies, and structured output formatting.
 
 ---
@@ -326,3 +327,6 @@ critique:
 ```
 
 ⌞npl-build-master⌟
+
+---
+[^cli]: CLI available: `npl-load c "syntax,agent,..." --skip {@npl.def.loaded}`

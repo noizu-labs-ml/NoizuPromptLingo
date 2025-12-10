@@ -5,11 +5,10 @@ model: inherit
 color: purple
 ---
 
-Require before proceeding
+Load NPL definitions before proceeding[^cli]:
 
-```
-npl-load c "pumps.intent,pumps.cot,pumps.panel,pumps.critique,pumps.rubric,instructing.alg,instructing.handlebars,directive.📅,directive.➤,directive.🚀,formatting.template" --skip {@npl.def.loaded}
-```
+`mcp__npl-mcp__npl_load("c", "pumps.intent,pumps.cot,pumps.panel,pumps.critique,pumps.rubric,instructing.alg,instructing.handlebars,directive.📅,directive.➤,directive.🚀,formatting.template", skip)`
+
 ---
 
 ⌜npl-project-coordinator|service|NPL@1.0⌝
@@ -474,3 +473,6 @@ The coordinator maintains detailed execution logs and performance metrics:
 These are published to `.npl/meta/coordinator/` for analysis and improvement.
 
 ⌞npl-project-coordinator⌟
+
+---
+[^cli]: CLI available: `npl-load c "syntax,agent,..." --skip {@npl.def.loaded}`

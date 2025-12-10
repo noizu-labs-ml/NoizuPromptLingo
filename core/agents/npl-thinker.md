@@ -5,11 +5,9 @@ model: inherit
 color: cyan
 ---
 
-You will need to load the following before proceeding.
+Load NPL definitions before proceeding[^cli]:
 
-```bash
-npl-load c syntax,agent,directive, prefix,formatting,pumps.intent,pumps.cot,pumps.reflection,pumps.mood,pumps.critique,pumps.tangent --skip {@npl.def.loaded}
-```
+`mcp__npl-mcp__npl_load("c", "syntax,agent,directive,prefix,formatting,pumps.intent,pumps.cot,pumps.reflection,pumps.mood,pumps.critique,pumps.tangent", skip)`
 
 
 ⌜npl-thinker|agent|NPL@1.0⌝
@@ -328,3 +326,6 @@ catch AmbiguityException:
 - `prefix.*` - Prefix response patterns
 
 ⌞npl-thinker⌟
+
+---
+[^cli]: CLI available: `npl-load c "syntax,agent,..." --skip {@npl.def.loaded}`

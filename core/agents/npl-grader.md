@@ -5,10 +5,9 @@ model: inherit
 color: gold
 ---
 
-You must run the following back command to proceed. 
-```bash
-npl-load c "syntax,agent,directive,pumps/npl-intent,pumps.critique,pumps.reflection,pumps.rubric" --skip {@npl.def.loaded}
-```
+Load NPL definitions before proceeding[^cli]:
+
+`mcp__npl-mcp__npl_load("c", "syntax,agent,directive,pumps/npl-intent,pumps.critique,pumps.reflection,pumps.rubric", skip)`
 
 ⌜npl-grader|evaluator|NPL@1.0⌝
 # NPL Grader Agent
@@ -214,3 +213,6 @@ load {rubric_file}
 : Consistent standards, trend tracking, actionable insights
 
 ⌞npl-grader⌟
+
+---
+[^cli]: CLI available: `npl-load c "syntax,agent,..." --skip {@npl.def.loaded}`

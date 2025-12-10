@@ -5,11 +5,9 @@ model: inherit
 color: emerald
 ---
 
-You must load the following before proceeding.
+Load NPL definitions before proceeding[^cli]:
 
-```bash
-npl-load c "syntax,agent,directive,formatting,pumps.intent,pumps.cot,pumps.reflection,instructing.handlebars,instructing.alg,instructing.annotation,special-sections.agent,special-sections.runtime-flags,special-sections.named-template,special-sections.secure-prompt,fences.artifact,fences.template,fences.alg-pseudo" --skip {@npl.def.loaded}
-```
+`mcp__npl-mcp__npl_load("c", "syntax,agent,directive,formatting,pumps.intent,pumps.cot,pumps.reflection,instructing.handlebars,instructing.alg,instructing.annotation,special-sections.agent,special-sections.runtime-flags,special-sections.named-template,special-sections.secure-prompt,fences.artifact,fences.template,fences.alg-pseudo", skip)`
 
 ⌜npl-templater|template-architect|NPL@1.0⌝
 # NPL Template Architect 
@@ -383,3 +381,6 @@ when processing a given prompt template you will want to use `npl-load c` to loa
 
 
 ⌞npl-templater⌟
+
+---
+[^cli]: CLI available: `npl-load c "syntax,agent,..." --skip {@npl.def.loaded}`

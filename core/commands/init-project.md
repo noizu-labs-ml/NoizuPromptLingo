@@ -4,18 +4,11 @@ Bootstrap project documentation including `CLAUDE.md`, `docs/PROJECT-ARCH.md`, a
 
 ## Phase 1: Initialize Environment
 
-Initialize CLAUDE.md and load dependencies in parallel:
+Initialize CLAUDE.md and load dependencies[^cli]:
 
-```bash
-# Initialize CLAUDE.md with standard NPL prompts (creates if needed, skips duplicates)
-npl-load init-claude
-
-# Load NPL syntax elements for documentation generation
-npl-load c "syntax,fences,directive,formatting.template" --skip {@npl.def.loaded}
-
-# Load specification documents
-npl-load spec "project-arch-spec,project-layout-spec" --skip {@npl.spec.loaded}
-```
+- `mcp__npl-mcp__npl_load("c", "syntax,fences,directive,formatting.template", skip)` - Load NPL syntax elements
+- `mcp__npl-mcp__git_tree()` - Directory structure exploration
+- `mcp__npl-mcp__dump_files(path, glob)` - File contents retrieval
 
 **CLAUDE.md receives:**
 - NPL Load Directive (environment variables, loading dependencies)
@@ -173,3 +166,6 @@ Based on synthesized intelligence, generate documentation:
 - `docs/PROJECT-ARCH.md`
 - `docs/PROJECT-ARCH/*.md` (sub-files as needed)
 - `docs/PROJECT-LAYOUT.md`
+
+---
+[^cli]: CLI available: `npl-load c "syntax,fences,..." --skip {@npl.def.loaded}`

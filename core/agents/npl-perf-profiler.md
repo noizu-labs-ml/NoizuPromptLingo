@@ -5,9 +5,9 @@ model: inherit
 color: red
 ---
 
-```bash
-npl-load c "pumps.intent,pumps.critique,pumps.reflection,instructing.alg,directive.📅,formatting.template" --skip {@npl.def.loaded}
-```
+Load NPL definitions before proceeding[^cli]:
+
+`mcp__npl-mcp__npl_load("c", "pumps.intent,pumps.critique,pumps.reflection,instructing.alg,directive.📅,formatting.template", skip)`
 
 ---
 
@@ -314,3 +314,6 @@ reflection:
 ```
 
 ⌞npl-perf-profiler⌟
+
+---
+[^cli]: CLI available: `npl-load c "syntax,agent,..." --skip {@npl.def.loaded}`

@@ -1,6 +1,6 @@
 npl-instructions:
    name: npl-conventions
-   version: 1.4.0
+   version: 1.5.0
 ---
 
 ```🏳️
@@ -90,8 +90,8 @@ Agents read `.summary.md` first, then fetch specific `##` sections from `.detail
 When `@track-work=true`, agents append entries to `worklog.jsonl` and read new entries via cursor-based reads:
 
 ```bash
-npl-session log --agent=explore-auth-001 --action=file_found --summary="Found auth.ts"
-npl-session read --agent=primary  # Read new entries since cursor
+npl-worklog log --agent=explore-auth-001 --action=file_found --summary="Found auth.ts"
+npl-worklog read --agent=primary  # Read new entries since cursor
 ```
 
 See `npl/agent.md` for full worklog entry schema.
@@ -117,9 +117,32 @@ Structured formats render consistently and are machine-parseable. ASCII art fail
 | Grep | Search file contents | `Grep("def main", type="py")` |
 | Read | View file contents | `Read("/path/to/file.py")` |
 | Task | Delegate to agents | `Task("@reviewer analyze PR")` |
-| git-tree | Directory structure overview | `git-tree docs/` |
+| `mcp__npl-mcp__git_tree` | Directory structure | `mcp__npl-mcp__git_tree("docs/")` |
+| `mcp__npl-mcp__dump_files` | Dump file contents | `mcp__npl-mcp__dump_files("src/", "*.md")` |
+| `mcp__npl-mcp__npl_load` | Load NPL components | `mcp__npl-mcp__npl_load("c", "syntax,agent")` |
 
 **Pattern**: Search first (`Glob`/`Grep`), then read relevant files.
+
+## MCP Server Integration
+
+The `npl-mcp` server provides collaboration tools. Features are discoverable via the `mcp__npl-mcp__*` prefix.
+
+### MCP Tool Categories
+
+| Category | Tools | Purpose |
+|:---------|:------|:--------|
+| **Scripts** | `dump_files`, `git_tree`, `git_tree_depth`, `npl_load` | Codebase exploration |
+| **Artifacts** | `create_artifact`, `add_revision`, `get_artifact`, `list_artifacts` | Version-controlled documents |
+| **Reviews** | `create_review`, `add_inline_comment`, `complete_review` | Collaborative review |
+| **Sessions** | `create_session`, `get_session`, `list_sessions` | Group artifacts and chat rooms |
+| **Chat** | `create_chat_room`, `send_message`, `get_notifications` | Team collaboration |
+
+### When to Use MCP
+
+- **Artifact sharing**: Use `create_artifact` + `share_artifact` for documents that need revision tracking
+- **Code reviews**: Use `create_review` + `add_inline_comment` for structured feedback
+- **Team discussions**: Use `create_chat_room` + `send_message` with @mentions
+- **Session grouping**: Use `create_session` to organize related artifacts and discussions
 
 ### 🎯 Documentation Discovery (Critical)
 

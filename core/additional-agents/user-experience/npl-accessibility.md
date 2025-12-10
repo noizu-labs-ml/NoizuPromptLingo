@@ -70,12 +70,12 @@ flowchart TD
     D --> E[Progressive Complexity Adjustment]
     E --> F[Assistive Technology Integration]
     F --> G[Accessible Output Generation]
-    
+
     B1[Visual Ability] --> B
     B2[Motor Ability] --> B
     B3[Cognitive Load] --> B
     B4[Technology Preferences] --> B
-    
+
     C --> C1[Visual Adaptations]
     C --> C2[Motor Adaptations]
     C --> C3[Cognitive Adaptations]
@@ -143,12 +143,12 @@ reflection:
     Accessibility is not about retrofitting compliance—it's about designing
     inclusive experiences from the ground up. NPL's power should enhance
     capabilities for all users, not create barriers for some.
-    
+
   complexity_balance: |
     The research benefits of NPL's sophisticated syntax must be preserved
     while providing multiple pathways for users with different abilities
     to access the same functionality.
-    
+
   universal_design: |
     Accessibility improvements often benefit all users, not just those
     with disabilities. Simplified interfaces and clear navigation help everyone.
@@ -162,7 +162,7 @@ reflection:
 ```accessibility
 NPL Symbol Accessibility Mapping:
 ├── ⌜⌝ (Corner Brackets): "NPL section start/end markers"
-├── ⟪⟫ (Double Angle Brackets): "Annotation delimiters"  
+├── ⟪⟫ (Double Angle Brackets): "Annotation delimiters"
 ├── ⩤⩥ (Semantic Operators): "Logical flow indicators"
 └── 🎯 (Target Emoji): "Focus attention marker"
 
@@ -310,7 +310,7 @@ Header Navigation:
 Main Workspace:
 ├── Simplified Prompt Builder (Level 1)
 │   ├── Task Type: [Dropdown: Code Review ▼]
-│   ├── Style: [Dropdown: Technical ▼]  
+│   ├── Style: [Dropdown: Technical ▼]
 │   ├── Length: [Slider: Brief ←→ Detailed]
 │   └── [Generate Prompt] (Large, accessible button)
 │
@@ -332,13 +332,13 @@ Main Workspace:
 Semantic Markup Structure:
 <main role="main" aria-labelledby="npl-workspace">
   <h1 id="npl-workspace">NPL Prompt Workspace</h1>
-  
+
   <section role="region" aria-labelledby="prompt-builder">
     <h2 id="prompt-builder">Prompt Builder</h2>
-    
+
     <div role="group" aria-labelledby="npl-syntax">
       <h3 id="npl-syntax">NPL Syntax Elements</h3>
-      
+
       <button aria-describedby="section-marker-desc">
         Insert Section Marker
       </button>
@@ -363,7 +363,7 @@ Live Region Updates:
 ```voice-control
 Dragon NaturallySpeaking Commands:
 ├── "NPL new section" → Creates ⌜⌝ with cursor inside
-├── "NPL annotate" → Creates ⟪⟫ with cursor inside  
+├── "NPL annotate" → Creates ⟪⟫ with cursor inside
 ├── "NPL focus here" → Inserts 🎯 at cursor position
 ├── "NPL intent block" → Creates full <npl-intent> structure
 └── "NPL read section" → Text-to-speech for current block
@@ -472,6 +472,17 @@ Voice Control Support:
 ```bash
 @npl-accessibility validate --prompt="complex-npl-prompt.md" --barriers="visual,motor,cognitive"
 ```
+
+## MCP Integration
+
+When `npl-mcp` server is available, accessibility artifacts and reviews benefit from collaboration tools:
+
+| Use Case | MCP Tools |
+|:---------|:----------|
+| Share audit reports | `create_artifact` + `share_artifact` |
+| Collect accessibility feedback | `create_chat_room` + `send_message` |
+| Track remediation tasks | `create_todo` with assignments |
+| Review WCAG compliance | `create_review` + `add_inline_comment` |
 
 ## Integration with Other Agents
 

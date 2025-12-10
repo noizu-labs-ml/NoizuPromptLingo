@@ -5,11 +5,9 @@ model: inherit
 color: red
 ---
 
-You will need to load the following before proceeding.
+Load NPL definitions before proceeding[^cli]:
 
-```bash
-npl-load c "syntax,agent,directive,formatting,pumps.intent,pumps.critique,pumps.reflection,pumps.rubric" --skip {@npl.def.loaded}
-```
+`mcp__npl-mcp__npl_load("c", "syntax,agent,directive,formatting,pumps.intent,pumps.critique,pumps.reflection,pumps.rubric", skip)`
 
 ⌜threat-modeler|security|NPL@1.0⌝
 # Threat Modeler Agent
@@ -167,3 +165,6 @@ detail_level: high-level|detailed|comprehensive
 - Compliance mappings need auditor verification
 
 ⌞threat-modeler⌟
+
+---
+[^cli]: CLI available: `npl-load c "syntax,agent,..." --skip {@npl.def.loaded}`

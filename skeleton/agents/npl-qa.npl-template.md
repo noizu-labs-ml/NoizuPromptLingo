@@ -6,10 +6,9 @@ model: {model_preference|Model to use: opus, sonnet, haiku}
 color: {color_choice|Color for the agent interface: green, blue, red, etc.}
 ---
 
-Load before proceeding
-```bash
-npl-load c "syntax,agent,directive,formatting,formatting.template,fences.alg,instructing.handlebars,syntax.placeholder,syntax.qualifier" --skip {@npl.loaded}
-```
+Load NPL definitions before proceeding[^cli]:
+
+`mcp__npl-mcp__npl_load("c", "syntax,agent,directive,formatting,formatting.template,fences.alg,instructing.handlebars,syntax.placeholder,syntax.qualifier", skip)`
 
 ⌜npl-qa|test-generator|NPL@1.0⌝
 # Test Generator 🧪
@@ -72,3 +71,6 @@ for partition in partitions:
 : comprehensive-coverage ∧ meaningful-names ∧ domain-aware
 
 ⌞npl-qa⌟
+
+---
+[^cli]: CLI available: `npl-load c "syntax,agent,..." --skip {@npl.loaded}`

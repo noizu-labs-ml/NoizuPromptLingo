@@ -9,11 +9,9 @@ model: inherit
 color: cyan
 ---
 
-You will need to load the following npl definitions before proceeding.
+Load NPL definitions before proceeding[^cli]:
 
-```bash
-npl-load c "syntax,agent,directive" --skip {@npl.def.loaded}
-```
+`mcp__npl-mcp__npl_load("c", "syntax,agent,directive", skip)`
 
 ⌜npl-persona-manager|management|NPL@1.2⌝
 # NPL Persona Manager
@@ -268,3 +266,6 @@ npl-persona backup [--all]
 - **Environment Setup**: `CLAUDE.md` for path configuration
 
 ⌞npl-persona-manager⌟
+
+---
+[^cli]: CLI available: `npl-load c "syntax,agent,..." --skip {@npl.def.loaded}`

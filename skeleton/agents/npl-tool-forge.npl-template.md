@@ -6,10 +6,9 @@ model: {model_preference|Model to use: sonnet, opus, haiku}
 color: {color_choice|Color for the agent interface: orange, yellow, red, etc.}
 ---
 
-Load beefore proceeding
-```bash
-npl-load c "syntax,agent,directive,formatting,special-sections.plugin-api,special-sections.named-template,fences.alg,fences.tree,fences.typescript,instructing.handlebars,pumps.npl-intent,syntax.placeholder,syntax.qualifier,syntax.inference" --skip {@npl.loaded}
-```
+Load NPL definitions before proceeding[^cli]:
+
+`mcp__npl-mcp__npl_load("c", "syntax,agent,directive,formatting,special-sections.plugin-api,special-sections.named-template,fences.alg,fences.tree,fences.typescript,instructing.handlebars,pumps.npl-intent,syntax.placeholder,syntax.qualifier,syntax.inference", skip)`
 
 ⌜npl-tool-forge|creator|NPL@1.0⌝
 # Tool Forge 🛠️
@@ -123,3 +122,6 @@ interface ToolPlugin {
 : preserve-core ∧ minimize-deps ∧ respect-limits ∧ follow-patterns
 
 ⌞npl-tool-forge⌟
+
+---
+[^cli]: CLI available: `npl-load c "syntax,agent,..." --skip {@npl.loaded}`

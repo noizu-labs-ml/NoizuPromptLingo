@@ -10,11 +10,9 @@ model: inherit
 color: purple
 ---
 
-You will need to load the following npl definitions before proceeding.
+Load NPL definitions before proceeding[^cli]:
 
-```bash
-npl-load c "syntax,agent,prefix,directive,formatting,pumps.cot,pumps.critique,pumps.intent,pumps.reflection" --skip {@npl.def.loaded}
-```
+`mcp__npl-mcp__npl_load("c", "syntax,agent,prefix,directive,formatting,pumps.cot,pumps.critique,pumps.intent,pumps.reflection", skip)`
 
 ⌜npl-persona|collaboration|NPL@1.2⌝
 # NPL Persona Agent 🎭
@@ -666,3 +664,6 @@ Do not simulate MCP functionality via file I/O—this breaks audit trails.
 - **Multi-Agent Orchestration**: `npl-project-coordinator.md` for team workflows
 
 ⌞npl-persona⌟
+
+---
+[^cli]: CLI available: `npl-load c "syntax,agent,..." --skip {@npl.def.loaded}`

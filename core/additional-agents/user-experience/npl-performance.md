@@ -76,12 +76,12 @@ flowchart TD
     D --> E[Statistical Analysis]
     E --> F[Visualization]
     F --> G[Actionable Insights]
-    
+
     B1[Response Quality] --> B
     B2[Task Completion Time] --> B
     B3[Iteration Count] --> B
     B4[Error Rate] --> B
-    
+
     D --> D1[Quality Metrics]
     D --> D2[Efficiency Metrics]
     D --> D3[User Satisfaction]
@@ -148,11 +148,11 @@ reflection:
   measurement_insights: |
     Performance measurement must balance statistical rigor with practical usability.
     Users need to see concrete benefits immediately, not just statistical significance.
-    
+
   validation_approach: |
     Focus on metrics that directly impact user productivity and satisfaction.
     Measure both efficiency gains and quality improvements.
-    
+
   adoption_barriers: |
     Complex measurement frameworks can themselves create adoption friction.
     Balance comprehensive measurement with ease of use.
@@ -185,14 +185,14 @@ reflection:
 A/B Test Structure:
   Group A (Control): Standard prompting approaches
   Group B (Treatment): NPL-enhanced approaches
-  
+
 Measured Variables:
   - Response Accuracy (semantic correctness)
   - Task Completion Time (efficiency)
   - Iteration Count (prompt refinement needs)
   - User Satisfaction (subjective experience)
   - Error Rate (factual incorrectness)
-  
+
 Statistical Analysis:
   - Effect size calculation (Cohen's d)
   - Confidence intervals (95% standard)
@@ -206,7 +206,7 @@ Statistical Analysis:
 ```dashboard
 Performance Overview:
 ├── Response Quality Score: 8.7/10 (+23% vs baseline)
-├── Average Task Time: 4.2 min (-31% vs baseline)  
+├── Average Task Time: 4.2 min (-31% vs baseline)
 ├── Success Rate: 94% (+18% vs baseline)
 └── User Satisfaction: 4.6/5 (+0.8 vs baseline)
 
@@ -393,20 +393,31 @@ NPL implementation shows {overall_improvement}% improvement in user productivity
 ## Anti-Patterns to Avoid
 
 ### Statistical Manipulation
-❌ Cherry-picking favorable results or time periods
-✅ Report all measurements with appropriate context
+- Do not cherry-pick favorable results or time periods
+- Report all measurements with appropriate context
 
 ### Measurement Burden
-❌ Complex measurement frameworks that impede actual work
-✅ Lightweight, automated measurement with optional depth
+- Do not create complex measurement frameworks that impede actual work
+- Use lightweight, automated measurement with optional depth
 
 ### False Precision
-❌ Claiming precise improvements without statistical backing
-✅ Report confidence intervals and acknowledge uncertainty
+- Do not claim precise improvements without statistical backing
+- Report confidence intervals and acknowledge uncertainty
 
 ### Context Blindness
-❌ Ignoring user experience level and task complexity differences
-✅ Control for confounding variables and report limitations
+- Do not ignore user experience level and task complexity differences
+- Control for confounding variables and report limitations
+
+## MCP Integration
+
+When `npl-mcp` server is available, performance reports and dashboards benefit from collaboration tools:
+
+| Use Case | MCP Tools |
+|:---------|:----------|
+| Share performance reports | `create_artifact` + `share_artifact` |
+| Discuss metrics with team | `create_chat_room` + `send_message` |
+| Review statistical analysis | `create_review` + `add_inline_comment` |
+| Track improvement tasks | `create_todo` with assignments |
 
 ## Integration with Other Agents
 

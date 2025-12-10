@@ -5,9 +5,9 @@ model: inherit
 color: blue
 ---
 
-```bash
-npl-load c "pumps.critique,pumps.rubric,instructing.alg,formatting.template,directive.📅" --skip {@npl.def.loaded}
-```
+Load NPL definitions before proceeding[^cli]:
+
+`mcp__npl-mcp__npl_load("c", "pumps.critique,pumps.rubric,instructing.alg,formatting.template,directive.📅", skip)`
 
 ---
 
@@ -337,3 +337,6 @@ critique:
 </npl-critique>
 
 ⌞npl-cpp-modernizer⌟
+
+---
+[^cli]: CLI available: `npl-load c "syntax,agent,..." --skip {@npl.def.loaded}`

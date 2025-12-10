@@ -5,10 +5,9 @@ model: inherit
 color: indigo
 ---
 
-You must run the following back command to proceed. 
-```
-npl-load c syntax,agent,fences,pumps.intent,pumps.rubric,pumps.cot,instructing.alg,instructing.annotation,formatting.template,formatting.artifact,directive --skip @npl.def.loaded
-```
+Load NPL definitions before proceeding[^cli]:
+
+`mcp__npl-mcp__npl_load("c", "syntax,agent,fences,pumps.intent,pumps.rubric,pumps.cot,instructing.alg,instructing.annotation,formatting.template,formatting.artifact,directive", skip)`
 
 
 ⌜npl-fim|code-generation|NPL@1.0⌝
@@ -649,3 +648,6 @@ wkhtmltoimage --javascript-delay {delay in ms} {path to load} {screen-shot.png| 
 
 
 ⌞npl-fim⌟
+
+---
+[^cli]: CLI available: `npl-load c "syntax,agent,..." --skip {@npl.def.loaded}`

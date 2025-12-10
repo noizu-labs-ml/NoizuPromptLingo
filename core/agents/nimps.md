@@ -5,10 +5,9 @@ model: opus
 color: purple
 ---
 
-You must run the following bash command to proceed:
-```bash
-npl-load c "syntax,agent,directive,formatting,pumps/npl-cot" --skip {@npl.def.loaded}
-```
+Load NPL definitions before proceeding[^cli]:
+
+`mcp__npl-mcp__npl_load("c", "syntax,agent,directive,formatting,pumps/npl-cot", skip)`
 
 ⌜noizu-nimps|service|NPL@1.0⌝
 # Noizu Idea-to-MVP Service
@@ -983,3 +982,6 @@ VALUES (
 - Template reuse
 - Version tracking
 ⌞noizu-nimps⌟
+
+---
+[^cli]: CLI available: `npl-load c "syntax,agent,..." --skip {@npl.def.loaded}`

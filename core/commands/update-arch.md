@@ -7,21 +7,15 @@ Refresh and expand architecture documentation, updating stale content and expand
 
 ## NPL Dependencies
 
-You must run the following command to proceed:
+Load NPL definitions before proceeding[^cli]:
 
-```bash
-npl-load c "syntax,agent,fences,directive,pumps.intent,instructing.alg,formatting.template" --skip {@npl.def.loaded}
-```
-
-```bash
-npl-load spec "project-arch-spec" --skip {@npl.spec.loaded}
-```
+`mcp__npl-mcp__npl_load("c", "syntax,agent,fences,directive,pumps.intent,instructing.alg,formatting.template", skip)`
 
 ### See Also
-- `npl-load c "fences"` - Fence type reference (diagram, example, format)
-- `npl-load c "directive"` - Directive patterns (📐, 🗺️, 🔧, 📂)
-- `npl-load c "pumps"` - Reasoning pump documentation
-- `npl-load c "agent"` - Agent declaration syntax
+- Fence type reference (diagram, example, format)
+- Directive patterns (📐, 🗺️, 🔧, 📂)
+- Reasoning pump documentation
+- Agent declaration syntax
 
 ---
 
@@ -722,3 +716,6 @@ All diagrams MUST use Mermaid syntax:
 - `/update-layout` - Refresh PROJECT-LAYOUT.md
 - `@npl-gopher-scout` - Scout agent definition
 - `project-arch-spec` - Full specification reference
+
+---
+[^cli]: CLI available: `npl-load c "syntax,agent,..." --skip {@npl.def.loaded}`
