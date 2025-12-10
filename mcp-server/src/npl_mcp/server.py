@@ -1,6 +1,7 @@
 """Main MCP server implementation."""
 
 import base64
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional, List
 from fastmcp import FastMCP
@@ -12,34 +13,40 @@ from .chat import ChatManager
 from . import scripts
 
 
-# Initialize MCP server
-mcp = FastMCP("npl-mcp", dependencies=["fastmcp", "pyyaml", "pillow", "aiosqlite"])
-
-# Global state (initialized on startup)
-db: Optional[Database] = None
-artifact_manager: Optional[ArtifactManager] = None
-review_manager: Optional[ReviewManager] = None
-chat_manager: Optional[ChatManager] = None
+# Global managers (initialized via lifespan)
+_db: Optional[Database] = None
+_artifact_manager: Optional[ArtifactManager] = None
+_review_manager: Optional[ReviewManager] = None
+_chat_manager: Optional[ChatManager] = None
 
 
-@mcp.lifespan()
-async def app_lifespan():
+@asynccontextmanager
+async def lifespan(server: FastMCP):
     """Initialize and cleanup resources."""
-    global db, artifact_manager, review_manager, chat_manager
+    global _db, _artifact_manager, _review_manager, _chat_manager
 
     # Initialize database
-    db = Database()
-    await db.connect()
+    _db = Database()
+    await _db.connect()
 
     # Initialize managers
-    artifact_manager = ArtifactManager(db)
-    review_manager = ReviewManager(db)
-    chat_manager = ChatManager(db)
+    _artifact_manager = ArtifactManager(_db)
+    _review_manager = ReviewManager(_db)
+    _chat_manager = ChatManager(_db)
 
-    yield  # Server runs
+    yield {
+        "db": _db,
+        "artifact_manager": _artifact_manager,
+        "review_manager": _review_manager,
+        "chat_manager": _chat_manager
+    }
 
     # Cleanup
-    await db.disconnect()
+    await _db.disconnect()
+
+
+# Initialize MCP server with lifespan
+mcp = FastMCP("npl-mcp", lifespan=lifespan)
 
 
 # ============================================================================
@@ -132,7 +139,7 @@ async def create_artifact(
         Dict with artifact_id, revision_id, and paths
     """
     file_content = base64.b64decode(file_content_base64)
-    return await artifact_manager.create_artifact(
+    return await _artifact_manager.create_artifact(
         name=name,
         artifact_type=artifact_type,
         file_content=file_content,
@@ -165,7 +172,7 @@ async def add_revision(
         Dict with revision_id, revision_num, and paths
     """
     file_content = base64.b64decode(file_content_base64)
-    result = await artifact_manager.add_revision(
+    result = await _artifact_manager.add_revision(
         artifact_id=artifact_id,
         file_content=file_content,
         filename=filename,
@@ -175,7 +182,7 @@ async def add_revision(
     )
 
     # Update current revision
-    await db.execute(
+    await _db.execute(
         "UPDATE artifacts SET current_revision_id = ? WHERE id = ?",
         (result["revision_id"], artifact_id)
     )
@@ -197,7 +204,7 @@ async def get_artifact(
     Returns:
         Dict with artifact info and base64-encoded file content
     """
-    return await artifact_manager.get_artifact(artifact_id, revision)
+    return await _artifact_manager.get_artifact(artifact_id, revision)
 
 
 @mcp.tool()
@@ -207,7 +214,7 @@ async def list_artifacts() -> list:
     Returns:
         List of artifact dicts
     """
-    return await artifact_manager.list_artifacts()
+    return await _artifact_manager.list_artifacts()
 
 
 @mcp.tool()
@@ -220,7 +227,7 @@ async def get_artifact_history(artifact_id: int) -> list:
     Returns:
         List of revision dicts
     """
-    return await artifact_manager.get_artifact_history(artifact_id)
+    return await _artifact_manager.get_artifact_history(artifact_id)
 
 
 # ============================================================================
@@ -243,7 +250,7 @@ async def create_review(
     Returns:
         Dict with review_id and metadata
     """
-    return await review_manager.create_review(artifact_id, revision_id, reviewer_persona)
+    return await _review_manager.create_review(artifact_id, revision_id, reviewer_persona)
 
 
 @mcp.tool()
@@ -264,7 +271,7 @@ async def add_inline_comment(
     Returns:
         Dict with comment_id and metadata
     """
-    return await review_manager.add_inline_comment(review_id, location, comment, persona)
+    return await _review_manager.add_inline_comment(review_id, location, comment, persona)
 
 
 @mcp.tool()
@@ -287,7 +294,7 @@ async def add_overlay_annotation(
     Returns:
         Dict with annotation details
     """
-    return await review_manager.add_overlay_annotation(review_id, x, y, comment, persona)
+    return await _review_manager.add_overlay_annotation(review_id, x, y, comment, persona)
 
 
 @mcp.tool()
@@ -300,7 +307,7 @@ async def get_review(review_id: int) -> dict:
     Returns:
         Dict with review data and comments
     """
-    return await review_manager.get_review(review_id)
+    return await _review_manager.get_review(review_id)
 
 
 @mcp.tool()
@@ -317,7 +324,7 @@ async def generate_annotated_artifact(
     Returns:
         Dict with annotated content and per-reviewer files
     """
-    return await review_manager.generate_annotated_artifact(artifact_id, revision_id)
+    return await _review_manager.generate_annotated_artifact(artifact_id, revision_id)
 
 
 @mcp.tool()
@@ -334,7 +341,7 @@ async def complete_review(
     Returns:
         Dict with updated review status
     """
-    return await review_manager.complete_review(review_id, overall_comment)
+    return await _review_manager.complete_review(review_id, overall_comment)
 
 
 # ============================================================================
@@ -357,7 +364,7 @@ async def create_chat_room(
     Returns:
         Dict with room_id and metadata
     """
-    return await chat_manager.create_chat_room(name, members, description)
+    return await _chat_manager.create_chat_room(name, members, description)
 
 
 @mcp.tool()
@@ -378,7 +385,7 @@ async def send_message(
     Returns:
         Dict with event_id and notifications created
     """
-    return await chat_manager.send_message(room_id, persona, message, reply_to_id)
+    return await _chat_manager.send_message(room_id, persona, message, reply_to_id)
 
 
 @mcp.tool()
@@ -397,7 +404,7 @@ async def react_to_message(
     Returns:
         Dict with reaction event_id
     """
-    return await chat_manager.react_to_message(event_id, persona, emoji)
+    return await _chat_manager.react_to_message(event_id, persona, emoji)
 
 
 @mcp.tool()
@@ -418,7 +425,7 @@ async def share_artifact(
     Returns:
         Dict with event_id and notifications
     """
-    return await chat_manager.share_artifact(room_id, persona, artifact_id, revision)
+    return await _chat_manager.share_artifact(room_id, persona, artifact_id, revision)
 
 
 @mcp.tool()
@@ -439,7 +446,7 @@ async def create_todo(
     Returns:
         Dict with event_id and notification
     """
-    return await chat_manager.create_todo(room_id, persona, description, assigned_to)
+    return await _chat_manager.create_todo(room_id, persona, description, assigned_to)
 
 
 @mcp.tool()
@@ -458,7 +465,7 @@ async def get_chat_feed(
     Returns:
         List of event dicts in chronological order
     """
-    return await chat_manager.get_chat_feed(room_id, since, limit)
+    return await _chat_manager.get_chat_feed(room_id, since, limit)
 
 
 @mcp.tool()
@@ -475,7 +482,7 @@ async def get_notifications(
     Returns:
         List of notification dicts with event details
     """
-    return await chat_manager.get_notifications(persona, unread_only)
+    return await _chat_manager.get_notifications(persona, unread_only)
 
 
 @mcp.tool()
@@ -488,7 +495,7 @@ async def mark_notification_read(notification_id: int) -> dict:
     Returns:
         Dict with updated notification status
     """
-    return await chat_manager.mark_notification_read(notification_id)
+    return await _chat_manager.mark_notification_read(notification_id)
 
 
 def main():
