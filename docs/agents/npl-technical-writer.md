@@ -6,16 +6,31 @@ Technical documentation agent that generates specs, PRs, issues, and docs withou
 
 Produces clear, actionable technical content. Strips filler words, removes passive voice, and uses exact terminology. Output is direct and implementation-ready.
 
+See [Detailed Documentation](npl-technical-writer.detailed.md) for complete reference.
+
 ## Capabilities
 
-- **Document generation**: specs, PRs, issues, READMEs, API docs
-- **Review mode**: inline annotations with specific improvement suggestions
-- **Diagram support**: Mermaid and PlantUML integration
-- **Template-driven**: consistent structure via named templates
-- **Anti-pattern filtering**: auto-removes "certainly", "it's worth noting", marketing language
-- **House style loading**: hierarchical style guide support
+- **Document generation**: specs, PRs, issues, READMEs, API docs ([Document Categories](npl-technical-writer.detailed.md#document-categories))
+- **Review mode**: inline annotations with specific improvement suggestions ([Annotation Patterns](npl-technical-writer.detailed.md#annotation-patterns))
+- **Diagram support**: Mermaid and PlantUML integration ([Diagram Support](npl-technical-writer.detailed.md#diagram-support))
+- **Template-driven**: consistent structure via named templates ([Templates](npl-technical-writer.detailed.md#templates))
+- **Anti-pattern filtering**: auto-removes "certainly", "it's worth noting", marketing language ([Anti-Pattern Filters](npl-technical-writer.detailed.md#anti-pattern-filters))
+- **House style loading**: hierarchical style guide support ([House Style Loading](npl-technical-writer.detailed.md#house-style-loading))
 
-## Usage
+## Commands
+
+| Command | Description | Details |
+|:--------|:------------|:--------|
+| `spec` | Technical specifications | [spec command](npl-technical-writer.detailed.md#spec) |
+| `pr` | Pull request descriptions | [pr command](npl-technical-writer.detailed.md#pr) |
+| `issue` | Bug reports / feature requests | [issue command](npl-technical-writer.detailed.md#issue) |
+| `doc` | General documentation | [doc command](npl-technical-writer.detailed.md#doc) |
+| `readme` | Project README files | [readme command](npl-technical-writer.detailed.md#readme) |
+| `api-doc` | API documentation | [api-doc command](npl-technical-writer.detailed.md#api-doc) |
+| `annotate` | Add inline feedback | [annotate command](npl-technical-writer.detailed.md#annotate) |
+| `review` | Document editing and rewrite | [review command](npl-technical-writer.detailed.md#review) |
+
+## Quick Examples
 
 ```bash
 # Generate a technical specification
@@ -31,19 +46,6 @@ Produces clear, actionable technical content. Strips filler words, removes passi
 @writer readme --project-type=nodejs
 ```
 
-## Commands
-
-| Command | Description |
-|---------|-------------|
-| `spec` | Technical specifications |
-| `pr` | Pull request descriptions |
-| `issue` | Bug reports / feature requests |
-| `doc` | General documentation |
-| `readme` | Project README files |
-| `api-doc` | API documentation |
-| `annotate` | Add inline feedback |
-| `review` | Document editing and rewrite |
-
 ## Workflow Integration
 
 ```bash
@@ -58,7 +60,19 @@ Produces clear, actionable technical content. Strips filler words, removes passi
 @gopher summarize src/ | @writer spec --component=auth
 ```
 
+See [Integration Patterns](npl-technical-writer.detailed.md#integration-patterns) for more workflows.
+
+## Limitations
+
+- Cannot execute code or validate implementations
+- Technical depth limited to provided context
+- Aggressive fluff removal may occasionally over-trim
+
+See [Limitations](npl-technical-writer.detailed.md#limitations) for complete list.
+
 ## See Also
 
-- Core definition: `core/agents/npl-technical-writer.md`
-- House styles: `conventions/technical.house-style`
+- [Detailed Documentation](npl-technical-writer.detailed.md) - Complete reference
+- [Best Practices](npl-technical-writer.detailed.md#best-practices)
+- [Templates](npl-technical-writer.detailed.md#templates)
+- Core definition: `npl-technical-writer|writer|NPL@1.0`

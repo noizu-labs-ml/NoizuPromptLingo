@@ -10,11 +10,36 @@ import glob
 import fnmatch
 import re
 import yaml
+import json
 import tempfile
 import subprocess
 import concurrent.futures
 from pathlib import Path
+from dataclasses import dataclass, field
 from typing import List, Set, Tuple, Optional, Dict, Any
+
+# Version comparison helper
+def parse_version(version_str: str) -> Tuple[int, ...]:
+    """Parse semantic version string to tuple for comparison"""
+    try:
+        parts = version_str.strip().split('.')
+        return tuple(int(p) for p in parts)
+    except (ValueError, AttributeError):
+        return (0, 0, 0)
+
+
+@dataclass
+class SectionMetadata:
+    """Metadata for a versioned prompt section"""
+    name: str
+    version: str
+    content: str = ""
+    source_path: Optional[str] = None
+    start_pos: int = 0
+    end_pos: int = 0
+
+    def version_tuple(self) -> Tuple[int, ...]:
+        return parse_version(self.version)
 
 # Resource type configuration - defines search paths and environment variables for each type
 RESOURCE_CONFIG = {
@@ -381,14 +406,7 @@ class NPLLoader:
         Returns (added_count, skipped_count).
         """
         if prompts is None:
-            prompts = ['npl_load', 'scripts', 'sql-lite']
-
-        # Define prompt identifiers for duplicate detection
-        identifiers = {
-            'npl_load': '## NPL Load Directive',
-            'scripts': '## NPL Scripts',
-            'sql-lite': '# SQLite Quick Guide'
-        }
+            prompts = ['npl-conventions', 'npl-load-directive', 'npl-scripts', 'sqlite-guide']
 
         # Read existing CLAUDE.md or create empty
         existing_content = ''
@@ -400,13 +418,15 @@ class NPLLoader:
                 print(f"Error reading {target_path}: {e}", file=sys.stderr)
                 return (0, 0)
 
+        # Parse existing versioned sections
+        existing_sections = self.parse_npl_sections(existing_content)
+
         # Collect prompts to append
         to_append = []
         skipped = 0
         for prompt_name in prompts:
-            # Check for duplicates using identifier
-            identifier = identifiers.get(prompt_name)
-            if identifier and identifier in existing_content:
+            # Skip if section already exists (by name from YAML header)
+            if prompt_name in existing_sections:
                 skipped += 1
                 print(f"Skipping {prompt_name}: already present in {target_path}", file=sys.stderr)
                 continue
@@ -423,11 +443,14 @@ class NPLLoader:
             else:
                 print(f"Prompt not found: {prompt_name}", file=sys.stderr)
 
-        # Append with separator
+        # Append with separator (join-style: separator only between items)
         if to_append:
             try:
                 with open(target_path, 'a', encoding='utf-8') as f:
                     for i, (name, content) in enumerate(to_append):
+                        # Strip leading/trailing * * * from content to avoid double separators
+                        content = _strip_section_separators(content)
+
                         # Add separator if there's existing content or previous prompts
                         if i > 0 or existing_content.strip():
                             f.write('\n\n* * *\n\n')
@@ -438,6 +461,243 @@ class NPLLoader:
                 return (0, skipped)
 
         return (len(to_append), skipped)
+
+    def parse_npl_sections(self, content: str) -> Dict[str, SectionMetadata]:
+        """
+        Parse content for npl-instructions YAML blocks.
+        Returns dict mapping section name to SectionMetadata.
+        """
+        sections = {}
+
+        # Pattern to match npl-instructions blocks
+        # Format: [* * *\n]npl-instructions:\n   name: ...\n   version: ...\n---
+        # The * * * prefix is optional (present in CLAUDE.md, absent in source files)
+        pattern = r'(?:\* \* \*\s*\n)?npl-instructions:\s*\n((?:\s+\S.*\n)+)---'
+
+        for match in re.finditer(pattern, content):
+            yaml_block = match.group(1)
+            start_pos = match.start()
+
+            try:
+                # Parse the YAML content
+                parsed = yaml.safe_load(yaml_block)
+                if parsed and isinstance(parsed, dict):
+                    name = parsed.get('name', '')
+                    version = parsed.get('version', '0.0.0')
+
+                    if name:
+                        # Find end of section (next * * * or EOF)
+                        remaining = content[match.end():]
+                        next_section = remaining.find('\n* * *\n')
+                        if next_section == -1:
+                            end_pos = len(content)
+                        else:
+                            end_pos = match.end() + next_section
+
+                        section_content = content[start_pos:end_pos].strip()
+                        sections[name] = SectionMetadata(
+                            name=name,
+                            version=str(version),
+                            content=section_content,
+                            start_pos=start_pos,
+                            end_pos=end_pos
+                        )
+            except yaml.YAMLError:
+                continue
+
+        return sections
+
+    def discover_prompt_sources(self) -> Dict[str, SectionMetadata]:
+        """
+        Discover all versioned prompts from source paths.
+        Returns dict mapping section name to SectionMetadata with source_path.
+        """
+        sources = {}
+        search_paths = self.get_search_paths('prompt')
+
+        for base_path in search_paths:
+            if not base_path.exists():
+                continue
+
+            for prompt_file in base_path.glob('*.md'):
+                try:
+                    content = prompt_file.read_text(encoding='utf-8')
+                    sections = self.parse_npl_sections(content)
+
+                    for name, metadata in sections.items():
+                        if name not in sources:  # First found wins
+                            metadata.source_path = str(prompt_file)
+                            sources[name] = metadata
+                except Exception:
+                    continue
+
+        return sources
+
+    def compare_claude_versions(self, target_path: str = './CLAUDE.md') -> List[Dict[str, Any]]:
+        """
+        Compare installed CLAUDE.md sections against source prompt versions.
+        Returns list of comparison dicts with status.
+        """
+        comparisons = []
+
+        # Get source prompts
+        sources = self.discover_prompt_sources()
+
+        # Get installed sections
+        installed = {}
+        target = Path(target_path)
+        if target.exists():
+            try:
+                content = target.read_text(encoding='utf-8')
+                installed = self.parse_npl_sections(content)
+            except Exception:
+                pass
+
+        # Compare all known sections
+        all_names = set(sources.keys()) | set(installed.keys())
+
+        for name in sorted(all_names):
+            source = sources.get(name)
+            inst = installed.get(name)
+
+            comparison = {
+                'name': name,
+                'source_version': source.version if source else None,
+                'installed_version': inst.version if inst else None,
+                'source_path': source.source_path if source else None,
+                'status': 'unknown'
+            }
+
+            if source and inst:
+                src_v = source.version_tuple()
+                inst_v = inst.version_tuple()
+                if src_v == inst_v:
+                    comparison['status'] = 'current'
+                elif src_v > inst_v:
+                    comparison['status'] = 'outdated'
+                else:
+                    comparison['status'] = 'newer'
+            elif source and not inst:
+                comparison['status'] = 'missing'
+            elif inst and not source:
+                comparison['status'] = 'extra'
+
+            comparisons.append(comparison)
+
+        return comparisons
+
+    def print_version_table(self, comparisons: List[Dict[str, Any]], as_json: bool = False) -> None:
+        """Print version comparison table to stdout."""
+        if as_json:
+            summary = {
+                'current': sum(1 for c in comparisons if c['status'] == 'current'),
+                'outdated': sum(1 for c in comparisons if c['status'] == 'outdated'),
+                'missing': sum(1 for c in comparisons if c['status'] == 'missing'),
+                'extra': sum(1 for c in comparisons if c['status'] == 'extra'),
+                'newer': sum(1 for c in comparisons if c['status'] == 'newer'),
+            }
+            print(json.dumps({'sections': comparisons, 'summary': summary}, indent=2))
+            return
+
+        print("NPL Prompt Version Status")
+        print("=" * 60)
+        print()
+        print(f"{'Section':<25} {'Source':<10} {'Installed':<10} {'Status':<10}")
+        print("-" * 60)
+
+        for comp in comparisons:
+            src_v = comp['source_version'] or '-'
+            inst_v = comp['installed_version'] or '-'
+            status = comp['status'].upper() if comp['status'] in ('outdated', 'missing') else comp['status']
+            print(f"{comp['name']:<25} {src_v:<10} {inst_v:<10} {status:<10}")
+
+        print()
+        counts = {}
+        for comp in comparisons:
+            counts[comp['status']] = counts.get(comp['status'], 0) + 1
+
+        summary_parts = []
+        for status in ['outdated', 'missing', 'current', 'extra', 'newer']:
+            if counts.get(status, 0) > 0:
+                summary_parts.append(f"{counts[status]} {status}")
+        print(f"Summary: {', '.join(summary_parts)}")
+        print()
+        print("Use --update <section1,section2> to update specific sections")
+        print("Use --update-all to update all outdated/missing sections")
+
+    def update_claude_sections(self, target_path: str, sections_to_update: List[str],
+                               dry_run: bool = False) -> Tuple[int, int]:
+        """
+        Update specified sections in CLAUDE.md with source versions.
+        Returns (updated_count, error_count).
+        """
+        sources = self.discover_prompt_sources()
+        target = Path(target_path)
+
+        # Read existing content
+        existing_content = ''
+        if target.exists():
+            try:
+                existing_content = target.read_text(encoding='utf-8')
+            except Exception as e:
+                print(f"Error reading {target_path}: {e}", file=sys.stderr)
+                return (0, 1)
+
+        installed = self.parse_npl_sections(existing_content)
+
+        updated = 0
+        errors = 0
+        new_content = existing_content
+
+        # Process sections in reverse order of position to maintain offsets
+        sections_by_pos = []
+        for name in sections_to_update:
+            if name in installed:
+                sections_by_pos.append((installed[name].start_pos, installed[name].end_pos, name))
+        sections_by_pos.sort(reverse=True)
+
+        # Replace existing sections
+        for start_pos, end_pos, name in sections_by_pos:
+            if name not in sources:
+                print(f"Warning: Source not found for {name}", file=sys.stderr)
+                errors += 1
+                continue
+
+            source = sources[name]
+            if dry_run:
+                print(f"Would update: {name} ({installed[name].version} -> {source.version})")
+            else:
+                new_content = new_content[:start_pos] + source.content + new_content[end_pos:]
+                print(f"Updated: {name} ({installed[name].version} -> {source.version})", file=sys.stderr)
+            updated += 1
+
+        # Add missing sections
+        for name in sections_to_update:
+            if name not in installed and name in sources:
+                source = sources[name]
+                if dry_run:
+                    print(f"Would add: {name} (v{source.version})")
+                else:
+                    # Strip leading/trailing * * * from content to avoid double separators
+                    section_content = _strip_section_separators(source.content)
+
+                    # Append with separator (join-style)
+                    if new_content.strip():
+                        new_content = new_content.rstrip() + '\n\n* * *\n\n' + section_content
+                    else:
+                        new_content = section_content
+                    print(f"Added: {name} (v{source.version})", file=sys.stderr)
+                updated += 1
+
+        # Write updated content
+        if not dry_run and updated > 0:
+            try:
+                target.write_text(new_content, encoding='utf-8')
+            except Exception as e:
+                print(f"Error writing {target_path}: {e}", file=sys.stderr)
+                return (0, updated + errors)
+
+        return (updated, errors)
 
     def load_agent(self, agent_name: str) -> Optional[Tuple[str, str]]:
         """Load agent by name from search paths"""
@@ -1008,6 +1268,16 @@ def _parse_skip_list(values) -> Set[str]:
     return {t for t in re.split(r'[,\s]+', raw) if t}
 
 
+def _strip_section_separators(content: str) -> str:
+    """Strip leading/trailing * * * separators for join-style concatenation."""
+    content = content.strip()
+    if content.startswith('* * *'):
+        content = content[5:].lstrip('\n')
+    if content.endswith('* * *'):
+        content = content[:-5].rstrip('\n')
+    return content
+
+
 def _add_resource_subparser(subparsers, name: str, help_text: str, items_name: str):
     """Factory function to create resource subparsers with standard arguments"""
     sp = subparsers.add_parser(name, help=help_text)
@@ -1077,12 +1347,20 @@ def main():
 
     # init-claude subcommand
     sp_init_claude = subparsers.add_parser('init-claude',
-        help='Initialize/append NPL prompts to CLAUDE.md')
+        help='Initialize/append NPL prompts to CLAUDE.md with version tracking')
     sp_init_claude.add_argument('--target', default='./CLAUDE.md',
         help='Target CLAUDE.md path (default: ./CLAUDE.md)')
     sp_init_claude.add_argument('--prompts', nargs='*',
-        default=['npl_load', 'scripts', 'sql-lite'],
-        help='Prompts to append (default: npl_load scripts sql-lite)')
+        default=['npl-conventions', 'npl-load-directive', 'npl-scripts', 'sqlite-guide'],
+        help='Prompts to append (default: npl-conventions npl-load-directive npl-scripts sqlite-guide)')
+    sp_init_claude.add_argument('--update', metavar='SECTIONS',
+        help='Update only specified sections (comma-separated names)')
+    sp_init_claude.add_argument('--update-all', action='store_true',
+        help='Update all outdated/missing sections')
+    sp_init_claude.add_argument('--dry-run', action='store_true',
+        help='Show what would change without modifying files')
+    sp_init_claude.add_argument('--json', action='store_true',
+        help='Output version info as JSON')
 
     args = parser.parse_args()
 
@@ -1169,13 +1447,61 @@ def main():
     # Handle init-claude command early and exit
     if args.command == 'init-claude':
         loader = NPLLoader()
-        added, skipped = loader.init_claude(args.target, args.prompts)
+        target = args.target
+
+        # Get version comparisons
+        comparisons = loader.compare_claude_versions(target)
+
+        # Check if CLAUDE.md has any versioned sections
+        has_versioned_sections = any(c['installed_version'] for c in comparisons)
+
+        # Determine which sections need action
+        outdated = [c['name'] for c in comparisons if c['status'] == 'outdated']
+        missing = [c['name'] for c in comparisons if c['status'] == 'missing']
+
+        # Handle --update or --update-all flags
+        if args.update or args.update_all:
+            if args.update:
+                sections_to_update = [s.strip() for s in args.update.split(',')]
+            else:  # --update-all
+                sections_to_update = outdated + missing
+
+            if not sections_to_update:
+                print("No sections to update")
+                sys.exit(0)
+
+            updated, errors = loader.update_claude_sections(
+                target, sections_to_update, dry_run=args.dry_run
+            )
+
+            if args.dry_run:
+                sys.exit(0)
+            elif updated > 0:
+                print(f"Updated {updated} section(s) in {target}")
+                sys.exit(1)  # Exit 1 = updates applied
+            else:
+                print(f"No sections updated")
+                sys.exit(0 if errors == 0 else 3)
+
+        # If versioned sections exist, show version table and exit
+        if has_versioned_sections:
+            loader.print_version_table(comparisons, as_json=args.json)
+
+            if outdated or missing:
+                sys.exit(2)  # Exit 2 = updates available
+            else:
+                sys.exit(0)  # All current
+
+        # No versioned sections - fall back to legacy append behavior
+        # (for first-time initialization)
+        added, skipped = loader.init_claude(target, args.prompts)
         if added > 0:
-            print(f"Added {added} prompt(s) to {args.target}")
+            print(f"Added {added} prompt(s) to {target}")
+            sys.exit(1)  # Exit 1 = updates applied
         if skipped > 0:
             print(f"Skipped {skipped} prompt(s) (already present)")
         if added == 0 and skipped == 0:
-            print(f"No prompts added to {args.target}")
+            print(f"No prompts added to {target}")
         sys.exit(0)
 
     loader = NPLLoader()

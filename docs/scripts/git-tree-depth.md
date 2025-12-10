@@ -1,6 +1,6 @@
 # git-tree-depth
 
-A command-line tool for listing directories in a Git repository with their nesting depth, while respecting `.gitignore` rules.
+List Git repository directories with nesting depth.
 
 ## Synopsis
 
@@ -10,76 +10,58 @@ git-tree-depth <target-folder>
 
 ## Description
 
-`git-tree-depth` lists all directories under a specified target folder in a Git repository, showing each directory's nesting depth relative to the target. Depth 0 represents the target directory itself. The tool respects `.gitignore` patterns.
+Lists directories under a target folder with their depth relative to target. Respects `.gitignore` rules.
 
-## Arguments
+## Quick Reference
 
-| Argument | Description |
-|----------|-------------|
-| `<target-folder>` | The directory to analyze (required) |
-
-## Output Format
-
-Each line contains the relative directory path and its depth, separated by a space:
-
-```
-<relative-path> <depth>
-```
-
-## Requirements
-
-- Must be run inside a Git repository
-- Uses `git ls-files`, `awk`, `sort`, `dirname`
+| Item | Value |
+|:-----|:------|
+| Required argument | `<target-folder>` (use `.` for root) |
+| Output format | `<path> <depth>` per line |
+| Exit 0 | Success |
+| Exit 1 | Missing argument or not in Git repo |
 
 ## Examples
 
-### Show depth for current project
-
 ```bash
+# Analyze current directory
 git-tree-depth .
+
+# Analyze specific path
+git-tree-depth src/components
 ```
 
-### Show depth for specific directory
-
-```bash
-git-tree-depth src/
-```
-
-### Analyze nested directory structure
-
-```bash
-git-tree-depth deployments/impact-simulation
-```
-
-## Sample Output
+Output:
 
 ```
 . 0
 core 1
 core/agents 2
-core/scripts 2
 docs 1
-docs/scripts 2
-npl 1
-npl/fences 2
-npl/pumps 2
 ```
 
-## Use Cases
+## Common Patterns
 
-- **Structure analysis**: Understand directory depth and organization
-- **Build scripts**: Process directories by depth order
-- **Documentation**: Generate hierarchical outlines
-- **Refactoring**: Identify deeply nested structures
+```bash
+# Directories at depth 2 only
+git-tree-depth src | awk '$2 == 2 { print $1 }'
 
-## Exit Codes
+# Maximum depth
+git-tree-depth . | awk '{ if ($2 > max) max=$2 } END { print max }'
 
-| Code | Meaning |
-|------|---------|
-| 0 | Success |
-| 1 | Missing target folder argument or not inside a Git repository |
+# Sort deepest first
+git-tree-depth . | sort -t' ' -k2 -rn
+```
+
+## Detailed Documentation
+
+See [git-tree-depth.detailed.md](./git-tree-depth.detailed.md) for:
+
+- [Implementation Details](./git-tree-depth.detailed.md#implementation-details) - Processing pipeline and internal logic
+- [Edge Cases and Limitations](./git-tree-depth.detailed.md#edge-cases-and-limitations) - Empty dirs, symlinks, unicode, performance
+- [Integration Patterns](./git-tree-depth.detailed.md#integration-patterns) - Makefiles, shell loops, filtering
 
 ## See Also
 
-- [git-tree](./git-tree.md) - Display directory tree respecting `.gitignore`
-- [dump-files](./dump-files.md) - Dump file contents from Git repository
+- [git-tree](./git-tree.md) - Display directory tree
+- [dump-files](./dump-files.md) - Dump file contents

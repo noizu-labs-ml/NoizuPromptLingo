@@ -1,51 +1,95 @@
 # npl-cognitive-load-assessor
 
-UX complexity analysis agent specializing in cognitive load measurement, learning curve assessment, adoption barrier identification, and user experience optimization for NPL systems.
-
-## Purpose
-
-Quantifies and analyzes cognitive burden in NPL systems using cognitive load theory and universal design principles. Measures mental effort requirements, identifies learning barriers, and provides evidence-based recommendations for reducing complexity while preserving NPL's research-validated advantages.
-
-## Capabilities
-
-- Measure cognitive load using NASA-TLX across mental, temporal, and effort dimensions
-- Map learning curves with empirical skill acquisition timelines (4-20 hours)
-- Identify adoption barriers with impact measurements (35% dropout at Stage 1)
-- Assess accessibility compliance against WCAG 2.2 AAA standards
-- Generate progressive disclosure scaffolding for complexity management
-- Design personalized learning paths based on user background
-
-## Usage
+UX complexity analysis agent for cognitive load measurement, learning curve assessment, and adoption barrier identification.
 
 ```bash
-# Perform comprehensive cognitive load assessment
+@npl-cognitive-load-assessor <command> [options]
+```
+
+## Commands
+
+| Command | Description |
+|:--------|:------------|
+| `analyze` | Comprehensive cognitive load assessment |
+| `learning-curve` | Time-to-proficiency analysis |
+| `barriers` | Adoption barrier identification |
+| `learning-path` | Generate personalized learning plans |
+| `accessibility-audit` | WCAG compliance validation |
+
+See [npl-cognitive-load-assessor.detailed.md](./npl-cognitive-load-assessor.detailed.md) for full command reference.
+
+## Quick Start
+
+```bash
+# Cognitive load assessment
 @npl-cognitive-load-assessor analyze --target=npl-interface
 
-# Evaluate learning curve for user profile
+# Learning curve for user profile
 @npl-cognitive-load-assessor learning-curve --user-profile="programmer,no-ai-experience"
 
 # Identify adoption barriers
 @npl-cognitive-load-assessor barriers --scope=onboarding --generate-solutions
 
-# Validate accessibility compliance
+# Generate learning path
+@npl-cognitive-load-assessor learning-path --goal="custom-agent-development" --time-budget="10-hours"
+
+# Accessibility audit
 @npl-cognitive-load-assessor accessibility-audit --standards="WCAG-2.2-AAA"
 ```
+
+## Cognitive Load Theory
+
+Applies Sweller's Cognitive Load Theory measuring three load types:
+
+| Type | Definition | Target |
+|:-----|:-----------|:-------|
+| Intrinsic | Essential task complexity | 40-50% |
+| Extraneous | Unnecessary design burden | 10-20% |
+| Germane | Productive learning effort | 30-40% |
+
+See [Cognitive Load Theory Framework](./npl-cognitive-load-assessor.detailed.md#cognitive-load-theory-framework) for details.
+
+## NASA-TLX Metrics
+
+Modified NASA Task Load Index with five dimensions: Mental Demand, Temporal Demand, Performance, Effort, Frustration. Scale 1-10.
+
+See [NASA-TLX Adaptation](./npl-cognitive-load-assessor.detailed.md#nasa-tlx-adaptation) for baseline comparisons.
+
+## Learning Stages
+
+| Stage | Timeline | Dropout Risk |
+|:------|:---------|:-------------|
+| Basic Comprehension | Week 1-2 | 35% |
+| Functional Application | Week 3-6 | 15% |
+| Advanced Integration | Week 7-12 | 5% |
+| Expertise | Month 4+ | 5% |
+
+See [Learning Curve Model](./npl-cognitive-load-assessor.detailed.md#learning-curve-model) for velocity factors.
 
 ## Workflow Integration
 
 ```bash
-# Combined UX analysis workflow
+# Combined UX analysis
 @npl-cognitive-load-assessor analyze && @npl-grader evaluate --rubric=cognitive-standards.md
 
-# Optimization with cognitive validation
+# Optimization with validation
 @npl-claude-optimizer optimize && @npl-cognitive-load-assessor quantify --context=optimization
-
-# Learning path generation
-@npl-cognitive-load-assessor learning-path --goal="custom-agent-development" --time-budget="10-hours"
 ```
+
+## Success Metrics
+
+| Metric | Target |
+|:-------|:-------|
+| Cognitive load (intermediate tasks) | <6/10 |
+| Learning curve reduction | >40% |
+| Adoption barrier reduction | >50% |
+| Accessibility compliance | WCAG 2.2 AAA |
+| First-month dropout rate | <20% |
+
+See [Success Metrics](./npl-cognitive-load-assessor.detailed.md#success-metrics) for full list.
 
 ## See Also
 
+- [Detailed Reference](./npl-cognitive-load-assessor.detailed.md) - Complete documentation
+- [Additional Agents README](../README.md) - Agent library overview
 - Core definition: `core/additional-agents/research/npl-cognitive-load-assessor.md`
-- Cognitive analysis pump: `npl/pumps/npl-cognitive.md`
-- Accessibility guidelines: `npl/accessibility.md`

@@ -9,11 +9,13 @@ Transforms ad-hoc performance testing into reproducible, data-driven benchmarkin
 ## Capabilities
 
 - Response time analysis with percentile tracking (P50, P95, P99)
-- Load and stress testing under realistic conditions
-- Performance regression detection across versions
+- Load and stress testing under configurable concurrency
+- Performance regression detection with statistical significance
 - Resource consumption monitoring (memory, CPU, tokens)
 - Bottleneck identification and optimization guidance
 - SLA compliance validation and reporting
+
+See [Capabilities](./npl-benchmarker.detailed.md#capabilities) for complete details.
 
 ## Usage
 
@@ -34,11 +36,13 @@ Transforms ad-hoc performance testing into reproducible, data-driven benchmarkin
 @npl-benchmarker monitor --interval="5m" --alert-threshold="p95>3000ms" --dashboard
 ```
 
+See [Usage Reference](./npl-benchmarker.detailed.md#usage-reference) for all commands.
+
 ## Workflow Integration
 
 ```bash
 # Establish baseline and compare
-@npl-benchmarker baseline --agents="all" --save="baseline-v1.0.json"
+@npl-benchmarker baseline --create --agents="all" --save="baseline-v1.0.json"
 @npl-benchmarker measure --agents="all" --compare="baseline-v1.0.json"
 
 # Parallel benchmarking across agents
@@ -50,6 +54,24 @@ Transforms ad-hoc performance testing into reproducible, data-driven benchmarkin
 @npl-benchmarker regression --baseline="main" --current="HEAD" --fail-on-regression=5%
 ```
 
+See [Integration Patterns](./npl-benchmarker.detailed.md#integration-patterns) for complete workflow examples.
+
+## Key Resources
+
+| Topic | Reference |
+|-------|-----------|
+| Benchmarking framework | [Benchmarking Framework](./npl-benchmarker.detailed.md#benchmarking-framework) |
+| Metrics collection | [Metrics Collection](./npl-benchmarker.detailed.md#metrics-collection) |
+| Regression detection | [Regression Detection](./npl-benchmarker.detailed.md#regression-detection) |
+| Load testing patterns | [Load Testing](./npl-benchmarker.detailed.md#load-testing) |
+| NPL pump integration | [NPL Pump Integration](./npl-benchmarker.detailed.md#npl-pump-integration) |
+| Output formats | [Output Formats](./npl-benchmarker.detailed.md#output-formats) |
+| CI/CD setup | [CI/CD Integration](./npl-benchmarker.detailed.md#cicd-integration) |
+| Anti-patterns | [Anti-Patterns](./npl-benchmarker.detailed.md#anti-patterns) |
+| Limitations | [Limitations](./npl-benchmarker.detailed.md#limitations) |
+
 ## See Also
 
+- Detailed reference: [npl-benchmarker.detailed.md](./npl-benchmarker.detailed.md)
 - Core definition: `core/additional-agents/quality-assurance/npl-benchmarker.md`
+- Related agents: [npl-tester](./npl-tester.md), [npl-validator](./npl-validator.md), [npl-integrator](./npl-integrator.md)

@@ -35,6 +35,31 @@ npl-load c "syntax,fences,directive" --skip {@npl.def.loaded}
 mkdir -p .npl/project-init/synthesis
 ```
 
+### Version Handling
+
+The `init-claude` command uses versioned prompt sections with `npl-instructions:` YAML headers. Behavior depends on existing CLAUDE.md state:
+
+**First-time initialization (no versioned sections):**
+- Appends all default prompts automatically
+- Exit code 1 (changes made)
+
+**Existing versioned sections:**
+- Prints version comparison table (source vs installed)
+- Exits without modifying (exit code 2 if updates available, 0 if current)
+- User must explicitly choose to update
+
+**Updating outdated sections:**
+```bash
+# Update specific sections
+npl-load init-claude --update npl-conventions,npl-scripts
+
+# Update all outdated/missing sections
+npl-load init-claude --update-all
+
+# Preview changes without modifying
+npl-load init-claude --update-all --dry-run
+```
+
 Write coordination state:
 
 ```json
@@ -49,6 +74,7 @@ Write coordination state:
 ```
 
 **CLAUDE.md receives:**
+- NPL Conventions (visualization preferences, tools)
 - NPL Load Directive
 - NPL Scripts reference
 - SQLite Quick Guide

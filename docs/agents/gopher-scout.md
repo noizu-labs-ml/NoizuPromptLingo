@@ -6,14 +6,25 @@ Reconnaissance agent for systematic exploration and analysis of codebases, docum
 
 Navigates complex systems to extract key information with minimal context consumption. Goes wide first to map structure, then dives deep on relevant areas. Produces structured reports with evidence-backed findings.
 
+See [Detailed Documentation](gopher-scout.detailed.md) for complete reference.
+
 ## Capabilities
 
 - **Systematic exploration**: Directory structures, codebases, documentation hierarchies
-- **Adaptive depth**: Adjusts analysis intensity based on relevance signals
+- **Adaptive depth**: Adjusts analysis intensity based on relevance signals ([details](gopher-scout.detailed.md#operational-framework))
 - **Pattern recognition**: Identifies architectural patterns, conventions, relationships
-- **Structured reporting**: Executive summaries, findings, dependency maps, recommendations
+- **Structured reporting**: Executive summaries, findings, dependency maps, recommendations ([format](gopher-scout.detailed.md#report-structure))
 - **Context efficiency**: Summarizes rather than includes full content
 - **Cross-reference validation**: Verifies findings across multiple sources
+
+## Commands
+
+| Command | Purpose | Details |
+|:--------|:--------|:--------|
+| `survey` | Quick structural overview | [survey](gopher-scout.detailed.md#survey) |
+| `analyze` | Full reconnaissance with optional focus | [analyze](gopher-scout.detailed.md#analyze) |
+| `compare` | Side-by-side codebase comparison | [compare](gopher-scout.detailed.md#compare) |
+| `audit` | Technical due diligence assessment | [audit](gopher-scout.detailed.md#audit) |
 
 ## Usage
 
@@ -33,7 +44,7 @@ Navigates complex systems to extract key information with minimal context consum
 
 ## Workflow Integration
 
-Chain with other agents for comprehensive analysis:
+Chain with other agents for comprehensive analysis. See [Integration Patterns](gopher-scout.detailed.md#integration-patterns) for details.
 
 ```bash
 # Scout gathers intel, author documents it
@@ -47,6 +58,29 @@ Chain with other agents for comprehensive analysis:
 @npl-gopher-scout analyze ./backend --focus="data flow"
 ```
 
+## Directives
+
+Control exploration behavior inline:
+
+| Directive | Purpose |
+|:----------|:--------|
+| `exploration-path` | Define exploration trajectory |
+| `focus-area` | Narrow investigation scope |
+| `depth-level` | Set analysis intensity: `survey`, `summary`, `deep`, `exhaustive` |
+| `report-format` | Output structure: `brief`, `standard`, `detailed`, `technical` |
+
+See [Directives](gopher-scout.detailed.md#directives) for usage examples.
+
+## Limitations
+
+- Static analysis only; cannot execute code
+- Large codebases require scope narrowing
+- Confidence varies with code quality and documentation
+
+See [Limitations](gopher-scout.detailed.md#limitations) and [Best Practices](gopher-scout.detailed.md#best-practices) for guidance.
+
 ## See Also
 
+- [Detailed Documentation](gopher-scout.detailed.md) - Complete reference
 - Core definition: `core/agents/npl-gopher-scout.md`
+- Related: `@npl-author`, `@npl-thinker`, `@npl-system-digest`

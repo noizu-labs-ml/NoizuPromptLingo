@@ -1,43 +1,184 @@
-## NPL Load Directive
+* * *
+npl-instructions:
+   name: npl-conventions
+   version: 1.3.0
+---
 
-### Environment Variables
+```🏳️
+@command-and-control="task-master"
+@work-log="standard"
+@track-work=true
+```
 
-NPL uses optional environment variables to locate resources, allowing projects to override only what they need:
+# NPL Conventions Reference
 
-**$NPL_HOME**
-: Base path for NPL definitions. Fallback: `./.npl`, `~/.npl`, `/etc/npl/`
+## Agent Delegation
 
-**$NPL_META**  
-: Path for metadata files. Fallback: `./.npl/meta`, `~/.npl/meta`, `/etc/npl/meta`
+Leverage sub-agents to conserve context and parallelize work.
 
-**$NPL_STYLE_GUIDE**
-: Path for style conventions. Fallback: `./.npl/conventions/`, `~/.npl/conventions/`, `/etc/npl/conventions/`
+### Command-and-Control Modes
 
-**$NPL_THEME**
-: Theme name for style loading (e.g., "dark-mode", "corporate")
+| Mode | Behavior |
+|:-----|:---------|
+| `lone-wolf` | Work independently; use sub-agents only when explicitly requested |
+| `team-member` | Suggest sub-agents during planning for complex/obvious delegation tasks |
+| `task-master` | Aggressively parallelize; push investigation, docs, implementation to sub-agents |
 
-**$NPL_PERSONA_DIR**
-: Base path for persona definitions and data. Fallback: `./.npl/personas`, `~/.npl/personas`, `/etc/npl/personas/`
+Other values may be set—agents should apply best-effort interpretation. Custom definitions:
+```
+@command-and-control.{name}.definition="custom behavior description"
+```
 
-**$NPL_PERSONA_TEAMS**
-: Path for team definitions. Fallback: `./.npl/teams`, `~/.npl/teams`, `/etc/npl/teams`
+### Work-Log Flag
 
-**$NPL_PERSONA_SHARED**
-: Path for shared persona resources. Fallback: `./.npl/shared`, `~/.npl/shared`, `/etc/npl/shared`
+Controls interstitial file generation in `.npl/tmp/`:
 
-### Loading Dependencies
+| Value | Files Generated |
+|:------|:----------------|
+| `false` | None |
+| `standard` (default) | `.summary.md` + `.detailed.md` |
+| `verbose` | All: `.summary.md`, `.detailed.md`, `.yaml` |
+| `yaml\|summary` | `.yaml` + `.summary.md` |
+| `yaml\|detailed` | `.yaml` + `.detailed.md` |
 
-Prompts may specify dependencies to load using the `npl-load` command-line tool:
+### Track-Work Flag
+
+Controls agent session logging (default: `true`). Set `@track-work=false` to disable.
+
+### Available Agents
+
+| Agent | Purpose |
+|:------|:--------|
+| `Explore` | Codebase exploration, pattern discovery |
+| `Plan` | Implementation design, architecture |
+| `npl-technical-writer` | Documentation, specs, PRs |
+| `npl-gopher-scout` | Reconnaissance, analysis |
+| `npl-grader` | Validation, QA, edge testing |
+
+### Session Directory Layout
+
+Sessions provide shared worklogs for cross-agent communication under `.npl/sessions/YYYY-MM-DD/`:
+
+```
+.npl/sessions/YYYY-MM-DD/
+├── meta.json           # Session metadata
+├── worklog.jsonl       # Append-only entry log (shared)
+├── .cursors/           # Per-agent read cursors
+│   └── <agent-id>.cursor
+└── tmp/                # Interstitial files
+    └── <agent-id>/
+        ├── <task>.summary.md
+        ├── <task>.detailed.md
+        └── <task>.yaml
+```
+
+**Agent ID Format**: `<agent-type>-<task-slug>-<NNN>` (e.g., `explore-auth-001`, `gopher-scout-analyze-flow-002`)
+
+### Interstitial Files (`tmp/<agent-id>/`)
+
+Each agent writes to its own subdirectory to avoid naming collisions:
+
+| Pattern | Purpose |
+|:--------|:--------|
+| `<task>.summary.md` | High-level findings; references headings in detailed file |
+| `<task>.detailed.md` | Full content with `##` headings matching summary refs |
+| `<task>.yaml` | Structured data (only in `verbose` or `yaml|*` modes) |
+
+Agents read `.summary.md` first, then fetch specific `##` sections from `.detailed.md` as needed.
+
+### Worklog Communication
+
+When `@track-work=true`, agents append entries to `worklog.jsonl` and read new entries via cursor-based reads:
+
+```bash
+npl-session log --agent=explore-auth-001 --action=file_found --summary="Found auth.ts"
+npl-session read --agent=primary  # Read new entries since cursor
+```
+
+See `npl/agent.md` for full worklog entry schema.
+
+## Visualization Preferences
+
+Structured formats render consistently and are machine-parseable. ASCII art fails both.
+
+| Task | Preferred | Avoid |
+|:-----|:----------|:------|
+| Flowcharts | mermaid flowchart | ASCII boxes |
+| Sequences | mermaid sequenceDiagram | ASCII arrows |
+| Graphs | graphviz dot, YAML | ASCII trees |
+| UI Mockups | SVG artifacts | ASCII frames |
+| Data structures | YAML, JSON | ASCII tables |
+| State machines | mermaid stateDiagram | ASCII diagrams |
+
+## Codebase Tools
+
+| Tool | Purpose | Example |
+|:-----|:--------|:--------|
+| Glob | Find files by pattern | `Glob("**/*.md")` |
+| Grep | Search file contents | `Grep("def main", type="py")` |
+| Read | View file contents | `Read("/path/to/file.py")` |
+| Task | Delegate to agents | `Task("@reviewer analyze PR")` |
+
+**Pattern**: Search first (`Glob`/`Grep`), then read relevant files.
+
+## NPL Framework Quick Reference
+
+**Agent invocation**: `@agent-name command args`
+
+**Common fences**:
+- `example` / `syntax` / `format` - Input/output specifications
+- `diagram` - Mermaid, graphviz, plantuml
+- `artifact` - Structured output with metadata
+
+**Intuition pumps** (XHTML tags or fences):
+- `<npl-intent>` - Clarify goals before acting
+- `<npl-cot>` - Chain-of-thought reasoning
+- `<npl-reflection>` - Evaluate output quality
+
+**Key markers**:
+- Highlight: `` `term` ``
+- Attention: `🎯 instruction`
+- In-fill: `[...]` or `[...|qualifier]`
+- Placeholder: `<term>`, `{term}`
+
+**Complete reference**: `${NPL_HOME}/npl.md`
+
+
+* * *
+
+* * *
+npl-instructions:
+   name: npl-load-directive
+   version: 1.0.0
+---
+
+# NPL Load Directive
+
+Hierarchical resource loading with multi-tier path resolution (environment → project → user → system). Projects inherit defaults and override only what they need.
+
+## Environment Variables
+
+| Variable | Purpose | Fallback Path |
+|:---------|:--------|:--------------|
+| `$NPL_HOME` | Base path for NPL definitions | `./.npl`, `~/.npl`, `/etc/npl/` |
+| `$NPL_META` | Metadata files | `./.npl/meta`, `~/.npl/meta`, `/etc/npl/meta` |
+| `$NPL_STYLE_GUIDE` | Style conventions | `./.npl/conventions/`, `~/.npl/conventions/` |
+| `$NPL_THEME` | Theme name for style loading | (e.g., "dark-mode", "corporate") |
+| `$NPL_PERSONA_DIR` | Persona definitions | `./.npl/personas`, `~/.npl/personas` |
+| `$NPL_PERSONA_TEAMS` | Team definitions | `./.npl/teams`, `~/.npl/teams` |
+| `$NPL_PERSONA_SHARED` | Shared persona resources | `./.npl/shared`, `~/.npl/shared` |
+
+## Loading Dependencies
+
+Load multiple resource types in a single call using type prefixes (`c`=core, `m`=meta, `s`=style):
 
 ```bash
 npl-load c "syntax,agent" --skip {@npl.def.loaded} m "persona.qa-engineer" --skip {@npl.meta.loaded} s "house-style" --skip {@npl.style.loaded}
 ```
 
-The tool searches paths in order (environment → project → user → system) and tracks what's loaded to prevent duplicates.
-
-**Critical:** When `npl-load` returns content, it includes headers that set global flags for tracking what is in context:
+**Critical:** The tool returns content headers that set global flags:
 - `npl.loaded=syntax,agent`
-- `npl.meta.loaded=persona.qa-engineer`  
+- `npl.meta.loaded=persona.qa-engineer`
 - `npl.style.loaded=house-style`
 
 These flags **must** be passed back via `--skip` on subsequent calls to prevent reloading:
@@ -47,256 +188,121 @@ These flags **must** be passed back via `--skip` on subsequent calls to prevent 
 npl-load c "syntax,agent" --skip ""
 # Returns: npl.loaded=syntax,agent
 
-# Next load uses --skip to avoid reloading
+# Subsequent loads pass --skip to avoid duplicates
 npl-load c "syntax,agent,pumps" --skip "syntax,agent"
 ```
 
-### Purpose
 
-This hierarchical loading system allows:
-- **Organizations** to set company-wide standards via environment variables
-- **Projects** to override specific components in `./.npl/`  
-- **Users** to maintain personal preferences in `~/.npl/`
-- **Fine-tuning** only the sections that need customization
+* * *
 
-Projects typically only need to create files for components they're modifying, inheriting everything else from parent paths. This keeps project-specific NPL directories minimal and focused.
-
+* * *
+npl-instructions:
+   name: npl-scripts
+   version: 1.1.0
 ---
 
 ## NPL Scripts
-The following scripts are available.
 
-**`npl-load <type> <items>`** - Load NPL definitions with hierarchical search
-- Types: `c` (core), `m` (meta), `s` (style)
-- Supports `--skip` flag for tracking loaded items
-- Searches: project → user → system paths
+The following scripts are available in `core/scripts/`.
 
-**`npl-persona <command> [options]`** - Comprehensive persona management tool
-- **Lifecycle**: `init`, `get`, `list`, `remove` - Create and manage personas
-- **Journal**: `journal <id> add|view|archive` - Track persona experiences
-- **Tasks**: `task <id> add|update|complete|list` - Manage persona tasks and goals
-- **Knowledge**: `kb <id> add|search|get` - Maintain persona knowledge bases
-- **Health**: `health <id>`, `sync <id>`, `backup <id>` - File integrity and maintenance
-- **Teams**: `team create|add|list|synthesize` - Multi-persona collaboration
-- **Analytics**: `analyze <id>`, `report <id>` - Insights and reporting
-- **Multi-tier support**: Respects `$NPL_PERSONA_DIR`, `$NPL_PERSONA_TEAMS`, `$NPL_PERSONA_SHARED`
-- **Tracking flags**: `--skip {@npl.personas.loaded}` prevents reloading
-- See `agents/npl-persona.md` for complete interface documentation
+### npl-load
 
-**`dump-files <path>`** - Dumps all file contents recursively with file name header
-- Respects `.gitignore`
-- Supports glob pattern filter: `./dump-files . -g "*.md"`
+**Resource loader with hierarchical path resolution and dependency tracking.**
 
-**`git-tree-depth <path>`** - Show directory tree with nesting levels
+Loads NPL components, metadata, styles, prompts, and other resources from project → user → system paths. Supports patch overlays and skip flags to prevent redundant loading.
 
-**`git-tree <path>`** - Display directory tree
-- Uses `tree` command if available, with pure-bash fallback
-- Defaults to current directory
+| Subcommand | Purpose | Example |
+|:-----------|:--------|:--------|
+| `c <items>` | Load core components (syntax, fences, directives) | `npl-load c "syntax,agent" --skip ""` |
+| `m <items>` | Load metadata (personas, configs) | `npl-load m "persona.qa-engineer"` |
+| `s <items>` | Load style guides (conventions) | `npl-load s "house-style"` |
+| `agent <name>` | Load agent definition with optional NPL docs | `npl-load agent npl-gopher-scout --definition` |
+| `init-claude` | Initialize/update CLAUDE.md with versioned prompts | `npl-load init-claude --update-all` |
+| `syntax --file <f>` | Analyze NPL syntax elements in content | `npl-load syntax --file agent.md --matches` |
+
+### npl-persona
+
+**Comprehensive persona management for simulated agent identities.**
+
+Creates and manages persistent personas with journals, tasks, and knowledge bases. Enables multi-persona teams for collaborative problem-solving and simulated discussions.
+
+| Command Group | Commands | Purpose |
+|:--------------|:---------|:--------|
+| Lifecycle | `init`, `get`, `list`, `remove` | Create, retrieve, list, delete personas |
+| Journal | `journal <id> add\|view\|archive` | Track experiences, decisions, learnings |
+| Tasks | `task <id> add\|update\|complete\|list` | Manage persona goals and active work |
+| Knowledge | `kb <id> add\|search\|get` | Build persona-specific knowledge bases |
+| Teams | `team create\|add\|list\|synthesize` | Multi-persona collaboration and synthesis |
+| Maintenance | `health`, `sync`, `backup` | File integrity, state sync, backups |
+
+### npl-session
+
+**Session and worklog management for cross-agent communication.**
+
+Provides shared worklogs for parent agents and sub-agents. Each reader maintains its own cursor.
+
+| Command | Purpose | Example |
+|:--------|:--------|:--------|
+| `init [--task=X]` | Create new session | `npl-session init --task="Implement auth"` |
+| `current` | Get current session ID | `npl-session current` |
+| `log --agent=X --action=Y --summary="..."` | Append entry to worklog | `npl-session log --agent=explore-001 --action=found --summary="auth.ts"` |
+| `read --agent=X [--peek] [--since=N]` | Read entries since this agent's cursor | `npl-session read --agent=primary` |
+| `status` | Show session stats | `npl-session status --json` |
+| `list [--all]` | List sessions | `npl-session list` |
+| `close [--archive]` | Close current session | `npl-session close --archive` |
+
+Each reader agent maintains its own cursor at `.cursors/<agent-id>.cursor`, allowing multiple agents to independently track their read position. Use `--peek` to read without advancing cursor.
+
+### npl-fim-config
+
+**Configuration tool for NPL-FIM visualization agent.**
+
+Queries the tool-task compatibility matrix to find appropriate visualization libraries. Supports natural language queries and manages artifact paths.
+
+| Command | Purpose | Example |
+|:--------|:--------|:--------|
+| `query <desc>` | Find tools matching description | `npl-fim-config query "network graph"` |
+| `list-tools` | List all supported visualization tools | `npl-fim-config list-tools` |
+| `matrix` | Show full compatibility matrix | `npl-fim-config matrix` |
+
+### Codebase Exploration
+
+| Script | Purpose | Example |
+|:-------|:--------|:--------|
+| `dump-files <path>` | Dump all file contents with headers (respects .gitignore) | `dump-files src/ -g "*.md"` |
+| `git-tree [path]` | Display directory tree (uses `tree` or bash fallback) | `git-tree core/` |
+| `git-tree-depth <path>` | List directories with nesting depth relative to target | `git-tree-depth src/` |
 
 
+* * *
+
+* * *
+npl-instructions:
+   name: sqlite-guide
+   version: 1.0.0
 ---
 
-## SQLite Quick Guide (Multi-Line Syntax)
+# SQLite Quick Guide
 
-* **Create DB & Table**
-
+## Heredoc Pattern
 ```bash
 sqlite3 mydb.sqlite <<'EOF'
-CREATE TABLE users (
-  id   INTEGER PRIMARY KEY,
-  name TEXT,
-  age  INTEGER
-);
+<SQL statements>
 EOF
 ```
 
-* **Insert Data**
+## Operations Reference
 
+| Operation | SQL Example |
+|-----------|-------------|
+| Create | `CREATE TABLE t (id INTEGER PRIMARY KEY, name TEXT);` |
+| Insert | `INSERT INTO t (name) VALUES ('val1'), ('val2');` |
+| Query | `SELECT * FROM t WHERE condition;` |
+| Alter | `ALTER TABLE t ADD COLUMN col TEXT;` |
+| Update | `UPDATE t SET col = 'val' WHERE condition;` |
+| Delete | `DELETE FROM t WHERE condition;` |
+
+## One-Liner Query
 ```bash
-sqlite3 mydb.sqlite <<'EOF'
-INSERT INTO users (name, age) VALUES
-  ('Alice', 30),
-  ('Bob',   25);
-EOF
+sqlite3 -header -column mydb.sqlite 'SELECT * FROM users;'
 ```
-
-* **Query Data**
-
-```bash
-sqlite3 -header -column mydb.sqlite <<'EOF'
-SELECT * FROM users;
-EOF
-```
-
-* **Edit Structure (ALTER)**
-
-```bash
-sqlite3 mydb.sqlite <<'EOF'
-ALTER TABLE users ADD COLUMN email TEXT;
-EOF
-```
-
-* **Update Rows**
-
-```bash
-sqlite3 mydb.sqlite <<'EOF'
-UPDATE users SET age = 31 WHERE name = 'Alice';
-EOF
-```
-
-* **Delete Rows**
-
-```bash
-sqlite3 mydb.sqlite <<'EOF'
-DELETE FROM users WHERE name = 'Bob';
-EOF
-```
-
-
-
----
-
-⌜NPL@1.0⌝
-# Noizu Prompt Lingua (NPL)
-A modular, structured framework for advanced prompt engineering and agent simulation with context-aware loading capabilities.
-
-**Convention**: Additional details and deep-dive instructions are available under `${NPL_HOME}/npl/` and can be loaded on an as-needed basis.
-
-## Core Concepts
-
-**npl-declaration**
-: Framework version and rule boundaries that establish operational context and constraints. See `${NPL_HOME}/npl/declarations.md`
-
-**agent**
-: Simulated entity with defined behaviors, capabilities, and response patterns for specific roles or functions. See `${NPL_HOME}/npl/agent.md`
-
-**intuition-pump**
-: Structured reasoning and thinking techniques that guide problem-solving and response construction. See `${NPL_HOME}/npl/planning.md`
-
-**syntax-element**
-: Foundational formatting conventions and placeholder systems for prompt construction. See `${NPL_HOME}/npl/syntax.md`
-
-**directive**
-: Specialized instruction patterns for precise agent behavior modification and output control. See `${NPL_HOME}/npl/directive.md`
-
-**prompt-prefix**
-: Response mode indicators that shape how output is generated under specific purposes or processing contexts. See `${NPL_HOME}/npl/prefix.md`
-
-## Essential Syntax
-
-**highlight**
-: `` `term` `` - Emphasize key concepts
-
-**attention**
-: `🎯 critical instruction` - Mark high-priority directives
-
-**placeholder**
-: `<term>`, `{term}`, `<<qualifier>:term>` - Expected input/output locations
-
-**in-fill**
-: `[...]` - Like in-paint but for text, indicates section where generated content should be provided
-
-**note**
-: `(note:[...])` - Prompt notes/comments describing purpose/layout but not directly resulting in output
-
-**infer**
-: `...`, `etc.` - Assume or generate additional entries based on context (e.g., animals: birds, cats, ... → dogs, horses, zebras, ants, echinoderms)
-
-**qualifier**
-: `term|qualifier` - Can be used with most syntax elements. Example: `[...|continue with 5 more examples]`
-
-**fences**
-: Special code sections with type indicators. Common types: `example`, `syntax`, `format`, `note`, `diagram`. See `./npl/fences.md`
-
-**omission**
-: `[___]` - Content left out for brevity that is expected in actual input/output
-
-### See Also
-- `${NPL_HOME}/npl/syntax.md` and `${NPL_HOME}/npl/syntax/*` for complete syntax reference and detailed specifications
-
-## Instructing Patterns
-
-Specialized syntax for directing agent behavior and response construction through structured commands and templates.
-
-**handlebars**
-: Template-like control structures (`{{if}}`, `{{foreach}}`). If format issues arise, load `${NPL_HOME}/npl/instructing/handlebars.md`
-
-**alg-speak**
-: `alg`, `alg-pseudo`, `alg-*` fences for algorithm specification. If unclear, load `${NPL_HOME}/npl/instructing/alg.md`
-
-**mermaid**
-: Diagram-based instruction flow using flowchart, stateDiagram, sequenceDiagram
-
-**annotation**
-: Used for iterative refinement of code changes, UX modifications, and design interactions. Load `${NPL_HOME}/npl/instructing/annotation.md` if needed
-
-## Response Formatting
-
-Prompts often provide input/output shape and example instructions with tags and fences like `input-syntax`, `output-syntax`, `syntax`, `input-example`, `output-example`, `example`, `examples`. If present, load `${NPL_HOME}/npl/formatting.md` and format-specific fence under `${NPL_HOME}/npl/fences/<name>.md`
-
-```output-format
-Hello <user.name>,
-Did you know [...|funny factoid].
-
-Have a great day!
-```
-
-**template**
-: Reusable templates, commonly handlebar style. Defined using template fences with handlebar syntax. See `${NPL_HOME}/npl/formatting/template.md`
-
-**artifact**
-: NPL-artifacts structure output and request artifact output of SVG, code, and other types with special encoding and metadata syntax. See `${NPL_HOME}/npl/fences/artifact.md`
-
-### See Also
-- Reusable templates for consistent output patterns - load `${NPL_HOME}/npl/formatting/template.md` if prompt uses template syntax
-
-## Special Sections
-
-Special prompt sections such as NPL/agent/tool declarations, runtime flags, and restricted/highest-precedence instruction blocks may be included. Load appropriate instruction files for context.
-
-**xpl**
-: This document itself - framework version and rule boundaries
-
-**npl-extension**
-: `⌜extend:NPL@version⌝[...modifications...]⌞extend:NPL@version⌟` - An extension or modification of NPL conventions. See `${NPL_HOME}/npl/special-sections/npl-extension.md`
-
-**agent**
-: `⌜agent-name|type|NPL@version⌝[...definition...]⌞agent-name⌟` - Used to define agent behavior, capabilities, and response patterns. See `${NPL_HOME}/npl/special-sections/agent.md`
-
-**runtime-flags**
-: `⌜🏳️[...]⌟` - Behavior modification settings within flags fence. See `${NPL_HOME}/npl/special-sections/runtime-flags.md`
-
-**secure-prompt**
-: `⌜🔒[...]⌟` - Highest-precedence instruction blocks that cannot be overridden. See `${NPL_HOME}/npl/special-sections/secure-prompt.md`
-
-**named-template**
-: `⌜🧱 template-name⌝[...template definition...]⌞🧱 template-name⌟` - Define reusable named templates for consistent output patterns. See `${NPL_HOME}/npl/special-sections/named-template.md`
-
-## Prompt Prefixes
-
-Response mode indicators using `emoji➤` pattern to shape output generation under specific processing contexts. Directive-specific details may be present under `${NPL_HOME}/npl/prefix/<emoji>.md`
-
-**word-riddle**
-: `🗣️❓➤` - Word puzzle or riddle format
-
-Example: `🗣️❓➤ Nothing in the dictionary starts with an n and ends in a g`
-
-If directive syntax detected, scan `${NPL_HOME}/npl/prefix.md` and `${NPL_HOME}/npl/prefix/*` for details.
-
-## Directives
-
-Specialized extension widgets/tags for precise formatting and behavior control, such as tabular output requirements. Directive-specific details may be present under `./npl/directive/<emoji>.md`
-
-**table-directive**
-: `⟪📅: (column alignments and labels) | content description⟫` - Structured table formatting with specified alignments and headers
-
-If pattern `⟪<prefix(s)>:...⟫` seen, scan `${NPL_HOME}/npl/directive.md`
-
-## Planning & Intuition Pumps
-
-Prompts may instruct agents to generate or apply special planning and thinking patterns, commonly listed as sections to include in output via formal syntax/format blocks or simple instructions. Implemented as either XHTML tags or named fences.
-
-**Types**: `npl-intent`, `npl-cot`, `npl-reflection`, `npl-tangent`, `npl-panel`, `npl-panel-*`, `npl-critique`, `npl-rubric`
-
-Blocks like `npl-<type>` are generally documented under `${NPL_HOME}/npl/pumps/<type>.md`
-⌞NPL@1.0⌟

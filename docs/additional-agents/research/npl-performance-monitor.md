@@ -1,51 +1,85 @@
 # npl-performance-monitor
 
-Real-time metrics collection and performance analysis agent for NPL systems, focusing on latency tracking, token usage optimization, quality benchmarking, and statistical validation of prompt effectiveness.
+Real-time metrics collection and performance analysis agent for NPL systems.
 
 ## Purpose
 
-Quantifies the 15-40% performance improvements documented in NPL research through empirical measurement and validation. Provides real-time monitoring, A/B testing capabilities, and academic-grade statistical analysis for NPL system optimization with sub-second latency tracking and minimal overhead.
+Validates NPL performance claims through empirical measurement. Tracks latency distributions (P50/P95/P99), token consumption, response quality, and experiment results with <5ms overhead per request.
 
 ## Capabilities
 
-- Collect real-time metrics: latency (P50/P95/P99), token usage, response quality
-- Execute controlled A/B tests with power analysis and statistical validation
-- Generate academic-grade reports supporting research publication
-- Detect performance regressions within 5 minutes of deployment
-- Track cognitive load: learning curves, error patterns, feature adoption
-- Validate empirical claims with confidence intervals and effect sizes
+- Collect latency, token usage, and quality metrics in real-time
+- Execute A/B tests with power analysis and statistical validation
+- Detect regressions within 5-minute windows
+- Generate dashboard, academic, and structured reports
 
-## Usage
+## Quick Start
 
 ```bash
-# Start monitoring session
-@npl-performance-monitor start --experiment="NPL-validation-v1"
+# Start monitoring
+@npl-performance-monitor start --experiment="validation-v1"
 
-# Monitor specific agent performance
+# Track specific agents
 @npl-performance-monitor track agent=npl-grader duration=1h
 
-# Generate performance report
+# Generate report
 @npl-performance-monitor report --format=dashboard --timerange=7d
-
-# Setup A/B test
-@npl-performance-monitor experiment create --control="standard" --treatment="npl-enhanced" --duration=14d
 ```
 
-## Workflow Integration
+## Commands
+
+| Command | Purpose | Details |
+|:--------|:--------|:--------|
+| `start` | Initialize session | [Configuration](#configuration) |
+| `track` | Monitor agent performance | [Metrics Reference](./npl-performance-monitor.detailed.md#metrics-reference) |
+| `baseline` | Capture baseline | [Workflow Examples](./npl-performance-monitor.detailed.md#workflow-examples) |
+| `compare` | Compare against baseline | [Statistical Methods](./npl-performance-monitor.detailed.md#statistical-methods) |
+| `experiment` | Manage A/B tests | [Commands - experiment](./npl-performance-monitor.detailed.md#experiment) |
+| `report` | Generate reports | [Output Formats](./npl-performance-monitor.detailed.md#output-formats) |
+| `alert` | Configure alerts | [Commands - alert](./npl-performance-monitor.detailed.md#alert) |
+
+## Configuration
+
+```yaml
+# monitor-config.yaml
+collection:
+  interval: 1000  # ms
+metrics:
+  latency: { enabled: true, percentiles: [50, 95, 99] }
+  tokens: { enabled: true }
+  quality: { enabled: true }
+alerts:
+  - metric: latency.p99
+    threshold: 3000
+    action: log
+```
+
+Full schema: [Configuration](./npl-performance-monitor.detailed.md#configuration)
+
+## Integration
 
 ```bash
-# Baseline and optimize workflow
-@npl-performance-monitor baseline --save=before && @npl-claude-optimizer optimize && @npl-performance-monitor compare --baseline=before
-
-# Parallel agent monitoring
-@npl-performance-monitor track agent=npl-grader,npl-thinker,npl-templater --metrics=latency,quality
+# Baseline-optimize-compare workflow
+@npl-performance-monitor baseline --save=before && \
+@npl-claude-optimizer optimize && \
+@npl-performance-monitor compare --baseline=before
 
 # Research validation pipeline
-@npl-performance-monitor experiment analyze --id=exp_001 && @npl-research-validator verify --data=results
+@npl-performance-monitor experiment analyze --id=exp_001 && \
+@npl-research-validator verify --data=results
 ```
+
+Additional patterns: [Integration](./npl-performance-monitor.detailed.md#integration)
+
+## Reference
+
+- [Architecture](./npl-performance-monitor.detailed.md#architecture)
+- [Metrics Reference](./npl-performance-monitor.detailed.md#metrics-reference)
+- [Statistical Methods](./npl-performance-monitor.detailed.md#statistical-methods)
+- [Troubleshooting](./npl-performance-monitor.detailed.md#troubleshooting)
 
 ## See Also
 
-- Core definition: `core/additional-agents/research/npl-performance-monitor.md`
-- Metrics pump: `npl/pumps/npl-metrics.md`
-- Benchmarking guidelines: `npl/benchmarking.md`
+- [npl-claude-optimizer](./npl-claude-optimizer.md) - Optimization using monitor data
+- [npl-research-validator](./npl-research-validator.md) - Statistical validation
+- [npl-cognitive-load-assessor](./npl-cognitive-load-assessor.md) - UX metrics

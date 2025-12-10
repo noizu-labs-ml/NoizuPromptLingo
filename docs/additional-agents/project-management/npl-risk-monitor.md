@@ -1,52 +1,76 @@
 # npl-risk-monitor
 
-Continuous risk assessment specialist that identifies project risks early, tracks mitigation effectiveness, and provides early warning systems for project health monitoring.
+Continuous risk assessment specialist for proactive project health monitoring.
 
 ## Purpose
 
-Transforms reactive risk management into proactive risk prevention through automated early warning systems. Identifies risks across technical, adoption, resource, and timeline dimensions before impact occurs, maintaining comprehensive risk awareness throughout project lifecycles.
+Transforms reactive risk management into proactive prevention. Identifies risks across technical, adoption, resource, and timeline dimensions before impact occurs.
 
 ## Capabilities
 
-- Identify and classify technical, user adoption, resource, and timeline risks
-- Monitor risk indicator trends and threshold breaches continuously
-- Track mitigation strategy implementation and effectiveness
-- Provide predictive risk escalation timelines and health scoring
-- Establish risk threshold alerts and notification protocols
-- Assess risk interdependencies and cascade potential
-- Generate stakeholder-appropriate communications by severity
+- Identify and classify risks across four dimensions (technical, adoption, resource, timeline)
+- Monitor risk indicator trends and threshold breaches
+- Track mitigation strategy effectiveness
+- Provide predictive escalation timelines and health scoring
+- Generate stakeholder-appropriate communications
+
+See [Capabilities](npl-risk-monitor.detailed.md#capabilities) for full details.
 
 ## Usage
 
 ```bash
-# Initial comprehensive assessment
+# Initial assessment
 @npl-risk-monitor "Conduct initial risk assessment for project X"
 
-# Continuous monitoring check
+# Continuous monitoring
 @npl-risk-monitor "Analyze current risk status and emerging threats"
 
-# Specific category focus
+# Category-specific analysis
 @npl-risk-monitor "Assess technical implementation risks for microservices migration"
 
 # Mitigation evaluation
 @npl-risk-monitor "Evaluate effectiveness of current mitigation strategies"
 ```
 
-## Workflow Integration
+See [Usage Examples](npl-risk-monitor.detailed.md#usage-examples) for detailed scenarios.
+
+## Risk Scoring
+
+Priority calculated as: `Impact (1-4) x Probability (1-4) = Priority (1-16)`
+
+| Score | Severity | Response |
+|:------|:---------|:---------|
+| 12-16 | Critical | Immediate escalation |
+| 8-11 | High | Active mitigation |
+| 4-7 | Medium | Monitor |
+| 1-3 | Low | Log |
+
+See [Risk Assessment Framework](npl-risk-monitor.detailed.md#risk-assessment-framework) for complete matrix.
+
+## Integration
 
 ```bash
 # Risk-driven technical review
-@npl-risk-monitor "Identify technical implementation risks" && @npl-technical-reality-checker "Validate feasibility considering risks"
+@npl-risk-monitor "Identify technical risks" && @npl-technical-reality-checker "Validate feasibility"
 
-# User adoption risk assessment
-@npl-risk-monitor "Assess user adoption risks" && @npl-user-impact-assessor "Develop mitigation strategies"
+# User adoption assessment
+@npl-risk-monitor "Assess adoption risks" && @npl-user-impact-assessor "Develop mitigation"
 
-# Coordinated risk response
-@npl-risk-monitor "Critical timeline risk detected" && @npl-project-coordinator "Adjust project plan to mitigate risk"
+# Project coordination
+@npl-risk-monitor "Critical timeline risk" && @npl-project-coordinator "Adjust plan"
 ```
+
+See [Integration Patterns](npl-risk-monitor.detailed.md#integration-patterns) for pipeline examples.
+
+## Success Metrics
+
+| Metric | Target |
+|:-------|:-------|
+| Early Detection | >85% |
+| Mitigation Success | >75% |
+| False Positives | <15% |
 
 ## See Also
 
-- Core definition: `core/additional-agents/project-management/npl-risk-monitor.md`
-- Risk scoring matrix: Impact (1-4) × Probability (1-4) = Priority score (1-16)
-- Success metrics: >85% early detection, >75% mitigation success, <15% false positives
+- Detailed documentation: [npl-risk-monitor.detailed.md](npl-risk-monitor.detailed.md)
+- Agent conventions: `npl/agent.md`

@@ -17,6 +17,8 @@ Converts technical features into developer-relevant outcomes with quantified imp
 - Design progressive disclosure of technical depth
 - Provide before/after scenarios with measurable results
 
+See [Capabilities](./npl-positioning.detailed.md#capabilities) for complete details.
+
 ## Usage
 
 ```bash
@@ -29,6 +31,8 @@ Converts technical features into developer-relevant outcomes with quantified imp
 # Transform technical docs to benefits-first
 @npl-positioning convert technical-spec.md --benefits-first --quantified-value
 ```
+
+See [Usage Reference](./npl-positioning.detailed.md#usage-reference) for all commands.
 
 ## Workflow Integration
 
@@ -43,8 +47,22 @@ Converts technical features into developer-relevant outcomes with quantified imp
 @npl-positioning create message-tests > messages.md && @npl-community validate messages.md --developer-feedback
 ```
 
+See [Integration Patterns](./npl-positioning.detailed.md#integration-patterns) for complete workflow examples.
+
+## Key Resources
+
+| Topic | Reference |
+|-------|-----------|
+| Positioning framework | [Positioning Framework](./npl-positioning.detailed.md#positioning-framework) |
+| Message transformation | [Message Transformation](./npl-positioning.detailed.md#message-transformation) |
+| A/B testing setup | [A/B Testing Framework](./npl-positioning.detailed.md#ab-testing-framework) |
+| NPL pump integration | [NPL Pump Integration](./npl-positioning.detailed.md#npl-pump-integration) |
+| Success metrics | [Success Metrics](./npl-positioning.detailed.md#success-metrics) |
+| Anti-patterns | [Anti-Patterns](./npl-positioning.detailed.md#anti-patterns) |
+| Limitations | [Limitations](./npl-positioning.detailed.md#limitations) |
+
 ## See Also
 
+- Detailed reference: [npl-positioning.detailed.md](./npl-positioning.detailed.md)
 - Core definition: `core/additional-agents/marketing/npl-positioning.md`
-- Positioning templates: `.claude/npl/templates/positioning/`
-- Style guide: `.claude/npl-m/house-style/positioning-style.md`
+- Related agents: [npl-marketing-copy](./npl-marketing-copy.md), [npl-conversion](./npl-conversion.md), [npl-community](./npl-community.md)

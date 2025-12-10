@@ -17,6 +17,8 @@ Builds sustainable developer communities through viral demonstration content, au
 - Implement peer recognition and reward systems
 - Track and optimize community engagement metrics
 
+For complete capability details, see [Capabilities](./npl-community.detailed.md#capabilities) in the detailed reference.
+
 ## Usage
 
 ```bash
@@ -28,7 +30,21 @@ Builds sustainable developer communities through viral demonstration content, au
 
 # Build collaboration framework
 @npl-community design collaboration-hub --features="template-marketplace,peer-mentoring"
+
+# Analyze community engagement
+@npl-community analyze engagement --metrics="sharing-rate,contribution-frequency" --optimize
+
+# Identify viral stories for amplification
+@npl-community identify viral-stories > community-wins.md
 ```
+
+For complete command reference, see [Usage Reference](./npl-community.detailed.md#usage-reference).
+
+## Key Concepts
+
+- **Viral Mechanics**: Content and features designed for organic sharing. See [Viral Content Strategies](./npl-community.detailed.md#viral-content-strategies).
+- **Contribution Ladder**: User progression from consumer to leader. See [Collaboration Platform Design](./npl-community.detailed.md#collaboration-platform-design).
+- **Community Building Principles**: Authentic value creation over promotional messaging. See [Community Building Principles](./npl-community.detailed.md#community-building-principles).
 
 ## Workflow Integration
 
@@ -43,8 +59,32 @@ Builds sustainable developer communities through viral demonstration content, au
 @npl-community collect templates > community-templates.md && @npl-grader validate community-templates.md
 ```
 
+For complete integration patterns, see [Integration Patterns](./npl-community.detailed.md#integration-patterns).
+
+## Anti-Patterns
+
+| Avoid | Prefer |
+|-------|--------|
+| Promotional tone | Peer celebration |
+| Company-directed agenda | Community-led growth |
+| Forced participation | Organic value creation |
+| Competition focus | Collaboration culture |
+
+For complete anti-pattern guidance, see [Anti-Patterns](./npl-community.detailed.md#anti-patterns).
+
+## Detailed Reference
+
+See [npl-community.detailed.md](./npl-community.detailed.md) for:
+
+- [Core Mission](./npl-community.detailed.md#core-mission) - Problem statement and solution approach
+- [Community Strategy Framework](./npl-community.detailed.md#community-strategy-framework) - Growth model diagrams
+- [Content Templates](./npl-community.detailed.md#content-templates) - Success story, challenge, and testimonial templates
+- [NPL Pump Integration](./npl-community.detailed.md#npl-pump-integration) - Intent, mood, critique, and rubric configurations
+- [Community Metrics](./npl-community.detailed.md#community-metrics) - Engagement and quality indicators
+- [Limitations](./npl-community.detailed.md#limitations) - Scope boundaries and dependencies
+
 ## See Also
 
 - Core definition: `core/additional-agents/marketing/npl-community.md`
-- Community templates: `.claude/npl/templates/community/`
-- Style guide: `.claude/npl-m/house-style/community-style.md`
+- Related agents: [npl-conversion](./npl-conversion.md), [npl-marketing-copy](./npl-marketing-copy.md), [npl-positioning](./npl-positioning.md)
+- Marketing overview: [README.md](./README.md)

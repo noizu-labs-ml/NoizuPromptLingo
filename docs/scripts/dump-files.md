@@ -1,32 +1,24 @@
 # dump-files
 
-A command-line tool for dumping file contents from a Git repository while respecting `.gitignore` rules.
+Dump Git-visible file contents with formatted headers.
 
 ## Synopsis
 
 ```bash
-dump-files <target-folder> [-g <glob-pattern>]
+dump-files <target-folder>
 ```
 
 ## Description
 
-`dump-files` recursively outputs the contents of all files under a specified directory in a Git repository. Each file is preceded by a formatted header showing its path. The tool respects `.gitignore` patterns, only showing tracked and untracked-but-not-ignored files.
+Outputs all tracked and untracked-but-not-ignored files under a directory. Each file includes a path header and separator for parsing.
 
 ## Arguments
 
 | Argument | Description |
-|----------|-------------|
-| `<target-folder>` | The directory to dump files from (required) |
-
-## Options
-
-| Option | Description |
-|--------|-------------|
-| `-g <pattern>` | Glob pattern to filter files (e.g., `"*.md"`, `"*.py"`) |
+|:---------|:------------|
+| `<target-folder>` | Directory to dump (required) |
 
 ## Output Format
-
-Each file is output in the following format:
 
 ```
 # path/to/file.ext
@@ -38,50 +30,42 @@ Each file is output in the following format:
 
 ## Requirements
 
-- Must be run inside a Git repository
+- Must run inside a Git repository
 - Uses `git ls-files` to determine visible files
 
 ## Examples
 
-### Dump all files in a directory
-
 ```bash
+# Dump all files in src/
 dump-files src/
-```
 
-### Dump files from a nested directory
-
-```bash
+# Dump nested directory
 dump-files deployments/impact-simulation
+
+# Dump entire project
+dump-files .
 ```
-
-### Dump only markdown files
-
-```bash
-dump-files docs/ -g "*.md"
-```
-
-### Dump Python files in project
-
-```bash
-dump-files . -g "*.py"
-```
-
-## Use Cases
-
-- **Code review**: Quickly view all files in a module or feature directory
-- **Documentation**: Generate a consolidated view of project files
-- **AI context**: Provide file contents to AI assistants for analysis
-- **Backup verification**: Review contents of a directory before archiving
 
 ## Exit Codes
 
 | Code | Meaning |
-|------|---------|
+|:-----|:--------|
 | 0 | Success |
 | 1 | Missing target folder argument |
 
+## Limitations
+
+- No glob/pattern filtering
+- No depth limit control
+- Git repository required
+
+See [dump-files.detailed.md](./dump-files.detailed.md) for:
+- [Implementation Details](./dump-files.detailed.md#implementation-details)
+- [Edge Cases](./dump-files.detailed.md#edge-cases)
+- [Integration Patterns](./dump-files.detailed.md#integration-patterns)
+- [Workarounds](./dump-files.detailed.md#limitations)
+
 ## See Also
 
-- [git-tree](./git-tree.md) - Display directory tree respecting `.gitignore`
-- [git-tree-depth](./git-tree-depth.md) - Show directory tree with nesting levels
+- [git-tree](./git-tree.md) - Display directory tree
+- [git-tree-depth](./git-tree-depth.md) - Show tree with nesting levels

@@ -1,6 +1,6 @@
 # git-tree
 
-A command-line tool for displaying a directory tree of files in a Git repository while respecting `.gitignore` rules.
+Git-aware directory tree viewer respecting `.gitignore` rules.
 
 ## Synopsis
 
@@ -8,40 +8,26 @@ A command-line tool for displaying a directory tree of files in a Git repository
 git-tree [target-folder]
 ```
 
-## Description
-
-`git-tree` displays a tree view of all files under a specified directory in a Git repository. It uses `git ls-files` to determine which files are visible (tracked and untracked-but-not-ignored) and renders the output using the `tree` command.
-
-## Arguments
-
-| Argument | Description |
-|----------|-------------|
-| `[target-folder]` | The directory to show tree for (defaults to current directory) |
-
-## Requirements
-
-- Must be run inside a Git repository
-- Requires `tree` command to be installed
-
-## Examples
-
-### Show tree of current directory
+## Quick Start
 
 ```bash
+# Entire repository
 git-tree
-```
 
-### Show tree of specific directory
-
-```bash
+# Specific directory
 git-tree src/components
 ```
 
-### Show tree of deployment files
+## Arguments
 
-```bash
-git-tree deployments/impact-simulation
-```
+| Argument | Default | Description |
+|:---------|:--------|:------------|
+| `target-folder` | `.` | Directory to display |
+
+## Requirements
+
+- Must run inside a Git repository
+- `tree` command optional (fallback provided)
 
 ## Sample Output
 
@@ -49,33 +35,30 @@ git-tree deployments/impact-simulation
 .
 ├── core
 │   ├── agents
-│   │   ├── npl-author.md
-│   │   └── npl-grader.md
+│   │   └── npl-author.md
 │   └── scripts
-│       ├── dump-files
-│       ├── git-tree
-│       └── npl-load
-├── docs
-│   └── scripts
-│       └── npl-load.md
-└── npl.md
+│       └── git-tree
+└── docs
+    └── scripts
+        └── git-tree.md
 ```
-
-## Use Cases
-
-- **Project orientation**: Quickly understand project structure
-- **Documentation**: Generate directory structure for README files
-- **Code review**: Identify files affected by changes
-- **Navigation**: Find files without wading through ignored directories
 
 ## Exit Codes
 
 | Code | Meaning |
-|------|---------|
+|:-----|:--------|
 | 0 | Success |
 | 1 | Not inside a Git repository |
 
+## More Information
+
+See [git-tree.detailed.md](./git-tree.detailed.md) for:
+- [How It Works](./git-tree.detailed.md#how-it-works) - Internal mechanics
+- [Tree Rendering](./git-tree.detailed.md#tree-rendering) - Primary vs fallback renderer
+- [Edge Cases](./git-tree.detailed.md#edge-cases) - Empty dirs, symlinks, submodules
+- [Integration Examples](./git-tree.detailed.md#integration-with-other-tools) - Scripting patterns
+
 ## See Also
 
-- [dump-files](./dump-files.md) - Dump file contents from Git repository
-- [git-tree-depth](./git-tree-depth.md) - Show directory tree with nesting levels
+- [dump-files.md](./dump-files.md) - Dump file contents
+- [git-tree-depth.md](./git-tree-depth.md) - Tree with depth indicators

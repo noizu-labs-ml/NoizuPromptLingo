@@ -4,7 +4,7 @@ Multi-agent workflow testing and integration specialist that validates collabora
 
 ## Purpose
 
-Transforms complex multi-agent coordination into validated, reliable workflows through systematic integration testing. Validates communication protocols, data handoffs, and workflow reliability in production environments.
+Validates multi-agent workflows, tests communication protocols, and ensures reliable coordination between NPL agents. Transforms complex multi-agent coordination into validated, reliable workflows through systematic integration testing.
 
 ## Capabilities
 
@@ -14,6 +14,8 @@ Transforms complex multi-agent coordination into validated, reliable workflows t
 - Data flow and context preservation verification
 - Error recovery and resilience testing
 - Workflow performance and bottleneck identification
+
+See [Capabilities](./npl-integrator.detailed.md#capabilities) for complete details.
 
 ## Usage
 
@@ -26,27 +28,43 @@ Transforms complex multi-agent coordination into validated, reliable workflows t
 
 # Integration health check
 @npl-integrator health-check --workflow="content-generation" --depth="comprehensive"
+```
+
+See [Usage Reference](./npl-integrator.detailed.md#usage-reference) for all commands.
+
+## Workflow Integration
+
+```bash
+# Custom workflow with config
+@npl-integrator test-workflow --workflow-config=".claude/workflows/custom-pipeline.yaml"
 
 # Performance testing
 @npl-integrator performance-test --workflow="complex-analysis" --concurrent-flows=3 --duration="15m"
 
 # CI/CD validation
 @npl-integrator ci-validate --workflow-dir=".claude/workflows" --fail-on-error
-```
-
-## Workflow Integration
-
-```bash
-# Document generation pipeline
-@npl-integrator test-workflow --agents="npl-technical-writer,npl-validator,npl-grader" --scenario="document-generation"
-
-# Custom workflow with config
-@npl-integrator test-workflow --workflow-config=".claude/workflows/custom-pipeline.yaml"
 
 # Failure injection testing
 @npl-integrator test-workflow --scenario="document-pipeline" --mock-failures --failure-rate=0.1
 ```
 
+See [Configuration Options](./npl-integrator.detailed.md#configuration-options) for all parameters.
+
+## Key Resources
+
+| Topic | Reference |
+|-------|-----------|
+| Technical architecture | [Technical Architecture](./npl-integrator.detailed.md#technical-architecture) |
+| Testing categories | [Testing Categories](./npl-integrator.detailed.md#testing-categories) |
+| Workflow definition | [Workflow Definition Format](./npl-integrator.detailed.md#workflow-definition-format) |
+| NPL pump integration | [NPL Pump Integration](./npl-integrator.detailed.md#npl-pump-integration) |
+| Output format | [Output Format](./npl-integrator.detailed.md#output-format) |
+| Quality framework | [Integration Quality Framework](./npl-integrator.detailed.md#integration-quality-framework) |
+| Best practices | [Best Practices](./npl-integrator.detailed.md#best-practices) |
+| Limitations | [Limitations](./npl-integrator.detailed.md#limitations) |
+
 ## See Also
 
+- Detailed reference: [npl-integrator.detailed.md](./npl-integrator.detailed.md)
 - Core definition: `core/additional-agents/quality-assurance/npl-integrator.md`
+- Related agents: [npl-tester](./npl-tester.md), [npl-validator](./npl-validator.md), [npl-benchmarker](./npl-benchmarker.md)

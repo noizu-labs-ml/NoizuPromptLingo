@@ -193,6 +193,45 @@ subdir/nested 2
 
 **NPL Integration**: Provides structured directory depth analysis for NPL agents performing architectural analysis and code organization tasks.
 
+---
+
+### npl-session
+
+**Purpose**: Session and worklog management for cross-agent communication. Provides shared JSONL worklogs with cursor-based reads.
+
+**Syntax**:
+```bash
+npl-session <command> [options]
+```
+
+**Commands**:
+| Command | Purpose |
+|---------|---------|
+| `init [--task=X]` | Create new session |
+| `current` | Get current session ID |
+| `log --agent=X --action=Y --summary="..."` | Append worklog entry |
+| `read --agent=X [--peek]` | Read new entries since cursor |
+| `status` | Show session stats |
+| `list [--all]` | List sessions |
+| `close [--archive]` | Close session |
+
+**Usage Examples**:
+```bash
+# Create session
+npl-session init --task="Implement auth"
+
+# Log entry
+npl-session log --agent=explore-auth-001 --type=Explore \
+    --action=file_found --summary="Found auth.ts"
+
+# Read new entries
+npl-session read --agent=primary
+```
+
+**NPL Integration**: Enables parent agents and sub-agents to share discoveries and coordinate work via a shared worklog.
+
+**Detailed Documentation**: See [npl-session.md](./npl-session.md) and [npl-session.detailed.md](./npl-session.detailed.md).
+
 <!-- PROJECT_SCRIPTS_DOCUMENTATION_SECTION_END -->
 
 ## Scaffolding Scripts (agentic/scaffolding/scripts/)

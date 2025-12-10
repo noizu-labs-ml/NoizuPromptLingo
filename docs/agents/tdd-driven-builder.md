@@ -2,56 +2,74 @@
 
 Agent template for implementing features using strict Test-Driven Development methodology with Red-Green-Refactor cycles.
 
+**Detailed reference**: [tdd-driven-builder.detailed.md](tdd-driven-builder.detailed.md)
+
 ## Purpose
 
-Creates specialized agents that enforce TDD discipline: write failing tests first, implement minimal code to pass, then refactor. Ensures high code coverage and testable implementations that meet specification requirements.
+Enforces TDD discipline: write failing tests first, implement minimal code to pass, then refactor. Produces high-coverage, testable implementations that meet specification requirements.
 
 ## Capabilities
 
-- Parse specification requirements into testable behaviors
-- Generate comprehensive test plans (unit, integration, contract, e2e)
-- Execute strict Red-Green-Refactor cycles
-- Maintain project-specific conventions and patterns
-- Validate coverage targets and test quality standards
-- Support multiple test frameworks (pytest, jest, JUnit, etc.)
+| Capability | Description | Details |
+|:-----------|:------------|:--------|
+| Spec parsing | Extract testable behaviors from requirements | [TDD Methodology](tdd-driven-builder.detailed.md#tdd-methodology) |
+| Test planning | Generate unit, integration, contract, e2e plans | [Test Strategy](tdd-driven-builder.detailed.md#test-strategy) |
+| Red-Green-Refactor | Execute strict TDD cycles | [Development Workflow](tdd-driven-builder.detailed.md#development-workflow) |
+| Convention detection | Follow project-specific patterns | [Integration Patterns](tdd-driven-builder.detailed.md#integration-patterns) |
+| Coverage validation | Verify >90% coverage targets | [Quality Metrics](tdd-driven-builder.detailed.md#quality-metrics) |
 
-## Usage
+## Quick Start
 
 ```bash
-# Basic TDD implementation
-@tdd-builder "Implement user authentication following TDD"
+# Plan phase: analyze specification
+@tdd-builder plan "User authentication" --framework=pytest
 
-# With specific requirements
-@cart-tdd-builder "Implement shopping cart with:
-1. Add items with quantity validation
-2. Calculate totals with tax
-3. Apply discount codes"
+# Red phase: write failing test
+@tdd-builder red "Validate credentials"
 
-# Hydrate template for project
+# Green phase: minimal implementation
+@tdd-builder green "Validate credentials"
+
+# Refactor phase: improve structure
+@tdd-builder refactor "Validate credentials"
+
+# Validate: check coverage and conventions
+@tdd-builder validate "User authentication"
+```
+
+See [Commands Reference](tdd-driven-builder.detailed.md#commands-reference) for all options.
+
+## Template Hydration
+
+```bash
 python -m npl.templater hydrate \
-  --template tdd-driven-builder.npl-template.md \
+  --template skeleton/agents/npl-tdd-builder.npl-template.md \
   --config project-tdd.yaml \
-  --output agents/project-tdd-builder.md
+  --output agents/my-tdd-builder.md
 ```
 
-## Workflow Integration
+See [Template Hydration](tdd-driven-builder.detailed.md#template-hydration) for configuration.
+
+## Integration
 
 ```bash
-# TDD + quality evaluation
-@tdd-builder "Implement payment feature" && @npl-grader evaluate --rubric=tdd-rubric.md
+# With test planning
+@npl-qa-tester generate test-plan spec.md
+@tdd-builder implement spec.md --test-plan=test-plan.md
 
-# TDD + security review
-@tdd-builder "Implement auth service"
+# With quality validation
+@tdd-builder "Implement feature" && @npl-grader evaluate --rubric=tdd-rubric.md
+
+# With security review
+@tdd-builder "Implement auth"
 @npl-persona --role="security-expert" "Audit implementation"
-
-# Coordinated development
-@project-manager "Break down user story"
-@tdd-builder "Implement tasks using TDD"
-@qa-specialist "Validate acceptance criteria"
 ```
+
+See [Agent Collaboration](tdd-driven-builder.detailed.md#agent-collaboration) for patterns.
 
 ## See Also
 
-- `npl-grader` - Evaluate TDD implementation quality
-- `npl-persona` - Multi-role code review
-- `npl-templater` - Template hydration for project-specific agents
+- [Best Practices](tdd-driven-builder.detailed.md#best-practices)
+- [Limitations](tdd-driven-builder.detailed.md#limitations)
+- [Usage Examples](tdd-driven-builder.detailed.md#usage-examples)
+- Source template: `skeleton/agents/npl-tdd-builder.npl-template.md`

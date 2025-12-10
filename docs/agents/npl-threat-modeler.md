@@ -2,19 +2,23 @@
 
 Defensive security specialist applying STRIDE methodology for threat modeling, vulnerability identification, and security control recommendations.
 
+**Detailed reference**: [npl-threat-modeler.detailed.md](npl-threat-modeler.detailed.md)
+
 ## Purpose
 
-Identifies security vulnerabilities and assesses risks without offensive testing. Generates threat models, risk assessments, and compliance documentation for established frameworks (SOC2, ISO27001, NIST, GDPR, HIPAA).
+Identifies security vulnerabilities and assesses risks without offensive testing. Generates threat models, risk assessments, and compliance documentation for established frameworks (SOC2, ISO27001, NIST, GDPR, HIPAA, PCI-DSS).
 
 ## Capabilities
 
-- **STRIDE Analysis**: Systematic threat identification across Spoofing, Tampering, Repudiation, Information Disclosure, DoS, Elevation of Privilege
-- **Risk Assessment**: Quantifies risks by likelihood and impact, prioritizes remediation
-- **Compliance Mapping**: Gap analysis against SOC2, ISO27001, NIST, GDPR, HIPAA, PCI-DSS
-- **Architecture Review**: Security assessment of system designs and data flows
-- **Documentation**: Security policies, incident response plans, audit-ready reports
+| Capability | Description | Details |
+|:-----------|:------------|:--------|
+| STRIDE Analysis | Threat identification across 6 categories | [STRIDE Framework](npl-threat-modeler.detailed.md#stride-framework) |
+| Risk Assessment | Quantified scoring by likelihood/impact | [Risk Scoring Matrix](npl-threat-modeler.detailed.md#risk-scoring-matrix) |
+| Compliance Mapping | Gap analysis against regulatory frameworks | [Compliance Frameworks](npl-threat-modeler.detailed.md#compliance-frameworks) |
+| Architecture Review | Security evaluation of system designs | [Architecture Review](npl-threat-modeler.detailed.md#architecture-review) |
+| Documentation | Policies, IR plans, audit-ready reports | [Output Templates](npl-threat-modeler.detailed.md#output-templates) |
 
-## Usage
+## Quick Start
 
 ```bash
 # Threat model for a system
@@ -30,7 +34,20 @@ Identifies security vulnerabilities and assesses risks without offensive testing
 @threat-modeler create-ir-plan "SaaS platform" --compliance=HIPAA
 ```
 
-## Workflow Integration
+See [Commands Reference](npl-threat-modeler.detailed.md#commands-reference) for all options.
+
+## Configuration
+
+| Option | Values |
+|:-------|:-------|
+| `--framework` | STRIDE, PASTA, OCTAVE |
+| `--compliance` | SOC2, ISO27001, NIST, GDPR, HIPAA, PCI-DSS |
+| `--risk-appetite` | conservative, balanced, aggressive |
+| `--output-format` | executive, technical, audit |
+
+See [Configuration Options](npl-threat-modeler.detailed.md#configuration-options) for complete list.
+
+## Integration
 
 ```bash
 # Security analysis then quality check
@@ -43,6 +60,8 @@ Identifies security vulnerabilities and assesses risks without offensive testing
 @threat-modeler develop-program --framework=SOC2 && @grader evaluate --rubric=compliance
 ```
 
+See [Integration Patterns](npl-threat-modeler.detailed.md#integration-patterns) for CI/CD examples.
+
 ## Boundaries
 
 **Permitted**: Vulnerability identification, secure architecture design, compliance assessment, security documentation, defensive controls
@@ -51,4 +70,7 @@ Identifies security vulnerabilities and assesses risks without offensive testing
 
 ## See Also
 
+- [Threat Modeling Methodologies](npl-threat-modeler.detailed.md#threat-modeling-methodologies) - STRIDE, PASTA, OCTAVE comparison
+- [Best Practices](npl-threat-modeler.detailed.md#best-practices)
+- [Limitations](npl-threat-modeler.detailed.md#limitations)
 - Core definition: `core/agents/npl-threat-modeler.md`

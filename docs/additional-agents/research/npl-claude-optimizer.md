@@ -4,16 +4,19 @@ Claude-specific optimization specialist that analyzes NPL configurations and pro
 
 ## Purpose
 
-Analyzes NPL configurations to deliver Claude-specific performance recommendations. Leverages Claude's constitutional training, extended context window, and natural instruction-following capabilities to achieve 15-40% performance improvements through token efficiency, context utilization, and constitutional alignment optimization.
+Analyzes NPL configurations to deliver Claude-specific performance recommendations. Achieves 15-40% performance improvements through token efficiency, context utilization, and constitutional alignment optimization.
+
+See: [Detailed Reference](./npl-claude-optimizer.detailed.md)
 
 ## Capabilities
 
-- Analyze token overhead and reduce verbose syntax by 22-35%
-- Optimize context window utilization from 60% to 80%+ efficiency
+- Reduce token overhead by 22-35% via syntax optimization
+- Improve context window utilization from 60% to 80%+
 - Align with Claude's constitutional training for natural instruction flow
 - Implement dynamic pump selection based on task complexity
-- Detect and prevent performance regression in configurations
-- Generate actionable optimization recommendations with quantified impact
+- Detect and prevent performance regression
+
+Details: [Optimization Categories](./npl-claude-optimizer.detailed.md#optimization-categories)
 
 ## Usage
 
@@ -28,6 +31,8 @@ Analyzes NPL configurations to deliver Claude-specific performance recommendatio
 @npl-claude-optimizer experiment --baseline=standard --treatment=optimized --duration=7d
 ```
 
+Options: [Configuration Options](./npl-claude-optimizer.detailed.md#configuration-options)
+
 ## Workflow Integration
 
 ```bash
@@ -41,8 +46,21 @@ Analyzes NPL configurations to deliver Claude-specific performance recommendatio
 @npl-research-validator provide-benchmarks && @npl-claude-optimizer optimize --benchmarks=benchmarks.json
 ```
 
+Integration details: [Integration Guidelines](./npl-claude-optimizer.detailed.md#integration-guidelines)
+
+## Quick Reference
+
+| Optimization | Token Savings | Quality Impact |
+|:-------------|:--------------|:---------------|
+| Syntax Simplification | 25-35% | Neutral |
+| Pump Optimization | 15-25% | +10-15% |
+| Constitutional Alignment | 5-10% | +20-30% |
+| Dynamic Selection | 30-40% | +25-35% |
+
+Full benchmarks: [Performance Benchmarks](./npl-claude-optimizer.detailed.md#performance-benchmarks)
+
 ## See Also
 
+- Detailed reference: [`npl-claude-optimizer.detailed.md`](./npl-claude-optimizer.detailed.md)
 - Core definition: `core/additional-agents/research/npl-claude-optimizer.md`
 - Performance tracking: `npl/pumps/npl-performance.md`
-- Optimization strategies: `npl/optimization.md`

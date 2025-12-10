@@ -1,50 +1,63 @@
 # npl-marketing-copy
 
-Benefits-first documentation specialist that transforms technical features into compelling developer-focused copy with clear value propositions and conversion-optimized messaging.
+Benefits-first documentation specialist that transforms technical features into developer-focused copy with clear value propositions.
 
-## Purpose
-
-Bridges the gap between technical sophistication and immediate practical value. Converts complex capabilities into developer-relevant benefits, creates A/B testable messaging variations, and quantifies improvements with concrete metrics that respect developer intelligence.
+**Type**: `service` | **Alias**: `@marketing-copy`, `@mcopy`
 
 ## Capabilities
 
-- Transform technical features into developer-focused benefits
-- Create conversion-optimized documentation and landing pages
-- Generate A/B testable messaging variations for different segments
-- Translate research advantages into accessible productivity gains
-- Build value proposition matrices for different developer personas
-- Provide proof points and evidence for credibility
-- Balance simplicity with progressive technical depth disclosure
-- Optimize existing marketing content for developer psychology
+- Feature-to-benefit transformation with quantified impact
+- A/B testable messaging variants for different personas
+- Conversion-optimized landing pages and documentation
+- Value proposition matrices by developer segment
+- Proof point integration (benchmarks, testimonials, comparisons)
+
+See [Capabilities](./npl-marketing-copy.detailed.md#capabilities) for implementation details.
+
+## Copy Types
+
+| Type | Use Case |
+|:-----|:---------|
+| Landing page | Product/feature introductions |
+| Doc headers | Scannable benefit-oriented titles |
+| Release notes | User-facing changelog entries |
+| Feature announcements | Blog/email announcements |
+| Email sequences | Onboarding, adoption, re-engagement |
+
+See [Copy Types](./npl-marketing-copy.detailed.md#copy-types) for templates and examples.
 
 ## Usage
 
 ```bash
-# Transform technical docs to benefits-first
-@npl-marketing-copy convert technical-doc.md --benefits-focus --developer-audience
-
-# Generate value propositions with test variants
-@npl-marketing-copy create value-prop --feature="npl-code-reviewer" --a-b-variants=3
-
-# Optimize landing page copy
+@npl-marketing-copy convert technical-doc.md --benefits-focus
+@npl-marketing-copy create value-prop --feature="code-review" --a-b-variants=3
 @npl-marketing-copy optimize landing-page.md --conversion-focus --proof-points
 ```
 
-## Workflow Integration
+See [Usage](./npl-marketing-copy.detailed.md#usage) for full parameter reference.
+
+## Integration
 
 ```bash
-# Conversion-optimized marketing pipeline
-@npl-conversion identify friction-points > barriers.md && @npl-marketing-copy optimize copy.md --barriers.md
+# Verify claims with technical writer
+@npl-marketing-copy generate claims > claims.md && @npl-technical-writer verify claims.md
 
-# Community-validated messaging
+# Extract value props from success stories
 @npl-community generate success-stories > wins.md && @npl-marketing-copy extract value-props wins.md
-
-# Technical accuracy verification
-@npl-marketing-copy generate claims --feature="performance" > claims.md && @npl-technical-writer verify claims.md
 ```
+
+See [Integration Patterns](./npl-marketing-copy.detailed.md#integration-patterns) for pipeline workflows.
+
+## Limitations
+
+- Cannot verify technical accuracy (pair with `@npl-technical-writer`)
+- Quantified benefits require source benchmark data
+- A/B testing suggestions only; actual testing needs external tools
+
+See [Limitations](./npl-marketing-copy.detailed.md#limitations) for full details.
 
 ## See Also
 
+- **Detailed reference**: [npl-marketing-copy.detailed.md](./npl-marketing-copy.detailed.md)
 - Core definition: `core/additional-agents/marketing/npl-marketing-copy.md`
-- Copy templates: `.claude/npl/templates/marketing-copy/`
 - Style guide: `.claude/npl-m/house-style/marketing-copy-style.md`

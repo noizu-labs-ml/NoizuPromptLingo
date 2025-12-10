@@ -1,6 +1,8 @@
 # npl-fim-config
 
-A configuration and query tool for the NPL-FIM (Fill-in-the-Middle) agent, providing solution recommendations and local override management for visualization tasks.
+Configuration and query tool for NPL-FIM agent. Selects visualization tools, manages local overrides, and delegates to `npl-load`.
+
+**Detailed reference**: [npl-fim-config.detailed.md](./npl-fim-config.detailed.md)
 
 ## Synopsis
 
@@ -8,196 +10,81 @@ A configuration and query tool for the NPL-FIM (Fill-in-the-Middle) agent, provi
 npl-fim-config [item] [options]
 ```
 
-## Description
+## Quick Reference
 
-`npl-fim-config` helps select appropriate visualization tools for different use cases, manage local override configurations, and query the tool-task compatibility matrix. It integrates with `npl-load` for loading FIM-related metadata.
+| Operation | Command |
+|:----------|:--------|
+| Query for tool | `npl-fim-config --query "org chart for React"` |
+| Show compatibility matrix | `npl-fim-config --table` |
+| Get preferred solution | `npl-fim-config network-graphs --preferred-solution` |
+| Get style guide command | `npl-fim-config d3_js.charts --style-guide` |
+| List overrides | `npl-fim-config --overrides` |
+| Edit override | `npl-fim-config solution.mermaid.diagram --local --edit` |
+| Load FIM metadata | `npl-fim-config d3_js.data-visualization --load` |
 
 ## Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `NPL_FIM_ARTIFACTS` | Output directory for generated artifacts | `./artifacts` |
-| `NPL_META` | Path for metadata files | `./.npl/meta/fim` |
+| Variable | Default |
+|:---------|:--------|
+| `NPL_FIM_ARTIFACTS` | `./artifacts` |
+| `NPL_META` | `./.npl/meta` |
+| `EDITOR` | `vi` |
 
-## Commands and Options
+## Options
 
 ### Query Operations
 
-| Option | Description |
-|--------|-------------|
-| `--query`, `-q` | Natural language query for solution recommendations |
-| `--table` | Display the tool-task compatibility matrix |
-| `--artifact-path` | Show the artifact output directory |
-| `--preferred-solution` | Get preferred solutions for a use case |
-| `--style-guide` | Get style guide command for a solution.use-case |
-| `--overrides` | List local override files |
+| Flag | Purpose | Details |
+|:-----|:--------|:--------|
+| `--query`, `-q` | Natural language tool query | [Query Operations](./npl-fim-config.detailed.md#--query--q) |
+| `--table` | Show tool-task matrix | [--table](./npl-fim-config.detailed.md#--table) |
+| `--artifact-path` | Print artifact directory | [--artifact-path](./npl-fim-config.detailed.md#--artifact-path) |
+| `--preferred-solution` | Get recommended tools | [--preferred-solution](./npl-fim-config.detailed.md#--preferred-solution) |
+| `--style-guide` | Get npl-load command | [--style-guide](./npl-fim-config.detailed.md#--style-guide) |
+| `--overrides` | List local overrides | [--overrides](./npl-fim-config.detailed.md#--overrides) |
 
 ### Local Override Management
 
-| Option | Description |
-|--------|-------------|
-| `--local` | Work with local overrides (requires `item`) |
-| `--patch` | Patch (append to) local override file |
-| `--replace` | Replace local override file |
-| `--edit` | Open local override in editor |
-| `--prompt` | Content for patch/replace operation |
-| `--prompt-file` | File containing content for patch/replace |
+| Flag | Purpose | Details |
+|:-----|:--------|:--------|
+| `--local` | Enable local override mode | [Local Override Management](./npl-fim-config.detailed.md#local-override-management) |
+| `--edit` | Open override in editor | [--edit](./npl-fim-config.detailed.md#--edit) |
+| `--patch` | Append to override | [--patch](./npl-fim-config.detailed.md#--patch) |
+| `--replace` | Overwrite override | [--replace](./npl-fim-config.detailed.md#--replace) |
+| `--prompt` | Inline content | [--prompt](./npl-fim-config.detailed.md#--prompt) |
+| `--prompt-file` | Content from file | [--prompt-file](./npl-fim-config.detailed.md#--prompt-file) |
 
-### Delegation Options
+### Delegation
 
-| Option | Description |
-|--------|-------------|
-| `--load [ENTRY]` | Delegate to `npl-load` with derived entries |
-| `--verbose`, `-v` | Enable verbose output (forwarded to npl-load) |
-| `--skip` | Forward --skip flag to npl-load |
+| Flag | Purpose | Details |
+|:-----|:--------|:--------|
+| `--load [ENTRY]` | Delegate to npl-load | [Delegation to npl-load](./npl-fim-config.detailed.md#delegation-to-npl-load) |
+| `--verbose`, `-v` | Verbose output | [--verbose](./npl-fim-config.detailed.md#--verbose--v) |
+| `--skip` | Forward skip flag | [--skip](./npl-fim-config.detailed.md#--skip) |
 
-## Tool-Task Categories
+## Use Cases
 
-### Supported Use Cases
+| Category | Preferred Tools |
+|:---------|:----------------|
+| data-visualization | plotly_js, d3_js |
+| network-graphs | cytoscape_js, d3_js |
+| diagram-generation | mermaid, plantuml |
+| 3d-graphics | three_js |
+| geospatial-mapping | leaflet_js, mapbox-gl-js |
+| prototyping | react, html |
 
-| Category | Description |
-|----------|-------------|
-| `data-visualization` | Charts, graphs, and data displays |
-| `network-graphs` | Node-edge visualizations and network diagrams |
-| `diagram-generation` | UML, flowcharts, and structural diagrams |
-| `3d-graphics` | WebGL and 3D rendering |
-| `music-notation` | Sheet music and score rendering |
-| `mathematical-scientific` | Equations, formulas, and scientific visualizations |
-| `geospatial-mapping` | Maps and geographic data |
-| `prototyping` | UI components and web interfaces |
-
-### Recommended Tools by Category
-
-| Category | Tools |
-|----------|-------|
-| data-visualization | d3_js, plotly_js, chart_js, vega-lite |
-| network-graphs | cytoscape_js, d3_js, sigma_js, vis_js |
-| diagram-generation | mermaid, plantuml, graphviz |
-| 3d-graphics | three_js, babylon_js, a-frame |
-| music-notation | vexflow, osmd, abcjs |
-| mathematical-scientific | latex, mathjax, katex |
-| geospatial-mapping | leaflet_js, mapbox-gl-js, deck_gl |
-| prototyping | react, vue, html, tailwind |
-
-## Examples
-
-### Query for Solution Recommendations
-
-```bash
-# Natural language query
-npl-fim-config --query "interactive org chart for React website"
-
-# Output:
-# Recommended solutions for: interactive org chart for React website
-# --------------------------------------------------
-# - mermaid: Markdown-based diagram generation
-#   ✓ Excellent for organizational charts
-# - d3_js: Data-driven documents for custom visualizations
-#   ✓ Works well with React
-```
-
-### Display Compatibility Matrix
-
-```bash
-# Show full matrix
-npl-fim-config --table
-
-# Filter by use case
-npl-fim-config diagram-generation --table
-```
-
-### Get Preferred Solutions
-
-```bash
-npl-fim-config network-graphs --preferred-solution
-# Output:
-# Preferred solutions for network-graphs:
-#   - cytoscape_js
-#   - d3_js
-```
-
-### Get Style Guide Command
-
-```bash
-npl-fim-config d3_js.data-visualization --style-guide
-# Output: npl-load -s fim.d3_js.data-visualization
-```
-
-### Work with Local Overrides
-
-```bash
-# List all local overrides
-npl-fim-config --overrides
-
-# List overrides for specific scope
-npl-fim-config solution --overrides
-
-# Edit a local override (opens in $EDITOR)
-npl-fim-config solution.mermaid.diagram --local --edit
-
-# Patch an existing override
-npl-fim-config solution.d3_js.charts --local --patch \
-  --prompt "## Custom Settings\nPrefer dark theme for all charts."
-
-# Replace an override
-npl-fim-config solution.plotly.defaults --local --replace \
-  --prompt-file my-plotly-config.md
-```
-
-### Delegate to npl-load
-
-```bash
-# Load FIM metadata for a solution
-npl-fim-config d3_js.data-visualization --load
-
-# Load with explicit entry
-npl-fim-config --load "fim.solution.mermaid"
-
-# Load with verbose output
-npl-fim-config d3_js.charts --load --verbose
-```
-
-## Local Override Structure
-
-Local overrides allow project-specific customization of FIM behavior without modifying system defaults.
-
-### File Location
-
-Overrides are stored in `./.npl/meta/fim/` with `.local.md` extension:
-
-```
-.npl/meta/fim/
-├── solution/
-│   ├── d3_js/
-│   │   └── charts.local.md
-│   └── mermaid/
-│       └── diagram.local.md
-└── use-case/
-    └── data-visualization.local.md
-```
-
-### Override Template
-
-When editing a new override, the following template is created:
-
-```markdown
-# Local Override: <item>
-
-## Additional Instructions
-
-## Corrections
-```
+Full matrix: [Tool-Task Compatibility Matrix](./npl-fim-config.detailed.md#tool-task-compatibility-matrix)
 
 ## Exit Codes
 
 | Code | Meaning |
-|------|---------|
+|:-----|:--------|
 | 0 | Success |
-| 1 | Invalid arguments or missing required content |
-| 2 | Invalid item specification |
-| 127 | npl-load not found in PATH |
+| 1 | Invalid arguments |
+| 2 | Invalid item for --load |
+| 127 | npl-load not found |
 
 ## See Also
 
-- [npl-load](./npl-load.md) - Load NPL components, metadata, and style guides
-- [NPL-FIM Agent](../agents/npl-fim.md) - FIM agent definition
+- [Detailed Reference](./npl-fim-config.detailed.md) - Complete documentation
+- [npl-load](./npl-load.md) - NPL component loader

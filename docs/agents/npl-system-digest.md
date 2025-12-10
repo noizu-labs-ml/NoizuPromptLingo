@@ -1,66 +1,66 @@
 # npl-system-digest
 
-Aggregates documentation, code, and external sources into cross-referenced system documentation with IDE-compatible navigation.
+Multi-source intelligence aggregator for cross-referenced system documentation with IDE-compatible navigation.
+
+**Detailed reference**: [npl-system-digest.detailed.md](npl-system-digest.detailed.md)
 
 ## Purpose
 
-Creates comprehensive system documentation by scanning multiple sources (docs, code, configs, APIs) and generating navigable, attributed output. Solves the problem of scattered documentation and missing cross-references in complex codebases.
+Aggregates documentation, code, and external sources into navigable, attributed output. Solves scattered documentation and missing cross-references in complex codebases.
 
 ## Capabilities
 
-- Multi-source aggregation (local files, external APIs, web resources)
-- Cross-reference analysis with file:line attribution
-- IDE-compatible navigation links (file:// with line numbers)
-- Hierarchical output modes (executive, technical, implementation)
-- Anchor tag insertion for documentation linking
-- System health and change impact assessment
+| Capability | Description | Details |
+|:-----------|:------------|:--------|
+| Aggregation | Local files, external APIs, standards | [Intelligence Gathering](npl-system-digest.detailed.md#intelligence-gathering) |
+| Cross-referencing | File:line attribution, symbol resolution | [Reference Patterns](npl-system-digest.detailed.md#reference-patterns) |
+| Navigation | IDE-compatible `file://` links | [IDE Compatibility](npl-system-digest.detailed.md#ide-compatibility) |
+| Output modes | Executive, technical, implementation | [Delivery Modes](npl-system-digest.detailed.md#delivery-modes) |
+| Anchoring | Insert/modify documentation anchors | [Anchor Management](npl-system-digest.detailed.md#anchor-management) |
 
-## Usage
+## Quick Start
 
 ```bash
 # Basic analysis
 @npl-system-digest analyze
 
-# Generate with specific output mode
-@npl-system-digest analyze --mode=comprehensive
+# Executive summary (1 page)
+@npl-system-digest analyze --mode=executive
 
-# Incremental update based on recent changes
+# Incremental update
 @npl-system-digest update --since-commit=HEAD~10
 
-# Generate IDE workspace navigation
+# IDE workspace navigation
 @npl-system-digest generate-nav --format=vscode-workspace
 ```
 
-## Template Instantiation
+See [Commands Reference](npl-system-digest.detailed.md#commands-reference) for all options.
 
-Create project-specific digest agents using `npl-templater`:
+## Configuration
 
-```bash
-@npl-templater hydrate system-digest.npl-template.md \
-  --agent_name="api-digest" \
-  --system_name="RestAPI" \
-  --source_language="python" \
-  --doc_directories="docs/" \
-  --source_directories="src/" \
-  --config_files="config.yaml"
-```
+| Option | Values | Default |
+|:-------|:-------|:--------|
+| `--mode` | executive, technical, implementation | technical |
+| `--focus` | architecture, api, security, all | all |
+| `--format` | markdown, html, json | markdown |
 
-## Workflow Integration
+See [Configuration Options](npl-system-digest.detailed.md#configuration-options) for complete list.
+
+## Integration
 
 ```bash
-# Chain with grader for documentation quality
+# Chain with grader
 @npl-system-digest analyze && @npl-grader evaluate generated-docs/
 
-# Parallel analysis with specialized agents
-@npl-system-digest analyze --focus=architecture &
-@security-agent analyze --focus=vulnerabilities &
-
-# CI/CD: regenerate on source changes
-@npl-system-digest update --incremental
+# Transform for audience
+@npl-system-digest analyze > system.md && @npl-technical-writer transform system.md --audience=onboarding
 ```
+
+See [Integration Patterns](npl-system-digest.detailed.md#integration-patterns) for CI/CD and template examples.
 
 ## See Also
 
-- `npl-templater` - Template hydration for creating custom digest agents
-- `npl-grader` - Documentation quality evaluation
-- `npl-technical-writer` - Transform digest output for specific audiences
+- [Best Practices](npl-system-digest.detailed.md#best-practices)
+- [Limitations](npl-system-digest.detailed.md#limitations)
+- [Digest Structure](npl-system-digest.detailed.md#digest-structure)
+- Template: `skeleton/agents/npl-system-digest.npl-template.md`

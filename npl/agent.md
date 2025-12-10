@@ -150,7 +150,7 @@ Modify agent behavior dynamically:
 
 **Flag Precedence** (highest to lowest):
 1. Response-level flags
-2. Agent-level flags  
+2. Agent-level flags
 3. NPL-level flags
 4. Global flags
 
@@ -161,6 +161,123 @@ Express emotional context:
 The agent is content with the successful completion of the task.
 </npl-mood>
 ```
+
+## Agent Work Logging
+
+Agents write interstitial files to `.npl/tmp/sessions/YYYY-MM-DD/tasks/<agent-id>/` based on `@work-log` flag:
+
+### Work-Log Modes
+
+| Mode | Files Generated |
+|:-----|:----------------|
+| `false` | None |
+| `standard` (default) | `<task>.summary.md`, `<task>.detailed.md` |
+| `verbose` | All: `.summary.md`, `.detailed.md`, `.yaml` |
+| `yaml\|summary` | `<task>.yaml`, `<task>.summary.md` |
+| `yaml\|detailed` | `<task>.yaml`, `<task>.detailed.md` |
+
+### File Conventions
+
+**Summary File** (`<task>.summary.md`):
+- Brief overview of findings/work
+- References to headings in detailed file (e.g., "See ## Authentication Flow")
+- Enables partial reads by other agents
+
+**Detailed File** (`<task>.detailed.md`):
+- Full content with `##` headings
+- Headings must match references in summary file
+- Agents can read specific sections via heading lookup
+
+**YAML File** (`<task>.yaml`):
+- Structured data for machine consumption
+- Only generated in `verbose` or `yaml|*` modes
+
+## Agent Session Tracking
+
+When `@track-work=true` (default), agents use session-scoped worklogs for cross-agent communication.
+
+### Session Directory Layout
+
+```
+.npl/sessions/<session-id>/
+├── meta.json           # Session metadata
+├── worklog.jsonl       # Append-only entry log (shared)
+├── .cursors/           # Per-agent read cursors
+│   ├── primary.cursor
+│   └── explore-auth-patterns-001.cursor
+└── tmp/                # Interstitial files for this session
+    └── <agent-id>/
+        ├── <task>.summary.md
+        └── <task>.detailed.md
+```
+
+**Session ID Format**: `YYYY-MM-DD` (e.g., `2025-12-10`)
+
+**Agent ID Format**: `<agent-type>-<task-slug>-<NNN>` (e.g., `explore-auth-patterns-001`, `plan-api-design-002`)
+
+### Worklog Entries
+
+All agents append to a shared `worklog.jsonl`. Each line is a JSON entry:
+
+```json
+{"seq":1,"ts":"2025-12-10T08:01:30Z","agent_id":"explore-auth-001","agent_type":"Explore","action":"file_found","summary":"Found 3 auth files","data":{"files":["auth.ts"]},"tags":["discovery"]}
+```
+
+| Field | Description |
+|:------|:------------|
+| `seq` | Auto-incremented sequence number |
+| `ts` | ISO timestamp |
+| `agent_id` | Unique agent instance identifier |
+| `agent_type` | Agent template (Explore, Plan, etc.) |
+| `action` | Action type (file_found, analysis_complete, etc.) |
+| `summary` | Human-readable summary |
+| `data` | Optional structured payload |
+| `tags` | Optional categorization tags |
+
+### Cursor-Based Reading
+
+Agents read only NEW entries since their last check using cursor files:
+
+```json
+// .cursors/explore-auth-001.cursor
+{"last_seq": 42, "last_read": "2025-12-10T08:05:00Z"}
+```
+
+Reading with `--peek` returns entries without updating the cursor.
+
+### npl-session CLI
+
+| Command | Purpose |
+|:--------|:--------|
+| `npl-session init [--task=X]` | Create new session |
+| `npl-session current` | Get current session ID |
+| `npl-session log --agent=X --action=Y --summary="..."` | Append entry |
+| `npl-session read --agent=X [--peek]` | Read new entries since cursor |
+| `npl-session status` | Show session stats |
+| `npl-session list [--all]` | List sessions |
+| `npl-session close [--archive]` | Close current session |
+
+### Example Workflow
+
+```bash
+# Session auto-created on first sub-agent spawn, or explicitly:
+npl-session init --task="Implement auth feature"
+
+# Sub-agent logs findings
+npl-session log --agent=explore-auth-001 --type=Explore \
+    --action=file_found --summary="Found auth.ts, auth.test.ts"
+
+# Parent reads new entries
+npl-session read --agent=primary
+# → [1] 2025-12-10T08:01:30Z explore-auth-001: file_found - Found auth.ts...
+
+# Monitor in real-time
+tail -F .npl/sessions/$(npl-session current)/worklog.jsonl
+```
+
+### Disabling Tracking
+
+Set `@track-work=false` to disable all session logging.
 
 ## Agent Lifecycle
 

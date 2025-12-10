@@ -1,0 +1,491 @@
+#!/usr/bin/env python3
+"""
+npl-session - Session and worklog management for cross-agent communication
+
+Sessions provide a shared worklog for parent agents and their sub-agents.
+Each agent instance (template + task) gets a unique identity within the session.
+"""
+
+import os
+import sys
+import argparse
+import json
+import re
+import fcntl
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Optional, Dict, Any, List
+from dataclasses import dataclass, asdict
+
+
+# Default session directory
+DEFAULT_SESSION_DIR = '.npl/sessions'
+CURRENT_SESSION_FILE = '.npl/current-session'
+
+
+@dataclass
+class WorklogEntry:
+    """A single worklog entry"""
+    seq: int
+    ts: str
+    agent_id: str
+    agent_type: str
+    action: str
+    summary: str
+    data: Optional[Dict[str, Any]] = None
+    tags: Optional[List[str]] = None
+    refs: Optional[Dict[str, Any]] = None
+
+    def to_json(self) -> str:
+        """Serialize to JSON line"""
+        d = {k: v for k, v in asdict(self).items() if v is not None}
+        return json.dumps(d, separators=(',', ':'))
+
+    @classmethod
+    def from_json(cls, line: str) -> 'WorklogEntry':
+        """Deserialize from JSON line"""
+        d = json.loads(line)
+        return cls(**d)
+
+
+class SessionManager:
+    """Manages NPL sessions and worklogs"""
+
+    def __init__(self, base_dir: Optional[str] = None):
+        self.base_dir = Path(base_dir or DEFAULT_SESSION_DIR)
+        self.current_file = Path(CURRENT_SESSION_FILE)
+
+    def _generate_session_id(self) -> str:
+        """Generate a session ID based on date (daily grouping)"""
+        now = datetime.now(timezone.utc)
+        return now.strftime('%Y-%m-%d')
+
+    def _get_session_path(self, session_id: str) -> Path:
+        """Get the path for a session directory"""
+        return self.base_dir / session_id
+
+    def get_current_session(self) -> Optional[str]:
+        """Get the current active session ID"""
+        if self.current_file.exists():
+            try:
+                return self.current_file.read_text().strip()
+            except Exception:
+                return None
+        return None
+
+    def set_current_session(self, session_id: str) -> None:
+        """Set the current active session"""
+        self.current_file.parent.mkdir(parents=True, exist_ok=True)
+        self.current_file.write_text(session_id)
+
+    def init_session(self, session_id: Optional[str] = None,
+                     task: Optional[str] = None) -> str:
+        """
+        Initialize a new session.
+        Returns the session ID.
+        """
+        if session_id is None:
+            session_id = self._generate_session_id()
+
+        session_path = self._get_session_path(session_id)
+
+        if session_path.exists():
+            print(f"Session already exists: {session_id}", file=sys.stderr)
+            return session_id
+
+        # Create session directory structure
+        session_path.mkdir(parents=True, exist_ok=True)
+        (session_path / '.cursors').mkdir(exist_ok=True)
+        (session_path / 'tmp').mkdir(exist_ok=True)
+
+        # Create meta.json
+        meta = {
+            'session_id': session_id,
+            'created': datetime.now(timezone.utc).isoformat(),
+            'task': task,
+            'status': 'active',
+            'agents': {},
+        }
+        (session_path / 'meta.json').write_text(
+            json.dumps(meta, indent=2)
+        )
+
+        # Create empty worklog
+        (session_path / 'worklog.jsonl').touch()
+
+        # Set as current session
+        self.set_current_session(session_id)
+
+        return session_id
+
+    def get_or_create_session(self) -> str:
+        """Get current session or create a new one"""
+        session_id = self.get_current_session()
+        if session_id and self._get_session_path(session_id).exists():
+            return session_id
+        return self.init_session()
+
+    def log_entry(self, session_id: str, agent_id: str, agent_type: str,
+                  action: str, summary: str,
+                  data: Optional[Dict] = None,
+                  tags: Optional[List[str]] = None,
+                  refs: Optional[Dict] = None) -> int:
+        """
+        Append an entry to the session worklog.
+        Returns the sequence number of the new entry.
+        """
+        session_path = self._get_session_path(session_id)
+        worklog_file = session_path / 'worklog.jsonl'
+
+        if not worklog_file.exists():
+            raise ValueError(f"Session not found: {session_id}")
+
+        # Get next sequence number and append atomically
+        with open(worklog_file, 'a+') as f:
+            fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+            try:
+                # Read to get last seq
+                f.seek(0)
+                lines = f.readlines()
+                if lines:
+                    last_entry = json.loads(lines[-1])
+                    last_seq = last_entry.get('seq', 0)
+                else:
+                    last_seq = 0
+
+                # Create entry
+                entry = WorklogEntry(
+                    seq=last_seq + 1,
+                    ts=datetime.now(timezone.utc).isoformat(),
+                    agent_id=agent_id,
+                    agent_type=agent_type,
+                    action=action,
+                    summary=summary,
+                    data=data,
+                    tags=tags,
+                    refs=refs
+                )
+
+                # Append
+                f.write(entry.to_json() + '\n')
+
+                return entry.seq
+            finally:
+                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+
+    def _get_cursor(self, session_id: str, agent_id: str) -> int:
+        """Get the last-read sequence number for an agent"""
+        cursor_file = self._get_session_path(session_id) / '.cursors' / f'{agent_id}.cursor'
+        if cursor_file.exists():
+            try:
+                data = json.loads(cursor_file.read_text())
+                return data.get('last_seq', 0)
+            except Exception:
+                return 0
+        return 0
+
+    def _set_cursor(self, session_id: str, agent_id: str, seq: int) -> None:
+        """Set the last-read sequence number for an agent"""
+        cursor_file = self._get_session_path(session_id) / '.cursors' / f'{agent_id}.cursor'
+        cursor_file.parent.mkdir(parents=True, exist_ok=True)
+        cursor_file.write_text(json.dumps({
+            'last_seq': seq,
+            'last_read': datetime.now(timezone.utc).isoformat()
+        }))
+
+    def read_entries(self, session_id: str, agent_id: str,
+                     peek: bool = False,
+                     since_seq: Optional[int] = None) -> List[WorklogEntry]:
+        """
+        Read new entries since the agent's cursor.
+        If peek=True, don't update the cursor.
+        If since_seq is provided, use that instead of the cursor.
+        """
+        session_path = self._get_session_path(session_id)
+        worklog_file = session_path / 'worklog.jsonl'
+
+        if not worklog_file.exists():
+            raise ValueError(f"Session not found: {session_id}")
+
+        # Determine starting sequence
+        if since_seq is not None:
+            start_seq = since_seq
+        else:
+            start_seq = self._get_cursor(session_id, agent_id)
+
+        entries = []
+        max_seq = start_seq
+
+        with open(worklog_file, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    entry = WorklogEntry.from_json(line)
+                    if entry.seq > start_seq:
+                        entries.append(entry)
+                        max_seq = max(max_seq, entry.seq)
+                except Exception:
+                    continue
+
+        # Update cursor unless peeking
+        if not peek and max_seq > start_seq:
+            self._set_cursor(session_id, agent_id, max_seq)
+
+        return entries
+
+    def get_status(self, session_id: str) -> Dict[str, Any]:
+        """Get session status and statistics"""
+        session_path = self._get_session_path(session_id)
+
+        if not session_path.exists():
+            raise ValueError(f"Session not found: {session_id}")
+
+        # Read meta
+        meta_file = session_path / 'meta.json'
+        meta = json.loads(meta_file.read_text()) if meta_file.exists() else {}
+
+        # Count entries and get agents
+        worklog_file = session_path / 'worklog.jsonl'
+        entry_count = 0
+        agents = set()
+        last_entry = None
+
+        if worklog_file.exists():
+            with open(worklog_file, 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if line:
+                        entry_count += 1
+                        try:
+                            entry = json.loads(line)
+                            agents.add(entry.get('agent_id', 'unknown'))
+                            last_entry = entry
+                        except Exception:
+                            pass
+
+        return {
+            'session_id': session_id,
+            'status': meta.get('status', 'unknown'),
+            'created': meta.get('created'),
+            'task': meta.get('task'),
+            'entry_count': entry_count,
+            'agents': sorted(agents),
+            'last_entry': last_entry.get('ts') if last_entry else None,
+        }
+
+    def list_sessions(self, include_archived: bool = False) -> List[Dict[str, Any]]:
+        """List all sessions"""
+        sessions = []
+
+        if not self.base_dir.exists():
+            return sessions
+
+        for session_dir in self.base_dir.iterdir():
+            if not session_dir.is_dir():
+                continue
+            if session_dir.name == 'archive' and not include_archived:
+                continue
+
+            try:
+                status = self.get_status(session_dir.name)
+                sessions.append(status)
+            except Exception:
+                continue
+
+        # Sort by creation time, newest first
+        sessions.sort(key=lambda s: s.get('created', ''), reverse=True)
+        return sessions
+
+    def close_session(self, session_id: str, archive: bool = False) -> None:
+        """Close a session, optionally archiving it"""
+        session_path = self._get_session_path(session_id)
+
+        if not session_path.exists():
+            raise ValueError(f"Session not found: {session_id}")
+
+        # Update meta
+        meta_file = session_path / 'meta.json'
+        meta = json.loads(meta_file.read_text()) if meta_file.exists() else {}
+        meta['status'] = 'closed'
+        meta['closed'] = datetime.now(timezone.utc).isoformat()
+        meta_file.write_text(json.dumps(meta, indent=2))
+
+        # Archive if requested
+        if archive:
+            archive_dir = self.base_dir / 'archive'
+            archive_dir.mkdir(exist_ok=True)
+            session_path.rename(archive_dir / session_id)
+
+        # Clear current session if it was this one
+        if self.get_current_session() == session_id:
+            self.current_file.unlink(missing_ok=True)
+
+
+def slugify(text: str, max_len: int = 30) -> str:
+    """Convert text to a URL-friendly slug"""
+    # Lowercase and replace non-alphanumeric with hyphens
+    slug = re.sub(r'[^a-z0-9]+', '-', text.lower())
+    # Remove leading/trailing hyphens
+    slug = slug.strip('-')
+    # Truncate
+    return slug[:max_len]
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description='NPL session and worklog management'
+    )
+    subparsers = parser.add_subparsers(dest='command', required=True)
+
+    # init command
+    sp_init = subparsers.add_parser('init', help='Initialize a new session')
+    sp_init.add_argument('--id', dest='session_id', help='Custom session ID')
+    sp_init.add_argument('--task', help='Task description for the session')
+
+    # current command
+    subparsers.add_parser('current', help='Get current session ID')
+
+    # log command
+    sp_log = subparsers.add_parser('log', help='Append entry to worklog')
+    sp_log.add_argument('--agent', required=True, help='Agent ID')
+    sp_log.add_argument('--type', dest='agent_type', default='unknown',
+                        help='Agent type (Explore, Plan, etc.)')
+    sp_log.add_argument('--action', required=True, help='Action type')
+    sp_log.add_argument('--summary', required=True, help='Summary of the action')
+    sp_log.add_argument('--data', help='JSON data payload')
+    sp_log.add_argument('--tags', help='Comma-separated tags')
+    sp_log.add_argument('--session', help='Session ID (default: current)')
+
+    # read command
+    sp_read = subparsers.add_parser('read', help='Read new entries since cursor')
+    sp_read.add_argument('--agent', required=True, help='Agent ID for cursor tracking')
+    sp_read.add_argument('--peek', action='store_true',
+                         help="Don't update cursor after reading")
+    sp_read.add_argument('--since', type=int, help='Read entries after this seq')
+    sp_read.add_argument('--session', help='Session ID (default: current)')
+    sp_read.add_argument('--json', action='store_true', help='Output as JSON array')
+
+    # status command
+    sp_status = subparsers.add_parser('status', help='Show session status')
+    sp_status.add_argument('--session', help='Session ID (default: current)')
+    sp_status.add_argument('--json', action='store_true', help='Output as JSON')
+
+    # list command
+    sp_list = subparsers.add_parser('list', help='List sessions')
+    sp_list.add_argument('--all', action='store_true', help='Include archived')
+    sp_list.add_argument('--json', action='store_true', help='Output as JSON')
+
+    # close command
+    sp_close = subparsers.add_parser('close', help='Close current session')
+    sp_close.add_argument('--archive', action='store_true', help='Archive the session')
+    sp_close.add_argument('--session', help='Session ID (default: current)')
+
+    args = parser.parse_args()
+    manager = SessionManager()
+
+    try:
+        if args.command == 'init':
+            session_id = manager.init_session(args.session_id, args.task)
+            print(session_id)
+
+        elif args.command == 'current':
+            session_id = manager.get_current_session()
+            if session_id:
+                print(session_id)
+            else:
+                print("No active session", file=sys.stderr)
+                sys.exit(1)
+
+        elif args.command == 'log':
+            session_id = args.session or manager.get_or_create_session()
+            data = json.loads(args.data) if args.data else None
+            tags = [t.strip() for t in args.tags.split(',')] if args.tags else None
+
+            seq = manager.log_entry(
+                session_id=session_id,
+                agent_id=args.agent,
+                agent_type=args.agent_type,
+                action=args.action,
+                summary=args.summary,
+                data=data,
+                tags=tags
+            )
+            print(f"Logged entry #{seq} to session {session_id}")
+
+        elif args.command == 'read':
+            session_id = args.session or manager.get_current_session()
+            if not session_id:
+                print("No active session", file=sys.stderr)
+                sys.exit(1)
+
+            entries = manager.read_entries(
+                session_id=session_id,
+                agent_id=args.agent,
+                peek=args.peek,
+                since_seq=args.since
+            )
+
+            if args.json:
+                print(json.dumps([asdict(e) for e in entries], indent=2))
+            else:
+                for entry in entries:
+                    print(f"[{entry.seq}] {entry.ts} {entry.agent_id}: "
+                          f"{entry.action} - {entry.summary}")
+
+        elif args.command == 'status':
+            session_id = args.session or manager.get_current_session()
+            if not session_id:
+                print("No active session", file=sys.stderr)
+                sys.exit(1)
+
+            status = manager.get_status(session_id)
+
+            if args.json:
+                print(json.dumps(status, indent=2))
+            else:
+                print(f"Session: {status['session_id']}")
+                print(f"Status: {status['status']}")
+                print(f"Created: {status['created']}")
+                if status['task']:
+                    print(f"Task: {status['task']}")
+                print(f"Entries: {status['entry_count']}")
+                print(f"Agents: {', '.join(status['agents']) or 'none'}")
+                if status['last_entry']:
+                    print(f"Last activity: {status['last_entry']}")
+
+        elif args.command == 'list':
+            sessions = manager.list_sessions(include_archived=args.all)
+
+            if args.json:
+                print(json.dumps(sessions, indent=2))
+            else:
+                current = manager.get_current_session()
+                for s in sessions:
+                    marker = '*' if s['session_id'] == current else ' '
+                    print(f"{marker} {s['session_id']} "
+                          f"[{s['status']}] "
+                          f"entries={s['entry_count']} "
+                          f"agents={len(s['agents'])}")
+
+        elif args.command == 'close':
+            session_id = args.session or manager.get_current_session()
+            if not session_id:
+                print("No active session", file=sys.stderr)
+                sys.exit(1)
+
+            manager.close_session(session_id, archive=args.archive)
+            action = 'archived' if args.archive else 'closed'
+            print(f"Session {session_id} {action}")
+
+    except ValueError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+if __name__ == '__main__':
+    main()

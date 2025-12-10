@@ -1,48 +1,66 @@
 # npl-code-reviewer
 
-Advanced code review agent evolved from gpt-cr with real git integration, dynamic rubric evaluation, and actionable recommendations.
+Advanced code review agent with real git integration, context-aware rubric evaluation, and actionable recommendations.
+
+**Detailed reference**: [npl-code-reviewer.detailed.md](npl-code-reviewer.detailed.md)
 
 ## Purpose
 
-Transforms traditional code review through automated analysis with real-time git diff parsing, context-aware rubric scoring, and specific file/line recommendations. Reduces review time by 60-80% while detecting 92% of critical issues with under 8% false positives.
+Parses git diffs, applies weighted rubrics by file type, and generates fix recommendations with file/line references. Detects 92% of critical issues with under 8% false positives.
 
 ## Capabilities
 
-- Direct git diff parsing from working directory with branch comparison
-- Dynamic rubric system adapting to file type and project phase
-- Actionable recommendations with precise file/line references and fix examples
-- Multi-level review depth: quick (2-3 min), detailed, comprehensive audit
-- Performance tracking with quantified before/after metrics
-- Test coverage impact analysis with specific test recommendations
+| Capability | Description | Details |
+|:-----------|:------------|:--------|
+| Git integration | Diff parsing, branch comparison, commit history | [Git Integration](npl-code-reviewer.detailed.md#git-integration) |
+| Dynamic rubrics | Context-aware weights by file type and phase | [Rubric System](npl-code-reviewer.detailed.md#rubric-system) |
+| Actionable output | File/line refs, fix examples, references | [Output Formats](npl-code-reviewer.detailed.md#output-formats) |
+| Review levels | Quick (2-3 min), detailed, comprehensive audit | [Review Operations](npl-code-reviewer.detailed.md#review-operations) |
+| Performance tracking | Before/after metrics, ROI calculation | [Performance Tracking](npl-code-reviewer.detailed.md#overview) |
 
-## Usage
+## Quick Start
 
 ```bash
 # Quick review of staged changes
-@npl-code-reviewer quick --files="src/api/*.py"
+@reviewer quick --files="src/api/*.py"
 
-# Analyze specific commit with detailed rubric
-@npl-code-reviewer analyze --commit="abc123" --depth="detailed"
+# Analyze specific commit
+@reviewer analyze --commit="abc123" --depth="detailed"
 
 # Pull request review with security focus
-@npl-code-reviewer pr --number=123 --focus="security,performance"
+@reviewer pr --number=123 --focus="security,performance"
+
+# Branch comparison
+@reviewer compare --from="main" --to="feature/new-api"
 ```
 
-## Workflow Integration
+See [Commands Reference](npl-code-reviewer.detailed.md#commands-reference) for all options.
+
+## Configuration
+
+| Option | Values |
+|:-------|:-------|
+| `--depth` | quick, detailed, comprehensive |
+| `--focus` | security, performance, testing, style |
+| `--fail-on` | critical, high, medium, low |
+| `--rubric` | strict, balanced, lenient |
+
+See [Configuration Options](npl-code-reviewer.detailed.md#configuration-options) for complete list.
+
+## CI/CD Integration
 
 ```bash
-# Pre-commit hook integration
-@npl-code-reviewer pre-commit --staged --fail-on="critical"
+# Pre-commit hook
+@reviewer pre-commit --staged --fail-on="critical"
 
-# Branch comparison with full audit
-@npl-code-reviewer compare --from="main" --to="feature/new-api" --rubric="full"
-
-# CI/CD pipeline with auto-commenting
-@npl-code-reviewer pr-check --auto-comment --require-approval
+# PR automation
+@reviewer pr-check --auto-comment --require-approval
 ```
+
+See [CI/CD Integration](npl-code-reviewer.detailed.md#cicd-integration) for GitHub/GitLab examples.
 
 ## See Also
 
+- [Best Practices](npl-code-reviewer.detailed.md#best-practices)
+- [Limitations](npl-code-reviewer.detailed.md#limitations)
 - Core definition: `core/additional-agents/infrastructure/npl-code-reviewer.md`
-- Custom rubric guide: `docs/rubrics/README.md`
-- CI/CD integration examples: `docs/examples/ci-cd/`

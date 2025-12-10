@@ -4,42 +4,60 @@ Template creation and hydration agent with progressive complexity tiers and proj
 
 ## Purpose
 
-Converts concrete files into reusable NPL templates and hydrates templates with project-specific values. Detects technology stacks, applies appropriate placeholders, and coordinates multi-file generation.
+Converts files into reusable NPL templates and hydrates templates with project-specific values. Detects technology stacks, applies placeholders, and coordinates multi-file generation.
 
 ## Capabilities
 
 - Create templates from existing files with dynamic placeholders
 - Hydrate templates using detected project context (framework, database, auth)
 - Four complexity tiers: zero-config, simple, smart, advanced
-- Coordinate multi-template orchestration for project scaffolding
-- Validate template syntax and test in sandbox environments
+- Multi-template orchestration for project scaffolding
+- Validate template syntax in sandbox environments
+- Community marketplace for template discovery and sharing
 
-## Usage
+## Commands
 
-```bash
-# Create template from existing file
-@templater create --from={file}
+| Command | Description |
+|:--------|:------------|
+| `quick-start` | Auto-detect project and suggest templates |
+| `create --from={file}` | Generate template from file |
+| `apply {template} --smart-fill` | Hydrate template with detected values |
+| `analyze {path}` | Examine files for templatization |
+| `validate {template}` | Check syntax and test rendering |
+| `orchestrate {suite}` | Coordinate multi-template generation |
+| `gallery` | Browse template marketplace |
+| `publish {template}` | Share to community |
 
-# Quick start with auto-detection
-@templater quick-start
-
-# Hydrate template for current project
-@templater apply {template} --smart-fill
-
-# Batch generate configs
-@templater orchestrate {suite} --coordinate
-```
+See [Commands Reference](./npl-templater.detailed.md#commands-reference) for full options.
 
 ## Template Tiers
 
 | Tier | Syntax | Use Case |
-|------|--------|----------|
-| 0 | `{auto-detect}` | Zero-config, full auto |
+|:-----|:-------|:---------|
+| 0 | `{auto-detect}` | Zero-config, full automation |
 | 1 | `{name}`, `{date\|today}` | Simple placeholders |
 | 2 | `{{#if}}`, `{{#each}}` | Conditional logic |
-| 3 | `⌜🧱⌝`, `⟪📊:⟫` | Full NPL directives |
+| 3 | `🧱`, NPL directives | Full NPL templates |
 
-## Workflow Integration
+See [Template Tiers](./npl-templater.detailed.md#template-tiers) for syntax details.
+
+## Usage
+
+```bash
+# Quick start with auto-detection
+@templater quick-start
+
+# Create template from existing file
+@templater create --from=config.yml --tier=2
+
+# Hydrate template for current project
+@templater apply react-app.npl --smart-fill
+
+# Batch generate configs
+@templater orchestrate frontend:react backend:django infra:docker
+```
+
+## Integration
 
 ```bash
 # Create then validate
@@ -49,11 +67,26 @@ Converts concrete files into reusable NPL templates and hydrates templates with 
 @thinker "Review my template structure" && @templater "Refactor based on analysis"
 
 # Parallel generation
-@templater orchestrate frontend:react backend:django infra:docker
+@templater orchestrate frontend:react backend:django infra:docker --parallel
 ```
+
+## Configuration
+
+| Flag | Values | Default |
+|:-----|:-------|:--------|
+| `--tier` | 0-3 | auto-detect |
+| `--mode` | visual, cli, api | cli |
+| `--marketplace` | official, community, private | official |
+
+See [Configuration](./npl-templater.detailed.md#configuration) for all options.
 
 ## See Also
 
-- Core definition: `core/agents/npl-templater.md`
-- Template syntax: `npl/fences/template.md`
-- Named templates: `npl/special-sections/named-template.md`
+- **Detailed reference**: [npl-templater.detailed.md](./npl-templater.detailed.md)
+  - [Template Syntax](./npl-templater.detailed.md#template-syntax) - Placeholders, control structures, directives
+  - [Intelligence Layer](./npl-templater.detailed.md#intelligence-layer) - Pattern recognition and smart fill
+  - [Best Practices](./npl-templater.detailed.md#best-practices) - Design and usage guidelines
+  - [Limitations](./npl-templater.detailed.md#limitations) - Scope and resource constraints
+- **Agent definition**: `core/agents/npl-templater.md`
+- **Template syntax**: `npl/fences/template.md`
+- **Handlebars reference**: `npl/instructing/handlebars.md`

@@ -1,52 +1,82 @@
 # npl-project-coordinator
 
-Cross-agent dependency management and orchestration specialist that coordinates multi-agent workflows, manages handoffs, tracks dependencies, and ensures efficient project execution.
+Cross-agent dependency management and orchestration specialist for multi-agent workflows.
 
 ## Purpose
 
-Serves as the central orchestration hub for multi-agent workflows, managing dependencies, sequencing operations, facilitating handoffs, and ensuring optimal coordination between specialized NPL agents. Addresses critical orchestration needs in complex AI/ML project management scenarios.
+Central orchestration hub for NPL agent ecosystems. Manages dependencies, sequences operations, facilitates handoffs, and tracks progress across complex workflows.
 
 ## Capabilities
 
 - Determine optimal execution order for multi-agent tasks
-- Ensure clean transitions and validation between agent operations
-- Map and resolve inter-agent dependencies systematically
-- Coordinate simultaneous agent operations for maximum efficiency
-- Track progress across multiple agent workstreams
-- Detect and resolve workflow impediments proactively
-- Generate consolidated status updates across all agents
+- Map and resolve inter-agent dependencies
+- Manage clean transitions between agent operations
+- Coordinate simultaneous agent operations
+- Track progress across multiple workstreams
+- Detect and resolve workflow impediments
+- Generate consolidated status updates
+
+See [Detailed Reference: Capabilities](./npl-project-coordinator.detailed.md#capabilities) for dependency types, handoff validation, and parallel execution strategies.
 
 ## Usage
 
 ```bash
 # Orchestrate multi-agent workflow
-@npl-project-coordinator "Plan and execute feature development with validation, prototyping, and testing"
+@npl-project-coordinator "Plan and execute: validation -> prototyping -> testing"
 
-# Monitor ongoing project
-@npl-project-coordinator "Generate status report for API redesign project involving 5 agents"
+# Generate status report
+@npl-project-coordinator "Generate status report for API redesign project"
 
-# Handle agent handoff
-@npl-project-coordinator "Manage handoff from prototyper to code-reviewer with artifacts"
+# Manage agent handoff
+@npl-project-coordinator "Manage handoff from npl-prototyper to npl-code-reviewer"
 
 # Resolve workflow conflict
 @npl-project-coordinator "Resolve conflicting documentation recommendations"
 ```
 
-## Workflow Integration
+See [Detailed Reference: Usage Examples](./npl-project-coordinator.detailed.md#usage-examples) for complete invocation patterns.
+
+## Integration
 
 ```bash
-# Core agent integration
-@npl-project-coordinator "Orchestrate validation-prototyping-testing pipeline" && @npl-validator "Validate requirements" && @npl-tester "Execute tests"
+# Sequential pipeline
+@npl-project-coordinator "Orchestrate pipeline" && \
+  @npl-validator "Validate" && @npl-tester "Test"
 
-# Documentation workflow
-@npl-project-coordinator "Manage parallel documentation workflow" && @npl-technical-writer "Generate docs" & @npl-grader "Evaluate all documentation"
+# Parallel with aggregation
+@npl-project-coordinator "Coordinate analysis" && \
+  @npl-risk-monitor "Assess" & @npl-technical-reality-checker "Check" & wait
 
 # Risk-aware coordination
-@npl-project-coordinator "Execute high-risk feature with monitoring" && @npl-risk-monitor "Assess risks" && @npl-technical-reality-checker "Verify feasibility"
+@npl-project-coordinator "Execute with monitoring" && \
+  @npl-risk-monitor "Assess risks"
 ```
+
+See [Detailed Reference: Integration Patterns](./npl-project-coordinator.detailed.md#integration-patterns) for sequential, parallel, and hybrid strategies.
+
+## Coordination Strategies
+
+| Strategy | Use Case |
+|:---------|:---------|
+| Sequential | Strict dependency ordering |
+| Parallel | Independent tasks, time optimization |
+| Hybrid | Sequential phases with parallel sub-tasks |
+| Adaptive | Runtime condition adjustments |
+
+See [Detailed Reference: Coordination Strategies](./npl-project-coordinator.detailed.md#coordination-strategies) for strategy selection guidance.
+
+## Success Metrics
+
+| Metric | Target |
+|:-------|:-------|
+| Workflow completion | >95% |
+| Handoff success | >98% |
+| Parallel efficiency | >80% |
+| Blocker detection | <5 min |
 
 ## See Also
 
-- Core definition: `core/additional-agents/project-management/npl-project-coordinator.md`
-- Workflow patterns: Sequential, parallel, and hybrid coordination strategies
-- Success metrics: >95% workflow completion, >98% handoff success, >80% parallel efficiency
+- [Detailed Reference](./npl-project-coordinator.detailed.md) - Complete specification
+- [Best Practices](./npl-project-coordinator.detailed.md#best-practices) - Design and execution guidance
+- [Limitations](./npl-project-coordinator.detailed.md#limitations) - Known constraints
+- [Project Management README](./README.md) - Category overview
