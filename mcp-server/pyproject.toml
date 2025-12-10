@@ -1,7 +1,7 @@
 [project]
 name = "npl-mcp"
-version = "0.1.0"
-description = "NPL MCP Server with artifact management and persona chat system"
+version = "0.2.0"
+description = "NPL MCP Server with artifact management, persona chat system, and web interface"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -9,6 +9,9 @@ dependencies = [
     "pyyaml>=6.0",
     "pillow>=10.0",
     "aiosqlite>=0.19.0",
+    "fastapi>=0.104.0",
+    "uvicorn>=0.24.0",
+    "httpx>=0.25.0",
 ]
 
 [project.optional-dependencies]
@@ -26,3 +29,6 @@ packages = ["src/npl_mcp"]
 
 [project.scripts]
 npl-mcp = "npl_mcp.server:main"
+npl-mcp-web = "npl_mcp.combined:main"
+npl-mcp-unified = "npl_mcp.unified:main"
+npl-mcp-launcher = "npl_mcp.launcher:main"

@@ -22,7 +22,8 @@ class ChatManager:
         self,
         name: str,
         members: List[str],
-        description: Optional[str] = None
+        description: Optional[str] = None,
+        session_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """Create a new chat room.
 
@@ -30,9 +31,10 @@ class ChatManager:
             name: Unique name for the room
             members: List of persona slugs
             description: Optional room description
+            session_id: Optional session to associate with
 
         Returns:
-            Dict with room_id and metadata
+            Dict with room_id, session_id, and metadata
 
         Raises:
             ValueError: If room name already exists
@@ -47,8 +49,8 @@ class ChatManager:
 
         # Create room
         cursor = await self.db.execute(
-            "INSERT INTO chat_rooms (name, description) VALUES (?, ?)",
-            (name, description)
+            "INSERT INTO chat_rooms (name, description, session_id) VALUES (?, ?, ?)",
+            (name, description, session_id)
         )
         room_id = cursor.lastrowid
 
@@ -69,6 +71,7 @@ class ChatManager:
 
         return {
             "room_id": room_id,
+            "session_id": session_id,
             "name": name,
             "description": description,
             "members": members

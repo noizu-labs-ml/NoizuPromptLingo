@@ -2,8 +2,11 @@
 
 import aiosqlite
 import os
+import sys
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
+
+from .migrations import run_migrations
 
 
 class Database:
@@ -44,13 +47,19 @@ class Database:
             self._connection = None
 
     async def _initialize_schema(self):
-        """Initialize database schema from SQL file."""
+        """Initialize database schema from SQL file and run migrations."""
         schema_path = Path(__file__).parent / "schema.sql"
         with open(schema_path, 'r') as f:
             schema_sql = f.read()
 
+        # Run base schema (uses IF NOT EXISTS, safe for existing DBs)
         await self._connection.executescript(schema_sql)
         await self._connection.commit()
+
+        # Run migrations for schema changes
+        applied = await run_migrations(self._connection)
+        if applied:
+            print(f"Applied {len(applied)} migration(s): {', '.join(applied)}", file=sys.stderr)
 
     @property
     def connection(self) -> aiosqlite.Connection:

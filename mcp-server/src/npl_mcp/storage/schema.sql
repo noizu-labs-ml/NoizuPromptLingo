@@ -1,4 +1,5 @@
 -- NPL MCP Database Schema
+-- Base schema - migrations handle additions to existing databases
 
 -- Artifacts: Main artifact registry
 CREATE TABLE IF NOT EXISTS artifacts (

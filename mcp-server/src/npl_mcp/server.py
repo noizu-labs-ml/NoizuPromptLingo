@@ -1,6 +1,7 @@
 """Main MCP server implementation."""
 
 import base64
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional, List
@@ -10,6 +11,7 @@ from .storage import Database
 from .artifacts.manager import ArtifactManager
 from .artifacts.reviews import ReviewManager
 from .chat import ChatManager
+from .sessions import SessionManager
 from . import scripts
 
 
@@ -18,12 +20,16 @@ _db: Optional[Database] = None
 _artifact_manager: Optional[ArtifactManager] = None
 _review_manager: Optional[ReviewManager] = None
 _chat_manager: Optional[ChatManager] = None
+_session_manager: Optional[SessionManager] = None
+
+# Web server port (set via environment)
+WEB_PORT = int(os.environ.get("NPL_MCP_WEB_PORT", "8765"))
 
 
 @asynccontextmanager
 async def lifespan(server: FastMCP):
     """Initialize and cleanup resources."""
-    global _db, _artifact_manager, _review_manager, _chat_manager
+    global _db, _artifact_manager, _review_manager, _chat_manager, _session_manager
 
     # Initialize database
     _db = Database()
@@ -33,12 +39,14 @@ async def lifespan(server: FastMCP):
     _artifact_manager = ArtifactManager(_db)
     _review_manager = ReviewManager(_db)
     _chat_manager = ChatManager(_db)
+    _session_manager = SessionManager(_db)
 
     yield {
         "db": _db,
         "artifact_manager": _artifact_manager,
         "review_manager": _review_manager,
-        "chat_manager": _chat_manager
+        "chat_manager": _chat_manager,
+        "session_manager": _session_manager
     }
 
     # Cleanup
@@ -349,10 +357,91 @@ async def complete_review(
 # ============================================================================
 
 @mcp.tool()
+async def create_session(
+    title: Optional[str] = None,
+    session_id: Optional[str] = None
+) -> dict:
+    """Create a new session to group chat rooms and artifacts.
+
+    Sessions provide a way to organize related activities. The returned
+    session_id can be shared with users so they can view the session
+    in the web interface at http://localhost:{WEB_PORT}/session/{session_id}
+
+    Args:
+        title: Optional human-readable title for the session
+        session_id: Optional custom session ID (auto-generated if not provided)
+
+    Returns:
+        Dict with session_id, title, created_at, and web_url
+    """
+    result = await _session_manager.create_session(title=title, session_id=session_id)
+    result["web_url"] = f"http://localhost:{WEB_PORT}/session/{result['session_id']}"
+    return result
+
+
+@mcp.tool()
+async def get_session(session_id: str) -> dict:
+    """Get session details and contents.
+
+    Args:
+        session_id: Session ID
+
+    Returns:
+        Dict with session info, chat_rooms, and artifacts
+    """
+    result = await _session_manager.get_session_contents(session_id)
+    result["web_url"] = f"http://localhost:{WEB_PORT}/session/{session_id}"
+    return result
+
+
+@mcp.tool()
+async def list_sessions(
+    status: Optional[str] = None,
+    limit: int = 20
+) -> list:
+    """List recent sessions.
+
+    Args:
+        status: Optional status filter ('active', 'archived')
+        limit: Maximum number of sessions to return (default: 20)
+
+    Returns:
+        List of session dicts with summary info
+    """
+    sessions = await _session_manager.list_sessions(status=status, limit=limit)
+    for s in sessions:
+        s["web_url"] = f"http://localhost:{WEB_PORT}/session/{s['id']}"
+    return sessions
+
+
+@mcp.tool()
+async def update_session(
+    session_id: str,
+    title: Optional[str] = None,
+    status: Optional[str] = None
+) -> dict:
+    """Update session metadata.
+
+    Args:
+        session_id: Session ID
+        title: New title (if provided)
+        status: New status ('active' or 'archived')
+
+    Returns:
+        Updated session dict
+    """
+    result = await _session_manager.update_session(session_id, title=title, status=status)
+    result["web_url"] = f"http://localhost:{WEB_PORT}/session/{session_id}"
+    return result
+
+
+@mcp.tool()
 async def create_chat_room(
     name: str,
     members: List[str],
-    description: Optional[str] = None
+    description: Optional[str] = None,
+    session_id: Optional[str] = None,
+    session_title: Optional[str] = None
 ) -> dict:
     """Create a new chat room.
 
@@ -360,11 +449,33 @@ async def create_chat_room(
         name: Unique name for the room
         members: List of persona slugs
         description: Optional room description
+        session_id: Optional session ID to associate with (creates new session if not found)
+        session_title: Optional title for new session (only used if creating new session)
 
     Returns:
-        Dict with room_id and metadata
+        Dict with room_id, session_id, web_url, and metadata
     """
-    return await _chat_manager.create_chat_room(name, members, description)
+    # Handle session creation/lookup
+    actual_session_id = None
+    if session_id or session_title:
+        session = await _session_manager.get_or_create_session(
+            session_id=session_id,
+            title=session_title
+        )
+        actual_session_id = session["session_id"]
+
+    result = await _chat_manager.create_chat_room(
+        name, members, description, session_id=actual_session_id
+    )
+
+    # Update session timestamp if we have one
+    if actual_session_id:
+        await _session_manager.touch_session(actual_session_id)
+        result["web_url"] = f"http://localhost:{WEB_PORT}/session/{actual_session_id}/room/{result['room_id']}"
+    else:
+        result["web_url"] = f"http://localhost:{WEB_PORT}/room/{result['room_id']}"
+
+    return result
 
 
 @mcp.tool()

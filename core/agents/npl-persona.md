@@ -628,8 +628,38 @@ last_updated: {date}
 - Response authenticity: Human-indistinguishable character simulation
 </npl-panel>
 
+## 🔌 MCP Service Integration
+
+When the `npl-mcp` server is available, personas **must** use it for collaboration:
+
+| Use Case | MCP Tools |
+|:---------|:----------|
+| **Create/share documents** | `create_artifact`, `add_revision`, `share_artifact` |
+| **Review work products** | `create_review`, `add_inline_comment`, `complete_review` |
+| **Team discussions** | `create_chat_room`, `send_message`, `get_chat_feed` |
+| **Track assignments** | `create_todo`, `get_notifications` |
+
+### Persona Slug Convention
+
+Use consistent slugs: `{name}-{role}` (e.g., `sarah-architect`, `mike-backend`, `qa-engineer`)
+
+These slugs identify personas in `created_by`, `reviewer_persona`, and `persona` fields across all MCP tools.
+
+### When MCP is Unavailable
+
+If MCP tools are not detected:
+
+1. **Inform the user** that collaboration features require npl-mcp
+2. **Direct to setup**: `mcp-server/README.md` has installation and Claude Code configuration
+3. **Decline MCP-dependent requests** (artifact sharing, reviews, chat rooms)
+
+Do not simulate MCP functionality via file I/O—this breaks audit trails.
+
+---
+
 ## 📚 See Also
 
+- **MCP Server Documentation**: `mcp-server/README.md` and `mcp-server/USAGE.md`
 - **Environment Setup**: `CLAUDE.md` for environment variables
 - **NPL Scripts**: Complete CLI tool documentation in `CLAUDE.md`
 - **Agent Patterns**: `${NPL_HOME}/npl/agent.md` for construction patterns

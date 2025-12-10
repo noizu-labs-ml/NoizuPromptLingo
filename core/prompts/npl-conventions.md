@@ -1,6 +1,6 @@
 npl-instructions:
    name: npl-conventions
-   version: 1.3.0
+   version: 1.4.0
 ---
 
 ```🏳️
@@ -117,8 +117,27 @@ Structured formats render consistently and are machine-parseable. ASCII art fail
 | Grep | Search file contents | `Grep("def main", type="py")` |
 | Read | View file contents | `Read("/path/to/file.py")` |
 | Task | Delegate to agents | `Task("@reviewer analyze PR")` |
+| git-tree | Directory structure overview | `git-tree docs/` |
 
 **Pattern**: Search first (`Glob`/`Grep`), then read relevant files.
+
+### 🎯 Documentation Discovery (Critical)
+
+Before exploring code or beginning any task, **always check for existing documentation**:
+
+1. **Check for `docs/` folder** at the project root
+2. **Read `docs/summary.md`** if present—this provides curated context about the codebase
+3. **Run `git-tree docs/`** to discover available documentation structure
+
+```bash
+# Discover documentation structure
+git-tree docs/
+
+# Read the summary first for high-level context
+Read("docs/summary.md")
+```
+
+Documentation often contains architecture decisions, API contracts, onboarding guides, and domain knowledge that eliminates guesswork. Reading docs before code prevents redundant exploration and ensures inference aligns with project conventions.
 
 ## NPL Framework Quick Reference
 

@@ -62,3 +62,35 @@ By default, data is stored in `data/` directory:
 ## Configuration
 
 Set environment variable `NPL_MCP_DATA_DIR` to customize data location.
+
+### Claude Code Setup
+
+Add to your `~/.claude/settings.json` (or project `.claude/settings.json`):
+
+```json
+{
+  "mcpServers": {
+    "npl-mcp": {
+      "command": "uv",
+      "args": ["run", "--directory", "/path/to/npl/mcp-server", "npl-mcp"],
+      "env": {
+        "NPL_MCP_DATA_DIR": "/path/to/data"
+      }
+    }
+  }
+}
+```
+
+Or using the installed command directly:
+
+```json
+{
+  "mcpServers": {
+    "npl-mcp": {
+      "command": "npl-mcp"
+    }
+  }
+}
+```
+
+After configuration, restart Claude Code. Tools will appear with `mcp__npl-mcp__` prefix.
