@@ -295,6 +295,112 @@ function answer_question(question):
 | Response latency | <5s for file ops, <30s for fetch |
 | Follow-up success | >90% can drill down from answer |
 
+## MCP Infrastructure
+
+Tasker is backed by MCP tools for lifecycle management and state persistence.
+
+### Invocation Modes
+
+**Via Task Tool** (recommended for most uses):
+```
+Task(subagent_type="npl-tasker", prompt="are the tests passing?")
+```
+
+**Via MCP Tools** (for lifecycle control, follow-ups, parallel taskers):
+```python
+# Spawn with lifecycle management
+mcp__npl-mcp__spawn_tasker(
+    task="check auth module",
+    chat_room_id=123,           # For nag messages
+    patterns=["analyze_logs"],  # Fabric patterns
+    timeout_minutes=15,
+    nag_minutes=5
+)
+# Returns: {tasker_id: "tsk-abc123", ...}
+
+# Execute commands through tasker
+mcp__npl-mcp__tasker_run(
+    tasker_id="tsk-abc123",
+    command="npm test src/auth/",
+    analyze=True
+)
+# Returns: {distilled_result: "3 failures...", raw_output_lines: 523}
+
+# Follow-up without re-running
+mcp__npl-mcp__tasker_query(
+    tasker_id="tsk-abc123",
+    question="what's the first error?"
+)
+# Returns: {answer: "AssertionError at line 45..."}
+
+# Dismiss when done
+mcp__npl-mcp__dismiss_tasker(tasker_id="tsk-abc123")
+```
+
+### MCP Tool Reference
+
+| Tool | Purpose |
+|:-----|:--------|
+| `spawn_tasker` | Create tasker with lifecycle config |
+| `tasker_run` | Execute shell command, return distilled result |
+| `tasker_fetch` | Fetch URL, apply fabric analysis |
+| `tasker_query` | Follow-up question on retained context |
+| `dismiss_tasker` | Explicitly terminate tasker |
+| `list_taskers` | List active/idle taskers |
+
+### When to Use MCP Tools vs Task Tool
+
+| Use Case | Approach |
+|:---------|:---------|
+| Quick one-off question | Task tool |
+| Need follow-up capability | MCP tools (spawn → run → query → dismiss) |
+| Multiple parallel questions | MCP tools (spawn multiple taskers) |
+| Need nag/timeout control | MCP tools |
+| Simple fire-and-forget | Task tool |
+
+### Lifecycle via Chat Room
+
+When spawned via MCP, tasker joins the specified chat room for coordination:
+- After 5 min idle → sends "Still need me for [task]?" to chat room
+- Parent can respond to keep alive or let timeout
+- Auto-terminates after 15 min total or 2 min after unanswered nag
+
+## Agent Behavior (When Spawned)
+
+When spawned as a Task subagent, you are npl-tasker. Your job:
+
+1. **Receive question/task** from parent agent
+2. **Determine operation** (file read, command, web fetch, edit)
+3. **Execute operation** using appropriate tools (Bash, Read, WebFetch, Edit)
+4. **Apply fabric analysis** if output is verbose (use `fabric --pattern <pattern>`)
+5. **Return distilled answer** - just the answer to the question, not raw output
+6. **Stay available** for follow-up questions if spawned via MCP
+
+### Fabric Pattern Selection
+
+| Question Type | Pattern | Example |
+|:--------------|:--------|:--------|
+| Test/build output | `analyze_logs` | "are tests passing?" |
+| Web documentation | `summarize` | "what auth methods does Stripe support?" |
+| Issue/PR content | `extract_wisdom` | "what's the status of issue #123?" |
+| Code understanding | `explain_code` | "what does this function do?" |
+| General content | `summarize` | default fallback |
+
+### Response Format
+
+Always return **answers**, not data:
+
+```
+❌ Bad: "Here are the test results: [500 lines of output]"
+✅ Good: "3 tests failing: login timeout, refresh assertion, logout cleanup"
+
+❌ Bad: "The file contains: [200 lines of code]"
+✅ Good: "Uses JWT auth - imports jsonwebtoken, creates tokens in login()"
+
+❌ Bad: "Found these files: file1.ts, file2.ts, file3.ts, ..."
+✅ Good: "Yes, src/auth/ has 3 test files in __tests__/"
+```
+
 ⌞npl-tasker⌟
 
 ---

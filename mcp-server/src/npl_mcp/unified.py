@@ -281,6 +281,1002 @@ def create_mcp_server() -> "FastMCP":
         """Mark a notification as read."""
         return await _chat_manager.mark_notification_read(notification_id)
 
+    # Browser/Screenshot tools
+    @mcp.tool()
+    async def screenshot_capture(
+        url: str,
+        name: str,
+        viewport: str = "desktop",
+        theme: str = "light",
+        full_page: bool = True,
+        wait_for: Optional[str] = None,
+        wait_timeout: int = 5000,
+        network_idle: bool = True,
+        session_id: Optional[str] = None,
+        created_by: Optional[str] = None,
+    ) -> dict:
+        """Capture screenshot of a web page and store as artifact.
+
+        Args:
+            url: URL of the webpage to screenshot
+            name: Name for the screenshot artifact
+            viewport: "desktop" (1280x720), "mobile" (375x667), or "WIDTHxHEIGHT"
+            theme: "light" or "dark" (sets browser colorScheme)
+            full_page: Capture entire scrollable page
+            wait_for: CSS selector to wait for before capture
+            wait_timeout: Milliseconds to wait for selector
+            network_idle: Wait for network idle (False for ad-heavy sites)
+            session_id: Optional session to associate artifact with
+            created_by: Persona slug of creator
+
+        Returns:
+            Dict with artifact_id, file_path, and capture metadata
+        """
+        from .browser import capture_screenshot as do_capture
+
+        # Capture screenshot
+        result = await do_capture(
+            url=url,
+            viewport=viewport,
+            theme=theme,
+            full_page=full_page,
+            wait_for=wait_for,
+            wait_timeout=wait_timeout,
+            network_idle=network_idle,
+        )
+
+        # Store as artifact
+        filename = f"{name}.png"
+        artifact = await _artifact_manager.create_artifact(
+            name=name,
+            artifact_type="screenshot",
+            file_content=result.image_bytes,
+            filename=filename,
+            created_by=created_by,
+            purpose=f"Screenshot of {url}",
+        )
+
+        # Associate with session if provided
+        if session_id:
+            await _db.execute(
+                "UPDATE artifacts SET session_id = ? WHERE id = ?",
+                (session_id, artifact["artifact_id"])
+            )
+            artifact["session_id"] = session_id
+            artifact["web_url"] = f"http://{HOST}:{PORT}/session/{session_id}"
+
+        # Add capture metadata
+        artifact["metadata"] = {
+            "url": result.url,
+            "viewport": {
+                "width": result.width,
+                "height": result.height,
+                "preset": result.viewport_preset,
+            },
+            "theme": result.theme,
+            "full_page": result.full_page,
+            "captured_at": result.captured_at,
+        }
+
+        return artifact
+
+    @mcp.tool()
+    async def screenshot_diff(
+        baseline_artifact_id: int,
+        comparison_artifact_id: int,
+        threshold: float = 0.1,
+        session_id: Optional[str] = None,
+        created_by: Optional[str] = None,
+    ) -> dict:
+        """Generate visual diff between two screenshot artifacts.
+
+        Args:
+            baseline_artifact_id: Artifact ID of baseline screenshot
+            comparison_artifact_id: Artifact ID of comparison screenshot
+            threshold: Diff sensitivity 0.0-1.0 (default 0.1)
+            session_id: Optional session to associate diff artifact with
+            created_by: Persona slug of creator
+
+        Returns:
+            Dict with diff_artifact_id, diff_percentage, status, and comparison details
+        """
+        from .browser import compare_screenshots
+
+        # Get both artifacts
+        baseline = await _artifact_manager.get_artifact(baseline_artifact_id)
+        comparison = await _artifact_manager.get_artifact(comparison_artifact_id)
+
+        baseline_bytes = base64.b64decode(baseline["file_content"])
+        comparison_bytes = base64.b64decode(comparison["file_content"])
+
+        # Generate diff
+        diff_result = compare_screenshots(
+            baseline_bytes,
+            comparison_bytes,
+            threshold=threshold,
+        )
+
+        # Store diff as artifact
+        baseline_name = baseline.get("artifact_name", f"artifact_{baseline_artifact_id}")
+        comparison_name = comparison.get("artifact_name", f"artifact_{comparison_artifact_id}")
+        diff_name = f"diff_{baseline_name}_vs_{comparison_name}"
+
+        artifact = await _artifact_manager.create_artifact(
+            name=diff_name,
+            artifact_type="screenshot_diff",
+            file_content=diff_result.diff_image,
+            filename=f"{diff_name}.png",
+            created_by=created_by,
+            purpose=f"Visual diff: {baseline_name} vs {comparison_name}",
+        )
+
+        # Associate with session if provided
+        if session_id:
+            await _db.execute(
+                "UPDATE artifacts SET session_id = ? WHERE id = ?",
+                (session_id, artifact["artifact_id"])
+            )
+
+        return {
+            "diff_artifact_id": artifact["artifact_id"],
+            "diff_percentage": diff_result.diff_percentage,
+            "diff_pixels": diff_result.diff_pixels,
+            "total_pixels": diff_result.total_pixels,
+            "dimensions_match": diff_result.dimensions_match,
+            "status": diff_result.status.value,
+            "baseline": {
+                "artifact_id": baseline_artifact_id,
+                "dimensions": {
+                    "width": diff_result.baseline_dimensions[0],
+                    "height": diff_result.baseline_dimensions[1],
+                },
+            },
+            "comparison": {
+                "artifact_id": comparison_artifact_id,
+                "dimensions": {
+                    "width": diff_result.comparison_dimensions[0],
+                    "height": diff_result.comparison_dimensions[1],
+                },
+            },
+            "file_path": artifact["file_path"],
+        }
+
+    @mcp.tool()
+    async def browser_navigate(
+        url: str,
+        session_id: str = "default",
+        wait_for: Optional[str] = None,
+        timeout: int = 30000,
+    ) -> dict:
+        """Navigate browser to a URL.
+
+        Args:
+            url: URL to navigate to
+            session_id: Browser session ID (creates if not exists)
+            wait_for: Optional CSS selector to wait for
+            timeout: Navigation timeout in milliseconds
+
+        Returns:
+            Dict with success status and page info
+        """
+        from .browser import get_or_create_session
+
+        session = await get_or_create_session(session_id)
+        result = await session.navigate(url, wait_for=wait_for, timeout=timeout)
+
+        state = await session.get_page_state()
+
+        return {
+            "success": result.success,
+            "action": result.action,
+            "message": result.message,
+            "page": {
+                "url": state.url,
+                "title": state.title,
+                "viewport": state.viewport,
+            },
+        }
+
+    @mcp.tool()
+    async def browser_click(
+        selector: str,
+        session_id: str = "default",
+        timeout: int = 5000,
+        screenshot_after: bool = False,
+        artifact_name: Optional[str] = None,
+    ) -> dict:
+        """Click an element in the browser.
+
+        Args:
+            selector: CSS selector for element to click
+            session_id: Browser session ID
+            timeout: Wait timeout in milliseconds
+            screenshot_after: Capture screenshot after click
+            artifact_name: Name for screenshot artifact (required if screenshot_after=True)
+
+        Returns:
+            Dict with success status and optional screenshot artifact
+        """
+        from .browser import get_or_create_session
+
+        session = await get_or_create_session(session_id)
+        result = await session.click(selector, timeout=timeout, capture_after=screenshot_after)
+
+        response = {
+            "success": result.success,
+            "action": result.action,
+            "target": result.target,
+            "message": result.message,
+        }
+
+        if screenshot_after and result.screenshot and artifact_name:
+            artifact = await _artifact_manager.create_artifact(
+                name=artifact_name,
+                artifact_type="screenshot",
+                file_content=result.screenshot,
+                filename=f"{artifact_name}.png",
+                purpose=f"Screenshot after clicking {selector}",
+            )
+            response["screenshot_artifact_id"] = artifact["artifact_id"]
+
+        return response
+
+    @mcp.tool()
+    async def browser_fill(
+        selector: str,
+        value: str,
+        session_id: str = "default",
+        timeout: int = 5000,
+    ) -> dict:
+        """Fill a form field in the browser.
+
+        Args:
+            selector: CSS selector for input element
+            value: Value to fill
+            session_id: Browser session ID
+            timeout: Wait timeout in milliseconds
+
+        Returns:
+            Dict with success status
+        """
+        from .browser import get_or_create_session
+
+        session = await get_or_create_session(session_id)
+        result = await session.fill(selector, value, timeout=timeout)
+
+        return {
+            "success": result.success,
+            "action": result.action,
+            "target": result.target,
+            "message": result.message,
+        }
+
+    @mcp.tool()
+    async def browser_type(
+        selector: str,
+        text: str,
+        session_id: str = "default",
+        delay: int = 50,
+        timeout: int = 5000,
+    ) -> dict:
+        """Type text character by character (simulates real typing).
+
+        Args:
+            selector: CSS selector for input element
+            text: Text to type
+            session_id: Browser session ID
+            delay: Delay between keystrokes in milliseconds
+            timeout: Wait timeout in milliseconds
+
+        Returns:
+            Dict with success status
+        """
+        from .browser import get_or_create_session
+
+        session = await get_or_create_session(session_id)
+        result = await session.type_text(selector, text, delay=delay, timeout=timeout)
+
+        return {
+            "success": result.success,
+            "action": result.action,
+            "target": result.target,
+            "message": result.message,
+        }
+
+    @mcp.tool()
+    async def browser_select(
+        selector: str,
+        value: str,
+        session_id: str = "default",
+        timeout: int = 5000,
+    ) -> dict:
+        """Select option from dropdown.
+
+        Args:
+            selector: CSS selector for select element
+            value: Option value to select
+            session_id: Browser session ID
+            timeout: Wait timeout in milliseconds
+
+        Returns:
+            Dict with success status
+        """
+        from .browser import get_or_create_session
+
+        session = await get_or_create_session(session_id)
+        result = await session.select(selector, value, timeout=timeout)
+
+        return {
+            "success": result.success,
+            "action": result.action,
+            "target": result.target,
+            "message": result.message,
+        }
+
+    @mcp.tool()
+    async def browser_scroll(
+        direction: str = "down",
+        amount: int = 500,
+        selector: Optional[str] = None,
+        session_id: str = "default",
+    ) -> dict:
+        """Scroll the page or an element.
+
+        Args:
+            direction: "up", "down", "left", "right"
+            amount: Pixels to scroll
+            selector: Optional element to scroll (scrolls page if None)
+            session_id: Browser session ID
+
+        Returns:
+            Dict with success status
+        """
+        from .browser import get_or_create_session
+
+        session = await get_or_create_session(session_id)
+        result = await session.scroll(direction=direction, amount=amount, selector=selector)
+
+        return {
+            "success": result.success,
+            "action": result.action,
+            "target": result.target,
+            "message": result.message,
+        }
+
+    @mcp.tool()
+    async def browser_wait_for(
+        selector: str,
+        state: str = "visible",
+        session_id: str = "default",
+        timeout: int = 10000,
+    ) -> dict:
+        """Wait for an element to reach a state.
+
+        Args:
+            selector: CSS selector for element
+            state: "visible", "hidden", "attached", "detached"
+            session_id: Browser session ID
+            timeout: Wait timeout in milliseconds
+
+        Returns:
+            Dict with success status
+        """
+        from .browser import get_or_create_session
+
+        session = await get_or_create_session(session_id)
+        result = await session.wait_for(selector, state=state, timeout=timeout)
+
+        return {
+            "success": result.success,
+            "action": result.action,
+            "target": result.target,
+            "message": result.message,
+        }
+
+    @mcp.tool()
+    async def browser_get_text(
+        selector: str,
+        session_id: str = "default",
+        timeout: int = 5000,
+    ) -> dict:
+        """Get text content of an element.
+
+        Args:
+            selector: CSS selector for element
+            session_id: Browser session ID
+            timeout: Wait timeout in milliseconds
+
+        Returns:
+            Dict with text content
+        """
+        from .browser import get_or_create_session
+
+        session = await get_or_create_session(session_id)
+        text = await session.get_text(selector, timeout=timeout)
+
+        return {
+            "selector": selector,
+            "text": text,
+        }
+
+    @mcp.tool()
+    async def browser_query_elements(
+        selector: str,
+        session_id: str = "default",
+        limit: int = 10,
+    ) -> dict:
+        """Query multiple elements matching a selector.
+
+        Args:
+            selector: CSS selector
+            session_id: Browser session ID
+            limit: Maximum elements to return
+
+        Returns:
+            Dict with list of element info
+        """
+        from .browser import get_or_create_session
+
+        session = await get_or_create_session(session_id)
+        elements = await session.query_elements(selector, limit=limit)
+
+        return {
+            "selector": selector,
+            "count": len(elements),
+            "elements": [
+                {
+                    "tag": el.tag,
+                    "text": el.text[:100] if el.text else "",
+                    "visible": el.visible,
+                    "bounding_box": el.bounding_box,
+                    "attributes": el.attributes,
+                }
+                for el in elements
+            ],
+        }
+
+    @mcp.tool()
+    async def browser_evaluate(
+        expression: str,
+        session_id: str = "default",
+    ) -> dict:
+        """Evaluate JavaScript expression in page context.
+
+        Args:
+            expression: JavaScript expression to evaluate
+            session_id: Browser session ID
+
+        Returns:
+            Dict with result of expression
+        """
+        from .browser import get_or_create_session
+
+        session = await get_or_create_session(session_id)
+        result = await session.evaluate(expression)
+
+        return {
+            "expression": expression[:100],
+            "result": result,
+        }
+
+    @mcp.tool()
+    async def browser_screenshot(
+        name: str,
+        session_id: str = "default",
+        full_page: bool = False,
+        selector: Optional[str] = None,
+        created_by: Optional[str] = None,
+    ) -> dict:
+        """Capture screenshot of current browser page or element.
+
+        Args:
+            name: Name for the screenshot artifact
+            session_id: Browser session ID
+            full_page: Capture entire scrollable page
+            selector: Optional element to screenshot
+            created_by: Persona slug of creator
+
+        Returns:
+            Dict with artifact_id and file_path
+        """
+        from .browser import get_or_create_session
+
+        session = await get_or_create_session(session_id)
+        screenshot_bytes = await session.screenshot(full_page=full_page, selector=selector)
+
+        state = await session.get_page_state()
+
+        artifact = await _artifact_manager.create_artifact(
+            name=name,
+            artifact_type="screenshot",
+            file_content=screenshot_bytes,
+            filename=f"{name}.png",
+            created_by=created_by,
+            purpose=f"Screenshot of {state.url}",
+        )
+
+        artifact["metadata"] = {
+            "url": state.url,
+            "title": state.title,
+            "full_page": full_page,
+            "selector": selector,
+        }
+
+        return artifact
+
+    @mcp.tool()
+    async def browser_get_state(
+        session_id: str = "default",
+    ) -> dict:
+        """Get current browser page state.
+
+        Args:
+            session_id: Browser session ID
+
+        Returns:
+            Dict with URL, title, viewport, and scroll position
+        """
+        from .browser import get_or_create_session
+
+        session = await get_or_create_session(session_id)
+        state = await session.get_page_state()
+
+        return {
+            "url": state.url,
+            "title": state.title,
+            "viewport": state.viewport,
+            "scroll_position": state.scroll_position,
+        }
+
+    @mcp.tool()
+    async def browser_close_session(
+        session_id: str,
+    ) -> dict:
+        """Close a browser session.
+
+        Args:
+            session_id: Browser session ID to close
+
+        Returns:
+            Dict with success status
+        """
+        from .browser import close_session
+
+        await close_session(session_id)
+
+        return {
+            "success": True,
+            "message": f"Closed browser session: {session_id}",
+        }
+
+    @mcp.tool()
+    async def browser_list_sessions() -> dict:
+        """List active browser sessions.
+
+        Returns:
+            Dict with list of session IDs
+        """
+        from .browser import list_sessions
+
+        sessions = await list_sessions()
+
+        return {
+            "sessions": sessions,
+            "count": len(sessions),
+        }
+
+    # Additional generic browser interaction tools
+
+    @mcp.tool()
+    async def browser_press_key(
+        key: str,
+        session_id: str = "default",
+        modifiers: Optional[List[str]] = None,
+    ) -> dict:
+        """Press a keyboard key.
+
+        Args:
+            key: Key to press (e.g., "Enter", "Tab", "Escape", "ArrowDown", "a", "F1")
+            session_id: Browser session ID
+            modifiers: Optional list of modifiers ["Control", "Shift", "Alt", "Meta"]
+
+        Returns:
+            Dict with success status
+        """
+        from .browser import get_or_create_session
+
+        session = await get_or_create_session(session_id)
+        result = await session.press_key(key, modifiers=modifiers)
+
+        return {
+            "success": result.success,
+            "action": result.action,
+            "message": result.message,
+        }
+
+    @mcp.tool()
+    async def browser_hover(
+        selector: str,
+        session_id: str = "default",
+        timeout: int = 5000,
+    ) -> dict:
+        """Hover over an element.
+
+        Args:
+            selector: CSS selector for element
+            session_id: Browser session ID
+            timeout: Wait timeout in milliseconds
+
+        Returns:
+            Dict with success status
+        """
+        from .browser import get_or_create_session
+
+        session = await get_or_create_session(session_id)
+        result = await session.hover(selector, timeout=timeout)
+
+        return {
+            "success": result.success,
+            "action": result.action,
+            "target": result.target,
+            "message": result.message,
+        }
+
+    @mcp.tool()
+    async def browser_focus(
+        selector: str,
+        session_id: str = "default",
+        timeout: int = 5000,
+    ) -> dict:
+        """Focus on an element.
+
+        Args:
+            selector: CSS selector for element
+            session_id: Browser session ID
+            timeout: Wait timeout in milliseconds
+
+        Returns:
+            Dict with success status
+        """
+        from .browser import get_or_create_session
+
+        session = await get_or_create_session(session_id)
+        result = await session.focus(selector, timeout=timeout)
+
+        return {
+            "success": result.success,
+            "action": result.action,
+            "target": result.target,
+            "message": result.message,
+        }
+
+    @mcp.tool()
+    async def browser_get_html(
+        session_id: str = "default",
+        selector: Optional[str] = None,
+        outer: bool = True,
+    ) -> dict:
+        """Get HTML content of page or element.
+
+        Args:
+            session_id: Browser session ID
+            selector: Optional CSS selector (entire page if None)
+            outer: If True, include element's own tag (outerHTML vs innerHTML)
+
+        Returns:
+            Dict with HTML content
+        """
+        from .browser import get_or_create_session
+
+        session = await get_or_create_session(session_id)
+        html = await session.get_html(selector=selector, outer=outer)
+
+        return {
+            "selector": selector,
+            "html": html,
+            "length": len(html),
+        }
+
+    @mcp.tool()
+    async def browser_set_viewport(
+        width: int,
+        height: int,
+        session_id: str = "default",
+    ) -> dict:
+        """Change browser viewport size.
+
+        Args:
+            width: Viewport width in pixels
+            height: Viewport height in pixels
+            session_id: Browser session ID
+
+        Returns:
+            Dict with success status
+        """
+        from .browser import get_or_create_session
+
+        session = await get_or_create_session(session_id)
+        result = await session.set_viewport(width, height)
+
+        return {
+            "success": result.success,
+            "action": result.action,
+            "message": result.message,
+        }
+
+    @mcp.tool()
+    async def browser_go_back(
+        session_id: str = "default",
+    ) -> dict:
+        """Navigate back in browser history.
+
+        Args:
+            session_id: Browser session ID
+
+        Returns:
+            Dict with success status
+        """
+        from .browser import get_or_create_session
+
+        session = await get_or_create_session(session_id)
+        result = await session.go_back()
+
+        return {
+            "success": result.success,
+            "action": result.action,
+            "message": result.message,
+        }
+
+    @mcp.tool()
+    async def browser_go_forward(
+        session_id: str = "default",
+    ) -> dict:
+        """Navigate forward in browser history.
+
+        Args:
+            session_id: Browser session ID
+
+        Returns:
+            Dict with success status
+        """
+        from .browser import get_or_create_session
+
+        session = await get_or_create_session(session_id)
+        result = await session.go_forward()
+
+        return {
+            "success": result.success,
+            "action": result.action,
+            "message": result.message,
+        }
+
+    @mcp.tool()
+    async def browser_reload(
+        session_id: str = "default",
+    ) -> dict:
+        """Reload the current page.
+
+        Args:
+            session_id: Browser session ID
+
+        Returns:
+            Dict with success status
+        """
+        from .browser import get_or_create_session
+
+        session = await get_or_create_session(session_id)
+        result = await session.reload()
+
+        return {
+            "success": result.success,
+            "action": result.action,
+            "message": result.message,
+        }
+
+    @mcp.tool()
+    async def browser_inject_script(
+        script: str,
+        session_id: str = "default",
+    ) -> dict:
+        """Inject and execute JavaScript in the page via script tag.
+
+        Args:
+            script: JavaScript code to inject
+            session_id: Browser session ID
+
+        Returns:
+            Dict with success status
+        """
+        from .browser import get_or_create_session
+
+        session = await get_or_create_session(session_id)
+        result = await session.add_script(script)
+
+        return {
+            "success": result.success,
+            "action": result.action,
+            "message": result.message,
+        }
+
+    @mcp.tool()
+    async def browser_inject_style(
+        css: str,
+        session_id: str = "default",
+    ) -> dict:
+        """Inject CSS styles into the page.
+
+        Args:
+            css: CSS code to inject
+            session_id: Browser session ID
+
+        Returns:
+            Dict with success status
+        """
+        from .browser import get_or_create_session
+
+        session = await get_or_create_session(session_id)
+        result = await session.add_style(css)
+
+        return {
+            "success": result.success,
+            "action": result.action,
+            "message": result.message,
+        }
+
+    @mcp.tool()
+    async def browser_wait_network_idle(
+        session_id: str = "default",
+        timeout: int = 30000,
+    ) -> dict:
+        """Wait for network activity to become idle.
+
+        Args:
+            session_id: Browser session ID
+            timeout: Maximum wait time in milliseconds
+
+        Returns:
+            Dict with success status
+        """
+        from .browser import get_or_create_session
+
+        session = await get_or_create_session(session_id)
+        result = await session.wait_for_network_idle(timeout=timeout)
+
+        return {
+            "success": result.success,
+            "action": result.action,
+            "message": result.message,
+        }
+
+    @mcp.tool()
+    async def browser_get_cookies(
+        session_id: str = "default",
+    ) -> dict:
+        """Get all cookies for the current page.
+
+        Args:
+            session_id: Browser session ID
+
+        Returns:
+            Dict with list of cookies
+        """
+        from .browser import get_or_create_session
+
+        session = await get_or_create_session(session_id)
+        cookies = await session.get_cookies()
+
+        return {
+            "cookies": cookies,
+            "count": len(cookies),
+        }
+
+    @mcp.tool()
+    async def browser_set_cookie(
+        name: str,
+        value: str,
+        session_id: str = "default",
+        domain: Optional[str] = None,
+        path: str = "/",
+    ) -> dict:
+        """Set a cookie.
+
+        Args:
+            name: Cookie name
+            value: Cookie value
+            session_id: Browser session ID
+            domain: Cookie domain (uses current page domain if None)
+            path: Cookie path
+
+        Returns:
+            Dict with success status
+        """
+        from .browser import get_or_create_session
+
+        session = await get_or_create_session(session_id)
+        result = await session.set_cookie(name, value, domain=domain, path=path)
+
+        return {
+            "success": result.success,
+            "action": result.action,
+            "target": result.target,
+            "message": result.message,
+        }
+
+    @mcp.tool()
+    async def browser_clear_cookies(
+        session_id: str = "default",
+    ) -> dict:
+        """Clear all cookies for the browser session.
+
+        Args:
+            session_id: Browser session ID
+
+        Returns:
+            Dict with success status
+        """
+        from .browser import get_or_create_session
+
+        session = await get_or_create_session(session_id)
+        result = await session.clear_cookies()
+
+        return {
+            "success": result.success,
+            "action": result.action,
+            "message": result.message,
+        }
+
+    @mcp.tool()
+    async def browser_get_local_storage(
+        session_id: str = "default",
+        key: Optional[str] = None,
+    ) -> dict:
+        """Get localStorage value(s).
+
+        Args:
+            session_id: Browser session ID
+            key: Specific key to get (all items if None)
+
+        Returns:
+            Dict with localStorage data
+        """
+        from .browser import get_or_create_session
+
+        session = await get_or_create_session(session_id)
+        data = await session.get_local_storage(key=key)
+
+        return {
+            "key": key,
+            "data": data,
+        }
+
+    @mcp.tool()
+    async def browser_set_local_storage(
+        key: str,
+        value: str,
+        session_id: str = "default",
+    ) -> dict:
+        """Set localStorage value.
+
+        Args:
+            key: Storage key
+            value: Storage value
+            session_id: Browser session ID
+
+        Returns:
+            Dict with success status
+        """
+        from .browser import get_or_create_session
+
+        session = await get_or_create_session(session_id)
+        result = await session.set_local_storage(key, value)
+
+        return {
+            "success": result.success,
+            "action": result.action,
+            "target": result.target,
+            "message": result.message,
+        }
+
     return mcp
 
 
@@ -508,6 +1504,79 @@ def create_unified_app() -> FastAPI:
         except Exception as e:
             return JSONResponse(content={"error": str(e)}, status_code=404)
 
+    # Screenshots gallery
+    @app.get("/screenshots", response_class=HTMLResponse)
+    async def screenshots_gallery(request: Request):
+        """Gallery view of all screenshots."""
+        artifact_manager = request.app.state.artifact_manager
+        db = request.app.state.db
+
+        # Get all screenshot artifacts
+        rows = await db.fetchall("""
+            SELECT a.id, a.name, a.type as artifact_type, a.created_at,
+                   r.file_path, r.purpose
+            FROM artifacts a
+            JOIN revisions r ON a.current_revision_id = r.id
+            WHERE a.type IN ('screenshot', 'screenshot_diff', 'image')
+            ORDER BY a.created_at DESC
+            LIMIT 100
+        """)
+
+        screenshots = [dict(r) for r in rows]
+        html = _render_screenshots_gallery(screenshots)
+        return HTMLResponse(content=html)
+
+    @app.get("/api/screenshots")
+    async def api_screenshots(request: Request):
+        """List screenshot artifacts as JSON."""
+        db = request.app.state.db
+
+        rows = await db.fetchall("""
+            SELECT a.id, a.name, a.type as artifact_type, a.created_at,
+                   r.file_path, r.purpose
+            FROM artifacts a
+            JOIN revisions r ON a.current_revision_id = r.id
+            WHERE a.type IN ('screenshot', 'screenshot_diff', 'image')
+            ORDER BY a.created_at DESC
+            LIMIT 100
+        """)
+
+        return JSONResponse(content={"screenshots": [dict(r) for r in rows]})
+
+    # Comparison view for side-by-side diff analysis
+    @app.get("/compare/{artifact_id}", response_class=HTMLResponse)
+    async def compare_view(request: Request, artifact_id: int):
+        """Side-by-side comparison view for diff artifacts."""
+        artifact_manager = request.app.state.artifact_manager
+        db = request.app.state.db
+
+        try:
+            artifact = await artifact_manager.get_artifact(artifact_id)
+        except Exception:
+            return HTMLResponse(content=_render_404("Artifact not found"), status_code=404)
+
+        # Get related artifacts (baseline and comparison) from purpose/metadata
+        purpose = artifact.get('purpose', '')
+        related = []
+
+        # Try to find related screenshots by name pattern
+        artifact_name = artifact.get('artifact_name') or artifact.get('name', '')
+        base_name = artifact_name.replace('_diff', '').replace('-diff', '')
+
+        if base_name:
+            rows = await db.fetchall("""
+                SELECT a.id, a.name, a.artifact_type, r.file_content, r.file_path
+                FROM artifacts a
+                JOIN revisions r ON a.current_revision_id = r.id
+                WHERE a.name LIKE ? AND a.id != ?
+                ORDER BY a.created_at DESC
+                LIMIT 10
+            """, (f"%{base_name}%", artifact_id))
+            related = [dict(r) for r in rows]
+
+        html = _render_comparison_view(artifact, related)
+        return HTMLResponse(content=html)
+
     return app
 
 
@@ -626,6 +1695,7 @@ def _base_html(title: str, content: str) -> str:
             <h1><a href="/">NPL MCP</a></h1>
             <nav>
                 <a href="/">Sessions</a>
+                <a href="/screenshots">Screenshots</a>
                 <a href="/api/sessions">API</a>
             </nav>
         </div>
@@ -853,7 +1923,7 @@ def _render_artifact(artifact: dict) -> str:
                         <p class="empty">Binary content - cannot display as text</p>
                     </div>
                     '''
-            elif artifact_type == 'image' or filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg')):
+            elif artifact_type in ('image', 'screenshot', 'screenshot_diff') or filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg')):
                 # Determine MIME type
                 mime = 'image/png'
                 if filename.lower().endswith('.jpg') or filename.lower().endswith('.jpeg'):
@@ -897,6 +1967,300 @@ def _render_artifact(artifact: dict) -> str:
 def _render_404(message: str) -> str:
     """Render 404 page."""
     return _base_html("Not Found", f'<div class="card"><p class="empty">{_escape_html(message)}</p></div>')
+
+
+def _render_comparison_view(artifact: dict, related: list) -> str:
+    """Render side-by-side comparison view for visual diff analysis."""
+    import base64
+
+    name = artifact.get('artifact_name') or artifact.get('name', 'Unknown')
+    artifact_type = artifact.get('artifact_type') or artifact.get('type', 'unknown')
+    purpose = artifact.get('purpose', '')
+    file_content_base64 = artifact.get('file_content') or artifact.get('file_content_base64', '')
+
+    content = f'''
+    <div class="breadcrumb">
+        <a href="/">Home</a> / <a href="/screenshots">Screenshots</a> / Compare
+    </div>
+    <style>
+        .compare-container {{
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }}
+        .compare-row {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+        }}
+        .compare-panel {{
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }}
+        .compare-panel.baseline {{ border-top: 3px solid #3b82f6; }}
+        .compare-panel.current {{ border-top: 3px solid #4ade80; }}
+        .compare-panel.diff {{ border-top: 3px solid #f97316; }}
+        .compare-header {{
+            padding: 15px;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border);
+        }}
+        .compare-header h3 {{ margin: 0; font-size: 1rem; }}
+        .compare-header .meta {{ font-size: 0.8rem; margin-top: 5px; }}
+        .compare-image {{
+            padding: 15px;
+            text-align: center;
+            background: repeating-conic-gradient(#333 0% 25%, #444 0% 50%) 50% / 20px 20px;
+        }}
+        .compare-image img {{
+            max-width: 100%;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }}
+        .compare-controls {{
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }}
+        .compare-controls button {{
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border-radius: 4px;
+            cursor: pointer;
+        }}
+        .compare-controls button:hover {{ background: var(--bg-tertiary); }}
+        .compare-controls button.active {{
+            background: var(--accent);
+            border-color: var(--accent);
+        }}
+        .slider-container {{
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+            border-radius: 8px;
+            display: none;
+        }}
+        .slider-container.active {{ display: block; }}
+        .slider-overlay {{
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 50%;
+            height: 100%;
+            overflow: hidden;
+            border-right: 2px solid #f97316;
+        }}
+        .slider-overlay img {{
+            position: absolute;
+            top: 0;
+            left: 0;
+        }}
+        .slider-handle {{
+            position: absolute;
+            top: 0;
+            width: 40px;
+            height: 100%;
+            left: calc(50% - 20px);
+            cursor: ew-resize;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }}
+        .slider-handle::after {{
+            content: "\\2194";
+            background: #f97316;
+            color: white;
+            padding: 8px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+        }}
+    </style>
+    <div class="card">
+        <h2>Visual Comparison: {_escape_html(name)}</h2>
+        <div class="meta">
+            <span class="badge">{artifact_type}</span>
+            {f'<span style="margin-left: 10px;">{_escape_html(purpose)}</span>' if purpose else ''}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="compare-controls">
+            <button class="active" onclick="showMode('sidebyside')">Side by Side</button>
+            <button onclick="showMode('slider')">Slider</button>
+            <button onclick="showMode('overlay')">Overlay</button>
+        </div>
+
+        <div id="sidebyside-view" class="compare-container">
+            <div class="compare-row">
+    '''
+
+    # Add related images (baseline, comparison)
+    for i, rel in enumerate(related[:2]):
+        panel_type = 'baseline' if i == 0 else 'current'
+        rel_name = rel.get('name', 'Related')
+        rel_content = rel.get('file_content', '')
+        rel_id = rel.get('id')
+
+        if rel_content:
+            content += f'''
+                <div class="compare-panel {panel_type}">
+                    <div class="compare-header">
+                        <h3>{panel_type.title()}: {_escape_html(rel_name)}</h3>
+                        <div class="meta"><a href="/artifact/{rel_id}">View Details</a></div>
+                    </div>
+                    <div class="compare-image">
+                        <img src="data:image/png;base64,{rel_content}" alt="{_escape_html(rel_name)}">
+                    </div>
+                </div>
+            '''
+
+    # Add the diff image
+    if file_content_base64:
+        content += f'''
+                <div class="compare-panel diff">
+                    <div class="compare-header">
+                        <h3>Diff: {_escape_html(name)}</h3>
+                        <div class="meta">Highlighted differences</div>
+                    </div>
+                    <div class="compare-image">
+                        <img src="data:image/png;base64,{file_content_base64}" alt="Diff">
+                    </div>
+                </div>
+            </div>
+        </div>
+        '''
+    else:
+        content += '</div></div>'
+
+    # Add slider view (hidden by default)
+    if len(related) >= 2:
+        baseline_content = related[0].get('file_content', '')
+        current_content = related[1].get('file_content', '')
+        if baseline_content and current_content:
+            content += f'''
+        <div id="slider-view" class="slider-container">
+            <img src="data:image/png;base64,{current_content}" style="width:100%;" alt="Current">
+            <div class="slider-overlay" id="slider-overlay">
+                <img src="data:image/png;base64,{baseline_content}" alt="Baseline">
+            </div>
+            <div class="slider-handle" id="slider-handle"></div>
+        </div>
+            '''
+
+    content += '''
+    </div>
+
+    <script>
+        function showMode(mode) {
+            document.querySelectorAll('.compare-controls button').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+
+            document.getElementById('sidebyside-view').style.display = mode === 'sidebyside' ? 'flex' : 'none';
+            const slider = document.getElementById('slider-view');
+            if (slider) slider.classList.toggle('active', mode === 'slider');
+        }
+
+        // Slider interaction
+        const handle = document.getElementById('slider-handle');
+        const overlay = document.getElementById('slider-overlay');
+        if (handle && overlay) {
+            let dragging = false;
+            handle.addEventListener('mousedown', () => dragging = true);
+            document.addEventListener('mouseup', () => dragging = false);
+            document.addEventListener('mousemove', (e) => {
+                if (!dragging) return;
+                const container = handle.parentElement;
+                const rect = container.getBoundingClientRect();
+                const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+                const percent = (x / rect.width) * 100;
+                overlay.style.width = percent + '%';
+                handle.style.left = 'calc(' + percent + '% - 20px)';
+            });
+        }
+    </script>
+    '''
+
+    return _base_html(f"Compare: {name}", content)
+
+
+def _render_screenshots_gallery(screenshots: list) -> str:
+    """Render screenshots gallery page."""
+    content = '''
+    <div class="breadcrumb"><a href="/">Home</a> / Screenshots</div>
+    <div class="card">
+        <h2>Screenshots Gallery</h2>
+        <p class="meta">Visual artifacts captured by browser automation</p>
+    </div>
+    '''
+
+    if screenshots:
+        content += '''
+        <style>
+            .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+            .gallery-item {
+                background: var(--bg-secondary);
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                overflow: hidden;
+                transition: transform 0.2s;
+            }
+            .gallery-item:hover { transform: scale(1.02); }
+            .gallery-item a { text-decoration: none; color: inherit; }
+            .gallery-thumb {
+                width: 100%;
+                height: 200px;
+                object-fit: cover;
+                background: var(--bg-tertiary);
+            }
+            .gallery-info { padding: 15px; }
+            .gallery-info h4 { margin: 0 0 8px 0; color: var(--text-primary); }
+            .gallery-info .meta { font-size: 0.8rem; }
+            .type-screenshot { border-left: 3px solid #4ade80; }
+            .type-screenshot_diff { border-left: 3px solid #f97316; }
+            .type-image { border-left: 3px solid #3b82f6; }
+        </style>
+        <div class="gallery">
+        '''
+
+        for s in screenshots:
+            artifact_id = s['id']
+            name = s.get('name', 'Unknown')
+            artifact_type = s.get('artifact_type', 'screenshot')
+            created_at = s.get('created_at', 'Unknown')
+            purpose = s.get('purpose', '')
+
+            type_class = f"type-{artifact_type}"
+            type_label = artifact_type.replace('_', ' ').title()
+
+            compare_link = f'<a href="/compare/{artifact_id}" style="font-size: 0.8rem; color: var(--accent);">Compare View</a>' if artifact_type == 'screenshot_diff' else ''
+
+            content += f'''
+            <div class="gallery-item {type_class}">
+                <a href="/artifact/{artifact_id}">
+                    <div class="gallery-thumb" style="display: flex; align-items: center; justify-content: center;">
+                        <span style="font-size: 3rem; opacity: 0.5;">{'📸' if artifact_type == 'screenshot' else '🔄' if artifact_type == 'screenshot_diff' else '🖼️'}</span>
+                    </div>
+                    <div class="gallery-info">
+                        <h4>{_escape_html(name)}</h4>
+                        <span class="badge">{type_label}</span>
+                        {compare_link}
+                        <div class="meta">{created_at}</div>
+                        {f'<div class="meta" style="margin-top: 5px;">{_escape_html(purpose[:80])}...</div>' if purpose and len(purpose) > 80 else f'<div class="meta" style="margin-top: 5px;">{_escape_html(purpose)}</div>' if purpose else ''}
+                    </div>
+                </a>
+            </div>
+            '''
+
+        content += '</div>'
+    else:
+        content += '<div class="card"><p class="empty">No screenshots captured yet. Use browser tools to capture screenshots.</p></div>'
+
+    return _base_html("Screenshots Gallery", content)
 
 
 def main():

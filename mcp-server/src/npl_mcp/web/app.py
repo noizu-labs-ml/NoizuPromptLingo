@@ -9,13 +9,18 @@ from pathlib import Path
 from typing import Optional
 
 from fastapi import FastAPI, Request, Form, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from ..storage.db import Database
 from ..sessions.manager import SessionManager
 from ..chat.rooms import ChatManager
 from ..artifacts.manager import ArtifactManager
+from ..browser.checkpoint import (
+    list_checkpoints,
+    get_checkpoint,
+    get_screenshots_dir,
+)
 
 
 # Templates directory
@@ -244,6 +249,68 @@ class WebServer:
             except ValueError as e:
                 raise HTTPException(status_code=400, detail=str(e))
 
+        # ============================================================================
+        # Screenshot / Visual Regression Routes
+        # ============================================================================
+
+        @app.get("/screenshots", response_class=HTMLResponse)
+        async def screenshots_index():
+            """List all checkpoints."""
+            try:
+                checkpoints = await list_checkpoints()
+                return self._render_checkpoints_list(checkpoints)
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=str(e))
+
+        @app.get("/screenshots/checkpoint/{slug}", response_class=HTMLResponse)
+        async def checkpoint_detail(slug: str):
+            """View checkpoint details and screenshots."""
+            try:
+                checkpoint = await get_checkpoint(slug)
+                if not checkpoint:
+                    raise HTTPException(status_code=404, detail=f"Checkpoint '{slug}' not found")
+                return self._render_checkpoint_detail(checkpoint)
+            except ValueError as e:
+                raise HTTPException(status_code=404, detail=str(e))
+
+        @app.get("/screenshots/compare/{comparison_id}", response_class=HTMLResponse)
+        async def comparison_report(comparison_id: str):
+            """Serve comparison HTML report."""
+            # comparison.html is always at .npl/screenshots/comparison.html
+            screenshots_dir = get_screenshots_dir()
+            report_path = screenshots_dir / "comparison.html"
+            if not report_path.exists():
+                raise HTTPException(status_code=404, detail="Comparison report not found")
+            return FileResponse(report_path, media_type="text/html")
+
+        @app.get("/screenshots/files/{path:path}")
+        async def serve_screenshot_file(path: str):
+            """Serve screenshot files (images, etc.)."""
+            screenshots_dir = get_screenshots_dir()
+            file_path = screenshots_dir / path
+            if not file_path.exists() or not file_path.is_file():
+                raise HTTPException(status_code=404, detail="File not found")
+            # Security: ensure path is within screenshots_dir
+            try:
+                file_path.resolve().relative_to(screenshots_dir.resolve())
+            except ValueError:
+                raise HTTPException(status_code=403, detail="Access denied")
+            return FileResponse(file_path)
+
+        # API endpoints for screenshots
+        @app.get("/api/screenshots/checkpoints")
+        async def api_list_checkpoints():
+            """API: List all checkpoints."""
+            return await list_checkpoints()
+
+        @app.get("/api/screenshots/checkpoint/{slug}")
+        async def api_get_checkpoint(slug: str):
+            """API: Get checkpoint details."""
+            checkpoint = await get_checkpoint(slug)
+            if not checkpoint:
+                raise HTTPException(status_code=404, detail=f"Checkpoint '{slug}' not found")
+            return checkpoint.to_dict()
+
     def _render_index(self, sessions: list) -> str:
         """Render landing page."""
         sessions_html = ""
@@ -271,6 +338,10 @@ class WebServer:
             content=f"""
             <h1>NPL MCP Sessions</h1>
             <p class="subtitle">Chat rooms, artifacts, and collaborative sessions</p>
+
+            <nav class="main-nav">
+                <a href="/screenshots" class="nav-link">📸 Visual Regression</a>
+            </nav>
 
             <table>
                 <thead>
@@ -494,6 +565,162 @@ class WebServer:
             .replace("'", "&#39;")
             .replace("\n", "<br>"))
 
+    def _render_checkpoints_list(self, checkpoints: list) -> str:
+        """Render checkpoints list page."""
+        checkpoints_html = ""
+        if checkpoints:
+            for cp in checkpoints:
+                commit = cp.get("git_commit", "")[:8] if cp.get("git_commit") else "N/A"
+                branch = cp.get("git_branch") or "N/A"
+                timestamp = cp.get("timestamp", "")[:16].replace("T", " ")
+                checkpoints_html += f"""
+                <tr>
+                    <td><a href="/screenshots/checkpoint/{cp['slug']}">{cp['slug']}</a></td>
+                    <td>{cp['name']}</td>
+                    <td>{branch}</td>
+                    <td><code>{commit}</code></td>
+                    <td>{cp.get('total_screenshots', 0)}</td>
+                    <td>{timestamp}</td>
+                </tr>
+                """
+        else:
+            checkpoints_html = '<tr><td colspan="6" class="empty">No checkpoints yet</td></tr>'
+
+        return self._base_html(
+            title="Visual Regression Checkpoints",
+            content=f"""
+            <nav class="breadcrumb">
+                <a href="/">Home</a> / <span>Screenshots</span>
+            </nav>
+
+            <h1>Visual Regression Checkpoints</h1>
+            <p class="subtitle">Captured screenshots for visual comparison testing</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Slug</th>
+                        <th>Name</th>
+                        <th>Branch</th>
+                        <th>Commit</th>
+                        <th>Screenshots</th>
+                        <th>Captured</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {checkpoints_html}
+                </tbody>
+            </table>
+            """
+        )
+
+    def _render_checkpoint_detail(self, checkpoint) -> str:
+        """Render checkpoint detail page."""
+        # Build screenshot grid
+        screenshots_html = ""
+        for page_name, viewports in checkpoint.screenshots.items():
+            screenshots_html += f'<h3>{page_name}</h3><div class="screenshot-grid">'
+            for viewport, themes in viewports.items():
+                for theme, info in themes.items():
+                    if info.path:
+                        img_url = f"/screenshots/files/{info.path}"
+                        screenshots_html += f"""
+                        <div class="screenshot-card">
+                            <div class="screenshot-img">
+                                <img src="{img_url}" alt="{page_name} - {viewport} - {theme}" loading="lazy">
+                            </div>
+                            <div class="screenshot-meta">
+                                <span class="viewport">{viewport}</span>
+                                <span class="theme">{theme}</span>
+                            </div>
+                        </div>
+                        """
+                    else:
+                        screenshots_html += f"""
+                        <div class="screenshot-card error">
+                            <div class="screenshot-placeholder">Capture failed</div>
+                            <div class="screenshot-meta">
+                                <span class="viewport">{viewport}</span>
+                                <span class="theme">{theme}</span>
+                            </div>
+                        </div>
+                        """
+            screenshots_html += '</div>'
+
+        commit = checkpoint.git_commit[:8] if checkpoint.git_commit else "N/A"
+        branch = checkpoint.git_branch or "N/A"
+        timestamp = checkpoint.timestamp[:16].replace("T", " ")
+
+        return self._base_html(
+            title=f"Checkpoint: {checkpoint.name}",
+            content=f"""
+            <nav class="breadcrumb">
+                <a href="/">Home</a> / <a href="/screenshots">Screenshots</a> / <span>{checkpoint.slug}</span>
+            </nav>
+
+            <h1>{checkpoint.name}</h1>
+            <p class="meta">
+                Branch: <strong>{branch}</strong> ·
+                Commit: <code>{commit}</code> ·
+                Captured: {timestamp} ·
+                {checkpoint.total_screenshots} screenshots
+            </p>
+            <p class="subtitle">{checkpoint.description or 'No description'}</p>
+
+            <section>
+                <h2>Screenshots</h2>
+                {screenshots_html}
+            </section>
+
+            <style>
+                .screenshot-grid {{
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                    gap: 1rem;
+                    margin-bottom: 2rem;
+                }}
+                .screenshot-card {{
+                    background: var(--bg-light);
+                    border-radius: 8px;
+                    overflow: hidden;
+                    border: 1px solid var(--border);
+                }}
+                .screenshot-card.error {{
+                    opacity: 0.6;
+                }}
+                .screenshot-img {{
+                    aspect-ratio: 16/10;
+                    background: #000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }}
+                .screenshot-img img {{
+                    max-width: 100%;
+                    max-height: 100%;
+                    object-fit: contain;
+                    cursor: pointer;
+                }}
+                .screenshot-placeholder {{
+                    color: var(--fg-muted);
+                    padding: 2rem;
+                    text-align: center;
+                }}
+                .screenshot-meta {{
+                    padding: 0.5rem;
+                    display: flex;
+                    gap: 0.5rem;
+                    font-size: 0.8rem;
+                }}
+                .screenshot-meta span {{
+                    padding: 0.25rem 0.5rem;
+                    background: var(--bg);
+                    border-radius: 4px;
+                }}
+            </style>
+            """
+        )
+
     def _base_html(self, title: str, content: str) -> str:
         """Base HTML template."""
         return f"""<!DOCTYPE html>
@@ -600,6 +827,30 @@ class WebServer:
 
         .status-archived {{
             color: var(--fg-muted);
+        }}
+
+        .main-nav {{
+            margin: 1rem 0;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border);
+        }}
+
+        .nav-link {{
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-light);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--fg);
+            text-decoration: none;
+            transition: background 0.15s ease;
+        }}
+
+        .nav-link:hover {{
+            background: var(--bg);
+            text-decoration: none;
         }}
 
         .card-grid {{

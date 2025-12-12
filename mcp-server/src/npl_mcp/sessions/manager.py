@@ -268,3 +268,16 @@ class SessionManager:
             Updated session dict
         """
         return await self.update_session(session_id, status="archived")
+
+    async def associate_artifact(self, session_id: str, artifact_id: int):
+        """Associate an artifact with a session.
+
+        Args:
+            session_id: Session ID to associate with
+            artifact_id: ID of the artifact to associate
+        """
+        await self.db.execute(
+            "UPDATE artifacts SET session_id = ? WHERE id = ?",
+            (session_id, artifact_id)
+        )
+        await self.touch_session(session_id)

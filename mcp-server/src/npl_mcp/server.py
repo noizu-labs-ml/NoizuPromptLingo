@@ -14,6 +14,18 @@ from .chat import ChatManager
 from .sessions import SessionManager
 from .executors import TaskerManager, fabric as tasker_fabric
 from . import scripts
+from .browser import (
+    capture_screenshot as browser_capture_screenshot,
+    compare_screenshots,
+    capture_checkpoint as browser_capture_checkpoint,
+    list_checkpoints as browser_list_checkpoints,
+    get_checkpoint as browser_get_checkpoint,
+    compare_checkpoints as browser_compare_checkpoints,
+    CaptureResult,
+    DiffResult,
+    CheckpointManifest,
+    ComparisonResult,
+)
 
 
 # Global managers (initialized via lifespan)
@@ -126,6 +138,249 @@ async def npl_load(
         Loaded NPL content with tracking flags
     """
     return await scripts.npl_load(resource_type, items, skip)
+
+
+# ============================================================================
+# Screenshot Tools
+# ============================================================================
+
+@mcp.tool()
+async def screenshot_capture(
+    url: str,
+    name: str,
+    viewport: str = "desktop",
+    theme: str = "light",
+    full_page: bool = True,
+    wait_for: Optional[str] = None,
+    wait_timeout: int = 5000,
+    session_id: Optional[str] = None
+) -> dict:
+    """Capture screenshot of a web page and store as artifact.
+
+    Args:
+        url: Full URL to capture
+        name: Name for the screenshot artifact
+        viewport: "desktop" (1280x720), "mobile" (375x667), "tablet", "4k", or "WxH"
+        theme: "light" or "dark" (sets browser colorScheme)
+        full_page: Capture entire scrollable page
+        wait_for: CSS selector to wait for before capture
+        wait_timeout: Milliseconds to wait for selector
+        session_id: Optional session ID to associate artifact with
+
+    Returns:
+        Dict with artifact_id, file_path, and capture metadata
+    """
+    # Capture screenshot using browser module
+    result: CaptureResult = await browser_capture_screenshot(
+        url=url,
+        viewport=viewport,
+        theme=theme,
+        full_page=full_page,
+        wait_for=wait_for,
+        wait_timeout=wait_timeout,
+    )
+
+    # Generate filename
+    filename = f"{name}-{viewport}-{theme}.png"
+
+    # Store as artifact
+    artifact = await _artifact_manager.create_artifact(
+        name=name,
+        artifact_type="screenshot",
+        file_content=result.image_bytes,
+        filename=filename,
+        purpose=f"Screenshot of {url}"
+    )
+
+    # Associate with session if provided
+    if session_id:
+        await _session_manager.associate_artifact(session_id, artifact["artifact_id"])
+
+    return {
+        "artifact_id": artifact["artifact_id"],
+        "file_path": artifact["file_path"],
+        "metadata": {
+            "url": result.url,
+            "viewport": result.viewport_preset or f"{result.width}x{result.height}",
+            "theme": result.theme,
+            "dimensions": {"width": result.width, "height": result.height},
+            "full_page": result.full_page,
+            "captured_at": result.captured_at,
+        }
+    }
+
+
+@mcp.tool()
+async def screenshot_diff(
+    baseline_artifact_id: int,
+    comparison_artifact_id: int,
+    threshold: float = 0.1,
+    session_id: Optional[str] = None
+) -> dict:
+    """Generate visual diff between two screenshot artifacts.
+
+    Args:
+        baseline_artifact_id: Artifact ID of baseline screenshot
+        comparison_artifact_id: Artifact ID of comparison screenshot
+        threshold: Diff sensitivity 0.0-1.0 (lower = more sensitive)
+        session_id: Optional session ID to associate diff artifact with
+
+    Returns:
+        Dict with diff_artifact_id, diff_percentage, status, and comparison details
+    """
+    # Load baseline and comparison images
+    baseline = await _artifact_manager.get_artifact(baseline_artifact_id)
+    comparison = await _artifact_manager.get_artifact(comparison_artifact_id)
+
+    baseline_bytes = base64.b64decode(baseline["file_content"])
+    comparison_bytes = base64.b64decode(comparison["file_content"])
+
+    # Generate diff
+    result: DiffResult = compare_screenshots(
+        baseline_bytes=baseline_bytes,
+        comparison_bytes=comparison_bytes,
+        threshold=threshold,
+    )
+
+    # Store diff as artifact
+    diff_name = f"diff-{baseline_artifact_id}-vs-{comparison_artifact_id}"
+    diff_artifact = await _artifact_manager.create_artifact(
+        name=diff_name,
+        artifact_type="screenshot_diff",
+        file_content=result.diff_image,
+        filename=f"{diff_name}.png",
+        purpose=f"Visual diff: artifact {baseline_artifact_id} vs {comparison_artifact_id}"
+    )
+
+    # Associate with session if provided
+    if session_id:
+        await _session_manager.associate_artifact(session_id, diff_artifact["artifact_id"])
+
+    return {
+        "diff_artifact_id": diff_artifact["artifact_id"],
+        "diff_percentage": result.diff_percentage,
+        "diff_pixels": result.diff_pixels,
+        "total_pixels": result.total_pixels,
+        "dimensions_match": result.dimensions_match,
+        "status": result.status.value,
+        "baseline": {
+            "artifact_id": baseline_artifact_id,
+            "dimensions": {"width": result.baseline_dimensions[0], "height": result.baseline_dimensions[1]}
+        },
+        "comparison": {
+            "artifact_id": comparison_artifact_id,
+            "dimensions": {"width": result.comparison_dimensions[0], "height": result.comparison_dimensions[1]}
+        }
+    }
+
+
+@mcp.tool()
+async def screenshot_checkpoint(
+    name: str,
+    urls: List[dict],
+    base_url: str,
+    description: str = "",
+    viewports: Optional[List[str]] = None,
+    themes: Optional[List[str]] = None,
+) -> dict:
+    """Capture a complete checkpoint of multiple pages across viewports and themes.
+
+    Creates a named checkpoint with screenshots organized by page/viewport/theme.
+    Captures git commit and branch information automatically.
+
+    Args:
+        name: Human-readable checkpoint name (e.g., "after-button-fix")
+        urls: List of page configs, each with:
+            - name: Page identifier (e.g., "dashboard")
+            - url: Relative URL path (e.g., "/dashboard")
+            - description: Optional page description
+            - requires_auth: Whether page needs authentication
+            - wait_for: CSS selector to wait for before capture
+        base_url: Base URL for relative paths (e.g., "http://localhost:4000")
+        description: Optional checkpoint description
+        viewports: Viewports to capture (default: ["desktop", "mobile"])
+        themes: Themes to capture (default: ["light", "dark"])
+
+    Returns:
+        Dict with checkpoint_slug, total_screenshots, and manifest details
+    """
+    manifest: CheckpointManifest = await browser_capture_checkpoint(
+        name=name,
+        urls=urls,
+        base_url=base_url,
+        description=description,
+        viewports=viewports,
+        themes=themes,
+    )
+
+    return {
+        "checkpoint_slug": manifest.slug,
+        "name": manifest.name,
+        "description": manifest.description,
+        "timestamp": manifest.timestamp,
+        "git_commit": manifest.git_commit,
+        "git_branch": manifest.git_branch,
+        "base_url": manifest.base_url,
+        "viewports": manifest.viewports,
+        "themes": manifest.themes,
+        "pages": len(manifest.pages),
+        "total_screenshots": manifest.total_screenshots,
+    }
+
+
+@mcp.tool()
+async def screenshot_list_checkpoints() -> list:
+    """List all available screenshot checkpoints.
+
+    Returns:
+        List of checkpoint summaries with slug, name, timestamp, and git info
+    """
+    return await browser_list_checkpoints()
+
+
+@mcp.tool()
+async def screenshot_get_checkpoint(slug: str) -> dict:
+    """Get detailed information about a specific checkpoint.
+
+    Args:
+        slug: Checkpoint slug (e.g., "after-button-fix-20251210-143000")
+
+    Returns:
+        Full checkpoint manifest with all screenshot paths
+    """
+    manifest = await browser_get_checkpoint(slug)
+    if manifest is None:
+        raise ValueError(f"Checkpoint '{slug}' not found")
+
+    return manifest.to_dict()
+
+
+@mcp.tool()
+async def screenshot_compare(
+    baseline_checkpoint: str,
+    comparison_checkpoint: str,
+    threshold: float = 0.1,
+) -> dict:
+    """Compare two checkpoints and generate visual diffs.
+
+    Compares all matching page/viewport/theme combinations between two checkpoints.
+    Generates diff images showing pixel-level differences.
+
+    Args:
+        baseline_checkpoint: Slug of the baseline checkpoint
+        comparison_checkpoint: Slug of the comparison checkpoint
+        threshold: Diff sensitivity 0.0-1.0 (lower = more sensitive, default 0.1)
+
+    Returns:
+        Dict with comparison_id, summary counts by status, and per-page details
+    """
+    result: ComparisonResult = await browser_compare_checkpoints(
+        baseline_slug=baseline_checkpoint,
+        comparison_slug=comparison_checkpoint,
+        threshold=threshold,
+    )
+
+    return result.to_dict()
 
 
 # ============================================================================

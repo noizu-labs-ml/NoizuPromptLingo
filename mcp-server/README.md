@@ -13,6 +13,7 @@ Comprehensive MCP server for Noizu Prompt Lingo (NPL) providing:
 ```bash
 cd mcp-server
 uv pip install -e .
+playwright install chromium  # For browser/screenshot features
 ```
 
 ## Starting the Server
@@ -28,28 +29,28 @@ The server provides multiple entry points for different use cases:
 
 ### Quick Start (stdio mode)
 
-```bash
-npl-mcp
-```
-
-### HTTP Mode with Web UI
+The server runs as an HTTP service with a web UI. Use the launcher to manage it:
 
 ```bash
-# Start the unified server (HTTP-based MCP + Web UI)
-npl-mcp-unified
-
-# Or use the launcher for managed startup
+# Start server (or confirm already running)
 npl-mcp-launcher
+
+# Check status
+npl-mcp-launcher --status
+
+# Stop server
+npl-mcp-launcher --stop
+
+# Force restart
+NPL_MCP_FORCE=true npl-mcp-launcher
+
+# Show Claude Code config snippet
+npl-mcp-launcher --config
 ```
 
-### Launcher Commands
-
-```bash
-npl-mcp-launcher           # Start server (or connect if already running)
-npl-mcp-launcher --status  # Check server status
-npl-mcp-launcher --stop    # Stop running server
-npl-mcp-launcher --config  # Print Claude Code configuration snippet
-```
+Default endpoints:
+- **Web UI**: http://127.0.0.1:8765/
+- **MCP**: http://127.0.0.1:8765/mcp
 
 ## MCP Tools
 
@@ -90,65 +91,24 @@ npl-mcp-launcher --config  # Print Claude Code configuration snippet
 - `get_notifications(persona, unread_only)` - Get notifications
 - `mark_notification_read(notification_id)` - Mark notification as read
 
-## Data Storage
+## Configuration
 
-By default, data is stored in `data/` directory:
-- `data/npl-mcp.db` - SQLite database
-- `data/artifacts/` - Artifact files organized by artifact/revision
-- `data/chats/` - Chat-related data
-- `data/.npl-mcp.pid` - Server PID file (for singleton mode)
-
-## Environment Variables
+### Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `NPL_MCP_DATA_DIR` | `./data` | Directory for database and artifact storage |
-| `NPL_MCP_HOST` | `127.0.0.1` | HTTP server bind host |
-| `NPL_MCP_PORT` | `8765` | HTTP server port (unified/launcher modes) |
-| `NPL_MCP_WEB_PORT` | `8765` | Web UI port (combined mode) |
-| `NPL_MCP_SINGLETON` | `false` | Enable singleton server mode |
-| `NPL_MCP_FORCE` | `false` | Force restart if server already running |
+| `NPL_MCP_HOST` | `127.0.0.1` | Server bind address |
+| `NPL_MCP_PORT` | `8765` | Server port |
+| `NPL_MCP_DATA_DIR` | `./data` | Data directory path |
+| `NPL_MCP_FORCE` | `false` | Force restart on launch |
 
 ## Claude Code Configuration
 
 ### Option 1: stdio mode (Recommended for single-user)
 
-Add to your `~/.claude/settings.json` (or project `.claude/settings.json`):
+1. Start the server: `npl-mcp-launcher`
 
-```json
-{
-  "mcpServers": {
-    "npl-mcp": {
-      "command": "uv",
-      "args": ["run", "--directory", "/path/to/npl/mcp-server", "npl-mcp"],
-      "env": {
-        "NPL_MCP_DATA_DIR": "/path/to/data"
-      }
-    }
-  }
-}
-```
-
-Or using the installed command directly:
-
-```json
-{
-  "mcpServers": {
-    "npl-mcp": {
-      "command": "npl-mcp"
-    }
-  }
-}
-```
-
-### Option 2: HTTP mode (Recommended for Web UI access)
-
-First start the server:
-```bash
-npl-mcp-launcher
-```
-
-Then configure Claude Code with URL endpoint:
+2. Add to your `~/.claude/settings.json` (or project `.claude/settings.json`):
 
 ```json
 {
@@ -160,17 +120,16 @@ Then configure Claude Code with URL endpoint:
 }
 ```
 
-This mode provides:
-- MCP tools via HTTP/SSE transport
-- Web UI at `http://127.0.0.1:8765/`
-- Session and chat room browsing
-- Artifact viewing
+3. Restart Claude Code. Tools will appear with `mcp__npl-mcp__` prefix.
 
-After configuration, restart Claude Code. Tools will appear with `mcp__npl-mcp__` prefix.
+### Data Files
+
+- `data/npl-mcp.db` - SQLite database
+- `data/artifacts/` - Artifact files by artifact/revision
+- `data/server.log` - Server logs
+- `data/.npl-mcp.pid` - PID file for running server
 
 ## Web UI Routes
-
-When running in HTTP mode (`npl-mcp-unified` or `npl-mcp-launcher`):
 
 | Route | Description |
 |-------|-------------|
@@ -180,7 +139,7 @@ When running in HTTP mode (`npl-mcp-unified` or `npl-mcp-launcher`):
 | `/room/{room_id}` | Standalone chat room view |
 | `/artifact/{artifact_id}` | Artifact viewer |
 
-### API Endpoints
+## API Endpoints
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
