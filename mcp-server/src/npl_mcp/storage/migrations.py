@@ -141,4 +141,31 @@ async def run_migrations(conn: aiosqlite.Connection) -> List[str]:
         await record_migration(conn, 3, "Add session_id to chat_rooms")
         applied.append("Add session_id to chat_rooms")
 
+    # Migration 4: Add taskers table for ephemeral executor agents
+    if current_version < 4:
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS taskers (
+                id TEXT PRIMARY KEY,
+                parent_agent_id TEXT NOT NULL,
+                session_id TEXT REFERENCES sessions(id),
+                chat_room_id INTEGER REFERENCES chat_rooms(id),
+                task TEXT NOT NULL,
+                patterns TEXT,
+                status TEXT DEFAULT 'active',
+                timeout_minutes INTEGER DEFAULT 15,
+                nag_minutes INTEGER DEFAULT 5,
+                created_at TEXT NOT NULL,
+                last_activity TEXT NOT NULL,
+                terminated_at TEXT,
+                termination_reason TEXT
+            )
+        """)
+        await conn.execute("CREATE INDEX IF NOT EXISTS idx_taskers_status ON taskers(status)")
+        await conn.execute("CREATE INDEX IF NOT EXISTS idx_taskers_session ON taskers(session_id)")
+        await conn.execute("CREATE INDEX IF NOT EXISTS idx_taskers_parent ON taskers(parent_agent_id)")
+        await conn.commit()
+
+        await record_migration(conn, 4, "Add taskers table")
+        applied.append("Add taskers table")
+
     return applied

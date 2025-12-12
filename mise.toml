@@ -1,0 +1,5 @@
+[tasks.hello]
+description = "A simple hello world task"
+run = "echo 'Hello from mise!'"
+
+

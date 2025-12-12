@@ -12,6 +12,7 @@ from .artifacts.manager import ArtifactManager
 from .artifacts.reviews import ReviewManager
 from .chat import ChatManager
 from .sessions import SessionManager
+from .executors import TaskerManager, fabric as tasker_fabric
 from . import scripts
 
 
@@ -21,6 +22,7 @@ _artifact_manager: Optional[ArtifactManager] = None
 _review_manager: Optional[ReviewManager] = None
 _chat_manager: Optional[ChatManager] = None
 _session_manager: Optional[SessionManager] = None
+_tasker_manager: Optional[TaskerManager] = None
 
 # Web server port (set via environment)
 WEB_PORT = int(os.environ.get("NPL_MCP_WEB_PORT", "8765"))
@@ -29,7 +31,7 @@ WEB_PORT = int(os.environ.get("NPL_MCP_WEB_PORT", "8765"))
 @asynccontextmanager
 async def lifespan(server: FastMCP):
     """Initialize and cleanup resources."""
-    global _db, _artifact_manager, _review_manager, _chat_manager, _session_manager
+    global _db, _artifact_manager, _review_manager, _chat_manager, _session_manager, _tasker_manager
 
     # Initialize database
     _db = Database()
@@ -40,16 +42,22 @@ async def lifespan(server: FastMCP):
     _review_manager = ReviewManager(_db)
     _chat_manager = ChatManager(_db)
     _session_manager = SessionManager(_db)
+    _tasker_manager = TaskerManager(_db, chat_manager=_chat_manager)
+
+    # Start tasker lifecycle monitor
+    await _tasker_manager.start_lifecycle_monitor()
 
     yield {
         "db": _db,
         "artifact_manager": _artifact_manager,
         "review_manager": _review_manager,
         "chat_manager": _chat_manager,
-        "session_manager": _session_manager
+        "session_manager": _session_manager,
+        "tasker_manager": _tasker_manager
     }
 
     # Cleanup
+    await _tasker_manager.stop_lifecycle_monitor()
     await _db.disconnect()
 
 
@@ -607,6 +615,319 @@ async def mark_notification_read(notification_id: int) -> dict:
         Dict with updated notification status
     """
     return await _chat_manager.mark_notification_read(notification_id)
+
+
+# ============================================================================
+# Tasker Tools (Ephemeral Executor Agents)
+# ============================================================================
+
+@mcp.tool()
+async def spawn_tasker(
+    task: str,
+    chat_room_id: int,
+    parent_agent_id: str = "primary",
+    patterns: Optional[List[str]] = None,
+    session_id: Optional[str] = None,
+    timeout_minutes: int = 15,
+    nag_minutes: int = 5
+) -> dict:
+    """Spawn an ephemeral tasker agent for executing commands and analyzing output.
+
+    Taskers handle mundane operations (file checks, commands, web fetching) to preserve
+    primary agent context. Raw output stays with the tasker; only distilled answers return.
+
+    Args:
+        task: Description of the task/topic for the tasker
+        chat_room_id: ID of chat room to join for nag messages (required)
+        parent_agent_id: Agent ID of spawning parent (default: "primary")
+        patterns: Fabric patterns to apply for analysis (e.g., ["analyze_logs", "summarize"])
+        session_id: Optional session to associate with
+        timeout_minutes: Auto-dismiss timeout (default: 15)
+        nag_minutes: Idle time before nagging parent (default: 5)
+
+    Returns:
+        Dict with tasker_id, status, and configuration
+    """
+    return await _tasker_manager.spawn_tasker(
+        task=task,
+        chat_room_id=chat_room_id,
+        parent_agent_id=parent_agent_id,
+        patterns=patterns,
+        session_id=session_id,
+        timeout_minutes=timeout_minutes,
+        nag_minutes=nag_minutes
+    )
+
+
+@mcp.tool()
+async def tasker_run(
+    tasker_id: str,
+    command: str,
+    cwd: Optional[str] = None,
+    analyze: bool = True,
+    timeout: int = 120
+) -> dict:
+    """Execute a shell command through a tasker and return distilled results.
+
+    The tasker runs the command, stores raw output in worklog, applies fabric analysis
+    if enabled, and returns only the distilled answer to preserve context.
+
+    Args:
+        tasker_id: ID of the tasker instance
+        command: Shell command to execute
+        cwd: Working directory for command (default: current directory)
+        analyze: Whether to apply fabric patterns (default: True)
+        timeout: Command timeout in seconds (default: 120)
+
+    Returns:
+        Dict with distilled_result, success status, and worklog reference
+    """
+    import asyncio
+    import subprocess
+
+    # Touch tasker to update activity
+    await _tasker_manager.touch_tasker(tasker_id)
+
+    # Get tasker context for patterns
+    tasker = await _tasker_manager.get_tasker(tasker_id)
+    if not tasker:
+        raise ValueError(f"Tasker '{tasker_id}' not found")
+
+    # Execute command
+    try:
+        process = await asyncio.create_subprocess_shell(
+            command,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            cwd=cwd
+        )
+
+        stdout, stderr = await asyncio.wait_for(
+            process.communicate(),
+            timeout=timeout
+        )
+
+        raw_output = stdout.decode() + (f"\nSTDERR:\n{stderr.decode()}" if stderr else "")
+        exit_code = process.returncode
+        success = exit_code == 0
+
+    except asyncio.TimeoutError:
+        return {
+            "success": False,
+            "error": f"Command timed out after {timeout}s",
+            "tasker_id": tasker_id
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "tasker_id": tasker_id
+        }
+
+    # Apply fabric analysis if enabled
+    analysis_result = None
+    distilled_result = raw_output[:500] + "..." if len(raw_output) > 500 else raw_output
+
+    if analyze and tasker.get('patterns'):
+        analysis = await tasker_fabric.analyze_with_patterns(raw_output, tasker['patterns'])
+        if analysis.get('success'):
+            analysis_result = analysis['result']
+            distilled_result = analysis_result
+        else:
+            # Fallback to truncated output
+            distilled_result = f"[Analysis failed: {analysis.get('error')}]\n{distilled_result}"
+
+    # Store context for follow-up queries
+    await _tasker_manager.store_context(
+        tasker_id=tasker_id,
+        command=command,
+        raw_output=raw_output,
+        analysis=analysis_result,
+        result=distilled_result[:500]
+    )
+
+    return {
+        "success": success,
+        "exit_code": exit_code,
+        "distilled_result": distilled_result,
+        "raw_output_lines": len(raw_output.split('\n')),
+        "tasker_id": tasker_id,
+        "analyzed": analyze and analysis_result is not None
+    }
+
+
+@mcp.tool()
+async def tasker_fetch(
+    tasker_id: str,
+    url: str,
+    question: Optional[str] = None,
+    analyze: bool = True
+) -> dict:
+    """Fetch web content through a tasker and return distilled results.
+
+    The tasker fetches the URL, stores raw content in worklog, applies fabric analysis
+    if enabled, and returns a distilled answer focused on the question if provided.
+
+    Args:
+        tasker_id: ID of the tasker instance
+        url: URL to fetch
+        question: Specific question to answer about the content (optional)
+        analyze: Whether to apply fabric patterns (default: True)
+
+    Returns:
+        Dict with distilled_result and worklog reference
+    """
+    import aiohttp
+
+    # Touch tasker to update activity
+    await _tasker_manager.touch_tasker(tasker_id)
+
+    # Get tasker context
+    tasker = await _tasker_manager.get_tasker(tasker_id)
+    if not tasker:
+        raise ValueError(f"Tasker '{tasker_id}' not found")
+
+    # Fetch URL
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, timeout=aiohttp.ClientTimeout(total=60)) as response:
+                content_type = response.headers.get('content-type', '')
+                if 'text' in content_type or 'json' in content_type:
+                    raw_content = await response.text()
+                else:
+                    return {
+                        "success": False,
+                        "error": f"Unsupported content type: {content_type}",
+                        "tasker_id": tasker_id
+                    }
+                status = response.status
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Fetch failed: {str(e)}",
+            "tasker_id": tasker_id
+        }
+
+    # Apply fabric analysis
+    analysis_result = None
+    patterns = tasker.get('patterns', ['summarize'])
+    distilled_result = raw_content[:1000] + "..." if len(raw_content) > 1000 else raw_content
+
+    if analyze:
+        analysis = await tasker_fabric.analyze_with_patterns(raw_content, patterns)
+        if analysis.get('success'):
+            analysis_result = analysis['result']
+            distilled_result = analysis_result
+
+    # If question provided, prepend it to result
+    if question:
+        distilled_result = f"Question: {question}\n\nAnswer:\n{distilled_result}"
+
+    # Store context
+    await _tasker_manager.store_context(
+        tasker_id=tasker_id,
+        command=f"fetch {url}",
+        raw_output=raw_content,
+        analysis=analysis_result,
+        result=distilled_result[:500]
+    )
+
+    return {
+        "success": status < 400,
+        "status_code": status,
+        "distilled_result": distilled_result,
+        "raw_content_length": len(raw_content),
+        "tasker_id": tasker_id,
+        "analyzed": analyze and analysis_result is not None
+    }
+
+
+@mcp.tool()
+async def tasker_query(
+    tasker_id: str,
+    question: str
+) -> dict:
+    """Ask a follow-up question to a tasker about previous outputs.
+
+    The tasker retains context from previous commands. Use this to drill down
+    into details without re-running commands.
+
+    Args:
+        tasker_id: ID of the tasker instance
+        question: Question about previous command outputs
+
+    Returns:
+        Dict with answer based on retained context
+    """
+    # Touch tasker
+    await _tasker_manager.touch_tasker(tasker_id)
+
+    # Get context
+    context = await _tasker_manager.get_context(tasker_id)
+    if not context:
+        raise ValueError(f"Tasker '{tasker_id}' not found or has no context")
+
+    # Build context for analysis
+    context_text = ""
+    if context.get('last_analysis'):
+        context_text = context['last_analysis']
+    elif context.get('last_raw_output'):
+        context_text = context['last_raw_output'][:5000]
+    else:
+        return {
+            "success": False,
+            "error": "No previous output to query",
+            "tasker_id": tasker_id
+        }
+
+    # Use fabric to answer the question with context
+    prompt = f"""Based on the following output, answer this question: {question}
+
+Output:
+{context_text}"""
+
+    result = await tasker_fabric.apply_fabric_pattern(prompt, "summarize")
+
+    return {
+        "success": result.get('success', False),
+        "answer": result.get('result', f"Based on context: {context_text[:500]}"),
+        "tasker_id": tasker_id,
+        "context_source": "analysis" if context.get('last_analysis') else "raw_output"
+    }
+
+
+@mcp.tool()
+async def dismiss_tasker(
+    tasker_id: str,
+    reason: Optional[str] = None
+) -> dict:
+    """Dismiss/terminate a tasker explicitly.
+
+    Args:
+        tasker_id: ID of the tasker to dismiss
+        reason: Optional reason for dismissal
+
+    Returns:
+        Dict with status and stats
+    """
+    return await _tasker_manager.dismiss_tasker(tasker_id, reason)
+
+
+@mcp.tool()
+async def list_taskers(
+    status: Optional[str] = None,
+    session_id: Optional[str] = None
+) -> list:
+    """List all taskers with optional filtering.
+
+    Args:
+        status: Filter by status ('active', 'idle', 'nagging', 'terminated')
+        session_id: Filter by session
+
+    Returns:
+        List of tasker info dicts
+    """
+    return await _tasker_manager.list_taskers(status=status, session_id=session_id)
 
 
 def main():

@@ -1351,8 +1351,8 @@ def main():
     sp_init_claude.add_argument('--target', default='./CLAUDE.md',
         help='Target CLAUDE.md path (default: ./CLAUDE.md)')
     sp_init_claude.add_argument('--prompts', nargs='*',
-        default=['npl-conventions', 'npl-load-directive', 'npl-scripts', 'sqlite-guide'],
-        help='Prompts to append (default: npl-conventions npl-load-directive npl-scripts sqlite-guide)')
+        default=['npl-conventions', 'npl-delegation', 'npl-load-directive', 'npl-scripts', 'sqlite-guide'],
+        help='Prompts to append (default: npl-conventions npl-delegation npl-load-directive npl-scripts sqlite-guide)')
     sp_init_claude.add_argument('--update', metavar='SECTIONS',
         help='Update only specified sections (comma-separated names)')
     sp_init_claude.add_argument('--update-all', action='store_true',
