@@ -28,16 +28,37 @@ if [[ -z "$TARGET" ]]; then
   exit 1
 fi
 
+# Resolve absolute path and change to target directory first
+# This ensures we find the correct git repo for the target path
+if [[ -d "$TARGET" ]]; then
+  TARGET_DIR="$(cd "$TARGET" && pwd)"
+elif [[ -f "$TARGET" ]]; then
+  TARGET_DIR="$(cd "$(dirname "$TARGET")" && pwd)"
+else
+  # Path doesn't exist - try parent directory
+  TARGET_DIR="$(cd "$(dirname "$TARGET")" 2>/dev/null && pwd)" || {
+    echo "Error: target directory does not exist: $TARGET" >&2
+    exit 1
+  }
+fi
+
+cd "$TARGET_DIR"
+
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || {
   echo "Error: not inside a git repository." >&2
   exit 1
 }
 
 ROOT="$(git -c core.quotepath=false rev-parse --show-toplevel)"
-cd "$ROOT"
 
-TARGET_REL="${TARGET#./}"
-TARGET_REL="${TARGET_REL%/}"
+# Calculate relative path from git root to target
+TARGET_REL="${TARGET_DIR#$ROOT/}"
+if [[ "$TARGET_REL" == "$TARGET_DIR" ]]; then
+  # Target dir IS the root
+  TARGET_REL="."
+fi
+
+cd "$ROOT"
 
 git -c core.quotepath=false ls-files --cached --others --exclude-standard -- "${TARGET_REL:-.}" \
   | xargs -I{} dirname "{}" \

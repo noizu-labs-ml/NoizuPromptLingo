@@ -24,12 +24,43 @@ set -euo pipefail
 
 TARGET="${1:-.}"
 
+# Resolve absolute path and change to target directory first
+# This ensures we find the correct git repo for the target path
+if [[ -d "$TARGET" ]]; then
+  TARGET_DIR="$(cd "$TARGET" && pwd)"
+  TARGET_REL="."
+elif [[ -f "$TARGET" ]]; then
+  TARGET_DIR="$(cd "$(dirname "$TARGET")" && pwd)"
+  TARGET_REL="$(basename "$TARGET")"
+else
+  # Path doesn't exist yet - try parent directory
+  TARGET_DIR="$(cd "$(dirname "$TARGET")" 2>/dev/null && pwd)" || TARGET_DIR="$(pwd)"
+  TARGET_REL="$(basename "$TARGET")"
+fi
+
+cd "$TARGET_DIR"
+
 git -c core.quotepath=false rev-parse --is-inside-work-tree >/dev/null 2>&1 || {
   echo "Error: not inside a git repository." >&2
   exit 1
 }
 
 ROOT="$(git rev-parse --show-toplevel)"
+
+# Calculate relative path from git root to target
+TARGET_FROM_ROOT="${TARGET_DIR#$ROOT/}"
+if [[ "$TARGET_FROM_ROOT" == "$TARGET_DIR" ]]; then
+  # Target dir IS the root
+  TARGET_FROM_ROOT="."
+fi
+if [[ "$TARGET_REL" != "." ]]; then
+  if [[ "$TARGET_FROM_ROOT" == "." ]]; then
+    TARGET_FROM_ROOT="$TARGET_REL"
+  else
+    TARGET_FROM_ROOT="$TARGET_FROM_ROOT/$TARGET_REL"
+  fi
+fi
+
 cd "$ROOT"
 
 # Fallback tree renderer when tree command not available
@@ -55,7 +86,7 @@ render_tree_fallback() {
   ' | sed 's/│   ├── /├── /; s/│   │/│   │/g'
 }
 
-FILES=$(git -c core.quotepath=false ls-files --cached --others --exclude-standard -- "$TARGET")
+FILES=$(git -c core.quotepath=false ls-files --cached --others --exclude-standard -- "$TARGET_FROM_ROOT")
 
 if command -v tree &>/dev/null; then
   echo "$FILES" | tree --fromfile

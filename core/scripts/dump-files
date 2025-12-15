@@ -32,8 +32,47 @@ if [[ -z "$TARGET" ]]; then
   exit 1
 fi
 
+# Resolve absolute path and change to target directory first
+# This ensures we find the correct git repo for the target path
+if [[ -d "$TARGET" ]]; then
+  TARGET_DIR="$(cd "$TARGET" && pwd)"
+  TARGET_REL="."
+elif [[ -f "$TARGET" ]]; then
+  TARGET_DIR="$(cd "$(dirname "$TARGET")" && pwd)"
+  TARGET_REL="$(basename "$TARGET")"
+else
+  # Path doesn't exist - error
+  echo "Error: target does not exist: $TARGET" >&2
+  exit 1
+fi
+
+cd "$TARGET_DIR"
+
+git rev-parse --is-inside-work-tree >/dev/null 2>&1 || {
+  echo "Error: not inside a git repository." >&2
+  exit 1
+}
+
+ROOT="$(git -c core.quotepath=false rev-parse --show-toplevel)"
+
+# Calculate relative path from git root to target
+TARGET_FROM_ROOT="${TARGET_DIR#$ROOT/}"
+if [[ "$TARGET_FROM_ROOT" == "$TARGET_DIR" ]]; then
+  # Target dir IS the root
+  TARGET_FROM_ROOT="."
+fi
+if [[ "$TARGET_REL" != "." ]]; then
+  if [[ "$TARGET_FROM_ROOT" == "." ]]; then
+    TARGET_FROM_ROOT="$TARGET_REL"
+  else
+    TARGET_FROM_ROOT="$TARGET_FROM_ROOT/$TARGET_REL"
+  fi
+fi
+
+cd "$ROOT"
+
 # List tracked + untracked but not ignored files, then dump with headers
-git -c core.quotepath=false ls-files --cached --others --exclude-standard "$TARGET" \
+git -c core.quotepath=false ls-files --cached --others --exclude-standard "$TARGET_FROM_ROOT" \
   | while read -r f; do
       echo -e "\n# $f\n---"
       cat "$f"
