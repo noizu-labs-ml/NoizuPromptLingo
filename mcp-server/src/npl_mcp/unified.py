@@ -114,6 +114,59 @@ def create_mcp_server() -> "FastMCP":
         from . import scripts
         return await scripts.npl_load(resource_type, items, skip)
 
+    @mcp.tool()
+    async def web_to_md(url: str, timeout: int = 30) -> dict:
+        """Fetch a web page and return its content as markdown using Jina Reader.
+
+        Args:
+            url: The URL of the web page to fetch
+            timeout: Request timeout in seconds (default 30)
+
+        Returns:
+            Dict with markdown content, title, and metadata
+        """
+        import httpx
+        import os
+
+        jina_api_key = os.environ.get("JINA_API_KEY", "")
+        jina_url = f"https://r.jina.ai/{url}"
+
+        headers = {}
+        if jina_api_key:
+            headers["Authorization"] = f"Bearer {jina_api_key}"
+
+        try:
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                response = await client.get(jina_url, headers=headers)
+                response.raise_for_status()
+
+                content = response.text
+
+                return {
+                    "success": True,
+                    "url": url,
+                    "content": content,
+                    "content_length": len(content),
+                }
+        except httpx.TimeoutException:
+            return {
+                "success": False,
+                "url": url,
+                "error": f"Request timed out after {timeout} seconds",
+            }
+        except httpx.HTTPStatusError as e:
+            return {
+                "success": False,
+                "url": url,
+                "error": f"HTTP {e.response.status_code}: {e.response.text[:500]}",
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "url": url,
+                "error": str(e),
+            }
+
     # Artifact tools
     @mcp.tool()
     async def create_artifact(
