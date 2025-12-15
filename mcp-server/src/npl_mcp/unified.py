@@ -1,7 +1,7 @@
-"""Unified HTTP server: MCP over HTTP + Web UI in one process.
+"""Unified HTTP server: MCP over SSE + Web UI in one process.
 
 This server:
-1. Serves MCP protocol over HTTP/SSE at /mcp
+1. Serves MCP protocol over SSE at /sse
 2. Serves web UI at / and other routes
 3. Can be configured to only start if not already running (singleton mode)
 4. Shares a single database connection
@@ -1307,7 +1307,7 @@ def create_unified_app() -> FastAPI:
         write_pid_file()
         print(f"NPL MCP Server running at http://{HOST}:{PORT}", file=sys.stderr)
         print(f"  Web UI: http://{HOST}:{PORT}/", file=sys.stderr)
-        print(f"  MCP endpoint: http://{HOST}:{PORT}/mcp", file=sys.stderr)
+        print(f"  MCP SSE endpoint: http://{HOST}:{PORT}/sse", file=sys.stderr)
 
         yield
 
@@ -1321,11 +1321,11 @@ def create_unified_app() -> FastAPI:
         lifespan=lifespan
     )
 
-    # Create and mount MCP HTTP app
+    # Create and mount MCP SSE app
     if FastMCP:
         mcp = create_mcp_server()
-        mcp_app = mcp.http_app(path="/mcp")
-        app.mount("/mcp", mcp_app)
+        mcp_app = mcp.http_app(path="/", transport="sse")
+        app.mount("/sse", mcp_app)
 
     # Add web UI routes directly to main app
     # These use app.state to access db/managers after lifespan init

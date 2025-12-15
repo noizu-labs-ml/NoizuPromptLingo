@@ -30,7 +30,4 @@ build-backend = "hatchling.build"
 packages = ["src/npl_mcp"]
 
 [project.scripts]
-npl-mcp = "npl_mcp.server:main"
-npl-mcp-web = "npl_mcp.combined:main"
-npl-mcp-unified = "npl_mcp.unified:main"
-npl-mcp-launcher = "npl_mcp.launcher:main"
+npl-mcp = "npl_mcp.launcher:main"

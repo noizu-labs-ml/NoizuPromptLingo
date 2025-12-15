@@ -1,18 +1,15 @@
 #!/usr/bin/env python3
 """Launcher for NPL MCP unified server with singleton support.
 
-This launcher ensures the unified HTTP server is running, starting it if needed.
-Claude Code connects directly to the HTTP endpoint - no stdio proxy required.
+This launcher ensures the unified SSE server is running, starting it if needed.
+Claude Code connects directly to the SSE endpoint - no stdio proxy required.
 
 Usage:
-    # Ensure server is running, start if not
-    python -m npl_mcp.launcher
-
-    # Force start new server (stops existing if running)
-    NPL_MCP_FORCE=true python -m npl_mcp.launcher
-
-    # Just check status
-    python -m npl_mcp.launcher --status
+    npl-mcp              # Start server (or report if already running)
+    npl-mcp --status     # Check server status
+    npl-mcp --stop       # Stop the server
+    npl-mcp --config     # Show Claude Code MCP config
+    npl-mcp --test       # Test server connectivity via SSE client
 
 Environment variables:
     NPL_MCP_HOST: Server host (default: 127.0.0.1)
@@ -34,7 +31,7 @@ HOST = os.environ.get("NPL_MCP_HOST", "127.0.0.1")
 PORT = int(os.environ.get("NPL_MCP_PORT", "8765"))
 DATA_DIR = Path(os.environ.get("NPL_MCP_DATA_DIR", "./data"))
 SERVER_URL = f"http://{HOST}:{PORT}"
-MCP_URL = f"{SERVER_URL}/mcp"
+MCP_URL = f"{SERVER_URL}/sse"
 LOG_FILE = DATA_DIR / "server.log"
 PID_FILE = DATA_DIR / ".npl-mcp.pid"
 
@@ -117,7 +114,7 @@ def print_status():
 
     print(f"NPL MCP Server Status")
     print(f"  URL: {SERVER_URL}")
-    print(f"  MCP Endpoint: {MCP_URL}")
+    print(f"  SSE Endpoint: {MCP_URL}")
     print(f"  Running: {'Yes' if running else 'No'}")
     if pid:
         print(f"  PID: {pid}")
@@ -154,6 +151,52 @@ Web UI available at: {SERVER_URL}
 """)
 
 
+async def run_test():
+    """Test server connectivity via SSE client."""
+    from fastmcp import Client
+    from fastmcp.client.transports import SSETransport
+
+    print(f"Connecting to {MCP_URL}...")
+    client = Client(SSETransport(MCP_URL))
+
+    async with client:
+        # List available tools
+        tools = await client.list_tools()
+        print(f"\n✓ Connected! Available tools: {len(tools)}")
+        print("\nFirst 10 tools:")
+        for tool in tools[:10]:
+            print(f"  - {tool.name}")
+
+        # Test git_tree
+        print("\nTesting git_tree('.')...")
+        result = await client.call_tool("git_tree", {"path": "."})
+        if result.content:
+            output = result.content[0].text
+            lines = output.split('\n')[:10]
+            print('\n'.join(lines))
+            if len(output.split('\n')) > 10:
+                print("  ...")
+
+        # Test list_sessions
+        print("\nTesting list_sessions...")
+        result = await client.call_tool("list_sessions", {"limit": 3})
+        if result.content:
+            print(result.content[0].text[:500])
+
+    print("\n✓ All tests passed!")
+
+
+def test_server():
+    """Run the async test."""
+    import asyncio
+
+    if not is_server_running():
+        print("Server not running. Start it first with: npl-mcp", file=sys.stderr)
+        sys.exit(1)
+
+    asyncio.run(run_test())
+
+
 def main():
     """Main entry point."""
     # Handle --status flag
@@ -175,6 +218,11 @@ def main():
         print_claude_config()
         return
 
+    # Handle --test flag
+    if "--test" in sys.argv:
+        test_server()
+        return
+
     force = os.environ.get("NPL_MCP_FORCE", "false").lower() == "true"
 
     if force and is_server_running():
@@ -184,13 +232,13 @@ def main():
 
     if is_server_running():
         print(f"✓ Server already running at {SERVER_URL}", file=sys.stderr)
-        print(f"  MCP endpoint: {MCP_URL}", file=sys.stderr)
+        print(f"  SSE endpoint: {MCP_URL}", file=sys.stderr)
         print(f"  Web UI: {SERVER_URL}/", file=sys.stderr)
     else:
         print(f"Starting NPL MCP server...", file=sys.stderr)
         if start_server():
             print(f"✓ Server started at {SERVER_URL}", file=sys.stderr)
-            print(f"  MCP endpoint: {MCP_URL}", file=sys.stderr)
+            print(f"  SSE endpoint: {MCP_URL}", file=sys.stderr)
             print(f"  Web UI: {SERVER_URL}/", file=sys.stderr)
             print(f"  Log file: {LOG_FILE}", file=sys.stderr)
         else:
