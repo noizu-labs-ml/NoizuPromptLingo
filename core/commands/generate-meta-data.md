@@ -203,7 +203,9 @@ flowchart RL
 
 ## Example Output
 
-### File: `.auth.py.meta.md`
+Note it is important to put checksum etc details in a --- deliminated block for yaml extraction.
+
+### Example File: `.auth.py.meta.md`
 
 ````markdown
 file: auth.py

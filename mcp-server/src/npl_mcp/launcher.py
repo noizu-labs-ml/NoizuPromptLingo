@@ -56,19 +56,70 @@ def get_server_pid() -> int | None:
     return None
 
 
-def stop_server():
-    """Stop the running server."""
+def stop_server() -> tuple[bool, str]:
+    """Stop the running server.
+
+    Returns:
+        Tuple of (success, message) indicating whether the server was stopped
+    """
+    import signal
+
     pid = get_server_pid()
-    if pid:
-        try:
-            import signal
-            os.kill(pid, signal.SIGTERM)
-            print(f"Stopped server (PID {pid})", file=sys.stderr)
-            time.sleep(0.5)
-        except ProcessLookupError:
-            pass
+
+    # Check if we have a PID to work with
+    if not pid:
+        # No PID file, but check if server is actually running
+        if is_server_running():
+            return False, "Server is running but no PID file found. Unable to stop."
+        return False, "Server not running (no PID file)"
+
+    # Try to verify the process exists before killing
+    try:
+        os.kill(pid, 0)  # Signal 0 checks if process exists
+    except ProcessLookupError:
+        # Process doesn't exist, clean up stale PID file
+        if PID_FILE.exists():
+            PID_FILE.unlink()
+        if is_server_running():
+            return False, f"Stale PID file (PID {pid} not found), but server still running on port. Unable to stop."
+        return False, f"Server not running (stale PID file for PID {pid}, cleaned up)"
+    except PermissionError:
+        return False, f"Permission denied checking process {pid}"
+
+    # Send SIGTERM
+    try:
+        os.kill(pid, signal.SIGTERM)
+    except ProcessLookupError:
+        if PID_FILE.exists():
+            PID_FILE.unlink()
+        return False, f"Process {pid} disappeared before SIGTERM could be sent"
+    except PermissionError:
+        return False, f"Permission denied stopping process {pid}"
+
+    # Wait for server to stop (up to 5 seconds)
+    for _ in range(50):
+        time.sleep(0.1)
+        if not is_server_running():
+            # Clean up PID file
+            if PID_FILE.exists():
+                PID_FILE.unlink()
+            return True, f"Server stopped (PID {pid})"
+
+    # Server didn't stop gracefully, try SIGKILL
+    try:
+        os.kill(pid, signal.SIGKILL)
+        time.sleep(0.5)
+    except ProcessLookupError:
+        pass  # Process already gone
+
+    # Final check
+    if is_server_running():
+        return False, f"Unable to stop server (PID {pid}). Server still responding on port."
+
+    # Clean up PID file
     if PID_FILE.exists():
         PID_FILE.unlink()
+    return True, f"Server forcefully stopped (PID {pid})"
 
 
 def start_server() -> bool:
@@ -206,11 +257,10 @@ def main():
 
     # Handle --stop flag
     if "--stop" in sys.argv:
-        if is_server_running():
-            stop_server()
-            print("Server stopped", file=sys.stderr)
-        else:
-            print("Server not running", file=sys.stderr)
+        success, message = stop_server()
+        print(message, file=sys.stderr)
+        if not success and is_server_running():
+            sys.exit(1)
         return
 
     # Handle --config flag
@@ -227,7 +277,11 @@ def main():
 
     if force and is_server_running():
         print("Stopping existing server...", file=sys.stderr)
-        stop_server()
+        success, message = stop_server()
+        print(f"  {message}", file=sys.stderr)
+        if not success and is_server_running():
+            print("✗ Failed to stop existing server for restart", file=sys.stderr)
+            sys.exit(1)
         time.sleep(0.5)
 
     if is_server_running():
