@@ -92,19 +92,34 @@ def create_mcp_server() -> "FastMCP":
     # Script tools
     @mcp.tool()
     async def dump_files(path: str, glob_filter: Optional[str] = None) -> str:
-        """Dump contents of files in a directory respecting .gitignore."""
+        """Dump contents of files in a directory respecting .gitignore.
+
+        IMPORTANT: Caller must pass an absolute path (e.g., '/home/user/project'),
+        not a relative path like '.' or './subdir'. Use pwd to get the current
+        working directory if needed.
+        """
         from . import scripts
         return await scripts.dump_files(path, glob_filter)
 
     @mcp.tool()
     async def git_tree(path: str = ".") -> str:
-        """Display directory tree respecting .gitignore."""
+        """Display directory tree respecting .gitignore.
+
+        IMPORTANT: Caller must pass an absolute path (e.g., '/home/user/project'),
+        not a relative path like '.' or './subdir'. Use pwd to get the current
+        working directory if needed.
+        """
         from . import scripts
         return await scripts.git_tree(path)
 
     @mcp.tool()
     async def git_tree_depth(path: str) -> str:
-        """List directories with nesting depth information."""
+        """List directories with nesting depth information.
+
+        IMPORTANT: Caller must pass an absolute path (e.g., '/home/user/project'),
+        not a relative path like '.' or './subdir'. Use pwd to get the current
+        working directory if needed.
+        """
         from . import scripts
         return await scripts.git_tree_depth(path)
 
@@ -115,7 +130,7 @@ def create_mcp_server() -> "FastMCP":
         return await scripts.npl_load(resource_type, items, skip)
 
     @mcp.tool()
-    async def web_to_md(url: str, timeout: int = 30) -> dict:
+    async def web_to_md(url: str, timeout: int = 30) -> str:
         """Fetch a web page and return its content as markdown using Jina Reader.
 
         Args:
@@ -123,10 +138,11 @@ def create_mcp_server() -> "FastMCP":
             timeout: Request timeout in seconds (default 30)
 
         Returns:
-            Dict with markdown content, title, and metadata
+            Formatted markdown string with success/failure status and content
         """
         import httpx
         import os
+        import traceback
 
         jina_api_key = os.environ.get("JINA_API_KEY", "")
         jina_url = f"https://r.jina.ai/{url}"
@@ -142,30 +158,47 @@ def create_mcp_server() -> "FastMCP":
 
                 content = response.text
 
-                return {
-                    "success": True,
-                    "url": url,
-                    "content": content,
-                    "content_length": len(content),
-                }
+                return f"""success: true
+url: {url}
+content_length: {len(content)}
+---
+{content}"""
         except httpx.TimeoutException:
-            return {
-                "success": False,
-                "url": url,
-                "error": f"Request timed out after {timeout} seconds",
-            }
+            tb = traceback.format_exc()
+            return f"""success: false
+url: {url}
+---
+# Error
+Request timed out after {timeout} seconds
+
+## Traceback
+```
+{tb}
+```"""
         except httpx.HTTPStatusError as e:
-            return {
-                "success": False,
-                "url": url,
-                "error": f"HTTP {e.response.status_code}: {e.response.text[:500]}",
-            }
+            tb = traceback.format_exc()
+            return f"""success: false
+url: {url}
+---
+# Error
+HTTP {e.response.status_code}: {e.response.text[:500]}
+
+## Traceback
+```
+{tb}
+```"""
         except Exception as e:
-            return {
-                "success": False,
-                "url": url,
-                "error": str(e),
-            }
+            tb = traceback.format_exc()
+            return f"""success: false
+url: {url}
+---
+# Error
+{str(e)}
+
+## Traceback
+```
+{tb}
+```"""
 
     # Artifact tools
     @mcp.tool()

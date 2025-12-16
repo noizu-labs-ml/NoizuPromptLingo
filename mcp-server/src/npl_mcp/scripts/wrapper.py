@@ -6,6 +6,24 @@ from pathlib import Path
 from typing import Optional
 
 
+def _validate_absolute_path(path: str, function_name: str) -> None:
+    """Validate that path is absolute, not relative.
+
+    Args:
+        path: The path to validate
+        function_name: Name of the calling function for error message
+
+    Raises:
+        ValueError: If path starts with '.' (relative path)
+    """
+    if path.startswith("."):
+        raise ValueError(
+            f"{function_name}: Relative paths are not allowed. "
+            f"Got '{path}'. Please pass an absolute path (e.g., '/home/user/project'). "
+            f"Use pwd to get the current working directory."
+        )
+
+
 def _find_script(script_name: str) -> Optional[Path]:
     """Find NPL script in core/scripts directory.
 
@@ -32,16 +50,18 @@ async def dump_files(path: str, glob_filter: Optional[str] = None) -> str:
     """Dump contents of files in a directory respecting .gitignore.
 
     Args:
-        path: Directory path to dump files from
+        path: Directory path to dump files from (must be absolute)
         glob_filter: Optional glob pattern to filter files (e.g., "*.md")
 
     Returns:
         Concatenated file contents with headers
 
     Raises:
+        ValueError: If path is relative (starts with '.')
         FileNotFoundError: If dump-files script not found
         subprocess.CalledProcessError: If script execution fails
     """
+    _validate_absolute_path(path, "dump_files")
     script_path = _find_script("dump-files")
     if not script_path:
         raise FileNotFoundError("dump-files script not found in core/scripts")
@@ -64,15 +84,17 @@ async def git_tree(path: str = ".") -> str:
     """Display directory tree respecting .gitignore.
 
     Args:
-        path: Directory path to show tree for (default: current directory)
+        path: Directory path to show tree for (must be absolute)
 
     Returns:
         Directory tree output
 
     Raises:
+        ValueError: If path is relative (starts with '.')
         FileNotFoundError: If git-tree script not found
         subprocess.CalledProcessError: If script execution fails
     """
+    _validate_absolute_path(path, "git_tree")
     script_path = _find_script("git-tree")
     if not script_path:
         raise FileNotFoundError("git-tree script not found in core/scripts")
@@ -91,15 +113,17 @@ async def git_tree_depth(path: str) -> str:
     """List directories with nesting depth information.
 
     Args:
-        path: Directory path to analyze
+        path: Directory path to analyze (must be absolute)
 
     Returns:
         Directory listing with depth numbers
 
     Raises:
+        ValueError: If path is relative (starts with '.')
         FileNotFoundError: If git-tree-depth script not found
         subprocess.CalledProcessError: If script execution fails
     """
+    _validate_absolute_path(path, "git_tree_depth")
     script_path = _find_script("git-tree-depth")
     if not script_path:
         raise FileNotFoundError("git-tree-depth script not found in core/scripts")
