@@ -56,6 +56,34 @@ def get_server_pid() -> int | None:
     return None
 
 
+def find_server_process() -> list[tuple[int, str]]:
+    """Search for npl_mcp.unified processes using ps aux.
+
+    Returns:
+        List of (pid, full_line) tuples for matching processes
+    """
+    try:
+        result = subprocess.run(
+            ["ps", "aux"],
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        matches = []
+        for line in result.stdout.splitlines():
+            if "-m npl_mcp.unified" in line:
+                parts = line.split()
+                if len(parts) >= 2:
+                    try:
+                        pid = int(parts[1])
+                        matches.append((pid, line))
+                    except ValueError:
+                        pass
+        return matches
+    except (subprocess.TimeoutExpired, OSError):
+        return []
+
+
 def stop_server() -> tuple[bool, str]:
     """Stop the running server.
 
@@ -68,9 +96,35 @@ def stop_server() -> tuple[bool, str]:
 
     # Check if we have a PID to work with
     if not pid:
-        # No PID file, but check if server is actually running
-        if is_server_running():
-            return False, "Server is running but no PID file found. Unable to stop."
+        # No PID file, search for process via ps aux
+        processes = find_server_process()
+        if processes:
+            print("No PID file found, but found npl_mcp.unified process(es):", file=sys.stderr)
+            for proc_pid, proc_line in processes:
+                print(f"\n  {proc_line}", file=sys.stderr)
+                response = input(f"\nKill process {proc_pid}? [y/N]: ").strip().lower()
+                if response in ('y', 'yes'):
+                    try:
+                        os.kill(proc_pid, signal.SIGTERM)
+                        time.sleep(0.5)
+                        # Check if it's gone
+                        try:
+                            os.kill(proc_pid, 0)
+                            # Still alive, try SIGKILL
+                            os.kill(proc_pid, signal.SIGKILL)
+                            time.sleep(0.3)
+                        except ProcessLookupError:
+                            pass  # Process terminated
+                        print(f"  Killed process {proc_pid}", file=sys.stderr)
+                    except ProcessLookupError:
+                        print(f"  Process {proc_pid} already gone", file=sys.stderr)
+                    except PermissionError:
+                        print(f"  Permission denied killing process {proc_pid}", file=sys.stderr)
+                else:
+                    print(f"  Skipped process {proc_pid}", file=sys.stderr)
+            return True, "Finished processing orphan processes"
+        elif is_server_running():
+            return False, "Server is running but no PID file found and process not found via ps. Unable to stop."
         return False, "Server not running (no PID file)"
 
     # Try to verify the process exists before killing
