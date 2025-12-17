@@ -168,4 +168,84 @@ async def run_migrations(conn: aiosqlite.Connection) -> List[str]:
         await record_migration(conn, 4, "Add taskers table")
         applied.append("Add taskers table")
 
+    # Migration 5: Add task_queues and related tables
+    if current_version < 5:
+        # Task queues - each queue has an associated chat room for Q&A
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS task_queues (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE,
+                description TEXT,
+                chat_room_id INTEGER REFERENCES chat_rooms(id),
+                session_id TEXT REFERENCES sessions(id),
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+                status TEXT DEFAULT 'active'
+            )
+        """)
+        await conn.execute("CREATE INDEX IF NOT EXISTS idx_task_queues_status ON task_queues(status)")
+        await conn.execute("CREATE INDEX IF NOT EXISTS idx_task_queues_session ON task_queues(session_id)")
+
+        # Tasks within queues
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS tasks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                queue_id INTEGER NOT NULL REFERENCES task_queues(id),
+                title TEXT NOT NULL,
+                description TEXT,
+                acceptance_criteria TEXT,
+                priority INTEGER DEFAULT 0,
+                deadline TEXT,
+                complexity INTEGER,
+                complexity_notes TEXT,
+                status TEXT DEFAULT 'pending',
+                created_by TEXT,
+                assigned_to TEXT,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+            )
+        """)
+        await conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_queue ON tasks(queue_id)")
+        await conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status)")
+        await conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_priority ON tasks(priority DESC)")
+        await conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_deadline ON tasks(deadline)")
+        await conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_assigned ON tasks(assigned_to)")
+
+        # Task events for activity feed
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS task_events (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                task_id INTEGER NOT NULL REFERENCES tasks(id),
+                queue_id INTEGER NOT NULL REFERENCES task_queues(id),
+                event_type TEXT NOT NULL,
+                persona TEXT,
+                data TEXT NOT NULL,
+                created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            )
+        """)
+        await conn.execute("CREATE INDEX IF NOT EXISTS idx_task_events_task ON task_events(task_id)")
+        await conn.execute("CREATE INDEX IF NOT EXISTS idx_task_events_queue ON task_events(queue_id)")
+        await conn.execute("CREATE INDEX IF NOT EXISTS idx_task_events_created ON task_events(created_at)")
+
+        # Task artifacts - linking artifacts/git branches to tasks
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS task_artifacts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                task_id INTEGER NOT NULL REFERENCES tasks(id),
+                artifact_id INTEGER REFERENCES artifacts(id),
+                artifact_type TEXT NOT NULL,
+                git_branch TEXT,
+                description TEXT,
+                created_by TEXT,
+                created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            )
+        """)
+        await conn.execute("CREATE INDEX IF NOT EXISTS idx_task_artifacts_task ON task_artifacts(task_id)")
+        await conn.execute("CREATE INDEX IF NOT EXISTS idx_task_artifacts_artifact ON task_artifacts(artifact_id)")
+
+        await conn.commit()
+
+        await record_migration(conn, 5, "Add task queues and related tables")
+        applied.append("Add task queues and related tables")
+
     return applied
