@@ -13,6 +13,7 @@ dependencies = [
     "uvicorn>=0.24.0",
     "httpx>=0.25.0",
     "playwright>=1.40.0",
+    "sse-starlette>=1.6.0",
 ]
 
 [project.optional-dependencies]
