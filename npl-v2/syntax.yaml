@@ -1,0 +1,990 @@
+# NPL Syntax Elements Registry
+# Core syntax elements and conventions for the Noizu Prompt Lingua framework
+
+version: "1.0"
+category: "syntax"
+description: "Core syntax elements for prompt construction"
+
+header:
+  title: "NPL Syntax Overview"
+  purpose: |
+    Core syntax elements for prompt construction. These elements form the foundation
+    of NPL and are used across all prompt types to structure input, mark output
+    locations, emphasize important terms, and control generation.
+  usage: |
+    Use syntax elements to create clear, unambiguous prompts. Combine elements as
+    needed: placeholders for variables, in-fill for generation, qualifiers for
+    constraints.
+
+elements:
+  # ============================================================================
+  # HIGHLIGHT
+  # ============================================================================
+  - name: "highlight"
+    code: "HL"
+    labels: ["core", "common", "emphasis", "basic", "minimal", "docs"]
+    type: "core"
+
+    metadata:
+      brief: "Emphasize key terms"
+      description: "Emphasize key concepts and important terms for clarity using inline markers"
+      purpose: "Draw attention to important terms in prompts and documentation"
+      usage: "For technical terms, identifiers, concepts requiring emphasis"
+      complexity: 1
+      scope: "inline"
+
+    syntax:
+      template: "`<term>`"
+      template_notes: "Wrap term in backticks to emphasize"
+
+    detection:
+      pre_filter: ["`"]
+      pattern: "`([^`]+)`"
+      type: "regex"
+      groups: ["term"]
+
+    examples:
+      primary:
+        - name: "technical-identifier"
+          labels: ["technical", "api"]
+          brief: "Technical identifier highlight"
+          description: "Highlighting technical identifiers like headers or variables"
+          input: "Ensure the `authentication` header is properly formatted."
+          explanation: "Backticks emphasize 'authentication' as a key technical term requiring attention"
+
+  # ============================================================================
+  # ATTENTION
+  # ============================================================================
+  - name: "attention"
+    code: "ATN"
+    labels: ["core", "critical", "marker", "emoji", "basic", "minimal"]
+    type: "core"
+
+    metadata:
+      brief: "Critical instruction marker"
+      description: "Mark critical instructions requiring special focus using target emoji"
+      purpose: "Highlight instructions that must be followed without fail"
+      usage: "For critical requirements, security rules, validation steps. Use sparingly - overuse reduces effectiveness."
+      complexity: 1
+      scope: "line-block"
+
+    syntax:
+      template: "🎯 <instruction>"
+      template_notes: "Target emoji followed by optional space then instruction text. Can combine with qualifiers."
+
+    detection:
+      pre_filter: ["🎯"]
+      pattern: "🎯\\s*(.+)"
+      type: "regex"
+      groups: ["instruction"]
+
+    examples:
+      primary:
+        - name: "security-requirement"
+          labels: ["security", "validation"]
+          brief: "Security instruction"
+          description: "Critical security validation instruction"
+          input: "🎯 Sanitize all SQL queries to prevent injection attacks."
+          explanation: "Target emoji marks this as a critical security requirement that must be followed"
+      supplemental:
+        - name: "data-integrity"
+          labels: ["data", "transaction"]
+          brief: "Data integrity"
+          description: "Critical data consistency requirement"
+          input: "🎯 Verify data consistency before committing transactions."
+          explanation: "Ensures data integrity in critical operations"
+        - name: "error-handling"
+          labels: ["errors", "edge-cases"]
+          brief: "Error handling"
+          description: "Comprehensive error handling requirement"
+          input: "🎯 Handle edge cases gracefully - null values, empty arrays, network timeouts."
+          explanation: "Emphasizes need for defensive programming"
+        - name: "with-qualifier"
+          labels: ["advanced", "qualifier"]
+          brief: "Attention with qualifier"
+          description: "Combining attention marker with qualifiers"
+          input: "🎯 Validate user permissions |strict mode, log failures| before data access."
+          explanation: "Qualifiers can be added to attention markers for additional context"
+
+  # ============================================================================
+  # PLACEHOLDER
+  # ============================================================================
+  - name: "placeholder"
+    code: "PH"
+    labels: ["core", "common", "template", "variable", "basic", "minimal"]
+    type: "core"
+
+    metadata:
+      brief: "Input/output placeholders"
+      description: "Indicate expected input or output locations using bracket notation"
+      purpose: "Mark locations where specific content will be inserted or retrieved"
+      usage: "For variables, field names, dynamic content insertion points"
+      complexity: 2
+      scope: "inline"
+
+    syntax:
+      template: |
+        <term>              - Angular bracket placeholder
+        {term}              - Curly bracket placeholder
+        <term|qualifier>    - Qualified angular placeholder
+        {term|qualifier}    - Qualified curly placeholder
+        ⟪term⟫              - Directive placeholder for content injection
+      template_notes: "Qualifier uses pipe (|). Supports nested properties like {user.profile.name}"
+      features:
+        - name: "with-qualifier"
+          template: "{term|qualifier}"
+          template_notes: "Add formatting, regional, or processing instructions"
+        - name: "with-format"
+          template: "<term|format: specification>"
+          template_notes: "Specify exact output format"
+
+    detection:
+      pre_filter: ["<", "{", "⟪"]
+      pattern: "(?:<([^>|]+)(?:\\|([^>]+))?>|\\{([^}|]+)(?:\\|([^}]+))?\\}|⟪([^⟫]+)⟫)"
+      type: "regex"
+      groups: ["angular_term", "angular_qualifier", "curly_term", "curly_qualifier", "directive"]
+
+    examples:
+      primary:
+        - name: "basic-placeholders"
+          labels: ["basic", "composite"]
+          brief: "Multiple placeholder styles"
+          description: "Shows different placeholder formats in context"
+          input: |
+            ````example
+            ```yaml
+            - role: system
+              message: |
+                Hello {user.name}, your order <order.id> is <order.status>.
+                Process: ⟪user credentials⟫ → ⟪authentication token⟫
+            - role: assistant
+              message: |
+                Hello Alice, your order ORD-12345 is SHIPPED.
+                Process: alice@example.com / ******* → eyJhbGci...
+            ```
+            ````
+          explanation: "Curly for input vars, angular for output, directive brackets for flow diagrams"
+        - name: "qualified-placeholder"
+          labels: ["qualified", "format"]
+          brief: "Placeholder with formatting"
+          description: "Placeholder with specific format qualifier"
+          input: |
+            ````example
+            ```yaml
+            - role: system
+              message: "Generate greeting for <user.name|format: last name, m.i, first name>"
+            - role: assistant
+              message: "Generate greeting for Smith, J. Alice"
+            ```
+            ````
+          explanation: "Format qualifier specifies exact name display order"
+      supplemental:
+        - name: "nested-placeholder"
+          labels: ["advanced", "nested"]
+          brief: "Nested property access"
+          description: "Accessing nested object properties"
+          input: "{user.profile.{selected_field}}"
+          explanation: "Dynamic property access within placeholder"
+        - name: "conditional-placeholder"
+          labels: ["advanced", "conditional"]
+          brief: "Conditional placeholder"
+          description: "Placeholder with conditional logic"
+          input: "<greeting|if morning: \"Good morning\", else: \"Hello\">"
+          explanation: "Conditional content based on context"
+        - name: "list-placeholder"
+          labels: ["advanced", "list"]
+          brief: "List placeholder"
+          description: "Placeholder for list generation"
+          input: "{shopping_list|items: 5-10, format: bullet points}"
+          explanation: "Generate list with count and format constraints"
+
+  # ============================================================================
+  # IN-FILL
+  # ============================================================================
+  - name: "in-fill"
+    code: "FIL"
+    labels: ["core", "common", "generation", "template", "basic", "minimal"]
+    type: "core"
+
+    metadata:
+      brief: "Content generation markers"
+      description: "Mark areas for dynamic content generation using bracket notation with optional size and qualifier"
+      purpose: "Template creation and content scaffolding for AI-generated content"
+      usage: "Where AI should generate context-appropriate content based on surrounding context"
+      complexity: 3
+      scope: "inline"
+
+    syntax:
+      template: "[...]"
+      template_notes: "Basic fill-in marker for contextual content generation"
+      features:
+        - name: "with-size"
+          template: "[...<size>]"
+          template_notes: |
+            Size formats:
+            - Simple count: [...3w] - exactly 3 words
+            - Range: [...3-5w] - between 3 and 5 words
+            - Minimum: [...3+w] - 3 or more words
+            - Maximum: [...3-w] - up to 3 words
+            - Complex: [...3-9+r] - 3 to 9 or more rows
+            Units: p=paragraphs, pg=pages, l=lines, s=sentences, w=words, i=items, r=rows, t=tokens
+        - name: "with-qualifier"
+          template: "[...|<qualifier>]"
+          template_notes: "Qualifier provides generation guidance. Can contain any text including brackets."
+        - name: "with-size-and-qualifier"
+          template: "[...<size>|<qualifier>]"
+          template_notes: "Combines size constraint with qualifier guidance"
+        - name: "alternative-syntax"
+          template: "[... <context hints> ...]"
+          template_notes: "Inline context hints wrapped in ellipsis"
+
+    detection:
+      pre_filter: ["[..."]
+      pattern: "\\[\\.{3}(?:(?P<size>[1-9][0-9]*(?:-[1-9][0-9]*)?\\+?(?:p|pg|l|s|w|i|r|t)))?(?:\\|(?P<qualifier>[^\\]]+))?\\]"
+      type: "regex"
+      groups: ["size", "qualifier"]
+      notes: "Qualifier can contain anything including brackets - may need LLM assistance for complex cases"
+
+    examples:
+      primary:
+        - name: "basic-generation"
+          labels: ["basic", "simple"]
+          brief: "Simple content marker"
+          description: "Basic fill-in marker for contextual content generation"
+          input: |
+            ````example
+            ```yaml
+            - role: system
+              message: "The event will feature several keynote speakers including [...]."
+            - role: assistant
+              message: "The event will feature several keynote speakers including Dr. Sarah Chen, Marcus Webb, and Prof. Lisa Park."
+            ```
+            ````
+          explanation: "AI generates contextually appropriate content to replace the [...] marker"
+        - name: "complex-with-size-and-qualifier"
+          labels: ["advanced", "size", "qualifier", "table"]
+          brief: "Size and qualifier with table output"
+          description: "Fill-in with row count and table structure qualifier"
+          input: |
+            ````example
+            ```yaml
+            - role: system
+              message: "[...1-4r|a table with headings [breed, alt breed names, factoid]]"
+            - role: assistant
+              message: |
+                | breed | alt breed names | factoid |
+                |-------|-----------------|---------|
+                | Labrador Retriever | Lab, Labrador | Most popular breed in the US for 31 years |
+                | German Shepherd | GSD, Alsatian | Originally bred for herding sheep |
+            ```
+            ````
+          explanation: "Size indicator (1-4r) controls row count, qualifier specifies table structure"
+      supplemental:
+        - name: "structural-fill-in"
+          labels: ["structural", "document"]
+          brief: "Document structure fill-in"
+          description: "Fill-in within document structure"
+          input: |
+            ## Meeting Agenda
+            1. Opening remarks
+            2. [...|main discussion topics]
+            3. Action items
+            4. Closing
+          explanation: "Fill-in preserves document structure while generating relevant content"
+        - name: "technical-fill-in"
+          labels: ["technical", "api"]
+          brief: "Technical documentation fill-in"
+          description: "Fill-in for technical content"
+          input: "The API endpoint accepts the following parameters: [...|required and optional parameters with types]."
+          explanation: "Qualifier guides generation of technical documentation"
+        - name: "multiple-fill-ins"
+          labels: ["multiple", "timeline"]
+          brief: "Multiple fill-ins in sequence"
+          description: "Multiple fill-in areas with different qualifiers"
+          input: |
+            The project timeline includes:
+            - Phase 1: Planning [...|2 weeks]
+            - Phase 2: Development [...|6 weeks]
+            - Phase 3: Testing [...|2 weeks]
+          explanation: "Each fill-in generates content appropriate to its phase and duration"
+        - switch:
+            - case: "with-qualifier"
+              name: "qualifier-only"
+              labels: ["qualifier"]
+              brief: "Qualifier-guided generation"
+              description: "Fill-in with explicit qualifier guiding content type"
+              input: |
+                ````example
+                ```yaml
+                - role: system
+                  message: "The research methodology should cover [...|standard approaches for qualitative studies]."
+                - role: assistant
+                  message: "The research methodology should cover interviews, focus groups, ethnographic observation, and thematic analysis."
+                ```
+                ````
+              explanation: "Qualifier guides the type of content generated"
+            - case: "with-size"
+              name: "size-only"
+              labels: ["size"]
+              brief: "Size-controlled generation"
+              description: "Fill-in with size indicator controlling output length"
+              input: |
+                ````example
+                ```yaml
+                - role: system
+                  message: "Write a product description [...2-3p] for the new smartphone."
+                - role: assistant
+                  message: |
+                    The new XPhone Pro represents the pinnacle of mobile technology. Featuring a stunning 6.7-inch OLED display with 120Hz refresh rate, every interaction feels fluid and responsive.
+
+                    Under the hood, the latest A18 processor delivers desktop-class performance while maintaining all-day battery life. The triple-camera system captures professional-quality photos in any lighting condition.
+
+                    With 5G connectivity and seamless integration across your devices, the XPhone Pro keeps you connected to what matters most.
+                ```
+                ````
+              explanation: "Size indicator (2-3p) controls output to 2-3 paragraphs"
+
+    extended:
+      size_indicators:
+        p: "paragraphs"
+        pg: "pages"
+        l: "lines"
+        s: "sentences"
+        w: "words"
+        i: "items"
+        r: "rows"
+        t: "tokens"
+      size_formats:
+        simple: "<count><unit> - exactly N units"
+        range: "<min>-<max><unit> - between min and max"
+        minimum: "<count>+<unit> - N or more"
+        maximum: "<count>-<unit> - up to N"
+
+  # ============================================================================
+  # QUALIFIER
+  # ============================================================================
+  - name: "qualifier"
+    code: "QL"
+    labels: ["core", "modifier", "pipe", "basic"]
+    type: "modifier"
+
+    metadata:
+      brief: "Pipe qualifier modifier"
+      description: "Extend syntax with additional details, conditions, or modifications using pipe delimiter"
+      purpose: "Provide specific guidance for content generation or formatting"
+      usage: "To constrain, guide, or specify output format. Used with in-fill, placeholder, and other elements."
+      complexity: 2
+      scope: "modifier"
+      requires: ["in-fill", "placeholder"]
+
+    syntax:
+      template: "<element>|<qualifier>"
+      template_notes: "Pipe separates element from its qualifier. Qualifier can contain any text."
+      features:
+        - name: "format-qualifier"
+          template: "<element>|format: <specification>"
+          template_notes: "Formatting instructions for output"
+        - name: "scope-qualifier"
+          template: "<element>|region: <area>, timeframe: <period>"
+          template_notes: "Geographic, temporal, or audience constraints"
+        - name: "chained-qualifiers"
+          template: "<element>|primary: <x>, secondary: <y>, format: <z>"
+          template_notes: "Multiple qualifiers separated by commas"
+
+    detection:
+      notes: "No standalone detection - qualifier is part of other elements (in-fill, placeholder)"
+
+    examples:
+      primary:
+        - name: "regional-constraint"
+          labels: ["constraint", "regional"]
+          brief: "Regional qualifier"
+          description: "Placeholder with regional constraint"
+          input: |
+            ````example
+            ```yaml
+            - role: system
+              message: "Available options: {payment_methods|common for usa and india}"
+            - role: assistant
+              message: "Available options: Credit Card, PayPal, UPI, Paytm, Apple Pay"
+            ```
+            ````
+          explanation: "Qualifier constrains output to payment methods common in specified regions"
+        - name: "format-qualifier"
+          labels: ["format", "name"]
+          brief: "Format qualifier"
+          description: "Placeholder with format specification"
+          input: |
+            ````example
+            ```yaml
+            - role: system
+              message: "User: <user.name|format: last name, m.i, first name>"
+            - role: assistant
+              message: "User: Smith, J. Alice"
+            ```
+            ````
+          explanation: "Format qualifier specifies exact output formatting"
+      supplemental:
+        - name: "chained-qualifiers"
+          labels: ["advanced", "chained"]
+          brief: "Chained qualifiers"
+          description: "Multiple qualifiers in single element"
+          input: "<content|primary: main topic, secondary: supporting details, format: structured outline>"
+          explanation: "Multiple qualifiers separated by commas for complex requirements"
+        - name: "conditional-qualifier"
+          labels: ["advanced", "conditional"]
+          brief: "Conditional qualifier"
+          description: "Qualifier with conditional logic"
+          input: "<greeting|if morning: formal, else: casual>"
+          explanation: "Conditional behavior based on context"
+        - name: "reference-qualifier"
+          labels: ["advanced", "reference"]
+          brief: "Reference qualifier"
+          description: "Qualifier with data source reference"
+          input: "<data|source: user_preferences, fallback: default_settings>"
+          explanation: "Specifies data source with fallback"
+
+    extended:
+      qualifier_types:
+        format: "format: <specification> - Formatting instructions"
+        style: "style: <requirements> - Style guidelines"
+        structure: "structure: <pattern> - Structural requirements"
+        topic: "topic: <focus> - Content focus area"
+        tone: "tone: <style> - Communication tone"
+        level: "level: <complexity> - Complexity level"
+        condition: "condition: <requirement> - Conditional processing"
+        constraint: "constraint: <limitation> - Processing constraints"
+        region: "region: <area> - Geographic scope"
+        timeframe: "timeframe: <period> - Temporal constraints"
+        audience: "audience: <target> - Target audience"
+
+  # ============================================================================
+  # AGENT-ALIAS
+  # ============================================================================
+  - name: "agent-alias"
+    code: "ALIAS"
+    labels: ["agent", "alias", "emoji", "agents"]
+    type: "core"
+
+    metadata:
+      brief: "Agent alias declaration"
+      description: "Declare alternative names for agents or services using raising hand emoji"
+      purpose: "Provide shorthand references for agents or services"
+      usage: "When referring to agents with shorter names. Aliases must be unique within context."
+      complexity: 1
+      scope: "line"
+
+    syntax:
+      template: "🙋 <agent-name> <alias> [additional-aliases...]"
+      template_notes: "First name is the agent, followed by one or more aliases separated by spaces or commas. Aliases are case-sensitive."
+
+    detection:
+      pre_filter: ["🙋"]
+      pattern: "🙋\\s*(\\S+)\\s+([\\w,\\s]+)"
+      type: "regex"
+      groups: ["agent_name", "aliases"]
+
+    examples:
+      primary:
+        - name: "single-alias"
+          labels: ["basic", "agent"]
+          brief: "Agent with single alias"
+          description: "Declare agent with single alias"
+          input: "🙋 spreadsheet-helper sph"
+          explanation: "Agent 'spreadsheet-helper' can now be referenced as @sph in subsequent messages"
+        - name: "multiple-aliases"
+          labels: ["advanced", "multi"]
+          brief: "Agent with multiple aliases"
+          description: "Declare agent with multiple aliases"
+          input: "🙋 customer-support-bot support cs-bot help"
+          explanation: "Agent can be referenced as @support, @cs-bot, or @help - intuitive aliases for different contexts"
+
+  # ============================================================================
+  # VALIDATION
+  # ============================================================================
+  - name: "validation"
+    code: "VAL"
+    labels: ["example", "positive", "negative", "checkmark", "basic", "docs"]
+    type: "core"
+
+    metadata:
+      brief: "Validation example markers"
+      description: "Provide clear behavioral demonstrations using checkmark or cross emoji"
+      purpose: "Show correct and incorrect examples side by side"
+      usage: "For demonstrating expected vs unexpected behavior"
+      complexity: 1
+      scope: "line"
+
+    syntax:
+      template: |
+        ✔ <positive example>
+        ✗ <negative example>
+      template_notes: "Checkmark (✔) for correct behavior, ballot X (✗) for incorrect"
+
+    detection:
+      pre_filter: ["✔", "✗"]
+      pattern: "([✔✗])\\s+(.+)"
+      type: "regex"
+      groups: ["type", "example"]
+
+    examples:
+      primary:
+        - name: "positive-negative-pair"
+          labels: ["pair", "contrast"]
+          brief: "Contrasting examples"
+          description: "Shows correct and incorrect behavior side by side"
+          input: |
+            ✔ The function returns a valid response for all tested inputs.
+            ✗ The function throws unhandled exceptions for edge cases.
+          explanation: "Visual markers make correct (✔) vs incorrect (✗) behavior immediately apparent"
+
+  # ============================================================================
+  # INFERENCE (ELLIPSIS)
+  # ============================================================================
+  - name: "inference"
+    code: "INF"
+    labels: ["generation", "ellipsis", "continuation", "basic"]
+    type: "core"
+
+    metadata:
+      brief: "Ellipsis inference marker"
+      description: "Indicate additional similar items should be generated using ellipsis or etc."
+      purpose: "Prompt generation of items matching established pattern"
+      usage: "When listing examples that should continue in pattern. Supports categorical, sequential, and hierarchical inference."
+      complexity: 1
+      scope: "inline"
+
+    syntax:
+      template: |
+        <item1>, <item2>, ...
+        <item1>, <item2>, etc.
+        <item1>, <item2>, ..
+      template_notes: "Ellipsis (...), etc., or short ellipsis (..) signals pattern continuation"
+
+    detection:
+      pre_filter: ["...", "etc.", ".."]
+      pattern: "[^\\.]+(\\.{2,4}|,\\s*etc\\.)[^\\.]+"
+      type: "regex"
+
+    examples:
+      primary:
+        - name: "categorical-inference"
+          labels: ["category", "list"]
+          brief: "Category continuation"
+          description: "Continue list within a category"
+          input: |
+            ````example
+            ```yaml
+            - role: system
+              message: "Citrus fruits: oranges, lemons, ..."
+            - role: assistant
+              message: "Citrus fruits: oranges, lemons, limes, grapefruits, tangerines, pomelos"
+            ```
+            ````
+          explanation: "Ellipsis prompts generation of additional items in the same category"
+        - name: "sequential-inference"
+          labels: ["sequence", "pattern"]
+          brief: "Sequential pattern"
+          description: "Continue a sequential pattern"
+          input: |
+            ````example
+            ```yaml
+            - role: system
+              message: "Sequential numbers: 2, 4, 6, 8, ..."
+            - role: assistant
+              message: "Sequential numbers: 2, 4, 6, 8, 10, 12, 14, 16"
+            ```
+            ````
+          explanation: "Agent recognizes and continues the even number pattern"
+      supplemental:
+        - name: "style-continuation"
+          labels: ["style", "creative"]
+          brief: "Style/concept continuation"
+          description: "Continue with similar stylistic elements"
+          input: |
+            ````example
+            ```yaml
+            - role: system
+              message: "Write a poem using anachronistic phrases like fortnight, henceforth, ..."
+            - role: assistant
+              message: |
+                Upon this fortnight's end I stand,
+                Henceforth my heart doth understand,
+                Wherefore the moon in yonder sky,
+                Doth make the stars themselves comply.
+            ```
+            ````
+          explanation: "Ellipsis signals to continue using similar archaic word choices throughout"
+        - name: "hierarchical-inference"
+          labels: ["hierarchy", "types"]
+          brief: "Hierarchical inference"
+          description: "Continue with items at similar hierarchy level"
+          input: "Text editors: Notepad, VS Code, ..."
+          explanation: "Generates items at same level: Sublime Text, Atom, Vim, Emacs"
+
+  # ============================================================================
+  # LITERAL-OUTPUT
+  # ============================================================================
+  - name: "literal-output"
+    code: "LIT"
+    labels: ["exact", "verbatim", "output"]
+    type: "core"
+
+    metadata:
+      brief: "Literal text output"
+      description: "Ensure specified text is output exactly as provided without modification, interpretation, or formatting changes"
+      purpose: "Force exact output without modification or interpretation"
+      usage: "For quotes, code strings, legal text, regex patterns, exact phrases that must not be altered"
+      complexity: 2
+      scope: "inline"
+
+    syntax:
+      template: "{~l|<exact text>}"
+      template_notes: |
+        Text inside is output verbatim.
+        - Use \\} to include literal closing brace
+        - Preserves all whitespace, special characters, line breaks
+        - No markdown/HTML interpretation within literal section
+        - Variables outside literal section are still processed
+
+    detection:
+      pre_filter: ["{~l|"]
+      pattern: "\\{~l\\|((?:[^}]|\\\\})*)\\}"
+      type: "regex"
+      groups: ["text"]
+
+    examples:
+      primary:
+        - name: "quote-with-special-chars"
+          labels: ["quote", "special-chars"]
+          brief: "Literal with special characters"
+          description: "Preserve text with brackets and braces"
+          input: |
+            ````example
+            ```yaml
+            - role: system
+              message: "Output: {~l|To be, <or> \\{not\\} [to] be [...]}, how are you {user.handle}."
+            - role: assistant
+              message: "Output: To be, <or> {not} [to] be [...], how are you Andy5000."
+            ```
+            ````
+          explanation: "Literal section preserved exactly including brackets; escaped braces become literal; {user.handle} outside literal is substituted"
+      supplemental:
+        - name: "code-command"
+          labels: ["code", "command"]
+          brief: "Command preservation"
+          description: "Preserve exact command syntax"
+          input: "The exact command is `{~l|sudo apt-get update && sudo apt-get upgrade}`."
+          explanation: "Command syntax preserved without reformatting"
+        - name: "regex-pattern"
+          labels: ["regex", "technical"]
+          brief: "Regex pattern"
+          description: "Preserve regex special characters"
+          input: "The regex pattern is `{~l|^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$}`."
+          explanation: "Regex characters preserved without interpretation"
+        - name: "multiline-literal"
+          labels: ["multiline", "format"]
+          brief: "Multi-line literal"
+          description: "Preserve exact line breaks and formatting"
+          input: |
+            The error message should display:
+            `{~l|Error 404: Resource not found.
+            Please check the URL and try again.
+            Contact support if the problem persists.}`
+          explanation: "Line breaks and formatting preserved exactly"
+        - name: "legal-text"
+          labels: ["legal", "formal"]
+          brief: "Legal text"
+          description: "Preserve exact legal language"
+          input: "The contract clause states: `{~l|Party A shall be liable for any damages exceeding $10,000.00 USD}`."
+          explanation: "Legal language and formatting preserved exactly"
+
+  # ============================================================================
+  # OMISSION
+  # ============================================================================
+  - name: "omission"
+    code: "OMT"
+    labels: ["omission", "placeholder", "visual", "docs"]
+    type: "core"
+
+    metadata:
+      brief: "Intentional omission marker"
+      description: "Content intentionally left out for brevity using underscore brackets, optionally with qualifier"
+      purpose: "Show where content exists but is omitted for space"
+      usage: "When showing structure without full content. Different from [...] which generates content."
+      complexity: 1
+      scope: "inline"
+
+    syntax:
+      template: |
+        [___]
+        [___|<explanation>]
+      template_notes: "Triple underscore indicates omission. Optional qualifier explains what was omitted. Does NOT generate content - just marks omission."
+
+    detection:
+      pre_filter: ["[___"]
+      pattern: "\\[___(?:\\|([^\\]]+))?\\]"
+      type: "regex"
+      groups: ["qualifier"]
+
+    examples:
+      primary:
+        - name: "omission-with-qualifier"
+          labels: ["structure", "explanation"]
+          brief: "Qualified omission"
+          description: "Show omitted content with explanation"
+          input: |
+            Good morning! [...|friendly greeting]
+            [___|today's weather forecast and news sections]
+            Have a great day!
+          explanation: "[...] generates content while [___] marks where existing content is omitted for brevity"
+
+  # ============================================================================
+  # DIRECT-MESSAGE
+  # ============================================================================
+  - name: "direct-message"
+    code: "DM"
+    labels: ["routing", "agent", "atsign", "agents"]
+    type: "core"
+
+    metadata:
+      brief: "Agent message routing"
+      description: "Route messages to specific agents for action using at sign notation"
+      purpose: "Direct instructions to specific agents or subsystems"
+      usage: "When tasking specific agents with actions in multi-agent workflows"
+      complexity: 2
+      scope: "line"
+
+    syntax:
+      template: |
+        @{<agent>} <instruction>
+        @<agent> <instruction>
+      template_notes: "At-sign with optional curly brackets containing agent name, followed by instruction"
+
+    detection:
+      pre_filter: ["@{", "@"]
+      pattern: "@\\{?([^}\\s]+)\\}?\\s+(.+)"
+      type: "regex"
+      groups: ["agent", "instruction"]
+
+    examples:
+      primary:
+        - name: "single-agent-task"
+          labels: ["routing", "instruction"]
+          brief: "Direct to single agent"
+          description: "Route task to specific agent"
+          input: |
+            ````example
+            ```yaml
+            - role: system
+              message: "@{search_agent} find the nearest coffee shop within 1 mile."
+            - role: assistant
+              message: "Found 3 coffee shops within 1 mile: Starbucks (0.2mi), Blue Bottle (0.5mi), Peet's (0.8mi)"
+            ```
+            ````
+          explanation: "At-curly syntax routes message to search_agent which processes and returns results"
+        - name: "multi-agent-workflow"
+          labels: ["workflow", "multi-agent"]
+          brief: "Multi-agent workflow"
+          description: "Coordinated multi-agent task flow"
+          input: |
+            @data_collector gather user preferences
+            @analyzer process the collected data
+            @recommender suggest products based on analysis
+            @formatter present recommendations in table format
+          explanation: "Sequential delegation across specialized agents in a workflow"
+
+  # ============================================================================
+  # MATH-AND-LOGIC
+  # ============================================================================
+  - name: "math-and-logic"
+    code: "MATH"
+    labels: ["math", "logic", "conditional", "operators", "latex", "technical"]
+    type: "core"
+
+    metadata:
+      brief: "Mathematical and logical expressions"
+      description: "Mathematical operations, conditional logic, set operations, and LaTeX notation for formal expressions"
+      purpose: "Express logical conditions, mathematical operations, set operations, formal reasoning"
+      usage: "For conditional logic, calculations, set operations, formal reasoning, scientific notation"
+      complexity: 4
+      scope: "expression"
+
+    syntax:
+      template: |
+        Conditionals:
+          if (<condition>) { <action> } else { <alternative> }
+
+        Math operators (Unicode):
+          ∑(<set>) - Summation
+          ∏(<set>) - Product
+          ∫(<expression>) - Integral
+          ∂ - Partial derivative
+          ∇ - Gradient/nabla
+          √ - Square root
+          ∞ - Infinity
+
+        Set operations:
+          A ∪ B - Union
+          A ∩ B - Intersection
+          A ∖ B - Set difference
+          A ⊂ B - Subset
+          x ∈ A - Element of
+
+        Logic operators:
+          ∧ - And
+          ∨ - Or
+          ¬ - Not
+          → - Implies
+          ↔ - If and only if
+          ∀ - For all
+          ∃ - Exists
+
+        Comparisons:
+          ==, !=, <, >, <=, >=, ≤, ≥, ≠, ≈
+
+        Inline LaTeX:
+          $<inline expression>$ - Inline math
+          $$<display expression>$$ - Display/block math
+      template_notes: "Supports both Unicode symbols and LaTeX notation. Use LaTeX for complex expressions."
+
+    detection:
+      type: "custom"
+      function: "detect_math_and_logic"
+      notes: "Complex detection requiring custom function due to varied syntax patterns"
+
+    examples:
+      primary:
+        - name: "conditional-logic"
+          labels: ["conditional", "branch"]
+          brief: "If-else branching"
+          description: "Conditional content based on state"
+          input: "if (user.role == 'admin') { Show admin panel } else { Show user dashboard }"
+          explanation: "Standard conditional logic - admin users see admin panel, regular users see user dashboard"
+        - name: "latex-calculus"
+          labels: ["latex", "calculus", "math"]
+          brief: "LaTeX calculus expressions"
+          description: "Calculus notation using LaTeX"
+          input: |
+            The definite integral: $\int_{a}^{b} f(x) \, dx$
+
+            Derivative: $\frac{d}{dx} x^2 = 2x$
+
+            Partial derivative: $\frac{\partial f}{\partial x}$
+
+            Gradient: $\nabla f = \left( \frac{\partial f}{\partial x}, \frac{\partial f}{\partial y} \right)$
+
+            Limit: $\lim_{x \to \infty} \frac{1}{x} = 0$
+
+            Summation: $\sum_{i=1}^{n} i = \frac{n(n+1)}{2}$
+
+            Product: $\prod_{i=1}^{n} i = n!$
+          explanation: "LaTeX provides precise mathematical notation for calculus operations"
+        - name: "set-operations"
+          labels: ["sets", "math"]
+          brief: "Set operations"
+          description: "Finding overlaps and combinations"
+          input: |
+            Target audience: (sports_enthusiasts ∩ health_focused)
+            All offerings: (standard_options ∪ premium_options)
+            Total sales: ∑(monthly_revenue)
+          explanation: "Set intersection (∩) finds overlap, union (∪) combines sets, summation (∑) aggregates values"
+      supplemental:
+        - name: "nested-conditionals"
+          labels: ["advanced", "nested"]
+          brief: "Nested conditionals"
+          description: "Complex nested conditional logic"
+          input: |
+            if (user.subscription == 'premium') {
+              Access to all features enabled
+              if (user.beta_tester) { Show experimental features }
+            } else {
+              Limited feature access
+              Upgrade prompts displayed
+            }
+          explanation: "Nested conditionals for complex branching logic"
+        - name: "latex-advanced"
+          labels: ["latex", "advanced", "equations"]
+          brief: "Advanced LaTeX expressions"
+          description: "Complex mathematical expressions in LaTeX"
+          input: |
+            Quadratic formula:
+            $$x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$$
+
+            Matrix notation:
+            $$\mathbf{A} = \begin{pmatrix} a & b \\ c & d \end{pmatrix}$$
+
+            Probability:
+            $$P(A|B) = \frac{P(B|A) \cdot P(A)}{P(B)}$$
+
+            Series expansion:
+            $$e^x = \sum_{n=0}^{\infty} \frac{x^n}{n!}$$
+          explanation: "Display math ($$) for complex multi-line expressions and formulas"
+        - name: "logic-quantifiers"
+          labels: ["logic", "quantifiers", "formal"]
+          brief: "Logical quantifiers"
+          description: "Formal logic with quantifiers"
+          input: |
+            ∀x ∈ Users: hasPermission(x) → canAccess(x)
+            ∃y ∈ Products: (inStock(y) ∧ price(y) < budget)
+            ¬(isAdmin ∨ isModerator) → restrictedAccess
+          explanation: "Universal (∀) and existential (∃) quantifiers for formal logic expressions"
+        - name: "data-analysis"
+          labels: ["analysis", "aggregation"]
+          brief: "Data analysis operations"
+          description: "Mathematical operations for data analysis"
+          input: |
+            Total revenue: ∑(monthly_sales)
+            Average: ∑(daily_temps) / 7
+            Common interests: (group_A_interests ∩ group_B_interests)
+          explanation: "Combining aggregation with set operations for data analysis"
+
+  # ============================================================================
+  # EXAMPLE-CONVERSATION
+  # ============================================================================
+  - name: "example-conversation"
+    code: "CONV"
+    labels: ["example", "conversation", "yaml", "docs"]
+    type: "core"
+
+    metadata:
+      brief: "Multi-turn example format"
+      description: "Structure multi-turn conversation examples using YAML within example fences"
+      purpose: "Clearly show request/response pairs in examples"
+      usage: "When demonstrating conversation flow or multi-step interactions"
+      complexity: 2
+      scope: "block"
+
+    syntax:
+      template: |
+        ````example
+        ```yaml
+        - role: system
+          message: <system instruction>
+        - role: assistant
+          message: <response>
+        ```
+        ````
+      template_notes: "YAML list format with role and message fields. Outer fence uses 4 backticks when containing nested fences."
+
+    detection:
+      pre_filter: ["```example", "role:", "message:"]
+      pattern: "```+example\\s*```yaml\\s*-\\s*role:"
+      type: "regex"
+
+    examples:
+      primary:
+        - name: "conversation-example"
+          labels: ["conversation", "yaml"]
+          brief: "Multi-turn conversation"
+          description: "Shows conversation flow with clear roles"
+          input: |
+            ````example
+            ```yaml
+            - role: system
+              message: What's the weather in Tokyo?
+            - role: assistant
+              message: Currently in Tokyo it's 72°F (22°C) with partly cloudy skies.
+            ```
+            ````
+          explanation: "YAML format clearly delineates conversation turns with role and message fields"

@@ -1,0 +1,1369 @@
+# NPL Fence Elements Registry
+# Code fence types and usage patterns for structured content containment
+
+version: "1.0"
+category: "fences"
+description: "Code fence types for structured content blocks with semantic meaning"
+
+header:
+  title: "NPL Fence Blocks"
+  purpose: |
+    Code fence types provide semantic containers for structured content. Use fences
+    to delimit examples, notes, diagrams, algorithms, and other block-level content.
+  usage: |
+    Wrap content in triple backticks with fence type. Use N+1 backticks for nested fences.
+
+elements:
+  # ============================================================================
+  # EXAMPLE
+  # ============================================================================
+  - name: "example"
+    code: "EX"
+    labels: ["core", "common", "demonstration", "content", "basic", "docs"]
+    type: "core"
+
+    metadata:
+      brief: "Usage demonstration blocks"
+      description: "Demonstrate usage patterns, illustrate concepts, and show expected behavior"
+      purpose: "Provide concrete illustrations rather than abstract descriptions"
+      usage: "For syntax demonstrations, input/output patterns, practical examples"
+      complexity: 1
+      scope: "block"
+
+    syntax:
+      template: |
+        ```example
+        <example content>
+        ```
+      template_notes: "Content shows usage patterns. Can contain other NPL syntax elements."
+      features:
+        - name: "with-qualifier"
+          template: |
+            ```example|<qualifier>
+            <example content>
+            ```
+          template_notes: "Qualifier adds context like 'basic', 'advanced', 'error-case'"
+        - name: "nested-fences"
+          template: |
+            ````example
+            ```<inner-fence>
+            <content>
+            ```
+            ````
+          template_notes: "Use N+1 backticks when containing nested fences"
+
+    detection:
+      pre_filter: ["```example"]
+      pattern: "```example(?:\\|([^\\n]*))?\\n([\\s\\S]*?)\\n```"
+      type: "regex"
+      flags: ["multiline", "dotall"]
+      groups: ["qualifier", "content"]
+
+    context:
+      can_contain: ["syntax", "highlight", "placeholder", "in-fill", "yaml"]
+      parse_nested: true
+
+    examples:
+      primary:
+        - name: "basic-example"
+          labels: ["basic", "syntax"]
+          brief: "Basic syntax demonstration"
+          description: "Simple example showing syntax usage"
+          input: |
+            ```example
+            Here's how you use highlight syntax: `important term`
+            ```
+          explanation: "Example fence contains demonstration of highlight syntax"
+        - name: "yaml-conversation"
+          labels: ["conversation", "yaml"]
+          brief: "Conversation example with YAML"
+          description: "Multi-turn example using YAML format"
+          input: |
+            ````example
+            ```yaml
+            - role: system
+              message: "What's the capital of France?"
+            - role: assistant
+              message: "The capital of France is Paris."
+            ```
+            ````
+          explanation: "Nested YAML fence shows conversation flow with clear role delineation"
+      supplemental:
+        - name: "qualified-example"
+          labels: ["qualified", "context"]
+          brief: "Example with qualifier"
+          description: "Example with contextual qualifier"
+          input: |
+            ```example|error-handling
+            try {
+              processData(input)
+            } catch (e) {
+              logError(e)
+              return fallbackValue
+            }
+            ```
+          explanation: "Qualifier 'error-handling' categorizes the example type"
+
+  # ============================================================================
+  # NOTE
+  # ============================================================================
+  - name: "note"
+    code: "NOTE"
+    labels: ["core", "common", "documentation", "content", "basic", "docs"]
+    type: "core"
+
+    metadata:
+      brief: "Explanatory note blocks"
+      description: "Include explanatory comments, clarifications, warnings, or additional context"
+      purpose: "Provide guidance and documentation without directly affecting output"
+      usage: "For clarifying comments, warnings, implementation notes, reference documentation"
+      complexity: 1
+      scope: "block"
+
+    syntax:
+      template: |
+        ```note
+        <note content>
+        ```
+      template_notes: "Notes explain intent, provide context, or add warnings. Not directly output."
+      features:
+        - name: "with-qualifier"
+          template: |
+            ```note|<type>
+            <note content>
+            ```
+          template_notes: "Types: warning, important, implementation, reference, context"
+
+    detection:
+      pre_filter: ["```note"]
+      pattern: "```note(?:\\|([^\\n]*))?\\n([\\s\\S]*?)\\n```"
+      type: "regex"
+      flags: ["multiline", "dotall"]
+      groups: ["qualifier", "content"]
+
+    examples:
+      primary:
+        - name: "basic-note"
+          labels: ["basic", "guidance"]
+          brief: "Basic explanatory note"
+          description: "Simple note providing guidance"
+          input: |
+            ```note
+            The attention marker should be used sparingly to maintain its impact.
+            ```
+          explanation: "Note provides guidance without becoming part of the output"
+        - name: "warning-note"
+          labels: ["warning", "critical"]
+          brief: "Warning note"
+          description: "Critical warning or important consideration"
+          input: |
+            ```note|warning
+            Always validate user inputs before processing to prevent security vulnerabilities.
+            ```
+          explanation: "Warning qualifier indicates critical information"
+      supplemental:
+        - name: "implementation-note"
+          labels: ["implementation", "technical"]
+          brief: "Implementation note"
+          description: "Technical implementation details"
+          input: |
+            ```note|implementation
+            This template uses handlebar syntax for iteration. If the agent doesn't
+            recognize {{foreach}}, load ./npl/instructing/handlebars.md for syntax support.
+            ```
+          explanation: "Implementation notes explain technical requirements"
+        - name: "reference-note"
+          labels: ["reference", "documentation"]
+          brief: "Reference note"
+          description: "Pointer to related documentation"
+          input: |
+            ```note|reference
+            See ./npl/syntax/qualifier.md for complete qualifier syntax reference.
+            ```
+          explanation: "Reference notes point to additional resources"
+
+  # ============================================================================
+  # DIAGRAM
+  # ============================================================================
+  - name: "diagram"
+    code: "DIAG"
+    labels: ["core", "visual", "structure", "content", "docs"]
+    type: "core"
+
+    metadata:
+      brief: "Visual representation blocks"
+      description: "Visual representations, flowcharts, system architectures, and structural diagrams"
+      purpose: "Convey complex relationships and processes that are difficult to express in text"
+      usage: "For system architecture, process flows, data structures, interaction patterns"
+      complexity: 2
+      scope: "block"
+
+    syntax:
+      template: |
+        ```diagram
+        <diagram content>
+        ```
+      template_notes: "Supports ASCII art, box diagrams, tree structures, and Mermaid syntax"
+      features:
+        - name: "mermaid"
+          template: |
+            ```diagram
+            flowchart TD
+                A[Start] --> B{Decision}
+                B -->|Yes| C[Action]
+                B -->|No| D[End]
+            ```
+          template_notes: "Mermaid syntax for complex flowcharts and diagrams"
+
+    detection:
+      pre_filter: ["```diagram"]
+      pattern: "```diagram(?:\\|([^\\n]*))?\\n([\\s\\S]*?)\\n```"
+      type: "regex"
+      flags: ["multiline", "dotall"]
+      groups: ["qualifier", "content"]
+
+    examples:
+      primary:
+        - name: "process-flow"
+          labels: ["flow", "process"]
+          brief: "Process flow diagram"
+          description: "Simple process flow with decision point"
+          input: |
+            ```diagram
+            [User Input] --> [Validation] --> [Processing] --> [Output]
+                                  |
+                                  v
+                             [Error Handling]
+            ```
+          explanation: "ASCII arrows show flow with branching for error handling"
+        - name: "tree-structure"
+          labels: ["hierarchy", "tree"]
+          brief: "Hierarchical tree"
+          description: "Tree structure showing hierarchy"
+          input: |
+            ```diagram
+            NPL Framework
+            ├── Core Syntax
+            │   ├── Placeholders
+            │   ├── Qualifiers
+            │   └── In-fill
+            ├── Fences
+            │   ├── Example
+            │   ├── Syntax
+            │   └── Format
+            └── Special Sections
+                ├── Agents
+                └── Templates
+            ```
+          explanation: "Tree diagram shows hierarchical relationships"
+      supplemental:
+        - name: "mermaid-flowchart"
+          labels: ["mermaid", "flowchart"]
+          brief: "Mermaid flowchart"
+          description: "Complex flowchart using Mermaid syntax"
+          input: |
+            ```diagram
+            flowchart TD
+                A[User Request] --> B{Validation}
+                B -->|Valid| C[Process]
+                B -->|Invalid| D[Error Response]
+                C --> E[Generate Output]
+                E --> F[Return Result]
+            ```
+          explanation: "Mermaid provides rich diagramming for complex visualizations"
+        - name: "box-architecture"
+          labels: ["architecture", "layers"]
+          brief: "Layered architecture"
+          description: "System architecture with layers"
+          input: |
+            ```diagram
+            ┌─────────────────┐
+            │   User Layer    │
+            ├─────────────────┤
+            │  Agent Layer    │
+            ├─────────────────┤
+            │ Processing Core │
+            ├─────────────────┤
+            │  Data Storage   │
+            └─────────────────┘
+            ```
+          explanation: "Box diagram shows layered system architecture"
+
+  # ============================================================================
+  # SYNTAX
+  # ============================================================================
+  - name: "syntax"
+    code: "SYN"
+    labels: ["core", "definition", "structure", "docs"]
+    type: "structure"
+
+    metadata:
+      brief: "Syntax definition blocks"
+      description: "Define formal syntax patterns, grammar rules, and structural conventions"
+      purpose: "Document how specific syntax elements should be constructed and used"
+      usage: "For formal syntax patterns, grammar rules, canonical syntax reference"
+      complexity: 2
+      scope: "block"
+
+    syntax:
+      template: |
+        ```syntax
+        <syntax definition>
+        ```
+      template_notes: |
+        Conventions within syntax blocks:
+        - Backticks for literal syntax elements
+        - Angle brackets <> for required parameters
+        - Square brackets [] for optional elements
+        - Pipe | for alternatives or qualifiers
+        - Ellipsis ... for extensible patterns
+
+    detection:
+      pre_filter: ["```syntax"]
+      pattern: "```syntax(?:\\|([^\\n]*))?\\n([\\s\\S]*?)\\n```"
+      type: "regex"
+      flags: ["multiline", "dotall"]
+      groups: ["qualifier", "content"]
+
+    examples:
+      primary:
+        - name: "element-syntax"
+          labels: ["definition", "element"]
+          brief: "Element syntax definition"
+          description: "Define syntax for an element"
+          input: |
+            ```syntax
+            placeholder: `<term>`, `{term}`, `<qualifier|term>` - Expected input/output locations
+            qualifier: `term|qualifier` - Can be used with most syntax elements
+            ```
+          explanation: "Syntax block formally defines element patterns"
+        - name: "agent-declaration-syntax"
+          labels: ["agent", "declaration"]
+          brief: "Agent declaration syntax"
+          description: "Formal syntax for agent declarations"
+          input: |
+            ```syntax
+            Agent Declaration:
+            ⌜agent-name|type|NPL@version⌝
+            # Agent Name
+            [...definition content...]
+            ⌞agent-name⌟
+            ```
+          explanation: "Complex syntax with special characters and structure"
+      supplemental:
+        - name: "parameterized-syntax"
+          labels: ["parameters", "directive"]
+          brief: "Parameterized syntax"
+          description: "Syntax with parameters documented"
+          input: |
+            ```syntax
+            Table Directive:
+            ⟪📅: (column alignments and labels) | content description⟫
+
+            Parameters:
+            - column alignments: left, right, center for each column
+            - labels: custom header names
+            - content description: what data populates the table
+            ```
+          explanation: "Syntax definition includes parameter documentation"
+
+  # ============================================================================
+  # FORMAT
+  # ============================================================================
+  - name: "format"
+    code: "FMT"
+    labels: ["core", "template", "output", "structure", "basic", "docs"]
+    type: "structure"
+
+    metadata:
+      brief: "Output format specification"
+      description: "Specify exact structure and layout of expected output with placeholders and templates"
+      purpose: "Define template patterns and formatting requirements for agent responses"
+      usage: "For output templates, data organization, response structure specifications"
+      complexity: 2
+      scope: "block"
+
+    syntax:
+      template: |
+        ```format
+        <format specification with placeholders>
+        ```
+      template_notes: |
+        Format elements:
+        - Placeholders: <term>, {term} for dynamic content
+        - In-fill: [...] for generated content with size qualifiers
+        - Handlebars: {{foreach}}, {{if}} for control structures
+        - Literal text: exact text that must appear in output
+
+    detection:
+      pre_filter: ["```format"]
+      pattern: "```format(?:\\|([^\\n]*))?\\n([\\s\\S]*?)\\n```"
+      type: "regex"
+      flags: ["multiline", "dotall"]
+      groups: ["qualifier", "content"]
+
+    context:
+      can_contain: ["placeholder", "in-fill", "handlebars", "directive"]
+      parse_nested: true
+
+    examples:
+      primary:
+        - name: "simple-format"
+          labels: ["basic", "greeting"]
+          brief: "Simple output format"
+          description: "Basic format with placeholders and fill-in"
+          input: |
+            ```format
+            Hello <user.name>,
+            Did you know [...|funny factoid].
+
+            Have a great day!
+            ```
+          explanation: "Format combines literal text, placeholders, and fill-in markers"
+        - name: "structured-format"
+          labels: ["structured", "data"]
+          brief: "Structured data format"
+          description: "Format with multiple data sections"
+          input: |
+            ```format
+            date: <current date|Y-M-D format>
+            summary: [...1s|summarize request as statement]
+
+            # Results
+            [...2-3p|detailed findings]
+
+            ## Recommendations
+            [...3-5i|actionable recommendations]
+            ```
+          explanation: "Structured format with size-controlled sections"
+      supplemental:
+        - name: "table-format"
+          labels: ["table", "data"]
+          brief: "Table output format"
+          description: "Format specifying table structure"
+          input: |
+            ```format
+            | #    | Prime |     English     |
+            | :--- | ----: | :-------------: |
+            | 1    |     2 |       Two       |
+            | 2    |     3 |      Three      |
+            [...additional rows...]
+            ```
+          explanation: "Format with table structure and fill-in for additional rows"
+        - name: "handlebar-format"
+          labels: ["handlebars", "iteration"]
+          brief: "Format with handlebars"
+          description: "Format using handlebar control structures"
+          input: |
+            ```format
+            # Cat Breeds
+            {{foreach as breed| from 5 random cat breeds}}
+            ## {{breed.name}}
+            [...2-3s|breed description]
+
+            history: [...3-4p|breed history]
+            also-known-as: [...2-4i|comma separated alt names]
+            {{/foreach}}
+            ```
+          explanation: "Handlebars enable iteration over dynamic collections"
+
+  # ============================================================================
+  # TEMPLATE
+  # ============================================================================
+  - name: "template"
+    code: "TPL"
+    labels: ["core", "reusable", "pattern", "structure"]
+    type: "structure"
+
+    metadata:
+      brief: "Reusable template blocks"
+      description: "Define reusable output formats with placeholder substitution and control structures"
+      purpose: "Create consistent formatting patterns that can be applied across contexts"
+      usage: "For reusable output patterns, consistent data presentation, response templates"
+      complexity: 3
+      scope: "block"
+
+    syntax:
+      template: |
+        ```template
+        <template content with variables>
+        ```
+      template_notes: |
+        Template variables:
+        - {variable.name} - Simple variable substitution
+        - {variable|qualifier} - Qualified variable with formatting
+        - {foreach collection as item}...{/foreach} - Iteration
+        - {if condition}...{else}...{/if} - Conditional content
+        - {@last}, {@first}, {@index} - Loop context variables
+
+    detection:
+      pre_filter: ["```template"]
+      pattern: "```template(?:\\|([^\\n]*))?\\n([\\s\\S]*?)\\n```"
+      type: "regex"
+      flags: ["multiline", "dotall"]
+      groups: ["qualifier", "content"]
+
+    context:
+      can_contain: ["placeholder", "handlebars", "in-fill"]
+      parse_nested: true
+
+    examples:
+      primary:
+        - name: "user-profile-template"
+          labels: ["profile", "data"]
+          brief: "User profile template"
+          description: "Template for displaying user information"
+          input: |
+            ```template
+            # {user.name}
+            **Role**: {user.role}
+            **Email**: {user.email}
+            **Bio**: {user.bio}
+
+            ## Recent Activity
+            {foreach user.activities as activity}
+            - {activity.date}: {activity.description}
+            {/foreach}
+            ```
+          explanation: "Template with variable substitution and iteration over activities"
+        - name: "conditional-template"
+          labels: ["conditional", "report"]
+          brief: "Conditional content template"
+          description: "Template with conditional sections"
+          input: |
+            ```template
+            ## Report Summary
+            **Date**: {report.date}
+            **Status**: {report.status}
+
+            {if report.errors}
+            ### Errors Found
+            {foreach report.errors as error}
+            - **{error.level}**: {error.message}
+            {/foreach}
+            {else}
+            No errors detected
+            {/if}
+            ```
+          explanation: "Conditional blocks show/hide content based on data state"
+      supplemental:
+        - name: "json-template"
+          labels: ["json", "api"]
+          brief: "JSON response template"
+          description: "Template for JSON API responses"
+          input: |
+            ```template
+            {
+              "status": "{response.status}",
+              "timestamp": "{response.timestamp}",
+              "data": {
+                {foreach response.items as item}
+                "{item.key}": "{item.value}"{if not @last},{/if}
+                {/foreach}
+              }
+            }
+            ```
+          explanation: "Template generates valid JSON with proper comma handling"
+
+    extended:
+      related: ["format", "handlebars"]
+
+  # ============================================================================
+  # ALG (Algorithm)
+  # ============================================================================
+  - name: "alg"
+    code: "ALG"
+    labels: ["algorithm", "computation", "procedure", "technical"]
+    type: "structure"
+
+    metadata:
+      brief: "Algorithm specification blocks"
+      description: "Formal algorithm specifications with inputs, outputs, and step-by-step procedures"
+      purpose: "Define computational procedures and problem-solving approaches"
+      usage: "For computational procedures, problem-solving methodologies, implementation strategies"
+      complexity: 3
+      scope: "block"
+
+    syntax:
+      template: |
+        ```alg
+        name: <algorithm-name>
+        input: <input description>
+        output: <output description>
+
+        procedure <name>(<params>):
+          <algorithm steps>
+        ```
+      template_notes: |
+        Algorithm components:
+        - name: Algorithm identifier
+        - input: Required input parameters and constraints
+        - output: Expected output format and guarantees
+        - procedure: Step-by-step algorithmic process
+        - complexity: Time/space analysis (optional)
+
+        Supports mathematical notation: ∇, ||x||, ∑, ∏, ∈, ∉, ≤, ≥, ∞
+
+    detection:
+      pre_filter: ["```alg"]
+      pattern: "```alg(?:\\|([^\\n]*))?\\n([\\s\\S]*?)\\n```"
+      type: "regex"
+      flags: ["multiline", "dotall"]
+      groups: ["qualifier", "content"]
+
+    examples:
+      primary:
+        - name: "search-algorithm"
+          labels: ["search", "basic"]
+          brief: "Binary search algorithm"
+          description: "Classic binary search implementation"
+          input: |
+            ```alg
+            name: binary_search
+            input: sorted array A, target value x
+            output: index of x in A, or -1 if not found
+
+            procedure binary_search(A, x):
+              left = 0
+              right = length(A) - 1
+
+              while left <= right:
+                mid = (left + right) / 2
+                if A[mid] == x:
+                  return mid
+                else if A[mid] < x:
+                  left = mid + 1
+                else:
+                  right = mid - 1
+
+              return -1
+            ```
+          explanation: "Formal algorithm specification with clear structure and logic"
+      supplemental:
+        - name: "optimization-algorithm"
+          labels: ["optimization", "math"]
+          brief: "Gradient descent"
+          description: "Optimization algorithm with math notation"
+          input: |
+            ```alg
+            name: gradient_descent
+            input: function f, initial point x0, learning rate alpha
+            output: optimized point x*
+
+            procedure gradient_descent(f, x0, alpha):
+              x = x0
+              tolerance = 1e-6
+              max_iterations = 1000
+
+              for i = 1 to max_iterations:
+                gradient = nabla f(x)
+                if ||gradient|| < tolerance:
+                  break
+                x = x - alpha * gradient
+
+              return x
+            ```
+          explanation: "Algorithm with mathematical notation for gradients and norms"
+
+    extended:
+      related: ["alg-pseudo"]
+
+  # ============================================================================
+  # ALG-PSEUDO (Pseudocode)
+  # ============================================================================
+  - name: "alg-pseudo"
+    code: "ALGP"
+    labels: ["algorithm", "pseudocode", "natural-language", "technical"]
+    type: "structure"
+
+    metadata:
+      brief: "Pseudocode algorithm blocks"
+      description: "High-level algorithmic descriptions using natural language constructs"
+      purpose: "Bridge the gap between problem description and code implementation"
+      usage: "For conceptual algorithms, teaching, language-agnostic specifications"
+      complexity: 2
+      scope: "block"
+
+    syntax:
+      template: |
+        ```alg-pseudo
+        Algorithm: <name>
+        Input: <description>
+        Output: <description>
+
+        BEGIN
+          <natural language steps>
+        END
+        ```
+      template_notes: |
+        Pseudocode conventions:
+        - BEGIN / END - Algorithm boundaries
+        - IF / THEN / ELSE / END IF - Conditionals
+        - FOR / DO / END FOR - Iteration loops
+        - WHILE / DO / END WHILE - Conditional loops
+        - READ, WRITE, RETURN - I/O and flow control
+        - Indentation shows logical structure
+
+    detection:
+      pre_filter: ["```alg-pseudo"]
+      pattern: "```alg-pseudo(?:\\|([^\\n]*))?\\n([\\s\\S]*?)\\n```"
+      type: "regex"
+      flags: ["multiline", "dotall"]
+      groups: ["qualifier", "content"]
+
+    examples:
+      primary:
+        - name: "sorting-pseudocode"
+          labels: ["sorting", "basic"]
+          brief: "Bubble sort pseudocode"
+          description: "Simple sorting algorithm in pseudocode"
+          input: |
+            ```alg-pseudo
+            Algorithm: BubbleSort
+            Input: Array of n elements
+            Output: Sorted array
+
+            BEGIN
+              FOR i = 0 to n-1 DO
+                FOR j = 0 to n-i-2 DO
+                  IF array[j] > array[j+1] THEN
+                    SWAP array[j] and array[j+1]
+                  END IF
+                END FOR
+              END FOR
+            END
+            ```
+          explanation: "Natural language pseudocode focuses on logic over syntax"
+      supplemental:
+        - name: "data-processing"
+          labels: ["pipeline", "processing"]
+          brief: "Data processing pipeline"
+          description: "Complex data processing with error handling"
+          input: |
+            ```alg-pseudo
+            Algorithm: DataProcessor
+            Input: Raw data stream
+            Output: Processed results
+
+            BEGIN
+              WHILE data is available DO
+                READ next data chunk
+
+                IF data is valid THEN
+                  CLEAN data (remove nulls, normalize)
+                  TRANSFORM data (apply business rules)
+                  VALIDATE transformed data
+
+                  IF validation passes THEN
+                    STORE processed data
+                    LOG success
+                  ELSE
+                    LOG validation error
+                    MOVE data to error queue
+                  END IF
+                ELSE
+                  LOG data format error
+                  SKIP to next chunk
+                END IF
+              END WHILE
+
+              GENERATE processing report
+            END
+            ```
+          explanation: "Pseudocode clearly shows branching and error handling flow"
+
+    extended:
+      related: ["alg"]
+
+  # ============================================================================
+  # ARTIFACT
+  # ============================================================================
+  - name: "artifact"
+    code: "ART"
+    labels: ["output", "metadata", "special"]
+    type: "special"
+
+    metadata:
+      brief: "Structured output with metadata"
+      description: "Encode output requiring special handling, metadata attachment, or specific rendering"
+      purpose: "Package deliverables with type information and processing instructions"
+      usage: "For SVG graphics, code files, documents with associated metadata"
+      complexity: 3
+      scope: "block"
+
+    syntax:
+      template: |
+        ```artifact
+        type: <content-type>
+        title: "<display title>"
+        <content>
+        ```
+      template_notes: |
+        Parameters:
+        - type: Content type (svg, code, document, html, etc.)
+        - language: Programming language for code artifacts
+        - title: Display title for the artifact
+        - format: Document format specification
+        - encoding: Special encoding requirements
+        - metadata: Additional context information
+
+    detection:
+      pre_filter: ["```artifact"]
+      pattern: "```artifact(?:\\|([^\\n]*))?\\n([\\s\\S]*?)\\n```"
+      type: "regex"
+      flags: ["multiline", "dotall"]
+      groups: ["qualifier", "content"]
+
+    examples:
+      primary:
+        - name: "svg-artifact"
+          labels: ["svg", "graphics"]
+          brief: "SVG graphic artifact"
+          description: "SVG image with metadata"
+          input: |
+            ```artifact
+            type: svg
+            title: "Simple Circle"
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="50" cy="50" r="40" fill="blue" />
+            </svg>
+            ```
+          explanation: "SVG artifact with type and title metadata for rendering"
+        - name: "code-artifact"
+          labels: ["code", "file"]
+          brief: "Code file artifact"
+          description: "Code with language specification"
+          input: |
+            ```artifact
+            type: code
+            language: python
+            title: "Fibonacci Function"
+            def fibonacci(n):
+                if n <= 1:
+                    return n
+                return fibonacci(n-1) + fibonacci(n-2)
+            ```
+          explanation: "Code artifact with language for syntax highlighting"
+      supplemental:
+        - name: "document-artifact"
+          labels: ["document", "markdown"]
+          brief: "Document artifact"
+          description: "Markdown document with format specification"
+          input: |
+            ```artifact
+            type: document
+            format: markdown
+            title: "Project README"
+            # My Project
+            This is a sample project with documentation.
+            ## Features
+            - Feature 1
+            - Feature 2
+            ```
+          explanation: "Document artifact with format and title metadata"
+
+    extended:
+      content_types:
+        svg: "Scalable Vector Graphics"
+        code: "Source code with language specification"
+        document: "Markdown, HTML, or text documents"
+        html: "HTML content for web rendering"
+        json: "Structured JSON data"
+        csv: "Tabular data in CSV format"
+
+  # ============================================================================
+  # MERMAID
+  # ============================================================================
+  - name: "mermaid"
+    code: "MMD"
+    labels: ["diagram", "visual", "flowchart", "graph"]
+    type: "structure"
+
+    metadata:
+      brief: "Mermaid diagram blocks"
+      description: "Rich diagramming using Mermaid syntax for flowcharts, sequences, state machines, and more"
+      purpose: "Create complex visual diagrams with standardized, renderable syntax"
+      usage: "For flowcharts, sequence diagrams, state diagrams, class diagrams, ER diagrams, Gantt charts"
+      complexity: 3
+      scope: "block"
+
+    syntax:
+      template: |
+        ```mermaid
+        <diagram-type>
+            <mermaid syntax>
+        ```
+      template_notes: |
+        Diagram types:
+        - flowchart TD/LR/BT/RL - Flow diagrams (direction: Top-Down, Left-Right, etc.)
+        - sequenceDiagram - Sequence/interaction diagrams
+        - stateDiagram-v2 - State machine diagrams
+        - classDiagram - Class/object diagrams
+        - erDiagram - Entity-relationship diagrams
+        - gantt - Gantt charts
+        - pie - Pie charts
+        - journey - User journey diagrams
+        - gitgraph - Git branch diagrams
+
+    detection:
+      pre_filter: ["```mermaid"]
+      pattern: "```mermaid(?:\\|([^\\n]*))?\\n([\\s\\S]*?)\\n```"
+      type: "regex"
+      flags: ["multiline", "dotall"]
+      groups: ["qualifier", "content"]
+
+    examples:
+      primary:
+        - name: "flowchart"
+          labels: ["flowchart", "decision"]
+          brief: "Decision flowchart"
+          description: "Flowchart with decision branches"
+          input: |
+            ```mermaid
+            flowchart TD
+                A[User Request] --> B{Valid Input?}
+                B -->|Yes| C[Process Request]
+                B -->|No| D[Show Error]
+                C --> E[Generate Response]
+                D --> F[Request Retry]
+                E --> G[Return Result]
+                F --> A
+            ```
+          explanation: "Flowchart with decision node, branching paths, and loop back"
+        - name: "sequence-diagram"
+          labels: ["sequence", "interaction"]
+          brief: "Sequence diagram"
+          description: "Interaction between components"
+          input: |
+            ```mermaid
+            sequenceDiagram
+                participant U as User
+                participant A as API
+                participant D as Database
+
+                U->>A: Send Request
+                A->>D: Query Data
+                D-->>A: Return Results
+                A-->>U: Send Response
+            ```
+          explanation: "Shows message flow between user, API, and database"
+      supplemental:
+        - name: "state-diagram"
+          labels: ["state", "machine"]
+          brief: "State machine"
+          description: "State transitions"
+          input: |
+            ```mermaid
+            stateDiagram-v2
+                [*] --> Idle
+                Idle --> Processing : start
+                Processing --> Complete : success
+                Processing --> Error : failure
+                Error --> Idle : retry
+                Complete --> [*]
+            ```
+          explanation: "State machine with transitions and terminal states"
+        - name: "class-diagram"
+          labels: ["class", "oop"]
+          brief: "Class diagram"
+          description: "Class relationships"
+          input: |
+            ```mermaid
+            classDiagram
+                class Animal {
+                    +String name
+                    +int age
+                    +makeSound()
+                }
+                class Dog {
+                    +String breed
+                    +bark()
+                }
+                class Cat {
+                    +meow()
+                }
+                Animal <|-- Dog
+                Animal <|-- Cat
+            ```
+          explanation: "Class hierarchy with inheritance relationships"
+        - name: "er-diagram"
+          labels: ["entity", "database"]
+          brief: "ER diagram"
+          description: "Entity relationships"
+          input: |
+            ```mermaid
+            erDiagram
+                USER ||--o{ ORDER : places
+                ORDER ||--|{ LINE_ITEM : contains
+                PRODUCT ||--o{ LINE_ITEM : "ordered in"
+                USER {
+                    int id PK
+                    string name
+                    string email
+                }
+                ORDER {
+                    int id PK
+                    date created
+                    int user_id FK
+                }
+            ```
+          explanation: "Database schema with relationships and attributes"
+        - name: "gantt-chart"
+          labels: ["gantt", "timeline"]
+          brief: "Gantt chart"
+          description: "Project timeline"
+          input: |
+            ```mermaid
+            gantt
+                title Project Timeline
+                dateFormat YYYY-MM-DD
+                section Planning
+                    Requirements     :a1, 2024-01-01, 7d
+                    Design           :a2, after a1, 14d
+                section Development
+                    Implementation   :b1, after a2, 30d
+                    Testing          :b2, after b1, 14d
+                section Deployment
+                    Release          :c1, after b2, 3d
+            ```
+          explanation: "Project schedule with phases, dependencies, and durations"
+
+    extended:
+      diagram_types:
+        flowchart: "Process flows and decision trees"
+        sequenceDiagram: "Component interactions over time"
+        stateDiagram: "State machines and transitions"
+        classDiagram: "Object-oriented class structures"
+        erDiagram: "Database entity relationships"
+        gantt: "Project timelines and schedules"
+        pie: "Proportional data visualization"
+        journey: "User experience flows"
+        gitgraph: "Git branching and commits"
+      related: ["diagram", "graphviz", "plantuml"]
+
+  # ============================================================================
+  # GRAPHVIZ
+  # ============================================================================
+  - name: "graphviz"
+    code: "GVZ"
+    labels: ["diagram", "visual", "graph", "dot"]
+    type: "structure"
+
+    metadata:
+      brief: "Graphviz DOT diagram blocks"
+      description: "Graph visualization using DOT language for network diagrams, dependency graphs, and hierarchies"
+      purpose: "Create precise graph layouts with fine-grained control over nodes and edges"
+      usage: "For dependency graphs, network topologies, hierarchical structures, call graphs"
+      complexity: 3
+      scope: "block"
+
+    syntax:
+      template: |
+        ```graphviz
+        digraph G {
+            <dot syntax>
+        }
+        ```
+      template_notes: |
+        Graph types:
+        - digraph - Directed graph (arrows)
+        - graph - Undirected graph (lines)
+
+        Layout engines:
+        - dot - Hierarchical (default)
+        - neato - Spring model
+        - fdp - Force-directed
+        - circo - Circular layout
+        - twopi - Radial layout
+
+        Common attributes:
+        - node [shape=box, color=blue]
+        - edge [style=dashed, color=red]
+        - rankdir=LR (left-to-right layout)
+
+    detection:
+      pre_filter: ["```graphviz", "```dot"]
+      pattern: "```(?:graphviz|dot)(?:\\|([^\\n]*))?\\n([\\s\\S]*?)\\n```"
+      type: "regex"
+      flags: ["multiline", "dotall"]
+      groups: ["qualifier", "content"]
+
+    examples:
+      primary:
+        - name: "dependency-graph"
+          labels: ["dependency", "hierarchy"]
+          brief: "Module dependencies"
+          description: "Directed graph of module dependencies"
+          input: |
+            ```graphviz
+            digraph Dependencies {
+                rankdir=TB;
+                node [shape=box, style=filled, fillcolor=lightblue];
+
+                App -> {API, Database, Cache};
+                API -> {AuthService, UserService};
+                AuthService -> Database;
+                UserService -> {Database, Cache};
+            }
+            ```
+          explanation: "Directed graph showing module dependencies with styled nodes"
+        - name: "state-machine"
+          labels: ["state", "transitions"]
+          brief: "State machine"
+          description: "State transitions with labels"
+          input: |
+            ```graphviz
+            digraph StateMachine {
+                rankdir=LR;
+                node [shape=circle];
+
+                start [shape=point];
+                end [shape=doublecircle];
+
+                start -> Idle;
+                Idle -> Running [label="start"];
+                Running -> Paused [label="pause"];
+                Paused -> Running [label="resume"];
+                Running -> end [label="complete"];
+            }
+            ```
+          explanation: "State machine with labeled transitions and special start/end nodes"
+      supplemental:
+        - name: "cluster-subgraph"
+          labels: ["cluster", "grouping"]
+          brief: "Clustered subgraphs"
+          description: "Grouped nodes in subgraphs"
+          input: |
+            ```graphviz
+            digraph Architecture {
+                subgraph cluster_frontend {
+                    label="Frontend";
+                    style=filled;
+                    color=lightgrey;
+                    UI -> Components -> State;
+                }
+
+                subgraph cluster_backend {
+                    label="Backend";
+                    style=filled;
+                    color=lightyellow;
+                    API -> Services -> Database;
+                }
+
+                State -> API [label="HTTP"];
+            }
+            ```
+          explanation: "Subgraphs create visual groupings with labeled boundaries"
+
+    extended:
+      shapes:
+        box: "Rectangle"
+        circle: "Circle"
+        ellipse: "Ellipse (default)"
+        diamond: "Diamond (decision)"
+        record: "Structured record"
+        point: "Small dot (start states)"
+        doublecircle: "Double circle (end states)"
+      related: ["mermaid", "diagram", "plantuml"]
+
+  # ============================================================================
+  # PLANTUML
+  # ============================================================================
+  - name: "plantuml"
+    code: "UML"
+    labels: ["diagram", "visual", "uml", "architecture"]
+    type: "structure"
+
+    metadata:
+      brief: "PlantUML diagram blocks"
+      description: "UML and architecture diagrams using PlantUML syntax for comprehensive software modeling"
+      purpose: "Create UML-compliant diagrams with rich notation for software design"
+      usage: "For class diagrams, sequence diagrams, use cases, component diagrams, deployment diagrams"
+      complexity: 3
+      scope: "block"
+
+    syntax:
+      template: |
+        ```plantuml
+        @startuml
+        <plantuml syntax>
+        @enduml
+        ```
+      template_notes: |
+        Diagram types:
+        - Sequence diagrams: participant, ->, -->
+        - Class diagrams: class, interface, extends, implements
+        - Use case diagrams: actor, usecase, -->
+        - Activity diagrams: start, :action;, if, endif
+        - Component diagrams: component, interface, ..>
+        - State diagrams: state, [*], -->
+        - Deployment diagrams: node, artifact, database
+
+        Styling:
+        - skinparam for global styles
+        - note for annotations
+        - ' for comments
+
+    detection:
+      pre_filter: ["```plantuml", "@startuml"]
+      pattern: "```plantuml(?:\\|([^\\n]*))?\\n([\\s\\S]*?)\\n```"
+      type: "regex"
+      flags: ["multiline", "dotall"]
+      groups: ["qualifier", "content"]
+
+    examples:
+      primary:
+        - name: "sequence-diagram"
+          labels: ["sequence", "interaction"]
+          brief: "Sequence diagram"
+          description: "Detailed interaction sequence"
+          input: |
+            ```plantuml
+            @startuml
+            actor User
+            participant "Web App" as App
+            participant "API Server" as API
+            database "Database" as DB
+
+            User -> App: Login Request
+            activate App
+            App -> API: Authenticate
+            activate API
+            API -> DB: Query User
+            DB --> API: User Data
+            API --> App: Auth Token
+            deactivate API
+            App --> User: Login Success
+            deactivate App
+            @enduml
+            ```
+          explanation: "Detailed sequence with activation bars and typed participants"
+        - name: "class-diagram"
+          labels: ["class", "uml"]
+          brief: "UML class diagram"
+          description: "Class relationships with methods"
+          input: |
+            ```plantuml
+            @startuml
+            abstract class Animal {
+                - name: String
+                - age: int
+                + getName(): String
+                + {abstract} makeSound(): void
+            }
+
+            class Dog extends Animal {
+                - breed: String
+                + bark(): void
+                + makeSound(): void
+            }
+
+            class Cat extends Animal {
+                + meow(): void
+                + makeSound(): void
+            }
+
+            interface Trainable {
+                + train(command: String): boolean
+            }
+
+            Dog ..|> Trainable
+            @enduml
+            ```
+          explanation: "UML class diagram with inheritance and interface implementation"
+      supplemental:
+        - name: "component-diagram"
+          labels: ["component", "architecture"]
+          brief: "Component diagram"
+          description: "System architecture components"
+          input: |
+            ```plantuml
+            @startuml
+            package "Frontend" {
+                [Web UI] as UI
+                [Mobile App] as Mobile
+            }
+
+            package "Backend" {
+                [API Gateway] as Gateway
+                [Auth Service] as Auth
+                [User Service] as User
+                [Order Service] as Order
+            }
+
+            database "PostgreSQL" as DB
+            queue "Message Queue" as MQ
+
+            UI --> Gateway
+            Mobile --> Gateway
+            Gateway --> Auth
+            Gateway --> User
+            Gateway --> Order
+            User --> DB
+            Order --> DB
+            Order --> MQ
+            @enduml
+            ```
+          explanation: "System architecture with packages, components, and connections"
+        - name: "activity-diagram"
+          labels: ["activity", "workflow"]
+          brief: "Activity diagram"
+          description: "Workflow with decisions"
+          input: |
+            ```plantuml
+            @startuml
+            start
+            :Receive Order;
+            if (In Stock?) then (yes)
+                :Process Order;
+                :Ship Order;
+            else (no)
+                :Notify Customer;
+                :Backorder Item;
+            endif
+            :Send Confirmation;
+            stop
+            @enduml
+            ```
+          explanation: "Activity workflow with conditional branching"
+        - name: "use-case-diagram"
+          labels: ["usecase", "requirements"]
+          brief: "Use case diagram"
+          description: "Actor and use case relationships"
+          input: |
+            ```plantuml
+            @startuml
+            left to right direction
+            actor Customer
+            actor Admin
+
+            rectangle "E-Commerce System" {
+                usecase "Browse Products" as UC1
+                usecase "Add to Cart" as UC2
+                usecase "Checkout" as UC3
+                usecase "Manage Inventory" as UC4
+                usecase "Process Refund" as UC5
+            }
+
+            Customer --> UC1
+            Customer --> UC2
+            Customer --> UC3
+            Admin --> UC4
+            Admin --> UC5
+            UC3 ..> UC2 : <<include>>
+            @enduml
+            ```
+          explanation: "Use case diagram with actors, use cases, and relationships"
+
+    extended:
+      diagram_types:
+        sequence: "Interaction over time"
+        class: "Object-oriented structure"
+        usecase: "Requirements and actors"
+        activity: "Workflow and processes"
+        component: "System architecture"
+        state: "State machines"
+        deployment: "Infrastructure layout"
+        object: "Instance relationships"
+        timing: "Timing constraints"
+      related: ["mermaid", "graphviz", "diagram"]

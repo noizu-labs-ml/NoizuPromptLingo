@@ -1,0 +1,317 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://noizu.ai/npl/element.schema.json",
+  "title": "NPL Element Schema",
+  "description": "Schema for validating NPL element definitions in YAML files",
+  "type": "object",
+  "required": ["version", "category", "description", "elements"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+$",
+      "description": "Schema version (e.g., '1.0')"
+    },
+    "category": {
+      "type": "string",
+      "description": "Category identifier (e.g., 'syntax', 'fences', 'directives')"
+    },
+    "description": {
+      "type": "string",
+      "description": "Brief description of the category"
+    },
+    "header": {
+      "$ref": "#/$defs/categoryHeader"
+    },
+    "elements": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/element"
+      },
+      "minItems": 1
+    }
+  },
+  "$defs": {
+    "categoryHeader": {
+      "type": "object",
+      "description": "Verbose category header shown when loading",
+      "required": ["title", "purpose"],
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Display title for the category"
+        },
+        "purpose": {
+          "type": "string",
+          "description": "Purpose statement for the category"
+        },
+        "usage": {
+          "type": "string",
+          "description": "When/how to use elements in this category"
+        },
+        "conventions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Key conventions for this category"
+        }
+      }
+    },
+    "element": {
+      "type": "object",
+      "required": ["name", "code", "labels", "type", "metadata", "syntax"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$",
+          "description": "Element identifier (lowercase, hyphens)"
+        },
+        "code": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9]{1,7}$",
+          "minLength": 2,
+          "maxLength": 8,
+          "description": "Short code (2-8 uppercase chars, e.g., 'HL', 'ATTN', 'PH')"
+        },
+        "labels": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "Tags for categorization and config presets"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["core", "modifier", "structure", "format", "pattern", "mode", "pump", "boundary", "emoji", "special"],
+          "description": "Element type classification"
+        },
+        "emoji": {
+          "type": "string",
+          "description": "Associated emoji for emoji-based elements"
+        },
+        "tag": {
+          "type": "string",
+          "description": "XML/HTML tag name for tag-based elements"
+        },
+        "metadata": {
+          "$ref": "#/$defs/metadata"
+        },
+        "syntax": {
+          "$ref": "#/$defs/syntax"
+        },
+        "detection": {
+          "$ref": "#/$defs/detection"
+        },
+        "context": {
+          "$ref": "#/$defs/context"
+        },
+        "examples": {
+          "$ref": "#/$defs/examples"
+        },
+        "extended": {
+          "type": "object",
+          "description": "Additional element-specific data"
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["brief", "description", "purpose"],
+      "properties": {
+        "brief": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Very short description (< 50 chars)"
+        },
+        "description": {
+          "type": "string",
+          "description": "Full description of the element"
+        },
+        "purpose": {
+          "type": "string",
+          "description": "Why this element exists"
+        },
+        "usage": {
+          "type": "string",
+          "description": "When and how to use this element"
+        },
+        "complexity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5,
+          "description": "Complexity level (1=simple, 5=complex)"
+        },
+        "scope": {
+          "type": "string",
+          "enum": ["inline", "line", "line-block", "block", "document", "expression", "instruction", "response", "annotation", "marker", "modifier"],
+          "description": "Scope of the element"
+        },
+        "requires": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Other elements this depends on"
+        }
+      }
+    },
+    "syntax": {
+      "type": "object",
+      "required": ["template"],
+      "properties": {
+        "template": {
+          "type": "string",
+          "description": "Primary syntax template"
+        },
+        "template_notes": {
+          "type": "string",
+          "description": "Notes explaining the template"
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/feature"
+          },
+          "description": "Optional features/variants"
+        }
+      }
+    },
+    "feature": {
+      "type": "object",
+      "required": ["name", "template"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Feature name"
+        },
+        "template": {
+          "type": "string",
+          "description": "Feature syntax template"
+        },
+        "template_notes": {
+          "type": "string",
+          "description": "Notes explaining the feature"
+        }
+      }
+    },
+    "detection": {
+      "type": "object",
+      "properties": {
+        "pre_filter": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Fast string checks before regex"
+        },
+        "pattern": {
+          "type": "string",
+          "description": "Regex pattern for detection"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["regex", "custom"],
+          "description": "Detection type"
+        },
+        "function": {
+          "type": "string",
+          "description": "Custom detection function name"
+        },
+        "flags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Regex flags"
+        },
+        "groups": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Named capture groups"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Detection notes"
+        }
+      }
+    },
+    "context": {
+      "type": "object",
+      "properties": {
+        "can_contain": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Elements this can contain"
+        },
+        "parse_nested": {
+          "type": "boolean",
+          "description": "Whether to parse nested content"
+        }
+      }
+    },
+    "examples": {
+      "type": "object",
+      "properties": {
+        "primary": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/example" },
+          "minItems": 1,
+          "description": "Primary examples (always shown)"
+        },
+        "supplemental": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              { "$ref": "#/$defs/example" },
+              { "$ref": "#/$defs/switchExample" }
+            ]
+          },
+          "description": "Additional examples"
+        }
+      }
+    },
+    "example": {
+      "type": "object",
+      "required": ["name", "brief", "input"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Example identifier"
+        },
+        "labels": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Example tags"
+        },
+        "brief": {
+          "type": "string",
+          "description": "Short example title"
+        },
+        "description": {
+          "type": "string",
+          "description": "Full example description"
+        },
+        "input": {
+          "type": "string",
+          "description": "Example input/usage"
+        },
+        "explanation": {
+          "type": "string",
+          "description": "Explanation of the example"
+        }
+      }
+    },
+    "switchExample": {
+      "type": "object",
+      "required": ["switch"],
+      "properties": {
+        "switch": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["case"],
+            "properties": {
+              "case": {
+                "type": "string",
+                "description": "Feature name this example applies to"
+              }
+            },
+            "allOf": [{ "$ref": "#/$defs/example" }]
+          },
+          "description": "Conditional examples based on features"
+        }
+      }
+    }
+  }
+}

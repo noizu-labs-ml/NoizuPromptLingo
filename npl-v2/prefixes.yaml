@@ -1,0 +1,591 @@
+# NPL Prompt Prefixes Registry
+# Response mode indicators using emoji patterns to shape output generation
+
+version: "1.0"
+category: "prefixes"
+description: "Response mode indicators that shape how output is generated under specific processing contexts"
+
+header:
+  title: "NPL Response Prefixes"
+  purpose: |
+    Response mode indicators shape how output is generated. Prefixes signal the type
+    of processing or output format expected.
+  usage: |
+    Prefix instructions with emoji➤ pattern to activate specific response modes.
+
+elements:
+  # ============================================================================
+  # WORD RIDDLE
+  # ============================================================================
+  - name: "word-riddle"
+    code: "RIDL"
+    labels: ["puzzle", "wordplay", "creative"]
+    type: "mode"
+    emoji: "🗣️❓"
+
+    metadata:
+      brief: "Word puzzle/riddle mode"
+      description: "Engage in word puzzles, riddles, and linguistic brain teasers"
+      purpose: "Creative wordplay and puzzle solving"
+      usage: "For word games, riddles, linguistic puzzles, brain teasers"
+      complexity: 2
+      scope: "response"
+
+    syntax:
+      template: "🗣️❓➤ <puzzle or riddle instruction>"
+      template_notes: "Speech bubble with question mark followed by arrow indicates riddle mode"
+
+    detection:
+      pre_filter: ["🗣️❓"]
+      pattern: "🗣️❓➤\\s*(.+)"
+      type: "regex"
+      groups: ["instruction"]
+
+    examples:
+      primary:
+        - name: "word-riddle"
+          labels: ["riddle", "wordplay"]
+          brief: "Word riddle example"
+          description: "Classic word riddle format"
+          input: "🗣️❓➤ Nothing in the dictionary starts with an n and ends in a g"
+          explanation: "Activates riddle mode - agent interprets 'nothing' as the answer (n-o-t-h-i-n-g)"
+
+  # ============================================================================
+  # SPEECH / VERBAL
+  # ============================================================================
+  - name: "speech"
+    code: "SPCH"
+    labels: ["verbal", "spoken", "audio"]
+    type: "mode"
+    emoji: "🗣️"
+
+    metadata:
+      brief: "Verbal/spoken output mode"
+      description: "Generate content optimized for spoken delivery or verbal presentation"
+      purpose: "Create speech-friendly output for presentations, podcasts, or verbal communication"
+      usage: "For speeches, presentations, podcast scripts, verbal instructions"
+      complexity: 1
+      scope: "response"
+
+    syntax:
+      template: "🗣️➤ <instruction for verbal content>"
+      template_notes: "Speech bubble indicates content should be optimized for speaking"
+
+    detection:
+      pre_filter: ["🗣️➤"]
+      pattern: "🗣️➤\\s*(.+)"
+      type: "regex"
+      groups: ["instruction"]
+
+    examples:
+      primary:
+        - name: "presentation-script"
+          labels: ["presentation", "speech"]
+          brief: "Presentation script"
+          description: "Content for verbal delivery"
+          input: "🗣️➤ Create a 2-minute introduction for the quarterly sales meeting"
+          explanation: "Generates speech-optimized content with natural pacing and verbal cues"
+
+  # ============================================================================
+  # DATA ANALYSIS
+  # ============================================================================
+  - name: "data-analysis"
+    code: "DATA"
+    labels: ["data", "analytics", "statistics"]
+    type: "mode"
+    emoji: "📊"
+
+    metadata:
+      brief: "Data analysis mode"
+      description: "Analyze data, generate statistics, and provide data-driven insights"
+      purpose: "Statistical analysis, data interpretation, and quantitative reasoning"
+      usage: "For data analysis, statistics, metrics interpretation, trend analysis"
+      complexity: 3
+      scope: "response"
+
+    syntax:
+      template: "📊➤ <data analysis instruction>"
+      template_notes: "Chart emoji indicates analytical/statistical processing mode"
+
+    detection:
+      pre_filter: ["📊"]
+      pattern: "📊➤\\s*(.+)"
+      type: "regex"
+      groups: ["instruction"]
+
+    examples:
+      primary:
+        - name: "sales-analysis"
+          labels: ["sales", "trends"]
+          brief: "Sales trend analysis"
+          description: "Analyze sales data for patterns"
+          input: "📊➤ Analyze quarterly sales trends and identify top-performing products"
+          explanation: "Activates analytical mode for statistical interpretation and insights"
+      supplemental:
+        - name: "metrics-summary"
+          labels: ["metrics", "summary"]
+          brief: "Metrics dashboard"
+          description: "Generate metrics summary"
+          input: "📊➤ Summarize key performance indicators for the marketing campaign"
+          explanation: "Generates structured metrics report with relevant KPIs"
+
+  # ============================================================================
+  # SENTIMENT ANALYSIS
+  # ============================================================================
+  - name: "sentiment-analysis"
+    code: "SENT"
+    labels: ["sentiment", "emotion", "analysis"]
+    type: "mode"
+    emoji: "💡"
+
+    metadata:
+      brief: "Sentiment analysis mode"
+      description: "Determine emotional tone and sentiment expressed in text content"
+      purpose: "Evaluate emotional polarity, intensity, and nuanced emotional states"
+      usage: "For customer feedback, social media monitoring, review analysis, brand perception"
+      complexity: 2
+      scope: "response"
+
+    syntax:
+      template: "💡➤ <sentiment analysis instruction>"
+      template_notes: "Lightbulb emoji indicates insight/analysis mode for sentiment detection"
+
+    detection:
+      pre_filter: ["💡"]
+      pattern: "💡➤\\s*(.+)"
+      type: "regex"
+      groups: ["instruction"]
+
+    examples:
+      primary:
+        - name: "review-sentiment"
+          labels: ["review", "customer"]
+          brief: "Review sentiment"
+          description: "Analyze customer review sentiment"
+          input: "💡➤ Assess the sentiment of this customer product review"
+          explanation: "Returns sentiment classification (Positive/Negative/Mixed/Neutral) with confidence"
+      supplemental:
+        - name: "social-media-tone"
+          labels: ["social", "emotion"]
+          brief: "Social media tone"
+          description: "Analyze social post emotional tone"
+          input: |
+            💡➤ Analyze the emotional tone of this post: "I can't believe how amazing this new restaurant is! The service was incredible."
+          explanation: "Returns 'Highly Positive' with enthusiasm and satisfaction markers identified"
+
+  # ============================================================================
+  # AUDIO DESCRIPTION
+  # ============================================================================
+  - name: "audio-description"
+    code: "AUD"
+    labels: ["audio", "accessibility", "description"]
+    type: "mode"
+    emoji: "🔊"
+
+    metadata:
+      brief: "Audio description mode"
+      description: "Generate audio descriptions for visual content or accessibility purposes"
+      purpose: "Create verbal descriptions of visual elements for accessibility"
+      usage: "For image descriptions, video narration, accessibility content, audio guides"
+      complexity: 2
+      scope: "response"
+
+    syntax:
+      template: "🔊➤ <audio description instruction>"
+      template_notes: "Speaker emoji indicates audio/verbal description generation"
+
+    detection:
+      pre_filter: ["🔊"]
+      pattern: "🔊➤\\s*(.+)"
+      type: "regex"
+      groups: ["instruction"]
+
+    examples:
+      primary:
+        - name: "image-description"
+          labels: ["image", "accessibility"]
+          brief: "Image description"
+          description: "Describe image for accessibility"
+          input: "🔊➤ Describe this product image for visually impaired users"
+          explanation: "Generates detailed verbal description suitable for screen readers"
+
+  # ============================================================================
+  # VISUAL OBSERVATION
+  # ============================================================================
+  - name: "visual-observation"
+    code: "VIS"
+    labels: ["visual", "observation", "analysis"]
+    type: "mode"
+    emoji: "👁️"
+
+    metadata:
+      brief: "Visual observation mode"
+      description: "Detailed visual analysis and observation of images or scenes"
+      purpose: "Careful examination and description of visual elements"
+      usage: "For image analysis, scene description, visual inspection, detail extraction"
+      complexity: 2
+      scope: "response"
+
+    syntax:
+      template: "👁️➤ <visual observation instruction>"
+      template_notes: "Eye emoji indicates careful visual examination mode"
+
+    detection:
+      pre_filter: ["👁️"]
+      pattern: "👁️➤\\s*(.+)"
+      type: "regex"
+      groups: ["instruction"]
+
+    examples:
+      primary:
+        - name: "scene-analysis"
+          labels: ["scene", "detail"]
+          brief: "Scene analysis"
+          description: "Detailed scene observation"
+          input: "👁️➤ Analyze the composition and key elements of this photograph"
+          explanation: "Provides detailed visual analysis including composition, subjects, lighting, colors"
+
+  # ============================================================================
+  # CONVERSATIONAL
+  # ============================================================================
+  - name: "conversational"
+    code: "CHAT"
+    labels: ["chat", "dialogue", "informal"]
+    type: "mode"
+    emoji: "💬"
+
+    metadata:
+      brief: "Conversational mode"
+      description: "Engage in natural, casual conversation with informal tone"
+      purpose: "Natural dialogue and friendly interaction"
+      usage: "For casual chat, friendly discussion, informal Q&A, social interaction"
+      complexity: 1
+      scope: "response"
+
+    syntax:
+      template: "💬➤ <conversational instruction>"
+      template_notes: "Speech bubble emoji indicates casual conversational mode"
+
+    detection:
+      pre_filter: ["💬"]
+      pattern: "💬➤\\s*(.+)"
+      type: "regex"
+      groups: ["instruction"]
+
+    examples:
+      primary:
+        - name: "casual-chat"
+          labels: ["chat", "friendly"]
+          brief: "Casual conversation"
+          description: "Friendly conversational response"
+          input: "💬➤ Chat with the user about their weekend plans"
+          explanation: "Generates warm, friendly conversational response"
+
+  # ============================================================================
+  # WRITING / COMPOSITION
+  # ============================================================================
+  - name: "writing"
+    code: "WRITE"
+    labels: ["writing", "composition", "creative"]
+    type: "mode"
+    emoji: "🖋️"
+
+    metadata:
+      brief: "Writing/composition mode"
+      description: "Creative writing, document composition, and prose generation"
+      purpose: "Generate well-crafted written content with attention to style and structure"
+      usage: "For articles, essays, stories, reports, formal documents"
+      complexity: 2
+      scope: "response"
+
+    syntax:
+      template: "🖋️➤ <writing instruction>"
+      template_notes: "Pen emoji indicates formal writing/composition mode"
+
+    detection:
+      pre_filter: ["🖋️"]
+      pattern: "🖋️➤\\s*(.+)"
+      type: "regex"
+      groups: ["instruction"]
+
+    examples:
+      primary:
+        - name: "article-draft"
+          labels: ["article", "formal"]
+          brief: "Article composition"
+          description: "Write formal article"
+          input: "🖋️➤ Write a professional article about sustainable business practices"
+          explanation: "Generates well-structured article with proper tone and formatting"
+      supplemental:
+        - name: "creative-story"
+          labels: ["creative", "fiction"]
+          brief: "Creative writing"
+          description: "Creative fiction writing"
+          input: "🖋️➤ Write a short story about an unexpected journey"
+          explanation: "Generates creative prose with narrative structure"
+
+  # ============================================================================
+  # CLASSIFICATION / LABELING
+  # ============================================================================
+  - name: "classification"
+    code: "TAG"
+    labels: ["classification", "categorization", "labeling"]
+    type: "mode"
+    emoji: "🏷️"
+
+    metadata:
+      brief: "Classification/labeling mode"
+      description: "Categorize, classify, or label content into defined categories"
+      purpose: "Systematic categorization and tagging of content"
+      usage: "For content classification, tagging, categorization, taxonomy assignment"
+      complexity: 2
+      scope: "response"
+
+    syntax:
+      template: "🏷️➤ <classification instruction>"
+      template_notes: "Label/tag emoji indicates classification mode"
+
+    detection:
+      pre_filter: ["🏷️"]
+      pattern: "🏷️➤\\s*(.+)"
+      type: "regex"
+      groups: ["instruction"]
+
+    examples:
+      primary:
+        - name: "content-tagging"
+          labels: ["tagging", "categorization"]
+          brief: "Content tagging"
+          description: "Classify content into categories"
+          input: "🏷️➤ Classify this support ticket into priority levels and department categories"
+          explanation: "Returns structured classification with category assignments"
+
+  # ============================================================================
+  # IMAGE GENERATION
+  # ============================================================================
+  - name: "image-generation"
+    code: "IMG"
+    labels: ["image", "visual", "generation"]
+    type: "mode"
+    emoji: "🖼️"
+
+    metadata:
+      brief: "Image generation mode"
+      description: "Generate image descriptions, prompts, or visual content specifications"
+      purpose: "Create detailed visual specifications or image generation prompts"
+      usage: "For image prompts, visual specifications, art direction, design briefs"
+      complexity: 3
+      scope: "response"
+
+    syntax:
+      template: "🖼️➤ <image generation instruction>"
+      template_notes: "Picture frame emoji indicates image/visual generation mode"
+
+    detection:
+      pre_filter: ["🖼️"]
+      pattern: "🖼️➤\\s*(.+)"
+      type: "regex"
+      groups: ["instruction"]
+
+    examples:
+      primary:
+        - name: "image-prompt"
+          labels: ["prompt", "art"]
+          brief: "Image prompt"
+          description: "Generate image creation prompt"
+          input: "🖼️➤ Create a detailed prompt for a futuristic cityscape at sunset"
+          explanation: "Generates detailed visual description suitable for image generation"
+
+  # ============================================================================
+  # QUESTION / INQUIRY
+  # ============================================================================
+  - name: "question"
+    code: "ASK"
+    labels: ["question", "inquiry", "exploration"]
+    type: "mode"
+    emoji: "❓"
+
+    metadata:
+      brief: "Question/inquiry mode"
+      description: "Generate clarifying questions, explore topics through inquiry"
+      purpose: "Socratic exploration and question-driven investigation"
+      usage: "For clarification, exploration, interview questions, requirements gathering"
+      complexity: 1
+      scope: "response"
+
+    syntax:
+      template: "❓➤ <inquiry instruction>"
+      template_notes: "Question mark emoji indicates inquiry/exploration mode"
+
+    detection:
+      pre_filter: ["❓➤"]
+      pattern: "❓➤\\s*(.+)"
+      type: "regex"
+      groups: ["instruction"]
+
+    examples:
+      primary:
+        - name: "clarifying-questions"
+          labels: ["clarification", "discovery"]
+          brief: "Generate questions"
+          description: "Create clarifying questions"
+          input: "❓➤ Generate questions to understand the user's project requirements"
+          explanation: "Produces thoughtful clarifying questions for requirements gathering"
+
+  # ============================================================================
+  # CODE / TECHNICAL
+  # ============================================================================
+  - name: "code"
+    code: "CODE"
+    labels: ["code", "technical", "programming"]
+    type: "mode"
+    emoji: "🖥️"
+
+    metadata:
+      brief: "Code/technical mode"
+      description: "Generate code, technical documentation, or programming-related content"
+      purpose: "Technical content generation with code focus"
+      usage: "For code generation, technical docs, API documentation, programming help"
+      complexity: 3
+      scope: "response"
+
+    syntax:
+      template: "🖥️➤ <code/technical instruction>"
+      template_notes: "Computer emoji indicates technical/code generation mode"
+
+    detection:
+      pre_filter: ["🖥️"]
+      pattern: "🖥️➤\\s*(.+)"
+      type: "regex"
+      groups: ["instruction"]
+
+    examples:
+      primary:
+        - name: "code-generation"
+          labels: ["code", "implementation"]
+          brief: "Code generation"
+          description: "Generate code implementation"
+          input: "🖥️➤ Write a Python function to validate email addresses"
+          explanation: "Generates well-documented, functional code"
+      supplemental:
+        - name: "api-docs"
+          labels: ["api", "documentation"]
+          brief: "API documentation"
+          description: "Generate API documentation"
+          input: "🖥️➤ Document the REST API endpoints for user management"
+          explanation: "Generates structured API documentation with examples"
+
+  # ============================================================================
+  # DOCUMENT / FORMAL
+  # ============================================================================
+  - name: "document"
+    code: "DOC"
+    labels: ["document", "formal", "structured"]
+    type: "mode"
+    emoji: "📄"
+
+    metadata:
+      brief: "Document/formal mode"
+      description: "Generate formal documents with proper structure and formatting"
+      purpose: "Create structured, formal documentation"
+      usage: "For reports, proposals, formal letters, official documents"
+      complexity: 2
+      scope: "response"
+
+    syntax:
+      template: "📄➤ <document instruction>"
+      template_notes: "Document emoji indicates formal document generation mode"
+
+    detection:
+      pre_filter: ["📄"]
+      pattern: "📄➤\\s*(.+)"
+      type: "regex"
+      groups: ["instruction"]
+
+    examples:
+      primary:
+        - name: "formal-report"
+          labels: ["report", "formal"]
+          brief: "Formal report"
+          description: "Generate formal report"
+          input: "📄➤ Create a project status report for stakeholders"
+          explanation: "Generates properly structured formal report with sections"
+
+  # ============================================================================
+  # EXPERIMENTAL / TESTING
+  # ============================================================================
+  - name: "experimental"
+    code: "TEST"
+    labels: ["experimental", "testing", "research"]
+    type: "mode"
+    emoji: "🧪"
+
+    metadata:
+      brief: "Experimental/testing mode"
+      description: "Experimental approaches, testing hypotheses, research exploration"
+      purpose: "Enable experimental thinking and hypothesis testing"
+      usage: "For A/B testing ideas, hypothesis exploration, experimental approaches"
+      complexity: 3
+      scope: "response"
+
+    syntax:
+      template: "🧪➤ <experimental instruction>"
+      template_notes: "Test tube emoji indicates experimental/research mode"
+
+    detection:
+      pre_filter: ["🧪"]
+      pattern: "🧪➤\\s*(.+)"
+      type: "regex"
+      groups: ["instruction"]
+
+    examples:
+      primary:
+        - name: "hypothesis-test"
+          labels: ["hypothesis", "research"]
+          brief: "Hypothesis testing"
+          description: "Explore experimental hypothesis"
+          input: "🧪➤ Design an experiment to test user engagement with the new feature"
+          explanation: "Generates experimental design with variables, controls, and metrics"
+
+  # ============================================================================
+  # TRANSLATION / LOCALIZATION
+  # ============================================================================
+  - name: "translation"
+    code: "I18N"
+    labels: ["translation", "language", "localization"]
+    type: "mode"
+    emoji: "🌐"
+
+    metadata:
+      brief: "Translation/localization mode"
+      description: "Translate content or adapt for different languages and regions"
+      purpose: "Language translation and cultural localization"
+      usage: "For translation, localization, multilingual content, cultural adaptation"
+      complexity: 2
+      scope: "response"
+
+    syntax:
+      template: "🌐➤ <translation instruction>"
+      template_notes: "Globe emoji indicates translation/localization mode"
+
+    detection:
+      pre_filter: ["🌐"]
+      pattern: "🌐➤\\s*(.+)"
+      type: "regex"
+      groups: ["instruction"]
+
+    examples:
+      primary:
+        - name: "language-translation"
+          labels: ["translation", "language"]
+          brief: "Language translation"
+          description: "Translate content to target language"
+          input: "🌐➤ Translate this product description to Spanish for the Latin American market"
+          explanation: "Provides culturally-adapted translation for target region"
+      supplemental:
+        - name: "localization"
+          labels: ["localization", "cultural"]
+          brief: "Cultural localization"
+          description: "Adapt content for region"
+          input: "🌐➤ Localize this marketing copy for the Japanese market"
+          explanation: "Adapts content with cultural considerations beyond direct translation"

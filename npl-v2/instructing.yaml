@@ -1,0 +1,423 @@
+# NPL Instructing Patterns Registry
+# Specialized syntax for directing agent behavior through structured commands and templates
+
+version: "1.0"
+category: "instructing"
+description: "Patterns for directing agent behavior through algorithms, annotations, and control structures"
+
+header:
+  title: "NPL Instructing Patterns"
+  purpose: |
+    Specialized syntax patterns for directing agent behavior through algorithms, control structures,
+    and meta-level instructions. Use instructing patterns for complex procedural guidance and
+    precise behavioral specification.
+  usage: |
+    Use handlebars for control flow, alg fences for algorithms, annotations for iterative refinement,
+    and symbolic logic for formal specifications.
+
+elements:
+  # ============================================================================
+  # HANDLEBARS
+  # ============================================================================
+  - name: "handlebars"
+    code: "HB"
+    labels: ["core", "template", "control", "technical"]
+    type: "pattern"
+
+    metadata:
+      brief: "Template control structures"
+      description: "Handlebar-style template syntax for conditionals, loops, and variable substitution"
+      purpose: "Enable dynamic content generation with control flow"
+      usage: "For conditional content, iteration over collections, variable interpolation"
+      complexity: 2
+      scope: "inline"
+
+    syntax:
+      template: |
+        Conditionals:
+          {{if <condition>}} ... {{else}} ... {{/if}}
+
+        Iteration:
+          {{foreach <collection> as <item>}} ... {{/foreach}}
+          {{foreach as <item>| from <source>}} ... {{/foreach}}
+
+        Variables:
+          {{<variable.path>}}
+          {{<variable>|<modifier>}}
+
+        Loop Context:
+          {{@first}}, {{@last}}, {{@index}}
+      template_notes: |
+        Double curly braces distinguish from regular text.
+        Supports nested structures and complex expressions.
+
+    detection:
+      pre_filter: ["{{"]
+      pattern: "\\{\\{(if|foreach|else|/if|/foreach|@\\w+|[\\w.]+(?:\\|[^}]+)?)\\}\\}"
+      type: "regex"
+      groups: ["expression"]
+
+    examples:
+      primary:
+        - name: "conditional-content"
+          labels: ["conditional", "branch"]
+          brief: "Conditional rendering"
+          description: "Show different content based on condition"
+          input: |
+            {{if user.is_premium}}
+            Welcome, Premium Member! Here are your exclusive features:
+            {{foreach user.premium_features as feature}}
+            - {{feature.name}}: {{feature.description}}
+            {{/foreach}}
+            {{else}}
+            Upgrade to Premium to unlock additional features!
+            {{/if}}
+          explanation: "Conditionally shows premium content based on user status"
+      supplemental:
+        - name: "list-generation"
+          labels: ["iteration", "list"]
+          brief: "List with loop context"
+          description: "Generate list with special handling for first/last"
+          input: |
+            Contributors: {{foreach contributors as c}}{{c.name}}{{if not @last}}, {{/if}}{{/foreach}}
+          explanation: "Generates comma-separated list without trailing comma"
+
+  # ============================================================================
+  # ALG-SPEAK
+  # ============================================================================
+  - name: "alg-speak"
+    code: "ALGS"
+    labels: ["algorithm", "procedural", "computation"]
+    type: "pattern"
+
+    metadata:
+      brief: "Algorithm specification patterns"
+      description: "Express instructions as formal algorithms with various notation styles"
+      purpose: "Precise, unambiguous procedural instructions"
+      usage: "For complex procedures, computational instructions, step-by-step processes"
+      complexity: 3
+      scope: "block"
+
+    syntax:
+      template: |
+        Fence types:
+          ```alg``` - Generic algorithm notation
+          ```alg-pseudo``` - Pseudocode style
+          ```alg-python``` - Python-like syntax
+          ```alg-javascript``` - JavaScript-like syntax
+          ```alg-flowchart``` - Flowchart notation
+      template_notes: |
+        Algorithm components:
+        - name: Algorithm identifier
+        - input: Required inputs
+        - output: Expected output
+        - procedure: Step-by-step process
+        - complexity: Time/space analysis
+
+    detection:
+      pre_filter: ["```alg"]
+      pattern: "```alg(?:-([\\w]+))?(?:\\|([^\\n]*))?\\n([\\s\\S]*?)\\n```"
+      type: "regex"
+      groups: ["style", "qualifier", "content"]
+
+    examples:
+      primary:
+        - name: "python-style-alg"
+          labels: ["python", "readable"]
+          brief: "Python-style algorithm"
+          description: "Algorithm in Python-like syntax"
+          input: |
+            ```alg-python
+            def process_order(order):
+                if not validate_inventory(order.items):
+                    return Error("Insufficient inventory")
+
+                total = sum(item.price * item.quantity for item in order.items)
+
+                if order.has_discount:
+                    total = apply_discount(total, order.discount_code)
+
+                charge_result = process_payment(order.payment_method, total)
+
+                if charge_result.success:
+                    update_inventory(order.items)
+                    send_confirmation(order.customer, order)
+                    return Success(order.id)
+                else:
+                    return Error(charge_result.message)
+            ```
+          explanation: "Readable algorithm in familiar Python syntax"
+      supplemental:
+        - name: "flowchart-alg"
+          labels: ["flowchart", "visual"]
+          brief: "Flowchart notation"
+          description: "Algorithm as flowchart steps"
+          input: |
+            ```alg-flowchart
+            [Start] --> [Receive Request]
+            [Receive Request] --> {Valid?}
+            {Valid?} -- Yes --> [Process]
+            {Valid?} -- No --> [Return Error]
+            [Process] --> {Success?}
+            {Success?} -- Yes --> [Return Result]
+            {Success?} -- No --> [Log Error] --> [Return Error]
+            [Return Result] --> [End]
+            [Return Error] --> [End]
+            ```
+          explanation: "Visual flowchart notation for process flow"
+
+    extended:
+      styles:
+        pseudo: "Natural language pseudocode"
+        python: "Python-like syntax"
+        javascript: "JavaScript-like syntax"
+        flowchart: "Box and arrow notation"
+
+  # ============================================================================
+  # ANNOTATION
+  # ============================================================================
+  - name: "annotation"
+    code: "ANNO"
+    labels: ["refinement", "iterative", "feedback"]
+    type: "pattern"
+
+    metadata:
+      brief: "Iterative refinement annotations"
+      description: "Mark content for iterative refinement with structured feedback"
+      purpose: "Enable structured content review and modification cycles"
+      usage: "For code changes, UX modifications, design interactions, document revisions"
+      complexity: 2
+      scope: "inline"
+
+    syntax:
+      template: |
+        Inline annotation:
+          <content> /* @annotation: <feedback> */
+
+        Block annotation:
+          /* @review
+             issue: <description>
+             suggestion: <improvement>
+             priority: <high|medium|low>
+          */
+
+        Line reference:
+          @line:<number>: <feedback>
+      template_notes: "Annotations provide structured feedback tied to specific content"
+
+    detection:
+      pre_filter: ["@annotation", "@review", "@line:"]
+      pattern: "(?:\\/\\*\\s*@(annotation|review)(?:[:\\s]([^*]+))\\*\\/|@line:(\\d+):\\s*(.+))"
+      type: "regex"
+      groups: ["type", "content", "line_num", "line_feedback"]
+
+    examples:
+      primary:
+        - name: "code-annotation"
+          labels: ["code", "review"]
+          brief: "Code review annotation"
+          description: "Annotate code for refinement"
+          input: |
+            function processUser(user) {
+              /* @annotation: Add input validation */
+              const result = database.query(user.id);  /* @annotation: Use parameterized query */
+              return result;
+            }
+
+            /* @review
+               issue: No error handling for database failures
+               suggestion: Wrap in try-catch with proper logging
+               priority: high
+            */
+          explanation: "Structured annotations for code review feedback"
+      supplemental:
+        - name: "design-annotation"
+          labels: ["design", "ux"]
+          brief: "Design annotation"
+          description: "UX design feedback"
+          input: |
+            @line:15: Button placement should follow F-pattern scanning
+            @line:23: Color contrast fails WCAG AA requirements
+            @line:31: Consider adding loading state indicator
+          explanation: "Line-referenced feedback for design documents"
+
+  # ============================================================================
+  # SYMBOLIC LOGIC
+  # ============================================================================
+  - name: "symbolic-logic"
+    code: "LOGIC"
+    labels: ["logic", "formal", "reasoning", "technical"]
+    type: "pattern"
+
+    metadata:
+      brief: "Symbolic logic notation"
+      description: "Express instructions using formal logical notation and operators"
+      purpose: "Precise logical specifications and reasoning"
+      usage: "For formal requirements, logical constraints, rule specifications"
+      complexity: 4
+      scope: "expression"
+
+    syntax:
+      template: |
+        Propositional:
+          P ∧ Q (and), P ∨ Q (or), ¬P (not)
+          P → Q (implies), P ↔ Q (iff)
+
+        Predicate:
+          ∀x P(x) (for all), ∃x P(x) (exists)
+          ∀x ∈ S: P(x) (for all in set)
+
+        Modal:
+          □P (necessarily), ◇P (possibly)
+      template_notes: "Standard mathematical logic notation"
+
+    detection:
+      pre_filter: ["∧", "∨", "¬", "→", "↔", "∀", "∃", "□", "◇"]
+      type: "custom"
+      function: "detect_symbolic_logic"
+
+    examples:
+      primary:
+        - name: "access-control-logic"
+          labels: ["security", "rules"]
+          brief: "Access control rules"
+          description: "Formal access control specification"
+          input: |
+            Access Control Rules:
+            ∀u ∈ Users: (isAdmin(u) ∨ isOwner(u, resource)) → canAccess(u, resource)
+            ∀u ∈ Users: ¬isAuthenticated(u) → ¬canAccess(u, resource)
+            ∃r ∈ Roles: hasRole(u, r) ∧ roleHasPermission(r, action) → canPerform(u, action)
+          explanation: "Formal logic specification of access control rules"
+      supplemental:
+        - name: "validation-logic"
+          labels: ["validation", "constraints"]
+          brief: "Validation constraints"
+          description: "Data validation rules in logic"
+          input: |
+            ∀order ∈ Orders:
+              hasItems(order) ∧ hasPayment(order) ∧ hasShipping(order) → isValid(order)
+              isValid(order) ∧ ¬isPaid(order) → status(order) = "pending"
+              isValid(order) ∧ isPaid(order) ∧ ¬isShipped(order) → status(order) = "processing"
+          explanation: "Order validation rules expressed formally"
+
+  # ============================================================================
+  # FORMAL PROOF
+  # ============================================================================
+  - name: "formal-proof"
+    code: "PROOF"
+    labels: ["proof", "verification", "mathematical"]
+    type: "pattern"
+
+    metadata:
+      brief: "Formal proof structure"
+      description: "Express reasoning as formal mathematical proofs"
+      purpose: "Rigorous verification of claims and logical deductions"
+      usage: "For correctness proofs, logical arguments, verified reasoning"
+      complexity: 4
+      scope: "block"
+
+    syntax:
+      template: |
+        Theorem: <statement>
+        Proof:
+          1. <premise or given>
+          2. <logical step> [by <justification>]
+          3. <logical step> [by <justification>]
+          ...
+          n. <conclusion> ∎
+      template_notes: |
+        Justifications include:
+        - Given, Assumption, Hypothesis
+        - By definition of X
+        - By step N
+        - By modus ponens, modus tollens
+        - By contradiction
+
+    detection:
+      pre_filter: ["Theorem:", "Proof:", "QED", "∎"]
+      pattern: "(?:Theorem|Lemma|Proof|QED|∎)"
+      type: "regex"
+
+    examples:
+      primary:
+        - name: "correctness-proof"
+          labels: ["correctness", "algorithm"]
+          brief: "Algorithm correctness"
+          description: "Prove algorithm terminates correctly"
+          input: |
+            Theorem: Binary search returns correct index or -1 for any sorted array
+
+            Proof:
+            1. Let A be a sorted array of n elements [Given]
+            2. Let x be the search target [Given]
+            3. Initially, left = 0, right = n-1 [By algorithm definition]
+            4. Loop invariant: if x ∈ A, then A[left] ≤ x ≤ A[right] [Claim]
+            5. Each iteration either finds x or reduces search space by half [By algorithm]
+            6. Search space shrinks: right - left decreases each iteration [By step 5]
+            7. Loop terminates when left > right or x is found [By algorithm]
+            8. If x found, correct index returned [By algorithm]
+            9. If left > right, x ∉ A, so -1 is correct [By invariant and exhaustion]
+            ∎
+          explanation: "Formal proof of binary search correctness"
+
+  # ============================================================================
+  # SECOND-ORDER INSTRUCTIONS
+  # ============================================================================
+  - name: "second-order"
+    code: "META"
+    labels: ["meta", "instruction", "delegation"]
+    type: "pattern"
+
+    metadata:
+      brief: "Meta-level instructions"
+      description: "Instructions about how to interpret or execute other instructions"
+      purpose: "Enable self-modifying behavior and meta-cognitive operations"
+      usage: "For instruction modification, behavioral adaptation, meta-prompting"
+      complexity: 3
+      scope: "instruction"
+
+    syntax:
+      template: |
+        Interpretation modifiers:
+          @interpret-literally: <instruction>
+          @interpret-flexibly: <instruction>
+
+        Execution modifiers:
+          @before-executing: <check>
+          @after-executing: <action>
+
+        Self-reference:
+          @this-instruction: <modification>
+          @previous-output: <operation>
+      template_notes: "Meta-instructions modify how other instructions are processed"
+
+    detection:
+      pre_filter: ["@interpret", "@before-executing", "@after-executing", "@this-instruction"]
+      pattern: "@(interpret-\\w+|before-executing|after-executing|this-instruction|previous-output):\\s*(.+)"
+      type: "regex"
+      groups: ["modifier", "content"]
+
+    examples:
+      primary:
+        - name: "interpretation-control"
+          labels: ["meta", "interpretation"]
+          brief: "Interpretation control"
+          description: "Control how instructions are interpreted"
+          input: |
+            @interpret-literally: Output exactly "Hello, World!" without any modifications
+
+            @interpret-flexibly: Provide a greeting appropriate for the user's timezone and culture
+
+            @before-executing: Verify the user has appropriate permissions
+            @after-executing: Log the action with timestamp and user ID
+          explanation: "Meta-instructions control interpretation and execution"
+      supplemental:
+        - name: "self-modification"
+          labels: ["adaptive", "self-modify"]
+          brief: "Self-modifying instruction"
+          description: "Instruction that modifies behavior"
+          input: |
+            @this-instruction: If response exceeds 500 words, summarize and offer to expand sections
+
+            @previous-output: Review for consistency with this response before finalizing
+          explanation: "Instructions that reference and modify their own execution"

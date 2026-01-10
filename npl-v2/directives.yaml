@@ -1,0 +1,561 @@
+# NPL Directives Registry
+# Specialized instruction patterns for precise agent behavior modification and output control
+
+version: "1.0"
+category: "directives"
+description: "Structured command syntax for fine-grained agent control using emoji prefixes"
+
+header:
+  title: "NPL Directives"
+  purpose: |
+    Emoji-prefixed directives provide fine-grained control over agent behavior and
+    output formatting. Each directive uses a specific emoji to signal its function.
+  usage: |
+    Use directive syntax ⟪emoji: content⟫ to invoke specific behaviors.
+
+elements:
+  # ============================================================================
+  # TABLE DIRECTIVE
+  # ============================================================================
+  - name: "table-directive"
+    code: "TBL"
+    labels: ["core", "formatting", "table", "output"]
+    type: "emoji"
+    emoji: "📅"
+
+    metadata:
+      brief: "Structured table formatting"
+      description: "Format data into structured tables with customizable column alignments and headers"
+      purpose: "Create organized tabular output with precise column control"
+      usage: "For presenting lists, comparisons, categorical data with specific alignment requirements"
+      complexity: 3
+      scope: "block"
+
+    syntax:
+      template: "⟪📅: (<column>:<alignment>, ...) | <content description>⟫"
+      template_notes: |
+        Column alignment syntax:
+        - :left or left - Left-aligned column
+        - :right or right - Right-aligned column
+        - :center or center - Center-aligned column
+        - #:left - Row number column, left-aligned
+        - name:right label Header - Column with custom header label
+
+    detection:
+      pre_filter: ["⟪📅"]
+      pattern: "⟪📅:\\s*\\(([^)]+)\\)\\s*\\|\\s*([^⟫]+)⟫"
+      type: "regex"
+      groups: ["columns", "content"]
+
+    examples:
+      primary:
+        - name: "prime-numbers-table"
+          labels: ["math", "numbered"]
+          brief: "Numbered table with alignments"
+          description: "Table with row numbers and mixed alignments"
+          input: |
+            ````example
+            ```yaml
+            - role: system
+              message: "⟪📅: (#:left, prime:right, english:center label Numbers) | first 5 prime numbers⟫"
+            - role: assistant
+              message: |
+                | #    | Prime |   Numbers   |
+                | :--- | ----: | :---------: |
+                | 1    |     2 |     Two     |
+                | 2    |     3 |    Three    |
+                | 3    |     5 |    Five     |
+                | 4    |     7 |    Seven    |
+                | 5    |    11 |   Eleven    |
+            ```
+            ````
+          explanation: "Directive specifies column names, alignments, and custom label; generates proper markdown table"
+      supplemental:
+        - name: "product-listing"
+          labels: ["ecommerce", "simple"]
+          brief: "Product table"
+          description: "Simple product listing with pricing"
+          input: "⟪📅: (product:left, price:right, rating:center) | top 5 bestselling products⟫"
+          explanation: "Creates product table with left-aligned names, right-aligned prices, centered ratings"
+
+    extended:
+      alignments:
+        left: "Left-align column content"
+        right: "Right-align column content (numbers)"
+        center: "Center-align column content"
+
+  # ============================================================================
+  # TEMPORAL DIRECTIVE
+  # ============================================================================
+  - name: "temporal-directive"
+    code: "TIME"
+    labels: ["core", "timing", "scheduling", "control"]
+    type: "emoji"
+    emoji: "⏳"
+
+    metadata:
+      brief: "Time-based task execution"
+      description: "Incorporate temporal considerations into task execution including scheduling and timing constraints"
+      purpose: "Schedule actions, set deadlines, define time-based triggers"
+      usage: "For scheduled tasks, time-constrained processing, recurring actions, event delays"
+      complexity: 2
+      scope: "instruction"
+
+    syntax:
+      template: "⟪⏳: <time condition>⟫ <instruction>"
+      template_notes: |
+        Time format patterns:
+        - Absolute: At 3:00 PM, On December 25th
+        - Relative: Within 5 minutes, After 2 hours
+        - Recurring: Every Monday, Daily at noon
+        - Event-triggered: 30 seconds after signup
+        - Duration: For no more than 1 hour, Until timeout
+
+    detection:
+      pre_filter: ["⟪⏳"]
+      pattern: "⟪⏳:\\s*([^⟫]+)⟫\\s*(.*)"
+      type: "regex"
+      groups: ["time_condition", "instruction"]
+
+    examples:
+      primary:
+        - name: "scheduled-report"
+          labels: ["scheduling", "recurring"]
+          brief: "Recurring scheduled task"
+          description: "Generate report on schedule"
+          input: "⟪⏳: At the end of each month⟫ Generate a summary report of user activity."
+          explanation: "Agent initiates monthly report generation at month's end"
+        - name: "deadline-constraint"
+          labels: ["deadline", "processing"]
+          brief: "Time-limited processing"
+          description: "Complete task within time limit"
+          input: "⟪⏳: Within 5 minutes of receiving data⟫ Analyze and present the findings."
+          explanation: "Sets 5-minute deadline for completing data analysis"
+      supplemental:
+        - name: "event-triggered"
+          labels: ["event", "delay"]
+          brief: "Delayed action after event"
+          description: "Action triggered after user event"
+          input: "⟪⏳: 30 seconds after user completes checkout⟫ Send order confirmation and tracking information."
+          explanation: "Triggers email 30 seconds post-checkout"
+        - name: "duration-limit"
+          labels: ["duration", "limit"]
+          brief: "Maximum processing time"
+          description: "Limit processing duration"
+          input: "⟪⏳: Process for maximum 10 minutes⟫ Scan document for key information, prioritizing most relevant sections first."
+          explanation: "Prevents infinite processing by setting time cap"
+
+  # ============================================================================
+  # TEMPLATE INTEGRATION DIRECTIVE
+  # ============================================================================
+  - name: "template-directive"
+    code: "TPLD"
+    labels: ["core", "template", "integration", "reuse"]
+    type: "emoji"
+    emoji: "⇆"
+
+    metadata:
+      brief: "Template integration"
+      description: "Integrate predefined templates into outputs with data binding and variable substitution"
+      purpose: "Apply consistent formatting across multiple data entries using reusable templates"
+      usage: "For reusing defined templates, consistent formatting, iterative data presentation"
+      complexity: 3
+      scope: "block"
+
+    syntax:
+      template: "⟪⇆: <template-name> | <application context>⟫"
+      template_notes: |
+        Alternative syntax: ⟪⇐: template-name | context⟫
+
+        Application contexts:
+        - with the data of each X - Apply to collection items
+        - for each item in Y - Iterate over collection
+        - using current context - Use available variables
+        - applying to Z - Apply to specific entries
+
+    detection:
+      pre_filter: ["⟪⇆", "⟪⇐"]
+      pattern: "⟪[⇆⇐]:\\s*([^|]+)\\s*\\|\\s*([^⟫]+)⟫"
+      type: "regex"
+      groups: ["template_name", "context"]
+
+    examples:
+      primary:
+        - name: "executive-profiles"
+          labels: ["business", "iteration"]
+          brief: "Apply template to collection"
+          description: "Apply user template to each executive"
+          input: |
+            ## Executives
+            {foreach business.executives as executive}
+            - Name: <executive.name>
+            - Role: <executive.role>
+            ⟪⇆: user-template | with the data of each executive⟫
+            {/foreach}
+          explanation: "Template applied consistently to each executive in the collection"
+      supplemental:
+        - name: "product-cards"
+          labels: ["ecommerce", "cards"]
+          brief: "Product card template"
+          description: "Apply product template to inventory"
+          input: "⟪⇆: product-card | for each item in inventory⟫"
+          explanation: "Generates product cards for all inventory items"
+        - name: "newsletter-articles"
+          labels: ["content", "newsletter"]
+          brief: "Article summary template"
+          description: "Apply summary template to news items"
+          input: "⟪⇆: article-summary | applying to each news item⟫"
+          explanation: "Creates consistent article summaries for newsletter"
+
+    extended:
+      related: ["template-fence", "named-template"]
+
+  # ============================================================================
+  # INTERACTIVE DIRECTIVE
+  # ============================================================================
+  - name: "interactive-directive"
+    code: "INTR"
+    labels: ["core", "interaction", "behavior", "ui"]
+    type: "emoji"
+    emoji: "🚀"
+
+    metadata:
+      brief: "Interactive element choreography"
+      description: "Define interactive behaviors and user-triggered actions that adapt based on interactions"
+      purpose: "Create responsive, interactive experiences with event-driven behaviors"
+      usage: "For user-triggered responses, interactive workflows, dynamic content adaptation"
+      complexity: 3
+      scope: "instruction"
+
+    syntax:
+      template: "⟪🚀: <trigger event>⟫ <action>"
+      template_notes: |
+        Trigger types:
+        - User actions: clicks, taps, selects, hovers, types, scrolls
+        - System events: data loaded, error occurred, timeout
+        - Time-based: After X seconds, At specific time
+        - State changes: When condition true, Upon reaching threshold
+
+    detection:
+      pre_filter: ["⟪🚀"]
+      pattern: "⟪🚀:\\s*([^⟫]+)⟫\\s*(.*)"
+      type: "regex"
+      groups: ["trigger", "action"]
+
+    examples:
+      primary:
+        - name: "user-selection"
+          labels: ["selection", "dynamic"]
+          brief: "Respond to user selection"
+          description: "Adapt response based on user choice"
+          input: "⟪🚀: User selects an option⟫ Provide corresponding information based on the user's selection."
+          explanation: "Agent dynamically responds based on which option user selects"
+        - name: "form-validation"
+          labels: ["validation", "input"]
+          brief: "Dynamic form validation"
+          description: "Validate input and show errors"
+          input: "⟪🚀: User enters invalid email format⟫ Show inline error message and highlight field in red."
+          explanation: "Real-time validation feedback as user types"
+      supplemental:
+        - name: "progressive-disclosure"
+          labels: ["disclosure", "expand"]
+          brief: "Expand on demand"
+          description: "Reveal details when requested"
+          input: "⟪🚀: User clicks \"Learn More\"⟫ Expand section with detailed technical specifications and usage examples."
+          explanation: "Content expands progressively as user requests more detail"
+        - name: "multi-step-workflow"
+          labels: ["workflow", "progress"]
+          brief: "Multi-step progress"
+          description: "Unlock steps progressively"
+          input: "⟪🚀: User completes step 1⟫ Unlock step 2 and update progress indicator to 33% complete."
+          explanation: "Guides user through sequential workflow with progress tracking"
+        - name: "contextual-help"
+          labels: ["help", "tooltip"]
+          brief: "Contextual tooltip"
+          description: "Show help on hover"
+          input: "⟪🚀: User hovers over complex term⟫ Display tooltip with definition and link to documentation."
+          explanation: "Provides contextual help without cluttering interface"
+
+    extended:
+      choreography_patterns:
+        sequential: "Step → Next Step → Final"
+        conditional: "If X then Y, else Z"
+        parallel: "Simultaneously A AND B AND C"
+
+  # ============================================================================
+  # IDENTIFIER DIRECTIVE
+  # ============================================================================
+  - name: "identifier-directive"
+    code: "ID"
+    labels: ["core", "identity", "tracking", "management"]
+    type: "emoji"
+    emoji: "🆔"
+
+    metadata:
+      brief: "Unique identifier management"
+      description: "Generate and manage unique identifiers for entities, sessions, and records"
+      purpose: "Maintain distinct identification for objects requiring tracking"
+      usage: "For session IDs, record IDs, transaction references, document management"
+      complexity: 2
+      scope: "instruction"
+
+    syntax:
+      template: "⟪🆔: <entity type>⟫ <context or instruction>"
+      template_notes: |
+        ID types:
+        - UUID/GUID: 550e8400-e29b-41d4-a716-446655440000
+        - Sequential: USER_12345, ORD_000789
+        - Hash-based: sha256_abc123def456
+        - Timestamp: 20240828_143022_001
+        - Composite: PROJ_001_TASK_045_USER_123
+
+    detection:
+      pre_filter: ["⟪🆔"]
+      pattern: "⟪🆔:\\s*([^⟫]+)⟫\\s*(.*)"
+      type: "regex"
+      groups: ["entity_type", "context"]
+
+    examples:
+      primary:
+        - name: "session-id"
+          labels: ["session", "auth"]
+          brief: "Session identifier"
+          description: "Generate session ID for login"
+          input: "⟪🆔: User Session⟫ Generate a session identifier for the new login event."
+          explanation: "Creates unique session ID for tracking user session"
+        - name: "transaction-id"
+          labels: ["transaction", "payment"]
+          brief: "Transaction reference"
+          description: "Create payment transaction ID"
+          input: "⟪🆔: Payment Transaction⟫ Create unique transaction reference for order processing."
+          explanation: "Generates traceable transaction ID for payment systems"
+      supplemental:
+        - name: "api-request-id"
+          labels: ["api", "logging"]
+          brief: "API request tracking"
+          description: "Generate request ID for logging"
+          input: "⟪🆔: API Request⟫ Generate request ID for logging and error tracking purposes."
+          explanation: "Enables request tracing through system logs"
+        - name: "user-facing-id"
+          labels: ["customer", "readable"]
+          brief: "Human-readable ID"
+          description: "Customer-friendly order number"
+          input: "⟪🆔: Order Number⟫ Human-readable order reference for customer service."
+          explanation: "Creates easy-to-communicate order reference"
+
+    extended:
+      id_types:
+        uuid: "Universally unique, distributed systems"
+        sequential: "Ordered, simple increment"
+        hash: "Content-derived, verification"
+        timestamp: "Time-ordered, chronological"
+        composite: "Multi-part, hierarchical"
+
+  # ============================================================================
+  # EXPLANATORY DIRECTIVE
+  # ============================================================================
+  - name: "explanatory-directive"
+    code: "EXPL"
+    labels: ["core", "documentation", "annotation", "guidance"]
+    type: "emoji"
+    emoji: "📖"
+
+    metadata:
+      brief: "Explanatory note annotations"
+      description: "Append instructive comments to clarify expectations and provide context for behaviors"
+      purpose: "Inline documentation explaining intent, constraints, or requirements"
+      usage: "For clarifying reasoning, ethical considerations, implementation guidance, edge cases"
+      complexity: 1
+      scope: "annotation"
+
+    syntax:
+      template: "⟪📖: <explanation>⟫ <associated instruction>"
+      template_notes: "Explanation precedes or accompanies the instruction it clarifies"
+
+    detection:
+      pre_filter: ["⟪📖"]
+      pattern: "⟪📖:\\s*([^⟫]+)⟫\\s*(.*)"
+      type: "regex"
+      groups: ["explanation", "instruction"]
+
+    examples:
+      primary:
+        - name: "privacy-guideline"
+          labels: ["privacy", "ethics"]
+          brief: "Data privacy guidance"
+          description: "Emphasize privacy requirements"
+          input: "⟪📖: Ensure user consent before data collection⟫ Prioritize user privacy when soliciting personal information."
+          explanation: "Provides ethical context for data handling instruction"
+        - name: "security-note"
+          labels: ["security", "logging"]
+          brief: "Security best practice"
+          description: "Document security constraint"
+          input: "⟪📖: Never log sensitive information like passwords or tokens⟫ Implement secure logging practices for user activity."
+          explanation: "Explains security rationale for logging implementation"
+      supplemental:
+        - name: "accessibility-note"
+          labels: ["accessibility", "wcag"]
+          brief: "Accessibility requirement"
+          description: "Document accessibility needs"
+          input: "⟪📖: Ensure all interactive elements are keyboard accessible⟫ Design user interface components following WCAG guidelines."
+          explanation: "Links accessibility standard to design instruction"
+        - name: "rate-limit-note"
+          labels: ["technical", "api"]
+          brief: "Technical constraint"
+          description: "Document API limitations"
+          input: "⟪📖: API rate limits apply - implement exponential backoff for retry logic⟫"
+          explanation: "Technical constraint annotation for implementation"
+
+    extended:
+      categories:
+        ethical: "Privacy, consent, autonomy"
+        technical: "Constraints, limits, requirements"
+        business: "Rules, policies, compliance"
+        ux: "Usability, accessibility, consistency"
+        quality: "Standards, verification, accuracy"
+
+  # ============================================================================
+  # SECTION REFERENCE DIRECTIVE
+  # ============================================================================
+  - name: "section-reference-directive"
+    code: "REF"
+    labels: ["core", "reference", "navigation", "organization"]
+    type: "emoji"
+    emoji: "📂"
+
+    metadata:
+      brief: "Section reference marking"
+      description: "Mark sections with unique identifiers for reference, navigation, and updates"
+      purpose: "Create navigable reference points for cross-referencing and modular organization"
+      usage: "For documentation anchors, content updates, section linking, modular content"
+      complexity: 2
+      scope: "marker"
+
+    syntax:
+      template: "⟪📂:{<identifier>}⟫ <section content or reference>"
+      template_notes: |
+        Naming conventions:
+        - Descriptive: user_guidelines, api_reference
+        - Hierarchical: docs_api_auth_oauth
+        - Versioned: user_manual_v2_1, changelog_2024_q1
+
+    detection:
+      pre_filter: ["⟪📂"]
+      pattern: "⟪📂:\\{([^}]+)\\}⟫\\s*(.*)"
+      type: "regex"
+      groups: ["identifier", "content"]
+
+    examples:
+      primary:
+        - name: "documentation-reference"
+          labels: ["docs", "anchor"]
+          brief: "Documentation anchor"
+          description: "Create reference point in docs"
+          input: "⟪📂:{installation_procedure_v2}⟫ Follow the latest installation steps outlined."
+          explanation: "Tags installation section for easy reference and updates"
+        - name: "cross-reference"
+          labels: ["navigation", "link"]
+          brief: "Cross-reference link"
+          description: "Link to another section"
+          input: "For authentication details, see ⟪📂:{auth_endpoints}⟫"
+          explanation: "Creates navigable link to related section"
+      supplemental:
+        - name: "document-structure"
+          labels: ["structure", "hierarchy"]
+          brief: "Document hierarchy"
+          description: "Organize document with references"
+          input: |
+            # User Manual ⟪📂:{manual_root}⟫
+
+            ## Getting Started ⟪📂:{getting_started}⟫
+            [content]
+
+            ## Configuration ⟪📂:{configuration}⟫
+            [content]
+          explanation: "Establishes navigable document structure"
+        - name: "reference-index"
+          labels: ["index", "toc"]
+          brief: "Reference index"
+          description: "Create section index"
+          input: |
+            Available sections:
+            - ⟪📂:{user_guidelines}⟫ - User behavior policies
+            - ⟪📂:{api_reference}⟫ - API documentation
+            - ⟪📂:{changelog}⟫ - Version history
+          explanation: "Table of contents with navigable references"
+
+  # ============================================================================
+  # EXPLICIT INSTRUCTION DIRECTIVE
+  # ============================================================================
+  - name: "explicit-instruction-directive"
+    code: "CMD"
+    labels: ["core", "instruction", "command", "precision"]
+    type: "emoji"
+    emoji: "➤"
+
+    metadata:
+      brief: "Explicit instruction with elaboration"
+      description: "Provide direct, precise instructions with optional elaboration for clarity"
+      purpose: "Eliminate interpretation ambiguity through explicit direction"
+      usage: "For precise task requirements, specific constraints, unambiguous commands"
+      complexity: 2
+      scope: "instruction"
+
+    syntax:
+      template: "⟪➤: <instruction> | <elaboration>⟫"
+      template_notes: |
+        Alternative: {➤: instruction | elaboration}
+
+        Elaboration provides:
+        - Context specification
+        - Constraint definition
+        - Quality requirements
+        - Output format
+        - Error handling guidance
+
+    detection:
+      pre_filter: ["⟪➤", "{➤"]
+      pattern: "[⟪{]➤:\\s*([^|]+)\\s*\\|\\s*([^⟫}]+)[⟫}]"
+      type: "regex"
+      groups: ["instruction", "elaboration"]
+
+    examples:
+      primary:
+        - name: "data-retrieval"
+          labels: ["data", "specific"]
+          brief: "Specific data request"
+          description: "Precise data retrieval instruction"
+          input: "⟪➤: Retrieve climate data | Include recent temperature anomalies⟫"
+          explanation: "Clear instruction with specific focus on temperature anomalies"
+        - name: "validation-task"
+          labels: ["validation", "complete"]
+          brief: "Complete validation"
+          description: "Validation with all checks specified"
+          input: "⟪➤: Validate input parameters | Check data types, ranges, and required fields⟫"
+          explanation: "Explicit validation requirements covering all aspects"
+      supplemental:
+        - name: "format-specification"
+          labels: ["format", "output"]
+          brief: "Format with specification"
+          description: "Output formatting instruction"
+          input: "⟪➤: Format output as table | Include headers, align numbers right⟫"
+          explanation: "Precise formatting with alignment requirements"
+        - name: "compilation-task"
+          labels: ["build", "technical"]
+          brief: "Technical build task"
+          description: "Compilation with flags"
+          input: "⟪➤: Compile the source code | Use optimization flags and generate debug symbols⟫"
+          explanation: "Technical task with specific build requirements"
+        - name: "translation-quality"
+          labels: ["translation", "quality"]
+          brief: "Quality-constrained task"
+          description: "Translation with quality requirements"
+          input: "⟪➤: Translate text | Maintain formal tone and technical accuracy⟫"
+          explanation: "Translation instruction with tone and accuracy constraints"
+
+    extended:
+      instruction_categories:
+        action: "Execute, update, process"
+        behavioral: "Respond, prioritize, maintain"
+        processing: "Parse, generate, analyze"
+        format: "Format, create, structure"

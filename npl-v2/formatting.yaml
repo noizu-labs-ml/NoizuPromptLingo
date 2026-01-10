@@ -1,0 +1,352 @@
+# NPL Formatting Registry
+# Input/output format specifications and template patterns
+
+version: "1.0"
+category: "formatting"
+description: "Format specification patterns for input and output structure definition"
+
+header:
+  title: "NPL Formatting Patterns"
+  purpose: |
+    Input/output format specifications define expected data structures and templates
+    for consistent formatting. Use format fences to specify exact input/output structures
+    and provide concrete examples.
+  usage: |
+    Use format fences (input-syntax, output-syntax, input-example, output-example, template)
+    to define exact data structures. Pair syntax specs with examples for clarity.
+
+elements:
+  # ============================================================================
+  # INPUT-SYNTAX
+  # ============================================================================
+  - name: "input-syntax"
+    code: "ISYN"
+    labels: ["input", "syntax", "specification"]
+    type: "format"
+
+    metadata:
+      brief: "Input syntax specification"
+      description: "Define the expected syntax and structure of input data"
+      purpose: "Document what input format the agent expects"
+      usage: "For API input specs, command syntax, data format requirements"
+      complexity: 2
+      scope: "block"
+
+    syntax:
+      template: |
+        ```input-syntax
+        <input format specification>
+        ```
+      template_notes: "Specifies the exact structure and format of expected input"
+
+    detection:
+      pre_filter: ["```input-syntax"]
+      pattern: "```input-syntax(?:\\|([^\\n]*))?\\n([\\s\\S]*?)\\n```"
+      type: "regex"
+      flags: ["multiline", "dotall"]
+      groups: ["qualifier", "content"]
+
+    examples:
+      primary:
+        - name: "api-input-spec"
+          labels: ["api", "json"]
+          brief: "API input specification"
+          description: "JSON input format for API endpoint"
+          input: |
+            ```input-syntax
+            {
+              "user_id": <string|required>,
+              "action": <"create"|"update"|"delete">,
+              "data": {
+                "name": <string|optional>,
+                "email": <email format|required for create>,
+                "preferences": <object|optional>
+              }
+            }
+            ```
+          explanation: "Documents expected JSON structure with type annotations"
+      supplemental:
+        - name: "command-syntax"
+          labels: ["cli", "command"]
+          brief: "Command line syntax"
+          description: "CLI command input format"
+          input: |
+            ```input-syntax
+            npl-load <type> "<items>" [--skip "<loaded>"]
+
+            Arguments:
+              type    : c (core), m (meta), s (style)
+              items   : Comma-separated list of items to load
+              --skip  : Previously loaded items to skip
+            ```
+          explanation: "Command line syntax with arguments documented"
+
+  # ============================================================================
+  # OUTPUT-SYNTAX
+  # ============================================================================
+  - name: "output-syntax"
+    code: "OSYN"
+    labels: ["output", "syntax", "specification"]
+    type: "format"
+
+    metadata:
+      brief: "Output syntax specification"
+      description: "Define the exact syntax and structure of generated output"
+      purpose: "Document what output format the agent will produce"
+      usage: "For API responses, command output, structured data generation"
+      complexity: 2
+      scope: "block"
+
+    syntax:
+      template: |
+        ```output-syntax
+        <output format specification>
+        ```
+      template_notes: "Specifies the exact structure and format of generated output"
+
+    detection:
+      pre_filter: ["```output-syntax"]
+      pattern: "```output-syntax(?:\\|([^\\n]*))?\\n([\\s\\S]*?)\\n```"
+      type: "regex"
+      flags: ["multiline", "dotall"]
+      groups: ["qualifier", "content"]
+
+    examples:
+      primary:
+        - name: "api-response-spec"
+          labels: ["api", "json"]
+          brief: "API response specification"
+          description: "JSON output format for API response"
+          input: |
+            ```output-syntax
+            {
+              "status": <"success"|"error">,
+              "data": {
+                "id": <uuid>,
+                "created_at": <ISO8601 timestamp>,
+                "result": <operation result object>
+              },
+              "meta": {
+                "request_id": <string>,
+                "processing_time_ms": <number>
+              }
+            }
+            ```
+          explanation: "Documents exact JSON response structure"
+      supplemental:
+        - name: "report-output"
+          labels: ["report", "markdown"]
+          brief: "Report output format"
+          description: "Markdown report structure"
+          input: |
+            ```output-syntax
+            # <Report Title>
+            **Generated**: <timestamp>
+            **Author**: <agent name>
+
+            ## Summary
+            [...1-2p|executive summary]
+
+            ## Findings
+            [...|detailed findings with sections]
+
+            ## Recommendations
+            [...|prioritized recommendations]
+            ```
+          explanation: "Markdown report structure with placeholders"
+
+  # ============================================================================
+  # INPUT-EXAMPLE
+  # ============================================================================
+  - name: "input-example"
+    code: "IEX"
+    labels: ["input", "example", "demonstration"]
+    type: "format"
+
+    metadata:
+      brief: "Input example demonstration"
+      description: "Provide concrete examples of valid input"
+      purpose: "Illustrate input format with actual examples"
+      usage: "For API documentation, tutorials, input validation examples"
+      complexity: 1
+      scope: "block"
+
+    syntax:
+      template: |
+        ```input-example
+        <concrete input example>
+        ```
+      template_notes: "Shows actual example input data following the input-syntax"
+
+    detection:
+      pre_filter: ["```input-example"]
+      pattern: "```input-example(?:\\|([^\\n]*))?\\n([\\s\\S]*?)\\n```"
+      type: "regex"
+      flags: ["multiline", "dotall"]
+      groups: ["qualifier", "content"]
+
+    examples:
+      primary:
+        - name: "api-input-example"
+          labels: ["api", "json"]
+          brief: "API input example"
+          description: "Concrete JSON input example"
+          input: |
+            ```input-example
+            {
+              "user_id": "usr_12345",
+              "action": "update",
+              "data": {
+                "name": "Jane Smith",
+                "email": "jane.smith@example.com",
+                "preferences": {
+                  "theme": "dark",
+                  "notifications": true
+                }
+              }
+            }
+            ```
+          explanation: "Actual example matching the input-syntax specification"
+
+  # ============================================================================
+  # OUTPUT-EXAMPLE
+  # ============================================================================
+  - name: "output-example"
+    code: "OEX"
+    labels: ["output", "example", "demonstration"]
+    type: "format"
+
+    metadata:
+      brief: "Output example demonstration"
+      description: "Provide concrete examples of generated output"
+      purpose: "Illustrate output format with actual examples"
+      usage: "For API documentation, expected results, output validation"
+      complexity: 1
+      scope: "block"
+
+    syntax:
+      template: |
+        ```output-example
+        <concrete output example>
+        ```
+      template_notes: "Shows actual example output data following the output-syntax"
+
+    detection:
+      pre_filter: ["```output-example"]
+      pattern: "```output-example(?:\\|([^\\n]*))?\\n([\\s\\S]*?)\\n```"
+      type: "regex"
+      flags: ["multiline", "dotall"]
+      groups: ["qualifier", "content"]
+
+    examples:
+      primary:
+        - name: "api-response-example"
+          labels: ["api", "json"]
+          brief: "API response example"
+          description: "Concrete JSON output example"
+          input: |
+            ```output-example
+            {
+              "status": "success",
+              "data": {
+                "id": "550e8400-e29b-41d4-a716-446655440000",
+                "created_at": "2024-01-15T14:30:00Z",
+                "result": {
+                  "updated_fields": ["name", "email", "preferences"],
+                  "previous_values": {
+                    "name": "Jane Doe"
+                  }
+                }
+              },
+              "meta": {
+                "request_id": "req_abc123",
+                "processing_time_ms": 42
+              }
+            }
+            ```
+          explanation: "Actual example matching the output-syntax specification"
+
+  # ============================================================================
+  # FORMAT-TEMPLATE
+  # ============================================================================
+  - name: "format-template"
+    code: "FTPL"
+    labels: ["template", "reusable", "pattern"]
+    type: "format"
+
+    metadata:
+      brief: "Reusable format template"
+      description: "Define reusable formatting templates with variable substitution"
+      purpose: "Create consistent output patterns across multiple uses"
+      usage: "For repeated output structures, standardized formatting, reusable patterns"
+      complexity: 2
+      scope: "block"
+
+    syntax:
+      template: |
+        ```template
+        <template with placeholders and control structures>
+        ```
+      template_notes: |
+        Template features:
+        - Variable substitution: {variable.name}
+        - Conditionals: {if condition}...{else}...{/if}
+        - Iteration: {foreach collection as item}...{/foreach}
+        - Loop context: {@first}, {@last}, {@index}
+        - Qualifiers: {value|format: spec}
+
+    detection:
+      pre_filter: ["```template"]
+      pattern: "```template(?:\\|([^\\n]*))?\\n([\\s\\S]*?)\\n```"
+      type: "regex"
+      flags: ["multiline", "dotall"]
+      groups: ["qualifier", "content"]
+
+    examples:
+      primary:
+        - name: "email-template"
+          labels: ["email", "communication"]
+          brief: "Email notification template"
+          description: "Reusable email template with personalization"
+          input: |
+            ```template
+            Subject: {notification.type|capitalize} - {notification.title}
+
+            Dear {user.name|first_name},
+
+            {notification.body}
+
+            {if notification.action_required}
+            Please take action by {notification.deadline|format: MMMM D, YYYY}:
+            {notification.action_url}
+            {/if}
+
+            Best regards,
+            {sender.name}
+            {sender.title}
+            ```
+          explanation: "Email template with conditional action section"
+      supplemental:
+        - name: "list-template"
+          labels: ["list", "iteration"]
+          brief: "List item template"
+          description: "Template with iteration over items"
+          input: |
+            ```template
+            ## {list.title}
+
+            {foreach list.items as item}
+            - **{item.name}**: {item.description}
+              - Status: {item.status}
+              - Priority: {item.priority}
+            {if not @last}
+
+            {/if}
+            {/foreach}
+
+            Total items: {list.items|count}
+            ```
+          explanation: "Template with foreach iteration and item counting"
+
+    extended:
+      related: ["format-fence", "template-fence", "named-template"]

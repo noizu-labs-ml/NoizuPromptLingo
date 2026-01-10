@@ -1,0 +1,215 @@
+# NPL Element Registry
+# Master index of all NPL elements across categories
+# Use this file to discover available elements and load specific categories
+
+version: "1.0"
+framework: "NPL"
+description: "Noizu Prompt Lingua - A modular framework for advanced prompt engineering"
+
+# Category files and their element counts
+categories:
+  syntax:
+    file: "syntax.yaml"
+    description: "Core syntax elements for prompt construction"
+    element_count: 13
+    elements:
+      - { name: highlight, code: HL }
+      - { name: attention, code: ATN }
+      - { name: placeholder, code: PH }
+      - { name: in-fill, code: FIL }
+      - { name: qualifier, code: QL }
+      - { name: agent-alias, code: ALIAS }
+      - { name: validation, code: VAL }
+      - { name: inference, code: INF }
+      - { name: literal-output, code: LIT }
+      - { name: omission, code: OMT }
+      - { name: direct-message, code: DM }
+      - { name: math-and-logic, code: MATH }
+      - { name: example-conversation, code: CONV }
+
+  fences:
+    file: "fences.yaml"
+    description: "Code fence types for structured content blocks"
+    element_count: 12
+    elements:
+      - { name: example, code: EX }
+      - { name: note, code: NOTE }
+      - { name: diagram, code: DIAG }
+      - { name: syntax, code: SYN }
+      - { name: format, code: FMT }
+      - { name: template, code: TPL }
+      - { name: alg, code: ALG }
+      - { name: alg-pseudo, code: ALGP }
+      - { name: artifact, code: ART }
+      - { name: mermaid, code: MMD }
+      - { name: graphviz, code: GVZ }
+      - { name: plantuml, code: UML }
+
+  directives:
+    file: "directives.yaml"
+    description: "Specialized instruction patterns using emoji prefixes"
+    element_count: 8
+    elements:
+      - { name: table-directive, code: TBL, emoji: "📅" }
+      - { name: temporal-directive, code: TIME, emoji: "⏳" }
+      - { name: template-directive, code: TPLD, emoji: "⇆" }
+      - { name: interactive-directive, code: INTR, emoji: "🚀" }
+      - { name: identifier-directive, code: ID, emoji: "🆔" }
+      - { name: explanatory-directive, code: EXPL, emoji: "📖" }
+      - { name: section-reference-directive, code: REF, emoji: "📂" }
+      - { name: explicit-instruction-directive, code: CMD, emoji: "➤" }
+
+  prefixes:
+    file: "prefixes.yaml"
+    description: "Response mode indicators using emoji patterns"
+    element_count: 15
+    elements:
+      - { name: word-riddle, code: RIDL, emoji: "🗣️❓" }
+      - { name: speech, code: SPCH, emoji: "🗣️" }
+      - { name: data-analysis, code: DATA, emoji: "📊" }
+      - { name: sentiment-analysis, code: SENT, emoji: "💡" }
+      - { name: audio-description, code: AUD, emoji: "🔊" }
+      - { name: visual-observation, code: VIS, emoji: "👁️" }
+      - { name: conversational, code: CHAT, emoji: "💬" }
+      - { name: writing, code: WRITE, emoji: "🖋️" }
+      - { name: classification, code: TAG, emoji: "🏷️" }
+      - { name: image-generation, code: IMG, emoji: "🖼️" }
+      - { name: question, code: ASK, emoji: "❓" }
+      - { name: code, code: CODE, emoji: "🖥️" }
+      - { name: document, code: DOC, emoji: "📄" }
+      - { name: experimental, code: TEST, emoji: "🧪" }
+      - { name: translation, code: I18N, emoji: "🌐" }
+
+  pumps:
+    file: "pumps.yaml"
+    description: "Intuition pumps - structured reasoning techniques"
+    element_count: 8
+    elements:
+      - { name: intent, code: INT }
+      - { name: cot, code: COT }
+      - { name: reflection, code: REFL }
+      - { name: tangent, code: TAN }
+      - { name: panel, code: PNL }
+      - { name: critique, code: CRIT }
+      - { name: rubric, code: RUB }
+      - { name: mood, code: MOOD }
+
+  special-sections:
+    file: "special-sections.yaml"
+    description: "Structured sections for agents, templates, and security"
+    element_count: 6
+    elements:
+      - { name: npl-declaration, code: NPL }
+      - { name: agent, code: AGT }
+      - { name: npl-extension, code: EXT }
+      - { name: runtime-flags, code: FLAG }
+      - { name: secure-prompt, code: SEC }
+      - { name: named-template, code: NTPL }
+
+  formatting:
+    file: "formatting.yaml"
+    description: "Input/output format specifications"
+    element_count: 5
+    elements:
+      - { name: input-syntax, code: ISYN }
+      - { name: output-syntax, code: OSYN }
+      - { name: input-example, code: IEX }
+      - { name: output-example, code: OEX }
+      - { name: format-template, code: FTPL }
+
+  instructing:
+    file: "instructing.yaml"
+    description: "Patterns for directing agent behavior"
+    element_count: 6
+    elements:
+      - { name: handlebars, code: HB }
+      - { name: alg-speak, code: ALGS }
+      - { name: annotation, code: ANNO }
+      - { name: symbolic-logic, code: LOGIC }
+      - { name: formal-proof, code: PROOF }
+      - { name: second-order, code: META }
+
+# Quick reference for common use cases
+quick_reference:
+  emphasis:
+    - syntax/highlight
+    - syntax/attention
+
+  placeholders:
+    - syntax/placeholder
+    - syntax/in-fill
+    - syntax/qualifier
+
+  diagrams:
+    - fences/diagram
+    - fences/mermaid
+    - fences/graphviz
+    - fences/plantuml
+
+  algorithms:
+    - fences/alg
+    - fences/alg-pseudo
+    - instructing/alg-speak
+
+  reasoning:
+    - pumps/cot
+    - pumps/reflection
+    - pumps/critique
+    - pumps/rubric
+
+  templates:
+    - fences/template
+    - fences/format
+    - special-sections/named-template
+    - formatting/format-template
+
+  agent-definition:
+    - special-sections/agent
+    - special-sections/npl-declaration
+    - special-sections/runtime-flags
+
+  security:
+    - special-sections/secure-prompt
+    - syntax/attention
+
+# Total element count
+totals:
+  categories: 8
+  elements: 73
+
+# Config presets - select elements by label
+# Elements are included if they have the preset's label in their labels array
+config_presets:
+  minimal:
+    description: "Absolute essentials only"
+    label: "minimal"
+    codes: [HL, ATN, PH, FIL]
+
+  basic:
+    description: "Common elements for most prompts"
+    label: "basic"
+    codes: [HL, ATN, PH, FIL, QL, VAL, INF, EX, FMT, NOTE]
+
+  agents:
+    description: "Elements for agent definitions and reasoning"
+    label: "agents"
+    codes: [AGT, ALIAS, DM, FLAG, INT, COT, REFL, PNL]
+
+  docs:
+    description: "Documentation and example-focused elements"
+    label: "docs"
+    codes: [HL, VAL, OMT, CONV, EX, NOTE, DIAG, SYN, FMT]
+
+  technical:
+    description: "Technical/code-focused elements"
+    label: "technical"
+    codes: [CODE, MATH, ALG, ALGP, HB, LOGIC]
+
+  standard:
+    description: "Basic + common formatting and fences"
+    includes_presets: [basic]
+    additional_codes: [TPL, ISYN, OSYN, IEX, OEX]
+
+  full:
+    description: "All elements"
+    all: true

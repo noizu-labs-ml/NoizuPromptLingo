@@ -1,0 +1,521 @@
+# NPL Intuition Pumps Registry
+# Structured reasoning and thinking techniques that guide problem-solving and response construction
+
+version: "1.0"
+category: "pumps"
+description: "Thinking patterns implemented as XHTML tags or named fences to enhance reasoning quality"
+
+header:
+  title: "NPL Intuition Pumps"
+  purpose: |
+    Structured reasoning techniques that guide problem-solving and response construction.
+    Pumps are implemented as XHTML tags or named fences.
+  usage: |
+    Include pump blocks in prompts to activate specific reasoning patterns.
+
+elements:
+  # ============================================================================
+  # INTENT
+  # ============================================================================
+  - name: "intent"
+    code: "INT"
+    labels: ["core", "planning", "understanding", "agents"]
+    type: "pump"
+    tag: "npl-intent"
+
+    metadata:
+      brief: "Intent structuring pump"
+      description: "Capture and structure the underlying intent, goals, and requirements of a request"
+      purpose: "Ensure clear understanding of what is being asked before responding"
+      usage: "At the start of complex requests to clarify goals, constraints, and success criteria"
+      complexity: 2
+      scope: "block"
+
+    syntax:
+      template: |
+        <npl-intent>
+        goal: <primary objective>
+        constraints: <limitations or requirements>
+        success_criteria: <how to measure success>
+        context: <relevant background>
+        </npl-intent>
+      template_notes: "Structured YAML-like format within tags. Can also use ```npl-intent fence."
+
+    detection:
+      pre_filter: ["<npl-intent", "```npl-intent"]
+      pattern: "<npl-intent>([\\s\\S]*?)</npl-intent>"
+      type: "regex"
+      groups: ["content"]
+
+    examples:
+      primary:
+        - name: "feature-request-intent"
+          labels: ["feature", "planning"]
+          brief: "Feature request intent"
+          description: "Structuring intent for a feature request"
+          input: |
+            <npl-intent>
+            goal: Implement user authentication with OAuth2
+            constraints:
+              - Must support Google and GitHub providers
+              - Session timeout of 24 hours
+              - No storing passwords locally
+            success_criteria:
+              - Users can sign in with OAuth providers
+              - Sessions persist across browser restarts
+              - Proper error handling for auth failures
+            context: Existing Express.js application with PostgreSQL
+            </npl-intent>
+          explanation: "Clarifies requirements before implementation begins"
+
+  # ============================================================================
+  # CHAIN OF THOUGHT (COT)
+  # ============================================================================
+  - name: "cot"
+    code: "COT"
+    labels: ["core", "reasoning", "step-by-step", "agents"]
+    type: "pump"
+    tag: "npl-cot"
+
+    metadata:
+      brief: "Chain of thought reasoning"
+      description: "Step-by-step reasoning process that shows the logical progression of thought"
+      purpose: "Make reasoning transparent and catch logical errors"
+      usage: "For complex problems requiring multi-step reasoning, math, or logical deduction"
+      complexity: 2
+      scope: "block"
+
+    syntax:
+      template: |
+        <npl-cot>
+        thought_process:
+          - thought: "<observation or consideration>"
+            reasoning: "<why this matters>"
+          - thought: "<next step in reasoning>"
+            reasoning: "<logical connection>"
+          - thought: "<conclusion>"
+            reasoning: "<how we arrived here>"
+        </npl-cot>
+      template_notes: "Structured thought progression. Each step builds on previous."
+
+    detection:
+      pre_filter: ["<npl-cot", "```npl-cot"]
+      pattern: "<npl-cot>([\\s\\S]*?)</npl-cot>"
+      type: "regex"
+      groups: ["content"]
+
+    examples:
+      primary:
+        - name: "problem-solving-cot"
+          labels: ["math", "logic"]
+          brief: "Problem solving chain"
+          description: "Step-by-step problem solving"
+          input: |
+            <npl-cot>
+            thought_process:
+              - thought: "The user wants to optimize database queries"
+                reasoning: "Performance issues mentioned with slow page loads"
+              - thought: "Current queries lack indexing on frequently filtered columns"
+                reasoning: "EXPLAIN shows full table scans on user_id lookups"
+              - thought: "Adding composite index on (user_id, created_at) would help"
+                reasoning: "These columns appear together in WHERE and ORDER BY"
+              - thought: "Should also consider query caching for repeated requests"
+                reasoning: "Same queries run multiple times per page load"
+            </npl-cot>
+          explanation: "Shows transparent reasoning process for database optimization"
+
+  # ============================================================================
+  # REFLECTION
+  # ============================================================================
+  - name: "reflection"
+    code: "REFL"
+    labels: ["core", "metacognition", "improvement", "agents"]
+    type: "pump"
+    tag: "npl-reflection"
+
+    metadata:
+      brief: "Self-reflection and review"
+      description: "Evaluate own output, identify weaknesses, and suggest improvements"
+      purpose: "Improve response quality through self-critique and iteration"
+      usage: "After generating content to review and refine the output"
+      complexity: 2
+      scope: "block"
+
+    syntax:
+      template: |
+        <npl-reflection>
+        assessment: <evaluation of current output>
+        strengths: <what works well>
+        weaknesses: <areas needing improvement>
+        improvements: <specific changes to make>
+        confidence: <certainty level 1-10>
+        </npl-reflection>
+      template_notes: "Structured self-evaluation for continuous improvement"
+
+    detection:
+      pre_filter: ["<npl-reflection", "```npl-reflection", "```reflect"]
+      pattern: "<npl-reflection>([\\s\\S]*?)</npl-reflection>"
+      type: "regex"
+      groups: ["content"]
+
+    examples:
+      primary:
+        - name: "code-reflection"
+          labels: ["code", "review"]
+          brief: "Code reflection"
+          description: "Reflecting on generated code"
+          input: |
+            <npl-reflection>
+            assessment: The function handles the basic case but may have edge case issues
+            strengths:
+              - Clear variable naming
+              - Proper error handling for null input
+              - Efficient algorithm choice
+            weaknesses:
+              - No handling for negative numbers
+              - Missing input validation for non-numeric strings
+              - Could benefit from JSDoc comments
+            improvements:
+              - Add input validation at function entry
+              - Handle negative number edge case
+              - Add comprehensive documentation
+            confidence: 7
+            </npl-reflection>
+          explanation: "Self-critique identifies areas for improvement in generated code"
+
+  # ============================================================================
+  # TANGENT
+  # ============================================================================
+  - name: "tangent"
+    code: "TAN"
+    labels: ["exploration", "related", "sidebar"]
+    type: "pump"
+    tag: "npl-tangent"
+
+    metadata:
+      brief: "Related tangent exploration"
+      description: "Explore related topics, alternative approaches, or interesting connections"
+      purpose: "Capture valuable related insights without derailing main response"
+      usage: "When encountering interesting related topics worth noting"
+      complexity: 1
+      scope: "block"
+
+    syntax:
+      template: |
+        <npl-tangent topic="<topic name>">
+        <related exploration content>
+        </npl-tangent>
+      template_notes: "Topic attribute identifies the tangent subject. Content explores the connection."
+
+    detection:
+      pre_filter: ["<npl-tangent", "```npl-tangent"]
+      pattern: "<npl-tangent(?:\\s+topic=\"([^\"]+)\")?>([\\s\\S]*?)</npl-tangent>"
+      type: "regex"
+      groups: ["topic", "content"]
+
+    examples:
+      primary:
+        - name: "architecture-tangent"
+          labels: ["architecture", "alternative"]
+          brief: "Architecture alternative"
+          description: "Exploring related architectural pattern"
+          input: |
+            <npl-tangent topic="Event Sourcing Alternative">
+            While implementing CRUD operations as requested, it's worth noting that
+            this use case might benefit from event sourcing. The audit trail requirements
+            and temporal queries suggest event sourcing could provide:
+            - Complete history of all changes
+            - Easy point-in-time reconstruction
+            - Natural fit for the compliance requirements mentioned
+
+            This would be a larger architectural change but worth considering for v2.
+            </npl-tangent>
+          explanation: "Captures valuable related insight without interrupting main task"
+
+  # ============================================================================
+  # PANEL
+  # ============================================================================
+  - name: "panel"
+    code: "PNL"
+    labels: ["multi-perspective", "discussion", "personas", "agents"]
+    type: "pump"
+    tag: "npl-panel"
+
+    metadata:
+      brief: "Multi-perspective panel discussion"
+      description: "Simulate discussion between multiple personas or viewpoints"
+      purpose: "Explore problems from diverse perspectives to find blind spots"
+      usage: "For complex decisions, design reviews, or when multiple viewpoints add value"
+      complexity: 3
+      scope: "block"
+
+    syntax:
+      template: |
+        <npl-panel personas="<persona1>, <persona2>, ...">
+        <simulated discussion content>
+        </npl-panel>
+      template_notes: "Personas attribute lists participants. Content shows their discussion."
+      features:
+        - name: "group-chat"
+          template: |
+            <npl-panel-group-chat>
+            <persona1>: <message>
+            <persona2>: <response>
+            ...
+            </npl-panel-group-chat>
+          template_notes: "Chat-style format for dynamic multi-party discussion"
+        - name: "reviewer-feedback"
+          template: |
+            <npl-panel-reviewer-feedback>
+            reviewer: <persona>
+            feedback: <detailed feedback>
+            severity: <critical|major|minor|suggestion>
+            </npl-panel-reviewer-feedback>
+          template_notes: "Structured review feedback from persona perspective"
+        - name: "inline-feedback"
+          template: |
+            <npl-panel-inline ref="line:42">
+            <persona>: <feedback on specific location>
+            </npl-panel-inline>
+          template_notes: "Feedback tied to specific code or document locations"
+
+    detection:
+      pre_filter: ["<npl-panel", "```npl-panel"]
+      pattern: "<npl-panel(?:-([\\w-]+))?(?:\\s+personas=\"([^\"]+)\")?>([\\s\\S]*?)</npl-panel(?:-[\\w-]+)?>"
+      type: "regex"
+      groups: ["variant", "personas", "content"]
+
+    examples:
+      primary:
+        - name: "design-review-panel"
+          labels: ["design", "review"]
+          brief: "Design review panel"
+          description: "Multiple personas review a design"
+          input: |
+            <npl-panel personas="Security Engineer, UX Designer, Performance Engineer">
+            Security Engineer: The API endpoint accepts user input without validation.
+            We need input sanitization before the database query.
+
+            UX Designer: The error messages are too technical. Users won't understand
+            "SQL constraint violation" - we should show friendly messages.
+
+            Performance Engineer: This endpoint makes 3 sequential database calls.
+            We could parallelize these or use a single JOIN query.
+
+            Security Engineer: Agreed on the error messages - and we shouldn't expose
+            internal error details to users for security reasons either.
+            </npl-panel>
+          explanation: "Multiple expert perspectives identify different improvement areas"
+      supplemental:
+        - name: "group-chat-panel"
+          labels: ["chat", "dynamic"]
+          brief: "Group chat format"
+          description: "Dynamic discussion format"
+          input: |
+            <npl-panel-group-chat>
+            Architect: Should we use microservices or monolith for the MVP?
+            Pragmatist: Monolith first - we can extract services later when we know the boundaries.
+            Architect: But what about scaling individual components?
+            Pragmatist: We don't have traffic yet. Premature optimization.
+            DevOps: I agree with monolith - simpler deployment, easier debugging.
+            </npl-panel-group-chat>
+          explanation: "Natural conversation flow between personas"
+
+  # ============================================================================
+  # CRITIQUE
+  # ============================================================================
+  - name: "critique"
+    code: "CRIT"
+    labels: ["evaluation", "analysis", "feedback"]
+    type: "pump"
+    tag: "npl-critique"
+
+    metadata:
+      brief: "Structured critique and evaluation"
+      description: "Systematic evaluation of content, code, or ideas with structured feedback"
+      purpose: "Provide thorough, actionable critique with clear categorization"
+      usage: "For code review, content review, design critique, proposal evaluation"
+      complexity: 2
+      scope: "block"
+
+    syntax:
+      template: |
+        <npl-critique>
+        summary: <overall assessment>
+        positive:
+          - <strength 1>
+          - <strength 2>
+        concerns:
+          - issue: <problem description>
+            severity: <critical|major|minor>
+            suggestion: <how to fix>
+        verdict: <approve|revise|reject>
+        </npl-critique>
+      template_notes: "Structured critique with severity levels and actionable suggestions"
+
+    detection:
+      pre_filter: ["<npl-critique", "```npl-critique"]
+      pattern: "<npl-critique>([\\s\\S]*?)</npl-critique>"
+      type: "regex"
+      groups: ["content"]
+
+    examples:
+      primary:
+        - name: "code-critique"
+          labels: ["code", "review"]
+          brief: "Code review critique"
+          description: "Structured code review"
+          input: |
+            <npl-critique>
+            summary: Functional implementation with some security and maintainability concerns
+            positive:
+              - Clean separation of concerns
+              - Good test coverage for happy path
+              - Consistent code style
+            concerns:
+              - issue: SQL queries constructed via string concatenation
+                severity: critical
+                suggestion: Use parameterized queries to prevent SQL injection
+              - issue: No error handling for database connection failures
+                severity: major
+                suggestion: Add try-catch with proper error logging and user feedback
+              - issue: Magic numbers in business logic (e.g., 30, 0.15)
+                severity: minor
+                suggestion: Extract to named constants with documentation
+            verdict: revise
+            </npl-critique>
+          explanation: "Structured critique with actionable items and severity levels"
+
+  # ============================================================================
+  # RUBRIC
+  # ============================================================================
+  - name: "rubric"
+    code: "RUB"
+    labels: ["evaluation", "scoring", "criteria"]
+    type: "pump"
+    tag: "npl-rubric"
+
+    metadata:
+      brief: "Rubric-based evaluation"
+      description: "Evaluate against defined criteria with scoring"
+      purpose: "Consistent, criteria-based assessment with quantifiable results"
+      usage: "For grading, quality assessment, compliance checking, benchmarking"
+      complexity: 2
+      scope: "block"
+
+    syntax:
+      template: |
+        <npl-rubric>
+        criteria:
+          - name: <criterion name>
+            weight: <1-10>
+            score: <1-10>
+            notes: <justification>
+          - name: <criterion name>
+            weight: <1-10>
+            score: <1-10>
+            notes: <justification>
+        total_score: <weighted average>
+        grade: <A/B/C/D/F or pass/fail>
+        </npl-rubric>
+      template_notes: "Weighted scoring with justification for each criterion"
+
+    detection:
+      pre_filter: ["<npl-rubric", "```npl-rubric"]
+      pattern: "<npl-rubric>([\\s\\S]*?)</npl-rubric>"
+      type: "regex"
+      groups: ["content"]
+
+    examples:
+      primary:
+        - name: "code-quality-rubric"
+          labels: ["code", "quality"]
+          brief: "Code quality rubric"
+          description: "Evaluate code against quality criteria"
+          input: |
+            <npl-rubric>
+            criteria:
+              - name: Correctness
+                weight: 10
+                score: 9
+                notes: All test cases pass, handles edge cases well
+              - name: Readability
+                weight: 7
+                score: 8
+                notes: Clear naming, good structure, could use more comments
+              - name: Performance
+                weight: 6
+                score: 6
+                notes: O(n^2) where O(n log n) is possible
+              - name: Security
+                weight: 9
+                score: 4
+                notes: Missing input validation, potential injection vulnerability
+              - name: Maintainability
+                weight: 7
+                score: 7
+                notes: Good modularity, some magic numbers present
+            total_score: 6.8
+            grade: B-
+            </npl-rubric>
+          explanation: "Weighted evaluation with clear justification per criterion"
+
+  # ============================================================================
+  # MOOD
+  # ============================================================================
+  - name: "mood"
+    code: "MOOD"
+    labels: ["tone", "emotional", "style"]
+    type: "pump"
+    tag: "npl-mood"
+
+    metadata:
+      brief: "Mood and tone setting"
+      description: "Establish emotional tone, style, and voice for response generation"
+      purpose: "Maintain consistent tone and emotional resonance in responses"
+      usage: "For creative writing, customer communication, brand voice consistency"
+      complexity: 1
+      scope: "block"
+
+    syntax:
+      template: |
+        <npl-mood>
+        tone: <formal|casual|friendly|professional|empathetic|...>
+        energy: <calm|energetic|subdued|enthusiastic|...>
+        voice: <authoritative|supportive|playful|serious|...>
+        </npl-mood>
+      template_notes: "Sets emotional parameters for subsequent content generation"
+
+    detection:
+      pre_filter: ["<npl-mood", "```npl-mood"]
+      pattern: "<npl-mood>([\\s\\S]*?)</npl-mood>"
+      type: "regex"
+      groups: ["content"]
+
+    examples:
+      primary:
+        - name: "support-mood"
+          labels: ["support", "empathy"]
+          brief: "Customer support mood"
+          description: "Set empathetic support tone"
+          input: |
+            <npl-mood>
+            tone: empathetic
+            energy: calm
+            voice: supportive
+            context: Customer has experienced a frustrating technical issue
+            </npl-mood>
+          explanation: "Establishes appropriate emotional tone for customer support interaction"
+      supplemental:
+        - name: "marketing-mood"
+          labels: ["marketing", "energetic"]
+          brief: "Marketing mood"
+          description: "Set enthusiastic marketing tone"
+          input: |
+            <npl-mood>
+            tone: enthusiastic
+            energy: high
+            voice: inspiring
+            context: Product launch announcement
+            </npl-mood>
+          explanation: "Sets upbeat tone appropriate for marketing content"
