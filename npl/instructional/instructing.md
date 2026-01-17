@@ -1,4 +1,4 @@
-# NPL Instructing Patterns
+# NPL Instructing Patterns 
 <!-- labels: [instructing, control-flow, templates] -->
 
 Comprehensive overview of instruction patterns and control structures for directing complex agent behaviors and response construction.
@@ -8,17 +8,6 @@ Comprehensive overview of instruction patterns and control structures for direct
 
 Instructing patterns provide specialized syntax for controlling agent behavior through structured commands, templates, and logical constructs. These patterns enable precise direction of complex reasoning processes, iterative refinement, and systematic problem-solving approaches.
 
-<!-- instructional: quick-reference | level: 0 | labels: [instructing, methods] -->
-## Core Instructing Methods
-
-| Method | Syntax | Purpose |
-|--------|--------|---------|
-| Handlebars | `{{if}}`, `{{foreach}}`, `{{with}}` | Dynamic content, conditional logic |
-| Alg-Speak | `alg-*` fences | Algorithm specification, pseudocode |
-| Annotation | Refinement markers | Iterative improvement, feedback loops |
-| Second-Order Logic | Quantifiers, predicates | Meta-level instruction, complex reasoning |
-| Symbolic Logic | `∑`, `∪`, `∩`, conditionals | Mathematical and logical reasoning |
-| Formal Proof | Proof steps, inference | Rigorous logical verification |
 
 ### Handlebars
 <!-- level: 0 | labels: [template, conditional] -->
