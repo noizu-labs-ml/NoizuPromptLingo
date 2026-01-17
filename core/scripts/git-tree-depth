@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+# -----------------------------------------------------------------------------
+# git-dir-depth
+#
+# Description:
+#   Lists all directories under a given target folder in a Git repository,
+#   respecting .gitignore. For each directory, also prints its nesting depth
+#   relative to the target (depth 0 = target itself).
+#
+# Usage:
+#   ./git-dir-depth [target-folder]
+#
+# Examples:
+#   ./git-dir-depth
+#   ./git-dir-depth deployments/impact-simulation
+#
+# Requirements:
+#   - Must be run inside a Git repository
+#   - Uses `git ls-files`, `awk`, `sort`, `dirname`
+# -----------------------------------------------------------------------------
+
+set -euo pipefail
+
+TARGET="${1:-}"
+
+if [[ -z "$TARGET" ]]; then
+  echo "Usage: $0 <target-folder>"
+  exit 1
+fi
+
+git rev-parse --is-inside-work-tree >/dev/null 2>&1 || {
+  echo "Error: not inside a git repository." >&2
+  exit 1
+}
+
+ROOT="$(git -c core.quotepath=false rev-parse --show-toplevel)"
+cd "$ROOT"
+
+TARGET_REL="${TARGET#./}"
+TARGET_REL="${TARGET_REL%/}"
+
+git -c core.quotepath=false ls-files --cached --others --exclude-standard -- "${TARGET_REL:-.}" \
+  | xargs -I{} dirname "{}" \
+  | awk -F/ '{ for (i=1;i<=NF;i++) { s=(i==1?$1:s"/"$i); print s } s="" }' \
+  | sort -u \
+  | awk -v base="$TARGET_REL" '
+      BEGIN {
+        gsub(/^\.\/?/,"",base);
+        sub(/\/$/,"",base);
+      }
+      {
+        p=$0;
+        if (base=="" || base==".") {
+          rel=p
+        } else if (p==base || index(p,base"/")==1) {
+          rel=substr(p, length(base)+2);
+        } else {
+          next
+        }
+        if (p==base || (base=="" && rel=="")) {
+          rel="."
+          depth=0
+        } else if (rel=="") {
+          rel="."
+          depth=0
+        } else {
+          n=split(rel, a, "/"); depth=n
+        }
+        print rel, depth
+      }' \
+  | awk '!seen[$0]++'
+

@@ -1,0 +1,1047 @@
+#!/usr/bin/env python3
+"""
+npl-load - Load NPL components, metadata, and style guides with dependency tracking
+"""
+
+import os
+import sys
+import argparse
+import glob
+import fnmatch
+import re
+import yaml
+import tempfile
+import subprocess
+import concurrent.futures
+from pathlib import Path
+from typing import List, Set, Tuple, Optional, Dict, Any
+
+class NPLLoader:
+    def __init__(self):
+        # Environment variables with fallbacks
+        self.npl_home = os.environ.get('NPL_HOME', None)
+        self.npl_meta = os.environ.get('NPL_META', None)
+        self.npl_style_guide = os.environ.get('NPL_STYLE_GUIDE', None)
+        self.npl_theme = os.environ.get('NPL_THEME', 'default')
+        
+        # Track loaded items
+        self.loaded_components = set()
+        self.loaded_meta = set()
+        self.loaded_style = set()
+        self.loaded_agents = set()
+        
+    def get_search_paths(self, resource_type='component'):
+        """Get search paths based on resource type"""
+        paths = []
+
+        # Platform-specific global config
+        if sys.platform.startswith('win'):
+            global_npl = Path(os.environ.get('PROGRAMDATA', 'C:\\ProgramData')) / 'npl'
+        elif sys.platform == 'darwin':
+            global_npl = Path('/Library/Application Support/npl')
+        else:
+            global_npl = Path('/etc/npl')
+
+        if resource_type == 'component':
+            if self.npl_home:
+                paths.append(Path(self.npl_home) / 'npl')
+            paths.extend([
+                Path('./.npl/npl'),
+                Path.home() / '.npl/npl',
+                global_npl / 'npl'
+            ])
+        elif resource_type == 'meta':
+            if self.npl_meta:
+                paths.append(Path(self.npl_meta))
+            paths.extend([
+                Path('./.npl/meta'),
+                Path.home() / '.npl/meta',
+                global_npl / 'meta'
+            ])
+        elif resource_type == 'style':
+            if self.npl_style_guide:
+                paths.append(Path(self.npl_style_guide))
+            paths.extend([
+                Path('./.npl/conventions'),
+                Path.home() / '.npl/conventions',
+                global_npl / 'conventions'
+            ])
+        elif resource_type == 'schema':
+            # Order: ./.npl/core/schema, $NPL_HOME/core/schema, ~/.npl/core/schema, /env/npl/core/schema
+            paths.extend([
+                Path('./.npl/core/schema'),
+            ])
+            if self.npl_home:
+                paths.append(Path(self.npl_home) / 'core/schema')
+            paths.extend([
+                Path.home() / '.npl/core/schema',
+                Path('/env/npl/core/schema'),
+            ])
+        elif resource_type == 'agent':
+            # Agent search paths in priority order
+            paths.extend([
+                Path('./.claude/agents'),
+                Path.home() / '.claude/agents'
+            ])
+            if self.npl_home:
+                paths.append(Path(self.npl_home) / 'core/agents')
+            paths.extend([
+                Path('./.npl/core/agents'),
+                Path.home() / '.npl/core/agents',
+                global_npl / 'core/agents'
+            ])
+
+        return paths
+
+    def get_npl_init_paths(self):
+        """Get search paths for the main npl.md file (one level up from search paths)"""
+        paths = []
+
+        # Platform-specific global config
+        if sys.platform.startswith('win'):
+            global_npl = Path(os.environ.get('PROGRAMDATA', 'C:\\ProgramData')) / 'npl'
+        elif sys.platform == 'darwin':
+            global_npl = Path('/Library/Application Support/npl')
+        else:
+            global_npl = Path('/etc/npl')
+
+        # Search paths are one level up from the component search paths
+        if self.npl_home:
+            paths.append(Path(self.npl_home))
+        paths.extend([
+            Path('./.npl'),
+            Path.home() / '.npl',
+            global_npl,
+            Path('.')  # Also check current directory
+        ])
+
+        return paths
+        
+    def resolve_path(self, item: str, resource_type: str) -> Optional[Tuple[Path, Path]]:
+        """Convert dot notation to path and find first existing file, returning (base_dir, file_path)"""
+        path_parts = item.split('.')
+        relative_path = Path(*path_parts[:-1]) / f"{path_parts[-1]}.md" if len(path_parts) > 1 else Path(f"{item}.md")
+        search_paths = self.get_search_paths(resource_type)
+
+        if resource_type == 'style':
+            # Try theme-specific first (if not default), then default
+            if self.npl_theme and self.npl_theme != 'default':
+                for base_path in search_paths:
+                    theme_path = base_path / self.npl_theme / relative_path
+                    if theme_path.exists():
+                        return (base_path / self.npl_theme, theme_path)
+            # Fallback to default
+            for base_path in search_paths:
+                full_path = base_path / 'default' / relative_path
+                if full_path.exists():
+                    return (base_path / 'default', full_path)
+            return None
+
+        # component/meta
+        for base_path in search_paths:
+            full_path = base_path / relative_path
+            if full_path.exists():
+                return (base_path, full_path)
+        return None
+
+    def load_file_with_patch(self, base: Path, file: Path, source_type: str, item: str) -> str:
+        """
+        Load content from file and apply patch if available.
+        - base: the root directory under which 'file' was found (e.g., .../.npl/npl, .../.npl/meta, .../conventions/<theme>)
+        - file: the absolute path to the discovered file
+        - source_type: 'component' | 'meta' | 'style'
+        - item: the dot-notation name used to look up the file (for labeling)
+        """
+        try:
+            with open(file, 'r', encoding='utf-8') as f:
+                content = f.read()
+        except Exception as e:
+            print(f"Error loading {file}: {e}")
+            return ""
+
+        # Compute relative path of the file under its discovery base
+        try:
+            rel_path = file.relative_to(base)
+        except Exception:
+            # As a fallback, just use the filename
+            rel_path = file.name
+
+        # Patch search bases (project, user, system)
+        if source_type == 'component':
+            patch_bases = [
+                Path('./.npl/npl'),
+                Path.home() / '.npl/npl',
+                Path('/etc/npl/npl')
+            ]
+        elif source_type == 'meta':
+            patch_bases = [
+                Path('./.npl/meta'),
+                Path.home() / '.npl/meta',
+                Path('/etc/npl/meta')
+            ]
+        elif source_type == 'style':
+            patch_bases = [
+                Path('./.npl/conventions'),
+                Path.home() / '.npl/conventions',
+                Path('/etc/npl/conventions')
+            ]
+        else:
+            patch_bases = []
+
+        # Theme-aware search for styles
+        candidates: List[Path] = []
+        if source_type == 'style':
+            # If base is .../conventions/<theme>, include theme segment in rel path for patches
+            theme_dir = base.name if base.parent.name == 'conventions' else None
+            for b in patch_bases:
+                if theme_dir:
+                    candidates.append((b / theme_dir / rel_path).with_suffix('.patch.md'))
+                    if theme_dir != 'default':
+                        candidates.append((b / 'default' / rel_path).with_suffix('.patch.md'))
+                # Also allow no-theme patch override
+                candidates.append((b / rel_path).with_suffix('.patch.md'))
+        else:
+            # Components/meta: straight relative placement
+            for b in patch_bases:
+                candidates.append((b / rel_path).with_suffix('.patch.md'))
+
+        for patch_file in candidates:
+            if patch_file.exists():
+                try:
+                    with open(patch_file, 'r', encoding='utf-8') as pf:
+                        patch_content = pf.read()
+                    return f"# {item}:\n『(patch)\n{patch_content}\n』\n{content}␜\n"
+                except Exception as e:
+                    print(f"Error loading patch {patch_file}: {e}")
+
+        return f"# {item}:\n{content}␜\n"
+
+    def is_skipped(self, item: str, skip_patterns: Set[str]) -> bool:
+        """Check if item matches any skip pattern (supports wildcards)"""
+        for pattern in skip_patterns:
+            if fnmatch.fnmatch(item, pattern):
+                return True
+        return False
+
+    def load_components(self, components: List[str], skip: Set[str]) -> List[Tuple[str, str]]:
+        """Load component files with patch support"""
+        loaded = []
+        for pattern in components:
+            if '*' in pattern:
+                base_paths = self.get_search_paths('component')
+                for base_path in base_paths:
+                    glob_pattern = pattern.replace('.', '/')
+                    for match in base_path.glob(f"{glob_pattern}.md"):
+                        relative = match.relative_to(base_path)
+                        item = str(relative).replace('/', '.').replace('.md', '')
+                        if not self.is_skipped(item, skip) and item not in self.loaded_components:
+                            content = self.load_file_with_patch(base_path, match, 'component', item)
+                            if content:
+                                loaded.append((item, content))
+                                self.loaded_components.add(item)
+            else:
+                if not self.is_skipped(pattern, skip) and pattern not in self.loaded_components:
+                    result = self.resolve_path(pattern, 'component')
+                    if result:
+                        base_path, file_path = result
+                        content = self.load_file_with_patch(base_path, file_path, 'component', pattern)
+                        if content:
+                            loaded.append((pattern, content))
+                            self.loaded_components.add(pattern)
+        return loaded
+
+    def load_meta(self, items: List[str], skip: Set[str]) -> List[Tuple[str, str]]:
+        """Load metadata files with patch support"""
+        loaded = []
+        for pattern in items:
+            if '*' in pattern:
+                base_paths = self.get_search_paths('meta')
+                for base_path in base_paths:
+                    glob_pattern = pattern.replace('.', '/')
+                    for match in base_path.glob(f"{glob_pattern}.md"):
+                        relative = match.relative_to(base_path)
+                        item = str(relative).replace('/', '.').replace('.md', '')
+                        if not self.is_skipped(item, skip) and item not in self.loaded_meta:
+                            content = self.load_file_with_patch(base_path, match, 'meta', item)
+                            if content:
+                                loaded.append((item, content))
+                                self.loaded_meta.add(item)
+            else:
+                if not self.is_skipped(pattern, skip) and pattern not in self.loaded_meta:
+                    result = self.resolve_path(pattern, 'meta')
+                    if result:
+                        base_path, file_path = result
+                        content = self.load_file_with_patch(base_path, file_path, 'meta', pattern)
+                        if content:
+                            loaded.append((pattern, content))
+                            self.loaded_meta.add(pattern)
+        return loaded
+
+    def load_style(self, items: List[str], skip: Set[str]) -> List[Tuple[str, str]]:
+        """Load style guide files with patch support"""
+        loaded = []
+        for pattern in items:
+            if '*' in pattern:
+                base_paths = self.get_search_paths('style')
+                for base_path in base_paths:
+                    for theme_dir in [self.npl_theme, 'default']:
+                        theme_path = base_path / theme_dir
+                        if theme_path.exists():
+                            glob_pattern = pattern.replace('.', '/')
+                            for match in theme_path.glob(f"{glob_pattern}.md"):
+                                relative = match.relative_to(theme_path)
+                                item = str(relative).replace('/', '.').replace('.md', '')
+                                if not self.is_skipped(item, skip) and item not in self.loaded_style:
+                                    content = self.load_file_with_patch(theme_path, match, 'style', item)
+                                    if content:
+                                        loaded.append((item, content))
+                                        self.loaded_style.add(item)
+            else:
+                if not self.is_skipped(pattern, skip) and pattern not in self.loaded_style:
+                    result = self.resolve_path(pattern, 'style')
+                    if result:
+                        base_path, file_path = result
+                        content = self.load_file_with_patch(base_path, file_path, 'style', pattern)
+                        if content:
+                            loaded.append((pattern, content))
+                            self.loaded_style.add(pattern)
+        return loaded
+
+    def load_agent(self, agent_name: str) -> Optional[Tuple[str, str]]:
+        """Load agent by name from search paths"""
+        if agent_name in self.loaded_agents:
+            return None
+
+        search_paths = self.get_search_paths('agent')
+        for base_path in search_paths:
+            agent_file = base_path / f"{agent_name}.md"
+            if agent_file.exists():
+                try:
+                    with open(agent_file, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                    self.loaded_agents.add(agent_name)
+                    return (agent_name, f"# agent:{agent_name}:\n{content}␜\n")
+                except Exception as e:
+                    print(f"Error loading agent {agent_file}: {e}", file=sys.stderr)
+                    continue
+        return None
+
+    def extract_agent_metadata(self, content: str) -> Dict[str, Any]:
+        """Extract YAML frontmatter metadata from agent content"""
+        metadata = {}
+
+        # Check if content starts with YAML frontmatter
+        if content.startswith('---'):
+            parts = content.split('---', 2)
+            if len(parts) >= 3:
+                try:
+                    metadata = yaml.safe_load(parts[1])
+                    if metadata is None:
+                        metadata = {}
+                except yaml.YAMLError:
+                    metadata = {}
+
+        return metadata
+
+    def discover_agents(self) -> Dict[str, Dict[str, Any]]:
+        """Discover all agents across search paths with metadata"""
+        agents = {}
+        search_paths = self.get_search_paths('agent')
+
+        for base_path in search_paths:
+            if not base_path.exists():
+                continue
+
+            for agent_file in base_path.glob('*.md'):
+                agent_name = agent_file.stem
+                if agent_name in agents:
+                    continue  # First found wins (priority order)
+
+                try:
+                    with open(agent_file, 'r', encoding='utf-8') as f:
+                        content = f.read()
+
+                    metadata = self.extract_agent_metadata(content)
+                    agents[agent_name] = {
+                        'path': agent_file,
+                        'location': str(agent_file),
+                        'metadata': metadata,
+                        'content': content
+                    }
+                except Exception as e:
+                    print(f"Error reading agent {agent_file}: {e}", file=sys.stderr)
+                    continue
+
+        return agents
+
+    def list_agents(self, verbose: bool = False) -> None:
+        """List all available agents with optional metadata"""
+        agents = self.discover_agents()
+
+        if not agents:
+            print("No agents found in search paths")
+            return
+
+        for agent_name in sorted(agents.keys()):
+            agent_data = agents[agent_name]
+            metadata = agent_data['metadata']
+
+            if verbose:
+                # Display detailed metadata
+                version = metadata.get('version', 'unknown')
+                description = metadata.get('description', 'No description')
+                categories = metadata.get('categories', [])
+                model = metadata.get('model', 'unknown')
+
+                print(f"{agent_name} (v{version})")
+                print(f"  Description: {description}")
+                if categories:
+                    print(f"  Categories: {', '.join(categories) if isinstance(categories, list) else categories}")
+                print(f"  Model: {model}")
+                print(f"  Location: {agent_data['location']}")
+                print()
+            else:
+                # Simple listing
+                print(agent_name)
+
+    def filter_agents(self, agents: Dict[str, Dict[str, Any]],
+                     search: Optional[str] = None,
+                     filter_meta: Optional[str] = None,
+                     category: Optional[str] = None) -> Dict[str, Dict[str, Any]]:
+        """Filter agents based on search criteria"""
+        filtered = {}
+
+        # Validate regex pattern once if search is provided
+        search_pattern = None
+        if search:
+            try:
+                search_pattern = re.compile(search, re.IGNORECASE)
+            except re.error as e:
+                print(f"Invalid regex pattern: {e}", file=sys.stderr)
+                return {}
+
+        # Validate metadata filter format
+        if filter_meta and ':' not in filter_meta:
+            print(f"Invalid filter format. Use field:value (got: {filter_meta})", file=sys.stderr)
+            return {}
+
+        for agent_name, agent_data in agents.items():
+            include = True
+
+            # Body search filter
+            if search_pattern and include:
+                if not search_pattern.search(agent_data['content']):
+                    include = False
+
+            # Metadata filter
+            if filter_meta and include:
+                field, value = filter_meta.split(':', 1)
+                metadata = agent_data['metadata']
+                if field not in metadata or str(metadata[field]).lower() != value.lower():
+                    include = False
+
+            # Category filter
+            if category and include:
+                metadata = agent_data['metadata']
+                categories = metadata.get('categories', [])
+                if isinstance(categories, list):
+                    if category.lower() not in [c.lower() for c in categories]:
+                        include = False
+                elif isinstance(categories, str):
+                    if category.lower() not in categories.lower():
+                        include = False
+                else:
+                    include = False
+
+            if include:
+                filtered[agent_name] = agent_data
+
+        return filtered
+
+    def search_and_list_agents(self, verbose: bool = False,
+                              search: Optional[str] = None,
+                              filter_meta: Optional[str] = None,
+                              category: Optional[str] = None) -> None:
+        """Search and list agents with filtering"""
+        agents = self.discover_agents()
+
+        if not agents:
+            print("No agents found in search paths")
+            return
+
+        # Apply filters
+        if search or filter_meta or category:
+            agents = self.filter_agents(agents, search, filter_meta, category)
+
+        if not agents:
+            print("No agents found matching the specified criteria")
+            return
+
+        # List the filtered agents
+        for agent_name in sorted(agents.keys()):
+            agent_data = agents[agent_name]
+            metadata = agent_data['metadata']
+
+            if verbose:
+                # Display detailed metadata
+                version = metadata.get('version', 'unknown')
+                description = metadata.get('description', 'No description')
+                categories = metadata.get('categories', [])
+                model = metadata.get('model', 'unknown')
+
+                print(f"{agent_name} (v{version})")
+                print(f"  Description: {description}")
+                if categories:
+                    print(f"  Categories: {', '.join(categories) if isinstance(categories, list) else categories}")
+                print(f"  Model: {model}")
+                print(f"  Location: {agent_data['location']}")
+                print()
+            else:
+                # Simple listing
+                print(agent_name)
+
+    def extract_npl_dependencies(self, agent_content: str) -> List[str]:
+        """Extract npl-load commands from agent content"""
+        dependencies = []
+
+        # Look for npl-load commands in code blocks and text
+        npl_load_pattern = r'npl-load\s+c\s+["\']?([^"\'`\n]+)["\']?'
+        matches = re.findall(npl_load_pattern, agent_content, re.IGNORECASE)
+
+        for match in matches:
+            # Parse comma-separated items, handling quotes
+            items = [item.strip().strip('"\'') for item in match.split(',')]
+            dependencies.extend(items)
+
+        return dependencies
+
+    def load_npl_components_parallel(self, components: List[str]) -> Dict[str, str]:
+        """Load NPL components in parallel using npl-load"""
+        component_content = {}
+
+        def load_component(component):
+            try:
+                # Use the existing npl-load script to load components (without --quiet for now)
+                cmd = [sys.executable, str(Path(__file__).parent / 'npl-load'), 'c', component]
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+                if result.returncode == 0:
+                    # Remove the flag update section from output
+                    output = result.stdout
+                    # Remove the flag update section
+                    if "# Flag Update" in output:
+                        lines = output.split('\n')
+                        content_lines = []
+                        in_flag_section = False
+                        for line in lines:
+                            if line.strip() == "# Flag Update":
+                                in_flag_section = True
+                                continue
+                            elif in_flag_section and line.strip() == "---":
+                                in_flag_section = False
+                                continue
+                            elif not in_flag_section:
+                                content_lines.append(line)
+                        output = '\n'.join(content_lines)
+                    return component, output
+                else:
+                    print(f"Warning: Failed to load component {component}: {result.stderr}", file=sys.stderr)
+                    return component, ""
+            except Exception as e:
+                print(f"Warning: Error loading component {component}: {e}", file=sys.stderr)
+                return component, ""
+
+        # Load components in parallel
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+            futures = [executor.submit(load_component, comp) for comp in components]
+            for future in concurrent.futures.as_completed(futures):
+                comp_name, content = future.result()
+                if content:
+                    component_content[comp_name] = content
+
+        return component_content
+
+    def extract_syntax_elements(self, npl_content: str) -> Set[str]:
+        """Extract NPL syntax elements from content"""
+        elements = set()
+
+        # Common NPL syntax patterns
+        patterns = [
+            # Basic syntax
+            r'`([^`]+)`',                    # highlight: `term`
+            r'\{([^}]+)\}',                  # placeholder: {term}
+            r'<([^>]+)>',                    # placeholder: <term>
+            r'<<([^>]+)>([^>]+)>',          # qualified: <<qualifier>:term>
+            r'\[\.\.\.([^\]]*)\]',          # in-fill: [...] or [...|qualifier]
+            r'\[___\]',                      # omission: [___]
+
+            # Special syntax
+            r'🎯\s*([^\n]+)',               # attention: 🎯 instruction
+            r'\(note:\s*([^\)]+)\)',        # note: (note:[...])
+            r'(\w+)\|([^\s\]]+)',           # qualifier: term|qualifier
+
+            # Communication and Routing
+            r'🙋\s+([^\n]+)',               # attention-alias: 🙋 alias
+            r'@\{([^}]+)\}',                # direct-message: @{agent}
+            r'⟪([^⟫]+)⟫',                   # value-placeholder: ⟪content⟫
+
+            # Validation and Examples
+            r'✔\s+([^\n]+)',                # validation: ✔ positive example
+            r'❌\s+([^\n]+)',               # validation: ❌ negative example
+            r'﹍',                          # separator: ﹍
+
+            # Content Generation
+            r'\.\.\.(?![.])',               # inference: ... (not followed by more dots)
+            r'\betc\.?\b',                  # inference: etc
+            r'`\{~l\|([^`]+)\}`',          # literal-output: `{~l|exact text}`
+
+            # Logic Operators
+            r'∑\([^)]+\)',                  # logic-operators: ∑(expression)
+            r'∩',                           # logic-operators: intersection
+            r'∪',                           # logic-operators: union
+            r'⊆',                           # logic-operators: subset
+            r'∈',                           # logic-operators: element of
+
+            # Fences
+            r'```(\w+)',                     # fences: ```type
+            r'```(\w+-\w+)',                # fences: ```example-type
+
+            # Handlebars
+            r'\{\{(\w+)\}\}',               # handlebars: {{var}}
+            r'\{\{foreach\s+(\w+)\}\}',     # handlebars: {{foreach item}}
+            r'\{\{if\s+([^\}]+)\}\}',       # handlebars: {{if condition}}
+            r'\{\{/(\w+)\}\}',              # handlebars: {{/endif}}
+
+            # NPL specific
+            r'<npl-(\w+)>',                 # npl tags: <npl-intent>
+            r'⌜([^⌝]+)⌝',                   # npl sections: ⌜content⌝
+            r'⌞([^⌟]+)⌟',                   # npl sections: ⌞content⌟
+
+            # Directives
+            r'⟪([^:]+):\s*([^⟫]+)⟫',       # directive: ⟪emoji: instruction⟫
+        ]
+
+        for pattern in patterns:
+            matches = re.findall(pattern, npl_content, re.MULTILINE)
+            for match in matches:
+                if isinstance(match, tuple):
+                    elements.update(match)
+                else:
+                    elements.add(match)
+
+        return elements
+
+    def analyze_npl_syntax_usage(self, content: str, show_matches: bool = False) -> Dict[str, Any]:
+        """Analyze NPL syntax elements in any content string and return detailed information"""
+        result = {
+            'syntax_elements': {},
+            'total_elements': 0,
+            'element_types': set(),
+            'matches': {} if show_matches else None
+        }
+
+        # Define pattern categories with their regex patterns
+        pattern_categories = {
+            'basic_syntax': [
+                (r'`([^`]+)`', 'highlight'),
+                (r'\{([^}]+)\}', 'placeholder'),
+                (r'<([^>]+)>', 'placeholder_angle'),
+                (r'<<([^>]+)>([^>]+)>', 'qualified_placeholder'),
+                (r'\[\.\.\.([^\]]*)\]', 'in_fill'),
+                (r'\[___\]', 'omission'),
+            ],
+            'special_syntax': [
+                (r'🎯\s*([^\n]+)', 'attention'),
+                (r'\(note:\s*([^\)]+)\)', 'note'),
+                (r'(\w+)\|([^\s\]]+)', 'qualifier'),
+            ],
+            'communication': [
+                (r'🙋\s+([^\n]+)', 'attention_alias'),
+                (r'@\{([^}]+)\}', 'direct_message'),
+                (r'⟪([^⟫]+)⟫', 'value_placeholder'),
+            ],
+            'validation': [
+                (r'✔\s+([^\n]+)', 'validation_positive'),
+                (r'❌\s+([^\n]+)', 'validation_negative'),
+                (r'﹍', 'separator'),
+            ],
+            'content_generation': [
+                (r'\.\.\.(?![.])', 'inference_dots'),
+                (r'\betc\.?\b', 'inference_etc'),
+                (r'`\{~l\|([^`]+)\}`', 'literal_output'),
+            ],
+            'logic_operators': [
+                (r'∑\([^)]+\)', 'summation'),
+                (r'∩', 'intersection'),
+                (r'∪', 'union'),
+                (r'⊆', 'subset'),
+                (r'∈', 'element_of'),
+            ],
+            'fences': [
+                (r'```(\w+)', 'fence_simple'),
+                (r'```(\w+-\w+)', 'fence_compound'),
+            ],
+            'handlebars': [
+                (r'\{\{(\w+)\}\}', 'handlebars_var'),
+                (r'\{\{foreach\s+(\w+)\}\}', 'handlebars_foreach'),
+                (r'\{\{if\s+([^\}]+)\}\}', 'handlebars_if'),
+                (r'\{\{/(\w+)\}\}', 'handlebars_end'),
+            ],
+            'npl_specific': [
+                (r'<npl-(\w+)>', 'npl_tag'),
+                (r'⌜([^⌝]+)⌝', 'npl_section_start'),
+                (r'⌞([^⌟]+)⌟', 'npl_section_end'),
+            ],
+            'directives': [
+                (r'⟪([^:]+):\s*([^⟫]+)⟫', 'directive'),
+            ]
+        }
+
+        # Analyze each pattern category
+        for category, patterns in pattern_categories.items():
+            for pattern_regex, element_type in patterns:
+                matches = re.findall(pattern_regex, content, re.MULTILINE)
+                if matches:
+                    count = len(matches)
+                    result['syntax_elements'][element_type] = count
+                    result['total_elements'] += count
+                    result['element_types'].add(category)
+
+                    if show_matches:
+                        result['matches'][element_type] = matches
+
+        return result
+
+    def print_syntax_analysis(self, content: str, show_matches: bool = False) -> None:
+        """Print a formatted analysis of NPL syntax elements in content"""
+        analysis = self.analyze_npl_syntax_usage(content, show_matches)
+
+        print(f"# NPL Syntax Analysis")
+        print(f"Total elements found: {analysis['total_elements']}")
+        print(f"Element types: {', '.join(sorted(analysis['element_types']))}")
+        print()
+
+        if analysis['syntax_elements']:
+            print("## Syntax Elements Found:")
+            for element_type, count in sorted(analysis['syntax_elements'].items()):
+                print(f"  {element_type}: {count}")
+
+                if show_matches and analysis['matches'].get(element_type):
+                    matches = analysis['matches'][element_type]
+                    for i, match in enumerate(matches[:3]):  # Show first 3 matches
+                        if isinstance(match, tuple):
+                            match_str = ' | '.join(match)
+                        else:
+                            match_str = str(match)
+                        print(f"    [{i+1}] {match_str}")
+                    if len(matches) > 3:
+                        print(f"    ... and {len(matches) - 3} more")
+                print()
+        else:
+            print("No NPL syntax elements found.")
+
+    def analyze_agent_npl_usage(self, agent_content: str, available_elements: Set[str]) -> Dict[str, int]:
+        """Analyze which NPL elements an agent uses and how frequently"""
+        usage = {}
+
+        # Extract all potential syntax elements from agent content
+        used_elements = self.extract_syntax_elements(agent_content)
+
+        # Count usage of each element
+        for element in used_elements:
+            if element in available_elements:
+                # Count occurrences more precisely for known elements
+                count = len(re.findall(re.escape(element), agent_content, re.IGNORECASE))
+                usage[element] = count
+
+        return usage
+
+    def generate_optimized_npl_definition(self, agent_name: str, required_elements: Set[str],
+                                        npl_components: Dict[str, str]) -> str:
+        """Generate optimized NPL definition file with only required elements"""
+
+        definition_parts = []
+        definition_parts.append(f"# NPL Definition for {agent_name}")
+        definition_parts.append("")
+        definition_parts.append("This file contains only the NPL syntax elements used by this agent.")
+        definition_parts.append("")
+
+        # Load base NPL if available
+        npl_init = self.load_npl_init()
+        if npl_init:
+            definition_parts.append("## Core NPL Framework")
+            definition_parts.append(npl_init)
+            definition_parts.append("")
+
+        # Add relevant component sections
+        for component_name, content in npl_components.items():
+            if any(element in content for element in required_elements):
+                definition_parts.append(f"## Component: {component_name}")
+                definition_parts.append(content)
+                definition_parts.append("")
+
+        return "\n".join(definition_parts)
+
+    def export_agent_definition(self, agent_name: str) -> Optional[str]:
+        """Export agent with optimized NPL documentation"""
+
+        # Load the agent
+        result = self.load_agent(agent_name)
+        if not result:
+            return None
+
+        agent_name, agent_content = result
+
+        # Extract NPL dependencies from agent content
+        dependencies = self.extract_npl_dependencies(agent_content)
+
+        # Add common NPL components
+        common_components = ['syntax', 'agent', 'fences', 'directive', 'formatting']
+        all_components = list(set(dependencies + common_components))
+
+        # Load NPL components in parallel
+        npl_components = self.load_npl_components_parallel(all_components)
+
+        # Extract all available syntax elements
+        available_elements = set()
+        for content in npl_components.values():
+            available_elements.update(self.extract_syntax_elements(content))
+
+        # Analyze agent's NPL usage
+        usage = self.analyze_agent_npl_usage(agent_content, available_elements)
+        required_elements = set(usage.keys())
+
+        # Generate optimized definition
+        definition = self.generate_optimized_npl_definition(agent_name, required_elements, npl_components)
+
+        # Create cache file
+        cache_dir = Path.home() / '.npl' / 'cache' / 'agent-definitions'
+        cache_dir.mkdir(parents=True, exist_ok=True)
+
+        cache_file = cache_dir / f"{agent_name}.npl.md"
+        with open(cache_file, 'w', encoding='utf-8') as f:
+            f.write(definition)
+
+        # Return combined content
+        combined = f"{agent_content}\n\n---\n\n{definition}"
+        return combined
+
+    def resolve_schema_path(self, schema_name: str) -> Optional[Path]:
+        """Find the first matching schema SQL file."""
+        file_name = f"{schema_name}.sql"
+        for base in self.get_search_paths('schema'):
+            candidate = base / file_name
+            if candidate.exists():
+                return candidate
+        return None
+
+    def load_schema(self, schema_name: str) -> Optional[str]:
+        """Load and return the raw schema SQL content (no patches, no wrappers)."""
+        p = self.resolve_schema_path(schema_name)
+        if not p:
+            return None
+        try:
+            with open(p, 'r', encoding='utf-8') as f:
+                return f.read()
+        except Exception:
+            return None
+
+    def find_npl_init(self) -> Optional[Path]:
+        """Find the main npl.md file using the same directory logic as other searches."""
+        search_paths = self.get_npl_init_paths()
+        for base_path in search_paths:
+            npl_file = base_path / 'npl.md'
+            if npl_file.exists():
+                return npl_file
+        return None
+
+    def load_npl_init(self) -> Optional[str]:
+        """Load and return the main npl.md file content."""
+        npl_file = self.find_npl_init()
+        if not npl_file:
+            return None
+        try:
+            with open(npl_file, 'r', encoding='utf-8') as f:
+                return f.read()
+        except Exception:
+            return None
+
+def _parse_skip_list(values) -> Set[str]:
+    """Accept '--skip a b c' or '--skip a,b,c'."""
+    if not values:
+        return set()
+    if isinstance(values, str):
+        raw = values
+    else:
+        raw = " ".join(values)
+    return {t for t in re.split(r'[,\s]+', raw) if t}
+
+def main():
+    parser = argparse.ArgumentParser(description='Load NPL resources with dependency tracking')
+    parser.add_argument('--quiet', action='store_true',
+                        help='Only output tracking flags, not content')
+
+    subparsers = parser.add_subparsers(dest='command', required=True)
+
+    sp_c = subparsers.add_parser('c', help='Load components')
+    sp_c.add_argument('def_items', nargs='*', help='Components to load (supports glob patterns)')
+    sp_c.add_argument('--skip', nargs='*', default=[], help='Skip patterns (wildcards allowed)')
+    sp_c.add_argument('--verbose', action='store_true')
+
+    sp_m = subparsers.add_parser('m', help='Load metadata')
+    sp_m.add_argument('meta_items', nargs='*', help='Metadata to load (supports glob patterns)')
+    sp_m.add_argument('--skip', nargs='*', default=[], help='Skip patterns (wildcards allowed)')
+    sp_m.add_argument('--verbose', action='store_true')
+
+    sp_s = subparsers.add_parser('s', help='Load style guides')
+    sp_s.add_argument('style_items', nargs='*', help='Style guides to load (supports glob patterns)')
+    sp_s.add_argument('--skip', nargs='*', default=[], help='Skip patterns (wildcards allowed)')
+    sp_s.add_argument('--verbose', action='store_true')
+
+    # New: schema subcommand
+    sp_schema = subparsers.add_parser('schema', help='Output the raw SQL for a schema')
+    sp_schema.add_argument('schema_name', help='Schema name without .sql (e.g., nimps)')
+
+    # New: init subcommand
+    sp_init = subparsers.add_parser('init', help='Load the main npl.md file')
+
+    # New: agent subcommand
+    sp_agent = subparsers.add_parser('agent', help='Load agent definitions')
+    sp_agent.add_argument('agent_name', nargs='?', help='Name of agent to load')
+    sp_agent.add_argument('--list', action='store_true', help='List all available agents')
+    sp_agent.add_argument('--verbose', '-v', action='store_true', help='Show metadata with --list')
+    sp_agent.add_argument('--search', help='Search in agent body (regex)')
+    sp_agent.add_argument('--filter-meta', help='Filter by metadata field (field:value)')
+    sp_agent.add_argument('--category', help='Filter by category')
+    sp_agent.add_argument('--definition', action='store_true',
+                         help='Get agent with NPL syntax documentation')
+
+    # New: syntax subcommand
+    sp_syntax = subparsers.add_parser('syntax', help='Analyze NPL syntax elements in content')
+    sp_syntax.add_argument('content', nargs='?', help='Content to analyze (use - for stdin)')
+    sp_syntax.add_argument('--file', help='File to analyze')
+    sp_syntax.add_argument('--matches', action='store_true', help='Show actual matches')
+
+    args = parser.parse_args()
+
+    # New: handle schema early and exit to ensure no extra output
+    if args.command == 'schema':
+        loader = NPLLoader()
+        content = loader.load_schema(args.schema_name)
+        if content is None:
+            print(f"Schema not found: {args.schema_name}", file=sys.stderr)
+            sys.exit(2)
+        # Output only the file contents
+        print(content, end='')
+        sys.exit(0)
+
+    # New: handle init command early and exit
+    if args.command == 'init':
+        loader = NPLLoader()
+        content = loader.load_npl_init()
+        if content is None:
+            print("Main npl.md file not found", file=sys.stderr)
+            sys.exit(2)
+        # Output only the file contents
+        print(content, end='')
+        sys.exit(0)
+
+    # New: handle agent command early and exit
+    if args.command == 'agent':
+        loader = NPLLoader()
+
+        if args.list:
+            # List all agents with optional filtering
+            loader.search_and_list_agents(args.verbose, args.search, args.filter_meta, args.category)
+            sys.exit(0)
+
+        if not args.agent_name:
+            print("Error: agent_name is required when not using --list", file=sys.stderr)
+            sys.exit(1)
+
+        if args.definition:
+            # Export agent with NPL documentation
+            combined_content = loader.export_agent_definition(args.agent_name)
+            if combined_content is None:
+                print(f"Agent not found: {args.agent_name}", file=sys.stderr)
+                sys.exit(2)
+            print(combined_content, end='')
+            sys.exit(0)
+
+        result = loader.load_agent(args.agent_name)
+        if result is None:
+            print(f"Agent not found: {args.agent_name}", file=sys.stderr)
+            sys.exit(2)
+        agent_name, content = result
+        # Output only the agent content
+        print(content, end='')
+        sys.exit(0)
+
+    # New: handle syntax command early and exit
+    if args.command == 'syntax':
+        loader = NPLLoader()
+
+        # Get content to analyze
+        content_to_analyze = None
+        if args.file:
+            try:
+                with open(args.file, 'r', encoding='utf-8') as f:
+                    content_to_analyze = f.read()
+            except Exception as e:
+                print(f"Error reading file {args.file}: {e}", file=sys.stderr)
+                sys.exit(2)
+        elif args.content:
+            if args.content == '-':
+                # Read from stdin
+                content_to_analyze = sys.stdin.read()
+            else:
+                content_to_analyze = args.content
+        else:
+            print("Error: Must provide content, --file, or - for stdin", file=sys.stderr)
+            sys.exit(1)
+
+        # Analyze and print results
+        loader.print_syntax_analysis(content_to_analyze, args.matches)
+        sys.exit(0)
+
+    loader = NPLLoader()
+    loaded_content = []
+
+    if args.command == 'c':
+        skip = _parse_skip_list(args.skip)
+        if args.def_items:
+            components = loader.load_components(args.def_items, skip)
+            for name, content in components:
+                loaded_content.append(('COMPONENT', name, content))
+
+    elif args.command == 'm':
+        skip = _parse_skip_list(args.skip)
+        if args.meta_items:
+            meta = loader.load_meta(args.meta_items, skip)
+            for name, content in meta:
+                loaded_content.append(('META', name, content))
+
+    elif args.command == 's':
+        skip = _parse_skip_list(args.skip)
+        if args.style_items:
+            styles = loader.load_style(args.style_items, skip)
+            for name, content in styles:
+                loaded_content.append(('STYLE', name, content))
+
+    if loader.loaded_components or loader.loaded_meta or loader.loaded_style:
+        print("# Flag Update")
+        print("\n```🏳️\n")
+        if loader.loaded_components:
+            print(f"@npl.def.loaded+=\"{','.join(sorted(loader.loaded_components))}\"")
+        if loader.loaded_meta:
+            print(f"@npl.meta.loaded+=\"{','.join(sorted(loader.loaded_meta))}\"")
+        if loader.loaded_style:
+            print(f"@npl.style.loaded+=\"{','.join(sorted(loader.loaded_style))}\"")
+        print("\n\n```\n")
+        print("\n---")
+
+    if not args.quiet:       
+        for resource_type, name, content in loaded_content:
+            print(content)
+
+if __name__ == '__main__':
+    main()

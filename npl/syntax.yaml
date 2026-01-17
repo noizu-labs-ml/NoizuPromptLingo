@@ -1,17 +1,32 @@
 name: syntax
 brief: Core syntax elements and conventions
 description: |
-  Foundational formatting conventions, placeholder systems, and structural patterns for prompt construction in the Noizu Prompt Lingua framework.
+  Foundational formatting conventions, placeholder systems, and structural patterns for prompt construction in the Noizu Prompt Lingua framework. These elements form the building blocks that other NPL components combine and extend.
 purpose: |
-  Establishes a consistent vocabulary of markers and patterns that convey intent clearly between prompt authors and language models.
+  Establishes a consistent vocabulary of markers and patterns that convey intent clearly between prompt authors and language models. Syntax elements enable precise control over content substitution, generation, emphasis, and structural organization.
+
 components:
   - name: qualifier
-    syntax: "?| <qualifier> <optional: key, value: list>"
-    brief: Extend elements with additional details
-    description: Pipe syntax for adding instructions, constraints, or contextual information to placeholders, in-fill areas, and other syntax elements.
+    syntax:
+      - name: pipe-qualifier
+        syntax: "|<qualifier>"
+        description: Appends qualifying instructions to placeholders or in-fill markers.
+    brief: Extend elements with constraints or context
+    description: |
+      Pipe syntax for adding instructions, constraints, or contextual information to placeholders, in-fill areas, and other syntax elements. Qualifiers modify how content is generated or substituted without changing the base element type.
+      
+      Use qualifiers when you need to:
+      - Guide content generation with specific instructions
+      - Add constraints to placeholder substitution
+      - Provide context that shapes output characteristics
     labels:
       - modifier
       - inline
+      - constraint
+    import:
+      - placeholder
+      - in-fill
+      - size-indicator
     examples:
       - name: basic-qualifier
         brief: Qualifier with placeholder and in-fill
@@ -19,11 +34,8 @@ components:
         level: 0
         purpose: Shows fundamental qualifier pipe syntax for content generation guidance
         labels:
-          - placeholder
-          - in-fill
-          - size-indicator
           - "{}"
-          - "[...:<range>|qualifier]"
+          - "[...:<range>|<qualifier>]"
         example: |
           Hello {},
           Sea Fact:
@@ -34,8 +46,6 @@ components:
         level: 1
         purpose: Demonstrates qualifier effect on generated output via thread example
         labels:
-          - in-fill
-          - size-indicator
           - "[...:<range>|<qualifier>]"
           - "[...|<qualifier>]"
         thread:
@@ -53,13 +63,11 @@ components:
         level: 2
         purpose: Demonstrates complex qualifier usage across different syntax elements
         labels:
-          - placeholder
-          - in-fill
-          - size-indicator
           - "{term}"
           - "{}"
-          - "[...|<size>|qualifier]"
-          - "[...|<range>|qualifier]"
+          - "{term|<qualifier>}"
+          - "{term:<count>|<qualifier>}"
+          - "[...:<count>|<qualifier>]"
         thread:
           - role: system
             message: |
@@ -79,14 +87,61 @@ components:
               pink: tulips
               cats: Maine, Tuxedo, Ragdoll
               lucky numbers: 432 981
+      - name: nested-qualifier
+        brief: Qualifiers with multiple constraints
+        description: Shows how to chain multiple constraints within a single qualifier.
+        level: 2
+        purpose: Demonstrates advanced qualifier composition
+        labels:
+          - "[...|<qualifier>]"
+          - "{term|<qualifier>}"
+        thread:
+          - role: system
+            message: |
+              Generate product description:
+              Name: {product.name}
+              Tagline: [...:1sentence| catchy, include benefit, under 10 words]
+              Features: [...:3-5items| technical specs, bullet format]
+          - role: user
+            message: product.name = "CloudSync Pro"
+          - role: assistant
+            message: |
+              Name: CloudSync Pro
+              Tagline: Sync everything, everywhere, instantly.
+              Features:
+              • 256-bit AES encryption
+              • Real-time synchronization across unlimited devices
+              • 99.99% uptime SLA
+              • API access with rate limiting
+
   - name: size-indicator
-    syntax: "?:<range><type>"
+    syntax:
+      - name: fixed-count
+        syntax: ":<count><type>"
+        description: Exact count constraint (e.g., :3sentences, :5items).
+      - name: range-count
+        syntax: ":<range><type>"
+        description: Range constraint allowing flexibility (e.g., :2-5paragraphs).
+      - name: max-count
+        syntax: ":<{max}<type>"
+        description: Maximum limit constraint (e.g., :<100words).
     brief: Specify expected output size
-    description: Size qualifier to provide output size expectations such as :2-5pages, :3sentences, :100-200words.
+    description: |
+      Size qualifier that provides explicit output size expectations for generated content. Combines with in-fill markers and qualifiers to constrain generation length.
+      
+      Common size types include:
+      - words, sentences, paragraphs, pages
+      - lines, items, characters
+      - Custom domain units (e.g., stanzas, verses)
+      
+      Use ranges (e.g., :2-5sentences) for flexibility or fixed counts (e.g., :3items) for precision.
     labels:
       - modifier
       - inline
-      - output
+      - constraint
+    import:
+      - in-fill
+      - qualifier
     examples:
       - name: basic-size
         brief: Simple line count constraint
@@ -141,10 +196,49 @@ components:
 
               Fold in chocolate chips. Drop spoonfuls onto baking sheet. Bake 9-11 minutes until golden.
               Tips: Chill dough for 30 minutes for thicker cookies. Use room temperature butter.
+      - name: size-with-qualifier
+        brief: Size combined with content qualifier
+        description: Shows size indicator working alongside content qualifiers for precise control.
+        level: 2
+        purpose: Demonstrates size and qualifier interaction
+        labels:
+          - "[...:<range><type>|<qualifier>]"
+        thread:
+          - role: system
+            message: |
+              Executive Summary: [...:100-150words| formal tone, no jargon]
+              Key Metrics: [...:3-5items| quantitative only]
+              Next Steps: [...:2-3sentences| action-oriented]
+          - role: user
+            message: Q3 performance review for engineering team
+          - role: assistant
+            message: |
+              Executive Summary: The engineering team delivered strong results in Q3, completing 94% of planned initiatives while maintaining code quality standards. Team velocity increased by 18% compared to Q2, attributed to improved sprint planning and reduced context switching. Infrastructure reliability reached 99.97% uptime, exceeding the 99.9% target.
+              
+              Key Metrics:
+              • Sprint velocity: 847 points (+18% QoQ)
+              • Bug escape rate: 2.1% (-0.8% QoQ)
+              • Deploy frequency: 12.3 per week (+24% QoQ)
+              
+              Next Steps: Prioritize technical debt reduction in Q4 sprint planning. Implement automated performance regression testing before November release.
+
   - name: highlight
-    syntax: "`<term>`"
+    syntax:
+      - name: backtick-highlight
+        syntax: "`<term>`"
+        description: Standard backtick emphasis for key terms and concepts.
+      - name: double-backtick
+        syntax: "``<term>``"
+        description: Escaped highlight for terms containing backticks.
     brief: Emphasize key concepts
-    description: Term emphasis using backticks to highlight important terms or phrases for clarity.
+    description: |
+      Term emphasis using backticks to highlight important terms, phrases, or concepts for clarity and focus. Highlighted terms signal to the agent that these concepts deserve particular attention in the response.
+      
+      Use highlighting for:
+      - Technical terminology requiring definition or explanation
+      - Key concepts central to the query
+      - Terms being compared or contrasted
+      - Code snippets, commands, or literal values within prose
     labels:
       - emphasis
       - inline
@@ -189,14 +283,43 @@ components:
               A `mutex` provides exclusive access to one thread at a time.
               A `semaphore` allows a specified number of concurrent accesses.
               A `spinlock` busy-waits instead of sleeping, useful for short critical sections.
+      - name: highlight-in-context
+        brief: Highlights within prose
+        description: Shows highlights used naturally within explanatory text.
+        level: 1
+        purpose: Demonstrates inline highlighting for technical terms
+        labels:
+          - "`term`"
+        thread:
+          - role: system
+            message: |
+              Explain how `async` and `await` work together in Python, including the role of the `event loop`.
+          - role: assistant
+            message: |
+              In Python, `async` declares a coroutine function that can be paused and resumed. When you call an `async` function, it returns a coroutine object rather than executing immediately.
+              
+              The `await` keyword pauses the coroutine until the awaited operation completes, allowing the `event loop` to run other tasks. The `event loop` is the central coordinator that manages all coroutines, deciding which one runs when another is waiting.
+
   - name: attention
-    syntax: "🎯 <instruction>"
+    syntax:
+      - name: target-attention
+        syntax: "🎯 <instruction>"
+        description: Critical instruction marker for high-priority directives.
     brief: Mark critical instructions
-    description: Critical instruction marker using 🎯 emoji for high-priority directives requiring special focus.
+    description: |
+      Critical instruction marker using 🎯 emoji prefix for high-priority directives requiring special focus. Attention markers signal that the instruction should take precedence over general guidance and must be followed.
+      
+      Use attention markers sparingly for:
+      - Security requirements that cannot be ignored
+      - Critical formatting or structural constraints
+      - Safety-related instructions
+      - Non-negotiable behavioral requirements
+      
+      Overuse diminishes impact—reserve for truly critical instructions.
     labels:
       - emphasis
       - inline
-      - priority
+      - high
     examples:
       - name: basic-attention
         brief: Single critical instruction
@@ -234,7 +357,6 @@ components:
         purpose: Demonstrates multiple attention directives working together
         labels:
           - "🎯 <instruction>"
-          - "🎯 (multiple)"
         thread:
           - role: system
             message: |
@@ -259,20 +381,38 @@ components:
                       return 'Invalid type', 400
                   filename = secure_filename(file.filename)
                   file.save(os.path.join(UPLOAD_DIR, filename))
+
   - name: placeholder
     syntax:
-      - name: bracket
-        syntax: "<term>"
-      - name: brace
+      - name: brace-placeholder
         syntax: "{term}"
+        description: Standard placeholder for variable substitution. Most common form.
+      - name: brace-property
+        syntax: "{term.property}"
+        description: Dot notation for accessing nested properties.
+      - name: brace-empty
+        syntax: "{}"
+        description: Empty placeholder for contextually inferred values.
+      - name: bracket-placeholder
+        syntax: "<term>"
+        description: Angle bracket placeholder for syntax definitions and formal specs.
       - name: double-bracket
         syntax: "⟪term⟫"
+        description: Unicode bracket placeholder when other brackets conflict with content.
     brief: Indicate expected content locations
     description: |
-      Mark locations where specific content should be inserted by users or generated by agents. term may be omitted when clear from context e.g. `{}`
+      Mark locations where specific content should be inserted by users or generated by agents. Placeholders support dot notation for property access (e.g., {user.name}) and can be combined with qualifiers for guided substitution.
+      
+      Placeholder styles serve different contexts:
+      - `{term}`: General-purpose, most common
+      - `<term>`: Syntax definitions, formal specs
+      - `⟪term⟫`: Avoids conflicts with angle brackets in content
+      - `{}`: Contextually inferred value
     labels:
       - variable
       - inline
+    import:
+      - qualifier
     examples:
       - name: basic-placeholder
         brief: Brace and dot notation
@@ -333,13 +473,57 @@ components:
                 "data": {"items": [1,2,3]},
                 "empty_allowed": null
               }
+      - name: placeholder-with-qualifier
+        brief: Qualified placeholders
+        description: Shows placeholders combined with qualifiers for guided substitution.
+        level: 2
+        purpose: Demonstrates placeholder and qualifier interaction
+        labels:
+          - "{term|<qualifier>}"
+          - "{term:<constraint>}"
+        thread:
+          - role: system
+            message: |
+              Generate test data:
+              Username: {username| 8-12 alphanumeric characters}
+              Email: {email| valid format, use example.com domain}
+              Age: {age:18-65| integer within range}
+          - role: assistant
+            message: |
+              Username: testUser42
+              Email: user.test@example.com
+              Age: 34
+
   - name: in-fill
-    syntax: "[...]"
+    syntax:
+      - name: basic-in-fill
+        syntax: "[...]"
+        description: Basic content generation marker.
+      - name: sized-in-fill
+        syntax: "[...:<size>]"
+        description: In-fill with size constraint.
+      - name: qualified-in-fill
+        syntax: "[...|<qualifier>]"
+        description: In-fill with generation guidance.
+      - name: full-in-fill
+        syntax: "[...:<size>|<qualifier>]"
+        description: In-fill with both size and qualifier.
     brief: Mark content generation areas
-    description: Content generation markers indicating where dynamic content should be generated.
+    description: |
+      Content generation markers indicating where dynamic content should be generated by the agent. Unlike placeholders (which substitute known values), in-fill markers signal that content must be created based on context.
+      
+      In-fill markers can be enhanced with:
+      - Size indicators: [...:2-3sentences]
+      - Qualifiers: [...| formal tone]
+      - Both: [...:100words| technical, no jargon]
+      
+      Use in-fill when content cannot be predetermined and requires contextual generation.
     labels:
       - generation
       - inline
+    import:
+      - qualifier
+      - size-indicator
     examples:
       - name: basic-in-fill
         brief: Simple content generation
@@ -357,7 +541,6 @@ components:
         purpose: Demonstrates sequential in-fill generation
         labels:
           - "[...]"
-          - "[...] (sequential)"
         thread:
           - role: system
             message: |
@@ -393,14 +576,64 @@ components:
               Pros: Prophetic themes still relevant today, masterful world-building, psychologically gripping
               Cons: Bleak tone may deter some readers, slow pacing in middle sections
               Verdict: Essential reading that remains hauntingly prescient.
+      - name: in-fill-vs-placeholder
+        brief: Distinguishing in-fill from placeholder
+        description: Shows the difference between in-fill (generated) and placeholder (substituted) content.
+        level: 1
+        purpose: Clarifies when to use each syntax element
+        labels:
+          - "[...]"
+          - "{term}"
+        thread:
+          - role: system
+            message: |
+              # Substituted (known values):
+              Customer: {customer.name}
+              Order ID: {order.id}
+              
+              # Generated (contextual):
+              Greeting: [...]
+              Personalized recommendation: [...| based on order history]
+          - role: user
+            message: customer.name=Sarah, order.id=12345, order history shows frequent book purchases
+          - role: assistant
+            message: |
+              Customer: Sarah
+              Order ID: 12345
+              
+              Greeting: Thank you for being a valued customer!
+              Personalized recommendation: Based on your love of books, you might enjoy our new literary fiction collection featuring award-winning authors.
+
   - name: infer
-    syntax: "..., etc."
+    syntax:
+      - name: trailing-ellipsis
+        syntax: "..."
+        description: Trailing ellipsis indicating pattern continuation.
+      - name: etc-marker
+        syntax: ", etc."
+        description: Explicit continuation marker for lists.
+      - name: and-so-on
+        syntax: ", and so on"
+        description: Natural language continuation marker.
+      - name: qualified-infer
+        syntax: "(...| <qualifier>)"
+        description: Inference with qualifier guidance. Parentheses visually delimit the qualifier.
     brief: Signal pattern continuation
-    description: Continuation patterns signaling agents to generate or consider similar items based on established context and pattern.
+    description: |
+      Continuation patterns signaling agents to generate or consider similar items based on established context and pattern recognition. The agent infers what comes next from the established sequence.
+      
+      Use inference when:
+      - A clear pattern has been established
+      - The complete set is obvious from context
+      - Listing all items would be redundant
+      
+      Inference differs from in-fill: inference extends a pattern, while in-fill generates contextual content.
+      
+      Note: Optional parentheses may be used like `(...| <qualifier>)` or `(etc.| <qualifier>)` to visually indicate the end of a qualifier and improve readability.
     labels:
       - generation
       - inline
-      - pattern
+      - guidance
     examples:
       - name: basic-infer
         brief: Simple list continuation
@@ -418,7 +651,7 @@ components:
         purpose: Demonstrates infer triggering list completion
         labels:
           - "..."
-          - "etc."
+          - ", etc."
         thread:
           - role: system
             message: |
@@ -433,8 +666,7 @@ components:
         purpose: Shows both ellipsis and etc. patterns with completions
         labels:
           - "..."
-          - "etc."
-          - "pattern continuation"
+          - ", etc."
         thread:
           - role: system
             message: |
@@ -449,10 +681,67 @@ components:
               - Powers of 2: 1, 2, 4, 8, 16, 32, 64, 128
               - Vowels: a, e, i, o, u
               - HTTP methods: GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS
+      - name: infer-vs-in-fill
+        brief: Inference versus generation
+        description: Contrasts pattern inference with content generation.
+        level: 2
+        purpose: Clarifies the distinction between infer and in-fill
+        labels:
+          - "..."
+          - "[...]"
+        thread:
+          - role: system
+            message: |
+              # Inference (pattern completion):
+              Days: Monday, Tuesday, Wednesday, ...
+              
+              # Generation (contextual creation):
+              Things to do on Monday: [...]
+          - role: assistant
+            message: |
+              Days: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday
+              
+              Things to do on Monday: Start the week with a team standup, review priorities, and tackle the most challenging task while energy is high.
+      - name: qualified-infer
+        brief: Inference with qualifier guidance
+        description: Shows inference patterns with qualifiers using parentheses for visual delimiting.
+        level: 2
+        purpose: Demonstrates qualified inference for guided pattern completion
+        labels:
+          - "(...| <qualifier>)"
+          - "(etc.| <qualifier>)"
+        thread:
+          - role: system
+            message: |
+              List programming languages by paradigm:
+              
+              Functional: Haskell, Erlang, (etc.| 3 more, include one modern language)
+              Object-Oriented: Java, C++, (...| focus on dynamically typed)
+              Systems: C, Rust, (...| low-level, memory-safe options)
+          - role: assistant
+            message: |
+              Functional: Haskell, Erlang, Clojure, F#, Elixir
+              Object-Oriented: Java, C++, Python, Ruby, JavaScript
+              Systems: C, Rust, Zig, Ada
+
   - name: literal-string
-    syntax: "`{~l|<text>}`"
+    syntax:
+      - name: literal-escape
+        syntax: "{~l|`<text>`}"
+        description: Literal string escape for exact text reproduction. Backticks are embedded in output.
+      - name: raw-block
+        syntax: "{~r|`<text>`}"
+        description: Raw block preserving all whitespace and formatting.
     brief: Exact text reproduction
-    description: Ensures specified text is output exactly as provided without modification or interpretation.
+    description: |
+      Ensures specified text is output exactly as provided without modification, interpretation, or escaping. Use literal strings when:
+      
+      - Outputting code that contains NPL syntax characters
+      - Preserving exact formatting including whitespace
+      - Preventing interpretation of special characters
+      - Documenting NPL syntax itself
+      
+      The content between `{~l|` and `}` is treated as opaque text. Include backticks inside the construct if you want them in the output.
     labels:
       - escape
       - inline
@@ -463,51 +752,87 @@ components:
         level: 0
         purpose: Shows fundamental literal syntax
         labels:
-          - "`{~l|<text>}`"
+          - "{~l|`<text>`}"
         example: |
-          Output exactly: `{~l|Hello, World!}`
+          Output exactly: {~l|`Hello, World!`}
       - name: literal-with-output
         brief: Literal string with thread output
         description: Shows literal string being reproduced exactly in output.
         level: 1
         purpose: Demonstrates literal effect on generated output
         labels:
-          - "`{~l|<text>}`"
+          - "{~l|`<text>`}"
         thread:
           - role: system
             message: |
-              Print: `{~l|SELECT * FROM users WHERE id = ?}`
+              Print: {~l|`SELECT * FROM users WHERE id = ?`}
           - role: assistant
             message: |
-              SELECT * FROM users WHERE id = ?
+              `SELECT * FROM users WHERE id = ?`
       - name: literal-special-chars
         brief: Preserving special characters
         description: Uses literal syntax to preserve NPL markers and special characters.
         level: 2
         purpose: Demonstrates escaping various special character types
         labels:
-          - "`{~l|<text>}`"
-          - "escape sequences"
-          - "special characters"
+          - "{~l|`<text>`}"
         thread:
           - role: system
             message: |
               Output these exactly:
-              1. `{~l|{user.name}}` (show placeholder syntax)
-              2. `{~l|[...] <term>}` (show NPL markers)
-              3. `{~l|C:\Users\name\file.txt}` (preserve backslashes)
+              1. {~l|`{user.name}`} (show placeholder syntax)
+              2. {~l|`[...] <term>`} (show NPL markers)
+              3. {~l|`C:\Users\name\file.txt`} (preserve backslashes)
           - role: assistant
             message: |
-              1. {user.name}
-              2. [...] <term>
-              3. C:\Users\name\file.txt
+              1. `{user.name}`
+              2. `[...] <term>`
+              3. `C:\Users\name\file.txt`
+      - name: literal-npl-documentation
+        brief: Documenting NPL syntax
+        description: Shows literal strings used to document NPL syntax elements.
+        level: 2
+        purpose: Demonstrates escaping NPL syntax for documentation
+        labels:
+          - "{~l|`<text>`}"
+        thread:
+          - role: system
+            message: |
+              Explain these NPL elements:
+              - Placeholder: {~l|`{term}`}
+              - In-fill: {~l|`[...]`}
+              - Attention: {~l|`🎯 <instruction>`}
+          - role: assistant
+            message: |
+              NPL Syntax Elements:
+              
+              - `{term}` is a placeholder that marks where a value should be substituted
+              - `[...]` is an in-fill marker indicating where content should be generated
+              - `🎯 <instruction>` is an attention marker for high-priority directives
+
   - name: omission
-    syntax: "[___]"
+    syntax:
+      - name: basic-omission
+        syntax: "[___]"
+        description: Basic omission marker indicating content left out.
+      - name: described-omission
+        syntax: "[___| <qualifier>]"
+        description: Omission with qualifier describing what was omitted.
     brief: Content omitted for brevity
-    description: Indicates content intentionally left out for brevity that is expected in actual input/output.
+    description: |
+      Indicates content intentionally left out for brevity that would be expected in actual input/output. Omission markers are meta-annotations that communicate to readers (human or agent) that content exists but isn't shown.
+      
+      Use omission markers for:
+      - Truncating long examples in documentation
+      - Indicating where user-provided content would appear
+      - Abbreviating repetitive patterns
+      - Showing structure without full content
+      
+      Optionally add descriptions: [___| description of omitted content]
     labels:
       - meta
       - inline
+      - documentation
     examples:
       - name: basic-omission
         brief: Simple content omission
@@ -516,6 +841,7 @@ components:
         purpose: Shows fundamental omission syntax
         labels:
           - "[___]"
+          - "[___| <qualifier>]"
         example: |
           Parse this JSON and extract names:
           [___| large JSON array omitted]
@@ -526,7 +852,7 @@ components:
         purpose: Demonstrates how omissions are processed
         labels:
           - "[___]"
-          - "[___| <description>]"
+          - "[___| <qualifier>]"
         thread:
           - role: system
             message: |
@@ -543,7 +869,7 @@ components:
         purpose: Demonstrates multiple omissions in context
         labels:
           - "[___]"
-          - "[___| <description>]"
+          - "[___| <qualifier>]"
         thread:
           - role: system
             message: |
@@ -560,44 +886,239 @@ components:
               - `meta`: Contains pagination (page, limit, total)
               - `data`: Array of resource objects
               - `errors`: Empty array on success, error details on failure
+      - name: omission-vs-in-fill
+        brief: Omission versus in-fill distinction
+        description: Clarifies when to use omission markers versus in-fill markers.
+        level: 1
+        purpose: Distinguishes meta-annotation from generation instruction
+        labels:
+          - "[___]"
+          - "[...]"
+        thread:
+          - role: system
+            message: |
+              # Omission (content exists but not shown):
+              User uploaded: [___| 50-page PDF document]
+              
+              # In-fill (content to be generated):
+              Summary: [...]
+          - role: user
+            message: The PDF is about climate change impacts on agriculture.
+          - role: assistant
+            message: |
+              Summary: The document examines how rising temperatures, changing precipitation patterns, and extreme weather events affect crop yields and farming practices worldwide.
+
+  - name: conditional-logic
+    syntax:
+      - name: if-block
+        syntax: "{{if <condition>}}[___]{{/if}}"
+        description: Conditional block that renders content when condition is true.
+      - name: if-else-block
+        syntax: "{{if <condition>}}[___]{{else}}[___]{{/if}}"
+        description: Conditional with alternative content when condition is false.
+      - name: foreach-block
+        syntax: "{{foreach <collection> as <item>}}[___]{{/foreach}}"
+        description: Iteration block that repeats content for each item in collection.
+      - name: unless-block
+        syntax: "{{unless <condition>}}[___]{{/unless}}"
+        description: Inverse conditional that renders when condition is false.
+    brief: Control flow for dynamic content
+    description: |
+      Symbolic logic, pseudo-code, algorithms, code snippets, handlebars, and other methods may be used to specify agent behavior or output behavior. These constructs enable conditional rendering, iteration, and dynamic content generation based on runtime conditions.
+      
+      Common patterns include:
+      - Conditional rendering based on data presence or values
+      - Iterating over collections to generate repeated structures
+      - Nested conditionals for complex logic
+      - Context variables like `@first`, `@last`, `@index` within loops
+    labels:
+      - logic
+      - block
+      - control-flow
+    import:
+      - placeholder
+      - in-fill
+    examples:
+      - name: basic-conditional
+        brief: Simple if block
+        description: Demonstrates basic conditional rendering.
+        level: 0
+        purpose: Shows fundamental conditional syntax
+        labels:
+          - "{{if}}"
+          - "{{/if}}"
+        example: |
+          {{if user.premium}}
+          Welcome back, premium member!
+          {{/if}}
+      - name: conditional-with-else
+        brief: If-else conditional
+        description: Shows conditional with alternative content.
+        level: 1
+        purpose: Demonstrates if-else branching
+        labels:
+          - "{{if}}"
+          - "{{else}}"
+          - "{{/if}}"
+        thread:
+          - role: system
+            message: |
+              Generate greeting:
+              {{if user.name}}
+              Hello, {user.name}!
+              {{else}}
+              Hello, guest!
+              {{/if}}
+          - role: user
+            message: user.name=null
+          - role: assistant
+            message: |
+              Hello, guest!
+      - name: foreach-iteration
+        brief: Collection iteration
+        description: Shows iteration over a collection.
+        level: 1
+        purpose: Demonstrates foreach loop
+        labels:
+          - "{{foreach}}"
+          - "{{/foreach}}"
+        thread:
+          - role: system
+            message: |
+              Shopping cart:
+              {{foreach items as item}}
+              - {item.name}: ${item.price}
+              {{/foreach}}
+          - role: user
+            message: |
+              items=[{name: "Book", price: 15}, {name: "Pen", price: 2}]
+          - role: assistant
+            message: |
+              Shopping cart:
+              - Book: $15
+              - Pen: $2
+      - name: nested-conditionals
+        brief: Complex nested logic
+        description: Combines conditionals with iteration and context variables.
+        level: 2
+        purpose: Demonstrates advanced control flow patterns
+        labels:
+          - "{{foreach}}"
+          - "{{if}}"
+          - "@first"
+          - "@last"
+        thread:
+          - role: system
+            message: |
+              Format author list:
+              {{foreach authors as author}}
+              {{if @first}}Authors: {{/if}}{author.name}{{if not @last}}, {{else}}.{{/if}}
+              {{/foreach}}
+          - role: user
+            message: |
+              authors=[{name: "Alice"}, {name: "Bob"}, {name: "Carol"}]
+          - role: assistant
+            message: |
+              Authors: Alice, Bob, Carol.
+      - name: conditional-output-format
+        brief: Dynamic output structure
+        description: Uses conditionals to vary output format based on data.
+        level: 2
+        purpose: Demonstrates conditionals controlling output behavior
+        labels:
+          - "{{if}}"
+          - "{{foreach}}"
+          - "{{unless}}"
+        thread:
+          - role: system
+            message: |
+              Generate report:
+              # {report.title}
+              
+              {{if report.summary}}
+              ## Summary
+              {report.summary}
+              {{/if}}
+              
+              {{unless report.items}}
+              No items to display.
+              {{/unless}}
+              
+              {{if report.items}}
+              ## Items
+              {{foreach report.items as item}}
+              - {item.name}: {item.status}
+              {{/foreach}}
+              {{/if}}
+          - role: user
+            message: |
+              report={title: "Status", summary: null, items: [{name: "Task 1", status: "Done"}]}
+          - role: assistant
+            message: |
+              # Status
+              
+              ## Items
+              - Task 1: Done
+
   - name: prompt-section
-    syntax: |
-      ```<section-type>
-      <content>
-      ```
-    brief: Specialized prompt sections
-    description: Special code fenced sections with type indicators for content like example, note, diagram, syntax, format, template.
+    syntax:
+      - name: section-tag
+        syntax: |
+          <npl-prompt-section type="{type}">
+          [___| section content]
+          </npl-prompt-section>
+        description: XML-style block with semantic type indicator.
+    brief: Specialized content containers
+    description: |
+      Tagged sections with type indicators that provide semantic meaning about how content should be interpreted. Each section type has specific processing rules and output expectations.
+      
+      Common section types include:
+      - `example`: Demonstration patterns for few-shot learning
+      - `note`: Explanatory comments and context
+      - `diagram`: Visual representations and flowcharts
+      - `syntax`: Formal syntax definitions
+      - `format`: Output structure specifications
+      - `template`: Reusable patterns with variable substitution
+      - `alg`: Formal algorithm specifications
+      - `logic`: Propositional and predicate logic expressions
     labels:
       - container
       - block
+    import:
+      - omission
+      - qualifier
     examples:
       - name: basic-section
         brief: Simple note section
-        description: Demonstrates basic prompt section fence.
+        description: Demonstrates basic prompt section tag.
         level: 0
         purpose: Shows fundamental section syntax
         labels:
-          - "```<type>"
-          - "```note"
+          - |
+            <npl-prompt-section type="<section-type>">
+          - |
+            <npl-prompt-section type="note">
         example: |
-          ```note
+          <npl-prompt-section type="note">
           This section explains the authentication flow.
-          ```
+          </npl-prompt-section>
       - name: section-with-output
         brief: Example section with application
         description: Shows example section content applied to generate output.
         level: 1
         purpose: Demonstrates section content influencing generation
         labels:
-          - "```example"
-          - "```<type>"
+          - |
+            <npl-prompt-section type="<section-type>">
+          - |
+            <npl-prompt-section type="example">
         thread:
           - role: system
             message: |
-              ```example
+              <npl-prompt-section type="example">
               Input: "hello world"
               Output: "HELLO WORLD"
-              ```
+              </npl-prompt-section>
               Apply this transformation to: "foo bar"
           - role: assistant
             message: |
@@ -608,27 +1129,72 @@ components:
         level: 2
         purpose: Demonstrates different section types working together
         labels:
-          - "```syntax"
-          - "```example"
-          - "```note"
-          - "```<type>"
+          - |
+            <npl-prompt-section type="<section-type>">
+          - |
+            <npl-prompt-section type="syntax">
+          - |
+            <npl-prompt-section type="example">
+          - |
+            <npl-prompt-section type="note">
         thread:
           - role: system
             message: |
-              ```syntax
+              <npl-prompt-section type="syntax">
               COMMAND := <action> <target> [--flag]
-              ```
+              </npl-prompt-section>
 
-              ```example
+              <npl-prompt-section type="example">
               move file.txt --force
               copy src/ dest/
-              ```
+              </npl-prompt-section>
 
-              ```note
+              <npl-prompt-section type="note">
               Flags are optional but recommended for destructive operations.
-              ```
+              </npl-prompt-section>
 
               Generate a delete command.
           - role: assistant
             message: |
               delete temp.log --force
+      - name: nested-content-in-section
+        brief: Sections containing NPL syntax
+        description: Shows prompt sections containing other NPL elements.
+        level: 2
+        purpose: Demonstrates NPL syntax within sections
+        labels:
+          - |
+            <npl-prompt-section type="<section-type>">
+          - |
+            <npl-prompt-section type="format">
+          - "{term}"
+          - "[...]"
+        thread:
+          - role: system
+            message: |
+              <npl-prompt-section type="format">
+              # Report: {report.title}
+              
+              ## Summary
+              [...:2-3sentences]
+              
+              ## Details
+              {{foreach items as item}}
+              - {item.name}: {item.status}
+              {{/foreach}}
+              </npl-prompt-section>
+              
+              Generate a status report.
+          - role: user
+            message: |
+              title="Weekly Update", items=[{name: "Feature A", status: "Complete"}, {name: "Feature B", status: "In Progress"}]
+          - role: assistant
+            message: |
+              # Report: Weekly Update
+              
+              ## Summary
+              Development progressed well this week with one feature completed and another actively in development. The team is on track for the sprint goals.
+              
+              ## Details
+              - Feature A: Complete
+              - Feature B: In Progress
