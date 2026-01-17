@@ -1,0 +1,6 @@
+.DS_STORE
+__pycache__
+*.pyc
+worktrees
+.npl
+mcp-server
