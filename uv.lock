@@ -2,6 +2,12 @@ version = 1
 revision = 3
 requires-python = ">=3.12"
 
+[manifest]
+members = [
+    "noizu-prompt-lingua",
+    "npl-tools",
+]
+
 [[package]]
 name = "annotated-types"
 version = "0.7.0"
@@ -320,6 +326,11 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [{ name = "mcp", extras = ["cli"], specifier = ">=1.25.0" }]
+
+[[package]]
+name = "npl-tools"
+version = "0.1.0"
+source = { virtual = "tools" }
 
 [[package]]
 name = "pycparser"

@@ -13,15 +13,15 @@ components:
         description: Appends qualifying instructions to placeholders or in-fill markers.
     brief: Extend elements with constraints or context
     description: |
-      Pipe syntax for adding instructions, constraints, or contextual information to placeholders, in-fill areas, and other syntax elements. Qualifiers modify how content is generated or substituted without changing the base element type.
+      Pipe syntax for adding instructions, constraints, or contextual information to placeholders and in-fill markers. Qualifiers modify content generation without changing the base element type.
       
       Use qualifiers when you need to:
       - Guide content generation with specific instructions
       - Add constraints to placeholder substitution
       - Provide context that shapes output characteristics
     labels:
-      - modifier
       - inline
+      - modifier
       - constraint
     import:
       - placeholder
@@ -35,6 +35,7 @@ components:
         purpose: Shows fundamental qualifier pipe syntax for content generation guidance
         labels:
           - "{}"
+          - "[...|<qualifier>]"
           - "[...:<range>|<qualifier>]"
         example: |
           Hello {},
@@ -94,6 +95,7 @@ components:
         purpose: Demonstrates advanced qualifier composition
         labels:
           - "[...|<qualifier>]"
+          - "[...:<range>|<qualifier>]"
           - "{term|<qualifier>}"
         thread:
           - role: system
@@ -127,17 +129,14 @@ components:
         description: Maximum limit constraint (e.g., :<100words).
     brief: Specify expected output size
     description: |
-      Size qualifier that provides explicit output size expectations for generated content. Combines with in-fill markers and qualifiers to constrain generation length.
+      Size qualifier providing explicit output size expectations for generated content. Combines with in-fill markers and qualifiers to constrain generation length.
       
-      Common size types include:
-      - words, sentences, paragraphs, pages
-      - lines, items, characters
-      - Custom domain units (e.g., stanzas, verses)
+      Common size types: words, sentences, paragraphs, pages, lines, items, characters, or custom domain units (stanzas, verses).
       
       Use ranges (e.g., :2-5sentences) for flexibility or fixed counts (e.g., :3items) for precision.
     labels:
-      - modifier
       - inline
+      - modifier
       - constraint
     import:
       - in-fill
@@ -232,7 +231,7 @@ components:
         description: Escaped highlight for terms containing backticks.
     brief: Emphasize key concepts
     description: |
-      Term emphasis using backticks to highlight important terms, phrases, or concepts for clarity and focus. Highlighted terms signal to the agent that these concepts deserve particular attention in the response.
+      Term emphasis using backticks to highlight important terms, phrases, or concepts. Highlighted terms signal that these concepts deserve particular attention in the response.
       
       Use highlighting for:
       - Technical terminology requiring definition or explanation
@@ -240,8 +239,10 @@ components:
       - Terms being compared or contrasted
       - Code snippets, commands, or literal values within prose
     labels:
-      - emphasis
       - inline
+      - emphasis
+    import:
+      - placeholder
     examples:
       - name: basic-highlight
         brief: Single term emphasis
@@ -307,9 +308,9 @@ components:
         description: Critical instruction marker for high-priority directives.
     brief: Mark critical instructions
     description: |
-      Critical instruction marker using 🎯 emoji prefix for high-priority directives requiring special focus. Attention markers signal that the instruction should take precedence over general guidance and must be followed.
+      Critical instruction marker using 🎯 emoji prefix for high-priority directives requiring special focus. Attention markers signal that the instruction must take precedence over general guidance.
       
-      Use attention markers sparingly for:
+      Use sparingly for:
       - Security requirements that cannot be ignored
       - Critical formatting or structural constraints
       - Safety-related instructions
@@ -317,9 +318,11 @@ components:
       
       Overuse diminishes impact—reserve for truly critical instructions.
     labels:
-      - emphasis
       - inline
-      - high
+      - emphasis
+      - critical
+    import:
+      - qualifier
     examples:
       - name: basic-attention
         brief: Single critical instruction
@@ -399,9 +402,15 @@ components:
       - name: double-bracket
         syntax: "⟪term⟫"
         description: Unicode bracket placeholder when other brackets conflict with content.
+      - name: qualified-placeholder
+        syntax: "{term|<qualifier>}"
+        description: Placeholder with generation guidance.
+      - name: constrained-placeholder
+        syntax: "{term:<constraint>}"
+        description: Placeholder with value constraints.
     brief: Indicate expected content locations
     description: |
-      Mark locations where specific content should be inserted by users or generated by agents. Placeholders support dot notation for property access (e.g., {user.name}) and can be combined with qualifiers for guided substitution.
+      Mark locations where specific content should be inserted by users or generated by agents. Placeholders support dot notation for property access and can be combined with qualifiers for guided substitution.
       
       Placeholder styles serve different contexts:
       - `{term}`: General-purpose, most common
@@ -409,8 +418,8 @@ components:
       - `⟪term⟫`: Avoids conflicts with angle brackets in content
       - `{}`: Contextually inferred value
     labels:
-      - variable
       - inline
+      - variable
     import:
       - qualifier
     examples:
@@ -519,8 +528,8 @@ components:
       
       Use in-fill when content cannot be predetermined and requires contextual generation.
     labels:
-      - generation
       - inline
+      - generation
     import:
       - qualifier
       - size-indicator
@@ -620,20 +629,20 @@ components:
         description: Inference with qualifier guidance. Parentheses visually delimit the qualifier.
     brief: Signal pattern continuation
     description: |
-      Continuation patterns signaling agents to generate or consider similar items based on established context and pattern recognition. The agent infers what comes next from the established sequence.
+      Continuation patterns signaling agents to extend established sequences. Unlike in-fill (which generates contextual content), inference extends recognizable patterns.
       
-      Use inference when:
-      - A clear pattern has been established
-      - The complete set is obvious from context
-      - Listing all items would be redundant
+      Variants:
+      - `...` trailing ellipsis for implicit continuation
+      - `, etc.` explicit list continuation  
+      - `(...| <qualifier>)` guided inference with parentheses delimiter
       
-      Inference differs from in-fill: inference extends a pattern, while in-fill generates contextual content.
-      
-      Note: Optional parentheses may be used like `(...| <qualifier>)` or `(etc.| <qualifier>)` to visually indicate the end of a qualifier and improve readability.
+      Use inference when a clear pattern has been established and the complete set is obvious from context.
     labels:
-      - generation
       - inline
+      - generation
       - guidance
+    import:
+      - qualifier
     examples:
       - name: basic-infer
         brief: Simple list continuation
@@ -727,24 +736,19 @@ components:
   - name: literal-string
     syntax:
       - name: literal-escape
-        syntax: "{~l|`<text>`}"
-        description: Literal string escape for exact text reproduction. Backticks are embedded in output.
-      - name: raw-block
-        syntax: "{~r|`<text>`}"
-        description: Raw block preserving all whitespace and formatting.
+        syntax: "⟬<text>⟭"
+        description: White tortoise shell bracket delimiters (U+27EC, U+27ED) for literal text. Rare enough to avoid escape logic entirely.
     brief: Exact text reproduction
     description: |
-      Ensures specified text is output exactly as provided without modification, interpretation, or escaping. Use literal strings when:
+      Ensures specified text is output exactly as provided without modification or interpretation. The `⟬...⟭` wrapper is consumed during processing—only the raw content appears in output.
       
-      - Outputting code that contains NPL syntax characters
-      - Preserving exact formatting including whitespace
-      - Preventing interpretation of special characters
+      Use literal strings when:
+      - Outputting text that contains NPL syntax characters
+      - Preventing interpretation of placeholders, in-fill markers, or other special syntax
       - Documenting NPL syntax itself
-      
-      The content between `{~l|` and `}` is treated as opaque text. Include backticks inside the construct if you want them in the output.
     labels:
-      - escape
       - inline
+      - escape
     examples:
       - name: basic-literal
         brief: Exact text output
@@ -752,63 +756,74 @@ components:
         level: 0
         purpose: Shows fundamental literal syntax
         labels:
-          - "{~l|`<text>`}"
+          - "⟬<text>⟭"
         example: |
-          Output exactly: {~l|`Hello, World!`}
+          Output exactly: ⟬Hello, World!⟭
       - name: literal-with-output
         brief: Literal string with thread output
         description: Shows literal string being reproduced exactly in output.
         level: 1
         purpose: Demonstrates literal effect on generated output
         labels:
-          - "{~l|`<text>`}"
+          - "⟬<text>⟭"
         thread:
           - role: system
             message: |
-              Print: {~l|`SELECT * FROM users WHERE id = ?`}
+              Print: ⟬SELECT * FROM users WHERE id = ?⟭
           - role: assistant
             message: |
-              `SELECT * FROM users WHERE id = ?`
+              SELECT * FROM users WHERE id = ?
       - name: literal-special-chars
         brief: Preserving special characters
         description: Uses literal syntax to preserve NPL markers and special characters.
         level: 2
         purpose: Demonstrates escaping various special character types
         labels:
-          - "{~l|`<text>`}"
+          - "⟬<text>⟭"
         thread:
           - role: system
             message: |
               Output these exactly:
-              1. {~l|`{user.name}`} (show placeholder syntax)
-              2. {~l|`[...] <term>`} (show NPL markers)
-              3. {~l|`C:\Users\name\file.txt`} (preserve backslashes)
+              1. ⟬{user.name}⟭ (show placeholder syntax)
+              2. ⟬[...] <term>⟭ (show NPL markers)
+              3. ⟬C:\Users\name\file.txt⟭ (preserve backslashes)
           - role: assistant
             message: |
-              1. `{user.name}`
-              2. `[...] <term>`
-              3. `C:\Users\name\file.txt`
+              1. {user.name} (show placeholder syntax)
+              2. [...] <term> (show NPL markers)
+              3. C:\Users\name\file.txt (preserve backslashes)
       - name: literal-npl-documentation
         brief: Documenting NPL syntax
         description: Shows literal strings used to document NPL syntax elements.
         level: 2
         purpose: Demonstrates escaping NPL syntax for documentation
         labels:
-          - "{~l|`<text>`}"
+          - "⟬<text>⟭"
+          - "[...|<qualifier>]"
         thread:
           - role: system
             message: |
-              Explain these NPL elements:
-              - Placeholder: {~l|`{term}`}
-              - In-fill: {~l|`[...]`}
-              - Attention: {~l|`🎯 <instruction>`}
+              Document these NPL patterns for a tutorial using markdown formatting with the below format.
+              **Placeholders** ⟬`{user.name}`⟭: [...|description]
+              **In-fill** ⟬`[...]`⟭: [...|description]
           - role: assistant
             message: |
-              NPL Syntax Elements:
-              
-              - `{term}` is a placeholder that marks where a value should be substituted
-              - `[...]` is an in-fill marker indicating where content should be generated
-              - `🎯 <instruction>` is an attention marker for high-priority directives
+              **Placeholders** `{user.name}`: Marks substitution points for variable content. Dot notation accesses nested properties.
+              **In-fill** `[...]`: Indicates where the model should generate contextual content rather than substitute known values.
+      - name: literal-raw-output
+        brief: Output arbitrary text without escape markers
+        description: Shows literal escape producing clean output without the wrapper syntax.
+        level: 1
+        purpose: Demonstrates that literal content outputs raw text only
+        labels:
+          - "⟬<text>⟭"
+        thread:
+          - role: system
+            message: |
+              Output this exactly: ⟬<< HEY HEY HEY [ guy ] >>⟭
+          - role: assistant
+            message: |
+              << HEY HEY HEY [ guy ] >>
 
   - name: omission
     syntax:
@@ -820,19 +835,19 @@ components:
         description: Omission with qualifier describing what was omitted.
     brief: Content omitted for brevity
     description: |
-      Indicates content intentionally left out for brevity that would be expected in actual input/output. Omission markers are meta-annotations that communicate to readers (human or agent) that content exists but isn't shown.
+      Indicates content intentionally left out for brevity that would be expected in actual input/output. Omission markers are meta-annotations communicating that content exists but isn't shown.
       
       Use omission markers for:
       - Truncating long examples in documentation
       - Indicating where user-provided content would appear
       - Abbreviating repetitive patterns
       - Showing structure without full content
-      
-      Optionally add descriptions: [___| description of omitted content]
     labels:
-      - meta
       - inline
+      - meta
       - documentation
+    import:
+      - qualifier
     examples:
       - name: basic-omission
         brief: Simple content omission
@@ -924,20 +939,20 @@ components:
         description: Inverse conditional that renders when condition is false.
     brief: Control flow for dynamic content
     description: |
-      Symbolic logic, pseudo-code, algorithms, code snippets, handlebars, and other methods may be used to specify agent behavior or output behavior. These constructs enable conditional rendering, iteration, and dynamic content generation based on runtime conditions.
+      Symbolic logic, pseudo-code, algorithms, code snippets, handlebars, and other methods for specifying agent behavior or output behavior. These constructs enable conditional rendering, iteration, and dynamic content generation.
       
-      Common patterns include:
+      Common patterns:
       - Conditional rendering based on data presence or values
       - Iterating over collections to generate repeated structures
       - Nested conditionals for complex logic
       - Context variables like `@first`, `@last`, `@index` within loops
     labels:
-      - logic
       - block
-      - control-flow
+      - logic
     import:
       - placeholder
       - in-fill
+      - infer
     examples:
       - name: basic-conditional
         brief: Simple if block
@@ -1070,9 +1085,9 @@ components:
         description: XML-style block with semantic type indicator.
     brief: Specialized content containers
     description: |
-      Tagged sections with type indicators that provide semantic meaning about how content should be interpreted. Each section type has specific processing rules and output expectations.
+      Tagged sections with type indicators providing semantic meaning about how content should be interpreted. Each section type has specific processing rules and output expectations.
       
-      Common section types include:
+      Common section types:
       - `example`: Demonstration patterns for few-shot learning
       - `note`: Explanatory comments and context
       - `diagram`: Visual representations and flowcharts
@@ -1082,8 +1097,8 @@ components:
       - `alg`: Formal algorithm specifications
       - `logic`: Propositional and predicate logic expressions
     labels:
-      - container
       - block
+      - container
     import:
       - omission
       - qualifier
@@ -1094,10 +1109,8 @@ components:
         level: 0
         purpose: Shows fundamental section syntax
         labels:
-          - |
-            <npl-prompt-section type="<section-type>">
-          - |
-            <npl-prompt-section type="note">
+          - '<npl-prompt-section type="<section-type>">'
+          - '<npl-prompt-section type="note">'
         example: |
           <npl-prompt-section type="note">
           This section explains the authentication flow.
@@ -1108,10 +1121,8 @@ components:
         level: 1
         purpose: Demonstrates section content influencing generation
         labels:
-          - |
-            <npl-prompt-section type="<section-type>">
-          - |
-            <npl-prompt-section type="example">
+          - '<npl-prompt-section type="<section-type>">'
+          - '<npl-prompt-section type="example">'
         thread:
           - role: system
             message: |
@@ -1129,14 +1140,10 @@ components:
         level: 2
         purpose: Demonstrates different section types working together
         labels:
-          - |
-            <npl-prompt-section type="<section-type>">
-          - |
-            <npl-prompt-section type="syntax">
-          - |
-            <npl-prompt-section type="example">
-          - |
-            <npl-prompt-section type="note">
+          - '<npl-prompt-section type="<section-type>">'
+          - '<npl-prompt-section type="syntax">'
+          - '<npl-prompt-section type="example">'
+          - '<npl-prompt-section type="note">'
         thread:
           - role: system
             message: |
@@ -1163,10 +1170,8 @@ components:
         level: 2
         purpose: Demonstrates NPL syntax within sections
         labels:
-          - |
-            <npl-prompt-section type="<section-type>">
-          - |
-            <npl-prompt-section type="format">
+          - '<npl-prompt-section type="<section-type>">'
+          - '<npl-prompt-section type="format">'
           - "{term}"
           - "[...]"
         thread:

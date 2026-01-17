@@ -4,3 +4,4 @@ __pycache__
 worktrees
 .npl
 mcp-server
+*.egg-info/
