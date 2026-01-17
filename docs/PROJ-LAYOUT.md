@@ -104,15 +104,15 @@ Python tooling for NPL processing:
 
 ```
 tools/
-├── npl_loader.py       # NPL YAML loader and formatter
-├── tmp_npl_loader.py   # Database-driven loader (populate/refresh/output)
-├── pyproject.toml      # Tools sub-package configuration
-└── build/lib/          # Build artifacts
+├── __init__.py         # Package marker
+└── npl_loader.py       # NPL loader with YAML and database support
 ```
 
-**CLI Commands:**
-- `npl-loader` - Load YAML files and output formatted markdown
-- `npl-db-loader` - Database operations (sync, output from DB)
+**CLI Command:** `npl-loader`
+- Default: Output formatted markdown from database
+- `--sync`: Sync YAML files to database (populate or refresh)
+- `--from-yaml`: Output from YAML files instead of database
+- `--list`: List all YAML files found with digests
 
 ## Configuration Files
 
