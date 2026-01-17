@@ -1,20 +1,33 @@
 # Planning & Thinking Patterns (Pumps)
+<!-- labels: [pumps, reasoning, transparency] -->
+
 Structured reasoning techniques and intuition pumps that guide problem-solving, response construction, and analytical thinking within NPL framework operations.
 
+<!-- instructional: conceptual-explanation | level: 0 | labels: [pumps, overview] -->
 ## Overview
 
 NPL pumps are cognitive tools that enable agents to demonstrate transparent reasoning processes, structured problem-solving, and reflective analysis. These patterns enhance the interpretability and reliability of agent responses by providing clear insight into decision-making processes.
 
 **Convention**: Pumps are implemented using XHTML tags (`<npl-type>`) for consistent formatting and structured data representation.
 
+<!-- instructional: quick-reference | level: 0 | labels: [pumps, types] -->
 ## Core Pump Types
 
+| Pump | Tag | Purpose |
+|------|-----|---------|
+| Intent Declaration | `<npl-intent>` | Document reasoning flow |
+| Chain of Thought | `<npl-cot>` | Structured problem decomposition |
+| Self-Assessment | `<npl-reflection>` | End-of-response evaluation |
+| Tangential Exploration | `<npl-tangent>` | Related concept exploration |
+| Panel Discussion | `<npl-panel>` | Multi-perspective analysis |
+| Critical Analysis | `<npl-critique>` | Solution evaluation |
+| Evaluation Framework | `<npl-rubric>` | Standardized assessment |
+| Emotional Context | `<npl-mood>` | Simulated emotional state |
+
 ### Intent Declaration (`npl-intent`)
+<!-- level: 0 | labels: [intent, transparency] -->
 Structured explanation of response construction steps and reasoning flow.
 
-**Purpose**: Document the logical sequence and rationale behind agent responses for transparency and debugging.
-
-**Syntax**:
 ```syntax
 <npl-intent>
 intent:
@@ -26,14 +39,12 @@ intent:
 </npl-intent>
 ```
 
-**Usage**: Applied at the beginning of complex responses to outline the agent's planned approach and decision-making process.
+**Usage**: Applied at the beginning of complex responses to outline the agent's planned approach.
 
 ### Chain of Thought (`npl-cot`)
+<!-- level: 1 | labels: [cot, reasoning, analysis] -->
 Structured problem-solving technique that breaks down complex reasoning into manageable, traceable steps.
 
-**Purpose**: Enable systematic analysis of problems through documented thought processes, understanding, and iterative refinement.
-
-**Syntax**:
 ```syntax
 <npl-cot>
 thought_process:
@@ -50,14 +61,12 @@ thought_process:
 </npl-cot>
 ```
 
-**Usage**: Applied to complex analytical tasks requiring step-by-step reasoning with reflection and correction capabilities.
+**Usage**: Applied to complex analytical tasks requiring step-by-step reasoning with reflection and correction.
 
 ### Self-Assessment (`npl-reflection`)
+<!-- level: 0 | labels: [reflection, evaluation] -->
 End-of-response evaluation blocks for continuous improvement and learning documentation.
 
-**Purpose**: Enable agents to critique their responses, identify improvement areas, and document learning insights for enhanced performance.
-
-**Syntax**:
 ```syntax
 <npl-reflection>
 reflection:
@@ -70,83 +79,63 @@ reflection:
 </npl-reflection>
 ```
 
+<!-- instructional: quick-reference | level: 0 | labels: [emojis, reflection] -->
 **Common Reflection Emojis**:
-- ✅ Success, positive acknowledgment
-- ❌ Error, issue identified  
-- 🔧 Improvement needed, potential fixes
-- 💡 Insight, learning point
-- 🔄 Review, reiteration needed
-- ⚠️ Warning, caution advised
-- 📚 Reference, learning opportunity
 
-**Usage**: Included at response conclusion when transparency, learning, or quality assessment is beneficial.
+| Emoji | Meaning |
+|-------|---------|
+| ✅ | Success, positive acknowledgment |
+| ❌ | Error, issue identified |
+| 🔧 | Improvement needed, potential fixes |
+| 💡 | Insight, learning point |
+| 🔄 | Review, reiteration needed |
+| ⚠️ | Warning, caution advised |
+| 📚 | Reference, learning opportunity |
 
 ### Tangential Exploration (`npl-tangent`)
+<!-- level: 1 | labels: [tangent, exploration] -->
 Structured exploration of related concepts and alternative perspectives that emerge during analysis.
 
-**Purpose**: Document relevant side considerations and alternative approaches while maintaining focus on the primary task.
-
 ### Panel Discussion (`npl-panel`)
+<!-- level: 2 | labels: [panel, multi-perspective] -->
 Multi-perspective analysis format simulating discussion between different viewpoints or expertise areas.
-
-**Purpose**: Provide comprehensive analysis through diverse perspectives, particularly useful for complex decisions or evaluations.
 
 **Variants**:
 - `npl-panel-inline-feedback` - Embedded feedback during process execution
 - `npl-panel-group-chat` - Conversational multi-agent analysis
 - `npl-panel-reviewer-feedback` - Structured peer review format
 
+
 ### Critical Analysis (`npl-critique`)
+<!-- level: 1 | labels: [critique, evaluation] -->
 Systematic evaluation framework for assessing solutions, approaches, or outputs against defined criteria.
 
-**Purpose**: Apply rigorous analytical standards to evaluate quality, effectiveness, and potential improvements.
-
 ### Evaluation Framework (`npl-rubric`)
+<!-- level: 1 | labels: [rubric, assessment] -->
 Structured assessment tool defining specific criteria and standards for evaluation.
 
-**Purpose**: Provide consistent evaluation methodology with clear metrics and scoring frameworks.
-
 ### Emotional Context (`npl-mood`)
-Simulated emotional state indicators that provide context for agent responses and decision-making.
+<!-- level: 0 | labels: [mood, emotional] -->
+Simulated emotional state indicators that provide context for agent responses.
 
-**Purpose**: Convey emotional context and personality traits to enhance natural interaction and user understanding.
-
-**Syntax**:
 ```syntax
-<npl-mood agent="@{agent}" mood="😀">
-The agent is content with the successful completion of the task.
+<npl-mood>
+<mood>😀</mood>
+<reason>The agent is content with the successful completion of the task.</reason>
 </npl-mood>
 ```
 
-**Common Mood Indicators**:
-- 😀 Happy, content
-- 😔 Sad, disappointed
-- 😠 Angry, frustrated
-- 😌 Relieved, satisfied
-- 😕 Confused, uncertain
-- 🤯 Overwhelmed, astonished
-- 😴 Tired, bored
-- 😐 Neutral, unemotional
+**Common Mood Indicators**: 😀 Happy | 😔 Sad | 😠 Frustrated | 😌 Relieved | 😕 Confused | 🤯 Overwhelmed | 😴 Tired | 😐 Neutral
 
+---
+
+<!-- instructional: usage-guideline | level: 1 | labels: [implementation, guidance] -->
 ## Implementation Guidelines
 
-**Selection Criteria**: Choose pumps based on task complexity, transparency requirements, and analytical depth needed.
+| Aspect | Guideline |
+|--------|-----------|
+| Selection | Choose pumps based on task complexity and transparency requirements |
+| Integration | Combine pumps for comprehensive analysis (e.g., `npl-cot` + `npl-reflection`) |
+| Format | Use XHTML tags for consistent parsing |
+| Conditional Use | Include based on context, debugging needs, or user preferences |
 
-**Integration**: Pumps can be combined for comprehensive analysis (e.g., `npl-cot` with `npl-reflection`).
-
-**Format Consistency**: Use XHTML tags for all NPL pump implementations to ensure structured data output and consistent parsing.
-
-**Conditional Usage**: Include pumps based on context requirements, debugging needs, or user preferences.
-
-## Quick Reference
-
-| Pump Type | Primary Use | Output Location |
-|-----------|-------------|-----------------|
-| `npl-intent` | Planning transparency | Response beginning |
-| `npl-cot` | Complex reasoning | Throughout analysis |
-| `npl-reflection` | Quality assessment | Response conclusion |
-| `npl-tangent` | Alternative exploration | Contextual insertion |
-| `npl-panel` | Multi-perspective analysis | Dedicated sections |
-| `npl-critique` | Critical evaluation | Assessment phases |
-| `npl-rubric` | Structured scoring | Evaluation contexts |
-| `npl-mood` | Emotional context | Contextual indicators |

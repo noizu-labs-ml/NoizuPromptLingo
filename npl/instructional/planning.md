@@ -1,15 +1,25 @@
 # Planning & Reasoning Patterns
+<!-- labels: [planning, reasoning, cognitive] -->
+
 Advanced thinking techniques and structured reasoning approaches for complex problem-solving and agent behavior orchestration.
 
+<!-- instructional: conceptual-explanation | level: 0 | labels: [planning, overview] -->
 ## Overview
+
 Planning in NPL encompasses structured reasoning techniques, thinking patterns, and cognitive frameworks that guide agents through complex problem-solving processes. These patterns provide systematic approaches to breaking down problems, analyzing solutions, and constructing well-reasoned responses.
 
+<!-- instructional: quick-reference | level: 0 | labels: [planning, components] -->
 ## Core Planning Components
 
-### Intent Blocks
-`npl-intent` - Structured transparency into agent decision-making processes
+| Component | Tag | Purpose |
+|-----------|-----|---------|
+| Intent Blocks | `<npl-intent>` | Document decision-making process |
+| Chain of Thought | `<npl-cot>` | Systematic problem decomposition |
+| Reflection Blocks | `<npl-reflection>` | Self-assessment and learning |
 
-Intent blocks provide clear documentation of the reasoning steps an agent takes when constructing responses, offering users insight into the agent's thought process.
+### Intent Blocks
+<!-- level: 0 | labels: [intent, transparency] -->
+`npl-intent` - Structured transparency into agent decision-making processes.
 
 ```syntax
 <npl-intent>
@@ -22,14 +32,11 @@ intent:
 </npl-intent>
 ```
 
-**Purpose**: Enhance transparency and trust by exposing the logical flow behind responses.
-
 **Usage**: Include at the beginning of complex responses or when debugging mode is active.
 
 ### Chain of Thought
-`npl-cot` - Structured problem decomposition and systematic reasoning
-
-Chain of Thought breaks complex problems into manageable steps, providing a systematic approach to problem-solving with explicit reflection and correction mechanisms.
+<!-- level: 1 | labels: [cot, decomposition, reasoning] -->
+`npl-cot` - Structured problem decomposition and systematic reasoning with explicit reflection and correction mechanisms.
 
 ```syntax
 <npl-cot>
@@ -50,14 +57,11 @@ Final solution or answer to the problem.
 </npl-conclusion>
 ```
 
-**Purpose**: Enable systematic breakdown of complex reasoning tasks with built-in self-correction.
-
 **Usage**: Apply to multi-step problems requiring structured analysis and verification.
 
 ### Reflection Blocks
-`npl-reflection` - Self-assessment and continuous improvement mechanisms
-
-Reflection blocks enable agents to evaluate their own responses, identify areas for improvement, and document learning insights.
+<!-- level: 0 | labels: [reflection, evaluation, learning] -->
+`npl-reflection` - Self-assessment and continuous improvement mechanisms.
 
 ```syntax
 <npl-reflection>
@@ -71,49 +75,39 @@ reflection:
 </npl-reflection>
 ```
 
+<!-- instructional: quick-reference | level: 0 | labels: [emojis, indicators] -->
 **Reflection Type Indicators**:
-- ✅ Success, positive acknowledgment
-- ❌ Error, issue identified
-- 🔧 Improvement needed, potential fixes
-- 💡 Insight, learning point
-- 🔄 Review, reiteration needed
-- 🆗 Acceptable, satisfactory
-- ⚠️ Warning, caution advised
-- ➕ Positive aspect, advantage
-- ➖ Negative aspect, disadvantage
-- ✏️ Clarification, editing suggested
 
-**Purpose**: Foster continuous learning and response quality improvement.
+| Emoji | Meaning | Emoji | Meaning |
+|-------|---------|-------|---------|
+| ✅ | Success | ❌ | Error identified |
+| 🔧 | Improvement needed | 💡 | Insight/learning |
+| 🔄 | Review needed | 🆗 | Acceptable |
+| ⚠️ | Warning | ➕ | Positive aspect |
+| ➖ | Negative aspect | ✏️ | Clarification needed |
 
 **Usage**: Include at the end of responses for self-evaluation and learning documentation.
 
+---
+
+<!-- instructional: quick-reference | level: 1 | labels: [advanced, patterns] -->
 ## Advanced Planning Patterns
 
-### Critique Systems
-`npl-critique` - Systematic evaluation and quality assessment frameworks
+| Pattern | Tag | Purpose |
+|---------|-----|---------|
+| Critique Systems | `<npl-critique>` | Systematic quality assessment |
+| Rubric Assessment | `<npl-rubric>` | Standardized evaluation criteria |
+| Panel Discussions | `<npl-panel>` | Multi-perspective analysis |
+| Tangential Exploration | `<npl-tangent>` | Controlled related concept exploration |
 
-Critique systems provide structured approaches to evaluating solutions, identifying weaknesses, and suggesting improvements.
 
-### Rubric-Based Assessment
-`npl-rubric` - Standardized evaluation criteria and scoring frameworks
+---
 
-Rubric systems enable consistent evaluation of responses against predefined criteria and quality standards.
-
-### Panel Discussions
-`npl-panel` - Multi-perspective analysis and collaborative reasoning
-
-Panel patterns simulate multiple viewpoints or expert perspectives on complex issues, providing comprehensive analysis.
-
-### Tangential Exploration
-`npl-tangent` - Structured exploration of related concepts and implications
-
-Tangent patterns allow for controlled exploration of related ideas while maintaining focus on the primary objective.
-
+<!-- instructional: integration-pattern | level: 1 | labels: [integration, agents] -->
 ## Integration Patterns
 
 ### Planning with Agent Behaviors
-Planning patterns can be integrated with agent definitions to create consistent reasoning approaches across different agent types:
-
+<!-- level: 1 -->
 ```example
 ⌜analyst-agent|service|NPL@1.0⌝
 # Data Analyst Agent
@@ -128,21 +122,28 @@ All responses should include:
 ⌞analyst-agent⌟
 ```
 
+<!-- instructional: decision-guide | level: 1 | labels: [conditional, selection] -->
 ### Conditional Planning Application
-Planning patterns can be applied conditionally based on:
+
+Apply planning patterns based on:
 - Query complexity level
 - User request for transparency
 - Debugging or development mode
 - Agent learning phases
 
+<!-- instructional: usage-guideline | level: 1 | labels: [layered, workflow] -->
 ### Layered Reasoning Approaches
-Multiple planning patterns can be combined for comprehensive analysis:
 
-1. **Intent** → Document planned approach
-2. **Chain of Thought** → Execute structured reasoning
-3. **Critique** → Evaluate solution quality
-4. **Reflection** → Learn for future improvements
+| Stage | Pattern | Purpose |
+|-------|---------|---------|
+| 1 | Intent | Document planned approach |
+| 2 | Chain of Thought | Execute structured reasoning |
+| 3 | Critique | Evaluate solution quality |
+| 4 | Reflection | Learn for future improvements |
 
+---
+
+<!-- instructional: usage-guideline | level: 1 | labels: [configuration, runtime] -->
 ## Planning Pattern Configuration
 
 ### Runtime Flags for Planning
@@ -160,20 +161,23 @@ Multiple planning patterns can be combined for comprehensive analysis:
 🏳️@simple_agent.planning.intent_minimal = true
 ```
 
+---
+
+<!-- instructional: lifecycle | level: 2 | labels: [complex, multi-stage] -->
 ## Complex Reasoning Structures
 
 ### Multi-Stage Problem Solving
-For problems requiring multiple phases of analysis:
 
-1. **Problem Decomposition** - Break into manageable components
-2. **Solution Space Exploration** - Identify possible approaches
-3. **Option Evaluation** - Assess trade-offs and constraints
-4. **Implementation Planning** - Structure execution steps
-5. **Outcome Validation** - Verify solution effectiveness
+| Stage | Action |
+|-------|--------|
+| 1. Problem Decomposition | Break into manageable components |
+| 2. Solution Exploration | Identify possible approaches |
+| 3. Option Evaluation | Assess trade-offs and constraints |
+| 4. Implementation Planning | Structure execution steps |
+| 5. Outcome Validation | Verify solution effectiveness |
 
 ### Collaborative Reasoning
-When multiple perspectives or expertise areas are needed:
-
+<!-- level: 2 -->
 ```example
 <npl-panel>
 perspectives:
@@ -187,17 +191,23 @@ consensus: "Integrated recommendation considering all viewpoints"
 </npl-panel>
 ```
 
+---
+
+<!-- instructional: best-practice | level: 1 | labels: [quality, validation] -->
 ## Quality Assurance in Planning
 
 ### Reasoning Validation
-- **Logical Consistency** - Ensure steps follow logically
-- **Completeness Check** - Verify all aspects are addressed
-- **Assumption Validation** - Identify and verify assumptions
-- **Alternative Consideration** - Explore other possible approaches
+
+| Check | Purpose |
+|-------|---------|
+| Logical Consistency | Ensure steps follow logically |
+| Completeness | Verify all aspects addressed |
+| Assumption Validation | Identify and verify assumptions |
+| Alternative Consideration | Explore other approaches |
 
 ### Error Detection and Correction
-Planning patterns include mechanisms for:
 - Identifying reasoning gaps
 - Correcting logical errors
 - Updating conclusions based on new information
 - Learning from mistakes for future improvement
+
