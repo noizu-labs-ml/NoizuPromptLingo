@@ -5,3 +5,4 @@ worktrees
 .npl
 mcp-server
 *.egg-info/
+build/
