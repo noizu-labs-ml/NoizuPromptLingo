@@ -1,15 +1,21 @@
 [project]
 name = "npl-tools"
 version = "0.1.0"
-description = "Add your description here"
+description = "NPL loader tools for loading and syncing NPL definitions"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "pyyaml>=6.0",
 ]
 
+[project.optional-dependencies]
+db = [
+    "psycopg2-binary>=2.9.9",
+]
+
 [project.scripts]
 npl-loader = "npl_loader:main"
+npl-db-loader = "tmp_npl_loader:main"
 
 [tool.setuptools]
-py-modules = ["npl_loader"]
+py-modules = ["npl_loader", "tmp_npl_loader"]
