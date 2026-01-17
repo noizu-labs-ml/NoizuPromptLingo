@@ -1,0 +1,194 @@
+name: agent
+brief: Agent definition and behavior specifications
+description: |
+  Comprehensive documentation for defining agents using NPL syntax, including capabilities, constraints, communication patterns, and lifecycle management.
+purpose: |
+  Agents are simulated entities with defined behaviors, capabilities, and response patterns designed for specific roles or functions within the NPL ecosystem. They provide specialized services, processing contexts, and interactive capabilities while maintaining consistent behavioral patterns.
+components:
+  - name: agent-declaration
+    syntax: |
+      ⌜agent-name|type|NPL@version⌝
+      # Agent Name
+      Brief description of the agent.
+      [___|behavioral specifications]
+      ⌞agent-name⌟
+    brief: Define a new agent entity
+    description: Basic agent declaration establishing identity, type, version, and behavioral specifications for a simulated entity.
+    labels:
+      - agent
+      - definition
+      - block
+    import:
+      - omission
+      - qualifier
+  - name: service-agent-declaration
+    syntax: |
+      ⌜service-name|service|NPL@version⌝
+      # Service Name
+      Brief description of the service.
+      [___|behavioral specifications]
+      ⌞service-name⌟
+    brief: Task-specific service agent
+    description: Provides specialized services or information processing such as search agents, translation services, or data processors.
+    labels:
+      - agent
+      - definition
+      - block
+      - service
+      - service-agent
+    import:
+      - omission
+      - qualifier
+  - name: tool-agent-declaration
+    syntax: |
+      ⌜tool-name|tool|NPL@version⌝
+      # Tool Name
+      Brief description of the tool.
+      [___|behavioral specifications]
+      ⌞tool-name⌟
+    brief: Utility simulation agent
+    description: Simulates specific tools or utilities such as calculators, converters, or validators.
+    labels:
+      - agent
+      - definition
+      - block
+      - tool
+      - tool-agent
+    import:
+      - omission
+      - qualifier
+  - name: persona-agent-declaration
+    syntax: |
+      ⌜persona-name|persona|NPL@version⌝
+      # Persona Name
+      Brief description of the persona.
+      [___|behavioral specifications]
+      ⌞persona-name⌟
+    brief: Human-like persona agent
+    description: Simulates human-like interactions and personas for role-playing, consultation, or expertise simulation.
+    labels:
+      - agent
+      - definition
+      - block
+      - persona
+      - persona-agent
+    import:
+      - omission
+      - qualifier
+  - name: agent-extension
+    syntax: |
+      ⌜extend:agent-name|type|NPL@version⌝
+      [___|additional capabilities]
+      ⌞extend:agent-name⌟
+    brief: Extend existing agent capabilities
+    description: Enhance an existing agent with additional capabilities, behaviors, or constraints without redefining the base agent.
+    labels:
+      - agent
+      - extension
+      - block
+    import:
+      - omission
+      - qualifier
+  - name: direct-message
+    syntax: "@{agent-name} <instruction>"
+    brief: Send command to specific agent
+    description: Route a message or instruction directly to a named agent for processing.
+    labels:
+      - communication
+      - inline
+    import:
+      - placeholder
+  - name: alias-declaration
+    syntax: "🙋 <agent-alias> <short-name>"
+    brief: Register agent aliases
+    description: Declare alternative names for an agent. After declaration, agent responds to @short-name or @agent-alias.
+    labels:
+      - agent
+      - communication
+      - inline
+  - name: intent-block
+    syntax: |
+      <npl-intent>
+      intent:
+        overview: <brief description>
+        steps:
+          - <step 1>
+          - <step 2>
+      </npl-intent>
+    brief: Document agent reasoning intent
+    description: Structured reasoning documentation block for agents to express their planned approach before execution.
+    labels:
+      - reasoning
+      - block
+      - pump
+    import:
+      - placeholder
+  - name: chain-of-thought
+    syntax: |
+      <npl-cot>
+      thought_process:
+        - thought: [...]
+          understanding: [...]
+          theory_of_mind: [...]
+          plan: [...]
+          rationale: [...]
+          execution:
+            - process: [...]
+              reflection: [...]
+              correction: [...]
+        outcome: [...]
+      </npl-cot>
+      <npl-conclusion>
+      "Final answer"
+      </npl-conclusion>
+    brief: Complex problem-solving reasoning
+    description: Detailed chain of thought processing structure for complex problem-solving with iterative reflection and correction.
+    labels:
+      - reasoning
+      - block
+      - pump
+  - name: reflection-block
+    syntax: |
+      <npl-reflect>
+      reflection:
+        overview: |
+          <assess response>
+        observations:
+          - <emoji> <observation>
+      </npl-reflect>
+    brief: Self-assessment documentation
+    description: Self-assessment and improvement documentation block for agents to evaluate their own responses.
+    labels:
+      - reasoning
+      - block
+      - pump
+    import:
+      - placeholder
+  - name: mood-block
+    syntax: |
+      <npl-mood agent="@{agent}" mood="<emoji>">
+      <mood context description>
+      </npl-mood>
+    brief: Express agent emotional context
+    description: Simulated mood expression to convey emotional context or state during agent interactions.
+    labels:
+      - agent
+      - expression
+      - block
+    import:
+      - placeholder
+  - name: runtime-flags
+    syntax: |
+      ⌜🏳️
+      🏳️verbose_output = true
+      🏳️@agent-name.debug_mode = true
+      ⌟
+    brief: Dynamic behavior modification
+    description: Modify agent behavior dynamically with global or agent-specific flags. Precedence from highest to lowest is response-level, agent-level, NPL-level, global.
+    labels:
+      - runtime
+      - configuration
+      - flags
+    import:
+      - omission
+      - qualifier

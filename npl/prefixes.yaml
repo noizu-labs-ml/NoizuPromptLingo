@@ -1,0 +1,898 @@
+name: prefix
+brief: Response mode indicators for agent output control
+description: |
+  Prefix patterns that control agent output modes and response behaviors using emoji-based indicators.
+purpose: |
+  Response mode indicators use the emoji➤ pattern to signal specific output formats, processing contexts, and behavioral modifications for agents. These prefixes shape how content is generated, structured, and presented.
+components:
+  - name: question-answering
+    syntax: "❓➤ <question>"
+    brief: Direct question answering
+    description: Directs the agent to provide direct, factual answers to specific questions, focusing on accuracy and completeness in addressing the query.
+    labels:
+      - qa
+      - information
+      - inline
+    examples:
+      - name: basic-question
+        brief: Simple factual query
+        description: Direct question requiring a specific factual answer.
+        level: 0
+        purpose: Demonstrates basic question-answering format
+        labels:
+          - "❓➤"
+        example: |
+          ❓➤ What is the tallest mountain in the world?
+      - name: question-with-output
+        brief: Question with answer
+        description: Question prefix with generated response.
+        level: 1
+        purpose: Shows question-answering with output
+        labels:
+          - "❓➤"
+          - "❓➤ <question>"
+        thread:
+          - role: system
+            message: |
+              ❓➤ What causes thunder?
+          - role: assistant
+            message: |
+              Thunder is caused by the rapid expansion of air surrounding a lightning bolt. The intense heat from lightning causes air to expand faster than the speed of sound, creating a shockwave we hear as thunder.
+      - name: multi-question-thread
+        brief: Multiple questions answered
+        description: Multiple questions in sequence with responses.
+        level: 2
+        purpose: Demonstrates chained question-answering
+        labels:
+          - "❓➤"
+          - "❓➤ <question>"
+          - "❓➤ (sequential)"
+        thread:
+          - role: system
+            message: |
+              Answer the following questions concisely.
+          - role: user
+            message: |
+              ❓➤ What is the capital of France?
+              ❓➤ What currency does France use?
+          - role: assistant
+            message: |
+              Paris is the capital of France.
+              France uses the Euro (EUR) as its official currency.
+  - name: translation
+    syntax: "🌐➤ <translation instruction>"
+    brief: Machine translation tasks
+    description: Directs the agent to convert text from one language to another while preserving meaning, context, and appropriate cultural nuances.
+    labels:
+      - language
+      - translation
+      - inline
+    examples:
+      - name: basic-translation
+        brief: Simple language translation
+        description: Basic translation task between two specified languages.
+        level: 0
+        purpose: Demonstrates basic translation prefix format
+        labels:
+          - "🌐➤"
+        example: |
+          🌐➤ Translate "Hello, how are you?" from English to Spanish.
+      - name: translation-with-output
+        brief: Translation with result
+        description: Translation prefix with generated output.
+        level: 1
+        purpose: Shows translation with output
+        labels:
+          - "🌐➤"
+          - "🌐➤ <instruction>"
+        thread:
+          - role: system
+            message: |
+              🌐➤ Translate to Japanese: "Thank you for your help."
+          - role: assistant
+            message: |
+              ご協力ありがとうございます。(Go-kyōryoku arigatō gozaimasu.)
+      - name: multi-language-translation
+        brief: Multiple language translations
+        description: Translation across multiple target languages.
+        level: 2
+        purpose: Demonstrates multi-target translation
+        labels:
+          - "🌐➤"
+          - "🌐➤ <instruction>"
+          - "🌐➤ (multi-target)"
+        thread:
+          - role: system
+            message: |
+              Translate the given phrase into all requested languages.
+          - role: user
+            message: |
+              🌐➤ "Good morning" → Spanish, French, German
+          - role: assistant
+            message: |
+              Spanish: Buenos días
+              French: Bonjour
+              German: Guten Morgen
+  - name: classification
+    syntax: "🏷️➤ <classification instruction>"
+    brief: Text classification tasks
+    description: Enables agents to categorize, label, or classify text content into predefined categories, classes, or groups based on content analysis.
+    labels:
+      - analysis
+      - categorization
+      - inline
+    examples:
+      - name: basic-classification
+        brief: Simple classification task
+        description: Basic classification into predefined categories.
+        level: 0
+        purpose: Demonstrates basic classification prefix
+        labels:
+          - "🏷️➤"
+        example: |
+          🏷️➤ Categorize the following support ticket into the correct department.
+      - name: classification-with-output
+        brief: Classification with result
+        description: Classification prefix with labeled output.
+        level: 1
+        purpose: Shows classification with output
+        labels:
+          - "🏷️➤"
+          - "🏷️➤ <instruction>"
+        thread:
+          - role: system
+            message: |
+              🏷️➤ Classify sentiment: "The product works great but shipping was slow."
+          - role: assistant
+            message: |
+              Mixed/Neutral - Positive sentiment toward product quality, negative toward delivery experience.
+      - name: multi-label-classification
+        brief: Multiple category labels
+        description: Classification with multiple applicable labels.
+        level: 2
+        purpose: Demonstrates multi-label classification
+        labels:
+          - "🏷️➤"
+          - "🏷️➤ <instruction>"
+          - "🏷️➤ (multi-label)"
+        thread:
+          - role: system
+            message: |
+              Classify content with all applicable labels.
+          - role: user
+            message: |
+              🏷️➤ "Breaking: Tech giant announces AI-powered medical diagnostic tool"
+              Categories: Technology, Health, Business, Science, Breaking News
+          - role: assistant
+            message: |
+              Labels: Technology, Health, Business, Breaking News
+              Primary: Technology
+              Secondary: Health, Business
+  - name: entity-recognition
+    syntax: "👁️➤ <NER instruction>"
+    brief: Named entity recognition
+    description: Directs the agent to locate and categorize named entities such as people, organizations, locations, dates, and other proper nouns within text.
+    labels:
+      - extraction
+      - analysis
+      - inline
+    examples:
+      - name: basic-ner
+        brief: Simple entity extraction
+        description: Basic named entity recognition task.
+        level: 0
+        purpose: Demonstrates basic NER prefix
+        labels:
+          - "👁️➤"
+        example: |
+          👁️➤ Extract named entities from this text.
+      - name: ner-with-output
+        brief: Entity extraction with result
+        description: NER prefix with categorized output.
+        level: 1
+        purpose: Shows NER with output
+        labels:
+          - "👁️➤"
+          - "👁️➤ <instruction>"
+        thread:
+          - role: system
+            message: |
+              👁️➤ Identify entities: "Apple CEO Tim Cook announced the new iPhone at their Cupertino headquarters on September 12th."
+          - role: assistant
+            message: |
+              ORGANIZATION: Apple
+              PERSON: Tim Cook
+              PRODUCT: iPhone
+              LOCATION: Cupertino
+              DATE: September 12th
+      - name: typed-entity-extraction
+        brief: Specific entity types
+        description: Entity extraction filtered by type.
+        level: 2
+        purpose: Demonstrates typed entity extraction
+        labels:
+          - "👁️➤"
+          - "👁️➤ <instruction>"
+          - "👁️➤ (typed)"
+        thread:
+          - role: system
+            message: |
+              Extract only the specified entity types.
+          - role: user
+            message: |
+              👁️➤ [PERSON, ORGANIZATION only]
+              "Dr. Sarah Chen from Stanford University collaborated with researchers at Google DeepMind to publish findings in Nature."
+          - role: assistant
+            message: |
+              PERSON: Dr. Sarah Chen
+              ORGANIZATION: Stanford University, Google DeepMind, Nature
+  - name: sentiment-analysis
+    syntax: "💡➤ <sentiment instruction>"
+    brief: Emotional tone analysis
+    description: Enables agents to analyze and identify emotional tone, sentiment, or subjective opinion expressed in text including polarity and intensity.
+    labels:
+      - analysis
+      - emotion
+      - inline
+    examples:
+      - name: basic-sentiment
+        brief: Simple sentiment analysis
+        description: Basic sentiment analysis task.
+        level: 0
+        purpose: Demonstrates basic sentiment prefix
+        labels:
+          - "💡➤"
+        example: |
+          💡➤ Assess the sentiment of this customer review.
+      - name: sentiment-with-output
+        brief: Sentiment with result
+        description: Sentiment prefix with analysis output.
+        level: 1
+        purpose: Shows sentiment analysis with output
+        labels:
+          - "💡➤"
+          - "💡➤ <instruction>"
+        thread:
+          - role: system
+            message: |
+              💡➤ Analyze: "The product is okay but overpriced for what you get."
+          - role: assistant
+            message: |
+              Sentiment: Slightly Negative
+              Polarity: -0.3
+              Aspects: Product quality (neutral), Price (negative)
+      - name: comparative-sentiment
+        brief: Multiple text comparison
+        description: Sentiment analysis comparing multiple inputs.
+        level: 2
+        purpose: Demonstrates comparative sentiment analysis
+        labels:
+          - "💡➤"
+          - "💡➤ <instruction>"
+          - "💡➤ (comparative)"
+        thread:
+          - role: system
+            message: |
+              Compare sentiment across the provided texts.
+          - role: user
+            message: |
+              💡➤ Compare:
+              A: "Absolutely love this product!"
+              B: "It works, I guess."
+              C: "Complete waste of money."
+          - role: assistant
+            message: |
+              A: Strongly Positive (+0.9) - Enthusiastic endorsement
+              B: Neutral/Lukewarm (+0.1) - Minimal satisfaction
+              C: Strongly Negative (-0.9) - Complete dissatisfaction
+              Range: High variance indicates polarized experiences
+  - name: conversation
+    syntax: "💬➤ <dialogue instruction>"
+    brief: Conversational interaction mode
+    description: Directs the agent to engage in conversational exchanges, simulating natural dialogue patterns appropriate for customer service or human-like interactions.
+    labels:
+      - dialogue
+      - interactive
+      - inline
+    examples:
+      - name: basic-conversation
+        brief: Simple dialogue mode
+        description: Basic conversational interaction task.
+        level: 0
+        purpose: Demonstrates basic conversation prefix
+        labels:
+          - "💬➤"
+        example: |
+          💬➤ Greet the user and ask how you can help.
+      - name: conversation-with-output
+        brief: Dialogue with response
+        description: Conversation prefix with dialogue output.
+        level: 1
+        purpose: Shows conversation with output
+        labels:
+          - "💬➤"
+          - "💬➤ <instruction>"
+        thread:
+          - role: system
+            message: |
+              💬➤ Respond as a friendly tech support agent to a user having login issues.
+          - role: assistant
+            message: |
+              Hi there! I'm sorry to hear you're having trouble logging in. Let's get this sorted out for you. Have you tried resetting your password using the "Forgot Password" link? If so, what happened when you tried?
+      - name: multi-turn-dialogue
+        brief: Extended conversation
+        description: Multi-turn conversational exchange.
+        level: 2
+        purpose: Demonstrates multi-turn dialogue
+        labels:
+          - "💬➤"
+          - "💬➤ <instruction>"
+          - "💬➤ (multi-turn)"
+        thread:
+          - role: system
+            message: |
+              💬➤ Role-play as a restaurant reservation assistant.
+          - role: user
+            message: |
+              I'd like to book a table for tonight.
+          - role: assistant
+            message: |
+              I'd be happy to help with your reservation! How many guests will be dining tonight, and do you have a preferred time?
+  - name: summarization
+    syntax: "📄➤ <summarization instruction>"
+    brief: Text summarization
+    description: Enables agents to create comprehensive yet concise summaries identifying key information, main points, and essential details while reducing length.
+    labels:
+      - condensation
+      - analysis
+      - inline
+    examples:
+      - name: basic-summarization
+        brief: Simple summary request
+        description: Basic summarization task.
+        level: 0
+        purpose: Demonstrates basic summarization prefix
+        labels:
+          - "📄➤"
+        example: |
+          📄➤ Summarize the main points of this article.
+      - name: summarization-with-output
+        brief: Summary with result
+        description: Summarization prefix with condensed output.
+        level: 1
+        purpose: Shows summarization with output
+        labels:
+          - "📄➤"
+          - "📄➤ <instruction>"
+        thread:
+          - role: system
+            message: |
+              📄➤ Summarize in one sentence: "The study examined 500 participants over 3 years, finding that regular exercise reduced anxiety symptoms by 40% compared to the control group. Participants exercised 30 minutes daily, 5 days per week."
+          - role: assistant
+            message: |
+              A 3-year study of 500 participants found that 30 minutes of daily exercise, 5 days weekly, reduced anxiety symptoms by 40%.
+      - name: structured-summary
+        brief: Multi-section summary
+        description: Summary with structured sections.
+        level: 2
+        purpose: Demonstrates structured summarization
+        labels:
+          - "📄➤"
+          - "📄➤ <instruction>"
+          - "📄➤ (structured)"
+        thread:
+          - role: system
+            message: |
+              Provide structured summaries as requested.
+          - role: user
+            message: |
+              📄➤ [format: TL;DR, Key Points, Conclusion]
+              [___| lengthy technical document about cloud migration]
+          - role: assistant
+            message: |
+              **TL;DR**: Migrate to cloud in phases, starting with non-critical workloads.
+
+              **Key Points**:
+              - Assessment phase identifies dependencies
+              - Lift-and-shift for legacy apps, refactor for cloud-native
+              - Budget 20% contingency for unexpected costs
+
+              **Conclusion**: 18-month timeline recommended with dedicated migration team.
+  - name: topic-modeling
+    syntax: "📊➤ <topic instruction>"
+    brief: Topic modeling analysis
+    description: Directs the agent to analyze textual content and identify main themes, subjects, and topics present for categorization and thematic analysis.
+    labels:
+      - analysis
+      - themes
+      - inline
+    examples:
+      - name: basic-topic-modeling
+        brief: Simple topic identification
+        description: Basic topic extraction task.
+        level: 0
+        purpose: Demonstrates basic topic modeling prefix
+        labels:
+          - "📊➤"
+        example: |
+          📊➤ Identify the main topics in this document collection.
+      - name: topic-modeling-with-output
+        brief: Topic extraction with result
+        description: Topic modeling prefix with identified themes.
+        level: 1
+        purpose: Shows topic modeling with output
+        labels:
+          - "📊➤"
+          - "📊➤ <instruction>"
+        thread:
+          - role: system
+            message: |
+              📊➤ Extract topics from: "Machine learning applications in healthcare are growing. AI diagnostics, drug discovery, and patient monitoring systems are transforming medicine."
+          - role: assistant
+            message: |
+              Topics identified:
+              1. Healthcare AI (primary)
+              2. Medical diagnostics
+              3. Pharmaceutical research
+              4. Patient care technology
+      - name: weighted-topic-analysis
+        brief: Topic distribution analysis
+        description: Topic modeling with weight/frequency analysis.
+        level: 2
+        purpose: Demonstrates weighted topic analysis
+        labels:
+          - "📊➤"
+          - "📊➤ <instruction>"
+          - "📊➤ (weighted)"
+        thread:
+          - role: system
+            message: |
+              Analyze topics with distribution weights.
+          - role: user
+            message: |
+              📊➤ [with weights]
+              [___| 50 customer support tickets]
+          - role: assistant
+            message: |
+              Topic Distribution:
+              - Billing issues: 35%
+              - Technical problems: 28%
+              - Feature requests: 20%
+              - Account access: 12%
+              - General inquiry: 5%
+
+              Primary concern: Billing clarity needs improvement
+  - name: text-to-speech
+    syntax: "🔊➤ <TTS instruction>"
+    brief: Text to speech conversion
+    description: Directs the agent to convert written text into spoken audio format for accessibility features and audio content creation.
+    labels:
+      - audio
+      - synthesis
+      - inline
+    examples:
+      - name: basic-tts
+        brief: Simple text to speech
+        description: Basic text-to-speech conversion task.
+        level: 0
+        purpose: Demonstrates basic TTS prefix
+        labels:
+          - "🔊➤"
+        example: |
+          🔊➤ Convert this text to speech audio.
+      - name: tts-with-output
+        brief: TTS with specification
+        description: TTS prefix with audio description output.
+        level: 1
+        purpose: Shows TTS with output
+        labels:
+          - "🔊➤"
+          - "🔊➤ <instruction>"
+        thread:
+          - role: system
+            message: |
+              🔊➤ [voice: calm, speed: slow] "Welcome to our meditation session. Take a deep breath."
+          - role: assistant
+            message: |
+              [Audio generated]
+              Voice: Calm female
+              Speed: 0.8x
+              Duration: 4.2 seconds
+              Format: WAV 44.1kHz
+      - name: multi-voice-tts
+        brief: Multiple voice synthesis
+        description: TTS with multiple voice characters.
+        level: 2
+        purpose: Demonstrates multi-voice TTS
+        labels:
+          - "🔊➤"
+          - "🔊➤ <instruction>"
+          - "🔊➤ (multi-voice)"
+        thread:
+          - role: system
+            message: |
+              Generate dialogue with distinct voices.
+          - role: user
+            message: |
+              🔊➤ [dialogue mode]
+              NARRATOR: Once upon a time...
+              CHILD: What happens next?
+              NARRATOR: A magical adventure began.
+          - role: assistant
+            message: |
+              [Multi-voice audio generated]
+              NARRATOR: Deep male voice, storytelling cadence
+              CHILD: Young female voice, curious intonation
+              Total duration: 8.5 seconds
+              Transitions: Smooth crossfade
+  - name: speech-recognition
+    syntax: "🗣️➤ <transcription instruction>"
+    brief: Speech to text transcription
+    description: Directs the agent to transcribe audio recordings of speech into accurate written text for documentation and content analysis.
+    labels:
+      - audio
+      - transcription
+      - inline
+    examples:
+      - name: basic-transcription
+        brief: Simple speech to text
+        description: Basic speech recognition task.
+        level: 0
+        purpose: Demonstrates basic speech recognition prefix
+        labels:
+          - "🗣️➤"
+        example: |
+          🗣️➤ Transcribe this audio clip.
+      - name: transcription-with-output
+        brief: Transcription with result
+        description: Speech recognition prefix with text output.
+        level: 1
+        purpose: Shows speech recognition with output
+        labels:
+          - "🗣️➤"
+          - "🗣️➤ <instruction>"
+        thread:
+          - role: system
+            message: |
+              🗣️➤ [with timestamps] Transcribe the meeting audio.
+          - role: assistant
+            message: |
+              [00:00] Speaker 1: Let's begin the standup.
+              [00:03] Speaker 2: I finished the API integration yesterday.
+              [00:08] Speaker 1: Great. Any blockers?
+              [00:10] Speaker 2: None at the moment.
+      - name: multi-speaker-transcription
+        brief: Speaker-labeled transcription
+        description: Transcription with speaker diarization.
+        level: 2
+        purpose: Demonstrates speaker-labeled transcription
+        labels:
+          - "🗣️➤"
+          - "🗣️➤ <instruction>"
+          - "🗣️➤ (diarization)"
+        thread:
+          - role: system
+            message: |
+              Transcribe with speaker identification.
+          - role: user
+            message: |
+              🗣️➤ [identify speakers, include confidence]
+              [___| 2-minute podcast audio]
+          - role: assistant
+            message: |
+              **Speakers detected**: 2 (Host, Guest)
+
+              HOST [confidence: 0.95]: Welcome back to Tech Talk.
+              GUEST [confidence: 0.92]: Thanks for having me.
+              HOST [confidence: 0.94]: So tell us about your new startup.
+              GUEST [confidence: 0.89]: We're building tools for developers...
+  - name: text-generation
+    syntax: "🖋️➤ <generation instruction>"
+    brief: Creative text generation
+    description: Enables agents to generate creative, original text content based on provided prompts, themes, or partial content for stories, descriptions, and expansions.
+    labels:
+      - creative
+      - generation
+      - inline
+    examples:
+      - name: basic-text-generation
+        brief: Simple text generation
+        description: Basic creative text generation task.
+        level: 0
+        purpose: Demonstrates basic text generation prefix
+        labels:
+          - "🖋️➤"
+        example: |
+          🖋️➤ Write an opening paragraph for a mystery novel.
+      - name: text-generation-with-output
+        brief: Generation with result
+        description: Text generation prefix with creative output.
+        level: 1
+        purpose: Shows text generation with output
+        labels:
+          - "🖋️➤"
+          - "🖋️➤ <instruction>"
+        thread:
+          - role: system
+            message: |
+              🖋️➤ Write a haiku about programming.
+          - role: assistant
+            message: |
+              Cursor blinking white
+              Logic flows through silent keys
+              Bug found at midnight
+      - name: constrained-generation
+        brief: Generation with constraints
+        description: Text generation with style and format constraints.
+        level: 2
+        purpose: Demonstrates constrained text generation
+        labels:
+          - "🖋️➤"
+          - "🖋️➤ <instruction>"
+          - "🖋️➤ (constrained)"
+        thread:
+          - role: system
+            message: |
+              Generate text following the specified constraints.
+          - role: user
+            message: |
+              🖋️➤ [style: noir, length: 2 sentences, must include: rain, detective]
+              Scene opening
+          - role: assistant
+            message: |
+              The rain hammered the city like a debt collector with a grudge. Detective Marlowe lit his third cigarette and watched the neon signs bleed colors into the wet pavement below.
+  - name: code-generation
+    syntax: "🖥️➤ <code instruction>"
+    brief: Code generation tasks
+    description: Enables agents to create functional code in various programming languages based on requirements, specifications, or problem descriptions.
+    labels:
+      - programming
+      - generation
+      - inline
+    examples:
+      - name: basic-code-generation
+        brief: Simple code generation
+        description: Basic code generation task.
+        level: 0
+        purpose: Demonstrates basic code generation prefix
+        labels:
+          - "🖥️➤"
+        example: |
+          🖥️➤ Write a function to check if a number is prime.
+      - name: code-generation-with-output
+        brief: Code with result
+        description: Code generation prefix with implementation output.
+        level: 1
+        purpose: Shows code generation with output
+        labels:
+          - "🖥️➤"
+          - "🖥️➤ <instruction>"
+        thread:
+          - role: system
+            message: |
+              🖥️➤ [Python] Fibonacci function, iterative approach.
+          - role: assistant
+            message: |
+              ```python
+              def fibonacci(n):
+                  if n <= 1:
+                      return n
+                  a, b = 0, 1
+                  for _ in range(2, n + 1):
+                      a, b = b, a + b
+                  return b
+              ```
+      - name: multi-language-code
+        brief: Code in multiple languages
+        description: Code generation with language comparison.
+        level: 2
+        purpose: Demonstrates multi-language code generation
+        labels:
+          - "🖥️➤"
+          - "🖥️➤ <instruction>"
+          - "🖥️➤ (multi-lang)"
+        thread:
+          - role: system
+            message: |
+              Generate equivalent implementations in requested languages.
+          - role: user
+            message: |
+              🖥️➤ [Python, JavaScript, Go]
+              Function: reverse a string
+          - role: assistant
+            message: |
+              **Python**:
+              ```python
+              def reverse(s): return s[::-1]
+              ```
+
+              **JavaScript**:
+              ```javascript
+              const reverse = s => s.split('').reverse().join('');
+              ```
+
+              **Go**:
+              ```go
+              func reverse(s string) string {
+                  r := []rune(s)
+                  for i, j := 0, len(r)-1; i < j; i, j = i+1, j-1 {
+                      r[i], r[j] = r[j], r[i]
+                  }
+                  return string(r)
+              }
+              ```
+  - name: image-captioning
+    syntax: "🖼️➤ <captioning instruction>"
+    brief: Image caption generation
+    description: Directs the agent to generate descriptive captions that capture the essence, content, and context of visual images for accessibility.
+    labels:
+      - visual
+      - description
+      - inline
+    examples:
+      - name: basic-captioning
+        brief: Simple image caption
+        description: Basic image captioning task.
+        level: 0
+        purpose: Demonstrates basic image captioning prefix
+        labels:
+          - "🖼️➤"
+        example: |
+          🖼️➤ Describe this image.
+      - name: captioning-with-output
+        brief: Caption with result
+        description: Image captioning prefix with descriptive output.
+        level: 1
+        purpose: Shows image captioning with output
+        labels:
+          - "🖼️➤"
+          - "🖼️➤ <instruction>"
+        thread:
+          - role: system
+            message: |
+              🖼️➤ Generate alt text for accessibility.
+              [___| image of person typing on laptop in coffee shop]
+          - role: assistant
+            message: |
+              A person works on a silver laptop at a wooden table in a cozy coffee shop. Warm lighting illuminates the scene, with blurred patrons visible in the background.
+      - name: structured-captioning
+        brief: Multi-aspect image description
+        description: Image captioning with structured elements.
+        level: 2
+        purpose: Demonstrates structured image captioning
+        labels:
+          - "🖼️➤"
+          - "🖼️➤ <instruction>"
+          - "🖼️➤ (structured)"
+        thread:
+          - role: system
+            message: |
+              Describe images with structured analysis.
+          - role: user
+            message: |
+              🖼️➤ [format: subject, setting, mood, technical]
+              [___| photo of mountain landscape at sunset]
+          - role: assistant
+            message: |
+              **Subject**: Snow-capped mountain range with prominent central peak
+              **Setting**: Alpine wilderness, golden hour lighting
+              **Mood**: Serene, majestic, awe-inspiring
+              **Technical**: Wide-angle shot, rule of thirds composition, warm color temperature
+  - name: word-riddle
+    syntax: "🗣️❓➤ <riddle instruction>"
+    brief: Word puzzles and riddles
+    description: Enables agents to create, solve, or respond to word-based riddles, puzzles, and linguistic challenges using wordplay and lateral thinking.
+    labels:
+      - puzzle
+      - creative
+      - inline
+    examples:
+      - name: basic-riddle
+        brief: Simple riddle format
+        description: Basic word riddle task.
+        level: 0
+        purpose: Demonstrates basic riddle prefix
+        labels:
+          - "🗣️❓➤"
+        example: |
+          🗣️❓➤ What has keys but no locks?
+      - name: riddle-with-output
+        brief: Riddle with answer
+        description: Riddle prefix with solution output.
+        level: 1
+        purpose: Shows riddle with answer
+        labels:
+          - "🗣️❓➤"
+          - "🗣️❓➤ <riddle>"
+        thread:
+          - role: system
+            message: |
+              🗣️❓➤ Nothing in the dictionary starts with an n and ends in a g.
+          - role: assistant
+            message: |
+              Answer: The word "nothing" itself starts with 'n' and ends in 'g'.
+              This is a self-referential riddle where the answer is hidden in the question.
+      - name: riddle-creation-thread
+        brief: Create and solve riddles
+        description: Riddle creation and solving exchange.
+        level: 2
+        purpose: Demonstrates riddle creation and solving
+        labels:
+          - "🗣️❓➤"
+          - "🗣️❓➤ <riddle>"
+          - "🗣️❓➤ (create)"
+        thread:
+          - role: system
+            message: |
+              Create and solve riddles as requested.
+          - role: user
+            message: |
+              🗣️❓➤ [create] Theme: time
+          - role: assistant
+            message: |
+              Riddle: I fly without wings, I pass without moving, I'm lost and yet everyone has me. What am I?
+
+              Answer: Time
+              Explanation: Time "flies" (passes quickly), moves forward without physical motion, can be "lost" (wasted), yet everyone possesses it equally.
+  - name: feature-extraction
+    syntax: "🧪➤ <extraction instruction>"
+    brief: Feature and data extraction
+    description: Enables agents to analyze content and systematically extract particular features, attributes, or data points matching defined criteria or patterns.
+    labels:
+      - extraction
+      - analysis
+      - inline
+    examples:
+      - name: basic-extraction
+        brief: Simple feature extraction
+        description: Basic feature extraction task.
+        level: 0
+        purpose: Demonstrates basic extraction prefix
+        labels:
+          - "🧪➤"
+        example: |
+          🧪➤ Extract the main keywords from this text.
+      - name: extraction-with-output
+        brief: Extraction with result
+        description: Feature extraction prefix with structured output.
+        level: 1
+        purpose: Shows extraction with output
+        labels:
+          - "🧪➤"
+          - "🧪➤ <instruction>"
+        thread:
+          - role: system
+            message: |
+              🧪➤ Extract dates and amounts: "Invoice #123 dated March 15, 2024 for $1,500. Payment due April 15, 2024."
+          - role: assistant
+            message: |
+              **Dates**:
+              - March 15, 2024 (invoice date)
+              - April 15, 2024 (due date)
+
+              **Amounts**:
+              - $1,500 (invoice total)
+      - name: pattern-extraction
+        brief: Pattern-based extraction
+        description: Feature extraction using pattern matching.
+        level: 2
+        purpose: Demonstrates pattern-based extraction
+        labels:
+          - "🧪➤"
+          - "🧪➤ <instruction>"
+          - "🧪➤ (pattern)"
+        thread:
+          - role: system
+            message: |
+              Extract features matching specified patterns.
+          - role: user
+            message: |
+              🧪➤ [patterns: email, phone, url]
+              "Contact us at support@example.com or call 555-123-4567. Visit https://example.com for more info."
+          - role: assistant
+            message: |
+              **Emails**: support@example.com
+              **Phone numbers**: 555-123-4567
+              **URLs**: https://example.com
+
+              Extraction confidence: High (all patterns matched standard formats)

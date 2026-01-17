@@ -1,0 +1,327 @@
+npl:
+  version: 1.0
+  description: |
+    A modular, structured framework for advanced prompt engineering and agent simulation with context-aware loading capabilities.
+  concepts:
+    - name: npl-declaration
+      description: |
+        Framework version and rule boundaries that establish operational context and constraints.
+      purpose: |
+        The npl block with tagged version assists fine tuned models adhere to conventions and helps logically separate conventions in system messages from any prompts using the convention.
+
+    - name: agent
+      description: |
+        Simulated entity with defined behaviors, capabilities, and response patterns for specific roles or functions.
+      purpose: |
+        Enables creation of specialized personas or roles that can be invoked to handle specific tasks with consistent behavior and expertise.
+
+    - name: intuition-pump
+      description: |
+        Structured reasoning and thinking techniques that guide problem-solving and response construction.
+      purpose: |
+        Provides explicit thinking patterns (chain-of-thought, reflection, critique, etc.) that improve response quality through guided deliberation.
+
+    - name: syntax-element
+      description: |
+        Foundational formatting conventions and placeholder systems for prompt construction.
+      purpose: |
+        Establishes a consistent vocabulary of markers and patterns that convey intent clearly between prompt authors and language models.
+
+    - name: directive
+      description: |
+        Specialized instruction patterns for precise agent behavior modification and output control.
+      purpose: |
+        Allows fine-grained control over formatting, structure, and behavior through tagged instruction widgets.
+
+    - name: prompt-prefix
+      description: |
+        Response mode indicators that shape how output is generated under specific purposes or processing contexts.
+      purpose: |
+        Signals the type of response expected (e.g., riddle format, code output, analysis) allowing models to adjust generation style accordingly.
+  labels:
+    taxonomy:
+      description: |
+        Standardized classification system for labeling NPL components. Labels enable consistent categorization, 
+        searchability, and understanding of how elements function within the framework.
+      
+      usage_guidelines:
+        - Apply 2-5 labels per component, covering at minimum scope and function
+        - List labels in order: scope → function → domain → priority
+        - Use the most specific applicable label; avoid redundant general labels
+        - Labels in examples should reference the syntax patterns demonstrated
+      
+      categories:
+        - name: scope
+          description: |
+            Defines where and how the element operates within prompt structure.
+          required: true
+          labels:
+            - name: inline
+              description: Element operates within a line of text, embedded in prose or other content.
+              examples:
+                - "`term` highlighting"
+                - "{placeholder} substitution"
+                - "[...] in-fill markers"
+            
+            - name: block
+              description: Element spans multiple lines as a distinct structural unit.
+              examples:
+                - "```syntax fences"
+                - "agent declarations"
+                - "template definitions"
+            
+            - name: wrapper
+              description: Element encloses other content to modify its interpretation or behavior.
+              examples:
+                - "⌜🔒 secure blocks ⌟"
+                - "⌜agent|type|NPL@version⌝...⌞agent⌟"
+        
+        - name: function
+          description: |
+            Primary operational purpose of the element within prompt construction.
+          required: true
+          labels:
+            - name: variable
+              description: Marks locations for value substitution from context or user input.
+              applies_to:
+                - placeholder
+                - template variables
+            
+            - name: generation
+              description: Signals content creation by the agent based on context.
+              applies_to:
+                - in-fill
+                - infer
+                - text generation prefixes
+            
+            - name: modifier
+              description: Adjusts or constrains the behavior of other elements.
+              applies_to:
+                - qualifier
+                - size-indicator
+                - runtime flags
+            
+            - name: emphasis
+              description: Draws attention to important content or instructions.
+              applies_to:
+                - highlight
+                - attention markers
+            
+            - name: escape
+              description: Prevents interpretation of special characters or syntax.
+              applies_to:
+                - literal-string
+                - code fences for raw content
+            
+            - name: meta
+              description: Provides information about the prompt itself rather than output content.
+              applies_to:
+                - omission markers
+                - notes
+                - documentation
+            
+            - name: definition
+              description: Establishes syntax patterns, schemas, or formal specifications.
+              applies_to:
+                - syntax blocks
+                - format blocks
+                - algorithm specifications
+            
+            - name: container
+              description: Groups related content with semantic meaning about its purpose.
+              applies_to:
+                - prompt sections
+                - agent declarations
+                - templates
+            
+            - name: logic
+              description: Implements conditional or iterative control flow.
+              applies_to:
+                - conditionals
+                - foreach loops
+                - symbolic logic blocks
+        
+        - name: domain
+          description: |
+            Subject area or specialized context where the element is primarily used.
+          required: false
+          labels:
+            - name: algorithm
+              description: Computational procedures, pseudocode, formal specifications.
+            
+            - name: analysis
+              description: Content examination, classification, extraction tasks.
+            
+            - name: audio
+              description: Speech, sound, text-to-speech, transcription tasks.
+            
+            - name: code
+              description: Programming languages, software development, technical implementation.
+            
+            - name: creative
+              description: Original content generation, storytelling, artistic output.
+            
+            - name: data
+              description: Structured information, databases, data transformation.
+            
+            - name: dialogue
+              description: Conversational interaction, multi-turn exchanges.
+            
+            - name: documentation
+              description: Explanatory content, specifications, reference material.
+            
+            - name: formal
+              description: Mathematical notation, logic, rigorous specifications.
+            
+            - name: language
+              description: Translation, linguistics, multilingual tasks.
+            
+            - name: template
+              description: Reusable patterns with variable substitution.
+            
+            - name: visual
+              description: Images, diagrams, graphical content.
+        
+        - name: priority
+          description: |
+            Indicates precedence level or importance within prompt processing.
+          required: false
+          labels:
+            - name: critical
+              description: Highest priority; cannot be overridden by other instructions.
+              usage: Security constraints, safety rules, immutable requirements.
+            
+            - name: high
+              description: Important instructions that should take precedence in conflicts.
+              usage: Attention markers, key behavioral directives.
+            
+            - name: normal
+              description: Standard priority; default for most elements.
+              usage: General instructions, examples, context.
+            
+            - name: low
+              description: Supplementary information; may be deprioritized if context limited.
+              usage: Notes, additional examples, optional guidance.
+        
+        - name: processing
+          description: |
+            How the element affects prompt interpretation or output generation.
+          required: false
+          labels:
+            - name: constraint
+              description: Limits or restricts output characteristics.
+              examples:
+                - size-indicator
+                - format requirements
+                - validation rules
+            
+            - name: guidance
+              description: Suggests direction without strict enforcement.
+              examples:
+                - qualifiers
+                - notes
+                - soft preferences
+            
+            - name: transformation
+              description: Converts input from one form to another.
+              examples:
+                - translation prefix
+                - summarization
+                - code generation
+            
+            - name: extraction
+              description: Identifies and pulls specific information from content.
+              examples:
+                - NER prefix
+                - feature extraction
+                - pattern matching
+            
+            - name: classification
+              description: Assigns categories or labels to content.
+              examples:
+                - sentiment analysis
+                - topic modeling
+                - categorization tasks
+        
+        - name: structure
+          description: |
+            Organizational role within prompt architecture.
+          required: false
+          labels:
+            - name: framework
+              description: Top-level structural elements defining NPL context.
+              examples:
+                - npl declaration
+                - version markers
+                - extension blocks
+            
+            - name: configuration
+              description: Settings that modify runtime behavior.
+              examples:
+                - runtime flags
+                - agent parameters
+                - feature toggles
+            
+            - name: reusable
+              description: Elements designed for repeated use across prompts.
+              examples:
+                - named templates
+                - agent definitions
+                - macros
+            
+            - name: demonstration
+              description: Shows expected patterns through examples.
+              examples:
+                - example blocks
+                - few-shot patterns
+                - thread demonstrations
+      
+      label_combinations:
+        description: |
+          Common label patterns for different element types.
+        patterns:
+          - element_type: syntax-element
+            typical_labels:
+              - "[scope] + [function]"
+              - "inline + variable (placeholders)"
+              - "inline + generation (in-fill)"
+              - "inline + modifier (qualifiers)"
+          
+          - element_type: prompt-section
+            typical_labels:
+              - "block + container + [domain]"
+              - "block + container + documentation (notes)"
+              - "block + definition + formal (logic blocks)"
+          
+          - element_type: prefix
+            typical_labels:
+              - "inline + [processing] + [domain]"
+              - "inline + transformation + language (translation)"
+              - "inline + classification + analysis (sentiment)"
+          
+          - element_type: special-section
+            typical_labels:
+              - "wrapper + [structure] + [priority]"
+              - "wrapper + framework + critical (secure prompts)"
+              - "block + reusable + template (named templates)"
+      
+      anti_patterns:
+        - name: over-labeling
+          description: Applying too many labels dilutes their meaning.
+          bad: "inline, variable, substitution, placeholder, value, input, user-provided"
+          good: "inline, variable"
+        
+        - name: redundant-labels
+          description: Avoid labels that repeat information from other labels.
+          bad: "block, multi-line, spans-lines"
+          good: "block"
+        
+        - name: vague-labels
+          description: Labels should be specific enough to distinguish element types.
+          bad: "content, text, output"
+          good: "generation, extraction, transformation"
+        
+        - name: inconsistent-granularity
+          description: Labels within a category should be at similar abstraction levels.
+          bad: "analysis, sentiment-analysis, classification" 
+          good: "analysis (category) with sentiment, topic, entity as subcategories"

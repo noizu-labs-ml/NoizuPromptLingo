@@ -1,0 +1,1077 @@
+name: prompt sections
+brief: Code fence types for structured content containment
+description: |
+  Code fence types and usage patterns for structured content containment and presentation in NPL.
+purpose: |
+  Fences create specialized content blocks with specific formatting, processing, or display requirements. They structure and contain different types of content while providing semantic meaning about how that content should be interpreted or presented.
+components:
+  - name: example prompt section
+    syntax: |
+      ```example
+      [___|example content]
+      ```
+    brief: Demonstrate usage patterns
+    description: Provides clear demonstrations of syntax usage, behavior patterns, or expected outputs. Shows concrete implementations rather than abstract descriptions.
+    labels:
+      - content
+      - demonstration
+      - block
+    import:
+      - omission
+    examples:
+      - name: basic-example
+        brief: Simple example fence
+        description: Demonstrates basic example block syntax.
+        level: 0
+        purpose: Shows fundamental example fence usage
+        labels:
+          - "```example"
+        example: |
+          ```example
+          Here's how to use highlight syntax: `important term`
+          ```
+      - name: example-with-application
+        brief: Example guiding output
+        description: Shows example content being applied to generate output.
+        level: 1
+        purpose: Demonstrates example block influencing generation
+        labels:
+          - "```example"
+        thread:
+          - role: system
+            message: |
+              ```example
+              Input: "cat" → Output: "CAT"
+              Input: "dog" → Output: "DOG"
+              ```
+              Apply to: "hello"
+          - role: assistant
+            message: |
+              HELLO
+      - name: multi-example-patterns
+        brief: Multiple example patterns
+        description: Multiple examples showing different patterns with expected output.
+        level: 2
+        purpose: Demonstrates example blocks covering multiple cases
+        labels:
+          - "```example"
+          - "[...]"
+        thread:
+          - role: system
+            message: |
+              ```example
+              Greeting: "Hi!" → Response: "Hello! How can I help?"
+              Question: "What time is it?" → Response: "The current time is [...]. Is there anything else?"
+              Farewell: "Bye" → Response: "Goodbye! Have a great day!"
+              ```
+              User says: "See you later"
+          - role: assistant
+            message: |
+              Goodbye! Have a great day!
+  - name: note  prompt section
+    syntax: |
+      ```note
+      [___|note content]
+      ```
+    brief: Explanatory comments and context
+    description: Includes explanatory comments, clarifications, warnings, or additional context within prompts without directly affecting generated output.
+    labels:
+      - content
+      - documentation
+      - block
+    import:
+      - omission
+      - attention
+    examples:
+      - name: basic-note
+        brief: Simple note fence
+        description: Demonstrates basic note block syntax.
+        level: 0
+        purpose: Shows fundamental note fence usage
+        labels:
+          - "```note"
+        example: |
+          ```note
+          The attention marker should be used sparingly to maintain its impact.
+          ```
+      - name: note-with-context
+        brief: Note providing generation context
+        description: Shows note providing context that influences output.
+        level: 1
+        purpose: Demonstrates note affecting response behavior
+        labels:
+          - "```note"
+        thread:
+          - role: system
+            message: |
+              ```note
+              User prefers concise, technical responses. Avoid casual language.
+              ```
+              Explain what an API is.
+          - role: assistant
+            message: |
+              An API (Application Programming Interface) defines protocols and tools for software components to communicate. It specifies request/response formats, authentication methods, and available endpoints.
+      - name: multi-note-guidance
+        brief: Multiple notes with attention
+        description: Combines multiple notes with attention markers for comprehensive guidance.
+        level: 2
+        purpose: Demonstrates notes with 🎯 attention markers
+        labels:
+          - "```note"
+          - "🎯 <instruction>"
+        thread:
+          - role: system
+            message: |
+              ```note
+              This API handles sensitive data.
+              🎯 Never include raw credentials in responses.
+              🎯 Always mask PII (show only last 4 digits).
+              ```
+              Show user profile for: email=john@test.com, ssn=123-45-6789, name=John Doe
+          - role: assistant
+            message: |
+              **User Profile**
+              - Name: John Doe
+              - Email: j***@test.com
+              - SSN: ***-**-6789
+  - name: diagram prompt section
+    syntax: |
+      ```diagram
+      [___|diagram content]
+      ```
+    brief: Visual representations and flowcharts
+    description: Contains visual representations, system architectures, flowcharts, and structural diagrams. Supports ASCII art, box-and-arrow, tree structures, and Mermaid syntax.
+    labels:
+      - content
+      - visual
+      - block
+    import:
+      - omission
+      - qualifier
+    examples:
+      - name: basic-diagram
+        brief: Simple box-and-arrow
+        description: Demonstrates basic diagram fence with arrow notation.
+        level: 0
+        purpose: Shows fundamental diagram syntax
+        labels:
+          - "```diagram"
+          - "[A] --> [B]"
+        example: |
+          ```diagram
+          [Component A] ---> [Component B]
+          [Component B] ---> [Component C]
+          ```
+      - name: diagram-with-output
+        brief: Diagram describing a process
+        description: Shows diagram used to describe a workflow that guides output.
+        level: 1
+        purpose: Demonstrates diagram influencing response structure
+        labels:
+          - "```diagram"
+          - "[A] --> [B]"
+        thread:
+          - role: system
+            message: |
+              ```diagram
+              [Input] --> [Validate] --> [Transform] --> [Output]
+                              |
+                              v
+                          [Error]
+              ```
+              Describe this data pipeline.
+          - role: assistant
+            message: |
+              This pipeline has four stages:
+              1. **Input**: Data enters the system
+              2. **Validate**: Data is checked for correctness; invalid data routes to Error handling
+              3. **Transform**: Valid data is processed and converted
+              4. **Output**: Transformed data is returned
+      - name: multi-diagram-styles
+        brief: Multiple diagram styles
+        description: Combines box-arrow, tree, and Mermaid diagram styles.
+        level: 2
+        purpose: Demonstrates various diagram notations together
+        labels:
+          - "```diagram"
+          - "[A] --> [B]"
+          - "├── (tree)"
+          - "flowchart (mermaid)"
+        thread:
+          - role: system
+            message: |
+              Show the same auth flow in three diagram styles:
+
+              ```diagram
+              Box-Arrow:
+              [User] --> [Auth] --> [Dashboard]
+
+              Tree:
+              Auth System
+              ├── Login
+              │   ├── Username
+              │   └── Password
+              └── Session
+
+              Mermaid:
+              flowchart LR
+                  U[User] --> A[Auth]
+                  A --> D[Dashboard]
+              ```
+              Which style is clearest for documentation?
+          - role: assistant
+            message: |
+              For documentation, Mermaid is typically clearest because:
+              - Renders as proper graphics in supporting platforms
+              - Supports labels, colors, and styling
+              - More accessible than ASCII art
+
+              However, box-arrow is best for quick inline explanations, and tree notation excels at showing hierarchies.
+  - name: syntax prompt section
+    syntax: |
+      ```syntax
+      [___|syntax definition]
+      ```
+    brief: Define formal syntax patterns
+    description: Formally defines syntax patterns, grammar rules, and structural conventions. Provides standardized documentation for how syntax elements should be constructed.
+    labels:
+      - structure
+      - definition
+      - block
+    import:
+      - omission
+      - qualifier
+    examples:
+      - name: basic-syntax
+        brief: Simple syntax definition
+        description: Demonstrates basic syntax fence for defining patterns.
+        level: 0
+        purpose: Shows fundamental syntax block usage
+        labels:
+          - "```syntax"
+        example: |
+          ```syntax
+          COMMAND := <action> <target> [--flag]
+          ```
+      - name: syntax-with-application
+        brief: Syntax guiding generation
+        description: Shows syntax definition being applied to generate valid output.
+        level: 1
+        purpose: Demonstrates syntax block constraining output
+        labels:
+          - "```syntax"
+          - "<term>"
+        thread:
+          - role: system
+            message: |
+              ```syntax
+              EMAIL := <local-part>@<domain>.<tld>
+              ```
+              Generate 3 example emails.
+          - role: assistant
+            message: |
+              1. john.doe@example.com
+              2. support@company.org
+              3. user123@mail.net
+      - name: multi-syntax-definitions
+        brief: Multiple syntax patterns
+        description: Combines multiple syntax definitions with examples.
+        level: 2
+        purpose: Demonstrates comprehensive syntax documentation
+        labels:
+          - "```syntax"
+          - "<term>"
+          - "[optional]"
+        thread:
+          - role: system
+            message: |
+              ```syntax
+              DATE := <YYYY>-<MM>-<DD>
+              TIME := <HH>:<MM>[:<SS>]
+              DATETIME := <DATE>T<TIME>[Z|<offset>]
+              ```
+              Parse: "Meeting at 2024-03-15T14:30"
+          - role: assistant
+            message: |
+              Parsed components:
+              - DATE: 2024-03-15 (YYYY=2024, MM=03, DD=15)
+              - TIME: 14:30 (HH=14, MM=30, SS omitted)
+              - DATETIME: 2024-03-15T14:30 (no timezone specified)
+  - name: format prompt section
+    syntax: |
+      ```format
+      [___|format specification]
+      ```
+    brief: Specify output templates and structure
+    description: Specifies exact structure and layout of expected output including template patterns, data organization, and formatting requirements.
+    labels:
+      - structure
+      - template
+      - block
+    import:
+      - omission
+      - qualifier
+    examples:
+      - name: basic-format
+        brief: Simple output format
+        description: Demonstrates basic format fence with placeholders and in-fill.
+        level: 0
+        purpose: Shows fundamental format block usage
+        labels:
+          - "```format"
+          - "<term>"
+          - "[...]"
+        example: |
+          ```format
+          Hello <user.name>,
+          Did you know [...|funny factoid].
+
+          Have a great day!
+          ```
+      - name: format-with-output
+        brief: Format shaping response
+        description: Shows format specification producing structured output.
+        level: 1
+        purpose: Demonstrates format constraining output structure
+        labels:
+          - "```format"
+          - "<term>"
+          - "[...]"
+        thread:
+          - role: system
+            message: |
+              ```format
+              **Weather Report**
+              Location: <city>
+              Temperature: [...|current temp]
+              Conditions: [...|weather description]
+              ```
+              Weather for: Tokyo
+          - role: assistant
+            message: |
+              **Weather Report**
+              Location: Tokyo
+              Temperature: 18°C (64°F)
+              Conditions: Partly cloudy with light winds from the east
+      - name: complex-format
+        brief: Format with tables and iteration
+        description: Combines table format with foreach iteration patterns.
+        level: 2
+        purpose: Demonstrates advanced format with multiple elements
+        labels:
+          - "```format"
+          - "<term>"
+          - "[...]"
+          - "{{foreach}}"
+        thread:
+          - role: system
+            message: |
+              ```format
+              # <report.title>
+
+              | Metric | Value | Change |
+              |--------|-------|--------|
+              {{foreach metrics as m}}
+              | {{m.name}} | {{m.value}} | {{m.delta}} |
+              {{/foreach}}
+
+              Summary: [...:1-2sentences]
+              ```
+              Generate quarterly sales report.
+          - role: assistant
+            message: |
+              # Q4 Sales Report
+
+              | Metric | Value | Change |
+              |--------|-------|--------|
+              | Revenue | $2.4M | +12% |
+              | Units Sold | 15,420 | +8% |
+              | New Customers | 892 | +23% |
+
+              Summary: Q4 showed strong growth across all metrics, with new customer acquisition leading at 23% improvement over Q3.
+  - name: template prompt section
+    syntax: |
+      ```template
+      [___|template with placeholders]
+      ```
+    brief: Reusable output patterns
+    description: Defines reusable output formats with placeholder substitution, conditional logic, and iteration patterns using handlebars-style syntax.
+    labels:
+      - structure
+      - reusable
+      - block
+    import:
+      - omission
+      - placeholder
+      - qualifier
+    examples:
+      - name: basic-template
+        brief: Simple placeholder template
+        description: Demonstrates basic template with placeholders.
+        level: 0
+        purpose: Shows fundamental template syntax
+        labels:
+          - "```template"
+          - "{term}"
+        example: |
+          ```template
+          # {user.name}
+          **Role**: {user.role}
+          **Email**: {user.email}
+          ```
+      - name: template-with-output
+        brief: Template with data substitution
+        description: Shows template producing output from provided data.
+        level: 1
+        purpose: Demonstrates template placeholder substitution
+        labels:
+          - "```template"
+          - "{term}"
+          - "{foreach}"
+        thread:
+          - role: system
+            message: |
+              ```template
+              | Name | Score |
+              |------|-------|
+              {foreach students as s}
+              | {s.name} | {s.score} |
+              {/foreach}
+              ```
+              Data: [{name: "Alice", score: 95}, {name: "Bob", score: 87}]
+          - role: assistant
+            message: |
+              | Name | Score |
+              |------|-------|
+              | Alice | 95 |
+              | Bob | 87 |
+      - name: complex-template
+        brief: Conditional and nested iteration
+        description: Combines if/else logic with foreach and context variables.
+        level: 2
+        purpose: Demonstrates advanced template features
+        labels:
+          - "```template"
+          - "{term}"
+          - "{foreach}"
+          - "{if}/{else}"
+          - "@last"
+        thread:
+          - role: system
+            message: |
+              ```template
+              {if items}
+              Items: {foreach items as i}{i.name}{if not @last}, {/if}{/foreach}
+              {else}
+              No items found.
+              {/if}
+              ```
+              Data: {items: [{name: "A"}, {name: "B"}, {name: "C"}]}
+          - role: assistant
+            message: |
+              Items: A, B, C
+  - name: alg prompt section
+    syntax: |
+      ```alg
+      name: <algorithm-name>
+      input: <input specification>
+      output: <output specification>
+
+      procedure <name>(<params>):
+        [___|algorithmic steps]
+      ```
+    brief: Formal algorithm specifications
+    description: Structured way to specify computational procedures with named algorithms, input/output specifications, and step-by-step procedural logic.
+    labels:
+      - algorithm
+      - formal
+      - block
+    import:
+      - omission
+      - qualifier
+    examples:
+      - name: basic-alg
+        brief: Simple algorithm specification
+        description: Demonstrates basic alg fence with procedure syntax.
+        level: 0
+        purpose: Shows fundamental algorithm block
+        labels:
+          - "```alg"
+          - "procedure"
+        example: |
+          ```alg
+          name: factorial
+          input: non-negative integer n
+          output: n!
+
+          procedure factorial(n):
+            if n <= 1:
+              return 1
+            return n * factorial(n - 1)
+          ```
+      - name: alg-with-trace
+        brief: Algorithm with execution trace
+        description: Shows algorithm specification with traced execution.
+        level: 1
+        purpose: Demonstrates algorithm guiding computation
+        labels:
+          - "```alg"
+          - "procedure"
+        thread:
+          - role: system
+            message: |
+              ```alg
+              name: gcd
+              input: integers a, b
+              output: greatest common divisor
+
+              procedure gcd(a, b):
+                while b != 0:
+                  temp = b
+                  b = a mod b
+                  a = temp
+                return a
+              ```
+              Trace: gcd(48, 18)
+          - role: assistant
+            message: |
+              Trace of gcd(48, 18):
+              - a=48, b=18 → temp=18, b=48 mod 18=12, a=18
+              - a=18, b=12 → temp=12, b=18 mod 12=6, a=12
+              - a=12, b=6 → temp=6, b=12 mod 6=0, a=6
+              - b=0, return a=6
+
+              Result: gcd(48, 18) = 6
+      - name: multi-procedure-alg
+        brief: Multiple procedures with complexity
+        description: Combines multiple procedures with complexity analysis.
+        level: 2
+        purpose: Demonstrates complex algorithm specification
+        labels:
+          - "```alg"
+          - "procedure (multiple)"
+          - "complexity"
+        thread:
+          - role: system
+            message: |
+              ```alg
+              name: merge_sort
+              input: array A
+              output: sorted array
+              complexity: O(n log n)
+
+              procedure merge_sort(A):
+                if length(A) <= 1:
+                  return A
+                mid = length(A) / 2
+                left = merge_sort(A[0:mid])
+                right = merge_sort(A[mid:end])
+                return merge(left, right)
+
+              procedure merge(L, R):
+                result = []
+                while L and R not empty:
+                  if L[0] <= R[0]:
+                    append L[0] to result
+                    remove L[0]
+                  else:
+                    append R[0] to result
+                    remove R[0]
+                append remaining L or R to result
+                return result
+              ```
+              Analyze the space complexity.
+          - role: assistant
+            message: |
+              Space complexity analysis:
+              - **Recursive call stack**: O(log n) depth
+              - **Merge temporary arrays**: O(n) at each level
+              - **Total auxiliary space**: O(n)
+
+              The algorithm requires O(n) extra space for merging, plus O(log n) stack space for recursion.
+  - name: alg-pseudo prompt section
+    syntax: |
+      ```alg-pseudo
+      Algorithm: <name>
+      Input: <input>
+      Output: <output>
+
+      BEGIN
+        [___|pseudocode steps]
+      END
+      ```
+    brief: Pseudocode algorithm descriptions
+    description: Natural language approach to algorithm specification using BEGIN/END, IF/THEN/ELSE, FOR/WHILE loops. Focuses on logical flow rather than implementation details.
+    labels:
+      - algorithm
+      - pseudocode
+      - block
+    import:
+      - omission
+      - qualifier
+    examples:
+      - name: basic-pseudo
+        brief: Simple pseudocode
+        description: Demonstrates basic alg-pseudo fence with BEGIN/END structure.
+        level: 0
+        purpose: Shows fundamental pseudocode block
+        labels:
+          - "```alg-pseudo"
+          - "BEGIN/END"
+          - "IF/THEN"
+        example: |
+          ```alg-pseudo
+          Algorithm: IsEven
+          Input: Integer n
+          Output: TRUE or FALSE
+
+          BEGIN
+            IF n MOD 2 equals 0 THEN
+              RETURN TRUE
+            ELSE
+              RETURN FALSE
+            END IF
+          END
+          ```
+      - name: pseudo-with-execution
+        brief: Pseudocode with execution
+        description: Shows pseudocode being executed step by step.
+        level: 1
+        purpose: Demonstrates pseudocode guiding computation
+        labels:
+          - "```alg-pseudo"
+          - "BEGIN/END"
+          - "FOR/DO"
+        thread:
+          - role: system
+            message: |
+              ```alg-pseudo
+              Algorithm: SumArray
+              Input: Array A of numbers
+              Output: Sum of all elements
+
+              BEGIN
+                total = 0
+                FOR each element x in A DO
+                  total = total + x
+                END FOR
+                RETURN total
+              END
+              ```
+              Execute for A = [3, 7, 2]
+          - role: assistant
+            message: |
+              Execution trace:
+              - Initialize: total = 0
+              - x = 3: total = 0 + 3 = 3
+              - x = 7: total = 3 + 7 = 10
+              - x = 2: total = 10 + 2 = 12
+              - RETURN 12
+
+              Result: 12
+      - name: complex-pseudo
+        brief: Multi-branch conditional logic
+        description: Combines loops, conditionals, and multiple return paths.
+        level: 2
+        purpose: Demonstrates complex pseudocode patterns
+        labels:
+          - "```alg-pseudo"
+          - "BEGIN/END"
+          - "IF/ELSE IF/ELSE"
+          - "WHILE/DO"
+        thread:
+          - role: system
+            message: |
+              ```alg-pseudo
+              Algorithm: FindMax
+              Input: Array A
+              Output: Maximum value or error
+
+              BEGIN
+                IF A is empty THEN
+                  RETURN "Error: Empty array"
+                END IF
+
+                max = A[0]
+                i = 1
+
+                WHILE i < length(A) DO
+                  IF A[i] > max THEN
+                    max = A[i]
+                  END IF
+                  i = i + 1
+                END WHILE
+
+                RETURN max
+              END
+              ```
+              What happens with A = [] and A = [5, 2, 9, 1]?
+          - role: assistant
+            message: |
+              **Case 1: A = []**
+              - Check: A is empty → TRUE
+              - RETURN "Error: Empty array"
+
+              **Case 2: A = [5, 2, 9, 1]**
+              - Initialize: max = 5, i = 1
+              - i=1: A[1]=2, 2 > 5? No, i=2
+              - i=2: A[2]=9, 9 > 5? Yes, max=9, i=3
+              - i=3: A[3]=1, 1 > 9? No, i=4
+              - i=4: 4 < 4? No, exit loop
+              - RETURN 9
+  - name: artifact prompt section
+    syntax: |
+      <artifact type="{content-type}">
+      <title><title></title>
+      <content>
+      [___|artifact content]
+      </content>
+      </artifact>
+    brief: Structured output with metadata
+    description: Provides structured output requiring special handling, metadata attachment, or specific rendering contexts. Supports SVG, code, documents with type-specific parameters.
+    labels:
+      - special
+      - metadata
+      - block
+    import:
+      - omission
+      - qualifier
+    examples:
+      - name: basic-artifact
+        brief: Simple code artifact
+        description: Demonstrates basic artifact fence with type and metadata.
+        level: 0
+        purpose: Shows fundamental artifact block
+        labels:
+          - "```artifact"
+          - "type:"
+          - "title:"
+        example: |
+          ```artifact
+          type: code
+          language: python
+          title: "Hello World"
+          print("Hello, World!")
+          ```
+      - name: artifact-with-output
+        brief: Artifact generation from request
+        description: Shows artifact being generated in response to a request.
+        level: 1
+        purpose: Demonstrates artifact creation in context
+        labels:
+          - "```artifact"
+          - "type:"
+          - "title:"
+        thread:
+          - role: system
+            message: |
+              Generate an SVG artifact when asked for graphics.
+          - role: user
+            message: Draw a red square.
+          - role: assistant
+            message: |
+              ```artifact
+              type: svg
+              title: "Red Square"
+              <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <rect x="10" y="10" width="80" height="80" fill="red" />
+              </svg>
+              ```
+      - name: multi-artifact
+        brief: Multiple artifact types
+        description: Shows different artifact types being used together.
+        level: 2
+        purpose: Demonstrates various artifact type options
+        labels:
+          - "```artifact"
+          - "type: code"
+          - "type: svg"
+          - "type: document"
+        thread:
+          - role: system
+            message: |
+              Respond with appropriate artifact types:
+              - Code requests → type: code
+              - Graphics → type: svg
+              - Documents → type: document
+          - role: user
+            message: Create a function to add two numbers, then show it as a flowchart.
+          - role: assistant
+            message: |
+              ```artifact
+              type: code
+              language: python
+              title: "Add Function"
+              def add(a, b):
+                  return a + b
+              ```
+
+              ```artifact
+              type: svg
+              title: "Add Flowchart"
+              <svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg">
+                <rect x="50" y="10" width="100" height="30" fill="#e0e0e0" stroke="#333"/>
+                <text x="100" y="30" text-anchor="middle">Input a, b</text>
+                <rect x="50" y="60" width="100" height="30" fill="#e0e0e0" stroke="#333"/>
+                <text x="100" y="80" text-anchor="middle">sum = a + b</text>
+                <rect x="50" y="110" width="100" height="30" fill="#e0e0e0" stroke="#333"/>
+                <text x="100" y="130" text-anchor="middle">Return sum</text>
+                <line x1="100" y1="40" x2="100" y2="60" stroke="#333"/>
+                <line x1="100" y1="90" x2="100" y2="110" stroke="#333"/>
+              </svg>
+              ```
+  - name: symbolic-logic
+    syntax: |
+      ```logic
+      [___|propositional or predicate logic expressions]
+      ```
+    brief: Formal logical expressions
+    description: Propositional and first-order predicate logic for precise behavioral specifications using quantifiers (∀, ∃), connectives (∧, ∨, →, ↔, ¬), and predicates.
+    labels:
+      - logic
+      - formal
+      - block
+    import:
+      - omission
+      - qualifier
+    examples:
+      - name: basic-logic
+        brief: Simple propositional logic
+        description: Demonstrates basic logic fence with connectives.
+        level: 0
+        purpose: Shows fundamental logic block
+        labels:
+          - "```logic"
+          - "∧ ∨ → ¬"
+        example: |
+          ```logic
+          (P ∧ Q) → R
+          ¬P ∨ Q ↔ (P → Q)
+          ```
+      - name: logic-with-evaluation
+        brief: Logic expression evaluation
+        description: Shows logical expression being evaluated.
+        level: 1
+        purpose: Demonstrates logic constraining behavior
+        labels:
+          - "```logic"
+          - "∀ ∃"
+          - "→"
+        thread:
+          - role: system
+            message: |
+              ```logic
+              ∀x (Human(x) → Mortal(x))
+              Human(Socrates)
+              ```
+              What can we conclude?
+          - role: assistant
+            message: |
+              By modus ponens:
+              1. ∀x (Human(x) → Mortal(x)) — universal rule
+              2. Human(Socrates) — given fact
+              3. Human(Socrates) → Mortal(Socrates) — instantiation
+              4. Mortal(Socrates) — conclusion
+
+              Socrates is mortal.
+      - name: complex-logic
+        brief: Nested quantifiers and predicates
+        description: Combines universal and existential quantifiers with multiple predicates.
+        level: 2
+        purpose: Demonstrates complex logical specifications
+        labels:
+          - "```logic"
+          - "∀ ∃"
+          - "∧ → ¬"
+        thread:
+          - role: system
+            message: |
+              ```logic
+              ∀request (Received(request) →
+                (Valid(request) → Process(request)) ∧
+                (¬Valid(request) → Reject(request)))
+
+              ∀x (Admin(x) → ∀r (Request(r, x) → Valid(r)))
+              ```
+              Trace: Received(r1), Request(r1, alice), Admin(alice)
+          - role: assistant
+            message: |
+              Trace:
+              1. Admin(alice) → ∀r (Request(r, alice) → Valid(r))
+              2. Request(r1, alice) → Valid(r1)
+              3. Valid(r1)
+              4. Received(r1) ∧ Valid(r1) → Process(r1)
+
+              Result: Process(r1) — request is processed.
+  - name: higher-order-logic
+    syntax: |
+      ```hol
+      [___|higher-order logic expressions]
+      ```
+    brief: Higher-order logical specifications
+    description: Second-order and higher-order logic supporting quantification over predicates, functions, and sets. Enables meta-level reasoning and complex behavioral constraints.
+    labels:
+      - logic
+      - formal
+      - higher-order
+      - block
+    import:
+      - omission
+      - qualifier
+    examples:
+      - name: basic-hol
+        brief: Simple predicate quantification
+        description: Demonstrates basic hol fence with predicate quantification.
+        level: 0
+        purpose: Shows fundamental higher-order logic block
+        labels:
+          - "```hol"
+          - "∀P"
+        example: |
+          ```hol
+          ∀P (P(0) ∧ ∀n(P(n) → P(n+1))) → ∀n P(n)
+          ```
+      - name: hol-with-interpretation
+        brief: HOL expression interpretation
+        description: Shows higher-order logic expression being interpreted.
+        level: 1
+        purpose: Demonstrates HOL guiding reasoning
+        labels:
+          - "```hol"
+          - "∀f: (A → B)"
+          - "∃"
+        thread:
+          - role: system
+            message: |
+              ```hol
+              ∀f: (A → B) ∀g: (B → C) ∃h: (A → C) (h = g ∘ f)
+              ```
+              Given f: Int → String (toString) and g: String → Bool (isEmpty), what is h?
+          - role: assistant
+            message: |
+              By function composition:
+              - f: Int → String (converts int to string)
+              - g: String → Bool (checks if empty)
+              - h = g ∘ f: Int → Bool
+
+              h(n) = isEmpty(toString(n))
+
+              For any integer n, h returns whether its string representation is empty (always false for valid integers).
+      - name: complex-hol
+        brief: Polymorphic type reasoning
+        description: Combines type variables with function quantification.
+        level: 2
+        purpose: Demonstrates advanced HOL specifications
+        labels:
+          - "```hol"
+          - "∀α ∀β"
+          - "∀f: (α → β)"
+        thread:
+          - role: system
+            message: |
+              ```hol
+              ∀α ∀β ∀f: (α → β) ∀g: (β → α)
+                (∀x: α (g(f(x)) = x)) ∧ (∀y: β (f(g(y)) = y)) →
+                Isomorphic(α, β)
+              ```
+              Are Int and String isomorphic?
+          - role: assistant
+            message: |
+              Checking isomorphism conditions:
+
+              **Needed**: f: Int → String and g: String → Int such that:
+              1. g(f(x)) = x for all Int x
+              2. f(g(y)) = y for all String y
+
+              **Analysis**:
+              - f = toString works for condition 1 (parseInt(toString(5)) = 5)
+              - Condition 2 fails: toString(parseInt("hello")) ≠ "hello"
+
+              **Conclusion**: Int and String are NOT isomorphic. Not all strings are valid integer representations.
+  - name: latex
+    syntax: |
+      ```latex
+      [___|mathematical instructions]
+      ```
+    brief: Mathematical notation for agent instruction
+    description: LaTeX mathematical notation for instructing agents using formal mathematics including equations, set theory, summations, integrals, and function definitions as behavioral specifications.
+    labels:
+      - math
+      - formal
+      - instruction
+      - block
+    import:
+      - omission
+      - qualifier
+    examples:
+      - name: basic-latex
+        brief: Simple equation
+        description: Demonstrates basic latex fence with equation syntax.
+        level: 0
+        purpose: Shows fundamental latex block
+        labels:
+          - "```latex"
+          - "f(x) ="
+        example: |
+          ```latex
+          f(x) = ax^2 + bx + c
+          \text{where } a \neq 0
+          ```
+      - name: latex-with-calculation
+        brief: Math expression evaluation
+        description: Shows latex expression being computed.
+        level: 1
+        purpose: Demonstrates latex guiding calculation
+        labels:
+          - "```latex"
+          - "\\sum"
+          - "\\frac"
+        thread:
+          - role: system
+            message: |
+              ```latex
+              \text{Average} = \frac{1}{n} \sum_{i=1}^{n} x_i
+              ```
+              Calculate for x = [4, 8, 6, 10, 2]
+          - role: assistant
+            message: |
+              Given: x = [4, 8, 6, 10, 2], n = 5
+
+              Sum = 4 + 8 + 6 + 10 + 2 = 30
+              Average = (1/5) × 30 = 6
+
+              Result: Average = 6
+      - name: complex-latex
+        brief: Piecewise and set notation
+        description: Combines piecewise functions with set-builder notation.
+        level: 2
+        purpose: Demonstrates advanced latex specifications
+        labels:
+          - "```latex"
+          - "\\begin{cases}"
+          - "\\{ x \\in ... \\}"
+        thread:
+          - role: system
+            message: |
+              ```latex
+              \text{grade}(s) = \begin{cases}
+                A & \text{if } s \geq 90 \\
+                B & \text{if } 80 \leq s < 90 \\
+                C & \text{if } 70 \leq s < 80 \\
+                F & \text{otherwise}
+              \end{cases}
+
+              \text{Passing} = \{ s \in \text{Scores} : \text{grade}(s) \neq F \}
+              ```
+              Evaluate: Scores = [95, 82, 67, 78, 91]
+          - role: assistant
+            message: |
+              Evaluating each score:
+              - 95: s ≥ 90 → A
+              - 82: 80 ≤ s < 90 → B
+              - 67: s < 70 → F
+              - 78: 70 ≤ s < 80 → C
+              - 91: s ≥ 90 → A
+
+              Passing = {95, 82, 78, 91} (grades ≠ F)
+              Passing count: 4 out of 5

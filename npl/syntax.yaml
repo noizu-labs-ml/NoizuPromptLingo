@@ -1,0 +1,634 @@
+name: syntax
+brief: Core syntax elements and conventions
+description: |
+  Foundational formatting conventions, placeholder systems, and structural patterns for prompt construction in the Noizu Prompt Lingua framework.
+purpose: |
+  Establishes a consistent vocabulary of markers and patterns that convey intent clearly between prompt authors and language models.
+components:
+  - name: qualifier
+    syntax: "?| <qualifier> <optional: key, value: list>"
+    brief: Extend elements with additional details
+    description: Pipe syntax for adding instructions, constraints, or contextual information to placeholders, in-fill areas, and other syntax elements.
+    labels:
+      - modifier
+      - inline
+    examples:
+      - name: basic-qualifier
+        brief: Qualifier with placeholder and in-fill
+        description: Demonstrates basic qualifier syntax combined with empty placeholder and sized in-fill.
+        level: 0
+        purpose: Shows fundamental qualifier pipe syntax for content generation guidance
+        labels:
+          - placeholder
+          - in-fill
+          - size-indicator
+          - "{}"
+          - "[...:<range>|qualifier]"
+        example: |
+          Hello {},
+          Sea Fact:
+          [...:1-2paragraph| provide a random sea fact in pirate speak]
+      - name: qualified-in-fill-output
+        brief: Qualified in-fill with thread output
+        description: Shows qualifier guiding in-fill content generation with expected output demonstration.
+        level: 1
+        purpose: Demonstrates qualifier effect on generated output via thread example
+        labels:
+          - in-fill
+          - size-indicator
+          - "[...:<range>|<qualifier>]"
+          - "[...|<qualifier>]"
+        thread:
+          - role: system
+            message: |
+              Output: [...:5-7words| list of words related to the word blue]
+              Poem: [...| based on words]
+          - role: assistant
+            message: |
+              sad, turquoise, melancholy, sky, paint, navy
+              Poem: Sad turquoise sky, painted navy blue like my thoughts of you.
+      - name: multi-element-qualification
+        brief: Multiple qualified elements in template
+        description: Combines multiple placeholder and in-fill qualifiers with various size indicators in a structured output template.
+        level: 2
+        purpose: Demonstrates complex qualifier usage across different syntax elements
+        labels:
+          - placeholder
+          - in-fill
+          - size-indicator
+          - "{term}"
+          - "{}"
+          - "[...|<size>|qualifier]"
+          - "[...|<range>|qualifier]"
+        thread:
+          - role: system
+            message: |
+              Output after every response:
+              ---
+              In {country-random} they speak {}.
+              pink: {association| first word that comes to mind when hearing pink}
+              cats: {breed common name:2-4items| random cat breeds}
+              lucky numbers: [...:2number| 2 random numbers 0-999]
+          - role: user
+            message: hello!
+          - role: assistant
+            message: |
+              Hey, how can I help?
+              ---
+              In China they speak Mandarin.
+              pink: tulips
+              cats: Maine, Tuxedo, Ragdoll
+              lucky numbers: 432 981
+  - name: size-indicator
+    syntax: "?:<range><type>"
+    brief: Specify expected output size
+    description: Size qualifier to provide output size expectations such as :2-5pages, :3sentences, :100-200words.
+    labels:
+      - modifier
+      - inline
+      - output
+    examples:
+      - name: basic-size
+        brief: Simple line count constraint
+        description: Demonstrates basic size indicator syntax with fixed count.
+        level: 0
+        purpose: Shows fundamental size constraint on in-fill
+        labels:
+          - "[...:<count><type>]"
+        example: |
+          Write a haiku [...:3lines] about the ocean.
+      - name: range-size-output
+        brief: Size range with thread output
+        description: Shows size range indicator effect on generated content.
+        level: 1
+        purpose: Demonstrates range-based sizing with example output
+        labels:
+          - "[...:<range><type>]"
+        thread:
+          - role: system
+            message: |
+              Generate: [...:2-3sentences] about why the sky is blue.
+          - role: assistant
+            message: |
+              The sky appears blue due to Rayleigh scattering. Shorter blue wavelengths scatter more than other colors when sunlight enters the atmosphere.
+      - name: multi-size-template
+        brief: Multiple size indicators in template
+        description: Combines multiple size indicators with different types in a structured output template.
+        level: 2
+        purpose: Demonstrates various size types working together
+        labels:
+          - "[...:<count><type>]"
+          - "[...:<range><type>]"
+          - "{term}"
+        thread:
+          - role: system
+            message: |
+              Recipe Card:
+              Name: {recipe-name}
+              Ingredients: [...:5-8items]
+              Steps: [...:3-5paragraph]
+              Tips: [...:1-2sentences]
+          - role: user
+            message: chocolate chip cookies
+          - role: assistant
+            message: |
+              Name: Classic Chocolate Chip Cookies
+              Ingredients: flour, butter, sugar, brown sugar, eggs, vanilla, baking soda, salt, chocolate chips
+              Steps:
+              Preheat oven to 375°F. Cream butter and sugars until fluffy.
+
+              Beat in eggs and vanilla. Mix flour, baking soda, and salt separately, then combine with wet ingredients.
+
+              Fold in chocolate chips. Drop spoonfuls onto baking sheet. Bake 9-11 minutes until golden.
+              Tips: Chill dough for 30 minutes for thicker cookies. Use room temperature butter.
+  - name: highlight
+    syntax: "`<term>`"
+    brief: Emphasize key concepts
+    description: Term emphasis using backticks to highlight important terms or phrases for clarity.
+    labels:
+      - emphasis
+      - inline
+    examples:
+      - name: basic-highlight
+        brief: Single term emphasis
+        description: Demonstrates basic backtick emphasis for a key term.
+        level: 0
+        purpose: Shows fundamental highlight syntax
+        labels:
+          - "`term`"
+        example: |
+          Explain what a `callback` function does in JavaScript.
+      - name: highlight-definition
+        brief: Highlight with definition output
+        description: Shows highlighted term triggering focused definition.
+        level: 1
+        purpose: Demonstrates highlight effect on generated explanation
+        labels:
+          - "`term`"
+        thread:
+          - role: system
+            message: |
+              Define: `polymorphism`
+          - role: assistant
+            message: |
+              Polymorphism is the ability of objects to take multiple forms, allowing the same interface to represent different underlying data types.
+      - name: multi-highlight-compare
+        brief: Multiple highlights for comparison
+        description: Uses multiple highlighted terms for comparative explanation.
+        level: 2
+        purpose: Demonstrates multiple highlights in comparison context
+        labels:
+          - "`term`"
+          - "`term` vs `term`"
+        thread:
+          - role: system
+            message: |
+              Compare `mutex` vs `semaphore` vs `spinlock` for thread synchronization.
+          - role: assistant
+            message: |
+              A `mutex` provides exclusive access to one thread at a time.
+              A `semaphore` allows a specified number of concurrent accesses.
+              A `spinlock` busy-waits instead of sleeping, useful for short critical sections.
+  - name: attention
+    syntax: "🎯 <instruction>"
+    brief: Mark critical instructions
+    description: Critical instruction marker using 🎯 emoji for high-priority directives requiring special focus.
+    labels:
+      - emphasis
+      - inline
+      - priority
+    examples:
+      - name: basic-attention
+        brief: Single critical instruction
+        description: Demonstrates basic attention marker for high-priority directive.
+        level: 0
+        purpose: Shows fundamental attention syntax
+        labels:
+          - "🎯 <instruction>"
+        example: |
+          🎯 Always escape user input before database queries.
+      - name: attention-with-output
+        brief: Attention directive with implementation
+        description: Shows attention marker guiding generated output.
+        level: 1
+        purpose: Demonstrates attention effect on code generation
+        labels:
+          - "🎯 <instruction>"
+        thread:
+          - role: system
+            message: |
+              Generate login form HTML.
+              🎯 Include CSRF token field.
+          - role: assistant
+            message: |
+              <form method="POST" action="/login">
+                <input type="hidden" name="csrf_token" value="{{csrf}}">
+                <input type="text" name="username">
+                <input type="password" name="password">
+                <button type="submit">Login</button>
+              </form>
+      - name: multi-attention
+        brief: Multiple attention markers
+        description: Uses multiple attention markers to enforce several critical requirements.
+        level: 2
+        purpose: Demonstrates multiple attention directives working together
+        labels:
+          - "🎯 <instruction>"
+          - "🎯 (multiple)"
+        thread:
+          - role: system
+            message: |
+              Write a file upload handler.
+              🎯 Validate file type before processing.
+              🎯 Limit file size to 5MB.
+              🎯 Sanitize filename.
+          - role: user
+            message: Python Flask
+          - role: assistant
+            message: |
+              ALLOWED = {'png', 'jpg', 'pdf'}
+              MAX_SIZE = 5 * 1024 * 1024
+
+              @app.route('/upload', methods=['POST'])
+              def upload():
+                  file = request.files['file']
+                  if file.content_length > MAX_SIZE:
+                      return 'File too large', 413
+                  ext = file.filename.rsplit('.', 1)[1].lower()
+                  if ext not in ALLOWED:
+                      return 'Invalid type', 400
+                  filename = secure_filename(file.filename)
+                  file.save(os.path.join(UPLOAD_DIR, filename))
+  - name: placeholder
+    syntax:
+      - name: bracket
+        syntax: "<term>"
+      - name: brace
+        syntax: "{term}"
+      - name: double-bracket
+        syntax: "⟪term⟫"
+    brief: Indicate expected content locations
+    description: |
+      Mark locations where specific content should be inserted by users or generated by agents. term may be omitted when clear from context e.g. `{}`
+    labels:
+      - variable
+      - inline
+    examples:
+      - name: basic-placeholder
+        brief: Brace and dot notation
+        description: Demonstrates basic placeholder syntax with property access.
+        level: 0
+        purpose: Shows fundamental placeholder patterns
+        labels:
+          - "{term}"
+          - "{term.property}"
+        example: |
+          Dear {recipient.name},
+          Thank you for your order #{order.id}.
+      - name: placeholder-substitution
+        brief: Placeholder with thread output
+        description: Shows placeholder resolution with both brace and bracket styles.
+        level: 1
+        purpose: Demonstrates placeholder substitution in action
+        labels:
+          - "{term}"
+          - "<term>"
+        thread:
+          - role: system
+            message: |
+              Template: "Welcome to <city>, {user.name}!"
+          - role: user
+            message: city=Tokyo, user.name=Alice
+          - role: assistant
+            message: |
+              Welcome to Tokyo, Alice!
+      - name: multi-style-placeholder
+        brief: All placeholder styles
+        description: Uses all three placeholder styles plus empty placeholder in a structured template.
+        level: 2
+        purpose: Demonstrates different placeholder formats working together
+        labels:
+          - "{term}"
+          - "<term>"
+          - "⟪term⟫"
+          - "{}"
+        thread:
+          - role: system
+            message: |
+              API Response Template:
+              {
+                "status": <status_code>,
+                "user": "{user.email}",
+                "data": ⟪response_payload⟫,
+                "empty_allowed": {}
+              }
+          - role: user
+            message: |
+              200, alice@test.com, {"items": [1,2,3]}
+          - role: assistant
+            message: |
+              {
+                "status": 200,
+                "user": "alice@test.com",
+                "data": {"items": [1,2,3]},
+                "empty_allowed": null
+              }
+  - name: in-fill
+    syntax: "[...]"
+    brief: Mark content generation areas
+    description: Content generation markers indicating where dynamic content should be generated.
+    labels:
+      - generation
+      - inline
+    examples:
+      - name: basic-in-fill
+        brief: Simple content generation
+        description: Demonstrates basic in-fill marker for content generation.
+        level: 0
+        purpose: Shows fundamental in-fill syntax
+        labels:
+          - "[...]"
+        example: |
+          The main benefits of exercise include [...].
+      - name: sequential-in-fill
+        brief: Multiple in-fills with output
+        description: Shows multiple in-fill markers resolved in sequence.
+        level: 1
+        purpose: Demonstrates sequential in-fill generation
+        labels:
+          - "[...]"
+          - "[...] (sequential)"
+        thread:
+          - role: system
+            message: |
+              Complete: "To make coffee, first [...], then [...], finally [...]."
+          - role: assistant
+            message: |
+              To make coffee, first grind fresh beans, then brew with hot water just off boil, finally serve immediately.
+      - name: in-fill-template
+        brief: In-fill with qualifiers and sizes
+        description: Combines in-fill with qualifiers and size indicators in a structured template.
+        level: 2
+        purpose: Demonstrates in-fill variations working together
+        labels:
+          - "[...]"
+          - "[...:<range>]"
+          - "[...|<qualifier>]"
+          - "{term}"
+        thread:
+          - role: system
+            message: |
+              Book Review:
+              Title: {book.title}
+              Summary: [...:2-3sentences]
+              Pros: [...| list 3 strengths]
+              Cons: [...| list 2 weaknesses]
+              Verdict: [...]
+          - role: user
+            message: "1984 by George Orwell"
+          - role: assistant
+            message: |
+              Title: 1984
+              Summary: A dystopian novel set in a totalitarian society under constant surveillance. Winston Smith struggles against the Party's oppressive control of truth and memory.
+              Pros: Prophetic themes still relevant today, masterful world-building, psychologically gripping
+              Cons: Bleak tone may deter some readers, slow pacing in middle sections
+              Verdict: Essential reading that remains hauntingly prescient.
+  - name: infer
+    syntax: "..., etc."
+    brief: Signal pattern continuation
+    description: Continuation patterns signaling agents to generate or consider similar items based on established context and pattern.
+    labels:
+      - generation
+      - inline
+      - pattern
+    examples:
+      - name: basic-infer
+        brief: Simple list continuation
+        description: Demonstrates basic ellipsis for list continuation.
+        level: 0
+        purpose: Shows fundamental inference syntax
+        labels:
+          - "..."
+        example: |
+          Primary colors: red, blue, ...
+      - name: infer-completion
+        brief: Pattern continuation with output
+        description: Shows inference continuation with generated completion.
+        level: 1
+        purpose: Demonstrates infer triggering list completion
+        labels:
+          - "..."
+          - "etc."
+        thread:
+          - role: system
+            message: |
+              List planets: Mercury, Venus, Earth, ...
+          - role: assistant
+            message: |
+              Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune
+      - name: multi-pattern-infer
+        brief: Multiple pattern completions
+        description: Demonstrates various pattern types with infer syntax.
+        level: 2
+        purpose: Shows both ellipsis and etc. patterns with completions
+        labels:
+          - "..."
+          - "etc."
+          - "pattern continuation"
+        thread:
+          - role: system
+            message: |
+              Complete patterns:
+              - Fibonacci: 1, 1, 2, 3, 5, ...
+              - Powers of 2: 1, 2, 4, 8, ...
+              - Vowels: a, e, i, ...
+              - HTTP methods: GET, POST, PUT, etc.
+          - role: assistant
+            message: |
+              - Fibonacci: 1, 1, 2, 3, 5, 8, 13, 21, 34
+              - Powers of 2: 1, 2, 4, 8, 16, 32, 64, 128
+              - Vowels: a, e, i, o, u
+              - HTTP methods: GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS
+  - name: literal-string
+    syntax: "`{~l|<text>}`"
+    brief: Exact text reproduction
+    description: Ensures specified text is output exactly as provided without modification or interpretation.
+    labels:
+      - escape
+      - inline
+    examples:
+      - name: basic-literal
+        brief: Exact text output
+        description: Demonstrates basic literal string for exact reproduction.
+        level: 0
+        purpose: Shows fundamental literal syntax
+        labels:
+          - "`{~l|<text>}`"
+        example: |
+          Output exactly: `{~l|Hello, World!}`
+      - name: literal-with-output
+        brief: Literal string with thread output
+        description: Shows literal string being reproduced exactly in output.
+        level: 1
+        purpose: Demonstrates literal effect on generated output
+        labels:
+          - "`{~l|<text>}`"
+        thread:
+          - role: system
+            message: |
+              Print: `{~l|SELECT * FROM users WHERE id = ?}`
+          - role: assistant
+            message: |
+              SELECT * FROM users WHERE id = ?
+      - name: literal-special-chars
+        brief: Preserving special characters
+        description: Uses literal syntax to preserve NPL markers and special characters.
+        level: 2
+        purpose: Demonstrates escaping various special character types
+        labels:
+          - "`{~l|<text>}`"
+          - "escape sequences"
+          - "special characters"
+        thread:
+          - role: system
+            message: |
+              Output these exactly:
+              1. `{~l|{user.name}}` (show placeholder syntax)
+              2. `{~l|[...] <term>}` (show NPL markers)
+              3. `{~l|C:\Users\name\file.txt}` (preserve backslashes)
+          - role: assistant
+            message: |
+              1. {user.name}
+              2. [...] <term>
+              3. C:\Users\name\file.txt
+  - name: omission
+    syntax: "[___]"
+    brief: Content omitted for brevity
+    description: Indicates content intentionally left out for brevity that is expected in actual input/output.
+    labels:
+      - meta
+      - inline
+    examples:
+      - name: basic-omission
+        brief: Simple content omission
+        description: Demonstrates basic omission marker with description.
+        level: 0
+        purpose: Shows fundamental omission syntax
+        labels:
+          - "[___]"
+        example: |
+          Parse this JSON and extract names:
+          [___| large JSON array omitted]
+      - name: omission-with-context
+        brief: Omission with thread output
+        description: Shows omission marker in context with response handling.
+        level: 1
+        purpose: Demonstrates how omissions are processed
+        labels:
+          - "[___]"
+          - "[___| <description>]"
+        thread:
+          - role: system
+            message: |
+              Summarize this error log:
+              [___| 500 lines of stack trace omitted for brevity]
+              Final error: NullPointerException at line 42
+          - role: assistant
+            message: |
+              The application crashed with a NullPointerException at line 42. Review null checks in that code path.
+      - name: multi-omission
+        brief: Multiple omissions in structure
+        description: Uses multiple omission markers to indicate abbreviated content in a structured document.
+        level: 2
+        purpose: Demonstrates multiple omissions in context
+        labels:
+          - "[___]"
+          - "[___| <description>]"
+        thread:
+          - role: system
+            message: |
+              Review this API response structure:
+              {
+                "meta": [___| pagination info],
+                "data": [___| array of 100 user objects],
+                "errors": []
+              }
+              What's the response pattern?
+          - role: assistant
+            message: |
+              Standard paginated API response with three fields:
+              - `meta`: Contains pagination (page, limit, total)
+              - `data`: Array of resource objects
+              - `errors`: Empty array on success, error details on failure
+  - name: prompt-section
+    syntax: |
+      ```<section-type>
+      <content>
+      ```
+    brief: Specialized prompt sections
+    description: Special code fenced sections with type indicators for content like example, note, diagram, syntax, format, template.
+    labels:
+      - container
+      - block
+    examples:
+      - name: basic-section
+        brief: Simple note section
+        description: Demonstrates basic prompt section fence.
+        level: 0
+        purpose: Shows fundamental section syntax
+        labels:
+          - "```<type>"
+          - "```note"
+        example: |
+          ```note
+          This section explains the authentication flow.
+          ```
+      - name: section-with-output
+        brief: Example section with application
+        description: Shows example section content applied to generate output.
+        level: 1
+        purpose: Demonstrates section content influencing generation
+        labels:
+          - "```example"
+          - "```<type>"
+        thread:
+          - role: system
+            message: |
+              ```example
+              Input: "hello world"
+              Output: "HELLO WORLD"
+              ```
+              Apply this transformation to: "foo bar"
+          - role: assistant
+            message: |
+              FOO BAR
+      - name: multi-section-types
+        brief: Multiple section types
+        description: Combines multiple section types for comprehensive specification.
+        level: 2
+        purpose: Demonstrates different section types working together
+        labels:
+          - "```syntax"
+          - "```example"
+          - "```note"
+          - "```<type>"
+        thread:
+          - role: system
+            message: |
+              ```syntax
+              COMMAND := <action> <target> [--flag]
+              ```
+
+              ```example
+              move file.txt --force
+              copy src/ dest/
+              ```
+
+              ```note
+              Flags are optional but recommended for destructive operations.
+              ```
+
+              Generate a delete command.
+          - role: assistant
+            message: |
+              delete temp.log --force
