@@ -26,6 +26,16 @@ components:
       Establishes immutable version boundaries, operational context and core rules for the NPL
       prompt‑engineering framework. All subsequent elements inherit these constraints unless
       explicitly overridden.
+    detection:
+      patterns:
+        - regex: '⌜NPL@[\d.]+⌝'
+          description: "NPL declaration opening with corner bracket"
+        - regex: '⌞NPL@[\d.]+⌟'
+          description: "NPL declaration closing with corner bracket"
+        - regex: '<npl-declaration[^>]*type="npl-definition"[^>]*>'
+          description: "NPL declaration XML wrapper"
+      category: pure
+      notes: "Corner brackets U+231C/U+231F are unambiguous NPL markers."
     labels:
       - block
       - framework
@@ -69,6 +79,15 @@ components:
       Adds supplemental rules or capabilities to a previously declared version without altering
       the original block. Extensions inherit the base version's constraints and may introduce
       new qualifiers, size‑indicators or processing flags.
+    detection:
+      patterns:
+        - regex: '⌜extend:NPL@[\d.]+⌝'
+          description: "Framework extension opening"
+        - regex: '⌞extend:NPL@[\d.]+⌟'
+          description: "Framework extension closing"
+        - regex: '<npl-declaration[^>]*type="npl-extension"[^>]*>'
+          description: "Framework extension XML wrapper"
+      category: pure
     labels:
       - block
       - framework
@@ -111,6 +130,15 @@ components:
       Extends an agent's capabilities by adding new behaviors, commands, or
       processing rules. The extension inherits the base agent's type and
       framework version.
+    detection:
+      patterns:
+        - regex: '⌜extend:[a-z][a-z0-9\-]*\|[a-z]+\|NPL@[\d.]+⌝'
+          description: "Agent extension opening"
+        - regex: '⌞extend:[a-z][a-z0-9\-]*⌟'
+          description: "Agent extension closing"
+        - regex: '<npl-declaration[^>]*type="agent-extension"[^>]*>'
+          description: "Agent extension XML wrapper"
+      category: pure
     labels:
       - block
       - agent
@@ -159,6 +187,15 @@ components:
         * **persona** – emulates a real person or expert.
         * **tool** – mimics an interactive command‑line tool.
         * **service** – represents a hosted service such as a GitHub API, vector‑DB, memory store, etc.
+    detection:
+      patterns:
+        - regex: '⌜[a-z][a-z0-9\-]*\|(persona|tool|service)\|NPL@[\d.]+⌝'
+          description: "Agent declaration opening"
+        - regex: '⌞[a-z][a-z0-9\-]*⌟'
+          description: "Agent declaration closing"
+        - regex: '<npl-declaration[^>]*type="agent-definition"[^>]*>'
+          description: "Agent definition XML wrapper"
+      category: pure
     labels:
       - block
       - agent

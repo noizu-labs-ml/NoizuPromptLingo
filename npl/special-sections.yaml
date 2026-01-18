@@ -13,6 +13,14 @@ components:
       ⌞extend:NPL@version⌟"
     brief: Extend NPL framework conventions
     description: Build upon and enhance existing NPL guidelines and rules for more specificity or breadth without creating entirely new framework versions.
+    detection:
+      patterns:
+        - regex: '⌜extend:NPL@[\d.]+⌝'
+          description: "NPL extension opening"
+        - regex: '⌞extend:NPL@[\d.]+⌟'
+          description: "NPL extension closing"
+      category: pure
+      notes: "Corner brackets make this unambiguous."
     labels:
       - framework
       - extension
@@ -93,6 +101,14 @@ components:
       ⌞agent-name⌟"
     brief: Define agent behavior and capabilities
     description: Agent definition syntax for creating simulated entities with specific behaviors, capabilities, and response patterns. Types include service, persona, tool, and specialist.
+    detection:
+      patterns:
+        - regex: '⌜[a-z][a-z0-9\-]*\|(service|persona|tool|specialist)\|NPL@[\d.]+⌝'
+          description: "Agent declaration opening"
+        - regex: '⌞[a-z][a-z0-9\-]*⌟'
+          description: "Agent declaration closing"
+      category: pure
+      notes: "Pipe-separated format with type makes this distinct."
     labels:
       - agent
       - definition
@@ -198,6 +214,14 @@ components:
       ⌟
     brief: Modify agent behavior at execution time
     description: Runtime behavior modifiers that alter agent operation and output characteristics including verbosity, debugging, feature toggles, and output formatting.
+    detection:
+      patterns:
+        - regex: '⌜🏳️'
+          description: "Runtime flags block opening with flag emoji"
+        - regex: '🏳️[a-z@\.]+=\s*\S+'
+          description: "Individual flag assignment"
+      category: pure
+      notes: "Flag emoji in corner bracket is unambiguous."
     labels:
       - runtime
       - configuration
@@ -285,6 +309,12 @@ components:
       ⌟
     brief: Immutable highest-precedence instructions
     description: Immutable instruction blocks with highest precedence that cannot be overridden by subsequent instructions. Ensures critical safety, security, and operational requirements cannot be bypassed.
+    detection:
+      patterns:
+        - regex: '⌜🔒'
+          description: "Secure prompt block opening with lock emoji"
+      category: pure
+      notes: "Lock emoji in corner bracket is unambiguous."
     labels:
       - security
       - immutable
@@ -372,6 +402,14 @@ components:
       ⌞🧱 template-name⌟
     brief: Reusable output patterns
     description: Named template definitions for creating reusable output patterns and structured content generation with variable substitution, conditional logic, and iteration patterns.
+    detection:
+      patterns:
+        - regex: '⌜🧱\s+[a-z][a-z0-9\-]*⌝'
+          description: "Named template opening with brick emoji"
+        - regex: '⌞🧱\s+[a-z][a-z0-9\-]*⌟'
+          description: "Named template closing with brick emoji"
+      category: pure
+      notes: "Brick emoji in corner bracket with name is unambiguous."
     labels:
       - template
       - reusable

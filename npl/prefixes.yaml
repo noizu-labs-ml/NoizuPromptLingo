@@ -9,6 +9,12 @@ components:
     syntax: "❓➤ <question>"
     brief: Direct question answering
     description: Directs the agent to provide direct, factual answers to specific questions, focusing on accuracy and completeness in addressing the query.
+    detection:
+      patterns:
+        - regex: '❓➤'
+          description: "Question prefix with question mark emoji"
+      category: pure
+      notes: "Unambiguous - ❓➤ pattern at line start."
     labels:
       - qa
       - information
@@ -63,6 +69,11 @@ components:
     syntax: "🌐➤ <translation instruction>"
     brief: Machine translation tasks
     description: Directs the agent to convert text from one language to another while preserving meaning, context, and appropriate cultural nuances.
+    detection:
+      patterns:
+        - regex: '🌐➤'
+          description: "Translation prefix with globe emoji"
+      category: pure
     labels:
       - language
       - translation
@@ -117,6 +128,11 @@ components:
     syntax: "🏷️➤ <classification instruction>"
     brief: Text classification tasks
     description: Enables agents to categorize, label, or classify text content into predefined categories, classes, or groups based on content analysis.
+    detection:
+      patterns:
+        - regex: '🏷️➤'
+          description: "Classification prefix with label emoji"
+      category: pure
     labels:
       - analysis
       - categorization
@@ -172,6 +188,11 @@ components:
     syntax: "👁️➤ <NER instruction>"
     brief: Named entity recognition
     description: Directs the agent to locate and categorize named entities such as people, organizations, locations, dates, and other proper nouns within text.
+    detection:
+      patterns:
+        - regex: '👁️➤'
+          description: "Entity recognition prefix with eye emoji"
+      category: pure
     labels:
       - extraction
       - analysis
@@ -230,6 +251,11 @@ components:
     syntax: "💡➤ <sentiment instruction>"
     brief: Emotional tone analysis
     description: Enables agents to analyze and identify emotional tone, sentiment, or subjective opinion expressed in text including polarity and intensity.
+    detection:
+      patterns:
+        - regex: '💡➤'
+          description: "Sentiment prefix with lightbulb emoji"
+      category: pure
     labels:
       - analysis
       - emotion
@@ -290,6 +316,11 @@ components:
     syntax: "💬➤ <dialogue instruction>"
     brief: Conversational interaction mode
     description: Directs the agent to engage in conversational exchanges, simulating natural dialogue patterns appropriate for customer service or human-like interactions.
+    detection:
+      patterns:
+        - regex: '💬➤'
+          description: "Conversation prefix with speech bubble emoji"
+      category: pure
     labels:
       - dialogue
       - interactive
@@ -342,6 +373,11 @@ components:
     syntax: "📄➤ <summarization instruction>"
     brief: Text summarization
     description: Enables agents to create comprehensive yet concise summaries identifying key information, main points, and essential details while reducing length.
+    detection:
+      patterns:
+        - regex: '📄➤'
+          description: "Summarization prefix with document emoji"
+      category: pure
     labels:
       - condensation
       - analysis
@@ -402,6 +438,11 @@ components:
     syntax: "📊➤ <topic instruction>"
     brief: Topic modeling analysis
     description: Directs the agent to analyze textual content and identify main themes, subjects, and topics present for categorization and thematic analysis.
+    detection:
+      patterns:
+        - regex: '📊➤'
+          description: "Topic modeling prefix with chart emoji"
+      category: pure
     labels:
       - analysis
       - themes
@@ -466,6 +507,11 @@ components:
     syntax: "🔊➤ <TTS instruction>"
     brief: Text to speech conversion
     description: Directs the agent to convert written text into spoken audio format for accessibility features and audio content creation.
+    detection:
+      patterns:
+        - regex: '🔊➤'
+          description: "TTS prefix with speaker emoji"
+      category: pure
     labels:
       - audio
       - synthesis
@@ -529,6 +575,11 @@ components:
     syntax: "🗣️➤ <transcription instruction>"
     brief: Speech to text transcription
     description: Directs the agent to transcribe audio recordings of speech into accurate written text for documentation and content analysis.
+    detection:
+      patterns:
+        - regex: '🗣️➤'
+          description: "Speech recognition prefix with speaking head emoji"
+      category: pure
     labels:
       - audio
       - transcription
@@ -590,6 +641,11 @@ components:
     syntax: "🖋️➤ <generation instruction>"
     brief: Creative text generation
     description: Enables agents to generate creative, original text content based on provided prompts, themes, or partial content for stories, descriptions, and expansions.
+    detection:
+      patterns:
+        - regex: '🖋️➤'
+          description: "Text generation prefix with pen emoji"
+      category: pure
     labels:
       - creative
       - generation
@@ -645,6 +701,11 @@ components:
     syntax: "🖥️➤ <code instruction>"
     brief: Code generation tasks
     description: Enables agents to create functional code in various programming languages based on requirements, specifications, or problem descriptions.
+    detection:
+      patterns:
+        - regex: '🖥️➤'
+          description: "Code generation prefix with computer emoji"
+      category: pure
     labels:
       - programming
       - generation
@@ -725,6 +786,11 @@ components:
     syntax: "🖼️➤ <captioning instruction>"
     brief: Image caption generation
     description: Directs the agent to generate descriptive captions that capture the essence, content, and context of visual images for accessibility.
+    detection:
+      patterns:
+        - regex: '🖼️➤'
+          description: "Image captioning prefix with frame emoji"
+      category: pure
     labels:
       - visual
       - description
@@ -782,6 +848,11 @@ components:
     syntax: "🗣️❓➤ <riddle instruction>"
     brief: Word puzzles and riddles
     description: Enables agents to create, solve, or respond to word-based riddles, puzzles, and linguistic challenges using wordplay and lateral thinking.
+    detection:
+      patterns:
+        - regex: '🗣️❓➤'
+          description: "Word riddle prefix with speaking+question emojis"
+      category: pure
     labels:
       - puzzle
       - creative
@@ -838,6 +909,11 @@ components:
     syntax: "🧪➤ <extraction instruction>"
     brief: Feature and data extraction
     description: Enables agents to analyze content and systematically extract particular features, attributes, or data points matching defined criteria or patterns.
+    detection:
+      patterns:
+        - regex: '🧪➤'
+          description: "Feature extraction prefix with test tube emoji"
+      category: pure
     labels:
       - extraction
       - analysis
