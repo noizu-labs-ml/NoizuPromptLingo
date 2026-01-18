@@ -23,10 +23,10 @@ components:
       - inline
       - modifier
       - constraint
-    import:
-      - placeholder
-      - in-fill
-      - size-indicator
+    require:
+      - syntax.placeholder
+      - syntax.in-fill
+      - syntax.size-indicator
     examples:
       - name: basic-qualifier
         brief: Qualifier with placeholder and in-fill
@@ -138,9 +138,9 @@ components:
       - inline
       - modifier
       - constraint
-    import:
-      - in-fill
-      - qualifier
+    require:
+      - syntax.in-fill
+      - syntax.qualifier
     examples:
       - name: basic-size
         brief: Simple line count constraint
@@ -241,8 +241,8 @@ components:
     labels:
       - inline
       - emphasis
-    import:
-      - placeholder
+    require:
+      - syntax.placeholder
     examples:
       - name: basic-highlight
         brief: Single term emphasis
@@ -321,8 +321,8 @@ components:
       - inline
       - emphasis
       - critical
-    import:
-      - qualifier
+    require:
+      - syntax.qualifier
     examples:
       - name: basic-attention
         brief: Single critical instruction
@@ -420,8 +420,8 @@ components:
     labels:
       - inline
       - variable
-    import:
-      - qualifier
+    require:
+      - syntax.qualifier
     examples:
       - name: basic-placeholder
         brief: Brace and dot notation
@@ -530,9 +530,9 @@ components:
     labels:
       - inline
       - generation
-    import:
-      - qualifier
-      - size-indicator
+    require:
+      - syntax.qualifier
+      - syntax.size-indicator
     examples:
       - name: basic-in-fill
         brief: Simple content generation
@@ -641,8 +641,8 @@ components:
       - inline
       - generation
       - guidance
-    import:
-      - qualifier
+    require:
+      - syntax.qualifier
     examples:
       - name: basic-infer
         brief: Simple list continuation
@@ -846,8 +846,8 @@ components:
       - inline
       - meta
       - documentation
-    import:
-      - qualifier
+    require:
+      - syntax.qualifier
     examples:
       - name: basic-omission
         brief: Simple content omission
@@ -949,10 +949,10 @@ components:
     labels:
       - block
       - logic
-    import:
-      - placeholder
-      - in-fill
-      - infer
+    require:
+      - syntax.placeholder
+      - syntax.in-fill
+      - syntax.infer
     examples:
       - name: basic-conditional
         brief: Simple if block
@@ -1099,9 +1099,9 @@ components:
     labels:
       - block
       - container
-    import:
-      - omission
-      - qualifier
+    require:
+      - syntax.omission
+      - syntax.qualifier
     examples:
       - name: basic-section
         brief: Simple note section

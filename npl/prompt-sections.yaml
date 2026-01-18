@@ -1,49 +1,49 @@
 name: prompt sections
-brief: Code fence types for structured content containment
+brief: Tagged sections for structured content containment
 description: |
-  Code fence types and usage patterns for structured content containment and presentation in NPL.
+  XML-style tagged sections for structured content containment and presentation in NPL.
 purpose: |
-  Fences create specialized content blocks with specific formatting, processing, or display requirements. They structure and contain different types of content while providing semantic meaning about how that content should be interpreted or presented.
+  Tagged sections create specialized content blocks with specific formatting, processing, or display requirements. They structure and contain different types of content while providing semantic meaning about how that content should be interpreted or presented.
 components:
   - name: example prompt section
     syntax: |
-      ```example
+      <npl-prompt-section type="example">
       [___|example content]
-      ```
+      </npl-prompt-section>
     brief: Demonstrate usage patterns
     description: Provides clear demonstrations of syntax usage, behavior patterns, or expected outputs. Shows concrete implementations rather than abstract descriptions.
     labels:
       - content
       - demonstration
       - block
-    import:
-      - omission
+    require:
+      - syntax.omission
     examples:
       - name: basic-example
-        brief: Simple example fence
+        brief: Simple example section
         description: Demonstrates basic example block syntax.
         priority: 0
-        purpose: Shows fundamental example fence usage
+        purpose: Shows fundamental example section usage
         labels:
-          - "```example"
+          - '<npl-prompt-section type="example">'
         example: |
-          ```example
+          <npl-prompt-section type="example">
           Here's how to use highlight syntax: `important term`
-          ```
+          </npl-prompt-section>
       - name: example-with-application
         brief: Example guiding output
         description: Shows example content being applied to generate output.
         priority: 1
         purpose: Demonstrates example block influencing generation
         labels:
-          - "```example"
+          - '<npl-prompt-section type="example">'
         thread:
           - role: system
             message: |
-              ```example
+              <npl-prompt-section type="example">
               Input: "cat" → Output: "CAT"
               Input: "dog" → Output: "DOG"
-              ```
+              </npl-prompt-section>
               Apply to: "hello"
           - role: assistant
             message: |
@@ -54,59 +54,59 @@ components:
         priority: 2
         purpose: Demonstrates example blocks covering multiple cases
         labels:
-          - "```example"
+          - '<npl-prompt-section type="example">'
           - "[...]"
         thread:
           - role: system
             message: |
-              ```example
+              <npl-prompt-section type="example">
               Greeting: "Hi!" → Response: "Hello! How can I help?"
               Question: "What time is it?" → Response: "The current time is [...]. Is there anything else?"
               Farewell: "Bye" → Response: "Goodbye! Have a great day!"
-              ```
+              </npl-prompt-section>
               User says: "See you later"
           - role: assistant
             message: |
               Goodbye! Have a great day!
-  - name: note  prompt section
+  - name: note prompt section
     syntax: |
-      ```note
+      <npl-prompt-section type="note">
       [___|note content]
-      ```
+      </npl-prompt-section>
     brief: Explanatory comments and context
     description: Includes explanatory comments, clarifications, warnings, or additional context within prompts without directly affecting generated output.
     labels:
       - content
       - documentation
       - block
-    import:
-      - omission
-      - attention
+    require:
+      - syntax.omission
+      - syntax.attention
     examples:
       - name: basic-note
-        brief: Simple note fence
+        brief: Simple note section
         description: Demonstrates basic note block syntax.
         priority: 0
-        purpose: Shows fundamental note fence usage
+        purpose: Shows fundamental note section usage
         labels:
-          - "```note"
+          - '<npl-prompt-section type="note">'
         example: |
-          ```note
+          <npl-prompt-section type="note">
           The attention marker should be used sparingly to maintain its impact.
-          ```
+          </npl-prompt-section>
       - name: note-with-context
         brief: Note providing generation context
         description: Shows note providing context that influences output.
         priority: 1
         purpose: Demonstrates note affecting response behavior
         labels:
-          - "```note"
+          - '<npl-prompt-section type="note">'
         thread:
           - role: system
             message: |
-              ```note
+              <npl-prompt-section type="note">
               User prefers concise, technical responses. Avoid casual language.
-              ```
+              </npl-prompt-section>
               Explain what an API is.
           - role: assistant
             message: |
@@ -117,16 +117,16 @@ components:
         priority: 2
         purpose: Demonstrates notes with 🎯 attention markers
         labels:
-          - "```note"
+          - '<npl-prompt-section type="note">'
           - "🎯 <instruction>"
         thread:
           - role: system
             message: |
-              ```note
+              <npl-prompt-section type="note">
               This API handles sensitive data.
               🎯 Never include raw credentials in responses.
               🎯 Always mask PII (show only last 4 digits).
-              ```
+              </npl-prompt-section>
               Show user profile for: email=john@test.com, ssn=123-45-6789, name=John Doe
           - role: assistant
             message: |
@@ -136,49 +136,97 @@ components:
               - SSN: ***-**-6789
   - name: diagram prompt section
     syntax: |
-      ```diagram
+      <npl-prompt-section type="diagram">
       [___|diagram content]
-      ```
+      </npl-prompt-section>
     brief: Visual representations and flowcharts
-    description: Contains visual representations, system architectures, flowcharts, and structural diagrams. Supports ASCII art, box-and-arrow, tree structures, and Mermaid syntax.
+    description: |
+      Contains visual representations, system architectures, flowcharts, and structural diagrams.
+      Supports ASCII art, box-and-arrow, tree structures, and Mermaid syntax.
+
+      Common uses:
+      - Explaining content structure or relationships
+      - Defining state machines for conversation or process flow
+      - Documenting system architecture
+      - Illustrating decision trees or workflows
     labels:
       - content
       - visual
       - block
-    import:
-      - omission
-      - qualifier
+    require:
+      - syntax.omission
+      - syntax.qualifier
     examples:
       - name: basic-diagram
         brief: Simple box-and-arrow
-        description: Demonstrates basic diagram fence with arrow notation.
+        description: Demonstrates basic diagram section with arrow notation.
         priority: 0
-        purpose: Shows fundamental diagram syntax
+        purpose: Shows fundamental diagram syntax for explaining relationships
         labels:
-          - "```diagram"
+          - '<npl-prompt-section type="diagram">'
           - "[A] --> [B]"
         example: |
-          ```diagram
+          <npl-prompt-section type="diagram">
           [Component A] ---> [Component B]
           [Component B] ---> [Component C]
-          ```
-      - name: diagram-with-output
-        brief: Diagram describing a process
-        description: Shows diagram used to describe a workflow that guides output.
-        priority: 1
-        purpose: Demonstrates diagram influencing response structure
+          </npl-prompt-section>
+      - name: state-machine-conversation
+        brief: State machine for conversation flow
+        description: Defines a state machine that controls how the agent should navigate a conversation.
+        priority: 0
+        purpose: Shows diagram as behavioral instruction for conversation flow
         labels:
-          - "```diagram"
+          - '<npl-prompt-section type="diagram">'
+          - "state machine"
+          - "[State] --event--> [State]"
+        thread:
+          - role: system
+            message: |
+              Follow this conversation state machine:
+              <npl-prompt-section type="diagram">
+              [GREETING] --user_responds--> [COLLECT_INFO]
+              [COLLECT_INFO] --info_complete--> [CONFIRM]
+              [COLLECT_INFO] --info_missing--> [COLLECT_INFO]
+              [CONFIRM] --user_confirms--> [PROCESS]
+              [CONFIRM] --user_corrects--> [COLLECT_INFO]
+              [PROCESS] --success--> [COMPLETE]
+              [PROCESS] --error--> [ERROR_HANDLING]
+              [ERROR_HANDLING] --resolved--> [PROCESS]
+              [ERROR_HANDLING] --unresolved--> [ESCALATE]
+              </npl-prompt-section>
+              Start in GREETING state. You are a pizza order assistant.
+          - role: user
+            message: Hi!
+          - role: assistant
+            message: |
+              Welcome to Pizza Palace! I'd love to help you place an order.
+
+              What type of pizza would you like today? (e.g., pepperoni, margherita, veggie)
+          - role: user
+            message: pepperoni, large
+          - role: assistant
+            message: |
+              Great choice! Let me confirm your order:
+              - Large Pepperoni Pizza
+
+              Is this correct? Would you like to add anything else?
+      - name: diagram-with-output
+        brief: Diagram explaining a process
+        description: Shows diagram used to describe a workflow that guides explanation output.
+        priority: 1
+        purpose: Demonstrates diagram for content explanation
+        labels:
+          - '<npl-prompt-section type="diagram">'
           - "[A] --> [B]"
         thread:
           - role: system
             message: |
-              ```diagram
+              <npl-prompt-section type="diagram">
               [Input] --> [Validate] --> [Transform] --> [Output]
                               |
                               v
                           [Error]
-              ```
+              </npl-prompt-section>
               Describe this data pipeline.
           - role: assistant
             message: |
@@ -193,7 +241,7 @@ components:
         priority: 2
         purpose: Demonstrates various diagram notations together
         labels:
-          - "```diagram"
+          - '<npl-prompt-section type="diagram">'
           - "[A] --> [B]"
           - "├── (tree)"
           - "flowchart (mermaid)"
@@ -202,7 +250,7 @@ components:
             message: |
               Show the same auth flow in three diagram styles:
 
-              ```diagram
+              <npl-prompt-section type="diagram">
               Box-Arrow:
               [User] --> [Auth] --> [Dashboard]
 
@@ -217,7 +265,7 @@ components:
               flowchart LR
                   U[User] --> A[Auth]
                   A --> D[Dashboard]
-              ```
+              </npl-prompt-section>
               Which style is clearest for documentation?
           - role: assistant
             message: |
@@ -229,44 +277,44 @@ components:
               However, box-arrow is best for quick inline explanations, and tree notation excels at showing hierarchies.
   - name: syntax prompt section
     syntax: |
-      ```syntax
+      <npl-prompt-section type="syntax">
       [___|syntax definition]
-      ```
+      </npl-prompt-section>
     brief: Define formal syntax patterns
     description: Formally defines syntax patterns, grammar rules, and structural conventions. Provides standardized documentation for how syntax elements should be constructed.
     labels:
       - structure
       - definition
       - block
-    import:
-      - omission
-      - qualifier
+    require:
+      - syntax.omission
+      - syntax.qualifier
     examples:
       - name: basic-syntax
         brief: Simple syntax definition
-        description: Demonstrates basic syntax fence for defining patterns.
+        description: Demonstrates basic syntax section for defining patterns.
         priority: 0
         purpose: Shows fundamental syntax block usage
         labels:
-          - "```syntax"
+          - '<npl-prompt-section type="syntax">'
         example: |
-          ```syntax
+          <npl-prompt-section type="syntax">
           COMMAND := <action> <target> [--flag]
-          ```
+          </npl-prompt-section>
       - name: syntax-with-application
         brief: Syntax guiding generation
         description: Shows syntax definition being applied to generate valid output.
         priority: 1
         purpose: Demonstrates syntax block constraining output
         labels:
-          - "```syntax"
+          - '<npl-prompt-section type="syntax">'
           - "<term>"
         thread:
           - role: system
             message: |
-              ```syntax
+              <npl-prompt-section type="syntax">
               EMAIL := <local-part>@<domain>.<tld>
-              ```
+              </npl-prompt-section>
               Generate 3 example emails.
           - role: assistant
             message: |
@@ -279,17 +327,17 @@ components:
         priority: 2
         purpose: Demonstrates comprehensive syntax documentation
         labels:
-          - "```syntax"
+          - '<npl-prompt-section type="syntax">'
           - "<term>"
           - "[optional]"
         thread:
           - role: system
             message: |
-              ```syntax
+              <npl-prompt-section type="syntax">
               DATE := <YYYY>-<MM>-<DD>
               TIME := <HH>:<MM>[:<SS>]
               DATETIME := <DATE>T<TIME>[Z|<offset>]
-              ```
+              </npl-prompt-section>
               Parse: "Meeting at 2024-03-15T14:30"
           - role: assistant
             message: |
@@ -299,53 +347,53 @@ components:
               - DATETIME: 2024-03-15T14:30 (no timezone specified)
   - name: format prompt section
     syntax: |
-      ```format
+      <npl-prompt-section type="format">
       [___|format specification]
-      ```
+      </npl-prompt-section>
     brief: Specify output templates and structure
     description: Specifies exact structure and layout of expected output including template patterns, data organization, and formatting requirements.
     labels:
       - structure
       - template
       - block
-    import:
-      - omission
-      - qualifier
+    require:
+      - syntax.omission
+      - syntax.qualifier
     examples:
       - name: basic-format
         brief: Simple output format
-        description: Demonstrates basic format fence with placeholders and in-fill.
+        description: Demonstrates basic format section with placeholders and in-fill.
         priority: 0
         purpose: Shows fundamental format block usage
         labels:
-          - "```format"
+          - '<npl-prompt-section type="format">'
           - "<term>"
           - "[...]"
         example: |
-          ```format
+          <npl-prompt-section type="format">
           Hello <user.name>,
           Did you know [...|funny factoid].
 
           Have a great day!
-          ```
+          </npl-prompt-section>
       - name: format-with-output
         brief: Format shaping response
         description: Shows format specification producing structured output.
         priority: 1
         purpose: Demonstrates format constraining output structure
         labels:
-          - "```format"
+          - '<npl-prompt-section type="format">'
           - "<term>"
           - "[...]"
         thread:
           - role: system
             message: |
-              ```format
+              <npl-prompt-section type="format">
               **Weather Report**
               Location: <city>
               Temperature: [...|current temp]
               Conditions: [...|weather description]
-              ```
+              </npl-prompt-section>
               Weather for: Tokyo
           - role: assistant
             message: |
@@ -359,14 +407,14 @@ components:
         priority: 2
         purpose: Demonstrates advanced format with multiple elements
         labels:
-          - "```format"
+          - '<npl-prompt-section type="format">'
           - "<term>"
           - "[...]"
           - "{{foreach}}"
         thread:
           - role: system
             message: |
-              ```format
+              <npl-prompt-section type="format">
               # <report.title>
 
               | Metric | Value | Change |
@@ -376,7 +424,7 @@ components:
               {{/foreach}}
 
               Summary: [...:1-2sentences]
-              ```
+              </npl-prompt-section>
               Generate quarterly sales report.
           - role: assistant
             message: |
@@ -391,19 +439,19 @@ components:
               Summary: Q4 showed strong growth across all metrics, with new customer acquisition leading at 23% improvement over Q3.
   - name: template prompt section
     syntax: |
-      ```template
+      <npl-prompt-section type="template">
       [___|template with placeholders]
-      ```
+      </npl-prompt-section>
     brief: Reusable output patterns
     description: Defines reusable output formats with placeholder substitution, conditional logic, and iteration patterns using handlebars-style syntax.
     labels:
       - structure
       - reusable
       - block
-    import:
-      - omission
-      - placeholder
-      - qualifier
+    require:
+      - syntax.omission
+      - syntax.placeholder
+      - syntax.qualifier
     examples:
       - name: basic-template
         brief: Simple placeholder template
@@ -411,33 +459,33 @@ components:
         priority: 0
         purpose: Shows fundamental template syntax
         labels:
-          - "```template"
+          - '<npl-prompt-section type="template">'
           - "{term}"
         example: |
-          ```template
+          <npl-prompt-section type="template">
           # {user.name}
           **Role**: {user.role}
           **Email**: {user.email}
-          ```
+          </npl-prompt-section>
       - name: template-with-output
         brief: Template with data substitution
         description: Shows template producing output from provided data.
         priority: 1
         purpose: Demonstrates template placeholder substitution
         labels:
-          - "```template"
+          - '<npl-prompt-section type="template">'
           - "{term}"
           - "{foreach}"
         thread:
           - role: system
             message: |
-              ```template
+              <npl-prompt-section type="template">
               | Name | Score |
               |------|-------|
               {foreach students as s}
               | {s.name} | {s.score} |
               {/foreach}
-              ```
+              </npl-prompt-section>
               Data: [{name: "Alice", score: 95}, {name: "Bob", score: 87}]
           - role: assistant
             message: |
@@ -451,7 +499,7 @@ components:
         priority: 2
         purpose: Demonstrates advanced template features
         labels:
-          - "```template"
+          - '<npl-prompt-section type="template">'
           - "{term}"
           - "{foreach}"
           - "{if}/{else}"
@@ -459,68 +507,105 @@ components:
         thread:
           - role: system
             message: |
-              ```template
+              <npl-prompt-section type="template">
               {if items}
               Items: {foreach items as i}{i.name}{if not @last}, {/if}{/foreach}
               {else}
               No items found.
               {/if}
-              ```
+              </npl-prompt-section>
               Data: {items: [{name: "A"}, {name: "B"}, {name: "C"}]}
           - role: assistant
             message: |
               Items: A, B, C
   - name: alg prompt section
     syntax: |
-      ```alg
+      <npl-prompt-section type="alg">
       name: <algorithm-name>
       input: <input specification>
       output: <output specification>
 
       procedure <name>(<params>):
         [___|algorithmic steps]
-      ```
+      </npl-prompt-section>
     brief: Formal algorithm specifications
-    description: Structured way to specify computational procedures with named algorithms, input/output specifications, and step-by-step procedural logic.
+    description: |
+      Structured way to specify computational procedures with named algorithms, input/output specifications,
+      and step-by-step procedural logic. Use alg blocks to instruct the LLM on exactly how to process
+      requests or handle specific tasks algorithmically.
     labels:
       - algorithm
       - formal
       - block
-    import:
-      - omission
-      - qualifier
+    require:
+      - syntax.omission
+      - syntax.qualifier
     examples:
-      - name: basic-alg
-        brief: Simple algorithm specification
-        description: Demonstrates basic alg fence with procedure syntax.
+      - name: alg-request-handler
+        brief: Algorithm instructing request processing
+        description: Uses algorithm specification to instruct the LLM on how to handle user requests.
         priority: 0
-        purpose: Shows fundamental algorithm block
+        purpose: Shows algorithm as behavioral instruction for request handling
         labels:
-          - "```alg"
+          - '<npl-prompt-section type="alg">'
           - "procedure"
-        example: |
-          ```alg
-          name: factorial
-          input: non-negative integer n
-          output: n!
+          - "behavioral"
+        thread:
+          - role: system
+            message: |
+              Handle all user questions using this algorithm:
+              <npl-prompt-section type="alg">
+              name: AnswerQuestion
+              input: user_question, context
+              output: structured_response
 
-          procedure factorial(n):
-            if n <= 1:
-              return 1
-            return n * factorial(n - 1)
-          ```
+              procedure AnswerQuestion(question, context):
+                # Step 1: Classify the question type
+                qtype = classify(question, [factual, opinion, how-to, clarification])
+
+                # Step 2: Check if answerable from context
+                if qtype == factual:
+                  evidence = search_context(context, question)
+                  if evidence is empty:
+                    return "I don't have information about that in the provided context."
+                  return synthesize_answer(evidence)
+
+                if qtype == how-to:
+                  steps = extract_procedure(context, question)
+                  return format_as_numbered_list(steps)
+
+                if qtype == clarification:
+                  return ask_followup(question)
+
+                # Default: opinion or unsupported
+                return "I can help with factual questions about the provided context."
+              </npl-prompt-section>
+          - role: user
+            message: |
+              Context: "Python lists are mutable sequences. Use append() to add items, pop() to remove the last item, and remove(x) to delete the first occurrence of x."
+
+              Question: How do I add an item to a Python list?
+          - role: assistant
+            message: |
+              To add an item to a Python list:
+
+              1. Use the `append()` method
+              2. Call it on your list with the item to add: `my_list.append(item)`
+
+              This adds the item to the end of the list.
       - name: alg-with-trace
         brief: Algorithm with execution trace
         description: Shows algorithm specification with traced execution.
         priority: 1
         purpose: Demonstrates algorithm guiding computation
         labels:
-          - "```alg"
+          - '<npl-prompt-section type="alg">'
           - "procedure"
         thread:
           - role: system
             message: |
-              ```alg
+              Use this algorithm for calculating GCD:
+              <npl-prompt-section type="alg">
               name: gcd
               input: integers a, b
               output: greatest common divisor
@@ -531,67 +616,88 @@ components:
                   b = a mod b
                   a = temp
                 return a
-              ```
-              Trace: gcd(48, 18)
+              </npl-prompt-section>
+              Show your work step by step.
+          - role: user
+            message: What is the GCD of 48 and 18?
           - role: assistant
             message: |
-              Trace of gcd(48, 18):
+              Applying gcd(48, 18):
               - a=48, b=18 → temp=18, b=48 mod 18=12, a=18
               - a=18, b=12 → temp=12, b=18 mod 12=6, a=12
               - a=12, b=6 → temp=6, b=12 mod 6=0, a=6
               - b=0, return a=6
 
-              Result: gcd(48, 18) = 6
+              **Result**: gcd(48, 18) = 6
       - name: multi-procedure-alg
-        brief: Multiple procedures with complexity
-        description: Combines multiple procedures with complexity analysis.
+        brief: Multiple procedures for complex task
+        description: Combines multiple procedures to instruct multi-step processing.
         priority: 2
-        purpose: Demonstrates complex algorithm specification
+        purpose: Demonstrates complex algorithm specification for behavior
         labels:
-          - "```alg"
+          - '<npl-prompt-section type="alg">'
           - "procedure (multiple)"
-          - "complexity"
+          - "behavioral"
         thread:
           - role: system
             message: |
-              ```alg
-              name: merge_sort
-              input: array A
-              output: sorted array
-              complexity: O(n log n)
+              Process code review requests using this algorithm:
+              <npl-prompt-section type="alg">
+              name: CodeReview
+              input: code_snippet, language
+              output: review_report
 
-              procedure merge_sort(A):
-                if length(A) <= 1:
-                  return A
-                mid = length(A) / 2
-                left = merge_sort(A[0:mid])
-                right = merge_sort(A[mid:end])
-                return merge(left, right)
+              procedure CodeReview(code, lang):
+                issues = []
+                suggestions = []
 
-              procedure merge(L, R):
-                result = []
-                while L and R not empty:
-                  if L[0] <= R[0]:
-                    append L[0] to result
-                    remove L[0]
-                  else:
-                    append R[0] to result
-                    remove R[0]
-                append remaining L or R to result
-                return result
+                # Phase 1: Static analysis
+                issues += check_syntax(code, lang)
+                issues += check_security(code, lang)
+                issues += check_style(code, lang)
+
+                # Phase 2: Logic review
+                suggestions += analyze_complexity(code)
+                suggestions += check_edge_cases(code)
+
+                # Phase 3: Format output
+                return format_review(issues, suggestions)
+
+              procedure format_review(issues, suggestions):
+                output = "## Code Review\n\n"
+                if issues:
+                  output += "### Issues Found\n"
+                  for issue in issues:
+                    output += "- " + issue.severity + ": " + issue.description + "\n"
+                if suggestions:
+                  output += "### Suggestions\n"
+                  for s in suggestions:
+                    output += "- " + s + "\n"
+                return output
+              </npl-prompt-section>
+          - role: user
+            message: |
+              Review this Python code:
+              ```python
+              def divide(a, b):
+                return a / b
               ```
-              Analyze the space complexity.
           - role: assistant
             message: |
-              Space complexity analysis:
-              - **Recursive call stack**: O(log n) depth
-              - **Merge temporary arrays**: O(n) at each level
-              - **Total auxiliary space**: O(n)
+              ## Code Review
 
-              The algorithm requires O(n) extra space for merging, plus O(log n) stack space for recursion.
+              ### Issues Found
+              - **Warning**: No handling for division by zero (ZeroDivisionError)
+              - **Style**: Missing type hints for parameters and return value
+              - **Style**: Missing docstring
+
+              ### Suggestions
+              - Add parameter validation: `if b == 0: raise ValueError("Cannot divide by zero")`
+              - Consider returning `None` or a default value for invalid input
+              - Add type hints: `def divide(a: float, b: float) -> float:`
   - name: alg-pseudo prompt section
     syntax: |
-      ```alg-pseudo
+      <npl-prompt-section type="alg-pseudo">
       Algorithm: <name>
       Input: <input>
       Output: <output>
@@ -599,53 +705,87 @@ components:
       BEGIN
         [___|pseudocode steps]
       END
-      ```
+      </npl-prompt-section>
     brief: Pseudocode algorithm descriptions
-    description: Natural language approach to algorithm specification using BEGIN/END, IF/THEN/ELSE, FOR/WHILE loops. Focuses on logical flow rather than implementation details.
+    description: |
+      Natural language approach to algorithm specification using BEGIN/END, IF/THEN/ELSE, FOR/WHILE loops.
+      Focuses on logical flow rather than implementation details. Use pseudocode to instruct the LLM
+      on how to handle processes in a readable, language-agnostic way.
     labels:
       - algorithm
       - pseudocode
       - block
-    import:
-      - omission
-      - qualifier
+    require:
+      - syntax.omission
+      - syntax.qualifier
     examples:
-      - name: basic-pseudo
-        brief: Simple pseudocode
-        description: Demonstrates basic alg-pseudo fence with BEGIN/END structure.
+      - name: pseudo-conversation-handler
+        brief: Pseudocode instructing conversation flow
+        description: Uses pseudocode to instruct the LLM on how to handle a multi-turn conversation.
         priority: 0
-        purpose: Shows fundamental pseudocode block
+        purpose: Shows pseudocode as behavioral instruction for conversation handling
         labels:
-          - "```alg-pseudo"
+          - '<npl-prompt-section type="alg-pseudo">'
           - "BEGIN/END"
           - "IF/THEN"
-        example: |
-          ```alg-pseudo
-          Algorithm: IsEven
-          Input: Integer n
-          Output: TRUE or FALSE
+          - "behavioral"
+        thread:
+          - role: system
+            message: |
+              Handle customer support conversations using this algorithm:
+              <npl-prompt-section type="alg-pseudo">
+              Algorithm: CustomerSupport
+              Input: user_message, conversation_history
+              Output: response
 
-          BEGIN
-            IF n MOD 2 equals 0 THEN
-              RETURN TRUE
-            ELSE
-              RETURN FALSE
-            END IF
-          END
-          ```
+              BEGIN
+                intent = CLASSIFY user_message AS [greeting, question, complaint, farewell, other]
+
+                IF intent is greeting THEN
+                  RETURN friendly greeting + ask how to help
+                END IF
+
+                IF intent is question THEN
+                  answer = SEARCH knowledge_base FOR user_message
+                  IF answer found THEN
+                    RETURN answer + ask if more help needed
+                  ELSE
+                    RETURN apologize + offer to escalate to human
+                  END IF
+                END IF
+
+                IF intent is complaint THEN
+                  RETURN empathize + apologize + ask for details + offer solution
+                END IF
+
+                IF intent is farewell THEN
+                  RETURN thank user + wish well + close conversation
+                END IF
+
+                RETURN ask for clarification
+              END
+              </npl-prompt-section>
+          - role: user
+            message: My order never arrived and I'm really frustrated!
+          - role: assistant
+            message: |
+              I completely understand your frustration, and I'm truly sorry your order hasn't arrived. That's definitely not the experience we want you to have.
+
+              Could you please share your order number so I can look into this right away? Once I have that, I can check the shipping status and work with you on a solution—whether that's tracking down the package, reshipping your order, or processing a refund.
       - name: pseudo-with-execution
-        brief: Pseudocode with execution
+        brief: Pseudocode with execution trace
         description: Shows pseudocode being executed step by step.
         priority: 1
         purpose: Demonstrates pseudocode guiding computation
         labels:
-          - "```alg-pseudo"
+          - '<npl-prompt-section type="alg-pseudo">'
           - "BEGIN/END"
           - "FOR/DO"
         thread:
           - role: system
             message: |
-              ```alg-pseudo
+              Use this algorithm and show your work:
+              <npl-prompt-section type="alg-pseudo">
               Algorithm: SumArray
               Input: Array A of numbers
               Output: Sum of all elements
@@ -657,8 +797,9 @@ components:
                 END FOR
                 RETURN total
               END
-              ```
-              Execute for A = [3, 7, 2]
+              </npl-prompt-section>
+          - role: user
+            message: Calculate the sum of [3, 7, 2]
           - role: assistant
             message: |
               Execution trace:
@@ -668,57 +809,74 @@ components:
               - x = 2: total = 10 + 2 = 12
               - RETURN 12
 
-              Result: 12
+              **Result**: 12
       - name: complex-pseudo
-        brief: Multi-branch conditional logic
-        description: Combines loops, conditionals, and multiple return paths.
+        brief: Multi-branch request processing
+        description: Uses pseudocode to instruct handling of different request types with error cases.
         priority: 2
-        purpose: Demonstrates complex pseudocode patterns
+        purpose: Demonstrates complex pseudocode for request handling
         labels:
-          - "```alg-pseudo"
+          - '<npl-prompt-section type="alg-pseudo">'
           - "BEGIN/END"
           - "IF/ELSE IF/ELSE"
           - "WHILE/DO"
+          - "behavioral"
         thread:
           - role: system
             message: |
-              ```alg-pseudo
-              Algorithm: FindMax
-              Input: Array A
-              Output: Maximum value or error
+              Process data validation requests using this algorithm:
+              <npl-prompt-section type="alg-pseudo">
+              Algorithm: ValidateAndProcess
+              Input: data, schema
+              Output: result or error_list
 
               BEGIN
-                IF A is empty THEN
-                  RETURN "Error: Empty array"
+                errors = empty list
+
+                # Phase 1: Required field check
+                FOR each field in schema.required DO
+                  IF field NOT IN data THEN
+                    ADD "Missing required field: {field}" TO errors
+                  END IF
+                END FOR
+
+                IF errors is NOT empty THEN
+                  RETURN errors
                 END IF
 
-                max = A[0]
-                i = 1
-
-                WHILE i < length(A) DO
-                  IF A[i] > max THEN
-                    max = A[i]
+                # Phase 2: Type validation
+                FOR each field, value IN data DO
+                  expected_type = schema.types[field]
+                  IF type(value) != expected_type THEN
+                    ADD "Invalid type for {field}: expected {expected_type}" TO errors
                   END IF
-                  i = i + 1
-                END WHILE
+                END FOR
 
-                RETURN max
+                IF errors is NOT empty THEN
+                  RETURN errors
+                END IF
+
+                # Phase 3: Process valid data
+                RETURN process(data)
               END
-              ```
-              What happens with A = [] and A = [5, 2, 9, 1]?
+              </npl-prompt-section>
+          - role: user
+            message: |
+              Validate: {"name": "Alice", "age": "thirty"}
+              Schema: required=[name, age, email], types={name: string, age: integer, email: string}
           - role: assistant
             message: |
-              **Case 1: A = []**
-              - Check: A is empty → TRUE
-              - RETURN "Error: Empty array"
+              **Phase 1: Required field check**
+              - name: present ✓
+              - age: present ✓
+              - email: NOT present ✗ → Error: "Missing required field: email"
 
-              **Case 2: A = [5, 2, 9, 1]**
-              - Initialize: max = 5, i = 1
-              - i=1: A[1]=2, 2 > 5? No, i=2
-              - i=2: A[2]=9, 9 > 5? Yes, max=9, i=3
-              - i=3: A[3]=1, 1 > 9? No, i=4
-              - i=4: 4 < 4? No, exit loop
-              - RETURN 9
+              **Result**: Validation failed
+
+              Errors:
+              - Missing required field: email
+
+              (Note: Type validation for age="thirty" would also fail in Phase 2, but we return early after Phase 1 errors)
   - name: artifact prompt section
     syntax: |
       <artifact type="{content-type}">
@@ -733,9 +891,9 @@ components:
       - special
       - metadata
       - block
-    import:
-      - omission
-      - qualifier
+    require:
+      - syntax.omission
+      - syntax.qualifier
     examples:
       - name: basic-artifact
         brief: Simple code artifact
@@ -820,50 +978,334 @@ components:
                 <line x1="100" y1="90" x2="100" y2="110" stroke="#333"/>
               </svg>
               ```
+  - name: handlebars-instructions
+    syntax:
+      - name: conditional-block
+        syntax: |
+          {{if <condition>}}
+            [content if true]
+          {{else}}
+            [content if false]
+          {{/if}}
+      - name: iteration-block
+        syntax: |
+          {{foreach <collection> as <item>}}
+            [content for each item]
+          {{/foreach}}
+      - name: unless-block
+        syntax: |
+          {{unless <condition>}}
+            [content if condition is false]
+          {{/unless}}
+    brief: Template-like control structures for dynamic content
+    description: |
+      Handlebars-like syntax used to instruct agents on how to process requests and format output.
+      It provides a familiar templating grammar for conditional rendering, iteration over collections,
+      and dynamic content inclusion based on context.
+    purpose: |
+      Generate repetitive content with variations, apply conditional logic to output sections,
+      or iterate over datasets without writing imperative code.
+    labels:
+      - block
+      - logic
+      - template
+    require:
+      - syntax.placeholder
+      - syntax.in-fill
+    examples:
+      - name: conditional-logic
+        brief: Conditional rendering based on user role
+        priority: 0
+        example: |
+          {{if user.role == 'administrator'}}
+            Show admin panel
+          {{else}}
+            Show user dashboard
+          {{/if}}
+      - name: iteration-loop
+        brief: Iterating over a list of executives
+        priority: 0
+        example: |
+          {{foreach business.executives as executive}}
+          - Name: {{executive.name}}
+          - Role: {{executive.role}}
+          {{/foreach}}
+
+  - name: algorithm-specification
+    syntax:
+      - name: generic-algorithm
+        syntax: |
+          ```alg
+          [algorithm specification]
+          ```
+      - name: pseudocode-algorithm
+        syntax: |
+          ```alg-pseudo
+          [pseudocode implementation]
+          ```
+      - name: language-specific-algorithm
+        syntax: |
+          ```alg-<language>
+          [language-specific implementation]
+          ```
+      - name: flowchart-representation
+        syntax: |
+          ```alg-flowchart
+          mermaid
+          [flowchart definition]
+          ```
+    brief: Structured language for defining computational logic
+    description: |
+      Algorithm Specification Language (Alg-Speak) provides formal notation for expressing
+      computational logic, step-by-step procedures, and algorithmic thinking patterns.
+      It supports generic pseudocode, language-specific implementations, and flowchart visualizations.
+    purpose: |
+      Define precise computational procedures, document complex logic flows, or specify
+      algorithm implementations when exact processing steps are critical.
+    labels:
+      - block
+      - definition
+      - algorithm
+    examples:
+      - name: find-max-algorithm
+        brief: Finding the maximum value in an array
+        priority: 1
+        example: |
+          ```alg
+          Algorithm: FindMaximum(array A)
+          1. max ← A[0]
+          2. for i = 1 to length(A) - 1 do
+          3.   if A[i] > max then
+          4.     max ← A[i]
+          5.   end if
+          6. end for
+          7. return max
+          ```
+      - name: binary-search-pseudo
+        brief: Binary search implementation in pseudocode
+        priority: 1
+        example: |
+          ```alg-pseudo
+          PROCEDURE BinarySearch(array, target):
+            left = 0
+            right = array.length - 1
+            WHILE left <= right:
+              mid = (left + right) / 2
+              IF array[mid] = target:
+                RETURN mid
+              ELSE IF array[mid] < target:
+                left = mid + 1
+              ELSE:
+                right = mid - 1
+              END IF
+            END WHILE
+            RETURN -1
+          ```
+
+  - name: iterative-annotation
+    syntax:
+      - name: basic-refinement
+        syntax: |
+          ```annotation
+          original: [existing content]
+          issues: [identified problems]
+          refinement: [improved version]
+          ```
+      - name: cyclic-refinement
+        syntax: |
+          ```annotation-cycle
+          iteration: <number>
+          focus: <area of improvement>
+          changes: [specific modifications]
+          validation: [verification method]
+          ```
+    brief: Progressive refinement patterns for code and design
+    description: |
+      Annotation patterns enable systematic improvement of outputs through iterative cycles.
+      They provide a structured format for documenting original content, identifying issues,
+      and tracking refinement versions.
+    purpose: |
+      Conduct code review and improvement cycles, UX design iteration processes, or
+      progressive solution refinement where feedback loops are required.
+    labels:
+      - block
+      - guidance
+      - refinement
+    examples:
+      - name: code-refinement
+        brief: Improving a calculation function
+        priority: 1
+        example: |
+          ```annotation
+          original: |
+            function calculate(a, b) {
+              return a + b;
+            }
+          issues:
+            - No input validation
+            - Limited to addition only
+          refinement: |
+            function calculate(a, b, operation = 'add') {
+              if (typeof a !== 'number' || typeof b !== 'number') {
+                throw new Error('Invalid input: numbers required');
+              }
+              // ... switch case logic
+            }
+          ```
+
+  - name: formal-proof
+    syntax:
+      - name: proof-structure
+        syntax: |
+          ```proof
+          Given: [premises]
+          To Prove: [conclusion]
+          Proof:
+            1. [step] - [justification]
+            ...
+            n. [conclusion] - [final justification]
+          ```
+    brief: Structured frameworks for rigorous logical verification
+    description: |
+      Formal proof structures provide systematic frameworks for constructing valid logical
+      arguments and establishing the truth of statements through step-by-step reasoning and
+      inference rules.
+    purpose: |
+      Verify mathematical theorems, prove algorithm correctness, or verify system properties
+      where logical soundness must be demonstrated.
+    labels:
+      - block
+      - verification
+      - formal
+    examples:
+      - name: direct-proof
+        brief: Proving if n is even then n² is even
+        priority: 2
+        example: |
+          ```proof
+          Theorem: If n is even, then n² is even.
+          Given: n is even (n = 2k for some integer k)
+          To Prove: n² is even
+
+          Proof:
+          1. n = 2k - Given (n is even)
+          2. n² = (2k)² - Substitution
+          3. n² = 4k² - Algebraic manipulation
+          4. n² = 2(2k²) - Factoring
+          5. Therefore, n² is even - Definition of even number ∎
+          ```
+
   - name: symbolic-logic
     syntax: |
-      ```logic
+      <npl-prompt-section type="logic">
       [___|propositional or predicate logic expressions]
-      ```
+      </npl-prompt-section>
     brief: Formal logical expressions
-    description: Propositional and first-order predicate logic for precise behavioral specifications using quantifiers (∀, ∃), connectives (∧, ∨, →, ↔, ¬), and predicates.
+    description: |
+      Propositional and first-order predicate logic for precise behavioral specifications
+      using quantifiers (∀, ∃), connectives (∧, ∨, →, ↔, ¬), and predicates.
+
+      Two primary uses:
+      - **Behavioral instruction**: Define rules the agent must follow when processing requests
+      - **State description**: Formally specify the current state of a system or entity
     labels:
       - logic
       - formal
       - block
-    import:
-      - omission
-      - qualifier
+    require:
+      - syntax.omission
+      - syntax.qualifier
     examples:
-      - name: basic-logic
-        brief: Simple propositional logic
-        description: Demonstrates basic logic fence with connectives.
+      - name: logic-behavioral-instruction
+        brief: Logic defining agent behavior rules
+        description: Uses logic to instruct the agent on how to handle different request types.
         priority: 0
-        purpose: Shows fundamental logic block
+        purpose: Shows logic as behavioral instruction for request processing
         labels:
-          - "```logic"
-          - "∧ ∨ → ¬"
-        example: |
-          ```logic
-          (P ∧ Q) → R
-          ¬P ∨ Q ↔ (P → Q)
-          ```
+          - '<npl-prompt-section type="logic">'
+          - "∀ →"
+          - "behavioral"
+        thread:
+          - role: system
+            message: |
+              Process requests according to these rules:
+              <npl-prompt-section type="logic">
+              ∀request (
+                (Authenticated(user) ∧ Authorized(user, request.resource)) → Allow(request)
+              )
+              ∀request (
+                ¬Authenticated(user) → Respond(401, "Authentication required")
+              )
+              ∀request (
+                Authenticated(user) ∧ ¬Authorized(user, request.resource) → Respond(403, "Forbidden")
+              )
+              </npl-prompt-section>
+          - role: user
+            message: |
+              User "bob" (authenticated, role=viewer) requests DELETE /api/posts/123
+              Resource /api/posts requires role=admin for DELETE
+          - role: assistant
+            message: |
+              Evaluating request:
+              - Authenticated(bob) = TRUE
+              - Authorized(bob, DELETE /api/posts/123) = FALSE (viewer ≠ admin)
+
+              Applying rule 3: Authenticated ∧ ¬Authorized → Respond(403)
+
+              **Response**: 403 Forbidden
+      - name: logic-state-description
+        brief: Logic describing system state
+        description: Uses logic to formally specify the current state of a system.
+        priority: 0
+        purpose: Shows logic as state description for system modeling
+        labels:
+          - '<npl-prompt-section type="logic">'
+          - "∧ ∨"
+          - "state"
+        thread:
+          - role: system
+            message: |
+              Current system state:
+              <npl-prompt-section type="logic">
+              # Cart State
+              CartExists(user_123) ∧ ItemCount(cart_123, 3)
+              ∀item ∈ cart_123: InStock(item)
+
+              # User State
+              Authenticated(user_123) ∧ ¬PremiumMember(user_123)
+              ShippingAddress(user_123) = NULL
+
+              # Checkout Preconditions
+              CanCheckout(user) ↔ (CartExists(user) ∧ ItemCount(cart, n) where n > 0
+                                   ∧ ShippingAddress(user) ≠ NULL)
+              </npl-prompt-section>
+              Can user_123 proceed to checkout?
+          - role: assistant
+            message: |
+              Evaluating CanCheckout(user_123):
+              - CartExists(user_123) = TRUE ✓
+              - ItemCount(cart_123, 3) where 3 > 0 = TRUE ✓
+              - ShippingAddress(user_123) = NULL ✗
+
+              **Result**: Cannot checkout. ShippingAddress is required.
+
+              Prompt user to add a shipping address before proceeding.
       - name: logic-with-evaluation
         brief: Logic expression evaluation
-        description: Shows logical expression being evaluated.
+        description: Shows logical expression being evaluated with classical inference.
         priority: 1
-        purpose: Demonstrates logic constraining behavior
+        purpose: Demonstrates logic constraining reasoning
         labels:
-          - "```logic"
+          - '<npl-prompt-section type="logic">'
           - "∀ ∃"
           - "→"
         thread:
           - role: system
             message: |
-              ```logic
+              <npl-prompt-section type="logic">
               ∀x (Human(x) → Mortal(x))
               Human(Socrates)
-              ```
+              </npl-prompt-section>
               What can we conclude?
           - role: assistant
             message: |
@@ -876,23 +1318,24 @@ components:
               Socrates is mortal.
       - name: complex-logic
         brief: Nested quantifiers and predicates
-        description: Combines universal and existential quantifiers with multiple predicates.
+        description: Combines universal and existential quantifiers with multiple predicates for complex request handling.
         priority: 2
-        purpose: Demonstrates complex logical specifications
+        purpose: Demonstrates complex logical specifications for behavior
         labels:
-          - "```logic"
+          - '<npl-prompt-section type="logic">'
           - "∀ ∃"
           - "∧ → ¬"
         thread:
           - role: system
             message: |
-              ```logic
+              Handle requests using these rules:
+              <npl-prompt-section type="logic">
               ∀request (Received(request) →
                 (Valid(request) → Process(request)) ∧
                 (¬Valid(request) → Reject(request)))
 
               ∀x (Admin(x) → ∀r (Request(r, x) → Valid(r)))
-              ```
+              </npl-prompt-section>
               Trace: Received(r1), Request(r1, alice), Admin(alice)
           - role: assistant
             message: |
@@ -905,47 +1348,131 @@ components:
               Result: Process(r1) — request is processed.
   - name: higher-order-logic
     syntax: |
-      ```hol
+      <npl-prompt-section type="higher-order-logic">
       [___|higher-order logic expressions]
-      ```
+      </npl-prompt-section>
     brief: Higher-order logical specifications
-    description: Second-order and higher-order logic supporting quantification over predicates, functions, and sets. Enables meta-level reasoning and complex behavioral constraints.
+    description: |
+      Second-order and higher-order logic supporting quantification over predicates, functions, and sets.
+      Enables meta-level reasoning and complex behavioral constraints.
+
+      Two primary uses:
+      - **Behavioral instruction**: Define transformation rules, processing pipelines, or meta-level policies
+      - **State description**: Model complex system states involving relationships between types, functions, or predicates
     labels:
       - logic
       - formal
       - higher-order
       - block
-    import:
-      - omission
-      - qualifier
+    require:
+      - syntax.omission
+      - syntax.qualifier
     examples:
-      - name: basic-hol
-        brief: Simple predicate quantification
-        description: Demonstrates basic hol fence with predicate quantification.
+      - name: hol-behavioral-instruction
+        brief: Higher-order logic defining transformation pipeline
+        description: Uses higher-order logic to instruct the agent on how to process and transform data.
         priority: 0
-        purpose: Shows fundamental higher-order logic block
+        purpose: Shows higher-order logic as behavioral instruction for data processing
         labels:
-          - "```hol"
-          - "∀P"
-        example: |
-          ```hol
-          ∀P (P(0) ∧ ∀n(P(n) → P(n+1))) → ∀n P(n)
-          ```
+          - '<npl-prompt-section type="higher-order-logic">'
+          - "∀f ∀g"
+          - "behavioral"
+        thread:
+          - role: system
+            message: |
+              Process user input using this transformation pipeline:
+              <npl-prompt-section type="higher-order-logic">
+              # Define pipeline composition
+              Pipeline ≔ λstages. fold(∘, id, stages)
+
+              # Validation stage type
+              Validator: (Input → Result<Input, Error>)
+
+              # Transformation stages
+              ∀input: UserInput
+                Pipeline([Sanitize, Validate, Normalize, Transform])(input)
+                where
+                  Sanitize: String → String       # Remove dangerous chars
+                  Validate: String → Result<String, ValidationError>
+                  Normalize: String → String      # Lowercase, trim
+                  Transform: String → OutputType  # Convert to target type
+
+              # Error handling rule
+              ∀stage ∀input (stage(input) = Error(e) → Halt ∧ Return(e))
+              </npl-prompt-section>
+          - role: user
+            message: 'Process input: "  HELLO@Example.com  "'
+          - role: assistant
+            message: |
+              Applying pipeline:
+              1. **Sanitize**: "  HELLO@Example.com  " → "  HELLO@Example.com  " (no dangerous chars)
+              2. **Validate**: Valid email format ✓
+              3. **Normalize**: "  HELLO@Example.com  " → "hello@example.com"
+              4. **Transform**: Output as Email type
+
+              **Result**: `Email("hello@example.com")`
+      - name: hol-state-description
+        brief: Higher-order logic describing system capabilities
+        description: Uses higher-order logic to formally model system state and capabilities.
+        priority: 0
+        purpose: Shows higher-order logic as state description for capability modeling
+        labels:
+          - '<npl-prompt-section type="higher-order-logic">'
+          - "∀P ∃"
+          - "state"
+        thread:
+          - role: system
+            message: |
+              Current plugin system state:
+              <npl-prompt-section type="higher-order-logic">
+              # Registered capabilities (predicates over operations)
+              Capabilities: Set<(Operation → Bool)>
+
+              # Current state
+              RegisteredPlugins = {ImageProcessor, TextAnalyzer, DataExporter}
+
+              ∀p ∈ RegisteredPlugins: ∃capability ∈ Capabilities (p.provides = capability)
+
+              ImageProcessor.provides = λop. op ∈ {Resize, Crop, Filter}
+              TextAnalyzer.provides = λop. op ∈ {Summarize, Translate, Sentiment}
+              DataExporter.provides = λop. op ∈ {ToCSV, ToJSON, ToXML}
+
+              # System can perform operation iff some plugin provides it
+              CanPerform(op) ↔ ∃p ∈ RegisteredPlugins (p.provides(op))
+              </npl-prompt-section>
+              Can the system perform Translate? What about Compress?
+          - role: assistant
+            message: |
+              Evaluating capabilities:
+
+              **Translate**:
+              - TextAnalyzer.provides(Translate) = TRUE (Translate ∈ {Summarize, Translate, Sentiment})
+              - ∃p where p.provides(Translate) ✓
+              - **CanPerform(Translate) = TRUE**
+
+              **Compress**:
+              - ImageProcessor.provides(Compress) = FALSE
+              - TextAnalyzer.provides(Compress) = FALSE
+              - DataExporter.provides(Compress) = FALSE
+              - ¬∃p where p.provides(Compress)
+              - **CanPerform(Compress) = FALSE**
+
+              The system can Translate but cannot Compress. A compression plugin would need to be registered.
       - name: hol-with-interpretation
-        brief: HOL expression interpretation
+        brief: Higher-order logic expression interpretation
         description: Shows higher-order logic expression being interpreted.
         priority: 1
-        purpose: Demonstrates HOL guiding reasoning
+        purpose: Demonstrates higher-order logic guiding reasoning
         labels:
-          - "```hol"
+          - '<npl-prompt-section type="higher-order-logic">'
           - "∀f: (A → B)"
           - "∃"
         thread:
           - role: system
             message: |
-              ```hol
+              <npl-prompt-section type="higher-order-logic">
               ∀f: (A → B) ∀g: (B → C) ∃h: (A → C) (h = g ∘ f)
-              ```
+              </npl-prompt-section>
               Given f: Int → String (toString) and g: String → Bool (isEmpty), what is h?
           - role: assistant
             message: |
@@ -961,19 +1488,19 @@ components:
         brief: Polymorphic type reasoning
         description: Combines type variables with function quantification.
         priority: 2
-        purpose: Demonstrates advanced HOL specifications
+        purpose: Demonstrates advanced higher-order logic specifications
         labels:
-          - "```hol"
+          - '<npl-prompt-section type="higher-order-logic">'
           - "∀α ∀β"
           - "∀f: (α → β)"
         thread:
           - role: system
             message: |
-              ```hol
+              <npl-prompt-section type="higher-order-logic">
               ∀α ∀β ∀f: (α → β) ∀g: (β → α)
                 (∀x: α (g(f(x)) = x)) ∧ (∀y: β (f(g(y)) = y)) →
                 Isomorphic(α, β)
-              ```
+              </npl-prompt-section>
               Are Int and String isomorphic?
           - role: assistant
             message: |
@@ -988,51 +1515,142 @@ components:
               - Condition 2 fails: toString(parseInt("hello")) ≠ "hello"
 
               **Conclusion**: Int and String are NOT isomorphic. Not all strings are valid integer representations.
-  - name: latex
+  - name: symbolic-latex
     syntax: |
-      ```latex
-      [___|mathematical instructions]
-      ```
+      <npl-prompt-section type="symbolic-latex">
+      [___|mathematical instructions using LaTeX notation]
+      </npl-prompt-section>
     brief: Mathematical notation for agent instruction
-    description: LaTeX mathematical notation for instructing agents using formal mathematics including equations, set theory, summations, integrals, and function definitions as behavioral specifications.
+    description: |
+      LaTeX mathematical notation for instructing agents using formal mathematics including equations,
+      set theory, summations, integrals, and function definitions with logical operators.
+
+      Two primary uses:
+      - **Behavioral instruction**: Define scoring functions, ranking algorithms, or decision rules mathematically
+      - **State description**: Formally describe quantities, relationships, or system metrics
     labels:
       - math
       - formal
       - instruction
       - block
-    import:
-      - omission
-      - qualifier
+    require:
+      - syntax.omission
+      - syntax.qualifier
     examples:
-      - name: basic-latex
-        brief: Simple equation
-        description: Demonstrates basic latex fence with equation syntax.
+      - name: latex-behavioral-instruction
+        brief: Math defining scoring behavior
+        description: Uses LaTeX to instruct the LLM on how to calculate and rank results.
         priority: 0
-        purpose: Shows fundamental latex block
+        purpose: Shows symbolic-latex as behavioral instruction for scoring/ranking
         labels:
-          - "```latex"
-          - "f(x) ="
-        example: |
-          ```latex
-          f(x) = ax^2 + bx + c
-          \text{where } a \neq 0
-          ```
+          - '<npl-prompt-section type="symbolic-latex">'
+          - "\\sum"
+          - "behavioral"
+        thread:
+          - role: system
+            message: |
+              Rank search results using this relevance scoring function:
+              <npl-prompt-section type="symbolic-latex">
+              \text{Score}(d, q) = \alpha \cdot \text{TF-IDF}(d, q) + \beta \cdot \text{Freshness}(d) + \gamma \cdot \text{Authority}(d)
+
+              \text{where: }
+              \alpha = 0.5, \beta = 0.3, \gamma = 0.2
+
+              \text{TF-IDF}(d, q) = \sum_{t \in q} \text{tf}(t, d) \cdot \log\frac{N}{\text{df}(t)}
+
+              \text{Freshness}(d) = e^{-\lambda \cdot \text{age\_days}(d)}, \lambda = 0.01
+
+              \text{Authority}(d) = \frac{\text{citations}(d)}{\max(\text{citations})}
+              </npl-prompt-section>
+              Return results in descending order of Score.
+          - role: user
+            message: |
+              Query: "machine learning"
+              Documents:
+              - A: TF-IDF=0.8, age=30 days, citations=50/100
+              - B: TF-IDF=0.6, age=5 days, citations=80/100
+              - C: TF-IDF=0.9, age=365 days, citations=95/100
+          - role: assistant
+            message: |
+              Calculating scores:
+
+              **Document A**:
+              - Freshness = e^(-0.01 × 30) = 0.74
+              - Score = 0.5(0.8) + 0.3(0.74) + 0.2(0.5) = 0.40 + 0.22 + 0.10 = **0.72**
+
+              **Document B**:
+              - Freshness = e^(-0.01 × 5) = 0.95
+              - Score = 0.5(0.6) + 0.3(0.95) + 0.2(0.8) = 0.30 + 0.29 + 0.16 = **0.75**
+
+              **Document C**:
+              - Freshness = e^(-0.01 × 365) = 0.026
+              - Score = 0.5(0.9) + 0.3(0.026) + 0.2(0.95) = 0.45 + 0.01 + 0.19 = **0.65**
+
+              **Ranked Results**: B (0.75) > A (0.72) > C (0.65)
+      - name: latex-state-description
+        brief: Math describing system metrics
+        description: Uses LaTeX to formally describe the current state of system metrics.
+        priority: 0
+        purpose: Shows symbolic-latex as state description for metrics modeling
+        labels:
+          - '<npl-prompt-section type="symbolic-latex">'
+          - "\\frac"
+          - "state"
+        thread:
+          - role: system
+            message: |
+              Current system health metrics:
+              <npl-prompt-section type="symbolic-latex">
+              \text{System Health} = \begin{cases}
+                \text{Healthy} & \text{if } H \geq 0.8 \\
+                \text{Degraded} & \text{if } 0.5 \leq H < 0.8 \\
+                \text{Critical} & \text{if } H < 0.5
+              \end{cases}
+
+              H = w_1 \cdot A + w_2 \cdot L + w_3 \cdot E
+
+              \text{where: }
+              A = \text{Availability} = \frac{\text{uptime}}{\text{total\_time}} = 0.99
+              L = \text{Latency Score} = 1 - \frac{\text{p99\_ms}}{1000} = 1 - \frac{250}{1000} = 0.75
+              E = \text{Error Rate Score} = 1 - \text{error\_rate} = 1 - 0.02 = 0.98
+
+              w_1 = 0.4, w_2 = 0.35, w_3 = 0.25
+              </npl-prompt-section>
+              What is the current system status?
+          - role: assistant
+            message: |
+              Calculating system health:
+
+              **Component Scores**:
+              - Availability (A) = 0.99
+              - Latency Score (L) = 0.75
+              - Error Rate Score (E) = 0.98
+
+              **Health Score**:
+              H = 0.4(0.99) + 0.35(0.75) + 0.25(0.98)
+              H = 0.396 + 0.263 + 0.245 = **0.904**
+
+              **Status**: Healthy (H = 0.904 ≥ 0.8)
+
+              The system is operating normally. Latency (p99 = 250ms) is the weakest metric but still within acceptable bounds.
       - name: latex-with-calculation
         brief: Math expression evaluation
-        description: Shows latex expression being computed.
+        description: Shows symbolic-latex expression being computed.
         priority: 1
-        purpose: Demonstrates latex guiding calculation
+        purpose: Demonstrates symbolic-latex guiding calculation
         labels:
-          - "```latex"
+          - '<npl-prompt-section type="symbolic-latex">'
           - "\\sum"
           - "\\frac"
         thread:
           - role: system
             message: |
-              ```latex
+              Use this formula:
+              <npl-prompt-section type="symbolic-latex">
               \text{Average} = \frac{1}{n} \sum_{i=1}^{n} x_i
-              ```
-              Calculate for x = [4, 8, 6, 10, 2]
+              </npl-prompt-section>
+          - role: user
+            message: Calculate the average for x = [4, 8, 6, 10, 2]
           - role: assistant
             message: |
               Given: x = [4, 8, 6, 10, 2], n = 5
@@ -1040,20 +1658,22 @@ components:
               Sum = 4 + 8 + 6 + 10 + 2 = 30
               Average = (1/5) × 30 = 6
 
-              Result: Average = 6
+              **Result**: Average = 6
       - name: complex-latex
-        brief: Piecewise and set notation
-        description: Combines piecewise functions with set-builder notation.
+        brief: Piecewise grading function
+        description: Uses piecewise functions to instruct classification behavior.
         priority: 2
-        purpose: Demonstrates advanced latex specifications
+        purpose: Demonstrates advanced symbolic-latex specifications for behavior
         labels:
-          - "```latex"
+          - '<npl-prompt-section type="symbolic-latex">'
           - "\\begin{cases}"
           - "\\{ x \\in ... \\}"
+          - "behavioral"
         thread:
           - role: system
             message: |
-              ```latex
+              Grade student scores using this function:
+              <npl-prompt-section type="symbolic-latex">
               \text{grade}(s) = \begin{cases}
                 A & \text{if } s \geq 90 \\
                 B & \text{if } 80 \leq s < 90 \\
@@ -1062,16 +1682,17 @@ components:
               \end{cases}
 
               \text{Passing} = \{ s \in \text{Scores} : \text{grade}(s) \neq F \}
-              ```
-              Evaluate: Scores = [95, 82, 67, 78, 91]
+              </npl-prompt-section>
+          - role: user
+            message: "Grade these scores: [95, 82, 67, 78, 91]"
           - role: assistant
             message: |
               Evaluating each score:
-              - 95: s ≥ 90 → A
-              - 82: 80 ≤ s < 90 → B
-              - 67: s < 70 → F
-              - 78: 70 ≤ s < 80 → C
-              - 91: s ≥ 90 → A
+              - 95: s ≥ 90 → **A**
+              - 82: 80 ≤ s < 90 → **B**
+              - 67: s < 70 → **F**
+              - 78: 70 ≤ s < 80 → **C**
+              - 91: s ≥ 90 → **A**
 
-              Passing = {95, 82, 78, 91} (grades ≠ F)
-              Passing count: 4 out of 5
+              **Passing** = {95, 82, 78, 91}
+              **Passing count**: 4 out of 5

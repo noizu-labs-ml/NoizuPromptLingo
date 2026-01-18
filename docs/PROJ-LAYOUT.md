@@ -10,10 +10,13 @@ npl/
 ├── docker/             # Docker initialization scripts
 ├── docs/               # Project documentation
 ├── liquibase/          # Database migrations
-├── npl/                # NPL specification and language definitions
+├── npl/                # NPL specification YAML definitions
 ├── npl_mcp/            # MCP server implementation
 ├── tools/              # Python tooling and loaders
+├── .gitignore          # Git exclusions
+├── .python-version     # Python version specification
 ├── docker-compose.yaml # Container orchestration
+├── LICENSE             # MIT License
 ├── pyproject.toml      # Root project configuration
 └── uv.lock             # Dependency lock file
 ```
@@ -29,6 +32,10 @@ docker/
 └── postgres-init/
     └── 01-extensions.sql   # Installs pgvector and uuid-ossp extensions
 ```
+
+**Container Services** (via `docker-compose.yaml`):
+- `npl-timescaledb`: TimescaleDB 2.24.0-pg17 on port 5432
+- `npl-redis`: Redis 8.4.0 on port 6379
 
 ### `liquibase/`
 
@@ -63,31 +70,24 @@ Development utility scripts for working with the codebase:
 
 ### `npl/`
 
-The core NPL specification files defining the prompt engineering framework:
+The core NPL specification YAML files defining the prompt engineering framework:
 
 ```
 npl/
-├── npl.md                  # Main NPL specification document
-├── npl.yaml                # YAML-based NPL definitions with taxonomy
+├── npl.yaml                # Core NPL definitions, taxonomy, and section_order
 ├── syntax.yaml             # Core syntax element definitions
-├── directives.md           # Directive patterns documentation
-├── directives.extended.md  # Extended directive documentation
 ├── directives.yaml         # Directive YAML definitions
 ├── prefixes.yaml           # Prompt prefix definitions
 ├── prompt-sections.yaml    # Prompt section specifications
 ├── special-sections.yaml   # Special section definitions
-└── instructional/          # Instructional documentation
-    ├── agent.md            # Agent definition guide
-    ├── agent.yaml          # Agent YAML definitions
-    ├── declarations.md     # NPL declaration syntax
-    ├── formatting.md       # Output formatting guide
-    ├── formatting.extended.md
-    ├── instructing.md      # Instructing patterns
-    ├── instructing.extended.md
-    ├── planning.md         # Planning and reasoning patterns
-    ├── pumps.md            # Intuition pumps documentation
-    └── pumps.extended.md
+├── declarations.yaml       # NPL declaration syntax definitions (instructional)
+├── instructing.yaml        # Instructing patterns definitions (instructional)
+└── pumps.yaml              # Intuition pumps definitions (instructional)
 ```
+
+**npl.yaml Configuration:**
+- `section_order.components`: Output order for component sections
+- `section_order.instructional`: Output order for instructional sections
 
 ### `npl_mcp/`
 
@@ -111,35 +111,36 @@ tools/
 **CLI Command:** `npl-loader`
 - Default: Output formatted markdown from database
 - `--sync`: Sync YAML files to database (populate or refresh)
-- `--from-yaml`: Output from YAML files instead of database
+- `--yaml`: Output from YAML files instead of database
 - `--list`: List all YAML files found with digests
+- `--instructions`: Append instructional notes section to output
+
+### `docs/`
+
+Project documentation:
+
+```
+docs/
+├── PROJ-ARCH.md            # Architecture documentation
+├── PROJ-LAYOUT.md          # Directory structure documentation (this file)
+└── instructional-blocks.md # Instructional content analysis
+```
 
 ## Configuration Files
 
-### `pyproject.toml` (Root)
+### `pyproject.toml`
 
-Defines the main `noizu-prompt-lingua` package:
+Defines the `noizu-prompt-lingua` package:
 - Python >=3.12 required
-- Depends on `mcp[cli]>=1.25.0`
-- Uses UV workspace with `tools/` as member
-
-### `tools/pyproject.toml`
-
-Defines the `npl-tools` sub-package:
-- Provides `npl-loader` CLI command
-- Depends on `pyyaml>=6.0`
+- Dependencies:
+  - `mcp[cli]>=1.25.0` - MCP server framework
+  - `pyyaml>=6.0` - YAML processing
+  - `psycopg2-binary>=2.9.9` - PostgreSQL adapter
+- Entry point: `npl-loader` CLI command
+- Packages: `npl_mcp`, `tools`
 
 ## File Naming Conventions
 
-- `.md` files: Human-readable documentation and specifications
-- `.yaml` files: Machine-readable definitions with structured data
-- `.extended.md` files: Extended documentation for advanced topics
+- `.yaml` files: Machine-readable NPL definitions with structured data
+- `.md` files: Human-readable documentation
 - Python files: Implementation code and tooling
-
-## Workspace Organization
-
-The project uses a UV workspace structure:
-- Root package: `noizu-prompt-lingua` (MCP server)
-- Member package: `npl-tools` (CLI utilities in `tools/`)
-
-This allows independent development and versioning of the MCP server and CLI tools while sharing the same repository.

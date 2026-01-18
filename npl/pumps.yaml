@@ -1,5 +1,5 @@
 name: Planning & Reasoning Pumps
-slug: planning-pumps
+slug: pumps
 brief: Cognitive tools for transparent reasoning and structured problem-solving
 description: |
   NPL pumps are cognitive tools that enable agents to demonstrate transparent reasoning processes,
@@ -359,7 +359,7 @@ components:
           expression: "The agent feels relieved and satisfied after resolving a particularly challenging bug."
           </npl-mood>
 
-instructional-notes:
+instructional:
 
   # ----------------------------------------------------------------------
   # Reflection Type Emojis – quick-reference
@@ -524,6 +524,14 @@ instructional-notes:
       - implementation
       - guidance
       - usage
+    references:
+      - pumps.intent-declaration
+      - pumps.chain-of-thought
+      - pumps.critique
+      - pumps.reflection
+      - pumps.rubric
+      - pumps.tangent
+      - pumps.mood
     content: |
       | Aspect | Guideline |
       |--------|-----------|

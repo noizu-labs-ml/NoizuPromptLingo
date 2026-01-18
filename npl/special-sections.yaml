@@ -1,4 +1,5 @@
 name: special-section
+slug: special-sections
 brief: Highest-precedence prompt sections for framework control
 description: |
   Special prompt sections that modify prompt behavior and establish framework boundaries, agent declarations, runtime configurations, and template definitions.
@@ -16,9 +17,9 @@ components:
       - framework
       - extension
       - configuration
-    import:
-      - omission
-      - qualifier
+    require:
+      - syntax.omission
+      - syntax.qualifier
     examples:
       - name: basic-extension
         brief: Simple syntax addition
@@ -84,6 +85,7 @@ components:
               [200] User object returned
               [404] User not found
               [401] Authentication required
+
   - name: agent-declaration
     syntax: |
       ⌜agent-name|type|NPL@version⌝
@@ -95,9 +97,9 @@ components:
       - agent
       - definition
       - block
-    import:
-      - omission
-      - qualifier
+    require:
+      - syntax.omission
+      - syntax.qualifier
     examples:
       - name: basic-agent
         brief: Simple agent definition
@@ -201,9 +203,9 @@ components:
       - configuration
       - flags
       - modifier
-    import:
-      - omission
-      - qualifier
+    require:
+      - syntax.omission
+      - syntax.qualifier
     examples:
       - name: basic-flags
         brief: Simple runtime flags
@@ -287,9 +289,9 @@ components:
       - security
       - immutable
       - priority
-    import:
-      - omission
-      - qualifier
+    require:
+      - syntax.omission
+      - syntax.qualifier
     examples:
       - name: basic-secure
         brief: Simple security constraints
@@ -374,9 +376,9 @@ components:
       - template
       - reusable
       - block
-    import:
-      - omission
-      - qualifier
+    require:
+      - syntax.omission
+      - syntax.qualifier
     examples:
       - name: basic-template
         brief: Simple named template

@@ -1,7 +1,20 @@
-npl:
+/npl:
   version: 1.0
   description: |
     A modular, structured framework for advanced prompt engineering and agent simulation with context-aware loading capabilities.
+
+  # Section output order for formatted output
+  # Same order is used for both components and instructional notes
+  section_order:
+    components:
+      - syntax
+      - declarations
+      - directives
+      - prefixes
+      - prompt-sections
+      - special-sections
+      - pumps
+
   concepts:
     - name: npl-declaration
       description: |

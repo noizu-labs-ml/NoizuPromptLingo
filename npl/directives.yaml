@@ -1,4 +1,5 @@
-name: directive
+name: directives
+slug: directives
 brief: Specialized instruction patterns for agent behavior control
 description: |
   Specialized instruction patterns for precise agent behavior modification and output control using structured command syntax with emoji prefixes.
@@ -13,9 +14,9 @@ components:
       - formatting
       - output
       - inline
-    import:
-      - placeholder
-      - qualifier
+    require:
+      - syntax.placeholder
+      - syntax.qualifier
     examples:
       - name: basic-table
         brief: Simple table directive
@@ -80,9 +81,9 @@ components:
       - diagram
       - output
       - inline
-    import:
-      - placeholder
-      - qualifier
+    require:
+      - syntax.placeholder
+      - syntax.qualifier
     examples:
       - name: basic-diagram
         brief: Simple diagram directive
@@ -216,9 +217,9 @@ components:
       - template
       - integration
       - inline
-    import:
-      - placeholder
-      - named-template
+    require:
+      - syntax.placeholder
+      - special-sections.named-template
     examples:
       - name: basic-template
         brief: Simple template directive
@@ -478,8 +479,8 @@ components:
       - reference
       - navigation
       - inline
-    import:
-      - placeholder
+    require:
+      - syntax.placeholder
     examples:
       - name: basic-reference
         brief: Simple section reference
@@ -552,8 +553,8 @@ components:
       - instruction
       - priority
       - inline
-    import:
-      - qualifier
+    require:
+      - syntax.qualifier
     examples:
       - name: basic-instruction
         brief: Simple explicit instruction
@@ -618,8 +619,8 @@ components:
       - task
       - tracking
       - inline
-    import:
-      - qualifier
+    require:
+      - syntax.qualifier
     examples:
       - name: basic-task
         brief: Simple task directive

@@ -30,6 +30,9 @@ components:
       - block
       - framework
       - version-control
+    references:
+      - declarations.npl-declaration
+      - syntax.omission
     examples:
       - name: Basic Framework Declaration
         slug: basic-framework-declaration
@@ -60,16 +63,19 @@ components:
     brief: Extend an existing framework version
     purpose: |
       Adds supplemental rules or capabilities to a previously declared version without altering
-      the original block. Extensions inherit the base version’s constraints and may introduce
+      the original block. Extensions inherit the base version's constraints and may introduce
       new qualifiers, size‑indicators or processing flags.
     description: |
       Adds supplemental rules or capabilities to a previously declared version without altering
-      the original block. Extensions inherit the base version’s constraints and may introduce
+      the original block. Extensions inherit the base version's constraints and may introduce
       new qualifiers, size‑indicators or processing flags.
     labels:
       - block
       - framework
       - version-control
+    references:
+      - special-sections.npl-extension
+      - syntax.qualifier
     examples:
       - name: Simple Extension Prompt
         slug: simple-extension-prompt
@@ -314,7 +320,6 @@ instructional:
       Provides the concrete rules that dictate how version blocks interact, what may
       override what, and how incompatibilities are detected.
     content: |
-      ### Version Control Rules
       | Rule                     | Explanation                                                                                                                                            |
       |--------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
       | **Immutable boundaries**| Once a `⌜NPL@X.Y⌝ … ⌞NPL@X.Y⌟` block is parsed, its rules cannot be altered later in the same prompt.                                              |
@@ -323,11 +328,11 @@ instructional:
     labels:
       - framework
       - version-control
-    related:
-      - npl-declaration
-      - framework-extension
-      - agent-declaration
-      - agent-extension
+    references:
+      - declarations.npl-declaration
+      - declarations.framework-extension
+      - declarations.agent-declaration
+      - declarations.agent-extension
 
   # ----------------------------------------------------------------------
   # Framework Scope & Inheritance – conceptual‑explanation
@@ -343,7 +348,6 @@ instructional:
       Outlines how declaration blocks establish the environment for all subsequent
       components and how extensions inherit from their parent version.
     content: |
-      ### Framework Scope & Inheritance
       * **Operational Scope** – The declaration block defines *what* syntax elements,
         qualifiers, and processing rules are available for the session. Extensions
         extend/alter these rules; agents define self‑container agents and agent
@@ -357,11 +361,11 @@ instructional:
       - framework
       - inheritance
       - scope
-    related:
-      - npl-declaration
-      - framework-extension
-      - agent-declaration
-      - agent-extension
+    references:
+      - declarations.npl-declaration
+      - declarations.framework-extension
+      - declarations.agent-declaration
+      - declarations.agent-extension
 
   # ----------------------------------------------------------------------
   # Implementation Guidelines – best‑practice
@@ -398,11 +402,11 @@ instructional:
       - implementation
       - placement
       - versioning
-    related:
-      - npl-declaration
-      - framework-extension
-      - agent-declaration
-      - agent-extension
+    references:
+      - declarations.npl-declaration
+      - declarations.framework-extension
+      - declarations.agent-declaration
+      - declarations.agent-extension
 
   # ----------------------------------------------------------------------
   # Agent Lifecycle Overview – lifecycle
@@ -426,9 +430,9 @@ instructional:
     labels:
       - agent
       - lifecycle
-    related:
-      - agent-declaration
-      - agent-extension
+    references:
+      - declarations.agent-declaration
+      - declarations.agent-extension
 
   # ----------------------------------------------------------------------
   # Best Practices for Declaration Prompts – best‑practice
@@ -456,7 +460,7 @@ instructional:
       - agent
       - definition
       - quality
-    related:
-      - agent-declaration
-      - npl-declaration
-      - framework-extension
+    references:
+      - declarations.agent-declaration
+      - declarations.npl-declaration
+      - declarations.framework-extension

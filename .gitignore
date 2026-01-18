@@ -6,3 +6,7 @@ worktrees
 mcp-server
 *.egg-info/
 build/
+output/
+out/
+.tmp/
+.next/

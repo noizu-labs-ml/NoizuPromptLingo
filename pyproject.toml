@@ -13,8 +13,13 @@ dependencies = [
 npl-loader = "tools.npl_loader:main"
 
 [tool.setuptools]
-packages = ["npl_mcp", "tools"]
+packages = ["npl_mcp", "tools", "tools.npl"]
 py-modules = []
 
 [tool.setuptools.package-data]
 "*" = ["*.yaml", "*.md"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]
