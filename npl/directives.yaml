@@ -20,7 +20,7 @@ components:
       - name: basic-table
         brief: Simple table directive
         description: Basic table formatting with column specification.
-        level: 0
+        priority: 0
         purpose: Demonstrates basic table directive
         labels:
           - "⟪▦:⟫"
@@ -29,7 +29,7 @@ components:
       - name: table-with-output
         brief: Table with result
         description: Table directive with formatted output.
-        level: 1
+        priority: 1
         purpose: Shows table directive with output
         labels:
           - "⟪▦:⟫"
@@ -48,7 +48,7 @@ components:
       - name: complex-table
         brief: Table with label and alignments
         description: Table with custom label and multiple alignment options.
-        level: 2
+        priority: 2
         purpose: Demonstrates full table syntax
         labels:
           - "⟪▦:⟫"
@@ -87,7 +87,7 @@ components:
       - name: basic-diagram
         brief: Simple diagram directive
         description: Basic diagram generation with engine and type.
-        level: 0
+        priority: 0
         purpose: Demonstrates basic diagram directive
         labels:
           - "⟪📊:⟫"
@@ -96,7 +96,7 @@ components:
       - name: diagram-with-output
         brief: Diagram with result
         description: Diagram directive with generated output.
-        level: 1
+        priority: 1
         purpose: Shows diagram directive with output
         labels:
           - "⟪📊:⟫"
@@ -117,7 +117,7 @@ components:
       - name: multi-engine-diagrams
         brief: Multiple diagram engines
         description: Diagram generation with different engines.
-        level: 2
+        priority: 2
         purpose: Demonstrates various diagram engines
         labels:
           - "⟪📊:⟫"
@@ -158,7 +158,7 @@ components:
       - name: basic-temporal
         brief: Simple time directive
         description: Basic time-based scheduling.
-        level: 0
+        priority: 0
         purpose: Demonstrates basic temporal directive
         labels:
           - "⟪⏳:⟫"
@@ -167,7 +167,7 @@ components:
       - name: temporal-with-output
         brief: Temporal with scheduled action
         description: Temporal directive with action confirmation.
-        level: 1
+        priority: 1
         purpose: Shows temporal directive with output
         labels:
           - "⟪⏳:⟫"
@@ -185,7 +185,7 @@ components:
       - name: complex-temporal
         brief: Multiple temporal conditions
         description: Various temporal constraint patterns.
-        level: 2
+        priority: 2
         purpose: Demonstrates various temporal patterns
         labels:
           - "⟪⏳:⟫"
@@ -223,7 +223,7 @@ components:
       - name: basic-template
         brief: Simple template directive
         description: Basic template integration.
-        level: 0
+        priority: 0
         purpose: Demonstrates basic template directive
         labels:
           - "⟪⇆:⟫"
@@ -232,7 +232,7 @@ components:
       - name: template-with-output
         brief: Template with result
         description: Template directive with rendered output.
-        level: 1
+        priority: 1
         purpose: Shows template directive with output
         labels:
           - "⟪⇆:⟫"
@@ -252,7 +252,7 @@ components:
       - name: template-with-loop
         brief: Template in iteration
         description: Template applied with foreach loop.
-        level: 2
+        priority: 2
         purpose: Demonstrates template with iteration
         labels:
           - "⟪⇆:⟫"
@@ -295,7 +295,7 @@ components:
       - name: basic-interactive
         brief: Simple interactive directive
         description: Basic user action trigger.
-        level: 0
+        priority: 0
         purpose: Demonstrates basic interactive directive
         labels:
           - "⟪🚀:⟫"
@@ -304,7 +304,7 @@ components:
       - name: interactive-with-output
         brief: Interactive with response
         description: Interactive directive with behavior definition.
-        level: 1
+        priority: 1
         purpose: Shows interactive directive with output
         labels:
           - "⟪🚀:⟫"
@@ -323,7 +323,7 @@ components:
       - name: complex-interactive
         brief: Multiple interaction patterns
         description: Various interactive behavior types.
-        level: 2
+        priority: 2
         purpose: Demonstrates various interactive patterns
         labels:
           - "⟪🚀:⟫"
@@ -358,7 +358,7 @@ components:
       - name: basic-identifier
         brief: Simple identifier directive
         description: Basic ID generation request.
-        level: 0
+        priority: 0
         purpose: Demonstrates basic identifier directive
         labels:
           - "⟪🆔:⟫"
@@ -367,7 +367,7 @@ components:
       - name: identifier-with-output
         brief: Identifier with result
         description: Identifier directive with generated output.
-        level: 1
+        priority: 1
         purpose: Shows identifier directive with output
         labels:
           - "⟪🆔:⟫"
@@ -384,7 +384,7 @@ components:
       - name: multi-identifier
         brief: Multiple ID types
         description: Various identifier generation patterns.
-        level: 2
+        priority: 2
         purpose: Demonstrates various identifier types
         labels:
           - "⟪🆔:⟫"
@@ -419,7 +419,7 @@ components:
       - name: basic-note
         brief: Simple explanatory note
         description: Basic annotation for context.
-        level: 0
+        priority: 0
         purpose: Demonstrates basic explanatory directive
         labels:
           - "⟪📖:⟫"
@@ -428,7 +428,7 @@ components:
       - name: note-with-output
         brief: Note with contextual action
         description: Explanatory note applied to task.
-        level: 1
+        priority: 1
         purpose: Shows explanatory note with output
         labels:
           - "⟪📖:⟫"
@@ -448,7 +448,7 @@ components:
       - name: multi-note-context
         brief: Multiple contextual notes
         description: Multiple annotations for comprehensive guidance.
-        level: 2
+        priority: 2
         purpose: Demonstrates multiple explanatory notes
         labels:
           - "⟪📖:⟫"
@@ -484,7 +484,7 @@ components:
       - name: basic-reference
         brief: Simple section reference
         description: Basic section marker for referencing.
-        level: 0
+        priority: 0
         purpose: Demonstrates basic section reference directive
         labels:
           - "⟪📂:{id}⟫"
@@ -493,7 +493,7 @@ components:
       - name: reference-with-output
         brief: Reference with cross-linking
         description: Section reference with navigation context.
-        level: 1
+        priority: 1
         purpose: Shows section reference with output
         labels:
           - "⟪📂:{id}⟫"
@@ -517,7 +517,7 @@ components:
       - name: document-structure-refs
         brief: Full document with references
         description: Hierarchical document with section markers.
-        level: 2
+        priority: 2
         purpose: Demonstrates document structure referencing
         labels:
           - "⟪📂:{id}⟫"
@@ -558,7 +558,7 @@ components:
       - name: basic-instruction
         brief: Simple explicit instruction
         description: Basic instruction with elaboration.
-        level: 0
+        priority: 0
         purpose: Demonstrates basic explicit instruction directive
         labels:
           - "⟪➤:⟫"
@@ -567,7 +567,7 @@ components:
       - name: instruction-with-output
         brief: Instruction with result
         description: Explicit instruction with executed output.
-        level: 1
+        priority: 1
         purpose: Shows explicit instruction with output
         labels:
           - "⟪➤:⟫"
@@ -586,7 +586,7 @@ components:
       - name: combined-instructions
         brief: Instructions with other directives
         description: Explicit instructions combined with other directives.
-        level: 2
+        priority: 2
         purpose: Demonstrates instruction combinations
         labels:
           - "⟪➤:⟫"
@@ -624,7 +624,7 @@ components:
       - name: basic-task
         brief: Simple task directive
         description: Basic task definition.
-        level: 0
+        priority: 0
         purpose: Demonstrates basic task directive
         labels:
           - "⟪⬜:⟫"
@@ -633,7 +633,7 @@ components:
       - name: task-with-output
         brief: Task with tracking
         description: Task directive with status tracking.
-        level: 1
+        priority: 1
         purpose: Shows task directive with output
         labels:
           - "⟪⬜:⟫"
@@ -652,7 +652,7 @@ components:
       - name: task-checklist
         brief: Multiple tasks with dependencies
         description: Task list with relationships and conditions.
-        level: 2
+        priority: 2
         purpose: Demonstrates task list patterns
         labels:
           - "⟪⬜:⟫"

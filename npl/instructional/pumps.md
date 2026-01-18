@@ -1,12 +1,14 @@
-# Planning & Thinking Patterns (Pumps)
-<!-- labels: [pumps, reasoning, transparency] -->
+# Planning & Reasoning Pumps
+<!-- labels: [pumps, planning, reasoning, transparency] -->
 
 Structured reasoning techniques and intuition pumps that guide problem-solving, response construction, and analytical thinking within NPL framework operations.
 
-<!-- instructional: conceptual-explanation | level: 0 | labels: [pumps, overview] -->
+<!-- instructional: conceptual-explanation | level: 0 | labels: [pumps, planning, overview] -->
 ## Overview
 
 NPL pumps are cognitive tools that enable agents to demonstrate transparent reasoning processes, structured problem-solving, and reflective analysis. These patterns enhance the interpretability and reliability of agent responses by providing clear insight into decision-making processes.
+
+Planning in NPL encompasses structured reasoning techniques, thinking patterns, and cognitive frameworks that guide agents through complex problem-solving processes. These patterns provide systematic approaches to breaking down problems, analyzing solutions, and constructing well-reasoned responses.
 
 **Convention**: Pumps are implemented using XHTML tags (`<npl-type>`) for consistent formatting and structured data representation.
 
@@ -1545,6 +1547,106 @@ Agent Status: @research-assistant [analyzing conflicting data]
 
 ---
 
+<!-- instructional: integration-pattern | level: 1 | labels: [integration, agents] -->
+## Agent Integration Patterns
+
+### Planning with Agent Behaviors
+<!-- level: 1 -->
+```example
+⌜analyst-agent|service|NPL@1.0⌝
+# Data Analyst Agent
+Provides structured analysis with built-in reasoning transparency.
+
+## Default Response Pattern
+All responses should include:
+1. <npl-intent> block outlining analysis approach
+2. <npl-cot> for complex data interpretation
+3. <npl-reflection> for quality assessment
+
+⌞analyst-agent⌟
+```
+
+<!-- instructional: decision-guide | level: 1 | labels: [conditional, selection] -->
+### Conditional Pump Application
+
+Apply planning patterns based on:
+- Query complexity level
+- User request for transparency
+- Debugging or development mode
+- Agent learning phases
+
+---
+
+<!-- instructional: usage-guideline | level: 1 | labels: [configuration, runtime] -->
+## Planning Pattern Configuration
+
+### Runtime Flags for Planning
+```syntax
+⌜🏳️
+🏳️planning.intent_blocks = conditional
+🏳️planning.reflection_mode = learning
+🏳️planning.cot_verbosity = detailed
+⌟
+```
+
+### Agent-Specific Planning Settings
+```syntax
+🏳️@research_agent.planning.reflection_required = true
+🏳️@simple_agent.planning.intent_minimal = true
+```
+
+---
+
+<!-- instructional: lifecycle | level: 2 | labels: [complex, multi-stage] -->
+## Complex Reasoning Structures
+
+### Multi-Stage Problem Solving
+
+| Stage | Action |
+|-------|--------|
+| 1. Problem Decomposition | Break into manageable components |
+| 2. Solution Exploration | Identify possible approaches |
+| 3. Option Evaluation | Assess trade-offs and constraints |
+| 4. Implementation Planning | Structure execution steps |
+| 5. Outcome Validation | Verify solution effectiveness |
+
+### Collaborative Reasoning
+<!-- level: 2 -->
+```example
+<npl-panel>
+perspectives:
+  - role: "Technical Expert"
+    viewpoint: "Implementation feasibility and constraints"
+  - role: "User Experience Designer"
+    viewpoint: "Usability and user impact"
+  - role: "Business Analyst"
+    viewpoint: "Cost-benefit and strategic alignment"
+consensus: "Integrated recommendation considering all viewpoints"
+</npl-panel>
+```
+
+---
+
+<!-- instructional: best-practice | level: 1 | labels: [quality, validation] -->
+## Quality Assurance in Planning
+
+### Reasoning Validation
+
+| Check | Purpose |
+|-------|---------|
+| Logical Consistency | Ensure steps follow logically |
+| Completeness | Verify all aspects addressed |
+| Assumption Validation | Identify and verify assumptions |
+| Alternative Consideration | Explore other approaches |
+
+### Error Detection and Correction
+- Identifying reasoning gaps
+- Correcting logical errors
+- Updating conclusions based on new information
+- Learning from mistakes for future improvement
+
+---
+
 <!-- instructional: usage-guideline | level: 1 | labels: [implementation, guidance] -->
 ## Implementation Guidelines
 
@@ -1567,6 +1669,16 @@ Agent Status: @research-assistant [analyzing conflicting data]
 | Transparent planning | `npl-intent` |
 | Exploratory thinking | `npl-tangent` |
 | Emotional engagement | `npl-mood` |
+
+<!-- instructional: usage-guideline | level: 1 | labels: [layered, workflow] -->
+### Layered Reasoning Approaches
+
+| Stage | Pattern | Purpose |
+|-------|---------|---------|
+| 1 | Intent | Document planned approach |
+| 2 | Chain of Thought | Execute structured reasoning |
+| 3 | Critique | Evaluate solution quality |
+| 4 | Reflection | Learn for future improvements |
 
 ### Combination Patterns
 
@@ -1591,3 +1703,8 @@ Pumps can be combined for comprehensive analysis:
 ```
 
 ---
+
+## See Also
+
+- `npl/instructional/declarations.md` - Agent definitions and behaviors
+- `npl/npl.md` - Main NPL specification document

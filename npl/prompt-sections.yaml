@@ -22,7 +22,7 @@ components:
       - name: basic-example
         brief: Simple example fence
         description: Demonstrates basic example block syntax.
-        level: 0
+        priority: 0
         purpose: Shows fundamental example fence usage
         labels:
           - "```example"
@@ -33,7 +33,7 @@ components:
       - name: example-with-application
         brief: Example guiding output
         description: Shows example content being applied to generate output.
-        level: 1
+        priority: 1
         purpose: Demonstrates example block influencing generation
         labels:
           - "```example"
@@ -51,7 +51,7 @@ components:
       - name: multi-example-patterns
         brief: Multiple example patterns
         description: Multiple examples showing different patterns with expected output.
-        level: 2
+        priority: 2
         purpose: Demonstrates example blocks covering multiple cases
         labels:
           - "```example"
@@ -86,7 +86,7 @@ components:
       - name: basic-note
         brief: Simple note fence
         description: Demonstrates basic note block syntax.
-        level: 0
+        priority: 0
         purpose: Shows fundamental note fence usage
         labels:
           - "```note"
@@ -97,7 +97,7 @@ components:
       - name: note-with-context
         brief: Note providing generation context
         description: Shows note providing context that influences output.
-        level: 1
+        priority: 1
         purpose: Demonstrates note affecting response behavior
         labels:
           - "```note"
@@ -114,7 +114,7 @@ components:
       - name: multi-note-guidance
         brief: Multiple notes with attention
         description: Combines multiple notes with attention markers for comprehensive guidance.
-        level: 2
+        priority: 2
         purpose: Demonstrates notes with 🎯 attention markers
         labels:
           - "```note"
@@ -152,7 +152,7 @@ components:
       - name: basic-diagram
         brief: Simple box-and-arrow
         description: Demonstrates basic diagram fence with arrow notation.
-        level: 0
+        priority: 0
         purpose: Shows fundamental diagram syntax
         labels:
           - "```diagram"
@@ -165,7 +165,7 @@ components:
       - name: diagram-with-output
         brief: Diagram describing a process
         description: Shows diagram used to describe a workflow that guides output.
-        level: 1
+        priority: 1
         purpose: Demonstrates diagram influencing response structure
         labels:
           - "```diagram"
@@ -190,7 +190,7 @@ components:
       - name: multi-diagram-styles
         brief: Multiple diagram styles
         description: Combines box-arrow, tree, and Mermaid diagram styles.
-        level: 2
+        priority: 2
         purpose: Demonstrates various diagram notations together
         labels:
           - "```diagram"
@@ -245,7 +245,7 @@ components:
       - name: basic-syntax
         brief: Simple syntax definition
         description: Demonstrates basic syntax fence for defining patterns.
-        level: 0
+        priority: 0
         purpose: Shows fundamental syntax block usage
         labels:
           - "```syntax"
@@ -256,7 +256,7 @@ components:
       - name: syntax-with-application
         brief: Syntax guiding generation
         description: Shows syntax definition being applied to generate valid output.
-        level: 1
+        priority: 1
         purpose: Demonstrates syntax block constraining output
         labels:
           - "```syntax"
@@ -276,7 +276,7 @@ components:
       - name: multi-syntax-definitions
         brief: Multiple syntax patterns
         description: Combines multiple syntax definitions with examples.
-        level: 2
+        priority: 2
         purpose: Demonstrates comprehensive syntax documentation
         labels:
           - "```syntax"
@@ -315,7 +315,7 @@ components:
       - name: basic-format
         brief: Simple output format
         description: Demonstrates basic format fence with placeholders and in-fill.
-        level: 0
+        priority: 0
         purpose: Shows fundamental format block usage
         labels:
           - "```format"
@@ -331,7 +331,7 @@ components:
       - name: format-with-output
         brief: Format shaping response
         description: Shows format specification producing structured output.
-        level: 1
+        priority: 1
         purpose: Demonstrates format constraining output structure
         labels:
           - "```format"
@@ -356,7 +356,7 @@ components:
       - name: complex-format
         brief: Format with tables and iteration
         description: Combines table format with foreach iteration patterns.
-        level: 2
+        priority: 2
         purpose: Demonstrates advanced format with multiple elements
         labels:
           - "```format"
@@ -408,7 +408,7 @@ components:
       - name: basic-template
         brief: Simple placeholder template
         description: Demonstrates basic template with placeholders.
-        level: 0
+        priority: 0
         purpose: Shows fundamental template syntax
         labels:
           - "```template"
@@ -422,7 +422,7 @@ components:
       - name: template-with-output
         brief: Template with data substitution
         description: Shows template producing output from provided data.
-        level: 1
+        priority: 1
         purpose: Demonstrates template placeholder substitution
         labels:
           - "```template"
@@ -448,7 +448,7 @@ components:
       - name: complex-template
         brief: Conditional and nested iteration
         description: Combines if/else logic with foreach and context variables.
-        level: 2
+        priority: 2
         purpose: Demonstrates advanced template features
         labels:
           - "```template"
@@ -493,7 +493,7 @@ components:
       - name: basic-alg
         brief: Simple algorithm specification
         description: Demonstrates basic alg fence with procedure syntax.
-        level: 0
+        priority: 0
         purpose: Shows fundamental algorithm block
         labels:
           - "```alg"
@@ -512,7 +512,7 @@ components:
       - name: alg-with-trace
         brief: Algorithm with execution trace
         description: Shows algorithm specification with traced execution.
-        level: 1
+        priority: 1
         purpose: Demonstrates algorithm guiding computation
         labels:
           - "```alg"
@@ -545,7 +545,7 @@ components:
       - name: multi-procedure-alg
         brief: Multiple procedures with complexity
         description: Combines multiple procedures with complexity analysis.
-        level: 2
+        priority: 2
         purpose: Demonstrates complex algorithm specification
         labels:
           - "```alg"
@@ -613,7 +613,7 @@ components:
       - name: basic-pseudo
         brief: Simple pseudocode
         description: Demonstrates basic alg-pseudo fence with BEGIN/END structure.
-        level: 0
+        priority: 0
         purpose: Shows fundamental pseudocode block
         labels:
           - "```alg-pseudo"
@@ -636,7 +636,7 @@ components:
       - name: pseudo-with-execution
         brief: Pseudocode with execution
         description: Shows pseudocode being executed step by step.
-        level: 1
+        priority: 1
         purpose: Demonstrates pseudocode guiding computation
         labels:
           - "```alg-pseudo"
@@ -672,7 +672,7 @@ components:
       - name: complex-pseudo
         brief: Multi-branch conditional logic
         description: Combines loops, conditionals, and multiple return paths.
-        level: 2
+        priority: 2
         purpose: Demonstrates complex pseudocode patterns
         labels:
           - "```alg-pseudo"
@@ -740,7 +740,7 @@ components:
       - name: basic-artifact
         brief: Simple code artifact
         description: Demonstrates basic artifact fence with type and metadata.
-        level: 0
+        priority: 0
         purpose: Shows fundamental artifact block
         labels:
           - "```artifact"
@@ -756,7 +756,7 @@ components:
       - name: artifact-with-output
         brief: Artifact generation from request
         description: Shows artifact being generated in response to a request.
-        level: 1
+        priority: 1
         purpose: Demonstrates artifact creation in context
         labels:
           - "```artifact"
@@ -780,7 +780,7 @@ components:
       - name: multi-artifact
         brief: Multiple artifact types
         description: Shows different artifact types being used together.
-        level: 2
+        priority: 2
         purpose: Demonstrates various artifact type options
         labels:
           - "```artifact"
@@ -838,7 +838,7 @@ components:
       - name: basic-logic
         brief: Simple propositional logic
         description: Demonstrates basic logic fence with connectives.
-        level: 0
+        priority: 0
         purpose: Shows fundamental logic block
         labels:
           - "```logic"
@@ -851,7 +851,7 @@ components:
       - name: logic-with-evaluation
         brief: Logic expression evaluation
         description: Shows logical expression being evaluated.
-        level: 1
+        priority: 1
         purpose: Demonstrates logic constraining behavior
         labels:
           - "```logic"
@@ -877,7 +877,7 @@ components:
       - name: complex-logic
         brief: Nested quantifiers and predicates
         description: Combines universal and existential quantifiers with multiple predicates.
-        level: 2
+        priority: 2
         purpose: Demonstrates complex logical specifications
         labels:
           - "```logic"
@@ -922,7 +922,7 @@ components:
       - name: basic-hol
         brief: Simple predicate quantification
         description: Demonstrates basic hol fence with predicate quantification.
-        level: 0
+        priority: 0
         purpose: Shows fundamental higher-order logic block
         labels:
           - "```hol"
@@ -934,7 +934,7 @@ components:
       - name: hol-with-interpretation
         brief: HOL expression interpretation
         description: Shows higher-order logic expression being interpreted.
-        level: 1
+        priority: 1
         purpose: Demonstrates HOL guiding reasoning
         labels:
           - "```hol"
@@ -960,7 +960,7 @@ components:
       - name: complex-hol
         brief: Polymorphic type reasoning
         description: Combines type variables with function quantification.
-        level: 2
+        priority: 2
         purpose: Demonstrates advanced HOL specifications
         labels:
           - "```hol"
@@ -1007,7 +1007,7 @@ components:
       - name: basic-latex
         brief: Simple equation
         description: Demonstrates basic latex fence with equation syntax.
-        level: 0
+        priority: 0
         purpose: Shows fundamental latex block
         labels:
           - "```latex"
@@ -1020,7 +1020,7 @@ components:
       - name: latex-with-calculation
         brief: Math expression evaluation
         description: Shows latex expression being computed.
-        level: 1
+        priority: 1
         purpose: Demonstrates latex guiding calculation
         labels:
           - "```latex"
@@ -1044,7 +1044,7 @@ components:
       - name: complex-latex
         brief: Piecewise and set notation
         description: Combines piecewise functions with set-builder notation.
-        level: 2
+        priority: 2
         purpose: Demonstrates advanced latex specifications
         labels:
           - "```latex"

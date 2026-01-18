@@ -1,0 +1,462 @@
+name: Declarations
+slug: declarations
+brief: Framework version boundaries and rule establishment for NPL
+description: |
+  How to declare the NPL framework definition, agent definitions and extensions used in a session.
+  Declaration blocks set immutable version boundaries, define core syntax elements, constraints
+  and behaviours, and provide a clear operational context for agents, extensions and runtime flags.
+
+components:
+  - name: NPL Declaration
+    slug: npl-declaration
+    syntax:
+      - name: block-declaration
+        syntax: |
+          <npl-declaration type="npl-definition">
+          ⌜NPL@{version.major.minor}⌝
+          [___]
+          ⌞NPL@{version.major.minor}⌟
+          </npl-declaration>
+    brief: Declare the core NPL framework version
+    purpose: |
+      Establishes immutable version boundaries, operational context and core rules for the NPL
+      prompt‑engineering framework. All subsequent elements inherit these constraints unless
+      explicitly overridden.
+    description: |
+      Establishes immutable version boundaries, operational context and core rules for the NPL
+      prompt‑engineering framework. All subsequent elements inherit these constraints unless
+      explicitly overridden.
+    labels:
+      - block
+      - framework
+      - version-control
+    examples:
+      - name: Basic Framework Declaration
+        slug: basic-framework-declaration
+        brief: Core version 0.1 declaration
+        priority: 0
+        labels:
+          - block
+          - framework
+          - version-control
+        example: |
+          <npl-declaration type="npl-definition">
+          ⌜NPL@0.1⌝
+          # Core NPL Framework Rules
+          [___|Framework‑specific rules and guidelines.]
+          ⌞NPL@0.1⌟
+          </npl-declaration>
+
+  - name: Framework Extension
+    slug: framework-extension
+    syntax:
+      - name: extend-declaration
+        syntax: |
+          <npl-declaration type="npl-extension">
+          ⌜extend:NPL@{version.major.minor}⌝
+          [___]
+          ⌞extend:NPL@{version.major.minor}⌟
+          </npl-declaration>
+    brief: Extend an existing framework version
+    purpose: |
+      Adds supplemental rules or capabilities to a previously declared version without altering
+      the original block. Extensions inherit the base version’s constraints and may introduce
+      new qualifiers, size‑indicators or processing flags.
+    description: |
+      Adds supplemental rules or capabilities to a previously declared version without altering
+      the original block. Extensions inherit the base version’s constraints and may introduce
+      new qualifiers, size‑indicators or processing flags.
+    labels:
+      - block
+      - framework
+      - version-control
+    examples:
+      - name: Simple Extension Prompt
+        slug: simple-extension-prompt
+        brief: Extension adding a new qualifier
+        priority: 1
+        labels:
+          - block
+          - framework
+          - version-control
+        example: |
+          <npl-declaration type="npl-extension">
+          ⌜extend:NPL@0.1⌝
+          # New qualifier `tone`
+          [___|qualifier: `tone` – forces formal / informal tone.]
+          ⌞extend:NPL@0.1⌟
+          </npl-declaration>
+
+  - name: Agent Extension
+    slug: agent-extension
+    syntax:
+      - name: agent-extend-block
+        syntax: |
+          <npl-declaration type="agent-extension">
+          ⌜extend:<agent-name>|<type>|NPL@{version.major.minor}⌝
+          [___]
+          ⌞extend:<agent-name>⌟
+          </npl-declaration>
+    brief: Extend an existing agent's capabilities
+    purpose: |
+      Adds supplemental capabilities or behaviors to a previously declared agent
+      without altering the original definition.
+    description: |
+      Extends an agent's capabilities by adding new behaviors, commands, or
+      processing rules. The extension inherits the base agent's type and
+      framework version.
+    labels:
+      - block
+      - agent
+      - extension
+    examples:
+      - name: Sports Agent Extension
+        slug: sports-agent-extension
+        brief: Add historical data capability to sports agent
+        priority: 1
+        labels:
+          - block
+          - agent
+          - extension
+        example: |
+          <npl-declaration type="agent-extension">
+          ⌜extend:sports-news-agent|service|NPL@0.1⌝
+          Enhances the agent's capability to provide historical sports facts.
+
+          ## Additional Capabilities
+          - Historical sports statistics and records
+          - Sports trivia and milestone events
+          - Cross-sport comparative analysis
+          ⌞extend:sports-news-agent⌟
+          </npl-declaration>
+
+  - name: Agent Declaration
+    slug: agent-declaration
+    syntax:
+      - name: agent-block
+        syntax: |
+          <npl-declaration type="agent-definition">
+          ⌜<agent-name>|<type>|NPL@{version.major.minor}⌝
+          # <Agent Name>
+          <description>
+          [___|behavioral specifications]
+          ⌞<agent-name>⌟
+          </npl-declaration>
+    brief: Define a concrete agent (persona, tool or service)
+    purpose: |
+      Declares an agent that operates under a given framework version and classifies it as a
+      persona, tool, or service. The block includes a description and optional behavioural
+      specifications.
+    description: |
+      Declares an agent that operates under a given framework version. The **type** field classifies
+      the agent by its functional role:
+        * **persona** – emulates a real person or expert.
+        * **tool** – mimics an interactive command‑line tool.
+        * **service** – represents a hosted service such as a GitHub API, vector‑DB, memory store, etc.
+    labels:
+      - block
+      - agent
+      - definition
+    examples:
+      - name: Minimal Agent (Conditional Greeting)
+        slug: minimal-agent-greeting
+        brief: A tiny agent that switches greeting style based on a flag
+        priority: 0
+        labels:
+          - block
+          - agent
+          - conditional
+        example: |
+          <npl-declaration type="agent-definition">
+          ⌜pirate‑bot|persona|NPL@0.1⌝
+          # Pirate Bot
+          {{if @pirate.mode}}Argh matey, high noon to you{{else}}Hello,{{/if}}
+          [___|Flag `@pirate.mode` toggles pirate‑speak.]
+          ⌞pirate‑bot⌟
+          </npl-declaration>
+
+  - name: Persona Agent Declaration
+    slug: persona-agent-declaration
+    brief: Persona‑type agent that emulates a real person
+    purpose: |
+      Provides a human‑like voice, domain knowledge and behavioural quirks of a specific
+      individual. Used when a relatable, expert‑style tone is required.
+    description: |
+      Provides a human‑like voice, knowledge domain and behavioural quirks of a specific
+      individual (e.g., a senior developer, legal counsel, historian). Personas are used
+      when the interaction model benefits from a relatable, expert‑style tone.
+    labels:
+      - block
+      - agent
+      - persona
+    examples:
+      - name: Senior‑Dev Persona
+        slug: senior-dev-persona
+        brief: Senior software engineer persona
+        priority: 0
+        labels:
+          - block
+          - agent
+          - persona
+        example: |
+          <npl-declaration type="agent-definition">
+          ⌜mikiulus|persona|NPL@0.1⌝
+          # Mikiulus
+          Senior Software Engineer
+          An experienced backend engineer with a focus on scalability
+          and clean architecture.
+          
+          [___|Provide detailed design reviews, code critiques,
+          and architectural guidance.]
+          ⌞mikiulus⌟
+          </npl-declaration>
+
+  - name: Tool Agent Declaration
+    slug: tool-agent-declaration
+    brief: Tool‑type agent that emulates an interactive command‑line tool
+    purpose: |
+      Behaves like a deterministic utility that accepts commands and returns structured,
+      repeatable output. Ideal for automating routine operations within a prompt.
+    description: |
+      Behaves like a utility that accepts commands and returns deterministic output
+      (e.g., a git client, a calculator, a data‑import script). Tool agents expose a concise
+      command syntax and are ideal for automating repeatable operations within a prompt.
+    labels:
+      - block
+      - agent
+      - tool
+    examples:
+      - name: CLI‑Git Tool
+        slug: cli-git-tool
+        brief: Git command‑line emulator
+        priority: 0
+        labels:
+          - block
+          - agent
+          - tool
+        example: |
+          <npl-declaration type="agent-definition">
+          ⌜git-cli|tool|NPL@0.1⌝
+          # Git CLI Emulator
+          Interprets git commands and returns simulated repository
+          responses.
+          
+          [___|Supported commands: status, log, checkout, commit.]
+          ⌞git-cli⌟
+          </npl-declaration>
+
+  - name: Service Agent Declaration
+    slug: service-agent-declaration
+    brief: Service‑type agent that emulates a hosted service
+    purpose: |
+      Represents an external system and offers high‑level operations such as fetch,
+      store, or query while handling authentication internally.
+    description: |
+      Represents an external system (GitHub, vector database, memory store, etc.). Service agents
+      expose high‑level operations such as `fetch`, `store`, `query` and handle
+      authentication/authorization concerns internally.
+    labels:
+      - block
+      - agent
+      - service
+    examples:
+      - name: GitHub Service
+        slug: github-service
+        brief: Virtual GitHub service
+        priority: 0
+        labels:
+          - block
+          - agent
+          - service
+        example: |
+          <npl-declaration type="agent-definition">
+          ⌜github|service|NPL@0.1⌝
+          # GitHub Service
+          Provides repository listing, issue creation and pull‑request
+          management via simple directives.
+          
+          [___|Supported actions: list‑repos, create‑issue,
+          merge‑pr, query‑commits.]
+          ⌞github⌟
+          </npl-declaration>
+
+      - name: Vector‑DB Service
+        slug: vectordb-service
+        brief: Vector database service
+        priority: 0
+        labels:
+          - block
+          - agent
+          - service
+        example: |
+          <npl-declaration type="agent-definition">
+          ⌜vecdb|service|NPL@0.1⌝
+          # Vector DB Service
+          Stores and queries high‑dimensional embeddings for semantic
+          search.
+          
+          [___|Operations: upsert, similarity‑search, delete‑by‑id.]
+          ⌞vecdb⌟
+          </npl-declaration>
+
+instructional:
+  # ----------------------------------------------------------------------
+  # Version Control Rules – usage‑guideline
+  # ----------------------------------------------------------------------
+  - name: Version Control Rules
+    slug: version-control-rules
+    type: usage-guideline
+    brief: Rules governing declaration version handling and precedence
+    purpose: |
+      Explain the hierarchy and immutability guarantees so authors can structure
+      declarations safely.
+    description: |
+      Provides the concrete rules that dictate how version blocks interact, what may
+      override what, and how incompatibilities are detected.
+    content: |
+      ### Version Control Rules
+      | Rule                     | Explanation                                                                                                                                            |
+      |--------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
+      | **Immutable boundaries**| Once a `⌜NPL@X.Y⌝ … ⌞NPL@X.Y⌟` block is parsed, its rules cannot be altered later in the same prompt.                                              |
+      | **Precedence hierarchy**| 1️⃣ **Agent‑level declarations** (including extensions) override all other rules.<br>2️⃣ **Extension declarations** modify the base framework but still obey any higher‑level agent rules.<br>3️⃣ **Later declarations** (chronological order) win when they are at the same level.<br>4️⃣ **Explicit version references** (`@with NPL@X.Y`) force a specific version, ignoring later lower‑priority blocks. |
+      | **Compatibility checks**| *Agents* must declare the framework version they target; *extensions* must specify the exact version they extend. A mismatch triggers a clear compatibility warning. |
+    labels:
+      - framework
+      - version-control
+    related:
+      - npl-declaration
+      - framework-extension
+      - agent-declaration
+      - agent-extension
+
+  # ----------------------------------------------------------------------
+  # Framework Scope & Inheritance – conceptual‑explanation
+  # ----------------------------------------------------------------------
+  - name: Framework Scope & Inheritance
+    slug: framework-scope-inheritance
+    type: conceptual-explanation
+    brief: Explain the operational scope and rule inheritance model
+    purpose: |
+      Help authors understand what rules are automatically available to agents,
+      extensions and directives without needing to repeat them.
+    description: |
+      Outlines how declaration blocks establish the environment for all subsequent
+      components and how extensions inherit from their parent version.
+    content: |
+      ### Framework Scope & Inheritance
+      * **Operational Scope** – The declaration block defines *what* syntax elements,
+        qualifiers, and processing rules are available for the session. Extensions
+        extend/alter these rules; agents define self‑container agents and agent
+        extensions extend their definitions.
+      * **Rule Inheritance** – All child elements (agents, extensions, directives)
+        automatically inherit these rules unless they explicitly override them.
+      * **Constraint Enforcement** – During prompt processing, any syntax element that
+        is not permitted by the active declaration version is rejected with an
+        informative error message.
+    labels:
+      - framework
+      - inheritance
+      - scope
+    related:
+      - npl-declaration
+      - framework-extension
+      - agent-declaration
+      - agent-extension
+
+  # ----------------------------------------------------------------------
+  # Implementation Guidelines – best‑practice
+  # ----------------------------------------------------------------------
+  - name: Implementation Guidelines
+    slug: implementation-guidelines
+    type: best-practice
+    brief: Practical advice for placing and versioning declaration blocks
+    purpose: |
+      Show developers how to organise version, extension and agent blocks so that
+      parsing order and precedence behave predictably.
+    description: |
+      A checklist of concrete steps that keep declaration files tidy, maintainable and
+      future‑proof.
+    content: |
+      1. **Place the core framework declaration at the very top of the file.**
+         ```syntax
+         ⌜NPL@{version.major.minor}⌝
+         [___|core framework rules]
+         ⌞NPL@{version.major.minor}⌟
+         ```
+      2. **Declare each agent immediately before its first usage.**  
+         Guarantees the parser knows the agent’s capabilities when it appears.
+      3. **Add extensions *after* the base framework block but *before* any agents that will
+         use the extended capabilities.**
+      4. **Adopt semantic versioning** (`MAJOR.MINOR`). Keep backward compatibility within a
+         major version and document any breaking changes in the `Purpose` or
+         `Version Control Rules` sections.
+      5. **Validate early** – run a lightweight validation pass that checks version
+         compatibility and missing declarations before any heavy processing.
+      6. **Provide clear error messages** – include the offending block, the expected version,
+         and a short remediation hint.
+    labels:
+      - implementation
+      - placement
+      - versioning
+    related:
+      - npl-declaration
+      - framework-extension
+      - agent-declaration
+      - agent-extension
+
+  # ----------------------------------------------------------------------
+  # Agent Lifecycle Overview – lifecycle
+  # ----------------------------------------------------------------------
+  - name: Agent Lifecycle Overview
+    slug: agent-lifecycle-overview
+    type: lifecycle
+    brief: High‑level phases an agent goes through from creation to modification
+    purpose: |
+      Give readers a mental model of what happens when an agent block is parsed
+      and how it evolves during a conversation.
+    description: |
+      Describes the three macro‑stages that govern an agent’s existence within a prompt:
+      initialization, active operation, and extension/modification.
+    content: |
+      | Phase                | Steps                                                                                     | What Happens                                                                                 |
+      |----------------------|-------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------|
+      | **Initialization**   | 1️⃣ Declaration Processing<br>2️⃣ Capability Loading<br>3️⃣ Context Establishment<br>4️⃣ Alias Registration | The system parses the agent block, loads any referenced behaviours, sets up its execution context, and registers any communication aliases. |
+      | **Active Operation** | 1️⃣ Message Routing<br>2️⃣ Context Maintenance<br>3️⃣ Behavior Execution<br>4️⃣ Self‑Assessment | Incoming messages are dispatched, the internal state is preserved across turns, defined behaviours are executed, and optional reflection blocks are generated. |
+      | **Extension & Modification** | 1️⃣ Runtime Updates (flags)<br>2️⃣ Extension Loading<br>3️⃣ Capability Enhancement<br>4️⃣ Constraint Updates | Flags can toggle debug mode, add new extensions, augment capabilities, or tighten/relax constraints on the fly. |
+    labels:
+      - agent
+      - lifecycle
+    related:
+      - agent-declaration
+      - agent-extension
+
+  # ----------------------------------------------------------------------
+  # Best Practices for Declaration Prompts – best‑practice
+  # ----------------------------------------------------------------------
+  - name: Best Practices for Declaration Prompts
+    slug: best-practices-declaration-prompts
+    type: best-practice
+    brief: Quality‑focused advice for writing clear, maintainable declaration blocks
+    purpose: |
+      Help authors produce well‑structured, self‑documenting declaration sections that
+      avoid common pitfalls such as version drift and ambiguous capability listings.
+    description: |
+      A set of style and hygiene recommendations that improve readability,
+      debuggability and future extensibility of declaration files.
+    content: |
+      * **Clear, concise descriptions** – Summarise the agent’s purpose in one sentence; follow with bullet‑point capabilities if needed.
+      * **Explicit capability listing** – Enumerate supported commands, actions, or behaviours inside the `[___| …]` placeholder.
+      * **Consistent naming** – Use kebab‑case or snake_case for `agent-name`; avoid spaces and special characters.
+      * **Version alignment** – Ensure the version in the agent header (`|NPL@X.Y|`) matches the nearest enclosing `NPL@X.Y` declaration.
+      * **Flag hygiene** – Declare only those runtime flags that are required; respect the flag precedence order (response > agent > NPL > global).
+      * **Lifecycle design** – Anticipate state‑persistence needs; keep initialization lightweight and idempotent.
+      * **Error handling** – Include a fallback clause or default response for unsupported inputs; surface version‑mismatch warnings early.
+      * **Documentation** – Add a short `## See Also` section linking to related agents, extensions, or framework rules for quick navigation.
+    labels:
+      - agent
+      - definition
+      - quality
+    related:
+      - agent-declaration
+      - npl-declaration
+      - framework-extension

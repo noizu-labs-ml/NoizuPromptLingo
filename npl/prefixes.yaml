@@ -17,7 +17,7 @@ components:
       - name: basic-question
         brief: Simple factual query
         description: Direct question requiring a specific factual answer.
-        level: 0
+        priority: 0
         purpose: Demonstrates basic question-answering format
         labels:
           - "❓➤"
@@ -26,7 +26,7 @@ components:
       - name: question-with-output
         brief: Question with answer
         description: Question prefix with generated response.
-        level: 1
+        priority: 1
         purpose: Shows question-answering with output
         labels:
           - "❓➤"
@@ -41,7 +41,7 @@ components:
       - name: multi-question-thread
         brief: Multiple questions answered
         description: Multiple questions in sequence with responses.
-        level: 2
+        priority: 2
         purpose: Demonstrates chained question-answering
         labels:
           - "❓➤"
@@ -71,7 +71,7 @@ components:
       - name: basic-translation
         brief: Simple language translation
         description: Basic translation task between two specified languages.
-        level: 0
+        priority: 0
         purpose: Demonstrates basic translation prefix format
         labels:
           - "🌐➤"
@@ -80,7 +80,7 @@ components:
       - name: translation-with-output
         brief: Translation with result
         description: Translation prefix with generated output.
-        level: 1
+        priority: 1
         purpose: Shows translation with output
         labels:
           - "🌐➤"
@@ -95,7 +95,7 @@ components:
       - name: multi-language-translation
         brief: Multiple language translations
         description: Translation across multiple target languages.
-        level: 2
+        priority: 2
         purpose: Demonstrates multi-target translation
         labels:
           - "🌐➤"
@@ -125,7 +125,7 @@ components:
       - name: basic-classification
         brief: Simple classification task
         description: Basic classification into predefined categories.
-        level: 0
+        priority: 0
         purpose: Demonstrates basic classification prefix
         labels:
           - "🏷️➤"
@@ -134,7 +134,7 @@ components:
       - name: classification-with-output
         brief: Classification with result
         description: Classification prefix with labeled output.
-        level: 1
+        priority: 1
         purpose: Shows classification with output
         labels:
           - "🏷️➤"
@@ -149,7 +149,7 @@ components:
       - name: multi-label-classification
         brief: Multiple category labels
         description: Classification with multiple applicable labels.
-        level: 2
+        priority: 2
         purpose: Demonstrates multi-label classification
         labels:
           - "🏷️➤"
@@ -180,7 +180,7 @@ components:
       - name: basic-ner
         brief: Simple entity extraction
         description: Basic named entity recognition task.
-        level: 0
+        priority: 0
         purpose: Demonstrates basic NER prefix
         labels:
           - "👁️➤"
@@ -189,7 +189,7 @@ components:
       - name: ner-with-output
         brief: Entity extraction with result
         description: NER prefix with categorized output.
-        level: 1
+        priority: 1
         purpose: Shows NER with output
         labels:
           - "👁️➤"
@@ -208,7 +208,7 @@ components:
       - name: typed-entity-extraction
         brief: Specific entity types
         description: Entity extraction filtered by type.
-        level: 2
+        priority: 2
         purpose: Demonstrates typed entity extraction
         labels:
           - "👁️➤"
@@ -238,7 +238,7 @@ components:
       - name: basic-sentiment
         brief: Simple sentiment analysis
         description: Basic sentiment analysis task.
-        level: 0
+        priority: 0
         purpose: Demonstrates basic sentiment prefix
         labels:
           - "💡➤"
@@ -247,7 +247,7 @@ components:
       - name: sentiment-with-output
         brief: Sentiment with result
         description: Sentiment prefix with analysis output.
-        level: 1
+        priority: 1
         purpose: Shows sentiment analysis with output
         labels:
           - "💡➤"
@@ -264,7 +264,7 @@ components:
       - name: comparative-sentiment
         brief: Multiple text comparison
         description: Sentiment analysis comparing multiple inputs.
-        level: 2
+        priority: 2
         purpose: Demonstrates comparative sentiment analysis
         labels:
           - "💡➤"
@@ -298,7 +298,7 @@ components:
       - name: basic-conversation
         brief: Simple dialogue mode
         description: Basic conversational interaction task.
-        level: 0
+        priority: 0
         purpose: Demonstrates basic conversation prefix
         labels:
           - "💬➤"
@@ -307,7 +307,7 @@ components:
       - name: conversation-with-output
         brief: Dialogue with response
         description: Conversation prefix with dialogue output.
-        level: 1
+        priority: 1
         purpose: Shows conversation with output
         labels:
           - "💬➤"
@@ -322,7 +322,7 @@ components:
       - name: multi-turn-dialogue
         brief: Extended conversation
         description: Multi-turn conversational exchange.
-        level: 2
+        priority: 2
         purpose: Demonstrates multi-turn dialogue
         labels:
           - "💬➤"
@@ -350,7 +350,7 @@ components:
       - name: basic-summarization
         brief: Simple summary request
         description: Basic summarization task.
-        level: 0
+        priority: 0
         purpose: Demonstrates basic summarization prefix
         labels:
           - "📄➤"
@@ -359,7 +359,7 @@ components:
       - name: summarization-with-output
         brief: Summary with result
         description: Summarization prefix with condensed output.
-        level: 1
+        priority: 1
         purpose: Shows summarization with output
         labels:
           - "📄➤"
@@ -374,7 +374,7 @@ components:
       - name: structured-summary
         brief: Multi-section summary
         description: Summary with structured sections.
-        level: 2
+        priority: 2
         purpose: Demonstrates structured summarization
         labels:
           - "📄➤"
@@ -410,7 +410,7 @@ components:
       - name: basic-topic-modeling
         brief: Simple topic identification
         description: Basic topic extraction task.
-        level: 0
+        priority: 0
         purpose: Demonstrates basic topic modeling prefix
         labels:
           - "📊➤"
@@ -419,7 +419,7 @@ components:
       - name: topic-modeling-with-output
         brief: Topic extraction with result
         description: Topic modeling prefix with identified themes.
-        level: 1
+        priority: 1
         purpose: Shows topic modeling with output
         labels:
           - "📊➤"
@@ -438,7 +438,7 @@ components:
       - name: weighted-topic-analysis
         brief: Topic distribution analysis
         description: Topic modeling with weight/frequency analysis.
-        level: 2
+        priority: 2
         purpose: Demonstrates weighted topic analysis
         labels:
           - "📊➤"
@@ -474,7 +474,7 @@ components:
       - name: basic-tts
         brief: Simple text to speech
         description: Basic text-to-speech conversion task.
-        level: 0
+        priority: 0
         purpose: Demonstrates basic TTS prefix
         labels:
           - "🔊➤"
@@ -483,7 +483,7 @@ components:
       - name: tts-with-output
         brief: TTS with specification
         description: TTS prefix with audio description output.
-        level: 1
+        priority: 1
         purpose: Shows TTS with output
         labels:
           - "🔊➤"
@@ -502,7 +502,7 @@ components:
       - name: multi-voice-tts
         brief: Multiple voice synthesis
         description: TTS with multiple voice characters.
-        level: 2
+        priority: 2
         purpose: Demonstrates multi-voice TTS
         labels:
           - "🔊➤"
@@ -537,7 +537,7 @@ components:
       - name: basic-transcription
         brief: Simple speech to text
         description: Basic speech recognition task.
-        level: 0
+        priority: 0
         purpose: Demonstrates basic speech recognition prefix
         labels:
           - "🗣️➤"
@@ -546,7 +546,7 @@ components:
       - name: transcription-with-output
         brief: Transcription with result
         description: Speech recognition prefix with text output.
-        level: 1
+        priority: 1
         purpose: Shows speech recognition with output
         labels:
           - "🗣️➤"
@@ -564,7 +564,7 @@ components:
       - name: multi-speaker-transcription
         brief: Speaker-labeled transcription
         description: Transcription with speaker diarization.
-        level: 2
+        priority: 2
         purpose: Demonstrates speaker-labeled transcription
         labels:
           - "🗣️➤"
@@ -598,7 +598,7 @@ components:
       - name: basic-text-generation
         brief: Simple text generation
         description: Basic creative text generation task.
-        level: 0
+        priority: 0
         purpose: Demonstrates basic text generation prefix
         labels:
           - "🖋️➤"
@@ -607,7 +607,7 @@ components:
       - name: text-generation-with-output
         brief: Generation with result
         description: Text generation prefix with creative output.
-        level: 1
+        priority: 1
         purpose: Shows text generation with output
         labels:
           - "🖋️➤"
@@ -624,7 +624,7 @@ components:
       - name: constrained-generation
         brief: Generation with constraints
         description: Text generation with style and format constraints.
-        level: 2
+        priority: 2
         purpose: Demonstrates constrained text generation
         labels:
           - "🖋️➤"
@@ -653,7 +653,7 @@ components:
       - name: basic-code-generation
         brief: Simple code generation
         description: Basic code generation task.
-        level: 0
+        priority: 0
         purpose: Demonstrates basic code generation prefix
         labels:
           - "🖥️➤"
@@ -662,7 +662,7 @@ components:
       - name: code-generation-with-output
         brief: Code with result
         description: Code generation prefix with implementation output.
-        level: 1
+        priority: 1
         purpose: Shows code generation with output
         labels:
           - "🖥️➤"
@@ -685,7 +685,7 @@ components:
       - name: multi-language-code
         brief: Code in multiple languages
         description: Code generation with language comparison.
-        level: 2
+        priority: 2
         purpose: Demonstrates multi-language code generation
         labels:
           - "🖥️➤"
@@ -733,7 +733,7 @@ components:
       - name: basic-captioning
         brief: Simple image caption
         description: Basic image captioning task.
-        level: 0
+        priority: 0
         purpose: Demonstrates basic image captioning prefix
         labels:
           - "🖼️➤"
@@ -742,7 +742,7 @@ components:
       - name: captioning-with-output
         brief: Caption with result
         description: Image captioning prefix with descriptive output.
-        level: 1
+        priority: 1
         purpose: Shows image captioning with output
         labels:
           - "🖼️➤"
@@ -758,7 +758,7 @@ components:
       - name: structured-captioning
         brief: Multi-aspect image description
         description: Image captioning with structured elements.
-        level: 2
+        priority: 2
         purpose: Demonstrates structured image captioning
         labels:
           - "🖼️➤"
@@ -790,7 +790,7 @@ components:
       - name: basic-riddle
         brief: Simple riddle format
         description: Basic word riddle task.
-        level: 0
+        priority: 0
         purpose: Demonstrates basic riddle prefix
         labels:
           - "🗣️❓➤"
@@ -799,7 +799,7 @@ components:
       - name: riddle-with-output
         brief: Riddle with answer
         description: Riddle prefix with solution output.
-        level: 1
+        priority: 1
         purpose: Shows riddle with answer
         labels:
           - "🗣️❓➤"
@@ -815,7 +815,7 @@ components:
       - name: riddle-creation-thread
         brief: Create and solve riddles
         description: Riddle creation and solving exchange.
-        level: 2
+        priority: 2
         purpose: Demonstrates riddle creation and solving
         labels:
           - "🗣️❓➤"
@@ -846,7 +846,7 @@ components:
       - name: basic-extraction
         brief: Simple feature extraction
         description: Basic feature extraction task.
-        level: 0
+        priority: 0
         purpose: Demonstrates basic extraction prefix
         labels:
           - "🧪➤"
@@ -855,7 +855,7 @@ components:
       - name: extraction-with-output
         brief: Extraction with result
         description: Feature extraction prefix with structured output.
-        level: 1
+        priority: 1
         purpose: Shows extraction with output
         labels:
           - "🧪➤"
@@ -875,7 +875,7 @@ components:
       - name: pattern-extraction
         brief: Pattern-based extraction
         description: Feature extraction using pattern matching.
-        level: 2
+        priority: 2
         purpose: Demonstrates pattern-based extraction
         labels:
           - "🧪➤"

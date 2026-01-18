@@ -24,15 +24,23 @@ import: [dependencies]
 examples:
   - name: example-id
     brief: Short description
-    level: 0|1|2
+    priority: 0|1|2
     purpose: What this demonstrates
     labels: [syntax patterns]
-    example: |
+    example: |        # Priority 0 (required): raw prompt example
       Simple example text
-    thread:  # OR
+    thread:           # Priority 1-2: conversation demonstrating usage
       - role: system|user|assistant
         message: content
 ```
+
+### Priority Levels for Examples
+
+| Priority | Importance | Format | Description |
+|----------|------------|--------|-------------|
+| **0** | Highest (required) | `example:` | Essential example showing raw syntax usage |
+| **1** | High | `thread:` | Important system/assistant exchange demonstrating output |
+| **2** | Medium | `thread:` | Supplementary multi-turn conversation with user interaction |
 
 ## What Makes Content "Instructional" vs "Component-Like"
 
@@ -159,7 +167,7 @@ Examples from codebase:
 - name: agent-lifecycle
   type: lifecycle
   brief: Agent initialization, operation, and extension phases
-  level: 1
+  priority: 1
   content: |
     ## Initialization
     1. Declaration Processing - Parse agent definition and type
@@ -190,7 +198,7 @@ Examples from codebase:
 - name: multi-agent-coordination
   type: integration-pattern
   brief: Coordinating multiple agents for complex tasks
-  level: 2
+  priority: 2
   content: |
     ```example
     @search-agent find relevant documents
@@ -357,7 +365,7 @@ instructional:
       2. Capability Loading - Initialize behaviors
       ...
     related: [agent-declaration, runtime-flags]
-    level: 1
+    priority: 1
 ```
 
 ### Option B: `guidance` sections within components
@@ -390,7 +398,7 @@ instructional:
   - name: agent-types
     type: conceptual-explanation
     brief: Understanding service, tool, and person agents
-    level: 0
+    priority: 0
     content: |
       ## Agent Types
 
@@ -401,7 +409,7 @@ instructional:
   - name: agent-lifecycle
     type: lifecycle
     brief: Agent initialization, operation, and extension
-    level: 1
+    priority: 1
     content: |
       ## Agent Lifecycle
 
@@ -413,7 +421,7 @@ instructional:
   - name: multi-agent-coordination
     type: integration-pattern
     brief: Coordinating multiple agents
-    level: 2
+    priority: 2
     content: |
       ## Multi-Agent Coordination
       ```example
@@ -427,7 +435,7 @@ instructional:
 
 **Rationale:**
 1. **Parallel structure** - `components` and `instructional` are peers, reflecting their distinct purposes
-2. **Consistent metadata** - Uses same patterns (name, brief, level, labels) for discoverability
+2. **Consistent metadata** - Uses same patterns (name, brief, priority, labels) for discoverability
 3. **Cross-referencing** - `related` field links instructional content to components
 4. **Type taxonomy** - Explicit `type` field categorizes instructional content
 5. **Content flexibility** - Full markdown in `content` field supports rich documentation
@@ -455,7 +463,7 @@ instructional:
   - name: <identifier>
     type: <instructional-type>
     brief: <one-line summary>
-    level: 0|1|2
+    priority: 0|1|2
     content: |
       Full markdown content...
     labels: [...]
@@ -470,7 +478,6 @@ instructional:
   - name: identifier           # Required: kebab-case identifier
     type: type-enum            # Required: from taxonomy
     brief: summary             # Required: one-line description
-    level: 0                   # Optional: 0=basic, 1=intermediate, 2=advanced
     content: |                 # Required: markdown content
       Instructional content with full markdown support.
       Can include code blocks, tables, lists.
@@ -483,20 +490,32 @@ instructional:
     see-also:                  # Optional: links to other instructional
       - agent-lifecycle
       - agent-best-practices
+    examples:                  # Optional: demonstrations of the concept
+      - name: example-id
+        brief: Short description
+        priority: 0|1|2        # 0=required, 1=high, 2=medium
+        labels: [relevant-syntax]
+        example: |             # Priority 0 (required): raw prompt
+          Raw example text
+        thread:                # Priority 1-2: conversation
+          - role: system|user|assistant
+            message: content
 ```
+
+**Note:** Instructional entries do not have a `priority` field themselves—priority is only used within `examples` to indicate complexity level.
 
 ### Type Taxonomy
 
-| Type | Description | Typical Level |
-|------|-------------|---------------|
-| `usage-guideline` | When and how to apply a feature | 0-1 |
+| Type | Description | Typical Example Priorities |
+|------|-------------|---------------------------|
+| `usage-guideline` | When and how to apply a feature | 0, 1 |
 | `best-practice` | Recommended approaches | 1 |
 | `conceptual-explanation` | Theory and understanding | 0 |
-| `integration-pattern` | Combining multiple elements | 2 |
-| `lifecycle` | Process flows and state transitions | 1-2 |
+| `integration-pattern` | Combining multiple elements | 1, 2 |
+| `lifecycle` | Process flows and state transitions | 1, 2 |
 | `comparison` | Distinguishing similar concepts | 1 |
 | `decision-guide` | Choosing between options | 1 |
-| `error-handling` | Troubleshooting and edge cases | 1-2 |
+| `error-handling` | Troubleshooting and edge cases | 1, 2 |
 | `quick-reference` | Concise summary/cheat-sheet | 0 |
 
 ## Example: Complete agent.yaml
@@ -526,7 +545,7 @@ components:
     examples:
       - name: service-agent
         brief: Basic service agent definition
-        level: 0
+        priority: 0
         example: |
           ⌜sports-news-agent|service|NPL@1.0⌝
           # Sports News Agent
@@ -539,7 +558,7 @@ instructional:
   - name: agent-types-overview
     type: conceptual-explanation
     brief: Understanding service, tool, and person agents
-    level: 0
+    priority: 0
     content: |
       ## Agent Types
 
@@ -566,7 +585,7 @@ instructional:
   - name: agent-lifecycle
     type: lifecycle
     brief: Agent initialization, operation, and extension
-    level: 1
+    priority: 1
     content: |
       ## Initialization
       1. **Declaration Processing** - Parse agent definition and type
@@ -590,7 +609,7 @@ instructional:
   - name: agent-definition-best-practices
     type: best-practice
     brief: Guidelines for effective agent definitions
-    level: 1
+    priority: 1
     content: |
       ## Definition Guidelines
       - Provide clear, concise agent descriptions
@@ -609,7 +628,7 @@ instructional:
   - name: multi-agent-coordination
     type: integration-pattern
     brief: Coordinating multiple agents for complex tasks
-    level: 2
+    priority: 2
     content: |
       ## Multi-Agent Coordination
 
@@ -658,11 +677,11 @@ instructional:
 
 ## Open Questions
 
-1. **Level requirement**: Should `level` be required or optional with default?
+1. **Priority requirement**: Should `priority` be required or optional with default?
    - **Recommendation**: Optional with default of 1 (intermediate)
 
 2. **Prerequisites field**: Add `prerequisites` for learning paths?
    - **Recommendation**: Defer—use `see-also` for now, add prerequisites if needed
 
 3. **Extended files**: Separate YAML or merged?
-   - **Recommendation**: Merge into single YAML per topic; use `level: 2` for advanced content
+   - **Recommendation**: Merge into single YAML per topic; use `priority: 2` for advanced content

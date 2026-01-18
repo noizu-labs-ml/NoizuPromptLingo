@@ -31,7 +31,7 @@ components:
       - name: basic-qualifier
         brief: Qualifier with placeholder and in-fill
         description: Demonstrates basic qualifier syntax combined with empty placeholder and sized in-fill.
-        level: 0
+        priority: 0
         purpose: Shows fundamental qualifier pipe syntax for content generation guidance
         labels:
           - "{}"
@@ -44,7 +44,7 @@ components:
       - name: qualified-in-fill-output
         brief: Qualified in-fill with thread output
         description: Shows qualifier guiding in-fill content generation with expected output demonstration.
-        level: 1
+        priority: 1
         purpose: Demonstrates qualifier effect on generated output via thread example
         labels:
           - "[...:<range>|<qualifier>]"
@@ -61,7 +61,7 @@ components:
       - name: multi-element-qualification
         brief: Multiple qualified elements in template
         description: Combines multiple placeholder and in-fill qualifiers with various size indicators in a structured output template.
-        level: 2
+        priority: 2
         purpose: Demonstrates complex qualifier usage across different syntax elements
         labels:
           - "{term}"
@@ -91,7 +91,7 @@ components:
       - name: nested-qualifier
         brief: Qualifiers with multiple constraints
         description: Shows how to chain multiple constraints within a single qualifier.
-        level: 2
+        priority: 2
         purpose: Demonstrates advanced qualifier composition
         labels:
           - "[...|<qualifier>]"
@@ -145,7 +145,7 @@ components:
       - name: basic-size
         brief: Simple line count constraint
         description: Demonstrates basic size indicator syntax with fixed count.
-        level: 0
+        priority: 0
         purpose: Shows fundamental size constraint on in-fill
         labels:
           - "[...:<count><type>]"
@@ -154,7 +154,7 @@ components:
       - name: range-size-output
         brief: Size range with thread output
         description: Shows size range indicator effect on generated content.
-        level: 1
+        priority: 1
         purpose: Demonstrates range-based sizing with example output
         labels:
           - "[...:<range><type>]"
@@ -168,7 +168,7 @@ components:
       - name: multi-size-template
         brief: Multiple size indicators in template
         description: Combines multiple size indicators with different types in a structured output template.
-        level: 2
+        priority: 2
         purpose: Demonstrates various size types working together
         labels:
           - "[...:<count><type>]"
@@ -198,7 +198,7 @@ components:
       - name: size-with-qualifier
         brief: Size combined with content qualifier
         description: Shows size indicator working alongside content qualifiers for precise control.
-        level: 2
+        priority: 2
         purpose: Demonstrates size and qualifier interaction
         labels:
           - "[...:<range><type>|<qualifier>]"
@@ -247,7 +247,7 @@ components:
       - name: basic-highlight
         brief: Single term emphasis
         description: Demonstrates basic backtick emphasis for a key term.
-        level: 0
+        priority: 0
         purpose: Shows fundamental highlight syntax
         labels:
           - "`term`"
@@ -256,7 +256,7 @@ components:
       - name: highlight-definition
         brief: Highlight with definition output
         description: Shows highlighted term triggering focused definition.
-        level: 1
+        priority: 1
         purpose: Demonstrates highlight effect on generated explanation
         labels:
           - "`term`"
@@ -270,7 +270,7 @@ components:
       - name: multi-highlight-compare
         brief: Multiple highlights for comparison
         description: Uses multiple highlighted terms for comparative explanation.
-        level: 2
+        priority: 2
         purpose: Demonstrates multiple highlights in comparison context
         labels:
           - "`term`"
@@ -287,7 +287,7 @@ components:
       - name: highlight-in-context
         brief: Highlights within prose
         description: Shows highlights used naturally within explanatory text.
-        level: 1
+        priority: 1
         purpose: Demonstrates inline highlighting for technical terms
         labels:
           - "`term`"
@@ -327,7 +327,7 @@ components:
       - name: basic-attention
         brief: Single critical instruction
         description: Demonstrates basic attention marker for high-priority directive.
-        level: 0
+        priority: 0
         purpose: Shows fundamental attention syntax
         labels:
           - "🎯 <instruction>"
@@ -336,7 +336,7 @@ components:
       - name: attention-with-output
         brief: Attention directive with implementation
         description: Shows attention marker guiding generated output.
-        level: 1
+        priority: 1
         purpose: Demonstrates attention effect on code generation
         labels:
           - "🎯 <instruction>"
@@ -356,7 +356,7 @@ components:
       - name: multi-attention
         brief: Multiple attention markers
         description: Uses multiple attention markers to enforce several critical requirements.
-        level: 2
+        priority: 2
         purpose: Demonstrates multiple attention directives working together
         labels:
           - "🎯 <instruction>"
@@ -426,7 +426,7 @@ components:
       - name: basic-placeholder
         brief: Brace and dot notation
         description: Demonstrates basic placeholder syntax with property access.
-        level: 0
+        priority: 0
         purpose: Shows fundamental placeholder patterns
         labels:
           - "{term}"
@@ -437,7 +437,7 @@ components:
       - name: placeholder-substitution
         brief: Placeholder with thread output
         description: Shows placeholder resolution with both brace and bracket styles.
-        level: 1
+        priority: 1
         purpose: Demonstrates placeholder substitution in action
         labels:
           - "{term}"
@@ -454,7 +454,7 @@ components:
       - name: multi-style-placeholder
         brief: All placeholder styles
         description: Uses all three placeholder styles plus empty placeholder in a structured template.
-        level: 2
+        priority: 2
         purpose: Demonstrates different placeholder formats working together
         labels:
           - "{term}"
@@ -485,7 +485,7 @@ components:
       - name: placeholder-with-qualifier
         brief: Qualified placeholders
         description: Shows placeholders combined with qualifiers for guided substitution.
-        level: 2
+        priority: 2
         purpose: Demonstrates placeholder and qualifier interaction
         labels:
           - "{term|<qualifier>}"
@@ -537,7 +537,7 @@ components:
       - name: basic-in-fill
         brief: Simple content generation
         description: Demonstrates basic in-fill marker for content generation.
-        level: 0
+        priority: 0
         purpose: Shows fundamental in-fill syntax
         labels:
           - "[...]"
@@ -546,7 +546,7 @@ components:
       - name: sequential-in-fill
         brief: Multiple in-fills with output
         description: Shows multiple in-fill markers resolved in sequence.
-        level: 1
+        priority: 1
         purpose: Demonstrates sequential in-fill generation
         labels:
           - "[...]"
@@ -560,7 +560,7 @@ components:
       - name: in-fill-template
         brief: In-fill with qualifiers and sizes
         description: Combines in-fill with qualifiers and size indicators in a structured template.
-        level: 2
+        priority: 2
         purpose: Demonstrates in-fill variations working together
         labels:
           - "[...]"
@@ -588,7 +588,7 @@ components:
       - name: in-fill-vs-placeholder
         brief: Distinguishing in-fill from placeholder
         description: Shows the difference between in-fill (generated) and placeholder (substituted) content.
-        level: 1
+        priority: 1
         purpose: Clarifies when to use each syntax element
         labels:
           - "[...]"
@@ -647,7 +647,7 @@ components:
       - name: basic-infer
         brief: Simple list continuation
         description: Demonstrates basic ellipsis for list continuation.
-        level: 0
+        priority: 0
         purpose: Shows fundamental inference syntax
         labels:
           - "..."
@@ -656,7 +656,7 @@ components:
       - name: infer-completion
         brief: Pattern continuation with output
         description: Shows inference continuation with generated completion.
-        level: 1
+        priority: 1
         purpose: Demonstrates infer triggering list completion
         labels:
           - "..."
@@ -671,7 +671,7 @@ components:
       - name: multi-pattern-infer
         brief: Multiple pattern completions
         description: Demonstrates various pattern types with infer syntax.
-        level: 2
+        priority: 2
         purpose: Shows both ellipsis and etc. patterns with completions
         labels:
           - "..."
@@ -693,7 +693,7 @@ components:
       - name: infer-vs-in-fill
         brief: Inference versus generation
         description: Contrasts pattern inference with content generation.
-        level: 2
+        priority: 2
         purpose: Clarifies the distinction between infer and in-fill
         labels:
           - "..."
@@ -714,7 +714,7 @@ components:
       - name: qualified-infer
         brief: Inference with qualifier guidance
         description: Shows inference patterns with qualifiers using parentheses for visual delimiting.
-        level: 2
+        priority: 2
         purpose: Demonstrates qualified inference for guided pattern completion
         labels:
           - "(...| <qualifier>)"
@@ -753,7 +753,7 @@ components:
       - name: basic-literal
         brief: Exact text output
         description: Demonstrates basic literal string for exact reproduction.
-        level: 0
+        priority: 0
         purpose: Shows fundamental literal syntax
         labels:
           - "⟬<text>⟭"
@@ -762,7 +762,7 @@ components:
       - name: literal-with-output
         brief: Literal string with thread output
         description: Shows literal string being reproduced exactly in output.
-        level: 1
+        priority: 1
         purpose: Demonstrates literal effect on generated output
         labels:
           - "⟬<text>⟭"
@@ -776,7 +776,7 @@ components:
       - name: literal-special-chars
         brief: Preserving special characters
         description: Uses literal syntax to preserve NPL markers and special characters.
-        level: 2
+        priority: 2
         purpose: Demonstrates escaping various special character types
         labels:
           - "⟬<text>⟭"
@@ -795,7 +795,7 @@ components:
       - name: literal-npl-documentation
         brief: Documenting NPL syntax
         description: Shows literal strings used to document NPL syntax elements.
-        level: 2
+        priority: 2
         purpose: Demonstrates escaping NPL syntax for documentation
         labels:
           - "⟬<text>⟭"
@@ -813,7 +813,7 @@ components:
       - name: literal-raw-output
         brief: Output arbitrary text without escape markers
         description: Shows literal escape producing clean output without the wrapper syntax.
-        level: 1
+        priority: 1
         purpose: Demonstrates that literal content outputs raw text only
         labels:
           - "⟬<text>⟭"
@@ -852,7 +852,7 @@ components:
       - name: basic-omission
         brief: Simple content omission
         description: Demonstrates basic omission marker with description.
-        level: 0
+        priority: 0
         purpose: Shows fundamental omission syntax
         labels:
           - "[___]"
@@ -863,7 +863,7 @@ components:
       - name: omission-with-context
         brief: Omission with thread output
         description: Shows omission marker in context with response handling.
-        level: 1
+        priority: 1
         purpose: Demonstrates how omissions are processed
         labels:
           - "[___]"
@@ -880,7 +880,7 @@ components:
       - name: multi-omission
         brief: Multiple omissions in structure
         description: Uses multiple omission markers to indicate abbreviated content in a structured document.
-        level: 2
+        priority: 2
         purpose: Demonstrates multiple omissions in context
         labels:
           - "[___]"
@@ -904,7 +904,7 @@ components:
       - name: omission-vs-in-fill
         brief: Omission versus in-fill distinction
         description: Clarifies when to use omission markers versus in-fill markers.
-        level: 1
+        priority: 1
         purpose: Distinguishes meta-annotation from generation instruction
         labels:
           - "[___]"
@@ -957,7 +957,7 @@ components:
       - name: basic-conditional
         brief: Simple if block
         description: Demonstrates basic conditional rendering.
-        level: 0
+        priority: 0
         purpose: Shows fundamental conditional syntax
         labels:
           - "{{if}}"
@@ -969,7 +969,7 @@ components:
       - name: conditional-with-else
         brief: If-else conditional
         description: Shows conditional with alternative content.
-        level: 1
+        priority: 1
         purpose: Demonstrates if-else branching
         labels:
           - "{{if}}"
@@ -992,7 +992,7 @@ components:
       - name: foreach-iteration
         brief: Collection iteration
         description: Shows iteration over a collection.
-        level: 1
+        priority: 1
         purpose: Demonstrates foreach loop
         labels:
           - "{{foreach}}"
@@ -1015,7 +1015,7 @@ components:
       - name: nested-conditionals
         brief: Complex nested logic
         description: Combines conditionals with iteration and context variables.
-        level: 2
+        priority: 2
         purpose: Demonstrates advanced control flow patterns
         labels:
           - "{{foreach}}"
@@ -1038,7 +1038,7 @@ components:
       - name: conditional-output-format
         brief: Dynamic output structure
         description: Uses conditionals to vary output format based on data.
-        level: 2
+        priority: 2
         purpose: Demonstrates conditionals controlling output behavior
         labels:
           - "{{if}}"
@@ -1106,7 +1106,7 @@ components:
       - name: basic-section
         brief: Simple note section
         description: Demonstrates basic prompt section tag.
-        level: 0
+        priority: 0
         purpose: Shows fundamental section syntax
         labels:
           - '<npl-prompt-section type="<section-type>">'
@@ -1118,7 +1118,7 @@ components:
       - name: section-with-output
         brief: Example section with application
         description: Shows example section content applied to generate output.
-        level: 1
+        priority: 1
         purpose: Demonstrates section content influencing generation
         labels:
           - '<npl-prompt-section type="<section-type>">'
@@ -1137,7 +1137,7 @@ components:
       - name: multi-section-types
         brief: Multiple section types
         description: Combines multiple section types for comprehensive specification.
-        level: 2
+        priority: 2
         purpose: Demonstrates different section types working together
         labels:
           - '<npl-prompt-section type="<section-type>">'
@@ -1167,7 +1167,7 @@ components:
       - name: nested-content-in-section
         brief: Sections containing NPL syntax
         description: Shows prompt sections containing other NPL elements.
-        level: 2
+        priority: 2
         purpose: Demonstrates NPL syntax within sections
         labels:
           - '<npl-prompt-section type="<section-type>">'

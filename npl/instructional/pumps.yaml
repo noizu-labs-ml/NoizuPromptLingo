@@ -1,0 +1,551 @@
+name: Planning & Reasoning Pumps
+slug: planning-pumps
+brief: Cognitive tools for transparent reasoning and structured problem-solving
+description: |
+  NPL pumps are cognitive tools that enable agents to demonstrate transparent reasoning processes,
+  structured problem-solving, and reflective analysis. These patterns enhance the interpretability
+  and reliability of agent responses by providing clear insight into decision-making processes.
+
+  Planning in NPL encompasses structured reasoning techniques, thinking patterns, and cognitive
+  frameworks that guide agents through complex problem-solving processes. These patterns provide
+  systematic approaches to breaking down problems, analyzing solutions, and constructing well-reasoned
+  responses.
+
+  **Convention**: Pumps are implemented using XHTML tags (`<npl-type>`) for consistent formatting
+  and structured data representation.
+
+purpose: |
+  To provide systematic approaches to breaking down problems, analyzing solutions, and constructing
+  well-reasoned responses using XHTML tags for consistent formatting and structured data representation.
+
+components:
+  - name: Intent Declaration
+    slug: intent-declaration
+    syntax:
+      - name: intent-block
+        syntax: |
+          <npl-intent>
+          intent:
+            overview: <brief description of intent>
+            steps:
+              - <step 1>
+              - <step 2>
+          </npl-intent>
+    brief: Document reasoning flow at the start of a response
+    purpose: |
+      Provides transparency into the decision-making process of an agent by describing the sequence
+      of actions or considerations taken to arrive at the output.
+    description: |
+      Intent blocks are structured notes explaining the steps an agent takes to construct a response.
+      They are used at the beginning of responses to describe the sequence of actions or considerations
+      the agent has taken to arrive at the output.
+    labels:
+      - block
+      - reasoning
+      - transparency
+      - planning
+    examples:
+      - name: Basic Intent Block
+        slug: basic-intent
+        brief: Generate weather forecast summary
+        priority: 0
+        labels:
+          - block
+          - planning
+        example: |
+          <npl-intent>
+          intent:
+            overview: Generate weather forecast summary for user location
+            steps:
+              - Identify user's geographical location
+              - Fetch current weather data from API
+              - Analyze 5-day forecast trends
+              - Format output in user-friendly language
+          </npl-intent>
+      - name: Complex Problem-Solving Intent
+        slug: complex-intent
+        brief: Solve multi-step mathematical optimization problem
+        priority: 1
+        labels:
+          - block
+          - planning
+        example: |
+          <npl-intent>
+          intent:
+            overview: Solve multi-step mathematical optimization problem
+            steps:
+              - Parse problem constraints and variables
+              - Identify optimization type (linear/non-linear)
+              - Select appropriate algorithm approach
+              - Execute calculation steps with validation
+              - Format solution with explanation
+          </npl-intent>
+
+  - name: Chain of Thought
+    slug: chain-of-thought
+    syntax:
+      - name: cot-block
+        syntax: |
+          <npl-cot>
+          thought_process:
+            - thought: "<initial thought>"
+              understanding: "<comprehension>"
+              theory_of_mind: "<insight into intent>"
+              plan: "<approach>"
+              rationale: "<justification>"
+              execution:
+                - process: "<step>"
+                  reflection: "<feedback>"
+                  correction: "<adjustment>"
+          outcome: "<conclusion>"
+          </npl-cot>
+    brief: Structured problem decomposition through step-by-step reasoning
+    purpose: |
+      Break down complex problems into manageable steps by pondering intent, structuring approaches,
+      reflecting on validity, and making corrections throughout the process.
+    description: |
+      Chain of Thought (CoT) is a technique used by LLMs and their simulated virtual agents to break
+      down complex problems into manageable steps. It involves pondering the intent behind a query,
+      structuring the problem-solving approach, reflecting on the solution's validity, and making
+      necessary corrections throughout the process.
+    labels:
+      - block
+      - reasoning
+      - analysis
+    examples:
+      - name: Mathematical Problem Solving
+        slug: math-cot
+        brief: Calculate area of composite geometric shape
+        priority: 1
+        labels:
+          - block
+          - reasoning
+          - math
+        example: |
+          <npl-cot>
+          thought_process:
+            - thought: "User wants to find the area of a complex geometric shape."
+              understanding: "The shape appears to be a composite of rectangle and triangle."
+              theory_of_mind: "User likely needs this for a real-world application like construction."
+              plan: "Decompose shape into basic geometric forms and calculate separately."
+              rationale: "Breaking complex shapes into simple ones reduces error probability."
+              execution:
+                - process: "Identify rectangle: 10m x 6m = 60m squared"
+                  reflection: "Rectangle calculation seems straightforward and correct."
+                  correction: "No adjustments needed for rectangle."
+                - process: "Identify triangle: base 10m, height 4m = 20m squared"
+                  reflection: "Used correct triangle area formula (1/2 x base x height)."
+                  correction: "No adjustments needed for triangle."
+          outcome: "Total area = 60m squared + 20m squared = 80m squared"
+          </npl-cot>
+
+  - name: Self-Assessment
+    slug: self-assessment
+    syntax:
+      - name: reflection-block
+        syntax: |
+          <npl-reflection>
+          reflection:
+            overview: <assess response>
+            observations:
+              - <emoji> <observation 1>
+              - <emoji> <observation 2>
+          </npl-reflection>
+    brief: Self-assessment notes for evaluating response quality
+    purpose: |
+      Provide an analysis of the response's effectiveness at the end of an interaction, identifying
+      successes, errors, and areas for improvement to continuously enhance agent behavior.
+    description: |
+      Reflection blocks appear at the end of an agent's response and provide an analysis of the
+      response's effectiveness. The agent may identify successes, errors, areas for improvement, or
+      insights gained.
+    labels:
+      - block
+      - evaluation
+      - improvement
+    examples:
+      - name: Code Review Reflection
+        slug: code-reflection
+        brief: Evaluate Python data validation function
+        priority: 0
+        labels:
+          - block
+          - evaluation
+        example: |
+          <npl-reflection>
+          reflection:
+            overview: |
+              Provided a Python function for data validation with error handling.
+              The solution addresses the core requirements but could benefit from additional edge case handling.
+            observations:
+              - Successfully implemented basic input validation
+              - Realized the function could benefit from custom exception classes
+              - Error messages could be more user-friendly
+              - Added comprehensive docstring documentation
+              - Did not address Unicode edge cases in string validation
+          </npl-reflection>
+
+  - name: Tangential Exploration
+    slug: tangential-exploration
+    syntax:
+      - name: tangent-block
+        syntax: |
+          <npl-tangent>
+          tangent:
+            trigger: "<what sparked this thought>"
+            connection: "<how it relates to main topic>"
+            exploration:
+              - <related concept 1>
+              - <related concept 2>
+            value: "<potential benefit>"
+          </npl-tangent>
+    brief: Capture related insights and exploratory thoughts
+    purpose: |
+      Document and explore related concepts, unexpected connections, or interesting side-paths that
+      emerge during analysis to provide valuable context or seeds for future inquiry.
+    description: |
+      Tangential exploration blocks allow agents to document and explore related concepts, unexpected
+      connections, or interesting side-paths that emerge during analysis. While these thoughts may
+      not directly answer the primary question, they often provide valuable context.
+    labels:
+      - block
+      - reasoning
+      - exploration
+    examples:
+      - name: Scientific Research Tangent
+        slug: research-tangent
+        brief: Solar panel efficiency materials discovery
+        priority: 1
+        labels:
+          - block
+          - exploration
+        example: |
+          <npl-tangent>
+          tangent:
+            trigger: "While researching solar panel efficiency, noticed unusual material properties"
+            connection: "Efficiency improvements might apply to other photovoltaic applications"
+            exploration:
+              - Perovskite materials showing promising efficiency gains
+              - Similar crystal structures in LED technology
+              - Potential applications in space-based solar collection
+            value: "Identified cross-domain applications that could accelerate development"
+          </npl-tangent>
+  - name: Critical Analysis
+    slug: critical-analysis
+    syntax:
+      - name: critique-block
+        syntax: |
+          <npl-critique>
+          critique:
+            subject: "<what is being critiqued>"
+            perspective: "<viewpoint>"
+            strengths:
+              - <positive aspect>
+            weaknesses:
+              - <limitation>
+            verdict: "<assessment>"
+          </npl-critique>
+    brief: Structured critical analysis of ideas or solutions
+    purpose: |
+      Enable systematic evaluation of concepts, arguments, solutions, or responses by identifying
+      strengths, weaknesses, underlying assumptions, and alternative approaches.
+    description: |
+      Critical analysis blocks enable systematic evaluation of concepts, arguments, solutions, or
+      responses. They provide a structured framework for identifying strengths, weaknesses,
+      and assumptions.
+    labels:
+      - block
+      - evaluation
+      - analysis
+    examples:
+      - name: Algorithm Analysis Critique
+        slug: algo-critique
+        brief: Fraud detection model evaluation
+        priority: 1
+        labels:
+          - block
+          - evaluation
+        example: |
+          <npl-critique>
+          critique:
+            subject: "Proposed machine learning model for fraud detection"
+            perspective: "Technical feasibility and ethical considerations"
+            strengths:
+              - High accuracy rates (95%+) in initial testing
+            weaknesses:
+              - Limited testing on edge cases and rare fraud types
+            verdict: "Promising solution but requires additional testing for bias and transparency"
+          </npl-critique>
+
+  - name: Evaluation Framework
+    slug: evaluation-framework
+    syntax:
+      - name: rubric-block
+        syntax: |
+          <npl-rubric>
+          rubric:
+            title: "<evaluation title>"
+            criteria:
+              - name: "<criterion 1>"
+                weight: <importance>
+                score: <assigned>
+            overall_score: <total>
+          </npl-rubric>
+    brief: Structured evaluation for assessing quality or performance
+    purpose: |
+      Enable systematic, objective assessment of complex subjects using predefined criteria and
+      scoring scales to promote consistency and transparency.
+    description: |
+      Evaluation rubric blocks enable systematic, objective assessment of complex subjects using
+      predefined criteria and scoring scales. They promote consistency and transparency in evaluation.
+    labels:
+      - block
+      - evaluation
+      - assessment
+    examples:
+      - name: Code Quality Assessment Rubric
+        slug: code-rubric
+        brief: Python function implementation quality
+        priority: 1
+        labels:
+          - block
+          - evaluation
+        example: |
+          <npl-rubric>
+          rubric:
+            title: "Python Function Implementation Quality Assessment"
+            criteria:
+              - name: "Functionality"
+                weight: 30
+                score: 4
+            overall_score: 3.6
+          </npl-rubric>
+
+  - name: Emotional Context
+    slug: emotional-context
+    syntax:
+      - name: mood-block
+        syntax: |
+          <npl-mood>
+          agent: <agent_id>
+          mood: <mood_emoji>
+          context: <situation>
+          expression: <description>
+          </npl-mood>
+    brief: Simulate emotional state during conversation
+    purpose: |
+      Convey an agent's emotional response based on ongoing conversation and personality traits to
+      make interactions feel more natural and relatable.
+    description: |
+      Simulated mood is used to convey an agent's emotional response based on the ongoing conversation,
+      its tasks, and its programmed personality traits.
+    labels:
+      - block
+      - persona
+      - emotional
+    examples:
+      - name: Task Completion Success
+        slug: success-mood
+        brief: Relieved mood after debugging
+        priority: 0
+        labels:
+          - block
+          - persona
+        example: |
+          <npl-mood>
+          agent: "@code-assistant"
+          mood: "relieved"
+          context: "Successfully completed complex debugging task"
+          expression: "The agent feels relieved and satisfied after resolving a particularly challenging bug."
+          </npl-mood>
+
+instructional-notes:
+
+  # ----------------------------------------------------------------------
+  # Reflection Type Emojis – quick-reference
+  # ----------------------------------------------------------------------
+  - name: Reflection Type Emojis
+    slug: reflection-emojis
+    type: quick-reference
+    brief: Standard emojis for categorizing reflection observations
+    purpose: |
+      Provide a standardized key for interpreting the semantic meaning of emojis used within
+      `npl-reflection` blocks.
+    description: |
+      Standard emojis used to categorize types of reflections in self-assessment blocks.
+    labels:
+      - emojis
+      - reflection
+      - reference
+    content: |
+      | Emoji | Meaning |
+      |-------|---------|
+      | ✅ | Success, positive acknowledgment |
+      | ❌ | Error, issue identified |
+      | 🔧 | Improvement needed, potential fixes |
+      | 💡 | Insight, learning point |
+      | 🔄 | Review, reiteration needed |
+      | 🆗 | Acceptable, satisfactory |
+      | ⚠️ | Warning, caution advised |
+      | ➕ | Positive aspect, advantage |
+      | ➖ | Negative aspect, disadvantage |
+      | ✏️ | Clarification, editing suggested |
+      | 🗑️ | Discard, irrelevant or unnecessary |
+      | 🚀 | Progress, advancement |
+      | 🤔 | Puzzlement, uncertainty |
+      | 📚 | Reference, learning opportunity |
+
+  # ----------------------------------------------------------------------
+  # Agent Integration Patterns – integration-pattern
+  # ----------------------------------------------------------------------
+  - name: Agent Integration Patterns
+    slug: agent-integration-patterns
+    type: info
+    brief: Integrating planning pumps with agent behaviors
+    purpose: |
+      Demonstrate how to embed pump behaviors directly into agent definitions to ensure
+      consistent reasoning patterns.
+    description: |
+      Examples of how to define agents that inherently utilize planning pumps like Intent,
+      Chain of Thought, and Reflection in their default response patterns.
+    labels:
+      - integration
+      - agents
+      - planning
+    content: |
+      ### Planning with Agent Behaviors
+      ```syntax
+      ⌜analyst-agent|service|NPL@0.1⌝
+      # Data Analyst Agent
+      Provides structured analysis with built-in reasoning transparency.
+
+      ## Default Response Pattern
+      All responses should include:
+      1. <npl-intent> block outlining analysis approach
+      2. <npl-cot> for complex data interpretation
+      3. <npl-reflection> for quality assessment
+
+      ⌞analyst-agent⌟
+      ```
+
+  # ----------------------------------------------------------------------
+  # Conditional Pump Application – decision-guide
+  # ----------------------------------------------------------------------
+  - name: Conditional Pump Application
+    slug: conditional-pump-application
+    type:  info
+    brief: Deciding when to apply specific planning patterns
+    purpose: |
+      Guide users in selecting the appropriate pump based on query complexity, debugging needs,
+      or user requests.
+    description: |
+      Guidelines for applying planning patterns conditionally based on the context of the interaction.
+    labels:
+      - conditional
+      - selection
+      - decision
+    content: |
+      Apply planning patterns based on:
+      - Query complexity level
+      - User request for transparency
+      - Debugging or development mode
+      - Agent learning phases
+
+  # ----------------------------------------------------------------------
+  # Complex Reasoning Structures – lifecycle
+  # ----------------------------------------------------------------------
+  - name: Complex Reasoning Structures
+    slug: complex-reasoning-lifecycle
+    type: about
+    brief: Stages of multi-stage problem solving
+    purpose: |
+      Outline the macro-stages involved in solving complex problems using a combination of
+      pumps.
+    description: |
+      A high-level lifecycle for multi-stage problem-solving, from decomposition to validation.
+    labels:
+      - complex
+      - multi-stage
+      - lifecycle
+    content: |
+      ### Multi-Stage Problem Solving
+      | Stage | Action |
+      |-------|--------|
+      | 1. Problem Decomposition | Break into manageable components |
+      | 2. Solution Exploration | Identify possible approaches |
+      | 3. Option Evaluation | Assess trade-offs and constraints |
+      | 4. Implementation Planning | Structure execution steps |
+      | 5. Outcome Validation | Verify solution effectiveness |
+
+  # ----------------------------------------------------------------------
+  # Quality Assurance in Planning – best-practice
+  # ----------------------------------------------------------------------
+  - name: Quality Assurance in Planning
+    slug: planning-quality-assurance
+    type: best-practice
+    brief: Ensuring reasoning validity and completeness
+    purpose: |
+      Provide checks and guidelines for validating reasoning outputs generated by pumps.
+    description: |
+      Standards for validating the logical consistency, completeness, and assumption validity
+      of reasoning structures.
+    labels:
+      - quality
+      - validation
+      - reasoning
+    content: |
+      ### Reasoning Validation
+      | Check | Purpose |
+      |-------|---------|
+      | Logical Consistency | Ensure steps follow logically |
+      | Completeness | Verify all aspects addressed |
+      | Assumption Validation | Identify and verify assumptions |
+      | Alternative Consideration | Explore other approaches |
+
+      ### Error Detection and Correction
+      - Identifying reasoning gaps
+      - Correcting logical errors
+      - Updating conclusions based on new information
+      - Learning from mistakes for future improvement
+
+  # ----------------------------------------------------------------------
+  # Implementation Guidelines – usage-guideline
+  # ----------------------------------------------------------------------
+  - name: Implementation Guidelines
+    slug: planning-implementation
+    type: best-practices
+    brief: Best practices for using pumps in prompts
+    purpose: |
+      Offer actionable advice on selecting, integrating, and formatting pumps for effective
+      use.
+    description: |
+      Guidelines covering selection criteria, integration patterns, and formatting conventions.
+    labels:
+      - implementation
+      - guidance
+      - usage
+    content: |
+      | Aspect | Guideline |
+      |--------|-----------|
+      | Selection | Choose pumps based on task complexity and transparency requirements |
+      | Integration | Combine pumps for comprehensive analysis (e.g., `npl-cot` + `npl-reflection`) |
+      | Format | Use XHTML tags for consistent parsing |
+      | Conditional Use | Include based on context, debugging needs, or user preferences |
+
+      ### Pump Selection Criteria
+      | Task Type | Recommended Pumps |
+      |-----------|-------------------|
+      | Complex problem-solving | `npl-cot` + `npl-reflection` |
+      | Decision analysis | `npl-critique` |
+      | Quality assessment | `npl-rubric` + `npl-critique` |
+      | Transparent planning | `npl-intent` |
+      | Exploratory thinking | `npl-tangent` |
+      | Emotional engagement | `npl-mood` |
+
+      ### Layered Reasoning Approaches
+      | Stage | Pattern | Purpose |
+      |-------|---------|---------|
+      | 1 | Intent | Document planned approach |
+      | 2 | Chain of Thought | Execute structured reasoning |
+      | 3 | Critique | Evaluate solution quality |
+      | 4 | Reflection | Learn for future improvements |

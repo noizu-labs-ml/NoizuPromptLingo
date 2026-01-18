@@ -23,7 +23,7 @@ components:
       - name: basic-extension
         brief: Simple syntax addition
         description: Demonstrates basic NPL extension with a custom syntax element.
-        level: 0
+        priority: 0
         purpose: Shows fundamental extension syntax
         labels:
           - "⌜extend:NPL@version⌝"
@@ -36,7 +36,7 @@ components:
       - name: extension-with-output
         brief: Extension applied in thread
         description: Shows NPL extension being applied to modify output behavior.
-        level: 1
+        priority: 1
         purpose: Demonstrates extension effect on generated output
         labels:
           - "⌜extend:NPL@version⌝"
@@ -57,7 +57,7 @@ components:
       - name: multi-element-extension
         brief: Multiple syntax additions
         description: Extends NPL with multiple new syntax elements for a domain-specific use case.
-        level: 2
+        priority: 2
         purpose: Demonstrates comprehensive extension with multiple elements
         labels:
           - "⌜extend:NPL@version⌝"
@@ -102,7 +102,7 @@ components:
       - name: basic-agent
         brief: Simple agent definition
         description: Demonstrates basic agent declaration with name, type, and constraints.
-        level: 0
+        priority: 0
         purpose: Shows fundamental agent declaration syntax
         labels:
           - "⌜name|type|NPL@version⌝"
@@ -118,7 +118,7 @@ components:
       - name: agent-with-output
         brief: Agent definition with thread
         description: Shows agent declaration and its effect on responses.
-        level: 1
+        priority: 1
         purpose: Demonstrates agent behavior in action
         labels:
           - "⌜name|type|NPL@version⌝"
@@ -143,7 +143,7 @@ components:
       - name: multi-section-agent
         brief: Comprehensive agent with sections
         description: Full agent definition with behavior, capabilities, and response format sections.
-        level: 2
+        priority: 2
         purpose: Demonstrates complete agent structure with multiple sections
         labels:
           - "⌜name|type|NPL@version⌝"
@@ -208,7 +208,7 @@ components:
       - name: basic-flags
         brief: Simple runtime flags
         description: Demonstrates basic runtime flag syntax with key-value pairs.
-        level: 0
+        priority: 0
         purpose: Shows fundamental flag block syntax
         labels:
           - "⌜🏳️"
@@ -222,7 +222,7 @@ components:
       - name: flags-with-output
         brief: Flags affecting output
         description: Shows runtime flags modifying agent response behavior.
-        level: 1
+        priority: 1
         purpose: Demonstrates flag effect on generated output
         labels:
           - "⌜🏳️"
@@ -247,7 +247,7 @@ components:
       - name: scoped-flags
         brief: Agent-scoped and response flags
         description: Demonstrates flags scoped to specific agents and response formatting.
-        level: 2
+        priority: 2
         purpose: Shows various flag scoping patterns
         labels:
           - "⌜🏳️"
@@ -294,7 +294,7 @@ components:
       - name: basic-secure
         brief: Simple security constraints
         description: Demonstrates basic immutable security instructions.
-        level: 0
+        priority: 0
         purpose: Shows fundamental secure prompt syntax
         labels:
           - "⌜🔒"
@@ -307,7 +307,7 @@ components:
       - name: secure-with-enforcement
         brief: Security block with enforcement
         description: Shows secure prompt being enforced in thread.
-        level: 1
+        priority: 1
         purpose: Demonstrates secure prompt taking precedence
         labels:
           - "⌜🔒"
@@ -335,7 +335,7 @@ components:
       - name: multi-constraint-secure
         brief: Multiple security constraints
         description: Comprehensive security block with multiple constraint categories.
-        level: 2
+        priority: 2
         purpose: Demonstrates structured security requirements
         labels:
           - "⌜🔒"
@@ -381,7 +381,7 @@ components:
       - name: basic-template
         brief: Simple named template
         description: Demonstrates basic named template with placeholder substitution.
-        level: 0
+        priority: 0
         purpose: Shows fundamental template syntax
         labels:
           - "⌜🧱 name⌝"
@@ -395,7 +395,7 @@ components:
       - name: template-with-output
         brief: Template applied in thread
         description: Shows named template being used to format output.
-        level: 1
+        priority: 1
         purpose: Demonstrates template effect on generated content
         labels:
           - "⌜🧱 name⌝"
@@ -424,7 +424,7 @@ components:
       - name: template-with-iteration
         brief: Template with loops and conditionals
         description: Complex template demonstrating foreach loops and nested data access.
-        level: 2
+        priority: 2
         purpose: Shows advanced template features
         labels:
           - "⌜🧱 name⌝"
