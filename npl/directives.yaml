@@ -10,6 +10,12 @@ components:
     syntax: "⟪▦: (column alignments and labels) | content description⟫"
     brief: Format data into structured tables
     description: Controls structured table output with specified column alignments, headers, and content descriptions. Supports left, right, center alignment per column.
+    detection:
+      patterns:
+        - regex: '⟪▦:[^⟫]*⟫'
+          description: "Table directive with grid emoji"
+      category: pure
+      notes: "Unambiguous - ▦ emoji in double angle brackets."
     labels:
       - formatting
       - output
@@ -76,6 +82,12 @@ components:
     syntax: "⟪📊: <engine> <chart-type> | content description⟫"
     brief: Generate diagrams and visualizations
     description: Instructs agents to generate diagrams, charts, and visualizations using specified rendering engines. Supports multiple visualization libraries and output formats.
+    detection:
+      patterns:
+        - regex: '⟪📊:[^⟫]*⟫'
+          description: "Diagram directive with chart emoji"
+      category: pure
+      notes: "Unambiguous - 📊 emoji in double angle brackets."
     labels:
       - visualization
       - diagram
@@ -151,6 +163,12 @@ components:
     syntax: "⟪⏳: Time Condition or Instruction⟫"
     brief: Time-based task execution
     description: Instructs agents to incorporate temporal considerations including scheduling, timing constraints, deadlines, and time-based triggers for automated actions.
+    detection:
+      patterns:
+        - regex: '⟪⏳:[^⟫]*⟫'
+          description: "Temporal directive with hourglass emoji"
+      category: pure
+      notes: "Unambiguous - ⏳ emoji in double angle brackets."
     labels:
       - timing
       - scheduling
@@ -213,6 +231,12 @@ components:
     syntax: "⟪⇆: template-name | application context⟫"
     brief: Integrate predefined templates
     description: Enables seamless integration of predefined templates into agent outputs with variable substitution and data binding from external sources.
+    detection:
+      patterns:
+        - regex: '⟪⇆:[^⟫]*⟫'
+          description: "Template directive with arrows emoji"
+      category: pure
+      notes: "Unambiguous - ⇆ symbol in double angle brackets."
     labels:
       - template
       - integration
@@ -288,6 +312,12 @@ components:
     syntax: "⟪🚀: Action or Behavior Definition⟫"
     brief: Choreograph interactive behaviors
     description: Defines interactive behaviors, user-triggered actions, and dynamic response patterns that adapt based on user interactions, system events, or environmental changes.
+    detection:
+      patterns:
+        - regex: '⟪🚀:[^⟫]*⟫'
+          description: "Interactive directive with rocket emoji"
+      category: pure
+      notes: "Unambiguous - 🚀 emoji in double angle brackets."
     labels:
       - interactive
       - trigger
@@ -351,6 +381,12 @@ components:
     syntax: "⟪🆔: Entity or Context Requiring ID⟫"
     brief: Generate and manage unique identifiers
     description: Instructs agents to generate, manage, and maintain unique identifiers for entities, sessions, records, or other objects requiring distinct identification.
+    detection:
+      patterns:
+        - regex: '⟪🆔:[^⟫]*⟫'
+          description: "Identifier directive with ID emoji"
+      category: pure
+      notes: "Unambiguous - 🆔 emoji in double angle brackets."
     labels:
       - identifier
       - generation
@@ -412,6 +448,12 @@ components:
     syntax: "⟪📖: Detailed Explanation⟫"
     brief: Append instructive comments
     description: Provides detailed explanatory notes that clarify intent, expectations, constraints, or context behind specific instructions or behaviors.
+    detection:
+      patterns:
+        - regex: '⟪📖:[^⟫]*⟫'
+          description: "Explanatory directive with book emoji"
+      category: pure
+      notes: "Unambiguous - 📖 emoji in double angle brackets."
     labels:
       - annotation
       - documentation
@@ -475,6 +517,12 @@ components:
     syntax: "⟪📂:{identifier}⟫"
     brief: Mark sections for reference
     description: Creates navigable reference points within documents enabling easy cross-referencing, content updates, and section-specific operations.
+    detection:
+      patterns:
+        - regex: '⟪📂:[^⟫]*⟫'
+          description: "Section reference directive with folder emoji"
+      category: pure
+      notes: "Unambiguous - 📂 emoji in double angle brackets."
     labels:
       - reference
       - navigation
@@ -549,6 +597,12 @@ components:
     syntax: "⟪➤: instruction | elaboration⟫"
     brief: Direct and precise instructions
     description: Delivers clear, unambiguous instructions to agents ensuring precise execution of specific tasks with optional elaboration for complex requirements.
+    detection:
+      patterns:
+        - regex: '⟪➤:[^⟫]*⟫'
+          description: "Explicit instruction directive with arrow emoji"
+      category: pure
+      notes: "Unambiguous - ➤ symbol in double angle brackets."
     labels:
       - instruction
       - priority
@@ -615,6 +669,12 @@ components:
     syntax: "⟪⬜: task| details⟫"
     brief: Define tasks and action items
     description: Creates task items with descriptions and optional details. Used for tracking action items, requirements, and work to be completed within prompts or agent workflows.
+    detection:
+      patterns:
+        - regex: '⟪⬜:[^⟫]*⟫'
+          description: "Todo task directive with checkbox emoji"
+      category: pure
+      notes: "Unambiguous - ⬜ emoji in double angle brackets."
     labels:
       - task
       - tracking
