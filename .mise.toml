@@ -1,0 +1,45 @@
+# mise configuration for NoizuPromptLingo
+
+[tools]
+
+[tasks]
+# Run the MCP server
+run = "uv run npl-mcp"
+
+# Run tests
+test = "uv run pytest tests/ -v"
+
+# Run tests with coverage
+test-coverage = "uv run pytest tests/ --cov=src/npl_mcp --cov-report=term-missing --cov-report=html"
+
+# Run tests with HTML coverage report
+test-html = "uv run pytest tests/ --cov=src/npl_mcp --cov-report=html && echo 'Coverage report: htmlcov/index.html'"
+
+# Run server in background
+start-server = "uv run npl-mcp &"
+
+# Stop the server (if running with pid file)
+stop-server = "[ -f data/.npl-mcp.pid ] && kill $(cat data/.npl-mcp.pid) 2>/dev/null || echo 'No PID file found'"
+
+# Check server status
+status = "npl-mcp --status"
+
+# Test status - emoji only (pass/fail)
+test-status = "uv run pytest tests/ -q 2>/dev/null >/dev/null && echo '✅' || echo '❌'"
+
+# Test errors - success emoji or list of failing tests
+# Usage: mise run test-errors [test-name]
+#   No args: shows success emoji or list of failing test names
+#   With arg: runs specific test with full output for debugging
+test-errors = """
+if [ -n "$1" ]; then
+  uv run pytest "$1" -v --tb=long
+else
+  output=$(uv run pytest tests/ --tb=no -q 2>&1)
+  if [ $? -eq 0 ]; then
+    echo '✅'
+  else
+    echo "$output" | grep -E '^FAILED|^ERROR' | sed 's/FAILED /❌ /; s/ERROR /⚠️ /'
+  fi
+fi
+"""

@@ -1,1 +1,6 @@
 worktrees
+__pycache__
+*.pyc
+.coverage
+.claude/settings.local.json
+htmlcov
