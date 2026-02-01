@@ -7,6 +7,9 @@ color: cyan
 
 # Agent Orchestration Overview
 
+**Related Documentation:**
+- [Architectural Assumptions](assumptions.md) — Foundational assumptions underlying this design
+
 ## System Architecture
 
 ```mermaid
