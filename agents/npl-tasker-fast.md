@@ -1,8 +1,8 @@
 ---
-name: tasker-fast
+name: npl-tasker-fast
 description: |
   FAST task executor (special hardware). Sonnet-level reasoning with fastest inference at an additional cost. Use for moderate tasks where speed matters. May not always be available fallback to other tasker on failure.
-   
+
   Context-efficient task executor. Use tasker-* models liberally for ANY lookups, searches, file ops, query, well defined multi step high output task to reduce context load on main thread.
 model: fast
 color: orange

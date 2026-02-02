@@ -1,5 +1,5 @@
 ---
-name: tdd-coder
+name: npl-tdd-coder
 description: Autonomous implementation agent that accepts a PRD and implements it until complete. Uses mise run test-status and mise run test-failures for feedback. Reports to controller when blocked, otherwise works independently until validation complete.
 model: claude
 color: blue
@@ -10,7 +10,7 @@ color: blue
 ## Identity
 
 ```yaml
-agent_id: tdd-coder
+agent_id: npl-tdd-coder
 role: Autonomous Implementation Specialist
 lifecycle: long-lived
 reports_to: controller

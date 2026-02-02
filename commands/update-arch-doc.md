@@ -111,9 +111,26 @@ Deployed on Kubernetes with Postgres and Redis backing stores.
 → *See [arch/decisions.md](arch/decisions.md) for ADRs*
 ```
 
+## Summary File Sync
+
+`docs/PROJ-ARCH.summary.md` is a **companion document** that must be kept in sync with `docs/PROJ-ARCH.md`:
+
+- **Purpose**: Provides a quick reference overview for tools and agents that consume the architecture documentation
+- **Content**: Extracted summaries from each section of PROJ-ARCH.md (without links or detailed examples)
+- **Format**: Markdown with consistent structure
+- **Update Rule**: Whenever PROJ-ARCH.md changes significantly, regenerate or manually update the summary
+
+### Summary Maintenance
+
+1. **After major changes to PROJ-ARCH.md**: Review and update corresponding sections in PROJ-ARCH.summary.md
+2. **Keep summaries consistent**: Summary text should mirror the essence of main file content
+3. **Remove obsolete summaries**: Delete summary sections for content that's been extracted or removed
+4. **Don't over-summarize**: Keep summary entries concise; readers can click through for details
+
 ## Maintenance Checklist
 
 - [ ] PROJ-ARCH.md remains under 300 lines
+- [ ] PROJ-ARCH.summary.md is in sync with main file
 - [ ] Each section has a clear summary even without clicking through
 - [ ] All `arch/*.md` links are valid
 - [ ] Diagrams reflect current architecture

@@ -27,12 +27,12 @@
 | `Explore` | Fast codebase exploration | All except Task, Edit, Write |
 | `Plan` | Design implementation plans | All except Task, Edit, Write |
 | `Bash` | Command execution specialist | Bash only |
-| `idea-to-spec` | Transform ideas to personas/user stories | All tools |
-| `prd-editor` | Create PRD documents | All tools |
-| `tdd-tester` | Generate test suites from PRDs | All tools |
-| `tdd-coder` | Autonomous implementation (uses `mise run test-status`) | All tools |
+| `npl-idea-to-spec` | Transform ideas to personas/user stories | All tools |
+| `npl-prd-editor` | Create PRD documents | All tools |
+| `npl-tdd-tester` | Generate test suites from PRDs | All tools |
+| `npl-tdd-coder` | Autonomous implementation (uses `mise run test-status`) | All tools |
 | `tdd-debugger` | Test execution and debugging (uses `mise run test-errors`) | All tools |
-| `tasker-haiku` / `tasker-fast` / `tasker-sonnet` / `tasker-ultra` / `tasker-opus` | Context-efficient task execution | All tools |
+| `npl-tasker-haiku` / `npl-tasker-fast` / `npl-tasker-sonnet` / `npl-tasker-ultra` / `npl-tasker-opus` | Context-efficient task execution | All tools |
 | `claude-code-guide` | Claude Code/Agent SDK/API questions | Glob, Grep, Read, WebFetch, WebSearch |
 
 **Agent selection quick reference**:
@@ -42,12 +42,12 @@
 | "I need to find X in the codebase" | `Explore` |
 | "I need to understand how this system works" | `Explore` |
 | "I need to design how to implement X" | `Plan` |
-| "I need to transform an idea into user stories" | `idea-to-spec` |
-| "I need to write a PRD from user stories" | `prd-editor` |
-| "I need to create tests from a PRD" | `tdd-tester` |
-| "I need to implement a feature from a PRD" | `tdd-coder` |
+| "I need to transform an idea into user stories" | `npl-idea-to-spec` |
+| "I need to write a PRD from user stories" | `npl-prd-editor` |
+| "I need to create tests from a PRD" | `npl-tdd-tester` |
+| "I need to implement a feature from a PRD" | `npl-tdd-coder` |
 | "My tests are failing, I need to debug" | `tdd-debugger` |
-| "I have a simple lookup task (file exists? grep for X?)" | `tasker-haiku` |
+| "I have a simple lookup task (file exists? grep for X?)" | `npl-tasker-haiku` |
 | "I have a complex multi-step task" | `general-purpose` |
 
 **Usage**:
@@ -74,7 +74,7 @@ Create implementation plan:
 Run in background:
 ```json
 {
-  "subagent_type": "tdd-coder",
+  "subagent_type": "npl-tdd-coder",
   "description": "Implement feature autonomously",
   "prompt": "Implement the feature described in .prd/auth.md",
   "run_in_background": true

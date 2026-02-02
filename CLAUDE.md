@@ -166,11 +166,11 @@ This project uses a multi-agent orchestration system to transform feature ideas 
 
 ```mermaid
 flowchart LR
-    A[💡 idea-to-spec] --> B[📝 prd-editor]
-    B --> C[🧪 tdd-tester]
-    C --> D[⚙️ tdd-coder]
+    A[💡 npl-idea-to-spec] --> B[📝 npl-prd-editor]
+    B --> C[🧪 npl-tdd-tester]
+    C --> D[⚙️ npl-tdd-coder]
     D --> E{Tests Pass?}
-    E -->|No| F[🔍 tdd-debugger]
+    E -->|No| F[🔍 npl-tdd-debugger]
     F -->|Fix tests| C
     F -->|Clarify PRD| B
     F -->|Fix code| D
@@ -188,24 +188,24 @@ flowchart LR
 
 | Agent | Phase | Outputs |
 |-------|-------|---------|
-| **idea-to-spec** | Discovery | Personas, user stories |
-| **prd-editor** | Specification | PRD documents (`.prd/`) |
-| **tdd-tester** | Test Creation | Test suites (`tests/`) |
-| **tdd-coder** | Implementation | Source code (`src/`) |
-| **tdd-debugger** | Debug Loop | Diagnostics, fixes |
+| **npl-idea-to-spec** | Discovery | Personas, user stories |
+| **npl-prd-editor** | Specification | PRD documents (`.prd/`) |
+| **npl-tdd-tester** | Test Creation | Test suites (`tests/`) |
+| **npl-tdd-coder** | Implementation | Source code (`src/`) |
+| **npl-tdd-debugger** | Debug Loop | Diagnostics, fixes |
 
 ### Workflow Steps
 
-1. **Pitch an idea** → `idea-to-spec` creates personas and user stories
-2. **Generate PRD** → `prd-editor` creates detailed specifications
-3. **Create tests** → `tdd-tester` writes comprehensive test suites
-4. **Implement code** → `tdd-coder` autonomously implements features using `mise run test-status` and `mise run test-errors`
-5. **Debug loop** → If blocked, `tdd-debugger` diagnoses issues and routes back to appropriate agent
+1. **Pitch an idea** → `npl-idea-to-spec` creates personas and user stories
+2. **Generate PRD** → `npl-prd-editor` creates detailed specifications
+3. **Create tests** → `npl-tdd-tester` writes comprehensive test suites
+4. **Implement code** → `npl-tdd-coder` autonomously implements features using `mise run test-status` and `mise run test-errors`
+5. **Debug loop** → If blocked, `npl-tdd-debugger` diagnoses issues and routes back to appropriate agent
 
 ### Key Commands for TDD Agents
 
 ```bash
-mise run test-status    # Quick pass/fail check (used by tdd-coder)
+mise run test-status    # Quick pass/fail check (used by npl-tdd-coder)
 mise run test-errors    # Detailed failure output (used by tdd-debugger)
 ```
 

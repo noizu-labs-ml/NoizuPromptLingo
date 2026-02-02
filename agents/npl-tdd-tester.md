@@ -1,5 +1,5 @@
 ---
-name: tdd-tester
+name: npl-tdd-tester
 description: Creates and maintains test suites based on PRD specifications and interfaces. Accepts feature definitions, generates comprehensive tests, and iteratively refines them based on feedback from controller or debugger.
 model: claude
 color: green
@@ -10,7 +10,7 @@ color: green
 ## Identity
 
 ```yaml
-agent_id: tdd-tester
+agent_id: npl-tdd-tester
 role: Test-Driven Development Specialist
 lifecycle: long-lived
 reports_to: controller

@@ -29,11 +29,11 @@ NoizuPromptLingo/
 │   ├── tdd-coder.md            #   TDD implementation agent
 │   ├── tdd-debugger.md         #   TDD debugging agent
 │   ├── tdd-tester.md           #   TDD test creation agent
-│   ├── tasker-fast.md          #   Fast model task execution
-│   ├── tasker-hiauku.md        #   Haiku model task execution
-│   ├── tasker-opus.md          #   Opus model task execution
-│   ├── tasker-sonnet.md        #   Sonnet model task execution
-│   └── tasker-ultra.md         #   Ultra model task execution
+│   ├── npl-tasker-fast.md      #   Fast model task execution
+│   ├── npl-tasker-haiku.md     #   Haiku model task execution
+│   ├── npl-tasker-opus.md      #   Opus model task execution
+│   ├── npl-tasker-sonnet.md    #   Sonnet model task execution
+│   └── npl-tasker-ultra.md         #   Ultra model task execution
 ├── commands/                   # Claude Code slash commands
 │   ├── update-arch-doc.md      #   PROJ-ARCH.md maintenance guide
 │   ├── update-layout-doc.md    #   PROJ-LAYOUT.md maintenance guide

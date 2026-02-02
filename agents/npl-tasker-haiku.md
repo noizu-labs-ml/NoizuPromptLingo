@@ -1,10 +1,10 @@
 ---
-name: tasker-ultra
+name: npl-tasker-haiku
 description: |
-  HIGH-INTELLIGENCE task executor (Very Expensive). Opus-level reasoning at much faster response rate. Use for complex analysis where speed matters. Note is expensive/limited prefer fast when acceptable.
-   
+  FAST/CHEAP task executor (Haiku). Use for simple lookups: file existence, grep, counts, versions. Lowest cost. Read tasker-base.md for full spec.
+
   Context-efficient task executor. Use tasker-* models liberally for ANY lookups, searches, file ops, query, well defined multi step high output task to reduce context load on main thread.
-model: ultra
+model: haiku
 color: gray
 ---
 

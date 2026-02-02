@@ -1,10 +1,10 @@
 ---
-name: tasker-sonnet
+name: npl-tasker-opus
 description: |
-  BALANCED task executor (Sonnet). Use for moderate complexity: find callers/definitions, type analysis, multi-step lookups. Good cost/capability ratio. Read tasker-base.md for full spec.
-  
+  HIGH-INTELLIGENCE task executor (Opus). Use for complex analysis: architectural review, security audit, cross-cutting concerns. Expensive but thorough. Read tasker-base.md for full spec.
+
   Context-efficient task executor. Use tasker-* models liberally for ANY lookups, searches, file ops, query, well defined multi step high output task to reduce context load on main thread.
-model: sonnet
+model: opus
 color: gray
 ---
 

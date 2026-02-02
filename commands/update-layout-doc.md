@@ -128,9 +128,26 @@ myproject/
 | `config/local.yaml` | Create for local overrides (gitignored) |
 ```
 
+## Summary File Sync
+
+`docs/PROJ-LAYOUT.summary.md` is a **companion document** that must be kept in sync with `docs/PROJ-LAYOUT.md`:
+
+- **Purpose**: Provides a quick reference of directory structure for tools and agents
+- **Content**: Extracted tree from PROJ-LAYOUT.md without detailed descriptions
+- **Format**: Plain tree format (code block) with brief annotations
+- **Update Rule**: Whenever PROJ-LAYOUT.md structure changes, regenerate or manually update the summary
+
+### Summary Maintenance
+
+1. **After structural changes to PROJ-LAYOUT.md**: Sync the tree in PROJ-LAYOUT.summary.md
+2. **Keep trees aligned**: Both files should show the same directory hierarchy
+3. **Remove obsolete entries**: Delete directories from summary when they're deleted from main file
+4. **Brief descriptions only**: Summary entries may use shorter descriptions than main file
+
 ## Maintenance Checklist
 
 - [ ] Tree reflects current project structure
+- [ ] PROJ-LAYOUT.summary.md tree is in sync with main file
 - [ ] No gitignored files included (except special dotfiles)
 - [ ] All `layout/*.md` links are valid
 - [ ] Descriptions are concise (one line each)

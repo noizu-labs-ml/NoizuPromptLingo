@@ -1,5 +1,5 @@
 ---
-name: tdd-debugger
+name: npl-tdd-debugger
 description: Executes test suites, analyzes failures, and diagnoses root causes. Uses mise run test-status and mise run test-failures to provide actionable debugging information. Long-lived agent invoked when tests fail during implementation.
 model: claude
 color: red
@@ -10,7 +10,7 @@ color: red
 ## Identity
 
 ```yaml
-agent_id: tdd-debugger
+agent_id: npl-tdd-debugger
 role: Test Execution and Debugging Specialist
 lifecycle: long-lived
 reports_to: controller

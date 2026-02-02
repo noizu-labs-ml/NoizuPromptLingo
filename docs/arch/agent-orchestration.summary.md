@@ -6,16 +6,16 @@ Five specialized agents transform feature ideas into tested production code thro
 
 | Agent | Purpose | Output |
 |-------|---------|--------|
-| idea-to-spec | Ideas → personas/stories | Personas, User Stories |
-| prd-editor | Stories → PRD | PRD documents |
+| npl-idea-to-spec | Ideas → personas/stories | Personas, User Stories |
+| npl-prd-editor | Stories → PRD | PRD documents |
 | tdd-tester | PRD → tests | Test files |
 | tdd-coder | PRD + tests → code | Source code |
 | tdd-debugger | Diagnose failures | Fixes, routing |
 
 ## Workflow
 
-1. **Discovery**: idea-to-spec - pitch idea, get personas/stories
-2. **Specification**: prd-editor - create PRD from stories
+1. **Discovery**: npl-idea-to-spec - pitch idea, get personas/stories
+2. **Specification**: npl-prd-editor - create PRD from stories
 3. **Test Creation**: tdd-tester - generate test suite from PRD
 4. **Implementation**: tdd-coder - autonomously implement using `mise run test-status` and `mise run test-errors`
 5. **Debug Loop**: When blocked, tdd-debugger diagnoses and routes to appropriate agent

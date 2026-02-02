@@ -11,7 +11,7 @@
 - `Explore` - Fast codebase exploration
 - `Plan` - Design implementation plans
 - `Bash` - Command execution specialist
-- `idea-to-spec` - Transform ideas to personas/user stories
+- `npl-idea-to-spec` - Transform ideas to personas/user stories
 - `prd-editor` - Create PRD documents
 - `tdd-tester` - Generate test suites from PRDs
 - `tdd-coder` - Autonomous implementation (uses `mise run test-status`)
@@ -26,6 +26,6 @@
 - Need implementation plan? → `Plan`
 - Simple lookup task? → `tasker-haiku`
 - Complex multi-step task? → `general-purpose`
-- TDD workflow? → `idea-to-spec` → `prd-editor` → `tdd-tester` → `tdd-coder` → `tdd-debugger`
+- TDD workflow? → `npl-idea-to-spec` → `prd-editor` → `tdd-tester` → `tdd-coder` → `tdd-debugger`
 
 **For expanded view:** [agents.md](agents.md) — Full documentation with usage examples, all agent types, tool restrictions, and parameter details. Load for unfamiliar agents or advanced use cases.

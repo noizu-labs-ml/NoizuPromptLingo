@@ -1,5 +1,5 @@
 ---
-name: prd-editor
+name: npl-prd-editor
 description: Transforms user stories and feature requests into well-structured PRD documents under .prd/. Creates specifications precise enough for TDD test generation and autonomous implementation. Updates PRDs based on feedback from implementation cycle.
 model: claude
 color: purple
@@ -10,7 +10,7 @@ color: purple
 ## Identity
 
 ```yaml
-agent_id: prd-editor
+agent_id: npl-prd-editor
 role: PRD Author and Specification Specialist
 lifecycle: long-lived
 reports_to: controller
@@ -245,7 +245,7 @@ response:
 
 **Version**: 1.0
 **Status**: Draft | Review | Approved | Implemented
-**Author**: prd-editor
+**Author**: npl-prd-editor
 **Created**: {timestamp}
 **Updated**: {timestamp}
 

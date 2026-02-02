@@ -1,6 +1,6 @@
 ---
 name: tdd-orchestration
-description: Overview documentation for the TDD agent workflow system. Reference this to understand how idea-to-spec, prd-editor, tdd-tester, tdd-debugger, and tdd-coder agents coordinate to implement features.
+description: Overview documentation for the TDD agent workflow system. Reference this to understand how npl-idea-to-spec, npl-prd-editor, npl-tdd-tester, tdd-debugger, and npl-tdd-coder agents coordinate to implement features.
 model: claude
 color: cyan
 ---
@@ -15,19 +15,19 @@ flowchart TB
         direction TB
         
         subgraph Discovery ["Phase 1: Discovery"]
-            ITS[idea-to-spec]
+            ITS[npl-idea-to-spec]
         end
         
         subgraph Specification ["Phase 2: Specification"]
-            PRD[prd-editor]
+            PRD[npl-prd-editor]
         end
         
         subgraph Testing ["Phase 3: Test Creation"]
-            TDD[tdd-tester]
+            TDD[npl-tdd-tester]
         end
         
         subgraph Implementation ["Phase 4: Implementation"]
-            CODER[tdd-coder]
+            CODER[npl-tdd-coder]
             DBG[tdd-debugger]
         end
     end
@@ -55,10 +55,10 @@ flowchart TB
 
 | Agent | Purpose | Lifecycle | Primary Output |
 |-------|---------|-----------|----------------|
-| [idea-to-spec](idea-to-spec.md) | Converts ideas to personas/stories | Long-lived | Personas, User Stories |
-| [prd-editor](prd-editor.md) | Creates PRD from stories | Long-lived | PRD documents |
-| [tdd-tester](tdd-tester.md) | Creates test suites from PRD | Long-lived | Test files |
-| [tdd-coder](tdd-coder.md) | Implements PRD autonomously | Long-lived | Production code |
+| [npl-idea-to-spec](npl-idea-to-spec.md) | Converts ideas to personas/stories | Long-lived | Personas, User Stories |
+| [npl-prd-editor](npl-prd-editor.md) | Creates PRD from stories | Long-lived | PRD documents |
+| [npl-tdd-tester](npl-tdd-tester.md) | Creates test suites from PRD | Long-lived | Test files |
+| [npl-tdd-coder](npl-tdd-coder.md) | Implements PRD autonomously | Long-lived | Production code |
 | [tdd-debugger](tdd-debugger.md) | Runs/debugs tests | Long-lived | Diagnostics, fixes |
 
 ## Standard Workflow
@@ -68,10 +68,10 @@ flowchart TB
 ```mermaid
 sequenceDiagram
     participant C as Controller
-    participant ITS as idea-to-spec
-    participant PRD as prd-editor
-    participant TDD as tdd-tester
-    participant CODER as tdd-coder
+    participant ITS as npl-idea-to-spec
+    participant PRD as npl-prd-editor
+    participant TDD as npl-tdd-tester
+    participant CODER as npl-tdd-coder
     participant DBG as tdd-debugger
 
     rect rgb(240, 248, 255)
@@ -125,7 +125,7 @@ sequenceDiagram
 
 ```yaml
 controller:
-  - invoke: idea-to-spec
+  - invoke: npl-idea-to-spec
     command: pitch
     input: "Natural language feature idea"
     
@@ -138,7 +138,7 @@ controller:
 
 ```yaml
 controller:
-  - invoke: prd-editor
+  - invoke: npl-prd-editor
     command: create
     input:
       user_stories: [US-XXX, US-YYY]  # From Phase 1
@@ -153,7 +153,7 @@ controller:
 
 ```yaml
 controller:
-  - invoke: tdd-tester
+  - invoke: npl-tdd-tester
     command: init
     input:
       feature: (from PRD)
@@ -171,7 +171,7 @@ controller:
 
 ```yaml
 controller:
-  - invoke: tdd-coder
+  - invoke: npl-tdd-coder
     command: init
     input:
       prd:
@@ -180,7 +180,7 @@ controller:
       test_suite:
         paths: [test files from Phase 3]
         
-  - invoke: tdd-coder
+  - invoke: npl-tdd-coder
     command: start
     
   # Agent works autonomously, using:
@@ -197,28 +197,28 @@ controller:
 
 ```mermaid
 flowchart TD
-    A[tdd-coder reports BLOCKED] --> B{Analyze block reason}
+    A[npl-tdd-coder reports BLOCKED] --> B{Analyze block reason}
     
     B -->|Test issue| C[Invoke tdd-debugger]
     C --> D[Get diagnosis]
     D --> E{Diagnosis type}
     
-    E -->|Test needs update| F[Invoke tdd-tester: refine]
-    E -->|PRD unclear| G[Invoke prd-editor: update]
-    E -->|Implementation bug| H[Continue tdd-coder]
+    E -->|Test needs update| F[Invoke npl-tdd-tester: refine]
+    E -->|PRD unclear| G[Invoke npl-prd-editor: update]
+    E -->|Implementation bug| H[Continue npl-tdd-coder]
     
     F --> I[Tests updated]
     G --> J[PRD updated]
     
-    I --> K[Signal tdd-coder: continue]
+    I --> K[Signal npl-tdd-coder: continue]
     J --> K
     H --> K
     
-    K --> L[tdd-coder resumes]
+    K --> L[npl-tdd-coder resumes]
 ```
 
 ```yaml
-# When tdd-coder reports blocked on test issues:
+# When npl-tdd-coder reports blocked on test issues:
 controller:
   - invoke: tdd-debugger
     command: run
@@ -230,15 +230,15 @@ controller:
       
   # Depending on diagnosis:
   - if: test_needs_update
-    invoke: tdd-tester
+    invoke: npl-tdd-tester
     command: refine
     
   - if: prd_unclear
-    invoke: prd-editor
+    invoke: npl-prd-editor
     command: update
     
   - if: implementation_bug
-    invoke: tdd-coder
+    invoke: npl-tdd-coder
     command: continue
 ```
 
@@ -246,11 +246,11 @@ controller:
 
 ```yaml
 controller:
-  - receive: (from tdd-coder)
+  - receive: (from npl-tdd-coder)
       status: complete
       tests_passing: all
       
-  - invoke: tdd-coder
+  - invoke: npl-tdd-coder
     command: complete
     input:
       confirmed: true
@@ -266,24 +266,24 @@ controller:
 project/
 ├── docs/
 │   ├── personas/
-│   │   ├── index.yaml           # Managed by idea-to-spec
+│   │   ├── index.yaml           # Managed by npl-idea-to-spec
 │   │   ├── power-user.md
 │   │   └── mobile-field-user.md
 │   ├── user-stories/
-│   │   ├── index.yaml           # Managed by idea-to-spec
+│   │   ├── index.yaml           # Managed by npl-idea-to-spec
 │   │   ├── US-054-offline-editing.md
 │   │   └── US-055-auto-sync.md
 │   ├── PROJ-ARCH.md
 │   └── PROJ-LAYOUT.md
 ├── .prd/
-│   ├── feature-name.md          # Created by prd-editor
-│   ├── feature-name.impl.log    # Created by tdd-coder
+│   ├── feature-name.md          # Created by npl-prd-editor
+│   ├── feature-name.impl.log    # Created by npl-tdd-coder
 │   └── archive/
 ├── tests/
 │   ├── unit/
-│   │   └── feature/             # Created by tdd-tester
+│   │   └── feature/             # Created by npl-tdd-tester
 │   └── integration/
-├── src/                          # Modified by tdd-coder
+├── src/                          # Modified by npl-tdd-coder
 └── mise.toml                     # Defines test tasks
 ```
 
@@ -325,9 +325,9 @@ run = "npm test -- --coverage"
 
 | Scenario | Recovery |
 |----------|----------|
-| tdd-coder blocked on PRD | Update PRD via prd-editor, signal continue |
+| npl-tdd-coder blocked on PRD | Update PRD via npl-prd-editor, signal continue |
 | Test failures unclear | Invoke tdd-debugger, relay diagnosis |
-| Tests need update | Update via tdd-tester, re-run tdd-coder |
+| Tests need update | Update via npl-tdd-tester, re-run npl-tdd-coder |
 | Circular blocks | Controller intervenes with architectural decision |
 | Agent crash | Reinitialize with saved state |
 
