@@ -1,0 +1,47 @@
+functional_requirements:
+  - id: FR-001
+    name: "Multi-Reviewer Workflow"
+    description: "Support multiple independent reviewers for same artifact revision"
+    status: completed
+    related_stories:
+      - US-010
+      - US-011
+      - US-023
+      - US-063
+    expected_tests: 8
+    coverage_target: 100
+    actual_coverage: 25
+    file: FR-001-multi-reviewer-workflow.md
+
+  - id: FR-002
+    name: "Inline Text Comments"
+    description: "Location-specific comments for text artifacts using line numbers"
+    status: completed
+    related_stories:
+      - US-010
+    expected_tests: 6
+    coverage_target: 100
+    actual_coverage: 25
+    file: FR-002-inline-text-comments.md
+
+  - id: FR-003
+    name: "Image Overlay Annotations"
+    description: "Visual overlay annotations with x,y coordinates"
+    status: completed
+    related_stories:
+      - US-011
+    expected_tests: 5
+    coverage_target: 100
+    actual_coverage: 25
+    file: FR-003-image-overlay-annotations.md
+
+  - id: FR-004
+    name: "Annotated Artifact Generation"
+    description: "Generate artifacts with all review comments as footnotes"
+    status: completed
+    related_stories:
+      - US-063
+    expected_tests: 8
+    coverage_target: 100
+    actual_coverage: 0
+    file: FR-004-annotated-artifact-generation.md

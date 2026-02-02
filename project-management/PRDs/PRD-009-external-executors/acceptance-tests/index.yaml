@@ -1,0 +1,36 @@
+acceptance_tests:
+  - id: AT-001
+    name: "Tasker Spawn and Lifecycle"
+    description: "Validates tasker spawning and lifecycle state transitions"
+    category: integration
+    related_fr:
+      - FR-001
+    status: not_started
+    file: AT-001-tasker-spawn-and-lifecycle.md
+
+  - id: AT-002
+    name: "Context Buffering"
+    description: "Validates context storage and retrieval"
+    category: unit
+    related_fr:
+      - FR-001
+    status: not_started
+    file: AT-002-context-buffering.md
+
+  - id: AT-003
+    name: "Fabric Pattern Application"
+    description: "Validates Fabric CLI integration"
+    category: integration
+    related_fr:
+      - FR-002
+    status: not_started
+    file: AT-003-fabric-pattern-application.md
+
+  - id: AT-004
+    name: "MCP Tool Registration"
+    description: "Validates MCP tool registration and invocation"
+    category: integration
+    related_fr:
+      - FR-003
+    status: not_started
+    file: AT-004-mcp-tool-registration.md

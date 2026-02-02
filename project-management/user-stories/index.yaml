@@ -15,6 +15,9 @@ stories:
     priority: critical
     status: draft
     prd_group: npl_load
+    prds:
+      - PRD-008
+      - PRD-014
     related_stories:
       - US-002
     related_personas:
@@ -1590,133 +1593,6 @@ stories:
       - US-204
     related_personas:
       - P-005
-  - id: US-201
-    title: Load Directives Section with Priority Filtering
-    status: draft
-    priority: high
-    prd_group: npl_load
-    file: US-201-load-directives-section.md
-    related_personas:
-      - P-001
-      - P-003
-    related_stories: []
-  - id: US-202
-    title: Load Fences Section with All Layout Strategies
-    status: draft
-    priority: high
-    prd_group: npl_load
-    file: US-202-load-fences-section.md
-    related_personas:
-      - P-003
-    related_stories: []
-  - id: US-203
-    title: Load Pumps Section with Complex Expressions
-    status: draft
-    priority: medium
-    prd_group: npl_load
-    file: US-203-load-pumps-section.md
-    related_personas:
-      - P-001
-    related_stories: []
-  - id: US-204
-    title: Cross-Section Loading with Additions and Subtractions
-    status: draft
-    priority: medium
-    prd_group: npl_load
-    file: US-204-cross-section-loading.md
-    related_personas:
-      - P-003
-    related_stories: []
-  - id: US-205
-    title: Generate Coverage Reports for All Loaded Components
-    status: draft
-    priority: high
-    prd_group: npl_load
-    file: US-205-generate-coverage-reports.md
-    related_personas:
-      - P-003
-    related_stories: []
-  - id: US-206
-    title: Convert Documentation Sources to Markdown
-    status: draft
-    priority: high
-    prd_group: markdown
-    file: US-206-convert-documentation-to-markdown.md
-    related_personas:
-      - P-003
-    related_stories: []
-  - id: US-207
-    title: Cache Converted Files with Hybrid Strategy
-    status: draft
-    priority: high
-    prd_group: markdown
-    file: US-207-cache-converted-files.md
-    related_personas:
-      - P-003
-    related_stories: []
-  - id: US-208
-    title: Configure Cache Expiry for URL Caches
-    status: draft
-    priority: high
-    prd_group: markdown
-    file: US-208-configure-cache-expiry.md
-    related_personas:
-      - P-003
-    related_stories: []
-  - id: US-209
-    title: Filter Markdown by Heading Path
-    status: draft
-    priority: high
-    prd_group: markdown
-    file: US-209-filter-markdown-by-heading-path.md
-    related_personas:
-      - P-001
-    related_stories: []
-  - id: US-210
-    title: Filter Markdown by Heading Level Selectors
-    status: draft
-    priority: high
-    prd_group: markdown
-    file: US-210-filter-by-heading-level.md
-    related_personas:
-      - P-001
-    related_stories: []
-  - id: US-211
-    title: MCP Tools for Markdown Conversion and Viewing
-    status: draft
-    priority: high
-    prd_group: markdown
-    file: US-211-mcp-markdown-conversion-tools.md
-    related_personas:
-      - P-001
-    related_stories: []
-  - id: US-212
-    title: Collapse Markdown Sections Below Depth Level
-    status: draft
-    priority: high
-    prd_group: markdown
-    file: US-212-collapse-sections-by-depth.md
-    related_personas:
-      - P-003
-    related_stories: []
-  - id: US-213
-    title: Combine Filtering and Collapsing in Pipeline
-    status: draft
-    priority: high
-    prd_group: markdown
-    file: US-213-combine-filter-and-collapse.md
-    related_personas:
-      - P-003
-    related_stories: []
-  - id: US-214
-    title: Markdown Output Format Options
-    status: draft
-    priority: high
-    prd_group: markdown
-    file: US-214-markdown-output-format-options.md
-    related_personas:
-      - P-003
-    related_stories: []
   - id: US-220
     title: NPL Syntax Validation via CLI with Error Reporting
     status: draft
@@ -1771,3 +1647,154 @@ stories:
     related_personas:
       - P-005
     related_stories: []
+  - id: US-111
+    title: Ephemeral Tasker Lifecycle Management
+    status: draft
+    priority: high
+    prd_group: coordination
+    file: US-111-ephemeral-tasker-lifecycle.md
+    prds:
+      - PRD-009
+    legacy_id: US-009-001
+    related_personas:
+      - P-001
+    related_stories:
+      - US-112
+      - US-113
+  - id: US-112
+    title: Fabric CLI Integration
+    status: draft
+    priority: medium
+    prd_group: coordination
+    file: US-112-fabric-cli-integration.md
+    prds:
+      - PRD-009
+    legacy_id: US-009-002
+    related_personas:
+      - P-001
+    related_stories:
+      - US-111
+      - US-113
+  - id: US-113
+    title: MCP Tool Exposure for Taskers
+    status: draft
+    priority: critical
+    prd_group: mcp_tools
+    file: US-113-mcp-tool-exposure-for-taskers.md
+    prds:
+      - PRD-009
+    legacy_id: US-009-003
+    related_personas:
+      - P-001
+    related_stories:
+      - US-111
+      - US-112
+  - id: US-114
+    title: MCP Artifact Management Tools
+    status: draft
+    priority: high
+    prd_group: mcp_tools
+    file: US-114-mcp-artifact-management-tools.md
+    prds:
+      - PRD-010
+      - PRD-002
+    legacy_id: US-008-030
+    related_personas:
+      - P-001
+    related_stories:
+      - US-008
+      - US-009
+      - US-010
+  - id: US-115
+    title: MCP Chat Collaboration Tools
+    status: draft
+    priority: high
+    prd_group: mcp_tools
+    file: US-115-mcp-chat-collaboration-tools.md
+    prds:
+      - PRD-010
+      - PRD-004
+    legacy_id: US-031-045
+    related_personas:
+      - P-001
+    related_stories:
+      - US-004
+      - US-005
+      - US-006
+      - US-007
+  - id: US-116
+    title: MCP Task Queue Tools
+    status: draft
+    priority: high
+    prd_group: mcp_tools
+    file: US-116-mcp-task-queue-tools.md
+    prds:
+      - PRD-010
+      - PRD-005
+    legacy_id: US-046-060
+    related_personas:
+      - P-001
+    related_stories:
+      - US-014
+      - US-015
+      - US-016
+      - US-017
+      - US-018
+  - id: US-117
+    title: MCP Browser Automation Tools
+    status: draft
+    priority: medium
+    prd_group: mcp_tools
+    file: US-117-mcp-browser-automation-tools.md
+    prds:
+      - PRD-010
+      - PRD-006
+    legacy_id: US-061-077
+    related_personas:
+      - P-001
+    related_stories:
+      - US-012
+      - US-013
+      - US-019
+      - US-021
+  - id: US-118
+    title: MCP Cross-Domain Integration Tools
+    status: draft
+    priority: medium
+    prd_group: mcp_tools
+    file: US-118-mcp-cross-domain-integration-tools.md
+    prds:
+      - PRD-010
+    legacy_id: US-078-083
+    related_personas:
+      - P-001
+    related_stories:
+      - US-008
+      - US-004
+      - US-017
+  - id: US-119
+    title: Skill Structure Validator
+    status: draft
+    priority: high
+    prd_group: validation
+    file: US-119-skill-structure-validator.md
+    prds:
+      - PRD-016
+    legacy_id: US-016-001
+    related_personas:
+      - P-005
+    related_stories:
+      - US-120
+  - id: US-120
+    title: Skill Quality Evaluator with Arize Phoenix
+    status: draft
+    priority: high
+    prd_group: validation
+    file: US-120-skill-quality-evaluator.md
+    prds:
+      - PRD-016
+    legacy_id: US-016-002
+    related_personas:
+      - P-005
+    related_stories:
+      - US-119

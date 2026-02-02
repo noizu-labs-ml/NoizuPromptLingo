@@ -1,0 +1,82 @@
+acceptance_tests:
+  - id: AT-001
+    name: "Artifact Creation and Versioning"
+    description: "Validates artifact creation, versioning, and content storage"
+    category: integration
+    related_fr:
+      - FR-001
+      - FR-002
+    status: not_started
+    file: AT-001-artifact-creation.md
+
+  - id: AT-002
+    name: "Code Review Workflow"
+    description: "Validates complete review workflow with comments and approval"
+    category: integration
+    related_fr:
+      - FR-003
+      - FR-004
+      - FR-005
+    status: not_started
+    file: AT-002-review-workflow.md
+
+  - id: AT-003
+    name: "Chat Room Messaging"
+    description: "Validates chat room creation, messaging, and reactions"
+    category: integration
+    related_fr:
+      - FR-007
+      - FR-008
+      - FR-009
+    status: not_started
+    file: AT-003-chat-room-messaging.md
+
+  - id: AT-004
+    name: "Task Queue Workflow"
+    description: "Validates task creation, picking, and status updates"
+    category: integration
+    related_fr:
+      - FR-014
+      - FR-015
+      - FR-016
+    status: not_started
+    file: AT-004-task-queue-workflow.md
+
+  - id: AT-005
+    name: "Cross-Domain Artifact-Task Linking"
+    description: "Validates cross-domain linking between artifacts and tasks"
+    category: integration
+    related_fr:
+      - FR-018
+    status: not_started
+    file: AT-005-artifact-task-linking.md
+
+  - id: AT-006
+    name: "Browser Navigation and Screenshots"
+    description: "Validates browser session management, navigation, and screenshot capture"
+    category: integration
+    related_fr:
+      - FR-021
+      - FR-022
+    status: not_started
+    file: AT-006-browser-navigation.md
+
+  - id: AT-007
+    name: "Screenshot Comparison and Diff Generation"
+    description: "Validates screenshot comparison with diff visualization"
+    category: integration
+    related_fr:
+      - FR-024
+    status: not_started
+    file: AT-007-screenshot-comparison.md
+
+  - id: AT-008
+    name: "End-to-End MCP Tool Invocation"
+    description: "Validates complete MCP tool invocation through STDIO transport"
+    category: e2e
+    related_fr:
+      - FR-001
+      - FR-014
+      - FR-018
+    status: not_started
+    file: AT-008-e2e-mcp-tools.md

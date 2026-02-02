@@ -1,0 +1,63 @@
+acceptance_tests:
+  - id: AT-001
+    name: "Screenshot Capture and Visual Diffing"
+    description: "Screenshot capture with viewport/theme control and pixel-perfect diffing"
+    category: integration
+    related_fr:
+      - FR-001
+    status: not_started
+    file: AT-001-screenshot-capture.md
+
+  - id: AT-002
+    name: "Browser Navigation and Page State"
+    description: "Page navigation, history controls, reloading, and network idle detection"
+    category: integration
+    related_fr:
+      - FR-002
+    status: not_started
+    file: AT-002-navigation.md
+
+  - id: AT-003
+    name: "Element Interaction"
+    description: "All element interaction methods including clicking, typing, selecting, hovering"
+    category: integration
+    related_fr:
+      - FR-003
+    status: not_started
+    file: AT-003-element-interaction.md
+
+  - id: AT-004
+    name: "Content Extraction"
+    description: "Content extraction including text, HTML, element queries, and JavaScript evaluation"
+    category: integration
+    related_fr:
+      - FR-004
+    status: not_started
+    file: AT-004-content-extraction.md
+
+  - id: AT-005
+    name: "Page Modification"
+    description: "Page modification through script and style injection"
+    category: integration
+    related_fr:
+      - FR-005
+    status: not_started
+    file: AT-005-page-modification.md
+
+  - id: AT-006
+    name: "State Management"
+    description: "Browser state management including viewport, cookies, and localStorage"
+    category: integration
+    related_fr:
+      - FR-006
+    status: not_started
+    file: AT-006-state-management.md
+
+  - id: AT-007
+    name: "Session Management"
+    description: "Session lifecycle management including listing and cleanup"
+    category: integration
+    related_fr:
+      - FR-007
+    status: not_started
+    file: AT-007-session-management.md

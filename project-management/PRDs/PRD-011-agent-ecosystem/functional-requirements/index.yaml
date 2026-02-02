@@ -1,0 +1,103 @@
+functional_requirements:
+  - id: FR-001
+    name: "Agent Loader System"
+    description: "Discovers and loads agent definitions from hierarchical paths"
+    status: draft
+    related_stories:
+      - US-001
+      - US-002
+      - US-004
+    expected_tests: 12
+    coverage_target: 100
+    file: FR-001-agent-loader-system.md
+
+  - id: FR-002
+    name: "Path Resolution Hierarchy"
+    description: "Resolve agent paths in priority order (env, project, user, system)"
+    status: draft
+    related_stories:
+      - US-001
+    expected_tests: 8
+    coverage_target: 100
+    file: FR-002-path-resolution.md
+
+  - id: FR-003
+    name: "Schema Validation Rules"
+    description: "Validate agent definitions against comprehensive schema"
+    status: draft
+    related_stories:
+      - US-002
+    expected_tests: 15
+    coverage_target: 100
+    file: FR-003-schema-validation.md
+
+  - id: FR-004
+    name: "Agent Definition Schema Structure"
+    description: "Complete YAML schema for agent definitions"
+    status: draft
+    related_stories:
+      - US-002
+      - US-005
+    expected_tests: 10
+    coverage_target: 100
+    file: FR-004-agent-definition-schema.md
+
+  - id: FR-005
+    name: "Agent Registry Implementation"
+    description: "Runtime registry for storing, retrieving, and searching agents"
+    status: draft
+    related_stories:
+      - US-003
+    expected_tests: 14
+    coverage_target: 100
+    file: FR-005-agent-registry.md
+
+  - id: FR-006
+    name: "Agent Dependency Resolution"
+    description: "Resolve dependencies to construct dependency graphs"
+    status: draft
+    related_stories:
+      - US-003
+    expected_tests: 10
+    coverage_target: 100
+    file: FR-006-dependency-resolution.md
+
+  - id: FR-007
+    name: "Agent Instantiation with Configuration"
+    description: "Create configured agent instances with parameter overrides"
+    status: draft
+    related_stories:
+      - US-004
+    expected_tests: 12
+    coverage_target: 100
+    file: FR-007-agent-instantiation.md
+
+  - id: FR-008
+    name: "Agent Template System"
+    description: "Support templates with customizable parameters and variable substitution"
+    status: draft
+    related_stories:
+      - US-004
+    expected_tests: 10
+    coverage_target: 100
+    file: FR-008-template-system.md
+
+  - id: FR-009
+    name: "Markdown-Based Agent Definition Format"
+    description: "Parse agent definitions from markdown with YAML frontmatter"
+    status: draft
+    related_stories:
+      - US-005
+    expected_tests: 8
+    coverage_target: 100
+    file: FR-009-agent-definition-format.md
+
+  - id: FR-010
+    name: "Agent Documentation Standards"
+    description: "Enforce documentation standards for all 45 agents"
+    status: draft
+    related_stories:
+      - US-005
+    expected_tests: 8
+    coverage_target: 100
+    file: FR-010-documentation-standards.md

@@ -241,6 +241,8 @@ class HeadingFilter:
     def _find_section(self, sections: List[Dict[str, Any]], selector: str) -> Optional[Dict[str, Any]]:
         """Find section matching selector.
 
+        Searches recursively through the entire section tree if needed.
+
         Args:
             sections: List of sections to search
             selector: Heading selector (name, level, or normalized name)
@@ -259,7 +261,7 @@ class HeadingFilter:
         # Normalize selector for matching
         normalized_selector = self._normalize_heading_name(selector)
 
-        # Handle text match - try both raw text and normalized names
+        # First pass: search at current level only
         for section in sections:
             section_text = section["text"]
             # Match by raw text (case-insensitive)
@@ -268,6 +270,13 @@ class HeadingFilter:
             # Match by normalized name
             if self._normalize_heading_name(section_text) == normalized_selector:
                 return section
+
+        # Second pass: search recursively if not found at current level
+        # This allows finding nested headings even when not specifying full path
+        for section in sections:
+            result = self._find_section(section.get("children", []), selector)
+            if result:
+                return result
 
         return None
 

@@ -1,0 +1,76 @@
+acceptance_tests:
+  - id: AT-016-001
+    name: "Structure Validator Basic Checks"
+    description: "Validates basic skill structure validation functionality"
+    category: integration
+    related_fr:
+      - FR-016-001
+      - FR-016-002
+      - FR-016-003
+    status: not_started
+    file: AT-016-001-structure-validator-basic.md
+
+  - id: AT-016-002
+    name: "File Format Validation"
+    description: "Validates YAML, Parquet, and Markdown format checking"
+    category: unit
+    related_fr:
+      - FR-016-002
+    status: not_started
+    file: AT-016-002-file-format-validation.md
+
+  - id: AT-016-003
+    name: "CLI Interface"
+    description: "Validates command-line interface functionality"
+    category: integration
+    related_fr:
+      - FR-016-003
+    status: not_started
+    file: AT-016-003-cli-interface.md
+
+  - id: AT-016-004
+    name: "Arize Phoenix Integration"
+    description: "Validates Phoenix integration and dashboard generation"
+    category: integration
+    related_fr:
+      - FR-016-004
+    status: not_started
+    file: AT-016-004-phoenix-integration.md
+
+  - id: AT-016-005
+    name: "EVAL Rubric Parsing"
+    description: "Validates rubric parsing and structure extraction"
+    category: unit
+    related_fr:
+      - FR-016-005
+    status: not_started
+    file: AT-016-005-rubric-parsing.md
+
+  - id: AT-016-006
+    name: "Evaluation Engine"
+    description: "Validates example scoring and quality assessment"
+    category: unit
+    related_fr:
+      - FR-016-006
+    status: not_started
+    file: AT-016-006-evaluation-engine.md
+
+  - id: AT-016-007
+    name: "Jupyter Notebook Generation"
+    description: "Validates interactive notebook creation"
+    category: integration
+    related_fr:
+      - FR-016-007
+    status: not_started
+    file: AT-016-007-jupyter-notebook.md
+
+  - id: AT-016-008
+    name: "End-to-End Validation Workflow"
+    description: "Validates complete validation workflow"
+    category: e2e
+    related_fr:
+      - FR-016-001
+      - FR-016-004
+      - FR-016-006
+    status: not_started
+    file: AT-016-008-e2e-validation.md

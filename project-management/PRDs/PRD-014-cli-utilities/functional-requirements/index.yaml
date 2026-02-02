@@ -1,0 +1,75 @@
+functional_requirements:
+  - id: FR-001
+    name: "npl-load Hierarchical Resource Loader"
+    description: "Load NPL resources with hierarchical path resolution and skip flags"
+    status: draft
+    related_stories:
+      - US-001
+      - US-002
+      - US-003
+    expected_tests: 15
+    coverage_target: 100
+    file: FR-001-npl-load-hierarchical-resource-loader.md
+
+  - id: FR-002
+    name: "npl-persona Lifecycle Manager"
+    description: "Manage persistent persona state with journals, tasks, and knowledge bases"
+    status: draft
+    related_stories:
+      - US-025
+    expected_tests: 25
+    coverage_target: 100
+    file: FR-002-npl-persona-lifecycle-manager.md
+
+  - id: FR-003
+    name: "npl-session Worklog Coordinator"
+    description: "Cross-agent communication through shared worklogs with cursor-based reads"
+    status: draft
+    related_stories:
+      - US-047
+    expected_tests: 18
+    coverage_target: 100
+    file: FR-003-npl-session-worklog-coordinator.md
+
+  - id: FR-004
+    name: "dump-files Content Extractor"
+    description: "Extract and display file contents with formatting for context injection"
+    status: draft
+    related_stories:
+      - US-085
+    expected_tests: 12
+    coverage_target: 100
+    file: FR-004-dump-files-content-extractor.md
+
+  - id: FR-005
+    name: "git-tree Directory Viewer"
+    description: "Display directory structure with Git awareness and .gitignore respect"
+    status: draft
+    related_stories:
+      - US-085
+    expected_tests: 12
+    coverage_target: 100
+    file: FR-005-git-tree-directory-viewer.md
+
+  - id: FR-006
+    name: "npl-syntax Validator"
+    description: "Validate NPL documents for syntax correctness with detailed error reporting"
+    status: draft
+    related_stories:
+      - US-086
+    expected_tests: 18
+    coverage_target: 100
+    file: FR-006-npl-syntax-validator.md
+
+  - id: FR-007
+    name: "npl-check Health Utility"
+    description: "Verify NPL installation and configuration health across all components"
+    status: draft
+    related_stories:
+      - US-001
+      - US-002
+      - US-025
+      - US-047
+    expected_tests: 15
+    coverage_target: 100
+    file: FR-007-npl-check-health-utility.md

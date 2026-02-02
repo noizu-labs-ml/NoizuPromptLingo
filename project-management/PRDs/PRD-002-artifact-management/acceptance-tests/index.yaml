@@ -1,0 +1,45 @@
+acceptance_tests:
+  - id: AT-001
+    name: "Create artifact basic flow"
+    description: "Validates artifact creation with all required fields"
+    category: integration
+    related_fr:
+      - FR-001
+    status: passing
+    file: AT-001-create-artifact-basic.md
+
+  - id: AT-002
+    name: "Add revision to existing artifact"
+    description: "Validates revision increment and version preservation"
+    category: integration
+    related_fr:
+      - FR-002
+    status: passing
+    file: AT-002-add-revision-flow.md
+
+  - id: AT-003
+    name: "Retrieve artifact by ID"
+    description: "Validates artifact retrieval with metadata and specific revisions"
+    category: integration
+    related_fr:
+      - FR-003
+    status: passing
+    file: AT-003-retrieve-artifact-by-id.md
+
+  - id: AT-004
+    name: "List all artifacts"
+    description: "Validates listing all artifacts with summary info"
+    category: unit
+    related_fr:
+      - FR-003
+    status: not_started
+    file: AT-004-list-all-artifacts.md
+
+  - id: AT-005
+    name: "Web route artifact access"
+    description: "Validates web routes for file serving and API access"
+    category: e2e
+    related_fr:
+      - FR-003
+    status: not_started
+    file: AT-005-web-route-access.md

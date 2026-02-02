@@ -1,0 +1,45 @@
+acceptance_tests:
+  - id: AT-001
+    name: "Create Review Session"
+    description: "Validate review session creation for artifact revision"
+    category: integration
+    related_fr:
+      - FR-001
+    status: passing
+    file: AT-001-create-review-session.md
+
+  - id: AT-002
+    name: "Add Inline Comment"
+    description: "Validate inline comment with line location reference"
+    category: integration
+    related_fr:
+      - FR-002
+    status: passing
+    file: AT-002-add-inline-comment.md
+
+  - id: AT-003
+    name: "Add Overlay Annotation"
+    description: "Validate overlay annotation with coordinate location"
+    category: integration
+    related_fr:
+      - FR-003
+    status: passing
+    file: AT-003-add-overlay-annotation.md
+
+  - id: AT-004
+    name: "Complete Review"
+    description: "Validate review completion with summary comment"
+    category: integration
+    related_fr:
+      - FR-001
+    status: passing
+    file: AT-004-complete-review.md
+
+  - id: AT-005
+    name: "Generate Annotated Artifact"
+    description: "Validate annotated artifact generation with multi-reviewer compilation"
+    category: e2e
+    related_fr:
+      - FR-004
+    status: not_started
+    file: AT-005-generate-annotated-artifact.md

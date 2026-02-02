@@ -1,0 +1,39 @@
+functional_requirements:
+  - id: FR-001
+    name: "Core Schema Definition"
+    description: "Base schema with 15 tables for artifacts, reviews, chat, sessions, and tasks"
+    status: completed
+    related_stories:
+      - US-038
+      - US-041
+      - US-044
+      - US-045
+    expected_tests: 12
+    coverage_target: 100
+    actual_coverage: 82
+    file: FR-001-core-schema-definition.md
+
+  - id: FR-002
+    name: "Schema Migration System"
+    description: "Automatic migration system with version tracking and idempotent operations"
+    status: completed
+    related_stories:
+      - US-038
+      - US-042
+      - US-044
+    expected_tests: 10
+    coverage_target: 100
+    actual_coverage: 82
+    file: FR-002-schema-migration-system.md
+
+  - id: FR-003
+    name: "Performance Indexing Strategy"
+    description: "Comprehensive indexing for query optimization across all tables"
+    status: completed
+    related_stories:
+      - US-040
+      - US-046
+    expected_tests: 0
+    coverage_target: 0
+    actual_coverage: 0
+    file: FR-003-performance-indexing-strategy.md

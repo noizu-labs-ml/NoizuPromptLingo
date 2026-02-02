@@ -1,0 +1,30 @@
+functional_requirements:
+  - id: FR-001
+    name: "Multi-Persona Chat Rooms"
+    description: "Chat rooms with @mentions, notifications, reactions, and artifact sharing"
+    status: completed
+    related_stories:
+      - US-004
+      - US-006
+      - US-007
+      - US-022
+      - US-027
+      - US-028
+    expected_tests: 15
+    current_coverage: 78
+    coverage_target: 100
+    file: FR-001-multi-persona-chat-rooms.md
+
+  - id: FR-002
+    name: "Session Grouping"
+    description: "Session management for organizing related work contexts"
+    status: completed
+    related_stories:
+      - US-005
+      - US-007
+      - US-031
+      - US-045
+    expected_tests: 10
+    current_coverage: 0
+    coverage_target: 100
+    file: FR-002-session-grouping.md

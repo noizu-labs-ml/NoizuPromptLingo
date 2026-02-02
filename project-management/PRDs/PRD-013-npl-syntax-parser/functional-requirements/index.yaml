@@ -1,0 +1,49 @@
+functional_requirements:
+  - id: FR-001
+    name: "Parser Engine"
+    description: "Core parsing functionality for NPL documents with tokenization and element extraction"
+    status: draft
+    related_stories:
+      - US-080
+      - US-087
+      - US-082
+      - US-084
+    expected_tests: 28
+    coverage_target: 100
+    file: FR-001-parser-engine.md
+
+  - id: FR-002
+    name: "Validator"
+    description: "Document validation for boundaries, references, and schema compliance"
+    status: draft
+    related_stories:
+      - US-080
+      - US-081
+    expected_tests: 20
+    coverage_target: 100
+    file: FR-002-validator.md
+
+  - id: FR-003
+    name: "AST Builder"
+    description: "Abstract Syntax Tree construction preserving structure and metadata"
+    status: draft
+    related_stories:
+      - US-087
+      - US-082
+      - US-083
+    expected_tests: 18
+    coverage_target: 100
+    file: FR-003-ast-builder.md
+
+  - id: FR-004
+    name: "CLI Tool"
+    description: "Command-line interface for validation, listing, and extraction"
+    status: draft
+    related_stories:
+      - US-080
+      - US-081
+      - US-082
+      - US-084
+    expected_tests: 14
+    coverage_target: 100
+    file: FR-004-cli-tool.md

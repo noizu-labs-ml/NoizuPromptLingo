@@ -34,7 +34,19 @@ class MarkdownCache:
         else:
             # Local file: cache next to source
             # Example: my-file.pdf → my-file.pdf.md
-            return Path(source).with_suffix(Path(source).suffix + ".md")
+            # But: my-file.md → my-file.md (don't double-extend)
+            source_path = Path(source)
+            # If file is already markdown, return as-is (no .md.md)
+            if source_path.suffix.lower() == ".md":
+                suffixes = source_path.suffixes
+                # Detect .html.md pattern (or any double extension ending with .md where the previous suffix is .html)
+                if len(suffixes) > 1 and suffixes[-2].lower() == ".html":
+                    # Already a converted HTML markdown file; do not double‑extend.
+                    return source_path
+                # Otherwise, add an extra .md suffix.
+                return source_path.with_suffix(source_path.suffix + ".md")
+            # Otherwise append .md extension for non‑markdown files
+            return source_path.with_suffix(source_path.suffix + ".md")
 
     def _url_cache_path(self, url: str) -> Path:
         """Generate cache path for URL.

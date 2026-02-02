@@ -1,0 +1,45 @@
+acceptance_tests:
+  - id: AT-001
+    name: "Database Initialization"
+    description: "Validates all 15 tables created with schema, indexes, and constraints"
+    category: integration
+    related_fr:
+      - FR-001
+    status: passing
+    file: AT-001-database-initialization.md
+
+  - id: AT-002
+    name: "Migration Idempotency"
+    description: "Validates migrations can run multiple times safely"
+    category: unit
+    related_fr:
+      - FR-002
+    status: passing
+    file: AT-002-migration-idempotency.md
+
+  - id: AT-003
+    name: "Foreign Key Constraints"
+    description: "Validates referential integrity and constraint enforcement"
+    category: unit
+    related_fr:
+      - FR-001
+    status: passing
+    file: AT-003-foreign-key-constraints.md
+
+  - id: AT-004
+    name: "Async Operations"
+    description: "Validates aiosqlite async I/O and concurrent access"
+    category: unit
+    related_fr:
+      - FR-001
+    status: passing
+    file: AT-004-async-operations.md
+
+  - id: AT-005
+    name: "Index Usage"
+    description: "Validates query optimization with index usage"
+    category: integration
+    related_fr:
+      - FR-003
+    status: not_started
+    file: AT-005-index-usage.md

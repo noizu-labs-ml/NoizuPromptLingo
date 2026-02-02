@@ -1,0 +1,34 @@
+functional_requirements:
+  - id: FR-001
+    name: "Artifact Creation"
+    description: "Create versioned artifacts with automatic revision tracking"
+    status: completed
+    related_stories:
+      - US-008
+    expected_tests: 10
+    coverage_target: 100
+    current_coverage: 53
+    file: FR-001-artifact-creation.md
+
+  - id: FR-002
+    name: "Revision Management"
+    description: "Add revisions and track artifact history"
+    status: completed
+    related_stories:
+      - US-009
+    expected_tests: 12
+    coverage_target: 100
+    current_coverage: 53
+    file: FR-002-revision-management.md
+
+  - id: FR-003
+    name: "Artifact Retrieval"
+    description: "Retrieve artifacts and serve via web routes"
+    status: partial
+    related_stories:
+      - US-009
+      - US-004
+    expected_tests: 15
+    coverage_target: 100
+    current_coverage: 0
+    file: FR-003-artifact-retrieval.md
