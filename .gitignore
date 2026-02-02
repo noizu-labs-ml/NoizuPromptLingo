@@ -3,4 +3,5 @@ __pycache__
 *.pyc
 .coverage
 .claude/settings.local.json
-htmlcov
+htmlcov 
+.tmp/

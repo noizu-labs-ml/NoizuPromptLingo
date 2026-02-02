@@ -8,13 +8,13 @@ You are now operating within the **Claude Code** environment - a powerful CLI to
 
 ## 🎯 Your First Step
 
-Before proceeding with any tasks, you **MUST** read the comprehensive tools documentation:
+Before proceeding with any tasks, you **MUST** read the tools documentation:
 
 ```
-Read the file: /pools/throughput/users/keith/github/ai/NoizuPromptLingo/docs/claude/tools.md
+Read the file: /pools/throughput/users/keith/github/ai/NoizuPromptLingo/docs/claude/tools.summary.md
 ```
 
-This documentation is **essential** for effective operation in this environment.
+This documentation is **essential** for effective operation in this environment. It contains navigation links to category-specific summaries.
 
 ---
 
@@ -22,10 +22,10 @@ This documentation is **essential** for effective operation in this environment.
 
 The tools documentation covers:
 
-1. **File Operations** (Read, Write, Edit)
+1. **File Operations** (Read, Write, Edit, NotebookEdit)
 2. **Search & Discovery** (Glob, Grep)
 3. **Command Execution** (Bash)
-4. **Agent Management** (Task)
+4. **Agent Management** (Task, TaskOutput, TaskStop)
 5. **Planning & Workflow** (EnterPlanMode, ExitPlanMode)
 6. **Task Tracking** (TaskCreate, TaskUpdate, TaskList, TaskGet)
 7. **User Interaction** (AskUserQuestion, Skill)
@@ -50,11 +50,10 @@ Unlike typical conversational AI, in Claude Code you must:
 
 ## 🚀 Quick Start Checklist
 
-- [ ] Use the **Read** tool to open `/pools/throughput/users/keith/github/ai/NoizuPromptLingo/docs/claude/tools.md`
-- [ ] Review the tool categories and their purposes
-- [ ] Study the "Best Practices" section
-- [ ] Review "Common Patterns" for proven workflows
-- [ ] Reference "Quick Reference" table as needed during work
+- [ ] Use the **Read** tool to open `/pools/throughput/users/keith/github/ai/NoizuPromptLingo/docs/claude/tools.summary.md`
+- [ ] Review the "Quick Reference" table for tool call examples
+- [ ] Navigate to category summaries (`docs/claude/tools/*.summary.md`) as needed
+- [ ] Review "Important Agent Usage Guidelines" for agent invocation patterns and context management
 
 ---
 
@@ -64,19 +63,11 @@ Invoke the Read tool like this:
 
 ```json
 {
-  "file_path": "/pools/throughput/users/keith/github/ai/NoizuPromptLingo/docs/claude/tools.md"
+  "file_path": "/pools/throughput/users/keith/github/ai/NoizuPromptLingo/docs/claude/tools.summary.md"
 }
 ```
 
-Or if you need to read in sections (the file is ~1,154 lines):
-
-```json
-{
-  "file_path": "/pools/throughput/users/keith/github/ai/NoizuPromptLingo/docs/claude/tools.md",
-  "offset": 0,
-  "limit": 200
-}
-```
+Navigate to category-specific summaries via the links provided.
 
 ---
 
@@ -103,11 +94,12 @@ Once you've familiarized yourself with the tools:
 
 ## 🆘 When You Need Help
 
-- **Tool usage questions**: Refer back to `docs/claude/tools.md`
+- **Tool usage questions**: Refer back to `docs/claude/tools.summary.md` and category summaries (`docs/claude/tools/*.summary.md`)
+- **Extended details**: Load `docs/claude/tools/*.md` (non-summary) files only when you need comprehensive documentation
 - **Project conventions**: Check `CLAUDE.md`
 - **User clarification**: Use the **AskUserQuestion** tool
 - **Complex exploration**: Use the **Task** tool with `Explore` agent
-- **Planning help**: Use **EnterPlanMode** to design approach
+- **Planning help**: Use **EnterPlanMode** to design implementation approach before coding
 
 ---
 
@@ -115,10 +107,11 @@ Once you've familiarized yourself with the tools:
 
 Now that you know what to do:
 
-1. **Read** `/pools/throughput/users/keith/github/ai/NoizuPromptLingo/docs/claude/tools.md` in full
+1. **Read** `/pools/throughput/users/keith/github/ai/NoizuPromptLingo/docs/claude/tools.summary.md`
 2. **Understand** the tools available to you
 3. **Apply** them to help the user with their tasks
-4. **Reference** the documentation whenever needed
+4. **Reference** category summaries (`docs/claude/tools/*.summary.md`) as needed during work
+5. **Load** full docs (`docs/claude/tools/*.md`) only for extended details when needed
 
 Welcome aboard, and happy coding! 🚀
 

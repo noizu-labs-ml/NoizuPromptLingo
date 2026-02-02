@@ -5,23 +5,65 @@ NoizuPromptLingo/
 ├── src/                        # Application source code
 │   ├── npl_mcp/                #   Main NPL MCP package
 │   │   ├── __init__.py         #     Package init
+│   │   ├── launcher.py         #     CLI entry point with server management
 │   │   ├── __main__.py         #     Module entry point
-│   │   └── launcher.py         #     CLI entry point with server management
+│   │   └── __pycache__/        #     Python cache
 │   └── mcp.py                  #   Minimal FastMCP hello-world server
 ├── tests/                      # Test suites
-│   └── test_mcp_server.py      #   MCP server tests
 ├── docs/                       # Documentation
+│   ├── arch/                   #   Architecture docs (agent orchestration, assumptions)
+│   ├── claude/                 #   Claude Code tooling documentation
+│   ├── layout/                 #   Extended layout documentation
+│   ├── personas/               #   Persona definitions with index.yaml
+│   ├── reference/              #   Reference documentation (e.g., MCP)
+│   ├── user-stories/           #   User story definitions → [layout/user-stories.md](layout/user-stories.md)
+│   ├── prd.md                  #   Product requirements document
+│   ├── prd.summary.md          #   PRD summary
+│   ├── user-stories.md         #   User stories overview
+│   ├── user-stories.summary.md #   User stories summary
+│   ├── PROJ-ARCH.md            #   High-level architecture
 │   └── PROJ-LAYOUT.md          #   This file
-├── commands/                   # Claude Code slash command definitions
+├── agents/                     # TDD agent definitions
+│   ├── idea-to-spec.md         #   Idea-to-specification agent
+│   ├── prd-editor.md           #   PRD editing agent
+│   ├── tdd-coder.md            #   TDD implementation agent
+│   ├── tdd-debugger.md         #   TDD debugging agent
+│   ├── tdd-tester.md           #   TDD test creation agent
+│   ├── tasker-fast.md          #   Fast model task execution
+│   ├── tasker-hiauku.md        #   Haiku model task execution
+│   ├── tasker-opus.md          #   Opus model task execution
+│   ├── tasker-sonnet.md        #   Sonnet model task execution
+│   └── tasker-ultra.md         #   Ultra model task execution
+├── commands/                   # Claude Code slash commands
 │   ├── update-arch-doc.md      #   PROJ-ARCH.md maintenance guide
-│   └── update-layout-doc.md    #   PROJ-LAYOUT.md maintenance guide
+│   ├── update-layout-doc.md    #   PROJ-LAYOUT.md maintenance guide
+│   ├── track-assumptions.md    #   Response instructions
+│   ├── annotate.md             #   Footnote annotation tool
+│   ├── reflect.md              #   Response reflection tool
+│   └── guest.md                #   Welcome environment skill
+├── tools/                      # Utility scripts
+│   ├── __init__.py             #   Package init
+│   ├── git_tree.py             #   Tree generation utility
+│   ├── git_dump.py             #   Git dump utility
+│   ├── lib/                    #   Shared utilities
+│   └── __pycache__/            #   Python cache
 ├── .claude/                    # Claude Code configuration
-│   ├── commands/               #   Symlinks to commands/ (for Claude Code)
-│   └── settings.local.json     #   Local Claude Code settings (gitignored)
-├── agents/                     # Agent definitions (placeholder)
+│   ├── commands -> ../commands # Symlink to commands/
+│   ├── agents -> ../agents     # Symlink to agents/
+│   └── settings.local.json     # Local settings (gitignored)
+├── worktrees/                  # Git worktrees (extended workspace)
+│   ├── main/                   #   Main worktree with full NPL framework
+│   │   ├── .npl/               #     NPL metadata (personas, prds)
+│   │   ├── core/               #     NPL core framework (agents, commands, prompts, schema)
+│   │   ├── demo/               #     Demo projects
+│   │   └── mcp-server/         #     Full MCP server implementation
+│   └── npl-update/             #   Update worktree
+├── .tmp/                       # Temporary files (gitignored)
+├── .venv/                      # Virtual environment (gitignored)
 ├── .mise.toml                  # mise task runner configuration
 ├── .python-version             # Python version (3.13)
 ├── .gitignore                  # Git ignore patterns
+├── .coverage                   # pytest coverage data (gitignored)
 ├── pyproject.toml              # Project metadata and dependencies
 ├── uv.lock                     # Dependency lock file
 ├── CLAUDE.md                   # Claude Code instructions
@@ -34,7 +76,8 @@ NoizuPromptLingo/
 | File | Description |
 |------|-------------|
 | `src/mcp.py` | Minimal FastMCP server exposing a single `hello` tool (SSE on 127.0.0.1:8765) |
-| `src/npl_mcp/launcher.py` | Full NPL MCP server with CLI flags (`--status`, `--stop`, `--config`, `--test`) |
+| `worktrees/main/mcp-server/` | Full NPL MCP server with comprehensive tooling |
+| `worktrees/main/core/` | NPL persona framework and agent definitions |
 
 ## Console Scripts
 
@@ -51,11 +94,38 @@ NoizuPromptLingo/
 | `pyproject.toml` | Package metadata, dependencies, build config |
 | `uv.lock` | Locked dependency versions |
 
+## Documentation Structure
+
+| Directory | Contents |
+|-----------|----------|
+| `docs/arch/` | Agent orchestration, assumptions (with .summary.md files) |
+| `docs/claude/` | Claude Code tooling documentation (tools.md and tools/ subdirectory) |
+| `docs/claude/tools/` | Tool category docs (agents, command-exec, file-ops, planning, search, task-tracking, user-interaction, web-ops) |
+| `docs/layout/` | Extended layout documentation (user-stories.md) |
+| `docs/personas/` | Persona definitions (ai-agent, dave-fellow-developer, vibe-coder, product-manager, project-manager, index.yaml) |
+| `docs/reference/` | Reference documentation (mcp.md) |
+| `docs/user-stories/` | 37 user stories (US-001 through US-037) with index.yaml → see [layout/user-stories.md](layout/user-stories.md) |
+| `worktrees/main/core/` | Extended NPL framework (agents, commands, prompts, schema, specifications, etc.) |
+
+## TDD Agent Workflow
+
+The project uses a multi-agent TDD system with agents defined in `agents/`:
+
+| Agent | Purpose |
+|-------|---------|
+| `idea-to-spec` | Transform ideas to personas + user stories |
+| `prd-editor` | Generate PRD documents from user stories |
+| `tdd-tester` | Create comprehensive test suites |
+| `tdd-coder` | Implement features using TDD cycle |
+| `tdd-debugger` | Diagnose and fix test failures |
+
 ## Generated Directories (gitignored)
 
 | Directory | Purpose |
 |-----------|---------|
 | `.venv/` | Virtual environment created by `uv sync` |
+| `.tmp/` | Temporary files for review instructions and agent work |
 | `htmlcov/` | HTML coverage reports from pytest-cov |
 | `.pytest_cache/` | pytest cache |
-| `worktrees/` | Git worktrees (frontend lives here when present) |
+| `.ruff_cache/` | Ruff linting cache |
+| `.coverage` | pytest coverage data file |

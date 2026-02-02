@@ -1,0 +1,519 @@
+version: 2
+updated: '2026-02-02T10:00:00Z'
+personas:
+  P-001: AI Agent - Autonomous, programmatic automation agent
+  P-002: Product Manager - Non-technical reviewer needing dashboards
+  P-003: Vibe Coder - Developer focused on rapid prototyping
+  P-004: Project Manager - Coordinates agents, sprint planning, task tracking
+  P-005: Dave - Senior developer focused on code review and quality
+stories:
+  - id: US-001
+    title: Load NPL Core Components
+    file: US-001-load-npl-core.md
+    persona: P-001
+    persona_name: AI Agent
+    priority: critical
+    status: draft
+    prd_group: npl_load
+    related_stories:
+      - US-002
+    related_personas:
+      - P-001
+  - id: US-002
+    title: Load Project-Specific Context
+    file: US-002-load-project-context.md
+    persona: P-001
+    persona_name: AI Agent
+    priority: critical
+    status: draft
+    prd_group: npl_load
+    related_stories:
+      - US-001
+    related_personas:
+      - P-001
+  - id: US-003
+    title: Fetch Web Content as Markdown
+    file: US-003-fetch-web-as-markdown.md
+    persona: P-003
+    persona_name: Vibe Coder
+    priority: high
+    status: draft
+    prd_group: npl_load
+    related_personas:
+      - P-003
+  - id: US-025
+    title: Explore Project File Structure
+    file: US-025-explore-project-structure.md
+    persona: P-001
+    persona_name: AI Agent
+    priority: medium
+    status: draft
+    prd_group: npl_load
+    related_personas:
+      - P-001
+  - id: US-004
+    title: Share Artifact in Chat Room
+    file: US-004-share-artifact-chat.md
+    persona: P-003
+    persona_name: Vibe Coder
+    priority: high
+    status: draft
+    prd_group: chat
+    related_stories:
+      - US-007
+      - US-008
+    related_personas:
+      - P-003
+  - id: US-005
+    title: View Session Dashboard
+    file: US-005-view-session-dashboard.md
+    persona: P-002
+    persona_name: Product Manager
+    priority: high
+    status: draft
+    prd_group: chat
+    related_stories:
+      - US-007
+      - US-008
+      - US-016
+    related_personas:
+      - P-002
+  - id: US-006
+    title: Send Message to Chat Room
+    file: US-006-send-message-to-room.md
+    persona: P-003
+    persona_name: Vibe Coder
+    priority: high
+    status: draft
+    prd_group: chat
+    related_stories:
+      - US-007
+      - US-022
+      - US-027
+      - US-004
+    related_personas:
+      - P-003
+  - id: US-007
+    title: Create Chat Room for Collaboration
+    file: US-007-create-chat-room.md
+    persona: P-001
+    persona_name: AI Agent
+    priority: high
+    status: draft
+    prd_group: chat
+    related_stories:
+      - US-005
+      - US-006
+      - US-027
+    related_personas:
+      - P-001
+  - id: US-022
+    title: Receive and Manage Notifications
+    file: US-022-receive-notifications.md
+    persona: P-002
+    persona_name: Product Manager
+    priority: medium
+    status: draft
+    prd_group: chat
+    related_stories:
+      - US-006
+      - US-027
+    related_personas:
+      - P-002
+  - id: US-027
+    title: React to Chat Messages
+    file: US-027-react-to-message.md
+    persona: P-003
+    persona_name: Vibe Coder
+    priority: low
+    status: draft
+    prd_group: chat
+    related_stories:
+      - US-006
+      - US-007
+      - US-022
+    related_personas:
+      - P-003
+  - id: US-028
+    title: Create Todo from Chat
+    file: US-028-create-chat-todo.md
+    persona: P-003
+    persona_name: Vibe Coder
+    priority: low
+    status: draft
+    prd_group: chat
+    related_stories:
+      - US-006
+      - US-007
+      - US-016
+      - US-027
+    related_personas:
+      - P-003
+  - id: US-008
+    title: Create Versioned Artifact
+    file: US-008-create-versioned-artifact.md
+    persona: P-001
+    persona_name: AI Agent
+    priority: high
+    status: draft
+    prd_group: artifacts
+    related_stories:
+      - US-009
+      - US-017
+      - US-004
+    related_personas:
+      - P-001
+  - id: US-009
+    title: Review Artifact Revision History
+    file: US-009-review-artifact-history.md
+    persona: P-002
+    persona_name: Product Manager
+    priority: medium
+    status: draft
+    prd_group: artifacts
+    related_stories:
+      - US-008
+      - US-010
+    related_personas:
+      - P-002
+  - id: US-010
+    title: Add Inline Review Comment
+    file: US-010-add-inline-comment.md
+    persona: P-002
+    persona_name: Product Manager
+    priority: medium
+    status: draft
+    prd_group: artifacts
+    related_stories:
+      - US-008
+      - US-009
+    related_personas:
+      - P-002
+  - id: US-011
+    title: Annotate Screenshot with Overlay
+    file: US-011-annotate-screenshot.md
+    persona: P-002
+    persona_name: Product Manager
+    priority: medium
+    status: draft
+    prd_group: artifacts
+    related_stories:
+      - US-008
+      - US-010
+      - US-012
+    related_personas:
+      - P-002
+  - id: US-023
+    title: Complete Review with Summary
+    file: US-023-complete-review.md
+    persona: P-002
+    persona_name: Product Manager
+    priority: medium
+    status: draft
+    prd_group: artifacts
+    related_stories:
+      - US-010
+    related_personas:
+      - P-002
+  - id: US-014
+    title: Pick Up Task from Queue
+    file: US-014-pick-task-from-queue.md
+    persona: P-001
+    persona_name: AI Agent
+    priority: high
+    status: draft
+    prd_group: tasks
+    related_personas:
+      - P-001
+  - id: US-015
+    title: View Task Queue Progress
+    file: US-015-view-task-progress.md
+    persona: P-004
+    persona_name: Project Manager
+    priority: high
+    status: draft
+    prd_group: tasks
+    related_stories:
+      - US-014
+      - US-018
+      - US-031
+      - US-033
+    related_personas:
+      - P-004
+  - id: US-016
+    title: Create Task in Queue
+    file: US-016-create-task.md
+    persona: P-003
+    persona_name: Vibe Coder
+    priority: high
+    status: draft
+    prd_group: tasks
+    related_personas:
+      - P-003
+  - id: US-017
+    title: Link Artifact to Task
+    file: US-017-link-artifact-to-task.md
+    persona: P-001
+    persona_name: AI Agent
+    priority: high
+    status: draft
+    prd_group: tasks
+    related_stories:
+      - US-008
+      - US-016
+    related_personas:
+      - P-001
+  - id: US-018
+    title: Update Task Status
+    file: US-018-update-task-status.md
+    persona: P-001
+    persona_name: AI Agent
+    priority: high
+    status: draft
+    prd_group: tasks
+    related_stories:
+      - US-014
+      - US-015
+      - US-016
+      - US-017
+    related_personas:
+      - P-001
+  - id: US-026
+    title: Ask Question on Task
+    file: US-026-ask-question-on-task.md
+    persona: P-001
+    persona_name: AI Agent
+    priority: medium
+    status: draft
+    prd_group: tasks
+    related_stories:
+      - US-015
+      - US-016
+      - US-018
+      - US-022
+      - US-007
+    related_personas:
+      - P-001
+  - id: US-030
+    title: Assign Task Complexity
+    file: US-030-assign-task-complexity.md
+    persona: P-001
+    persona_name: AI Agent
+    priority: low
+    status: draft
+    prd_group: tasks
+    related_stories:
+      - US-014
+      - US-015
+      - US-016
+      - US-018
+      - US-033
+    related_personas:
+      - P-001
+  - id: US-012
+    title: Capture Screenshot of Current Work
+    file: US-012-capture-screenshot.md
+    persona: P-003
+    persona_name: Vibe Coder
+    priority: medium
+    status: draft
+    prd_group: browser
+    related_personas:
+      - P-003
+  - id: US-013
+    title: Compare Screenshots for Visual Regression
+    file: US-013-compare-screenshots.md
+    persona: P-001
+    persona_name: AI Agent
+    priority: medium
+    status: draft
+    prd_group: browser
+    related_stories:
+      - US-008
+      - US-012
+    related_personas:
+      - P-001
+  - id: US-019
+    title: Automate Form Submission
+    file: US-019-automate-form-submission.md
+    persona: P-001
+    persona_name: AI Agent
+    priority: medium
+    status: draft
+    prd_group: browser
+    related_stories:
+      - US-021
+    related_personas:
+      - P-001
+  - id: US-020
+    title: Quick Form Fill for Developers
+    file: US-020-quick-form-fill.md
+    persona: P-003
+    persona_name: Vibe Coder
+    priority: medium
+    status: draft
+    prd_group: browser
+    related_stories:
+      - US-021
+      - US-024
+    related_personas:
+      - P-003
+  - id: US-021
+    title: Navigate and Interact with Web Pages
+    file: US-021-browser-navigation.md
+    persona: P-001
+    persona_name: AI Agent
+    priority: medium
+    status: draft
+    prd_group: browser
+    related_personas:
+      - P-001
+  - id: US-024
+    title: Manage Browser Session State
+    file: US-024-manage-browser-state.md
+    persona: P-001
+    persona_name: AI Agent
+    priority: low
+    status: draft
+    prd_group: browser
+    related_stories:
+      - US-019
+      - US-020
+      - US-021
+    related_personas:
+      - P-001
+  - id: US-029
+    title: Inject Scripts and Styles
+    file: US-029-inject-page-scripts.md
+    persona: P-001
+    persona_name: AI Agent
+    priority: low
+    status: draft
+    prd_group: browser
+    related_stories:
+      - US-019
+      - US-021
+      - US-024
+    related_personas:
+      - P-001
+  - id: US-031
+    title: View Agent Work Logs
+    file: US-031-view-agent-work-logs.md
+    persona: P-004
+    persona_name: Project Manager
+    priority: high
+    status: draft
+    prd_group: coordination
+    related_stories:
+      - US-014
+      - US-015
+      - US-032
+      - US-033
+      - US-034
+    related_personas:
+      - P-004
+  - id: US-032
+    title: Assign Tasks to Specific Agents
+    file: US-032-assign-tasks-to-agents.md
+    persona: P-004
+    persona_name: Project Manager
+    priority: high
+    status: draft
+    prd_group: coordination
+    related_stories:
+      - US-016
+      - US-022
+      - US-031
+    related_personas:
+      - P-004
+  - id: US-033
+    title: Monitor Sprint Progress with Agent Metrics
+    file: US-033-monitor-sprint-progress.md
+    persona: P-004
+    persona_name: Project Manager
+    priority: medium
+    status: draft
+    prd_group: coordination
+    related_stories:
+      - US-015
+      - US-018
+      - US-030
+      - US-031
+      - US-032
+    related_personas:
+      - P-004
+  - id: US-034
+    title: Review Agent-Generated Code
+    file: US-034-review-agent-generated-code.md
+    persona: P-005
+    persona_name: Dave the Fellow Developer
+    priority: high
+    status: draft
+    prd_group: collaboration
+    related_stories:
+      - US-008
+      - US-009
+      - US-010
+      - US-017
+      - US-018
+      - US-023
+      - US-035
+      - US-036
+      - US-037
+    related_personas:
+      - P-005
+  - id: US-035
+    title: Share Architectural Context with Agents
+    file: US-035-share-context-with-agents.md
+    persona: P-005
+    persona_name: Dave the Fellow Developer
+    priority: high
+    status: draft
+    prd_group: collaboration
+    related_stories:
+      - US-001
+      - US-008
+      - US-009
+      - US-010
+      - US-014
+      - US-034
+      - US-036
+      - US-037
+    related_personas:
+      - P-005
+  - id: US-036
+    title: Pair Program via Chat Room
+    file: US-036-pair-program-via-chat.md
+    persona: P-005
+    persona_name: Dave the Fellow Developer
+    collaborators:
+      - P-003
+      - P-001
+    priority: medium
+    status: draft
+    prd_group: collaboration
+    related_stories:
+      - US-004
+      - US-006
+      - US-007
+      - US-008
+      - US-027
+      - US-028
+      - US-034
+      - US-035
+    related_personas:
+      - P-005
+  - id: US-037
+    title: Track Code Quality Metrics for Agent Output
+    file: US-037-track-code-quality-metrics.md
+    persona: P-005
+    persona_name: Dave the Fellow Developer
+    priority: low
+    status: draft
+    prd_group: collaboration
+    related_stories:
+      - US-008
+      - US-031
+      - US-034
+    related_personas:
+      - P-005

@@ -1,0 +1,324 @@
+version: 1
+updated: '2026-02-02T12:00:00Z'
+personas:
+  # Core personas
+  - id: P-001
+    name: AI Agent
+    file: ai-agent.md
+    tags: [autonomous, programmatic, automation]
+    related_stories: [US-001, US-002, US-008, US-014, US-017, US-018, US-019, US-021, US-024, US-025, US-026, US-029]
+  - id: P-002
+    name: Product Manager
+    file: product-manager.md
+    tags: [non-technical, reviewer, dashboard]
+    related_stories: [US-005, US-009, US-010, US-011, US-015, US-022, US-023]
+  - id: P-003
+    name: Vibe Coder
+    file: vibe-coder.md
+    tags: [developer, rapid-prototyping, natural-language]
+    related_stories: [US-003, US-004, US-006, US-012, US-016, US-020, US-027, US-028]
+  - id: P-004
+    name: Project Manager
+    file: project-manager.md
+    tags: [coordination, sprint-planning, task-tracking, agent-oversight]
+    related_stories: [US-015, US-031, US-032, US-033]
+  - id: P-005
+    name: Dave the Fellow Developer
+    file: dave-fellow-developer.md
+    tags: [senior-developer, code-review, agent-collaboration, quality-assurance]
+    related_stories: [US-034, US-035, US-036, US-037]
+  - id: P-006
+    name: Control Agent
+    file: control-agent.md
+    tags: [autonomous, orchestration, special-purpose, workflow-management, multi-agent]
+    related_stories: [US-022, US-027, US-032]
+  - id: P-007
+    name: Sub-Agent
+    file: sub-agent.md
+    tags: [autonomous, task-execution, special-purpose, reliable, observable]
+    related_stories: [US-014, US-018]
+
+  # Core NPL Agents
+  - id: A-001
+    name: Gopher Scout
+    file: agents/gopher-scout.md
+    category: Core
+    tags: [discovery, research, evidence-backed]
+  - id: A-002
+    name: NIMPS
+    file: agents/nimps.md
+    category: Core
+    tags: [content-generation, personas, storage]
+  - id: A-003
+    name: NPL Author
+    file: agents/npl-author.md
+    category: Core
+    tags: [content, documentation, token-efficiency]
+  - id: A-004
+    name: NPL FIM
+    file: agents/npl-fim.md
+    category: Core
+    tags: [implementation, code-generation]
+  - id: A-005
+    name: NPL Grader
+    file: agents/npl-grader.md
+    category: Core
+    tags: [validation, quality-assurance, multi-stage]
+  - id: A-006
+    name: NPL Marketing Writer
+    file: agents/npl-marketing-writer.md
+    category: Core
+    tags: [marketing, copywriting, messaging]
+  - id: A-007
+    name: NPL Persona
+    file: agents/npl-persona.md
+    category: Core
+    tags: [persona-management, utilities]
+  - id: A-008
+    name: NPL PRD Manager
+    file: agents/npl-prd-manager.md
+    category: Core
+    tags: [planning, specification, requirements]
+  - id: A-009
+    name: NPL QA
+    file: agents/npl-qa.md
+    category: Core
+    tags: [quality-assurance, testing, validation]
+  - id: A-010
+    name: NPL System Digest
+    file: agents/npl-system-digest.md
+    category: Core
+    tags: [documentation, analysis, synthesis]
+  - id: A-011
+    name: NPL Technical Writer
+    file: agents/npl-technical-writer.md
+    category: Core
+    tags: [documentation, technical-writing, quality]
+  - id: A-012
+    name: NPL Templater
+    file: agents/npl-templater.md
+    category: Core
+    tags: [templates, utilities, intelligence]
+  - id: A-013
+    name: NPL Thinker
+    file: agents/npl-thinker.md
+    category: Core
+    tags: [ideation, strategy, creative-thinking]
+  - id: A-014
+    name: NPL Threat Modeler
+    file: agents/npl-threat-modeler.md
+    category: Core
+    tags: [security, risk-analysis, threat-modeling]
+  - id: A-015
+    name: NPL Tool Forge
+    file: agents/npl-tool-forge.md
+    category: Core
+    tags: [tools, utilities, customization]
+  - id: A-016
+    name: TDD Driven Builder
+    file: agents/tdd-driven-builder.md
+    category: Core
+    tags: [implementation, testing, tdd]
+
+  # Additional Agents - Infrastructure
+  - id: A-017
+    name: NPL Build Manager
+    file: additional-agents/infrastructure/npl-build-manager.md
+    category: Infrastructure
+    tags: [ci-cd, deployment, automation]
+  - id: A-018
+    name: NPL Code Reviewer
+    file: additional-agents/infrastructure/npl-code-reviewer.md
+    category: Infrastructure
+    tags: [code-review, quality, patterns]
+  - id: A-019
+    name: NPL Prototyper
+    file: additional-agents/infrastructure/npl-prototyper.md
+    category: Infrastructure
+    tags: [prototyping, rapid-development, experimentation]
+
+  # Additional Agents - Marketing
+  - id: A-020
+    name: NPL Community
+    file: additional-agents/marketing/npl-community.md
+    category: Marketing
+    tags: [community, engagement, advocacy]
+  - id: A-021
+    name: NPL Conversion
+    file: additional-agents/marketing/npl-conversion.md
+    category: Marketing
+    tags: [conversion, funnels, activation]
+  - id: A-022
+    name: NPL Marketing Copy
+    file: additional-agents/marketing/npl-marketing-copy.md
+    category: Marketing
+    tags: [copywriting, messaging, marketing]
+  - id: A-023
+    name: NPL Positioning
+    file: additional-agents/marketing/npl-positioning.md
+    category: Marketing
+    tags: [positioning, strategy, differentiation]
+
+  # Additional Agents - Project Management
+  - id: A-024
+    name: NPL Project Coordinator
+    file: additional-agents/project-management/npl-project-coordinator.md
+    category: Project Management
+    tags: [coordination, planning, stakeholder-management]
+  - id: A-025
+    name: NPL Risk Monitor
+    file: additional-agents/project-management/npl-risk-monitor.md
+    category: Project Management
+    tags: [risk-management, monitoring, mitigation]
+  - id: A-026
+    name: NPL Technical Reality Checker
+    file: additional-agents/project-management/npl-technical-reality-checker.md
+    category: Project Management
+    tags: [feasibility, estimation, technical-assessment]
+  - id: A-027
+    name: NPL User Impact Assessor
+    file: additional-agents/project-management/npl-user-impact-assessor.md
+    category: Project Management
+    tags: [user-impact, prioritization, assessment]
+
+  # Additional Agents - Quality Assurance
+  - id: A-028
+    name: NPL Benchmarker
+    file: additional-agents/quality-assurance/npl-benchmarker.md
+    category: Quality Assurance
+    tags: [benchmarking, performance, regression]
+  - id: A-029
+    name: NPL Integrator
+    file: additional-agents/quality-assurance/npl-integrator.md
+    category: Quality Assurance
+    tags: [integration-testing, validation, workflows]
+  - id: A-030
+    name: NPL Tester
+    file: additional-agents/quality-assurance/npl-tester.md
+    category: Quality Assurance
+    tags: [testing, test-design, coverage]
+  - id: A-031
+    name: NPL Validator
+    file: additional-agents/quality-assurance/npl-validator.md
+    category: Quality Assurance
+    tags: [validation, acceptance, sign-off]
+
+  # Additional Agents - Research
+  - id: A-032
+    name: NPL Claude Optimizer
+    file: additional-agents/research/npl-claude-optimizer.md
+    category: Research
+    tags: [optimization, api-tuning, prompt-engineering]
+  - id: A-033
+    name: NPL Cognitive Load Assessor
+    file: additional-agents/research/npl-cognitive-load-assessor.md
+    category: Research
+    tags: [cognitive-load, ux-analysis, simplification]
+  - id: A-034
+    name: NPL Performance Monitor
+    file: additional-agents/research/npl-performance-monitor.md
+    category: Research
+    tags: [performance, monitoring, optimization]
+  - id: A-035
+    name: NPL Research Validator
+    file: additional-agents/research/npl-research-validator.md
+    category: Research
+    tags: [research, validation, evidence]
+
+  # Additional Agents - User Experience
+  - id: A-036
+    name: NPL Accessibility
+    file: additional-agents/user-experience/npl-accessibility.md
+    category: User Experience
+    tags: [accessibility, wcag, inclusive-design]
+  - id: A-037
+    name: NPL Onboarding
+    file: additional-agents/user-experience/npl-onboarding.md
+    category: User Experience
+    tags: [onboarding, ux, learning-paths]
+  - id: A-038
+    name: NPL Performance
+    file: additional-agents/user-experience/npl-performance.md
+    category: User Experience
+    tags: [performance, frontend, user-experience]
+  - id: A-039
+    name: NPL User Researcher
+    file: additional-agents/user-experience/npl-user-researcher.md
+    category: User Experience
+    tags: [user-research, feedback, testing]
+
+  # Utilities - Commands
+  - id: U-001
+    name: init-project-fast
+    file: commands/init-project-fast.md
+    type: Command
+    tags: [initialization, setup, automation]
+  - id: U-002
+    name: update-arch
+    file: commands/update-arch.md
+    type: Command
+    tags: [documentation, architecture, sync]
+  - id: U-003
+    name: update-layout
+    file: commands/update-layout.md
+    type: Command
+    tags: [documentation, layout, sync]
+
+  # Utilities - Prompts
+  - id: U-004
+    name: npl
+    file: prompts/npl.md
+    type: Prompt
+    tags: [system-prompt, base, initialization]
+  - id: U-005
+    name: npl_load
+    file: prompts/npl_load.md
+    type: Prompt
+    tags: [project-loading, context, initialization]
+  - id: U-006
+    name: scripts
+    file: prompts/scripts.md
+    type: Prompt
+    tags: [automation, scripting, execution]
+  - id: U-007
+    name: sql-lite
+    file: prompts/sql-lite.md
+    type: Prompt
+    tags: [database, sql, queries]
+
+  # Utilities - Scripts
+  - id: U-008
+    name: dump-files
+    file: scripts/dump-files.md
+    type: Script
+    tags: [file-export, data, utilities]
+  - id: U-009
+    name: git-tree-depth
+    file: scripts/git-tree-depth.md
+    type: Script
+    tags: [git-analysis, visualization, diagnostics]
+  - id: U-010
+    name: git-tree
+    file: scripts/git-tree.md
+    type: Script
+    tags: [git-visualization, repository, history]
+  - id: U-011
+    name: npl-fim-config
+    file: scripts/npl-fim-config.md
+    type: Script
+    tags: [configuration, fim-model, setup]
+  - id: U-012
+    name: npl-load
+    file: scripts/npl-load.md
+    type: Script
+    tags: [project-loading, context, initialization]
+  - id: U-013
+    name: npl-persona
+    file: scripts/npl-persona.md
+    type: Script
+    tags: [persona-management, utilities]
+  - id: U-014
+    name: npl-session
+    file: scripts/npl-session.md
+    type: Script
+    tags: [session-management, initialization, state]

@@ -2,9 +2,12 @@
 
 ## Overview
 
-NPL MCP is a Model Context Protocol (MCP) server built on FastMCP. It exposes tools to AI assistants (like Claude) via Server-Sent Events (SSE). The project provides two server variants: a minimal hello-world example for prototyping and a full-featured launcher with CLI management capabilities.
+NPL MCP is a Model Context Protocol (MCP) server built on FastMCP. It exposes tools to AI assistants (like Claude) via Server-Sent Events (SSE). The project provides two server variants:
 
-The architecture follows a simple layered approach: FastMCP handles tool registration and MCP protocol details, FastAPI provides HTTP routing, and Uvicorn serves as the ASGI server.
+1. **Minimal Server** (`src/mcp.py`) - Hello-world example for prototyping
+2. **Full Server** (`src/npl_mcp/launcher.py`) - Production server with CLI management
+
+The architecture follows a simple layered approach: FastMCP handles tool registration and MCP protocol details, FastAPI provides HTTP routing and health checks, and Uvicorn serves as the ASGI server.
 
 ## System Diagram
 
@@ -38,10 +41,10 @@ graph TB
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| FastMCP Instance | `src/npl_mcp/launcher.py` | Tool registration and MCP protocol handling |
-| FastAPI App | `src/npl_mcp/launcher.py` | HTTP routing, health checks, SSE mount |
 | Minimal Server | `src/mcp.py` | Standalone hello-world for quick experiments |
-| CLI Launcher | `src/npl_mcp/launcher.py` | Server start/stop, status checks, port config |
+| Full Server | `src/npl_mcp/launcher.py` | FastMCP + FastAPI + CLI options (status, port/host config) |
+| Console Script | `pyproject.toml` | Defines `npl-mcp` entry point → `npl_mcp.launcher:main` |
+| Module Entry | `src/npl_mcp/__main__.py` | Enables `python -m npl_mcp` invocation |
 
 ## Request Flow
 
@@ -64,9 +67,11 @@ graph TB
 
 | Entry Point | Command | Description |
 |-------------|---------|-------------|
-| Console script | `npl-mcp` | Full server with CLI options |
-| Module | `python -m npl_mcp` | Same as console script |
-| Direct | `python src/mcp.py` | Minimal hello-world server |
+| Recommended | `uv run npl-mcp` | Full server with CLI options (uses uv) |
+| Console script | `npl-mcp` | Full server (requires package installed) |
+| Module | `uv run -m npl_mcp` | Same as console script via module |
+| Direct minimal | `uv run src/mcp.py` | Minimal hello-world server |
+| Python direct | `python src/mcp.py` | Minimal server without uv |
 
 ## Available Tools
 
@@ -74,6 +79,58 @@ graph TB
 |------|-------------|
 | `hello-world` | Returns a greeting message |
 | `echo` | Echoes back provided text (full server only) |
+
+→ *See [claude/tools.summary.md](claude/tools.summary.md) for Claude Code built-in tools reference*
+
+## Requirements & Specifications
+
+Features are expressed through **user stories** organized around specific personas, which generate **PRD documents** that guide the TDD implementation workflow.
+
+### Personas
+
+The system defines personas across three categories:
+
+**Core User Personas** (7 primary personas):
+- P-001: AI Agent (autonomous programmatic automation)
+- P-002: Product Manager (non-technical dashboards)
+- P-003: Vibe Coder (rapid prototyping developer)
+- P-004: Project Manager (agent coordination and task tracking)
+- P-005: Dave the Fellow Developer (code review and quality)
+- P-006: Control Agent (orchestration and workflow management)
+- P-007: Sub-Agent (task execution and reliability)
+
+**Specialized Agents** (16+ agents organized by domain):
+- Core Agents: NPL Author, NPL FIM, NPL Grader, NPL QA, NPL Persona, NPL PRD Manager, etc.
+- Infrastructure Agents: Build Manager, Code Reviewer, Prototyper
+- Quality Assurance: Tester, Validator, Benchmarker, Integrator
+- User Experience: Accessibility, Onboarding, Performance
+- Research: Claude Optimizer, Performance Monitor, Cognitive Load Assessor
+- Project Management: Coordinator, Risk Monitor, Technical Reality Checker
+- Marketing: Community, Conversion, Marketing Copy, Positioning
+
+→ *See [personas/](personas/) for detailed persona definitions, [personas/index.yaml](personas/index.yaml) for relationship metadata*
+
+### User Stories
+
+37 user stories organized into 7 PRD priority groups:
+
+| Group | Count | Scope |
+|-------|-------|-------|
+| NPL Load | 4 | Loading prompt conventions and NPL components |
+| Chat/Collaboration | 7 | Real-time messaging and collaboration features |
+| Artifacts/Reviews | 5 | Versioned artifacts and review workflows |
+| Task Queue | 7 | Task management and queue operations |
+| Browser/Screenshots | 7 | Browser automation and visual testing |
+| Agent Coordination | 3 | Monitoring and coordinating AI agents |
+| Human-Agent Collaboration | 4 | Developer-AI pair programming and interaction |
+
+→ *See [user-stories.md](user-stories.md) for overview, [user-stories/](user-stories/) for individual stories*
+
+### Product Requirement Documents
+
+PRDs transform user stories into actionable specifications with functional/non-functional requirements, API specifications, and testing strategies.
+
+→ *See [prd.md](prd.md) for detailed format, [prd.summary.md](prd.summary.md) for overview*
 
 ## Key Design Decisions
 
@@ -86,7 +143,14 @@ graph TB
 
 The project implements a TDD-driven workflow system that coordinates multiple specialized agents (idea-to-spec, prd-editor, tdd-tester, tdd-coder, tdd-debugger) to transform feature ideas into tested, production-ready code. Each agent operates autonomously within a defined phase, with a controller orchestrating the overall workflow from discovery through implementation.
 
-→ *See [arch/agent-orchestration.md](arch/agent-orchestration.md) for details*
+The workflow processes feature ideas through:
+1. **Persona Definitions** (`docs/personas/`) - Establish user perspectives
+2. **User Stories** (`docs/user-stories/`) - Capture feature requirements
+3. **PRDs** (`.prd/`) - Detailed specifications (per PRD spec)
+4. **Tests** (`tests/`) - Test-driven development
+5. **Implementation** (`src/`) - Production code
+
+→ *See [arch/agent-orchestration.summary.md](arch/agent-orchestration.summary.md) for details*
 
 ## Configuration
 

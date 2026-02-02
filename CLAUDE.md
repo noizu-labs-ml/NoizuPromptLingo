@@ -4,6 +4,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
+## ⚠️ IMPORTANT: Scratchpad Directory Rule
+
+**ALWAYS use `.tmp/` directory for temporary files, NOT `/tmp/`**
+
+```bash
+# ✅ CORRECT
+.tmp/scratchpad/
+.tmp/docs/
+.tmp/user-stories.md
+
+# ❌ INCORRECT
+/tmp/
+/tmp/claude-*/scratchpad/
+```
+
+**Why**: `.tmp/` is project-scoped and persists across sessions. `/tmp/` is system-wide and ephemeral. All temporary work must use `.tmp/` to maintain context and avoid data loss.
+
+---
+
 ## Common Development Commands (using `uv`)
 
 | Goal | Command |
@@ -18,6 +37,48 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Lint the source code (using `ruff` – add as dev dep if needed) | `uvx ruff check src` |
 | Format code (using `ruff` or `black`) | `uvx ruff format src` |
 | Build a distributable wheel | `uv build` |
+
+---
+
+## YAML Index Management (using `yq`)
+
+This project uses `yq` (YAML CLI) for managing relationship metadata in index files. **Version 3.4.3** is currently in use.
+
+### yq Syntax Notes (v3.4.3)
+
+The system uses `yq` version 3.4.3, which has different syntax than newer versions:
+
+```bash
+# CORRECT: Filter before flags, pipe output to file
+yq -y 'filter_expression' input.yaml > output.yaml && mv output.yaml input.yaml
+
+# INCORRECT: -i flag not supported in v3.4.3
+yq -i 'filter' file.yaml  # ❌ Will fail
+
+# INCORRECT: Filter after flags
+yq '.filter' -y input.yaml  # ❌ Wrong order
+```
+
+### Common Operations
+
+```bash
+# Query a value
+yq '.stories[] | select(.id == "US-001") | .title' docs/user-stories/index.yaml
+
+# Add field to all items
+yq -y '.stories |= map(.new_field = "value")' docs/user-stories/index.yaml > temp.yaml && mv temp.yaml docs/user-stories/index.yaml
+
+# Update conditional fields
+yq -y '.personas |= map(if .id == "P-001" then .related_stories = ["US-001"] else . end)' docs/personas/index.yaml > temp.yaml && mv temp.yaml docs/personas/index.yaml
+```
+
+### Index Files as Single Source of Truth
+
+Relationship metadata is maintained in YAML index files, NOT in markdown files:
+- **User stories** relationships: `docs/user-stories/index.yaml` (via `related_stories` and `related_personas` fields)
+- **Personas** relationships: `docs/personas/index.yaml` (via `related_stories` field)
+
+Markdown files describe content; YAML indexes describe structure. This separation enables version control of relationships independent from documentation content.
 
 ---
 
