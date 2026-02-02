@@ -43,6 +43,12 @@ Examples:
         help="When not --bare, collapse headings below this depth (1-6)",
     )
     parser.add_argument(
+        "--filter-inner-depth",
+        type=int,
+        metavar="N",
+        help="Collapse depth WITHIN filtered sections only (1-6)",
+    )
+    parser.add_argument(
         "--rich",
         action="store_true",
         help="Format markdown output with Rich (terminal styling)",
@@ -63,7 +69,11 @@ def main() -> int:
         # Apply view transformations
         viewer = MarkdownViewer()
         result = viewer.view(
-            content, filter=args.filter, bare=args.bare, depth=args.depth
+            content,
+            filter=args.filter,
+            bare=args.bare,
+            depth=args.depth,
+            filter_inner_depth=args.filter_inner_depth,
         )
 
         # Apply Rich formatting if requested

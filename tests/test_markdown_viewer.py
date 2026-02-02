@@ -157,12 +157,21 @@ class TestMarkdownViewerFilterOnly:
         assert "This is the main content" in result
 
     def test_view_with_nested_filter(self, viewer, sample_doc):
-        """Test viewing with nested heading filter."""
+        """Test viewing with nested heading filter (context preservation)."""
         result = viewer.view(sample_doc, filter="Main Document > Section A > Subsection A1")
 
+        # Ancestors shown expanded
+        assert "# Main Document" in result
+        assert "## Section A" in result
+
+        # Matched section shown expanded
         assert "### Subsection A1" in result
         assert "Detailed content for A1" in result
-        assert "Subsection A2" not in result
+
+        # Sibling shown collapsed
+        assert "### Subsection A2 (collapsed)" in result
+        # But content under sibling not shown
+        assert "Detailed content for A2" not in result
 
     def test_view_with_invalid_filter_returns_error(self, viewer, sample_doc):
         """Test viewing with invalid filter returns error message."""
@@ -352,29 +361,53 @@ class TestMarkdownViewerCombined:
     """Test filtering and collapsing together."""
 
     def test_filter_then_collapse(self, viewer, sample_doc):
-        """Test applying both filter and collapse."""
+        """Test applying both filter and collapse with context preservation."""
         result = viewer.view(sample_doc, filter="Main Document > Section A", depth=2)
 
+        # Matched section should be shown expanded
         assert "## Section A" in result
         assert "Content for section A" in result
+
         # Subsection A1 shown with (collapsed) marker (level 3 > depth 2)
         assert "### Subsection A1 (collapsed)" in result
         # Content under collapsed heading is hidden
         assert "Detailed content for A1" not in result
-        assert "Section B" not in result
+
+        # Ancestor should be shown expanded (Main Document is ancestor)
+        assert "# Main Document" in result
+        assert "This is the main content." in result
+
+        # Sibling should be shown collapsed
+        assert "## Section B (collapsed)" in result
+
         assert "(collapsed)" in result
 
     def test_filter_and_collapse_at_different_depths(self, viewer, deep_doc):
-        """Test filter and collapse at various depths."""
-        # Filter to Level 1, then collapse at depth 3
+        """Test filter and collapse at various depths with context preservation."""
+        # Filter to Level 1 > Level 2, collapse at depth 3
         result = viewer.view(deep_doc, filter="Level 1 > Level 2", depth=3)
 
+        # Ancestor should be shown expanded
+        assert "# Level 1" in result
+        assert "Content at level 1." in result
+
+        # Matched section should be shown expanded
         assert "## Level 2" in result
+        assert "Content at level 2." in result
+
+        # Level 3 should be expanded (within matched section)
         assert "### Level 3" in result
+        assert "Content at level 3." in result
+
         # Level 4 shown with (collapsed) marker (level 4 > depth 3)
         assert "#### Level 4 (collapsed)" in result
+
         # Deeper levels hidden
         assert "##### Level 5" not in result
+
+        # Siblings shown collapsed
+        assert "## Another Level 2 (collapsed)" in result
+
         assert "(collapsed)" in result
 
 
@@ -615,6 +648,156 @@ Other content."""
         assert "Just content" in result
         assert "Other" not in result
         assert "[Collapsed]" not in result
+
+
+# ============================================================================
+# Test Context Preservation (Filter without --bare)
+# ============================================================================
+
+
+class TestContextPreservation:
+    """Test that filtering without --bare shows document context."""
+
+    def test_filter_shows_ancestors_expanded(self, viewer, sample_doc):
+        """Test that ancestor sections are shown expanded."""
+        result = viewer.view(sample_doc, filter="Main Document > Section A")
+
+        # Ancestor should be shown expanded
+        assert "# Main Document" in result
+        assert "This is the main content." in result
+
+        # Matched section shown expanded
+        assert "## Section A" in result
+        assert "Content for section A" in result
+
+        # Siblings shown collapsed
+        assert "## Section B (collapsed)" in result
+
+    def test_filter_shows_siblings_collapsed(self, viewer, sample_doc):
+        """Test that sibling sections are shown collapsed."""
+        result = viewer.view(sample_doc, filter="Main Document > Section A")
+
+        # Siblings should be shown collapsed
+        assert "## Section B (collapsed)" in result
+        # Content under siblings should be hidden
+        assert "Content for section B" not in result
+
+    def test_filter_nested_shows_full_path(self, viewer, sample_doc):
+        """Test that nested filter shows full ancestor path."""
+        result = viewer.view(sample_doc, filter="Main Document > Section A > Subsection A1")
+
+        # Ancestors should be shown expanded
+        assert "# Main Document" in result
+        assert "## Section A" in result
+
+        # Matched section shown expanded
+        assert "### Subsection A1" in result
+        assert "Detailed content for A1" in result
+
+        # Siblings shown collapsed
+        assert "### Subsection A2 (collapsed)" in result
+        assert "Detailed content for A2" not in result
+
+    def test_filter_preserves_document_structure(self, viewer, deep_doc):
+        """Test that filtering preserves full document structure."""
+        result = viewer.view(deep_doc, filter="Level 1 > Level 2")
+
+        # Ancestor shown expanded
+        assert "# Level 1" in result
+
+        # Matched section shown expanded
+        assert "## Level 2" in result
+
+        # Other level 2 sibling shown collapsed
+        assert "## Another Level 2 (collapsed)" in result
+
+
+# ============================================================================
+# Test Filter Inner Depth
+# ============================================================================
+
+
+class TestFilterInnerDepth:
+    """Test filter_inner_depth parameter for collapsing within matched sections."""
+
+    def test_filter_inner_depth_collapses_within_match(self, viewer, deep_doc):
+        """Test that filter_inner_depth collapses children within matched section."""
+        result = viewer.view(
+            deep_doc,
+            filter="Level 1 > Level 2",
+            filter_inner_depth=3
+        )
+
+        # Ancestor shown expanded
+        assert "# Level 1" in result
+        assert "Content at level 1." in result
+
+        # Matched section shown expanded
+        assert "## Level 2" in result
+        assert "Content at level 2." in result
+
+        # Levels up to filter_inner_depth shown expanded
+        assert "### Level 3" in result
+        assert "Content at level 3." in result
+
+        # Levels beyond filter_inner_depth shown collapsed
+        assert "#### Level 4 (collapsed)" in result
+        assert "Content at level 4." not in result
+
+    def test_global_depth_overrides_filter_inner_depth(self, viewer, deep_doc):
+        """Test that global depth parameter overrides filter_inner_depth."""
+        result = viewer.view(
+            deep_doc,
+            filter="Level 1 > Level 2",
+            depth=2,
+            filter_inner_depth=5
+        )
+
+        # Global depth takes precedence
+        # Ancestor at level 1 shown expanded
+        assert "# Level 1" in result
+
+        # Matched section at level 2 shown expanded
+        assert "## Level 2" in result
+
+        # Level 3 shown collapsed (violates global depth=2)
+        assert "### Level 3 (collapsed)" in result
+        assert "Content at level 3." not in result
+
+    def test_filter_inner_depth_with_siblings(self, viewer, sample_doc):
+        """Test filter_inner_depth with sibling sections."""
+        result = viewer.view(
+            sample_doc,
+            filter="Main Document > Section A",
+            filter_inner_depth=2
+        )
+
+        # Matched section shown expanded
+        assert "## Section A" in result
+
+        # Children collapsed at filter_inner_depth (level 3 > depth 2)
+        assert "### Subsection A1 (collapsed)" in result
+        assert "Detailed content for A1" not in result
+
+        # Siblings shown collapsed
+        assert "## Section B (collapsed)" in result
+
+    def test_filter_inner_depth_1_collapses_all_children(self, viewer, sample_doc):
+        """Test filter_inner_depth=1 collapses immediate children."""
+        # Filter to Section A which has level 2
+        # filter_inner_depth=2 means collapse children at level > 2
+        # So level 3 children should be collapsed
+        result = viewer.view(
+            sample_doc,
+            filter="Main Document > Section A",
+            filter_inner_depth=2
+        )
+
+        # Matched section at level 2 shown expanded
+        assert "## Section A" in result
+
+        # Children at level 3 shown collapsed
+        assert "### Subsection A1 (collapsed)" in result
 
 
 # ============================================================================

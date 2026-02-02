@@ -50,6 +50,12 @@ Examples:
         help="When not --bare, collapse headings below this depth (1-6)",
     )
     parser.add_argument(
+        "--filter-inner-depth",
+        type=int,
+        metavar="N",
+        help="Collapse depth WITHIN filtered sections only (1-6)",
+    )
+    parser.add_argument(
         "--rich",
         action="store_true",
         help="Format markdown output with Rich (terminal styling, stdout only)",
@@ -102,7 +108,11 @@ async def async_main(args):
         # Apply filtering/viewing transformations
         viewer = MarkdownViewer()
         result = viewer.view(
-            markdown_content, filter=args.filter, bare=args.bare, depth=args.depth
+            markdown_content,
+            filter=args.filter,
+            bare=args.bare,
+            depth=args.depth,
+            filter_inner_depth=args.filter_inner_depth,
         )
 
         # Write output

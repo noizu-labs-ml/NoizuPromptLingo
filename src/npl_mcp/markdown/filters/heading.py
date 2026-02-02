@@ -42,6 +42,67 @@ class HeadingFilter:
         normalized = normalized.strip('-')
         return normalized
 
+    def filter_with_context(self, content: str, selector: str) -> Dict[str, Any]:
+        """Apply filter while preserving document context by marking matches.
+
+        Instead of extracting the matched section, this returns the full
+        document structure with matched sections marked for context-aware rendering.
+
+        Args:
+            content: Markdown content to filter
+            selector: Heading selector (path, level, or name)
+
+        Returns:
+            Dict with:
+                - 'sections': Full document structure with marking flags
+                - 'has_matches': Whether any sections matched
+                - 'matched_ids': Set of IDs of matched sections
+        """
+        # Parse selector into path parts
+        parts = [p.strip() for p in selector.split(">")]
+
+        # Parse markdown into sections
+        sections = self._parse_sections(content)
+
+        # Navigate path to find matched section(s)
+        current = sections
+        for part in parts:
+            if part == "*":
+                # Match all at current level
+                if isinstance(current, dict):
+                    current = current.get("children", [])
+                break
+            else:
+                # Find matching section
+                if isinstance(current, list):
+                    current = self._find_section(current, part)
+                else:
+                    # Already narrowed to single section, search its children
+                    current = self._find_section(current.get("children", []), part)
+
+                if not current:
+                    return {
+                        'sections': sections,
+                        'has_matches': False,
+                        'matched_ids': set()
+                    }
+
+        # Ensure current is a list for consistent handling
+        if isinstance(current, dict):
+            current = [current]
+
+        # Mark matched sections and their ancestors
+        matched_ids = set()
+        for matched_section in current:
+            self._mark_matched(matched_section, matched_ids)
+            self._mark_ancestors(sections, matched_section)
+
+        return {
+            'sections': sections,
+            'has_matches': len(matched_ids) > 0,
+            'matched_ids': matched_ids
+        }
+
     def filter(self, content: str, selector: str) -> str:
         """Apply heading selector to markdown content.
 
@@ -84,6 +145,52 @@ class HeadingFilter:
             return self._sections_to_markdown(current)
         else:
             return self._sections_to_markdown([current])
+
+    def _mark_matched(self, section: Dict[str, Any], matched_ids: set) -> None:
+        """Recursively mark section and all children as matched.
+
+        Args:
+            section: Section dictionary to mark
+            matched_ids: Set to accumulate matched section IDs
+        """
+        section['matched'] = True
+        matched_ids.add(id(section))
+        for child in section.get('children', []):
+            self._mark_matched(child, matched_ids)
+
+    def _mark_ancestors(self, sections: List[Dict[str, Any]], matched_section: Dict[str, Any]) -> bool:
+        """Mark all ancestors of matched section for context rendering.
+
+        Recursively searches the section tree to find the matched section,
+        and marks all its ancestors with 'matched_ancestor' flag.
+
+        Args:
+            sections: List of sections to search
+            matched_section: The matched section to find ancestors for
+
+        Returns:
+            True if the matched section was found and ancestors were marked
+        """
+        def find_and_mark_ancestors(section_list, target, ancestors_chain):
+            for section in section_list:
+                # Check if this is the target section
+                if id(section) == id(target):
+                    # Mark all ancestors
+                    for ancestor in ancestors_chain:
+                        ancestor['matched_ancestor'] = True
+                    return True
+
+                # Recurse into children
+                if find_and_mark_ancestors(
+                    section.get('children', []),
+                    target,
+                    ancestors_chain + [section]
+                ):
+                    return True
+
+            return False
+
+        return find_and_mark_ancestors(sections, matched_section, [])
 
     def _parse_sections(self, content: str) -> List[Dict[str, Any]]:
         """Parse markdown into hierarchical sections.
