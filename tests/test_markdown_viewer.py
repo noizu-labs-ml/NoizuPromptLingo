@@ -949,12 +949,13 @@ Content about nihilism.
 Specific content about metaphysical nihilism.
 """
 
-        # With proper headings, filtering works
-        result_with = viewer.view(with_headings, filter="Metaphysical Nihilism")
+        # With proper headings, filtering works (need full path from root)
+        result_with = viewer.view(with_headings, filter="Main > Nihilism > Metaphysical Nihilism")
         assert "Error" not in result_with
+        assert "Metaphysical Nihilism" in result_with
 
         # Without headings, filtering fails
-        result_without = viewer.view(without_headings, filter="Metaphysical Nihilism")
+        result_without = viewer.view(without_headings, filter="Main > Nihilism > Metaphysical Nihilism")
         assert "Error" in result_without or "Section not found" in result_without
 
     def test_viewer_filter_case_sensitivity_with_headings(self, viewer):
@@ -970,8 +971,8 @@ API documentation here.
 Details about endpoint methods.
 """
 
-        # Should find heading with exact text
-        result = viewer.view(content, filter="API Reference")
+        # Should find heading with exact text (need full path from root)
+        result = viewer.view(content, filter="Document > API Reference")
         assert "Error" not in result
         assert "API Reference" in result
 
@@ -1058,10 +1059,11 @@ But this might not have heading marker from poor conversion.
 Back to proper formatting again.
 """
 
-        # Can find properly formatted heading
-        result1 = viewer.view(content, filter="Metaphysical Nihilism")
+        # Can find properly formatted heading (need full path from root)
+        result1 = viewer.view(content, filter="Philosophy > Nihilism > Metaphysical Nihilism")
         assert "Error" not in result1
+        assert "Metaphysical Nihilism" in result1
 
-        # Cannot find poorly formatted heading
-        result2 = viewer.view(content, filter="Epistemological Nihilism")
-        assert "Error" in result2
+        # Cannot find poorly formatted heading (text exists but not as markdown heading)
+        result2 = viewer.view(content, filter="Philosophy > Nihilism > Epistemological Nihilism")
+        assert "Error" in result2 or "Section not found" in result2

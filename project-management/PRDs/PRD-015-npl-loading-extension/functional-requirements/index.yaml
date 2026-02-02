@@ -1,0 +1,25 @@
+functional_requirements:
+  - id: FR-1
+    title: Expression Parser Extension
+    file: FR-1.md
+    description: Extend the NPL expression parser to recognize all section types
+
+  - id: FR-2
+    title: Section Resolver
+    file: FR-2.md
+    description: Resolve NPL components to their YAML definitions
+
+  - id: FR-3
+    title: Priority Filter
+    file: FR-3.md
+    description: Filter component examples by priority level
+
+  - id: FR-4
+    title: Layout Strategies
+    file: FR-4.md
+    description: Format resolved components using configurable layout strategies
+
+  - id: FR-5
+    title: Unified Loading API
+    file: FR-5.md
+    description: Provide a single entry point for NPL loading

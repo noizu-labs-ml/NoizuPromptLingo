@@ -1,0 +1,35 @@
+acceptance_tests:
+  - id: AT-1
+    title: Section Loading Tests
+    file: AT-1.md
+    description: Test loading each NPL section
+
+  - id: AT-2
+    title: Component Loading Tests
+    file: AT-2.md
+    description: Test loading specific components
+
+  - id: AT-3
+    title: Priority Filtering Tests
+    file: AT-3.md
+    description: Test priority filtering per section
+
+  - id: AT-4
+    title: Cross-Section Expression Tests
+    file: AT-4.md
+    description: Test cross-section expressions with + and -
+
+  - id: AT-5
+    title: Layout Strategy Tests
+    file: AT-5.md
+    description: Test layout strategies with all content types
+
+  - id: AT-6
+    title: Error Handling Tests
+    file: AT-6.md
+    description: Test error handling for invalid inputs
+
+  - id: AT-7
+    title: Integration Tests
+    file: AT-7.md
+    description: Integration tests for complete workflows

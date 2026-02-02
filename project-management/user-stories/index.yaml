@@ -1,5 +1,5 @@
 version: 2
-updated: '2026-02-02T04:05:25Z'
+updated: '2026-02-02T17:30:00Z'
 personas:
   P-001: AI Agent - Autonomous, programmatic automation agent
   P-002: Product Manager - Non-technical reviewer needing dashboards
@@ -1512,5 +1512,81 @@ stories:
     priority: high
     status: draft
     prd_group: executor_exposure
+    related_personas:
+      - P-005
+  - id: US-201
+    title: Load Directives Section with Priority Filtering
+    file: US-201-load-directives-section.md
+    persona: P-001
+    persona_name: AI Agent
+    priority: high
+    status: draft
+    prd_group: npl_load
+    prds:
+      - PRD-015
+    related_stories:
+      - US-202
+      - US-203
+    related_personas:
+      - P-001
+      - P-003
+  - id: US-202
+    title: Load Fences Section with All Layout Strategies
+    file: US-202-load-fences-section.md
+    persona: P-003
+    persona_name: Vibe Coder
+    priority: high
+    status: draft
+    prd_group: npl_load
+    prds:
+      - PRD-015
+    related_stories:
+      - US-201
+      - US-204
+    related_personas:
+      - P-003
+  - id: US-203
+    title: Load Pumps Section with Complex Expressions
+    file: US-203-load-pumps-section.md
+    persona: P-001
+    persona_name: AI Agent
+    priority: medium
+    status: draft
+    prd_group: npl_load
+    prds:
+      - PRD-015
+    related_stories:
+      - US-201
+      - US-204
+    related_personas:
+      - P-001
+  - id: US-204
+    title: Cross-Section Loading with Additions and Subtractions
+    file: US-204-cross-section-loading.md
+    persona: P-003
+    persona_name: Vibe Coder
+    priority: medium
+    status: draft
+    prd_group: npl_load
+    prds:
+      - PRD-015
+    related_stories:
+      - US-202
+      - US-203
+      - US-205
+    related_personas:
+      - P-003
+  - id: US-205
+    title: Generate Coverage Reports for All Loaded Components
+    file: US-205-generate-coverage-reports.md
+    persona: P-005
+    persona_name: Dave
+    priority: high
+    status: draft
+    prd_group: npl_load
+    prds:
+      - PRD-015
+    related_stories:
+      - US-204
     related_personas:
       - P-005
