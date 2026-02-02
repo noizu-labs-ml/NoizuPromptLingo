@@ -3,49 +3,113 @@ name: annotate
 description: Adds footnote annotations to files. NEVER modifies originals. Copies source to {file}.annotated.{ext}.md, adds markers there, and appends definitions to {file}.footnotes.{ext}.md. Every marker REQUIRES a corresponding definition.
 ---
 
-# Annotate Instructions
+# Annotation Instructions.
 
-## CRITICAL RULES
+## THE ANNOTATION LOOP
 
-1. **NEVER modify the original file**
-2. **Copy the original to an annotated file first**
-3. **Add markers to the annotated copy only**
-4. **Append definitions to the footnotes file**
-5. **Every marker MUST have a definition — NEVER add one without the other**
+For each annotation, perform these two operations **in sequence before moving to the next annotation**:
 
-## Three-File System
+```
+┌─────────────────────────────────────────────────────────────┐
+│                                                             │
+│   FOR EACH ANNOTATION:                                      │
+│                                                             │
+│      1. Insert [^marker] in annotated file                  │
+│      2. Append [^marker]: definition to footnotes file      │
+│                                                             │
+│   THEN move to next annotation and repeat.                  │
+│                                                             │
+│   ─────────────────────────────────────────────────────     │
+│                                                             │
+│   DO NOT: Insert all markers, then append all definitions    │
+│   RIGHT: Insert marker → append definition → next marker    │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
 
-When annotating `src/auth.py`, you create/modify THREE files:
+## CORRECT WORKFLOW
 
-| File | Purpose | Modified? |
-|------|---------|-----------|
-| `src/auth.py` | Original source | **NEVER** |
-| `src/auth.annotated.py.md` | Annotated copy with markers | YES |
-| `src/auth.footnotes.py.md` | Footnote definitions | YES |
+```mermaid
+flowchart TD
+    A[Copy original to annotated file] --> B[Identify first annotation location]
+    B --> C[Insert Single marker in annotated file]
+    C --> D[Append Single definition to footnotes file]
+    D --> E{More annotations?}
+    E -->|Yes| F[Identify next annotation location]
+    F --> B
+    E -->|No| G[Done]
+```
 
-### File Naming Rules
+## FOOTNOTE DEFINITION FORMAT
 
-| Original File | Annotated Copy | Footnotes File |
-|---------------|----------------|----------------|
-| `foo.py` | `foo.annotated.py.md` | `foo.footnotes.py.md` |
-| `foo.ts` | `foo.annotated.ts.md` | `foo.footnotes.ts.md` |
-| `foo.yaml` | `foo.annotated.yaml.md` | `foo.footnotes.yaml.md` |
-| `foo.md` | `foo.annotated.md` | `foo.footnotes.md` |
+### Single-Line Footnote
 
-**Pattern:**
-- Annotated: `{name}.annotated.{ext}.md` (or `{name}.annotated.md` if already `.md`)
-- Footnotes: `{name}.footnotes.{ext}.md` (or `{name}.footnotes.md` if already `.md`)
+```markdown
+[^marker-id]: Short definition on the same line.
 
-## Required Operations
+---
+```
 
-Annotating a file requires THREE steps:
+### Multi-Line Footnote (4-SPACE INDENT)
 
-### Step 1: Copy Original to Annotated File
+For multi-line definitions, put the marker on its own line, then **indent all content with 4 spaces**:
 
-**Copy `src/auth.py` → `src/auth.annotated.py.md`**
+```markdown
+[^marker-id]:
+    First line of the definition starts here with 4-space indent.
+    
+    Additional paragraphs also indented 4 spaces.
+    
+    **Markdown formatting** works normally within the indented block.
+    
+    - Lists work too
+    - Just keep the 4-space indent
 
-The annotated file is a markdown file containing the source. Wrap code in a fenced code block:
+---
+```
 
+### Multi-Line Example
+
+```markdown
+[^introduction-clarify]:
+    **TODO**: Consider adding a brief "Quick Start" section at the beginning
+    for users who need immediate, hands-on guidance before diving into the
+    reference documentation.
+    
+    Current introduction assumes users are already oriented to the environment.
+
+---
+
+[^auth-flow]:
+    ## Authentication Flow
+    
+    This function implements OAuth 2.0 with PKCE:
+    
+    1. Generate code verifier
+    2. Create authorization URL
+    3. Handle callback
+    4. Exchange code for tokens
+    
+    > **Security Note**: Always validate the state parameter to prevent CSRF.
+
+---
+```
+
+### Format Rules
+
+| Scenario | Format |
+|----------|--------|
+| Short (one line) | `[^id]: Definition here.` |
+| Long (multi-line) | `[^id]:\n    Indented content...` |
+| Indent amount | **4 spaces** (not tabs) |
+
+## EXAMPLE: Correct Step-by-Step
+
+Annotating `src/auth.py` with three annotations:
+
+### Setup: Copy original to annotated file
+
+Create `src/auth.annotated.py.md`:
 ```markdown
 # Annotated: auth.py
 
@@ -58,26 +122,7 @@ def login(user):
 \`\`\`
 ```
 
-### Step 2: Add Markers to Annotated Copy
-
-**Edit `src/auth.annotated.py.md` to add `[^marker]` references:**
-
-```markdown
-# Annotated: auth.py
-
-Source: `src/auth.py`
-
-\`\`\`python
-def login(user):  # [^login-flow]
-    token = get_token(user)  # [^token-fetch]
-    return validate(token)
-\`\`\`
-```
-
-### Step 3: Append Definitions to Footnotes File
-
-**Create/append to `src/auth.footnotes.py.md`:**
-
+Create `src/auth.footnotes.py.md`:
 ```markdown
 # Footnotes: auth.py
 
@@ -85,115 +130,95 @@ Source: `src/auth.py`
 
 ---
 
-[^login-flow]: Main authentication entry point.
-
-Validates user credentials and establishes session.
-
----
-
-[^token-fetch]: Retrieves OAuth token from identity provider.
-
----
 ```
 
-## ALL THREE STEPS ARE REQUIRED
+### Annotation 1: login function
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                                                             │
-│   STEP 1: Copy original  →  {file}.annotated.{ext}.md      │
-│                                                             │
-│   STEP 2: Add [^markers] to annotated copy                 │
-│                                                             │
-│   STEP 3: Append [^marker]: definitions to footnotes       │
-│                                                             │
-│   ─────────────────────────────────────────────────────    │
-│                                                             │
-│   NEVER modify the original file                           │
-│   NEVER add a marker without its definition                │
-│   NEVER add a definition without its marker                │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
+**Step 1a — Insert marker in annotated file:**
+```python
+def login(user):  # [^login-flow]
 ```
 
-## Complete Example
-
-You are asked to annotate `src/api/client.ts`.
-
-### Original File (DO NOT MODIFY)
-
-`src/api/client.ts`:
-```typescript
-export class ApiClient {
-    private baseUrl: string;
-    
-    async fetch<T>(endpoint: string): Promise<T> {
-        const response = await fetch(`${this.baseUrl}${endpoint}`);
-        if (!response.ok) {
-            throw new ApiError(response.status);
-        }
-        return response.json();
-    }
-}
-```
-
-### Step 1 & 2: Create Annotated Copy with Markers
-
-**Create `src/api/client.annotated.ts.md`:**
-
+**Step 1b — Append definition to footnotes file:**
 ```markdown
-# Annotated: client.ts
-
-Source: `src/api/client.ts`
-
-\`\`\`typescript
-export class ApiClient {
-    private baseUrl: string;  // [^base-url]
+[^login-flow]:
+    Main authentication entry point.
     
-    async fetch<T>(endpoint: string): Promise<T> {  // [^fetch-method]
-        const response = await fetch(`${this.baseUrl}${endpoint}`);
-        if (!response.ok) {  // [^error-check]
-            throw new ApiError(response.status);
-        }
-        return response.json();
-    }
-}
-\`\`\`
+    Validates user credentials and establishes a session. Called by
+    the `/auth/login` endpoint.
+
+---
+
 ```
 
-### Step 3: Create Footnotes File with Definitions
+### Annotation 2: token fetch
 
-**Create `src/api/client.footnotes.ts.md`:**
+**Step 2a — Insert marker in annotated file:**
+```python
+    token = get_token(user)  # [^token-fetch]
+```
 
+**Step 2b — Append definition to footnotes file:**
 ```markdown
-# Footnotes: client.ts
-
-Source: `src/api/client.ts`
+[^token-fetch]: Retrieves OAuth token from provider.
 
 ---
 
-[^base-url]: Configured via `API_BASE_URL` environment variable.
-
-Defaults to `http://localhost:3000` in development.
-
----
-
-[^fetch-method]: Generic fetch wrapper with automatic JSON parsing.
-
-Type parameter `T` represents the expected response shape.
-
----
-
-[^error-check]: Throws `ApiError` on non-2xx responses.
-
-TODO: Add retry logic for 5xx errors.
-
----
 ```
 
-## Annotated File Structure
+### Annotation 3: validation
 
-The `.annotated.{ext}.md` file is a markdown document:
+**Step 3a — Insert marker in annotated file:**
+```python
+    return validate(token)  # [^validation]
+```
+
+**Step 3b — Append definition to footnotes file:**
+```markdown
+[^validation]:
+    Validates token signature and expiry.
+    
+    **Checks performed:**
+    - Signature verification against public key
+    - Expiration timestamp
+    - Issuer claim matches expected value
+    - Audience claim includes our client ID
+
+---
+
+```
+
+## GUIDELINES
+
+❌ **DO NOT — Batching markers:**
+1. Insert `[^login-flow]`
+2. Insert `[^token-fetch]`
+3. Insert `[^validation]`
+4. Append `[^login-flow]:` definition
+5. Append `[^token-fetch]:` definition
+6. Append `[^validation]:` definition
+
+✅ **DO — Interleaved:**
+1. Insert `[^login-flow]`
+2. Append `[^login-flow]:` definition
+3. Insert `[^token-fetch]`
+4. Append `[^token-fetch]:` definition
+5. Insert `[^validation]`
+6. Append `[^validation]:` definition
+
+## File Naming
+
+| Original File | Annotated Copy | Footnotes File |
+|---------------|----------------|----------------|
+| `foo.py` | `foo.annotated.py.md` | `foo.footnotes.py.md` |
+| `foo.ts` | `foo.annotated.ts.md` | `foo.footnotes.ts.md` |
+| `foo.md` | `foo.annotated.md` | `foo.footnotes.md` |
+
+**Original file is NEVER modified.**
+
+## File Structures
+
+### Annotated File (`{name}.annotated.{ext}.md`)
 
 ```markdown
 # Annotated: {filename}
@@ -201,13 +226,11 @@ The `.annotated.{ext}.md` file is a markdown document:
 Source: `{path/to/original}`
 
 \`\`\`{language}
-{original code with [^markers] added in comments}
+{code with [^markers] in comments}
 \`\`\`
 ```
 
-For markdown files, no code fence needed — just copy content and add markers inline.
-
-## Footnotes File Structure
+### Footnotes File (`{name}.footnotes.{ext}.md`)
 
 ```markdown
 # Footnotes: {filename}
@@ -216,32 +239,38 @@ Source: `{path/to/original}`
 
 ---
 
-[^marker-id]: Definition content here.
-
-Supports **markdown** formatting.
+[^marker-1]: Short definition.
 
 ---
 
-[^another-marker]: Another definition.
+[^marker-2]:
+    Longer definition with multiple lines.
+    
+    All indented 4 spaces.
 
 ---
 ```
 
-## Checklist Before Completing
+## Comment Syntax for Markers
 
-- [ ] Original file is UNTOUCHED
-- [ ] Annotated copy exists: `{file}.annotated.{ext}.md`
-- [ ] Annotated copy contains original content with `[^markers]`
-- [ ] Footnotes file exists: `{file}.footnotes.{ext}.md`
-- [ ] Every `[^marker]` has a corresponding `[^marker]:` definition
-- [ ] Every definition ends with `---`
+| Language | Marker Syntax |
+|----------|---------------|
+| Python, Shell, YAML | `# [^id]` |
+| JS, TS, Go, Rust, C | `// [^id]` |
+| HTML, XML | `<!-- [^id] -->` |
+| CSS | `/* [^id] */` |
+| SQL | `-- [^id]` |
+| Markdown | `[^id]` (inline as regular markdown insure unique) |
 
 ## Summary
 
-| Action | File |
-|--------|------|
-| Read only | `{file}.{ext}` (original) |
-| Add markers | `{file}.annotated.{ext}.md` |
-| Add definitions | `{file}.footnotes.{ext}.md` |
+1. Copy original → annotated file (once at start)
+2. Create footnotes file with header (once at start)
+3. **Loop for each annotation:**
+   - Insert ONE marker in annotated file
+   - Append ONE definition to footnotes file (4-space indent for multi-line)
+   - Repeat for next annotation
 
-**The original file is NEVER modified. Markers and definitions are ALWAYS added together.**
+**IMPORTANT! Never batch. Always alternate: marker → definition → marker → definition.**
+
+**Multi-line definitions: indent all content 4 spaces.**

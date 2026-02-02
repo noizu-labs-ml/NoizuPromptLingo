@@ -1,14 +1,11 @@
 ---
 name: tdd-orchestration
 description: Overview documentation for the TDD agent workflow system. Reference this to understand how idea-to-spec, prd-editor, tdd-tester, tdd-debugger, and tdd-coder agents coordinate to implement features.
-model: sonnet
+model: claude
 color: cyan
 ---
 
 # Agent Orchestration Overview
-
-**Related Documentation:**
-- [Architectural Assumptions](assumptions.md) — Foundational assumptions underlying this design
 
 ## System Architecture
 
