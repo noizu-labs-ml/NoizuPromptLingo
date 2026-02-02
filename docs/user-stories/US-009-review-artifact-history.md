@@ -108,6 +108,52 @@ So that **I can understand how a deliverable evolved, track changes over time, a
 - **Branching**: Do artifacts need branching/merging support, or is linear history sufficient?
 - **Retention Policy**: Should very old revisions be archived/compressed after N days?
 
+## Implementation Status
+
+**Status**: ✅ Implemented in mcp-server worktree
+
+### MCP Tools
+- `get_artifact_history(artifact_id)` - Returns chronological list of all revisions
+- `get_artifact(artifact_id, revision)` - Retrieve specific or current revision
+- `add_revision(artifact_id, file_content_base64, filename, created_by, purpose, notes)` - Create new revision
+
+### Database Tables
+- `revisions` - Stores all revision metadata and file paths
+- `artifacts` - Tracks current_revision_id pointer
+
+### Web Routes
+- `GET /artifact/{id}` - Shows current revision by default
+- `GET /artifact/{id}?revision={num}` - View specific revision number
+
+### Source Files
+- Implementation: `worktrees/main/mcp-server/src/npl_mcp/artifacts/manager.py`
+- Database: `worktrees/main/mcp-server/src/npl_mcp/storage/schema.sql`
+- Tests: `worktrees/main/mcp-server/tests/test_basic.py::test_add_revision`
+
+### Test Coverage
+53% (artifacts module)
+
+### Example Usage
+```python
+# Get artifact history
+history = await get_artifact_history(artifact_id=1)
+# Returns: [{"revision_num": 2, "created_by": "...", "purpose": "...", "filename": "...", "created_at": "..."}, ...]
+
+# Get specific revision
+old_version = await get_artifact(artifact_id=1, revision=0)
+```
+
+### Notes
+- Revisions numbered 0-indexed (revision 0, 1, 2, ...)
+- History returned newest first
+- Each revision immutable after creation
+- Comparison/diff features not yet implemented
+
+### Documentation
+- Category Brief: `.tmp/mcp-server/categories/02-artifact-management.md`
+- README: `worktrees/main/mcp-server/README.md`
+- USAGE: `worktrees/main/mcp-server/USAGE.md`
+
 ## Related Commands
 
 ### Artifact Tools (Future Implementation)

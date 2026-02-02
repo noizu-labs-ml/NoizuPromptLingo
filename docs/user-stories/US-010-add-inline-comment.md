@@ -129,3 +129,62 @@ add_inline_comment(
   content="This button alignment is off by 5px"
 )
 ```
+
+## Implementation Status
+
+**Status**: ✅ Implemented in mcp-server worktree
+
+### MCP Tools
+- `create_review(artifact_id, revision_id, reviewer_persona)` - Start review
+- `add_inline_comment(review_id, location, comment, persona)` - Add comment at location
+- `get_review(review_id)` - Retrieve review with all comments
+- `complete_review(review_id, overall_comment)` - Mark review complete
+
+### Database Tables
+- `reviews` - Review metadata (artifact_id, revision_id, reviewer_persona, status, overall_comment)
+- `inline_comments` - Location-specific comments (review_id, location, comment, persona, created_at)
+
+### Web Routes
+- No dedicated web routes (API-only via MCP tools)
+
+### Source Files
+- Implementation: `worktrees/main/mcp-server/src/npl_mcp/artifacts/reviews.py` (lines 71-117)
+- Database: `worktrees/main/mcp-server/src/npl_mcp/storage/schema.sql`
+- Tests: `worktrees/main/mcp-server/tests/test_basic.py::test_review_workflow`
+
+### Test Coverage
+25% (review system module)
+
+### Location Format
+- Text files: `"line:58"` (line number)
+- Images: `"@x:100,y:200"` (pixel coordinates)
+
+### Example Usage
+```python
+# Create review
+review = await create_review(
+    artifact_id=1,
+    revision_id=2,
+    reviewer_persona="mike-developer"
+)
+
+# Add comment at line 58
+comment = await add_inline_comment(
+    review_id=1,
+    location="line:58",
+    comment="This section needs refactoring",
+    persona="mike-developer"
+)
+# Returns: {"comment_id": 1, "location": "line:58", ...}
+```
+
+### Notes
+- Location string format differs from spec (simplified implementation)
+- No threading/reply support yet
+- Comments are immutable
+- Multi-reviewer workflows supported
+
+### Documentation
+- Category Brief: `.tmp/mcp-server/categories/03-review-system.md`
+- README: `worktrees/main/mcp-server/README.md`
+- USAGE: `worktrees/main/mcp-server/USAGE.md` (Multi-Reviewer Scenario)

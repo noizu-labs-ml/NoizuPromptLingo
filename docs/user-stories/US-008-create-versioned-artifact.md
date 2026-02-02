@@ -89,6 +89,49 @@ So that **my deliverables are persisted, tracked, and available for review**.
 - Should we implement artifact templates for common types?
 - Should creation trigger chat room notification if session-linked?
 
+## Implementation Status
+
+**Status**: ✅ Implemented in mcp-server worktree
+
+### MCP Tools
+- `create_artifact(name, artifact_type, file_content_base64, filename, created_by?, purpose?)`
+- `get_artifact(artifact_id, revision?)`
+- `list_artifacts()`
+
+### Database Tables
+- `artifacts` - Artifact metadata (id, name, type, current_revision_id, created_at)
+- `revisions` - Revision metadata (id, artifact_id, revision_num, filename, created_by, purpose, notes, created_at)
+
+### Web Routes
+- `GET /artifact/{id}` - View artifact in web UI
+- `GET /api/artifact/{id}` - JSON API endpoint
+
+### Source Files
+- Implementation: `worktrees/main/mcp-server/src/npl_mcp/artifacts/manager.py`
+- Database: `worktrees/main/mcp-server/src/npl_mcp/storage/schema.sql`
+- Tests: `worktrees/main/mcp-server/tests/test_basic.py::test_create_artifact`
+
+### Test Coverage
+53% (artifacts module)
+
+### Example Usage
+```python
+artifact = await create_artifact(
+    name="design-mockup-v1",
+    artifact_type="image",
+    file_content_base64=base64_encoded_image,
+    filename="mockup.png",
+    created_by="sarah-designer",
+    purpose="Initial design concept for dashboard"
+)
+# Returns: {"artifact_id": 1, "revision_num": 0, "web_url": "..."}
+```
+
+### Documentation
+- Category Brief: `.tmp/mcp-server/categories/02-artifact-management.md`
+- README: `worktrees/main/mcp-server/README.md` (Artifact Management section)
+- USAGE: `worktrees/main/mcp-server/USAGE.md` (Artifact Management Workflow)
+
 ## Related Commands
 
 **Primary**:

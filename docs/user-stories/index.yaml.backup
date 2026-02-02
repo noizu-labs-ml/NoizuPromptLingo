@@ -525,8 +525,6 @@ stories:
     priority: high
     status: draft
     prd_group: coordination
-    prds:
-      - PRD-001
     related_stories:
       - US-039
       - US-041
@@ -541,8 +539,6 @@ stories:
     priority: critical
     status: draft
     prd_group: coordination
-    prds:
-      - PRD-001
     related_stories:
       - US-038
       - US-043
@@ -556,8 +552,6 @@ stories:
     priority: medium
     status: draft
     prd_group: coordination
-    prds:
-      - PRD-001
     related_stories: []
     related_personas:
       - P-005
@@ -569,8 +563,6 @@ stories:
     priority: critical
     status: draft
     prd_group: coordination
-    prds:
-      - PRD-001
     related_stories:
       - US-032
     related_personas:
@@ -583,9 +575,6 @@ stories:
     priority: high
     status: draft
     prd_group: coordination
-    prds:
-      - PRD-001
-      - PRD-006
     related_stories:
       - US-031
     related_personas:
@@ -598,8 +587,6 @@ stories:
     priority: medium
     status: draft
     prd_group: collaboration
-    prds:
-      - PRD-001
     related_stories:
       - US-004
     related_personas:
@@ -612,8 +599,6 @@ stories:
     priority: high
     status: draft
     prd_group: coordination
-    prds:
-      - PRD-001
     related_stories: []
     related_personas:
       - P-005
@@ -625,8 +610,6 @@ stories:
     priority: low
     status: draft
     prd_group: coordination
-    prds:
-      - PRD-001
     related_stories:
       - US-005
     related_personas:
@@ -639,8 +622,6 @@ stories:
     priority: low
     status: draft
     prd_group: coordination
-    prds:
-      - PRD-001
     related_stories:
       - US-009
     related_personas:
@@ -653,9 +634,6 @@ stories:
     priority: medium
     status: draft
     prd_group: npl_load
-    prds:
-      - PRD-001
-      - PRD-008
     related_stories:
       - US-025
     related_personas:
@@ -668,9 +646,6 @@ stories:
     priority: high
     status: draft
     prd_group: coordination
-    prds:
-      - PRD-005
-      - PRD-006
     related_stories:
       - US-031
       - US-033
@@ -684,8 +659,6 @@ stories:
     priority: critical
     status: draft
     prd_group: npl_load
-    prds:
-      - PRD-004
     related_stories:
       - US-005
     related_personas:
@@ -698,8 +671,6 @@ stories:
     priority: medium
     status: draft
     prd_group: coordination
-    prds:
-      - PRD-001
     related_stories:
       - US-031
       - US-033
@@ -713,9 +684,6 @@ stories:
     priority: high
     status: draft
     prd_group: coordination
-    prds:
-      - PRD-004
-      - PRD-005
     related_stories: []
     related_personas:
       - P-001
@@ -727,8 +695,6 @@ stories:
     priority: high
     status: draft
     prd_group: browser
-    prds:
-      - PRD-006
     related_stories:
       - US-021
       - US-024
@@ -742,8 +708,6 @@ stories:
     priority: medium
     status: draft
     prd_group: chat
-    prds:
-      - PRD-004
     related_stories:
       - US-022
       - US-005
@@ -757,8 +721,6 @@ stories:
     priority: high
     status: draft
     prd_group: collaboration
-    prds:
-      - PRD-005
     related_stories: []
     related_personas:
       - P-005
@@ -770,8 +732,6 @@ stories:
     priority: critical
     status: draft
     prd_group: npl_load
-    prds:
-      - PRD-001
     related_stories: []
     related_personas:
       - P-003
@@ -783,8 +743,6 @@ stories:
     priority: medium
     status: draft
     prd_group: coordination
-    prds:
-      - PRD-001
     related_stories:
       - US-031
     related_personas:
@@ -797,8 +755,6 @@ stories:
     priority: low
     status: draft
     prd_group: collaboration
-    prds:
-      - PRD-001
     related_stories:
       - US-031
       - US-009
@@ -812,8 +768,6 @@ stories:
     priority: high
     status: draft
     prd_group: coordination
-    prds:
-      - PRD-004
     related_stories:
       - US-032
     related_personas:
@@ -826,8 +780,6 @@ stories:
     priority: high
     status: draft
     prd_group: coordination
-    prds:
-      - PRD-004
     related_stories:
       - US-032
     related_personas:
@@ -840,8 +792,6 @@ stories:
     priority: high
     status: draft
     prd_group: collaboration
-    prds:
-      - PRD-004
     related_stories:
       - US-034
     related_personas:

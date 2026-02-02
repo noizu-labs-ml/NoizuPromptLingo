@@ -81,6 +81,54 @@ So that **discussions, artifacts, and todos related to a feature or task are org
 - Room permissions and access control
 - Room archival and deletion
 
+## Implementation Status
+
+**Status**: ✅ Implemented in mcp-server worktree
+
+### MCP Tools
+- `create_chat_room(name, members, description, session_id, session_title)`
+- `get_chat_feed(room_id, since, limit)`
+- `send_message(room_id, persona, message, reply_to_id)`
+
+### Database Tables
+- `chat_rooms` - Room registry (id, name, description, session_id, created_at)
+- `room_members` - Membership tracking (room_id, persona_slug, joined_at)
+- `chat_events` - Event stream (id, room_id, event_type, persona, data, timestamp)
+
+### Web Routes
+- `GET /room/{room_id}` - Standalone chat room view
+- `GET /session/{session_id}/room/{room_id}` - Room in session context
+- `GET /api/room/{id}/feed` - Get chat feed via API
+
+### Source Files
+- Implementation: `worktrees/main/mcp-server/src/npl_mcp/chat/rooms.py`
+- Database: `worktrees/main/mcp-server/src/npl_mcp/storage/schema.sql` (lines 62-90)
+- Tests: `worktrees/main/mcp-server/tests/test_basic.py` (test_chat_workflow)
+
+### Test Coverage
+78% (chat system module)
+
+### Example Usage
+```python
+room = await create_chat_room(
+    name="dashboard-redesign",
+    members=["sarah-designer", "mike-developer", "alex-pm"],
+    description="Discussion for dashboard redesign project"
+)
+# Returns: {"room_id": 1, "name": "dashboard-redesign", "members": [...], "web_url": "..."}
+```
+
+### Notes
+- Session integration via `session_id` or `session_title`
+- Auto-creates session if `session_title` provided without `session_id`
+- Members receive persona_join events automatically
+- Event-driven architecture (all room activity stored as events)
+
+### Documentation
+- Category Brief: `.tmp/mcp-server/categories/04-chat-collaboration.md`
+- README: `worktrees/main/mcp-server/README.md` (Chat System section)
+- USAGE: `worktrees/main/mcp-server/USAGE.md` (Multi-Persona Chat Workflow)
+
 ## Related MCP Tools
 
 - `create_chat_room` (Chat Tools) - Main tool for this story
