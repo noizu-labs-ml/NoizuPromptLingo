@@ -40,15 +40,19 @@ Without these utilities, Claude Code cannot effectively use the NPL framework, a
 
 ## User Stories
 
-| Story ID | Description |
-|----------|-------------|
-| US-001 | As a developer, I want to load NPL resources from hierarchical paths |
-| US-002 | As a developer, I want resources resolved from environment, project, user, then system |
-| US-003 | As a developer, I want to skip already-loaded resources using flags |
-| US-025 | As a developer, I want to manage persistent persona state with journals and tasks |
-| US-047 | As a developer, I want cross-agent communication through shared worklogs |
-| US-085 | As a developer, I want to explore codebase structure respecting .gitignore |
-| US-086 | As a developer, I want syntax validation via CLI |
+Core stories for this PRD:
+
+| ID | Title | File | Status |
+|---|---|---|---|
+| US-085 | Implement CLI Utilities (npl-load, npl-persona, npl-session) | `project-management/user-stories/US-085-implement-cli-utilities.md` | draft |
+| US-086 | Extract and Load 45 Agent Specifications | `project-management/user-stories/US-086-extract-and-load-agent-specifications.md` | draft |
+
+Related stories (extracted for clarity):
+
+| ID | Title | File | Status | Notes |
+|---|---|---|---|---|
+| US-224 | Skip Already-Loaded Resources Using Flags | `project-management/user-stories/US-224-skip-loaded-resources-flag.md` | draft | --skip flag for resource loading |
+| US-225 | Cross-Agent Communication Through Shared Worklogs | `project-management/user-stories/US-225-cross-agent-worklog-communication.md` | draft | npl-session worklog management |
 
 ---
 

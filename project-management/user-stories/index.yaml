@@ -1590,3 +1590,184 @@ stories:
       - US-204
     related_personas:
       - P-005
+  - id: US-201
+    title: Load Directives Section with Priority Filtering
+    status: draft
+    priority: high
+    prd_group: npl_load
+    file: US-201-load-directives-section.md
+    related_personas:
+      - P-001
+      - P-003
+    related_stories: []
+  - id: US-202
+    title: Load Fences Section with All Layout Strategies
+    status: draft
+    priority: high
+    prd_group: npl_load
+    file: US-202-load-fences-section.md
+    related_personas:
+      - P-003
+    related_stories: []
+  - id: US-203
+    title: Load Pumps Section with Complex Expressions
+    status: draft
+    priority: medium
+    prd_group: npl_load
+    file: US-203-load-pumps-section.md
+    related_personas:
+      - P-001
+    related_stories: []
+  - id: US-204
+    title: Cross-Section Loading with Additions and Subtractions
+    status: draft
+    priority: medium
+    prd_group: npl_load
+    file: US-204-cross-section-loading.md
+    related_personas:
+      - P-003
+    related_stories: []
+  - id: US-205
+    title: Generate Coverage Reports for All Loaded Components
+    status: draft
+    priority: high
+    prd_group: npl_load
+    file: US-205-generate-coverage-reports.md
+    related_personas:
+      - P-003
+    related_stories: []
+  - id: US-206
+    title: Convert Documentation Sources to Markdown
+    status: draft
+    priority: high
+    prd_group: markdown
+    file: US-206-convert-documentation-to-markdown.md
+    related_personas:
+      - P-003
+    related_stories: []
+  - id: US-207
+    title: Cache Converted Files with Hybrid Strategy
+    status: draft
+    priority: high
+    prd_group: markdown
+    file: US-207-cache-converted-files.md
+    related_personas:
+      - P-003
+    related_stories: []
+  - id: US-208
+    title: Configure Cache Expiry for URL Caches
+    status: draft
+    priority: high
+    prd_group: markdown
+    file: US-208-configure-cache-expiry.md
+    related_personas:
+      - P-003
+    related_stories: []
+  - id: US-209
+    title: Filter Markdown by Heading Path
+    status: draft
+    priority: high
+    prd_group: markdown
+    file: US-209-filter-markdown-by-heading-path.md
+    related_personas:
+      - P-001
+    related_stories: []
+  - id: US-210
+    title: Filter Markdown by Heading Level Selectors
+    status: draft
+    priority: high
+    prd_group: markdown
+    file: US-210-filter-by-heading-level.md
+    related_personas:
+      - P-001
+    related_stories: []
+  - id: US-211
+    title: MCP Tools for Markdown Conversion and Viewing
+    status: draft
+    priority: high
+    prd_group: markdown
+    file: US-211-mcp-markdown-conversion-tools.md
+    related_personas:
+      - P-001
+    related_stories: []
+  - id: US-212
+    title: Collapse Markdown Sections Below Depth Level
+    status: draft
+    priority: high
+    prd_group: markdown
+    file: US-212-collapse-sections-by-depth.md
+    related_personas:
+      - P-003
+    related_stories: []
+  - id: US-213
+    title: Combine Filtering and Collapsing in Pipeline
+    status: draft
+    priority: high
+    prd_group: markdown
+    file: US-213-combine-filter-and-collapse.md
+    related_personas:
+      - P-003
+    related_stories: []
+  - id: US-214
+    title: Markdown Output Format Options
+    status: draft
+    priority: high
+    prd_group: markdown
+    file: US-214-markdown-output-format-options.md
+    related_personas:
+      - P-003
+    related_stories: []
+  - id: US-220
+    title: NPL Syntax Validation via CLI with Error Reporting
+    status: draft
+    priority: high
+    prd_group: npl_syntax
+    file: US-220-npl-syntax-validation-cli.md
+    related_personas:
+      - P-005
+    related_stories: []
+  - id: US-221
+    title: Extract Metadata from Agent Definition Files
+    status: draft
+    priority: high
+    prd_group: npl_syntax
+    file: US-221-extract-agent-metadata.md
+    related_personas:
+      - P-005
+    related_stories: []
+  - id: US-222
+    title: IDE Integration for NPL Syntax Highlighting
+    status: draft
+    priority: medium
+    prd_group: npl_syntax
+    file: US-222-npl-ide-syntax-highlighting.md
+    related_personas:
+      - P-005
+    related_stories: []
+  - id: US-223
+    title: List All NPL Syntax Elements in Document
+    status: draft
+    priority: medium
+    prd_group: npl_syntax
+    file: US-223-list-npl-syntax-elements.md
+    related_personas:
+      - P-005
+    related_stories: []
+  - id: US-224
+    title: Skip Already-Loaded Resources Using Flags
+    status: draft
+    priority: medium
+    prd_group: cli_utilities
+    file: US-224-skip-loaded-resources-flag.md
+    related_personas:
+      - P-005
+    related_stories: []
+  - id: US-225
+    title: Cross-Agent Communication Through Shared Worklogs
+    status: draft
+    priority: high
+    prd_group: cli_utilities
+    file: US-225-cross-agent-worklog-communication.md
+    related_personas:
+      - P-005
+    related_stories: []

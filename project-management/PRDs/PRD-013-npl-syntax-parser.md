@@ -41,14 +41,21 @@ The lack of parsing blocks development of advanced NPL tooling and quality assur
 
 ## User Stories
 
-| Story ID | Description |
-|----------|-------------|
-| US-080 | As a developer, I want to validate NPL documents for syntax errors |
-| US-087 | As a developer, I want AST representation of NPL documents for programmatic analysis |
-| US-081 | As a developer, I want CLI validation with clear error messages and line numbers |
-| US-082 | As a developer, I want to extract metadata from agent definition files |
-| US-083 | As a developer, I want IDE integration for NPL syntax highlighting |
-| US-084 | As a developer, I want to list all syntax elements used in a document |
+Core stories for this PRD:
+
+| ID | Title | File | Status |
+|---|---|---|---|
+| US-080 | Build NPL Syntax Parser | `project-management/user-stories/US-080-build-npl-syntax-parser.md` | draft |
+| US-087 | Build NPL Syntax Pattern Library (155 elements) | `project-management/user-stories/US-087-build-npl-syntax-pattern-library.md` | draft |
+
+Related stories (extracted for clarity):
+
+| ID | Title | File | Status | Notes |
+|---|---|---|---|---|
+| US-220 | NPL Syntax Validation via CLI with Error Reporting | `project-management/user-stories/US-220-npl-syntax-validation-cli.md` | draft | CLI validation with line/column reporting |
+| US-221 | Extract Metadata from Agent Definition Files | `project-management/user-stories/US-221-extract-agent-metadata.md` | draft | Extract agent specs from NPL definitions |
+| US-222 | IDE Integration for NPL Syntax Highlighting | `project-management/user-stories/US-222-npl-ide-syntax-highlighting.md` | draft | TextMate/VS Code highlighting |
+| US-223 | List All NPL Syntax Elements in Document | `project-management/user-stories/US-223-list-npl-syntax-elements.md` | draft | Element usage analysis |
 
 ---
 

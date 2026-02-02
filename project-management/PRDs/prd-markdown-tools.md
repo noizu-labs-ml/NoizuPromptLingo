@@ -34,29 +34,33 @@ These tools address the need for developers and AI agents to efficiently convert
 
 ## User Stories
 
+User stories for this PRD are defined in separate files for clarity and reusability:
+
 ### Content Developer Converting Documentation
 
-| ID | Story | Persona |
-|----|-------|---------|
-| US-MD-001 | As a content developer, I want to convert web documentation to markdown so I can reference it locally | P-003 (Vibe Coder) |
-| US-MD-002 | As a content developer, I want converted files cached next to the source so I don't re-fetch unchanged content | P-003 (Vibe Coder) |
-| US-MD-003 | As a content developer, I want URL caches to expire after a configurable time so I get fresh content when needed | P-003 (Vibe Coder) |
+| ID | Title | File | Persona |
+|---|---|---|---|
+| US-206 | Convert Documentation Sources to Markdown | `project-management/user-stories/US-206-convert-documentation-to-markdown.md` | P-003 (Vibe Coder) |
+| US-207 | Cache Converted Files with Hybrid Strategy | `project-management/user-stories/US-207-cache-converted-files.md` | P-003 (Vibe Coder) |
+| US-208 | Configure Cache Expiry for URL Caches | `project-management/user-stories/US-208-configure-cache-expiry.md` | P-003 (Vibe Coder) |
 
 ### AI Agent Filtering Documentation
 
-| ID | Story | Persona |
-|----|-------|---------|
-| US-MD-004 | As an AI agent, I want to filter markdown by heading path so I can extract relevant sections from large docs | P-001 (AI Agent) |
-| US-MD-005 | As an AI agent, I want to use heading level selectors (h1, h2) so I can navigate document structure | P-001 (AI Agent) |
-| US-MD-006 | As an AI agent, I want MCP tool access to markdown conversion so I can process documentation programmatically | P-001 (AI Agent) |
+| ID | Title | File | Persona |
+|---|---|---|---|
+| US-209 | Filter Markdown by Heading Path | `project-management/user-stories/US-209-filter-markdown-by-heading-path.md` | P-001 (AI Agent) |
+| US-210 | Filter Markdown by Heading Level Selectors | `project-management/user-stories/US-210-filter-by-heading-level.md` | P-001 (AI Agent) |
+| US-211 | MCP Tools for Markdown Conversion and Viewing | `project-management/user-stories/US-211-mcp-markdown-conversion-tools.md` | P-001 (AI Agent) |
 
 ### Technical Writer Managing Deep Documents
 
-| ID | Story | Persona |
-|----|-------|---------|
-| US-MD-007 | As a technical writer, I want to collapse sections below a certain depth so I can focus on high-level structure | P-003 (Vibe Coder) |
-| US-MD-008 | As a technical writer, I want to combine filtering and collapsing so I can see a filtered view with controlled depth | P-003 (Vibe Coder) |
-| US-MD-009 | As a technical writer, I want output format options (rich, plain, JSON) so I can integrate with different workflows | P-003 (Vibe Coder) |
+| ID | Title | File | Persona |
+|---|---|---|---|
+| US-212 | Collapse Markdown Sections Below Depth Level | `project-management/user-stories/US-212-collapse-sections-by-depth.md` | P-003 (Vibe Coder) |
+| US-213 | Combine Filtering and Collapsing in Pipeline | `project-management/user-stories/US-213-combine-filter-and-collapse.md` | P-003 (Vibe Coder) |
+| US-214 | Markdown Output Format Options | `project-management/user-stories/US-214-markdown-output-format-options.md` | P-003 (Vibe Coder) |
+
+**To load a user story**: Reference the story file or use the MCP tool `get-story {story-id}`
 
 ---
 
