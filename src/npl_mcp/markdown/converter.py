@@ -1,5 +1,6 @@
 """Markdown converter - convert URLs, files, and images to markdown."""
 
+import base64
 import os
 from pathlib import Path
 from typing import Optional
@@ -21,7 +22,8 @@ class MarkdownConverter:
         self,
         source: str,
         force_refresh: bool = False,
-        timeout: int = 30
+        timeout: int = 30,
+        no_cache: bool = False
     ) -> str:
         """Convert source to markdown with caching.
 
@@ -29,13 +31,14 @@ class MarkdownConverter:
             source: URL, file path, or image path to convert
             force_refresh: Skip cache and force fresh conversion
             timeout: Request timeout in seconds for URLs
+            no_cache: Skip both reading from and writing to cache
 
         Returns:
             Formatted markdown with YAML metadata header
         """
 
-        # Check cache first
-        if not force_refresh:
+        # Check cache first (unless no_cache or force_refresh)
+        if not force_refresh and not no_cache:
             cached = await self.cache.get_cached(source)
             if cached:
                 return self._format_response(source, cached, cached=True)
@@ -46,7 +49,7 @@ class MarkdownConverter:
         elif source.endswith((".png", ".jpg", ".jpeg", ".gif", ".svg")):
             content = await self._convert_image(source)
         elif source.endswith(".pdf"):
-            content = await self._convert_pdf(source)
+            content = await self._convert_pdf(source, timeout)
         elif source.endswith((".docx", ".doc")):
             content = await self._convert_docx(source)
         elif source.endswith((".html", ".htm")):
@@ -55,8 +58,9 @@ class MarkdownConverter:
             # Assume it's already markdown or text
             content = Path(source).read_text()
 
-        # Save to cache
-        await self.cache.save_cache(source, content)
+        # Save to cache (unless no_cache)
+        if not no_cache:
+            await self.cache.save_cache(source, content)
 
         return self._format_response(source, content, cached=False)
 
@@ -144,43 +148,75 @@ class MarkdownConverter:
         markdown = h.handle(html_content)
         return markdown.strip()
 
-    async def _convert_pdf(self, file_path: str) -> str:
+    async def _convert_pdf(self, file_path: str, timeout: int = 60) -> str:
         """Convert PDF to markdown using Jina API or local converter.
 
         Args:
             file_path: Path to PDF file
+            timeout: Request timeout in seconds for Jina API
 
         Returns:
             Markdown content from PDF
         """
-        try:
-            # Try using Jina API first (better formatting and OCR)
-            jina_api_key = os.environ.get("JINA_API_KEY", "")
-            if jina_api_key:
-                try:
-                    return await self._convert_pdf_via_jina(file_path, jina_api_key)
-                except NotImplementedError:
-                    # Jina doesn't support local files, continue to local conversion
-                    pass
+        jina_api_key = os.environ.get("JINA_API_KEY", "")
 
-            # Fallback to local pdfplumber conversion
+        # Use Jina API when available (better structure preservation)
+        if jina_api_key:
+            try:
+                return await self._convert_pdf_via_jina(file_path, jina_api_key, timeout)
+            except Exception as e:
+                # Log warning but fall back to local conversion
+                import sys
+                print(f"Warning: Jina PDF conversion failed, falling back to local: {e}", file=sys.stderr)
+
+        # Fallback to local pdfplumber conversion
+        try:
             return await self._convert_pdf_local(file_path)
         except Exception as e:
             raise RuntimeError(f"Failed to convert PDF {file_path}: {e}")
 
-    async def _convert_pdf_via_jina(self, file_path: str, api_key: str) -> str:
-        """Convert PDF using Jina API (requires temporary HTTP server or file upload).
+    async def _convert_pdf_via_jina(self, file_path: str, api_key: str, timeout: int = 60) -> str:
+        """Convert PDF using Jina Reader API with base64-encoded content.
 
         Args:
             file_path: Path to PDF file
             api_key: Jina API key
+            timeout: Request timeout in seconds
 
         Returns:
             Markdown content from Jina
         """
-        # For local files, Jina would need a public URL or file upload API.
-        # Since we don't have that, we skip this and use local converter
-        raise NotImplementedError("Jina PDF conversion requires public URL or file upload support")
+        # Read and base64 encode the PDF
+        pdf_bytes = Path(file_path).read_bytes()
+        pdf_base64 = base64.standard_b64encode(pdf_bytes).decode('utf-8')
+
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "X-Return-Format": "markdown",
+        }
+
+        # Jina Reader API accepts pdf as base64 in JSON body
+        payload = {
+            "url": f"file://{Path(file_path).name}",
+            "pdf": pdf_base64,
+        }
+
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            response = await client.post(
+                "https://r.jina.ai/",
+                headers=headers,
+                json=payload,
+            )
+            response.raise_for_status()
+
+            # Parse JSON response and extract content
+            data = response.json()
+            if data.get("code") == 200 and "data" in data:
+                return data["data"].get("content", "")
+            else:
+                raise RuntimeError(f"Jina API error: {data}")
 
     async def _convert_pdf_local(self, file_path: str) -> str:
         """Convert PDF to markdown using local pdfplumber library.

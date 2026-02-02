@@ -1,0 +1,50 @@
+acceptance_tests:
+  - id: AT-001
+    title: Get Story Basic Tests
+    file: AT-001-get-story-basic.md
+    description: Basic tests for get_story tool
+
+  - id: AT-002
+    title: Get Story Edge Cases
+    file: AT-002-get-story-edge-cases.md
+    description: Edge case tests for get_story tool
+
+  - id: AT-003
+    title: List Stories Tests
+    file: AT-003-list-stories.md
+    description: Tests for list_stories tool with filters
+
+  - id: AT-004
+    title: Get PRD Tests
+    file: AT-004-get-prd.md
+    description: Tests for get_prd tool
+
+  - id: AT-005
+    title: Get Functional Requirement Tests
+    file: AT-005-get-functional-requirement.md
+    description: Tests for get_prd_functional_requirement tool
+
+  - id: AT-006
+    title: Get Acceptance Test Tests
+    file: AT-006-get-acceptance-test.md
+    description: Tests for get_prd_acceptance_test tool
+
+  - id: AT-007
+    title: Update Story Metadata Tests
+    file: AT-007-update-story-metadata.md
+    description: Tests for update_story_metadata tool
+
+  - id: AT-008
+    title: Persona Access Tests
+    file: AT-008-persona-access.md
+    description: Tests for get_persona and list_personas tools
+
+  - id: AT-009
+    title: Error Handling Tests
+    file: AT-009-error-handling.md
+    description: Tests for error conditions across all tools
+
+  - id: AT-010
+    title: Integration Tests
+    file: AT-010-integration.md
+    description: End-to-end integration tests

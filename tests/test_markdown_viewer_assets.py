@@ -1,7 +1,7 @@
-"""Tests for markdown viewer using real-world test assets.
+"""Tests for markdown viewer using test assets.
 
-These tests use actual markdown files to ensure the context-preserving
-filter works correctly with real documents (not just synthetic fixtures).
+These tests use a static markdown file to ensure the context-preserving
+filter works correctly with realistic document structures.
 """
 
 import pytest
@@ -12,8 +12,8 @@ from npl_mcp.markdown.viewer import MarkdownViewer
 
 @pytest.fixture
 def nihilism_md():
-    """Load the nihilism markdown test asset."""
-    asset_path = Path(__file__).parent / "assets" / "nihilism.html.md"
+    """Load the nihilism-style test markdown asset."""
+    asset_path = Path(__file__).parent / "assets" / "test.md"
     return asset_path.read_text()
 
 

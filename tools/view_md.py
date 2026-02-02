@@ -65,7 +65,7 @@ Examples:
     parser.add_argument(
         "--no-cache",
         action="store_true",
-        help="Disable caching (force fresh conversion)",
+        help="Disable caching (skip reading from and writing to cache)",
     )
     parser.add_argument(
         "--cache-dir",
@@ -97,7 +97,7 @@ async def async_main(args):
         converter = MarkdownConverter(cache)
 
         conversion_result = await converter.convert(
-            args.source, force_refresh=args.no_cache, timeout=args.timeout
+            args.source, force_refresh=False, timeout=args.timeout, no_cache=args.no_cache
         )
 
         # Extract content from conversion result (strip metadata header)

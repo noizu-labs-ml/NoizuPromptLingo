@@ -1798,3 +1798,116 @@ stories:
       - P-005
     related_stories:
       - US-119
+  - id: US-226
+    title: Read User Story by ID
+    file: US-226-read-user-story-by-id.md
+    persona: P-008
+    persona_name: TDD Workflow Agent
+    priority: critical
+    status: draft
+    prd_group: pm_mcp_tools
+    related_stories:
+      - US-227
+      - US-228
+    related_personas:
+      - P-008
+      - P-001
+    prds:
+      - PRD-017
+  - id: US-227
+    title: List and Filter User Stories
+    file: US-227-list-and-filter-user-stories.md
+    persona: P-008
+    persona_name: TDD Workflow Agent
+    priority: high
+    status: draft
+    prd_group: pm_mcp_tools
+    related_stories:
+      - US-226
+      - US-228
+    related_personas:
+      - P-008
+      - P-001
+    prds:
+      - PRD-017
+  - id: US-228
+    title: Read PRD Content by ID
+    file: US-228-read-prd-content-by-id.md
+    persona: P-008
+    persona_name: TDD Workflow Agent
+    priority: critical
+    status: draft
+    prd_group: pm_mcp_tools
+    related_stories:
+      - US-226
+      - US-229
+      - US-230
+    related_personas:
+      - P-008
+      - P-001
+    prds:
+      - PRD-017
+  - id: US-229
+    title: Access PRD Functional Requirements
+    file: US-229-access-prd-functional-requirements.md
+    persona: P-008
+    persona_name: TDD Workflow Agent
+    priority: high
+    status: draft
+    prd_group: pm_mcp_tools
+    related_stories:
+      - US-228
+      - US-230
+    related_personas:
+      - P-008
+      - P-001
+    prds:
+      - PRD-017
+  - id: US-230
+    title: Access PRD Acceptance Tests
+    file: US-230-access-prd-acceptance-tests.md
+    persona: P-008
+    persona_name: TDD Workflow Agent
+    priority: critical
+    status: draft
+    prd_group: pm_mcp_tools
+    related_stories:
+      - US-228
+      - US-229
+    related_personas:
+      - P-008
+      - P-001
+    prds:
+      - PRD-017
+  - id: US-231
+    title: Update User Story Metadata
+    file: US-231-update-user-story-metadata.md
+    persona: P-008
+    persona_name: TDD Workflow Agent
+    priority: high
+    status: draft
+    prd_group: pm_mcp_tools
+    related_stories:
+      - US-226
+      - US-227
+    related_personas:
+      - P-008
+      - P-001
+    prds:
+      - PRD-017
+  - id: US-232
+    title: List and Access Personas
+    file: US-232-list-and-access-personas.md
+    persona: P-008
+    persona_name: TDD Workflow Agent
+    priority: medium
+    status: draft
+    prd_group: pm_mcp_tools
+    related_stories:
+      - US-226
+      - US-227
+    related_personas:
+      - P-008
+      - P-001
+    prds:
+      - PRD-017

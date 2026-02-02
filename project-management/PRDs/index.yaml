@@ -65,7 +65,7 @@ prds:
 
   - id: PRD-005
     title: Task Queue System
-    file: PRD-005-task-queue.md
+    file: PRD-005-task-queue-system.md
     status: documented
     version: 1.0
     categories: [C-06]
