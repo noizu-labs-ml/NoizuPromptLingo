@@ -1,6 +1,6 @@
 # User Story: Validate Artifact Management Implementation
 
-**ID**: US-0091
+**ID**: US-0104
 **Persona**: P-005 (Dave, DevOps Engineer)
 **Priority**: High
 **Status**: Draft

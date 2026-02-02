@@ -1,6 +1,6 @@
 # User Story: Validate Browser Automation Implementation
 
-**ID**: US-0094
+**ID**: US-0107
 **Persona**: P-005 (Dave, DevOps Engineer)
 **Priority**: High
 **Status**: Draft

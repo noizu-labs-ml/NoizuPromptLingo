@@ -1,6 +1,6 @@
 # User Story: Validate Chat System Implementation
 
-**ID**: US-0092
+**ID**: US-0105
 **Persona**: P-005 (Dave, DevOps Engineer)
 **Priority**: High
 **Status**: Draft

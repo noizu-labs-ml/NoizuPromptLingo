@@ -1384,9 +1384,9 @@ stories:
       - US-007
     related_personas:
       - P-002
-  - id: US-91
-    title: Story 91
-    file: US-91*.md
+  - id: US-104
+    title: Validate Artifact Management Implementation
+    file: US-104-validate-artifact-management.md
     persona: P-005
     persona_name: Dave
     priority: high
@@ -1394,9 +1394,9 @@ stories:
     prd_group: implementation_validation
     related_personas:
       - P-005
-  - id: US-92
-    title: Story 92
-    file: US-92*.md
+  - id: US-105
+    title: Validate Chat System Implementation
+    file: US-105-validate-chat-system.md
     persona: P-005
     persona_name: Dave
     priority: high
@@ -1404,9 +1404,9 @@ stories:
     prd_group: implementation_validation
     related_personas:
       - P-005
-  - id: US-93
-    title: Story 93
-    file: US-93*.md
+  - id: US-106
+    title: Validate Task Queue Implementation
+    file: US-106-validate-task-queue.md
     persona: P-005
     persona_name: Dave
     priority: high
@@ -1414,9 +1414,9 @@ stories:
     prd_group: implementation_validation
     related_personas:
       - P-005
-  - id: US-94
-    title: Story 94
-    file: US-94*.md
+  - id: US-107
+    title: Validate Browser Automation Implementation
+    file: US-107-validate-browser-automation.md
     persona: P-005
     persona_name: Dave
     priority: high
@@ -1424,9 +1424,9 @@ stories:
     prd_group: implementation_validation
     related_personas:
       - P-005
-  - id: US-95
-    title: Story 95
-    file: US-95*.md
+  - id: US-108
+    title: Validate Web Interface Implementation
+    file: US-108-validate-web-interface.md
     persona: P-005
     persona_name: Dave
     priority: high
@@ -1434,9 +1434,9 @@ stories:
     prd_group: implementation_validation
     related_personas:
       - P-005
-  - id: US-96
-    title: Story 96
-    file: US-96*.md
+  - id: US-109
+    title: Add Session Management Test Suite
+    file: US-109-add-session-test-suite.md
     persona: P-005
     persona_name: Dave
     priority: critical
@@ -1444,9 +1444,9 @@ stories:
     prd_group: test_coverage
     related_personas:
       - P-005
-  - id: US-97
-    title: Story 97
-    file: US-97*.md
+  - id: US-110
+    title: Add Task Queue Test Suite
+    file: US-110-add-task-queue-test-suite.md
     persona: P-005
     persona_name: Dave
     priority: critical
@@ -1454,9 +1454,9 @@ stories:
     prd_group: test_coverage
     related_personas:
       - P-005
-  - id: US-98
+  - id: US-098
     title: Story 98
-    file: US-98*.md
+    file: US-098-add-browser-automation-test-suite.md
     persona: P-005
     persona_name: Dave
     priority: critical
@@ -1464,9 +1464,9 @@ stories:
     prd_group: test_coverage
     related_personas:
       - P-005
-  - id: US-99
+  - id: US-099
     title: Story 99
-    file: US-99*.md
+    file: US-099-add-web-interface-test-suite.md
     persona: P-005
     persona_name: Dave
     priority: critical

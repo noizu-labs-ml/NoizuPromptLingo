@@ -1,6 +1,6 @@
 # User Story: Add Session Management Test Suite (0% → 80%)
 
-**ID**: US-0096
+**ID**: US-0109
 **Persona**: P-005 (Dave, DevOps Engineer)
 **Priority**: Critical
 **Status**: Draft
