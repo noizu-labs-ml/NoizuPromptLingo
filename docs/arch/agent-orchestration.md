@@ -1,6 +1,6 @@
 ---
 name: tdd-orchestration
-description: Overview documentation for the TDD agent workflow system. Reference this to understand how npl-idea-to-spec, npl-prd-editor, npl-tdd-tester, tdd-debugger, and npl-tdd-coder agents coordinate to implement features.
+description: Overview documentation for the TDD agent workflow system. Reference this to understand how npl-idea-to-spec, npl-prd-editor, npl-tdd-tester, npl-tdd-debugger, and npl-tdd-coder agents coordinate to implement features.
 model: claude
 color: cyan
 ---
@@ -28,7 +28,7 @@ flowchart TB
         
         subgraph Implementation ["Phase 4: Implementation"]
             CODER[npl-tdd-coder]
-            DBG[tdd-debugger]
+            DBG[npl-tdd-debugger]
         end
     end
     
@@ -59,7 +59,7 @@ flowchart TB
 | [npl-prd-editor](npl-prd-editor.md) | Creates PRD from stories | Long-lived | PRD documents |
 | [npl-tdd-tester](npl-tdd-tester.md) | Creates test suites from PRD | Long-lived | Test files |
 | [npl-tdd-coder](npl-tdd-coder.md) | Implements PRD autonomously | Long-lived | Production code |
-| [tdd-debugger](tdd-debugger.md) | Runs/debugs tests | Long-lived | Diagnostics, fixes |
+| [npl-tdd-debugger](npl-tdd-debugger.md) | Runs/debugs tests | Long-lived | Diagnostics, fixes |
 
 ## Standard Workflow
 
@@ -72,7 +72,7 @@ sequenceDiagram
     participant PRD as npl-prd-editor
     participant TDD as npl-tdd-tester
     participant CODER as npl-tdd-coder
-    participant DBG as tdd-debugger
+    participant DBG as npl-tdd-debugger
 
     rect rgb(240, 248, 255)
         Note over C,ITS: Phase 1: Discovery
@@ -199,7 +199,7 @@ controller:
 flowchart TD
     A[npl-tdd-coder reports BLOCKED] --> B{Analyze block reason}
     
-    B -->|Test issue| C[Invoke tdd-debugger]
+    B -->|Test issue| C[Invoke npl-tdd-debugger]
     C --> D[Get diagnosis]
     D --> E{Diagnosis type}
     
@@ -220,7 +220,7 @@ flowchart TD
 ```yaml
 # When npl-tdd-coder reports blocked on test issues:
 controller:
-  - invoke: tdd-debugger
+  - invoke: npl-tdd-debugger
     command: run
     input:
       scope: failed
@@ -326,7 +326,7 @@ run = "npm test -- --coverage"
 | Scenario | Recovery |
 |----------|----------|
 | npl-tdd-coder blocked on PRD | Update PRD via npl-prd-editor, signal continue |
-| Test failures unclear | Invoke tdd-debugger, relay diagnosis |
+| Test failures unclear | Invoke npl-tdd-debugger, relay diagnosis |
 | Tests need update | Update via npl-tdd-tester, re-run npl-tdd-coder |
 | Circular blocks | Controller intervenes with architectural decision |
 | Agent crash | Reinitialize with saved state |

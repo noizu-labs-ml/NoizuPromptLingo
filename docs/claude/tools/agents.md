@@ -31,7 +31,7 @@
 | `npl-prd-editor` | Create PRD documents | All tools |
 | `npl-tdd-tester` | Generate test suites from PRDs | All tools |
 | `npl-tdd-coder` | Autonomous implementation (uses `mise run test-status`) | All tools |
-| `tdd-debugger` | Test execution and debugging (uses `mise run test-errors`) | All tools |
+| `npl-tdd-debugger` | Test execution and debugging (uses `mise run test-errors`) | All tools |
 | `npl-tasker-haiku` / `npl-tasker-fast` / `npl-tasker-sonnet` / `npl-tasker-ultra` / `npl-tasker-opus` | Context-efficient task execution | All tools |
 | `claude-code-guide` | Claude Code/Agent SDK/API questions | Glob, Grep, Read, WebFetch, WebSearch |
 
@@ -46,7 +46,7 @@
 | "I need to write a PRD from user stories" | `npl-prd-editor` |
 | "I need to create tests from a PRD" | `npl-tdd-tester` |
 | "I need to implement a feature from a PRD" | `npl-tdd-coder` |
-| "My tests are failing, I need to debug" | `tdd-debugger` |
+| "My tests are failing, I need to debug" | `npl-tdd-debugger` |
 | "I have a simple lookup task (file exists? grep for X?)" | `npl-tasker-haiku` |
 | "I have a complex multi-step task" | `general-purpose` |
 

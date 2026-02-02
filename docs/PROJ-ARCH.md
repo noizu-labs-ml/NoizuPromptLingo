@@ -141,7 +141,7 @@ PRDs transform user stories into actionable specifications with functional/non-f
 
 ## Agent Orchestration
 
-The project implements a TDD-driven workflow system that coordinates multiple specialized agents (idea-to-spec, prd-editor, npl-tdd-tester, npl-tdd-coder, tdd-debugger) to transform feature ideas into tested, production-ready code. Each agent operates autonomously within a defined phase, with a controller orchestrating the overall workflow from discovery through implementation.
+The project implements a TDD-driven workflow system that coordinates multiple specialized agents (idea-to-spec, prd-editor, npl-tdd-tester, npl-tdd-coder, npl-tdd-debugger) to transform feature ideas into tested, production-ready code. Each agent operates autonomously within a defined phase, with a controller orchestrating the overall workflow from discovery through implementation.
 
 The workflow processes feature ideas through:
 1. **Persona Definitions** (`docs/personas/`) - Establish user perspectives

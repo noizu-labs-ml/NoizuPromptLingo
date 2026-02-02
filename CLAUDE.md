@@ -206,7 +206,7 @@ flowchart LR
 
 ```bash
 mise run test-status    # Quick pass/fail check (used by npl-tdd-coder)
-mise run test-errors    # Detailed failure output (used by tdd-debugger)
+mise run test-errors    # Detailed failure output (used by npl-tdd-debugger)
 ```
 
 **📖 For detailed workflow, agent interactions, and communication protocol, see [docs/arch/agent-orchestration.md](docs/arch/agent-orchestration.md)**
