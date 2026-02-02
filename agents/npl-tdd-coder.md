@@ -1,7 +1,7 @@
 ---
 name: npl-tdd-coder
 description: Autonomous implementation agent that accepts a PRD and implements it until complete. Uses mise run test-status and mise run test-failures for feedback. Reports to controller when blocked, otherwise works independently until validation complete.
-model: claude
+model: opus
 color: blue
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: npl-prd-editor
 description: Transforms user stories and feature requests into well-structured PRD documents under .prd/. Creates specifications precise enough for TDD test generation and autonomous implementation. Updates PRDs based on feedback from implementation cycle.
-model: claude
+model: opus
 color: purple
 ---
 

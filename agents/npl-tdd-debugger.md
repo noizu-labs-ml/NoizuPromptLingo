@@ -1,7 +1,7 @@
 ---
 name: npl-tdd-debugger
 description: Executes test suites, analyzes failures, and diagnoses root causes. Uses mise run test-status and mise run test-failures to provide actionable debugging information. Long-lived agent invoked when tests fail during implementation.
-model: claude
+model: opus
 color: red
 ---
 

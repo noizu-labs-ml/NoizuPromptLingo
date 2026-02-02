@@ -1,26 +1,24 @@
-# Spike UI-UX: Agent Systems for Design & Revenue
+# Skills: Specialized Agent Systems
 
-> Two comprehensive agent systems: one for generating passive income through digital products, one for human-centered UX/UI design methodology across multiple output formats.
+> Specialized skill systems for AI agents working on design, conversions, and product development.
 
-This repository contains production-ready prompt engineering systems developed through iterative experimentation (hence "spike"). Both systems are LLM-agnostic and designed for rapid, high-quality output generation.
+This directory contains modular agent skills developed through iterative experimentation. Each skill is LLM-agnostic and designed for rapid, high-quality output generation.
 
 ---
 
 ## Overview
 
-**Purpose**: Provide reusable, modular agent prompts for:
-1. **Revenue Generation** - Systematize creation of digital products that generate passive income
-2. **Design Methodology** - Structured approach to UX/UI design from wireframes to production code
+**Purpose**: Provide reusable skills for AI agents across different domains.
 
 **Philosophy**: Outcome-focused, accessibility-first, conversion-optimized, and grounded in 2026 design standards.
 
 ---
 
-## Two Main Systems
+## Available Skills
 
-### 1. Passive Income Agents (`passive-income-agents/`)
+### 1. Conversion Engineer (`conversion-engineer/`)
 
-**Purpose**: Agent-based system for generating passive income through digital products leveraging technical and creative skills.
+**Purpose**: Skill system for optimizing digital products for revenue, conversions, and monetization.
 
 **Three Income Streams:**
 

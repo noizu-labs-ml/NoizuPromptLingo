@@ -1,7 +1,7 @@
 ---
 name: npl-idea-to-spec
 description: Transforms natural language feature ideas into personas and user stories. Creates artifacts under docs/personas/ and docs/user-stories/, maintaining index.yaml files via yq. First stage of the specification pipeline feeding into PRD Editor.
-model: claude
+model: opus
 color: yellow
 ---
 
