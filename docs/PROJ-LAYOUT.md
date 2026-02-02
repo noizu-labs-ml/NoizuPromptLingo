@@ -14,15 +14,17 @@ NoizuPromptLingo/
 │   ├── arch/                   #   Architecture docs (agent orchestration, assumptions)
 │   ├── claude/                 #   Claude Code tooling documentation
 │   ├── layout/                 #   Extended layout documentation
-│   ├── personas/               #   Persona definitions with index.yaml
 │   ├── reference/              #   Reference documentation (e.g., MCP)
-│   ├── user-stories/           #   User story definitions → [layout/user-stories.md](layout/user-stories.md)
+│   ├── PROJ-ARCH.md            #   High-level architecture
+│   └── PROJ-LAYOUT.md          #   This file
+├── project-management/         # Project management and planning
+│   ├── personas/               #   Persona definitions with index.yaml
+│   ├── user-stories/           #   User story definitions with index.yaml
+│   ├── PRDs/                   #   Product requirement documents
 │   ├── prd.md                  #   Product requirements document
 │   ├── prd.summary.md          #   PRD summary
 │   ├── user-stories.md         #   User stories overview
-│   ├── user-stories.summary.md #   User stories summary
-│   ├── PROJ-ARCH.md            #   High-level architecture
-│   └── PROJ-LAYOUT.md          #   This file
+│   └── user-stories.summary.md #   User stories summary
 ├── agents/                     # TDD agent definitions
 │   ├── idea-to-spec.md         #   Idea-to-specification agent
 │   ├── prd-editor.md           #   PRD editing agent
@@ -102,9 +104,10 @@ NoizuPromptLingo/
 | `docs/claude/` | Claude Code tooling documentation (tools.md and tools/ subdirectory) |
 | `docs/claude/tools/` | Tool category docs (agents, command-exec, file-ops, planning, search, task-tracking, user-interaction, web-ops) |
 | `docs/layout/` | Extended layout documentation (user-stories.md) |
-| `docs/personas/` | Persona definitions (ai-agent, dave-fellow-developer, vibe-coder, product-manager, project-manager, index.yaml) |
 | `docs/reference/` | Reference documentation (mcp.md) |
-| `docs/user-stories/` | 37 user stories (US-001 through US-037) with index.yaml → see [layout/user-stories.md](layout/user-stories.md) |
+| `project-management/personas/` | Persona definitions with index.yaml |
+| `project-management/user-stories/` | 110+ user stories (US-001 through US-110) with index.yaml |
+| `project-management/PRDs/` | Product requirement documents (PRD-001 through PRD-014) |
 | `worktrees/main/core/` | Extended NPL framework (agents, commands, prompts, schema, specifications, etc.) |
 
 ## TDD Agent Workflow

@@ -24,7 +24,7 @@ Five specialized agents transform feature ideas into tested production code thro
 ## Key Concepts
 
 - **Controller**: Orchestrates agents, manages state, routes blocked reports
-- **Artifacts**: personas/, user-stories/, .prd/, tests/, src/
+- **Artifacts**: personas/, user-stories/, docs/PRDs/, tests/, src/
 - **Mise Tasks**: `test-status`, `test-errors` required for TDD loop
 - **Status Values**: `ok`, `blocked`, `needs_clarification`, `complete`
 

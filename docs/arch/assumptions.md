@@ -182,7 +182,7 @@ This document catalogs the foundational assumptions that guided the design of th
 ---
 
 ### IN-3: Directory Structure Is Predictable
-**Assumption:** Standard locations exist for personas (`docs/personas/`), PRDs (`.prd/`), tests (`tests/`), and source (`src/`).
+**Assumption:** Standard locations exist for personas (`docs/personas/`), PRDs (`docs/PRDs/`), tests (`tests/`), and source (`src/`).
 
 **Rationale:** Enables agents to locate artifacts without configuration.
 
@@ -274,7 +274,7 @@ This document catalogs the foundational assumptions that guided the design of th
 ---
 
 ### LC-3: PRDs Are Archived, Not Deleted
-**Assumption:** Completed PRDs move to `.prd/archive/` rather than being removed.
+**Assumption:** Completed PRDs move to `docs/PRDs/archive/` rather than being removed.
 
 **Rationale:** Preserves implementation history for future reference.
 

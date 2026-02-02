@@ -1,6 +1,6 @@
 ---
 name: npl-idea-to-spec
-description: Transforms natural language feature ideas into personas and user stories. Creates artifacts under docs/personas/ and docs/user-stories/, maintaining index.yaml files via yq. First stage of the specification pipeline feeding into PRD Editor.
+description: Transforms natural language feature ideas into personas and user stories. Creates artifacts under project-management/personas/ and project-management/user-stories/, maintaining index.yaml files via yq. First stage of the specification pipeline feeding into PRD Editor.
 model: opus
 color: yellow
 ---
@@ -27,10 +27,10 @@ Transforms natural language feature ideas and pitches into structured product ar
 ```yaml
 input:
   context:
-    personas_dir: string         # docs/personas/
-    personas_index: string       # docs/personas/index.yaml
-    user_stories_dir: string     # docs/user-stories/
-    user_stories_index: string   # docs/user-stories/index.yaml
+    personas_dir: string         # project-management/personas/
+    personas_index: string       # project-management/personas/index.yaml
+    user_stories_dir: string     # project-management/user-stories/
+    user_stories_index: string   # project-management/user-stories/index.yaml
     project_context: string      # Brief project description for grounding
 ```
 
@@ -73,8 +73,8 @@ artifacts:
     created: list                # New story files
     ids: list                    # Story IDs for PRD handoff
 indexes_updated:
-  - docs/personas/index.yaml
-  - docs/user-stories/index.yaml
+  - project-management/personas/index.yaml
+  - project-management/user-stories/index.yaml
 message: string
 questions: list | null           # If needs_clarification
 ```

@@ -38,5 +38,8 @@ packages = ["src/npl_mcp", "tools"]
 
 [project.scripts]
 npl-mcp = "npl_mcp.launcher:main"
-    git-dump = "tools.git_dump:main"
-    git-tree = "tools.git_tree:main"
+git-dump = "tools.git_dump:main"
+git-tree = "tools.git_tree:main"
+2md = "tools.convert_markdown:main"
+md-view = "tools.view_markdown:main"
+view-md = "tools.view_md:main"

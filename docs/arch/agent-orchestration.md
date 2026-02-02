@@ -34,7 +34,7 @@ flowchart TB
     
     subgraph Artifacts
         PERS[(Personas<br/>User Stories)]
-        PRDDOC[(.prd/<br/>PRD Documents)]
+        PRDDOC[(project-management/PRDs/<br/>PRD Documents)]
         TESTS[(tests/<br/>Test Suites)]
         SRC[(src/<br/>Source Code)]
     end
@@ -145,7 +145,7 @@ controller:
       personas: [matched personas]
       
   - receive:
-      prd_path: ".prd/feature-name.md"
+      prd_path: "docs/PRDs/feature-name.md"
       prd_hash: "abc123"
 ```
 
@@ -159,7 +159,7 @@ controller:
       feature: (from PRD)
       interface: (from PRD)
       context:
-        prd_path: ".prd/feature-name.md"
+        prd_path: "docs/PRDs/feature-name.md"
         test_path: "tests/unit/feature/"
         
   - receive:
@@ -175,7 +175,7 @@ controller:
     command: init
     input:
       prd:
-        path: ".prd/feature-name.md"
+        path: "docs/PRDs/feature-name.md"
         hash: "abc123"
       test_suite:
         paths: [test files from Phase 3]
@@ -275,7 +275,7 @@ project/
 │   │   └── US-055-auto-sync.md
 │   ├── PROJ-ARCH.md
 │   └── PROJ-LAYOUT.md
-├── .prd/
+├── docs/PRDs/
 │   ├── feature-name.md          # Created by npl-prd-editor
 │   ├── feature-name.impl.log    # Created by npl-tdd-coder
 │   └── archive/

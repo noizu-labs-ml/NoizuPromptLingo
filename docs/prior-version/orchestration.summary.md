@@ -44,7 +44,7 @@ flowchart LR
 - Creates sub-files when sections exceed thresholds
 - Ensures SMART requirements (Specific, Measurable, Achievable, Relevant, Traceable)
 - Monitors section lengths and splits dynamically
-- Artifacts: `.prd/PRD.md`, `.prd/<sub-files>`
+- Artifacts: `docs/PRDs/PRD.md`, `docs/PRDs/<sub-files>`
 
 ### Phase 3: Test Creation (npl-tdd-tester)
 **Input**: PRD specifications

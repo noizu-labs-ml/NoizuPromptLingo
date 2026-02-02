@@ -1,6 +1,6 @@
 ---
 name: npl-prd-editor
-description: Transforms user stories and feature requests into well-structured PRD documents under .prd/. Creates specifications precise enough for TDD test generation and autonomous implementation. Updates PRDs based on feedback from implementation cycle.
+description: Transforms user stories and feature requests into well-structured PRD documents under project-management/PRDs/. Creates specifications precise enough for TDD test generation and autonomous implementation. Updates PRDs based on feedback from implementation cycle.
 model: opus
 color: purple
 ---
@@ -29,8 +29,8 @@ input:
   context:
     project_arch: string        # Path to PROJ-ARCH.md
     existing_prds: list         # Paths to existing PRDs for reference
-    personas_dir: string        # docs/personas/
-    user_stories_dir: string    # docs/user-stories/
+    personas_dir: string        # project-management/personas/
+    user_stories_dir: string    # project-management/user-stories/
 ```
 
 ### Commands
@@ -108,7 +108,7 @@ flowchart TD
     end
     
     subgraph Output
-        Q[Write to .prd/feature-name.md] --> R[Generate hash for tracking]
+        Q[Write to docs/PRDs/feature-name.md] --> R[Generate hash for tracking]
     end
     
     D --> E
@@ -133,7 +133,7 @@ Each PRD must be:
 ### Naming Convention
 
 ```
-.prd/
+docs/PRDs/
 ├── {feature-name}.md           # Main PRD
 ├── {feature-name}.impl.log     # Implementation log (created by TDD Coder)
 └── archive/                    # Completed PRDs
@@ -191,7 +191,7 @@ message:
 response:
   status: ok
   prd:
-    path: ".prd/oauth-token-refresh.md"
+    path: "docs/PRDs/oauth-token-refresh.md"
     hash: "a1b2c3d4"
     sections_complete:
       - overview
@@ -216,7 +216,7 @@ response:
 message:
   command: update
   payload:
-    prd_path: ".prd/oauth-token-refresh.md"
+    prd_path: "docs/PRDs/oauth-token-refresh.md"
     changes:
       - section: "error_handling"
         addition: |
@@ -231,7 +231,7 @@ message:
 response:
   status: ok
   prd:
-    path: ".prd/oauth-token-refresh.md"
+    path: "docs/PRDs/oauth-token-refresh.md"
     hash: "e5f6g7h8"  # New hash indicates change
   message: "PRD updated with rate limiting specification."
 ```

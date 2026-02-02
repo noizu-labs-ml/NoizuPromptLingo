@@ -18,7 +18,7 @@ PRDs ensure:
 
 ## File Location
 
-PRDs are stored in the `.prd/` directory structure. The location depends on the project context:
+PRDs are stored in the `docs/PRDs/` directory structure. The location depends on the project context:
 
 **Main NPL Framework** (extended workspace):
 ```
@@ -28,9 +28,9 @@ worktrees/main/.npl/prds/
 └── ...
 ```
 
-**Root Project** (if .prd/ directory exists):
+**Root Project** (if docs/PRDs/ directory exists):
 ```
-.prd/
+docs/PRDs/
 ├── PRD-001.md
 ├── PRD-002.md
 └── ...

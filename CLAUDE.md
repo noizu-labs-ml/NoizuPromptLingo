@@ -63,20 +63,20 @@ yq '.filter' -y input.yaml  # ❌ Wrong order
 
 ```bash
 # Query a value
-yq '.stories[] | select(.id == "US-001") | .title' docs/user-stories/index.yaml
+yq '.stories[] | select(.id == "US-001") | .title' project-management/user-stories/index.yaml
 
 # Add field to all items
-yq -y '.stories |= map(.new_field = "value")' docs/user-stories/index.yaml > temp.yaml && mv temp.yaml docs/user-stories/index.yaml
+yq -y '.stories |= map(.new_field = "value")' project-management/user-stories/index.yaml > temp.yaml && mv temp.yaml project-management/user-stories/index.yaml
 
 # Update conditional fields
-yq -y '.personas |= map(if .id == "P-001" then .related_stories = ["US-001"] else . end)' docs/personas/index.yaml > temp.yaml && mv temp.yaml docs/personas/index.yaml
+yq -y '.personas |= map(if .id == "P-001" then .related_stories = ["US-001"] else . end)' project-management/personas/index.yaml > temp.yaml && mv temp.yaml project-management/personas/index.yaml
 ```
 
 ### Index Files as Single Source of Truth
 
 Relationship metadata is maintained in YAML index files, NOT in markdown files:
-- **User stories** relationships: `docs/user-stories/index.yaml` (via `related_stories` and `related_personas` fields)
-- **Personas** relationships: `docs/personas/index.yaml` (via `related_stories` field)
+- **User stories** relationships: `project-management/user-stories/index.yaml` (via `related_stories` and `related_personas` fields)
+- **Personas** relationships: `project-management/personas/index.yaml` (via `related_stories` field)
 
 Markdown files describe content; YAML indexes describe structure. This separation enables version control of relationships independent from documentation content.
 
@@ -261,7 +261,7 @@ flowchart LR
 | Agent | Phase | Outputs |
 |-------|-------|---------|
 | **npl-idea-to-spec** | Discovery | Personas, user stories |
-| **npl-prd-editor** | Specification | PRD documents (`.prd/`) |
+| **npl-prd-editor** | Specification | PRD documents (`project-management/PRDs/`) |
 | **npl-tdd-tester** | Test Creation | Test suites (`tests/`) |
 | **npl-tdd-coder** | Implementation | Source code (`src/`) |
 | **npl-tdd-debugger** | Debug Loop | Diagnostics, fixes |
@@ -301,7 +301,7 @@ General FastMCP 2.x framework guides are available in `docs/resources/fastmcp/`:
 - **[Progressive Examples](docs/resources/fastmcp/10-examples.md)** – Examples from simple to advanced
 
 These are general framework reference docs, not project-specific implementation guides. For project-specific MCP tool implementations, see:
-- [PRD-009: MCP Tools Implementation](docs/PRDs/prd-009-mcp-tools-implementation.md)
+- [PRD-009: MCP Tools Implementation](project-management/PRDs/PRD-010-mcp-tools-implementation.md)
 - [Features Grid - MCP Tools section](docs/features-grid.md)
 - [Implementation Tracker](docs/implementation-tracker.yaml)
 
@@ -314,7 +314,7 @@ For complete documentation navigation including planning, architecture, and reso
 Key quick-links:
 - **[Roadmap](docs/roadmap.yaml)** – 4-phase implementation roadmap
 - **[Features Grid](docs/features-grid.md)** – Implementation status and gaps
-- **[User Stories](docs/user-stories/index.yaml)** – Specifications with relationships
+- **[User Stories](project-management/user-stories/index.yaml)** – Specifications with relationships
 - **[Project Architecture](docs/PROJ-ARCH.md)** – System design overview
 
 ---

@@ -10,7 +10,7 @@ Transforms feature requests, user stories, and change descriptions into well-str
 
 ## Role & Responsibilities
 
-- Transform user stories and feature requests into structured PRD documents under `.prd/`
+- Transform user stories and feature requests into structured PRD documents under `docs/PRDs/`
 - Create specifications precise enough for TDD test generation
 - Ensure PRDs are ready for autonomous implementation
 - Update PRDs based on feedback from the implementation cycle
@@ -70,13 +70,13 @@ init --project-arch PROJ-ARCH.md --personas docs/personas/ --user-stories docs/u
 create --feature oauth-token-refresh --user-stories US-042,US-043 --personas power-user,mobile-user
 
 # Update existing PRD with new requirements
-update --prd .prd/oauth-token-refresh.md --section error_handling --add "Rate limiting: exponential backoff"
+update --prd docs/PRDs/oauth-token-refresh.md --section error_handling --add "Rate limiting: exponential backoff"
 
 # Review PRD for completeness
-review --prd .prd/oauth-token-refresh.md
+review --prd docs/PRDs/oauth-token-refresh.md
 
 # Refine PRD based on feedback
-refine --prd .prd/oauth-token-refresh.md --feedback "Clarify offline behavior"
+refine --prd docs/PRDs/oauth-token-refresh.md --feedback "Clarify offline behavior"
 
 # Check current status
 status

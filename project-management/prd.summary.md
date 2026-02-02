@@ -15,7 +15,7 @@ docs/personas/ (P-XXX persona definitions)
     ↓
 docs/user-stories/ (US-XXX user stories)
     ↓
-.prd/ or worktrees/main/.npl/prds/ (PRD-XXX specifications)
+docs/PRDs/ or worktrees/main/.npl/prds/ (PRD-XXX specifications)
     ↓
 tests/ (tdd-tester creates test suite)
     ↓
@@ -73,7 +73,7 @@ PRDs are managed by the `prd-editor` agent:
 
 **PRD Storage** (location depends on project structure):
 - `worktrees/main/.npl/prds/` - PRDs in the main NPL framework (extended workspace)
-- `.prd/` - PRDs in root project (alternative location if directory exists)
+- `docs/PRDs/` - PRDs in root project (alternative location if directory exists)
 
 **Naming Patterns**:
 - Numbered: `PRD-XXX.md` (e.g., `PRD-001.md`, `PRD-042.md`)

@@ -272,7 +272,7 @@ Migration considered complete when:
 ## Contact & Questions
 
 For questions about migration approach or content, see plan document at:
-`.prd/migration-plan-legacy-docs.md` (if available)
+`docs/PRDs/migration-plan-legacy-docs.md` (if available)
 
 ---
 

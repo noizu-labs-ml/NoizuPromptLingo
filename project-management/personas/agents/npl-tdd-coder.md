@@ -54,7 +54,7 @@ Accepts a PRD and implements it autonomously until complete. Operates independen
 
 - **Feeds to**:
   - Controller: Progress reports, blocked escalations, completion notifications
-  - Implementation Log: Detailed work history in `.prd/{prd-name}.impl.log`
+  - Implementation Log: Detailed work history in `docs/PRDs/{prd-name}.impl.log`
   - Source Code: Production code in `src/` directory
 
 - **Coordinates with**:

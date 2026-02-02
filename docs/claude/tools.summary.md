@@ -182,7 +182,7 @@ Task(subagent_type="Explore", prompt="Find and explain authentication patterns",
 Task(subagent_type="Explore", model="haiku", prompt="List all test files", description="List test files")
 
 // TDD implementation
-Task(subagent_type="tdd-coder", prompt="Implement feature from .prd/auth.md", description="Implement auth feature")
+Task(subagent_type="tdd-coder", prompt="Implement feature from docs/PRDs/auth.md", description="Implement auth feature")
 
 // Resume previous agent
 Task(subagent_type="Explore", resume="agent-id-here", prompt="Now look at migrations", description="Continue exploration")

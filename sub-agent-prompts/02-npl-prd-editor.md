@@ -16,7 +16,7 @@ Rename the prd-editor agent to use "npl-" prefix and create corresponding docume
 ```yaml
 ---
 name: prd-editor
-description: Transforms user stories and feature requests into well-structured PRD documents under .prd/. Creates specifications precise enough for TDD test generation and autonomous implementation. Updates PRDs based on feedback from implementation cycle.
+description: Transforms user stories and feature requests into well-structured PRD documents under docs/PRDs/. Creates specifications precise enough for TDD test generation and autonomous implementation. Updates PRDs based on feedback from implementation cycle.
 model: claude
 color: purple
 ---
@@ -44,7 +44,7 @@ reports_to: controller
 ## Documentation Files to Update
 - `CLAUDE.md` - TDD Agent Workflow section references agent name
 - `docs/arch/agent-orchestration.summary.md` - Agent pipeline descriptions
-- `.prd/` directory documentation (if any)
+- `docs/PRDs/` directory documentation (if any)
 - Any specification templates referencing this agent
 
 ## Persona Documentation
@@ -112,7 +112,7 @@ Transforms feature requests, user stories, and change descriptions into well-str
 - [ ] Persona documentation created at `docs/personas/agents/npl-prd-editor.md`
 - [ ] CLAUDE.md agent references updated
 - [ ] docs/arch/agent-orchestration.summary.md references updated
-- [ ] .prd/ documentation cross-references checked
+- [ ] docs/PRDs/ documentation cross-references checked
 - [ ] All specification templates reference correct agent name
 - [ ] No broken references remain in codebase
 ```

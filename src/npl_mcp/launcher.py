@@ -24,6 +24,9 @@ PORT = "8765"
 
 def create_app() -> "FastMCP":
     """Create the FastMCP app with tools."""
+    from pathlib import Path
+    from typing import Optional
+
     mcp = FastMCP("npl-mcp")
 
     @mcp.tool(name="hello-world")
@@ -35,6 +38,87 @@ def create_app() -> "FastMCP":
     async def echo(text: str) -> str:
         """Echo back the provided text."""
         return f"Echo: {text}"
+
+    @mcp.tool()
+    async def to_markdown(
+        source: str,
+        no_cache: bool = False,
+        timeout: int = 30
+    ) -> str:
+        """Convert URL, file, or image to markdown with caching.
+
+        Args:
+            source: URL, file path, or image to convert
+            no_cache: Disable caching (force fresh conversion)
+            timeout: Request timeout in seconds for URLs
+
+        Returns:
+            Formatted markdown with metadata header
+
+        Examples:
+            await to_markdown("https://docs.python.org/3/library/pathlib.html")
+            await to_markdown("report.pdf")
+            await to_markdown("diagram.png")  # Uses vision API
+        """
+        from npl_mcp.markdown.converter import MarkdownConverter
+        from npl_mcp.markdown.cache import MarkdownCache
+
+        cache = MarkdownCache()
+        converter = MarkdownConverter(cache)
+
+        return await converter.convert(
+            source,
+            force_refresh=no_cache,
+            timeout=timeout
+        )
+
+    @mcp.tool()
+    async def view_markdown(
+        source: str,
+        filter: Optional[str] = None,
+        collapsed_depth: Optional[int] = None,
+        filtered_only: bool = False
+    ) -> str:
+        """View markdown with optional filtering and collapsing.
+
+        Args:
+            source: Markdown file path or markdown content string
+            filter: Optional filter selector (e.g., "h2", "Overview > API", "css:#main")
+            collapsed_depth: Collapse headings below this depth (1-6)
+            filtered_only: Show only filtered sections (no collapsed headings)
+
+        Returns:
+            Filtered/collapsed markdown content
+
+        Examples:
+            # Filter to specific section
+            await view_markdown("doc.md", filter="API Reference")
+
+            # Collapse deep sections
+            await view_markdown("doc.md", collapsed_depth=2)
+
+            # Filter and show only matching sections
+            await view_markdown("doc.md", filter="Installation", filtered_only=True)
+
+            # CSS selector (Phase 2)
+            await view_markdown("doc.md", filter="css:article.main")
+        """
+        from npl_mcp.markdown.viewer import MarkdownViewer
+
+        # Determine if source is a file path or content
+        if Path(source).exists():
+            content = Path(source).read_text()
+        else:
+            # Assume it's markdown content directly
+            content = source
+
+        viewer = MarkdownViewer()
+        return viewer.view(
+            content,
+            filter=filter,
+            collapsed_depth=collapsed_depth,
+            filtered_only=filtered_only
+        )
 
     return mcp
 

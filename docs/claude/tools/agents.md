@@ -76,7 +76,7 @@ Run in background:
 {
   "subagent_type": "npl-tdd-coder",
   "description": "Implement feature autonomously",
-  "prompt": "Implement the feature described in .prd/auth.md",
+  "prompt": "Implement the feature described in docs/PRDs/auth.md",
   "run_in_background": true
 }
 ```

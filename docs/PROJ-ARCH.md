@@ -108,7 +108,7 @@ The system defines personas across three categories:
 - Project Management: Coordinator, Risk Monitor, Technical Reality Checker
 - Marketing: Community, Conversion, Marketing Copy, Positioning
 
-→ *See [personas/](personas/) for detailed persona definitions, [personas/index.yaml](personas/index.yaml) for relationship metadata*
+→ *See [project-management/personas/](../project-management/personas/) for detailed persona definitions, [project-management/personas/index.yaml](../project-management/personas/index.yaml) for relationship metadata*
 
 ### User Stories
 
@@ -124,13 +124,13 @@ The system defines personas across three categories:
 | Agent Coordination | 3 | Monitoring and coordinating AI agents |
 | Human-Agent Collaboration | 4 | Developer-AI pair programming and interaction |
 
-→ *See [user-stories.md](user-stories.md) for overview, [user-stories/](user-stories/) for individual stories*
+→ *See [project-management/user-stories.md](../project-management/user-stories.md) for overview, [project-management/user-stories/](../project-management/user-stories/) for individual stories*
 
 ### Product Requirement Documents
 
 PRDs transform user stories into actionable specifications with functional/non-functional requirements, API specifications, and testing strategies.
 
-→ *See [prd.md](prd.md) for detailed format, [prd.summary.md](prd.summary.md) for overview*
+→ *See [project-management/prd.md](../project-management/prd.md) for detailed format, [project-management/prd.summary.md](../project-management/prd.summary.md) for overview*
 
 ## Key Design Decisions
 
@@ -144,9 +144,9 @@ PRDs transform user stories into actionable specifications with functional/non-f
 The project implements a TDD-driven workflow system that coordinates multiple specialized agents (idea-to-spec, prd-editor, npl-tdd-tester, npl-tdd-coder, npl-tdd-debugger) to transform feature ideas into tested, production-ready code. Each agent operates autonomously within a defined phase, with a controller orchestrating the overall workflow from discovery through implementation.
 
 The workflow processes feature ideas through:
-1. **Persona Definitions** (`docs/personas/`) - Establish user perspectives
-2. **User Stories** (`docs/user-stories/`) - Capture feature requirements
-3. **PRDs** (`.prd/`) - Detailed specifications (per PRD spec)
+1. **Persona Definitions** (`project-management/personas/`) - Establish user perspectives
+2. **User Stories** (`project-management/user-stories/`) - Capture feature requirements
+3. **PRDs** (`project-management/PRDs/`) - Detailed specifications (per PRD spec)
 4. **Tests** (`tests/`) - Test-driven development
 5. **Implementation** (`src/`) - Production code
 

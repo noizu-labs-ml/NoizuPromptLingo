@@ -304,11 +304,11 @@ response:
 
 ### Implementation Log
 
-Maintains `.prd/{prd-name}.impl.log`:
+Maintains `docs/PRDs/{prd-name}.impl.log`:
 
 ```markdown
 # Implementation Log: auth-oauth
-PRD: .prd/auth-oauth.md
+PRD: docs/PRDs/auth-oauth.md
 Started: 2024-01-15T10:00:00Z
 Agent: tdd-coder
 
