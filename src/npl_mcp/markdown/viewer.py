@@ -75,8 +75,8 @@ class MarkdownViewer:
         When depth=2, shows:
         - # Heading 1 (expanded)
         - ## Heading 2 (expanded)
-        - ### Inner Content (collapsed)  - heading text shown but marked as collapsed
-        - #### Deep Content (collapsed)   - only first level below shown, others hidden
+        - ### Inner Content 📦  - heading text shown but marked as collapsed
+        - #### Deep Content 📦   - only first level below shown, others hidden
 
         Content under collapsed headings is hidden.
 
@@ -85,7 +85,7 @@ class MarkdownViewer:
             depth: Show headings up to this level expanded, collapse below
 
         Returns:
-            Markdown with collapsed indicators for levels > depth
+            Markdown with collapsed indicators (📦 emoji) for levels > depth
         """
         lines = []
         in_collapsed_section = False
@@ -106,15 +106,15 @@ class MarkdownViewer:
                 else:
                     # Level > depth: show heading but mark as collapsed
                     if not in_collapsed_section:
-                        # First level below threshold - show heading with "(collapsed)" marker
+                        # First level below threshold - show heading with emoji marker
                         heading_prefix = "#" * level
-                        lines.append(f"{heading_prefix} {heading_text} (collapsed)")
+                        lines.append(f"{heading_prefix} {heading_text} 📦")
                         in_collapsed_section = True
                         collapsed_section_depth = level
                     elif level < collapsed_section_depth:
                         # Return to a shallower collapsed level - show but mark as collapsed
                         heading_prefix = "#" * level
-                        lines.append(f"{heading_prefix} {heading_text} (collapsed)")
+                        lines.append(f"{heading_prefix} {heading_text} 📦")
                         collapsed_section_depth = level
                     # else: deeper nested under collapse - skip entirely
             else:
@@ -137,21 +137,22 @@ class MarkdownViewer:
 
         Renders the entire document structure with:
         - Matched sections: shown expanded (or controlled by filter_inner_depth)
-        - Matched ancestors: shown expanded to provide navigation context
-        - Other sections: shown as collapsed with "(collapsed)" marker
+        - Matched ancestors: ALWAYS shown expanded to provide navigation context
+        - Other sections: shown as collapsed with emoji marker
 
         Args:
             sections: Full document structure (list of section dicts)
             matched_ids: Set of IDs of matched sections
-            depth: Global collapse depth (overrides per-section logic if set)
+            depth: Global collapse depth (applies to non-matched siblings)
             filter_inner_depth: Collapse depth WITHIN matched sections only
 
         Returns:
-            Rendered markdown with context preservation
+            Rendered markdown with context preservation and emoji markers
         """
         lines = []
+        COLLAPSED_EMOJI = "📦"  # Emoji to indicate collapsed section
 
-        def render_section(section: dict, is_ancestor: bool = False) -> None:
+        def render_section(section: dict, is_inside_matched: bool = False) -> None:
             level = section['level']
             text = section['text']
             is_matched = id(section) in matched_ids
@@ -160,32 +161,42 @@ class MarkdownViewer:
             # Determine if this section should be collapsed
             should_collapse = False
 
-            if depth is not None and level > depth:
-                # Global depth always takes precedence
-                should_collapse = True
-            elif is_matched or is_matched_ancestor:
-                # Matched sections and their ancestors shown expanded
-                if filter_inner_depth is not None and is_matched:
-                    # Only apply inner depth to matched sections (not ancestors)
-                    should_collapse = level > filter_inner_depth
+            if is_matched_ancestor:
+                # ANCESTORS ALWAYS SHOWN EXPANDED - never collapse
+                should_collapse = False
+            elif is_matched:
+                # MATCHED SECTIONS ALWAYS SHOWN EXPANDED
+                # (they are the focal point of the filter)
+                should_collapse = False
             else:
-                # Non-matched, non-ancestor sections always collapse
-                should_collapse = True
+                # Non-matched section - check if should collapse
+                # Global depth always takes precedence
+                if depth is not None and level > depth:
+                    should_collapse = True
+                elif is_inside_matched:
+                    # Inside a matched section (and depth didn't force collapse)
+                    if filter_inner_depth is not None:
+                        # Use filter_inner_depth to control collapse
+                        should_collapse = level > filter_inner_depth
+                    # else: no filter_inner_depth, show all children expanded
+                elif len(matched_ids) > 0:
+                    # Filtering mode - collapse all non-matched (not inside matched)
+                    should_collapse = True
 
             # Render heading
             heading = f"{'#' * level} {text}"
             if should_collapse:
-                # Show collapsed marker when collapsing
-                lines.append(f"{heading} (collapsed)")
+                # Show collapsed marker with emoji
+                lines.append(f"{heading} {COLLAPSED_EMOJI}")
                 return  # Skip content and children
             else:
                 # Not collapsed - show fully expanded
                 lines.append(heading)
                 # Render content
                 lines.extend(section.get('content', []))
-                # Render children
+                # Render children (pass flag if we're matched or already inside matched)
                 for child in section.get('children', []):
-                    render_section(child)
+                    render_section(child, is_inside_matched=is_matched or is_inside_matched)
 
         # Render all top-level sections
         for section in sections:

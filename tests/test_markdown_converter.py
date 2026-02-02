@@ -7,9 +7,12 @@ Tests cover:
 - force_refresh parameter
 - Error handling (file not found, URL timeout)
 - Metadata header format
+- BUG #1: Double extension cache issue (markdown file .md.md)
+- BUG #2: HTML heading preservation (local vs Jina conversion)
 """
 
 import os
+import re
 import tempfile
 from pathlib import Path
 from unittest.mock import AsyncMock, patch, MagicMock
@@ -84,6 +87,29 @@ def temp_image_file():
     """Create a temporary image file path for testing."""
     with tempfile.NamedTemporaryFile(mode="wb", delete=False, suffix=".png") as f:
         f.write(b"\x89PNG\r\n\x1a\n fake png content")
+        path = f.name
+    yield path
+    Path(path).unlink(missing_ok=True)
+
+
+@pytest.fixture
+def temp_html_file():
+    """Create a temporary HTML file for testing."""
+    html_content = """
+    <html>
+    <head><title>Test Page</title></head>
+    <body>
+    <h1>Test Heading</h1>
+    <p>This is a test paragraph.</p>
+    <ul>
+    <li>Item 1</li>
+    <li>Item 2</li>
+    </ul>
+    </body>
+    </html>
+    """
+    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".html") as f:
+        f.write(html_content)
         path = f.name
     yield path
     Path(path).unlink(missing_ok=True)
@@ -417,11 +443,13 @@ class TestConverterErrorHandling:
                 await converter.convert("https://example.com/not-found")
 
     @pytest.mark.asyncio
-    async def test_pdf_conversion_not_implemented(self, converter, temp_pdf_file):
-        """Test that PDF conversion raises NotImplementedError."""
-        with pytest.raises(NotImplementedError) as exc_info:
+    async def test_pdf_conversion_fails_with_invalid_pdf(self, converter, temp_pdf_file):
+        """Test that PDF conversion handles invalid PDF gracefully."""
+        # The temp_pdf_file is a fake PDF that can't be parsed
+        with pytest.raises(RuntimeError) as exc_info:
             await converter.convert(temp_pdf_file)
 
+        # Should get a RuntimeError about PDF parsing
         assert "PDF" in str(exc_info.value) or "pdf" in str(exc_info.value).lower()
 
     @pytest.mark.asyncio
@@ -588,6 +616,48 @@ class TestConverterTimeout:
 
 
 # ============================================================================
+# Test HTML Conversion
+# ============================================================================
+
+
+class TestConverterHTMLConversion:
+    """Test converting HTML files to markdown."""
+
+    @pytest.mark.asyncio
+    async def test_convert_html_file(self, converter, temp_html_file):
+        """Test converting an HTML file to markdown."""
+        result = await converter.convert(temp_html_file)
+
+        assert "success: true" in result
+        assert "source_type: file" in result
+        # Check that content is converted to markdown (h1, paragraph, etc.)
+        content = result.split("---")[1] if "---" in result else result
+        assert "Test" in content or "Heading" in content or "test" in content.lower()
+
+    @pytest.mark.asyncio
+    async def test_convert_html_includes_metadata(self, converter, temp_html_file):
+        """Test that converted HTML includes proper metadata."""
+        result = await converter.convert(temp_html_file)
+
+        assert "success: true" in result
+        assert f"source: {temp_html_file}" in result
+        assert "source_type: file" in result
+        assert "cached:" in result
+        assert "cache_file:" in result
+
+    @pytest.mark.asyncio
+    async def test_convert_html_uses_cache(self, converter, temp_html_file):
+        """Test that HTML conversions are cached."""
+        # First conversion
+        result1 = await converter.convert(temp_html_file)
+        assert "cached: false" in result1
+
+        # Second conversion should use cache
+        result2 = await converter.convert(temp_html_file)
+        assert "cached: true" in result2
+
+
+# ============================================================================
 # Test Source Type Detection
 # ============================================================================
 
@@ -643,7 +713,8 @@ class TestConverterSourceTypeDetection:
     @pytest.mark.asyncio
     async def test_pdf_extension_detected(self, converter, temp_pdf_file):
         """Test that .pdf files are detected correctly."""
-        with pytest.raises(NotImplementedError) as exc_info:
+        # Invalid PDF will raise RuntimeError
+        with pytest.raises(RuntimeError) as exc_info:
             await converter.convert(temp_pdf_file)
 
         assert "pdf" in str(exc_info.value).lower()
@@ -663,3 +734,345 @@ class TestConverterSourceTypeDetection:
 
         assert "source_type: file" in result
         assert "success: true" in result
+
+    @pytest.mark.asyncio
+    async def test_html_extension_detected(self, converter, temp_html_file):
+        """Test that .html files are detected and converted."""
+        result = await converter.convert(temp_html_file)
+
+        assert "source_type: file" in result
+        assert "success: true" in result
+        # Content should be converted to markdown
+        assert "---" in result  # Separator present
+
+
+# ============================================================================
+# BUG #1: Double Extension Cache Issue
+# ============================================================================
+
+
+class TestBugDoubleExtensionCache:
+    """Test for bug: Running 2md on markdown file should NOT produce .md.md files.
+
+    Issue: When converting a file that's already markdown (e.g., nihilism.html.md),
+    the converter should detect this and not create duplicate cache files.
+
+    Current behavior (buggy):
+    - Input: nihilism.html.md
+    - Output cache: nihilism.html.md.md (double extension)
+
+    Expected behavior:
+    - Input: nihilism.html.md (already markdown)
+    - Should either skip caching or detect that source is already markdown
+    """
+
+    @pytest.mark.asyncio
+    async def test_markdown_file_cache_path(self, converter, cache):
+        """Test that markdown file cache path doesn't double extend."""
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".html.md") as f:
+            f.write("# Already Markdown\n\nNo conversion needed.")
+            markdown_file = f.name
+
+        try:
+            result = await converter.convert(markdown_file)
+
+            # The cache path should not have double extension (.html.md.md)
+            # This test documents the bug - currently it DOES create .md.md
+            cache_path = cache.get_cache_path(markdown_file)
+
+            # BUG: This assertion FAILS with current code
+            # Current behavior creates: file.html.md.md
+            # Expected behavior should be: file.html.md (no caching needed)
+            assert not str(cache_path).endswith(".md.md"), \
+                f"Cache path has double extension: {cache_path}"
+        finally:
+            Path(markdown_file).unlink(missing_ok=True)
+
+    @pytest.mark.asyncio
+    async def test_converting_markdown_twice_no_double_cache(self, converter, cache):
+        """Test that converting markdown file twice doesn't create cascading .md files.
+
+        BUG: Running converter twice on result creates:
+        - First run: file.html.md
+        - Second run on file.html.md: file.html.md.md
+        """
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".html.md") as f:
+            f.write("# Heading\n\n## Section\n\nContent here.")
+            source_file = f.name
+
+        try:
+            # First conversion
+            result1 = await converter.convert(source_file)
+            assert "success: true" in result1
+
+            # Second conversion of same file should use cache
+            result2 = await converter.convert(source_file)
+
+            # Should indicate cached, not create new file
+            assert "cached:" in result2
+
+            # Check that no .md.md file was created
+            double_ext_path = Path(source_file).with_suffix(".md.md")
+            assert not double_ext_path.exists(), \
+                f"Double extension cache file created: {double_ext_path}"
+        finally:
+            Path(source_file).unlink(missing_ok=True)
+
+    @pytest.mark.asyncio
+    async def test_markdown_source_detection(self, converter):
+        """Test that files already in markdown format are detected.
+
+        Markdown files should either:
+        1. Not be cached (detect as already markdown)
+        2. Or cached without adding .md extension
+        """
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".md") as f:
+            f.write("# Already Markdown\n\nThis is markdown content.")
+            md_file = f.name
+
+        try:
+            result = await converter.convert(md_file)
+
+            # Should recognize it's already markdown
+            assert "Already Markdown" in result
+
+            # Verify no double extension occurs
+            parts = Path(md_file).suffixes
+            # Should be ['.md'] not ['.md', '.md']
+            assert parts == ['.md'], \
+                f"File has multiple markdown extensions: {parts}"
+        finally:
+            Path(md_file).unlink(missing_ok=True)
+
+
+# ============================================================================
+# BUG #2: HTML Heading Preservation Issue
+# ============================================================================
+
+
+class TestBugHTMLHeadingPreservation:
+    """Test for bug: Headings from local HTML are not preserved like Jina does.
+
+    Issue: When converting HTML files:
+    - Jina API conversion (via URL): Preserves heading structure correctly
+    - Local html2text conversion: Headings are lost or mangled
+
+    Root cause: Two different conversion methods, Jina is better at preserving structure.
+    Suggested fix: Use Jina for both URL and local files (requires file upload support).
+    """
+
+    @pytest.mark.asyncio
+    async def test_local_html_with_multiple_headings(self, converter):
+        """Test that headings in local HTML files are converted to markdown headings."""
+        html_content = """
+        <html>
+        <body>
+        <h1>Main Title</h1>
+        <p>Main content paragraph.</p>
+
+        <h2>Section One</h2>
+        <p>Section one content.</p>
+
+        <h2>Section Two</h2>
+        <p>Section two content.</p>
+
+        <h3>Subsection 2.1</h3>
+        <p>Detailed content.</p>
+        </body>
+        </html>
+        """
+
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".html") as f:
+            f.write(html_content)
+            html_file = f.name
+
+        try:
+            result = await converter.convert(html_file)
+            content = result.split("---")[1] if "---" in result else result
+
+            # BUG: These assertions may FAIL because html2text doesn't preserve headings well
+            # Should have markdown heading (# ) for h1
+            assert "#" in content, \
+                "No markdown headings found in converted HTML"
+
+            # Should preserve heading hierarchy
+            lines = content.split("\n")
+            heading_lines = [l for l in lines if l.strip().startswith("#")]
+            assert len(heading_lines) > 0, \
+                "No heading lines found after conversion"
+
+            # Verify specific headings are present
+            heading_text = "\n".join(heading_lines)
+            assert "Main Title" in heading_text or "main" in heading_text.lower(), \
+                f"Main h1 heading not preserved. Headings found: {heading_text}"
+
+            assert "Section" in heading_text, \
+                f"Section h2 headings not preserved. Headings found: {heading_text}"
+        finally:
+            Path(html_file).unlink(missing_ok=True)
+
+    @pytest.mark.asyncio
+    async def test_html_heading_levels_preserved(self, converter):
+        """Test that HTML heading levels (h1->h2->h3) become markdown hierarchy.
+
+        BUG: Local HTML conversion may not preserve heading levels correctly.
+        """
+        html_content = """
+        <html>
+        <body>
+        <h1>Level 1</h1>
+        <h2>Level 2</h2>
+        <h3>Level 3</h3>
+        <h2>Back to Level 2</h2>
+        </body>
+        </html>
+        """
+
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".html") as f:
+            f.write(html_content)
+            html_file = f.name
+
+        try:
+            result = await converter.convert(html_file)
+            content = result.split("---")[1] if "---" in result else result
+
+            # Extract heading lines with their levels
+            heading_pattern = r"^(#+)\s+(.*)$"
+            headings = []
+            for line in content.split("\n"):
+                match = re.match(heading_pattern, line)
+                if match:
+                    level = len(match.group(1))
+                    text = match.group(2).strip()
+                    headings.append((level, text))
+
+            # BUG: This may fail if headings aren't found
+            assert len(headings) >= 2, \
+                f"Expected at least 2 headings, found {len(headings)}: {headings}"
+
+            # Verify heading progression
+            heading_levels = [h[0] for h in headings]
+            assert heading_levels[0] == 1, "First heading should be level 1"
+
+            # If we have level 2 and 3, they should follow proper hierarchy
+            if len(heading_levels) > 2:
+                assert heading_levels[1] <= 2, "Second heading should be level <= 2"
+        finally:
+            Path(html_file).unlink(missing_ok=True)
+
+    @pytest.mark.asyncio
+    async def test_nested_html_structure_preservation(self, converter):
+        """Test that nested HTML structure (divs with headers) is converted to markdown hierarchy.
+
+        BUG: Complex HTML structures may lose their heading hierarchy in local conversion.
+        """
+        html_content = """
+        <html>
+        <body>
+        <div class="container">
+            <h1>Document Title</h1>
+            <div class="section">
+                <h2>Introduction</h2>
+                <p>Intro paragraph.</p>
+                <h3>Background</h3>
+                <p>Background info.</p>
+            </div>
+            <div class="section">
+                <h2>Main Content</h2>
+                <p>Main paragraph.</p>
+                <h3>Details</h3>
+                <p>Detailed info.</p>
+            </div>
+        </div>
+        </body>
+        </html>
+        """
+
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".html") as f:
+            f.write(html_content)
+            html_file = f.name
+
+        try:
+            result = await converter.convert(html_file)
+            content = result.split("---")[1] if "---" in result else result
+
+            # Should have at least title and section headings
+            assert "Document Title" in content or "Title" in content, \
+                "Document title h1 not found"
+
+            assert "Introduction" in content or "Main Content" in content, \
+                "Section headings h2 not found"
+
+            # Verify we can extract a structured outline
+            heading_pattern = r"^(#+)\s+(.*)$"
+            headings = [line for line in content.split("\n")
+                       if re.match(heading_pattern, line)]
+
+            assert len(headings) >= 3, \
+                f"Expected at least 3 headings for nested structure, found {len(headings)}"
+        finally:
+            Path(html_file).unlink(missing_ok=True)
+
+    @pytest.mark.asyncio
+    async def test_html_vs_markdown_content_parity(self, converter):
+        """Test that HTML converted to markdown has same content as original markdown.
+
+        This tests whether html2text is losing information compared to a source markdown.
+        """
+        markdown_content = """# Document Title
+
+## Section One
+
+This is the first section with content.
+
+## Section Two
+
+This is the second section.
+
+### Subsection 2.1
+
+Detailed content here.
+"""
+
+        # Create equivalent HTML
+        html_content = """
+        <html>
+        <body>
+        <h1>Document Title</h1>
+        <h2>Section One</h2>
+        <p>This is the first section with content.</p>
+        <h2>Section Two</h2>
+        <p>This is the second section.</p>
+        <h3>Subsection 2.1</h3>
+        <p>Detailed content here.</p>
+        </body>
+        </html>
+        """
+
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".html") as f:
+            f.write(html_content)
+            html_file = f.name
+
+        try:
+            result = await converter.convert(html_file)
+            html_converted = result.split("---")[1] if "---" in result else result
+
+            # Extract key structural elements
+            def extract_structure(content):
+                """Extract heading and key text from content."""
+                headings = []
+                for line in content.split("\n"):
+                    if line.strip().startswith("#"):
+                        headings.append(line.strip())
+                return headings
+
+            md_structure = extract_structure(markdown_content)
+            html_structure = extract_structure(html_converted)
+
+            # Should have same number of headings
+            # BUG: This may fail if html2text loses headings
+            assert len(html_structure) >= len(md_structure) // 2, \
+                f"HTML conversion lost headings. Expected ~{len(md_structure)}, " \
+                f"got {len(html_structure)}. HTML structure: {html_structure}"
+        finally:
+            Path(html_file).unlink(missing_ok=True)

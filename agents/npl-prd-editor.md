@@ -132,18 +132,29 @@ Each PRD must be:
 
 ### Naming Convention
 
-```
-project-management/PRDs/
-├── {feature-name}.md           # Main PRD
-├── {feature-name}.impl.log     # Implementation log (created by TDD Coder)
-└── archive/                    # Completed PRDs
-    └── {feature-name}.md
-```
+PRD naming and numbering:
+- **Number**: Unique sequential number (PRD-001, PRD-002, etc.)
+- **Name**: Kebab-case, descriptive
+- **Format**: `PRD-NNN-{kebab-case-name}`
+- **Examples**:
+  - `PRD-015-npl-loading-extension`
+  - `PRD-016-oauth-authentication`
+  - `PRD-017-payment-retry-logic`
 
-Feature name format: `kebab-case`, descriptive, e.g.:
-- `user-oauth-authentication`
-- `payment-retry-logic`
-- `dashboard-real-time-updates`
+User stories referenced in PRDs must have unique IDs in `project-management/user-stories/`:
+- Format: `US-NNN-{kebab-case-name}.yaml` or `.md`
+- Do NOT inline user stories in PRDs - extract and reference by ID
+- Use MCP tools: `get-story`, `edit-story`, `update-story` to manage stories
+
+Functional Requirements stored in `PRD-NNN-{name}/functional-requirements/`:
+- File naming: `FR-001-{kebab-case-name}.md`
+- Index: `functional-requirements/index.yaml` (lists all FRs with metadata)
+- Each FR is a separate file with interface, behavior, edge cases
+
+Acceptance Tests stored in `PRD-NNN-{name}/acceptance-tests/`:
+- File naming: `AT-001-{kebab-case-name}.md`
+- Index: `acceptance-tests/index.yaml` (lists all tests with status)
+- Each test is a separate file with test implementation and coverage details
 
 ## Lifecycle
 
@@ -238,7 +249,30 @@ response:
 
 ## Output Artifacts
 
-### PRD Template
+### PRD Directory Structure
+
+Each PRD lives in a dedicated directory with organized sub-sections:
+
+```
+project-management/PRDs/
+├── {feature-name}/
+│   ├── README.md                          # Main PRD document (overview, goals, etc.)
+│   ├── functional-requirements/
+│   │   ├── index.yaml                     # List of all FRs with status
+│   │   ├── FR-001-{requirement-name}.md   # Individual FR detail
+│   │   ├── FR-002-{requirement-name}.md
+│   │   └── ...
+│   ├── acceptance-tests/
+│   │   ├── index.yaml                     # List of all test cases
+│   │   ├── AT-001-{test-name}.md          # Individual test case
+│   │   ├── AT-002-{test-name}.md
+│   │   └── ...
+│   └── {feature-name}.impl.log            # Implementation log (created by TDD Coder)
+└── archive/
+    └── {feature-name}/                    # Completed PRDs
+```
+
+### Main PRD Template (README.md)
 
 ```markdown
 # PRD: {Feature Name}
@@ -253,67 +287,239 @@ response:
 
 Brief description of the feature and its purpose.
 
+### Goals
+
+1. Goal statement
+2. Goal statement
+
+### Non-Goals
+
+- Non-goal statement
+
+---
+
 ## User Stories
 
-| ID | Story | Persona |
+Reference existing user stories from `project-management/user-stories/`:
+
+| ID | Title | Persona |
 |----|-------|---------|
-| US-042 | As a power user, I want seamless auth... | power-user |
+| US-001 | [User Story Title](../../user-stories/US-001-*.md) | persona-id |
+| US-002 | [User Story Title](../../user-stories/US-002-*.md) | persona-id |
+
+Use the MCP tools to load full story details:
+- **get-story**: `get-story --story-id US-001` - Load story by ID
+- **edit-story**: `edit-story --story-id US-001` - Modify story content
+- **update-story**: `update-story --story-id US-001` - Update story metadata
+
+---
 
 ## Functional Requirements
 
-### FR-1: {Requirement Name}
+All functional requirements are detailed in `./functional-requirements/` directory.
 
-**Description**: What the system must do.
+See `functional-requirements/index.yaml` for summary and status.
 
-**Interface**:
-```typescript
-function refreshToken(options: RefreshOptions): Promise<Token>
-```
+Key FRs:
+- **FR-001**: [Requirement Name](./functional-requirements/FR-001-requirement-name.md)
+- **FR-002**: [Requirement Name](./functional-requirements/FR-002-requirement-name.md)
 
-**Behavior**:
-- Given {precondition}
-- When {action}
-- Then {expected result}
-
-**Edge Cases**:
-- Empty token: throw InvalidTokenError
-- Expired refresh token: redirect to login
-
-### FR-2: ...
+---
 
 ## Non-Functional Requirements
 
-| ID | Requirement | Metric |
-|----|-------------|--------|
-| NFR-1 | Token refresh must complete | < 5 seconds |
-| NFR-2 | Must work with intermittent connectivity | Retry 3x |
+| ID | Requirement | Metric | Target |
+|----|-------------|--------|--------|
+| NFR-1 | Test coverage for new code | Line coverage | >= 80% |
+| NFR-2 | Performance baseline | Time | < 100ms for primary operation |
+
+---
 
 ## Error Handling
 
 | Error Condition | Error Type | User Message |
 |-----------------|------------|--------------|
-| Invalid token | InvalidTokenError | "Please log in again" |
-| Rate limited | RateLimitError | "Too many requests, please wait" |
+| Invalid input | ValueError | "Please provide valid input" |
 
-## Acceptance Criteria
+---
 
-- [ ] AC-1: Token refreshes automatically before expiration
-- [ ] AC-2: Failed refresh triggers graceful degradation
-- [ ] AC-3: User is notified only on permanent failure
+## Acceptance Tests
+
+All acceptance tests are detailed in `./acceptance-tests/` directory.
+
+See `acceptance-tests/index.yaml` for test plan.
+
+Key test areas:
+- **AT-001**: [Test Title](./acceptance-tests/AT-001-test-title.md)
+- **AT-002**: [Test Title](./acceptance-tests/AT-002-test-title.md)
+
+---
+
+## Success Criteria
+
+1. All user stories fully implemented with AC passing
+2. Test coverage >= 80% for all new code
+3. All acceptance tests pass
+4. Error messages are clear and actionable
+
+---
 
 ## Out of Scope
 
-- Multi-provider token sync
-- Token sharing across devices
+- Item excluded from this work
+- Item excluded from this work
+
+---
 
 ## Dependencies
 
-- Auth service v2.1+
-- Token store module
+- External service/library name
+- Another system/module name
+
+---
 
 ## Open Questions
 
-- [ ] Q1: Should we support offline token refresh queue?
+- [ ] Q1: Question about requirements?
+- [ ] Q2: Question about approach?
+```
+
+### Functional Requirement Template (functional-requirements/FR-00X-{name}.md)
+
+```markdown
+# FR-001: {Requirement Name}
+
+**Status**: Draft | Active | Completed
+
+## Description
+
+Clear statement of what the system must do.
+
+## Interface
+
+```python
+def function_name(param1: Type, param2: Type) -> ReturnType:
+    """Docstring with purpose and behavior."""
+```
+
+## Behavior
+
+Specify expected behavior using Given-When-Then format:
+
+- **Given** precondition or initial state
+- **When** action is taken
+- **Then** expected result occurs
+
+Example:
+- Given expression `"directive"`
+- When parsed
+- Then returns NPLExpression with additions=[NPLComponent(DIRECTIVES, None, None)]
+
+## Edge Cases
+
+- **Edge case 1**: Description and expected handling
+- **Edge case 2**: Description and expected handling
+
+## Related User Stories
+
+- US-001
+- US-002
+
+## Test Coverage
+
+Expected test count: 8-12 tests covering normal + edge cases.
+Target coverage: 100% for this FR.
+```
+
+### Acceptance Test Template (acceptance-tests/AT-00X-{test-name}.md)
+
+```markdown
+# AT-001: {Test Name}
+
+**Category**: Unit | Integration | End-to-End
+**Related FR**: FR-001, FR-002
+**Status**: Not Started | In Progress | Passing | Failing
+
+## Description
+
+Clear statement of what this test validates.
+
+## Test Implementation
+
+```python
+def test_something_specific():
+    """Test docstring explaining the scenario."""
+    # Setup
+    # Action
+    # Assert
+```
+
+## Acceptance Criteria
+
+- [ ] Condition 1 is true
+- [ ] Condition 2 is true
+- [ ] Edge case X handled correctly
+
+## Dependencies
+
+- Other tests that must pass first
+- Fixtures or test data required
+
+## Coverage
+
+Covers:
+- Normal path scenarios
+- Edge cases
+- Error conditions
+```
+
+### functional-requirements/index.yaml Template
+
+```yaml
+functional_requirements:
+  - id: FR-001
+    name: "Requirement Name"
+    description: "Brief description"
+    status: draft | active | completed
+    related_stories:
+      - US-001
+      - US-002
+    test_count: 8
+    coverage_target: 100
+    file: FR-001-requirement-name.md
+
+  - id: FR-002
+    name: "Requirement Name"
+    description: "Brief description"
+    status: draft
+    related_stories:
+      - US-001
+    test_count: 5
+    coverage_target: 100
+    file: FR-002-requirement-name.md
+```
+
+### acceptance-tests/index.yaml Template
+
+```yaml
+acceptance_tests:
+  - id: AT-001
+    name: "Test Name"
+    description: "What this test validates"
+    category: unit | integration | e2e
+    related_fr:
+      - FR-001
+    status: not_started | in_progress | passing | failing
+    file: AT-001-test-name.md
+
+  - id: AT-002
+    name: "Test Name"
+    category: integration
+    related_fr:
+      - FR-001
+      - FR-002
+    status: not_started
+    file: AT-002-test-name.md
 ```
 
 ## Constraints

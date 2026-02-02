@@ -120,6 +120,78 @@ def create_app() -> "FastMCP":
             filtered_only=filtered_only
         )
 
+    @mcp.tool()
+    async def get_story(story_id: str) -> str:
+        """Load a user story by ID from project-management/user-stories/.
+
+        Args:
+            story_id: User story ID (e.g., "US-001")
+
+        Returns:
+            Story content from matching file
+
+        Implementation Note:
+            This is a stub that directs to the local file structure.
+            In a future phase, this will read from:
+            ./project-management/user-stories/{story_id}-*.md or .yaml
+        """
+        import glob
+
+        stories_dir = Path("./project-management/user-stories")
+        if not stories_dir.exists():
+            return f"📋 Load user story by ID\n\nTo load story '{story_id}', read from:\n./project-management/user-stories/{story_id}-*.md\n\nDirectory does not exist yet."
+
+        # Search for matching story file
+        pattern = str(stories_dir / f"{story_id}-*.md") + " " + str(stories_dir / f"{story_id}-*.yaml")
+        matches = glob.glob(str(stories_dir / f"{story_id}-*.*"))
+
+        if matches:
+            return f"📋 Found story file: {matches[0]}\n\nRead from this path to load the complete user story."
+
+        return f"📋 Load user story by ID\n\nUser story '{story_id}' not found in ./project-management/user-stories/\n\nTo create it, add a file: {story_id}-{story_id.lower()}.yaml"
+
+    @mcp.tool()
+    async def edit_story(story_id: str, field: str, value: str) -> str:
+        """Edit a user story field by ID.
+
+        Args:
+            story_id: User story ID (e.g., "US-001")
+            field: Field to update (e.g., "title", "description", "acceptance_criteria")
+            value: New value for the field
+
+        Returns:
+            Confirmation message
+
+        Implementation Note:
+            This is a stub that directs to the local file structure.
+            To edit story '{story_id}', modify the corresponding file:
+            ./project-management/user-stories/{story_id}-*.yaml
+        """
+        stories_dir = Path("./project-management/user-stories")
+
+        return f"✏️ Edit User Story\n\nTo update field '{field}' in story '{story_id}':\n\n1. Locate file: ./project-management/user-stories/{story_id}-*.yaml\n2. Edit the '{field}' field with value: {value}\n3. Update corresponding index.yaml if relationships changed"
+
+    @mcp.tool()
+    async def update_story(story_id: str, metadata_key: str, metadata_value: str) -> str:
+        """Update user story metadata by ID.
+
+        Args:
+            story_id: User story ID (e.g., "US-001")
+            metadata_key: Metadata field (e.g., "status", "priority", "related_personas")
+            metadata_value: New metadata value
+
+        Returns:
+            Confirmation message
+
+        Implementation Note:
+            This is a stub that directs to the YAML index structure.
+            To update story '{story_id}' metadata:
+            1. Edit ./project-management/user-stories/index.yaml
+            2. Find the entry with id: {story_id}
+            3. Update {metadata_key}: {metadata_value}
+        """
+        return f"🔄 Update Story Metadata\n\nTo update story '{story_id}' metadata:\n\n1. Edit: ./project-management/user-stories/index.yaml\n2. Find entry with id: {story_id}\n3. Set {metadata_key}: {metadata_value}\n4. Use yq to ensure YAML validity"
+
     return mcp
 
 

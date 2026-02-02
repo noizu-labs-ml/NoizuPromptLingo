@@ -147,7 +147,9 @@ class HeadingFilter:
             return self._sections_to_markdown([current])
 
     def _mark_matched(self, section: Dict[str, Any], matched_ids: set) -> None:
-        """Recursively mark section and all children as matched.
+        """Mark only the directly matched section (not children).
+
+        Children are tracked implicitly via tree traversal.
 
         Args:
             section: Section dictionary to mark
@@ -155,8 +157,6 @@ class HeadingFilter:
         """
         section['matched'] = True
         matched_ids.add(id(section))
-        for child in section.get('children', []):
-            self._mark_matched(child, matched_ids)
 
     def _mark_ancestors(self, sections: List[Dict[str, Any]], matched_section: Dict[str, Any]) -> bool:
         """Mark all ancestors of matched section for context rendering.
