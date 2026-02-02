@@ -8,7 +8,7 @@ Rename the idea-to-spec agent to use "npl-" prefix and create corresponding docu
 2. Update internal fields:
    - `name:` from "idea-to-spec" to "npl-idea-to-spec"
    - `agent_id:` from "idea-to-spec" to "npl-idea-to-spec"
-3. Create persona documentation: `docs/personas/agents/npl-idea-to-spec.md`
+3. Create persona documentation: `project-management/personas/agents/npl-idea-to-spec.md`
 4. Update all references in assigned documentation files
 
 ## Agent File Content
@@ -16,7 +16,7 @@ Rename the idea-to-spec agent to use "npl-" prefix and create corresponding docu
 ```yaml
 ---
 name: idea-to-spec
-description: Transforms natural language feature ideas into personas and user stories. Creates artifacts under docs/personas/ and docs/user-stories/, maintaining index.yaml files via yq. First stage of the specification pipeline feeding into PRD Editor.
+description: Transforms natural language feature ideas into personas and user stories. Creates artifacts under project-management/personas/ and project-management/user-stories/, maintaining index.yaml files via yq. First stage of the specification pipeline feeding into PRD Editor.
 model: claude
 color: yellow
 ---
@@ -49,7 +49,7 @@ reports_to: controller
 
 ## Persona Documentation
 
-Create `docs/personas/agents/npl-idea-to-spec.md` following this structure:
+Create `project-management/personas/agents/npl-idea-to-spec.md` following this structure:
 
 ```markdown
 # Agent Persona: Idea to Spec Specialist
@@ -78,8 +78,8 @@ Transforms natural language feature ideas and pitches into structured product ar
 ✅ Clear handoff preparation for downstream agents
 
 ## Needs to Work Effectively
-- Access to `docs/personas/` and `docs/user-stories/` directories
-- `docs/personas/index.yaml` and `docs/user-stories/index.yaml` for lookups
+- Access to `project-management/personas/` and `project-management/user-stories/` directories
+- `project-management/personas/index.yaml` and `project-management/user-stories/index.yaml` for lookups
 - Brief project context for grounding analysis
 - `yq` (version 3.4.3) available on system path
 - Controller availability for clarification requests
@@ -106,7 +106,7 @@ Transforms natural language feature ideas and pitches into structured product ar
 - [ ] Agent file renamed to `agents/npl-idea-to-spec.md`
 - [ ] `name:` field updated to "npl-idea-to-spec"
 - [ ] `agent_id:` field updated to "npl-idea-to-spec"
-- [ ] Persona documentation created at `docs/personas/agents/npl-idea-to-spec.md`
+- [ ] Persona documentation created at `project-management/personas/agents/npl-idea-to-spec.md`
 - [ ] CLAUDE.md agent references updated
 - [ ] docs/arch/agent-orchestration.summary.md references updated
 - [ ] All other documentation cross-references checked and updated

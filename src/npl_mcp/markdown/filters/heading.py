@@ -36,6 +36,11 @@ class HeadingFilter:
         for part in parts:
             if part == "*":
                 # Return all content at current level
+                # If current is a single section, return its children
+                if isinstance(current, dict):
+                    children = current.get("children", [])
+                    return self._sections_to_markdown(children)
+                # If current is a list, return all sections in that list
                 return self._sections_to_markdown(current)
             else:
                 # Find matching section

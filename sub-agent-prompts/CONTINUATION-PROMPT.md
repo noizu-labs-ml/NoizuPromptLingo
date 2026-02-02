@@ -1,7 +1,7 @@
 # Continuation Prompt: Complete Agent Persona Population
 
 ## Current Status
-- ✅ Created 11 core agent personas in `docs/personas/agents/`
+- ✅ Created 11 core agent personas in `project-management/personas/agents/`
 - ⏳ Need to complete remaining core agents (5 more)
 - ⏳ Need to create group persona for tasker agents
 - ⏳ Need to process worktrees/main/docs additional agents
@@ -12,10 +12,10 @@
 **Use tasker-sonnet agents for all persona creation work**. Do NOT process these files manually. Instead:
 
 1. **For Each Batch**: Launch tasker-sonnet agent with this instruction set
-2. **Agent Responsibility**: Read source files (`.md` + `.detailed.md` pairs), extract key information, create persona files in `docs/personas/agents/`
+2. **Agent Responsibility**: Read source files (`.md` + `.detailed.md` pairs), extract key information, create persona files in `project-management/personas/agents/`
 3. **Tasker Instructions Template**:
    ```
-   Read [SOURCE_FILES] and create [PERSONA_FILE] in docs/personas/agents/
+   Read [SOURCE_FILES] and create [PERSONA_FILE] in project-management/personas/agents/
    following the template provided. Extract:
    - Purpose and responsibilities
    - Key capabilities and strengths
@@ -27,7 +27,7 @@
    Keep output 1-2 pages maximum.
    ```
 4. **Execute Batches Incrementally**: Launch ONE tasker per batch. When complete, review and launch next batch rather than batching all at once.
-5. **Output Verification**: Each tasker should report which files were created/updated in `docs/personas/agents/`
+5. **Output Verification**: Each tasker should report which files were created/updated in `project-management/personas/agents/`
 
 **Reference Materials Available to Taskers**:
 - `.tmp/NPL-COMPREHENSIVE-BRIEF.md` - Full framework summary
@@ -168,7 +168,7 @@ From `worktrees/main/docs/**`:
 
 ### Batch 1 - Create 5 Remaining Core Agents + Tasker Group (Tasker-Sonnet)
 
-**Task**: Create 6 agent persona files in `docs/personas/agents/`
+**Task**: Create 6 agent persona files in `project-management/personas/agents/`
 
 **Source Files**:
 - `worktrees/main/docs/agents/npl-persona.md` + `npl-persona.detailed.md`
@@ -188,10 +188,10 @@ From `worktrees/main/docs/**`:
    - Integration with other agents
 3. Create persona file following the template provided above
 4. Add 2-3 domain-specific sections relevant to agent type
-5. Save each to `docs/personas/agents/{agent-name}.md`
-6. For tasker group: Create single `docs/personas/agents/tasker-agents.md` representing all tasker-* variants as one entry
+5. Save each to `project-management/personas/agents/{agent-name}.md`
+6. For tasker group: Create single `project-management/personas/agents/tasker-agents.md` representing all tasker-* variants as one entry
 
-**Output**: 6 files created in `docs/personas/agents/`
+**Output**: 6 files created in `project-management/personas/agents/`
 
 ### Batches 2-9 - Additional Agents (Tasker-Sonnet per Batch)
 
@@ -208,11 +208,11 @@ Launch tasker-sonnet agents ONE BATCH AT A TIME (incrementally, not all at once)
 
 1. **Batch 1 - Tasker**: Create 5 remaining core agents + tasker group (7 files)
    - Source: `worktrees/main/docs/agents/{npl-persona,npl-prd-manager,npl-templater,npl-marketing-writer,npl-tool-forge}.md` + `.detailed.md`
-   - Output: 6 personas in `docs/personas/agents/`
+   - Output: 6 personas in `project-management/personas/agents/`
 
 2. **Batch 2 - Tasker**: Create tasker group persona
    - Source: `worktrees/main/docs/agents/tasker*.md`
-   - Output: `docs/personas/agents/tasker-agents.md`
+   - Output: `project-management/personas/agents/tasker-agents.md`
 
 3. **Batch 3 - Tasker**: Infrastructure agents (3)
    - Source: `worktrees/main/docs/additional-agents/infrastructure/*.md`
@@ -242,15 +242,15 @@ Launch tasker-sonnet agents ONE BATCH AT A TIME (incrementally, not all at once)
    - Sources: commands, MCP tools, CLI scripts docs
    - Output: `commands.md`, `mcp-tools.md`, `cli-scripts.md`
 
-10. **Batch 10 - Manual**: Update `docs/personas/index.yaml` with all new entries (P-100+)
+10. **Batch 10 - Manual**: Update `project-management/personas/index.yaml` with all new entries (P-100+)
 
 ## Output Location
 
-All persona files go to: `docs/personas/agents/`
+All persona files go to: `project-management/personas/agents/`
 
 Directory structure after completion:
 ```
-docs/personas/
+project-management/personas/
 ├── agents/
 │   ├── [11 existing core agents].md
 │   ├── [5 remaining core agents].md
@@ -267,10 +267,10 @@ docs/personas/
 
 ## Next Steps After Completion
 
-1. Update `docs/personas/index.yaml` with all new agent entries (IDs P-100+)
-2. Create `docs/personas/index.yaml` structure for agents (separate section or linked directory)
+1. Update `project-management/personas/index.yaml` with all new agent entries (IDs P-100+)
+2. Create `project-management/personas/index.yaml` structure for agents (separate section or linked directory)
 3. Verify all cross-references work
-4. Create summary document: `docs/personas/AGENT-PERSONAS-INDEX.md`
+4. Create summary document: `project-management/personas/AGENT-PERSONAS-INDEX.md`
 
 ## Key Considerations
 
@@ -297,27 +297,27 @@ Task tool → subagent_type: tasker-sonnet
 Prompt:
 "Read the 5 core agents and tasker files from worktrees/main/docs/agents/,
 extract key information from .md + .detailed.md pairs, and create 6 agent
-persona files in docs/personas/agents/ following the provided template.
+persona files in project-management/personas/agents/ following the provided template.
 Return list of files created and brief summary of each persona."
 
 Reference materials available:
 - .tmp/NPL-COMPREHENSIVE-BRIEF.md
 - .tmp/docs/agents/summary.brief.md
-- Existing personas in docs/personas/agents/ (for style reference)
+- Existing personas in project-management/personas/agents/ (for style reference)
 ```
 
 **Then**:
 - Review tasker output
-- Verify files created in `docs/personas/agents/`
+- Verify files created in `project-management/personas/agents/`
 - Launch Batch 2 tasker for next set of agents
 - Continue incremental batching until all 9 batches complete
 
 **Final Step**:
-- Manually update `docs/personas/index.yaml` with all P-100+ entries
-- Create `docs/personas/AGENT-PERSONAS-INDEX.md` summary
+- Manually update `project-management/personas/index.yaml` with all P-100+ entries
+- Create `project-management/personas/AGENT-PERSONAS-INDEX.md` summary
 
 ---
 
 **Status**: Ready for Batch 1 tasker execution
 **Estimated Total Files**: 46 agent personas + 4 group personas (50 total)
-**Target**: Complete agent persona ecosystem in `docs/personas/agents/`
+**Target**: Complete agent persona ecosystem in `project-management/personas/agents/`

@@ -426,7 +426,7 @@ Access via Claude in your session:
 
 ## Conventions & Standards
 
-For skill development and usage standards, see [`docs/references/skills-layout.md`](../references/skills-layout.md)
+For skill development and usage standards, see [`docs/reference/SKILL-GUIDELINE.md`](../reference/SKILL-GUIDELINE.md)
 
 Key points:
 - Each skill has `SKILL.md` + 2-4 `.prompt.md` files

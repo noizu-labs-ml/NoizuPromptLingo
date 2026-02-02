@@ -81,7 +81,7 @@ Report:
 - Path written to
 
 **Style Notes**:
-- Match tone of existing personas in docs/personas/agents/ and docs/personas/
+- Match tone of existing personas in project-management/personas/agents/ and project-management/personas/
 - Use agent-specific terminology from source docs
 - Be concise but comprehensive
 - Focus on practical value and integration

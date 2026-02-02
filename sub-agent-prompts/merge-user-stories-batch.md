@@ -1,7 +1,7 @@
 # Batch User Story Merge Instructions
 
 ## Mission
-Extract user stories from topic-grouped markdown files in `tmp-us/` and merge them into the `docs/user-stories/` directory following established conventions.
+Extract user stories from topic-grouped markdown files in `tmp-us/` and merge them into the `project-management/user-stories/` directory following established conventions.
 
 ## Context
 
@@ -10,9 +10,9 @@ Extract user stories from topic-grouped markdown files in `tmp-us/` and merge th
 - Metadata is in `tmp-us/user-stories.yaml`
 - Stories US-038 to US-077 (40 total)
 
-### Target Structure (docs/user-stories/)
+### Target Structure (project-management/user-stories/)
 - Each story gets its own file: `US-###-kebab-case-title.md`
-- Metadata maintained in `docs/user-stories/index.yaml`
+- Metadata maintained in `project-management/user-stories/index.yaml`
 - Currently has US-001 to US-037
 
 ## Your Batch Assignment
@@ -96,7 +96,7 @@ For each story, prepare a YAML entry with this structure:
 ## Output Requirements
 
 ### 1. Create Markdown Files
-Write each story to `docs/user-stories/US-###-kebab-case-title.md`
+Write each story to `project-management/user-stories/US-###-kebab-case-title.md`
 
 ### 2. Create YAML Batch File
 Save all 5 YAML entries to `.tmp/batch-yaml/batch-{start}-{end}.yaml`
@@ -115,8 +115,8 @@ Save to `.tmp/batch-reports/batch-{start}-{end}.md`:
 - ...
 
 ## Files Created
-- docs/user-stories/US-###-kebab-case-title.md
-- docs/user-stories/US-###-kebab-case-title.md
+- project-management/user-stories/US-###-kebab-case-title.md
+- project-management/user-stories/US-###-kebab-case-title.md
 - ...
 
 ## YAML Entries
@@ -140,7 +140,7 @@ Before completing, verify:
 
 ## Important Notes
 
-- **DO NOT modify** `docs/user-stories/index.yaml` - the coordinator will merge all batches
+- **DO NOT modify** `project-management/user-stories/index.yaml` - the coordinator will merge all batches
 - **DO modify** individual markdown files and create YAML prep files
 - **Preserve all content** from source - don't summarize or omit details
 - **Follow existing conventions** - look at US-001 through US-037 for examples

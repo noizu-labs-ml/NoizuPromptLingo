@@ -100,13 +100,13 @@ flowchart TD
     
     subgraph Persona_Creation ["Persona Creation"]
         H --> J[Create persona files]
-        J --> K[Update docs/personas/index.yaml via yq]
+        J --> K[Update project-management/personas/index.yaml via yq]
     end
     
     subgraph Story_Generation ["User Story Generation"]
         L[Generate stories for persona × need] --> M[Apply INVEST criteria]
         M --> N[Assign IDs and priorities]
-        N --> O[Update docs/user-stories/index.yaml via yq]
+        N --> O[Update project-management/user-stories/index.yaml via yq]
     end
     
     subgraph Handoff
@@ -141,14 +141,14 @@ Uses `yq` for YAML manipulation:
 ```bash
 # Add persona to index
 yq -i '.personas += [{"id": "P-007", "name": "Mobile Power User", "file": "mobile-power-user.md"}]' \
-  docs/personas/index.yaml
+  project-management/personas/index.yaml
 
 # Add user story to index
 yq -i '.stories += [{"id": "US-054", "title": "Offline sync", "persona": "P-007", "file": "US-054-offline-sync.md", "status": "draft"}]' \
-  docs/user-stories/index.yaml
+  project-management/user-stories/index.yaml
 
 # Query existing personas
-yq '.personas[] | select(.role == "power-user")' docs/personas/index.yaml
+yq '.personas[] | select(.role == "power-user")' project-management/personas/index.yaml
 ```
 
 ## Lifecycle
@@ -212,23 +212,23 @@ response:
   artifacts:
     personas:
       created:
-        - docs/personas/mobile-field-user.md
+        - project-management/personas/mobile-field-user.md
       existing:
-        - docs/personas/power-user.md (matched: works remotely)
+        - project-management/personas/power-user.md (matched: works remotely)
     user_stories:
       created:
-        - docs/user-stories/US-054-offline-editing.md
-        - docs/user-stories/US-055-auto-sync.md
-        - docs/user-stories/US-056-sync-status.md
-        - docs/user-stories/US-057-conflict-resolution.md
+        - project-management/user-stories/US-054-offline-editing.md
+        - project-management/user-stories/US-055-auto-sync.md
+        - project-management/user-stories/US-056-sync-status.md
+        - project-management/user-stories/US-057-conflict-resolution.md
       ids:
         - "US-054"
         - "US-055"
         - "US-056"
         - "US-057"
   indexes_updated:
-    - docs/personas/index.yaml
-    - docs/user-stories/index.yaml
+    - project-management/personas/index.yaml
+    - project-management/user-stories/index.yaml
   message: |
     Pitch analyzed. Created 1 new persona and 4 user stories.
     Story IDs ready for PRD: US-054, US-055, US-056, US-057
@@ -246,10 +246,10 @@ message:
       name: "offline-document-sync"
       description: "Enable offline editing with automatic synchronization"
       user_stories:
-        - "docs/user-stories/US-054-offline-editing.md"
-        - "docs/user-stories/US-055-auto-sync.md"
-        - "docs/user-stories/US-056-sync-status.md"
-        - "docs/user-stories/US-057-conflict-resolution.md"
+        - "project-management/user-stories/US-054-offline-editing.md"
+        - "project-management/user-stories/US-055-auto-sync.md"
+        - "project-management/user-stories/US-056-sync-status.md"
+        - "project-management/user-stories/US-057-conflict-resolution.md"
       personas:
         - "mobile-field-user"
         - "power-user"
@@ -259,7 +259,7 @@ message:
 
 ### Persona File Template
 
-`docs/personas/{persona-id}.md`:
+`project-management/personas/{persona-id}.md`:
 
 ```markdown
 # Persona: {Name}
@@ -309,7 +309,7 @@ Often needs to capture or edit data while away from reliable WiFi.
 
 ### User Story File Template
 
-`docs/user-stories/{story-id}-{slug}.md`:
+`project-management/user-stories/{story-id}-{slug}.md`:
 
 ```markdown
 # User Story: {Title}
@@ -351,7 +351,7 @@ So that **my work is not interrupted by connectivity issues**.
 
 ### Index File Structure
 
-`docs/personas/index.yaml`:
+`project-management/personas/index.yaml`:
 
 ```yaml
 # Persona Index
@@ -372,7 +372,7 @@ personas:
     tags: [mobile, offline, field-work]
 ```
 
-`docs/user-stories/index.yaml`:
+`project-management/user-stories/index.yaml`:
 
 ```yaml
 # User Story Index

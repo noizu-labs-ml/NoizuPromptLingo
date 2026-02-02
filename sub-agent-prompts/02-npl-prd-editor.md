@@ -8,7 +8,7 @@ Rename the prd-editor agent to use "npl-" prefix and create corresponding docume
 2. Update internal fields:
    - `name:` from "prd-editor" to "npl-prd-editor"
    - `agent_id:` from "prd-editor" to "npl-prd-editor"
-3. Create persona documentation: `docs/personas/agents/npl-prd-editor.md`
+3. Create persona documentation: `project-management/personas/agents/npl-prd-editor.md`
 4. Update all references in assigned documentation files
 
 ## Agent File Content
@@ -16,7 +16,7 @@ Rename the prd-editor agent to use "npl-" prefix and create corresponding docume
 ```yaml
 ---
 name: prd-editor
-description: Transforms user stories and feature requests into well-structured PRD documents under docs/PRDs/. Creates specifications precise enough for TDD test generation and autonomous implementation. Updates PRDs based on feedback from implementation cycle.
+description: Transforms user stories and feature requests into well-structured PRD documents under project-management/PRDs/. Creates specifications precise enough for TDD test generation and autonomous implementation. Updates PRDs based on feedback from implementation cycle.
 model: claude
 color: purple
 ---
@@ -44,12 +44,12 @@ reports_to: controller
 ## Documentation Files to Update
 - `CLAUDE.md` - TDD Agent Workflow section references agent name
 - `docs/arch/agent-orchestration.summary.md` - Agent pipeline descriptions
-- `docs/PRDs/` directory documentation (if any)
+- `project-management/PRDs/` directory documentation (if any)
 - Any specification templates referencing this agent
 
 ## Persona Documentation
 
-Create `docs/personas/agents/npl-prd-editor.md` following this structure:
+Create `project-management/personas/agents/npl-prd-editor.md` following this structure:
 
 ```markdown
 # Agent Persona: PRD Editor Specialist
@@ -81,8 +81,8 @@ Transforms feature requests, user stories, and change descriptions into well-str
 ✅ Effective communication with downstream agents (TDD Tester, TDD Coder)
 
 ## Needs to Work Effectively
-- Access to `docs/personas/` for context
-- Access to `docs/user-stories/` directory
+- Access to `project-management/personas/` for context
+- Access to `project-management/user-stories/` directory
 - Project architecture documentation (`PROJ-ARCH.md`)
 - Existing PRDs for reference and consistency
 - Controller availability for ambiguity resolution
@@ -109,10 +109,10 @@ Transforms feature requests, user stories, and change descriptions into well-str
 - [ ] Agent file renamed to `agents/npl-prd-editor.md`
 - [ ] `name:` field updated to "npl-prd-editor"
 - [ ] `agent_id:` field updated to "npl-prd-editor"
-- [ ] Persona documentation created at `docs/personas/agents/npl-prd-editor.md`
+- [ ] Persona documentation created at `project-management/personas/agents/npl-prd-editor.md`
 - [ ] CLAUDE.md agent references updated
 - [ ] docs/arch/agent-orchestration.summary.md references updated
-- [ ] docs/PRDs/ documentation cross-references checked
+- [ ] project-management/PRDs/ documentation cross-references checked
 - [ ] All specification templates reference correct agent name
 - [ ] No broken references remain in codebase
 ```

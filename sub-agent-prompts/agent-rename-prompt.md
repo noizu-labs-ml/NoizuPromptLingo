@@ -13,7 +13,7 @@ You are responsible for renaming one NPL agent to use the "npl-" prefix and crea
    - Keep all other content identical
 
 2. **Create Persona Documentation**
-   - Create docs/personas/agents/npl-[AGENT_NAME].md
+   - Create project-management/personas/agents/npl-[AGENT_NAME].md
    - Extract information from the agent definition
    - Follow the structure below
 

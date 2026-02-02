@@ -136,7 +136,7 @@ message:
   payload:
     feature: { description: "User authentication via OAuth" }
     interface: { signature: "authenticate(provider: string): Promise<User>" }
-    context: { prd_path: "docs/PRDs/auth-oauth.md", test_path: "tests/unit/auth/" }
+    context: { prd_path: "project-management/PRDs/auth-oauth.md", test_path: "tests/unit/auth/" }
 
 # TDD Tester → Controller
 response:
@@ -174,7 +174,7 @@ response:
 ```typescript
 /**
  * @feature {Feature Name}
- * @prd {docs/PRDs/feature-name.md}
+ * @prd {project-management/PRDs/feature-name.md}
  * @generated {timestamp}
  * @tdd-tester v1
  */

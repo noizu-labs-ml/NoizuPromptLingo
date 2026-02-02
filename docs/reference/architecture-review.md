@@ -533,7 +533,7 @@ conversion-marketing/
 
 When can we say the architecture is working?
 
-1. **Structure:** ✅ Skills follow conventions (see skill-setup.md)
+1. **Structure:** ✅ Skills follow conventions (see docs/reference/SKILL-GUIDELINE.md)
 2. **Navigation:** Users can find what they need quickly
 3. **Composition:** Users can chain skills to complete full workflows
 4. **Outcomes:** Following a skill completely produces intended outcome

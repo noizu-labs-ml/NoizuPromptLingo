@@ -2,12 +2,12 @@
 
 ## Mission
 
-Consolidate 8 batch-processed user story YAML files into the main `docs/user-stories/index.yaml` and verify the merge succeeded.
+Consolidate 8 batch-processed user story YAML files into the main `project-management/user-stories/index.yaml` and verify the merge succeeded.
 
 ## Context
 
 - All 8 batch agents have completed and created YAML entries in `.tmp/batch-yaml/batch-{start}-{end}.yaml`
-- 40 new markdown files were created in `docs/user-stories/US-038-*.md` through `US-077-*.md`
+- 40 new markdown files were created in `project-management/user-stories/US-038-*.md` through `US-077-*.md`
 - Main index currently has 37 stories (US-001 to US-037)
 - Task: Merge new entries and update timestamp
 
@@ -32,25 +32,25 @@ Use the proper yq v3.4.3 pattern to append:
 NEW_STORIES=$(yq -r '.' .tmp/consolidated-entries.yaml)
 
 # Append to existing stories using yq (filter before flags)
-yq -y ".stories += ${NEW_STORIES}" docs/user-stories/index.yaml > .tmp/index-merged.yaml && mv .tmp/index-merged.yaml docs/user-stories/index.yaml
+yq -y ".stories += ${NEW_STORIES}" project-management/user-stories/index.yaml > .tmp/index-merged.yaml && mv .tmp/index-merged.yaml project-management/user-stories/index.yaml
 ```
 
 **Alternative approach if above doesn't work**:
 ```bash
 # Create a jq/yq compatible merge by reading both files
-yq -y '.stories |= . + load(".tmp/new-stories-array.yaml")' docs/user-stories/index.yaml > .tmp/index-merged.yaml && mv .tmp/index-merged.yaml docs/user-stories/index.yaml
+yq -y '.stories |= . + load(".tmp/new-stories-array.yaml")' project-management/user-stories/index.yaml > .tmp/index-merged.yaml && mv .tmp/index-merged.yaml project-management/user-stories/index.yaml
 ```
 
 ### 4. Update timestamp using yq
 Update the `updated` field to current UTC time:
 ```bash
-yq -y '.updated = now | todateiso8601' docs/user-stories/index.yaml > .tmp/timestamped.yaml && mv .tmp/timestamped.yaml docs/user-stories/index.yaml
+yq -y '.updated = now | todateiso8601' project-management/user-stories/index.yaml > .tmp/timestamped.yaml && mv .tmp/timestamped.yaml project-management/user-stories/index.yaml
 ```
 
 OR manually set a specific timestamp:
 ```bash
 TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-yq -y ".updated = \"${TIMESTAMP}\"" docs/user-stories/index.yaml > .tmp/timestamped.yaml && mv .tmp/timestamped.yaml docs/user-stories/index.yaml
+yq -y ".updated = \"${TIMESTAMP}\"" project-management/user-stories/index.yaml > .tmp/timestamped.yaml && mv .tmp/timestamped.yaml project-management/user-stories/index.yaml
 ```
 
 ## Phase 2: Verify Results
@@ -59,7 +59,7 @@ yq -y ".updated = \"${TIMESTAMP}\"" docs/user-stories/index.yaml > .tmp/timestam
 
 1. **Count verification**:
    - Query index.yaml: should show exactly 77 total stories
-   - Count files: `ls -1 docs/user-stories/US-*.md | wc -l` should be at least 77
+   - Count files: `ls -1 project-management/user-stories/US-*.md | wc -l` should be at least 77
 
 2. **Structure verification**:
    - index.yaml parses as valid YAML
@@ -79,7 +79,7 @@ yq -y ".updated = \"${TIMESTAMP}\"" docs/user-stories/index.yaml > .tmp/timestam
 ## Expected Outputs
 
 ### Success Indicators
-- `docs/user-stories/index.yaml` updated with 77 total stories
+- `project-management/user-stories/index.yaml` updated with 77 total stories
 - `updated` timestamp refreshed to current time
 - All YAML is valid and parseable
 - No errors during verification

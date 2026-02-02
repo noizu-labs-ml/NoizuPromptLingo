@@ -108,7 +108,7 @@ flowchart TD
     end
     
     subgraph Output
-        Q[Write to docs/PRDs/feature-name.md] --> R[Generate hash for tracking]
+        Q[Write to project-management/PRDs/feature-name.md] --> R[Generate hash for tracking]
     end
     
     D --> E
@@ -133,7 +133,7 @@ Each PRD must be:
 ### Naming Convention
 
 ```
-docs/PRDs/
+project-management/PRDs/
 ├── {feature-name}.md           # Main PRD
 ├── {feature-name}.impl.log     # Implementation log (created by TDD Coder)
 └── archive/                    # Completed PRDs
@@ -178,8 +178,8 @@ message:
       name: "oauth-token-refresh"
       description: "Implement automatic OAuth token refresh with retry logic"
       user_stories:
-        - "docs/user-stories/US-042-seamless-auth.md"
-        - "docs/user-stories/US-043-session-persistence.md"
+        - "project-management/user-stories/US-042-seamless-auth.md"
+        - "project-management/user-stories/US-043-session-persistence.md"
       personas:
         - "power-user"
         - "mobile-user"
@@ -191,7 +191,7 @@ message:
 response:
   status: ok
   prd:
-    path: "docs/PRDs/oauth-token-refresh.md"
+    path: "project-management/PRDs/oauth-token-refresh.md"
     hash: "a1b2c3d4"
     sections_complete:
       - overview
@@ -216,7 +216,7 @@ response:
 message:
   command: update
   payload:
-    prd_path: "docs/PRDs/oauth-token-refresh.md"
+    prd_path: "project-management/PRDs/oauth-token-refresh.md"
     changes:
       - section: "error_handling"
         addition: |
@@ -231,7 +231,7 @@ message:
 response:
   status: ok
   prd:
-    path: "docs/PRDs/oauth-token-refresh.md"
+    path: "project-management/PRDs/oauth-token-refresh.md"
     hash: "e5f6g7h8"  # New hash indicates change
   message: "PRD updated with rate limiting specification."
 ```

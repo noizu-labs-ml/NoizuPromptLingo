@@ -10,12 +10,18 @@
 
 ## Overview
 
-This PRD defines two complementary CLI and MCP tools for markdown conversion and viewing:
+This PRD defines three CLI tools and two MCP tools for markdown conversion and viewing:
 
+**CLI Tools**:
 1. **2md** - Convert web pages, documents, and images to markdown with hybrid caching
-2. **md-view** - Filter and view markdown with collapsible sections and heading navigation
+2. **md-view** - Pure pipe filter for markdown (stdin → stdout) with optional filtering and collapsing
+3. **view-md** - Combined converter + filter tool (source → markdown → filtered output)
 
-These tools address the need for developers and AI agents to efficiently convert documentation sources to markdown and navigate large markdown documents through filtering and collapsing.
+**MCP Tools**:
+1. **to_markdown** - MCP version of `2md` (conversion only)
+2. **view_markdown** - MCP version of `view-md` (combined convert + filter)
+
+These tools address the need for developers and AI agents to efficiently convert documentation sources to markdown, navigate large markdown documents through filtering and collapsing, and combine operations in flexible pipelines.
 
 ### Design Philosophy
 
@@ -319,7 +325,7 @@ class MarkdownViewer:
 
 ### FR-9: CLI Tool - md-view
 
-**Description**: Command-line interface for markdown filtering and viewing.
+**Description**: Pure pipe filter for markdown (stdin → stdout) with optional filtering and collapsing.
 
 **Module**: `tools/md_view.py`
 
@@ -327,48 +333,98 @@ class MarkdownViewer:
 
 **Usage**:
 ```bash
-md-view [source] [options]
+md-view [options]
 ```
 
-**Arguments**:
-
-| Argument | Required | Description |
-|----------|----------|-------------|
-| `source` | No | Markdown file or `-` for stdin (default: stdin) |
+**Arguments**: None (reads from stdin only)
 
 **Options**:
 
 | Option | Description |
 |--------|-------------|
 | `--filter` | Filter selector (heading path, level, CSS, XPath) |
-| `--filtered-only` | Show only filtered sections (no collapse markers) |
-| `--collapse-depth` | Collapse headings below this depth (1-6) |
-| `-o, --output` | Output file (default: stdout) |
+| `--bare` | Show ONLY filtered content (no collapsed headings) |
+| `--depth` | Collapse headings below this depth (1-6) |
+| `--rich` | Format markdown output with Rich (terminal styling) |
 
 **Examples**:
 ```bash
-# Filter by heading level
-md-view document.md --filter "h2"
+# Filter by heading level from stdin
+cat document.md | md-view --filter "h2"
 
-# Filter by heading path
-md-view doc.md --filter "Overview > API"
+# Filter by heading path from pipe
+2md https://example.com | md-view --filter "API"
 
 # Collapse deep sections
-md-view doc.md --collapse-depth 2
+md-view --depth 2 < doc.md
 
-# Filter and get exact match only
-md-view doc.md --filter "Features" --filtered-only
+# Filter with bare output (no collapse markers)
+md-view --bare --filter "Features" < doc.md
 
-# Pipeline from stdin
-cat doc.md | md-view --filter "Installation"
+# Rich formatting
+cat doc.md | md-view --rich --filter "Installation"
 
 # Combined filter and collapse
-md-view doc.md --filter "API" --collapse-depth 2
+md-view --filter "API" --depth 2 < doc.md
 ```
 
-### FR-10: MCP Tool - to_markdown
+### FR-10: CLI Tool - view-md
 
-**Description**: MCP tool for markdown conversion via FastMCP server.
+**Description**: Combined tool for converting a source and viewing with optional filtering/collapsing.
+
+**Module**: `tools/view_md.py`
+
+**Console Script**: `view-md` (via pyproject.toml)
+
+**Usage**:
+```bash
+view-md <source> [output] [options]
+```
+
+**Arguments**:
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `source` | Yes | URL, file path, or image to convert and view |
+| `output` | No | Output file (default: stdout) |
+
+**Options**:
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--filter` | None | Filter selector (heading path, level, CSS, XPath) |
+| `--bare` | False | Show ONLY filtered content (no collapsed headings) |
+| `--depth` | None | Collapse headings below this depth (1-6) |
+| `--rich` | False | Format markdown output with Rich (stdout only) |
+| `--no-cache` | False | Force fresh conversion (skip cache) |
+| `--cache-dir` | `.tmp/cache/markdown/` | Custom cache directory |
+| `--timeout` | 30 | Request timeout for URLs (seconds) |
+| `-q, --quiet` | False | Suppress non-content output |
+
+**Examples**:
+```bash
+# Convert URL and view
+view-md https://example.com/docs
+
+# Convert and filter
+view-md https://api.docs/ref --filter "Authentication"
+
+# Convert, filter, and save
+view-md report.pdf --filter "Results" --bare > results.md
+
+# Convert with collapsing
+view-md page.html --depth 2
+
+# Convert and rich format display
+view-md https://docs.com --rich --filter "API"
+
+# Force refresh and collapse
+view-md https://example.com/docs --no-cache --depth 2
+```
+
+### FR-11: MCP Tool - to_markdown
+
+**Description**: MCP tool for markdown conversion via FastMCP server (maps to `2md` CLI).
 
 **Tool Name**: `to_markdown`
 
@@ -377,17 +433,29 @@ md-view doc.md --filter "API" --collapse-depth 2
 @mcp.tool()
 async def to_markdown(
     source: str,
-    force_refresh: bool = False,
+    no_cache: bool = False,
     timeout: int = 30
 ) -> str:
-    """Convert URL, file, or image to markdown."""
+    """Convert URL, file, or image to markdown with caching."""
 ```
 
 **Returns**: Formatted markdown with YAML metadata header.
 
-### FR-11: MCP Tool - view_markdown
+**Examples**:
+```python
+# Convert URL
+result = await to_markdown("https://docs.example.com/api")
 
-**Description**: MCP tool for markdown viewing via FastMCP server.
+# Force fresh conversion
+result = await to_markdown("report.pdf", no_cache=True)
+
+# With custom timeout
+result = await to_markdown("https://slow-site.com", timeout=60)
+```
+
+### FR-12: MCP Tool - view_markdown
+
+**Description**: MCP tool for combined markdown conversion + viewing via FastMCP server (maps to `view-md` CLI).
 
 **Tool Name**: `view_markdown`
 
@@ -395,15 +463,32 @@ async def to_markdown(
 ```python
 @mcp.tool()
 async def view_markdown(
-    content: str,
+    source: str,
     filter: Optional[str] = None,
-    collapsed_depth: Optional[int] = None,
-    filtered_only: bool = False
+    bare: bool = False,
+    depth: Optional[int] = None,
+    no_cache: bool = False,
+    timeout: int = 30
 ) -> str:
-    """View markdown with filtering and collapsing options."""
+    """Convert source to markdown, then filter and view with optional collapsing."""
 ```
 
 **Returns**: Processed markdown based on filter/collapse options.
+
+**Examples**:
+```python
+# Convert and view specific section
+result = await view_markdown("https://docs.python.org", filter="Installation")
+
+# Convert with collapsing
+result = await view_markdown("report.pdf", depth=2)
+
+# Show only filtered section
+result = await view_markdown("doc.md", filter="API", bare=True)
+
+# Force refresh with depth
+result = await view_markdown("https://site.com/page", depth=2, no_cache=True)
+```
 
 ---
 
@@ -439,45 +524,58 @@ async def view_markdown(
 
 ### CLI Tools
 
+**2md Tool**:
 - [x] AC-1: `2md` converts URLs to markdown via Jina API
 - [x] AC-2: `2md` caches local files next to source with `.md` extension
 - [x] AC-3: `2md` caches URLs in `.tmp/cache/markdown/` with hashed filenames
 - [x] AC-4: `2md` respects `--no-cache` flag for forced refresh
 - [x] AC-5: `2md` supports `--format rich|plain|json` output modes
+
+**md-view Tool** (pure pipe filter):
 - [x] AC-6: `md-view` filters by heading name (case-insensitive)
 - [x] AC-7: `md-view` filters by heading level (`h1` - `h6`)
 - [x] AC-8: `md-view` filters by nested path (`parent > child`)
 - [x] AC-9: `md-view` collapses sections below specified depth
-- [x] AC-10: `md-view` reads from stdin with `-` source
+- [x] AC-10: `md-view` reads from stdin only
 - [x] AC-11: `md-view` combines filtering and collapsing
+- [x] AC-12: `md-view` supports `--rich` flag for Rich markdown formatting
+
+**view-md Tool** (combined convert + filter):
+- [x] AC-13: `view-md` converts URLs, files, and images to markdown
+- [x] AC-14: `view-md` applies filtering and/or collapsing to output
+- [x] AC-15: `view-md` supports `--bare` flag for filtered-only output
+- [x] AC-16: `view-md` supports `--depth` flag for controlled collapsing
+- [x] AC-17: `view-md` supports `--rich` flag for Rich markdown formatting
+- [x] AC-18: `view-md` respects caching options (`--no-cache`, `--cache-dir`)
 
 ### MCP Tools
 
-- [ ] AC-12: `to_markdown` MCP tool is registered in FastMCP server
-- [ ] AC-13: `view_markdown` MCP tool is registered in FastMCP server
-- [ ] AC-14: MCP tools return structured responses with metadata
+- [ ] AC-19: `to_markdown` MCP tool is registered in FastMCP server
+- [ ] AC-20: `view_markdown` MCP tool is registered in FastMCP server
+- [ ] AC-21: MCP tools return structured responses with metadata
+- [ ] AC-22: `view_markdown` combines conversion and filtering in single call
 
 ### Cache Behavior
 
-- [x] AC-15: URL caches expire after `max_age` seconds (default 3600)
-- [x] AC-16: Local file caches never expire
-- [x] AC-17: Cache directories are created automatically
-- [x] AC-18: Same URL always produces same cache path (deterministic)
+- [x] AC-23: URL caches expire after `max_age` seconds (default 3600)
+- [x] AC-24: Local file caches never expire
+- [x] AC-25: Cache directories are created automatically
+- [x] AC-26: Same URL always produces same cache path (deterministic)
 
 ### Filter Behavior
 
-- [x] AC-19: Heading filter is case-insensitive
-- [x] AC-20: Nested paths navigate hierarchy correctly
-- [x] AC-21: Wildcard `*` returns all children at level
-- [x] AC-22: Missing sections return error messages
-- [x] AC-23: Filter type auto-detection works correctly
+- [x] AC-27: Heading filter is case-insensitive
+- [x] AC-28: Nested paths navigate hierarchy correctly
+- [x] AC-29: Wildcard `*` returns all children at level
+- [x] AC-30: Missing sections return error messages
+- [x] AC-31: Filter type auto-detection works correctly
 
 ### Test Coverage
 
-- [x] AC-24: Cache module has comprehensive test coverage
-- [x] AC-25: Viewer module has comprehensive test coverage
-- [x] AC-26: Heading filter has comprehensive test coverage
-- [x] AC-27: All 45 tests pass
+- [x] AC-32: Cache module has comprehensive test coverage
+- [x] AC-33: Viewer module has comprehensive test coverage
+- [x] AC-34: Heading filter has comprehensive test coverage
+- [x] AC-35: All markdown tests pass
 
 ---
 
@@ -526,18 +624,19 @@ async def view_markdown(
 ```
 src/npl_mcp/markdown/
     __init__.py          # Exports: MarkdownCache, MarkdownConverter, MarkdownViewer
-    cache.py             # MarkdownCache class
-    converter.py         # MarkdownConverter class
-    viewer.py            # MarkdownViewer class
+    cache.py             # MarkdownCache class (hybrid caching)
+    converter.py         # MarkdownConverter class (conversion logic)
+    viewer.py            # MarkdownViewer class (filtering + collapsing)
     filters/
         __init__.py      # FilterType enum, detect_filter_type(), apply_filter()
-        heading.py       # HeadingFilter class
-        css.py           # CSSFilter stub
-        xpath.py         # XPathFilter stub
+        heading.py       # HeadingFilter class (heading path navigation)
+        css.py           # CSSFilter stub (Phase 2)
+        xpath.py         # XPathFilter stub (Phase 2)
 
 tools/
-    2md.py               # CLI for markdown conversion
-    md_view.py           # CLI for markdown viewing
+    2md.py               # CLI: Convert web page/doc/image to markdown
+    md_view.py           # CLI: Pure pipe filter (stdin → stdout)
+    view_md.py           # CLI: Combined convert + filter (source → filtered markdown)
 ```
 
 ### Console Scripts (pyproject.toml)
@@ -546,6 +645,7 @@ tools/
 [project.scripts]
 2md = "tools.2md:main"
 md-view = "tools.md_view:main"
+view-md = "tools.view_md:main"
 ```
 
 ### Progressive Feature Enhancement
