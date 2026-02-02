@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## ⚠️ IMPORTANT: Scratchpad Directory Rule
 
-**ALWAYS use `.tmp/` directory for temporary files, NOT `/tmp/`**
+**ALWAYS use `.tmp/` directory for temporary files, NOT `/tmp/`**  (except for plan files which you are not able to save here whiel in plan mode. 
 
 ```bash
 # ✅ CORRECT
@@ -135,6 +135,78 @@ The project uses [mise](https://mise.jdx.dev/) as a task runner. Tasks are defin
 4. **Testing** – Add tests under a `tests/` directory. Run them with `uv run -m pytest`. Individual tests can be targeted with the file path.
 5. **Lint / format** – Install `ruff` as a dev dependency (`uv add --dev ruff`) and run via `uvx ruff`.
 6. **Packaging** – Build wheels with `uv build`; the resulting `dist/` directory contains a wheel that can be published to PyPI.
+
+---
+
+## Heavy Parallelization: Task Agent Best Practices
+
+When spawning multiple parallel task agents for batch processing or similar workloads, follow this pattern to avoid repetitive prompts and maximize efficiency:
+
+### Pattern: Reusable Prompt + Per-Agent Instructions
+
+**Step 1: Create Reusable Prompt Template**
+```bash
+# Save shared prompt logic to ./sub-agent-prompts/{task-name}.mdi
+./sub-agent-prompts/merge-user-stories-batch.md
+./sub-agent-prompts/process-artifacts.md
+# etc.
+```
+
+We will periodically review and assess these for useful feature/pattern extraction. 
+
+
+**Step 2: Test with Single Agent**
+- Spawn ONE agent with the template (e.g. "read ./sub-agent-prompts/{name}.md {per agent instructions}")
+- Verify output quality, format, and correctness
+- Adjust template based on results
+- Create sample output for reference
+
+**Step 3: Spawn Remaining Agents in Parallel**
+- Use the tested prompt template
+- Pass per-agent details in description or structured task context
+- All agents use same base instructions, different parameters
+
+### Example: Batch Processing
+
+**Create template** (`.tmp/sub-agent-prompts/batch-processor.md`):
+```markdown
+# Batch Processing Template
+
+Read instruction prompt at .tmp/sub-agent-prompts/shared-instructions.md
+
+For each item in your batch:
+1. Extract data from source
+2. Create output file following conventions
+3. Prepare metadata entry
+
+Your specific batch details will be in the task description.
+```
+
+**Spawn agents** (all in parallel with different parameters):
+```
+Task 1: "Process batch 1 (items 1-5) from source-file.txt"
+Task 2: "Process batch 2 (items 6-10) from source-file.txt"
+Task 3: "Process batch 3 (items 11-15) from source-file.txt"
+# etc.
+```
+
+### Benefits
+
+✅ **DRY principle** – Instructions written once, reused N times
+✅ **Consistency** – All agents follow identical patterns
+✅ **Quality control** – Single template validated upfront
+✅ **Maintainability** – Update instructions in one place
+✅ **Scalability** – Easy to spawn 10+ agents without bloat
+✅ **Efficiency** – Fewer tokens wasted on repetition
+
+### Guidelines
+
+- Keep template general; put specifics in task description
+- Use `./sub-agent-prompts/` for all reusable prompt files
+- Always test with 1 agent before spawning 8+ in parallel
+- Name prompts clearly: `{task-name}-{version}.md`
+- Document expected outputs in the template
+- Include quality checklist in template (not repeated per agent)
 
 ---
 

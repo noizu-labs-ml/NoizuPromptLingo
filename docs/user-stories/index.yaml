@@ -1,5 +1,5 @@
 version: 2
-updated: '2026-02-02T10:00:00Z'
+updated: '2026-02-02T04:05:25Z'
 personas:
   P-001: AI Agent - Autonomous, programmatic automation agent
   P-002: Product Manager - Non-technical reviewer needing dashboards
@@ -517,3 +517,480 @@ stories:
       - US-034
     related_personas:
       - P-005
+  - id: US-038
+    title: Apply Database Schema Migration
+    file: US-038-apply-database-schema-migration.md
+    persona: P-005
+    persona_name: Dave the Fellow Developer
+    priority: high
+    status: draft
+    prd_group: coordination
+    related_stories:
+      - US-039
+      - US-041
+      - US-043
+    related_personas:
+      - P-005
+  - id: US-039
+    title: Backup and Restore Database
+    file: US-039-backup-and-restore-database.md
+    persona: P-004
+    persona_name: Project Manager
+    priority: critical
+    status: draft
+    prd_group: coordination
+    related_stories:
+      - US-038
+      - US-043
+    related_personas:
+      - P-004
+  - id: US-040
+    title: Monitor Database Health and Performance
+    file: US-040-monitor-database-health-and-performance.md
+    persona: P-005
+    persona_name: Dave the Fellow Developer
+    priority: medium
+    status: draft
+    prd_group: coordination
+    related_stories: []
+    related_personas:
+      - P-005
+  - id: US-041
+    title: Prevent Concurrent Write Conflicts
+    file: US-041-prevent-concurrent-write-conflicts.md
+    persona: P-001
+    persona_name: AI Agent
+    priority: critical
+    status: draft
+    prd_group: coordination
+    related_stories:
+      - US-032
+    related_personas:
+      - P-001
+  - id: US-042
+    title: Audit Schema Version Compatibility
+    file: US-042-audit-schema-version-compatibility.md
+    persona: P-004
+    persona_name: Project Manager
+    priority: high
+    status: draft
+    prd_group: coordination
+    related_stories:
+      - US-031
+    related_personas:
+      - P-004
+  - id: US-043
+    title: Export and Import Data Between Databases
+    file: US-043-export-and-import-data-between-databases.md
+    persona: P-003
+    persona_name: Vibe Coder
+    priority: medium
+    status: draft
+    prd_group: collaboration
+    related_stories:
+      - US-004
+    related_personas:
+      - P-003
+  - id: US-044
+    title: Validate Database Integrity
+    file: US-044-validate-database-integrity.md
+    persona: P-005
+    persona_name: Dave the Fellow Developer
+    priority: high
+    status: draft
+    prd_group: coordination
+    related_stories: []
+    related_personas:
+      - P-005
+  - id: US-045
+    title: Manage Multiple Database Instances
+    file: US-045-manage-multiple-database-instances.md
+    persona: P-004
+    persona_name: Project Manager
+    priority: low
+    status: draft
+    prd_group: coordination
+    related_stories:
+      - US-005
+    related_personas:
+      - P-004
+  - id: US-046
+    title: Optimize Database Storage
+    file: US-046-optimize-database-storage.md
+    persona: P-005
+    persona_name: Dave the Fellow Developer
+    priority: low
+    status: draft
+    prd_group: coordination
+    related_stories:
+      - US-009
+    related_personas:
+      - P-005
+  - id: US-047
+    title: View Database Schema Documentation
+    file: US-047-view-database-schema-documentation.md
+    persona: P-003
+    persona_name: Vibe Coder
+    priority: medium
+    status: draft
+    prd_group: npl_load
+    related_stories:
+      - US-025
+    related_personas:
+      - P-003
+  - id: US-048
+    title: Real-Time Agent Workflow Failure Diagnostics
+    file: US-048-real-time-agent-workflow-failure-diagnostics.md
+    persona: P-004
+    persona_name: Project Manager
+    priority: high
+    status: draft
+    prd_group: coordination
+    related_stories:
+      - US-031
+      - US-033
+    related_personas:
+      - P-004
+  - id: US-049
+    title: Structured Error Logging for MCP Tools
+    file: US-049-structured-error-logging-for-mcp-tools.md
+    persona: P-005
+    persona_name: Dave the Fellow Developer
+    priority: critical
+    status: draft
+    prd_group: npl_load
+    related_stories:
+      - US-005
+    related_personas:
+      - P-005
+  - id: US-050
+    title: Agent Performance Metrics Dashboard
+    file: US-050-agent-performance-metrics-dashboard.md
+    persona: P-004
+    persona_name: Project Manager
+    priority: medium
+    status: draft
+    prd_group: coordination
+    related_stories:
+      - US-031
+      - US-033
+    related_personas:
+      - P-004
+  - id: US-051
+    title: Worklog Error Propagation Protocol
+    file: US-051-worklog-error-propagation-protocol.md
+    persona: P-001
+    persona_name: AI Agent
+    priority: high
+    status: draft
+    prd_group: coordination
+    related_stories: []
+    related_personas:
+      - P-001
+  - id: US-052
+    title: Browser Automation Timeout & Retry Handling
+    file: US-052-browser-automation-timeout-and-retry-handling.md
+    persona: P-001
+    persona_name: AI Agent
+    priority: high
+    status: draft
+    prd_group: browser
+    related_stories:
+      - US-021
+      - US-024
+    related_personas:
+      - P-001
+  - id: US-053
+    title: Exception Alerting for Long-Running Processes
+    file: US-053-exception-alerting-for-long-running-processes.md
+    persona: P-002
+    persona_name: Product Manager
+    priority: medium
+    status: draft
+    prd_group: chat
+    related_stories:
+      - US-022
+      - US-005
+    related_personas:
+      - P-002
+  - id: US-054
+    title: Test Execution Error Detail Capture
+    file: US-054-test-execution-error-detail-capture.md
+    persona: P-005
+    persona_name: Dave the Fellow Developer
+    priority: high
+    status: draft
+    prd_group: collaboration
+    related_stories: []
+    related_personas:
+      - P-005
+  - id: US-055
+    title: Database Migration Error Recovery
+    file: US-055-database-migration-error-recovery.md
+    persona: P-003
+    persona_name: Vibe Coder
+    priority: critical
+    status: draft
+    prd_group: npl_load
+    related_stories: []
+    related_personas:
+      - P-003
+  - id: US-056
+    title: Token Usage Tracking and Budget Alerts
+    file: US-056-token-usage-tracking-and-budget-alerts.md
+    persona: P-002
+    persona_name: Product Manager
+    priority: medium
+    status: draft
+    prd_group: coordination
+    related_stories:
+      - US-031
+    related_personas:
+      - P-002
+  - id: US-057
+    title: Cross-Agent Debugging Session Replay
+    file: US-057-cross-agent-debugging-session-replay.md
+    persona: P-005
+    persona_name: Dave the Fellow Developer
+    priority: low
+    status: draft
+    prd_group: collaboration
+    related_stories:
+      - US-031
+      - US-009
+    related_personas:
+      - P-005
+  - id: US-058
+    title: Facilitate Multi-Persona Consensus
+    file: US-058-facilitate-multi-persona-consensus.md
+    persona: P-004
+    persona_name: Project Manager
+    priority: high
+    status: draft
+    prd_group: coordination
+    related_stories:
+      - US-032
+    related_personas:
+      - P-004
+  - id: US-059
+    title: Chain Multi-Agent Workflows with Dependencies
+    file: US-059-chain-multi-agent-workflows-with-dependencies.md
+    persona: P-004
+    persona_name: Project Manager
+    priority: high
+    status: draft
+    prd_group: coordination
+    related_stories:
+      - US-032
+    related_personas:
+      - P-004
+  - id: US-060
+    title: Cross-Validate Agent Outputs
+    file: US-060-cross-validate-agent-outputs.md
+    persona: P-005
+    persona_name: Dave the Fellow Developer
+    priority: high
+    status: draft
+    prd_group: collaboration
+    related_stories:
+      - US-034
+    related_personas:
+      - P-005
+  - id: US-061
+    title: Negotiate Resource Access Priority
+    file: US-061-negotiate-resource-access-priority.md
+    persona: P-001
+    persona_name: AI Agent
+    priority: medium
+    status: draft
+    prd_group: coordination
+    related_stories: []
+    related_personas:
+      - P-001
+  - id: US-062
+    title: Visualize Multi-Agent Decision Trees
+    file: US-062-visualize-multi-agent-decision-trees.md
+    persona: P-002
+    persona_name: Product Manager
+    priority: medium
+    status: draft
+    prd_group: coordination
+    related_stories:
+      - US-031
+    related_personas:
+      - P-002
+  - id: US-063
+    title: Multi-Perspective Artifact Review
+    file: US-063-multi-perspective-artifact-review.md
+    persona: P-003
+    persona_name: Vibe Coder
+    priority: high
+    status: draft
+    prd_group: artifacts
+    related_stories:
+      - US-010
+    related_personas:
+      - P-003
+  - id: US-064
+    title: Agent Handoff Protocol
+    file: US-064-agent-handoff-protocol.md
+    persona: P-001
+    persona_name: AI Agent
+    priority: high
+    status: draft
+    prd_group: coordination
+    related_stories:
+      - US-032
+    related_personas:
+      - P-001
+  - id: US-065
+    title: Parallel Agent Synthesis
+    file: US-065-parallel-agent-synthesis.md
+    persona: P-004
+    persona_name: Project Manager
+    priority: medium
+    status: draft
+    prd_group: coordination
+    related_stories: []
+    related_personas:
+      - P-004
+  - id: US-066
+    title: Agent Quality Gates
+    file: US-066-agent-quality-gates.md
+    persona: P-005
+    persona_name: Dave the Fellow Developer
+    priority: high
+    status: draft
+    prd_group: collaboration
+    related_stories:
+      - US-037
+    related_personas:
+      - P-005
+  - id: US-067
+    title: Agent Reasoning Path Export
+    file: US-067-agent-reasoning-path-export.md
+    persona: P-002
+    persona_name: Product Manager
+    priority: medium
+    status: draft
+    prd_group: coordination
+    related_stories:
+      - US-031
+    related_personas:
+      - P-002
+  - id: US-068
+    title: Define Artifact Access Control Policies
+    file: US-068-define-artifact-access-control-policies.md
+    persona: P-004
+    persona_name: Project Manager
+    priority: critical
+    status: draft
+    prd_group: artifacts
+    related_stories:
+      - US-008
+    related_personas:
+      - P-004
+  - id: US-069
+    title: Implement Chat Room Role-Based Access
+    file: US-069-implement-chat-room-role-based-access.md
+    persona: P-004
+    persona_name: Project Manager
+    priority: high
+    status: draft
+    prd_group: chat
+    related_stories:
+      - US-007
+    related_personas:
+      - P-004
+  - id: US-070
+    title: Generate Audit Logs for Sensitive Operations
+    file: US-070-generate-audit-logs-for-sensitive-operations.md
+    persona: P-005
+    persona_name: Dave the Fellow Developer
+    priority: critical
+    status: draft
+    prd_group: coordination
+    related_stories: []
+    related_personas:
+      - P-005
+  - id: US-071
+    title: Detect and Prevent Secret Leakage in Artifacts
+    file: US-071-detect-and-prevent-secret-leakage-in-artifacts.md
+    persona: P-005
+    persona_name: Dave the Fellow Developer
+    priority: critical
+    status: draft
+    prd_group: artifacts
+    related_stories:
+      - US-008
+    related_personas:
+      - P-005
+  - id: US-072
+    title: Implement Persona Permission Scopes
+    file: US-072-implement-persona-permission-scopes.md
+    persona: P-004
+    persona_name: Project Manager
+    priority: high
+    status: draft
+    prd_group: coordination
+    related_stories: []
+    related_personas:
+      - P-004
+  - id: US-073
+    title: Enable Multi-User SQLite Access with Row-Level Security
+    file: US-073-enable-multi-user-sqlite-access-with-row-level-security.md
+    persona: P-005
+    persona_name: Dave the Fellow Developer
+    priority: high
+    status: draft
+    prd_group: npl_load
+    related_stories: []
+    related_personas:
+      - P-005
+  - id: US-074
+    title: Encrypt Sensitive Persona Knowledge Bases
+    file: US-074-encrypt-sensitive-persona-knowledge-bases.md
+    persona: P-002
+    persona_name: Product Manager
+    priority: medium
+    status: draft
+    prd_group: npl_load
+    related_stories: []
+    related_personas:
+      - P-002
+  - id: US-075
+    title: Implement Review Access Control for Sensitive Artifacts
+    file: US-075-implement-review-access-control-for-sensitive-artifacts.md
+    persona: P-002
+    persona_name: Product Manager
+    priority: high
+    status: draft
+    prd_group: artifacts
+    related_stories:
+      - US-010
+      - US-023
+    related_personas:
+      - P-002
+  - id: US-076
+    title: Create Security Dashboard for Access Violations
+    file: US-076-create-security-dashboard-for-access-violations.md
+    persona: P-004
+    persona_name: Project Manager
+    priority: medium
+    status: draft
+    prd_group: coordination
+    related_stories:
+      - US-005
+    related_personas:
+      - P-004
+  - id: US-077
+    title: Manage API Key Vault for Personas
+    file: US-077-manage-api-key-vault-for-personas.md
+    persona: P-001
+    persona_name: AI Agent
+    priority: high
+    status: draft
+    prd_group: npl_load
+    related_stories: []
+    related_personas:
+      - P-001
