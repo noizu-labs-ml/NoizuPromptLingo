@@ -285,6 +285,40 @@ mise run test-errors    # Detailed failure output (used by npl-tdd-debugger)
 
 ---
 
+## FastMCP Framework Documentation
+
+General FastMCP 2.x framework guides are available in `docs/resources/fastmcp/`:
+
+- **[Installation and Setup](docs/resources/fastmcp/01-installation.md)** – How to install and configure FastMCP
+- **[Core Concepts](docs/resources/fastmcp/02-core-concepts.md)** – Servers, tools, resources, prompts, and context
+- **[Tool Implementation](docs/resources/fastmcp/03-tools.md)** – How to implement and register MCP tools
+- **[Resource Management](docs/resources/fastmcp/04-resources.md)** – Resource URI templates and patterns
+- **[Prompt Templates](docs/resources/fastmcp/05-prompts.md)** – Prompt creation and template system
+- **[Context & Lifecycle](docs/resources/fastmcp/06-context.md)** – Server context and lifecycle hooks
+- **[Client Integration](docs/resources/fastmcp/07-client.md)** – Integrating FastMCP with clients
+- **[Production Deployment](docs/resources/fastmcp/08-deployment.md)** – Deployment patterns and considerations
+- **[Migration & Upgrades](docs/resources/fastmcp/09-migration.md)** – Version migration paths
+- **[Progressive Examples](docs/resources/fastmcp/10-examples.md)** – Examples from simple to advanced
+
+These are general framework reference docs, not project-specific implementation guides. For project-specific MCP tool implementations, see:
+- [PRD-009: MCP Tools Implementation](docs/PRDs/prd-009-mcp-tools-implementation.md)
+- [Features Grid - MCP Tools section](docs/features-grid.md)
+- [Implementation Tracker](docs/implementation-tracker.yaml)
+
+---
+
+## Documentation Index & Navigation
+
+For complete documentation navigation including planning, architecture, and resources, see **[Master Documentation Index](docs/DOCUMENTATION-INDEX.md)**.
+
+Key quick-links:
+- **[Roadmap](docs/roadmap.yaml)** – 4-phase implementation roadmap
+- **[Features Grid](docs/features-grid.md)** – Implementation status and gaps
+- **[User Stories](docs/user-stories/index.yaml)** – Specifications with relationships
+- **[Project Architecture](docs/PROJ-ARCH.md)** – System design overview
+
+---
+
 ## Important Project Files
 
 - `pyproject.toml` – defines the package (`npl_mcp`), dependencies, and the `npl-mcp` console script.

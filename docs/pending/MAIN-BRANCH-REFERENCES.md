@@ -59,24 +59,24 @@ This indicates the file is in the main branch worktree, not the current branch.
 - Add reference: `main:/mcp-server/src/npl_mcp/executors/`
 - Implementation status: See main:/mcp-server/tools/by-category/executor-tools.yaml
 
-**prd-009-mcp-tools-implementation.md**
+**PRD-010-mcp-tools-implementation.md** (Design Spec)
 - Add reference: `main:/mcp-server/docs/categories/02-artifact-management.md`
 - Add reference: `main:/mcp-server/docs/categories/04-chat-collaboration.md`
 - Add reference: `main:/mcp-server/docs/categories/06-task-queue.md`
 - Add reference: `main:/mcp-server/docs/categories/07-browser-automation.md`
 
-**prd-010-agent-ecosystem.md**
+**PRD-011-agent-ecosystem.md** (Design Spec)
 - Add reference: `main:/mcp-server/docs/categories/10-external-executors.md`
 - Note: Agents are not yet implemented in main branch
 
-**prd-011-multi-agent-orchestration.md**
+**PRD-012-multi-agent-orchestration.md** (Design Spec)
 - Add reference: `main:/docs/pending/mcp-server/extraction-summary.md` (orchestration patterns)
 
-**prd-012-npl-syntax-parser.md**
+**PRD-013-npl-syntax-parser.md** (Design Spec)
 - Add reference: `.tmp/docs/npl-syntax-elements.brief.md` (design)
 - Note: Parser not yet implemented in main branch
 
-**prd-013-cli-utilities.md**
+**PRD-014-cli-utilities.md** (Design Spec)
 - Add reference: `main:/mcp-server/tools/by-category/script-tools.yaml`
 - Note: Partial implementation in main branch
 
