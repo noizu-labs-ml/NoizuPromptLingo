@@ -63,6 +63,36 @@ flowchart TB
 
 ## Standard Workflow
 
+### Quick Start: PRD-Driven Implementation
+
+For most feature implementations, the workflow is straightforward:
+
+1. **Pass PRD to `npl-tdd-tester`**
+   - Input: PRD document (e.g., `project-management/PRDs/prd-feature-name.md`)
+   - Output: Comprehensive test suites (`tests/test_*.py`)
+   - Agent proposes test plan and generates tests based on acceptance criteria
+
+2. **Pass Tests to `npl-tdd-coder`**
+   - Input: Test suites + PRD
+   - Output: Implementation code (RED → GREEN → REFACTOR cycle)
+   - Agent uses `mise run test-status` for quick pass/fail feedback
+   - Agent uses `mise run test-errors` to see specific failures
+   - Agent implements fixes autonomously until all tests pass
+
+3. **Debug Loop (if blocked)**
+   - Invoke `npl-tdd-debugger` if tests keep failing
+   - Debugger analyzes and routes back to appropriate agent:
+     - Tests unclear? → `npl-tdd-tester` to refine
+     - PRD unclear? → `npl-prd-editor` to clarify
+     - Implementation bug? → `npl-tdd-coder` continues
+
+**Key Commands Agents Use**:
+```bash
+mise run test-status    # Quick summary: ✅ or ❌
+mise run test-errors    # Detailed: which tests fail and why
+mise run test-coverage  # Final coverage report
+```
+
 ### Workflow Sequence
 
 ```mermaid
@@ -169,6 +199,8 @@ controller:
 
 ### Phase 4: Implementation
 
+The `npl-tdd-coder` agent works autonomously following the TDD cycle:
+
 ```yaml
 controller:
   - invoke: npl-tdd-coder
@@ -179,19 +211,38 @@ controller:
         hash: "abc123"
       test_suite:
         paths: [test files from Phase 3]
-        
+
   - invoke: npl-tdd-coder
     command: start
-    
-  # Agent works autonomously, using:
-  # - mise run test-status
-  # - mise run test-failures
-  
-  # Controller monitors for:
-  - status: implementing  # Progress updates
-  - status: blocked       # Needs intervention
-  - status: complete      # Ready for confirmation
 ```
+
+**Agent Autonomous Loop** (Red → Green → Refactor):
+
+1. **Red**: Run tests to see failures
+   ```bash
+   mise run test-status        # Quick: Xof Y passing
+   mise run test-errors        # Details: Why tests fail
+   ```
+
+2. **Green**: Implement code to pass tests
+   ```bash
+   # Fix implementation files based on failures
+   # Rerun: mise run test-status
+   ```
+
+3. **Refactor**: Clean code while keeping tests green
+   - Improve readability, efficiency
+   - Rerun tests after each change
+
+4. **Loop**: Repeat until all tests pass
+   ```bash
+   mise run test-coverage      # Final: Coverage report
+   ```
+
+**Controller Monitoring**:
+- `status: implementing` — Agent is making progress
+- `status: blocked` — Agent cannot proceed (see Debug Loop)
+- `status: complete` — All tests pass, implementation done
 
 ### Phase 5: Debug Loop (when blocked)
 

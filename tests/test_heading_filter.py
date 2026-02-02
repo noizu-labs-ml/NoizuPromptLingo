@@ -257,14 +257,8 @@ class TestHeadingFilterNestedPath:
 
 
 class TestHeadingFilterWildcard:
-    """Test wildcard selector (parent > *).
+    """Test wildcard selector (parent > *)."""
 
-    Note: The current implementation has a bug where wildcard returns the children
-    list directly but _sections_to_markdown expects dict items. These tests document
-    expected behavior that would require implementation fixes.
-    """
-
-    @pytest.mark.xfail(reason="Implementation bug: wildcard returns wrong type for _sections_to_markdown")
     def test_wildcard_returns_all_children(self, filter, sample_doc):
         """Test wildcard returns all immediate children."""
         result = filter.filter(sample_doc, "Overview > *")
@@ -274,7 +268,6 @@ class TestHeadingFilterWildcard:
         assert "Getting started content" in result
         assert "API content" in result
 
-    @pytest.mark.xfail(reason="Implementation bug: wildcard returns wrong type for _sections_to_markdown")
     def test_wildcard_excludes_siblings(self, filter, sample_doc):
         """Test wildcard excludes sibling sections."""
         result = filter.filter(sample_doc, "Overview > *")
@@ -282,7 +275,6 @@ class TestHeadingFilterWildcard:
         # Examples is a sibling of Overview, not a child
         assert "# Examples" not in result
 
-    @pytest.mark.xfail(reason="Implementation bug: wildcard returns wrong type for _sections_to_markdown")
     def test_wildcard_at_deeper_level(self, filter, sample_doc):
         """Test wildcard at deeper level."""
         result = filter.filter(sample_doc, "Overview > API Reference > *")
@@ -292,7 +284,6 @@ class TestHeadingFilterWildcard:
         assert "Auth details" in result
         assert "Endpoint list" in result
 
-    @pytest.mark.xfail(reason="Implementation bug: wildcard returns wrong type for _sections_to_markdown")
     def test_wildcard_no_children(self, filter):
         """Test wildcard when parent has no children."""
         content = "# Parent\nParent content only\n# Sibling\nSibling content"

@@ -15,6 +15,33 @@ from typing import List, Optional, Dict, Any
 class HeadingFilter:
     """Filter markdown by heading paths."""
 
+    @staticmethod
+    def _normalize_heading_name(text: str) -> str:
+        """Normalize heading text to kebab-case for matching.
+
+        Examples:
+            "Mereological nihilism" -> "mereological-nihilism"
+            "API Reference" -> "api-reference"
+            "HTTP/2" -> "http2"
+
+        Args:
+            text: Heading text to normalize
+
+        Returns:
+            Normalized heading name in kebab-case
+        """
+        # Convert to lowercase
+        normalized = text.lower()
+        # Replace spaces and underscores with hyphens
+        normalized = re.sub(r'[\s_]+', '-', normalized)
+        # Remove non-alphanumeric characters except hyphens
+        normalized = re.sub(r'[^a-z0-9\-]', '', normalized)
+        # Remove consecutive hyphens
+        normalized = re.sub(r'-+', '-', normalized)
+        # Strip leading/trailing hyphens
+        normalized = normalized.strip('-')
+        return normalized
+
     def filter(self, content: str, selector: str) -> str:
         """Apply heading selector to markdown content.
 
@@ -109,7 +136,7 @@ class HeadingFilter:
 
         Args:
             sections: List of sections to search
-            selector: Heading selector (name or level)
+            selector: Heading selector (name, level, or normalized name)
 
         Returns:
             Matching section or None
@@ -122,9 +149,17 @@ class HeadingFilter:
                     return section
             return None
 
-        # Handle text match (case-insensitive)
+        # Normalize selector for matching
+        normalized_selector = self._normalize_heading_name(selector)
+
+        # Handle text match - try both raw text and normalized names
         for section in sections:
-            if section["text"].lower() == selector.lower():
+            section_text = section["text"]
+            # Match by raw text (case-insensitive)
+            if section_text.lower() == selector.lower():
+                return section
+            # Match by normalized name
+            if self._normalize_heading_name(section_text) == normalized_selector:
                 return section
 
         return None

@@ -58,8 +58,8 @@ class MarkdownViewer:
         When depth=2, shows:
         - # Heading 1 (expanded)
         - ## Heading 2 (expanded)
-        - ### [Collapsed] (collapsed - level 3+)
-        - #### [Collapsed] (collapsed - level 4+)
+        - ### Inner Content (collapsed)  - heading text shown but marked as collapsed
+        - #### Deep Content (collapsed)   - only first level below shown, others hidden
 
         Content under collapsed headings is hidden.
 
@@ -79,24 +79,27 @@ class MarkdownViewer:
             match = re.match(r"^(#{1,6})\s+(.+)$", line)
             if match:
                 level = len(match.group(1))
+                heading_text = match.group(2)
 
                 # If we're returning to a level <= depth, exit collapsed section
                 if level <= depth:
                     in_collapsed_section = False
-
-                # If level > depth, mark as collapsed
-                if level > depth:
-                    if not in_collapsed_section or level < collapsed_section_depth:
-                        # Start new collapsed section at this level
+                    # This heading is at or above depth - show it fully expanded
+                    lines.append(line)
+                else:
+                    # Level > depth: show heading but mark as collapsed
+                    if not in_collapsed_section:
+                        # First level below threshold - show heading with "(collapsed)" marker
                         heading_prefix = "#" * level
-                        lines.append(f"{heading_prefix} [Collapsed]")
+                        lines.append(f"{heading_prefix} {heading_text} (collapsed)")
                         in_collapsed_section = True
                         collapsed_section_depth = level
-                    # Skip the original heading (replace with [Collapsed])
-                else:
-                    # This heading is at or above depth - show it
-                    lines.append(line)
-                    in_collapsed_section = False
+                    elif level < collapsed_section_depth:
+                        # Return to a shallower collapsed level - show but mark as collapsed
+                        heading_prefix = "#" * level
+                        lines.append(f"{heading_prefix} {heading_text} (collapsed)")
+                        collapsed_section_depth = level
+                    # else: deeper nested under collapse - skip entirely
             else:
                 # Content line
                 if not in_collapsed_section:

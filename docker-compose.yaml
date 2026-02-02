@@ -1,0 +1,51 @@
+version: "3.8"
+
+networks:
+  npl-network:
+    driver: bridge
+    name: npl-network
+
+services:
+  npl-timescaledb:
+    image: timescale/timescaledb:2.24.0-pg17
+    container_name: npl-timescaledb
+    restart: unless-stopped
+    networks:
+      - npl-network
+    ports:
+      - "${NPL_DB_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: ${NPL_DB_NAME:-npl}
+      POSTGRES_USER: ${NPL_DB_USER:-npl}
+      POSTGRES_PASSWORD: ${NPL_DB_PASSWORD:-npl_secret}
+    volumes:
+      - npl-timescaledb-data:/var/lib/postgresql/data
+      - ./docker/postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${NPL_DB_USER:-npl} -d ${NPL_DB_NAME:-npl}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  npl-redis:
+    image: redis:8.4.0
+    container_name: npl-redis
+    restart: unless-stopped
+    networks:
+      - npl-network
+    ports:
+      - "${NPL_REDIS_PORT:-6379}:6379"
+    command: redis-server
+    volumes:
+      - npl-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  npl-timescaledb-data:
+    name: npl-timescaledb-data
+  npl-redis-data:
+    name: npl-redis-data

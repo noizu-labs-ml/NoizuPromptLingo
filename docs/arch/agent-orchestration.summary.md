@@ -12,14 +12,22 @@ Five specialized agents transform feature ideas into tested production code thro
 | tdd-coder | PRD + tests → code | Source code |
 | tdd-debugger | Diagnose failures | Fixes, routing |
 
-## Workflow
+## Workflow (PRD-Driven)
 
+**Standard Path** (most features):
+1. Get/create PRD (ideas → personas → stories → PRD)
+2. Pass PRD to `npl-tdd-tester` → generates test suites
+3. Pass tests + PRD to `npl-tdd-coder` → implements code (RED → GREEN → REFACTOR)
+4. Coder uses `mise run test-status` / `mise run test-errors` for feedback
+5. When all tests pass → implementation complete
+
+**Full Path** (with full orchestration):
 1. **Discovery**: npl-idea-to-spec - pitch idea, get personas/stories
 2. **Specification**: npl-prd-editor - create PRD from stories
-3. **Test Creation**: tdd-tester - generate test suite from PRD
-4. **Implementation**: tdd-coder - autonomously implement using `mise run test-status` and `mise run test-errors`
-5. **Debug Loop**: When blocked, tdd-debugger diagnoses and routes to appropriate agent
-6. **Completion**: Controller confirms and archives
+3. **Test Creation**: npl-tdd-tester - generate test suite from PRD
+4. **Implementation**: npl-tdd-coder - autonomously implement (RED → GREEN → REFACTOR)
+5. **Debug Loop**: When blocked, npl-tdd-debugger diagnoses and routes back
+6. **Completion**: Controller confirms
 
 ## Key Concepts
 

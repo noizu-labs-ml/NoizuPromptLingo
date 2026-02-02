@@ -204,9 +204,12 @@ class TestMarkdownViewerCollapseOnly:
 
         assert "# Main Document" in result
         assert "This is the main content" in result
-        # Content at depth 2+ is collapsed
+        # Content at depth 2+ is collapsed - heading shown with (collapsed) marker
+        assert "## Section A (collapsed)" in result
+        # Deeper headings not shown (hidden under collapsed section)
         assert "### Subsection A1" not in result
-        assert "[Collapsed]" in result
+        # New behavior: heading text shown with (collapsed), not [Collapsed] marker
+        assert "(collapsed)" in result
 
     def test_collapse_at_depth_2(self, viewer, sample_doc):
         """Test collapsing all content below depth 2."""
@@ -215,8 +218,11 @@ class TestMarkdownViewerCollapseOnly:
         assert "# Main Document" in result
         assert "## Section A" in result
         assert "Content for section A" in result
-        assert "### Subsection A1" not in result
-        assert "[Collapsed]" in result
+        # Headings at depth 3+ shown with (collapsed) marker
+        assert "### Subsection A1 (collapsed)" in result
+        # Content under collapsed heading is hidden
+        assert "Detailed content for A1" not in result
+        assert "(collapsed)" in result
 
     def test_collapse_at_depth_3(self, viewer, sample_doc):
         """Test collapsing all content below depth 3."""
@@ -235,16 +241,22 @@ class TestMarkdownViewerCollapseOnly:
         assert "## Level 2" in result
         assert "### Level 3" in result
         assert "#### Level 4" in result
-        assert "##### Level 5" not in result
-        assert "[Collapsed]" in result
+        # Level 5 shown with (collapsed) marker, deeper levels hidden
+        assert "##### Level 5 (collapsed)" in result
+        # Level 6 hidden (nested under collapsed section)
+        assert "###### Level 6" not in result
+        assert "(collapsed)" in result
 
     def test_collapse_at_depth_5(self, viewer, deep_doc):
         """Test collapsing at depth 5."""
         result = viewer.view(deep_doc, depth=5)
 
         assert "##### Level 5" in result
-        assert "###### Level 6" not in result
-        assert "[Collapsed]" in result
+        # Level 6 shown with (collapsed) marker
+        assert "###### Level 6 (collapsed)" in result
+        # Content under collapsed heading is hidden
+        assert "Content at level 6" not in result
+        assert "(collapsed)" in result
 
     def test_collapse_at_depth_6(self, viewer, deep_doc):
         """Test collapsing at depth 6 shows all headings."""
@@ -255,7 +267,7 @@ class TestMarkdownViewerCollapseOnly:
         # No collapsed markers needed at depth 6 (max)
 
     def test_collapse_single_collapsed_marker(self, viewer):
-        """Test that consecutive collapsed sections have single marker."""
+        """Test that consecutive collapsed sections show heading with (collapsed)."""
         content = """# H1
 ## H2
 ### H3
@@ -268,12 +280,17 @@ Content 3
 
         result = viewer.view(content, depth=2)
 
-        # Count [Collapsed] markers - should appear once when transitioning
-        assert "[Collapsed]" in result
-        # The important thing is that collapsed content is hidden
-        assert "### H3" not in result
-        assert "Content 1" not in result
+        # First level below threshold shows heading with (collapsed) marker
+        assert "### H3 (collapsed)" in result
+        # Deeper headings are hidden (under collapsed section)
         assert "#### H4" not in result
+        assert "##### H5" not in result
+        # Content under collapsed sections is hidden
+        assert "Content 1" not in result
+        assert "Content 2" not in result
+        assert "Content 3" not in result
+        # H2 Again is at depth 2, so it should be expanded
+        assert "## H2 Again" in result
 
 
 # ============================================================================
@@ -294,16 +311,21 @@ class TestMarkdownViewerInvalidDepth:
         """Test that depth 0 collapses all headings (level > 0)."""
         result = viewer.view(sample_doc, depth=0)
         # depth=0 means all headings (level 1+) get collapsed
-        # Should show [Collapsed] marker
-        assert "[Collapsed]" in result
-        # Original headings should be collapsed
-        assert "# Main Document" not in result or "[Collapsed]" in result
+        # Should show heading text with (collapsed) marker
+        assert "(collapsed)" in result
+        # H1 shown with (collapsed) marker
+        assert "# Main Document (collapsed)" in result
+        # Deeper headings hidden
+        assert "## Section A" not in result
 
     def test_collapse_depth_negative_collapses_all(self, viewer, sample_doc):
         """Test that negative depth collapses all content."""
         result = viewer.view(sample_doc, depth=-1)
         # Negative depth means all headings (level > -1) get collapsed
-        assert "[Collapsed]" in result
+        # Should show heading text with (collapsed) marker
+        assert "(collapsed)" in result
+        # H1 shown with (collapsed) marker
+        assert "# Main Document (collapsed)" in result
 
     def test_collapse_depth_7_shows_all(self, viewer, sample_doc):
         """Test that depth 7+ shows all content (no heading > level 6)."""
@@ -335,9 +357,12 @@ class TestMarkdownViewerCombined:
 
         assert "## Section A" in result
         assert "Content for section A" in result
-        assert "### Subsection A1" not in result
+        # Subsection A1 shown with (collapsed) marker (level 3 > depth 2)
+        assert "### Subsection A1 (collapsed)" in result
+        # Content under collapsed heading is hidden
+        assert "Detailed content for A1" not in result
         assert "Section B" not in result
-        assert "[Collapsed]" in result
+        assert "(collapsed)" in result
 
     def test_filter_and_collapse_at_different_depths(self, viewer, deep_doc):
         """Test filter and collapse at various depths."""
@@ -346,8 +371,11 @@ class TestMarkdownViewerCombined:
 
         assert "## Level 2" in result
         assert "### Level 3" in result
-        assert "#### Level 4" not in result
-        assert "[Collapsed]" in result
+        # Level 4 shown with (collapsed) marker (level 4 > depth 3)
+        assert "#### Level 4 (collapsed)" in result
+        # Deeper levels hidden
+        assert "##### Level 5" not in result
+        assert "(collapsed)" in result
 
 
 # ============================================================================
@@ -430,9 +458,11 @@ class TestMarkdownViewerEdgeCases:
         result = viewer.view(content, depth=1)
 
         assert "# H1" in result
-        # Headings at depth 2+ are collapsed
+        # Headings at depth 2+ shown with (collapsed) marker
+        assert "## H2 (collapsed)" in result
+        # Deeper headings hidden (under collapsed section)
         assert "### H3" not in result
-        assert "[Collapsed]" in result
+        assert "(collapsed)" in result
 
     def test_collapse_with_blank_lines(self, viewer):
         """Test collapse handling with blank lines."""
@@ -450,9 +480,11 @@ Detailed content.
 
         assert "# Section 1" in result
         assert "Some content here" in result
-        # Content at depth 2+ is collapsed
+        # Headings at depth 2+ shown with (collapsed) marker
+        assert "## Subsection (collapsed)" in result
+        # Content under collapsed heading is hidden
         assert "Detailed content" not in result
-        assert "[Collapsed]" in result
+        assert "(collapsed)" in result
 
     def test_view_with_code_blocks_in_content(self, viewer):
         """Test viewing content with code blocks."""
@@ -498,8 +530,12 @@ More sub content."""
         assert "# Second Main" in result
         assert "First content" in result
         assert "Second content" in result
-        assert "## First Sub" not in result
-        assert "## Second Sub" not in result
+        # Subsections shown with (collapsed) marker
+        assert "## First Sub (collapsed)" in result
+        assert "## Second Sub (collapsed)" in result
+        # Content under collapsed headings is hidden
+        assert "Sub content" not in result
+        assert "More sub content" not in result
 
     def test_preserve_inline_formatting(self, viewer):
         """Test that inline formatting is preserved."""
@@ -590,13 +626,22 @@ class TestMarkdownViewerDepthBoundaries:
     """Test depth parameter boundary conditions."""
 
     def test_depth_exactly_1(self, viewer, simple_doc):
-        """Test depth=1 shows only h1."""
+        """Test depth=1 shows only h1 expanded, h2 collapsed.
+
+        Note: Once in a collapsed section, only returning to a level <= depth
+        exits the collapsed state. Peer-level headings remain hidden.
+        """
         result = viewer.view(simple_doc, depth=1)
 
         assert "# Title" in result
         assert "Intro paragraph" in result
-        assert "## Section One" not in result
-        assert "[Collapsed]" in result
+        # First H2 heading shown with (collapsed) marker
+        assert "## Section One (collapsed)" in result
+        # Content under collapsed headings is hidden
+        assert "First section content" not in result
+        # Second H2 also hidden (still in collapsed section at level 2)
+        assert "Section Two" not in result
+        assert "(collapsed)" in result
 
     def test_depth_exactly_2(self, viewer, simple_doc):
         """Test depth=2 shows h1 and h2."""

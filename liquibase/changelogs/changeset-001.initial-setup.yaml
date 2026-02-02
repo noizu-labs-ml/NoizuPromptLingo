@@ -1,0 +1,306 @@
+databaseChangeLog:
+  # ===========================================================================
+  # Changeset 001: Create npl_element_type enum
+  # ===========================================================================
+  - changeSet:
+      id: 001-create-npl-element-type-enum
+      author: npl
+      comment: Create npl_element_type enum for categorizing NPL elements
+      changes:
+        - sql:
+            sql: |
+              CREATE TYPE npl_element_type AS ENUM (
+                'concept',
+                'section',
+                'component',
+                'label',
+                'example',
+                'syntax'
+              );
+      rollback:
+        - sql:
+            sql: DROP TYPE IF EXISTS npl_element_type;
+
+  # ===========================================================================
+  # Changeset 002: Create npl_metadata table
+  # ===========================================================================
+  - changeSet:
+      id: 002-create-npl-metadata-table
+      author: npl
+      comment: Create npl_metadata table for storing configuration and state
+      changes:
+        - createTable:
+            tableName: npl_metadata
+            columns:
+              - column:
+                  name: id
+                  type: VARCHAR(64)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: value
+                  type: JSONB
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: modified_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+        - createIndex:
+            tableName: npl_metadata
+            indexName: idx_npl_metadata_modified_at
+            columns:
+              - column:
+                  name: modified_at
+
+  # ===========================================================================
+  # Changeset 003: Create npl_component table
+  # ===========================================================================
+  - changeSet:
+      id: 003-create-npl-component-table
+      author: npl
+      comment: Create npl_component table for storing NPL components
+      changes:
+        - createTable:
+            tableName: npl_component
+            columns:
+              - column:
+                  name: id
+                  type: VARCHAR(128)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: version
+                  type: VARCHAR(32)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: section
+                  type: VARCHAR(128)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: file
+                  type: VARCHAR(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: digest
+                  type: CHAR(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: value
+                  type: JSONB
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: modified_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: deleted_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  constraints:
+                    nullable: true
+        - sql:
+            sql: ALTER TABLE npl_component ADD COLUMN search vector(1536);
+        - createIndex:
+            tableName: npl_component
+            indexName: idx_npl_component_section
+            columns:
+              - column:
+                  name: section
+        - createIndex:
+            tableName: npl_component
+            indexName: idx_npl_component_file
+            columns:
+              - column:
+                  name: file
+        - createIndex:
+            tableName: npl_component
+            indexName: idx_npl_component_deleted_at
+            columns:
+              - column:
+                  name: deleted_at
+        - sql:
+            sql: CREATE INDEX idx_npl_component_search ON npl_component USING ivfflat (search vector_cosine_ops) WITH (lists = 100);
+      rollback:
+        - dropTable:
+            tableName: npl_component
+
+  # ===========================================================================
+  # Changeset 004: Create npl_sections table
+  # ===========================================================================
+  - changeSet:
+      id: 004-create-npl-sections-table
+      author: npl
+      comment: Create npl_sections table for storing section definitions
+      changes:
+        - createTable:
+            tableName: npl_sections
+            columns:
+              - column:
+                  name: id
+                  type: VARCHAR(128)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(128)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: version
+                  type: VARCHAR(32)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: files
+                  type: JSONB
+                  constraints:
+                    nullable: false
+              - column:
+                  name: digest
+                  type: CHAR(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: value
+                  type: JSONB
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: modified_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: deleted_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  constraints:
+                    nullable: true
+        - sql:
+            sql: ALTER TABLE npl_sections ADD COLUMN search vector(1536);
+        - createIndex:
+            tableName: npl_sections
+            indexName: idx_npl_sections_name
+            columns:
+              - column:
+                  name: name
+        - createIndex:
+            tableName: npl_sections
+            indexName: idx_npl_sections_deleted_at
+            columns:
+              - column:
+                  name: deleted_at
+        - sql:
+            sql: CREATE INDEX idx_npl_sections_search ON npl_sections USING ivfflat (search vector_cosine_ops) WITH (lists = 100);
+      rollback:
+        - dropTable:
+            tableName: npl_sections
+
+  # ===========================================================================
+  # Changeset 005: Create npl_concepts table
+  # ===========================================================================
+  - changeSet:
+      id: 005-create-npl-concepts-table
+      author: npl
+      comment: Create npl_concepts table for storing core NPL concepts
+      changes:
+        - createTable:
+            tableName: npl_concepts
+            columns:
+              - column:
+                  name: id
+                  type: VARCHAR(128)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(128)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: version
+                  type: VARCHAR(32)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: file
+                  type: VARCHAR(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: digest
+                  type: CHAR(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: value
+                  type: JSONB
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: modified_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: deleted_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  constraints:
+                    nullable: true
+        - sql:
+            sql: ALTER TABLE npl_concepts ADD COLUMN search vector(1536);
+        - createIndex:
+            tableName: npl_concepts
+            indexName: idx_npl_concepts_name
+            columns:
+              - column:
+                  name: name
+        - createIndex:
+            tableName: npl_concepts
+            indexName: idx_npl_concepts_deleted_at
+            columns:
+              - column:
+                  name: deleted_at
+        - sql:
+            sql: CREATE INDEX idx_npl_concepts_search ON npl_concepts USING ivfflat (search vector_cosine_ops) WITH (lists = 100);
+      rollback:
+        - dropTable:
+            tableName: npl_concepts
