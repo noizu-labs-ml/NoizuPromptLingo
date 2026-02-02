@@ -1,0 +1,66 @@
+Category: Database Infrastructure
+Tools extracted: N/A (Infrastructure layer)
+Database tables: 16 (9 base + 1 sessions + 1 taskers + 5 task-related)
+Web routes: N/A (Infrastructure)
+Test coverage: 82%
+
+Files created:
+- categories/01-database-infrastructure.md
+- tools/by-category/database-schema.yaml
+
+Status: Complete
+
+Summary:
+--------
+Documented the complete database infrastructure for NPL MCP server including:
+
+Base Schema (9 tables):
+- artifacts: Main artifact registry
+- revisions: Version history for artifacts
+- reviews: Artifact review sessions
+- inline_comments: Line-by-line or position-based review comments
+- review_overlays: Image annotation overlay files
+- chat_rooms: Collaboration spaces
+- room_members: Persona membership in chat rooms
+- chat_events: All events in chat rooms
+- notifications: User notifications from @mentions and events
+
+Migration System:
+- schema_version: Migration tracking table
+- 5 migrations applied (sessions, taskers, task queues)
+
+Extended Tables (7 tables via migrations):
+- sessions: Session grouping for related content
+- taskers: Ephemeral executor agent tracking
+- task_queues: Task queue registry
+- tasks: Individual tasks within queues
+- task_events: Activity feed for task lifecycle
+- task_artifacts: Link artifacts/git branches to tasks
+
+Total Tables: 16
+Total Indexes: 32
+Foreign Key Relationships: 18
+
+Migration System Features:
+- Automatic migration on startup
+- Version tracking in schema_version table
+- Conditional column additions (checks existence before ALTER TABLE)
+- Idempotent migrations (safe to run multiple times)
+
+Performance Optimizations:
+- All foreign key columns indexed
+- Timestamp columns indexed for chronological queries
+- Compound indexes for common query patterns (e.g., persona + read_at for notifications)
+- Priority DESC index for task sorting
+
+Test Coverage: 82% (Database Layer - Excellent)
+
+Dependencies:
+- aiosqlite (>=0.19.0)
+- Python sqlite3 (built-in)
+
+Implementation Notes:
+- SQLite single-writer constraint (concurrent writes serialize)
+- WAL mode recommended but not enforced
+- Foreign key constraints must be enabled explicitly
+- File-based database (backup via file copy)

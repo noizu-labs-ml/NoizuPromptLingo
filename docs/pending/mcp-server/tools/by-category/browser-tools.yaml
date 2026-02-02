@@ -1,0 +1,392 @@
+category: browser-automation
+category_id: C-07
+tool_count: 32
+documentation_source: worktrees/main/mcp-server
+tools:
+  # Screenshot Tools (3 tools)
+  - name: screenshot_capture
+    signature: 'screenshot_capture(url: str, name: str, viewport: str = "desktop", theme: str = "light", full_page: bool = True, wait_for: Optional[str] = None, wait_timeout: int = 5000, network_idle: bool = True, session_id: Optional[str] = None, created_by: Optional[str] = None) -> dict'
+    description: Capture screenshot of a web page and store as artifact with viewport/theme control
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/browser/capture.py'
+    database_tables: [artifacts, revisions]
+    web_routes: [GET /artifact/{id}, GET /api/artifact/{id}]
+    user_stories: [US-052, US-048]
+    test_coverage_percent: null
+    example: |
+      result = await screenshot_capture(
+          url="https://example.com",
+          name="homepage-dark",
+          viewport="desktop",
+          theme="dark",
+          full_page=True
+      )
+
+  - name: screenshot_diff
+    signature: 'screenshot_diff(baseline_artifact_id: int, comparison_artifact_id: int, threshold: float = 0.1, session_id: Optional[str] = None, created_by: Optional[str] = None) -> dict'
+    description: Generate visual diff between two screenshot artifacts using pixelmatch algorithm
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/browser/diff.py'
+    database_tables: [artifacts, revisions]
+    web_routes: [GET /artifact/{id}]
+    user_stories: [US-042]
+    test_coverage_percent: null
+    example: |
+      diff = await screenshot_diff(
+          baseline_artifact_id=1,
+          comparison_artifact_id=2,
+          threshold=0.1
+      )
+
+  - name: browser_screenshot
+    signature: 'browser_screenshot(name: str, session_id: str = "default", full_page: bool = False, selector: Optional[str] = None, created_by: Optional[str] = None) -> dict'
+    description: Capture screenshot of current browser page or specific element in active session
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/browser/interact.py'
+    database_tables: [artifacts]
+    web_routes: [GET /artifact/{id}]
+    user_stories: [US-048]
+    test_coverage_percent: null
+    example: |
+      await browser_navigate(url="https://example.com", session_id="test")
+      screenshot = await browser_screenshot(name="after-load", session_id="test")
+
+  # Navigation Tools (5 tools)
+  - name: browser_navigate
+    signature: 'browser_navigate(url: str, session_id: str = "default", wait_for: Optional[str] = None, timeout: int = 30000) -> dict'
+    description: Navigate browser to a URL with optional element wait and timeout
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/browser/interact.py'
+    database_tables: []
+    web_routes: []
+    user_stories: [US-052]
+    test_coverage_percent: null
+    example: |
+      result = await browser_navigate(
+          url="https://app.example.com/dashboard",
+          session_id="workflow",
+          wait_for=".dashboard-loaded"
+      )
+
+  - name: browser_go_back
+    signature: 'browser_go_back(session_id: str = "default") -> dict'
+    description: Navigate back in browser history
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/browser/interact.py'
+    database_tables: []
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: null
+    example: |
+      await browser_go_back(session_id="workflow")
+
+  - name: browser_go_forward
+    signature: 'browser_go_forward(session_id: str = "default") -> dict'
+    description: Navigate forward in browser history
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/browser/interact.py'
+    database_tables: []
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: null
+    example: |
+      await browser_go_forward(session_id="workflow")
+
+  - name: browser_reload
+    signature: 'browser_reload(session_id: str = "default") -> dict'
+    description: Reload the current page
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/browser/interact.py'
+    database_tables: []
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: null
+    example: |
+      await browser_reload(session_id="workflow")
+
+  - name: browser_wait_network_idle
+    signature: 'browser_wait_network_idle(session_id: str = "default", timeout: int = 30000) -> dict'
+    description: Wait for network activity to become idle (no requests for 500ms)
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/browser/interact.py'
+    database_tables: []
+    web_routes: []
+    user_stories: [US-052]
+    test_coverage_percent: null
+    example: |
+      await browser_navigate(url="https://example.com", session_id="test")
+      await browser_wait_network_idle(session_id="test")
+
+  # Interaction Tools (9 tools)
+  - name: browser_click
+    signature: 'browser_click(selector: str, session_id: str = "default", timeout: int = 5000, screenshot_after: bool = False, artifact_name: Optional[str] = None) -> dict'
+    description: Click an element with optional post-click screenshot capture
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/browser/interact.py'
+    database_tables: [artifacts]
+    web_routes: []
+    user_stories: [US-052]
+    test_coverage_percent: null
+    example: |
+      result = await browser_click(
+          selector="button[type='submit']",
+          session_id="form",
+          screenshot_after=True,
+          artifact_name="after-submit"
+      )
+
+  - name: browser_fill
+    signature: 'browser_fill(selector: str, value: str, session_id: str = "default", timeout: int = 5000) -> dict'
+    description: Fill a form field instantly (no typing delay)
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/browser/interact.py'
+    database_tables: []
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: null
+    example: |
+      await browser_fill("input[name='email']", "test@example.com", session_id="form")
+
+  - name: browser_type
+    signature: 'browser_type(selector: str, text: str, session_id: str = "default", delay: int = 50, timeout: int = 5000) -> dict'
+    description: Type text character-by-character with configurable delay (simulates human typing)
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/browser/interact.py'
+    database_tables: []
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: null
+    example: |
+      await browser_type("#search", "playwright automation", delay=100, session_id="search")
+
+  - name: browser_select
+    signature: 'browser_select(selector: str, value: str, session_id: str = "default", timeout: int = 5000) -> dict'
+    description: Select option from dropdown by value
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/browser/interact.py'
+    database_tables: []
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: null
+    example: |
+      await browser_select("select[name='country']", "US", session_id="form")
+
+  - name: browser_hover
+    signature: 'browser_hover(selector: str, session_id: str = "default", timeout: int = 5000) -> dict'
+    description: Hover over an element to trigger hover states/tooltips
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/browser/interact.py'
+    database_tables: []
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: null
+    example: |
+      await browser_hover(".tooltip-trigger", session_id="test")
+
+  - name: browser_focus
+    signature: 'browser_focus(selector: str, session_id: str = "default", timeout: int = 5000) -> dict'
+    description: Focus on an element (activates input, triggers focus events)
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/browser/interact.py'
+    database_tables: []
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: null
+    example: |
+      await browser_focus("input#username", session_id="form")
+
+  - name: browser_scroll
+    signature: 'browser_scroll(direction: str = "down", amount: int = 500, selector: Optional[str] = None, session_id: str = "default") -> dict'
+    description: Scroll the page or a specific element (up/down/left/right)
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/browser/interact.py'
+    database_tables: []
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: null
+    example: |
+      await browser_scroll(direction="down", amount=1000, session_id="test")
+
+  - name: browser_wait_for
+    signature: 'browser_wait_for(selector: str, state: str = "visible", session_id: str = "default", timeout: int = 10000) -> dict'
+    description: Wait for an element to reach a state (visible/hidden/attached/detached)
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/browser/interact.py'
+    database_tables: []
+    web_routes: []
+    user_stories: [US-052]
+    test_coverage_percent: null
+    example: |
+      await browser_wait_for(".loading-spinner", state="hidden", timeout=30000, session_id="test")
+
+  - name: browser_press_key
+    signature: 'browser_press_key(key: str, session_id: str = "default", modifiers: Optional[List[str]] = None) -> dict'
+    description: Press a keyboard key with optional modifiers (Control/Shift/Alt/Meta)
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/browser/interact.py'
+    database_tables: []
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: null
+    example: |
+      await browser_press_key("Enter", session_id="form")
+      await browser_press_key("a", modifiers=["Control"], session_id="editor")
+
+  # Content Extraction Tools (4 tools)
+  - name: browser_get_text
+    signature: 'browser_get_text(selector: str, session_id: str = "default", timeout: int = 5000) -> dict'
+    description: Get text content of an element
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/browser/interact.py'
+    database_tables: []
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: null
+    example: |
+      result = await browser_get_text("h1.title", session_id="scraper")
+      # Returns: {selector: "h1.title", text: "Page Title"}
+
+  - name: browser_get_html
+    signature: 'browser_get_html(session_id: str = "default", selector: Optional[str] = None, outer: bool = True) -> dict'
+    description: Get HTML content of page or element (outerHTML vs innerHTML)
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/browser/interact.py'
+    database_tables: []
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: null
+    example: |
+      html = await browser_get_html(selector="article", outer=False, session_id="scraper")
+
+  - name: browser_query_elements
+    signature: 'browser_query_elements(selector: str, session_id: str = "default", limit: int = 10) -> dict'
+    description: Query multiple elements returning tag, text, visibility, bounding box, and attributes
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/browser/interact.py'
+    database_tables: []
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: null
+    example: |
+      elements = await browser_query_elements(".product-card", limit=20, session_id="scraper")
+      # Returns: {selector, count, elements: [{tag, text, visible, bounding_box, attributes}]}
+
+  - name: browser_evaluate
+    signature: 'browser_evaluate(expression: str, session_id: str = "default") -> dict'
+    description: Evaluate JavaScript expression in page context and return result
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/browser/interact.py'
+    database_tables: []
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: null
+    example: |
+      result = await browser_evaluate("document.querySelectorAll('a').length", session_id="scraper")
+      # Returns: {expression: "document.query...", result: 42}
+
+  # Page Modification Tools (2 tools)
+  - name: browser_inject_script
+    signature: 'browser_inject_script(script: str, session_id: str = "default") -> dict'
+    description: Inject and execute JavaScript in the page via script tag
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/browser/interact.py'
+    database_tables: []
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: null
+    example: |
+      await browser_inject_script("window.customAnalytics = true;", session_id="test")
+
+  - name: browser_inject_style
+    signature: 'browser_inject_style(css: str, session_id: str = "default") -> dict'
+    description: Inject CSS styles into the page
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/browser/interact.py'
+    database_tables: []
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: null
+    example: |
+      await browser_inject_style(".ad { display: none !important; }", session_id="test")
+
+  # State Management Tools (7 tools)
+  - name: browser_get_state
+    signature: 'browser_get_state(session_id: str = "default") -> dict'
+    description: Get current browser page state (URL, title, viewport, scroll position)
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/browser/interact.py'
+    database_tables: []
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: null
+    example: |
+      state = await browser_get_state(session_id="test")
+      # Returns: {url, title, viewport: {width, height}, scroll_position: {x, y}}
+
+  - name: browser_set_viewport
+    signature: 'browser_set_viewport(width: int, height: int, session_id: str = "default") -> dict'
+    description: Change browser viewport size (affects responsive design and screenshots)
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/browser/interact.py'
+    database_tables: []
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: null
+    example: |
+      await browser_set_viewport(width=1920, height=1080, session_id="test")
+
+  - name: browser_get_cookies
+    signature: 'browser_get_cookies(session_id: str = "default") -> dict'
+    description: Get all cookies for the current page
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/browser/interact.py'
+    database_tables: []
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: null
+    example: |
+      cookies = await browser_get_cookies(session_id="auth")
+      # Returns: {cookies: [{name, value, domain, path, ...}], count: N}
+
+  - name: browser_set_cookie
+    signature: 'browser_set_cookie(name: str, value: str, session_id: str = "default", domain: Optional[str] = None, path: str = "/") -> dict'
+    description: Set a cookie with optional domain and path
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/browser/interact.py'
+    database_tables: []
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: null
+    example: |
+      await browser_set_cookie("session_token", "abc123", domain="example.com", session_id="auth")
+
+  - name: browser_clear_cookies
+    signature: 'browser_clear_cookies(session_id: str = "default") -> dict'
+    description: Clear all cookies for the browser session
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/browser/interact.py'
+    database_tables: []
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: null
+    example: |
+      await browser_clear_cookies(session_id="auth")
+
+  - name: browser_get_local_storage
+    signature: 'browser_get_local_storage(session_id: str = "default", key: Optional[str] = None) -> dict'
+    description: Get localStorage value(s) - specific key or all items
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/browser/interact.py'
+    database_tables: []
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: null
+    example: |
+      data = await browser_get_local_storage(key="user_prefs", session_id="app")
+      all_data = await browser_get_local_storage(session_id="app")
+
+  - name: browser_set_local_storage
+    signature: 'browser_set_local_storage(key: str, value: str, session_id: str = "default") -> dict'
+    description: Set localStorage value
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/browser/interact.py'
+    database_tables: []
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: null
+    example: |
+      await browser_set_local_storage("theme", "dark", session_id="app")
+
+  # Session Management Tools (2 tools)
+  - name: browser_close_session
+    signature: 'browser_close_session(session_id: str) -> dict'
+    description: Close a browser session and cleanup resources
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/browser/interact.py'
+    database_tables: []
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: null
+    example: |
+      await browser_close_session("workflow-123")
+
+  - name: browser_list_sessions
+    signature: 'browser_list_sessions() -> dict'
+    description: List all active browser sessions
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/browser/interact.py'
+    database_tables: []
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: null
+    example: |
+      sessions = await browser_list_sessions()
+      # Returns: {sessions: ["default", "workflow-1"], count: 2}

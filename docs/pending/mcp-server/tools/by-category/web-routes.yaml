@@ -1,0 +1,352 @@
+category: web-interface
+category_id: C-09
+route_count: 17
+tool_count: 0  # Web routes, not MCP tools
+documentation_source: worktrees/main/mcp-server
+source_file: worktrees/main/mcp-server/src/npl_mcp/web/app.py
+
+html_routes:
+  - route: /
+    method: GET
+    description: Landing page listing all sessions with metadata table
+    response_type: HTML
+    template: index.html
+    database_tables: [sessions, chat_rooms, artifacts]
+    user_stories: [US-003, FR-005]
+    status_codes: [200]
+
+  - route: /session/{session_id}
+    method: GET
+    description: Session detail page with room/artifact cards in grid layout
+    response_type: HTML
+    template: session.html
+    parameters:
+      - name: session_id
+        type: path
+        description: Session identifier
+    database_tables: [sessions, chat_rooms, artifacts]
+    user_stories: [US-003, FR-006]
+    status_codes: [200, 404]
+
+  - route: /session/{session_id}/room/{room_id}
+    method: GET
+    description: Chat room view in session context with message feed and posting form
+    response_type: HTML
+    template: chat_room.html
+    parameters:
+      - name: session_id
+        type: path
+        description: Session identifier
+      - name: room_id
+        type: path
+        description: Room identifier
+    database_tables: [chat_rooms, chat_events, notifications]
+    user_stories: [US-004, FR-007]
+    status_codes: [200, 404]
+
+  - route: /room/{room_id}
+    method: GET
+    description: Standalone chat room view without session context
+    response_type: HTML
+    template: chat_room.html
+    parameters:
+      - name: room_id
+        type: path
+        description: Room identifier
+    database_tables: [chat_rooms, chat_events]
+    user_stories: [US-004, FR-007]
+    status_codes: [200, 404]
+
+  - route: /screenshots
+    method: GET
+    description: Screenshot checkpoint listing page with thumbnail grid
+    response_type: HTML
+    template: screenshots.html
+    database_tables: [screenshot_checkpoints]
+    user_stories: []
+    status_codes: [200]
+
+  - route: /screenshots/checkpoint/{slug}
+    method: GET
+    description: Individual checkpoint detail view with metadata and image
+    response_type: HTML
+    template: checkpoint_detail.html
+    parameters:
+      - name: slug
+        type: path
+        description: Checkpoint slug identifier
+    database_tables: [screenshot_checkpoints]
+    user_stories: []
+    status_codes: [200, 404]
+
+  - route: /screenshots/compare/{comparison_id}
+    method: GET
+    description: Side-by-side screenshot comparison view
+    response_type: HTML
+    template: comparison.html
+    parameters:
+      - name: comparison_id
+        type: path
+        description: Comparison identifier
+    database_tables: [screenshot_comparisons, screenshot_checkpoints]
+    user_stories: []
+    status_codes: [200, 404]
+
+  - route: /screenshots/files/{path:path}
+    method: GET
+    description: Static file serving for screenshot images
+    response_type: Binary (image)
+    parameters:
+      - name: path
+        type: path
+        description: File path under screenshots directory
+    database_tables: []
+    user_stories: []
+    status_codes: [200, 404]
+
+form_submission_routes:
+  - route: /session/{session_id}/room/{room_id}/message
+    method: POST
+    description: Post message to chat room via HTML form submission
+    response_type: Redirect (303 See Other)
+    redirect_target: /session/{session_id}/room/{room_id}
+    parameters:
+      - name: session_id
+        type: path
+        description: Session identifier
+      - name: room_id
+        type: path
+        description: Room identifier
+      - name: persona
+        type: form
+        description: Sender persona name
+      - name: message
+        type: form
+        description: Message text content
+    database_tables: [chat_events, notifications]
+    user_stories: [US-005, FR-008]
+    status_codes: [303, 400]
+
+  - route: /session/{session_id}/room/{room_id}/todo
+    method: POST
+    description: Create todo in chat room via HTML form
+    response_type: Redirect (303 See Other)
+    redirect_target: /session/{session_id}/room/{room_id}
+    parameters:
+      - name: session_id
+        type: path
+        description: Session identifier
+      - name: room_id
+        type: path
+        description: Room identifier
+      - name: persona
+        type: form
+        description: Creator persona name
+      - name: description
+        type: form
+        description: Todo description text
+      - name: assigned_to
+        type: form
+        required: false
+        description: Optional assignee persona
+    database_tables: [chat_events]
+    user_stories: [FR-009]
+    status_codes: [303, 400]
+
+  - route: /room/{room_id}/message
+    method: POST
+    description: Post message to standalone room via HTML form
+    response_type: Redirect (303 See Other)
+    redirect_target: /room/{room_id}
+    parameters:
+      - name: room_id
+        type: path
+        description: Room identifier
+      - name: persona
+        type: form
+        description: Sender persona name
+      - name: message
+        type: form
+        description: Message text content
+    database_tables: [chat_events, notifications]
+    user_stories: [US-005, FR-008]
+    status_codes: [303, 400]
+
+api_routes:
+  - route: /api/sessions
+    method: GET
+    description: List all sessions with metadata in JSON format
+    response_type: JSON (array)
+    parameters:
+      - name: status
+        type: query
+        required: false
+        description: Filter by session status (active, archived)
+    database_tables: [sessions, chat_rooms, artifacts]
+    user_stories: [FR-016]
+    status_codes: [200]
+    example_response: |
+      [
+        {
+          "id": "abc12345",
+          "title": "Feature Development",
+          "created_at": "2025-10-09T12:00:00",
+          "updated_at": "2025-10-09T15:30:00",
+          "status": "active",
+          "room_count": 3,
+          "artifact_count": 5
+        }
+      ]
+
+  - route: /api/session/{session_id}
+    method: GET
+    description: Get session details with rooms and artifacts in JSON format
+    response_type: JSON (object)
+    parameters:
+      - name: session_id
+        type: path
+        description: Session identifier
+    database_tables: [sessions, chat_rooms, artifacts]
+    user_stories: [FR-016]
+    status_codes: [200, 404]
+
+  - route: /api/room/{room_id}/feed
+    method: GET
+    description: Get chat event stream in JSON format with pagination
+    response_type: JSON (array)
+    parameters:
+      - name: room_id
+        type: path
+        description: Room identifier
+      - name: since
+        type: query
+        required: false
+        description: Event ID offset for pagination
+      - name: limit
+        type: query
+        required: false
+        description: Maximum number of events to return
+    database_tables: [chat_events]
+    user_stories: [FR-017]
+    status_codes: [200, 404]
+
+  - route: /api/room/{room_id}/message
+    method: POST
+    description: Post message to room programmatically via JSON body
+    response_type: JSON (object)
+    parameters:
+      - name: room_id
+        type: path
+        description: Room identifier
+    request_body:
+      content_type: application/json
+      schema: |
+        {
+          "persona": "alice",
+          "message": "Hello from API"
+        }
+    database_tables: [chat_events, notifications]
+    user_stories: [FR-017]
+    status_codes: [200, 400]
+
+  - route: /api/screenshots/checkpoints
+    method: GET
+    description: List all screenshot checkpoints in JSON format
+    response_type: JSON (array)
+    database_tables: [screenshot_checkpoints]
+    user_stories: []
+    status_codes: [200]
+
+  - route: /api/screenshots/checkpoint/{slug}
+    method: GET
+    description: Get screenshot checkpoint metadata in JSON format
+    response_type: JSON (object)
+    parameters:
+      - name: slug
+        type: path
+        description: Checkpoint slug identifier
+    database_tables: [screenshot_checkpoints]
+    user_stories: []
+    status_codes: [200, 404]
+
+mcp_protocol_route:
+  - route: /mcp
+    method: POST/SSE
+    description: MCP protocol endpoint (FastMCP SSE transport)
+    response_type: Server-Sent Events
+    protocol: FastMCP
+    database_tables: []
+    user_stories: [FR-012]
+    status_codes: [200]
+    notes: |
+      This is the MCP protocol endpoint when running in unified HTTP mode.
+      In stdio mode (npl-mcp), this route is not available.
+
+deployment_modes:
+  - name: stdio-only
+    command: npl-mcp
+    description: MCP tools only, no web server
+    web_routes_available: false
+
+  - name: combined
+    command: npl-mcp-web
+    description: MCP on stdio, web on HTTP (background thread)
+    web_routes_available: true
+    web_port_env: NPL_MCP_WEB_PORT
+    default_port: 8765
+
+  - name: unified
+    command: npl-mcp-unified
+    description: Single HTTP server with MCP at /mcp and web at /
+    web_routes_available: true
+    mcp_route_available: true
+    default_port: 8765
+
+  - name: launcher
+    command: npl-mcp-launcher
+    description: Singleton mode with auto-start and PID tracking
+    web_routes_available: true
+    mcp_route_available: true
+    default_port: 8765
+
+environment_variables:
+  - name: NPL_MCP_HOST
+    default: 127.0.0.1
+    description: Server bind address
+
+  - name: NPL_MCP_PORT
+    default: 8765
+    description: Server port
+
+  - name: NPL_MCP_WEB_HOST
+    default: 127.0.0.1
+    description: Web server host (combined mode)
+
+  - name: NPL_MCP_WEB_PORT
+    default: 8765
+    description: Web server port (combined mode)
+
+  - name: NPL_MCP_SINGLETON
+    default: false
+    description: Enable singleton mode (launcher)
+
+  - name: NPL_MCP_FORCE
+    default: false
+    description: Force restart on launch
+
+test_coverage: 0%
+notes: |
+  Web interface is untested. All routes are implemented and functional but lack
+  automated tests. Manual testing confirms basic functionality.
+
+  Security considerations:
+  - No authentication/authorization
+  - HTML auto-escaping via Jinja2
+  - All sessions publicly accessible
+  - Local development use case only
+
+  Future enhancements:
+  - Real-time WebSocket updates
+  - User authentication
+  - Artifact editing via web
+  - Mobile-responsive layouts

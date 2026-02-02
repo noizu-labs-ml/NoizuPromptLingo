@@ -1,0 +1,152 @@
+category: session-management
+category_id: C-05
+tool_count: 4
+documentation_source: worktrees/main/mcp-server
+tools:
+  - name: create_session
+    signature: 'create_session(title: Optional[str] = None, session_id: Optional[str] = None) -> dict'
+    description: Create a new session to group chat rooms and artifacts with optional custom ID and title
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/sessions/manager.py'
+    mcp_definition_file: 'worktrees/main/mcp-server/src/npl_mcp/unified.py'
+    mcp_definition_line: 347
+    implementation_method: 'SessionManager.create_session'
+    implementation_line: 34
+    database_tables:
+      - sessions
+    web_routes:
+      - 'GET /session/{session_id}'
+      - 'GET /api/session/{id}'
+    user_stories: []
+    test_coverage_percent: 0
+    example: |
+      # Create session with auto-generated ID
+      session = await create_session(title="Q4 Planning Session")
+      # Returns: {
+      #   "session_id": "a7f3k9m2",
+      #   "title": "Q4 Planning Session",
+      #   "created_at": "2025-10-09T14:30:00+00:00",
+      #   "status": "active",
+      #   "web_url": "http://127.0.0.1:8765/session/a7f3k9m2"
+      # }
+
+      # Create with custom ID
+      session = await create_session(
+          title="Bug Triage",
+          session_id="bug-triage-2025-10"
+      )
+
+  - name: get_session
+    signature: 'get_session(session_id: str) -> dict'
+    description: Get session details and contents including all associated chat rooms and artifacts
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/sessions/manager.py'
+    mcp_definition_file: 'worktrees/main/mcp-server/src/npl_mcp/unified.py'
+    mcp_definition_line: 354
+    implementation_method: 'SessionManager.get_session_contents'
+    implementation_line: 217
+    database_tables:
+      - sessions
+      - chat_rooms
+      - artifacts
+    web_routes:
+      - 'GET /session/{session_id}'
+      - 'GET /api/session/{id}'
+    user_stories: []
+    test_coverage_percent: 0
+    example: |
+      # Retrieve session with all contents
+      details = await get_session(session_id="a7f3k9m2")
+      # Returns: {
+      #   "session": {
+      #     "id": "a7f3k9m2",
+      #     "title": "Q4 Planning Session",
+      #     "created_at": "2025-10-09T14:30:00",
+      #     "updated_at": "2025-10-09T16:45:00",
+      #     "status": "active"
+      #   },
+      #   "chat_rooms": [
+      #     {"id": 1, "name": "planning-room", "event_count": 15, "member_count": 3}
+      #   ],
+      #   "artifacts": [
+      #     {"id": 2, "name": "design-doc", "revision_count": 3}
+      #   ],
+      #   "web_url": "http://127.0.0.1:8765/session/a7f3k9m2"
+      # }
+
+  - name: list_sessions
+    signature: 'list_sessions(status: Optional[str] = None, limit: int = 20) -> list'
+    description: List recent sessions ordered by activity with optional status filter and summary counts
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/sessions/manager.py'
+    mcp_definition_file: 'worktrees/main/mcp-server/src/npl_mcp/unified.py'
+    mcp_definition_line: 361
+    implementation_method: 'SessionManager.list_sessions'
+    implementation_line: 90
+    database_tables:
+      - sessions
+      - chat_rooms
+      - artifacts
+    web_routes:
+      - 'GET /'
+      - 'GET /api/sessions'
+    user_stories: []
+    test_coverage_percent: 0
+    example: |
+      # List all active sessions
+      active = await list_sessions(status="active", limit=10)
+      # Returns: [
+      #   {
+      #     "id": "a7f3k9m2",
+      #     "title": "Q4 Planning Session",
+      #     "created_at": "2025-10-09T14:30:00",
+      #     "updated_at": "2025-10-09T16:45:00",
+      #     "status": "active",
+      #     "room_count": 3,
+      #     "artifact_count": 5,
+      #     "web_url": "http://127.0.0.1:8765/session/a7f3k9m2"
+      #   }
+      # ]
+
+      # List all sessions (active and archived)
+      all_sessions = await list_sessions(limit=50)
+
+      # List archived sessions only
+      archived = await list_sessions(status="archived")
+
+  - name: update_session
+    signature: 'update_session(session_id: str, title: Optional[str] = None, status: Optional[str] = None) -> dict'
+    description: Update session metadata (title and/or status) with automatic timestamp tracking
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/sessions/manager.py'
+    mcp_definition_file: 'worktrees/main/mcp-server/src/npl_mcp/unified.py'
+    mcp_definition_line: 369
+    implementation_method: 'SessionManager.update_session'
+    implementation_line: 132
+    database_tables:
+      - sessions
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: 0
+    example: |
+      # Update session title
+      result = await update_session(
+          session_id="a7f3k9m2",
+          title="Q4 Planning - Final Review"
+      )
+
+      # Archive a session
+      result = await update_session(
+          session_id="a7f3k9m2",
+          status="archived"
+      )
+
+      # Update both title and status
+      result = await update_session(
+          session_id="a7f3k9m2",
+          title="Q4 Planning - Completed",
+          status="archived"
+      )
+      # Returns: {
+      #   "id": "a7f3k9m2",
+      #   "title": "Q4 Planning - Completed",
+      #   "status": "archived",
+      #   "created_at": "2025-10-09T14:30:00",
+      #   "updated_at": "2025-10-09T18:00:00"  # Auto-updated
+      # }

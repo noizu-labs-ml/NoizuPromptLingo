@@ -1,0 +1,363 @@
+version: 1
+updated: '2026-02-02'
+documentation_source: worktrees/main/mcp-server
+
+prds:
+  - id: PRD-001
+    title: Database Infrastructure
+    file: PRD-001-database-infrastructure.md
+    status: documented
+    version: 1.0
+    categories: [C-01]
+    tools: []
+    user_stories: [US-038, US-039, US-040, US-041, US-042, US-043, US-044, US-045, US-046, US-047, US-055]
+    personas: [P-004, P-005, P-001, P-003]
+    database_tables: [artifacts, revisions, reviews, inline_comments, review_overlays, chat_rooms, room_members, chat_events, notifications, sessions, taskers, task_queues, tasks, task_events, task_artifacts, schema_version]
+    web_routes: []
+    implementation_source: worktrees/main/mcp-server
+    documentation_brief: .tmp/mcp-server/categories/01-database-infrastructure.md
+    test_coverage: 82%
+
+  - id: PRD-002
+    title: Artifact Management
+    file: PRD-002-artifact-management.md
+    status: documented
+    version: 1.0
+    categories: [C-02]
+    tools: [create_artifact, add_revision, get_artifact, list_artifacts, get_artifact_history]
+    user_stories: [US-008, US-009, US-017, US-023, US-063, US-068, US-071, US-075]
+    personas: [P-001, P-002, P-003, P-004, P-005]
+    database_tables: [artifacts, revisions]
+    web_routes: [GET /artifact/{id}, GET /api/artifact/{id}, POST /artifact/upload]
+    implementation_source: worktrees/main/mcp-server
+    documentation_brief: .tmp/mcp-server/categories/02-artifact-management.md
+    test_coverage: 53%
+
+  - id: PRD-003
+    title: Review System
+    file: PRD-003-review-system.md
+    status: documented
+    version: 1.0
+    categories: [C-03]
+    tools: [create_review, add_inline_comment, add_overlay_annotation, get_review, generate_annotated_artifact, complete_review]
+    user_stories: [US-010, US-011, US-023, US-063, US-075]
+    personas: [P-002, P-003, P-005]
+    database_tables: [reviews, inline_comments, review_overlays]
+    web_routes: []
+    implementation_source: worktrees/main/mcp-server
+    documentation_brief: .tmp/mcp-server/categories/03-review-system.md
+    test_coverage: 25%
+
+  - id: PRD-004
+    title: Chat and Session Management
+    file: PRD-004-chat-and-sessions.md
+    status: documented
+    version: 1.0
+    categories: [C-04, C-05]
+    tools: [create_chat_room, send_message, react_to_message, share_artifact, create_todo, get_chat_feed, get_notifications, mark_notification_read, create_session, get_session, list_sessions, update_session]
+    user_stories: [US-005, US-012, US-013, US-014, US-015, US-016, US-049, US-051, US-058, US-059, US-064, US-001, US-002, US-003, US-004, US-006, US-007, US-053]
+    personas: [P-001, P-002, P-003, P-004]
+    database_tables: [chat_rooms, room_members, chat_events, notifications, sessions]
+    web_routes: [GET /room/{room_id}, GET /session/{session_id}/room/{room_id}, GET /api/room/{id}/feed, GET /session/{session_id}, GET /api/sessions, GET /api/session/{id}]
+    implementation_source: worktrees/main/mcp-server
+    documentation_brief: .tmp/mcp-server/categories/04-chat-collaboration.md
+    test_coverage: 78%
+
+  - id: PRD-005
+    title: Task Queue System
+    file: PRD-005-task-queue.md
+    status: documented
+    version: 1.0
+    categories: [C-06]
+    tools: [create_task_queue, get_task_queue, list_task_queues, create_task, get_task, list_tasks, update_task_status, assign_task_complexity, update_task, add_task_artifact, add_task_message, get_task_queue_feed, get_task_feed]
+    user_stories: [US-020, US-021, US-022, US-025, US-026, US-027, US-028, US-029, US-030, US-031, US-032, US-033, US-034, US-035, US-036, US-037, US-048, US-051, US-054]
+    personas: [P-001, P-003, P-004, P-005]
+    database_tables: [task_queues, tasks, task_events, task_artifacts]
+    web_routes: [GET /tasks, GET /tasks/{queue_id}, GET /tasks/{queue_id}/task/{task_id}, POST /tasks/{queue_id}/task/{task_id}/message, POST /tasks/{queue_id}/task/{task_id}/status, GET /api/task_queues, GET /api/task_queue/{queue_id}, GET /api/tasks, GET /api/task/{task_id}, GET /api/queue/{queue_id}/feed, GET /api/task/{task_id}/feed]
+    implementation_source: worktrees/main/mcp-server
+    documentation_brief: .tmp/mcp-server/categories/06-task-queue.md
+    test_coverage: 0%
+
+  - id: PRD-006
+    title: Browser Automation
+    file: PRD-006-browser-automation.md
+    status: documented
+    version: 1.0
+    categories: [C-07]
+    tools: [screenshot_capture, screenshot_diff, browser_navigate, browser_click, browser_fill, browser_type, browser_select, browser_scroll, browser_wait_for, browser_get_text, browser_query_elements, browser_evaluate, browser_screenshot, browser_get_state, browser_press_key, browser_hover, browser_focus, browser_get_html, browser_set_viewport, browser_go_back, browser_go_forward, browser_reload, browser_inject_script, browser_inject_style, browser_wait_network_idle, browser_get_cookies, browser_set_cookie, browser_clear_cookies, browser_get_local_storage, browser_set_local_storage, browser_close_session, browser_list_sessions]
+    user_stories: [US-052, US-042, US-048, US-012, US-013, US-019, US-020, US-021, US-024, US-029]
+    personas: [P-001, P-003]
+    database_tables: [artifacts]
+    web_routes: [GET /screenshots, GET /screenshots/checkpoint/{slug}, GET /screenshots/compare/{comparison_id}, GET /api/screenshots/checkpoints, GET /api/screenshots/checkpoint/{slug}]
+    implementation_source: worktrees/main/mcp-server
+    documentation_brief: .tmp/mcp-server/categories/07-browser-automation.md
+    test_coverage: null
+
+  - id: PRD-007
+    title: Web Interface
+    file: PRD-007-web-interface.md
+    status: documented
+    version: 1.0
+    categories: [C-09]
+    tools: []
+    user_stories: [US-005]
+    personas: [P-002]
+    database_tables: [sessions, chat_rooms, chat_events, notifications, artifacts]
+    web_routes: [GET /, GET /session/{id}, GET /session/{id}/room/{room_id}, GET /room/{room_id}, GET /artifact/{id}, GET /tasks, GET /tasks/{queue_id}, GET /tasks/{queue_id}/task/{task_id}, GET /screenshots, GET /screenshots/checkpoint/{slug}, GET /screenshots/compare/{comparison_id}]
+    implementation_source: worktrees/main/mcp-server
+    documentation_brief: .tmp/mcp-server/categories/09-web-interface.md
+    test_coverage: 0%
+
+  - id: PRD-008
+    title: NPL Script Wrappers
+    file: PRD-008-script-wrappers.md
+    status: documented
+    version: 1.0
+    categories: [C-08]
+    tools: [dump_files, git_tree, git_tree_depth, npl_load, web_to_md]
+    user_stories: [US-018, US-019, US-001, US-002, US-003, US-025, US-047]
+    personas: [P-001, P-003, P-005]
+    database_tables: []
+    web_routes: []
+    implementation_source: worktrees/main/mcp-server
+    documentation_brief: .tmp/mcp-server/categories/08-script-wrappers.md
+    test_coverage: 0%
+
+  - id: PRD-009
+    title: External Executors
+    file: PRD-009-external-executors.md
+    status: documented
+    version: 1.0
+    categories: [C-10]
+    tools: []
+    user_stories: []
+    personas: []
+    database_tables: [taskers]
+    web_routes: []
+    implementation_source: worktrees/main/mcp-server
+    implementation_modules: [src/npl_mcp/executors/manager.py, src/npl_mcp/executors/fabric.py]
+    documentation_brief: .tmp/mcp-server/categories/10-external-executors.md
+    test_coverage: null
+    notes: Complete implementation exists but NO MCP tools exposed in unified.py - potential enhancement opportunity
+
+tool_to_prd_mapping:
+  # PRD-002: Artifact Management
+  create_artifact: PRD-002
+  add_revision: PRD-002
+  get_artifact: PRD-002
+  list_artifacts: PRD-002
+  get_artifact_history: PRD-002
+
+  # PRD-003: Review System
+  create_review: PRD-003
+  add_inline_comment: PRD-003
+  add_overlay_annotation: PRD-003
+  get_review: PRD-003
+  generate_annotated_artifact: PRD-003
+  complete_review: PRD-003
+
+  # PRD-004: Chat and Session Management
+  create_chat_room: PRD-004
+  send_message: PRD-004
+  react_to_message: PRD-004
+  share_artifact: PRD-004
+  create_todo: PRD-004
+  get_chat_feed: PRD-004
+  get_notifications: PRD-004
+  mark_notification_read: PRD-004
+  create_session: PRD-004
+  get_session: PRD-004
+  list_sessions: PRD-004
+  update_session: PRD-004
+
+  # PRD-005: Task Queue System
+  create_task_queue: PRD-005
+  get_task_queue: PRD-005
+  list_task_queues: PRD-005
+  create_task: PRD-005
+  get_task: PRD-005
+  list_tasks: PRD-005
+  update_task_status: PRD-005
+  assign_task_complexity: PRD-005
+  update_task: PRD-005
+  add_task_artifact: PRD-005
+  add_task_message: PRD-005
+  get_task_queue_feed: PRD-005
+  get_task_feed: PRD-005
+
+  # PRD-006: Browser Automation
+  screenshot_capture: PRD-006
+  screenshot_diff: PRD-006
+  browser_navigate: PRD-006
+  browser_click: PRD-006
+  browser_fill: PRD-006
+  browser_type: PRD-006
+  browser_select: PRD-006
+  browser_scroll: PRD-006
+  browser_wait_for: PRD-006
+  browser_get_text: PRD-006
+  browser_query_elements: PRD-006
+  browser_evaluate: PRD-006
+  browser_screenshot: PRD-006
+  browser_get_state: PRD-006
+  browser_press_key: PRD-006
+  browser_hover: PRD-006
+  browser_focus: PRD-006
+  browser_get_html: PRD-006
+  browser_set_viewport: PRD-006
+  browser_go_back: PRD-006
+  browser_go_forward: PRD-006
+  browser_reload: PRD-006
+  browser_inject_script: PRD-006
+  browser_inject_style: PRD-006
+  browser_wait_network_idle: PRD-006
+  browser_get_cookies: PRD-006
+  browser_set_cookie: PRD-006
+  browser_clear_cookies: PRD-006
+  browser_get_local_storage: PRD-006
+  browser_set_local_storage: PRD-006
+  browser_close_session: PRD-006
+  browser_list_sessions: PRD-006
+
+  # PRD-008: NPL Script Wrappers
+  dump_files: PRD-008
+  git_tree: PRD-008
+  git_tree_depth: PRD-008
+  npl_load: PRD-008
+  web_to_md: PRD-008
+
+us_to_prd_mapping:
+  # PRD-001: Database Infrastructure
+  US-038: [PRD-001]
+  US-039: [PRD-001]
+  US-040: [PRD-001]
+  US-041: [PRD-001]
+  US-042: [PRD-001, PRD-006]
+  US-043: [PRD-001]
+  US-044: [PRD-001]
+  US-045: [PRD-001]
+  US-046: [PRD-001]
+  US-047: [PRD-001, PRD-008]
+  US-055: [PRD-001]
+
+  # PRD-002: Artifact Management
+  US-008: [PRD-002]
+  US-009: [PRD-002]
+  US-017: [PRD-002]
+  US-023: [PRD-002, PRD-003]
+  US-063: [PRD-002, PRD-003]
+  US-068: [PRD-002]
+  US-071: [PRD-002]
+  US-075: [PRD-002, PRD-003]
+
+  # PRD-003: Review System
+  US-010: [PRD-003]
+  US-011: [PRD-003]
+
+  # PRD-004: Chat and Session Management
+  US-001: [PRD-004, PRD-008]
+  US-002: [PRD-004, PRD-008]
+  US-003: [PRD-004, PRD-008]
+  US-004: [PRD-004]
+  US-005: [PRD-004, PRD-007]
+  US-006: [PRD-004]
+  US-007: [PRD-004]
+  US-012: [PRD-004, PRD-006]
+  US-013: [PRD-004, PRD-006]
+  US-014: [PRD-004]
+  US-015: [PRD-004]
+  US-016: [PRD-004]
+  US-049: [PRD-004]
+  US-051: [PRD-004, PRD-005]
+  US-053: [PRD-004]
+  US-058: [PRD-004]
+  US-059: [PRD-004]
+  US-064: [PRD-004]
+
+  # PRD-005: Task Queue System
+  US-020: [PRD-005]
+  US-021: [PRD-005, PRD-006]
+  US-022: [PRD-005]
+  US-025: [PRD-005, PRD-008]
+  US-026: [PRD-005]
+  US-027: [PRD-005]
+  US-028: [PRD-005]
+  US-029: [PRD-005, PRD-006]
+  US-030: [PRD-005]
+  US-031: [PRD-005]
+  US-032: [PRD-005]
+  US-033: [PRD-005]
+  US-034: [PRD-005]
+  US-035: [PRD-005]
+  US-036: [PRD-005]
+  US-037: [PRD-005]
+  US-048: [PRD-005, PRD-006]
+  US-054: [PRD-005]
+
+  # PRD-006: Browser Automation
+  US-019: [PRD-006]
+  US-020: [PRD-006]
+  US-024: [PRD-006]
+  US-052: [PRD-006]
+
+  # PRD-008: NPL Script Wrappers
+  US-018: [PRD-008]
+
+statistics:
+  total_prds: 9
+  total_tools: 73
+  total_user_stories: 90
+  total_database_tables: 16
+  total_web_routes: 17
+  prd_with_tools: 6
+  prd_infrastructure: 2
+  prd_ui: 1
+  prd_tool_distribution:
+    PRD-002: 5
+    PRD-003: 6
+    PRD-004: 12
+    PRD-005: 13
+    PRD-006: 32
+    PRD-008: 5
+  coverage_distribution:
+    documented: 9
+    with_test_coverage: 4
+    highest_coverage: "PRD-001 (82%)"
+    lowest_coverage: "PRD-005, PRD-007, PRD-008 (0%)"
+    average_coverage: "31%"
+  category_coverage:
+    C-01: 82%
+    C-02: 53%
+    C-03: 25%
+    C-04: 78%
+    C-05: 0%
+    C-06: 0%
+    C-07: null
+    C-08: 0%
+    C-09: 0%
+    C-10: null
+
+persona_engagement:
+  P-001: [PRD-001, PRD-002, PRD-004, PRD-005, PRD-006, PRD-008]
+  P-002: [PRD-002, PRD-003, PRD-004, PRD-007]
+  P-003: [PRD-002, PRD-003, PRD-004, PRD-005, PRD-006, PRD-008]
+  P-004: [PRD-001, PRD-004, PRD-005]
+  P-005: [PRD-001, PRD-002, PRD-003, PRD-005, PRD-008]
+
+next_steps:
+  - Generate individual PRD markdown files (PRD-001.md through PRD-009.md)
+  - Create comprehensive extraction summary document
+  - Update user-stories/index.yaml with implementation_status for all stories
+  - Generate tool reference documentation from tool_to_prd_mapping
+  - Create cross-reference matrix for PRD dependencies
+  - Document test coverage improvement roadmap
+
+notes:
+  - Index created on 2026-02-02 from extraction data
+  - Source: worktrees/main/mcp-server (production-ready code)
+  - 73 MCP tools across 6 PRDs with exposed tool interfaces
+  - 3 PRDs cover infrastructure and UI (no direct tool exposure)
+  - 90 user stories mapped across all 9 PRDs
+  - Test coverage varies: 82% (database) to 0% (tasks, sessions, web, scripts)
+  - Some user stories span multiple PRDs (cross-cutting concerns)
+  - PRD-009 (External Executors) has complete implementation but no MCP exposure

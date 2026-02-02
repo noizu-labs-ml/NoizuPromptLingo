@@ -1,0 +1,36 @@
+Category: Session Management
+Tools extracted: 4
+Database tables: 1 primary (sessions), 2 related (artifacts, chat_rooms with session_id FK)
+Web routes: 3
+Test coverage: 0%
+Files created:
+- categories/05-session-management.md
+- tools/by-category/session-tools.yaml
+Status: Complete
+
+Tools:
+1. create_session - Create new session with optional custom ID
+2. get_session - Retrieve session details and all contents
+3. list_sessions - List sessions with filtering and summary counts
+4. update_session - Update session metadata with auto-timestamps
+
+Implementation notes:
+- Sessions table added via migration 1 (not base schema.sql)
+- Session IDs use 8-char cryptographically secure random strings
+- Supports custom session IDs with collision handling
+- Automatic timestamp tracking (created_at, updated_at)
+- Status field supports 'active' and 'archived'
+- Foreign keys in artifacts and chat_rooms (migrations 2-3)
+- Web UI integration via web_url fields
+
+Database schema:
+- sessions (id TEXT PRIMARY KEY, title TEXT, created_at TEXT, updated_at TEXT, status TEXT)
+- artifacts.session_id (FK to sessions.id, nullable)
+- chat_rooms.session_id (FK to sessions.id, nullable)
+- Indexes: idx_sessions_updated, idx_sessions_status
+
+Internal methods (not MCP tools):
+- touch_session - Update timestamp on activity
+- get_or_create_session - Idempotent session retrieval/creation
+- associate_artifact - Link artifact to session
+- archive_session - Helper for status='archived'

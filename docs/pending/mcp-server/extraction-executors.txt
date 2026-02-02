@@ -1,0 +1,86 @@
+Category: External Executors
+Category ID: C-10
+Tools extracted: 0 (MCP) / 10 (Potential)
+Implementation modules: 2
+Database tables: 1
+Web routes: 0
+Test coverage: Unknown (not documented)
+
+Status: IMPLEMENTATION COMPLETE BUT NOT EXPOSED
+
+Critical Finding:
+-----------------
+Complete, production-ready implementation exists for ephemeral tasker agents
+and fabric CLI integration, but ZERO MCP tools are exposed in unified.py.
+
+Implementation Files:
+- src/npl_mcp/executors/manager.py (455 lines)
+- src/npl_mcp/executors/fabric.py (253 lines)
+- src/npl_mcp/executors/__init__.py (exports)
+
+Key Features:
+1. Tasker Lifecycle Management
+   - Auto-spawning with unique IDs
+   - State tracking (IDLE/ACTIVE/NAGGING/TERMINATED)
+   - Configurable timeouts (default: 15 min)
+   - Idle nag messages (default: 5 min)
+   - Context buffering for follow-ups
+   - Background lifecycle monitor
+
+2. Fabric CLI Integration
+   - Auto-detection of fabric installation
+   - Single/multi-pattern analysis
+   - Graceful fallback without fabric
+   - Pattern selection heuristics
+   - Timeout handling (default: 5 min)
+
+Database Schema:
+- taskers table with 13 columns
+- Lifecycle state tracking
+- Chat integration for nags
+- Session grouping support
+
+Potential MCP Tools (Not Yet Exposed):
+1. spawn_tasker
+2. get_tasker
+3. list_taskers
+4. touch_tasker
+5. dismiss_tasker
+6. keep_alive_tasker
+7. apply_fabric_pattern
+8. analyze_with_fabric
+9. list_fabric_patterns
+10. store_tasker_context
+11. get_tasker_context
+
+External Dependencies:
+- Fabric CLI (https://github.com/danielmiessler/fabric)
+- asyncio for lifecycle monitoring
+- subprocess for CLI invocation
+
+Documentation Gaps:
+- Not mentioned in README.md
+- Not mentioned in USAGE.md
+- Not mentioned in PROJECT_STATUS.md coverage
+- Not mentioned in ENHANCEMENTS.md
+- No test files found
+- No web UI
+
+Integration Points:
+- ChatManager (for nag messages)
+- SessionManager (optional grouping)
+- Database (persistent state)
+
+Recommended Actions:
+1. Expose MCP tools in unified.py
+2. Add comprehensive test coverage
+3. Document in README/USAGE
+4. Create web UI dashboard
+5. Add to PROJECT_STATUS coverage report
+
+Files created:
+- categories/10-external-executors.md
+- tools/by-category/executor-tools.yaml
+- extraction-executors.txt
+
+Extraction Date: 2026-02-02

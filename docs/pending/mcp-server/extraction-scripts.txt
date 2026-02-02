@@ -1,0 +1,10 @@
+Category: NPL Script Wrappers
+Tools extracted: 5
+Database tables: 0
+Web routes: 0
+Test coverage: 0%
+External dependencies: 4 bash/Python scripts, 1 HTTP API
+Files created:
+- categories/08-script-wrappers.md
+- tools/by-category/script-tools.yaml
+Status: Complete

@@ -1,0 +1,253 @@
+category: task-queue
+category_id: C-06
+tool_count: 13
+documentation_source: worktrees/main/mcp-server
+tools:
+  - name: create_task_queue
+    signature: 'create_task_queue(name: str, description: Optional[str] = None, session_id: Optional[str] = None, chat_room_id: Optional[int] = None) -> dict'
+    description: Create a new task queue for organizing work items
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/tasks/manager.py'
+    mcp_definition_file: 'worktrees/main/mcp-server/src/npl_mcp/unified.py'
+    mcp_definition_line: 1437
+    database_tables: [task_queues]
+    web_routes: [GET /tasks, POST /api/tasks/queues, GET /api/tasks/queues]
+    user_stories: []
+    test_coverage_percent: 0
+    example: |
+      # Create a queue for design work
+      queue = await create_task_queue(
+          name="dashboard-redesign",
+          description="Q4 2025 dashboard redesign tasks",
+          session_id="ses-20251009",
+          chat_room_id=5
+      )
+      # Returns: {"queue_id": 1, "name": "dashboard-redesign", ...}
+
+  - name: get_task_queue
+    signature: 'get_task_queue(queue_id: int) -> dict'
+    description: Get task queue details with task counts
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/tasks/manager.py'
+    mcp_definition_file: 'worktrees/main/mcp-server/src/npl_mcp/unified.py'
+    mcp_definition_line: 1464
+    database_tables: [task_queues, tasks]
+    web_routes: [GET /tasks/{queue_id}, GET /api/tasks/queues/{queue_id}]
+    user_stories: []
+    test_coverage_percent: 0
+    example: |
+      # Get queue details
+      queue = await get_task_queue(queue_id=1)
+      # Returns: {"id": 1, "name": "...", "total_tasks": 15, "pending": 5, ...}
+
+  - name: list_task_queues
+    signature: 'list_task_queues(status: Optional[str] = None, limit: int = 50) -> list'
+    description: List task queues with summary stats
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/tasks/manager.py'
+    mcp_definition_file: 'worktrees/main/mcp-server/src/npl_mcp/unified.py'
+    mcp_definition_line: 1478
+    database_tables: [task_queues, tasks]
+    web_routes: [GET /tasks, GET /api/tasks/queues]
+    user_stories: []
+    test_coverage_percent: 0
+    example: |
+      # List active queues
+      queues = await list_task_queues(status="active", limit=50)
+      # Returns: [{"id": 1, "name": "...", "total_tasks": 15, ...}, ...]
+
+  - name: create_task
+    signature: 'create_task(queue_id: int, title: str, description: Optional[str] = None, acceptance_criteria: Optional[str] = None, priority: int = 1, deadline: Optional[str] = None, created_by: Optional[str] = None, assigned_to: Optional[str] = None) -> dict'
+    description: Create a new task in a queue
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/tasks/manager.py'
+    mcp_definition_file: 'worktrees/main/mcp-server/src/npl_mcp/unified.py'
+    mcp_definition_line: 1497
+    database_tables: [tasks, task_events]
+    web_routes: [POST /api/tasks/queues/{queue_id}/tasks]
+    user_stories: []
+    test_coverage_percent: 0
+    example: |
+      # Create a task
+      task = await create_task(
+          queue_id=1,
+          title="Implement login form",
+          description="Create responsive login form with validation",
+          acceptance_criteria="- Form validates email\n- Password strength meter",
+          priority=2,
+          deadline="2025-10-15T17:00:00",
+          created_by="product-manager",
+          assigned_to="frontend-dev"
+      )
+
+  - name: get_task
+    signature: 'get_task(task_id: int) -> dict'
+    description: Get task details with linked artifacts
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/tasks/manager.py'
+    mcp_definition_file: 'worktrees/main/mcp-server/src/npl_mcp/unified.py'
+    mcp_definition_line: 1536
+    database_tables: [tasks, task_artifacts]
+    web_routes: [GET /tasks/{queue_id}/task/{task_id}, GET /api/tasks/{task_id}]
+    user_stories: []
+    test_coverage_percent: 0
+    example: |
+      # Get task details
+      task = await get_task(task_id=1)
+      # Returns: {"id": 1, "title": "...", "status": "in_progress", "artifacts": [...], ...}
+
+  - name: list_tasks
+    signature: 'list_tasks(queue_id: int, status: Optional[str] = None, assigned_to: Optional[str] = None, limit: int = 100) -> list'
+    description: List tasks in a queue ordered by priority and deadline
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/tasks/manager.py'
+    mcp_definition_file: 'worktrees/main/mcp-server/src/npl_mcp/unified.py'
+    mcp_definition_line: 1550
+    database_tables: [tasks]
+    web_routes: [GET /api/tasks/queues/{queue_id}/tasks]
+    user_stories: []
+    test_coverage_percent: 0
+    example: |
+      # List pending tasks
+      tasks = await list_tasks(queue_id=1, status="pending", limit=100)
+      # Returns: [{"id": 1, "title": "...", "priority": 2, ...}, ...]
+
+  - name: update_task_status
+    signature: 'update_task_status(task_id: int, status: str, persona: Optional[str] = None, notes: Optional[str] = None) -> dict'
+    description: Update task status following workflow (pending -> in_progress -> blocked -> review -> done)
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/tasks/manager.py'
+    mcp_definition_file: 'worktrees/main/mcp-server/src/npl_mcp/unified.py'
+    mcp_definition_line: 1575
+    database_tables: [tasks, task_events]
+    web_routes: [POST /tasks/{queue_id}/task/{task_id}/status, PATCH /api/tasks/{task_id}/status]
+    user_stories: []
+    test_coverage_percent: 0
+    note: Only human operators can mark tasks as 'done'
+    example: |
+      # Agent starts working
+      await update_task_status(
+          task_id=1,
+          status="in_progress",
+          persona="frontend-dev",
+          notes="Starting implementation"
+      )
+
+  - name: assign_task_complexity
+    signature: 'assign_task_complexity(task_id: int, complexity: int, notes: Optional[str] = None, persona: Optional[str] = None) -> dict'
+    description: Assign complexity score (1-5) to task after agent review
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/tasks/manager.py'
+    mcp_definition_file: 'worktrees/main/mcp-server/src/npl_mcp/unified.py'
+    mcp_definition_line: 1603
+    database_tables: [tasks, task_events]
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: 0
+    complexity_scale: '1=trivial, 2=simple, 3=moderate, 4=complex, 5=very complex'
+    example: |
+      # Agent assesses complexity
+      await assign_task_complexity(
+          task_id=1,
+          complexity=3,
+          notes="Requires UI work plus validation logic. Estimated 4-6 hours.",
+          persona="tech-lead"
+      )
+
+  - name: update_task
+    signature: 'update_task(task_id: int, title: Optional[str] = None, description: Optional[str] = None, acceptance_criteria: Optional[str] = None, priority: Optional[int] = None, deadline: Optional[str] = None, assigned_to: Optional[str] = None, persona: Optional[str] = None) -> dict'
+    description: Update task details (any field)
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/tasks/manager.py'
+    mcp_definition_file: 'worktrees/main/mcp-server/src/npl_mcp/unified.py'
+    mcp_definition_line: 1628
+    database_tables: [tasks, task_events]
+    web_routes: [PATCH /api/tasks/{task_id}]
+    user_stories: []
+    test_coverage_percent: 0
+    example: |
+      # Update task priority
+      await update_task(
+          task_id=1,
+          priority=3,
+          persona="product-manager"
+      )
+
+  - name: add_task_artifact
+    signature: 'add_task_artifact(task_id: int, artifact_type: str, artifact_id: Optional[int] = None, git_branch: Optional[str] = None, description: Optional[str] = None, created_by: Optional[str] = None) -> dict'
+    description: Link an artifact, git branch, or file to a task
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/tasks/manager.py'
+    mcp_definition_file: 'worktrees/main/mcp-server/src/npl_mcp/unified.py'
+    mcp_definition_line: 1665
+    database_tables: [task_artifacts, task_events]
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: 0
+    artifact_types: ['artifact', 'git_branch', 'file']
+    example: |
+      # Link artifact
+      await add_task_artifact(
+          task_id=1,
+          artifact_type="artifact",
+          artifact_id=42,
+          description="Login form mockup v2",
+          created_by="designer"
+      )
+
+      # Link git branch
+      await add_task_artifact(
+          task_id=1,
+          artifact_type="git_branch",
+          git_branch="feature/login-form",
+          description="Implementation branch",
+          created_by="frontend-dev"
+      )
+
+  - name: add_task_message
+    signature: 'add_task_message(task_id: int, persona: str, message: str) -> dict'
+    description: Add a message/question to task's activity feed
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/tasks/manager.py'
+    mcp_definition_file: 'worktrees/main/mcp-server/src/npl_mcp/unified.py'
+    mcp_definition_line: 1696
+    database_tables: [task_events]
+    web_routes: [POST /tasks/{queue_id}/task/{task_id}/message, POST /api/tasks/{task_id}/message]
+    user_stories: []
+    test_coverage_percent: 0
+    example: |
+      # Add message to task
+      await add_task_message(
+          task_id=1,
+          persona="frontend-dev",
+          message="Should the password field support pasting? Security team input needed."
+      )
+
+  - name: get_task_queue_feed
+    signature: 'get_task_queue_feed(queue_id: int, since: Optional[str] = None, limit: int = 100) -> dict'
+    description: Get activity feed for task queue (for polling updates)
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/tasks/manager.py'
+    mcp_definition_file: 'worktrees/main/mcp-server/src/npl_mcp/unified.py'
+    mcp_definition_line: 1720
+    database_tables: [task_events]
+    web_routes: [GET /api/tasks/queues/{queue_id}/feed]
+    user_stories: []
+    test_coverage_percent: 0
+    polling_pattern: Pass returned 'next_since' value in subsequent calls to only get new events
+    example: |
+      # Poll for queue updates
+      feed = await get_task_queue_feed(
+          queue_id=1,
+          since="2025-10-09T14:30:00",
+          limit=100
+      )
+      # Returns: {"events": [...], "next_since": "2025-10-09T15:45:00", "has_more": false}
+
+  - name: get_task_feed
+    signature: 'get_task_feed(task_id: int, since: Optional[str] = None, limit: int = 50) -> dict'
+    description: Get activity feed for a specific task
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/tasks/manager.py'
+    mcp_definition_file: 'worktrees/main/mcp-server/src/npl_mcp/unified.py'
+    mcp_definition_line: 1745
+    database_tables: [task_events]
+    web_routes: [GET /api/tasks/{task_id}/feed]
+    user_stories: []
+    test_coverage_percent: 0
+    polling_pattern: Pass returned 'next_since' value in subsequent calls to only get new events
+    example: |
+      # Poll for task updates
+      feed = await get_task_feed(
+          task_id=1,
+          since="2025-10-09T14:30:00",
+          limit=50
+      )
+      # Returns: {"events": [...], "next_since": "2025-10-09T15:45:00", "has_more": false}

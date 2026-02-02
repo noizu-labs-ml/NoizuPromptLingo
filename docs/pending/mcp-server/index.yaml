@@ -1,0 +1,208 @@
+version: 1
+extraction_date: '2026-02-02'
+extraction_source: worktrees/main/mcp-server
+total_tools: 73
+total_categories: 10
+total_database_tables: 16
+total_web_routes: 17
+
+categories:
+  - id: C-01
+    name: Database Infrastructure
+    brief_file: categories/01-database-infrastructure.md
+    tool_count: 0
+    tools: []
+    database_tables: [artifacts, revisions, reviews, inline_comments, review_overlays, chat_rooms, room_members, chat_events, notifications, sessions, taskers, task_queues, tasks, task_events, task_artifacts, schema_version]
+    database_table_count: 16
+    user_stories: [US-038, US-039, US-040, US-041, US-042, US-043, US-044, US-045, US-046, US-047, US-055]
+    status: documented
+    tool_list_file: tools/by-category/database-schema.yaml
+    extraction_summary: extraction-database.txt
+
+  - id: C-02
+    name: Artifact Management
+    brief_file: categories/02-artifact-management.md
+    tool_count: 5
+    tools: [create_artifact, add_revision, get_artifact, list_artifacts, get_artifact_history]
+    database_tables: [artifacts, revisions]
+    web_routes: [GET /artifact/{id}, GET /api/artifact/{id}, POST /artifact/upload]
+    user_stories: [US-008, US-009, US-017, US-023, US-063, US-068, US-071, US-075]
+    status: documented
+    tool_list_file: tools/by-category/artifact-tools.yaml
+    extraction_summary: extraction-artifacts.txt
+    test_coverage: 53%
+    suggested_prd: PRD-002
+
+  - id: C-03
+    name: Review System
+    brief_file: categories/03-review-system.md
+    tool_count: 6
+    tools: [create_review, add_inline_comment, add_overlay_annotation, get_review, generate_annotated_artifact, complete_review]
+    database_tables: [reviews, inline_comments, review_overlays]
+    user_stories: [US-010, US-011, US-023, US-063, US-075]
+    status: documented
+    tool_list_file: tools/by-category/review-tools.yaml
+    extraction_summary: extraction-reviews.txt
+    test_coverage: 25%
+    suggested_prd: PRD-003
+
+  - id: C-04
+    name: Chat and Collaboration
+    brief_file: categories/04-chat-collaboration.md
+    tool_count: 8
+    tools: [create_chat_room, send_message, react_to_message, share_artifact, create_todo, get_chat_feed, get_notifications, mark_notification_read]
+    database_tables: [chat_rooms, room_members, chat_events, notifications]
+    web_routes: [GET /room/{room_id}, GET /session/{session_id}/room/{room_id}, GET /api/room/{id}/feed]
+    user_stories: [US-005, US-012, US-013, US-014, US-015, US-016, US-049, US-051, US-058, US-059, US-064]
+    status: documented
+    tool_list_file: tools/by-category/chat-tools.yaml
+    extraction_summary: extraction-chat.txt
+    test_coverage: 78%
+    suggested_prd: PRD-004
+
+  - id: C-05
+    name: Session Management
+    brief_file: categories/05-session-management.md
+    tool_count: 4
+    tools: [create_session, get_session, list_sessions, update_session]
+    database_tables: [sessions]
+    web_routes: [GET /session/{session_id}, GET /api/sessions, GET /api/session/{id}]
+    user_stories: [US-001, US-002, US-003, US-004, US-006, US-007]
+    status: documented
+    tool_list_file: tools/by-category/session-tools.yaml
+    extraction_summary: extraction-sessions.txt
+    test_coverage: 0%
+    suggested_prd: PRD-004
+
+  - id: C-06
+    name: Task Queue System
+    brief_file: categories/06-task-queue.md
+    tool_count: 13
+    tools: [create_task_queue, get_task_queue, list_task_queues, create_task, get_task, list_tasks, update_task_status, assign_task_complexity, update_task, add_task_artifact, add_task_message, get_task_queue_feed, get_task_feed]
+    database_tables: [task_queues, tasks, task_events, task_artifacts]
+    web_routes: [GET /tasks, GET /tasks/{queue_id}, GET /tasks/{queue_id}/task/{task_id}, POST /tasks/{queue_id}/task/{task_id}/message, POST /tasks/{queue_id}/task/{task_id}/status, GET /api/task_queues, GET /api/task_queue/{queue_id}, GET /api/tasks, GET /api/task/{task_id}, GET /api/queue/{queue_id}/feed, GET /api/task/{task_id}/feed]
+    user_stories: [US-020, US-021, US-022, US-025, US-026, US-027, US-028, US-029, US-030, US-031, US-032, US-033, US-034, US-035, US-036, US-037, US-048, US-051, US-054]
+    status: documented
+    tool_list_file: tools/by-category/task-tools.yaml
+    extraction_summary: extraction-tasks.txt
+    test_coverage: 0%
+    suggested_prd: PRD-005
+
+  - id: C-07
+    name: Browser Automation
+    brief_file: categories/07-browser-automation.md
+    tool_count: 32
+    tools: [screenshot_capture, screenshot_diff, browser_navigate, browser_click, browser_fill, browser_type, browser_select, browser_scroll, browser_wait_for, browser_get_text, browser_query_elements, browser_evaluate, browser_screenshot, browser_get_state, browser_press_key, browser_hover, browser_focus, browser_get_html, browser_set_viewport, browser_go_back, browser_go_forward, browser_reload, browser_inject_script, browser_inject_style, browser_wait_network_idle, browser_get_cookies, browser_set_cookie, browser_clear_cookies, browser_get_local_storage, browser_set_local_storage, browser_close_session, browser_list_sessions]
+    database_tables: [artifacts]
+    web_routes: [GET /screenshots, GET /screenshots/checkpoint/{slug}, GET /screenshots/compare/{comparison_id}, GET /api/screenshots/checkpoints, GET /api/screenshots/checkpoint/{slug}]
+    user_stories: [US-012, US-013, US-019, US-020, US-021, US-024, US-029, US-052, US-042, US-048, US-091, US-092, US-093]
+    status: documented
+    tool_list_file: tools/by-category/browser-tools.yaml
+    extraction_summary: extraction-browser.txt
+    test_coverage: null
+    suggested_prd: PRD-006
+
+  - id: C-08
+    name: NPL Script Wrappers
+    brief_file: categories/08-script-wrappers.md
+    tool_count: 5
+    tools: [dump_files, git_tree, git_tree_depth, npl_load, web_to_md]
+    database_tables: []
+    user_stories: [US-018, US-019, US-096]
+    status: documented
+    tool_list_file: tools/by-category/script-tools.yaml
+    extraction_summary: extraction-scripts.txt
+    test_coverage: 0%
+    suggested_prd: PRD-008
+
+  - id: C-09
+    name: Web Interface
+    brief_file: categories/09-web-interface.md
+    tool_count: 0
+    tools: []
+    database_tables: [sessions, chat_rooms, chat_events, notifications, artifacts]
+    web_routes: [GET /, GET /session/{id}, GET /session/{id}/room/{room_id}, GET /room/{room_id}, GET /artifact/{id}, GET /tasks, GET /tasks/{queue_id}, GET /tasks/{queue_id}/task/{task_id}, GET /screenshots, GET /screenshots/checkpoint/{slug}, GET /screenshots/compare/{comparison_id}]
+    user_stories: [US-005, US-097]
+    status: documented
+    tool_list_file: tools/by-category/web-routes.yaml
+    extraction_summary: extraction-web.txt
+    test_coverage: 0%
+    suggested_prd: PRD-007
+
+  - id: C-10
+    name: External Executors
+    brief_file: categories/10-external-executors.md
+    tool_count: 0
+    tools: []
+    database_tables: [taskers]
+    implementation_modules: [src/npl_mcp/executors/manager.py, src/npl_mcp/executors/fabric.py]
+    user_stories: [US-094, US-095]
+    status: documented
+    tool_list_file: tools/by-category/executor-tools.yaml
+    extraction_summary: extraction-executors.txt
+    test_coverage: null
+    suggested_prd: PRD-009
+    notes: Complete implementation exists but NO MCP tools exposed in unified.py - potential enhancement opportunity
+
+tool_summary:
+  total_mcp_tools: 73
+  by_category:
+    C-02: 5
+    C-03: 6
+    C-04: 8
+    C-05: 4
+    C-06: 13
+    C-07: 32
+    C-08: 5
+  not_exposed:
+    - category: C-10
+      description: Executor/Tasker tools
+      count: 10
+      note: Implementation complete but not exposed as MCP tools
+
+prd_mapping:
+  PRD-001: Database Infrastructure (C-01)
+  PRD-002: Artifact Management (C-02)
+  PRD-003: Review System (C-03)
+  PRD-004: Chat and Sessions (C-04, C-05)
+  PRD-005: Task Queue System (C-06)
+  PRD-006: Browser Automation (C-07)
+  PRD-007: Web Interface (C-09)
+  PRD-008: Script Wrappers (C-08)
+  PRD-009: External Executors (C-10)
+
+coverage_summary:
+  categories_documented: 10
+  categories_with_test_coverage: 4
+  categories_without_test_coverage: 3
+  categories_infrastructure: 3
+  average_test_coverage: 31%
+  highest_coverage: "C-01 (Database): 82%"
+  lowest_coverage: "C-05, C-06, C-08, C-09 (0%)"
+
+extraction_statistics:
+  database_tables: 16
+  web_routes: 17
+  mcp_tools_documented: 73
+  mcp_tools_exposed: 73
+  mcp_tools_not_exposed: 10+
+  categories_complete: 10
+  categories_partial: 0
+  categories_needs_work: 0
+
+next_steps:
+  - Create master tool list (complete-tool-list.yaml)
+  - Update docs/user-stories/index.yaml with implementation_status fields
+  - Generate docs/prds/PRD-*.md files
+  - Create docs/prds/index.yaml
+  - Generate extraction-summary.md
+
+notes:
+  - Extraction completed on 2026-02-02
+  - Source: worktrees/main/mcp-server (production-ready code)
+  - 73 tools across 8 exposed categories (C-02 through C-08)
+  - 10 additional executor tools implemented but not exposed (C-10)
+  - Database layer complete with 16 tables and migration system
+  - Web interface with 17 routes for all major features
+  - Test coverage varies from 0% (tasks, sessions) to 82% (database)
+  - Ready for user stories and PRD generation

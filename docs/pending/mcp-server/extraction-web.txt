@@ -1,0 +1,29 @@
+Category: Web Interface
+Routes extracted: 17
+- HTML routes: 8
+- Form submission routes: 3
+- API routes: 5
+- MCP protocol route: 1
+
+Database tables: 7
+- sessions
+- chat_rooms
+- chat_events
+- notifications
+- artifacts
+- screenshot_checkpoints
+- screenshot_comparisons
+
+Deployment modes: 4
+- stdio-only (npl-mcp)
+- combined (npl-mcp-web)
+- unified (npl-mcp-unified)
+- launcher (npl-mcp-launcher)
+
+Test coverage: 0%
+
+Files created:
+- categories/09-web-interface.md
+- tools/by-category/web-routes.yaml
+
+Status: Complete

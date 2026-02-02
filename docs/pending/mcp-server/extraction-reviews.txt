@@ -1,0 +1,9 @@
+Category: Review System
+Tools extracted: 6
+Database tables: 2
+Web routes: 0
+Test coverage: 25%
+Files created:
+- categories/03-review-system.md
+- tools/by-category/review-tools.yaml
+Status: Complete

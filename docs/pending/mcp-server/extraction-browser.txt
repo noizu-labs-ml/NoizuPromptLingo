@@ -1,0 +1,45 @@
+Category: Browser Automation
+Tools extracted: 32
+Database tables: 2
+Web routes: 3
+Test coverage: Not specified in PROJECT_STATUS.md
+Files created:
+- categories/07-browser-automation.md
+- tools/by-category/browser-tools.yaml
+Status: Complete
+
+Tool Breakdown:
+- Screenshot Tools: 3 (screenshot_capture, screenshot_diff, browser_screenshot)
+- Navigation Tools: 5 (navigate, go_back, go_forward, reload, wait_network_idle)
+- Interaction Tools: 9 (click, fill, type, select, hover, focus, scroll, wait_for, press_key)
+- Content Extraction Tools: 4 (get_text, get_html, query_elements, evaluate)
+- Page Modification Tools: 2 (inject_script, inject_style)
+- State Management Tools: 7 (get_state, set_viewport, get_cookies, set_cookie, clear_cookies, get_local_storage, set_local_storage)
+- Session Management Tools: 2 (close_session, list_sessions)
+
+Key Features:
+- Playwright-based browser automation with persistent sessions
+- Screenshot capture with viewport presets (desktop/mobile/custom)
+- Theme control (light/dark mode via prefers-color-scheme)
+- Visual regression testing using pixelmatch algorithm
+- Cookie and localStorage management
+- JavaScript/CSS injection
+- Network idle detection
+- Checkpoint-based testing infrastructure (not exposed as MCP tools)
+
+Implementation Files:
+- worktrees/main/mcp-server/src/npl_mcp/browser/__init__.py
+- worktrees/main/mcp-server/src/npl_mcp/browser/capture.py
+- worktrees/main/mcp-server/src/npl_mcp/browser/diff.py
+- worktrees/main/mcp-server/src/npl_mcp/browser/interact.py
+- worktrees/main/mcp-server/src/npl_mcp/browser/checkpoint.py
+- worktrees/main/mcp-server/src/npl_mcp/browser/report.py
+
+Related User Stories:
+- US-052: Browser automation timeout and retry handling
+- US-042: Audit schema version compatibility (visual regression)
+- US-048: Real-time agent workflow failure diagnostics (screenshot on error)
+
+Dependencies:
+- External: playwright, Pillow (PIL), pixelmatch
+- Internal: Artifact Manager (C-01), Session Manager (C-02), Database (C-04)

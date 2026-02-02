@@ -1,0 +1,101 @@
+version: 1
+title: FastMCP Framework Documentation
+description: General FastMCP 2.x framework guides for building MCP servers
+source: worktrees/main/docs/fastmcp/
+type: reference
+copied_to_staging: 2026-02-02
+
+documents:
+  - id: readme
+    file: README.md
+    title: FastMCP Overview
+    description: High-level overview of the FastMCP framework
+
+  - id: installation
+    file: 01-installation.md
+    title: Installation and Setup
+    description: How to install and configure FastMCP
+
+  - id: core-concepts
+    file: 02-core-concepts.md
+    title: Core Concepts
+    description: Fundamental concepts - servers, tools, resources, prompts, context
+
+  - id: tools
+    file: 03-tools.md
+    title: Tool Implementation
+    description: How to implement and register MCP tools
+
+  - id: resources
+    file: 04-resources.md
+    title: Resource Management
+    description: Resource URI templates and management patterns
+
+  - id: prompts
+    file: 05-prompts.md
+    title: Prompt Templates
+    description: Prompt creation and template system
+
+  - id: context
+    file: 06-context.md
+    title: Context and Lifecycle
+    description: Server context management and lifecycle hooks
+
+  - id: client
+    file: 07-client.md
+    title: Client Integration
+    description: Integrating FastMCP with client applications
+
+  - id: deployment
+    file: 08-deployment.md
+    title: Production Deployment
+    description: Deployment patterns and production considerations
+
+  - id: migration
+    file: 09-migration.md
+    title: Migration and Upgrades
+    description: Migration paths and version upgrades
+
+  - id: examples
+    file: 10-examples.md
+    title: Progressive Examples
+    description: Progressive examples from simple to advanced
+
+# Summary
+total_documents: 11
+categories:
+  - Getting Started (installation, overview)
+  - Core Concepts (tools, resources, prompts, context)
+  - Integration (client, deployment)
+  - Advanced (migration, examples)
+
+# Usage Notes
+usage_notes: |
+  These are general FastMCP framework documentation files copied from
+  worktrees/main/docs/fastmcp/. They provide comprehensive guides for
+  building FastMCP-based MCP servers.
+
+  These are NOT project-specific implementation guides. Rather, they are
+  framework reference documentation for understanding how FastMCP works.
+
+  For project-specific MCP tool implementations, see:
+  - docs/PRDs/prd-009-mcp-tools-implementation.md
+  - docs/pending/features-grid.md (MCP tools section)
+
+reading_order:
+  beginner:
+    - README.md
+    - 01-installation.md
+    - 02-core-concepts.md
+    - 10-examples.md
+
+  intermediate:
+    - 03-tools.md
+    - 04-resources.md
+    - 05-prompts.md
+    - 06-context.md
+
+  advanced:
+    - 07-client.md
+    - 08-deployment.md
+    - 09-migration.md

@@ -1,0 +1,96 @@
+category: script-wrappers
+category_id: C-08
+tool_count: 5
+documentation_source: worktrees/main/mcp-server
+
+tools:
+  - name: dump_files
+    signature: 'dump_files(path: str, glob_filter: Optional[str] = None) -> str'
+    description: Dump contents of files in a directory respecting .gitignore. Requires absolute path (not relative).
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/scripts/wrapper.py'
+    external_script: 'core/scripts/dump-files'
+    mcp_tool_definition: 'worktrees/main/mcp-server/src/npl_mcp/unified.py:161-169'
+    database_tables: []
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: 0
+    example: |
+      # Dump all markdown files in docs directory
+      content = await dump_files(
+          path="/home/user/project/docs",
+          glob_filter="*.md"
+      )
+
+  - name: git_tree
+    signature: 'git_tree(path: str = ".") -> str'
+    description: Display directory tree respecting .gitignore. Requires absolute path (not relative).
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/scripts/wrapper.py'
+    external_script: 'core/scripts/git-tree'
+    mcp_tool_definition: 'worktrees/main/mcp-server/src/npl_mcp/unified.py:172-180'
+    database_tables: []
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: 0
+    example: |
+      # Show directory structure
+      tree = await git_tree(path="/home/user/project/src")
+
+  - name: git_tree_depth
+    signature: 'git_tree_depth(path: str) -> str'
+    description: List directories with nesting depth information. Requires absolute path (not relative).
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/scripts/wrapper.py'
+    external_script: 'core/scripts/git-tree-depth'
+    mcp_tool_definition: 'worktrees/main/mcp-server/src/npl_mcp/unified.py:183-191'
+    database_tables: []
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: 0
+    example: |
+      # Analyze nesting depth
+      depth = await git_tree_depth(path="/home/user/project/src")
+
+  - name: npl_load
+    signature: 'npl_load(resource_type: str, items: str, skip: Optional[str] = None) -> str'
+    description: Load NPL components, metadata, or style guides. Resource types - c (component), m (meta), s (style). Returns content with tracking flags that must be passed to --skip on subsequent calls.
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/scripts/wrapper.py'
+    external_script: 'core/scripts/npl-load'
+    mcp_tool_definition: 'worktrees/main/mcp-server/src/npl_mcp/unified.py:194-197'
+    database_tables: []
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: 0
+    example: |
+      # Load syntax and agent components
+      npl_syntax = await npl_load(
+          resource_type="c",
+          items="syntax,agent,formatting",
+          skip="syntax"  # Already loaded
+      )
+
+      # Load persona metadata
+      persona = await npl_load(
+          resource_type="m",
+          items="persona.qa-engineer",
+          skip=""
+      )
+
+  - name: web_to_md
+    signature: 'web_to_md(url: str, timeout: int = 30) -> str'
+    description: Fetch a web page and return its content as markdown using Jina Reader API. Supports optional JINA_API_KEY environment variable for authentication.
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/unified.py'
+    external_api: 'https://r.jina.ai/'
+    mcp_tool_definition: 'worktrees/main/mcp-server/src/npl_mcp/unified.py:200-238'
+    database_tables: []
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: 0
+    environment_variables:
+      - name: JINA_API_KEY
+        required: false
+        description: Optional Jina Reader API key for authenticated requests
+    example: |
+      # Fetch documentation page
+      markdown = await web_to_md(
+          url="https://example.com/docs",
+          timeout=30
+      )
