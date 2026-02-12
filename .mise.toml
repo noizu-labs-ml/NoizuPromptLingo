@@ -29,3 +29,6 @@ test-status = "uv run pytest tests/ -q 2>/dev/null >/dev/null && echo '✅' || e
 
 # Test errors - show failing tests with minimal output
 test-errors = "uv run pytest --tb=no -q tests/"
+
+# Run FastMCP Inspector for development/debugging
+inspect = "uv run fastmcp dev src/npl_mcp/launcher.py:create_app --with-editable ."
