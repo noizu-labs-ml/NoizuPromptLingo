@@ -2,9 +2,9 @@
 
 ## Overview
 
-NPL MCP is a Model Context Protocol (MCP) server built on FastMCP 2.x. Rather than exposing all ~103 tools directly (which overwhelms clients), it uses a **meta tool pattern**: discovery tools are visible at startup. All catalog tools are callable on the same server scope and discoverable through these discovery tools.
+NPL MCP is a Model Context Protocol (MCP) server built on FastMCP 2.x. Rather than exposing all ~110 tools directly (which overwhelms clients), it uses a **meta tool pattern**: 9 tools are visible at startup (5 discovery + 4 session/instruction tools). All catalog tools are callable on the same server scope and discoverable through these discovery tools.
 
-The server combines FastMCP for MCP protocol handling, FastAPI for HTTP routing and a Next.js frontend, LiteLLM proxy for LLM-powered features (intent search, image descriptions), and PostgreSQL for persistent storage.
+The server combines FastMCP for MCP protocol handling, FastAPI for HTTP routing and a Next.js frontend, LiteLLM proxy for LLM-powered features (intent search, image descriptions), and PostgreSQL for persistent storage for sessions and versioned instructions.
 
 ## System Diagram
 
@@ -17,9 +17,9 @@ graph TB
 
     subgraph "NPL MCP Server"
         API[FastAPI App]
-        MCP[FastMCP Instance]
-        Meta[Discovery Tools<br/>5 visible at startup]
-        Catalog[Static Catalog<br/>103 tools, all callable]
+        MCP[FastMCP Instance<br/>9 tools registered]
+        Meta[Discovery Tools<br/>5 visible + 4 session/instruction]
+        Catalog[Static Catalog<br/>110 tools, all callable]
         FE[Next.js Frontend<br/>static export]
     end
 
@@ -94,10 +94,12 @@ Six utility tools are highlighted in ToolSummary's default view: **ToMarkdown**,
 
 | Module | Status | Tools | Description |
 |--------|--------|-------|-------------|
-| `meta_tools/` | Active | 2 registered | Discovery layer (ToolSummary, ToolSearch) |
+| `meta_tools/` | Active | 5 registered | Discovery layer (ToolSummary, ToolSearch, ToolDefinition, ToolHelp, ToolCall) |
 | `markdown/` | Active | 0 (in catalog) | Converter, viewer, caching, filters |
 | `npl/` | Active | 0 | NPL YAML loading, syntax parsing |
 | `pm_tools/` | Active | 8 (in catalog) | PRD/story/persona access |
+| `instructions/` | Active | 2 registered + 3 catalog | Versioned instruction documents for agent prompts |
+| `tool_sessions/` | Active | 2 registered | Agent session tracking (agent, task) pairs |
 | `storage/` | Stub | 0 | PostgreSQL async wrapper |
 | `artifacts/` | Stub | 5 (in catalog) | Versioned artifact management |
 | `browser/` | Stub | 36 (in catalog) | Browser automation |
