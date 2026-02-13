@@ -4,6 +4,7 @@ Orchestrates MarkdownConverter, MarkdownViewer, and ImageDescriptionCache
 into a single tool callable from MCP.
 """
 
+import json
 from pathlib import Path
 from typing import Any, Optional
 
@@ -74,7 +75,11 @@ async def to_markdown(
         out_path.write_text(processed, encoding="utf-8")
         result["output_file"] = str(out_path)
     else:
-        result["content"] = processed
+        # Preserve JSON responses as parsed objects instead of strings
+        try:
+            result["content"] = json.loads(processed)
+        except (json.JSONDecodeError, ValueError):
+            result["content"] = processed
 
     return result
 
