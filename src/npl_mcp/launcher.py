@@ -253,7 +253,8 @@ def create_app() -> "FastMCP":
     async def instructions_handler(
         uuid: str,
         version: Optional[int] = None,
-    ) -> dict:
+        json: bool = False,
+    ) -> dict | str:
         """Retrieve instruction body by UUID.
 
         Gets the active version by default, or a specific version if specified.
@@ -261,9 +262,10 @@ def create_app() -> "FastMCP":
         Args:
             uuid: Instruction UUID.
             version: Specific version number (active version if omitted).
+            json: If True, return full metadata as JSON. Default returns markdown.
         """
         from npl_mcp.instructions.instructions import instructions_get as _get
-        return await _get(uuid=uuid, version=version)
+        return await _get(uuid=uuid, version=version, json=json)
 
     @mcp.tool(name="Instructions.Create")
     async def instructions_create_handler(

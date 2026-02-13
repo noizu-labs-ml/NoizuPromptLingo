@@ -77,8 +77,19 @@ async def instructions_create(
 async def instructions_get(
     uuid: str,
     version: Optional[int] = None,
-) -> dict[str, Any]:
-    """Retrieve instruction body.  Active version if *version* is ``None``."""
+    json: bool = False,
+) -> dict[str, Any] | str:
+    """Retrieve instruction body.  Active version if *version* is ``None``.
+
+    When *json* is ``False`` (default) returns a Markdown document::
+
+        # {title}
+        ---
+
+        {body}
+
+    When *json* is ``True`` returns the full metadata dict.
+    """
     uid = _decode(uuid)
     if uid is None:
         return {"uuid": uuid, "status": "error", "message": "Invalid UUID format."}
@@ -107,6 +118,9 @@ async def instructions_get(
             "status": "error",
             "message": f"Version {target_version} not found.",
         }
+
+    if not json:
+        return f"# {instr['title']}\n---\n\n{ver['body']}"
 
     return {
         "uuid": _encode(instr["id"]),

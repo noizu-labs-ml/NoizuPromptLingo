@@ -93,7 +93,32 @@ class TestInstructionsCreate:
 
 class TestInstructionsGet:
     @patch("npl_mcp.instructions.instructions.get_pool")
-    async def test_get_active_version(self, mock_get_pool):
+    async def test_get_returns_markdown_by_default(self, mock_get_pool):
+        uid = uuid.uuid4()
+        pool = AsyncMock()
+        pool.fetchrow.side_effect = [
+            {
+                "id": uid,
+                "title": "My Title",
+                "description": "D",
+                "tags": ["t"],
+                "active_version": 1,
+            },
+            {
+                "version": 1,
+                "body": "content body",
+                "change_note": "Initial",
+                "created_at": None,
+            },
+        ]
+        mock_get_pool.return_value = pool
+
+        result = await instructions_get(shortuuid.encode(uid))
+        assert isinstance(result, str)
+        assert result == "# My Title\n---\n\ncontent body"
+
+    @patch("npl_mcp.instructions.instructions.get_pool")
+    async def test_get_json_flag_returns_dict(self, mock_get_pool):
         uid = uuid.uuid4()
         pool = AsyncMock()
         pool.fetchrow.side_effect = [
@@ -113,8 +138,8 @@ class TestInstructionsGet:
         ]
         mock_get_pool.return_value = pool
 
-        # Accept both short and full UUID as input
-        result = await instructions_get(shortuuid.encode(uid))
+        result = await instructions_get(shortuuid.encode(uid), json=True)
+        assert isinstance(result, dict)
         assert result["status"] == "ok"
         assert result["body"] == "content"
         assert result["version"] == 1
@@ -143,7 +168,7 @@ class TestInstructionsGet:
         mock_get_pool.return_value = pool
 
         # Full UUID string should also work
-        result = await instructions_get(str(uid))
+        result = await instructions_get(str(uid), json=True)
         assert result["status"] == "ok"
         assert result["uuid"] == shortuuid.encode(uid)
 
@@ -168,9 +193,34 @@ class TestInstructionsGet:
         ]
         mock_get_pool.return_value = pool
 
-        result = await instructions_get(str(uid), version=1)
+        result = await instructions_get(str(uid), version=1, json=True)
         assert result["version"] == 1
         assert result["body"] == "old content"
+
+    @patch("npl_mcp.instructions.instructions.get_pool")
+    async def test_get_specific_version_markdown(self, mock_get_pool):
+        uid = uuid.uuid4()
+        pool = AsyncMock()
+        pool.fetchrow.side_effect = [
+            {
+                "id": uid,
+                "title": "Doc",
+                "description": "D",
+                "tags": [],
+                "active_version": 2,
+            },
+            {
+                "version": 1,
+                "body": "old content",
+                "change_note": "Initial",
+                "created_at": None,
+            },
+        ]
+        mock_get_pool.return_value = pool
+
+        result = await instructions_get(str(uid), version=1)
+        assert isinstance(result, str)
+        assert result == "# Doc\n---\n\nold content"
 
     @patch("npl_mcp.instructions.instructions.get_pool")
     async def test_not_found(self, mock_get_pool):
