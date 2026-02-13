@@ -12,19 +12,24 @@ src/
 │   │   ├── converter.py            #     Document-to-markdown conversion
 │   │   ├── viewer.py               #     Filtered markdown viewing
 │   │   ├── cache.py                #     Conversion result caching
-│   │   ├── image_descriptions.py   #     Image description extraction
+│   │   ├── image_descriptions.py   #     LLM-powered image description (YAML-cached)
 │   │   └── filters/                #     Content filtering engines
 │   │       ├── __init__.py
 │   │       ├── css.py              #       CSS selector filtering
 │   │       ├── heading.py          #       Heading-path filtering
 │   │       └── xpath.py            #       XPath filtering
 │   │
-│   ├── meta_tools/                 #   MCP tool discovery/catalog
+│   ├── meta_tools/                 #   MCP tool discovery/catalog layer
 │   │   ├── __init__.py
-│   │   ├── catalog.py              #     Tool catalog management
-│   │   ├── search.py               #     Tool search (text + intent)
-│   │   ├── summary.py              #     Tool summary generation
-│   │   └── llm_client.py           #     LLM client for intent search
+│   │   ├── catalog.py              #     Static catalog (104 tools, 19 categories)
+│   │   ├── summary.py              #     ToolSummary: exposed tools + category drill-down
+│   │   ├── search.py               #     ToolSearch: text + intent (LLM) modes
+│   │   ├── definition.py           #     ToolDefinition: batch param lookup
+│   │   ├── help.py                 #     ToolHelp: LLM-driven usage instructions
+│   │   ├── pin.py                  #     ToolPin: dynamic tool registration (disabled)
+│   │   ├── tool_registry.py        #     Maps tool names to implementation functions
+│   │   ├── inference_cache.py      #     In-memory LLM cache (MD5-keyed)
+│   │   └── llm_client.py           #     LiteLLM client (chat_completion, describe_image)
 │   │
 │   ├── npl/                        #   NPL syntax parser and loader
 │   │   ├── __init__.py
@@ -43,13 +48,24 @@ src/
 │   │   ├── utils.py                #     Shared utilities
 │   │   └── exceptions.py           #     PM-specific exceptions
 │   │
+│   ├── browser/                    #   Browser/network tools (implemented)
+│   │   ├── __init__.py
+│   │   ├── ping.py                 #     URL ping tool
+│   │   ├── screenshot.py           #     Page screenshot tool
+│   │   ├── download.py             #     File download tool
+│   │   ├── rest.py                 #     REST API client tool
+│   │   ├── secrets.py              #     Secret management tool
+│   │   └── to_markdown.py          #     URL-to-markdown conversion
+│   │
+│   ├── storage/                    #   PostgreSQL async wrapper (asyncpg)
+│   │   ├── __init__.py
+│   │   └── pool.py                 #     Connection pool singleton
+│   │
 │   ├── web/                        #   Web interface
 │   │   ├── static/                 #     Built frontend assets (gitignored)
 │   │   └── .gitignore
 │   │
-│   ├── storage/                    #   PostgreSQL async wrapper (asyncpg)
 │   ├── artifacts/                  #   Versioned artifact management (stubs)
-│   ├── browser/                    #   Browser automation (stubs)
 │   ├── chat/                       #   Event-sourced chat rooms (stubs)
 │   ├── executors/                  #   Tasker agent management (stubs)
 │   ├── scripts/                    #   Shell script wrappers (stubs)
@@ -62,11 +78,13 @@ src/
 ## Active vs Stub Modules
 
 Active modules with implementations:
-- `markdown/` — Full markdown conversion, viewing, caching, filtering
-- `meta_tools/` — Tool catalog, search (text + LLM intent), summaries
+- `markdown/` — Full markdown conversion, viewing, caching, filtering, image descriptions
+- `meta_tools/` — Tool catalog, search (text + LLM intent), definition, help, summaries, caching
 - `npl/` — NPL YAML loading, syntax parsing, reference resolution
 - `pm_tools/` — PRD, user story, and persona access via MCP tools
+- `browser/` — Ping, Screenshot, Download, Rest, Secrets, ToMarkdown
+- `storage/` — PostgreSQL async connection pool
 - `launcher.py` — Server lifecycle management
 
-Stub modules (contain `__pycache__` only, tools raise `NotImplementedError`):
-- `artifacts/`, `browser/`, `chat/`, `executors/`, `scripts/`, `sessions/`, `storage/`, `tasks/`
+Stub modules (tools raise `NotImplementedError`):
+- `artifacts/`, `chat/`, `executors/`, `scripts/`, `sessions/`, `tasks/`

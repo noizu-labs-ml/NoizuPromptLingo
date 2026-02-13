@@ -1,11 +1,11 @@
 # Project Architecture Summary
 
 ## Overview
-NPL MCP server built on FastMCP 2.x using a meta tool pattern: 2 discovery tools registered (ToolSummary, ToolSearch), 96 tools in static catalog. FastAPI + Next.js frontend, LiteLLM proxy for LLM features, PostgreSQL for storage.
+NPL MCP is a Model Context Protocol server built on FastMCP 2.x using a meta tool pattern: 5 discovery tools visible at startup with 103 catalog tools callable on the same server scope. FastAPI for routing and Next.js frontend, LiteLLM proxy for LLM-powered features, PostgreSQL for persistent storage.
 
 ## Components
 - **Launcher** (`launcher.py`): create_app() + create_asgi_app(), CLI, Uvicorn
-- **Meta Tools** (`meta_tools/`): ToolSummary, ToolSearch, static catalog (96 tools, 15 categories)
+- **Meta Tools** (`meta_tools/`): ToolSummary, ToolSearch, ToolDefinition, ToolHelp, ToolCall discovery layer, static catalog (103 tools, 19 categories)
 - **Markdown** (`markdown/`): Converter, viewer, CSS/heading/xpath filters, image descriptions
 - **NPL Parser** (`npl/`): YAML loader, syntax parser, reference resolver
 - **PM Tools** (`pm_tools/`): PRD, user story, persona access (8 catalog tools)

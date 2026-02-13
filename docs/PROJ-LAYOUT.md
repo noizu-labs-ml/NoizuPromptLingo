@@ -5,13 +5,13 @@ NoizuPromptLingo/
 ├── src/                            # Application source → [layout/src.md](layout/src.md)
 │   ├── npl_mcp/                    #   Main NPL MCP package
 │   │   ├── markdown/               #     Markdown converter, viewer, filters
-│   │   ├── meta_tools/             #     MCP tool catalog, search, LLM client
+│   │   ├── meta_tools/             #     Tool catalog, search, definition, help, LLM client
 │   │   ├── npl/                    #     NPL syntax parser and loader
 │   │   ├── pm_tools/               #     PRD/story/persona management tools
 │   │   ├── web/                    #     FastAPI routes + static assets
 │   │   ├── storage/                #     PostgreSQL async wrapper (asyncpg)
+│   │   ├── browser/                #     Ping, Screenshot, Download, Rest, Secrets, ToMarkdown
 │   │   ├── artifacts/              #     Versioned artifact management (stubs)
-│   │   ├── browser/                #     Browser automation (stubs)
 │   │   ├── chat/                   #     Event-sourced chat rooms (stubs)
 │   │   ├── executors/              #     Tasker agent management (stubs)
 │   │   ├── scripts/                #     Shell script wrappers (stubs)
@@ -34,14 +34,15 @@ NoizuPromptLingo/
 │   └── PROJ-LAYOUT.md              #   This file
 ├── project-management/             # Planning & specs → [layout/project-management.md](layout/project-management.md)
 │   ├── personas/                   #   Persona definitions with index.yaml
-│   ├── user-stories/               #   130+ user stories with index.yaml
-│   ├── PRDs/                       #   Product requirement documents (PRD-001–017)
+│   ├── user-stories/               #   150+ user stories with index.yaml
+│   ├── PRDs/                       #   Product requirement documents (PRD-001–016)
 │   └── TODO/                       #   Backlog items
 ├── npl/                            # NPL language specifications (YAML + Markdown)
 ├── skills/                         # Skill definitions (conversion, market, UX, monetization)
 ├── agents/                         # TDD agent definitions (npl-*.md)
 ├── commands/                       # Claude Code slash commands
 ├── sub-agent-prompts/              # Reusable prompts for parallel agent spawning
+├── scripts/                        # Operational scripts (port forwarding, etc.)
 ├── liquibase/                      # Database migrations (Liquibase YAML changelogs)
 │   ├── changelogs/                 #   Migration changesets
 │   ├── liquibase.properties        #   Connection config
@@ -51,11 +52,13 @@ NoizuPromptLingo/
 ├── tools/                          # Utility scripts (git_tree, git_dump, markdown, validators)
 ├── worktrees/                      # Git worktrees (extended workspace)
 │   ├── main/                       #   Main branch with full NPL framework
-│   └── npl-update/                 #   Update worktree
+│   ├── npl-update/                 #   Update worktree
+│   └── redo/                       #   Redo worktree
 ├── .claude/                        # Claude Code configuration
 │   ├── commands -> ../commands     #   Symlink to commands/
 │   ├── agents -> ../agents         #   Symlink to agents/
 │   └── settings.local.json         #   Local settings (gitignored)
+├── .prd/                           # PRD workspace
 ├── .tmp/                           # Temporary/scratch files (gitignored)
 ├── .envrc                          # direnv — loads environment
 ├── .mise.toml                      # mise task runner configuration

@@ -6,7 +6,8 @@ docs/
 │   ├── agent-orchestration.md          #   Multi-agent TDD workflow design
 │   ├── agent-orchestration.summary.md  #   Summary companion
 │   ├── assumptions.md                  #   Tracked architectural assumptions
-│   └── assumptions.summary.md          #   Summary companion
+│   ├── assumptions.summary.md          #   Summary companion
+│   └── meta-tools.md                   #   Meta-tool discovery pattern design
 ├── agents/                             # Agent-specific documentation
 │   ├── control-agent.md                #   Control agent behavior
 │   └── sub-agent.md                    #   Sub-agent patterns
@@ -43,5 +44,7 @@ docs/
 │   └── *.md                            #   Various summary/brief files
 ├── features-grid.md                    # Implementation status and gaps
 ├── PROJ-ARCH.md                        # High-level architecture
-└── PROJ-LAYOUT.md                      # Project layout (main file)
+├── PROJ-ARCH.summary.md                # Architecture summary companion
+├── PROJ-LAYOUT.md                      # Project layout (main file)
+└── PROJ-LAYOUT.summary.md              # Layout summary companion
 ```
