@@ -4,7 +4,7 @@ This module provides a complete, static description of every MCP tool
 registered by the server. It is the single source of truth for tool
 discovery, documentation generation, and LLM-assisted tool selection.
 
-Total: 103 tools across 11 categories (5 exposed, 98 hidden).
+Total: 103 tools across 11 categories (5 discovery, 6 exposed, 92 hidden).
 """
 
 from typing import Optional, TypedDict
@@ -37,7 +37,7 @@ class CategoryInfo(TypedDict):
 CATEGORIES: list[CategoryInfo] = [
     {
         "name": "Discovery",
-        "description": "Tool discovery and management: search, browse, inspect, and pin catalog tools",
+        "description": "Tool discovery and management: search, browse, inspect, and call catalog tools",
         "tool_count": 5,
     },
     {
@@ -147,12 +147,12 @@ TOOL_CATALOG: list[ToolEntry] = [
         ],
     },
     {
-        "name": "ToolPin",
+        "name": "ToolCall",
         "category": "Discovery",
-        "description": "Pin or unpin a catalog tool for dynamic MCP registration. Pin (register) a tool from the catalog so it appears in the client's tool list, or unpin (unregister) it to remove it.",
+        "description": "Call any catalog tool by name, whether pinned or not. Dispatches to the tool's implementation with the provided arguments. Returns the tool's result directly, or an error if the tool is not found or has no implementation.",
         "parameters": [
-            {"name": "tool_name", "type": "str", "required": True, "description": "Name of the tool from the catalog (e.g. 'ToMarkdown')"},
-            {"name": "pin", "type": "bool", "required": False, "description": "True to register the tool, False to unregister it (default: True)"},
+            {"name": "tool", "type": "str", "required": True, "description": "Name of the catalog tool to call (e.g. 'Ping')"},
+            {"name": "arguments", "type": "dict", "required": False, "description": "Arguments to pass to the tool as a JSON object (default: {})"},
         ],
     },
 
@@ -1188,10 +1188,11 @@ TOOL_CATALOG: list[ToolEntry] = [
 
 
 # ---------------------------------------------------------------------------
-# Exposed tools - directly registered and shown in ToolSummary
+# Exposed tools - shown in ToolSummary default view (no filter)
+# Discovery tools are excluded since the client already knows them.
 # ---------------------------------------------------------------------------
 
-EXPOSED_TOOL_NAMES: set[str] = {"ToolSummary", "ToolSearch", "ToolDefinition", "ToolHelp", "ToolPin"}
+EXPOSED_TOOL_NAMES: set[str] = {"ToMarkdown", "Ping", "Download", "Screenshot", "Secret", "Rest"}
 
 
 # ---------------------------------------------------------------------------

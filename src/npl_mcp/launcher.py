@@ -74,16 +74,12 @@ def build_frontend() -> bool:
 
 
 def create_app() -> "FastMCP":
-    """Create the FastMCP app with discovery tools only.
+    """Create the FastMCP app with discovery tools.
 
-    Only ToolSummary, ToolSearch, ToolDefinition, ToolHelp, and ToolPin
-    are registered at startup. All other tools (ToMarkdown, Ping, Download,
-    Screenshot, Secret, Rest, etc.) are discoverable via the catalog and
-    activated via ToolPin when needed.
+    ToolSummary, ToolSearch, ToolDefinition, ToolHelp, and ToolCall
+    are visible at startup. All catalog tools are callable via ToolCall.
     """
     from typing import Optional
-
-    from fastmcp.server.context import Context
 
     mcp = FastMCP("npl-mcp")
 
@@ -169,22 +165,42 @@ def create_app() -> "FastMCP":
         from npl_mcp.meta_tools.help import tool_help as _help
         return await _help(tool, task, verbose=verbose)
 
-    @mcp.tool(name="ToolPin")
-    async def tool_pin(tool_name: str, pin: bool = True, ctx: Context = None) -> dict:
-        """Pin or unpin a catalog tool for dynamic MCP registration.
+    @mcp.tool(name="ToolCall")
+    async def tool_call(tool: str, arguments: dict = None) -> dict:
+        """Call any catalog tool by name, whether pinned or not.
 
-        Pin (register) a tool from the catalog so it appears in the
-        client's tool list, or unpin (unregister) it to remove it.
-        Triggers notifications/tools/list_changed automatically.
-
-        Core tools (ToolSummary, ToolSearch, ToolPin) cannot be unpinned.
+        Dispatches to the tool's implementation with the provided arguments.
+        Returns the tool's result directly, or an error if the tool is not
+        found or has no implementation.
 
         Args:
-            tool_name: Name of the tool from the catalog (e.g. "ToMarkdown").
-            pin: True to register the tool, False to unregister it (default: True).
+            tool: Name of the catalog tool to call (e.g. "Ping").
+            arguments: Arguments to pass to the tool as a JSON object (default: {}).
         """
-        from npl_mcp.meta_tools.pin import tool_pin as _pin
-        return await _pin(tool_name, pin=pin, fastmcp=ctx.fastmcp)
+        from npl_mcp.meta_tools.catalog import get_tool_by_name
+        from npl_mcp.meta_tools.tool_registry import get_implementation
+
+        if arguments is None:
+            arguments = {}
+
+        entry = get_tool_by_name(tool)
+        if entry is None:
+            return {"tool": tool, "status": "error", "message": f"Tool '{tool}' not found in catalog."}
+
+        impl = get_implementation(tool)
+        if impl is None:
+            return {
+                "tool": tool,
+                "status": "stub",
+                "message": f"Tool '{tool}' is in the catalog but has no implementation yet.",
+            }
+
+        try:
+            return await impl(**arguments)
+        except TypeError as exc:
+            return {"tool": tool, "status": "error", "message": f"Invalid arguments: {exc}"}
+        except Exception as exc:
+            return {"tool": tool, "status": "error", "message": f"{type(exc).__name__}: {exc}"}
 
     return mcp
 

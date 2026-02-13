@@ -2,7 +2,7 @@
 
 ## Overview
 
-NPL MCP is a Model Context Protocol (MCP) server built on FastMCP 2.x. Rather than registering all ~96 tools directly (which overwhelms clients), it uses a **meta tool pattern**: only 2 discovery tools (ToolSummary, ToolSearch) are registered as MCP tools. All other tools live in a static catalog that clients explore through these discovery tools.
+NPL MCP is a Model Context Protocol (MCP) server built on FastMCP 2.x. Rather than exposing all ~103 tools directly (which overwhelms clients), it uses a **meta tool pattern**: discovery tools are visible at startup. All catalog tools are callable on the same server scope and discoverable through these discovery tools.
 
 The server combines FastMCP for MCP protocol handling, FastAPI for HTTP routing and a Next.js frontend, LiteLLM proxy for LLM-powered features (intent search, image descriptions), and PostgreSQL for persistent storage.
 
@@ -18,8 +18,8 @@ graph TB
     subgraph "NPL MCP Server"
         API[FastAPI App]
         MCP[FastMCP Instance]
-        Meta[Meta Tools<br/>ToolSummary + ToolSearch]
-        Catalog[Static Catalog<br/>96 tools, 15 categories]
+        Meta[Discovery Tools<br/>5 visible at startup]
+        Catalog[Static Catalog<br/>103 tools, all callable]
         FE[Next.js Frontend<br/>static export]
     end
 
@@ -52,14 +52,17 @@ graph TB
 
 ## Meta Tool Pattern
 
-Only **2 MCP tools** are registered with FastMCP. The remaining 96 tools are discoverable through the catalog but not directly callable via MCP.
+**5 discovery tools** are visible at startup. All 103 catalog tools are callable on the same MCP server scope via `ToolCall`.
 
-| Registered Tool | Purpose |
-|-----------------|---------|
+| Visible Tool | Purpose |
+|--------------|---------|
 | **ToolSummary** | Browse catalog: exposed tools, category drill-down, `#Tool` lookup |
 | **ToolSearch** | Search by text (substring) or intent (LLM-powered semantic) |
+| **ToolDefinition** | Get full definitions for one or more catalog tools by name |
+| **ToolHelp** | Get LLM-driven instructions on how to use a tool for a specific task |
+| **ToolCall** | Call any catalog tool by name, whether pinned or not |
 
-Four "exposed" tools are highlighted in ToolSummary's default view: **ToMarkdown**, **Ping**, **Download**, **Screenshot**. These are catalog entries, not registered MCP tools.
+Six utility tools are highlighted in ToolSummary's default view: **ToMarkdown**, **Ping**, **Download**, **Screenshot**, **Secret**, **Rest**.
 
 → *See [arch/meta-tools.md](arch/meta-tools.md) for full details, catalog structure, and LLM configuration*
 

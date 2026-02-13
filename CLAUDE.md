@@ -63,9 +63,9 @@ Relationship metadata lives in YAML index files, NOT markdown:
 
 ## MCP Tool Discovery
 
-This server uses a **meta-discovery pattern**. Only 5 Discovery tools are registered at startup: `ToolSummary`, `ToolSearch`, `ToolDefinition`, `ToolHelp`, and `ToolPin`. All other tools (103 total) live in the catalog and are activated via `ToolPin`.
+This server uses a **meta-discovery pattern**. 5 Discovery tools are always visible: `ToolSummary`, `ToolSearch`, `ToolDefinition`, `ToolHelp`, and `ToolCall`. All 103 catalog tools are discoverable via these tools.
 
-**Tools listed by ToolDefinition are callable on the same MCP server scope.** If `mcp__npl__ToolDefinition` lists a tool named `Bop`, then it is callable as `mcp__npl__Bop` once pinned. Pin a tool with `mcp__npl__ToolPin(tool_name="Bop")` to register it, then call it directly.
+**Use `ToolCall` to invoke any catalog tool by name** (e.g. `ToolCall(tool="Ping", arguments={"url": "https://example.com"})`).
 
 ---
 

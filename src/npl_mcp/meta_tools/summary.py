@@ -8,7 +8,7 @@ from .catalog import TOOL_CATALOG, CATEGORIES, EXPOSED_TOOL_NAMES, ToolEntry
 async def tool_summary(filter: Optional[str] = None) -> dict:
     """Return available tools or drill into a catalog category.
 
-    No filter: returns only the directly-exposed tools (Browse, Ping, etc.).
+    No filter: returns highlighted utility tools (Ping, ToMarkdown, etc.) excluding Discovery tools.
     With filter: expands that catalog category showing its tools and subcategories.
     Dot notation drills deeper: "Browser.Screenshots" shows screenshot tools.
     With Category#ToolName: returns a single tool's full definition including parameters.
@@ -40,11 +40,11 @@ def _resolve_single(filter_value: str) -> dict:
 
 
 def _exposed_tools() -> dict:
-    """Return exposed tools and a catalog overview for discovery.
+    """Return highlighted tools and a catalog overview for discovery.
 
-    Groups directly-registered tools by category, then lists all available
-    catalog categories so agents know what can be explored via drill-down
-    or pinned via ToolPin.
+    Shows Browser and Utility tools the client doesn't already know about
+    (Discovery tools are excluded since they're already visible).
+    Groups by category so agents know what can be explored via drill-down.
     """
     tools = [t for t in TOOL_CATALOG if t["name"] in EXPOSED_TOOL_NAMES]
 
@@ -71,7 +71,7 @@ def _exposed_tools() -> dict:
     return {
         "total_tools": len(tools),
         "categories": categories,
-        "hint": "Use ToolSummary(filter='CategoryName') to explore, or ToolPin to activate a tool.",
+        "hint": "Use ToolSummary(filter='CategoryName') to explore, ToolCall to invoke any catalog tool.",
     }
 
 

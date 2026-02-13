@@ -2,7 +2,7 @@
 
 ## Overview
 
-Instead of registering all ~96 MCP tools directly (which overwhelms clients with large tool lists), the NPL MCP server uses a **meta tool pattern**: only 2 discovery tools are registered as MCP tools. All other tools live in a static catalog that clients explore through these discovery tools.
+Instead of registering all ~103 MCP tools directly (which overwhelms clients with large tool lists), the NPL MCP server uses a **meta tool pattern**: discovery tools are visible at startup. All catalog tools are callable on the same server scope and discoverable through these discovery tools.
 
 ```
 Client ──MCP──> ToolSummary / ToolSearch
@@ -33,13 +33,15 @@ Client ──MCP──> ToolSummary / ToolSearch
 
 ## Registered MCP Tools
 
-Only these tools are registered with FastMCP and visible to MCP clients:
+These 5 discovery tools are visible to MCP clients at startup:
 
 | Tool | Purpose |
 |------|---------|
 | **ToolSummary** | Browse catalog: list exposed tools, drill into categories, look up single tool |
 | **ToolSearch** | Search by text (substring) or intent (LLM-powered semantic) |
-| **ToolPin** | Dynamically register/unregister catalog tools at runtime |
+| **ToolDefinition** | Get full definitions for one or more catalog tools by name |
+| **ToolHelp** | Get LLM-driven instructions on how to use a tool for a specific task |
+| **ToolCall** | Call any catalog tool by name, whether pinned or not |
 
 ## Exposed Tools
 
@@ -52,13 +54,13 @@ Four tools are highlighted in ToolSummary's default view (no filter argument). T
 | **Download** | Browser | Download URL or copy file to local path |
 | **Screenshot** | Browser | Capture screenshot of URL with optional resize |
 
-These are **not registered as MCP tools by default** - they appear in the catalog and are discoverable via ToolSummary/ToolSearch. They can be dynamically registered via ToolPin.
+These are discoverable via ToolSummary/ToolSearch and callable on the same server scope via ToolCall.
 
 ## File Structure
 
 ```
 src/npl_mcp/
-├── launcher.py                    # create_app() - ToolSummary, ToolSearch, ToolPin
+├── launcher.py                    # create_app() - ToolSummary, ToolSearch, ToolCall
 ├── meta_tools/
 │   ├── __init__.py                # exports tool_summary, tool_search, tool_pin
 │   ├── catalog.py                 # CATEGORIES, TOOL_CATALOG, EXPOSED_TOOL_NAMES
@@ -125,34 +127,6 @@ Returns the 4 exposed tools with name and description:
 }
 ```
 
-## ToolPin - Dynamic Registration
-
-`ToolPin(tool_name="dump_files", pin=True)` registers a catalog tool with the MCP server at runtime. `pin=False` unregisters it. Triggers `notifications/tools/list_changed` automatically via FastMCP context.
-
-### Pin behavior
-- Looks up the tool in `TOOL_CATALOG` by name
-- Builds JSON Schema from catalog parameter definitions
-- Creates a `CatalogStubTool` (subclass of FastMCP `Tool`) with the correct schema
-- Registers it via `ctx.fastmcp.add_tool()`
-- Stub handler returns tool info + received arguments (implementation pending)
-
-### Unpin behavior
-- Validates tool is not a core tool (ToolSummary, ToolSearch, ToolPin)
-- Removes via `fastmcp._tool_manager.remove_tool(name)`
-
-### Status responses
-| Status | Meaning |
-|--------|---------|
-| `ok` | Pin/unpin succeeded |
-| `already_pinned` | Tool is already registered |
-| `not_pinned` | Tool is not currently registered (unpin) |
-| `error` | Tool not found in catalog, or core tool unpin attempt |
-
-### Implementation
-- `src/npl_mcp/meta_tools/pin.py` - `CatalogStubTool`, `create_catalog_tool()`, `tool_pin()`
-- Core tools protected: `CORE_TOOLS = {"ToolSummary", "ToolSearch", "ToolPin"}`
-- Type mapping: `str->string`, `int->integer`, `bool->boolean`, `float->number`
-
 ## ToolSearch Modes
 
 ### Text mode (default)
@@ -210,4 +184,4 @@ Image descriptions use a separate model parameter (default `openai/GPT5.2`) pass
 | Executors | 11 | Agent lifecycle management |
 | Project Management | 8 | PRDs, stories, personas |
 
-**Total**: 96 tools (4 exposed, 92 hidden)
+**Total**: 103 tools (5 discovery visible at startup, all callable via ToolCall)

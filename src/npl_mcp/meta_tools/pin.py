@@ -1,8 +1,9 @@
-"""ToolPin - dynamic tool registration/unregistration from the catalog.
+"""ToolPin - dynamic tool visibility management from the catalog.
 
-Allows MCP clients to pin (register) or unpin (unregister) tools from the
-static catalog at runtime. Pinned tools appear in the client's tool list
-and trigger `notifications/tools/list_changed`.
+Allows MCP clients to pin (show) or unpin (hide) tools from the
+static catalog at runtime. Pinned tools appear in the client's tool
+list under the same MCP server namespace as discovery tools.
+All catalog tools are callable whether pinned or not.
 """
 
 import json
@@ -15,7 +16,7 @@ from .catalog import get_tool_by_name, ToolEntry
 from .tool_registry import get_implementation
 
 # Tools that cannot be unpinned (core discovery tools)
-CORE_TOOLS = frozenset({"ToolSummary", "ToolSearch", "ToolDefinition", "ToolHelp", "ToolPin"})
+CORE_TOOLS = frozenset({"ToolSummary", "ToolSearch", "ToolDefinition", "ToolHelp", "ToolCall"})
 
 # Python type strings to JSON Schema types
 _TYPE_MAP = {

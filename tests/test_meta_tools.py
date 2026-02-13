@@ -101,14 +101,14 @@ class TestCatalogIntegrity:
             assert name in catalog_names, f"Exposed tool {name!r} not in catalog"
 
     def test_exposed_tools_are_expected(self):
-        assert EXPOSED_TOOL_NAMES == {"ToolSummary", "ToolSearch", "ToolDefinition", "ToolHelp", "ToolPin"}
+        assert EXPOSED_TOOL_NAMES == {"ToMarkdown", "Ping", "Download", "Screenshot", "Secret", "Rest"}
 
-    def test_exposed_tools_under_discovery_category(self):
+    def test_exposed_tools_exclude_discovery(self):
         for tool in TOOL_CATALOG:
             if tool["name"] in EXPOSED_TOOL_NAMES:
-                assert tool["category"] == "Discovery", (
-                    f"Exposed tool {tool['name']} should be in Discovery category, "
-                    f"got {tool['category']!r}"
+                assert tool["category"] != "Discovery", (
+                    f"Exposed tool {tool['name']} should not be in Discovery category "
+                    f"(Discovery tools are already known to the client)"
                 )
 
     def test_ping_has_url_param(self):
@@ -157,13 +157,15 @@ class TestToolSummary:
     async def test_exposed_tools_grouped_by_category(self):
         result = await tool_summary()
         assert len(result["categories"]) >= 1
-        # All exposed tools are under Discovery
+        # Exposed tools are under Browser and Utility (not Discovery)
+        all_names = set()
         for cat in result["categories"]:
             assert "category" in cat
             assert "tools" in cat
-            if cat["category"] == "Discovery":
-                names = {t["name"] for t in cat["tools"]}
-                assert EXPOSED_TOOL_NAMES.issubset(names)
+            assert cat["category"] != "Discovery"
+            for t in cat["tools"]:
+                all_names.add(t["name"])
+        assert EXPOSED_TOOL_NAMES.issubset(all_names)
 
     @pytest.mark.asyncio
     async def test_exposed_tools_omit_parameters(self):
@@ -187,11 +189,11 @@ class TestToolSummary:
     @pytest.mark.asyncio
     async def test_category_has_description(self):
         result = await tool_summary()
-        discovery_cat = next(
-            (c for c in result["categories"] if c["category"] == "Discovery"), None
+        browser_cat = next(
+            (c for c in result["categories"] if c["category"] == "Browser"), None
         )
-        assert discovery_cat is not None
-        assert "description" in discovery_cat
+        assert browser_cat is not None
+        assert "description" in browser_cat
 
     @pytest.mark.asyncio
     async def test_no_catalog_categories_in_default(self):
@@ -202,7 +204,7 @@ class TestToolSummary:
     async def test_includes_hint(self):
         result = await tool_summary()
         assert "hint" in result
-        assert "ToolPin" in result["hint"]
+        assert "ToolCall" in result["hint"]
 
 
 # ---------------------------------------------------------------------------
@@ -492,7 +494,7 @@ class TestMCPRegistration:
         mcp = create_app()
         tool_names = set(mcp._tool_manager._tools.keys())
         assert tool_names == {
-            "ToolSummary", "ToolSearch", "ToolDefinition", "ToolHelp", "ToolPin",
+            "ToolSummary", "ToolSearch", "ToolDefinition", "ToolHelp", "ToolCall",
         }
 
 
@@ -553,125 +555,107 @@ class TestToolDefinition:
 
 
 # ---------------------------------------------------------------------------
-# ToolPin - dynamic registration
+# ToolCall - dispatch to catalog tool implementations
 # ---------------------------------------------------------------------------
 
-class TestToolPin:
-    """Test dynamic tool pin/unpin via the catalog."""
+class TestToolCall:
+    """Test ToolCall dispatches to catalog tool implementations."""
 
-    def _make_mcp(self):
+    @pytest.mark.asyncio
+    async def test_call_implemented_tool(self):
+        """ToolCall dispatches to a real implementation and returns its result."""
+        with patch(
+            "npl_mcp.meta_tools.tool_registry._IMPLEMENTATIONS",
+            {"Ping": AsyncMock(return_value={"url": "https://example.com", "status_code": 200, "response_time_ms": 42.0})},
+        ):
+            from npl_mcp.launcher import create_app
+            mcp = create_app()
+            tool = mcp._tool_manager._tools["ToolCall"]
+            result = await tool.run({"tool": "Ping", "arguments": {"url": "https://example.com"}})
+            data = json.loads(result.content[0].text)
+            assert data["status_code"] == 200
+            assert data["url"] == "https://example.com"
+
+    @pytest.mark.asyncio
+    async def test_call_unknown_tool(self):
+        """ToolCall returns error for tools not in catalog."""
         from npl_mcp.launcher import create_app
-        return create_app()
+        mcp = create_app()
+        tool = mcp._tool_manager._tools["ToolCall"]
+        result = await tool.run({"tool": "nonexistent_xyz"})
+        data = json.loads(result.content[0].text)
+        assert data["status"] == "error"
+        assert "not found" in data["message"]
 
     @pytest.mark.asyncio
-    async def test_pin_catalog_tool(self):
-        from npl_mcp.meta_tools.pin import tool_pin
-        mcp = self._make_mcp()
-        result = await tool_pin("dump_files", pin=True, fastmcp=mcp)
-        assert result["status"] == "ok"
-        assert result["action"] == "pin"
-        assert "dump_files" in mcp._tool_manager._tools
-
-    @pytest.mark.asyncio
-    async def test_pin_adds_to_registered(self):
-        from npl_mcp.meta_tools.pin import tool_pin
-        mcp = self._make_mcp()
-        before = len(mcp._tool_manager._tools)
-        await tool_pin("dump_files", pin=True, fastmcp=mcp)
-        after = len(mcp._tool_manager._tools)
-        assert after == before + 1
-
-    @pytest.mark.asyncio
-    async def test_pin_already_pinned(self):
-        from npl_mcp.meta_tools.pin import tool_pin
-        mcp = self._make_mcp()
-        await tool_pin("dump_files", pin=True, fastmcp=mcp)
-        result = await tool_pin("dump_files", pin=True, fastmcp=mcp)
-        assert result["status"] == "already_pinned"
-
-    @pytest.mark.asyncio
-    async def test_pin_unknown_tool(self):
-        from npl_mcp.meta_tools.pin import tool_pin
-        mcp = self._make_mcp()
-        result = await tool_pin("nonexistent_tool_xyz", pin=True, fastmcp=mcp)
-        assert result["status"] == "error"
-        assert "not found" in result["message"]
-
-    @pytest.mark.asyncio
-    async def test_unpin_tool(self):
-        from npl_mcp.meta_tools.pin import tool_pin
-        mcp = self._make_mcp()
-        await tool_pin("dump_files", pin=True, fastmcp=mcp)
-        assert "dump_files" in mcp._tool_manager._tools
-
-        result = await tool_pin("dump_files", pin=False, fastmcp=mcp)
-        assert result["status"] == "ok"
-        assert result["action"] == "unpin"
-        assert "dump_files" not in mcp._tool_manager._tools
-
-    @pytest.mark.asyncio
-    async def test_unpin_not_pinned(self):
-        from npl_mcp.meta_tools.pin import tool_pin
-        mcp = self._make_mcp()
-        result = await tool_pin("dump_files", pin=False, fastmcp=mcp)
-        assert result["status"] == "not_pinned"
-
-    @pytest.mark.asyncio
-    async def test_unpin_core_tool_blocked(self):
-        from npl_mcp.meta_tools.pin import tool_pin, CORE_TOOLS
-        mcp = self._make_mcp()
-        for name in CORE_TOOLS:
-            result = await tool_pin(name, pin=False, fastmcp=mcp)
-            assert result["status"] == "error"
-            assert "core tool" in result["message"]
-
-    @pytest.mark.asyncio
-    async def test_pinned_tool_has_correct_schema(self):
-        from npl_mcp.meta_tools.pin import tool_pin
-        mcp = self._make_mcp()
-        await tool_pin("dump_files", pin=True, fastmcp=mcp)
-
-        tool = mcp._tool_manager._tools["dump_files"]
-        schema = tool.parameters
-        assert schema["type"] == "object"
-        assert "path" in schema["properties"]
-        assert "path" in schema.get("required", [])
-
-    @pytest.mark.asyncio
-    async def test_pinned_tool_stub_returns_response(self):
-        from npl_mcp.meta_tools.pin import tool_pin
-        mcp = self._make_mcp()
-        await tool_pin("dump_files", pin=True, fastmcp=mcp)
-
-        tool = mcp._tool_manager._tools["dump_files"]
-        result = await tool.run({"path": "/some/path"})
-        text = result.content[0].text
-        data = json.loads(text)
-        assert data["tool"] == "dump_files"
+    async def test_call_stub_tool(self):
+        """ToolCall returns stub status for tools without implementation."""
+        from npl_mcp.launcher import create_app
+        mcp = create_app()
+        tool = mcp._tool_manager._tools["ToolCall"]
+        result = await tool.run({"tool": "dump_files", "arguments": {"path": "/tmp"}})
+        data = json.loads(result.content[0].text)
         assert data["status"] == "stub"
-        assert data["arguments_received"]["path"] == "/some/path"
+        assert "no implementation" in data["message"]
 
     @pytest.mark.asyncio
-    async def test_pin_multiple_tools(self):
-        from npl_mcp.meta_tools.pin import tool_pin
-        mcp = self._make_mcp()
-        await tool_pin("dump_files", pin=True, fastmcp=mcp)
-        await tool_pin("git_tree", pin=True, fastmcp=mcp)
-        await tool_pin("Ping", pin=True, fastmcp=mcp)
-
-        registered = set(mcp._tool_manager._tools.keys())
-        assert {"dump_files", "git_tree", "Ping"}.issubset(registered)
-        result = await tool_pin("git_tree", pin=False, fastmcp=mcp)
-        assert result["status"] == "ok"
-        assert "git_tree" not in mcp._tool_manager._tools
-        assert "dump_files" in mcp._tool_manager._tools
+    async def test_call_bad_arguments(self):
+        """ToolCall returns error when arguments don't match the function signature."""
+        from npl_mcp.launcher import create_app
+        mcp = create_app()
+        tool = mcp._tool_manager._tools["ToolCall"]
+        result = await tool.run({"tool": "Ping", "arguments": {"bad_param": "value"}})
+        data = json.loads(result.content[0].text)
+        assert data["status"] == "error"
+        assert "Invalid arguments" in data["message"]
 
     @pytest.mark.asyncio
-    async def test_registered_count_in_response(self):
-        from npl_mcp.meta_tools.pin import tool_pin
-        mcp = self._make_mcp()
-        result = await tool_pin("dump_files", pin=True, fastmcp=mcp)
-        assert result["registered_tools"] == 6  # 5 startup + dump_files
+    async def test_call_no_arguments(self):
+        """ToolCall with no arguments passes empty dict."""
+        with patch(
+            "npl_mcp.meta_tools.tool_registry._IMPLEMENTATIONS",
+            {"Ping": AsyncMock(return_value={"error": "missing url"})},
+        ):
+            from npl_mcp.launcher import create_app
+            mcp = create_app()
+            tool = mcp._tool_manager._tools["ToolCall"]
+            result = await tool.run({"tool": "Ping"})
+            data = json.loads(result.content[0].text)
+            # The mock was called with no kwargs
+            assert data is not None
+
+    @pytest.mark.asyncio
+    async def test_call_runtime_error(self):
+        """ToolCall catches non-TypeError exceptions from implementations."""
+        async def broken(**kwargs):
+            raise ConnectionError("network down")
+
+        with patch(
+            "npl_mcp.meta_tools.tool_registry._IMPLEMENTATIONS",
+            {"Ping": broken},
+        ):
+            from npl_mcp.launcher import create_app
+            mcp = create_app()
+            tool = mcp._tool_manager._tools["ToolCall"]
+            result = await tool.run({"tool": "Ping", "arguments": {"url": "https://example.com"}})
+            data = json.loads(result.content[0].text)
+            assert data["status"] == "error"
+            assert "ConnectionError" in data["message"]
+
+    def test_toolcall_in_catalog(self):
+        """ToolCall appears in the catalog under Discovery."""
+        from npl_mcp.meta_tools.catalog import get_tool_by_name
+        entry = get_tool_by_name("ToolCall")
+        assert entry is not None
+        assert entry["category"] == "Discovery"
+        param_names = {p["name"] for p in entry["parameters"]}
+        assert "tool" in param_names
+        assert "arguments" in param_names
+
+    def test_toolcall_in_core_tools(self):
+        """ToolCall cannot be unpinned."""
+        from npl_mcp.meta_tools.pin import CORE_TOOLS
+        assert "ToolCall" in CORE_TOOLS
 
 
 # ---------------------------------------------------------------------------
