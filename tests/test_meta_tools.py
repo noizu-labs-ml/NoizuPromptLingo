@@ -101,7 +101,10 @@ class TestCatalogIntegrity:
             assert name in catalog_names, f"Exposed tool {name!r} not in catalog"
 
     def test_exposed_tools_are_expected(self):
-        assert EXPOSED_TOOL_NAMES == {"ToMarkdown", "Ping", "Download", "Screenshot", "Secret", "Rest"}
+        assert EXPOSED_TOOL_NAMES == {
+            "ToMarkdown", "Ping", "Download", "Screenshot", "Secret", "Rest",
+            "ToolSession", "ToolSession.Generate", "Instructions", "Instructions.Create",
+        }
 
     def test_exposed_tools_exclude_discovery(self):
         for tool in TOOL_CATALOG:
@@ -335,8 +338,8 @@ class TestTextSearch:
     async def test_searches_full_catalog(self):
         result = await tool_search("browser", mode="text")
         names = {m["name"] for m in result["matches"]}
-        # Should find catalog tools beyond just exposed ones
-        assert len(names) > len(EXPOSED_TOOL_NAMES)
+        # Should find catalog tools beyond just the 6 browser-related exposed ones
+        assert len(names) > 6
 
     @pytest.mark.asyncio
     async def test_limit(self):
@@ -489,12 +492,13 @@ class TestIntentSearch:
 
 class TestMCPRegistration:
 
-    def test_only_discovery_tools_registered(self):
+    def test_only_discovery_and_registered_tools_registered(self):
         from npl_mcp.launcher import create_app
         mcp = create_app()
         tool_names = set(mcp._tool_manager._tools.keys())
         assert tool_names == {
             "ToolSummary", "ToolSearch", "ToolDefinition", "ToolHelp", "ToolCall",
+            "ToolSession", "ToolSession.Generate", "Instructions", "Instructions.Create",
         }
 
 

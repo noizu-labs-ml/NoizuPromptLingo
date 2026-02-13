@@ -21,6 +21,7 @@ dependencies = [
     "html2text>=2024.1.0",
     "pdfplumber>=0.10.0",
     "lxml>=5.0.0",
+    "shortuuid>=1.0.0",
 ]
 
 [project.optional-dependencies]

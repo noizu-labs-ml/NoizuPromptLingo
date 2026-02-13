@@ -32,6 +32,27 @@ class TestToolRegistry:
     def test_auto_registered_rest(self):
         assert "Rest" in _IMPLEMENTATIONS
 
+    def test_auto_registered_tool_session_generate(self):
+        assert "ToolSession.Generate" in _IMPLEMENTATIONS
+
+    def test_auto_registered_tool_session(self):
+        assert "ToolSession" in _IMPLEMENTATIONS
+
+    def test_auto_registered_instructions(self):
+        assert "Instructions" in _IMPLEMENTATIONS
+
+    def test_auto_registered_instructions_create(self):
+        assert "Instructions.Create" in _IMPLEMENTATIONS
+
+    def test_auto_registered_instructions_update(self):
+        assert "Instructions.Update" in _IMPLEMENTATIONS
+
+    def test_auto_registered_instructions_active_version(self):
+        assert "Instructions.ActiveVersion" in _IMPLEMENTATIONS
+
+    def test_auto_registered_instructions_versions(self):
+        assert "Instructions.Versions" in _IMPLEMENTATIONS
+
     def test_get_missing_returns_none(self):
         assert get_implementation("NonExistent") is None
 
@@ -85,8 +106,23 @@ class TestCatalogIntegrity:
 
     def test_total_tool_count(self):
         from npl_mcp.meta_tools.catalog import TOOL_CATALOG
-        assert len(TOOL_CATALOG) == 103
+        assert len(TOOL_CATALOG) == 110
+
+    def test_tool_sessions_category_exists(self):
+        from npl_mcp.meta_tools.catalog import get_category_info
+        cat = get_category_info("ToolSessions")
+        assert cat is not None
+        assert cat["tool_count"] == 2
+
+    def test_instructions_category_exists(self):
+        from npl_mcp.meta_tools.catalog import get_category_info
+        cat = get_category_info("Instructions")
+        assert cat is not None
+        assert cat["tool_count"] == 5
 
     def test_exposed_tools_are_non_discovery(self):
         from npl_mcp.meta_tools.catalog import EXPOSED_TOOL_NAMES
-        assert EXPOSED_TOOL_NAMES == {"ToMarkdown", "Ping", "Download", "Screenshot", "Secret", "Rest"}
+        assert EXPOSED_TOOL_NAMES == {
+            "ToMarkdown", "Ping", "Download", "Screenshot", "Secret", "Rest",
+            "ToolSession", "ToolSession.Generate", "Instructions", "Instructions.Create",
+        }

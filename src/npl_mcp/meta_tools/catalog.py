@@ -4,7 +4,7 @@ This module provides a complete, static description of every MCP tool
 registered by the server. It is the single source of truth for tool
 discovery, documentation generation, and LLM-assisted tool selection.
 
-Total: 103 tools across 11 categories (5 discovery, 6 exposed, 92 hidden).
+Total: 110 tools across 13 categories (5 discovery, 10 exposed, 95 hidden).
 """
 
 from typing import Optional, TypedDict
@@ -97,6 +97,16 @@ CATEGORIES: list[CategoryInfo] = [
         "name": "Project Management",
         "description": "Access user stories, PRDs, functional requirements, acceptance tests, personas",
         "tool_count": 8,
+    },
+    {
+        "name": "ToolSessions",
+        "description": "Agent session tracking: generate, retrieve, and manage tool sessions keyed by agent/task pairs",
+        "tool_count": 2,
+    },
+    {
+        "name": "Instructions",
+        "description": "Versioned instruction documents: create, retrieve, update, rollback, and list versions",
+        "tool_count": 5,
     },
 ]
 
@@ -1184,6 +1194,83 @@ TOOL_CATALOG: list[ToolEntry] = [
         ],
     },
 
+    # ======================================================================
+    # ToolSessions (2)
+    # ======================================================================
+    {
+        "name": "ToolSession.Generate",
+        "category": "ToolSessions",
+        "description": "Generate or look up a session UUID by (agent, task) pair. If existing, returns the UUID; if notes provided and not already present, appends them. If not existing, creates a new session.",
+        "parameters": [
+            {"name": "agent", "type": "str", "required": True, "description": "Agent identifier"},
+            {"name": "brief", "type": "str", "required": True, "description": "Brief description of the session purpose"},
+            {"name": "task", "type": "str", "required": True, "description": "Task identifier (unique per agent)"},
+            {"name": "notes", "type": "str", "required": False, "description": "Optional notes to append to the session"},
+        ],
+    },
+    {
+        "name": "ToolSession",
+        "category": "ToolSessions",
+        "description": "Retrieve session info by UUID. Default returns agent and brief; verbose mode returns all fields including task, notes, and timestamps.",
+        "parameters": [
+            {"name": "uuid", "type": "str", "required": True, "description": "Session UUID"},
+            {"name": "verbose", "type": "bool", "required": False, "description": "If True, return all fields (default False)"},
+        ],
+    },
+
+    # ======================================================================
+    # Instructions (5)
+    # ======================================================================
+    {
+        "name": "Instructions",
+        "category": "Instructions",
+        "description": "Retrieve instruction body by UUID. Gets active version by default, or a specific version if specified.",
+        "parameters": [
+            {"name": "uuid", "type": "str", "required": True, "description": "Instruction UUID"},
+            {"name": "version", "type": "int", "required": False, "description": "Specific version number (active version if omitted)"},
+        ],
+    },
+    {
+        "name": "Instructions.Create",
+        "category": "Instructions",
+        "description": "Create a new instruction document with its first version (v1). Returns the UUID.",
+        "parameters": [
+            {"name": "title", "type": "str", "required": True, "description": "Instruction title"},
+            {"name": "description", "type": "str", "required": True, "description": "Instruction description"},
+            {"name": "tags", "type": "list", "required": True, "description": "List of string tags for categorization"},
+            {"name": "body", "type": "str", "required": True, "description": "Instruction body content"},
+        ],
+    },
+    {
+        "name": "Instructions.Update",
+        "category": "Instructions",
+        "description": "Create a new version of an instruction. Increments version number and sets it as active. Optionally updates description, tags, and/or body.",
+        "parameters": [
+            {"name": "uuid", "type": "str", "required": True, "description": "Instruction UUID"},
+            {"name": "change_note", "type": "str", "required": True, "description": "Description of what changed in this version"},
+            {"name": "description", "type": "str", "required": False, "description": "New description (keeps current if omitted)"},
+            {"name": "tags", "type": "list", "required": False, "description": "New tags list (keeps current if omitted)"},
+            {"name": "body", "type": "str", "required": False, "description": "New body content (keeps current if omitted)"},
+        ],
+    },
+    {
+        "name": "Instructions.ActiveVersion",
+        "category": "Instructions",
+        "description": "Change the active version of an instruction (rollback or forward).",
+        "parameters": [
+            {"name": "uuid", "type": "str", "required": True, "description": "Instruction UUID"},
+            {"name": "version", "type": "int", "required": True, "description": "Version number to set as active"},
+        ],
+    },
+    {
+        "name": "Instructions.Versions",
+        "category": "Instructions",
+        "description": "List all versions of an instruction with change notes and active indicator.",
+        "parameters": [
+            {"name": "uuid", "type": "str", "required": True, "description": "Instruction UUID"},
+        ],
+    },
+
 ]
 
 
@@ -1192,7 +1279,10 @@ TOOL_CATALOG: list[ToolEntry] = [
 # Discovery tools are excluded since the client already knows them.
 # ---------------------------------------------------------------------------
 
-EXPOSED_TOOL_NAMES: set[str] = {"ToMarkdown", "Ping", "Download", "Screenshot", "Secret", "Rest"}
+EXPOSED_TOOL_NAMES: set[str] = {
+    "ToMarkdown", "Ping", "Download", "Screenshot", "Secret", "Rest",
+    "ToolSession", "ToolSession.Generate", "Instructions", "Instructions.Create",
+}
 
 
 # ---------------------------------------------------------------------------

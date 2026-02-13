@@ -1,0 +1,58 @@
+databaseChangeLog:
+  # ===========================================================================
+  # Changeset 007: Create npl_tool_sessions table
+  # ===========================================================================
+  - changeSet:
+      id: 007-create-npl-tool-sessions-table
+      author: npl
+      comment: Create npl_tool_sessions table for agent session tracking
+      changes:
+        - createTable:
+            tableName: npl_tool_sessions
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: agent
+                  type: VARCHAR(256)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: brief
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: task
+                  type: VARCHAR(512)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: notes
+                  type: TEXT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: modified_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: npl_tool_sessions
+            columnNames: agent, task
+            constraintName: uq_npl_tool_sessions_agent_task
+      rollback:
+        - dropTable:
+            tableName: npl_tool_sessions

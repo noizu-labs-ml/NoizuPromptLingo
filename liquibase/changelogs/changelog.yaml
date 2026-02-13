@@ -5,3 +5,9 @@ databaseChangeLog:
   - include:
       file: changelogs/changeset-002.secrets-table.yaml
       relativeToChangelogFile: false
+  - include:
+      file: changelogs/changeset-003.tool-sessions-table.yaml
+      relativeToChangelogFile: false
+  - include:
+      file: changelogs/changeset-004.instructions-tables.yaml
+      relativeToChangelogFile: false

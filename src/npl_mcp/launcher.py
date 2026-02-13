@@ -202,6 +202,87 @@ def create_app() -> "FastMCP":
         except Exception as exc:
             return {"tool": tool, "status": "error", "message": f"{type(exc).__name__}: {exc}"}
 
+    # ------------------------------------------------------------------
+    # ToolSession tools (2 registered)
+    # ------------------------------------------------------------------
+
+    @mcp.tool(name="ToolSession.Generate")
+    async def tool_session_generate_handler(
+        agent: str,
+        brief: str,
+        task: str,
+        notes: Optional[str] = None,
+    ) -> dict:
+        """Generate or look up a session UUID by (agent, task) pair.
+
+        If a session already exists for this agent/task pair, returns its UUID.
+        If notes are provided and not already present, appends them.
+        If no session exists, creates a new one.
+
+        Args:
+            agent: Agent identifier.
+            brief: Brief description of the session purpose.
+            task: Task identifier (unique per agent).
+            notes: Optional notes to append to the session.
+        """
+        from npl_mcp.tool_sessions.tool_sessions import tool_session_generate as _gen
+        return await _gen(agent=agent, brief=brief, task=task, notes=notes)
+
+    @mcp.tool(name="ToolSession")
+    async def tool_session_handler(
+        uuid: str,
+        verbose: bool = False,
+    ) -> dict:
+        """Retrieve session info by UUID.
+
+        Default returns agent and brief.  Verbose mode returns all fields
+        including task, notes, and timestamps.
+
+        Args:
+            uuid: Session UUID.
+            verbose: If True, return all fields (default False).
+        """
+        from npl_mcp.tool_sessions.tool_sessions import tool_session as _session
+        return await _session(uuid=uuid, verbose=verbose)
+
+    # ------------------------------------------------------------------
+    # Instructions tools (2 registered)
+    # ------------------------------------------------------------------
+
+    @mcp.tool(name="Instructions")
+    async def instructions_handler(
+        uuid: str,
+        version: Optional[int] = None,
+    ) -> dict:
+        """Retrieve instruction body by UUID.
+
+        Gets the active version by default, or a specific version if specified.
+
+        Args:
+            uuid: Instruction UUID.
+            version: Specific version number (active version if omitted).
+        """
+        from npl_mcp.instructions.instructions import instructions_get as _get
+        return await _get(uuid=uuid, version=version)
+
+    @mcp.tool(name="Instructions.Create")
+    async def instructions_create_handler(
+        title: str,
+        description: str,
+        tags: list[str],
+        body: str,
+    ) -> dict:
+        """Create a new instruction document with its first version (v1).
+
+        Args:
+            title: Instruction title.
+            description: Instruction description.
+            tags: List of string tags for categorization.
+            body: Instruction body content.
+        """
+        from npl_mcp.instructions.instructions import instructions_create as _create
+        return await _create(title=title, description=description, tags=tags, body=body)
+
     return mcp
 
 

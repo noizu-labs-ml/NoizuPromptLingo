@@ -1,0 +1,115 @@
+databaseChangeLog:
+  # ===========================================================================
+  # Changeset 008: Create npl_instructions table
+  # ===========================================================================
+  - changeSet:
+      id: 008-create-npl-instructions-table
+      author: npl
+      comment: Create npl_instructions table for versioned instruction documents
+      changes:
+        - createTable:
+            tableName: npl_instructions
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: title
+                  type: VARCHAR(512)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: tags
+                  type: TEXT[]
+                  constraints:
+                    nullable: true
+              - column:
+                  name: active_version
+                  type: INTEGER
+                  defaultValueNumeric: 1
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: modified_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+      rollback:
+        - dropTable:
+            tableName: npl_instructions
+
+  # ===========================================================================
+  # Changeset 009: Create npl_instruction_versions table
+  # ===========================================================================
+  - changeSet:
+      id: 009-create-npl-instruction-versions-table
+      author: npl
+      comment: Create npl_instruction_versions table for versioned instruction bodies
+      changes:
+        - createTable:
+            tableName: npl_instruction_versions
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: instruction_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    references: npl_instructions(id)
+                    foreignKeyName: fk_instruction_version_instruction
+              - column:
+                  name: version
+                  type: INTEGER
+                  constraints:
+                    nullable: false
+              - column:
+                  name: body
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: change_note
+                  type: TEXT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: npl_instruction_versions
+            columnNames: instruction_id, version
+            constraintName: uq_instruction_version
+        - createIndex:
+            tableName: npl_instruction_versions
+            indexName: idx_instruction_versions_instruction_id
+            columns:
+              - column:
+                  name: instruction_id
+      rollback:
+        - dropTable:
+            tableName: npl_instruction_versions
