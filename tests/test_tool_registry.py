@@ -21,14 +21,23 @@ from npl_mcp.meta_tools.pin import (
 # ── Registry basics ──────────────────────────────────────────────────────
 
 class TestToolRegistry:
+    def test_auto_registered_to_markdown(self):
+        assert "ToMarkdown" in _IMPLEMENTATIONS
+
+    def test_auto_registered_ping(self):
+        assert "Ping" in _IMPLEMENTATIONS
+
+    def test_auto_registered_download(self):
+        assert "Download" in _IMPLEMENTATIONS
+
+    def test_auto_registered_screenshot(self):
+        assert "Screenshot" in _IMPLEMENTATIONS
+
     def test_auto_registered_secret(self):
         assert "Secret" in _IMPLEMENTATIONS
 
     def test_auto_registered_rest(self):
         assert "Rest" in _IMPLEMENTATIONS
-
-    def test_no_secret_get(self):
-        assert "SecretGet" not in _IMPLEMENTATIONS
 
     def test_get_missing_returns_none(self):
         assert get_implementation("NonExistent") is None

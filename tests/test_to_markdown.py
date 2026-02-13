@@ -365,8 +365,6 @@ class TestToMarkdownImageDescriptions:
 
 
 class TestToMarkdownRegistration:
-    def test_tool_registered_in_launcher(self):
-        from npl_mcp.launcher import create_app
-        mcp = create_app()
-        tool_names = set(mcp._tool_manager._tools.keys())
-        assert "ToMarkdown" in tool_names
+    def test_tool_in_registry(self):
+        from npl_mcp.meta_tools.tool_registry import get_implementation
+        assert get_implementation("ToMarkdown") is not None

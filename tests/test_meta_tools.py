@@ -487,14 +487,12 @@ class TestIntentSearch:
 
 class TestMCPRegistration:
 
-    def test_all_startup_tools_registered(self):
+    def test_only_discovery_tools_registered(self):
         from npl_mcp.launcher import create_app
         mcp = create_app()
         tool_names = set(mcp._tool_manager._tools.keys())
         assert tool_names == {
             "ToolSummary", "ToolSearch", "ToolDefinition", "ToolHelp", "ToolPin",
-            "ToMarkdown", "Ping", "Download", "Screenshot",
-            "Secret", "Rest",
         }
 
 
@@ -673,7 +671,7 @@ class TestToolPin:
         from npl_mcp.meta_tools.pin import tool_pin
         mcp = self._make_mcp()
         result = await tool_pin("dump_files", pin=True, fastmcp=mcp)
-        assert result["registered_tools"] == 12  # 11 startup + dump_files
+        assert result["registered_tools"] == 6  # 5 startup + dump_files
 
 
 # ---------------------------------------------------------------------------

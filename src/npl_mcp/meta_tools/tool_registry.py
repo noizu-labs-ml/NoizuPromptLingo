@@ -25,9 +25,17 @@ def get_implementation(name: str) -> Optional[Callable]:
 # ---------------------------------------------------------------------------
 
 def _auto_register() -> None:
+    from npl_mcp.browser.to_markdown import to_markdown
+    from npl_mcp.browser.ping import ping
+    from npl_mcp.browser.download import download
+    from npl_mcp.browser.screenshot import screenshot
     from npl_mcp.browser.secrets import secret_set
     from npl_mcp.browser.rest import rest
 
+    register_implementation("ToMarkdown", to_markdown)
+    register_implementation("Ping", ping)
+    register_implementation("Download", download)
+    register_implementation("Screenshot", screenshot)
     register_implementation("Secret", secret_set)
     register_implementation("Rest", rest)
 
