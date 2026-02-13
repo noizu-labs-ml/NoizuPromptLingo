@@ -61,6 +61,14 @@ Relationship metadata lives in YAML index files, NOT markdown:
 
 ---
 
+## MCP Tool Discovery
+
+This server uses a **meta-discovery pattern**. Only 5 Discovery tools are registered at startup: `ToolSummary`, `ToolSearch`, `ToolDefinition`, `ToolHelp`, and `ToolPin`. All other tools (103 total) live in the catalog and are activated via `ToolPin`.
+
+**Tools listed by ToolDefinition are callable on the same MCP server scope.** If `mcp__npl__ToolDefinition` lists a tool named `Bop`, then it is callable as `mcp__npl__Bop` once pinned. Pin a tool with `mcp__npl__ToolPin(tool_name="Bop")` to register it, then call it directly.
+
+---
+
 ## High-Level Architecture
 
 - **Entry point**: `src/npl_mcp/launcher.py` - starts FastAPI app, mounts FastMCP SSE (`/sse`)
