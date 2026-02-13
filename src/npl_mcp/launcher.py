@@ -74,24 +74,26 @@ def build_frontend() -> bool:
 
 
 def create_app() -> "FastMCP":
-    """Create the FastMCP app with discovery tools only.
+    """Create the FastMCP app with all directly-registered tools.
 
-    Only ToolSummary and ToolSearch are registered. All other tools
-    (ToMarkdown, Ping, Download, Screenshot, etc.) are discoverable
-    through the catalog but not directly registered.
+    Registers discovery tools (ToolSummary, ToolSearch, ToolDefinition,
+    ToolHelp, ToolPin), browser tools (ToMarkdown, Ping, Download,
+    Screenshot, Rest), and utility tools (Secret). Remaining catalog tools
+    are discoverable via ToolSearch/ToolSummary and activatable via ToolPin.
     """
     from typing import Optional
+
+    from fastmcp.server.context import Context
 
     mcp = FastMCP("npl-mcp")
 
     @mcp.tool(name="ToolSummary")
-    async def tool_summary(category: Optional[str] = None) -> dict:
+    async def tool_summary(filter: Optional[str] = None) -> dict:
         """List available tools, or drill into a catalog category.
 
-        Without category: returns the exposed tools (ToMarkdown, Ping,
-        Download, Screenshot) with full parameter info.
+        Without filter: returns the discovery tools with descriptions.
 
-        With category: expands that catalog category to show tool
+        With filter: expands that catalog category to show tool
         definitions and subcategories. Use dot notation to drill deeper
         (e.g. "Browser.Screenshots").
 
@@ -99,18 +101,19 @@ def create_app() -> "FastMCP":
         (e.g. "Browser.Screenshots#screenshot_capture").
 
         Args:
-            category: Category path to expand, or Category#Tool for a single tool.
+            filter: Category path to expand, or Category#Tool for a single tool.
                       Omit to see exposed tools.
         """
         from npl_mcp.meta_tools.summary import tool_summary as _summary
-        return await _summary(category=category)
+        return await _summary(filter=filter)
 
     @mcp.tool(name="ToolSearch")
     async def tool_search(
         query: str,
         mode: str = "text",
         limit: int = 10,
-    ) -> str:
+        verbose: bool = False,
+    ) -> dict:
         """Search for tools by name/description or by intent.
 
         Two search modes:
@@ -122,13 +125,214 @@ def create_app() -> "FastMCP":
             query: Search text (tool name for text mode, natural language for intent mode).
             mode: "text" or "intent" (default: "text").
             limit: Maximum results (default: 10).
+            verbose: If True, include full parameter definitions in each match.
 
         Returns:
-            JSON with matches including tool name, description, parameters,
+            JSON with matches including tool name, description,
             and (for intent mode) relevance and usage explanation.
         """
         from npl_mcp.meta_tools.search import tool_search as _search
-        return await _search(query, mode=mode, limit=limit)
+        return await _search(query, mode=mode, limit=limit, verbose=verbose)
+
+    @mcp.tool(name="ToolDefinition")
+    async def tool_definition(tools: list[str]) -> dict:
+        """Get full definitions for one or more catalog tools by name.
+
+        Returns complete tool info including all parameters. Use this
+        after ToolSearch or ToolSummary to get parameter details.
+
+        Args:
+            tools: List of tool names to look up (e.g. ["ToMarkdown", "Ping"]).
+
+        Returns:
+            JSON with full tool definitions including parameters,
+            and any names that were not found.
+        """
+        from npl_mcp.meta_tools.definition import tool_definition as _definition
+        return _definition(tools)
+
+    @mcp.tool(name="ToolHelp")
+    async def tool_help(tool: str, task: str, verbose: int = 2) -> dict:
+        """Get LLM-driven instructions on how to use a tool for a specific task.
+
+        Returns actionable guidance tailored to your task, with detail level
+        controlled by verbose.
+
+        Args:
+            tool: Name of the catalog tool (e.g. "ToMarkdown").
+            task: What you are trying to accomplish.
+            verbose: Detail level: 1=brief, 2=standard, 3=detailed with examples.
+
+        Returns:
+            JSON with tool name, task, and generated instructions.
+        """
+        from npl_mcp.meta_tools.help import tool_help as _help
+        return await _help(tool, task, verbose=verbose)
+
+    @mcp.tool(name="ToMarkdown")
+    async def to_markdown_tool(
+        source: str,
+        filter: Optional[str] = None,
+        collapsed_depth: Optional[int] = None,
+        filtered_only: bool = False,
+        output: Optional[str] = None,
+        with_image_descriptions: bool = False,
+        image_model: str = "openai/gpt-5-mini",
+        fallback_parser: bool = False,
+    ) -> dict:
+        """Convert file/URL to markdown with optional filter, collapse, and image descriptions.
+
+        Args:
+            source: URL, file path, or markdown content string.
+            filter: Filter selector to extract specific sections. Heading name: 'API Reference' matches ## API Reference. Path: 'Overview > API' matches API under Overview. CSS: 'css:#main' uses CSS selector. Use filtered_only=True for extraction, False (default) for context view with collapsed siblings.
+            collapsed_depth: Collapse headings below this depth (1-6).
+            filtered_only: Show only filtered sections (default False).
+            output: File path to write output. If omitted, returns in payload.
+            with_image_descriptions: Inject LLM-generated image descriptions (default False).
+            image_model: Multi-modal LLM for image descriptions (default 'openai/gpt-5-mini').
+            fallback_parser: Fall back to html2text if Jina fails (default False, Jina only).
+        """
+        from npl_mcp.browser.to_markdown import to_markdown as _to_markdown
+        return await _to_markdown(
+            source,
+            filter=filter,
+            collapsed_depth=collapsed_depth,
+            filtered_only=filtered_only,
+            output=output,
+            with_image_descriptions=with_image_descriptions,
+            image_model=image_model,
+            fallback_parser=fallback_parser,
+        )
+
+    @mcp.tool(name="Ping")
+    async def ping_tool(url: str, sentinel: Optional[str] = None, timeout: float = 10.0) -> dict:
+        """Check connectivity to a URL. Returns status code and response time.
+
+        Optional sentinel validates response content:
+        - xpath:<expr> – Evaluate XPath against the HTML response.
+        - regex:<pattern> – Regex search on the response body.
+        - llm:<condition> – Ask an LLM to evaluate condition (TRUE/FALSE + detail).
+
+        Args:
+            url: URL to ping/check connectivity.
+            sentinel: Validation expression with xpath:, regex:, or llm: prefix.
+            timeout: Request timeout in seconds (default 10.0).
+        """
+        from npl_mcp.browser.ping import ping as _ping
+        return await _ping(url, sentinel=sentinel, timeout=timeout)
+
+    @mcp.tool(name="Download")
+    async def download_tool(
+        file: str,
+        out: Optional[str] = None,
+    ) -> dict:
+        """Download a URL or copy a file to a local path.
+
+        Supports HTTP(S) URLs (streamed download) and local file copies.
+        Creates parent directories automatically.
+
+        Args:
+            file: URL or file path to download from.
+            out: Local file path to save to. If omitted, uses source filename
+                in the current directory.
+        """
+        from npl_mcp.browser.download import download as _download
+        return await _download(file, out)
+
+    @mcp.tool(name="Screenshot")
+    async def screenshot_tool(
+        url: str,
+        output: Optional[str] = None,
+        max_width: Optional[int] = None,
+        max_height: Optional[int] = None,
+        full_page: bool = False,
+    ) -> dict:
+        """Capture a screenshot of a URL. Returns file path or base64 data.
+
+        The image is captured at native viewport size and optionally scaled
+        down to fit within max_width/max_height (preserving aspect ratio).
+
+        Args:
+            url: URL to screenshot.
+            output: File path to save PNG. If omitted, returns base64 data.
+            max_width: Maximum width in pixels (scales down preserving aspect ratio).
+            max_height: Maximum height in pixels (scales down preserving aspect ratio).
+            full_page: Capture full scrollable page (default False, viewport only).
+        """
+        from npl_mcp.browser.screenshot import screenshot as _screenshot
+        return await _screenshot(
+            url,
+            output=output,
+            max_width=max_width,
+            max_height=max_height,
+            full_page=full_page,
+        )
+
+    @mcp.tool(name="Secret")
+    async def secret_tool(name: str, value: str) -> dict:
+        """Store a named secret for use in API authentication.
+
+        Secrets are persisted in PostgreSQL and referenced via ${secret.NAME}
+        in Rest tool headers/body. Creates or updates the secret.
+
+        Args:
+            name: Secret identifier matching [a-zA-Z_][a-zA-Z0-9_]* (max 128 chars).
+            value: Secret value (max 64 KB).
+        """
+        from npl_mcp.browser.secrets import secret_set
+        return await secret_set(name, value)
+
+    @mcp.tool(name="Rest")
+    async def rest_tool(
+        url: str,
+        method: str = "GET",
+        headers: Optional[dict[str, str]] = None,
+        accept: Optional[str] = None,
+        encoding: Optional[str] = None,
+        body: Optional[str] = None,
+        timeout: float = 30.0,
+    ) -> dict:
+        """Full HTTP client with ${secret.NAME} injection in headers and body.
+
+        Supports GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS. Secrets are
+        resolved from the database before the request is sent.
+
+        Args:
+            url: Request URL.
+            method: HTTP method (default GET).
+            headers: Request headers dict. May contain ${secret.NAME} placeholders.
+            accept: Default Accept header (won't override explicit header).
+            encoding: Default Accept-Encoding header (won't override explicit).
+            body: Request body string. May contain ${secret.NAME} placeholders. Max 1 MB.
+            timeout: Request timeout in seconds (default 30).
+        """
+        from npl_mcp.browser.rest import rest
+        return await rest(
+            url,
+            method=method,
+            headers=headers,
+            accept=accept,
+            encoding=encoding,
+            body=body,
+            timeout=timeout,
+        )
+
+    @mcp.tool(name="ToolPin")
+    async def tool_pin(tool_name: str, pin: bool = True, ctx: Context = None) -> dict:
+        """Pin or unpin a catalog tool for dynamic MCP registration.
+
+        Pin (register) a tool from the catalog so it appears in the
+        client's tool list, or unpin (unregister) it to remove it.
+        Triggers notifications/tools/list_changed automatically.
+
+        Core tools (ToolSummary, ToolSearch, ToolPin) cannot be unpinned.
+
+        Args:
+            tool_name: Name of the tool from the catalog (e.g. "ToMarkdown").
+            pin: True to register the tool, False to unregister it (default: True).
+        """
+        from npl_mcp.meta_tools.pin import tool_pin as _pin
+        return await _pin(tool_name, pin=pin, fastmcp=ctx.fastmcp)
 
     return mcp
 

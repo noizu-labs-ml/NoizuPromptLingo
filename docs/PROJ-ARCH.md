@@ -2,12 +2,9 @@
 
 ## Overview
 
-NPL MCP is a Model Context Protocol (MCP) server built on FastMCP. It exposes tools to AI assistants (like Claude) via Server-Sent Events (SSE). The project provides two server variants:
+NPL MCP is a Model Context Protocol (MCP) server built on FastMCP 2.x. Rather than registering all ~96 tools directly (which overwhelms clients), it uses a **meta tool pattern**: only 2 discovery tools (ToolSummary, ToolSearch) are registered as MCP tools. All other tools live in a static catalog that clients explore through these discovery tools.
 
-1. **Minimal Server** (`src/mcp.py`) - Hello-world example for prototyping
-2. **Full Server** (`src/npl_mcp/launcher.py`) - Production server with CLI management
-
-The architecture follows a simple layered approach: FastMCP handles tool registration and MCP protocol details, FastAPI provides HTTP routing and health checks, and Uvicorn serves as the ASGI server.
+The server combines FastMCP for MCP protocol handling, FastAPI for HTTP routing and a Next.js frontend, LiteLLM proxy for LLM-powered features (intent search, image descriptions), and PostgreSQL for persistent storage.
 
 ## System Diagram
 
@@ -21,141 +18,138 @@ graph TB
     subgraph "NPL MCP Server"
         API[FastAPI App]
         MCP[FastMCP Instance]
-        Tools[Tool Definitions]
+        Meta[Meta Tools<br/>ToolSummary + ToolSearch]
+        Catalog[Static Catalog<br/>96 tools, 15 categories]
+        FE[Next.js Frontend<br/>static export]
     end
 
-    subgraph Transport
-        SSE["/sse endpoint"]
-        Health["/ health check"]
+    subgraph External
+        LLM[LiteLLM Proxy<br/>localhost:4111]
+        DB[(PostgreSQL<br/>localhost:5111)]
     end
 
-    CC -->|SSE| SSE
-    Other -->|SSE| SSE
-    SSE --> API
+    CC -->|SSE| API
+    Other -->|SSE| API
     API --> MCP
-    MCP --> Tools
-    Health --> API
+    MCP --> Meta
+    Meta --> Catalog
+    Meta -->|intent search| LLM
+    API --> FE
+    Catalog -.->|stubs| DB
 ```
 
 ## Core Components
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
+| Launcher | `src/npl_mcp/launcher.py` | `create_app()` + `create_asgi_app()`, CLI, Uvicorn |
+| Meta Tools | `src/npl_mcp/meta_tools/` | ToolSummary, ToolSearch, static catalog |
+| Markdown Tools | `src/npl_mcp/markdown/` | Converter, viewer, filters, image descriptions |
+| NPL Parser | `src/npl_mcp/npl/` | YAML loader, syntax parser, reference resolver |
+| PM Tools | `src/npl_mcp/pm_tools/` | PRD, user story, persona access |
+| Frontend | `frontend/` | Next.js + Tailwind web UI |
 | Minimal Server | `src/mcp.py` | Standalone hello-world for quick experiments |
-| Full Server | `src/npl_mcp/launcher.py` | FastMCP + FastAPI + CLI options (status, port/host config) |
-| Console Script | `pyproject.toml` | Defines `npl-mcp` entry point → `npl_mcp.launcher:main` |
-| Module Entry | `src/npl_mcp/__main__.py` | Enables `python -m npl_mcp` invocation |
 
-## Request Flow
+## Meta Tool Pattern
 
-1. MCP client connects to `/sse` endpoint via Server-Sent Events
-2. FastAPI routes the connection to the mounted FastMCP app
-3. FastMCP handles the MCP protocol, dispatching tool calls
-4. Tool functions execute and return results via SSE stream
+Only **2 MCP tools** are registered with FastMCP. The remaining 96 tools are discoverable through the catalog but not directly callable via MCP.
+
+| Registered Tool | Purpose |
+|-----------------|---------|
+| **ToolSummary** | Browse catalog: exposed tools, category drill-down, `#Tool` lookup |
+| **ToolSearch** | Search by text (substring) or intent (LLM-powered semantic) |
+
+Four "exposed" tools are highlighted in ToolSummary's default view: **ToMarkdown**, **Ping**, **Download**, **Screenshot**. These are catalog entries, not registered MCP tools.
+
+→ *See [arch/meta-tools.md](arch/meta-tools.md) for full details, catalog structure, and LLM configuration*
 
 ## Technology Stack
 
 | Layer | Technology | Purpose |
 |-------|------------|---------|
 | Protocol | MCP (Model Context Protocol) | AI assistant communication standard |
-| Framework | FastMCP | MCP server implementation |
-| HTTP | FastAPI | ASGI web framework |
-| Server | Uvicorn | ASGI server |
-| Transport | SSE (Server-Sent Events) | Bidirectional streaming |
+| Framework | FastMCP 2.x | MCP server with dynamic tool management |
+| HTTP | FastAPI | ASGI framework, frontend serving |
+| Server | Uvicorn | ASGI server with reload support |
+| Transport | SSE (Server-Sent Events) | MCP client streaming |
+| Database | PostgreSQL (asyncpg) | Persistent storage (localhost:5111) |
+| Migrations | Liquibase | YAML-based schema changelogs |
+| LLM Proxy | LiteLLM | Intent search, image descriptions (localhost:4111) |
+| Frontend | Next.js + Tailwind | Static-exported web UI |
+
+## Request Flow
+
+1. MCP client connects to `/sse` endpoint via Server-Sent Events
+2. FastAPI routes the connection to the mounted FastMCP SSE app
+3. FastMCP dispatches tool calls to ToolSummary or ToolSearch
+4. Meta tools query the static catalog and optionally the LLM proxy
+5. Results return via SSE stream
+
+## Module Architecture
+
+| Module | Status | Tools | Description |
+|--------|--------|-------|-------------|
+| `meta_tools/` | Active | 2 registered | Discovery layer (ToolSummary, ToolSearch) |
+| `markdown/` | Active | 0 (in catalog) | Converter, viewer, caching, filters |
+| `npl/` | Active | 0 | NPL YAML loading, syntax parsing |
+| `pm_tools/` | Active | 8 (in catalog) | PRD/story/persona access |
+| `storage/` | Stub | 0 | PostgreSQL async wrapper |
+| `artifacts/` | Stub | 5 (in catalog) | Versioned artifact management |
+| `browser/` | Stub | 36 (in catalog) | Browser automation |
+| `chat/` | Stub | 8 (in catalog) | Event-sourced chat rooms |
+| `tasks/` | Stub | 13 (in catalog) | Task queue management |
+| `executors/` | Stub | 11 (in catalog) | Agent lifecycle management |
+| `sessions/` | Stub | 4 (in catalog) | Session lifecycle |
+| `scripts/` | Stub | 5 (in catalog) | Shell script wrappers |
 
 ## Entry Points
 
 | Entry Point | Command | Description |
 |-------------|---------|-------------|
-| Recommended | `uv run npl-mcp` | Full server with CLI options (uses uv) |
+| Recommended | `uv run npl-mcp` | Full server with CLI options |
 | Console script | `npl-mcp` | Full server (requires package installed) |
 | Module | `uv run -m npl_mcp` | Same as console script via module |
-| Direct minimal | `uv run src/mcp.py` | Minimal hello-world server |
-| Python direct | `python src/mcp.py` | Minimal server without uv |
-
-## Available Tools
-
-| Tool | Description |
-|------|-------------|
-| `hello-world` | Returns a greeting message |
-| `echo` | Echoes back provided text (full server only) |
-
-→ *See [claude/tools.summary.md](claude/tools.summary.md) for Claude Code built-in tools reference*
-
-## Requirements & Specifications
-
-Features are expressed through **user stories** organized around specific personas, which generate **PRD documents** that guide the TDD implementation workflow.
-
-### Personas
-
-The system defines personas across three categories:
-
-**Core User Personas** (7 primary personas):
-- P-001: AI Agent (autonomous programmatic automation)
-- P-002: Product Manager (non-technical dashboards)
-- P-003: Vibe Coder (rapid prototyping developer)
-- P-004: Project Manager (agent coordination and task tracking)
-- P-005: Dave the Fellow Developer (code review and quality)
-- P-006: Control Agent (orchestration and workflow management)
-- P-007: Sub-Agent (task execution and reliability)
-
-**Specialized Agents** (16+ agents organized by domain):
-- Core Agents: NPL Author, NPL FIM, NPL Grader, NPL QA, NPL Persona, NPL PRD Manager, etc.
-- Infrastructure Agents: Build Manager, Code Reviewer, Prototyper
-- Quality Assurance: Tester, Validator, Benchmarker, Integrator
-- User Experience: Accessibility, Onboarding, Performance
-- Research: Claude Optimizer, Performance Monitor, Cognitive Load Assessor
-- Project Management: Coordinator, Risk Monitor, Technical Reality Checker
-- Marketing: Community, Conversion, Marketing Copy, Positioning
-
-→ *See [project-management/personas/](../project-management/personas/) for detailed persona definitions, [project-management/personas/index.yaml](../project-management/personas/index.yaml) for relationship metadata*
-
-### User Stories
-
-37 user stories organized into 7 PRD priority groups:
-
-| Group | Count | Scope |
-|-------|-------|-------|
-| NPL Load | 4 | Loading prompt conventions and NPL components |
-| Chat/Collaboration | 7 | Real-time messaging and collaboration features |
-| Artifacts/Reviews | 5 | Versioned artifacts and review workflows |
-| Task Queue | 7 | Task management and queue operations |
-| Browser/Screenshots | 7 | Browser automation and visual testing |
-| Agent Coordination | 3 | Monitoring and coordinating AI agents |
-| Human-Agent Collaboration | 4 | Developer-AI pair programming and interaction |
-
-→ *See [project-management/user-stories.md](../project-management/user-stories.md) for overview, [project-management/user-stories/](../project-management/user-stories/) for individual stories*
-
-### Product Requirement Documents
-
-PRDs transform user stories into actionable specifications with functional/non-functional requirements, API specifications, and testing strategies.
-
-→ *See [project-management/prd.md](../project-management/prd.md) for detailed format, [project-management/prd.summary.md](../project-management/prd.summary.md) for overview*
+| Minimal | `uv run src/mcp.py` | Hello-world server only |
 
 ## Key Design Decisions
 
-- **FastMCP over raw MCP SDK**: Simplifies tool registration with decorators
-- **SSE transport**: Enables real-time bidirectional communication without WebSockets complexity
-- **Two server variants**: Minimal for learning/testing, full for production use
-- **FastAPI wrapper**: Allows adding custom endpoints (health checks) alongside MCP
+- **Meta tool pattern over direct registration**: Prevents overwhelming clients with 96+ tools; clients discover what they need
+- **FastMCP 2.x**: Supports dynamic tool management via `ctx.fastmcp.add_tool()` / `remove_tool()`
+- **LiteLLM proxy**: Routes LLM calls through a local proxy for model flexibility and key management
+- **Static catalog**: Tool definitions are code constants, not database-backed — fast, versioned, no runtime dependencies
+- **Next.js static export**: Frontend builds to `web/static/` and is served by FastAPI middleware
 
 ## Agent Orchestration
 
-The project implements a TDD-driven workflow system that coordinates multiple specialized agents (idea-to-spec, prd-editor, npl-tdd-tester, npl-tdd-coder, npl-tdd-debugger) to transform feature ideas into tested, production-ready code. Each agent operates autonomously within a defined phase, with a controller orchestrating the overall workflow from discovery through implementation.
+The project implements a TDD-driven workflow system with 5 specialized agents that transform feature ideas into tested code:
 
-The workflow processes feature ideas through:
-1. **Persona Definitions** (`project-management/personas/`) - Establish user perspectives
-2. **User Stories** (`project-management/user-stories/`) - Capture feature requirements
-3. **PRDs** (`project-management/PRDs/`) - Detailed specifications (per PRD spec)
-4. **Tests** (`tests/`) - Test-driven development
-5. **Implementation** (`src/`) - Production code
+1. **npl-idea-to-spec** → Personas + user stories
+2. **npl-prd-editor** → PRD documents
+3. **npl-tdd-tester** → Test suites
+4. **npl-tdd-coder** → Implementation (runs until tests pass)
+5. **npl-tdd-debugger** → Root cause analysis on failures
 
 → *See [arch/agent-orchestration.summary.md](arch/agent-orchestration.summary.md) for details*
 
 ## Configuration
 
-| Flag | Default | Description |
-|------|---------|-------------|
+| Flag / Env Var | Default | Description |
+|----------------|---------|-------------|
 | `--host` | 127.0.0.1 | Server bind address |
 | `--port` | 8765 | Server port |
 | `--status` | - | Check if server is running |
+| `--no-frontend` | - | Skip frontend build |
+| `--reload` | - | Auto-reload on file changes |
+| `NPL_LITELLM_URL` | `http://localhost:4111/v1` | LiteLLM proxy URL |
+| `NPL_LITELLM_KEY` | `sk-litellm-master-key-12345` | LiteLLM API key |
+| `NPL_LITELLM_MODEL` | `groq/openai/gpt-oss-120b` | Default model for intent search |
+
+## Infrastructure
+
+| Service | Port | Purpose |
+|---------|------|---------|
+| NPL MCP Server | 8765 | MCP SSE + web UI |
+| LiteLLM Proxy | 4111 | LLM routing |
+| PostgreSQL | 5111 | Database (`npl`) |
+
+Services defined in `docker-compose.yaml` (PostgreSQL) with init scripts in `docker/postgres-init/`. Schema managed by Liquibase changelogs in `liquibase/`.

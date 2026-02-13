@@ -4,10 +4,12 @@ Parses markdown for image references, describes them via multi-modal LLM,
 and caches descriptions in a YAML file keyed by image URI + model.
 """
 
+import asyncio
 import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
+from urllib.parse import urljoin
 
 import yaml
 
@@ -56,48 +58,92 @@ class ImageDescriptionCache:
         self._save()
 
 
+def _resolve_image_uri(uri: str, base_url: Optional[str] = None) -> str:
+    """Resolve an image URI to an absolute URL if possible.
+
+    Handles:
+    - Absolute URLs (http/https) → returned as-is
+    - Relative URIs with a base_url → resolved via urljoin
+    - Local paths without base_url → returned as-is (for local files)
+    """
+    if uri.startswith(("http://", "https://", "data:")):
+        return uri
+    if base_url and base_url.startswith(("http://", "https://")):
+        return urljoin(base_url, uri)
+    return uri
+
+
 async def inject_image_descriptions(
     markdown: str,
-    model: str = "openai/GPT5.2",
+    model: str = "openai/gpt-5-mini",
     cache_file: Optional[Path] = None,
+    base_url: Optional[str] = None,
 ) -> str:
     """Parse markdown for images and inject LLM descriptions after each one.
+
+    Uncached images are described in parallel via asyncio.gather for speed.
 
     Args:
         markdown: Input markdown text with ``![alt](uri)`` references.
         model: Multi-modal LLM model name for descriptions.
         cache_file: Override cache file path (default .tmp/cache/image_descriptions.yaml).
+        base_url: Base URL for resolving relative image URIs (e.g. source page URL).
 
     Returns:
         Markdown with descriptions injected after each image reference.
     """
     cache = ImageDescriptionCache(cache_file or DEFAULT_CACHE_FILE)
 
+    # Collect all image matches with resolved URIs
+    matches: list[tuple[re.Match, str]] = []
+    for match in _IMAGE_RE.finditer(markdown):
+        raw_uri = match.group(2)
+        image_uri = _resolve_image_uri(raw_uri, base_url)
+        matches.append((match, image_uri))
+
+    if not matches:
+        return markdown
+
+    # Separate cached vs uncached
+    descriptions: dict[str, Optional[str]] = {}
+    errors: dict[str, str] = {}
+    uncached: list[str] = []
+    for _, image_uri in matches:
+        if image_uri not in descriptions:
+            cached_desc = cache.get(image_uri, model)
+            descriptions[image_uri] = cached_desc
+            if cached_desc is None:
+                uncached.append(image_uri)
+
+    # Fetch uncached descriptions in parallel
+    if uncached:
+        async def _describe(uri: str) -> tuple[str, Optional[str], Optional[str]]:
+            try:
+                desc = await describe_image(uri, model=model)
+                return uri, desc, None
+            except Exception as exc:
+                return uri, None, f"{type(exc).__name__}: {exc}"
+
+        results = await asyncio.gather(*[_describe(uri) for uri in uncached])
+        for uri, desc, err in results:
+            descriptions[uri] = desc
+            if desc is not None:
+                cache.set(uri, model, desc)
+            elif err is not None:
+                errors[uri] = err
+
+    # Rebuild markdown with descriptions injected
     parts: list[str] = []
     last_end = 0
 
-    for match in _IMAGE_RE.finditer(markdown):
-        image_uri = match.group(2)
-
-        # Check cache first
-        description = cache.get(image_uri, model)
-
-        if description is None:
-            # Call LLM for description
-            try:
-                description = await describe_image(image_uri, model=model)
-                cache.set(image_uri, model, description)
-            except Exception:
-                # Skip description on LLM failure (don't break the document)
-                parts.append(markdown[last_end:match.end()])
-                last_end = match.end()
-                continue
-
-        # Append text before image + image + description block
+    for match, image_uri in matches:
+        description = descriptions.get(image_uri)
         parts.append(markdown[last_end:match.end()])
-        parts.append(f"\n\n> **Image**: {description}\n")
+        if description is not None:
+            parts.append(f"\n\n> **Image**: {description}\n")
+        elif image_uri in errors:
+            parts.append(f"\n\n> **Image description failed**: {errors[image_uri]}\n")
         last_end = match.end()
 
-    # Remaining text after last image
     parts.append(markdown[last_end:])
     return "".join(parts)

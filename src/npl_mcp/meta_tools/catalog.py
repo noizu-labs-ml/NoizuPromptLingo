@@ -4,7 +4,7 @@ This module provides a complete, static description of every MCP tool
 registered by the server. It is the single source of truth for tool
 discovery, documentation generation, and LLM-assisted tool selection.
 
-Total: 96 tools across 9 categories (4 exposed, 92 hidden).
+Total: 103 tools across 11 categories (5 exposed, 98 hidden).
 """
 
 from typing import Optional, TypedDict
@@ -36,6 +36,11 @@ class CategoryInfo(TypedDict):
 
 CATEGORIES: list[CategoryInfo] = [
     {
+        "name": "Discovery",
+        "description": "Tool discovery and management: search, browse, inspect, and pin catalog tools",
+        "tool_count": 5,
+    },
+    {
         "name": "Scripts",
         "description": "Shell script wrappers for file dumping, directory trees, NPL resource loading",
         "tool_count": 5,
@@ -61,9 +66,14 @@ CATEGORIES: list[CategoryInfo] = [
         "tool_count": 8,
     },
     {
+        "name": "Utility",
+        "description": "Persist named credentials for API authentication",
+        "tool_count": 1,
+    },
+    {
         "name": "Browser",
-        "description": "Headless browser automation, markdown conversion, screenshots, downloads, connectivity",
-        "tool_count": 36,
+        "description": "Headless browser automation, markdown conversion, screenshots, downloads, connectivity, REST client",
+        "tool_count": 37,
     },
     {"name": "Browser.Screenshots", "description": "Capture and compare screenshots of web pages", "tool_count": 3},
     {"name": "Browser.Navigation", "description": "Navigate, scroll, and control browser history", "tool_count": 5},
@@ -96,6 +106,56 @@ CATEGORIES: list[CategoryInfo] = [
 # ---------------------------------------------------------------------------
 
 TOOL_CATALOG: list[ToolEntry] = [
+    # ======================================================================
+    # Discovery (5)
+    # ======================================================================
+    {
+        "name": "ToolSummary",
+        "category": "Discovery",
+        "description": "List available tools, or drill into a catalog category. Without filter: returns the exposed tools. With filter: expands that catalog category to show tool definitions and subcategories. Use dot notation to drill deeper (e.g. 'Browser.Screenshots'). With Category#ToolName: returns a single tool's full definition.",
+        "parameters": [
+            {"name": "filter", "type": "str", "required": False, "description": "Category path to expand, or Category#Tool for a single tool. Omit to see exposed tools."},
+        ],
+    },
+    {
+        "name": "ToolSearch",
+        "category": "Discovery",
+        "description": "Search for tools by name/description or by intent. Two search modes: 'text' for fast substring matching, 'intent' for LLM-powered semantic search with multi-tool workflow suggestions.",
+        "parameters": [
+            {"name": "query", "type": "str", "required": True, "description": "Search text (tool name for text mode, natural language for intent mode)"},
+            {"name": "mode", "type": "str", "required": False, "description": "'text' or 'intent' (default: 'text')"},
+            {"name": "limit", "type": "int", "required": False, "description": "Maximum results (default: 10)"},
+            {"name": "verbose", "type": "bool", "required": False, "description": "If True, include full parameter definitions in each match"},
+        ],
+    },
+    {
+        "name": "ToolDefinition",
+        "category": "Discovery",
+        "description": "Get full definitions for one or more catalog tools by name. Returns complete tool info including all parameters.",
+        "parameters": [
+            {"name": "tools", "type": "list", "required": True, "description": "List of tool names to look up (e.g. ['ToMarkdown', 'Ping'])"},
+        ],
+    },
+    {
+        "name": "ToolHelp",
+        "category": "Discovery",
+        "description": "Get LLM-driven instructions on how to use a tool for a specific task. Returns actionable guidance tailored to your task.",
+        "parameters": [
+            {"name": "tool", "type": "str", "required": True, "description": "Name of the catalog tool (e.g. 'ToMarkdown')"},
+            {"name": "task", "type": "str", "required": True, "description": "What you are trying to accomplish"},
+            {"name": "verbose", "type": "int", "required": False, "description": "Detail level: 1=brief, 2=standard, 3=detailed with examples"},
+        ],
+    },
+    {
+        "name": "ToolPin",
+        "category": "Discovery",
+        "description": "Pin or unpin a catalog tool for dynamic MCP registration. Pin (register) a tool from the catalog so it appears in the client's tool list, or unpin (unregister) it to remove it.",
+        "parameters": [
+            {"name": "tool_name", "type": "str", "required": True, "description": "Name of the tool from the catalog (e.g. 'ToMarkdown')"},
+            {"name": "pin", "type": "bool", "required": False, "description": "True to register the tool, False to unregister it (default: True)"},
+        ],
+    },
+
     # ======================================================================
     # Scripts (5)
     # ======================================================================
@@ -387,7 +447,20 @@ TOOL_CATALOG: list[ToolEntry] = [
     },
 
     # ======================================================================
-    # Browser (32)
+    # Utility (1)
+    # ======================================================================
+    {
+        "name": "Secret",
+        "category": "Utility",
+        "description": "Store a named secret for use in API authentication. Secrets are persisted in PostgreSQL and referenced via ${secret.NAME} in Rest tool headers/body. Creates or updates the secret.",
+        "parameters": [
+            {"name": "name", "type": "str", "required": True, "description": "Secret identifier matching [a-zA-Z_][a-zA-Z0-9_]* (max 128 chars)"},
+            {"name": "value", "type": "str", "required": True, "description": "Secret value (max 64 KB)"},
+        ],
+    },
+
+    # ======================================================================
+    # Browser (32 stubs + 4 exposed + 1 Rest)
     # ======================================================================
     {
         "name": "screenshot_capture",
@@ -972,20 +1045,23 @@ TOOL_CATALOG: list[ToolEntry] = [
         "description": "Convert file/URL to markdown with optional filter, collapse, and image descriptions.",
         "parameters": [
             {"name": "source", "type": "str", "required": True, "description": "URL, file path, or markdown content string"},
-            {"name": "filter", "type": "str", "required": False, "description": "Filter selector (e.g., 'h2', 'Overview > API', 'css:#main')"},
+            {"name": "filter", "type": "str", "required": False, "description": "Filter selector to extract specific sections. Heading name: 'API Reference' matches ## API Reference. Path: 'Overview > API' matches API under Overview. CSS: 'css:#main' uses CSS selector. Use filtered_only=True for extraction, False (default) for context view with collapsed siblings."},
             {"name": "collapsed_depth", "type": "int", "required": False, "description": "Collapse headings below this depth (1-6)"},
             {"name": "filtered_only", "type": "bool", "required": False, "description": "Show only filtered sections (default False)"},
             {"name": "output", "type": "str", "required": False, "description": "File path to write output. If omitted, returns in payload."},
             {"name": "with_image_descriptions", "type": "bool", "required": False, "description": "Inject LLM-generated image descriptions (default False)"},
-            {"name": "image_model", "type": "str", "required": False, "description": "Multi-modal LLM for image descriptions (default 'openai/GPT5.2')"},
+            {"name": "image_model", "type": "str", "required": False, "description": "Multi-modal LLM for image descriptions (default 'openai/gpt-5-mini')"},
+            {"name": "fallback_parser", "type": "bool", "required": False, "description": "Fall back to html2text if Jina fails (default False, Jina only)"},
         ],
     },
     {
         "name": "Ping",
         "category": "Browser",
-        "description": "Check connectivity to a URL.",
+        "description": "Check connectivity to a URL. Returns status code and response time. Optional sentinel validates response via xpath:, regex:, or llm: prefix.",
         "parameters": [
             {"name": "url", "type": "str", "required": True, "description": "URL to ping/check connectivity"},
+            {"name": "sentinel", "type": "str", "required": False, "description": "Validation expression: 'xpath:<expr>' checks HTML elements, 'regex:<pattern>' searches response body, 'llm:<condition>' asks LLM to evaluate condition (returns TRUE/FALSE + detail)"},
+            {"name": "timeout", "type": "float", "required": False, "description": "Request timeout in seconds (default 10.0)"},
         ],
     },
     {
@@ -994,17 +1070,37 @@ TOOL_CATALOG: list[ToolEntry] = [
         "description": "Download a URL or copy a file to a local path.",
         "parameters": [
             {"name": "file", "type": "str", "required": True, "description": "URL or file path to download from"},
-            {"name": "out", "type": "str", "required": True, "description": "Local file path to save to"},
+            {"name": "out", "type": "str", "required": False, "description": "Local file path to save to. If omitted, uses source filename in current directory."},
         ],
     },
     {
         "name": "Screenshot",
         "category": "Browser",
-        "description": "Capture a screenshot of a URL. Returns file path or base64 stream.",
+        "description": "Capture a screenshot of a URL. Returns file path or base64 data.",
         "parameters": [
             {"name": "url", "type": "str", "required": True, "description": "URL to screenshot"},
             {"name": "output", "type": "str", "required": False, "description": "File path to save. If omitted, returns base64 data."},
-            {"name": "resolution", "type": "str", "required": False, "description": "Resize to WIDTHxHEIGHT (e.g. '128x128')"},
+            {"name": "max_width", "type": "int", "required": False, "description": "Maximum width in pixels. Image is scaled down preserving aspect ratio."},
+            {"name": "max_height", "type": "int", "required": False, "description": "Maximum height in pixels. Image is scaled down preserving aspect ratio."},
+            {"name": "full_page", "type": "bool", "required": False, "description": "Capture full scrollable page (default False, viewport only)"},
+        ],
+    },
+
+    # ======================================================================
+    # Browser – Rest (1)
+    # ======================================================================
+    {
+        "name": "Rest",
+        "category": "Browser",
+        "description": "Full HTTP client with ${secret.NAME} injection in headers and body. Supports GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS. Secrets are resolved from the database before the request is sent.",
+        "parameters": [
+            {"name": "url", "type": "str", "required": True, "description": "Request URL"},
+            {"name": "method", "type": "str", "required": False, "description": "HTTP method: GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS (default GET)"},
+            {"name": "headers", "type": "dict", "required": False, "description": "Request headers as {name: value} dict. May contain ${secret.NAME} placeholders."},
+            {"name": "accept", "type": "str", "required": False, "description": "Default Accept header (won't override explicit header)"},
+            {"name": "encoding", "type": "str", "required": False, "description": "Default Accept-Encoding header (won't override explicit)"},
+            {"name": "body", "type": "str", "required": False, "description": "Request body string. May contain ${secret.NAME} placeholders. Max 1 MB."},
+            {"name": "timeout", "type": "float", "required": False, "description": "Request timeout in seconds (default 30)"},
         ],
     },
 
@@ -1095,7 +1191,7 @@ TOOL_CATALOG: list[ToolEntry] = [
 # Exposed tools - directly registered and shown in ToolSummary
 # ---------------------------------------------------------------------------
 
-EXPOSED_TOOL_NAMES: set[str] = {"ToMarkdown", "Ping", "Download", "Screenshot"}
+EXPOSED_TOOL_NAMES: set[str] = {"ToolSummary", "ToolSearch", "ToolDefinition", "ToolHelp", "ToolPin"}
 
 
 # ---------------------------------------------------------------------------

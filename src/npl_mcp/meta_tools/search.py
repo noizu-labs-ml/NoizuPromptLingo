@@ -1,42 +1,48 @@
 """ToolSearch - text and intent-based tool discovery."""
 
 import json
-from typing import Optional
 
-from .catalog import TOOL_CATALOG, EXPOSED_TOOL_NAMES, ToolEntry
+from .catalog import TOOL_CATALOG, ToolEntry
+from .inference_cache import cache_key, cache_get, cache_set
 from .llm_client import chat_completion
-
-
-def _get_exposed_tools() -> list[ToolEntry]:
-    """Return only the tools that are currently exposed."""
-    return [t for t in TOOL_CATALOG if t["name"] in EXPOSED_TOOL_NAMES]
 
 
 async def tool_search(
     query: str,
     mode: str = "text",
     limit: int = 10,
-) -> str:
+    verbose: bool = False,
+) -> dict:
     """Search exposed tools by text or intent.
 
     Args:
         query: Search query string.
         mode: "text" for substring matching, "intent" for LLM-powered semantic search.
         limit: Maximum results to return.
+        verbose: If True, include full parameter definitions in each match.
 
     Returns:
-        JSON string with search results.
+        Dict with search results.
     """
     if mode == "intent":
         result = await _intent_search(query, limit)
     else:
         result = _text_search(query, limit)
-    return json.dumps(result, indent=2)
+
+    if not verbose:
+        result["matches"] = [_strip_params(m) for m in result["matches"]]
+
+    return result
+
+
+def _strip_params(match: dict) -> dict:
+    """Return a copy of match without the 'parameters' key."""
+    return {k: v for k, v in match.items() if k != "parameters"}
 
 
 def _text_search(query: str, limit: int = 10) -> dict:
     """Case-insensitive substring search on tool name and description."""
-    tools = _get_exposed_tools()
+    tools = TOOL_CATALOG
     q = query.lower()
 
     exact_name = []
@@ -126,8 +132,16 @@ def _enrich_matches(
 
 
 async def _intent_search(query: str, limit: int = 10) -> dict:
-    """LLM-powered intent search with text-search fallback."""
-    tools = _get_exposed_tools()
+    """LLM-powered intent search with text-search fallback.
+
+    Successful LLM results are cached keyed by catalog hash + query + limit.
+    """
+    key = cache_key("intent_search", query, str(limit))
+    cached = cache_get(key)
+    if cached is not None:
+        return cached
+
+    tools = TOOL_CATALOG
 
     try:
         messages = _build_intent_prompt(query, tools, limit)
@@ -144,12 +158,15 @@ async def _intent_search(query: str, limit: int = 10) -> dict:
         result = json.loads(content)
         enriched = _enrich_matches(result.get("matches", []), tools)
 
-        return {
+        response_dict = {
             "mode": "intent",
             "query": query,
             "total_matches": len(enriched),
             "matches": enriched[:limit],
         }
+
+        cache_set(key, response_dict)
+        return response_dict
 
     except Exception as e:
         fallback = _text_search(query, limit)

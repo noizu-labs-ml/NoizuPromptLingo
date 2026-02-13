@@ -9,6 +9,7 @@ dependencies = [
     "pyyaml>=6.0",
     "pillow>=10.0",
     "aiosqlite>=0.19.0",
+    "asyncpg>=0.29.0",
     "fastapi>=0.104.0",
     "uvicorn>=0.24.0",
     "httpx>=0.25.0",
@@ -19,6 +20,7 @@ dependencies = [
     "pytest-cov>=5.0",
     "html2text>=2024.1.0",
     "pdfplumber>=0.10.0",
+    "lxml>=5.0.0",
 ]
 
 [project.optional-dependencies]

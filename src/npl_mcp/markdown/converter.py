@@ -12,6 +12,30 @@ import pdfplumber
 from .cache import MarkdownCache
 
 
+def _parse_sse_stream(lines: list[str]) -> str:
+    """Parse Server-Sent Events lines and return the last complete data payload.
+
+    Jina streams progressive chunks; the final ``data:`` payload is the most
+    complete rendering of the page.
+    """
+    last_data: list[str] = []
+    current: list[str] = []
+
+    for line in lines:
+        if line.startswith("data: "):
+            current.append(line[6:])
+        elif line == "":
+            # Blank line marks end of an event
+            if current:
+                last_data = current
+                current = []
+    # Handle stream that doesn't end with a blank line
+    if current:
+        last_data = current
+
+    return "\n".join(last_data)
+
+
 class MarkdownConverter:
     """Convert various sources to markdown."""
 
@@ -23,7 +47,8 @@ class MarkdownConverter:
         source: str,
         force_refresh: bool = False,
         timeout: int = 30,
-        no_cache: bool = False
+        no_cache: bool = False,
+        fallback_parser: bool = False,
     ) -> str:
         """Convert source to markdown with caching.
 
@@ -32,6 +57,8 @@ class MarkdownConverter:
             force_refresh: Skip cache and force fresh conversion
             timeout: Request timeout in seconds for URLs
             no_cache: Skip both reading from and writing to cache
+            fallback_parser: If True, fall back to direct html2text when Jina fails.
+                If False (default), use Jina only.
 
         Returns:
             Formatted markdown with YAML metadata header
@@ -45,7 +72,7 @@ class MarkdownConverter:
 
         # Determine source type and convert
         if source.startswith(("http://", "https://")):
-            content = await self._convert_url(source, timeout)
+            content = await self._convert_url(source, timeout, fallback_parser=fallback_parser)
         elif source.endswith((".png", ".jpg", ".jpeg", ".gif", ".svg")):
             content = await self._convert_image(source)
         elif source.endswith(".pdf"):
@@ -64,27 +91,75 @@ class MarkdownConverter:
 
         return self._format_response(source, content, cached=False)
 
-    async def _convert_url(self, url: str, timeout: int) -> str:
-        """Convert URL to markdown using Jina API.
+    async def _convert_url(self, url: str, timeout: int, *, fallback_parser: bool = False) -> str:
+        """Convert URL to markdown via Jina Reader.
+
+        Uses Jina Reader with SSE streaming. Only falls back to direct
+        httpx + html2text when ``fallback_parser=True`` and Jina fails.
 
         Args:
             url: Full URL to convert
             timeout: Request timeout in seconds
+            fallback_parser: Allow direct html2text fallback on Jina failure.
 
         Returns:
             Markdown content from URL
         """
+        try:
+            content = await self._convert_url_jina(url, timeout)
+            if content and content.strip():
+                return content
+        except Exception:
+            pass
+
+        if fallback_parser:
+            try:
+                return await self._convert_url_direct(url, timeout)
+            except Exception:
+                pass
+
+        return ""
+
+    async def _convert_url_jina(self, url: str, timeout: int) -> str:
+        """Fetch URL content via Jina Reader API using SSE streaming.
+
+        Streaming mode waits longer for JS-heavy pages to render and
+        returns progressively more complete content. The final data
+        chunk contains the most complete result.
+        """
         jina_api_key = os.environ.get("JINA_API_KEY", "")
         jina_url = f"https://r.jina.ai/{url}"
 
-        headers = {}
+        headers = {
+            "Accept": "text/event-stream",
+            "X-With-Shadow-Dom": "true",
+        }
         if jina_api_key:
             headers["Authorization"] = f"Bearer {jina_api_key}"
 
         async with httpx.AsyncClient(timeout=timeout) as client:
-            response = await client.get(jina_url, headers=headers)
+            async with client.stream("GET", jina_url, headers=headers) as response:
+                response.raise_for_status()
+                return _parse_sse_stream(
+                    [line async for line in response.aiter_lines()]
+                )
+
+    async def _convert_url_direct(self, url: str, timeout: int) -> str:
+        """Fetch URL and convert HTML to markdown with html2text."""
+        async with httpx.AsyncClient(
+            timeout=timeout, follow_redirects=True
+        ) as client:
+            response = await client.get(url)
             response.raise_for_status()
-            return response.text
+
+        h = html2text.HTML2Text()
+        h.ignore_links = False
+        h.ignore_images = False
+        h.ignore_emphasis = False
+        h.body_width = 0
+        h.protect_links = False
+
+        return h.handle(response.text).strip()
 
     async def _convert_html(self, file_path: str) -> str:
         """Convert HTML file to markdown using Jina API or local converter.

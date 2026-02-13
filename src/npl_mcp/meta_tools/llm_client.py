@@ -5,6 +5,7 @@ import mimetypes
 import os
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 import httpx
 
@@ -52,6 +53,36 @@ async def chat_completion(
         return response.json()
 
 
+def _is_svg(uri: str) -> bool:
+    """Check if a URI points to an SVG image."""
+    if uri.startswith("data:"):
+        return "image/svg" in uri
+    parsed = urlparse(uri)
+    return parsed.path.lower().endswith(".svg")
+
+
+async def _rasterize_svg(svg_uri: str) -> str:
+    """Render an SVG to a base64 PNG data URI via Playwright.
+
+    Launches a headless browser, navigates to the SVG, screenshots it,
+    and returns a ``data:image/png;base64,...`` string.
+    """
+    from playwright.async_api import async_playwright
+
+    pw = await async_playwright().start()
+    try:
+        browser = await pw.chromium.launch()
+        page = await browser.new_page(viewport={"width": 800, "height": 600})
+        await page.goto(svg_uri, wait_until="networkidle", timeout=15_000)
+        png_bytes = await page.screenshot(type="png")
+        await browser.close()
+    finally:
+        await pw.stop()
+
+    b64 = base64.b64encode(png_bytes).decode("ascii")
+    return f"data:image/png;base64,{b64}"
+
+
 def _image_uri_to_content(image_uri: str) -> dict:
     """Convert an image URI to an OpenAI vision content block.
 
@@ -72,10 +103,12 @@ def _image_uri_to_content(image_uri: str) -> dict:
 
 async def describe_image(
     image_uri: str,
-    model: str = "openai/GPT5.2",
+    model: str = "openai/gpt-5-mini",
     timeout: float = 30.0,
 ) -> str:
     """Describe an image using a multi-modal LLM.
+
+    SVG images are rasterized to PNG via Playwright before sending to the LLM.
 
     Args:
         image_uri: URL, local file path, or data URI of the image.
@@ -85,6 +118,10 @@ async def describe_image(
     Returns:
         Text description of the image.
     """
+    # SVGs must be rasterized — LLMs can't process XML vector graphics
+    if _is_svg(image_uri):
+        image_uri = await _rasterize_svg(image_uri)
+
     messages = [
         {
             "role": "user",

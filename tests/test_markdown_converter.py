@@ -21,7 +21,7 @@ import pytest
 import httpx
 
 from npl_mcp.markdown.cache import MarkdownCache
-from npl_mcp.markdown.converter import MarkdownConverter
+from npl_mcp.markdown.converter import MarkdownConverter, _parse_sse_stream
 
 
 # ============================================================================
@@ -168,43 +168,39 @@ class TestConverterLocalFiles:
 
 
 class TestConverterURLs:
-    """Test converting URLs to markdown via Jina API."""
+    """Test converting URLs to markdown via Jina + direct fallback."""
 
     @pytest.mark.asyncio
-    async def test_convert_url_via_jina(self, converter):
-        """Test converting URL via Jina API (mocked)."""
-        mock_response = MagicMock()
-        mock_response.text = "# Converted Content\n\nFrom Jina API."
-        mock_response.raise_for_status = MagicMock()
+    async def test_convert_url_uses_jina_when_complete(self, converter):
+        """Test that Jina result is used when it has sufficient content."""
+        jina_content = "# Converted Content\n\nFrom Jina API with plenty of detail."
+        direct_content = "# Short"
 
-        with patch("httpx.AsyncClient") as mock_client_class:
-            mock_client = AsyncMock()
-            mock_client.get.return_value = mock_response
-            mock_client.__aenter__.return_value = mock_client
-            mock_client.__aexit__.return_value = None
-            mock_client_class.return_value = mock_client
-
+        with patch.object(converter, "_convert_url_jina", new_callable=AsyncMock, return_value=jina_content), \
+             patch.object(converter, "_convert_url_direct", new_callable=AsyncMock, return_value=direct_content):
             result = await converter.convert("https://example.com/page")
 
         assert "success: true" in result
         assert "source_type: url" in result
         assert "Converted Content" in result
-        mock_client.get.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_convert_url_prefers_jina_even_if_shorter(self, converter):
+        """Test that Jina is preferred even when direct returns more content."""
+        jina_content = "# Short but valid Jina"
+        direct_content = "# Full Page\n\n## Section 1\nLong content here.\n\n## Section 2\nMore content."
+
+        with patch.object(converter, "_convert_url_jina", new_callable=AsyncMock, return_value=jina_content), \
+             patch.object(converter, "_convert_url_direct", new_callable=AsyncMock, return_value=direct_content):
+            result = await converter.convert("https://example.com/page")
+
+        assert "Short but valid Jina" in result
 
     @pytest.mark.asyncio
     async def test_convert_url_includes_metadata(self, converter):
         """Test that converted URL includes proper metadata."""
-        mock_response = MagicMock()
-        mock_response.text = "# API Docs"
-        mock_response.raise_for_status = MagicMock()
-
-        with patch("httpx.AsyncClient") as mock_client_class:
-            mock_client = AsyncMock()
-            mock_client.get.return_value = mock_response
-            mock_client.__aenter__.return_value = mock_client
-            mock_client.__aexit__.return_value = None
-            mock_client_class.return_value = mock_client
-
+        with patch.object(converter, "_convert_url_jina", new_callable=AsyncMock, return_value="# API Docs"), \
+             patch.object(converter, "_convert_url_direct", new_callable=AsyncMock, return_value=""):
             result = await converter.convert("https://example.com/docs")
 
         assert "success: true" in result
@@ -213,10 +209,77 @@ class TestConverterURLs:
         assert "cache_file:" in result
 
     @pytest.mark.asyncio
-    async def test_convert_url_uses_jina_endpoint(self, converter):
-        """Test that URL conversion calls correct Jina endpoint."""
+    async def test_convert_url_jina_calls_jina_endpoint_with_sse(self, converter):
+        """Test that _convert_url_jina streams from correct Jina endpoint with SSE."""
+        sse_lines = ["data: # Content", "", ""]
+
         mock_response = MagicMock()
-        mock_response.text = "# Content"
+        mock_response.raise_for_status = MagicMock()
+
+        async def fake_aiter_lines():
+            for line in sse_lines:
+                yield line
+
+        mock_response.aiter_lines = fake_aiter_lines
+
+        with patch("httpx.AsyncClient") as mock_client_class:
+            mock_client = AsyncMock()
+            # stream() returns a sync context-manager-like object
+            # that is used with `async with`. Use MagicMock for __aenter__/__aexit__.
+            stream_cm = MagicMock()
+            stream_cm.__aenter__ = AsyncMock(return_value=mock_response)
+            stream_cm.__aexit__ = AsyncMock(return_value=None)
+            mock_client.stream = MagicMock(return_value=stream_cm)
+            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+            mock_client.__aexit__ = AsyncMock(return_value=None)
+            mock_client_class.return_value = mock_client
+
+            result = await converter._convert_url_jina("https://example.com/page", 30)
+
+        call_args = mock_client.stream.call_args
+        assert call_args[0] == ("GET", "https://r.jina.ai/https://example.com/page")
+        headers = call_args[1].get("headers", {})
+        assert headers.get("Accept") == "text/event-stream"
+        assert headers.get("X-With-Shadow-Dom") == "true"
+        assert result == "# Content"
+
+    @pytest.mark.asyncio
+    async def test_convert_url_jina_with_api_key(self, converter):
+        """Test _convert_url_jina includes API key in SSE request."""
+        sse_lines = ["data: # Content", ""]
+
+        mock_response = MagicMock()
+        mock_response.raise_for_status = MagicMock()
+
+        async def fake_aiter_lines():
+            for line in sse_lines:
+                yield line
+
+        mock_response.aiter_lines = fake_aiter_lines
+
+        with patch.dict(os.environ, {"JINA_API_KEY": "test-api-key"}):
+            with patch("httpx.AsyncClient") as mock_client_class:
+                mock_client = AsyncMock()
+                stream_cm = MagicMock()
+                stream_cm.__aenter__ = AsyncMock(return_value=mock_response)
+                stream_cm.__aexit__ = AsyncMock(return_value=None)
+                mock_client.stream = MagicMock(return_value=stream_cm)
+                mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+                mock_client.__aexit__ = AsyncMock(return_value=None)
+                mock_client_class.return_value = mock_client
+
+                await converter._convert_url_jina("https://example.com/page", 30)
+
+        call_args = mock_client.stream.call_args
+        headers = call_args[1].get("headers", {})
+        assert headers.get("Authorization") == "Bearer test-api-key"
+        assert headers.get("Accept") == "text/event-stream"
+
+    @pytest.mark.asyncio
+    async def test_convert_url_direct_uses_html2text(self, converter):
+        """Test that _convert_url_direct fetches HTML and converts with html2text."""
+        mock_response = MagicMock()
+        mock_response.text = "<html><body><h1>Title</h1><p>Content</p></body></html>"
         mock_response.raise_for_status = MagicMock()
 
         with patch("httpx.AsyncClient") as mock_client_class:
@@ -226,54 +289,83 @@ class TestConverterURLs:
             mock_client.__aexit__.return_value = None
             mock_client_class.return_value = mock_client
 
-            await converter.convert("https://example.com/page")
+            result = await converter._convert_url_direct("https://example.com/page", 30)
 
-        # Verify Jina URL format
-        call_args = mock_client.get.call_args
-        called_url = call_args[0][0]
-        assert called_url == "https://r.jina.ai/https://example.com/page"
+        assert "Title" in result
+        assert "Content" in result
 
     @pytest.mark.asyncio
-    async def test_convert_url_with_api_key(self, converter):
-        """Test URL conversion includes API key when set."""
-        mock_response = MagicMock()
-        mock_response.text = "# Content"
-        mock_response.raise_for_status = MagicMock()
+    async def test_convert_url_jina_failure_no_fallback_by_default(self, converter):
+        """Test that Jina failure returns empty when fallback_parser is False."""
+        with patch.object(converter, "_convert_url_jina", new_callable=AsyncMock, side_effect=Exception("Jina down")), \
+             patch.object(converter, "_convert_url_direct", new_callable=AsyncMock, return_value="# Direct") as direct_mock:
+            result = await converter.convert("https://example.com/page")
 
-        with patch.dict(os.environ, {"JINA_API_KEY": "test-api-key"}):
-            with patch("httpx.AsyncClient") as mock_client_class:
-                mock_client = AsyncMock()
-                mock_client.get.return_value = mock_response
-                mock_client.__aenter__.return_value = mock_client
-                mock_client.__aexit__.return_value = None
-                mock_client_class.return_value = mock_client
+        direct_mock.assert_not_called()
+        assert "success: true" in result
 
-                await converter.convert("https://example.com/page")
+    @pytest.mark.asyncio
+    async def test_convert_url_jina_failure_uses_direct_with_flag(self, converter):
+        """Test that Jina failure falls back to direct when fallback_parser=True."""
+        direct_content = "# Fallback Content\n\nDirect fetch worked."
 
-        call_args = mock_client.get.call_args
-        headers = call_args[1].get("headers", {})
-        assert headers.get("Authorization") == "Bearer test-api-key"
+        with patch.object(converter, "_convert_url_jina", new_callable=AsyncMock, side_effect=Exception("Jina down")), \
+             patch.object(converter, "_convert_url_direct", new_callable=AsyncMock, return_value=direct_content):
+            result = await converter.convert("https://example.com/page", fallback_parser=True)
+
+        assert "Fallback Content" in result
 
     @pytest.mark.asyncio
     async def test_convert_url_without_api_key(self, converter):
         """Test URL conversion works without API key."""
-        mock_response = MagicMock()
-        mock_response.text = "# Content"
-        mock_response.raise_for_status = MagicMock()
-
-        with patch.dict(os.environ, {}, clear=True):
-            # Ensure JINA_API_KEY is not set
-            os.environ.pop("JINA_API_KEY", None)
-            with patch("httpx.AsyncClient") as mock_client_class:
-                mock_client = AsyncMock()
-                mock_client.get.return_value = mock_response
-                mock_client.__aenter__.return_value = mock_client
-                mock_client.__aexit__.return_value = None
-                mock_client_class.return_value = mock_client
-
+        with patch.object(converter, "_convert_url_jina", new_callable=AsyncMock, return_value="# Content"), \
+             patch.object(converter, "_convert_url_direct", new_callable=AsyncMock, return_value=""):
+            with patch.dict(os.environ, {}, clear=True):
+                os.environ.pop("JINA_API_KEY", None)
                 result = await converter.convert("https://example.com/page")
 
         assert "success: true" in result
+
+
+# ============================================================================
+# Test SSE Stream Parsing
+# ============================================================================
+
+
+class TestParseSSEStream:
+    """Test _parse_sse_stream for Jina event-stream responses."""
+
+    def test_single_data_event(self):
+        lines = ["data: # Hello World", ""]
+        assert _parse_sse_stream(lines) == "# Hello World"
+
+    def test_multiline_data_event(self):
+        lines = ["data: # Title", "data: ", "data: Paragraph text.", ""]
+        assert _parse_sse_stream(lines) == "# Title\n\nParagraph text."
+
+    def test_progressive_chunks_returns_last(self):
+        """Jina streams progressive chunks; we want the last (most complete)."""
+        lines = [
+            "data: # Partial",
+            "",
+            "data: # Full Page",
+            "data: ",
+            "data: Complete content.",
+            "",
+        ]
+        assert _parse_sse_stream(lines) == "# Full Page\n\nComplete content."
+
+    def test_empty_stream(self):
+        assert _parse_sse_stream([]) == ""
+
+    def test_no_trailing_blank_line(self):
+        """Handle streams that don't end with a blank line."""
+        lines = ["data: # Content"]
+        assert _parse_sse_stream(lines) == "# Content"
+
+    def test_ignores_non_data_lines(self):
+        lines = ["event: message", "data: # Content", "id: 1", ""]
+        assert _parse_sse_stream(lines) == "# Content"
 
 
 # ============================================================================
@@ -308,17 +400,8 @@ class TestConverterCaching:
     @pytest.mark.asyncio
     async def test_convert_url_caches_result(self, converter, cache):
         """Test that URL conversion caches the result."""
-        mock_response = MagicMock()
-        mock_response.text = "# Cached URL Content"
-        mock_response.raise_for_status = MagicMock()
-
-        with patch("httpx.AsyncClient") as mock_client_class:
-            mock_client = AsyncMock()
-            mock_client.get.return_value = mock_response
-            mock_client.__aenter__.return_value = mock_client
-            mock_client.__aexit__.return_value = None
-            mock_client_class.return_value = mock_client
-
+        with patch.object(converter, "_convert_url_jina", new_callable=AsyncMock, return_value="# Cached URL Content"), \
+             patch.object(converter, "_convert_url_direct", new_callable=AsyncMock, return_value=""):
             # First conversion
             result1 = await converter.convert("https://example.com/page")
             assert "cached: false" in result1
@@ -369,21 +452,11 @@ class TestConverterForceRefresh:
     @pytest.mark.asyncio
     async def test_force_refresh_url_refetches(self, converter):
         """Test that force_refresh on URL refetches from API."""
-        mock_response1 = MagicMock()
-        mock_response1.text = "# Original Content"
-        mock_response1.raise_for_status = MagicMock()
+        jina_mock = AsyncMock(side_effect=["# Original Content", "# Updated Content"])
+        direct_mock = AsyncMock(return_value="")
 
-        mock_response2 = MagicMock()
-        mock_response2.text = "# Updated Content"
-        mock_response2.raise_for_status = MagicMock()
-
-        with patch("httpx.AsyncClient") as mock_client_class:
-            mock_client = AsyncMock()
-            mock_client.get.side_effect = [mock_response1, mock_response2]
-            mock_client.__aenter__.return_value = mock_client
-            mock_client.__aexit__.return_value = None
-            mock_client_class.return_value = mock_client
-
+        with patch.object(converter, "_convert_url_jina", jina_mock), \
+             patch.object(converter, "_convert_url_direct", direct_mock):
             # First conversion
             result1 = await converter.convert("https://example.com/page")
             assert "Original Content" in result1
@@ -392,8 +465,8 @@ class TestConverterForceRefresh:
             result2 = await converter.convert("https://example.com/page", force_refresh=True)
             assert "Updated Content" in result2
 
-        # Should have been called twice
-        assert mock_client.get.call_count == 2
+        # Jina should have been called twice
+        assert jina_mock.call_count == 2
 
 
 # ============================================================================
@@ -411,36 +484,33 @@ class TestConverterErrorHandling:
             await converter.convert("/nonexistent/path/document.txt")
 
     @pytest.mark.asyncio
-    async def test_url_timeout_error(self, converter):
-        """Test timeout error for URL conversion."""
-        with patch("httpx.AsyncClient") as mock_client_class:
-            mock_client = AsyncMock()
-            mock_client.get.side_effect = httpx.TimeoutException("Request timed out")
-            mock_client.__aenter__.return_value = mock_client
-            mock_client.__aexit__.return_value = None
-            mock_client_class.return_value = mock_client
+    async def test_url_jina_fails_returns_empty_without_fallback(self, converter):
+        """Test that Jina failure returns empty when fallback_parser is False."""
+        with patch.object(converter, "_convert_url_jina", new_callable=AsyncMock, side_effect=httpx.TimeoutException("timeout")):
+            result = await converter.convert("https://example.com/slow-page")
 
-            with pytest.raises(httpx.TimeoutException):
-                await converter.convert("https://example.com/slow-page")
+        # Should still return a formatted response with empty content
+        assert "success: true" in result
 
     @pytest.mark.asyncio
-    async def test_url_http_error(self, converter):
-        """Test HTTP error for URL conversion."""
-        with patch("httpx.AsyncClient") as mock_client_class:
-            mock_client = AsyncMock()
-            mock_response = MagicMock()
-            mock_response.raise_for_status.side_effect = httpx.HTTPStatusError(
-                "404 Not Found",
-                request=MagicMock(),
-                response=MagicMock()
-            )
-            mock_client.get.return_value = mock_response
-            mock_client.__aenter__.return_value = mock_client
-            mock_client.__aexit__.return_value = None
-            mock_client_class.return_value = mock_client
+    async def test_url_both_fail_returns_empty(self, converter):
+        """Test that when both Jina and direct fail, empty content is returned."""
+        with patch.object(converter, "_convert_url_jina", new_callable=AsyncMock, side_effect=httpx.TimeoutException("timeout")), \
+             patch.object(converter, "_convert_url_direct", new_callable=AsyncMock, side_effect=httpx.TimeoutException("timeout")):
+            result = await converter.convert("https://example.com/slow-page", fallback_parser=True)
 
-            with pytest.raises(httpx.HTTPStatusError):
-                await converter.convert("https://example.com/not-found")
+        assert "success: true" in result
+
+    @pytest.mark.asyncio
+    async def test_url_jina_fails_direct_succeeds_with_fallback(self, converter):
+        """Test Jina HTTP error falls back to direct when fallback_parser=True."""
+        with patch.object(converter, "_convert_url_jina", new_callable=AsyncMock, side_effect=httpx.HTTPStatusError(
+                "404", request=MagicMock(), response=MagicMock()
+             )), \
+             patch.object(converter, "_convert_url_direct", new_callable=AsyncMock, return_value="# Direct Content"):
+            result = await converter.convert("https://example.com/not-found", fallback_parser=True)
+
+        assert "Direct Content" in result
 
     @pytest.mark.asyncio
     async def test_pdf_conversion_fails_with_invalid_pdf(self, converter, temp_pdf_file):
@@ -508,17 +578,8 @@ class TestConverterMetadataFormat:
     @pytest.mark.asyncio
     async def test_metadata_source_type_url(self, converter):
         """Test source_type is 'url' for URLs."""
-        mock_response = MagicMock()
-        mock_response.text = "# Content"
-        mock_response.raise_for_status = MagicMock()
-
-        with patch("httpx.AsyncClient") as mock_client_class:
-            mock_client = AsyncMock()
-            mock_client.get.return_value = mock_response
-            mock_client.__aenter__.return_value = mock_client
-            mock_client.__aexit__.return_value = None
-            mock_client_class.return_value = mock_client
-
+        with patch.object(converter, "_convert_url_jina", new_callable=AsyncMock, return_value="# Content"), \
+             patch.object(converter, "_convert_url_direct", new_callable=AsyncMock, return_value=""):
             result = await converter.convert("https://example.com/page")
 
         assert "source_type: url" in result
@@ -577,42 +638,28 @@ class TestConverterTimeout:
     """Test timeout parameter for URL conversion."""
 
     @pytest.mark.asyncio
-    async def test_custom_timeout_passed_to_client(self, converter):
-        """Test that custom timeout is passed to HTTP client."""
-        mock_response = MagicMock()
-        mock_response.text = "# Content"
-        mock_response.raise_for_status = MagicMock()
+    async def test_custom_timeout_passed_to_jina(self, converter):
+        """Test that custom timeout is passed to _convert_url_jina."""
+        jina_mock = AsyncMock(return_value="# Content")
+        direct_mock = AsyncMock(return_value="")
 
-        with patch("httpx.AsyncClient") as mock_client_class:
-            mock_client = AsyncMock()
-            mock_client.get.return_value = mock_response
-            mock_client.__aenter__.return_value = mock_client
-            mock_client.__aexit__.return_value = None
-            mock_client_class.return_value = mock_client
-
+        with patch.object(converter, "_convert_url_jina", jina_mock), \
+             patch.object(converter, "_convert_url_direct", direct_mock):
             await converter.convert("https://example.com/page", timeout=60)
 
-        # Check timeout was passed to AsyncClient
-        mock_client_class.assert_called_once_with(timeout=60)
+        jina_mock.assert_called_once_with("https://example.com/page", 60)
 
     @pytest.mark.asyncio
     async def test_default_timeout(self, converter):
-        """Test default timeout value."""
-        mock_response = MagicMock()
-        mock_response.text = "# Content"
-        mock_response.raise_for_status = MagicMock()
+        """Test default timeout value is 30."""
+        jina_mock = AsyncMock(return_value="# Content")
+        direct_mock = AsyncMock(return_value="")
 
-        with patch("httpx.AsyncClient") as mock_client_class:
-            mock_client = AsyncMock()
-            mock_client.get.return_value = mock_response
-            mock_client.__aenter__.return_value = mock_client
-            mock_client.__aexit__.return_value = None
-            mock_client_class.return_value = mock_client
-
+        with patch.object(converter, "_convert_url_jina", jina_mock), \
+             patch.object(converter, "_convert_url_direct", direct_mock):
             await converter.convert("https://example.com/page")
 
-        # Default timeout should be 30
-        mock_client_class.assert_called_once_with(timeout=30)
+        jina_mock.assert_called_once_with("https://example.com/page", 30)
 
 
 # ============================================================================
@@ -668,17 +715,8 @@ class TestConverterSourceTypeDetection:
     @pytest.mark.asyncio
     async def test_http_url_detected(self, converter):
         """Test that http:// URLs are detected correctly."""
-        mock_response = MagicMock()
-        mock_response.text = "# Content"
-        mock_response.raise_for_status = MagicMock()
-
-        with patch("httpx.AsyncClient") as mock_client_class:
-            mock_client = AsyncMock()
-            mock_client.get.return_value = mock_response
-            mock_client.__aenter__.return_value = mock_client
-            mock_client.__aexit__.return_value = None
-            mock_client_class.return_value = mock_client
-
+        with patch.object(converter, "_convert_url_jina", new_callable=AsyncMock, return_value="# Content"), \
+             patch.object(converter, "_convert_url_direct", new_callable=AsyncMock, return_value=""):
             result = await converter.convert("http://example.com/page")
 
         assert "source_type: url" in result
@@ -686,17 +724,8 @@ class TestConverterSourceTypeDetection:
     @pytest.mark.asyncio
     async def test_https_url_detected(self, converter):
         """Test that https:// URLs are detected correctly."""
-        mock_response = MagicMock()
-        mock_response.text = "# Content"
-        mock_response.raise_for_status = MagicMock()
-
-        with patch("httpx.AsyncClient") as mock_client_class:
-            mock_client = AsyncMock()
-            mock_client.get.return_value = mock_response
-            mock_client.__aenter__.return_value = mock_client
-            mock_client.__aexit__.return_value = None
-            mock_client_class.return_value = mock_client
-
+        with patch.object(converter, "_convert_url_jina", new_callable=AsyncMock, return_value="# Content"), \
+             patch.object(converter, "_convert_url_direct", new_callable=AsyncMock, return_value=""):
             result = await converter.convert("https://example.com/page")
 
         assert "source_type: url" in result

@@ -5,34 +5,73 @@ from typing import Optional
 from .catalog import TOOL_CATALOG, CATEGORIES, EXPOSED_TOOL_NAMES, ToolEntry
 
 
-async def tool_summary(category: Optional[str] = None) -> dict:
+async def tool_summary(filter: Optional[str] = None) -> dict:
     """Return available tools or drill into a catalog category.
 
-    No category: returns only the directly-exposed tools (Browse, Ping, etc.).
-    With category: expands that catalog category showing its tools and subcategories.
+    No filter: returns only the directly-exposed tools (Browse, Ping, etc.).
+    With filter: expands that catalog category showing its tools and subcategories.
     Dot notation drills deeper: "Browser.Screenshots" shows screenshot tools.
-    With Category#ToolName: returns a single tool definition.
+    With Category#ToolName: returns a single tool's full definition including parameters.
+    Comma-separated: "Scripts,Chat" expands multiple categories at once.
+
+    Parameters are omitted unless you request a specific tool via #ToolName.
+    To get full parameter info, use e.g. "Browser.Screenshots#screenshot_capture".
     """
-    if category is None:
+    if filter is None:
         return _exposed_tools()
-    if "#" in category:
-        return _get_tool(category)
-    return _expand_category(category)
+
+    # Support comma-separated filters
+    parts = [p.strip() for p in filter.split(",") if p.strip()]
+    if len(parts) == 1:
+        return _resolve_single(parts[0])
+
+    # Multiple filters: merge results
+    results = []
+    for part in parts:
+        results.append(_resolve_single(part))
+    return {"results": results}
+
+
+def _resolve_single(filter_value: str) -> dict:
+    """Resolve a single filter value (category or #tool lookup)."""
+    if "#" in filter_value:
+        return _get_tool(filter_value)
+    return _expand_category(filter_value)
 
 
 def _exposed_tools() -> dict:
-    """Return only the tools that are directly registered and callable."""
+    """Return exposed tools and a catalog overview for discovery.
+
+    Groups directly-registered tools by category, then lists all available
+    catalog categories so agents know what can be explored via drill-down
+    or pinned via ToolPin.
+    """
     tools = [t for t in TOOL_CATALOG if t["name"] in EXPOSED_TOOL_NAMES]
+
+    # Group by category
+    by_cat: dict[str, list[dict]] = {}
+    for t in tools:
+        by_cat.setdefault(t["category"], []).append(
+            {"name": t["name"], "description": t["description"]}
+        )
+
+    categories = []
+    for cat_name, cat_tools in sorted(by_cat.items()):
+        # Look up category description
+        desc = None
+        for c in CATEGORIES:
+            if c["name"] == cat_name:
+                desc = c["description"]
+                break
+        entry: dict = {"category": cat_name, "tools": cat_tools}
+        if desc:
+            entry["description"] = desc
+        categories.append(entry)
+
     return {
         "total_tools": len(tools),
-        "tools": [
-            {
-                "name": t["name"],
-                "description": t["description"],
-                "parameters": t["parameters"],
-            }
-            for t in tools
-        ],
+        "categories": categories,
+        "hint": "Use ToolSummary(filter='CategoryName') to explore, or ToolPin to activate a tool.",
     }
 
 
@@ -86,13 +125,12 @@ def _expand_category(category: str) -> dict:
     if description:
         result["description"] = description
 
-    # Full tool definitions for direct tools
+    # Tool names and descriptions (use #ToolName for full parameter info)
     if direct_tools:
         result["tools"] = [
             {
                 "name": t["name"],
                 "description": t["description"],
-                "parameters": t["parameters"],
             }
             for t in direct_tools
         ]
