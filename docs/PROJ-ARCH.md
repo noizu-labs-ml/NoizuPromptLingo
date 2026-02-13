@@ -43,10 +43,12 @@ graph TB
 | Component | Location | Purpose |
 |-----------|----------|---------|
 | Launcher | `src/npl_mcp/launcher.py` | `create_app()` + `create_asgi_app()`, CLI, Uvicorn |
-| Meta Tools | `src/npl_mcp/meta_tools/` | ToolSummary, ToolSearch, static catalog |
+| Meta Tools | `src/npl_mcp/meta_tools/` | ToolSummary, ToolSearch, ToolDefinition, ToolHelp, ToolCall |
 | Markdown Tools | `src/npl_mcp/markdown/` | Converter, viewer, filters, image descriptions |
 | NPL Parser | `src/npl_mcp/npl/` | YAML loader, syntax parser, reference resolver |
 | PM Tools | `src/npl_mcp/pm_tools/` | PRD, user story, persona access |
+| Instructions | `src/npl_mcp/instructions/` | Versioned instruction documents for agent prompts |
+| Tool Sessions | `src/npl_mcp/tool_sessions/` | Agent session tracking (agent, task) pairs |
 | Frontend | `frontend/` | Next.js + Tailwind web UI |
 | Minimal Server | `src/mcp.py` | Standalone hello-world for quick experiments |
 
