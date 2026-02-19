@@ -50,17 +50,17 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
-                  name: modified_at
+                  name: updated_at
                   type: TIMESTAMP WITHOUT TIME ZONE
                   defaultValueComputed: NOW()
                   constraints:
                     nullable: false
         - createIndex:
             tableName: npl_metadata
-            indexName: idx_npl_metadata_modified_at
+            indexName: idx_npl_metadata_updated_at
             columns:
               - column:
-                  name: modified_at
+                  name: updated_at
 
   # ===========================================================================
   # Changeset 003: Create npl_component table
@@ -111,7 +111,7 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
-                  name: modified_at
+                  name: updated_at
                   type: TIMESTAMP WITHOUT TIME ZONE
                   defaultValueComputed: NOW()
                   constraints:
@@ -196,7 +196,7 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
-                  name: modified_at
+                  name: updated_at
                   type: TIMESTAMP WITHOUT TIME ZONE
                   defaultValueComputed: NOW()
                   constraints:
@@ -275,7 +275,7 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
-                  name: modified_at
+                  name: updated_at
                   type: TIMESTAMP WITHOUT TIME ZONE
                   defaultValueComputed: NOW()
                   constraints:

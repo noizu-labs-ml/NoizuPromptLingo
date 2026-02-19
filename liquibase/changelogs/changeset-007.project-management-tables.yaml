@@ -1,0 +1,236 @@
+databaseChangeLog:
+  # ===========================================================================
+  # Changeset 014: Create npl_user_personas table
+  # ===========================================================================
+  # Depends on: npl_projects (created in changeset-006)
+  - changeSet:
+      id: 014-create-npl-user-personas-table
+      author: npl
+      comment: Create npl_user_personas table for archetypal user personas
+      changes:
+        - createTable:
+            tableName: npl_user_personas
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: project_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    references: npl_projects(id)
+                    foreignKeyName: fk_user_personas_project
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: description
+                  type: TEXT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: goals
+                  type: TEXT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: pain_points
+                  type: TEXT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: behaviors
+                  type: TEXT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: physical_description
+                  type: TEXT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: persona_image
+                  type: TEXT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: demographics
+                  type: JSONB
+                  constraints:
+                    nullable: true
+              - column:
+                  name: created_by
+                  type: UUID
+                  constraints:
+                    nullable: true
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: deleted_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  constraints:
+                    nullable: true
+        - createIndex:
+            tableName: npl_user_personas
+            indexName: idx_user_personas_project_id
+            columns:
+              - column:
+                  name: project_id
+        - createIndex:
+            tableName: npl_user_personas
+            indexName: idx_user_personas_deleted_at
+            columns:
+              - column:
+                  name: deleted_at
+            where: deleted_at IS NULL
+      rollback:
+        - dropTable:
+            tableName: npl_user_personas
+
+  # ===========================================================================
+  # Changeset 015: Create npl_user_stories table
+  # ===========================================================================
+  # Depends on: npl_projects (created in changeset-006)
+  - changeSet:
+      id: 015-create-npl-user-stories-table
+      author: npl
+      comment: Create npl_user_stories table for user stories with persona references
+      changes:
+        - createTable:
+            tableName: npl_user_stories
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: project_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    references: npl_projects(id)
+                    foreignKeyName: fk_user_stories_project
+              - column:
+                  name: persona_ids
+                  type: UUID[]
+                  constraints:
+                    nullable: true
+              - column:
+                  name: title
+                  type: VARCHAR(500)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: story_text
+                  type: TEXT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: description
+                  type: TEXT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: priority
+                  type: VARCHAR(20)
+                  defaultValue: medium
+                  constraints:
+                    nullable: true
+              - column:
+                  name: status
+                  type: VARCHAR(30)
+                  defaultValue: draft
+                  constraints:
+                    nullable: false
+              - column:
+                  name: story_points
+                  type: INTEGER
+                  constraints:
+                    nullable: true
+              - column:
+                  name: acceptance_criteria
+                  type: JSONB
+                  constraints:
+                    nullable: true
+              - column:
+                  name: tags
+                  type: TEXT[]
+                  constraints:
+                    nullable: true
+              - column:
+                  name: created_by
+                  type: UUID
+                  constraints:
+                    nullable: true
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: deleted_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  constraints:
+                    nullable: true
+        - createIndex:
+            tableName: npl_user_stories
+            indexName: idx_user_stories_project_id
+            columns:
+              - column:
+                  name: project_id
+        - createIndex:
+            tableName: npl_user_stories
+            indexName: idx_user_stories_status
+            columns:
+              - column:
+                  name: status
+        - createIndex:
+            tableName: npl_user_stories
+            indexName: idx_user_stories_priority
+            columns:
+              - column:
+                  name: priority
+        - sql:
+            sql: CREATE INDEX idx_user_stories_persona_ids ON npl_user_stories USING GIN (persona_ids);
+        - createIndex:
+            tableName: npl_user_stories
+            indexName: idx_user_stories_deleted_at
+            columns:
+              - column:
+                  name: deleted_at
+            where: deleted_at IS NULL
+      rollback:
+        - dropTable:
+            tableName: npl_user_stories

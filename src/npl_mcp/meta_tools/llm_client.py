@@ -12,6 +12,46 @@ import httpx
 LITELLM_BASE_URL = os.environ.get("NPL_LITELLM_URL", "http://localhost:4111/v1")
 LITELLM_API_KEY = os.environ.get("NPL_LITELLM_KEY", "sk-litellm-master-key-12345")
 LITELLM_MODEL = os.environ.get("NPL_LITELLM_MODEL", "groq/openai/gpt-oss-120b")
+LITELLM_EMBED_MODEL = os.environ.get("NPL_LITELLM_EMBED_MODEL", "openai/text-embedding-3-small")
+
+
+async def embed_texts(
+    texts: list[str],
+    model: str | None = None,
+    timeout: float = 30.0,
+) -> list[list[float]]:
+    """Call LiteLLM-compatible embeddings endpoint.
+
+    Args:
+        texts: List of strings to embed.
+        model: Override embedding model (default from env).
+        timeout: Request timeout in seconds.
+
+    Returns:
+        List of embedding vectors (list of floats), one per input text,
+        ordered to match the input list.
+
+    Raises:
+        httpx.HTTPStatusError: On non-2xx response.
+        httpx.TimeoutException: On timeout.
+    """
+    use_model = model or LITELLM_EMBED_MODEL
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        response = await client.post(
+            f"{LITELLM_BASE_URL}/embeddings",
+            headers={
+                "Authorization": f"Bearer {LITELLM_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": use_model,
+                "input": texts,
+            },
+        )
+        response.raise_for_status()
+        data = response.json()
+        sorted_data = sorted(data["data"], key=lambda x: x["index"])
+        return [item["embedding"] for item in sorted_data]
 
 
 async def chat_completion(

@@ -4,6 +4,64 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
+## Session Initialization (MANDATORY — DO THIS FIRST)
+
+**BLOCKING REQUIREMENT**: Before doing ANY work — before reading files, answering questions, or executing tasks — you MUST generate a session. No exceptions. This is the absolute first action in every conversation.
+
+The `$NPL_PROJECT` environment variable MUST be set.
+
+### Single-Call Session Init
+
+If the task is already clear from the user's first message, create a **task session directly** — no separate root session needed:
+
+```
+ToolSession.Generate(
+    agent="<agent-name>",
+    brief="<what this task does>",
+    task="<task-slug>",
+    project=$NPL_PROJECT
+)
+```
+
+Save the returned UUID — it is both the **root** and **task session ID** for this conversation.
+
+### Deferred Task Session (exploratory/unclear intent)
+
+If the user's intent is unclear and you need to explore first, create a root session:
+
+```
+ToolSession.Generate(
+    agent="Root",
+    brief="Session: <ISO8601 timestamp with ms>",
+    task="root",
+    project=$NPL_PROJECT
+)
+```
+
+Then create child sessions as work items become clear:
+
+```
+ToolSession.Generate(
+    agent="<agent-name>",
+    brief="<what this task does>",
+    task="<task-slug>",
+    project=$NPL_PROJECT,
+    parent="<root-session-uuid>"
+)
+```
+
+### Sub-Agent Hierarchy
+
+When spawning sub-agents, always pass the parent session UUID. Use root for top-level tasks, or the task session for sub-tasks within that scope.
+
+### Instructions Require Sessions
+
+`Instructions` and `Instructions.Create` require a valid session UUID. You cannot use them without completing session initialization.
+
+**If the MCP server is unavailable or `$NPL_PROJECT` is not set, inform the user immediately and do not proceed until resolved.**
+
+---
+
 ## Response Protocol
 
 ### Assumptions Table

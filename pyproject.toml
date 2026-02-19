@@ -22,6 +22,9 @@ dependencies = [
     "pdfplumber>=0.10.0",
     "lxml>=5.0.0",
     "shortuuid>=1.0.0",
+    "cairosvg>=2.8.2",
+    "anthropic>=0.79.0",
+    "openai>=2.20.0",
 ]
 
 [project.optional-dependencies]

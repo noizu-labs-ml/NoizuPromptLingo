@@ -56,10 +56,10 @@ async def secret_set(name: str, value: str) -> dict[str, Any]:
     # UPSERT – xmax = 0 means a fresh insert (no prior row was updated)
     row = await pool.fetchrow(
         """
-        INSERT INTO npl_secrets (name, value, created_at, modified_at)
+        INSERT INTO npl_secrets (name, value, created_at, updated_at)
         VALUES ($1, $2, NOW(), NOW())
         ON CONFLICT (name) DO UPDATE
-            SET value = EXCLUDED.value, modified_at = NOW()
+            SET value = EXCLUDED.value, updated_at = NOW()
         RETURNING xmax
         """,
         name,

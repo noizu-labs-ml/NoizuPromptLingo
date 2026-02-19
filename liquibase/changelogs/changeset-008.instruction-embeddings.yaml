@@ -1,0 +1,57 @@
+databaseChangeLog:
+  - changeSet:
+      id: 016-create-npl-instruction-embeddings-table
+      author: npl
+      comment: >
+        Create npl_instruction_embeddings join table for multi-facet vector search.
+        Each instruction can have multiple embedding rows (one per descriptive phrase).
+        Uses HNSW index for cosine similarity search via pgvector.
+      changes:
+        - createTable:
+            tableName: npl_instruction_embeddings
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: instruction_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: label
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+        - sql:
+            sql: ALTER TABLE npl_instruction_embeddings ADD COLUMN embedding vector(1536) NOT NULL;
+        - addForeignKeyConstraint:
+            baseTableName: npl_instruction_embeddings
+            baseColumnNames: instruction_id
+            constraintName: fk_instruction_embeddings_instruction
+            referencedTableName: npl_instructions
+            referencedColumnNames: id
+        - createIndex:
+            tableName: npl_instruction_embeddings
+            indexName: idx_instruction_embeddings_instruction_id
+            columns:
+              - column:
+                  name: instruction_id
+        - sql:
+            sql: >
+              CREATE INDEX idx_instruction_embeddings_search
+              ON npl_instruction_embeddings
+              USING hnsw (embedding vector_cosine_ops);
+      rollback:
+        - dropTable:
+            tableName: npl_instruction_embeddings

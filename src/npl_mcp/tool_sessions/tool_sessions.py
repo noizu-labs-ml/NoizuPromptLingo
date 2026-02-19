@@ -1,8 +1,8 @@
 """ToolSession tools -- agent session tracking via PostgreSQL.
 
-Sessions are keyed by (agent, task) pairs.  ``ToolSession.Generate`` creates
-or retrieves a session UUID, optionally appending notes.  ``ToolSession``
-retrieves session info by UUID.
+Sessions are keyed by (project, agent, task) triples.  ``ToolSession.Generate``
+creates or retrieves a session UUID, optionally appending notes.
+``ToolSession`` retrieves session info by UUID.
 
 UUIDs are stored as full UUIDs in PostgreSQL but exposed to callers as
 short UUIDs via the ``shortuuid`` library.
@@ -14,6 +14,7 @@ from typing import Any, Optional
 import shortuuid
 
 from npl_mcp.storage import get_pool
+from npl_mcp.tool_sessions.projects import upsert_project
 
 
 def _encode(uid: _uuid_mod.UUID) -> str:
@@ -38,25 +39,49 @@ async def tool_session_generate(
     agent: str,
     brief: str,
     task: str,
+    project: str,
+    parent: Optional[str] = None,
     notes: Optional[str] = None,
 ) -> dict[str, Any]:
-    """Look up or create a session by (agent, task).
+    """Look up or create a session by (project, agent, task).
 
-    * If a session already exists for the pair, return its UUID.
+    * If a session already exists for the triple, return its UUID.
       If *notes* is provided and is **not** a substring of the existing
-      notes, append it (newline-separated) and update ``modified_at``.
+      notes, append it (newline-separated) and update ``updated_at``.
     * If no session exists, create one and return the new UUID.
+
+    *project* is resolved to a ``npl_projects`` row via :func:`upsert_project`.
+    *parent*, if given, must be a valid session UUID.
     """
     if not agent:
         return {"status": "error", "message": "agent must be a non-empty string."}
     if not task:
         return {"status": "error", "message": "task must be a non-empty string."}
+    if not project:
+        return {"status": "error", "message": "project must be a non-empty string."}
 
-    pool = await get_pool()
+    # Resolve project
+    project_id = await upsert_project(project)
+
+    # Resolve optional parent
+    parent_id: Optional[_uuid_mod.UUID] = None
+    if parent:
+        parent_id = _decode(parent)
+        if parent_id is None:
+            return {"status": "error", "message": f"Invalid parent UUID: {parent}"}
+        pool = await get_pool()
+        exists = await pool.fetchval(
+            "SELECT id FROM npl_tool_sessions WHERE id = $1", parent_id
+        )
+        if exists is None:
+            return {"status": "error", "message": f"Parent session not found: {parent}"}
+    else:
+        pool = await get_pool()
 
     # Look for existing session
     row = await pool.fetchrow(
-        "SELECT id, notes FROM npl_tool_sessions WHERE agent = $1 AND task = $2",
+        "SELECT id, notes FROM npl_tool_sessions WHERE project_id = $1 AND agent = $2 AND task = $3",
+        project_id,
         agent,
         task,
     )
@@ -71,27 +96,29 @@ async def tool_session_generate(
                 f"{existing_notes}\n{notes}".strip() if existing_notes else notes
             )
             await pool.execute(
-                "UPDATE npl_tool_sessions SET notes = $1, modified_at = NOW() WHERE id = $2",
+                "UPDATE npl_tool_sessions SET notes = $1, updated_at = NOW() WHERE id = $2",
                 new_notes,
                 row["id"],
             )
-            return {"uuid": session_id, "action": "existing_updated", "status": "ok"}
+            return {"uuid": session_id, "action": "existing_updated", "project": project, "status": "ok"}
 
-        return {"uuid": session_id, "action": "existing", "status": "ok"}
+        return {"uuid": session_id, "action": "existing", "project": project, "status": "ok"}
 
     # Create new session
     new_id = await pool.fetchval(
         """
-        INSERT INTO npl_tool_sessions (agent, brief, task, notes, created_at, modified_at)
-        VALUES ($1, $2, $3, $4, NOW(), NOW())
+        INSERT INTO npl_tool_sessions (agent, brief, task, notes, project_id, parent_id, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
         RETURNING id
         """,
         agent,
         brief,
         task,
         notes,
+        project_id,
+        parent_id,
     )
-    return {"uuid": _encode(new_id), "action": "created", "status": "ok"}
+    return {"uuid": _encode(new_id), "action": "created", "project": project, "status": "ok"}
 
 
 async def tool_session(
@@ -100,8 +127,8 @@ async def tool_session(
 ) -> dict[str, Any]:
     """Retrieve session info by UUID.
 
-    Default: returns ``{uuid, agent, brief, status}``.
-    Verbose: additionally returns ``task, notes, created_at, modified_at``.
+    Default: returns ``{uuid, agent, brief, project, status}``.
+    Verbose: additionally returns ``task, notes, parent, created_at, updated_at``.
     """
     uid = _decode(uuid)
     if uid is None:
@@ -111,13 +138,20 @@ async def tool_session(
 
     if verbose:
         row = await pool.fetchrow(
-            """SELECT id, agent, brief, task, notes, created_at, modified_at
-               FROM npl_tool_sessions WHERE id = $1""",
+            """SELECT s.id, s.agent, s.brief, s.task, s.notes,
+                      s.parent_id, s.created_at, s.updated_at,
+                      p.name AS project
+               FROM npl_tool_sessions s
+               JOIN npl_projects p ON s.project_id = p.id
+               WHERE s.id = $1""",
             uid,
         )
     else:
         row = await pool.fetchrow(
-            "SELECT id, agent, brief FROM npl_tool_sessions WHERE id = $1",
+            """SELECT s.id, s.agent, s.brief, p.name AS project
+               FROM npl_tool_sessions s
+               JOIN npl_projects p ON s.project_id = p.id
+               WHERE s.id = $1""",
             uid,
         )
 
@@ -128,17 +162,19 @@ async def tool_session(
         "uuid": _encode(row["id"]),
         "agent": row["agent"],
         "brief": row["brief"],
+        "project": row["project"],
         "status": "ok",
     }
 
     if verbose:
         result["task"] = row["task"]
         result["notes"] = row["notes"]
+        result["parent"] = _encode(row["parent_id"]) if row["parent_id"] else None
         result["created_at"] = (
             row["created_at"].isoformat() if row["created_at"] else None
         )
-        result["modified_at"] = (
-            row["modified_at"].isoformat() if row["modified_at"] else None
+        result["updated_at"] = (
+            row["updated_at"].isoformat() if row["updated_at"] else None
         )
 
     return result

@@ -103,7 +103,10 @@ class TestCatalogIntegrity:
     def test_exposed_tools_are_expected(self):
         assert EXPOSED_TOOL_NAMES == {
             "ToMarkdown", "Ping", "Download", "Screenshot", "Secret", "Rest",
-            "ToolSession", "ToolSession.Generate", "Instructions", "Instructions.Create",
+            "ToolSession", "ToolSession.Generate",
+            "Instructions", "Instructions.Create", "Instructions.Update",
+            "Instructions.ActiveVersion", "Instructions.Versions",
+            "Instructions.List",
         }
 
     def test_exposed_tools_exclude_discovery(self):
@@ -499,6 +502,7 @@ class TestMCPRegistration:
         assert tool_names == {
             "ToolSummary", "ToolSearch", "ToolDefinition", "ToolHelp", "ToolCall",
             "ToolSession", "ToolSession.Generate", "Instructions", "Instructions.Create",
+            "Instructions.List",
         }
 
 

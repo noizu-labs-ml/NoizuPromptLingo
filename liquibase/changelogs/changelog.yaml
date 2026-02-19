@@ -11,3 +11,12 @@ databaseChangeLog:
   - include:
       file: changelogs/changeset-004.instructions-tables.yaml
       relativeToChangelogFile: false
+  - include:
+      file: changelogs/changeset-006.projects-and-session-hierarchy.yaml
+      relativeToChangelogFile: false
+  - include:
+      file: changelogs/changeset-007.project-management-tables.yaml
+      relativeToChangelogFile: false
+  - include:
+      file: changelogs/changeset-008.instruction-embeddings.yaml
+      relativeToChangelogFile: false

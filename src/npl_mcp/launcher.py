@@ -211,6 +211,8 @@ def create_app() -> "FastMCP":
         agent: str,
         brief: str,
         task: str,
+        project: str,
+        parent: Optional[str] = None,
         notes: Optional[str] = None,
     ) -> dict:
         """Generate or look up a session UUID by (agent, task) pair.
@@ -223,10 +225,12 @@ def create_app() -> "FastMCP":
             agent: Agent identifier.
             brief: Brief description of the session purpose.
             task: Task identifier (unique per agent).
+            project: Project name for scoping (e.g. from $NPL_PROJECT).
+            parent: Optional parent session UUID for hierarchy.
             notes: Optional notes to append to the session.
         """
         from npl_mcp.tool_sessions.tool_sessions import tool_session_generate as _gen
-        return await _gen(agent=agent, brief=brief, task=task, notes=notes)
+        return await _gen(agent=agent, brief=brief, task=task, project=project, parent=parent, notes=notes)
 
     @mcp.tool(name="ToolSession")
     async def tool_session_handler(
@@ -235,8 +239,8 @@ def create_app() -> "FastMCP":
     ) -> dict:
         """Retrieve session info by UUID.
 
-        Default returns agent and brief.  Verbose mode returns all fields
-        including task, notes, and timestamps.
+        Default returns agent, brief, and project name.  Verbose mode returns
+        all fields including task, notes, parent, and timestamps.
 
         Args:
             uuid: Session UUID.
@@ -252,6 +256,7 @@ def create_app() -> "FastMCP":
     @mcp.tool(name="Instructions")
     async def instructions_handler(
         uuid: str,
+        session: str,
         version: Optional[int] = None,
         json: bool = False,
     ) -> dict | str:
@@ -261,11 +266,12 @@ def create_app() -> "FastMCP":
 
         Args:
             uuid: Instruction UUID.
+            session: A valid tool-session UUID (required for access gating).
             version: Specific version number (active version if omitted).
             json: If True, return full metadata as JSON. Default returns markdown.
         """
         from npl_mcp.instructions.instructions import instructions_get as _get
-        return await _get(uuid=uuid, version=version, json=json)
+        return await _get(uuid=uuid, version=version, json=json, session=session)
 
     @mcp.tool(name="Instructions.Create")
     async def instructions_create_handler(
@@ -273,6 +279,7 @@ def create_app() -> "FastMCP":
         description: str,
         tags: list[str],
         body: str,
+        session: str,
     ) -> dict:
         """Create a new instruction document with its first version (v1).
 
@@ -281,9 +288,35 @@ def create_app() -> "FastMCP":
             description: Instruction description.
             tags: List of string tags for categorization.
             body: Instruction body content.
+            session: A valid tool-session UUID to link this instruction to.
         """
         from npl_mcp.instructions.instructions import instructions_create as _create
-        return await _create(title=title, description=description, tags=tags, body=body)
+        return await _create(title=title, description=description, tags=tags, body=body, session=session)
+
+    @mcp.tool(name="Instructions.List")
+    async def instructions_list_handler(
+        session: str,
+        query: Optional[str] = None,
+        mode: str = "text",
+        tags: Optional[list[str]] = None,
+        limit: int = 20,
+    ) -> dict:
+        """Search and list instruction documents.
+
+        Modes:
+        - "text": ILIKE search on title, description, tags, and embedding labels
+        - "intent": Embed query, cosine similarity search against instruction embeddings
+        - "all": Return all instructions (no search filter)
+
+        Args:
+            session: A valid tool-session UUID (required for access gating).
+            query: Search query string (required for text/intent modes).
+            mode: Search mode: "text", "intent", or "all" (default: "text").
+            tags: Optional tag filter (AND logic -- instruction must have all listed tags).
+            limit: Maximum results to return (default 20, max 100).
+        """
+        from npl_mcp.instructions.instructions import instructions_list as _list
+        return await _list(session=session, query=query, mode=mode, tags=tags, limit=limit)
 
     return mcp
 

@@ -106,7 +106,7 @@ class TestCatalogIntegrity:
 
     def test_total_tool_count(self):
         from npl_mcp.meta_tools.catalog import TOOL_CATALOG
-        assert len(TOOL_CATALOG) == 110
+        assert len(TOOL_CATALOG) == 124
 
     def test_tool_sessions_category_exists(self):
         from npl_mcp.meta_tools.catalog import get_category_info
@@ -118,11 +118,14 @@ class TestCatalogIntegrity:
         from npl_mcp.meta_tools.catalog import get_category_info
         cat = get_category_info("Instructions")
         assert cat is not None
-        assert cat["tool_count"] == 5
+        assert cat["tool_count"] == 6
 
     def test_exposed_tools_are_non_discovery(self):
         from npl_mcp.meta_tools.catalog import EXPOSED_TOOL_NAMES
         assert EXPOSED_TOOL_NAMES == {
             "ToMarkdown", "Ping", "Download", "Screenshot", "Secret", "Rest",
-            "ToolSession", "ToolSession.Generate", "Instructions", "Instructions.Create",
+            "ToolSession", "ToolSession.Generate",
+            "Instructions", "Instructions.Create", "Instructions.Update",
+            "Instructions.ActiveVersion", "Instructions.Versions",
+            "Instructions.List",
         }

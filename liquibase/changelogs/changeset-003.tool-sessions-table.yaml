@@ -44,7 +44,7 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
-                  name: modified_at
+                  name: updated_at
                   type: TIMESTAMP WITHOUT TIME ZONE
                   defaultValueComputed: NOW()
                   constraints:

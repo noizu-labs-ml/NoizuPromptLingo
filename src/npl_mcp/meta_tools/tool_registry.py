@@ -41,6 +41,26 @@ def _auto_register() -> None:
         instructions_update,
         instructions_active_version,
         instructions_versions,
+        instructions_list,
+    )
+    from npl_mcp.pm_tools.db_projects import (
+        project_create,
+        project_get,
+        project_list,
+    )
+    from npl_mcp.pm_tools.db_personas import (
+        persona_create,
+        persona_get,
+        persona_update,
+        persona_delete,
+        persona_list,
+    )
+    from npl_mcp.pm_tools.db_stories import (
+        story_create,
+        story_get,
+        story_update,
+        story_delete,
+        story_list,
     )
 
     register_implementation("ToMarkdown", to_markdown)
@@ -56,6 +76,20 @@ def _auto_register() -> None:
     register_implementation("Instructions.Update", instructions_update)
     register_implementation("Instructions.ActiveVersion", instructions_active_version)
     register_implementation("Instructions.Versions", instructions_versions)
+    register_implementation("Instructions.List", instructions_list)
+    register_implementation("Proj.Projects.Create", project_create)
+    register_implementation("Proj.Projects.Get", project_get)
+    register_implementation("Proj.Projects.List", project_list)
+    register_implementation("Proj.UserPersonas.Create", persona_create)
+    register_implementation("Proj.UserPersonas.Get", persona_get)
+    register_implementation("Proj.UserPersonas.Update", persona_update)
+    register_implementation("Proj.UserPersonas.Delete", persona_delete)
+    register_implementation("Proj.UserPersonas.List", persona_list)
+    register_implementation("Proj.UserStories.Create", story_create)
+    register_implementation("Proj.UserStories.Get", story_get)
+    register_implementation("Proj.UserStories.Update", story_update)
+    register_implementation("Proj.UserStories.Delete", story_delete)
+    register_implementation("Proj.UserStories.List", story_list)
 
 
 _auto_register()

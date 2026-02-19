@@ -95,8 +95,8 @@ CATEGORIES: list[CategoryInfo] = [
     },
     {
         "name": "Project Management",
-        "description": "Access user stories, PRDs, functional requirements, acceptance tests, personas",
-        "tool_count": 8,
+        "description": "Access user stories, PRDs, functional requirements, acceptance tests, personas, and DB-backed project/persona/story CRUD",
+        "tool_count": 21,
     },
     {
         "name": "ToolSessions",
@@ -105,8 +105,8 @@ CATEGORIES: list[CategoryInfo] = [
     },
     {
         "name": "Instructions",
-        "description": "Versioned instruction documents: create, retrieve, update, rollback, and list versions",
-        "tool_count": 5,
+        "description": "Versioned instruction documents: create, retrieve, update, rollback, list versions, and search",
+        "tool_count": 6,
     },
 ]
 
@@ -1195,23 +1195,180 @@ TOOL_CATALOG: list[ToolEntry] = [
     },
 
     # ======================================================================
+    # Project Management — DB-backed CRUD (13)
+    # ======================================================================
+    {
+        "name": "Proj.Projects.Create",
+        "category": "Project Management",
+        "description": "Create a new project.",
+        "parameters": [
+            {"name": "name", "type": "str", "required": True, "description": "Project name"},
+            {"name": "description", "type": "str", "required": False, "description": "Project description"},
+        ],
+    },
+    {
+        "name": "Proj.Projects.Get",
+        "category": "Project Management",
+        "description": "Retrieve a project by ID.",
+        "parameters": [
+            {"name": "id", "type": "str", "required": True, "description": "Project UUID"},
+        ],
+    },
+    {
+        "name": "Proj.Projects.List",
+        "category": "Project Management",
+        "description": "List projects with pagination.",
+        "parameters": [
+            {"name": "page", "type": "int", "required": False, "description": "Page number (default 1)"},
+            {"name": "page_size", "type": "int", "required": False, "description": "Items per page (default 20)"},
+        ],
+    },
+    {
+        "name": "Proj.UserPersonas.Create",
+        "category": "Project Management",
+        "description": "Create a new user persona within a project.",
+        "parameters": [
+            {"name": "project_id", "type": "str", "required": True, "description": "Project UUID"},
+            {"name": "name", "type": "str", "required": True, "description": "Persona name (e.g. 'Power Admin', 'Casual Browser')"},
+            {"name": "role", "type": "str", "required": False, "description": "Role or job title"},
+            {"name": "description", "type": "str", "required": False, "description": "Narrative description of who this persona is"},
+            {"name": "goals", "type": "str", "required": False, "description": "What this persona is trying to achieve"},
+            {"name": "pain_points", "type": "str", "required": False, "description": "Frustrations or obstacles"},
+            {"name": "behaviors", "type": "str", "required": False, "description": "Typical behaviors, habits, or patterns"},
+            {"name": "physical_description", "type": "str", "required": False, "description": "Physical appearance description"},
+            {"name": "persona_image", "type": "str", "required": False, "description": "URL or path to persona avatar image"},
+            {"name": "demographics", "type": "dict", "required": False, "description": "Flexible demographic attributes as JSON object"},
+        ],
+    },
+    {
+        "name": "Proj.UserPersonas.Get",
+        "category": "Project Management",
+        "description": "Retrieve a user persona by ID.",
+        "parameters": [
+            {"name": "id", "type": "str", "required": True, "description": "Persona UUID"},
+        ],
+    },
+    {
+        "name": "Proj.UserPersonas.Update",
+        "category": "Project Management",
+        "description": "Update an existing user persona.",
+        "parameters": [
+            {"name": "id", "type": "str", "required": True, "description": "Persona UUID"},
+            {"name": "name", "type": "str", "required": False, "description": "New persona name"},
+            {"name": "role", "type": "str", "required": False, "description": "New role"},
+            {"name": "description", "type": "str", "required": False, "description": "New description"},
+            {"name": "goals", "type": "str", "required": False, "description": "New goals"},
+            {"name": "pain_points", "type": "str", "required": False, "description": "New pain points"},
+            {"name": "behaviors", "type": "str", "required": False, "description": "New behaviors"},
+            {"name": "physical_description", "type": "str", "required": False, "description": "New physical description"},
+            {"name": "persona_image", "type": "str", "required": False, "description": "New persona image URL"},
+            {"name": "demographics", "type": "dict", "required": False, "description": "New demographics JSON object"},
+        ],
+    },
+    {
+        "name": "Proj.UserPersonas.Delete",
+        "category": "Project Management",
+        "description": "Soft-delete a user persona.",
+        "parameters": [
+            {"name": "id", "type": "str", "required": True, "description": "Persona UUID"},
+        ],
+    },
+    {
+        "name": "Proj.UserPersonas.List",
+        "category": "Project Management",
+        "description": "List personas for a project with pagination.",
+        "parameters": [
+            {"name": "project_id", "type": "str", "required": True, "description": "Project UUID"},
+            {"name": "page", "type": "int", "required": False, "description": "Page number (default 1)"},
+            {"name": "page_size", "type": "int", "required": False, "description": "Items per page (default 20)"},
+        ],
+    },
+    {
+        "name": "Proj.UserStories.Create",
+        "category": "Project Management",
+        "description": "Create a new user story within a project.",
+        "parameters": [
+            {"name": "project_id", "type": "str", "required": True, "description": "Project UUID"},
+            {"name": "title", "type": "str", "required": True, "description": "Short summary / title of the story"},
+            {"name": "persona_ids", "type": "list", "required": False, "description": "Array of persona UUIDs — the 'As a...' personas"},
+            {"name": "story_text", "type": "str", "required": False, "description": "Full 'As a [persona], I want [X], so that [Y]' narrative"},
+            {"name": "description", "type": "str", "required": False, "description": "Additional context or notes"},
+            {"name": "priority", "type": "str", "required": False, "description": "Priority: critical, high, medium (default), low"},
+            {"name": "status", "type": "str", "required": False, "description": "Status: draft (default), ready, in_progress, done, archived"},
+            {"name": "story_points", "type": "int", "required": False, "description": "Story point estimate"},
+            {"name": "acceptance_criteria", "type": "list", "required": False, "description": "Array of acceptance criterion objects [{id, criterion, sort_order, is_met}]"},
+            {"name": "tags", "type": "list", "required": False, "description": "Freeform tags for categorization"},
+        ],
+    },
+    {
+        "name": "Proj.UserStories.Get",
+        "category": "Project Management",
+        "description": "Retrieve a user story by ID. Pass include='acceptance-criteria' to include acceptance criteria.",
+        "parameters": [
+            {"name": "id", "type": "str", "required": True, "description": "Story UUID"},
+            {"name": "include", "type": "str", "required": False, "description": "Pass 'acceptance-criteria' to include acceptance_criteria in response"},
+        ],
+    },
+    {
+        "name": "Proj.UserStories.Update",
+        "category": "Project Management",
+        "description": "Update an existing user story.",
+        "parameters": [
+            {"name": "id", "type": "str", "required": True, "description": "Story UUID"},
+            {"name": "title", "type": "str", "required": False, "description": "New title"},
+            {"name": "persona_ids", "type": "list", "required": False, "description": "New persona UUID array"},
+            {"name": "story_text", "type": "str", "required": False, "description": "New story text"},
+            {"name": "description", "type": "str", "required": False, "description": "New description"},
+            {"name": "priority", "type": "str", "required": False, "description": "New priority"},
+            {"name": "status", "type": "str", "required": False, "description": "New status"},
+            {"name": "story_points", "type": "int", "required": False, "description": "New story points"},
+            {"name": "acceptance_criteria", "type": "list", "required": False, "description": "New acceptance criteria array"},
+            {"name": "tags", "type": "list", "required": False, "description": "New tags array"},
+        ],
+    },
+    {
+        "name": "Proj.UserStories.Delete",
+        "category": "Project Management",
+        "description": "Soft-delete a user story.",
+        "parameters": [
+            {"name": "id", "type": "str", "required": True, "description": "Story UUID"},
+        ],
+    },
+    {
+        "name": "Proj.UserStories.List",
+        "category": "Project Management",
+        "description": "List stories for a project with optional filtering and pagination.",
+        "parameters": [
+            {"name": "project_id", "type": "str", "required": True, "description": "Project UUID"},
+            {"name": "persona_id", "type": "str", "required": False, "description": "Filter by persona UUID (array containment query)"},
+            {"name": "status", "type": "str", "required": False, "description": "Filter by status"},
+            {"name": "priority", "type": "str", "required": False, "description": "Filter by priority"},
+            {"name": "tags", "type": "list", "required": False, "description": "Filter by tags (array overlap)"},
+            {"name": "page", "type": "int", "required": False, "description": "Page number (default 1)"},
+            {"name": "page_size", "type": "int", "required": False, "description": "Items per page (default 20)"},
+        ],
+    },
+
+    # ======================================================================
     # ToolSessions (2)
     # ======================================================================
     {
         "name": "ToolSession.Generate",
         "category": "ToolSessions",
-        "description": "Generate or look up a session UUID by (agent, task) pair. If existing, returns the UUID; if notes provided and not already present, appends them. If not existing, creates a new session.",
+        "description": "Generate or look up a session UUID by (project, agent, task) triple. Sessions are scoped to a project. If existing, returns the UUID; if notes provided and not already present, appends them. If not existing, creates a new session.",
         "parameters": [
             {"name": "agent", "type": "str", "required": True, "description": "Agent identifier"},
             {"name": "brief", "type": "str", "required": True, "description": "Brief description of the session purpose"},
-            {"name": "task", "type": "str", "required": True, "description": "Task identifier (unique per agent)"},
+            {"name": "task", "type": "str", "required": True, "description": "Task identifier (unique per agent within project)"},
+            {"name": "project", "type": "str", "required": True, "description": "Project name for scoping (e.g. from $NPL_PROJECT)"},
+            {"name": "parent", "type": "str", "required": False, "description": "Optional parent session UUID for hierarchy"},
             {"name": "notes", "type": "str", "required": False, "description": "Optional notes to append to the session"},
         ],
     },
     {
         "name": "ToolSession",
         "category": "ToolSessions",
-        "description": "Retrieve session info by UUID. Default returns agent and brief; verbose mode returns all fields including task, notes, and timestamps.",
+        "description": "Retrieve session info by UUID. Default returns agent, brief, and project name. Verbose mode returns all fields including task, notes, parent, and timestamps.",
         "parameters": [
             {"name": "uuid", "type": "str", "required": True, "description": "Session UUID"},
             {"name": "verbose", "type": "bool", "required": False, "description": "If True, return all fields (default False)"},
@@ -1224,21 +1381,24 @@ TOOL_CATALOG: list[ToolEntry] = [
     {
         "name": "Instructions",
         "category": "Instructions",
-        "description": "Retrieve instruction body by UUID. Gets active version by default, or a specific version if specified.",
+        "description": "Retrieve instruction body by UUID. Gets active version by default, or a specific version if specified. Requires a valid session UUID for access gating.",
         "parameters": [
             {"name": "uuid", "type": "str", "required": True, "description": "Instruction UUID"},
+            {"name": "session", "type": "str", "required": True, "description": "A valid tool-session UUID (required for access gating)"},
             {"name": "version", "type": "int", "required": False, "description": "Specific version number (active version if omitted)"},
+            {"name": "json", "type": "bool", "required": False, "description": "If True, return full metadata as JSON. Default returns markdown."},
         ],
     },
     {
         "name": "Instructions.Create",
         "category": "Instructions",
-        "description": "Create a new instruction document with its first version (v1). Returns the UUID.",
+        "description": "Create a new instruction document with its first version (v1). Returns the UUID. Requires a valid session UUID.",
         "parameters": [
             {"name": "title", "type": "str", "required": True, "description": "Instruction title"},
             {"name": "description", "type": "str", "required": True, "description": "Instruction description"},
             {"name": "tags", "type": "list", "required": True, "description": "List of string tags for categorization"},
             {"name": "body", "type": "str", "required": True, "description": "Instruction body content"},
+            {"name": "session", "type": "str", "required": True, "description": "A valid tool-session UUID to link this instruction to"},
         ],
     },
     {
@@ -1270,6 +1430,18 @@ TOOL_CATALOG: list[ToolEntry] = [
             {"name": "uuid", "type": "str", "required": True, "description": "Instruction UUID"},
         ],
     },
+    {
+        "name": "Instructions.List",
+        "category": "Instructions",
+        "description": "Search and list instruction documents. Supports text search (ILIKE on title/description/tags/labels), intent search (pgvector cosine similarity on embeddings), and listing all instructions. Requires a valid session UUID.",
+        "parameters": [
+            {"name": "session", "type": "str", "required": True, "description": "A valid tool-session UUID (required for access gating)"},
+            {"name": "query", "type": "str", "required": False, "description": "Search query string (required for text/intent modes)"},
+            {"name": "mode", "type": "str", "required": False, "description": "Search mode: 'text', 'intent', or 'all' (default: 'text')"},
+            {"name": "tags", "type": "list", "required": False, "description": "Tag filter (AND logic -- instruction must have all listed tags)"},
+            {"name": "limit", "type": "int", "required": False, "description": "Maximum results (default 20, max 100)"},
+        ],
+    },
 
 ]
 
@@ -1281,7 +1453,10 @@ TOOL_CATALOG: list[ToolEntry] = [
 
 EXPOSED_TOOL_NAMES: set[str] = {
     "ToMarkdown", "Ping", "Download", "Screenshot", "Secret", "Rest",
-    "ToolSession", "ToolSession.Generate", "Instructions", "Instructions.Create",
+    "ToolSession", "ToolSession.Generate",
+    "Instructions", "Instructions.Create", "Instructions.Update",
+    "Instructions.ActiveVersion", "Instructions.Versions",
+    "Instructions.List",
 }
 
 
