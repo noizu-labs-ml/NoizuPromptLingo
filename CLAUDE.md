@@ -62,6 +62,42 @@ When spawning sub-agents, always pass the parent session UUID. Use root for top-
 
 ---
 
+## Project Documentation (Agentic Reference)
+
+Three documentation files provide a structured understanding of the codebase. **Consult these before any task that requires knowledge of project structure, architecture, or data model.** Each has a `.summary.md` companion for quick lookups.
+
+| Document | Purpose | Summary |
+|----------|---------|---------|
+| [`docs/PROJ-LAYOUT.md`](docs/PROJ-LAYOUT.md) | Directory tree with descriptions of what each directory and key file contains | `docs/PROJ-LAYOUT.summary.md` |
+| [`docs/PROJ-ARCH.md`](docs/PROJ-ARCH.md) | High-level architecture: components, diagrams, design decisions, tech stack | `docs/PROJ-ARCH.summary.md` |
+| [`docs/PROJ-SCHEMA.md`](docs/PROJ-SCHEMA.md) | Database schema: ERDs (Mermaid + PlantUML), table details, indexes, migrations | `docs/PROJ-SCHEMA.summary.md` |
+
+### When to Reference
+
+- **PROJ-LAYOUT** — Finding files, understanding directory organization, locating entry points or config files.
+- **PROJ-ARCH** — Understanding component relationships, data flow, infrastructure, or design rationale. Detailed sections live in `docs/arch/*.md`.
+- **PROJ-SCHEMA** — Writing queries, creating migrations, understanding table relationships or column types. Detailed domain breakdowns live in `docs/schema/*.md`.
+
+### Overflow Structure
+
+Each doc stays concise by extracting detail into subdirectories:
+
+```
+docs/
+├── PROJ-LAYOUT.md          + layout/*.md
+├── PROJ-ARCH.md            + arch/*.md
+├── PROJ-SCHEMA.md          + schema/*.md
+└── *.summary.md            (compact versions for quick reference)
+```
+
+Summary files contain the same structure in condensed form (no PlantUML, shorter descriptions) — prefer these for fast orientation, then read the full doc or subdirectory file when detail is needed.
+
+### Maintenance
+
+These docs are maintained via update commands (`/update-layout-doc`, `/update-arch-doc`, `/update-schema-doc`). When your work changes project structure, architecture, or schema, flag that the corresponding doc may need updating.
+
+---
+
 ## Response Protocol
 
 ### Assumptions Table
