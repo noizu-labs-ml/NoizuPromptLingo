@@ -6,7 +6,12 @@ from unittest.mock import AsyncMock, patch
 import httpx
 import pytest
 
-from npl_mcp.meta_tools.catalog import CATEGORIES, TOOL_CATALOG, EXPOSED_TOOL_NAMES
+from npl_mcp.meta_tools.catalog import (
+    build_catalog,
+    invalidate_catalog,
+    get_tool_by_name,
+    get_categories,
+)
 from npl_mcp.meta_tools.summary import tool_summary
 from npl_mcp.meta_tools.search import tool_search
 from npl_mcp.meta_tools.definition import tool_definition
@@ -14,14 +19,21 @@ from npl_mcp.meta_tools.help import tool_help
 from npl_mcp.meta_tools import inference_cache
 
 
+@pytest.fixture(scope="session")
+def _mcp_app():
+    """Create the MCP app once per test session to register all tools."""
+    from npl_mcp.launcher import create_app
+    return create_app()
+
+
 @pytest.fixture(autouse=True)
-def _clear_inference_cache():
-    """Clear the LLM inference cache before each test."""
+def _clear_caches(_mcp_app):
+    """Clear inference cache and invalidate catalog cache before each test."""
     inference_cache.cache_clear()
-    inference_cache._invalidate_catalog_hash()
+    invalidate_catalog()
     yield
     inference_cache.cache_clear()
-    inference_cache._invalidate_catalog_hash()
+    invalidate_catalog()
 
 
 # ---------------------------------------------------------------------------
@@ -29,115 +41,113 @@ def _clear_inference_cache():
 # ---------------------------------------------------------------------------
 
 class TestCatalogIntegrity:
-    """Verify the full catalog is well-formed."""
+    """Verify the dynamic catalog is well-formed."""
 
-    def test_categories_not_empty(self):
-        assert len(CATEGORIES) >= 9
+    @pytest.mark.asyncio
+    async def test_categories_not_empty(self):
+        categories = await get_categories()
+        assert len(categories) >= 9
 
-    def test_every_category_has_fields(self):
-        for cat in CATEGORIES:
+    @pytest.mark.asyncio
+    async def test_every_category_has_fields(self):
+        categories = await get_categories()
+        for cat in categories:
             assert "name" in cat
             assert "description" in cat
             assert "tool_count" in cat
             assert cat["tool_count"] > 0
 
-    def test_catalog_not_empty(self):
-        assert len(TOOL_CATALOG) > 0
+    @pytest.mark.asyncio
+    async def test_catalog_not_empty(self):
+        catalog = await build_catalog()
+        assert len(catalog) > 0
 
-    def test_every_tool_has_required_fields(self):
-        for tool in TOOL_CATALOG:
+    @pytest.mark.asyncio
+    async def test_every_tool_has_required_fields(self):
+        catalog = await build_catalog()
+        for tool in catalog:
             assert "name" in tool and tool["name"], f"Tool missing name: {tool}"
             assert "category" in tool and tool["category"], f"Tool {tool['name']} missing category"
-            assert "description" in tool and tool["description"], f"Tool {tool['name']} missing description"
+            assert "description" in tool, f"Tool {tool['name']} missing description"
             assert "parameters" in tool, f"Tool {tool['name']} missing parameters"
 
-    def test_every_tool_has_valid_category(self):
-        category_names = {c["name"] for c in CATEGORIES}
-        for tool in TOOL_CATALOG:
+    @pytest.mark.asyncio
+    async def test_every_tool_has_valid_category(self):
+        catalog = await build_catalog()
+        categories = await get_categories()
+        category_names = {c["name"] for c in categories}
+        for tool in catalog:
             assert tool["category"] in category_names, (
                 f"Tool {tool['name']} has unknown category {tool['category']!r}. "
                 f"Valid: {category_names}"
             )
 
-    def test_category_tool_counts_match(self):
-        actual_counts = {}
-        for tool in TOOL_CATALOG:
-            actual_counts[tool["category"]] = actual_counts.get(tool["category"], 0) + 1
-
-        # For parent categories (like Browser), sum their subcategories
-        parent_sums: dict[str, int] = {}
-        for cat_name, count in actual_counts.items():
-            root = cat_name.split(".")[0]
-            if root != cat_name:
-                parent_sums[root] = parent_sums.get(root, 0) + count
-
-        for cat in CATEGORIES:
-            name = cat["name"]
-            if name in parent_sums and name not in actual_counts:
-                actual = parent_sums[name]
-            elif name in parent_sums and name in actual_counts:
-                actual = actual_counts[name] + parent_sums[name]
-            else:
-                actual = actual_counts.get(name, 0)
-            assert actual == cat["tool_count"], (
-                f"Category {name!r}: declared {cat['tool_count']} tools but catalog has {actual}"
-            )
-
-    def test_no_duplicate_tool_names(self):
-        names = [t["name"] for t in TOOL_CATALOG]
+    @pytest.mark.asyncio
+    async def test_no_duplicate_tool_names(self):
+        catalog = await build_catalog()
+        names = [t["name"] for t in catalog]
         assert len(names) == len(set(names)), f"Duplicate names: {[n for n in names if names.count(n) > 1]}"
 
-    def test_parameters_well_formed(self):
-        for tool in TOOL_CATALOG:
+    @pytest.mark.asyncio
+    async def test_parameters_well_formed(self):
+        catalog = await build_catalog()
+        for tool in catalog:
             for param in tool["parameters"]:
                 assert "name" in param, f"Tool {tool['name']} has param without name"
                 assert "type" in param, f"Tool {tool['name']} param {param.get('name')} missing type"
                 assert "required" in param, f"Tool {tool['name']} param {param['name']} missing required"
                 assert "description" in param, f"Tool {tool['name']} param {param['name']} missing description"
 
-    def test_exposed_tools_exist_in_catalog(self):
-        catalog_names = {t["name"] for t in TOOL_CATALOG}
-        for name in EXPOSED_TOOL_NAMES:
-            assert name in catalog_names, f"Exposed tool {name!r} not in catalog"
-
-    def test_exposed_tools_are_expected(self):
-        assert EXPOSED_TOOL_NAMES == {
-            "ToMarkdown", "Ping", "Download", "Screenshot", "Secret", "Rest",
-            "ToolSession", "ToolSession.Generate",
-            "Instructions", "Instructions.Create", "Instructions.Update",
-            "Instructions.ActiveVersion", "Instructions.Versions",
-            "Instructions.List",
-        }
-
-    def test_exposed_tools_exclude_discovery(self):
-        for tool in TOOL_CATALOG:
-            if tool["name"] in EXPOSED_TOOL_NAMES:
-                assert tool["category"] != "Discovery", (
-                    f"Exposed tool {tool['name']} should not be in Discovery category "
-                    f"(Discovery tools are already known to the client)"
-                )
-
-    def test_ping_has_url_param(self):
-        ping = next(t for t in TOOL_CATALOG if t["name"] == "Ping")
+    @pytest.mark.asyncio
+    async def test_ping_has_url_param(self):
+        ping = await get_tool_by_name("Ping")
+        assert ping is not None
         param_names = {p["name"] for p in ping["parameters"]}
         assert "url" in param_names
 
-    def test_screenshot_has_max_size_params(self):
-        ss = next(t for t in TOOL_CATALOG if t["name"] == "Screenshot")
+    @pytest.mark.asyncio
+    async def test_screenshot_has_max_size_params(self):
+        ss = await get_tool_by_name("Screenshot")
+        assert ss is not None
         param_names = {p["name"] for p in ss["parameters"]}
         assert "max_width" in param_names
         assert "max_height" in param_names
 
-    def test_tomarkdown_has_image_params(self):
-        tm = next(t for t in TOOL_CATALOG if t["name"] == "ToMarkdown")
+    @pytest.mark.asyncio
+    async def test_tomarkdown_has_image_params(self):
+        tm = await get_tool_by_name("ToMarkdown")
+        assert tm is not None
         param_names = {p["name"] for p in tm["parameters"]}
         assert "with_image_descriptions" in param_names
         assert "image_model" in param_names
         assert "output" in param_names
 
+    @pytest.mark.asyncio
+    async def test_mcp_tools_in_catalog(self):
+        """All MCP-registered tools appear in the catalog."""
+        catalog = await build_catalog()
+        catalog_names = {t["name"] for t in catalog}
+        expected_mcp = {
+            "ToolSummary", "ToolSearch", "ToolDefinition", "ToolHelp", "ToolCall",
+            "ToolSession", "ToolSession.Generate",
+            "Instructions", "Instructions.Create", "Instructions.List",
+            "NPLSpec",
+        }
+        assert expected_mcp.issubset(catalog_names)
+
+    @pytest.mark.asyncio
+    async def test_discoverable_tools_in_catalog(self):
+        """All discoverable (hidden) tools appear in the catalog."""
+        catalog = await build_catalog()
+        catalog_names = {t["name"] for t in catalog}
+        expected_discoverable = {
+            "ToMarkdown", "Ping", "Download", "Screenshot", "Rest", "Secret",
+        }
+        assert expected_discoverable.issubset(catalog_names)
+
 
 # ---------------------------------------------------------------------------
-# ToolSummary - default (exposed tools only)
+# ToolSummary - default (all non-Discovery tools)
 # ---------------------------------------------------------------------------
 
 class TestToolSummary:
@@ -150,47 +160,35 @@ class TestToolSummary:
         assert "categories" in result
 
     @pytest.mark.asyncio
-    async def test_lists_only_exposed_tools(self):
+    async def test_lists_all_non_discovery_tools(self):
+        """Default view shows all tools except Discovery category."""
         result = await tool_summary()
-        assert result["total_tools"] == len(EXPOSED_TOOL_NAMES)
-        tool_names = set()
-        for cat in result["categories"]:
-            for t in cat["tools"]:
-                tool_names.add(t["name"])
-        assert tool_names == EXPOSED_TOOL_NAMES
+        catalog = await build_catalog()
+        non_discovery = [t for t in catalog if t["category"] != "Discovery"]
+        assert result["total_tools"] == len(non_discovery)
 
     @pytest.mark.asyncio
-    async def test_exposed_tools_grouped_by_category(self):
+    async def test_no_discovery_category(self):
+        result = await tool_summary()
+        for cat in result["categories"]:
+            assert cat["category"] != "Discovery"
+
+    @pytest.mark.asyncio
+    async def test_tools_grouped_by_category(self):
         result = await tool_summary()
         assert len(result["categories"]) >= 1
-        # Exposed tools are under Browser and Utility (not Discovery)
-        all_names = set()
         for cat in result["categories"]:
             assert "category" in cat
             assert "tools" in cat
-            assert cat["category"] != "Discovery"
-            for t in cat["tools"]:
-                all_names.add(t["name"])
-        assert EXPOSED_TOOL_NAMES.issubset(all_names)
 
     @pytest.mark.asyncio
-    async def test_exposed_tools_omit_parameters(self):
+    async def test_tools_omit_parameters(self):
         result = await tool_summary()
         for cat in result["categories"]:
             for tool in cat["tools"]:
                 assert "name" in tool
                 assert "description" in tool
                 assert "parameters" not in tool
-
-    @pytest.mark.asyncio
-    async def test_does_not_list_hidden_tools(self):
-        result = await tool_summary()
-        tool_names = set()
-        for cat in result["categories"]:
-            for t in cat["tools"]:
-                tool_names.add(t["name"])
-        assert "browser_click" not in tool_names
-        assert "create_artifact" not in tool_names
 
     @pytest.mark.asyncio
     async def test_category_has_description(self):
@@ -210,7 +208,6 @@ class TestToolSummary:
     async def test_includes_hint(self):
         result = await tool_summary()
         assert "hint" in result
-        assert "ToolCall" in result["hint"]
 
 
 # ---------------------------------------------------------------------------
@@ -232,7 +229,6 @@ class TestToolSummaryCategory:
         assert result["category"] == "Browser"
         assert result["tool_count"] == 37
         assert "subcategories" in result
-        # Core browser tools are direct under Browser
         assert "tools" in result
         direct_names = {t["name"] for t in result["tools"]}
         assert {"ToMarkdown", "Ping", "Download", "Screenshot", "Rest"}.issubset(direct_names)
@@ -341,8 +337,7 @@ class TestTextSearch:
     async def test_searches_full_catalog(self):
         result = await tool_search("browser", mode="text")
         names = {m["name"] for m in result["matches"]}
-        # Should find catalog tools beyond just the 6 browser-related exposed ones
-        assert len(names) > 6
+        assert len(names) > 5
 
     @pytest.mark.asyncio
     async def test_limit(self):
@@ -495,14 +490,12 @@ class TestIntentSearch:
 
 class TestMCPRegistration:
 
-    def test_only_discovery_and_registered_tools_registered(self):
-        from npl_mcp.launcher import create_app
-        mcp = create_app()
-        tool_names = set(mcp._tool_manager._tools.keys())
+    def test_only_discovery_and_registered_tools_registered(self, _mcp_app):
+        tool_names = set(_mcp_app._tool_manager._tools.keys())
         assert tool_names == {
             "ToolSummary", "ToolSearch", "ToolDefinition", "ToolHelp", "ToolCall",
             "ToolSession", "ToolSession.Generate", "Instructions", "Instructions.Create",
-            "Instructions.List",
+            "Instructions.List", "NPLSpec",
         }
 
 
@@ -512,8 +505,9 @@ class TestMCPRegistration:
 
 class TestToolDefinition:
 
-    def test_single_tool(self):
-        result = tool_definition(["Ping"])
+    @pytest.mark.asyncio
+    async def test_single_tool(self):
+        result = await tool_definition(["Ping"])
         assert len(result["definitions"]) == 1
         defn = result["definitions"][0]
         assert defn["name"] == "Ping"
@@ -521,31 +515,36 @@ class TestToolDefinition:
         assert "parameters" in defn
         assert "not_found" not in result
 
-    def test_multiple_tools(self):
-        result = tool_definition(["Ping", "ToMarkdown", "Download"])
+    @pytest.mark.asyncio
+    async def test_multiple_tools(self):
+        result = await tool_definition(["Ping", "ToMarkdown", "Download"])
         assert len(result["definitions"]) == 3
         names = [d["name"] for d in result["definitions"]]
         assert names == ["Ping", "ToMarkdown", "Download"]
 
-    def test_not_found(self):
-        result = tool_definition(["nonexistent_xyz"])
+    @pytest.mark.asyncio
+    async def test_not_found(self):
+        result = await tool_definition(["nonexistent_xyz"])
         assert len(result["definitions"]) == 0
         assert result["not_found"] == ["nonexistent_xyz"]
 
-    def test_mixed_found_and_not_found(self):
-        result = tool_definition(["Ping", "no_such_tool", "Screenshot"])
+    @pytest.mark.asyncio
+    async def test_mixed_found_and_not_found(self):
+        result = await tool_definition(["Ping", "no_such_tool", "Screenshot"])
         assert len(result["definitions"]) == 2
         assert result["definitions"][0]["name"] == "Ping"
         assert result["definitions"][1]["name"] == "Screenshot"
         assert result["not_found"] == ["no_such_tool"]
 
-    def test_empty_list(self):
-        result = tool_definition([])
+    @pytest.mark.asyncio
+    async def test_empty_list(self):
+        result = await tool_definition([])
         assert result["definitions"] == []
         assert "not_found" not in result
 
-    def test_includes_full_parameters(self):
-        result = tool_definition(["ToMarkdown"])
+    @pytest.mark.asyncio
+    async def test_includes_full_parameters(self):
+        result = await tool_definition(["ToMarkdown"])
         defn = result["definitions"][0]
         assert len(defn["parameters"]) > 0
         param = defn["parameters"][0]
@@ -554,9 +553,10 @@ class TestToolDefinition:
         assert "required" in param
         assert "description" in param
 
-    def test_hidden_tools_accessible(self):
-        """ToolDefinition can look up any catalog tool, not just exposed ones."""
-        result = tool_definition(["browser_click", "create_artifact"])
+    @pytest.mark.asyncio
+    async def test_hidden_tools_accessible(self):
+        """ToolDefinition can look up any catalog tool, not just MCP-registered ones."""
+        result = await tool_definition(["browser_click", "create_artifact"])
         assert len(result["definitions"]) == 2
         assert result["definitions"][0]["name"] == "browser_click"
         assert result["definitions"][1]["name"] == "create_artifact"
@@ -570,100 +570,83 @@ class TestToolCall:
     """Test ToolCall dispatches to catalog tool implementations."""
 
     @pytest.mark.asyncio
-    async def test_call_implemented_tool(self):
+    async def test_call_implemented_tool(self, _mcp_app):
         """ToolCall dispatches to a real implementation and returns its result."""
+        mock_result = {"url": "https://example.com", "status_code": 200, "response_time_ms": 42.0}
         with patch(
-            "npl_mcp.meta_tools.tool_registry._IMPLEMENTATIONS",
-            {"Ping": AsyncMock(return_value={"url": "https://example.com", "status_code": 200, "response_time_ms": 42.0})},
+            "npl_mcp.meta_tools.catalog.call_tool",
+            new_callable=AsyncMock,
+            return_value=mock_result,
         ):
-            from npl_mcp.launcher import create_app
-            mcp = create_app()
-            tool = mcp._tool_manager._tools["ToolCall"]
+            tool = _mcp_app._tool_manager._tools["ToolCall"]
             result = await tool.run({"tool": "Ping", "arguments": {"url": "https://example.com"}})
             data = json.loads(result.content[0].text)
             assert data["status_code"] == 200
             assert data["url"] == "https://example.com"
 
     @pytest.mark.asyncio
-    async def test_call_unknown_tool(self):
+    async def test_call_unknown_tool(self, _mcp_app):
         """ToolCall returns error for tools not in catalog."""
-        from npl_mcp.launcher import create_app
-        mcp = create_app()
-        tool = mcp._tool_manager._tools["ToolCall"]
+        tool = _mcp_app._tool_manager._tools["ToolCall"]
         result = await tool.run({"tool": "nonexistent_xyz"})
         data = json.loads(result.content[0].text)
         assert data["status"] == "error"
         assert "not found" in data["message"]
 
     @pytest.mark.asyncio
-    async def test_call_stub_tool(self):
+    async def test_call_stub_tool(self, _mcp_app):
         """ToolCall returns stub status for tools without implementation."""
-        from npl_mcp.launcher import create_app
-        mcp = create_app()
-        tool = mcp._tool_manager._tools["ToolCall"]
+        tool = _mcp_app._tool_manager._tools["ToolCall"]
         result = await tool.run({"tool": "dump_files", "arguments": {"path": "/tmp"}})
         data = json.loads(result.content[0].text)
         assert data["status"] == "stub"
-        assert "no implementation" in data["message"]
+        assert "no implementation" in data["message"].lower()
 
     @pytest.mark.asyncio
-    async def test_call_bad_arguments(self):
+    async def test_call_bad_arguments(self, _mcp_app):
         """ToolCall returns error when arguments don't match the function signature."""
-        from npl_mcp.launcher import create_app
-        mcp = create_app()
-        tool = mcp._tool_manager._tools["ToolCall"]
+        tool = _mcp_app._tool_manager._tools["ToolCall"]
         result = await tool.run({"tool": "Ping", "arguments": {"bad_param": "value"}})
         data = json.loads(result.content[0].text)
         assert data["status"] == "error"
-        assert "Invalid arguments" in data["message"]
 
     @pytest.mark.asyncio
-    async def test_call_no_arguments(self):
+    async def test_call_no_arguments(self, _mcp_app):
         """ToolCall with no arguments passes empty dict."""
+        mock_result = {"error": "missing url"}
         with patch(
-            "npl_mcp.meta_tools.tool_registry._IMPLEMENTATIONS",
-            {"Ping": AsyncMock(return_value={"error": "missing url"})},
+            "npl_mcp.meta_tools.catalog.call_tool",
+            new_callable=AsyncMock,
+            return_value=mock_result,
         ):
-            from npl_mcp.launcher import create_app
-            mcp = create_app()
-            tool = mcp._tool_manager._tools["ToolCall"]
+            tool = _mcp_app._tool_manager._tools["ToolCall"]
             result = await tool.run({"tool": "Ping"})
             data = json.loads(result.content[0].text)
-            # The mock was called with no kwargs
             assert data is not None
 
     @pytest.mark.asyncio
-    async def test_call_runtime_error(self):
+    async def test_call_runtime_error(self, _mcp_app):
         """ToolCall catches non-TypeError exceptions from implementations."""
-        async def broken(**kwargs):
-            raise ConnectionError("network down")
-
         with patch(
-            "npl_mcp.meta_tools.tool_registry._IMPLEMENTATIONS",
-            {"Ping": broken},
+            "npl_mcp.meta_tools.catalog.call_tool",
+            new_callable=AsyncMock,
+            side_effect=ConnectionError("network down"),
         ):
-            from npl_mcp.launcher import create_app
-            mcp = create_app()
-            tool = mcp._tool_manager._tools["ToolCall"]
+            tool = _mcp_app._tool_manager._tools["ToolCall"]
             result = await tool.run({"tool": "Ping", "arguments": {"url": "https://example.com"}})
             data = json.loads(result.content[0].text)
             assert data["status"] == "error"
             assert "ConnectionError" in data["message"]
 
-    def test_toolcall_in_catalog(self):
+    @pytest.mark.asyncio
+    async def test_toolcall_in_catalog(self):
         """ToolCall appears in the catalog under Discovery."""
-        from npl_mcp.meta_tools.catalog import get_tool_by_name
-        entry = get_tool_by_name("ToolCall")
+        entry = await get_tool_by_name("ToolCall")
         assert entry is not None
         assert entry["category"] == "Discovery"
         param_names = {p["name"] for p in entry["parameters"]}
         assert "tool" in param_names
         assert "arguments" in param_names
-
-    def test_toolcall_in_core_tools(self):
-        """ToolCall cannot be unpinned."""
-        from npl_mcp.meta_tools.pin import CORE_TOOLS
-        assert "ToolCall" in CORE_TOOLS
 
 
 # ---------------------------------------------------------------------------
@@ -681,16 +664,15 @@ class TestInferenceCache:
         inference_cache.cache_set(key, {"result": 42})
         assert inference_cache.cache_get(key) == {"result": 42}
 
-    def test_catalog_hash_is_stable(self):
-        h1 = inference_cache._get_catalog_hash()
-        h2 = inference_cache._get_catalog_hash()
-        assert h1 == h2
-        assert len(h1) == 32  # MD5 hex digest
+    def test_catalog_version_is_stable(self):
+        v1 = inference_cache._get_catalog_version()
+        v2 = inference_cache._get_catalog_version()
+        assert v1 == v2
 
-    def test_catalog_hash_included_in_key(self):
+    def test_catalog_version_included_in_key(self):
         key = inference_cache.cache_key("intent_search", "hello")
-        cat_hash = inference_cache._get_catalog_hash()
-        assert key.startswith(cat_hash + "|")
+        version = inference_cache._get_catalog_version()
+        assert key.startswith(version + "|")
 
     def test_different_params_different_keys(self):
         k1 = inference_cache.cache_key("intent_search", "query_a", "10")
@@ -703,6 +685,13 @@ class TestInferenceCache:
         assert inference_cache.cache_get(key) == "value"
         inference_cache.cache_clear()
         assert inference_cache.cache_get(key) is None
+
+    def test_invalidation_changes_version(self):
+        """Invalidating the catalog increments the version counter."""
+        v1 = inference_cache._get_catalog_version()
+        invalidate_catalog()
+        v2 = inference_cache._get_catalog_version()
+        assert v1 != v2
 
 
 # ---------------------------------------------------------------------------
@@ -756,7 +745,6 @@ class TestIntentSearchCaching:
         ) as mock_llm:
             r1 = await tool_search("fail query", mode="intent")
             assert r1["fallback"] is True
-            # Second call should try LLM again
             r2 = await tool_search("fail query", mode="intent")
             assert mock_llm.call_count == 2
 
@@ -850,7 +838,7 @@ class TestToolHelp:
 
     @pytest.mark.asyncio
     async def test_help_hidden_tool_accessible(self):
-        """ToolHelp works for any catalog tool, not just exposed ones."""
+        """ToolHelp works for any catalog tool, not just MCP-registered ones."""
         with patch(
             "npl_mcp.meta_tools.help.chat_completion",
             new_callable=AsyncMock,

@@ -1,0 +1,1029 @@
+name: directives
+slug: directives
+brief: Specialized instruction patterns for agent behavior control
+description: 'Specialized instruction patterns for precise agent behavior modification
+  and output control using structured command syntax with emoji prefixes.
+
+  '
+purpose: 'Directives provide fine-grained control over agent behavior, output formatting,
+  and interaction patterns through structured command syntax that extends beyond basic
+  prompt instructions.
+
+  '
+categories:
+- name: output-formatting
+  title: Output Formatting
+  description: Control structured output generation.
+  examples:
+  - name: formatting-combined
+    brief: Combined table and diagram directives
+    covers:
+    - table-formatting
+    - diagram-visualization
+    thread:
+    - role: system
+      message: 'Generate a report with table and diagram.
+
+        ⟪▦: (metric:left, q1:right, q2:right) | quarterly data⟫
+
+        ⟪📊: mermaid bar-chart | revenue comparison⟫
+
+        '
+    - role: assistant
+      message: '| Metric | Q1 | Q2 |
+
+        |--------|---:|---:|
+
+        | Revenue | $1.2M | $1.5M |
+
+        | Users | 10K | 15K |
+
+
+        ```mermaid
+
+        %%{init: {''theme'': ''base''}}%%
+
+        bar-chart showing Q1 vs Q2 growth
+
+        ```
+
+        '
+- name: control-scheduling
+  title: Control & Scheduling
+  description: Time-based and interactive behavior control.
+  examples:
+  - name: control-combined
+    brief: Combined temporal and interactive directives
+    covers:
+    - temporal-control
+    - interactive-element
+    thread:
+    - role: system
+      message: '⟪⏳: On page load⟫ Initialize dashboard
+
+        ⟪🚀: User clicks refresh⟫ Reload data with loading indicator
+
+        '
+    - role: assistant
+      message: 'Behaviors configured:
+
+        - Auto-init dashboard on load
+
+        - Manual refresh with visual feedback
+
+        '
+- name: integration-reference
+  title: Integration & Reference
+  description: Template integration and document navigation.
+  examples:
+  - name: integration-combined
+    brief: Combined template and section directives
+    covers:
+    - template-integration
+    - section-reference
+    thread:
+    - role: system
+      message: '⟪📂:{user-profile}⟫
+
+        ⟪⇆: profile-card | with current user⟫
+
+        '
+    - role: assistant
+      message: '## User Profile {#user-profile}
+
+        ┌─────────────────────┐
+
+        │ **Alice Chen**      │
+
+        │ Engineering Lead    │
+
+        └─────────────────────┘
+
+        '
+- name: guidance-tracking
+  title: Guidance & Tracking
+  description: Annotations, identifiers, and task management.
+  examples:
+  - name: guidance-combined
+    brief: Combined guidance directives
+    covers:
+    - explanatory-note
+    - explicit-instruction
+    - todo-task
+    - identifier-management
+    thread:
+    - role: system
+      message: '⟪📖: Ensure GDPR compliance⟫
+
+        ⟪➤: Generate unique IDs for all records⟫
+
+        ⟪🆔: User Record⟫ Create UUID
+
+        ⟪⬜: Audit compliance| review all data handling⟫
+
+        '
+    - role: assistant
+      message: 'Configuration applied:
+
+        - GDPR notes attached to data operations
+
+        - UUID: 7f3a8b2c-4d5e-6f7a-8b9c-0d1e2f3a4b5c
+
+        - [ ] Audit compliance (pending)
+
+        '
+components:
+- name: table-formatting
+  priority: 0
+  friendly-name: Table Formatting
+  title: Table Formatting
+  syntax:
+  - syntax: '⟪▦: (column alignments and labels) | content description⟫'
+  brief: Format data into structured tables
+  description: Controls structured table output with specified column alignments,
+    headers, and content descriptions. Supports left, right, center alignment per
+    column.
+  detection:
+    patterns:
+    - regex: ⟪▦:[^⟫]*⟫
+      description: Table directive with grid emoji
+    category: pure
+    notes: Unambiguous - ▦ emoji in double angle brackets.
+  labels:
+  - formatting
+  - output
+  - inline
+  require:
+  - syntax.placeholder
+  - syntax.qualifier
+  examples:
+  - name: basic-table
+    brief: Simple table directive
+    description: Basic table formatting with column specification.
+    priority: 1
+    purpose: Demonstrates basic table directive
+    labels:
+    - ⟪▦:⟫
+    example: '⟪▦: (name:left, value:right) | sample data⟫
+
+      '
+  - name: table-with-output
+    brief: Table with result
+    description: Table directive with formatted output.
+    priority: 1
+    purpose: Shows table directive with output
+    labels:
+    - ⟪▦:⟫
+    - '⟪▦: (columns) | content⟫'
+    thread:
+    - role: system
+      message: '⟪▦: (#:left, item:left, price:right) | top 3 menu items⟫
+
+        '
+    - role: assistant
+      message: '| # | Item | Price |
+
+        |---|------|------:|
+
+        | 1 | Burger | $12.99 |
+
+        | 2 | Pizza | $15.99 |
+
+        | 3 | Salad | $9.99 |
+
+        '
+  - name: complex-table
+    brief: Table with label and alignments
+    description: Table with custom label and multiple alignment options.
+    priority: 2
+    purpose: Demonstrates full table syntax
+    labels:
+    - ⟪▦:⟫
+    - '⟪▦: (col:align label Name) | content⟫'
+    - :left
+    - :right
+    - :center
+    thread:
+    - role: system
+      message: 'Generate a formatted table of metrics.
+
+        '
+    - role: user
+      message: '⟪▦: (metric:left, q1:right, q2:right, change:center label Quarterly
+        Report) | sales metrics⟫
+
+        '
+    - role: assistant
+      message: '**Quarterly Report**
+
+        | Metric | Q1 | Q2 | Change |
+
+        |--------|---:|---:|:------:|
+
+        | Revenue | $1.2M | $1.5M | +25% |
+
+        | Users | 10K | 15K | +50% |
+
+        | Churn | 5% | 3% | -40% |
+
+        '
+  category: output-formatting
+- name: diagram-visualization
+  priority: 0
+  friendly-name: Diagram Visualization
+  title: Diagram Visualization
+  syntax:
+  - syntax: '⟪📊: <engine> <chart-type> | content description⟫'
+  brief: Generate diagrams and visualizations
+  description: Instructs agents to generate diagrams, charts, and visualizations using
+    specified rendering engines. Supports multiple visualization libraries and output
+    formats.
+  detection:
+    patterns:
+    - regex: ⟪📊:[^⟫]*⟫
+      description: Diagram directive with chart emoji
+    category: pure
+    notes: Unambiguous - 📊 emoji in double angle brackets.
+  labels:
+  - visualization
+  - diagram
+  - output
+  - inline
+  require:
+  - syntax.placeholder
+  - syntax.qualifier
+  examples:
+  - name: basic-diagram
+    brief: Simple diagram directive
+    description: Basic diagram generation with engine and type.
+    priority: 1
+    purpose: Demonstrates basic diagram directive
+    labels:
+    - ⟪📊:⟫
+    example: '⟪📊: mermaid flowchart | user login process⟫
+
+      '
+  - name: diagram-with-output
+    brief: Diagram with result
+    description: Diagram directive with generated output.
+    priority: 1
+    purpose: Shows diagram directive with output
+    labels:
+    - ⟪📊:⟫
+    - '⟪📊: <engine> <type> | content⟫'
+    thread:
+    - role: system
+      message: '⟪📊: mermaid sequence-diagram | API authentication flow⟫
+
+        '
+    - role: assistant
+      message: "```mermaid\nsequenceDiagram\n    Client->>Server: POST /login\n  \
+        \  Server->>Database: Validate credentials\n    Database-->>Server: User data\n\
+        \    Server-->>Client: JWT token\n```\n"
+  - name: multi-engine-diagrams
+    brief: Multiple diagram engines
+    description: Diagram generation with different engines.
+    priority: 2
+    purpose: Demonstrates various diagram engines
+    labels:
+    - ⟪📊:⟫
+    - '⟪📊: <engine> <type> | content⟫'
+    - mermaid
+    - graphviz
+    - d3.js
+    thread:
+    - role: system
+      message: 'Generate diagrams using appropriate engines.
+
+        '
+    - role: user
+      message: '⟪📊: graphviz digraph | module dependencies⟫
+
+        ⟪📊: d3.js bar-chart | monthly revenue | animated: true⟫
+
+        '
+    - role: assistant
+      message: "**Module Dependencies (Graphviz)**:\n```dot\ndigraph {\n    main ->\
+        \ utils\n    main -> api\n    api -> database\n}\n```\n\n**Monthly Revenue\
+        \ (D3.js)**:\n[Animated bar chart showing Jan-Dec revenue data]\n"
+  category: output-formatting
+- name: temporal-control
+  priority: 0
+  friendly-name: Temporal Control
+  title: Temporal Control
+  syntax:
+  - syntax: '⟪⏳: Time Condition or Instruction⟫'
+  brief: Time-based task execution
+  description: Instructs agents to incorporate temporal considerations including scheduling,
+    timing constraints, deadlines, and time-based triggers for automated actions.
+  detection:
+    patterns:
+    - regex: ⟪⏳:[^⟫]*⟫
+      description: Temporal directive with hourglass emoji
+    category: pure
+    notes: Unambiguous - ⏳ emoji in double angle brackets.
+  labels:
+  - timing
+  - scheduling
+  - inline
+  examples:
+  - name: basic-temporal
+    brief: Simple time directive
+    description: Basic time-based scheduling.
+    priority: 1
+    purpose: Demonstrates basic temporal directive
+    labels:
+    - ⟪⏳:⟫
+    example: '⟪⏳: Every day at 9 AM⟫ Send reminder email
+
+      '
+  - name: temporal-with-output
+    brief: Temporal with scheduled action
+    description: Temporal directive with action confirmation.
+    priority: 1
+    purpose: Shows temporal directive with output
+    labels:
+    - ⟪⏳:⟫
+    - '⟪⏳: condition⟫ action'
+    thread:
+    - role: system
+      message: '⟪⏳: 30 seconds after form submission⟫ Send confirmation email
+
+        '
+    - role: assistant
+      message: 'Scheduled action configured:
+
+        - Trigger: Form submission + 30s delay
+
+        - Action: Send confirmation email
+
+        - Status: Active
+
+        '
+  - name: complex-temporal
+    brief: Multiple temporal conditions
+    description: Various temporal constraint patterns.
+    priority: 2
+    purpose: Demonstrates various temporal patterns
+    labels:
+    - ⟪⏳:⟫
+    - '⟪⏳: condition⟫ action'
+    - recurring
+    - deadline
+    - delay
+    thread:
+    - role: system
+      message: 'Configure scheduled tasks.
+
+        '
+    - role: user
+      message: '⟪⏳: Within 5 minutes⟫ Process incoming data
+
+        ⟪⏳: At end of each day⟫ Generate summary report
+
+        ⟪⏳: Maximum 10 minutes⟫ Complete analysis, prioritize key sections
+
+        '
+    - role: assistant
+      message: 'Scheduled tasks configured:
+
+        1. Data processing: 5-minute deadline constraint
+
+        2. Summary report: Daily at 23:59
+
+        3. Analysis: 10-minute max duration with priority handling
+
+        '
+  category: control-scheduling
+- name: template-integration
+  priority: 0
+  friendly-name: Template Integration
+  title: Template Integration
+  syntax:
+  - syntax: '⟪⇆: template-name | application context⟫'
+  brief: Integrate predefined templates
+  description: Enables seamless integration of predefined templates into agent outputs
+    with variable substitution and data binding from external sources.
+  detection:
+    patterns:
+    - regex: ⟪⇆:[^⟫]*⟫
+      description: Template directive with arrows emoji
+    category: pure
+    notes: Unambiguous - ⇆ symbol in double angle brackets.
+  labels:
+  - template
+  - integration
+  - inline
+  require:
+  - syntax.placeholder
+  - special-sections.named-template
+  examples:
+  - name: basic-template
+    brief: Simple template directive
+    description: Basic template integration.
+    priority: 1
+    purpose: Demonstrates basic template directive
+    labels:
+    - ⟪⇆:⟫
+    example: '⟪⇆: user-card | with user data⟫
+
+      '
+  - name: template-with-output
+    brief: Template with result
+    description: Template directive with rendered output.
+    priority: 1
+    purpose: Shows template directive with output
+    labels:
+    - ⟪⇆:⟫
+    - '⟪⇆: template | context⟫'
+    thread:
+    - role: system
+      message: '⟪⇆: product-card | for featured item⟫
+
+        Data: {name: "Pro Widget", price: 99.99, rating: 4.5}
+
+        '
+    - role: assistant
+      message: '┌─────────────────────┐
+
+        │ **Pro Widget**      │
+
+        │ $99.99              │
+
+        │ ★★★★½ (4.5)        │
+
+        └─────────────────────┘
+
+        '
+  - name: template-with-loop
+    brief: Template in iteration
+    description: Template applied with foreach loop.
+    priority: 2
+    purpose: Demonstrates template with iteration
+    labels:
+    - ⟪⇆:⟫
+    - '⟪⇆: template | context⟫'
+    - '{foreach}'
+    thread:
+    - role: system
+      message: 'Apply template to each item.
+
+        '
+    - role: user
+      message: '## Team Members
+
+        {foreach team.members as member}
+
+        ⟪⇆: profile-card | with member data⟫
+
+        {/foreach}
+
+        '
+    - role: assistant
+      message: '## Team Members
+
+
+        ┌────────────────────────────┐
+
+        │ **Alice Chen**             │
+
+        │ Engineering Lead           │
+
+        │ alice@example.com          │
+
+        └────────────────────────────┘
+
+
+        ┌────────────────────────────┐
+
+        │ **Bob Smith**              │
+
+        │ Product Manager            │
+
+        │ bob@example.com            │
+
+        └────────────────────────────┘
+
+        '
+  category: integration-reference
+- name: interactive-element
+  priority: 0
+  friendly-name: Interactive Element
+  title: Interactive Element
+  syntax:
+  - syntax: '⟪🚀: Action or Behavior Definition⟫'
+  brief: Choreograph interactive behaviors
+  description: Defines interactive behaviors, user-triggered actions, and dynamic
+    response patterns that adapt based on user interactions, system events, or environmental
+    changes.
+  detection:
+    patterns:
+    - regex: ⟪🚀:[^⟫]*⟫
+      description: Interactive directive with rocket emoji
+    category: pure
+    notes: Unambiguous - 🚀 emoji in double angle brackets.
+  labels:
+  - interactive
+  - trigger
+  - inline
+  examples:
+  - name: basic-interactive
+    brief: Simple interactive directive
+    description: Basic user action trigger.
+    priority: 1
+    purpose: Demonstrates basic interactive directive
+    labels:
+    - ⟪🚀:⟫
+    example: '⟪🚀: User clicks submit⟫ Validate and show confirmation
+
+      '
+  - name: interactive-with-output
+    brief: Interactive with response
+    description: Interactive directive with behavior definition.
+    priority: 1
+    purpose: Shows interactive directive with output
+    labels:
+    - ⟪🚀:⟫
+    - '⟪🚀: trigger⟫ action'
+    thread:
+    - role: system
+      message: '⟪🚀: User hovers over term⟫ Show tooltip with definition
+
+        '
+    - role: assistant
+      message: 'Interactive behavior configured:
+
+        - Trigger: mouseenter on .term elements
+
+        - Action: Display tooltip overlay
+
+        - Position: Above element, centered
+
+        - Dismiss: On mouseleave
+
+        '
+  - name: complex-interactive
+    brief: Multiple interaction patterns
+    description: Various interactive behavior types.
+    priority: 2
+    purpose: Demonstrates various interactive patterns
+    labels:
+    - ⟪🚀:⟫
+    - '⟪🚀: trigger⟫ action'
+    - → (chain)
+    - conditional
+    thread:
+    - role: system
+      message: 'Define UI interaction behaviors.
+
+        '
+    - role: user
+      message: '⟪🚀: Form submit⟫ → ⟪🚀: Validate⟫ → ⟪🚀: Show result⟫
+
+        ⟪🚀: If premium user⟫ Show advanced options
+
+        ⟪🚀: If basic user⟫ Show upgrade prompt
+
+        '
+    - role: assistant
+      message: "Behaviors configured:\n1. Form flow: Submit → Validate → Result (chained)\n\
+        2. User-tier branching:\n   - Premium: Advanced options panel\n   - Basic:\
+        \ Upgrade CTA modal\n"
+  category: control-scheduling
+- name: identifier-management
+  priority: 0
+  friendly-name: Identifier Management
+  title: Identifier Management
+  syntax:
+  - syntax: '⟪🆔: Entity or Context Requiring ID⟫'
+  brief: Generate and manage unique identifiers
+  description: Instructs agents to generate, manage, and maintain unique identifiers
+    for entities, sessions, records, or other objects requiring distinct identification.
+  detection:
+    patterns:
+    - regex: ⟪🆔:[^⟫]*⟫
+      description: Identifier directive with ID emoji
+    category: pure
+    notes: Unambiguous - 🆔 emoji in double angle brackets.
+  labels:
+  - identifier
+  - generation
+  - inline
+  examples:
+  - name: basic-identifier
+    brief: Simple identifier directive
+    description: Basic ID generation request.
+    priority: 1
+    purpose: Demonstrates basic identifier directive
+    labels:
+    - ⟪🆔:⟫
+    example: '⟪🆔: User Session⟫ Generate session ID for login
+
+      '
+  - name: identifier-with-output
+    brief: Identifier with result
+    description: Identifier directive with generated output.
+    priority: 1
+    purpose: Shows identifier directive with output
+    labels:
+    - ⟪🆔:⟫
+    - '⟪🆔: entity⟫ instruction'
+    thread:
+    - role: system
+      message: '⟪🆔: Order⟫ Generate human-readable order reference
+
+        '
+    - role: assistant
+      message: 'Generated: ORD-2024-00847
+
+        Format: ORD-{YEAR}-{SEQUENCE}
+
+        Uniqueness: Verified against existing orders
+
+        '
+  - name: multi-identifier
+    brief: Multiple ID types
+    description: Various identifier generation patterns.
+    priority: 2
+    purpose: Demonstrates various identifier types
+    labels:
+    - ⟪🆔:⟫
+    - '⟪🆔: entity⟫ instruction'
+    - uuid
+    - sequential
+    - token
+    thread:
+    - role: system
+      message: 'Generate identifiers for new user registration.
+
+        '
+    - role: user
+      message: '⟪🆔: User Account⟫ Permanent UUID
+
+        ⟪🆔: Activation Token⟫ Temporary secure token
+
+        ⟪🆔: Display ID⟫ Human-readable username suffix
+
+        '
+    - role: assistant
+      message: 'Generated identifiers:
+
+        - User Account: 7f3a8b2c-4d5e-6f7a-8b9c-0d1e2f3a4b5c
+
+        - Activation Token: act_Kj8mNp2xQr5tVw9y (expires: 24h)
+
+        - Display ID: user#4827
+
+        '
+  category: guidance-tracking
+- name: explanatory-note
+  priority: 0
+  friendly-name: Explanatory Note
+  title: Explanatory Note
+  syntax:
+  - syntax: '⟪📖: Detailed Explanation⟫'
+  brief: Append instructive comments
+  description: Provides detailed explanatory notes that clarify intent, expectations,
+    constraints, or context behind specific instructions or behaviors.
+  detection:
+    patterns:
+    - regex: ⟪📖:[^⟫]*⟫
+      description: Explanatory directive with book emoji
+    category: pure
+    notes: Unambiguous - 📖 emoji in double angle brackets.
+  labels:
+  - annotation
+  - documentation
+  - inline
+  examples:
+  - name: basic-note
+    brief: Simple explanatory note
+    description: Basic annotation for context.
+    priority: 1
+    purpose: Demonstrates basic explanatory directive
+    labels:
+    - ⟪📖:⟫
+    example: '⟪📖: Ensure user consent before data collection⟫
+
+      '
+  - name: note-with-output
+    brief: Note with contextual action
+    description: Explanatory note applied to task.
+    priority: 1
+    purpose: Shows explanatory note with output
+    labels:
+    - ⟪📖:⟫
+    - '⟪📖: note⟫ instruction'
+    thread:
+    - role: system
+      message: '⟪📖: Never log passwords or tokens⟫ Implement activity logging
+
+        '
+    - role: assistant
+      message: "```python\ndef log_activity(user_id, action, details):\n    # Sensitive\
+        \ fields are automatically redacted\n    safe_details = redact_sensitive(details)\n\
+        \    logger.info(f\"User {user_id}: {action}\", extra=safe_details)\n```\n"
+  - name: multi-note-context
+    brief: Multiple contextual notes
+    description: Multiple annotations for comprehensive guidance.
+    priority: 2
+    purpose: Demonstrates multiple explanatory notes
+    labels:
+    - ⟪📖:⟫
+    - '⟪📖: note⟫ instruction'
+    - '⟪📖: note⟫ (standalone)'
+    thread:
+    - role: system
+      message: 'Design a user data form with these constraints.
+
+        '
+    - role: user
+      message: '⟪📖: GDPR compliance required for EU users⟫
+
+        ⟪📖: All fields must be keyboard accessible⟫
+
+        ⟪📖: Error messages should guide without exposing system details⟫
+
+        Create registration form
+
+        '
+    - role: assistant
+      message: 'Form designed with:
+
+        - Explicit consent checkbox (GDPR)
+
+        - Tab-navigable fields with ARIA labels
+
+        - User-friendly validation: "Please enter a valid email" (not "Invalid format:
+        regex mismatch")
+
+        '
+  category: guidance-tracking
+- name: section-reference
+  priority: 0
+  friendly-name: Section Reference
+  title: Section Reference
+  syntax:
+  - syntax: ⟪📂:{identifier}⟫
+  brief: Mark sections for reference
+  description: Creates navigable reference points within documents enabling easy cross-referencing,
+    content updates, and section-specific operations.
+  detection:
+    patterns:
+    - regex: ⟪📂:[^⟫]*⟫
+      description: Section reference directive with folder emoji
+    category: pure
+    notes: Unambiguous - 📂 emoji in double angle brackets.
+  labels:
+  - reference
+  - navigation
+  - inline
+  require:
+  - syntax.placeholder
+  examples:
+  - name: basic-reference
+    brief: Simple section reference
+    description: Basic section marker for referencing.
+    priority: 1
+    purpose: Demonstrates basic section reference directive
+    labels:
+    - ⟪📂:{id}⟫
+    example: '⟪📂:{installation}⟫ Follow the steps below to install.
+
+      '
+  - name: reference-with-output
+    brief: Reference with cross-linking
+    description: Section reference with navigation context.
+    priority: 1
+    purpose: Shows section reference with output
+    labels:
+    - ⟪📂:{id}⟫
+    - cross-reference
+    thread:
+    - role: system
+      message: '⟪📂:{auth_api}⟫ Authentication Endpoints
+
+
+        For setup, see ⟪📂:{installation}⟫
+
+        '
+    - role: assistant
+      message: '## Authentication Endpoints {#auth_api}
+
+
+        | Endpoint | Method | Description |
+
+        |----------|--------|-------------|
+
+        | /login | POST | User authentication |
+
+        | /logout | POST | End session |
+
+
+        *Related: [Installation Guide](#installation)*
+
+        '
+  - name: document-structure-refs
+    brief: Full document with references
+    description: Hierarchical document with section markers.
+    priority: 2
+    purpose: Demonstrates document structure referencing
+    labels:
+    - ⟪📂:{id}⟫
+    - cross-reference
+    - hierarchy
+    thread:
+    - role: system
+      message: 'Create document with navigable sections.
+
+        '
+    - role: user
+      message: '# Manual ⟪📂:{root}⟫
+
+        ## Setup ⟪📂:{setup}⟫
+
+        ## Config ⟪📂:{config}⟫
+
+        ## FAQ ⟪📂:{faq}⟫
+
+
+        Index all sections.
+
+        '
+    - role: assistant
+      message: "**Navigation Index**\n- [Manual](#root)\n  - [Setup](#setup)\n  -\
+        \ [Configuration](#config)\n  - [FAQ](#faq)\n\nCross-references enabled for\
+        \ internal linking.\n"
+  category: integration-reference
+- name: explicit-instruction
+  priority: 0
+  friendly-name: Explicit Instruction
+  title: Explicit Instruction
+  syntax:
+  - syntax: '⟪➤: instruction | elaboration⟫'
+  brief: Direct and precise instructions
+  description: Delivers clear, unambiguous instructions to agents ensuring precise
+    execution of specific tasks with optional elaboration for complex requirements.
+  detection:
+    patterns:
+    - regex: ⟪➤:[^⟫]*⟫
+      description: Explicit instruction directive with arrow emoji
+    category: pure
+    notes: Unambiguous - ➤ symbol in double angle brackets.
+  labels:
+  - instruction
+  - priority
+  - inline
+  require:
+  - syntax.qualifier
+  examples:
+  - name: basic-instruction
+    brief: Simple explicit instruction
+    description: Basic instruction with elaboration.
+    priority: 1
+    purpose: Demonstrates basic explicit instruction directive
+    labels:
+    - ⟪➤:⟫
+    example: '⟪➤: Validate input | Check required fields⟫
+
+      '
+  - name: instruction-with-output
+    brief: Instruction with result
+    description: Explicit instruction with executed output.
+    priority: 1
+    purpose: Shows explicit instruction with output
+    labels:
+    - ⟪➤:⟫
+    - '⟪➤: instruction | elaboration⟫'
+    thread:
+    - role: system
+      message: '⟪➤: Sort records | By timestamp desc, then priority⟫
+
+        '
+    - role: assistant
+      message: 'Records sorted:
+
+        1. [2024-01-15 14:30] Priority: High - Server outage
+
+        2. [2024-01-15 14:30] Priority: Medium - API latency
+
+        3. [2024-01-15 09:00] Priority: High - Database backup
+
+        4. [2024-01-14 16:45] Priority: Low - Log rotation
+
+        '
+  - name: combined-instructions
+    brief: Instructions with other directives
+    description: Explicit instructions combined with other directives.
+    priority: 2
+    purpose: Demonstrates instruction combinations
+    labels:
+    - ⟪➤:⟫
+    - '⟪➤: instruction | elaboration⟫'
+    - combined
+    thread:
+    - role: system
+      message: 'Generate a performance report.
+
+        '
+    - role: user
+      message: '⟪▦: (metric:left, value:right) | performance data⟫
+
+        ⟪➤: Include only metrics above threshold | threshold: 80%⟫
+
+        ⟪➤: Add trend indicators | compare to last month⟫
+
+        '
+    - role: assistant
+      message: '| Metric | Value |
+
+        |--------|------:|
+
+        | Uptime | 99.9% ↑ |
+
+        | Response Time | 85ms ↓ |
+
+        | Success Rate | 98.5% → |
+
+
+        *Filtered: 3 metrics below 80% threshold omitted*
+
+        '
+  category: guidance-tracking
+- name: todo-task
+  priority: 0
+  friendly-name: Todo Task
+  title: Todo Task
+  syntax:
+  - syntax: '⟪⬜: task| details⟫'
+  brief: Define tasks and action items
+  description: Creates task items with descriptions and optional details. Used for
+    tracking action items, requirements, and work to be completed within prompts or
+    agent workflows.
+  detection:
+    patterns:
+    - regex: ⟪⬜:[^⟫]*⟫
+      description: Todo task directive with checkbox emoji
+    category: pure
+    notes: Unambiguous - ⬜ emoji in double angle brackets.
+  labels:
+  - task
+  - tracking
+  - inline
+  require:
+  - syntax.qualifier
+  examples:
+  - name: basic-task
+    brief: Simple task directive
+    description: Basic task definition.
+    priority: 1
+    purpose: Demonstrates basic task directive
+    labels:
+    - ⟪⬜:⟫
+    example: '⟪⬜: Review pull request⟫
+
+      '
+  - name: task-with-output
+    brief: Task with tracking
+    description: Task directive with status tracking.
+    priority: 1
+    purpose: Shows task directive with output
+    labels:
+    - ⟪⬜:⟫
+    - '⟪⬜: task| details⟫'
+    thread:
+    - role: system
+      message: '⟪⬜: Fix auth bug| priority: high, blocking release⟫
+
+        '
+    - role: assistant
+      message: "Task created:\n- [ ] Fix auth bug\n  - Priority: High\n  - Status:\
+        \ Blocking release\n  - Added to sprint backlog\n"
+  - name: task-checklist
+    brief: Multiple tasks with dependencies
+    description: Task list with relationships and conditions.
+    priority: 2
+    purpose: Demonstrates task list patterns
+    labels:
+    - ⟪⬜:⟫
+    - '⟪⬜: task| details⟫'
+    - depends
+    - subtasks
+    thread:
+    - role: system
+      message: 'Create task checklist for deployment.
+
+        '
+    - role: user
+      message: '⟪⬜: Run tests| required before deploy⟫
+
+        ⟪⬜: Deploy to staging| depends: tests-pass⟫
+
+        ⟪⬜: Production deploy| subtasks: backup, migrate, verify⟫
+
+        '
+    - role: assistant
+      message: "Deployment Checklist:\n1. [ ] Run tests (blocking)\n2. [ ] Deploy\
+        \ to staging (after #1)\n3. [ ] Production deploy\n   - [ ] Backup database\n\
+        \   - [ ] Run migrations\n   - [ ] Verify deployment\n"
+  category: guidance-tracking

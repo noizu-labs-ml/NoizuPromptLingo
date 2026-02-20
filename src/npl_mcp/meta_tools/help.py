@@ -67,7 +67,7 @@ async def tool_help(tool: str, task: str, verbose: int = 2) -> dict:
     Returns:
         Dict with tool name, task, and generated instructions.
     """
-    entry = get_tool_by_name(tool)
+    entry = await get_tool_by_name(tool)
     if entry is None:
         return {
             "tool": tool,

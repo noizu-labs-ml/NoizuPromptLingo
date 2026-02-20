@@ -14,6 +14,7 @@ Usage:
 
 import subprocess
 import sys
+from typing import Any, Optional
 from pathlib import Path
 
 import uvicorn
@@ -74,20 +75,67 @@ def build_frontend() -> bool:
 
 
 def create_app() -> "FastMCP":
-    """Create the FastMCP app with discovery tools.
+    """Create the FastMCP app with discovery tools and NPLSpec.
 
-    ToolSummary, ToolSearch, ToolDefinition, ToolHelp, and ToolCall
-    are visible at startup. All catalog tools are callable via ToolCall.
+    MCP-visible tools are registered with @mcp.tool() + @discoverable(mcp_registered=True).
+    Hidden tools are registered via discoverable_tools module.
+    Stub tools come from stub_catalog.py.
     """
-    from typing import Optional
+    from npl_mcp.meta_tools.catalog import discoverable, init_catalog
+    from npl_mcp.convention_formatter import NPLDefinition, ComponentSpec
 
     mcp = FastMCP("npl-mcp")
 
+    # ------------------------------------------------------------------
+    # NPLSpec tool (MCP-visible)
+    # ------------------------------------------------------------------
+
+    @mcp.tool(name="NPLSpec")
+    @discoverable(category="NPL", name="NPLSpec", mcp_registered=True,
+                  description="Noizu Prompt Lingua specification generation and formatting")
+    def npl_spec(
+        components: list[ComponentSpec] = [],
+        rendered: list[ComponentSpec] = [],
+        component_priority: int = 0,
+        example_priority: int = 0,
+        extension: bool = False,
+        concise: bool = True,
+        xml: bool = False,
+    ) -> str:
+        """Generate an NPL definition or extension block.
+
+        Args:
+            components: List of component specs to include. Empty list includes all conventions.
+            rendered: List of component specs already rendered elsewhere.
+                     These are excluded from output but treated as known for example selection.
+                     Empty list means nothing pre-rendered.
+            component_priority: Default max component priority to include.
+            example_priority: Default max example priority to include.
+            extension: If True, wraps in extend markers instead of definition markers.
+            concise: If True, use brief descriptions (default True).
+            xml: If True, use XML tags for examples instead of fenced code blocks.
+        """
+        npl = NPLDefinition()
+        return npl.format(
+            components=components or None,
+            rendered=rendered or None,
+            component_priority=component_priority,
+            example_priority=example_priority,
+            extension=extension,
+            flags={"concise": concise, "xml": xml},
+        )
+
+    # ------------------------------------------------------------------
+    # Discovery tools (5 MCP-visible)
+    # ------------------------------------------------------------------
+
     @mcp.tool(name="ToolSummary")
+    @discoverable(category="Discovery", name="ToolSummary", mcp_registered=True,
+                  description="Tool discovery: search, browse, and inspect registered tools")
     async def tool_summary(filter: Optional[str] = None) -> dict:
         """List available tools, or drill into a catalog category.
 
-        Without filter: returns the discovery tools with descriptions.
+        Without filter: returns all non-Discovery tools grouped by category.
 
         With filter: expands that catalog category to show tool
         definitions and subcategories. Use dot notation to drill deeper
@@ -98,12 +146,13 @@ def create_app() -> "FastMCP":
 
         Args:
             filter: Category path to expand, or Category#Tool for a single tool.
-                      Omit to see exposed tools.
+                      Omit to see all tools.
         """
         from npl_mcp.meta_tools.summary import tool_summary as _summary
         return await _summary(filter=filter)
 
     @mcp.tool(name="ToolSearch")
+    @discoverable(category="Discovery", name="ToolSearch", mcp_registered=True)
     async def tool_search(
         query: str,
         mode: str = "text",
@@ -131,6 +180,7 @@ def create_app() -> "FastMCP":
         return await _search(query, mode=mode, limit=limit, verbose=verbose)
 
     @mcp.tool(name="ToolDefinition")
+    @discoverable(category="Discovery", name="ToolDefinition", mcp_registered=True)
     async def tool_definition(tools: list[str]) -> dict:
         """Get full definitions for one or more catalog tools by name.
 
@@ -145,9 +195,10 @@ def create_app() -> "FastMCP":
             and any names that were not found.
         """
         from npl_mcp.meta_tools.definition import tool_definition as _definition
-        return _definition(tools)
+        return await _definition(tools)
 
     @mcp.tool(name="ToolHelp")
+    @discoverable(category="Discovery", name="ToolHelp", mcp_registered=True)
     async def tool_help(tool: str, task: str, verbose: int = 2) -> dict:
         """Get LLM-driven instructions on how to use a tool for a specific task.
 
@@ -166,47 +217,47 @@ def create_app() -> "FastMCP":
         return await _help(tool, task, verbose=verbose)
 
     @mcp.tool(name="ToolCall")
-    async def tool_call(tool: str, arguments: dict = None) -> dict:
-        """Call any catalog tool by name, whether pinned or not.
+    @discoverable(category="Discovery", name="ToolCall", mcp_registered=True)
+    async def tool_call(tool: str, arguments: dict[str, Any] | None = None) -> Any:
+        """Invoke a discoverable tool by name.
 
-        Dispatches to the tool's implementation with the provided arguments.
-        Returns the tool's result directly, or an error if the tool is not
-        found or has no implementation.
+        Discoverable tools are hidden from the MCP tools/list but can be found
+        via ToolSummary / ToolSearch / ToolDefinition and called here.
 
         Args:
-            tool: Name of the catalog tool to call (e.g. "Ping").
-            arguments: Arguments to pass to the tool as a JSON object (default: {}).
+            tool: Name of the discoverable tool to call.
+            arguments: Arguments to pass as a JSON object.
         """
-        from npl_mcp.meta_tools.catalog import get_tool_by_name
-        from npl_mcp.meta_tools.tool_registry import get_implementation
+        from npl_mcp.meta_tools.catalog import call_tool, get_tool_by_name
 
         if arguments is None:
             arguments = {}
 
-        entry = get_tool_by_name(tool)
+        entry = await get_tool_by_name(tool)
         if entry is None:
             return {"tool": tool, "status": "error", "message": f"Tool '{tool}' not found in catalog."}
 
-        impl = get_implementation(tool)
-        if impl is None:
+        try:
+            return await call_tool(tool, arguments)
+        except KeyError:
+            # Tool exists in catalog (maybe stub or MCP-registered) but not in discoverable registry
             return {
                 "tool": tool,
                 "status": "stub",
-                "message": f"Tool '{tool}' is in the catalog but has no implementation yet.",
+                "message": f"Tool '{tool}' is in the catalog but has no implementation via ToolCall.",
             }
-
-        try:
-            return await impl(**arguments)
         except TypeError as exc:
             return {"tool": tool, "status": "error", "message": f"Invalid arguments: {exc}"}
         except Exception as exc:
             return {"tool": tool, "status": "error", "message": f"{type(exc).__name__}: {exc}"}
 
     # ------------------------------------------------------------------
-    # ToolSession tools (2 registered)
+    # ToolSession tools (2 MCP-visible)
     # ------------------------------------------------------------------
 
     @mcp.tool(name="ToolSession.Generate")
+    @discoverable(category="ToolSessions", name="ToolSession.Generate", mcp_registered=True,
+                  description="Agent session tracking: generate, retrieve, and manage tool sessions keyed by agent/task pairs")
     async def tool_session_generate_handler(
         agent: str,
         brief: str,
@@ -233,6 +284,7 @@ def create_app() -> "FastMCP":
         return await _gen(agent=agent, brief=brief, task=task, project=project, parent=parent, notes=notes)
 
     @mcp.tool(name="ToolSession")
+    @discoverable(category="ToolSessions", name="ToolSession", mcp_registered=True)
     async def tool_session_handler(
         uuid: str,
         verbose: bool = False,
@@ -250,10 +302,12 @@ def create_app() -> "FastMCP":
         return await _session(uuid=uuid, verbose=verbose)
 
     # ------------------------------------------------------------------
-    # Instructions tools (2 registered)
+    # Instructions tools (3 MCP-visible)
     # ------------------------------------------------------------------
 
     @mcp.tool(name="Instructions")
+    @discoverable(category="Instructions", name="Instructions", mcp_registered=True,
+                  description="Versioned instruction documents: create, retrieve, update, rollback, list versions, and search")
     async def instructions_handler(
         uuid: str,
         session: str,
@@ -274,6 +328,7 @@ def create_app() -> "FastMCP":
         return await _get(uuid=uuid, version=version, json=json, session=session)
 
     @mcp.tool(name="Instructions.Create")
+    @discoverable(category="Instructions", name="Instructions.Create", mcp_registered=True)
     async def instructions_create_handler(
         title: str,
         description: str,
@@ -294,6 +349,7 @@ def create_app() -> "FastMCP":
         return await _create(title=title, description=description, tags=tags, body=body, session=session)
 
     @mcp.tool(name="Instructions.List")
+    @discoverable(category="Instructions", name="Instructions.List", mcp_registered=True)
     async def instructions_list_handler(
         session: str,
         query: Optional[str] = None,
@@ -317,6 +373,16 @@ def create_app() -> "FastMCP":
         """
         from npl_mcp.instructions.instructions import instructions_list as _list
         return await _list(session=session, query=query, mode=mode, tags=tags, limit=limit)
+
+    # ------------------------------------------------------------------
+    # Initialize catalog and register discoverable tools
+    # ------------------------------------------------------------------
+
+    # Register implemented-but-hidden tools
+    import npl_mcp.meta_tools.discoverable_tools  # noqa: F401
+
+    # Initialize catalog with MCP reference for introspection
+    init_catalog(mcp)
 
     return mcp
 

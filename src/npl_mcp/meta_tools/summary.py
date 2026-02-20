@@ -1,54 +1,53 @@
-"""ToolSummary - exposed tool listing and category browser for tool discovery."""
+"""ToolSummary — tool listing and category browser for tool discovery."""
+
+from __future__ import annotations
 
 from typing import Optional
 
-from .catalog import TOOL_CATALOG, CATEGORIES, EXPOSED_TOOL_NAMES, ToolEntry
+from .catalog import (
+    build_catalog,
+    _CATEGORY_DESCRIPTIONS,
+    ToolEntry,
+)
 
 
 async def tool_summary(filter: Optional[str] = None) -> dict:
     """Return available tools or drill into a catalog category.
 
-    No filter: returns highlighted utility tools (Ping, ToMarkdown, etc.) excluding Discovery tools.
+    No filter: returns all non-Discovery tools grouped by category.
     With filter: expands that catalog category showing its tools and subcategories.
-    Dot notation drills deeper: "Browser.Screenshots" shows screenshot tools.
+    Dot notation drills deeper: "NPL.Sub" shows tools in that subcategory.
     With Category#ToolName: returns a single tool's full definition including parameters.
-    Comma-separated: "Scripts,Chat" expands multiple categories at once.
+    Comma-separated: "NPL,Discovery" expands multiple categories at once.
 
     Parameters are omitted unless you request a specific tool via #ToolName.
-    To get full parameter info, use e.g. "Browser.Screenshots#screenshot_capture".
+    To get full parameter info, use e.g. "NPL#NPLSpec".
     """
     if filter is None:
-        return _exposed_tools()
+        return await _all_tools()
 
-    # Support comma-separated filters
     parts = [p.strip() for p in filter.split(",") if p.strip()]
     if len(parts) == 1:
-        return _resolve_single(parts[0])
+        return await _resolve_single(parts[0])
 
-    # Multiple filters: merge results
     results = []
     for part in parts:
-        results.append(_resolve_single(part))
+        results.append(await _resolve_single(part))
     return {"results": results}
 
 
-def _resolve_single(filter_value: str) -> dict:
+async def _resolve_single(filter_value: str) -> dict:
     """Resolve a single filter value (category or #tool lookup)."""
     if "#" in filter_value:
-        return _get_tool(filter_value)
-    return _expand_category(filter_value)
+        return await _get_tool(filter_value)
+    return await _expand_category(filter_value)
 
 
-def _exposed_tools() -> dict:
-    """Return highlighted tools and a catalog overview for discovery.
+async def _all_tools() -> dict:
+    """Return all non-Discovery tools grouped by category."""
+    catalog = await build_catalog()
+    tools = [t for t in catalog if t["category"] != "Discovery"]
 
-    Shows Browser and Utility tools the client doesn't already know about
-    (Discovery tools are excluded since they're already visible).
-    Groups by category so agents know what can be explored via drill-down.
-    """
-    tools = [t for t in TOOL_CATALOG if t["name"] in EXPOSED_TOOL_NAMES]
-
-    # Group by category
     by_cat: dict[str, list[dict]] = {}
     for t in tools:
         by_cat.setdefault(t["category"], []).append(
@@ -57,12 +56,7 @@ def _exposed_tools() -> dict:
 
     categories = []
     for cat_name, cat_tools in sorted(by_cat.items()):
-        # Look up category description
-        desc = None
-        for c in CATEGORIES:
-            if c["name"] == cat_name:
-                desc = c["description"]
-                break
+        desc = _CATEGORY_DESCRIPTIONS.get(cat_name)
         entry: dict = {"category": cat_name, "tools": cat_tools}
         if desc:
             entry["description"] = desc
@@ -71,14 +65,17 @@ def _exposed_tools() -> dict:
     return {
         "total_tools": len(tools),
         "categories": categories,
-        "hint": "Use ToolSummary(filter='CategoryName') to explore, ToolCall to invoke any catalog tool.",
+        "hint": "Use ToolSummary(filter='CategoryName') to explore, or ToolDefinition for full parameter info.",
     }
 
 
-def _get_tool(path: str) -> dict:
+async def _get_tool(path: str) -> dict:
     """Return a single tool definition by Category.Path#ToolName."""
+    catalog = await build_catalog()
     cat_path, tool_name = path.split("#", 1)
-    for t in TOOL_CATALOG:
+
+    # Try exact category + name match first
+    for t in catalog:
         if t["name"] == tool_name and t["category"] == cat_path:
             return {
                 "name": t["name"],
@@ -86,8 +83,9 @@ def _get_tool(path: str) -> dict:
                 "description": t["description"],
                 "parameters": t["parameters"],
             }
-    # Try matching just by name (in case category path is partial)
-    for t in TOOL_CATALOG:
+
+    # Fallback: match just by name
+    for t in catalog:
         if t["name"] == tool_name:
             return {
                 "name": t["name"],
@@ -95,28 +93,22 @@ def _get_tool(path: str) -> dict:
                 "description": t["description"],
                 "parameters": t["parameters"],
             }
+
     return {"error": f"Tool '{tool_name}' not found in category '{cat_path}'."}
 
 
-def _expand_category(category: str) -> dict:
+async def _expand_category(category: str) -> dict:
     """Expand a specific category, showing tools and subcategories within it."""
+    catalog = await build_catalog()
     prefix = category + "."
 
-    # Tools directly in this category (exact match)
-    direct_tools = [t for t in TOOL_CATALOG if t["category"] == category]
-
-    # Tools in subcategories (starts with prefix)
-    sub_tools = [t for t in TOOL_CATALOG if t["category"].startswith(prefix)]
+    direct_tools = [t for t in catalog if t["category"] == category]
+    sub_tools = [t for t in catalog if t["category"].startswith(prefix)]
 
     if not direct_tools and not sub_tools:
         return {"error": f"Category '{category}' not found."}
 
-    # Look up description from CATEGORIES
-    description = None
-    for c in CATEGORIES:
-        if c["name"] == category:
-            description = c["description"]
-            break
+    description = _CATEGORY_DESCRIPTIONS.get(category)
 
     result: dict = {
         "category": category,
@@ -125,17 +117,12 @@ def _expand_category(category: str) -> dict:
     if description:
         result["description"] = description
 
-    # Tool names and descriptions (use #ToolName for full parameter info)
     if direct_tools:
         result["tools"] = [
-            {
-                "name": t["name"],
-                "description": t["description"],
-            }
+            {"name": t["name"], "description": t["description"]}
             for t in direct_tools
         ]
 
-    # Nested subcategories (one level deeper)
     subcats = _collect_subcategories(category, sub_tools)
     if subcats:
         result["subcategories"] = subcats
@@ -143,9 +130,7 @@ def _expand_category(category: str) -> dict:
     return result
 
 
-def _collect_subcategories(
-    parent: str, tools: list[ToolEntry]
-) -> list[dict]:
+def _collect_subcategories(parent: str, tools: list[ToolEntry]) -> list[dict]:
     """Group tools into immediate subcategories under parent."""
     depth = parent.count(".") + 1
     buckets: dict[str, list[ToolEntry]] = {}
@@ -153,22 +138,14 @@ def _collect_subcategories(
     for tool in tools:
         parts = tool["category"].split(".")
         if len(parts) <= depth:
-            continue  # direct tool, not a subcategory
+            continue
         sub_name = ".".join(parts[: depth + 1])
         buckets.setdefault(sub_name, []).append(tool)
 
     subcats = []
     for sub_name, sub_tools in sorted(buckets.items()):
-        # Look up description from CATEGORIES
-        desc = None
-        for c in CATEGORIES:
-            if c["name"] == sub_name:
-                desc = c["description"]
-                break
-        entry: dict = {
-            "name": sub_name,
-            "tool_count": len(sub_tools),
-        }
+        desc = _CATEGORY_DESCRIPTIONS.get(sub_name)
+        entry: dict = {"name": sub_name, "tool_count": len(sub_tools)}
         if desc:
             entry["description"] = desc
         subcats.append(entry)

@@ -1,8 +1,10 @@
-"""ToolSearch - text and intent-based tool discovery."""
+"""ToolSearch — text and intent-based tool discovery."""
+
+from __future__ import annotations
 
 import json
 
-from .catalog import TOOL_CATALOG, ToolEntry
+from .catalog import build_catalog, ToolEntry
 from .inference_cache import cache_key, cache_get, cache_set
 from .llm_client import chat_completion
 
@@ -13,7 +15,7 @@ async def tool_search(
     limit: int = 10,
     verbose: bool = False,
 ) -> dict:
-    """Search exposed tools by text or intent.
+    """Search registered tools by text or intent.
 
     Args:
         query: Search query string.
@@ -27,7 +29,7 @@ async def tool_search(
     if mode == "intent":
         result = await _intent_search(query, limit)
     else:
-        result = _text_search(query, limit)
+        result = await _text_search(query, limit)
 
     if not verbose:
         result["matches"] = [_strip_params(m) for m in result["matches"]]
@@ -40,16 +42,16 @@ def _strip_params(match: dict) -> dict:
     return {k: v for k, v in match.items() if k != "parameters"}
 
 
-def _text_search(query: str, limit: int = 10) -> dict:
+async def _text_search(query: str, limit: int = 10) -> dict:
     """Case-insensitive substring search on tool name and description."""
-    tools = TOOL_CATALOG
+    catalog = await build_catalog()
     q = query.lower()
 
     exact_name = []
     name_match = []
     desc_match = []
 
-    for tool in tools:
+    for tool in catalog:
         name_lower = tool["name"].lower()
         desc_lower = tool["description"].lower()
 
@@ -134,17 +136,17 @@ def _enrich_matches(
 async def _intent_search(query: str, limit: int = 10) -> dict:
     """LLM-powered intent search with text-search fallback.
 
-    Successful LLM results are cached keyed by catalog hash + query + limit.
+    Successful LLM results are cached keyed by catalog version + query + limit.
     """
     key = cache_key("intent_search", query, str(limit))
     cached = cache_get(key)
     if cached is not None:
         return cached
 
-    tools = TOOL_CATALOG
+    catalog = await build_catalog()
 
     try:
-        messages = _build_intent_prompt(query, tools, limit)
+        messages = _build_intent_prompt(query, catalog, limit)
         response = await chat_completion(messages)
         content = response["choices"][0]["message"]["content"]
 
@@ -156,7 +158,7 @@ async def _intent_search(query: str, limit: int = 10) -> dict:
         content = content.strip()
 
         result = json.loads(content)
-        enriched = _enrich_matches(result.get("matches", []), tools)
+        enriched = _enrich_matches(result.get("matches", []), catalog)
 
         response_dict = {
             "mode": "intent",
@@ -169,7 +171,7 @@ async def _intent_search(query: str, limit: int = 10) -> dict:
         return response_dict
 
     except Exception as e:
-        fallback = _text_search(query, limit)
+        fallback = await _text_search(query, limit)
         fallback["mode"] = "intent"
         fallback["fallback"] = True
         fallback["fallback_reason"] = f"{type(e).__name__}: {e}"

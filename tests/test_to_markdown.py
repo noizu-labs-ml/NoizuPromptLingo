@@ -366,5 +366,5 @@ class TestToMarkdownImageDescriptions:
 
 class TestToMarkdownRegistration:
     def test_tool_in_registry(self):
-        from npl_mcp.meta_tools.tool_registry import get_implementation
-        assert get_implementation("ToMarkdown") is not None
+        from npl_mcp.meta_tools.catalog import _DISCOVERABLE_TOOLS
+        assert "ToMarkdown" in _DISCOVERABLE_TOOLS

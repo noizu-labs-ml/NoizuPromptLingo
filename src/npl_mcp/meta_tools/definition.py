@@ -1,18 +1,21 @@
-"""ToolDefinition - batch lookup of full tool definitions from the catalog."""
+"""ToolDefinition — batch lookup of full tool definitions from the catalog."""
 
-from .catalog import TOOL_CATALOG, ToolEntry
+from __future__ import annotations
+
+from .catalog import build_catalog, ToolEntry
 
 
-def tool_definition(tools: list[str]) -> dict:
+async def tool_definition(tools: list[str]) -> dict:
     """Return full definitions (including parameters) for the requested tools.
 
     Args:
-        tools: List of tool names to look up (e.g. ["ToMarkdown", "Ping"]).
+        tools: List of tool names to look up (e.g. ["NPLSpec"]).
 
     Returns:
         Dict with "definitions" list and any "not_found" names.
     """
-    catalog_by_name: dict[str, ToolEntry] = {t["name"]: t for t in TOOL_CATALOG}
+    catalog = await build_catalog()
+    catalog_by_name: dict[str, ToolEntry] = {t["name"]: t for t in catalog}
 
     definitions = []
     not_found = []

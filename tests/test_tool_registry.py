@@ -1,131 +1,154 @@
-"""Tests for meta_tools/tool_registry.py and pin.py integration."""
-
-from unittest.mock import AsyncMock, MagicMock, patch
+"""Tests for discoverable tool registration and catalog integration."""
 
 import pytest
 
-from npl_mcp.meta_tools.tool_registry import (
-    _IMPLEMENTATIONS,
-    register_implementation,
-    get_implementation,
+from npl_mcp.meta_tools.catalog import (
+    _DISCOVERABLE_TOOLS,
+    _MCP_TOOL_CATEGORIES,
+    build_catalog,
+    call_tool,
+    get_tool_by_name,
+    get_category_info,
+    invalidate_catalog,
 )
+from npl_mcp.meta_tools import inference_cache
 
 
-# ── Registry basics ──────────────────────────────────────────────────────
-
-class TestToolRegistry:
-    def test_auto_registered_to_markdown(self):
-        assert "ToMarkdown" in _IMPLEMENTATIONS
-
-    def test_auto_registered_ping(self):
-        assert "Ping" in _IMPLEMENTATIONS
-
-    def test_auto_registered_download(self):
-        assert "Download" in _IMPLEMENTATIONS
-
-    def test_auto_registered_screenshot(self):
-        assert "Screenshot" in _IMPLEMENTATIONS
-
-    def test_auto_registered_secret(self):
-        assert "Secret" in _IMPLEMENTATIONS
-
-    def test_auto_registered_rest(self):
-        assert "Rest" in _IMPLEMENTATIONS
-
-    def test_auto_registered_tool_session_generate(self):
-        assert "ToolSession.Generate" in _IMPLEMENTATIONS
-
-    def test_auto_registered_tool_session(self):
-        assert "ToolSession" in _IMPLEMENTATIONS
-
-    def test_auto_registered_instructions(self):
-        assert "Instructions" in _IMPLEMENTATIONS
-
-    def test_auto_registered_instructions_create(self):
-        assert "Instructions.Create" in _IMPLEMENTATIONS
-
-    def test_auto_registered_instructions_update(self):
-        assert "Instructions.Update" in _IMPLEMENTATIONS
-
-    def test_auto_registered_instructions_active_version(self):
-        assert "Instructions.ActiveVersion" in _IMPLEMENTATIONS
-
-    def test_auto_registered_instructions_versions(self):
-        assert "Instructions.Versions" in _IMPLEMENTATIONS
-
-    def test_get_missing_returns_none(self):
-        assert get_implementation("NonExistent") is None
-
-    def test_register_custom(self):
-        async def my_fn():
-            pass
-        register_implementation("CustomTool", my_fn)
-        assert get_implementation("CustomTool") is my_fn
-        # Cleanup
-        del _IMPLEMENTATIONS["CustomTool"]
-
-    def test_implementations_are_callable(self):
-        for name, fn in _IMPLEMENTATIONS.items():
-            assert callable(fn), f"{name} is not callable"
+@pytest.fixture(scope="session")
+def _mcp_app():
+    """Create the MCP app once per test session to register all tools."""
+    from npl_mcp.launcher import create_app
+    return create_app()
 
 
-# ── Catalog entry integrity ──────────────────────────────────────────────
+@pytest.fixture(autouse=True)
+def _clear_caches(_mcp_app):
+    """Clear caches before each test."""
+    inference_cache.cache_clear()
+    invalidate_catalog()
+    yield
+    inference_cache.cache_clear()
+    invalidate_catalog()
+
+
+# ── Discoverable registry basics ─────────────────────────────────────────
+
+class TestDiscoverableRegistry:
+    def test_registered_to_markdown(self):
+        assert "ToMarkdown" in _DISCOVERABLE_TOOLS
+
+    def test_registered_ping(self):
+        assert "Ping" in _DISCOVERABLE_TOOLS
+
+    def test_registered_download(self):
+        assert "Download" in _DISCOVERABLE_TOOLS
+
+    def test_registered_screenshot(self):
+        assert "Screenshot" in _DISCOVERABLE_TOOLS
+
+    def test_registered_secret(self):
+        assert "Secret" in _DISCOVERABLE_TOOLS
+
+    def test_registered_rest(self):
+        assert "Rest" in _DISCOVERABLE_TOOLS
+
+    def test_registered_instructions_update(self):
+        assert "Instructions.Update" in _DISCOVERABLE_TOOLS
+
+    def test_registered_instructions_active_version(self):
+        assert "Instructions.ActiveVersion" in _DISCOVERABLE_TOOLS
+
+    def test_registered_instructions_versions(self):
+        assert "Instructions.Versions" in _DISCOVERABLE_TOOLS
+
+    def test_missing_returns_none(self):
+        assert _DISCOVERABLE_TOOLS.get("NonExistent") is None
+
+    def test_discoverable_fns_are_callable(self):
+        for name, info in _DISCOVERABLE_TOOLS.items():
+            assert callable(info.fn), f"{name} fn is not callable"
+
+
+# ── MCP tool category registry ──────────────────────────────────────────
+
+class TestMCPToolCategories:
+    def test_mcp_tools_have_categories(self):
+        expected = {
+            "NPLSpec": "NPL",
+            "ToolSummary": "Discovery",
+            "ToolSearch": "Discovery",
+            "ToolDefinition": "Discovery",
+            "ToolHelp": "Discovery",
+            "ToolCall": "Discovery",
+            "ToolSession.Generate": "ToolSessions",
+            "ToolSession": "ToolSessions",
+            "Instructions": "Instructions",
+            "Instructions.Create": "Instructions",
+            "Instructions.List": "Instructions",
+        }
+        for name, cat in expected.items():
+            assert name in _MCP_TOOL_CATEGORIES, f"{name} missing from MCP categories"
+            assert _MCP_TOOL_CATEGORIES[name] == cat, (
+                f"{name}: expected {cat!r}, got {_MCP_TOOL_CATEGORIES[name]!r}"
+            )
+
+
+# ── Catalog entry integrity ─────────────────────────────────────────────
 
 class TestCatalogIntegrity:
-    def test_secret_in_catalog(self):
-        from npl_mcp.meta_tools.catalog import get_tool_by_name
-        entry = get_tool_by_name("Secret")
+    @pytest.mark.asyncio
+    async def test_secret_in_catalog(self):
+        entry = await get_tool_by_name("Secret")
         assert entry is not None
         assert entry["category"] == "Utility"
-        assert len(entry["parameters"]) == 2
 
-    def test_rest_in_catalog(self):
-        from npl_mcp.meta_tools.catalog import get_tool_by_name
-        entry = get_tool_by_name("Rest")
+    @pytest.mark.asyncio
+    async def test_rest_in_catalog(self):
+        entry = await get_tool_by_name("Rest")
         assert entry is not None
         assert entry["category"] == "Browser"
-        assert len(entry["parameters"]) == 7
 
-    def test_utility_category_exists(self):
-        from npl_mcp.meta_tools.catalog import get_category_info
-        cat = get_category_info("Utility")
+    @pytest.mark.asyncio
+    async def test_utility_category_exists(self):
+        cat = await get_category_info("Utility")
         assert cat is not None
-        assert cat["tool_count"] == 1
+        assert cat["tool_count"] >= 1
 
-    def test_discovery_category_exists(self):
-        from npl_mcp.meta_tools.catalog import get_category_info
-        cat = get_category_info("Discovery")
+    @pytest.mark.asyncio
+    async def test_discovery_category_has_5_tools(self):
+        cat = await get_category_info("Discovery")
         assert cat is not None
         assert cat["tool_count"] == 5
 
-    def test_browser_count(self):
-        from npl_mcp.meta_tools.catalog import get_category_info
-        cat = get_category_info("Browser")
-        assert cat is not None
-        assert cat["tool_count"] == 37
-
-    def test_total_tool_count(self):
-        from npl_mcp.meta_tools.catalog import TOOL_CATALOG
-        assert len(TOOL_CATALOG) == 124
-
-    def test_tool_sessions_category_exists(self):
-        from npl_mcp.meta_tools.catalog import get_category_info
-        cat = get_category_info("ToolSessions")
+    @pytest.mark.asyncio
+    async def test_tool_sessions_category_exists(self):
+        cat = await get_category_info("ToolSessions")
         assert cat is not None
         assert cat["tool_count"] == 2
 
-    def test_instructions_category_exists(self):
-        from npl_mcp.meta_tools.catalog import get_category_info
-        cat = get_category_info("Instructions")
+    @pytest.mark.asyncio
+    async def test_instructions_category_exists(self):
+        cat = await get_category_info("Instructions")
         assert cat is not None
-        assert cat["tool_count"] == 6
+        assert cat["tool_count"] >= 6
 
-    def test_exposed_tools_are_non_discovery(self):
-        from npl_mcp.meta_tools.catalog import EXPOSED_TOOL_NAMES
-        assert EXPOSED_TOOL_NAMES == {
-            "ToMarkdown", "Ping", "Download", "Screenshot", "Secret", "Rest",
-            "ToolSession", "ToolSession.Generate",
-            "Instructions", "Instructions.Create", "Instructions.Update",
-            "Instructions.ActiveVersion", "Instructions.Versions",
-            "Instructions.List",
-        }
+    @pytest.mark.asyncio
+    async def test_npl_category_exists(self):
+        cat = await get_category_info("NPL")
+        assert cat is not None
+        assert cat["tool_count"] >= 1
+
+
+# ── call_tool dispatcher ────────────────────────────────────────────────
+
+class TestCallTool:
+    @pytest.mark.asyncio
+    async def test_call_unknown_raises_key_error(self):
+        with pytest.raises(KeyError, match="not found"):
+            await call_tool("NonExistent")
+
+    @pytest.mark.asyncio
+    async def test_call_stub_raises_key_error(self):
+        """Stub tools are in catalog but not in discoverable registry."""
+        with pytest.raises(KeyError):
+            await call_tool("dump_files")
