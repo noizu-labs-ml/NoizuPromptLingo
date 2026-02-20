@@ -1,0 +1,11 @@
+examples
+worktrees
+__pycache__
+*.pyc
+.DS_Store
+.coverage
+.claude/settings.local.json
+htmlcov 
+.tmp/
+#spike-*/
+.envrc
