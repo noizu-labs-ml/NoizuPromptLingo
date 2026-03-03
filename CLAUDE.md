@@ -157,7 +157,7 @@ Relationship metadata lives in YAML index files, NOT markdown:
 
 ## MCP Tool Discovery
 
-This server uses a **meta-discovery pattern**. 5 Discovery tools are always visible: `ToolSummary`, `ToolSearch`, `ToolDefinition`, `ToolHelp`, and `ToolCall`. All 103 catalog tools are discoverable via these tools.
+This server uses a **meta-discovery pattern**. 5 Discovery tools are always visible: `ToolSummary`, `ToolSearch`, `ToolDefinition`, `ToolHelp`, and `ToolCall`. All ~124 catalog tools are discoverable via these tools.
 
 **Use `ToolCall` to invoke any catalog tool by name** (e.g. `ToolCall(tool="Ping", arguments={"url": "https://example.com"})`).
 
@@ -165,15 +165,15 @@ This server uses a **meta-discovery pattern**. 5 Discovery tools are always visi
 
 ## High-Level Architecture
 
-- **Entry point**: `src/npl_mcp/launcher.py` - starts FastAPI app, mounts FastMCP SSE (`/sse`)
-- **`unified.py`** - builds FastMCP instance with all tool definitions, returns ASGI app
+- **Entry point**: `src/npl_mcp/launcher.py` - creates FastMCP instance, registers tools, starts FastAPI + Uvicorn
 - **`storage/`** - PostgreSQL async wrapper (asyncpg)
-- **`artifacts/`, `reviews/`** - versioned artifacts and review workflows
-- **`chat/`, `sessions/`, `tasks/`** - chat rooms, sessions, task queues
-- **`browser/`** - headless browser stubs
-- **`web/`** - FastAPI routes for web UI and API
-- **`meta_tools/`** - ToolSummary, ToolSearch discovery layer
+- **`artifacts/`** - versioned artifact management (stubs)
+- **`chat/`, `sessions/`, `tasks/`** - chat rooms, sessions, task queues (stubs)
+- **`browser/`** - ToMarkdown, Ping, Download, Screenshot, Rest, Secret
+- **`meta_tools/`** - ToolSummary, ToolSearch, ToolDefinition, ToolHelp, ToolCall
 - **`pm_tools/`** - PRD/story/persona tools
+- **`instructions/`** - versioned instruction documents with embeddings
+- **`tool_sessions/`** - session tracking by (project, agent, task)
 
 ---
 
@@ -228,18 +228,15 @@ Save shared prompt templates to `./sub-agent-prompts/{task-name}.md`. Test with 
 
 ## Reference Documentation
 
-- **FastMCP 2.x guides**: `docs/resources/fastmcp/` (01-installation through 10-examples)
-- **[Documentation Index](docs/DOCUMENTATION-INDEX.md)** - master navigation
-- **[Roadmap](docs/roadmap.yaml)** | **[Features Grid](docs/features-grid.md)** | **[Architecture](docs/PROJ-ARCH.md)**
+- **FastMCP 2.x guides**: `docs/reference/fastmcp/` (01-installation through 10-examples)
+- **[Features Grid](docs/features-grid.md)** | **[Architecture](docs/PROJ-ARCH.md)**
 
 ---
 
 ## Key Project Files
 
 - `pyproject.toml` - package definition, dependencies, `npl-mcp` console script
-- `src/npl_mcp/launcher.py` - CLI entry point (PID, singleton, Uvicorn)
-- `src/npl_mcp/unified.py` - FastMCP tool registrations, ASGI app
-- `src/npl_mcp/web/app.py` - FastAPI app mounting MCP + UI routes
+- `src/npl_mcp/launcher.py` - CLI entry point (PID, singleton, Uvicorn, tool registrations)
 
 ---
 

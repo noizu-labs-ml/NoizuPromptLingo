@@ -2,24 +2,24 @@
 
 ## Overview
 
-Instead of registering all ~126 tools directly (which overwhelms clients with large tool lists), the NPL MCP server uses a **three-tier tool pattern**: 11 MCP-visible tools are registered at startup, ~22 hidden tools are callable via `ToolCall`, and ~93 stub tools are discoverable but return stub status. All tools are unified into a single catalog by `build_catalog()`.
+Instead of registering all ~124 tools directly (which overwhelms clients with large tool lists), the NPL MCP server uses a **three-tier tool pattern**: 11 MCP-visible tools are registered at startup, 21 hidden tools are callable via `ToolCall`, and 92 stub tools are discoverable but return stub status. All tools are unified into a single catalog by `build_catalog()`.
 
 ```
 Client ──MCP──> ToolSummary / ToolSearch / ToolCall
                        │
                        ▼
-              Unified Catalog (~126 tools)
+              Unified Catalog (~124 tools)
               ┌──────────────────────────────┐
               │ MCP-Visible (11)             │
               │   Discovery (5), NPLSpec,    │
               │   Sessions (2), Instructions (3) │
-              │ Hidden/Discoverable (~22)    │
+              │ Hidden/Discoverable (21)     │
               │   Browser (5): ToMarkdown,   │
               │     Ping, Download, Screenshot, Rest │
               │   Utility (1): Secret        │
               │   Instructions (3)           │
-              │   Project Management (13)    │
-              │ Stubs (~93)                  │
+              │   Project Management (12)    │
+              │ Stubs (92)                   │
               │   Scripts (5), Artifacts (5),│
               │   Reviews (6), Sessions (4), │
               │   Chat (8), Browser.* (28),  │

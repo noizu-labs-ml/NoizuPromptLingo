@@ -2,7 +2,7 @@
 
 ## Overview
 
-NPL MCP is a Model Context Protocol (MCP) server built on FastMCP 2.x. Rather than exposing all ~126 tools directly (which overwhelms clients), it uses a **meta tool pattern**: 11 tools are visible at startup (5 discovery + 1 NPL spec + 2 session + 3 instruction). An additional ~22 implemented tools are hidden but callable via `ToolCall`, plus ~93 stub tools for planned features.
+NPL MCP is a Model Context Protocol (MCP) server built on FastMCP 2.x. Rather than exposing all ~124 tools directly (which overwhelms clients), it uses a **meta tool pattern**: 11 tools are visible at startup (5 discovery + 1 NPL spec + 2 session + 3 instruction). An additional 21 implemented tools are hidden but callable via `ToolCall`, plus 92 stub tools for planned features.
 
 The server combines FastMCP for MCP protocol handling, FastAPI for HTTP routing and a Next.js frontend, LiteLLM proxy for LLM-powered features (intent search, image descriptions), and PostgreSQL for persistent storage of sessions, instructions, projects, personas, stories, and secrets.
 
@@ -19,8 +19,8 @@ graph TB
         API[FastAPI App]
         MCP[FastMCP Instance<br/>11 tools registered]
         Meta[Discovery Tools<br/>5 discovery + 6 functional]
-        Hidden[Hidden Tools<br/>~22 via ToolCall]
-        Stubs[Stub Catalog<br/>~93 planned tools]
+        Hidden[Hidden Tools<br/>21 via ToolCall]
+        Stubs[Stub Catalog<br/>92 planned tools]
         FE[Next.js Frontend<br/>static export]
     end
 
@@ -59,15 +59,15 @@ graph TB
 
 ## Meta Tool Pattern
 
-**11 MCP-visible tools** are registered at startup. All ~126 catalog tools are discoverable via meta tools and callable via `ToolCall`.
+**11 MCP-visible tools** are registered at startup. All ~124 catalog tools are discoverable via meta tools and callable via `ToolCall`.
 
 ### Three-Tier Tool Registration
 
 | Tier | Count | Visibility | Description |
 |------|-------|------------|-------------|
 | MCP-Visible | 11 | In `tools/list` | Direct `@mcp.tool()` registration |
-| Hidden/Discoverable | ~22 | Via ToolCall only | Registered via `register_discoverable()` |
-| Stubs | ~93 | Discoverable, not callable | Static definitions for planned features |
+| Hidden/Discoverable | 21 | Via ToolCall only | Registered via `register_discoverable()` |
+| Stubs | 92 | Discoverable, not callable | Static definitions for planned features |
 
 ### Discovery Tools (5)
 
@@ -89,8 +89,6 @@ graph TB
 | **Instructions** | Retrieve versioned instruction documents |
 | **Instructions.Create** | Create new instruction with v1 |
 | **Instructions.List** | Search instructions by text/intent/tags |
-
-Five browser utility tools are highlighted in ToolSummary's default view: **ToMarkdown**, **Ping**, **Download**, **Screenshot**, **Rest**.
 
 → *See [arch/meta-tools.md](arch/meta-tools.md) for full details, catalog structure, and LLM configuration*
 
@@ -147,24 +145,27 @@ Five browser utility tools are highlighted in ToolSummary's default view: **ToMa
 
 ## Key Design Decisions
 
-- **Three-tier tool registration**: MCP-visible (11) for core functionality, hidden (22) callable via ToolCall, stubs (93) for planned features
+- **Three-tier tool registration**: MCP-visible (11) for core functionality, hidden (21) callable via ToolCall, stubs (92) for planned features
 - **FastMCP 2.x**: MCP server framework with SSE transport
 - **LiteLLM proxy**: Routes LLM calls through a local proxy for model flexibility and key management
-- **Dynamic catalog builder**: Merges MCP-registered, hidden, and stub tools into a unified ~126-tool catalog
+- **Dynamic catalog builder**: Merges MCP-registered, hidden, and stub tools into a unified ~124-tool catalog
 - **PostgreSQL for state**: Sessions, instructions, projects, personas, stories, and secrets all DB-backed
 - **Next.js static export**: Frontend builds to `web/static/` and is served by FastAPI middleware
 
 ## Agent Orchestration
 
-The project implements a TDD-driven workflow system with 5 specialized agents that transform feature ideas into tested code:
+The project implements a TDD-driven workflow system with 5 specialized agents that transform feature ideas into tested code, plus utility agents:
 
 1. **npl-idea-to-spec** → Personas + user stories
 2. **npl-prd-editor** → PRD documents
 3. **npl-tdd-tester** → Test suites
 4. **npl-tdd-coder** → Implementation (runs until tests pass)
 5. **npl-tdd-debugger** → Root cause analysis on failures
+6. **npl-winnower** → Response winnowing and quality filtering
+7. **npl-tasker-*** → Task execution agents (haiku/fast/sonnet/opus/ultra)
 
 → *See [arch/agent-orchestration.summary.md](arch/agent-orchestration.summary.md) for details*
+→ *See [winnower-design.md](winnower-design.md) for winnower agent spec*
 
 ## Configuration
 

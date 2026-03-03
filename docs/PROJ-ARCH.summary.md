@@ -1,7 +1,7 @@
 # Project Architecture Summary
 
 ## Overview
-NPL MCP is a Model Context Protocol server built on FastMCP 2.x using a three-tier tool pattern: 11 MCP-visible tools at startup (5 discovery + 1 NPL spec + 2 session + 3 instruction), ~22 hidden tools callable via ToolCall, ~93 stub tools for planned features. Unified catalog of ~126 tools. FastAPI for routing and Next.js frontend, LiteLLM proxy for LLM-powered features, PostgreSQL for persistent storage.
+NPL MCP is a Model Context Protocol server built on FastMCP 2.x using a three-tier tool pattern: 11 MCP-visible tools at startup (5 discovery + 1 NPL spec + 2 session + 3 instruction), 21 hidden tools callable via ToolCall, 92 stub tools for planned features. Unified catalog of ~124 tools. FastAPI for routing and Next.js frontend, LiteLLM proxy for LLM-powered features, PostgreSQL for persistent storage.
 
 ## Components
 - **Launcher** (`launcher.py`): create_app() + create_asgi_app(), CLI, Uvicorn
@@ -9,7 +9,7 @@ NPL MCP is a Model Context Protocol server built on FastMCP 2.x using a three-ti
 - **NPL Spec** (`convention_formatter.py`): NPLSpec tool — NPL definition generation from convention YAMLs
 - **Markdown** (`markdown/`): Converter, viewer, CSS/heading/xpath filters, image descriptions
 - **NPL Parser** (`npl/`): YAML loader, syntax parser, reference resolver
-- **PM Tools** (`pm_tools/`): PRD/story/persona access — file-based + DB-backed CRUD (13 hidden tools)
+- **PM Tools** (`pm_tools/`): PRD/story/persona access — file-based + DB-backed CRUD (12 hidden tools)
 - **Instructions** (`instructions/`): Versioned instruction documents with embeddings (3 registered + 3 hidden)
 - **Tool Sessions** (`tool_sessions/`): Session tracking by (project, agent, task) triple (2 registered)
 - **Browser** (`browser/`): ToMarkdown, Ping, Download, Screenshot, Rest, Secret (5 hidden + stubs)
@@ -27,4 +27,4 @@ MCP protocol, FastMCP 2.x, FastAPI, Uvicorn, SSE transport, PostgreSQL (asyncpg,
 - Docker Compose for PostgreSQL, Liquibase for schema
 
 ## Agent Orchestration
-5-agent TDD pipeline: npl-idea-to-spec → npl-prd-editor → npl-tdd-tester → npl-tdd-coder → npl-tdd-debugger (on failure)
+TDD pipeline: npl-idea-to-spec → npl-prd-editor → npl-tdd-tester → npl-tdd-coder → npl-tdd-debugger (on failure). Plus npl-winnower (quality filtering) and npl-tasker-* (task execution agents).

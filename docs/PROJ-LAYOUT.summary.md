@@ -6,25 +6,26 @@ NoizuPromptLingo/
 ├── src/mcp.py              # Minimal FastMCP hello-world server
 ├── frontend/               # Next.js web UI (React/TypeScript/Tailwind)
 ├── tests/                  # 25 test files (markdown, NPL, PM tools, meta tools, browser, instructions, sessions)
-├── docs/                   # Architecture, reference, layout, agents, claude, pending, prior-version
+├── docs/                   # Architecture, reference, layout, agents, claude, pending, prior-version, winnower design
 ├── project-management/     # Personas, 147 user stories, 21 PRDs (001–017), TODOs
 ├── conventions/            # NPL convention YAML definitions
 ├── npl/                    # NPL language specifications (YAML + Markdown)
 ├── skills/                 # Skill definitions (4 domains)
-├── agents/                 # TDD agent definitions (npl-*.md)
-├── commands/               # Claude Code slash commands
+├── agents/                 # TDD agent definitions (npl-*.md, incl. npl-winnower)
+├── commands/               # Claude Code slash commands (8 commands)
 ├── sub-agent-prompts/      # Reusable prompts for parallel agents
 ├── scripts/                # Operational scripts (port forwarding)
-├── liquibase/              # Database migrations (Liquibase YAML)
+├── liquibase/              # Database migrations (Liquibase YAML, changesets 001–008)
 ├── docker/                 # Docker config (PostgreSQL init)
 ├── tools/                  # Utility scripts (git, markdown, validators)
 ├── wip/                    # Work-in-progress sub-project
-├── worktrees/              # Git worktrees (main, npl-update, redo, take-3)
-├── .claude/                # Claude Code config (agents/, commands/, settings)
+├── worktrees/              # Git worktrees (main, npl-update, redo)
+├── .claude/                # Claude Code config (agents/, commands/, worktrees/, settings)
 ├── .prd/                   # PRD workspace
 ├── .tmp/                   # Scratch files (gitignored)
 ├── .envrc                  # direnv config
 ├── .mise.toml              # mise task runner
+├── debug-command.sh        # Debug/diagnostic script
 ├── docker-compose.yaml     # Local PostgreSQL at localhost:5111
 ├── pyproject.toml          # Package metadata + dependencies
 └── CLAUDE.md               # Claude Code instructions

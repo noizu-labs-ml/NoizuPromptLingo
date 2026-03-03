@@ -47,6 +47,7 @@ docs/
 │   ├── scripts/                        #   Old script docs
 │   └── *.md                            #   Various summary/brief files
 ├── features-grid.md                    # Implementation status and gaps
+├── winnower-design.md                  # Winnower agent spec and design
 ├── PROJ-ARCH.md                        # High-level architecture
 ├── PROJ-ARCH.summary.md                # Architecture summary companion
 ├── PROJ-LAYOUT.md                      # Project layout (main file)

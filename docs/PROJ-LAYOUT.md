@@ -46,12 +46,12 @@ NoizuPromptLingo/
 ├── conventions/                    # NPL convention YAML definitions
 ├── npl/                            # NPL language specifications (YAML + Markdown)
 ├── skills/                         # Skill definitions (conversion, market, UX, monetization)
-├── agents/                         # TDD agent definitions (npl-*.md)
-├── commands/                       # Claude Code slash commands
+├── agents/                         # TDD agent definitions (npl-*.md, incl. npl-winnower)
+├── commands/                       # Claude Code slash commands (8 commands)
 ├── sub-agent-prompts/              # Reusable prompts for parallel agent spawning
 ├── scripts/                        # Operational scripts (port forwarding, etc.)
 ├── liquibase/                      # Database migrations (Liquibase YAML changelogs)
-│   ├── changelogs/                 #   Migration changesets
+│   ├── changelogs/                 #   Migration changesets (001–008)
 │   ├── liquibase.properties        #   Connection config
 │   └── liquibase.properties.example#   Template for local setup
 ├── docker/                         # Docker configuration
@@ -61,8 +61,7 @@ NoizuPromptLingo/
 ├── worktrees/                      # Git worktrees (extended workspace)
 │   ├── main/                       #   Main branch with full NPL framework
 │   ├── npl-update/                 #   Update worktree
-│   ├── redo/                       #   Redo worktree
-│   └── take-3/                     #   Take-3 worktree
+│   └── redo/                       #   Redo worktree
 ├── .claude/                        # Claude Code configuration
 │   ├── agents/                     #   Agent definitions
 │   ├── commands/                   #   Slash command definitions
@@ -73,6 +72,7 @@ NoizuPromptLingo/
 ├── .mise.toml                      # mise task runner configuration
 ├── .python-version                 # Python version (3.13)
 ├── .tool-versions                  # Tool version management
+├── debug-command.sh                # Debug/diagnostic shell script
 ├── docker-compose.yaml             # Local dev services (PostgreSQL)
 ├── pyproject.toml                  # Project metadata and dependencies
 ├── uv.lock                         # Dependency lock file
@@ -114,6 +114,7 @@ Agents defined in `agents/` (mirrored in `.claude/agents`):
 | `npl-tdd-tester` | Create comprehensive test suites |
 | `npl-tdd-coder` | Implement features using TDD cycle |
 | `npl-tdd-debugger` | Diagnose and fix test failures |
+| `npl-winnower` | Response winnowing and quality filtering |
 | `npl-tasker-*` | Task execution agents (haiku/fast/sonnet/opus/ultra) |
 
 ## Generated Directories (gitignored)
