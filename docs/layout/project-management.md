@@ -42,6 +42,8 @@ project-management/
 │   ├── PRD-014-cli-utilities/          #   CLI utilities
 │   ├── PRD-015-npl-loading-extension/  #   NPL loading extension
 │   ├── PRD-016-skill-validator-tool/   #   Skill validator
+│   ├── PRD-017-markdown-tools/        #   Markdown tools
+│   ├── PRD-017-pm-mcp-tools/          #   PM MCP tools
 │   └── archive/                        #   Archived/superseded PRDs
 ├── TODO/                               # Backlog items
 │   └── jina.md

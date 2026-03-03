@@ -7,7 +7,9 @@ NoizuPromptLingo/
 │   │   ├── markdown/               #     Markdown converter, viewer, filters
 │   │   ├── meta_tools/             #     Tool catalog, search, definition, help, LLM client
 │   │   ├── npl/                    #     NPL syntax parser and loader
-│   │   ├── pm_tools/               #     PRD/story/persona management tools
+│   │   ├── pm_tools/               #     PRD/story/persona management tools (file + DB)
+│   │   ├── instructions/           #     Instruction management + vector embeddings
+│   │   ├── tool_sessions/          #     Tool session and project management
 │   │   ├── web/                    #     FastAPI routes + static assets
 │   │   ├── storage/                #     PostgreSQL async wrapper (asyncpg)
 │   │   ├── browser/                #     Ping, Screenshot, Download, Rest, Secrets, ToMarkdown
@@ -17,6 +19,7 @@ NoizuPromptLingo/
 │   │   ├── scripts/                #     Shell script wrappers (stubs)
 │   │   ├── sessions/               #     Session lifecycle (stubs)
 │   │   ├── tasks/                  #     Task queues (stubs)
+│   │   ├── convention_formatter.py #     NPL convention YAML formatter
 │   │   └── launcher.py             #     CLI entry point with server management
 │   └── mcp.py                      #   Minimal FastMCP hello-world server
 ├── frontend/                       # Next.js web UI (React/TypeScript/Tailwind)
@@ -27,16 +30,20 @@ NoizuPromptLingo/
 ├── tests/                          # Test suites → [layout/tests.md](layout/tests.md)
 ├── docs/                           # Documentation → [layout/docs.md](layout/docs.md)
 │   ├── arch/                       #   Architecture docs
+│   ├── agents/                     #   Agent-specific documentation
+│   ├── claude/                     #   Claude Code tooling docs
 │   ├── reference/                  #   Reference docs (MCP, FastMCP, skills)
 │   ├── pending/                    #   Docs pending integration
 │   ├── prior-version/              #   Archived docs from prior version
 │   ├── PROJ-ARCH.md                #   High-level architecture
-│   └── PROJ-LAYOUT.md              #   This file
+│   ├── PROJ-LAYOUT.md              #   This file
+│   └── PROJ-SCHEMA.md              #   Database schema documentation
 ├── project-management/             # Planning & specs → [layout/project-management.md](layout/project-management.md)
 │   ├── personas/                   #   Persona definitions with index.yaml
-│   ├── user-stories/               #   150+ user stories with index.yaml
-│   ├── PRDs/                       #   Product requirement documents (PRD-001–016)
+│   ├── user-stories/               #   147 user stories with index.yaml
+│   ├── PRDs/                       #   Product requirement documents (PRD-001–017)
 │   └── TODO/                       #   Backlog items
+├── conventions/                    # NPL convention YAML definitions
 ├── npl/                            # NPL language specifications (YAML + Markdown)
 ├── skills/                         # Skill definitions (conversion, market, UX, monetization)
 ├── agents/                         # TDD agent definitions (npl-*.md)
@@ -50,13 +57,15 @@ NoizuPromptLingo/
 ├── docker/                         # Docker configuration
 │   └── postgres-init/              #   PostgreSQL init scripts
 ├── tools/                          # Utility scripts (git_tree, git_dump, markdown, validators)
+├── wip/                            # Work-in-progress sub-project (separate pyproject.toml)
 ├── worktrees/                      # Git worktrees (extended workspace)
 │   ├── main/                       #   Main branch with full NPL framework
 │   ├── npl-update/                 #   Update worktree
-│   └── redo/                       #   Redo worktree
+│   ├── redo/                       #   Redo worktree
+│   └── take-3/                     #   Take-3 worktree
 ├── .claude/                        # Claude Code configuration
-│   ├── commands -> ../commands     #   Symlink to commands/
-│   ├── agents -> ../agents         #   Symlink to agents/
+│   ├── agents/                     #   Agent definitions
+│   ├── commands/                   #   Slash command definitions
 │   └── settings.local.json         #   Local settings (gitignored)
 ├── .prd/                           # PRD workspace
 ├── .tmp/                           # Temporary/scratch files (gitignored)
@@ -96,7 +105,7 @@ NoizuPromptLingo/
 
 ## TDD Agent Workflow
 
-Agents defined in `agents/` (symlinked via `.claude/agents`):
+Agents defined in `agents/` (mirrored in `.claude/agents`):
 
 | Agent | Purpose |
 |-------|---------|

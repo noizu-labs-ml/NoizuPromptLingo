@@ -2,9 +2,9 @@
 
 ## Overview
 
-NPL MCP uses PostgreSQL (asyncpg) with Liquibase YAML changelogs for migrations. The schema covers six domains: NPL content storage with vector search, credential management, agent session tracking, versioned instruction documents, project scoping, and project management (personas/stories).
+NPL MCP uses PostgreSQL (asyncpg) with Liquibase YAML changelogs for migrations. The schema covers six domains: NPL content storage with vector search, credential management, agent session tracking, versioned instruction documents with multi-facet embeddings, project scoping, and project management (personas/stories).
 
-**Database**: `localhost:5111/npl` | **Driver**: asyncpg | **Migrations**: `liquibase/changelogs/`
+**Database**: `localhost:5111/npl` | **Driver**: asyncpg | **Migrations**: `liquibase/changelogs/` | **Tables**: 11 | **Changesets**: 16
 
 ## Entity Relationship Diagram
 
@@ -16,6 +16,7 @@ erDiagram
     npl_tool_sessions ||--o{ npl_tool_sessions : "parent"
     npl_tool_sessions ||--o{ npl_instructions : "session"
     npl_instructions ||--o{ npl_instruction_versions : "has versions"
+    npl_instructions ||--o{ npl_instruction_embeddings : "has embeddings"
     npl_projects ||--o{ npl_user_personas : "has personas"
     npl_projects ||--o{ npl_user_stories : "has stories"
 
@@ -111,6 +112,14 @@ erDiagram
         INTEGER version
         TEXT body
         TEXT change_note
+        TIMESTAMP created_at
+    }
+
+    npl_instruction_embeddings {
+        UUID id PK
+        UUID instruction_id FK
+        TEXT label
+        vector_1536 embedding
         TIMESTAMP created_at
     }
 
@@ -269,6 +278,15 @@ package "Instructions" {
     change_note : TEXT
     * created_at : TIMESTAMP
   }
+
+  entity npl_instruction_embeddings {
+    * id : UUID <<PK>>
+    --
+    * instruction_id : UUID <<FK>>
+    * label : TEXT
+    * embedding : vector(1536)
+    * created_at : TIMESTAMP
+  }
 }
 
 package "Project Management" {
@@ -315,6 +333,7 @@ npl_projects ||--o{ npl_tool_sessions : "project_id"
 npl_tool_sessions ||--o{ npl_tool_sessions : "parent_id"
 npl_tool_sessions ||--o{ npl_instructions : "session_id"
 npl_instructions ||--o{ npl_instruction_versions : "instruction_id"
+npl_instructions ||--o{ npl_instruction_embeddings : "instruction_id"
 npl_projects ||--o{ npl_user_personas : "project_id"
 npl_projects ||--o{ npl_user_stories : "project_id"
 @enduml
@@ -334,77 +353,9 @@ CREATE TYPE npl_element_type AS ENUM (
 
 ## NPL Content Domain
 
-Tables for storing parsed NPL language elements with vector embeddings for semantic search.
+Tables for storing parsed NPL language elements with vector embeddings for semantic search. Four tables: `npl_metadata` (key-value config), `npl_component` (components with section grouping), `npl_sections` (section definitions with file lists), `npl_concepts` (core concept definitions). All content tables except metadata have `vector(1536)` columns with ivfflat indexes and soft deletes.
 
-### npl_metadata
-
-Key-value configuration and state store.
-
-| Column | Type | Nullable | Default | Description |
-|--------|------|----------|---------|-------------|
-| id | VARCHAR(64) | No | — | Primary key |
-| value | JSONB | No | — | Stored value |
-| created_at | TIMESTAMP | No | NOW() | Creation time |
-| updated_at | TIMESTAMP | No | NOW() | Last modification |
-
-**Indexes**: `idx_npl_metadata_updated_at` (updated_at)
-
-### npl_component
-
-NPL components with section grouping and vector search.
-
-| Column | Type | Nullable | Default | Description |
-|--------|------|----------|---------|-------------|
-| id | VARCHAR(128) | No | — | Primary key |
-| version | VARCHAR(32) | No | — | Component version |
-| section | VARCHAR(128) | No | — | Parent section ID |
-| file | VARCHAR(64) | No | — | Source file |
-| digest | CHAR(64) | No | — | Content SHA-256 |
-| value | JSONB | No | — | Component data |
-| search | vector(1536) | Yes | — | Embedding vector |
-| created_at | TIMESTAMP | No | NOW() | Creation time |
-| updated_at | TIMESTAMP | No | NOW() | Last modification |
-| deleted_at | TIMESTAMP | Yes | — | Soft delete marker |
-
-**Indexes**: `idx_npl_component_section` (section), `idx_npl_component_file` (file), `idx_npl_component_deleted_at` (deleted_at), `idx_npl_component_search` (search — ivfflat, vector_cosine_ops, lists=100)
-
-### npl_sections
-
-NPL section definitions with associated file lists.
-
-| Column | Type | Nullable | Default | Description |
-|--------|------|----------|---------|-------------|
-| id | VARCHAR(128) | No | — | Primary key |
-| name | VARCHAR(128) | No | — | Section name |
-| version | VARCHAR(32) | No | — | Section version |
-| files | JSONB | No | — | Associated files |
-| digest | CHAR(64) | No | — | Content SHA-256 |
-| value | JSONB | No | — | Section data |
-| search | vector(1536) | Yes | — | Embedding vector |
-| created_at | TIMESTAMP | No | NOW() | Creation time |
-| updated_at | TIMESTAMP | No | NOW() | Last modification |
-| deleted_at | TIMESTAMP | Yes | — | Soft delete marker |
-
-**Indexes**: `idx_npl_sections_name` (name), `idx_npl_sections_deleted_at` (deleted_at), `idx_npl_sections_search` (search — ivfflat, vector_cosine_ops, lists=100)
-
-### npl_concepts
-
-Core NPL concept definitions.
-
-| Column | Type | Nullable | Default | Description |
-|--------|------|----------|---------|-------------|
-| id | VARCHAR(128) | No | — | Primary key |
-| name | VARCHAR(128) | No | — | Concept name |
-| version | VARCHAR(32) | No | — | Concept version |
-| file | VARCHAR(64) | No | — | Source file |
-| digest | CHAR(64) | No | — | Content SHA-256 |
-| value | JSONB | No | — | Concept data |
-| search | vector(1536) | Yes | — | Embedding vector |
-| created_at | TIMESTAMP | No | NOW() | Creation time |
-| updated_at | TIMESTAMP | No | NOW() | Last modification |
-| deleted_at | TIMESTAMP | Yes | — | Soft delete marker |
-
-**Indexes**: `idx_npl_concepts_name` (name), `idx_npl_concepts_deleted_at` (deleted_at), `idx_npl_concepts_search` (search — ivfflat, vector_cosine_ops, lists=100)
+→ *See [schema/npl-content.md](schema/npl-content.md) for full column details and indexes*
 
 ## Credentials Domain
 
@@ -460,96 +411,15 @@ Agent session tracking scoped to projects, with optional parent hierarchy.
 
 ## Instructions Domain
 
-Versioned instruction documents with active version pointer, optionally linked to a session.
+Versioned instruction documents with active version pointer, optionally linked to a session. Three tables: `npl_instructions` (metadata + active version tracking), `npl_instruction_versions` (versioned bodies), `npl_instruction_embeddings` (multi-facet vector embeddings with HNSW index for semantic search).
 
-### npl_instructions
-
-Instruction document metadata with active version tracking.
-
-| Column | Type | Nullable | Default | Description |
-|--------|------|----------|---------|-------------|
-| id | UUID | No | gen_random_uuid() | Primary key |
-| session_id | UUID | Yes | — | FK to npl_tool_sessions(id) |
-| title | VARCHAR(512) | No | — | Document title |
-| description | TEXT | Yes | — | Document description |
-| tags | TEXT[] | Yes | — | Categorization tags |
-| active_version | INTEGER | No | 1 | Points to active version number |
-| created_at | TIMESTAMP | No | NOW() | Creation time |
-| updated_at | TIMESTAMP | No | NOW() | Last modification |
-
-**Foreign Key**: `fk_instructions_session` (session_id) REFERENCES npl_tool_sessions(id)
-**Indexes**: `idx_instructions_session_id` (session_id)
-
-### npl_instruction_versions
-
-Versioned instruction bodies linked to parent instruction.
-
-| Column | Type | Nullable | Default | Description |
-|--------|------|----------|---------|-------------|
-| id | UUID | No | gen_random_uuid() | Primary key |
-| instruction_id | UUID | No | — | FK to npl_instructions(id) |
-| version | INTEGER | No | — | Version number |
-| body | TEXT | No | — | Instruction content |
-| change_note | TEXT | Yes | — | Version change description |
-| created_at | TIMESTAMP | No | NOW() | Creation time |
-
-**Foreign Key**: `fk_instruction_version_instruction` (instruction_id) REFERENCES npl_instructions(id)
-**Constraints**: `uq_instruction_version` UNIQUE (instruction_id, version)
-**Indexes**: `idx_instruction_versions_instruction_id` (instruction_id)
+→ *See [schema/instructions.md](schema/instructions.md) for full column details and indexes*
 
 ## Project Management Domain
 
-Tables for user personas and user stories. Supports the feature implementation workflow (idea-to-spec pipeline). Scoped to projects via FK.
+Tables for user personas and user stories. Supports the feature implementation workflow (idea-to-spec pipeline). Two tables: `npl_user_personas` (15 columns, rich persona profiles with demographics JSONB) and `npl_user_stories` (15 columns, stories with UUID[] persona_ids via GIN index, acceptance criteria, tags). Both use soft deletes with partial indexes.
 
-### npl_user_personas
-
-Archetypal user personas linked to a project.
-
-| Column | Type | Nullable | Default | Description |
-|--------|------|----------|---------|-------------|
-| id | UUID | No | gen_random_uuid() | Primary key |
-| project_id | UUID | No | — | FK to npl_projects(id) |
-| name | VARCHAR(255) | No | — | Persona name |
-| role | VARCHAR(255) | Yes | — | Persona role |
-| description | TEXT | Yes | — | Persona description |
-| goals | TEXT | Yes | — | User goals |
-| pain_points | TEXT | Yes | — | User pain points |
-| behaviors | TEXT | Yes | — | Behavioral patterns |
-| physical_description | TEXT | Yes | — | Physical appearance |
-| persona_image | TEXT | Yes | — | Image URL or path |
-| demographics | JSONB | Yes | — | Demographic data |
-| created_by | UUID | Yes | — | Creator reference |
-| created_at | TIMESTAMP | No | NOW() | Creation time |
-| updated_at | TIMESTAMP | No | NOW() | Last modification |
-| deleted_at | TIMESTAMP | Yes | — | Soft delete marker |
-
-**Foreign Key**: `fk_user_personas_project` (project_id) REFERENCES npl_projects(id)
-**Indexes**: `idx_user_personas_project_id` (project_id), `idx_user_personas_deleted_at` (deleted_at — partial, WHERE deleted_at IS NULL)
-
-### npl_user_stories
-
-User stories with persona references and acceptance criteria.
-
-| Column | Type | Nullable | Default | Description |
-|--------|------|----------|---------|-------------|
-| id | UUID | No | gen_random_uuid() | Primary key |
-| project_id | UUID | No | — | FK to npl_projects(id) |
-| persona_ids | UUID[] | Yes | — | Associated persona IDs |
-| title | VARCHAR(500) | No | — | Story title |
-| story_text | TEXT | Yes | — | "As a... I want... So that..." |
-| description | TEXT | Yes | — | Additional details |
-| priority | VARCHAR(20) | Yes | 'medium' | Priority level |
-| status | VARCHAR(30) | No | 'draft' | Workflow status |
-| story_points | INTEGER | Yes | — | Effort estimate |
-| acceptance_criteria | JSONB | Yes | — | Acceptance criteria list |
-| tags | TEXT[] | Yes | — | Categorization tags |
-| created_by | UUID | Yes | — | Creator reference |
-| created_at | TIMESTAMP | No | NOW() | Creation time |
-| updated_at | TIMESTAMP | No | NOW() | Last modification |
-| deleted_at | TIMESTAMP | Yes | — | Soft delete marker |
-
-**Foreign Key**: `fk_user_stories_project` (project_id) REFERENCES npl_projects(id)
-**Indexes**: `idx_user_stories_project_id` (project_id), `idx_user_stories_status` (status), `idx_user_stories_priority` (priority), `idx_user_stories_persona_ids` (persona_ids — GIN), `idx_user_stories_deleted_at` (deleted_at — partial, WHERE deleted_at IS NULL)
+→ *See [schema/project-management.md](schema/project-management.md) for full column details and indexes*
 
 ## Migration History
 
@@ -570,11 +440,12 @@ User stories with persona references and acceptance criteria.
 | 013 | changeset-006 | Alter `npl_instructions` — add session_id |
 | 014 | changeset-007 | `npl_user_personas` |
 | 015 | changeset-007 | `npl_user_stories` |
+| 016 | changeset-008 | `npl_instruction_embeddings` (multi-facet vector search, HNSW index) |
 
 ## Design Notes
 
 - **Soft deletes**: NPL content tables and project management tables use `deleted_at` rather than hard deletes
-- **Vector search**: 1536-dimension embeddings with ivfflat indexes (cosine similarity, 100 lists) on content tables
+- **Vector search**: 1536-dimension embeddings on content tables (ivfflat, cosine, 100 lists) and instruction embeddings (HNSW, cosine)
 - **Project scoping**: Sessions are scoped to projects via `project_id` FK; unique constraint is (project_id, agent, task). Instructions optionally linked to sessions via `session_id`
 - **Session hierarchy**: `npl_tool_sessions.parent_id` is a self-FK enabling parent-child session trees
 - **Timestamps**: All tables use `TIMESTAMP WITHOUT TIME ZONE` with `NOW()` defaults — application manages UTC. All tables use `updated_at` as the modification timestamp column

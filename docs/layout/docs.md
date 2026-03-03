@@ -28,6 +28,10 @@ docs/
 │   ├── docs.md                         #   This file
 │   ├── project-management.md           #   PM artifacts detail
 │   └── user-stories.md                 #   User story index reference
+├── schema/                             # Extended schema docs (extracted domains)
+│   ├── npl-content.md                  #   NPL content tables detail
+│   ├── instructions.md                 #   Instructions domain detail
+│   └── project-management.md           #   PM tables detail
 ├── pending/                            # Docs pending integration into take-2
 │   ├── mcp-server/                     #   MCP server consolidation docs
 │   ├── resources/                      #   Resource docs
@@ -46,5 +50,7 @@ docs/
 ├── PROJ-ARCH.md                        # High-level architecture
 ├── PROJ-ARCH.summary.md                # Architecture summary companion
 ├── PROJ-LAYOUT.md                      # Project layout (main file)
-└── PROJ-LAYOUT.summary.md              # Layout summary companion
+├── PROJ-LAYOUT.summary.md              # Layout summary companion
+├── PROJ-SCHEMA.md                      # Database schema documentation
+└── PROJ-SCHEMA.summary.md              # Schema summary companion
 ```

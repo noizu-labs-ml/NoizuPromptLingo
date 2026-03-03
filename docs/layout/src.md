@@ -6,6 +6,7 @@ src/
 │   ├── __init__.py                 #   Package init
 │   ├── __main__.py                 #   Module entry point (`python -m npl_mcp`)
 │   ├── launcher.py                 #   CLI entry point — PID mgmt, Uvicorn, --status/--stop
+│   ├── convention_formatter.py     #   NPL convention YAML formatter
 │   │
 │   ├── markdown/                   #   Markdown processing tools
 │   │   ├── __init__.py
@@ -26,8 +27,8 @@ src/
 │   │   ├── search.py               #     ToolSearch: text + intent (LLM) modes
 │   │   ├── definition.py           #     ToolDefinition: batch param lookup
 │   │   ├── help.py                 #     ToolHelp: LLM-driven usage instructions
-│   │   ├── pin.py                  #     ToolPin: dynamic tool registration (disabled)
-│   │   ├── tool_registry.py        #     Maps tool names to implementation functions
+│   │   ├── discoverable_tools.py   #     Dynamic tool discovery and registration
+│   │   ├── stub_catalog.py         #     Stub catalog for testing/fallback
 │   │   ├── inference_cache.py      #     In-memory LLM cache (MD5-keyed)
 │   │   └── llm_client.py           #     LiteLLM client (chat_completion, describe_image)
 │   │
@@ -42,9 +43,12 @@ src/
 │   │
 │   ├── pm_tools/                   #   Project management MCP tools
 │   │   ├── __init__.py
-│   │   ├── personas.py             #     Persona CRUD tools
+│   │   ├── personas.py             #     Persona CRUD tools (file-based)
+│   │   ├── db_personas.py          #     Persona tools (database-backed)
 │   │   ├── prds.py                 #     PRD access tools
-│   │   ├── stories.py              #     User story tools
+│   │   ├── stories.py              #     User story tools (file-based)
+│   │   ├── db_stories.py           #     User story tools (database-backed)
+│   │   ├── db_projects.py          #     Project management tools (database-backed)
 │   │   ├── utils.py                #     Shared utilities
 │   │   └── exceptions.py           #     PM-specific exceptions
 │   │
@@ -56,6 +60,16 @@ src/
 │   │   ├── rest.py                 #     REST API client tool
 │   │   ├── secrets.py              #     Secret management tool
 │   │   └── to_markdown.py          #     URL-to-markdown conversion
+│   │
+│   ├── instructions/               #   Instruction management
+│   │   ├── __init__.py
+│   │   ├── instructions.py         #     Instruction CRUD and retrieval
+│   │   └── embeddings.py           #     Vector embedding support
+│   │
+│   ├── tool_sessions/              #   Tool session management
+│   │   ├── __init__.py
+│   │   ├── tool_sessions.py        #     Session lifecycle and tracking
+│   │   └── projects.py             #     Project-scoped session management
 │   │
 │   ├── storage/                    #   PostgreSQL async wrapper (asyncpg)
 │   │   ├── __init__.py
@@ -81,10 +95,13 @@ Active modules with implementations:
 - `markdown/` — Full markdown conversion, viewing, caching, filtering, image descriptions
 - `meta_tools/` — Tool catalog, search (text + LLM intent), definition, help, summaries, caching
 - `npl/` — NPL YAML loading, syntax parsing, reference resolution
-- `pm_tools/` — PRD, user story, and persona access via MCP tools
+- `pm_tools/` — PRD, user story, and persona access (file-based + database-backed)
+- `instructions/` — Instruction management with vector embeddings
+- `tool_sessions/` — Tool session lifecycle and project management
 - `browser/` — Ping, Screenshot, Download, Rest, Secrets, ToMarkdown
 - `storage/` — PostgreSQL async connection pool
 - `launcher.py` — Server lifecycle management
+- `convention_formatter.py` — NPL convention YAML formatting
 
 Stub modules (tools raise `NotImplementedError`):
 - `artifacts/`, `chat/`, `executors/`, `scripts/`, `sessions/`, `tasks/`

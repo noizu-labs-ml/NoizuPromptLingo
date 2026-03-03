@@ -2,38 +2,35 @@
 
 ## Overview
 
-Instead of registering all ~103 MCP tools directly (which overwhelms clients with large tool lists), the NPL MCP server uses a **meta tool pattern**: discovery tools are visible at startup. All catalog tools are callable on the same server scope and discoverable through these discovery tools.
+Instead of registering all ~126 tools directly (which overwhelms clients with large tool lists), the NPL MCP server uses a **three-tier tool pattern**: 11 MCP-visible tools are registered at startup, ~22 hidden tools are callable via `ToolCall`, and ~93 stub tools are discoverable but return stub status. All tools are unified into a single catalog by `build_catalog()`.
 
 ```
-Client ──MCP──> ToolSummary / ToolSearch
+Client ──MCP──> ToolSummary / ToolSearch / ToolCall
                        │
                        ▼
-              Static TOOL_CATALOG (96 tools)
-              ┌─────────────────────────┐
-              │ Scripts (5)             │
-              │ Artifacts (5)           │
-              │ Reviews (6)             │
-              │ Sessions (4)            │
-              │ Chat (8)                │
-              │ Browser (36)            │
-              │   ├─ Screenshots (3)    │
-              │   ├─ Navigation (5)     │
-              │   ├─ Input (7)          │
-              │   ├─ Query (5)          │
-              │   ├─ Session (3)        │
-              │   ├─ Wait (2)           │
-              │   ├─ Inject (2)         │
-              │   ├─ Storage (5)        │
-              │   └─ [4 exposed tools]  │
-              │ Task Queues (13)        │
-              │ Executors (11)          │
-              │ Project Management (8)  │
-              └─────────────────────────┘
+              Unified Catalog (~126 tools)
+              ┌──────────────────────────────┐
+              │ MCP-Visible (11)             │
+              │   Discovery (5), NPLSpec,    │
+              │   Sessions (2), Instructions (3) │
+              │ Hidden/Discoverable (~22)    │
+              │   Browser (5): ToMarkdown,   │
+              │     Ping, Download, Screenshot, Rest │
+              │   Utility (1): Secret        │
+              │   Instructions (3)           │
+              │   Project Management (13)    │
+              │ Stubs (~93)                  │
+              │   Scripts (5), Artifacts (5),│
+              │   Reviews (6), Sessions (4), │
+              │   Chat (8), Browser.* (28),  │
+              │   Task Queues (13),          │
+              │   Executors (11)             │
+              └──────────────────────────────┘
 ```
 
-## Registered MCP Tools
+## Discovery Tools
 
-These 5 discovery tools are visible to MCP clients at startup:
+These 5 discovery tools are part of the 11 MCP-visible tools:
 
 | Tool | Purpose |
 |------|---------|
@@ -45,28 +42,34 @@ These 5 discovery tools are visible to MCP clients at startup:
 
 ## Exposed Tools
 
-Four tools are highlighted in ToolSummary's default view (no filter argument). These are the "recommended" utility tools that clients should know about:
+Five browser tools are highlighted in ToolSummary's default view (no filter argument). These are hidden tools callable via ToolCall:
 
 | Tool | Category | Description |
 |------|----------|-------------|
 | **ToMarkdown** | Browser | Convert URL/file to markdown with filter, collapse, image descriptions |
-| **Ping** | Browser | Check connectivity to a URL |
+| **Ping** | Browser | Check connectivity to a URL with optional sentinel validation |
 | **Download** | Browser | Download URL or copy file to local path |
-| **Screenshot** | Browser | Capture screenshot of URL with optional resize |
+| **Screenshot** | Browser | Capture screenshot of URL with Playwright, optional resize |
+| **Rest** | Browser | Full HTTP client with `${secret.NAME}` placeholder injection |
 
-These are discoverable via ToolSummary/ToolSearch and callable on the same server scope via ToolCall.
+These are discoverable via ToolSummary/ToolSearch and callable via ToolCall.
 
 ## File Structure
 
 ```
 src/npl_mcp/
-├── launcher.py                    # create_app() - ToolSummary, ToolSearch, ToolCall
+├── launcher.py                    # create_app() — 11 MCP tools, create_asgi_app()
+├── convention_formatter.py        # NPLSpec tool — NPL definition generation
 ├── meta_tools/
-│   ├── __init__.py                # exports tool_summary, tool_search, tool_pin
-│   ├── catalog.py                 # CATEGORIES, TOOL_CATALOG, EXPOSED_TOOL_NAMES
+│   ├── __init__.py                # exports discoverable, build_catalog, init_catalog
+│   ├── catalog.py                 # @discoverable decorator, build_catalog(), call_tool()
+│   ├── discoverable_tools.py      # register_all() — 22 hidden tools
+│   ├── stub_catalog.py            # 93 stub tool definitions
 │   ├── summary.py                 # tool_summary() implementation
 │   ├── search.py                  # tool_search() implementation
-│   ├── pin.py                     # tool_pin(), CatalogStubTool, CORE_TOOLS
+│   ├── definition.py              # tool_definition() implementation
+│   ├── help.py                    # tool_help() implementation
+│   ├── inference_cache.py         # In-memory LLM response cache
 │   └── llm_client.py             # LiteLLM proxy: chat_completion(), describe_image()
 └── markdown/
     └── image_descriptions.py      # ImageDescriptionCache + inject_image_descriptions()
@@ -164,24 +167,21 @@ Image descriptions use a separate model parameter (default `openai/GPT5.2`) pass
 
 ## Category Reference
 
-| Category | Tools | Description |
-|----------|-------|-------------|
-| Scripts | 5 | Shell script wrappers |
-| Artifacts | 5 | Versioned artifact management |
-| Reviews | 6 | Review workflows |
-| Sessions | 4 | Session lifecycle |
-| Chat | 8 | Event-sourced chat rooms |
-| Browser | 36 | Browser automation + utility tools |
-| Browser.Screenshots | 3 | Capture and compare screenshots |
-| Browser.Navigation | 5 | Navigate, scroll, history |
-| Browser.Input | 7 | Click, type, form interaction |
-| Browser.Query | 5 | Read text, HTML, evaluate JS |
-| Browser.Session | 3 | Browser session management |
-| Browser.Wait | 2 | Wait for elements/network |
-| Browser.Inject | 2 | Inject JS/CSS |
-| Browser.Storage | 5 | Cookies and localStorage |
-| Task Queues | 13 | Task queue management |
-| Executors | 11 | Agent lifecycle management |
-| Project Management | 8 | PRDs, stories, personas |
+| Category | Implemented | Stubs | Description |
+|----------|-------------|-------|-------------|
+| Discovery | 5 (MCP) | 0 | ToolSummary, ToolSearch, ToolDefinition, ToolHelp, ToolCall |
+| NPL | 1 (MCP) | 0 | NPLSpec — NPL definition generation |
+| Tool Sessions | 2 (MCP) | 0 | Session generate + retrieve |
+| Instructions | 3 (MCP) + 3 (hidden) | 0 | CRUD + versioning + embeddings search |
+| Project Management | 13 (hidden) | 0 | Projects (3), Personas (5), Stories (5) — DB-backed |
+| Browser | 5 (hidden) | ~28 | ToMarkdown, Ping, Download, Screenshot, Rest |
+| Utility | 1 (hidden) | 0 | Secret management |
+| Scripts | 0 | 5 | Shell script wrappers |
+| Artifacts | 0 | 5 | Versioned artifact management |
+| Reviews | 0 | 6 | Review workflows |
+| Sessions | 0 | 4 | Session lifecycle |
+| Chat | 0 | 8 | Event-sourced chat rooms |
+| Task Queues | 0 | 13 | Task queue management |
+| Executors | 0 | 11 | Agent lifecycle management |
 
-**Total**: 103 tools (5 discovery visible at startup, all callable via ToolCall)
+**Total**: ~126 tools (11 MCP-visible, ~22 hidden via ToolCall, ~93 stubs)
