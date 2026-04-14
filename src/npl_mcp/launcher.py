@@ -76,11 +76,13 @@ def build_frontend() -> bool:
 def create_app() -> "FastMCP":
     """Create the FastMCP app with discovery tools and NPLSpec.
 
-    MCP-visible tools are registered with @mcp.tool() + @discoverable(mcp_registered=True).
-    Hidden tools are registered via discoverable_tools module.
-    Stub tools come from stub_catalog.py.
+    MCP-visible tools are registered with ``@mcp_discoverable(mcp, ...)``, which
+    stacks ``@mcp.tool()`` + ``@discoverable(..., mcp_registered=True)`` in one
+    call and populates FastMCP-native ``tags`` / ``meta`` from the NPL category.
+    Hidden tools are registered via the ``discoverable_tools`` module.
+    Stub tools come from ``stub_catalog.py``.
     """
-    from npl_mcp.meta_tools.catalog import discoverable, init_catalog
+    from npl_mcp.meta_tools.catalog import init_catalog, mcp_discoverable
     from npl_mcp.convention_formatter import NPLDefinition, ComponentSpec
 
     mcp = FastMCP("npl-mcp")
@@ -89,9 +91,12 @@ def create_app() -> "FastMCP":
     # NPLSpec tool (MCP-visible)
     # ------------------------------------------------------------------
 
-    @mcp.tool(name="NPLSpec")
-    @discoverable(category="NPL", name="NPLSpec", mcp_registered=True,
-                  description="Noizu Prompt Lingua specification generation and formatting")
+    @mcp_discoverable(
+        mcp,
+        name="NPLSpec",
+        category="NPL",
+        description="Noizu Prompt Lingua specification generation and formatting",
+    )
     def npl_spec(
         components: list[ComponentSpec] = [],
         rendered: list[ComponentSpec] = [],
@@ -128,9 +133,12 @@ def create_app() -> "FastMCP":
     # Discovery tools (5 MCP-visible)
     # ------------------------------------------------------------------
 
-    @mcp.tool(name="ToolSummary")
-    @discoverable(category="Discovery", name="ToolSummary", mcp_registered=True,
-                  description="Tool discovery: search, browse, and inspect registered tools")
+    @mcp_discoverable(
+        mcp,
+        name="ToolSummary",
+        category="Discovery",
+        description="Tool discovery: search, browse, and inspect registered tools",
+    )
     async def tool_summary(filter: Optional[str] = None) -> dict:
         """List available tools, or drill into a catalog category.
 
@@ -150,8 +158,7 @@ def create_app() -> "FastMCP":
         from npl_mcp.meta_tools.summary import tool_summary as _summary
         return await _summary(filter=filter)
 
-    @mcp.tool(name="ToolSearch")
-    @discoverable(category="Discovery", name="ToolSearch", mcp_registered=True)
+    @mcp_discoverable(mcp, name="ToolSearch", category="Discovery")
     async def tool_search(
         query: str,
         mode: str = "text",
@@ -178,8 +185,7 @@ def create_app() -> "FastMCP":
         from npl_mcp.meta_tools.search import tool_search as _search
         return await _search(query, mode=mode, limit=limit, verbose=verbose)
 
-    @mcp.tool(name="ToolDefinition")
-    @discoverable(category="Discovery", name="ToolDefinition", mcp_registered=True)
+    @mcp_discoverable(mcp, name="ToolDefinition", category="Discovery")
     async def tool_definition(tools: list[str]) -> dict:
         """Get full definitions for one or more catalog tools by name.
 
@@ -196,8 +202,7 @@ def create_app() -> "FastMCP":
         from npl_mcp.meta_tools.definition import tool_definition as _definition
         return await _definition(tools)
 
-    @mcp.tool(name="ToolHelp")
-    @discoverable(category="Discovery", name="ToolHelp", mcp_registered=True)
+    @mcp_discoverable(mcp, name="ToolHelp", category="Discovery")
     async def tool_help(tool: str, task: str, verbose: int = 2) -> dict:
         """Get LLM-driven instructions on how to use a tool for a specific task.
 
@@ -215,19 +220,29 @@ def create_app() -> "FastMCP":
         from npl_mcp.meta_tools.help import tool_help as _help
         return await _help(tool, task, verbose=verbose)
 
-    @mcp.tool(name="ToolCall")
-    @discoverable(category="Discovery", name="ToolCall", mcp_registered=True)
+    @mcp_discoverable(mcp, name="ToolCall", category="Discovery")
     async def tool_call(tool: str, arguments: dict[str, Any] | None = None) -> Any:
         """Invoke a discoverable tool by name.
 
         Discoverable tools are hidden from the MCP tools/list but can be found
         via ToolSummary / ToolSearch / ToolDefinition and called here.
 
+        Status values in the response:
+          * ``mcp`` — tool is MCP-registered; clients should call it directly
+            via the MCP protocol rather than through ToolCall.
+          * ``stub`` — tool is in the catalog but has no implementation.
+          * ``error`` — tool not found or invocation failed.
+
         Args:
             tool: Name of the discoverable tool to call.
             arguments: Arguments to pass as a JSON object.
         """
-        from npl_mcp.meta_tools.catalog import call_tool, get_tool_by_name
+        from npl_mcp.meta_tools.catalog import (
+            _DISCOVERABLE_TOOLS,
+            _MCP_TOOL_CATEGORIES,
+            call_tool,
+            get_tool_by_name,
+        )
 
         if arguments is None:
             arguments = {}
@@ -236,27 +251,43 @@ def create_app() -> "FastMCP":
         if entry is None:
             return {"tool": tool, "status": "error", "message": f"Tool '{tool}' not found in catalog."}
 
-        try:
-            return await call_tool(tool, arguments)
-        except KeyError:
-            # Tool exists in catalog (maybe stub or MCP-registered) but not in discoverable registry
+        # Hidden tools (in _DISCOVERABLE_TOOLS) dispatch via our own registry.
+        if tool in _DISCOVERABLE_TOOLS:
+            try:
+                return await call_tool(tool, arguments)
+            except TypeError as exc:
+                return {"tool": tool, "status": "error", "message": f"Invalid arguments: {exc}"}
+            except Exception as exc:
+                return {"tool": tool, "status": "error", "message": f"{type(exc).__name__}: {exc}"}
+
+        # MCP-registered tools should be called directly via the MCP protocol.
+        if tool in _MCP_TOOL_CATEGORIES:
             return {
                 "tool": tool,
-                "status": "stub",
-                "message": f"Tool '{tool}' is in the catalog but has no implementation via ToolCall.",
+                "status": "mcp",
+                "message": (
+                    f"Tool '{tool}' is registered with FastMCP. "
+                    f"Call it directly via the MCP tools/call protocol."
+                ),
             }
-        except TypeError as exc:
-            return {"tool": tool, "status": "error", "message": f"Invalid arguments: {exc}"}
-        except Exception as exc:
-            return {"tool": tool, "status": "error", "message": f"{type(exc).__name__}: {exc}"}
+
+        # Otherwise it's in the catalog (a stub) but has no implementation.
+        return {
+            "tool": tool,
+            "status": "stub",
+            "message": f"Tool '{tool}' is in the catalog but has no implementation via ToolCall.",
+        }
 
     # ------------------------------------------------------------------
     # ToolSession tools (2 MCP-visible)
     # ------------------------------------------------------------------
 
-    @mcp.tool(name="ToolSession.Generate")
-    @discoverable(category="ToolSessions", name="ToolSession.Generate", mcp_registered=True,
-                  description="Agent session tracking: generate, retrieve, and manage tool sessions keyed by agent/task pairs")
+    @mcp_discoverable(
+        mcp,
+        name="ToolSession.Generate",
+        category="ToolSessions",
+        description="Agent session tracking: generate, retrieve, and manage tool sessions keyed by agent/task pairs",
+    )
     async def tool_session_generate_handler(
         agent: str,
         brief: str,
@@ -282,8 +313,7 @@ def create_app() -> "FastMCP":
         from npl_mcp.tool_sessions.tool_sessions import tool_session_generate as _gen
         return await _gen(agent=agent, brief=brief, task=task, project=project, parent=parent, notes=notes)
 
-    @mcp.tool(name="ToolSession")
-    @discoverable(category="ToolSessions", name="ToolSession", mcp_registered=True)
+    @mcp_discoverable(mcp, name="ToolSession", category="ToolSessions")
     async def tool_session_handler(
         uuid: str,
         verbose: bool = False,
@@ -304,9 +334,12 @@ def create_app() -> "FastMCP":
     # Instructions tools (3 MCP-visible)
     # ------------------------------------------------------------------
 
-    @mcp.tool(name="Instructions")
-    @discoverable(category="Instructions", name="Instructions", mcp_registered=True,
-                  description="Versioned instruction documents: create, retrieve, update, rollback, list versions, and search")
+    @mcp_discoverable(
+        mcp,
+        name="Instructions",
+        category="Instructions",
+        description="Versioned instruction documents: create, retrieve, update, rollback, list versions, and search",
+    )
     async def instructions_handler(
         uuid: str,
         session: str,
@@ -326,8 +359,7 @@ def create_app() -> "FastMCP":
         from npl_mcp.instructions.instructions import instructions_get as _get
         return await _get(uuid=uuid, version=version, json=json, session=session)
 
-    @mcp.tool(name="Instructions.Create")
-    @discoverable(category="Instructions", name="Instructions.Create", mcp_registered=True)
+    @mcp_discoverable(mcp, name="Instructions.Create", category="Instructions")
     async def instructions_create_handler(
         title: str,
         description: str,
@@ -347,8 +379,7 @@ def create_app() -> "FastMCP":
         from npl_mcp.instructions.instructions import instructions_create as _create
         return await _create(title=title, description=description, tags=tags, body=body, session=session)
 
-    @mcp.tool(name="Instructions.List")
-    @discoverable(category="Instructions", name="Instructions.List", mcp_registered=True)
+    @mcp_discoverable(mcp, name="Instructions.List", category="Instructions")
     async def instructions_list_handler(
         session: str,
         query: Optional[str] = None,

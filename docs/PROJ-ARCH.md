@@ -2,7 +2,7 @@
 
 ## Overview
 
-NPL MCP is a Model Context Protocol (MCP) server built on FastMCP 2.x. Rather than exposing all ~125 tools directly (which overwhelms clients), it uses a **meta tool pattern**: 11 tools are visible at startup (5 discovery + 1 NPL spec + 2 session + 3 instruction). An additional 22 implemented tools are hidden but callable via `ToolCall`, plus 92 stub tools for planned features.
+NPL MCP is a Model Context Protocol (MCP) server built on FastMCP 3.x. Rather than exposing all ~125 tools directly (which overwhelms clients), it uses a **meta tool pattern**: 11 tools are visible at startup (5 discovery + 1 NPL spec + 2 session + 3 instruction). An additional 22 implemented tools are hidden but callable via `ToolCall`, plus 92 stub tools for planned features. Every MCP-visible tool carries hierarchical `tags` and NPL-specific `meta` (`npl_category`, `npl_discoverable`) so 3.x-native clients can group and filter tools natively.
 
 The server combines FastMCP for MCP protocol handling, FastAPI for HTTP routing and a Next.js frontend, LiteLLM proxy for LLM-powered features (intent search, image descriptions), and PostgreSQL for persistent storage of sessions, instructions, projects, personas, stories, and secrets.
 
@@ -16,8 +16,8 @@ graph TB
     end
 
     subgraph "NPL MCP Server"
-        API[FastAPI App]
-        MCP[FastMCP Instance<br/>11 tools registered]
+        API[FastAPI App<br/>pure-ASGI fallback middleware]
+        MCP[FastMCP 3.x Instance<br/>11 tools registered<br/>tags + meta populated]
         Meta[Discovery Tools<br/>5 discovery + 6 functional]
         Hidden[Hidden Tools<br/>22 via ToolCall]
         Stubs[Stub Catalog<br/>92 planned tools]
@@ -65,9 +65,11 @@ graph TB
 
 | Tier | Count | Visibility | Description |
 |------|-------|------------|-------------|
-| MCP-Visible | 11 | In `tools/list` | Direct `@mcp.tool()` registration |
-| Hidden/Discoverable | 22 | Via ToolCall only | Registered via `register_discoverable()` |
-| Stubs | 92 | Discoverable, not callable | Static definitions for planned features |
+| MCP-Visible | 11 | In `tools/list` | Registered via `@mcp_discoverable(mcp, ...)` (combines `@mcp.tool` + `@discoverable`, auto-populates tags/meta) |
+| Hidden/Discoverable | 22 | Via `ToolCall` only | Registered via `register_discoverable()`; tags auto-derived from category |
+| Stubs | 92 | In catalog, not callable | Static definitions for planned features; tags derived at catalog-build time |
+
+`ToolCall` returns one of four statuses: the dispatched result, `"mcp"` (tool is in FastMCP — call via MCP protocol directly), `"stub"` (no implementation), or `"error"` (not found / invocation failed).
 
 ### Discovery Tools (5)
 
@@ -97,9 +99,10 @@ graph TB
 | Layer | Technology | Purpose |
 |-------|------------|---------|
 | Protocol | MCP (Model Context Protocol) | AI assistant communication standard |
-| Framework | FastMCP 2.x | MCP server with dynamic tool management |
+| Framework | FastMCP 3.x (`>=3.0.0,<4.0.0`) | MCP server with provider-based tool management |
 | HTTP | FastAPI | ASGI framework, frontend serving |
 | Server | Uvicorn | ASGI server with reload support |
+| Middleware | Pure ASGI (`FrontendFallbackMiddleware`) | File fallback on 404; SSE-safe (does not buffer bodies) |
 | Transport | SSE (Server-Sent Events) | MCP client streaming |
 | Database | PostgreSQL (asyncpg) | Persistent storage (localhost:5111) |
 | Migrations | Liquibase | YAML-based schema changelogs |
@@ -109,10 +112,11 @@ graph TB
 ## Request Flow
 
 1. MCP client connects to `/sse` endpoint via Server-Sent Events
-2. FastAPI routes the connection to the mounted FastMCP SSE app
-3. FastMCP dispatches tool calls to ToolSummary or ToolSearch
-4. Meta tools query the static catalog and optionally the LLM proxy
-5. Results return via SSE stream
+2. FastAPI's pure-ASGI `FrontendFallbackMiddleware` passes the request through untouched (only buffers GET responses headed for a 404 file fallback)
+3. The FastMCP SSE sub-app (mounted at `/sse`) handles the MCP handshake and tool dispatch
+4. `await mcp.list_tools()` / `mcp.get_tool(name)` are served by FastMCP's `LocalProvider`; our catalog builder consumes `list_tools()` during `build_catalog()`
+5. Meta tools query the unified catalog (MCP + hidden + stubs) and optionally the LLM proxy
+6. Results return via SSE stream
 
 ## Module Architecture
 
@@ -146,11 +150,15 @@ graph TB
 ## Key Design Decisions
 
 - **Three-tier tool registration**: MCP-visible (11) for core functionality, hidden (22) callable via ToolCall, stubs (92) for planned features
-- **FastMCP 2.x**: MCP server framework with SSE transport
+- **FastMCP 3.x**: Upgraded from 2.x. Uses `list_tools()`/`get_tool()` public API; keeps a custom catalog layer rather than adopting `AggregateProvider` — our three-tier merge (MCP + hidden + stubs) and hierarchical categories have no native equivalent in 3.x's flat tag system and version-based merge
+- **Hidden-but-callable preserved as custom code**: 3.x's `enabled=False` makes tools both invisible *and* uncallable via `mcp.call_tool()`. Our `@discoverable` + `_DISCOVERABLE_TOOLS` registry provides the hidden-yet-callable semantic 3.x cannot express natively
+- **3.x-native metadata populated alongside**: Every MCP-registered tool carries `tags` (derived from category hierarchy) and `meta` (`npl_category`, `npl_discoverable`), so 3.x-native clients can filter/group without reading our catalog structures
+- **`mcp_discoverable` helper**: Single decorator replaces the `@mcp.tool + @discoverable` stack; auto-derives tags/meta from NPL category
+- **Pure-ASGI fallback middleware**: `BaseHTTPMiddleware` buffered response bodies and crashed SSE (empty 202s on `/sse/messages/`). Replaced with a pure ASGI middleware that only intercepts 404 GETs and leaves streaming responses untouched
 - **LiteLLM proxy**: Routes LLM calls through a local proxy for model flexibility and key management
-- **Dynamic catalog builder**: Merges MCP-registered, hidden, and stub tools into a unified ~124-tool catalog
+- **Dynamic catalog builder**: Merges MCP-registered, hidden, and stub tools into a unified 125-tool catalog
 - **PostgreSQL for state**: Sessions, instructions, projects, personas, stories, and secrets all DB-backed
-- **Next.js static export**: Frontend builds to `web/static/` and is served by FastAPI middleware
+- **Next.js static export**: Frontend builds to `web/static/` and is served by the FastAPI fallback middleware
 
 ## Agent Orchestration
 

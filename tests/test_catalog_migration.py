@@ -17,10 +17,12 @@ import pytest
 from npl_mcp.meta_tools.catalog import (
     _DISCOVERABLE_TOOLS,
     _MCP_TOOL_CATEGORIES,
+    _category_to_tags,
     _schema_to_params,
     build_catalog,
     call_tool,
     get_tool_by_name,
+    mcp_discoverable,
 )
 
 
@@ -258,3 +260,152 @@ class TestCallToolDispatcher:
         assert entry is not None
         assert entry["name"] == "Ping"
         assert entry["category"] == "Browser"
+
+
+# ── 3.x metadata enrichment ──────────────────────────────────────────────
+
+class TestCategoryToTags:
+    """Validates category → tag-set derivation."""
+
+    def test_simple_category(self):
+        assert _category_to_tags("Browser") == {"browser"}
+
+    def test_hierarchical_category(self):
+        tags = _category_to_tags("Browser.Screenshots")
+        assert tags == {"browser", "browser.screenshots"}
+
+    def test_three_level_category(self):
+        tags = _category_to_tags("A.B.C")
+        assert tags == {"a", "a.b", "a.b.c"}
+
+    def test_category_with_spaces(self):
+        """Category with internal spaces is lowercased but not split."""
+        assert _category_to_tags("Project Management") == {"project management"}
+
+
+class TestMCPToolMetadata:
+    """Validates FastMCP-native metadata is populated on MCP-registered tools."""
+
+    @pytest.mark.asyncio
+    async def test_mcp_tools_have_tags(self, _mcp_app):
+        """Each MCP-registered tool has tags derived from its NPL category."""
+        for tool in await _mcp_app.list_tools():
+            tags = getattr(tool, "tags", None)
+            assert tags, f"{tool.name} has no tags"
+            # Expect at least the top-level category tag
+            category = _MCP_TOOL_CATEGORIES.get(tool.name, "")
+            top_tag = category.lower().split(".")[0] if category else None
+            if top_tag:
+                assert top_tag in tags, (
+                    f"{tool.name} missing expected tag '{top_tag}' (tags={tags})"
+                )
+
+    @pytest.mark.asyncio
+    async def test_mcp_tools_have_meta_category(self, _mcp_app):
+        """Each MCP tool carries ``meta['npl_category']`` matching our registry."""
+        for tool in await _mcp_app.list_tools():
+            meta = getattr(tool, "meta", None) or {}
+            expected = _MCP_TOOL_CATEGORIES.get(tool.name)
+            assert meta.get("npl_category") == expected, (
+                f"{tool.name}: meta.npl_category={meta.get('npl_category')!r} "
+                f"!= _MCP_TOOL_CATEGORIES={expected!r}"
+            )
+            assert meta.get("npl_discoverable") is True, (
+                f"{tool.name} missing meta['npl_discoverable']"
+            )
+
+
+class TestCatalogEntryFields:
+    """Validates ToolEntry carries the optional fields."""
+
+    @pytest.mark.asyncio
+    async def test_mcp_entry_has_tags(self, _mcp_app):
+        catalog = await build_catalog()
+        entry = next(e for e in catalog if e["name"] == "NPLSpec")
+        assert "tags" in entry
+        assert "npl" in entry["tags"]
+
+    @pytest.mark.asyncio
+    async def test_hidden_entry_has_tags(self, _mcp_app):
+        """Hidden tools get tags derived from their category."""
+        catalog = await build_catalog()
+        entry = next(e for e in catalog if e["name"] == "Ping")
+        assert "tags" in entry
+        assert "browser" in entry["tags"]
+
+    @pytest.mark.asyncio
+    async def test_stub_entry_has_tags(self, _mcp_app):
+        """Stub entries gain tags from their category during build_catalog()."""
+        catalog = await build_catalog()
+        # Pick a known stub entry
+        stub = next(e for e in catalog if e["name"] == "dump_files")
+        assert "tags" in stub
+        assert "scripts" in stub["tags"]
+
+    @pytest.mark.asyncio
+    async def test_hierarchical_stub_tags(self, _mcp_app):
+        """Browser.Screenshots stubs get both 'browser' and 'browser.screenshots' tags."""
+        catalog = await build_catalog()
+        stub = next(
+            e for e in catalog if e.get("category") == "Browser.Screenshots"
+        )
+        assert {"browser", "browser.screenshots"}.issubset(stub["tags"])
+
+
+class TestMCPDiscoverableHelper:
+    """Validates the combined @mcp_discoverable decorator."""
+
+    @pytest.mark.asyncio
+    async def test_helper_registers_in_both_registries(self, _mcp_app):
+        """A tool registered via @mcp_discoverable appears in FastMCP AND has a category."""
+        # NPLSpec is registered via @mcp_discoverable in launcher.py
+        # Verify FastMCP knows about it
+        tool = await _mcp_app.get_tool("NPLSpec")
+        assert tool is not None
+        assert tool.name == "NPLSpec"
+        # Verify our category registry knows about it
+        assert _MCP_TOOL_CATEGORIES.get("NPLSpec") == "NPL"
+
+    @pytest.mark.asyncio
+    async def test_helper_sets_tags_and_meta(self, _mcp_app):
+        """@mcp_discoverable populates FastMCP tags and meta from category."""
+        tool = await _mcp_app.get_tool("NPLSpec")
+        assert "npl" in (tool.tags or set())
+        assert (tool.meta or {}).get("npl_category") == "NPL"
+
+
+# ── ToolCall status distinction (stub vs mcp vs error) ───────────────────
+
+class TestToolCallStatusDistinction:
+    """Validates ToolCall distinguishes MCP-registered tools from stubs."""
+
+    @pytest.mark.asyncio
+    async def test_toolcall_on_mcp_tool_returns_status_mcp(self, _mcp_app):
+        """Calling an MCP-registered tool via ToolCall returns status='mcp'."""
+        # Call the ToolCall handler directly from FastMCP
+        tool_call_handler = await _mcp_app.get_tool("ToolCall")
+        result = await tool_call_handler.run({"tool": "NPLSpec", "arguments": {}})
+        import json
+        data = json.loads(result.content[0].text)
+        assert data["status"] == "mcp", f"Expected status=mcp, got: {data}"
+        assert "MCP tools/call" in data["message"]
+
+    @pytest.mark.asyncio
+    async def test_toolcall_on_stub_still_returns_status_stub(self, _mcp_app):
+        """Calling a catalog-only stub via ToolCall still returns status='stub'."""
+        tool_call_handler = await _mcp_app.get_tool("ToolCall")
+        result = await tool_call_handler.run({"tool": "dump_files", "arguments": {}})
+        import json
+        data = json.loads(result.content[0].text)
+        assert data["status"] == "stub", f"Expected status=stub, got: {data}"
+        assert "no implementation" in data["message"].lower()
+
+    @pytest.mark.asyncio
+    async def test_toolcall_on_unknown_tool_returns_status_error(self, _mcp_app):
+        """Calling a tool not in catalog returns status='error'."""
+        tool_call_handler = await _mcp_app.get_tool("ToolCall")
+        result = await tool_call_handler.run({"tool": "nonexistent_xyz", "arguments": {}})
+        import json
+        data = json.loads(result.content[0].text)
+        assert data["status"] == "error"
+        assert "not found" in data["message"].lower()

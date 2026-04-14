@@ -17,7 +17,7 @@ from __future__ import annotations
 import asyncio
 import inspect
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Optional, TypedDict, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -35,17 +35,38 @@ class ToolParam(TypedDict):
     description: str
 
 
-class ToolEntry(TypedDict):
+class ToolEntry(TypedDict, total=False):
+    # Required fields
     name: str
     category: str
     description: str
     parameters: list[ToolParam]
+    # Optional 3.x-native fields (populated when available)
+    tags: set[str]      # Derived from category hierarchy + extras
+    title: str          # Display title (from FastMCP Tool.title)
+    version: str        # Tool version (from FastMCP Tool.version)
 
 
 class CategoryInfo(TypedDict):
     name: str
     description: str
     tool_count: int
+
+
+# ---------------------------------------------------------------------------
+# Category → tags derivation
+# ---------------------------------------------------------------------------
+
+def _category_to_tags(category: str) -> set[str]:
+    """Convert a hierarchical category into a set of flat tags.
+
+    Examples:
+        ``"Browser"`` → ``{"browser"}``
+        ``"Browser.Screenshots"`` → ``{"browser", "browser.screenshots"}``
+        ``"Project Management"`` → ``{"project management"}``
+    """
+    parts = category.lower().split(".")
+    return {".".join(parts[: i + 1]) for i in range(len(parts))}
 
 
 # ---------------------------------------------------------------------------
@@ -59,6 +80,7 @@ class _DiscoverableInfo:
     fn: Callable[..., Any]
     description: str
     parameters: list[ToolParam]
+    tags: set[str] = field(default_factory=set)
 
 
 _DISCOVERABLE_TOOLS: dict[str, _DiscoverableInfo] = {}  # tool_name → info
@@ -128,6 +150,7 @@ def discoverable(
     name: str | None = None,
     description: str | None = None,
     mcp_registered: bool = False,
+    tags: set[str] | None = None,
 ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Mark a tool as meta-discoverable.
 
@@ -152,6 +175,9 @@ def discoverable(
         mcp_registered: Set ``True`` when also decorated with ``@mcp.tool()``.
                         The tool stays in MCP's tools/list; the decorator
                         only records category metadata.
+        tags: Optional extra tags in addition to those auto-derived from
+              ``category``. Only applied to hidden tools — MCP-registered
+              tools carry tags on the FastMCP Tool object directly.
     """
     def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
         tool_name = name or fn.__name__
@@ -165,11 +191,15 @@ def discoverable(
             _MCP_TOOL_CATEGORIES[tool_name] = category
         else:
             # Hidden tool — store everything needed for catalog + ToolCall.
+            auto_tags = _category_to_tags(category)
+            if tags:
+                auto_tags |= tags
             _DISCOVERABLE_TOOLS[tool_name] = _DiscoverableInfo(
                 category=category,
                 fn=fn,
                 description=(fn.__doc__ or "").strip(),
                 parameters=_extract_params(fn),
+                tags=auto_tags,
             )
 
         return fn
@@ -187,11 +217,22 @@ def register_discoverable(
     fn: Callable[..., Any],
     mcp_registered: bool = False,
     category_description: str | None = None,
+    tags: set[str] | None = None,
 ) -> None:
     """Programmatically register a tool as discoverable.
 
     Use this when the decorator pattern is not practical (e.g. wrapping
     third-party functions or registering from a separate module).
+
+    Args:
+        name: Tool name as it will appear in the catalog.
+        category: Hierarchical category (e.g. ``"Browser.Screenshots"``).
+        fn: The callable to dispatch to when ``call_tool(name, ...)`` runs.
+        mcp_registered: Set ``True`` when the tool is also registered with
+                        FastMCP — only records category metadata then.
+        category_description: One-line description for the category (set once).
+        tags: Optional extra tags; auto-derived tags from ``category`` are
+              always included regardless.
     """
     if category_description and category not in _CATEGORY_DESCRIPTIONS:
         _CATEGORY_DESCRIPTIONS[category] = category_description
@@ -199,12 +240,87 @@ def register_discoverable(
     if mcp_registered:
         _MCP_TOOL_CATEGORIES[name] = category
     else:
+        auto_tags = _category_to_tags(category)
+        if tags:
+            auto_tags |= tags
         _DISCOVERABLE_TOOLS[name] = _DiscoverableInfo(
             category=category,
             fn=fn,
             description=(fn.__doc__ or "").strip(),
             parameters=_extract_params(fn),
+            tags=auto_tags,
         )
+
+
+# ---------------------------------------------------------------------------
+# Combined MCP + discoverable registration helper
+# ---------------------------------------------------------------------------
+
+def mcp_discoverable(
+    mcp: "FastMCP",
+    *,
+    name: str,
+    category: str,
+    description: str | None = None,
+    extra_tags: set[str] | None = None,
+    extra_meta: dict[str, Any] | None = None,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    """Register a tool with both FastMCP (MCP-visible) and our discovery catalog.
+
+    This is a convenience wrapper that applies ``@mcp.tool(...)`` and
+    ``@discoverable(..., mcp_registered=True)`` in one call, deriving the
+    FastMCP-native ``tags`` / ``meta`` from the NPL category hierarchy.
+
+    Populates on the FastMCP ``Tool`` object:
+
+      * ``tags``: derived from the hierarchical category plus any
+        ``extra_tags`` supplied by the caller. A category of
+        ``"Browser.Screenshots"`` becomes ``{"browser", "browser.screenshots"}``.
+      * ``meta``: ``{"npl_category": <category>, "npl_discoverable": True}``
+        plus any ``extra_meta``.
+
+    Example::
+
+        @mcp_discoverable(
+            mcp,
+            name="NPLSpec",
+            category="NPL",
+            description="Noizu Prompt Lingua specification generation",
+        )
+        def npl_spec(...): ...
+
+    Args:
+        mcp: FastMCP instance to register the tool with.
+        name: Tool name exposed over MCP and in the catalog.
+        category: Hierarchical NPL category (e.g. ``"Browser.Screenshots"``).
+        description: Category description — used once per category.
+        extra_tags: Additional tags beyond those derived from ``category``.
+        extra_meta: Additional metadata keys beyond the NPL-reserved ones.
+
+    Returns:
+        A decorator that, when applied, registers the function with
+        FastMCP *and* records it in the NPL discovery catalog.
+    """
+    tags: set[str] = _category_to_tags(category)
+    if extra_tags:
+        tags |= extra_tags
+
+    meta: dict[str, Any] = {"npl_category": category, "npl_discoverable": True}
+    if extra_meta:
+        meta.update(extra_meta)
+
+    def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
+        # Apply @mcp.tool() first so FastMCP records the tool with metadata.
+        fn = mcp.tool(name=name, tags=tags, meta=meta)(fn)
+        # Then record in our catalog — only needs to set _MCP_TOOL_CATEGORIES.
+        return discoverable(
+            category=category,
+            name=name,
+            mcp_registered=True,
+            description=description,
+        )(fn)
+
+    return decorator
 
 
 # ---------------------------------------------------------------------------
@@ -296,23 +412,38 @@ async def build_catalog() -> list[ToolEntry]:
             mcp_names.add(tool.name)
             category = _MCP_TOOL_CATEGORIES.get(tool.name, "Uncategorized")
             params = _schema_to_params(tool.parameters) if tool.parameters else []
-            catalog.append({
+            entry: ToolEntry = {
                 "name": tool.name,
                 "category": category,
                 "description": tool.description or "",
                 "parameters": params,
-            })
+            }
+            # Pull 3.x-native metadata onto the entry when present.
+            mcp_tags = getattr(tool, "tags", None)
+            if mcp_tags:
+                entry["tags"] = set(mcp_tags)
+            else:
+                entry["tags"] = _category_to_tags(category)
+            title = getattr(tool, "title", None)
+            if title:
+                entry["title"] = title
+            version = getattr(tool, "version", None)
+            if version:
+                entry["version"] = str(version)
+            catalog.append(entry)
 
     # 2. Discoverable-only tools (not in MCP)
     for tool_name, info in _DISCOVERABLE_TOOLS.items():
         if tool_name not in mcp_names:
             discoverable_names.add(tool_name)
-            catalog.append({
+            entry: ToolEntry = {
                 "name": tool_name,
                 "category": info.category,
                 "description": info.description,
                 "parameters": info.parameters,
-            })
+                "tags": set(info.tags) if info.tags else _category_to_tags(info.category),
+            }
+            catalog.append(entry)
 
     # 3. Stub catalog entries (not in MCP or discoverable)
     try:
@@ -321,10 +452,15 @@ async def build_catalog() -> list[ToolEntry]:
         for cat_name, cat_desc in STUB_CATEGORIES.items():
             if cat_name not in _CATEGORY_DESCRIPTIONS:
                 _CATEGORY_DESCRIPTIONS[cat_name] = cat_desc
-        # Add stub entries not already covered
-        for entry in STUB_CATALOG:
-            if entry["name"] not in mcp_names and entry["name"] not in discoverable_names:
-                catalog.append(entry)
+        # Add stub entries not already covered. Derive tags from category
+        # without mutating the original STUB_CATALOG entries.
+        for stub in STUB_CATALOG:
+            if stub["name"] in mcp_names or stub["name"] in discoverable_names:
+                continue
+            enriched: ToolEntry = dict(stub)  # shallow copy preserves original
+            if "tags" not in enriched:
+                enriched["tags"] = _category_to_tags(enriched["category"])
+            catalog.append(enriched)
     except ImportError:
         pass  # No stub catalog available
 
