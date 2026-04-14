@@ -1,37 +1,81 @@
 #!/usr/bin/env python3
-"""Tests for the NPL MCP server.
+"""End-to-end tests for the NPL MCP server.
 
-These tests connect to a running MCP server via its SSE endpoint and
-verify that the tools are callable and return expected results.
+These tests connect to a running MCP server via its SSE endpoint and verify
+that the real tool suite (ToolSummary, ToolSearch, ToolDefinition, NPLSpec)
+is discoverable and callable end-to-end.
 
 The server must be running before running these tests:
     uv run npl-mcp
 
 Run with:
-    uv run pytest tests/
-    uv run pytest tests/test_mcp_server.py -v
+    uv run -m pytest tests/test_mcp_server.py -v
+
+Tests skip automatically if the server is unreachable.
 """
 
-import asyncio
+import json
 import os
-import sys
-from typing import Any
 
-import pytest
 import httpx
+import pytest
 
 
-# MCP endpoint configuration (can be overridden via env vars)
 HOST = os.environ.get("NPL_MCP_TEST_HOST", "127.0.0.1")
 PORT = os.environ.get("NPL_MCP_TEST_PORT", "8765")
 SSE_URL = f"http://{HOST}:{PORT}/sse"
 
 
+# MCP tools that should always be visible on the npl-mcp launcher.
+EXPECTED_MCP_TOOLS = {
+    "NPLSpec",
+    "ToolSummary",
+    "ToolSearch",
+    "ToolDefinition",
+    "ToolHelp",
+    "ToolCall",
+    "ToolSession.Generate",
+    "ToolSession",
+    "Instructions",
+    "Instructions.Create",
+    "Instructions.List",
+}
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+def _fastmcp_client():
+    """Build a FastMCP SSE client, or skip if FastMCP is not installed."""
+    try:
+        from fastmcp import Client
+        from fastmcp.client.transports import SSETransport
+    except ImportError:
+        pytest.skip("fastmcp not installed")
+    return Client(SSETransport(SSE_URL))
+
+
+def _tool_result_text(result) -> str:
+    """Extract text from a FastMCP tool call result, regardless of version."""
+    if hasattr(result, "content") and result.content:
+        return result.content[0].text
+    return str(result)
+
+
+# ---------------------------------------------------------------------------
+# HTTP liveness
+# ---------------------------------------------------------------------------
+
+
 def test_server_is_responding() -> None:
-    """Verify the server is responding to HTTP requests."""
+    """The server accepts HTTP requests on the configured port."""
     try:
         response = httpx.get(f"http://{HOST}:{PORT}/", timeout=2.0)
-        assert response.status_code in (200, 404, 405), f"Unexpected status: {response.status_code}"
+        assert response.status_code in (200, 404, 405), (
+            f"Unexpected status: {response.status_code}"
+        )
     except httpx.ConnectError:
         pytest.skip(f"Server not running at {HOST}:{PORT}")
     except httpx.TimeoutException:
@@ -39,123 +83,122 @@ def test_server_is_responding() -> None:
 
 
 def test_sse_endpoint_exists() -> None:
-    """Verify the SSE endpoint is accessible."""
+    """The SSE endpoint is reachable."""
     try:
         response = httpx.get(SSE_URL, timeout=2.0)
-        # fastmcp 2.x may return 307 (redirect to /sse/), 403, 426, or 200
-        assert response.status_code in (200, 307, 403, 426), f"SSE endpoint returned unexpected status: {response.status_code}"
+        # FastMCP may return 307 (redirect to /sse/), 200, 403, or 426
+        assert response.status_code in (200, 307, 403, 426), (
+            f"SSE endpoint returned unexpected status: {response.status_code}"
+        )
     except (httpx.ConnectError, httpx.TimeoutException):
         pytest.skip(f"Server not running at {SSE_URL}")
 
 
-@pytest.mark.asyncio
-async def test_hello_tool_via_fastmcp_client() -> None:
-    """Test the hello tool via FastMCP Client."""
-    try:
-        from fastmcp import Client
-        from fastmcp.client.transports import SSETransport
-    except ImportError:
-        pytest.skip("fastmcp not installed")
-
-    client = Client(SSETransport(SSE_URL))
-
-    call_result = None
-    try:
-        async with client:
-            # List tools to verify hello-world exists
-            tools = await client.list_tools()
-            tool_names = {t.name for t in tools}
-            assert "hello-world" in tool_names, "Tool 'hello-world' not found in server"
-
-            # Call the hello-world tool
-            result = await client.call_tool("hello-world", {})
-            assert len(result.content) > 0, "No content returned from hello-world tool"
-
-            tool_output = result.content[0]
-            output_text = tool_output.text
-            call_result = output_text
-
-            # Verify greeting
-            assert "hello" in output_text, f"Expected greeting, got: {output_text}"
-    except (httpx.ConnectError, httpx.TimeoutException):
-        pytest.skip(f"Could not connect to server at {SSE_URL}")
-    except Exception as e:
-        pytest.fail(f"Failed to call hello tool: {e}", call_result)
+# ---------------------------------------------------------------------------
+# MCP protocol handshake + tool discovery
+# ---------------------------------------------------------------------------
 
 
 @pytest.mark.asyncio
-async def test_echo_tool_via_fastmcp_client() -> None:
-    """Test the echo tool via FastMCP Client."""
-    try:
-        from fastmcp import Client
-        from fastmcp.client.transports import SSETransport
-    except ImportError:
-        pytest.skip("fastmcp not installed")
-
-    client = Client(SSETransport(SSE_URL))
-
+async def test_list_tools_returns_expected_set() -> None:
+    """The MCP server exposes the 11 expected tools via tools/list."""
+    client = _fastmcp_client()
     try:
         async with client:
             tools = await client.list_tools()
             tool_names = {t.name for t in tools}
-            assert "echo" in tool_names, "Tool 'echo' not found in server"
-
-            test_message = "Test message from pytest"
-            result = await client.call_tool("echo", {"text": test_message})
-            assert len(result.content) > 0
-
-            output_text = result.content[0].text
-            assert test_message in output_text, f"Expected '{test_message}' in output, got: {output_text}"
+            missing = EXPECTED_MCP_TOOLS - tool_names
+            assert not missing, (
+                f"Missing expected MCP tools: {missing}. Got: {sorted(tool_names)}"
+            )
     except (httpx.ConnectError, httpx.TimeoutException):
         pytest.skip(f"Could not connect to server at {SSE_URL}")
-    except Exception as e:
-        pytest.fail(f"Failed to call echo tool: {e}")
-
-
-@pytest.mark.asyncio
-async def test_list_tools() -> None:
-    """Verify we can list all tools from the server."""
-    try:
-        from fastmcp import Client
-        from fastmcp.client.transports import SSETransport
-    except ImportError:
-        pytest.skip("fastmcp not installed")
-
-    client = Client(SSETransport(SSE_URL))
-
-    try:
-        async with client:
-            tools = await client.list_tools()
-            assert len(tools) >= 2, f"Expected at least 2 tools, got {len(tools)}"
-
-            # Verify expected tools exist
-            tool_names = {t.name for t in tools}
-            required_tools = {"hello-world", "echo"}
-            missing_tools = required_tools - tool_names
-            assert not missing_tools, f"Missing required tools: {missing_tools}"
-    except (httpx.ConnectError, httpx.TimeoutException):
-        pytest.skip(f"Could not connect to server at {SSE_URL}")
-    except Exception as e:
-        pytest.fail(f"Failed to list tools: {e}")
 
 
 @pytest.mark.asyncio
 async def test_error_handling_invalid_tool() -> None:
-    """Test that calling a non‑existent tool raises an appropriate error."""
-    try:
-        from fastmcp import Client
-        from fastmcp.client.transports import SSETransport
-    except ImportError:
-        pytest.skip("fastmcp not installed")
-
-    client = Client(SSETransport(SSE_URL))
-
+    """Calling a non-existent tool raises an error via the protocol."""
+    client = _fastmcp_client()
     try:
         async with client:
-            try:
+            with pytest.raises(Exception):
                 await client.call_tool("nonexistent_tool_12345", {})
-                pytest.fail("Expected an exception when calling nonexistent tool")
-            except Exception:
-                pass  # Expected: tool not found
+    except (httpx.ConnectError, httpx.TimeoutException):
+        pytest.skip(f"Could not connect to server at {SSE_URL}")
+
+
+# ---------------------------------------------------------------------------
+# Tool-call smoke tests (exercise real tools end-to-end)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_tool_summary_no_filter_returns_catalog() -> None:
+    """ToolSummary without a filter returns the full catalog grouped by category."""
+    client = _fastmcp_client()
+    try:
+        async with client:
+            result = await client.call_tool("ToolSummary", {})
+            text = _tool_result_text(result)
+            assert text, "ToolSummary returned empty content"
+            data = json.loads(text)
+            # Expect a dict-shaped result with categories
+            assert isinstance(data, dict)
+            assert len(data) > 0, "ToolSummary returned empty dict"
+    except (httpx.ConnectError, httpx.TimeoutException):
+        pytest.skip(f"Could not connect to server at {SSE_URL}")
+
+
+@pytest.mark.asyncio
+async def test_tool_search_text_mode_finds_known_tool() -> None:
+    """ToolSearch in text mode finds at least one tool matching 'ping'."""
+    client = _fastmcp_client()
+    try:
+        async with client:
+            result = await client.call_tool(
+                "ToolSearch", {"query": "ping", "mode": "text", "limit": 5}
+            )
+            text = _tool_result_text(result)
+            data = json.loads(text)
+            assert "matches" in data
+            names = {m["name"].lower() for m in data["matches"]}
+            assert "ping" in names, f"Expected 'Ping' in matches, got: {names}"
+    except (httpx.ConnectError, httpx.TimeoutException):
+        pytest.skip(f"Could not connect to server at {SSE_URL}")
+
+
+@pytest.mark.asyncio
+async def test_tool_definition_returns_parameters() -> None:
+    """ToolDefinition returns parameter definitions for a known tool."""
+    client = _fastmcp_client()
+    try:
+        async with client:
+            result = await client.call_tool("ToolDefinition", {"tools": ["Ping"]})
+            text = _tool_result_text(result)
+            data = json.loads(text)
+            assert "definitions" in data
+            assert len(data["definitions"]) == 1
+            ping_def = data["definitions"][0]
+            assert ping_def["name"] == "Ping"
+            assert "parameters" in ping_def
+            param_names = {p["name"] for p in ping_def["parameters"]}
+            assert "url" in param_names
+    except (httpx.ConnectError, httpx.TimeoutException):
+        pytest.skip(f"Could not connect to server at {SSE_URL}")
+
+
+@pytest.mark.asyncio
+async def test_npl_spec_generates_definition() -> None:
+    """NPLSpec generates an NPL definition block wrapped in ⌜NPL@...⌝ markers."""
+    client = _fastmcp_client()
+    try:
+        async with client:
+            # Empty components list → include all conventions
+            result = await client.call_tool("NPLSpec", {})
+            text = _tool_result_text(result)
+            assert text.startswith("⌜NPL@"), (
+                f"NPLSpec output did not start with NPL definition marker: {text[:80]}"
+            )
+            assert "⌞NPL@" in text, "NPLSpec output missing closing marker"
     except (httpx.ConnectError, httpx.TimeoutException):
         pytest.skip(f"Could not connect to server at {SSE_URL}")

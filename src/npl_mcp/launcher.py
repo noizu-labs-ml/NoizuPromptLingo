@@ -22,7 +22,6 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastmcp import FastMCP
-from starlette.middleware.base import BaseHTTPMiddleware
 
 
 HOST = "127.0.0.1"
@@ -401,27 +400,78 @@ def create_asgi_app() -> FastAPI:
     if DIST_DIR.exists() and (DIST_DIR / "index.html").exists():
         try:
             api.mount("/_next", StaticFiles(directory=str(DIST_DIR / "_next")), name="next-static")
-
-            class FrontendFallbackMiddleware(BaseHTTPMiddleware):
-                async def dispatch(self, request: Request, call_next):
-                    response = await call_next(request)
-                    if response.status_code == 404 and request.method == "GET":
-                        path = request.url.path.lstrip("/")
-                        file_path = DIST_DIR / path
-                        if file_path.is_file():
-                            return FileResponse(file_path)
-                        index_path = DIST_DIR / "index.html"
-                        if index_path.exists():
-                            return FileResponse(index_path)
-                    return response
-
-            api.add_middleware(FrontendFallbackMiddleware)
+            api.add_middleware(FrontendFallbackMiddleware, dist_dir=DIST_DIR)
         except Exception:
             serve_fallback(api)
     else:
         serve_fallback(api)
 
     return api
+
+
+class FrontendFallbackMiddleware:
+    """Pure-ASGI middleware that serves static files / index.html on 404 GETs.
+
+    Implemented as a pure ASGI middleware (not ``BaseHTTPMiddleware``) because
+    ``BaseHTTPMiddleware`` buffers response bodies, which breaks SSE/streaming
+    endpoints. See https://github.com/encode/starlette/issues/1012.
+    """
+
+    def __init__(self, app, dist_dir: Path) -> None:
+        self.app = app
+        self.dist_dir = dist_dir
+
+    async def __call__(self, scope, receive, send) -> None:
+        # Only intercept HTTP GETs; pass everything else through untouched.
+        if scope.get("type") != "http" or scope.get("method") != "GET":
+            await self.app(scope, receive, send)
+            return
+
+        # We need to buffer the response.start so we can decide whether to
+        # pass it through or replace the response with a file.
+        start_message: Optional[dict] = None
+        replaced = False
+
+        async def send_wrapper(message: dict) -> None:
+            nonlocal start_message, replaced
+
+            if replaced:
+                # A replacement response has already taken over; swallow
+                # any remaining messages from the original app.
+                return
+
+            mtype = message.get("type")
+
+            if mtype == "http.response.start":
+                if message.get("status") == 404:
+                    # Hold this — we might override it once we see the body.
+                    start_message = message
+                    return
+                await send(message)
+                return
+
+            if mtype == "http.response.body" and start_message is not None:
+                # Original response was a 404. Decide whether to substitute.
+                path = scope.get("path", "").lstrip("/")
+                file_path = self.dist_dir / path
+                if file_path.is_file():
+                    await FileResponse(file_path)(scope, receive, send)
+                    replaced = True
+                    return
+                index_path = self.dist_dir / "index.html"
+                if index_path.exists():
+                    await FileResponse(index_path)(scope, receive, send)
+                    replaced = True
+                    return
+                # No file available — flush the original 404 through.
+                await send(start_message)
+                start_message = None
+                await send(message)
+                return
+
+            await send(message)
+
+        await self.app(scope, receive, send_wrapper)
 
 
 def main() -> None:

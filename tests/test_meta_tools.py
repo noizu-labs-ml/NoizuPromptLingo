@@ -19,23 +19,6 @@ from npl_mcp.meta_tools.help import tool_help
 from npl_mcp.meta_tools import inference_cache
 
 
-@pytest.fixture(scope="session")
-def _mcp_app():
-    """Create the MCP app once per test session to register all tools."""
-    from npl_mcp.launcher import create_app
-    return create_app()
-
-
-@pytest.fixture(autouse=True)
-def _clear_caches(_mcp_app):
-    """Clear inference cache and invalidate catalog cache before each test."""
-    inference_cache.cache_clear()
-    invalidate_catalog()
-    yield
-    inference_cache.cache_clear()
-    invalidate_catalog()
-
-
 # ---------------------------------------------------------------------------
 # Catalog integrity
 # ---------------------------------------------------------------------------
@@ -490,8 +473,10 @@ class TestIntentSearch:
 
 class TestMCPRegistration:
 
-    def test_only_discovery_and_registered_tools_registered(self, _mcp_app):
-        tool_names = set(_mcp_app._tool_manager._tools.keys())
+    @pytest.mark.asyncio
+    async def test_only_discovery_and_registered_tools_registered(self, _mcp_app):
+        tools = await _mcp_app.list_tools()
+        tool_names = {t.name for t in tools}
         assert tool_names == {
             "ToolSummary", "ToolSearch", "ToolDefinition", "ToolHelp", "ToolCall",
             "ToolSession", "ToolSession.Generate", "Instructions", "Instructions.Create",
@@ -578,7 +563,7 @@ class TestToolCall:
             new_callable=AsyncMock,
             return_value=mock_result,
         ):
-            tool = _mcp_app._tool_manager._tools["ToolCall"]
+            tool = await _mcp_app.get_tool("ToolCall")
             result = await tool.run({"tool": "Ping", "arguments": {"url": "https://example.com"}})
             data = json.loads(result.content[0].text)
             assert data["status_code"] == 200
@@ -587,7 +572,7 @@ class TestToolCall:
     @pytest.mark.asyncio
     async def test_call_unknown_tool(self, _mcp_app):
         """ToolCall returns error for tools not in catalog."""
-        tool = _mcp_app._tool_manager._tools["ToolCall"]
+        tool = await _mcp_app.get_tool("ToolCall")
         result = await tool.run({"tool": "nonexistent_xyz"})
         data = json.loads(result.content[0].text)
         assert data["status"] == "error"
@@ -596,7 +581,7 @@ class TestToolCall:
     @pytest.mark.asyncio
     async def test_call_stub_tool(self, _mcp_app):
         """ToolCall returns stub status for tools without implementation."""
-        tool = _mcp_app._tool_manager._tools["ToolCall"]
+        tool = await _mcp_app.get_tool("ToolCall")
         result = await tool.run({"tool": "dump_files", "arguments": {"path": "/tmp"}})
         data = json.loads(result.content[0].text)
         assert data["status"] == "stub"
@@ -605,7 +590,7 @@ class TestToolCall:
     @pytest.mark.asyncio
     async def test_call_bad_arguments(self, _mcp_app):
         """ToolCall returns error when arguments don't match the function signature."""
-        tool = _mcp_app._tool_manager._tools["ToolCall"]
+        tool = await _mcp_app.get_tool("ToolCall")
         result = await tool.run({"tool": "Ping", "arguments": {"bad_param": "value"}})
         data = json.loads(result.content[0].text)
         assert data["status"] == "error"
@@ -619,7 +604,7 @@ class TestToolCall:
             new_callable=AsyncMock,
             return_value=mock_result,
         ):
-            tool = _mcp_app._tool_manager._tools["ToolCall"]
+            tool = await _mcp_app.get_tool("ToolCall")
             result = await tool.run({"tool": "Ping"})
             data = json.loads(result.content[0].text)
             assert data is not None
@@ -632,7 +617,7 @@ class TestToolCall:
             new_callable=AsyncMock,
             side_effect=ConnectionError("network down"),
         ):
-            tool = _mcp_app._tool_manager._tools["ToolCall"]
+            tool = await _mcp_app.get_tool("ToolCall")
             result = await tool.run({"tool": "Ping", "arguments": {"url": "https://example.com"}})
             data = json.loads(result.content[0].text)
             assert data["status"] == "error"

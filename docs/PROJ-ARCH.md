@@ -2,7 +2,7 @@
 
 ## Overview
 
-NPL MCP is a Model Context Protocol (MCP) server built on FastMCP 2.x. Rather than exposing all ~124 tools directly (which overwhelms clients), it uses a **meta tool pattern**: 11 tools are visible at startup (5 discovery + 1 NPL spec + 2 session + 3 instruction). An additional 21 implemented tools are hidden but callable via `ToolCall`, plus 92 stub tools for planned features.
+NPL MCP is a Model Context Protocol (MCP) server built on FastMCP 2.x. Rather than exposing all ~125 tools directly (which overwhelms clients), it uses a **meta tool pattern**: 11 tools are visible at startup (5 discovery + 1 NPL spec + 2 session + 3 instruction). An additional 22 implemented tools are hidden but callable via `ToolCall`, plus 92 stub tools for planned features.
 
 The server combines FastMCP for MCP protocol handling, FastAPI for HTTP routing and a Next.js frontend, LiteLLM proxy for LLM-powered features (intent search, image descriptions), and PostgreSQL for persistent storage of sessions, instructions, projects, personas, stories, and secrets.
 
@@ -19,7 +19,7 @@ graph TB
         API[FastAPI App]
         MCP[FastMCP Instance<br/>11 tools registered]
         Meta[Discovery Tools<br/>5 discovery + 6 functional]
-        Hidden[Hidden Tools<br/>21 via ToolCall]
+        Hidden[Hidden Tools<br/>22 via ToolCall]
         Stubs[Stub Catalog<br/>92 planned tools]
         FE[Next.js Frontend<br/>static export]
     end
@@ -59,14 +59,14 @@ graph TB
 
 ## Meta Tool Pattern
 
-**11 MCP-visible tools** are registered at startup. All ~124 catalog tools are discoverable via meta tools and callable via `ToolCall`.
+**11 MCP-visible tools** are registered at startup. All ~125 catalog tools are discoverable via meta tools and callable via `ToolCall`.
 
 ### Three-Tier Tool Registration
 
 | Tier | Count | Visibility | Description |
 |------|-------|------------|-------------|
 | MCP-Visible | 11 | In `tools/list` | Direct `@mcp.tool()` registration |
-| Hidden/Discoverable | 21 | Via ToolCall only | Registered via `register_discoverable()` |
+| Hidden/Discoverable | 22 | Via ToolCall only | Registered via `register_discoverable()` |
 | Stubs | 92 | Discoverable, not callable | Static definitions for planned features |
 
 ### Discovery Tools (5)
@@ -122,10 +122,10 @@ graph TB
 | `convention_formatter.py` | Active | 1 registered | NPLSpec — NPL definition generation |
 | `markdown/` | Active | 0 (library) | Converter, viewer, caching, filters |
 | `npl/` | Active | 0 (library) | NPL YAML loading, syntax parsing |
-| `pm_tools/` | Active | 13 hidden | File-based + DB-backed PRD/story/persona CRUD |
+| `pm_tools/` | Active | 13 hidden + 8 stubs | DB-backed project/persona/story CRUD + file-based stubs |
 | `instructions/` | Active | 3 registered + 3 hidden | Versioned instructions with vector embeddings |
 | `tool_sessions/` | Active | 2 registered | Session tracking by (project, agent, task) |
-| `browser/` | Active | 5 hidden + 28 stubs | ToMarkdown, Ping, Download, Screenshot, Rest + stubs |
+| `browser/` | Active | 6 hidden + 32 stubs | ToMarkdown, Ping, Download, Screenshot, Rest, Secret + stubs |
 | `storage/` | Active | 0 (library) | PostgreSQL async connection pool (asyncpg) |
 | `artifacts/` | Stub | 5 (in catalog) | Versioned artifact management |
 | `chat/` | Stub | 8 (in catalog) | Event-sourced chat rooms |
@@ -145,7 +145,7 @@ graph TB
 
 ## Key Design Decisions
 
-- **Three-tier tool registration**: MCP-visible (11) for core functionality, hidden (21) callable via ToolCall, stubs (92) for planned features
+- **Three-tier tool registration**: MCP-visible (11) for core functionality, hidden (22) callable via ToolCall, stubs (92) for planned features
 - **FastMCP 2.x**: MCP server framework with SSE transport
 - **LiteLLM proxy**: Routes LLM calls through a local proxy for model flexibility and key management
 - **Dynamic catalog builder**: Merges MCP-registered, hidden, and stub tools into a unified ~124-tool catalog

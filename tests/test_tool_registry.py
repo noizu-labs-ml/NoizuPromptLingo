@@ -11,24 +11,6 @@ from npl_mcp.meta_tools.catalog import (
     get_category_info,
     invalidate_catalog,
 )
-from npl_mcp.meta_tools import inference_cache
-
-
-@pytest.fixture(scope="session")
-def _mcp_app():
-    """Create the MCP app once per test session to register all tools."""
-    from npl_mcp.launcher import create_app
-    return create_app()
-
-
-@pytest.fixture(autouse=True)
-def _clear_caches(_mcp_app):
-    """Clear caches before each test."""
-    inference_cache.cache_clear()
-    invalidate_catalog()
-    yield
-    inference_cache.cache_clear()
-    invalidate_catalog()
 
 
 # ── Discoverable registry basics ─────────────────────────────────────────

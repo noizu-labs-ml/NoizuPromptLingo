@@ -291,10 +291,8 @@ async def build_catalog() -> list[ToolEntry]:
 
     # 1. MCP-registered tools
     if _mcp_ref is not None:
-        mcp_tools = await _mcp_ref.get_tools()
-        # get_tools() returns dict[str, FunctionTool] in FastMCP 2.x+
-        tool_iter = mcp_tools.values() if isinstance(mcp_tools, dict) else mcp_tools
-        for tool in tool_iter:
+        # FastMCP 3.x: list_tools() returns list[FunctionTool].
+        for tool in await _mcp_ref.list_tools():
             mcp_names.add(tool.name)
             category = _MCP_TOOL_CATEGORIES.get(tool.name, "Uncategorized")
             params = _schema_to_params(tool.parameters) if tool.parameters else []

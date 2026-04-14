@@ -32,12 +32,15 @@ NoizuPromptLingo/
 │   ├── arch/                       #   Architecture docs
 │   ├── agents/                     #   Agent-specific documentation
 │   ├── claude/                     #   Claude Code tooling docs
+│   ├── layout/                     #   Layout detail files (src, tests, docs, etc.)
 │   ├── reference/                  #   Reference docs (MCP, FastMCP, skills)
+│   ├── schema/                     #   Schema detail files (instructions, PM, NPL)
 │   ├── pending/                    #   Docs pending integration
 │   ├── prior-version/              #   Archived docs from prior version
 │   ├── PROJ-ARCH.md                #   High-level architecture
 │   ├── PROJ-LAYOUT.md              #   This file
-│   └── PROJ-SCHEMA.md              #   Database schema documentation
+│   ├── PROJ-SCHEMA.md              #   Database schema documentation
+│   └── winnower-design.md          #   Winnower agent design document
 ├── project-management/             # Planning & specs → [layout/project-management.md](layout/project-management.md)
 │   ├── personas/                   #   Persona definitions with index.yaml
 │   ├── user-stories/               #   147 user stories with index.yaml
@@ -45,11 +48,11 @@ NoizuPromptLingo/
 │   └── TODO/                       #   Backlog items
 ├── conventions/                    # NPL convention YAML definitions
 ├── npl/                            # NPL language specifications (YAML + Markdown)
-├── skills/                         # Skill definitions (conversion, market, UX, monetization)
 ├── agents/                         # TDD agent definitions (npl-*.md, incl. npl-winnower)
 ├── commands/                       # Claude Code slash commands (8 commands)
 ├── sub-agent-prompts/              # Reusable prompts for parallel agent spawning
 ├── scripts/                        # Operational scripts (port forwarding, etc.)
+├── gh-pages                        # GitHub Pages submodule (static site)
 ├── liquibase/                      # Database migrations (Liquibase YAML changelogs)
 │   ├── changelogs/                 #   Migration changesets (001–008)
 │   ├── liquibase.properties        #   Connection config
@@ -57,23 +60,26 @@ NoizuPromptLingo/
 ├── docker/                         # Docker configuration
 │   └── postgres-init/              #   PostgreSQL init scripts
 ├── tools/                          # Utility scripts (git_tree, git_dump, markdown, validators)
-├── wip/                            # Work-in-progress sub-project (separate pyproject.toml)
-├── worktrees/                      # Git worktrees (extended workspace)
+├── worktrees/                      # Git worktrees (gitignored, extended workspace)
 │   ├── main/                       #   Main branch with full NPL framework
 │   ├── npl-update/                 #   Update worktree
-│   └── redo/                       #   Redo worktree
+│   ├── redo/                       #   Redo worktree
+│   └── take-3/                     #   Take-3 worktree
 ├── .claude/                        # Claude Code configuration
-│   ├── agents/                     #   Agent definitions
+│   ├── agents/                     #   Agent definitions (symlinks + local)
 │   ├── commands/                   #   Slash command definitions
+│   ├── worktrees/                  #   Claude Code worktree state
 │   └── settings.local.json         #   Local settings (gitignored)
 ├── .prd/                           # PRD workspace
 ├── .tmp/                           # Temporary/scratch files (gitignored)
 ├── .envrc                          # direnv — loads environment
+├── .gitmodules                     # Git submodule definitions (gh-pages)
 ├── .mise.toml                      # mise task runner configuration
 ├── .python-version                 # Python version (3.13)
 ├── .tool-versions                  # Tool version management
 ├── debug-command.sh                # Debug/diagnostic shell script
 ├── docker-compose.yaml             # Local dev services (PostgreSQL)
+├── package-lock.json               # Node package lock (frontend deps)
 ├── pyproject.toml                  # Project metadata and dependencies
 ├── uv.lock                         # Dependency lock file
 ├── CLAUDE.md                       # Claude Code instructions
