@@ -171,8 +171,17 @@ export interface NPLLoadRequest {
   skip?: string[];
 }
 
+export interface NPLComponentSpec {
+  spec: string;                  // "section:*" or "section:name"
+  component_priority?: number;   // 0 = default; higher = more verbose
+  example_priority?: number;     // 0 = default; higher = more examples
+}
+
 export interface NPLSpecRequest {
-  components?: string[]; // "section#name" specs
+  components?: Array<string | NPLComponentSpec>;
+  rendered?: Array<string | NPLComponentSpec>;
+  component_priority?: number;
+  example_priority?: number;
   concise?: boolean;
   xml?: boolean;
   extension?: boolean;
@@ -229,7 +238,30 @@ export interface ChatRoom {
   created_at: string;
 }
 
-export type ArtifactKind = "markdown" | "json" | "yaml" | "code" | "text" | "other";
+export type ArtifactKind =
+  | "markdown"
+  | "json"
+  | "yaml"
+  | "code"
+  | "text"
+  | "other"
+  | "image"
+  | "video"
+  | "audio"
+  | "pdf"
+  | "binary";
+
+export const BINARY_ARTIFACT_KINDS: ReadonlyArray<ArtifactKind> = [
+  "image",
+  "video",
+  "audio",
+  "pdf",
+  "binary",
+];
+
+export function isBinaryKind(k: ArtifactKind): boolean {
+  return (BINARY_ARTIFACT_KINDS as readonly string[]).includes(k);
+}
 
 export interface Artifact {
   id: number;
@@ -247,9 +279,26 @@ export interface ArtifactRevision {
   artifact_id: number;
   revision: number;
   content: string;
+  mime_type?: string | null;
+  has_binary?: boolean;
   notes: string | null;
   created_by: string | null;
   created_at: string | null;
+}
+
+export interface ArtifactUploadInput {
+  file: File;
+  title: string;
+  kind?: ArtifactKind;
+  description?: string;
+  created_by?: string | null;
+  notes?: string | null;
+}
+
+export interface ArtifactRevisionUploadInput {
+  file: File;
+  notes?: string | null;
+  created_by?: string | null;
 }
 
 export interface ArtifactRevisionSummary {

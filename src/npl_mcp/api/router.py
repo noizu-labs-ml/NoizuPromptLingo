@@ -17,7 +17,8 @@ import yaml
 from pathlib import Path
 from typing import Any, Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
+from fastapi.responses import Response
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/api", tags=["api"])
@@ -1422,6 +1423,91 @@ async def npl_elements() -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
+# NPL load/spec endpoints (book view)
+# ---------------------------------------------------------------------------
+
+
+class NPLLoadRequest(BaseModel):
+    expression: str
+    layout: str = "yaml_order"
+    skip: Optional[list[str]] = None
+
+
+class NPLSpecComponent(BaseModel):
+    spec: str
+    component_priority: int = 0
+    example_priority: int = 0
+
+
+class NPLSpecRequest(BaseModel):
+    components: Optional[list[NPLSpecComponent]] = None
+    rendered: Optional[list[NPLSpecComponent]] = None
+    component_priority: int = 0
+    example_priority: int = 0
+    extension: bool = False
+    concise: bool = True
+    xml: bool = False
+
+
+@router.post("/npl/load")
+async def npl_load_endpoint(req: NPLLoadRequest) -> dict:
+    try:
+        from npl_mcp.npl.loader import load_npl
+        from npl_mcp.npl.layout import LayoutStrategy
+
+        layout_map = {
+            "yaml_order": LayoutStrategy.YAML_ORDER,
+            "classic": LayoutStrategy.CLASSIC,
+            "grouped": LayoutStrategy.GROUPED,
+        }
+        strategy = layout_map.get(req.layout.lower(), LayoutStrategy.YAML_ORDER)
+        markdown = load_npl(
+            expression=req.expression,
+            npl_dir=_CONVENTIONS_DIR,
+            layout=strategy,
+            skip=req.skip,
+        )
+        return {"markdown": markdown, "char_count": len(markdown)}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/npl/spec")
+async def npl_spec_endpoint(req: NPLSpecRequest) -> dict:
+    try:
+        from npl_mcp.convention_formatter import NPLDefinition, ComponentSpec
+
+        def _to_specs(items):
+            if not items:
+                return None
+            return [
+                ComponentSpec(
+                    spec=i.spec,
+                    component_priority=i.component_priority,
+                    example_priority=i.example_priority,
+                )
+                for i in items
+            ]
+
+        npl = NPLDefinition(conventions_dir=_CONVENTIONS_DIR)
+        markdown = npl.format(
+            components=_to_specs(req.components),
+            rendered=_to_specs(req.rendered),
+            component_priority=req.component_priority,
+            example_priority=req.example_priority,
+            extension=req.extension,
+            flags={"concise": req.concise, "xml": req.xml},
+        )
+        return {"markdown": markdown, "char_count": len(markdown)}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+# ---------------------------------------------------------------------------
 # Docs endpoints (US-047)
 # ---------------------------------------------------------------------------
 
@@ -1936,6 +2022,8 @@ def _artifact_full_dto(result: dict) -> dict:
             "artifact_id": rev.get("artifact_id"),
             "revision": rev.get("revision"),
             "content": rev.get("content"),
+            "mime_type": rev.get("mime_type"),
+            "has_binary": rev.get("has_binary", False),
             "notes": rev.get("notes"),
             "created_by": rev.get("created_by"),
             "created_at": rev.get("created_at"),
@@ -2043,6 +2131,122 @@ async def artifacts_add_revision_endpoint(
         if result.get("status") == "error":
             raise HTTPException(status_code=400, detail=result.get("message", "Invalid request"))
         return _artifact_full_dto(result)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+# ---------------------------------------------------------------------------
+# Artifact binary upload + raw streaming (Wave Q — media kinds)
+# ---------------------------------------------------------------------------
+
+_MAX_UPLOAD_BYTES = 15 * 1024 * 1024
+
+
+def _kind_for_mime(mime: str | None) -> str:
+    if not mime:
+        return "binary"
+    m = mime.lower()
+    if m.startswith("image/"):
+        return "image"
+    if m.startswith("video/"):
+        return "video"
+    if m.startswith("audio/"):
+        return "audio"
+    if m == "application/pdf":
+        return "pdf"
+    return "binary"
+
+
+@router.post("/artifacts/upload")
+async def artifacts_upload_endpoint(
+    file: UploadFile = File(...),
+    title: str = Form(...),
+    kind: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    created_by: Optional[str] = Form(None),
+    notes: Optional[str] = Form(None),
+) -> dict:
+    """Create a binary artifact from a multipart file upload."""
+    try:
+        raw = await file.read()
+        if len(raw) > _MAX_UPLOAD_BYTES:
+            raise HTTPException(
+                status_code=413,
+                detail=f"File exceeds {_MAX_UPLOAD_BYTES // (1024 * 1024)} MB cap.",
+            )
+        resolved_kind = kind or _kind_for_mime(file.content_type)
+        from npl_mcp.artifacts import artifact_create
+        result = await artifact_create(
+            title=title,
+            content="",
+            kind=resolved_kind,
+            description=description,
+            created_by=created_by,
+            notes=notes,
+            binary_content=raw,
+            mime_type=file.content_type,
+        )
+        if result.get("status") == "error":
+            raise HTTPException(status_code=400, detail=result.get("message", "Invalid request"))
+        return _artifact_full_dto(result)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+@router.post("/artifacts/{artifact_id}/revisions/upload")
+async def artifacts_add_revision_upload_endpoint(
+    artifact_id: int,
+    file: UploadFile = File(...),
+    notes: Optional[str] = Form(None),
+    created_by: Optional[str] = Form(None),
+) -> dict:
+    """Append a binary revision via multipart upload."""
+    try:
+        raw = await file.read()
+        if len(raw) > _MAX_UPLOAD_BYTES:
+            raise HTTPException(
+                status_code=413,
+                detail=f"File exceeds {_MAX_UPLOAD_BYTES // (1024 * 1024)} MB cap.",
+            )
+        from npl_mcp.artifacts import artifact_add_revision
+        result = await artifact_add_revision(
+            artifact_id=artifact_id,
+            content="",
+            notes=notes,
+            created_by=created_by,
+            binary_content=raw,
+            mime_type=file.content_type,
+        )
+        if result.get("status") == "not_found":
+            raise HTTPException(status_code=404, detail=f"Artifact {artifact_id} not found")
+        if result.get("status") == "error":
+            raise HTTPException(status_code=400, detail=result.get("message", "Invalid request"))
+        return _artifact_full_dto(result)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+@router.get("/artifacts/{artifact_id}/revisions/{revision}/raw")
+async def artifacts_raw_endpoint(artifact_id: int, revision: int) -> Response:
+    """Stream raw binary content of a revision with its Content-Type."""
+    try:
+        from npl_mcp.artifacts import artifact_get_binary
+        result = await artifact_get_binary(artifact_id=artifact_id, revision=revision)
+        if result.get("status") == "not_found":
+            raise HTTPException(status_code=404, detail="Revision not found")
+        if result.get("status") == "error":
+            raise HTTPException(status_code=400, detail=result.get("message", "Invalid request"))
+        return Response(
+            content=result["binary_content"],
+            media_type=result["mime_type"],
+            headers={"Cache-Control": "private, max-age=60"},
+        )
     except HTTPException:
         raise
     except Exception as exc:

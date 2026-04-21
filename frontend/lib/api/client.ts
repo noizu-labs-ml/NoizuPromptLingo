@@ -18,7 +18,9 @@ import type {
   ArtifactKind,
   ArtifactListResult,
   ArtifactRevisionInput,
+  ArtifactRevisionUploadInput,
   ArtifactRevisionsResult,
+  ArtifactUploadInput,
   ArtifactWithRevision,
   ATDocument,
   CategoryInfo,
@@ -152,8 +154,11 @@ export interface ArtifactsAPI {
   list(kind?: ArtifactKind, limit?: number): Promise<ArtifactListResult>;
   get(id: number, revision?: number): Promise<ArtifactWithRevision | null>;
   create(input: ArtifactCreateInput): Promise<ArtifactWithRevision>;
+  upload(input: ArtifactUploadInput): Promise<ArtifactWithRevision>;
   listRevisions(id: number): Promise<ArtifactRevisionsResult>;
   addRevision(id: number, input: ArtifactRevisionInput): Promise<ArtifactWithRevision>;
+  addRevisionUpload(id: number, input: ArtifactRevisionUploadInput): Promise<ArtifactWithRevision>;
+  rawUrl(id: number, revision: number): string;
 }
 
 export interface OrchestrationAPI {

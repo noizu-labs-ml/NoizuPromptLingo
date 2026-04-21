@@ -35,3 +35,6 @@ databaseChangeLog:
   - include:
       file: changelogs/changeset-013.chat-tables.yaml
       relativeToChangelogFile: false
+  - include:
+      file: changelogs/changeset-014.artifact-binary.yaml
+      relativeToChangelogFile: false

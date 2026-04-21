@@ -8,6 +8,7 @@ import { DocumentIcon, PlusIcon } from "@heroicons/react/24/outline";
 
 import { api } from "@/lib/api/client";
 import type { ArtifactRevisionSummary } from "@/lib/api/types";
+import { isBinaryKind } from "@/lib/api/types";
 import { Card } from "@/components/primitives/Card";
 import { Badge } from "@/components/primitives/Badge";
 import { CodeBlock } from "@/components/primitives/CodeBlock";
@@ -20,6 +21,8 @@ import { DetailHeader } from "@/components/composites/DetailHeader";
 
 import { kindVariant } from "@/lib/utils/badges";
 
+const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
+
 export default function ArtifactDetailClient() {
   const params = useParams<{ id: string }>();
   const id = Number.parseInt(params?.id ?? "", 10);
@@ -28,6 +31,7 @@ export default function ArtifactDetailClient() {
   const [activeRevision, setActiveRevision] = useState<number | undefined>(undefined);
   const [newContent, setNewContent] = useState("");
   const [newNotes, setNewNotes] = useState("");
+  const [newFile, setNewFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
@@ -41,17 +45,42 @@ export default function ArtifactDetailClient() {
     () => api.artifacts.listRevisions(id),
   );
 
+  const isBinary = artifact ? isBinaryKind(artifact.kind) : false;
+
   async function handleAddRevision() {
-    if (!newContent.trim()) return;
     setSubmitting(true);
     setAddError(null);
     try {
-      const updated = await api.artifacts.addRevision(id, {
-        content: newContent,
-        notes: newNotes.trim() || undefined,
-      });
+      let updated;
+      if (isBinary) {
+        if (!newFile) {
+          setAddError("Please pick a file.");
+          setSubmitting(false);
+          return;
+        }
+        if (newFile.size > MAX_UPLOAD_BYTES) {
+          setAddError("File exceeds 15 MB cap.");
+          setSubmitting(false);
+          return;
+        }
+        updated = await api.artifacts.addRevisionUpload(id, {
+          file: newFile,
+          notes: newNotes.trim() || undefined,
+        });
+      } else {
+        if (!newContent.trim()) {
+          setAddError("Content cannot be empty.");
+          setSubmitting(false);
+          return;
+        }
+        updated = await api.artifacts.addRevision(id, {
+          content: newContent,
+          notes: newNotes.trim() || undefined,
+        });
+      }
       setNewContent("");
       setNewNotes("");
+      setNewFile(null);
       setAddOpen(false);
       setActiveRevision(updated.revision.revision);
       await Promise.all([mutateArtifact(), mutateRevisions()]);
@@ -103,6 +132,8 @@ export default function ArtifactDetailClient() {
   }
 
   const revisions: ArtifactRevisionSummary[] = revisionsData?.revisions ?? [];
+  const rawUrl = api.artifacts.rawUrl(artifact.id, artifact.revision.revision);
+  const mime = artifact.revision.mime_type ?? "";
 
   return (
     <div className="space-y-6">
@@ -176,16 +207,27 @@ export default function ArtifactDetailClient() {
           {addOpen && (
             <Card className="space-y-3">
               <h3 className="text-sm font-semibold text-foreground">New revision</h3>
-              <FormField label="Content" htmlFor="new-revision-content">
-                <Textarea
-                  id="new-revision-content"
-                  rows={5}
-                  value={newContent}
-                  onChange={(e) => setNewContent(e.target.value)}
-                  placeholder="New content body…"
-                  mono
-                />
-              </FormField>
+              {isBinary ? (
+                <FormField label="File" htmlFor="new-revision-file" helper="Max 15 MB.">
+                  <input
+                    id="new-revision-file"
+                    type="file"
+                    onChange={(e) => setNewFile(e.target.files?.[0] ?? null)}
+                    className="focus-ring block w-full text-xs text-foreground file:mr-3 file:rounded file:border-0 file:bg-accent file:px-3 file:py-1 file:text-xs file:font-semibold file:text-accent-on hover:file:bg-accent-soft"
+                  />
+                </FormField>
+              ) : (
+                <FormField label="Content" htmlFor="new-revision-content">
+                  <Textarea
+                    id="new-revision-content"
+                    rows={5}
+                    value={newContent}
+                    onChange={(e) => setNewContent(e.target.value)}
+                    placeholder="New content body…"
+                    mono
+                  />
+                </FormField>
+              )}
               <FormField label="Notes" htmlFor="new-revision-notes" helper="Optional change summary.">
                 <Input
                   id="new-revision-notes"
@@ -203,7 +245,7 @@ export default function ArtifactDetailClient() {
               <Button
                 size="sm"
                 onClick={handleAddRevision}
-                disabled={submitting || !newContent.trim()}
+                disabled={submitting || (isBinary ? !newFile : !newContent.trim())}
                 loading={submitting}
                 className="w-full"
               >
@@ -229,14 +271,86 @@ export default function ArtifactDetailClient() {
             {artifact.revision.notes && (
               <p className="text-xs text-muted italic mb-2">“{artifact.revision.notes}”</p>
             )}
-            <CodeBlock
-              code={artifact.revision.content}
-              language={artifact.kind === "markdown" ? "markdown" : artifact.kind}
-              maxHeight="500px"
-            />
+            {isBinary ? (
+              <MediaPreview kind={artifact.kind} mime={mime} rawUrl={rawUrl} title={artifact.title} />
+            ) : (
+              <CodeBlock
+                code={artifact.revision.content}
+                language={artifact.kind === "markdown" ? "markdown" : artifact.kind}
+                maxHeight="500px"
+              />
+            )}
           </Card>
         </div>
       </div>
+    </div>
+  );
+}
+
+function MediaPreview({
+  kind,
+  mime,
+  rawUrl,
+  title,
+}: {
+  kind: string;
+  mime: string;
+  rawUrl: string;
+  title: string;
+}) {
+  if (kind === "image" || mime.startsWith("image/")) {
+    return (
+      <div className="rounded-lg border border-border/50 bg-surface-1 p-3 flex items-center justify-center">
+        <img
+          src={rawUrl}
+          alt={title}
+          className="max-w-full max-h-[70vh] object-contain rounded"
+        />
+      </div>
+    );
+  }
+  if (kind === "video" || mime.startsWith("video/")) {
+    return (
+      <div className="rounded-lg border border-border/50 bg-surface-1 p-3">
+        <video
+          src={rawUrl}
+          controls
+          className="w-full max-h-[70vh] rounded"
+        />
+      </div>
+    );
+  }
+  if (kind === "audio" || mime.startsWith("audio/")) {
+    return (
+      <div className="rounded-lg border border-border/50 bg-surface-1 p-4">
+        <audio src={rawUrl} controls className="w-full" />
+        <p className="mt-2 text-xs text-muted font-mono">{mime}</p>
+      </div>
+    );
+  }
+  if (kind === "pdf" || mime === "application/pdf") {
+    return (
+      <div className="rounded-lg border border-border/50 bg-surface-1 overflow-hidden">
+        <iframe
+          src={rawUrl}
+          title={title}
+          className="w-full"
+          style={{ height: "75vh", border: 0 }}
+        />
+      </div>
+    );
+  }
+  // binary / unknown — offer download
+  return (
+    <div className="rounded-lg border border-border/50 bg-surface-1 p-6 text-center space-y-3">
+      <p className="text-sm text-muted">Binary artifact ({mime || "unknown type"}).</p>
+      <a
+        href={rawUrl}
+        download={title}
+        className="focus-ring inline-flex items-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-semibold text-accent-on hover:bg-accent-soft transition-colors"
+      >
+        Download
+      </a>
     </div>
   );
 }

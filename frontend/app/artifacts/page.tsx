@@ -27,7 +27,12 @@ import { FilterBar } from "@/components/composites/FilterBar";
 import { relativeTime } from "@/lib/utils/format";
 import { kindVariant } from "@/lib/utils/badges";
 
-const KINDS: ArtifactKind[] = ["markdown", "json", "yaml", "code", "text", "other"];
+const KINDS: ArtifactKind[] = [
+  "markdown", "json", "yaml", "code", "text", "other",
+  "image", "video", "audio", "pdf", "binary",
+];
+const MEDIA_KINDS: ArtifactKind[] = ["image", "video", "audio", "pdf", "binary"];
+const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
 
 function kindBadgeVariant(kind: string): BadgeProps["variant"] {
   return kindVariant(kind);
@@ -39,23 +44,51 @@ function NewArtifactForm({ onCreated }: { onCreated: () => void }) {
   const [kind, setKind] = useState<ArtifactKind>("markdown");
   const [description, setDescription] = useState("");
   const [content, setContent] = useState("");
+  const [file, setFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const isMedia = (MEDIA_KINDS as string[]).includes(kind);
+
   async function handleSubmit() {
-    if (!title.trim() || !content.trim()) return;
+    if (!title.trim()) return;
     setSubmitting(true);
     setError(null);
     try {
-      await api.artifacts.create({
-        title: title.trim(),
-        content,
-        kind,
-        description: description.trim() || undefined,
-      });
+      if (isMedia) {
+        if (!file) {
+          setError("Please pick a file.");
+          setSubmitting(false);
+          return;
+        }
+        if (file.size > MAX_UPLOAD_BYTES) {
+          setError("File exceeds 15 MB cap.");
+          setSubmitting(false);
+          return;
+        }
+        await api.artifacts.upload({
+          file,
+          title: title.trim(),
+          kind,
+          description: description.trim() || undefined,
+        });
+      } else {
+        if (!content.trim()) {
+          setError("Content cannot be empty.");
+          setSubmitting(false);
+          return;
+        }
+        await api.artifacts.create({
+          title: title.trim(),
+          content,
+          kind,
+          description: description.trim() || undefined,
+        });
+      }
       setTitle("");
       setDescription("");
       setContent("");
+      setFile(null);
       setKind("markdown");
       setOpen(false);
       onCreated();
@@ -114,15 +147,34 @@ function NewArtifactForm({ onCreated }: { onCreated: () => void }) {
             onChange={(e) => setDescription(e.target.value)}
           />
         </FormField>
-        <FormField label="Content (revision 1)" className="md:col-span-2">
-          <Textarea
-            rows={8}
-            mono
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Artifact body..."
-          />
-        </FormField>
+        {isMedia ? (
+          <FormField
+            label="File (revision 1)"
+            helper="Max 15 MB. MIME type is detected from the file."
+            className="md:col-span-2"
+          >
+            <input
+              type="file"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              className="focus-ring block w-full text-sm text-foreground file:mr-3 file:rounded file:border-0 file:bg-accent file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-accent-on hover:file:bg-accent-soft"
+            />
+            {file && (
+              <p className="mt-1 text-xs text-muted font-mono">
+                {file.name} · {(file.size / 1024).toFixed(1)} KB · {file.type || "unknown"}
+              </p>
+            )}
+          </FormField>
+        ) : (
+          <FormField label="Content (revision 1)" className="md:col-span-2">
+            <Textarea
+              rows={8}
+              mono
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="Artifact body..."
+            />
+          </FormField>
+        )}
       </div>
 
       {error && (
@@ -139,7 +191,7 @@ function NewArtifactForm({ onCreated }: { onCreated: () => void }) {
           variant="primary"
           size="sm"
           loading={submitting}
-          disabled={!title.trim() || !content.trim()}
+          disabled={!title.trim() || (isMedia ? !file : !content.trim())}
           onClick={handleSubmit}
         >
           {submitting ? "Creating…" : "Create"}
@@ -208,6 +260,13 @@ export default function ArtifactsPage() {
           {artifacts.map((a: Artifact) => (
             <Link key={a.id} href={`/artifacts/${a.id}`} className="block rounded-lg focus-ring">
               <Card hoverable className="flex items-center gap-3">
+                {a.kind === "image" ? (
+                  <img
+                    src={api.artifacts.rawUrl(a.id, a.latest_revision)}
+                    alt=""
+                    className="h-10 w-10 rounded object-cover border border-border/50 shrink-0"
+                  />
+                ) : null}
                 <div className="flex-1 min-w-0 flex flex-col gap-0.5">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="text-sm font-medium text-foreground truncate">{a.title}</span>

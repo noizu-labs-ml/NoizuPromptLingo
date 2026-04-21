@@ -19,8 +19,13 @@ from typing import Any, Optional
 from npl_mcp.storage import get_pool
 
 
-VALID_KINDS = {"markdown", "json", "yaml", "code", "text", "other"}
+VALID_KINDS = {
+    "markdown", "json", "yaml", "code", "text", "other",
+    "image", "video", "audio", "pdf", "binary",
+}
+BINARY_KINDS = {"image", "video", "audio", "pdf", "binary"}
 _DEFAULT_KIND = "markdown"
+MAX_BINARY_BYTES = 15 * 1024 * 1024  # 15 MB
 
 
 def _artifact_row_to_dict(row) -> dict[str, Any]:
@@ -37,11 +42,25 @@ def _artifact_row_to_dict(row) -> dict[str, Any]:
 
 
 def _revision_row_to_dict(row) -> dict[str, Any]:
+    # Binary content is not serialized in the text body — frontend fetches it
+    # separately via GET /api/artifacts/{id}/revisions/{n}/raw
+    has_binary = False
+    try:
+        has_binary = row["binary_content"] is not None
+    except (KeyError, IndexError):
+        has_binary = False
+    mime_type = None
+    try:
+        mime_type = row["mime_type"]
+    except (KeyError, IndexError):
+        mime_type = None
     return {
         "id": row["id"],
         "artifact_id": row["artifact_id"],
         "revision": row["revision"],
-        "content": row["content"],
+        "content": row["content"] if not has_binary else "",
+        "mime_type": mime_type,
+        "has_binary": has_binary,
         "notes": row["notes"],
         "created_by": row["created_by"],
         "created_at": row["created_at"].isoformat() if row["created_at"] else None,
@@ -62,22 +81,40 @@ def _revision_summary(row) -> dict[str, Any]:
 
 async def artifact_create(
     title: str,
-    content: str,
+    content: str = "",
     kind: str = _DEFAULT_KIND,
     description: Optional[str] = None,
     created_by: Optional[str] = None,
     notes: Optional[str] = None,
+    binary_content: Optional[bytes] = None,
+    mime_type: Optional[str] = None,
 ) -> dict[str, Any]:
-    """Create a new artifact with its initial revision (revision = 1)."""
+    """Create a new artifact with its initial revision (revision = 1).
+
+    For text kinds (markdown/json/yaml/code/text/other) pass ``content``.
+    For binary kinds (image/video/audio/pdf/binary) pass ``binary_content``
+    (bytes) and ``mime_type``.
+    """
     if not title or not title.strip():
         return {"status": "error", "message": "title must be a non-empty string."}
-    if content is None:
-        return {"status": "error", "message": "content must be provided."}
     if kind not in VALID_KINDS:
         return {
             "status": "error",
             "message": f"Invalid kind '{kind}'. Must be one of: {', '.join(sorted(VALID_KINDS))}",
         }
+    if kind in BINARY_KINDS:
+        if binary_content is None:
+            return {"status": "error", "message": f"binary_content required for kind '{kind}'."}
+        if len(binary_content) > MAX_BINARY_BYTES:
+            return {
+                "status": "error",
+                "message": f"binary_content exceeds {MAX_BINARY_BYTES // (1024 * 1024)} MB cap.",
+            }
+        content = content or ""
+    else:
+        if content is None:
+            return {"status": "error", "message": "content must be provided."}
+        binary_content = None
 
     pool = await get_pool()
 
@@ -96,12 +133,16 @@ async def artifact_create(
 
     revision_row = await pool.fetchrow(
         """
-        INSERT INTO npl_artifact_revisions (artifact_id, revision, content, notes, created_by)
-        VALUES ($1, 1, $2, $3, $4)
-        RETURNING id, artifact_id, revision, content, notes, created_by, created_at
+        INSERT INTO npl_artifact_revisions
+            (artifact_id, revision, content, mime_type, binary_content, notes, created_by)
+        VALUES ($1, 1, $2, $3, $4, $5, $6)
+        RETURNING id, artifact_id, revision, content, mime_type, binary_content,
+                  notes, created_by, created_at
         """,
         artifact_row["id"],
         content,
+        mime_type,
+        binary_content,
         notes,
         created_by,
     )
@@ -114,41 +155,64 @@ async def artifact_create(
 
 async def artifact_add_revision(
     artifact_id: int,
-    content: str,
+    content: str = "",
     notes: Optional[str] = None,
     created_by: Optional[str] = None,
+    binary_content: Optional[bytes] = None,
+    mime_type: Optional[str] = None,
 ) -> dict[str, Any]:
     """Append a new revision to an existing artifact.
 
     Increments ``npl_artifacts.latest_revision`` and refreshes
     ``updated_at``. Returns the new revision + updated artifact.
+    Binary/text shape follows the parent artifact's ``kind``.
     """
     try:
         aid = int(artifact_id)
     except (TypeError, ValueError):
         return {"status": "error", "message": "artifact_id must be an integer."}
-    if content is None:
-        return {"status": "error", "message": "content must be provided."}
 
     pool = await get_pool()
     existing = await pool.fetchrow(
-        "SELECT id, latest_revision FROM npl_artifacts WHERE id = $1",
+        "SELECT id, kind, latest_revision FROM npl_artifacts WHERE id = $1",
         aid,
     )
     if existing is None:
         return {"status": "not_found", "id": aid}
 
+    parent_kind = existing["kind"]
+    if parent_kind in BINARY_KINDS:
+        if binary_content is None:
+            return {
+                "status": "error",
+                "message": f"binary_content required for kind '{parent_kind}'.",
+            }
+        if len(binary_content) > MAX_BINARY_BYTES:
+            return {
+                "status": "error",
+                "message": f"binary_content exceeds {MAX_BINARY_BYTES // (1024 * 1024)} MB cap.",
+            }
+        content = content or ""
+    else:
+        if content is None:
+            return {"status": "error", "message": "content must be provided."}
+        binary_content = None
+
     new_rev_num = int(existing["latest_revision"]) + 1
 
     revision_row = await pool.fetchrow(
         """
-        INSERT INTO npl_artifact_revisions (artifact_id, revision, content, notes, created_by)
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING id, artifact_id, revision, content, notes, created_by, created_at
+        INSERT INTO npl_artifact_revisions
+            (artifact_id, revision, content, mime_type, binary_content, notes, created_by)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING id, artifact_id, revision, content, mime_type, binary_content,
+                  notes, created_by, created_at
         """,
         aid,
         new_rev_num,
         content,
+        mime_type,
+        binary_content,
         notes,
         created_by,
     )
@@ -202,7 +266,8 @@ async def artifact_get(
         return {"status": "error", "message": "revision must be an integer."}
 
     revision_row = await pool.fetchrow(
-        """SELECT id, artifact_id, revision, content, notes, created_by, created_at
+        """SELECT id, artifact_id, revision, content, mime_type, binary_content,
+                  notes, created_by, created_at
            FROM npl_artifact_revisions
            WHERE artifact_id = $1 AND revision = $2""",
         aid,
@@ -286,4 +351,52 @@ async def artifact_list_revisions(artifact_id: int) -> dict[str, Any]:
         "artifact_id": aid,
         "revisions": [_revision_summary(r) for r in rows],
         "count": len(rows),
+    }
+
+
+async def artifact_get_binary(
+    artifact_id: int,
+    revision: Optional[int] = None,
+) -> dict[str, Any]:
+    """Fetch raw binary content + mime_type for a revision.
+
+    Returns {"status": "ok", "binary_content": bytes, "mime_type": str, ...}
+    or {"status": "not_found"} / {"status": "error"}.
+    """
+    try:
+        aid = int(artifact_id)
+    except (TypeError, ValueError):
+        return {"status": "error", "message": "artifact_id must be an integer."}
+
+    pool = await get_pool()
+    artifact_row = await pool.fetchrow(
+        "SELECT latest_revision, title FROM npl_artifacts WHERE id = $1",
+        aid,
+    )
+    if artifact_row is None:
+        return {"status": "not_found", "id": aid}
+
+    target_rev = revision if revision is not None else artifact_row["latest_revision"]
+    try:
+        rev_num = int(target_rev)
+    except (TypeError, ValueError):
+        return {"status": "error", "message": "revision must be an integer."}
+
+    row = await pool.fetchrow(
+        """SELECT binary_content, mime_type
+           FROM npl_artifact_revisions
+           WHERE artifact_id = $1 AND revision = $2""",
+        aid,
+        rev_num,
+    )
+    if row is None:
+        return {"status": "not_found", "id": aid, "revision": rev_num}
+    if row["binary_content"] is None:
+        return {"status": "error", "message": "This revision has no binary content."}
+    return {
+        "status": "ok",
+        "binary_content": bytes(row["binary_content"]),
+        "mime_type": row["mime_type"] or "application/octet-stream",
+        "title": artifact_row["title"],
+        "revision": rev_num,
     }

@@ -17,6 +17,8 @@ import type {
   ArtifactKind,
   ArtifactListResult,
   ArtifactRevisionInput,
+  ArtifactRevisionUploadInput,
+  ArtifactUploadInput,
   ArtifactRevisionsResult,
   ArtifactWithRevision,
   ATDocument,
@@ -142,7 +144,13 @@ export const npl = {
     return post<NPLResponse>("/api/npl/load", request);
   },
   async spec(request: NPLSpecRequest): Promise<NPLResponse> {
-    return post<NPLResponse>("/api/npl/spec", request);
+    const normalize = (c: unknown) =>
+      typeof c === "string" ? { spec: c } : c;
+    return post<NPLResponse>("/api/npl/spec", {
+      ...request,
+      components: request.components?.map(normalize),
+      rendered: request.rendered?.map(normalize),
+    });
   },
   async elements(): Promise<NPLElement[]> {
     return get<NPLElement[]>("/api/npl/elements");
@@ -332,6 +340,37 @@ export const artifacts = {
   },
   async addRevision(id: number, input: ArtifactRevisionInput): Promise<ArtifactWithRevision> {
     return post<ArtifactWithRevision>(`/api/artifacts/${id}/revisions`, input);
+  },
+  async upload(input: ArtifactUploadInput): Promise<ArtifactWithRevision> {
+    const fd = new FormData();
+    fd.append("file", input.file);
+    fd.append("title", input.title);
+    if (input.kind) fd.append("kind", input.kind);
+    if (input.description) fd.append("description", input.description);
+    if (input.created_by) fd.append("created_by", input.created_by);
+    if (input.notes) fd.append("notes", input.notes);
+    const r = await fetch(url("/api/artifacts/upload"), { method: "POST", body: fd });
+    if (!r.ok) throw new Error(`/api/artifacts/upload returned ${r.status}`);
+    return r.json();
+  },
+  async addRevisionUpload(
+    id: number,
+    input: ArtifactRevisionUploadInput
+  ): Promise<ArtifactWithRevision> {
+    const fd = new FormData();
+    fd.append("file", input.file);
+    if (input.notes) fd.append("notes", input.notes);
+    if (input.created_by) fd.append("created_by", input.created_by);
+    const r = await fetch(url(`/api/artifacts/${id}/revisions/upload`), {
+      method: "POST",
+      body: fd,
+    });
+    if (!r.ok)
+      throw new Error(`/api/artifacts/${id}/revisions/upload returned ${r.status}`);
+    return r.json();
+  },
+  rawUrl(id: number, revision: number): string {
+    return url(`/api/artifacts/${id}/revisions/${revision}/raw`);
   },
 };
 

@@ -39,13 +39,8 @@ export const prds = rest.prds;
 export const docs = rest.docs;
 export const explorer = rest.explorer;
 
-// NPL: elements + coverage from REST, load/spec stay on mock (no REST endpoint)
-export const npl = {
-  load: mock.npl.load.bind(mock.npl),
-  spec: mock.npl.spec.bind(mock.npl),
-  elements: rest.npl.elements.bind(rest.npl),
-  coverage: rest.npl.coverage.bind(rest.npl),
-};
+// NPL: fully REST — /api/npl/{load,spec,elements,coverage}
+export const npl = rest.npl;
 
 // metrics: all methods now via rest (tool-calls/llm-calls return [] on 501)
 export const metrics = {

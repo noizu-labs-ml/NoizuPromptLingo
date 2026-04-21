@@ -904,12 +904,19 @@ class FrontendFallbackMiddleware:
 
             if mtype == "http.response.body" and start_message is not None:
                 # Original response was a 404. Decide whether to substitute.
-                path = scope.get("path", "").lstrip("/")
-                file_path = self.dist_dir / path
-                if file_path.is_file():
+                path = scope.get("path", "").lstrip("/").rstrip("/")
+                file_path = self.dist_dir / path if path else None
+                if file_path and file_path.is_file():
                     await FileResponse(file_path)(scope, receive, send)
                     replaced = True
                     return
+                # Next.js static export: try {path}.html for SSG routes
+                if path:
+                    html_path = self.dist_dir / f"{path}.html"
+                    if html_path.is_file():
+                        await FileResponse(html_path)(scope, receive, send)
+                        replaced = True
+                        return
                 index_path = self.dist_dir / "index.html"
                 if index_path.exists():
                     await FileResponse(index_path)(scope, receive, send)

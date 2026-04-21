@@ -57,6 +57,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "Tools", href: "/tools", icon: WrenchScrewdriverIcon },
       { label: "NPL", href: "/npl", icon: BeakerIcon },
+      { label: "NPL Book", href: "/npl/book", icon: BookOpenIcon },
       { label: "Markdown", href: "/markdown", icon: DocumentArrowDownIcon },
     ],
   },
