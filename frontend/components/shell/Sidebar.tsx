@@ -24,6 +24,7 @@ import {
   UserGroupIcon,
   HeartIcon,
   QueueListIcon,
+  SwatchIcon,
 } from "@heroicons/react/24/outline";
 
 interface NavItem {
@@ -43,6 +44,12 @@ const NAV_GROUPS: NavGroup[] = [
     heading: "Overview",
     items: [
       { label: "Home", href: "/", icon: HomeIcon },
+    ],
+  },
+  {
+    heading: "Design",
+    items: [
+      { label: "Style Guide", href: "/style-guide", icon: SwatchIcon },
     ],
   },
   {
