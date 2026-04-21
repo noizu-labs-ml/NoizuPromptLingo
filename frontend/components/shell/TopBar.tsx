@@ -3,16 +3,18 @@
 import { Fragment } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MagnifyingGlassIcon, Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import { MagnifyingGlassIcon, Bars3Icon, XMarkIcon, SparklesIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { ThemeToggle } from "./ThemeToggle";
 import { Kbd } from "@/components/primitives/Kbd";
+import { Button } from "@/components/primitives/Button";
 import { heading } from "@/lib/ui/typography";
 
 interface TopBarProps {
   onMobileMenuOpen?: () => void;
   mobileMenuOpen?: boolean;
   onOpenPalette?: () => void;
+  onOpenQuickCreate?: () => void;
 }
 
 function deriveBreadcrumbs(pathname: string): { label: string; href: string }[] {
@@ -32,7 +34,7 @@ function deriveBreadcrumbs(pathname: string): { label: string; href: string }[] 
   return crumbs;
 }
 
-export function TopBar({ onMobileMenuOpen, mobileMenuOpen, onOpenPalette }: TopBarProps) {
+export function TopBar({ onMobileMenuOpen, mobileMenuOpen, onOpenPalette, onOpenQuickCreate }: TopBarProps) {
   const pathname = usePathname();
   const breadcrumbs = deriveBreadcrumbs(pathname);
 
@@ -97,6 +99,16 @@ export function TopBar({ onMobileMenuOpen, mobileMenuOpen, onOpenPalette }: TopB
 
       {/* Spacer */}
       <div className="flex-1" />
+
+      {/* Quick create button */}
+      <Button
+        variant="primary"
+        size="sm"
+        leadingIcon={<SparklesIcon className="h-4 w-4" />}
+        onClick={onOpenQuickCreate}
+      >
+        <span className="hidden sm:inline">New</span>
+      </Button>
 
       {/* Theme toggle */}
       <ThemeToggle />

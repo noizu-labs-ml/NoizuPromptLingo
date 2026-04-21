@@ -39,7 +39,7 @@ const variantClasses: Record<ButtonVariant, string> = {
   ghost:
     "text-foreground hover:bg-surface-1",
   danger:
-    "bg-danger text-white hover:bg-danger/90",
+    "bg-danger text-accent-on hover:bg-danger/90",
   icon:
     "text-muted hover:text-foreground hover:bg-surface-1 p-1.5 rounded-md",
 };

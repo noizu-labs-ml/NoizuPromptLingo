@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import Link from "next/link";
 import { ReactNode } from "react";
+import { MinusIcon } from "@heroicons/react/24/solid";
 import { heading } from "@/lib/ui/typography";
 import { focusRing } from "@/lib/utils/focusRing";
 
@@ -33,11 +34,16 @@ const trendClasses: Record<StatTileTrend, string> = {
   flat: "text-subtle",
 };
 
-const trendGlyph: Record<StatTileTrend, string> = {
-  up: "▲",
-  down: "▼",
-  flat: "—",
-};
+function TrendGlyph({ trend }: { trend: StatTileTrend }) {
+  if (trend === "flat") {
+    return <MinusIcon className="h-3 w-3" aria-hidden="true" />;
+  }
+  return (
+    <span aria-hidden="true" className="text-[0.7em] leading-none">
+      {trend === "up" ? "▲" : "▼"}
+    </span>
+  );
+}
 
 function Delta({ value, trend = "flat" }: StatTileDelta) {
   return (
@@ -47,7 +53,7 @@ function Delta({ value, trend = "flat" }: StatTileDelta) {
         trendClasses[trend]
       )}
     >
-      <span aria-hidden="true">{trendGlyph[trend]}</span>
+      <TrendGlyph trend={trend} />
       <span>{value}</span>
     </span>
   );

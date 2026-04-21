@@ -1,23 +1,22 @@
 "use client";
 
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import useSWR from "swr";
 import clsx from "clsx";
-import {
-  ArrowLeftIcon,
-  DocumentIcon,
-  PlusIcon,
-} from "@heroicons/react/24/outline";
+import { DocumentIcon, PlusIcon } from "@heroicons/react/24/outline";
 
 import { api } from "@/lib/api/client";
 import type { ArtifactRevisionSummary } from "@/lib/api/types";
 import { Card } from "@/components/primitives/Card";
 import { Badge } from "@/components/primitives/Badge";
 import { CodeBlock } from "@/components/primitives/CodeBlock";
-import { PageHeader } from "@/components/primitives/PageHeader";
 import { EmptyState } from "@/components/primitives/EmptyState";
+import { Button } from "@/components/primitives/Button";
+import { Input } from "@/components/primitives/Input";
+import { Textarea } from "@/components/primitives/Textarea";
+import { FormField } from "@/components/primitives/FormField";
+import { DetailHeader } from "@/components/composites/DetailHeader";
 
 import { kindVariant } from "@/lib/utils/badges";
 
@@ -76,8 +75,8 @@ export default function ArtifactDetailClient() {
   if (isLoading) {
     return (
       <div className="space-y-6 animate-pulse">
-        <div className="h-8 bg-surface-sunken rounded w-1/3" />
-        <div className="h-40 bg-surface-sunken rounded" />
+        <div className="h-8 bg-surface-1 rounded w-1/3" />
+        <div className="h-40 bg-surface-1 rounded" />
       </div>
     );
   }
@@ -85,12 +84,15 @@ export default function ArtifactDetailClient() {
   if (!artifact) {
     return (
       <div className="space-y-4">
-        <Link
-          href="/artifacts"
-          className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors"
-        >
-          <ArrowLeftIcon className="h-3.5 w-3.5" /> Back to artifacts
-        </Link>
+        <DetailHeader
+          breadcrumbs={[
+            { label: "Artifacts", href: "/artifacts" },
+            { label: "Not found" },
+          ]}
+          backHref="/artifacts"
+          backLabel="Back to artifacts"
+          title="Artifact not found"
+        />
         <EmptyState
           icon={<DocumentIcon />}
           title="Artifact not found"
@@ -104,14 +106,13 @@ export default function ArtifactDetailClient() {
 
   return (
     <div className="space-y-6">
-      <Link
-        href="/artifacts"
-        className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors"
-      >
-        <ArrowLeftIcon className="h-3.5 w-3.5" /> Back to artifacts
-      </Link>
-
-      <PageHeader
+      <DetailHeader
+        breadcrumbs={[
+          { label: "Artifacts", href: "/artifacts" },
+          { label: artifact.title },
+        ]}
+        backHref="/artifacts"
+        backLabel="Back to artifacts"
         title={artifact.title}
         description={artifact.description || undefined}
         actions={
@@ -129,12 +130,14 @@ export default function ArtifactDetailClient() {
           <Card>
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-foreground">Revisions</h3>
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setAddOpen((v) => !v)}
-                className="text-xs text-accent hover:text-accent/80 transition-colors inline-flex items-center gap-0.5"
+                leadingIcon={<PlusIcon className="h-3.5 w-3.5" />}
               >
-                <PlusIcon className="h-3.5 w-3.5" /> Add
-              </button>
+                Add
+              </Button>
             </div>
             {revisions.length === 0 ? (
               <p className="text-xs text-muted">No revisions loaded.</p>
@@ -146,12 +149,13 @@ export default function ArtifactDetailClient() {
                   return (
                     <li key={r.id}>
                       <button
+                        type="button"
                         onClick={() => setActiveRevision(r.revision)}
                         className={clsx(
-                          "w-full flex items-center justify-between gap-2 rounded px-2 py-1 text-xs transition-colors",
+                          "focus-ring w-full flex items-center justify-between gap-2 rounded px-2 py-1 text-xs transition-colors",
                           current
                             ? "bg-accent/10 text-accent font-medium"
-                            : "text-muted hover:bg-surface-raised hover:text-foreground"
+                            : "text-muted hover:bg-surface-1 hover:text-foreground"
                         )}
                       >
                         <span className="font-mono">v{r.revision}</span>
@@ -170,34 +174,41 @@ export default function ArtifactDetailClient() {
           </Card>
 
           {addOpen && (
-            <Card className="space-y-2">
+            <Card className="space-y-3">
               <h3 className="text-sm font-semibold text-foreground">New revision</h3>
-              <textarea
-                rows={5}
-                value={newContent}
-                onChange={(e) => setNewContent(e.target.value)}
-                placeholder="New content body…"
-                className="font-mono text-xs rounded-md border border-border bg-surface-sunken px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-accent/40 resize-y w-full"
-              />
-              <input
-                value={newNotes}
-                onChange={(e) => setNewNotes(e.target.value)}
-                placeholder="Notes (optional)"
-                className="rounded-md border border-border bg-surface-sunken px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-accent/40 w-full"
-              />
-              {addError && <p className="text-xs text-danger">{addError}</p>}
-              <button
+              <FormField label="Content" htmlFor="new-revision-content">
+                <Textarea
+                  id="new-revision-content"
+                  rows={5}
+                  value={newContent}
+                  onChange={(e) => setNewContent(e.target.value)}
+                  placeholder="New content body…"
+                  mono
+                />
+              </FormField>
+              <FormField label="Notes" htmlFor="new-revision-notes" helper="Optional change summary.">
+                <Input
+                  id="new-revision-notes"
+                  inputSize="sm"
+                  value={newNotes}
+                  onChange={(e) => setNewNotes(e.target.value)}
+                  placeholder="Notes (optional)"
+                />
+              </FormField>
+              {addError && (
+                <p className="text-xs text-danger" role="alert" aria-live="polite">
+                  {addError}
+                </p>
+              )}
+              <Button
+                size="sm"
                 onClick={handleAddRevision}
                 disabled={submitting || !newContent.trim()}
-                className={clsx(
-                  "w-full text-xs rounded-md px-3 py-1.5 font-medium transition-colors",
-                  submitting || !newContent.trim()
-                    ? "bg-surface-raised text-subtle cursor-not-allowed"
-                    : "bg-accent text-white hover:bg-accent/90"
-                )}
+                loading={submitting}
+                className="w-full"
               >
                 {submitting ? "Saving…" : `Save as v${artifact.latest_revision + 1}`}
-              </button>
+              </Button>
             </Card>
           )}
         </aside>

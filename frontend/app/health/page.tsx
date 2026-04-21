@@ -21,6 +21,8 @@ import { Card } from "@/components/primitives/Card";
 import { PageHeader } from "@/components/primitives/PageHeader";
 import { Badge } from "@/components/primitives/Badge";
 import type { BadgeProps } from "@/components/primitives/Badge";
+import { Button } from "@/components/primitives/Button";
+import { SkeletonGrid } from "@/components/primitives/SkeletonGrid";
 
 function statusBadgeVariant(status: SubsystemHealth["status"]): BadgeProps["variant"] {
   switch (status) {
@@ -150,33 +152,23 @@ export default function HealthPage() {
               <HeartIcon className={clsx("h-4 w-4", overallClass)} />
               <span className={clsx("font-semibold", overallClass)}>{overallLabel}</span>
             </div>
-            <button
-              onClick={() => mutate()}
-              className="text-xs rounded-md border border-border px-3 py-1.5 text-muted hover:text-foreground hover:bg-surface-raised transition-colors"
-            >
+            <Button variant="secondary" size="sm" onClick={() => mutate()}>
               Refresh now
-            </button>
+            </Button>
           </div>
         }
       />
 
       {error && (
-        <div className="rounded-md border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
+        <div
+          role="alert"
+          className="rounded-md border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger"
+        >
           Failed to fetch health report: {String(error)}
         </div>
       )}
 
-      {isLoading && !data && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <Card key={i} className="animate-pulse">
-              <div className="h-4 bg-surface-sunken rounded w-1/2 mb-3" />
-              <div className="h-3 bg-surface-sunken rounded w-full mb-1.5" />
-              <div className="h-3 bg-surface-sunken rounded w-3/4" />
-            </Card>
-          ))}
-        </div>
-      )}
+      {isLoading && !data && <SkeletonGrid as="card" count={5} />}
 
       {data && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

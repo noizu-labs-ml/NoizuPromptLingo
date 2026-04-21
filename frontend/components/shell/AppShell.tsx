@@ -6,6 +6,8 @@ import clsx from "clsx";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { CommandPalette } from "./CommandPalette";
+import { QuickCreateModal } from "@/components/modals/QuickCreateModal";
+import { ToastProvider } from "@/components/primitives/ToastContainer";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -16,6 +18,7 @@ const SIDEBAR_WIDTH = "w-56";
 export function AppShell({ children }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [quickCreateOpen, setQuickCreateOpen] = useState(false);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -29,6 +32,7 @@ export function AppShell({ children }: AppShellProps) {
   }, []);
 
   return (
+    <ToastProvider>
     <div className="flex h-full bg-canvas text-foreground">
       {/* Skip link — visually hidden until focused */}
       <a href="#main-content" className="skip-link">
@@ -103,6 +107,7 @@ export function AppShell({ children }: AppShellProps) {
             onMobileMenuOpen={() => setMobileOpen((v) => !v)}
             mobileMenuOpen={mobileOpen}
             onOpenPalette={() => setPaletteOpen(true)}
+            onOpenQuickCreate={() => setQuickCreateOpen(true)}
           />
         </div>
 
@@ -117,6 +122,8 @@ export function AppShell({ children }: AppShellProps) {
       </div>
 
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+      <QuickCreateModal isOpen={quickCreateOpen} onClose={() => setQuickCreateOpen(false)} />
     </div>
+    </ToastProvider>
   );
 }

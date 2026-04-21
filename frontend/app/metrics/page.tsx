@@ -5,8 +5,10 @@ import { api } from "@/lib/api/client";
 import type { ToolCall, LLMCall, ToolError, NPLSectionCoverage } from "@/lib/api/types";
 import { Card } from "@/components/primitives/Card";
 import { Badge } from "@/components/primitives/Badge";
+import { ComingSoonBanner } from "@/components/primitives/ComingSoonBanner";
 import { PageHeader } from "@/components/primitives/PageHeader";
 import { DataTable } from "@/components/primitives/DataTable";
+import { TabBar, TabPanel } from "@/components/composites/TabBar";
 
 import { relativeTime, formatNumber, truncate } from "@/lib/utils/format";
 
@@ -32,9 +34,9 @@ function ResponseTimeChart({ calls }: { calls: ToolCall[] }) {
       {BUCKETS.map((bucket, i) => (
         <div key={bucket.label} className="flex items-center gap-3">
           <span className="text-xs text-muted w-20 shrink-0 text-right">{bucket.label}</span>
-          <div className="flex-1 bg-surface rounded h-5 overflow-hidden">
+          <div className="flex-1 bg-surface-1 rounded h-5 overflow-hidden">
             <div
-              className="h-full bg-brand-500 rounded transition-all"
+              className="h-full bg-accent rounded transition-all"
               style={{ width: `${(counts[i] / maxCount) * 100}%` }}
             />
           </div>
@@ -57,7 +59,7 @@ function NPLCoverageCard() {
     return (
       <Card>
         <h2 className="text-base font-semibold text-foreground mb-4">NPL Coverage</h2>
-        <div className="h-48 rounded bg-surface animate-pulse" />
+        <div className="h-48 rounded bg-surface-1 animate-pulse" />
       </Card>
     );
   }
@@ -76,7 +78,7 @@ function NPLCoverageCard() {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-base font-semibold text-foreground">NPL Coverage</h2>
-        <span className="text-3xl font-bold text-brand-500">{formatNumber(coverage.coverage_percent)}%</span>
+        <span className="text-3xl font-bold text-accent">{formatNumber(coverage.coverage_percent)}%</span>
       </div>
 
       {/* Overall progress bar */}
@@ -84,9 +86,9 @@ function NPLCoverageCard() {
         {formatNumber(coverage.complete_components)} / {formatNumber(coverage.total_components)} components complete
         ({formatNumber(coverage.total_sections)} sections)
       </div>
-      <div className="w-full bg-surface rounded h-2 overflow-hidden mb-6">
+      <div className="w-full bg-surface-1 rounded h-2 overflow-hidden mb-6">
         <div
-          className="h-full bg-brand-500 rounded transition-all"
+          className="h-full bg-accent rounded transition-all"
           style={{ width: `${coverage.coverage_percent}%` }}
         />
       </div>
@@ -99,9 +101,9 @@ function NPLCoverageCard() {
               <span className="text-sm font-medium text-foreground capitalize">{sec.section}</span>
               <span className="text-xs text-muted">{formatNumber(sec.complete)}/{formatNumber(sec.total)}</span>
             </div>
-            <div className="w-full bg-surface rounded h-1.5 overflow-hidden mb-1">
+            <div className="w-full bg-surface-1 rounded h-1.5 overflow-hidden mb-1">
               <div
-                className="h-full bg-brand-500 rounded transition-all"
+                className="h-full bg-accent rounded transition-all"
                 style={{ width: `${sec.coverage_percent}%` }}
               />
             </div>
@@ -254,7 +256,7 @@ export default function MetricsPage() {
         row.session_id ? (
           <a
             href={`/sessions/${row.session_id}`}
-            className="font-mono text-xs text-brand-500 hover:underline"
+            className="font-mono text-xs text-accent hover:underline"
           >
             {row.session_id}
           </a>
@@ -271,6 +273,28 @@ export default function MetricsPage() {
     },
   ];
 
+  const tabs = [
+    {
+      id: "tool-calls",
+      label: "Tool Calls",
+      badge: toolCalls ? toolCalls.length : undefined,
+    },
+    {
+      id: "llm-usage",
+      label: "LLM Usage",
+      badge: llmCalls ? llmCalls.length : undefined,
+    },
+    {
+      id: "errors",
+      label: "Errors",
+      badge: toolErrors ? toolErrors.length : undefined,
+    },
+    {
+      id: "npl-coverage",
+      label: "NPL Coverage",
+    },
+  ];
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
@@ -278,72 +302,77 @@ export default function MetricsPage() {
         description="Tool call history and LLM usage."
       />
 
-      {/* Banner */}
-      <div className="rounded-md border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning">
-        <strong>Preview only — tool call history and LLM usage still use mock data. Tool errors are live.</strong>
-      </div>
+      <ComingSoonBanner description="Tool call and LLM metrics coming soon — provisioning in progress. Tool errors are live." />
 
-      {/* Two-column data tables */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Tool Call History */}
-        <Card>
-          <h2 className="text-base font-semibold text-foreground mb-4">Tool Call History</h2>
-          {tcLoading ? (
-            <div className="h-48 rounded bg-surface animate-pulse" />
-          ) : (
-            <DataTable<ToolCall>
-              columns={tcColumns}
-              rows={toolCalls ?? []}
-              rowKey={(row) => row.id}
-              emptyMessage="No tool calls recorded."
-            />
-          )}
-        </Card>
+      <TabBar tabs={tabs} defaultIndex={0}>
+        {/* Tool Calls */}
+        <TabPanel>
+          <div className="flex flex-col gap-6">
+            <Card>
+              <h2 className="text-base font-semibold text-foreground mb-4">Tool Call History</h2>
+              {tcLoading ? (
+                <div className="h-48 rounded bg-surface-1 animate-pulse" />
+              ) : (
+                <DataTable<ToolCall>
+                  columns={tcColumns}
+                  rows={toolCalls ?? []}
+                  rowKey={(row) => row.id}
+                  emptyMessage="No tool calls recorded."
+                />
+              )}
+            </Card>
+
+            <Card>
+              <h2 className="text-base font-semibold text-foreground mb-2">Response Time Distribution</h2>
+              <p className="text-xs text-muted mb-4">Tool calls bucketed by response latency.</p>
+              {tcLoading ? (
+                <div className="h-32 rounded bg-surface-1 animate-pulse" />
+              ) : (
+                <ResponseTimeChart calls={toolCalls ?? []} />
+              )}
+            </Card>
+          </div>
+        </TabPanel>
 
         {/* LLM Usage */}
-        <Card>
-          <h2 className="text-base font-semibold text-foreground mb-4">LLM Usage</h2>
-          {llmLoading ? (
-            <div className="h-48 rounded bg-surface animate-pulse" />
-          ) : (
-            <DataTable<LLMCall>
-              columns={llmColumns}
-              rows={llmCalls ?? []}
-              rowKey={(row) => row.id}
-              emptyMessage="No LLM calls recorded."
-            />
-          )}
-        </Card>
-      </div>
+        <TabPanel>
+          <Card>
+            <h2 className="text-base font-semibold text-foreground mb-4">LLM Usage</h2>
+            {llmLoading ? (
+              <div className="h-48 rounded bg-surface-1 animate-pulse" />
+            ) : (
+              <DataTable<LLMCall>
+                columns={llmColumns}
+                rows={llmCalls ?? []}
+                rowKey={(row) => row.id}
+                emptyMessage="No LLM calls recorded."
+              />
+            )}
+          </Card>
+        </TabPanel>
 
-      {/* Response Time Distribution */}
-      <Card>
-        <h2 className="text-base font-semibold text-foreground mb-2">Response Time Distribution</h2>
-        <p className="text-xs text-muted mb-4">Tool calls bucketed by response latency.</p>
-        {tcLoading ? (
-          <div className="h-32 rounded bg-surface animate-pulse" />
-        ) : (
-          <ResponseTimeChart calls={toolCalls ?? []} />
-        )}
-      </Card>
+        {/* Errors */}
+        <TabPanel>
+          <Card>
+            <h2 className="text-base font-semibold text-foreground mb-4">Tool Errors</h2>
+            {errLoading ? (
+              <div className="h-48 rounded bg-surface-1 animate-pulse" />
+            ) : (
+              <DataTable<ToolError>
+                columns={errorColumns}
+                rows={toolErrors ?? []}
+                rowKey={(row) => String(row.id)}
+                emptyMessage="No errors recorded."
+              />
+            )}
+          </Card>
+        </TabPanel>
 
-      {/* Tool Errors */}
-      <Card>
-        <h2 className="text-base font-semibold text-foreground mb-4">Tool Errors</h2>
-        {errLoading ? (
-          <div className="h-48 rounded bg-surface animate-pulse" />
-        ) : (
-          <DataTable<ToolError>
-            columns={errorColumns}
-            rows={toolErrors ?? []}
-            rowKey={(row) => String(row.id)}
-            emptyMessage="No errors recorded."
-          />
-        )}
-      </Card>
-
-      {/* NPL Coverage */}
-      <NPLCoverageCard />
+        {/* NPL Coverage */}
+        <TabPanel>
+          <NPLCoverageCard />
+        </TabPanel>
+      </TabBar>
     </div>
   );
 }

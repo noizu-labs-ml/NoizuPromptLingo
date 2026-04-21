@@ -135,9 +135,9 @@ function OverviewTab({
                   <span className="text-muted">{STATUS_LABEL[status]}</span>
                   <span className="text-foreground font-medium">{count}</span>
                 </div>
-                <div className="h-2 rounded-full bg-surface-sunken overflow-hidden">
+                <div className="h-2 rounded-full bg-surface-1 overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-brand-500 transition-all"
+                    className="h-full rounded-full bg-accent transition-all"
                     style={{ width: `${pct}%` }}
                   />
                 </div>
@@ -236,7 +236,7 @@ function InlineListbox<T extends string>({
         </ListboxButton>
         <ListboxOptions
           anchor="bottom start"
-          className="absolute z-50 mt-1 w-36 rounded-md border border-border bg-surface shadow-lg py-1 text-sm focus:outline-none"
+          className="absolute z-50 mt-1 w-36 rounded-md border border-border bg-surface-2 shadow-elevated py-1 text-sm focus:outline-none"
         >
           {options.map((opt) => (
             <ListboxOption
@@ -245,7 +245,7 @@ function InlineListbox<T extends string>({
               className={({ focus }: { focus: boolean }) =>
                 clsx(
                   "flex items-center gap-2 px-3 py-1.5 cursor-pointer",
-                  focus ? "bg-surface-sunken text-foreground" : "text-muted"
+                  focus ? "bg-surface-1 text-foreground" : "text-muted"
                 )
               }
             >
@@ -324,23 +324,29 @@ function StoryCard({
           onSelect={(v) => handleUpdate("priority", v)}
         />
         {story.story_points > 0 && (
-          <span className="inline-flex items-center rounded-full bg-surface-sunken border border-border text-muted px-2 py-0.5 text-xs">
+          <span className="inline-flex items-center rounded-full bg-surface-1 border border-border text-muted px-2 py-0.5 text-xs">
             {story.story_points} pts
           </span>
         )}
-        {saving && (
-          <span className="inline-flex items-center text-xs text-muted animate-pulse">saving…</span>
-        )}
-        {saveOk && !saving && (
-          <span className="inline-flex items-center text-xs text-success">
-            <CheckIcon className="h-3 w-3 mr-0.5" /> saved
-          </span>
-        )}
-        {saveError && !saving && (
-          <span className="inline-flex items-center text-xs text-danger" title={saveError}>
-            error
-          </span>
-        )}
+        <span
+          className="inline-flex items-center gap-1 text-xs"
+          role={saveError ? "alert" : "status"}
+          aria-live="polite"
+        >
+          {saving && (
+            <span className="inline-flex items-center text-muted animate-pulse">saving…</span>
+          )}
+          {saveOk && !saving && (
+            <span className="inline-flex items-center text-success">
+              <CheckIcon className="h-3 w-3 mr-0.5" /> saved
+            </span>
+          )}
+          {saveError && !saving && (
+            <span className="inline-flex items-center text-danger" title={saveError}>
+              error
+            </span>
+          )}
+        </span>
       </div>
 
       {story.acceptance_criteria.length > 0 && (
@@ -392,23 +398,25 @@ function StoriesTab({ projectId }: { projectId: string }) {
         {/* View toggle */}
         <div className="flex rounded-md border border-border overflow-hidden">
           <button
+            type="button"
             onClick={() => setViewMode("list")}
             className={clsx(
-              "px-3 py-1.5 text-sm font-medium transition-colors",
+              "focus-ring px-3 py-1.5 text-sm font-medium transition-colors",
               viewMode === "list"
-                ? "bg-brand-500 text-white"
-                : "bg-surface text-muted hover:text-foreground"
+                ? "bg-accent text-accent-on"
+                : "bg-surface-1 text-muted hover:text-foreground"
             )}
           >
             List
           </button>
           <button
+            type="button"
             onClick={() => setViewMode("kanban")}
             className={clsx(
-              "px-3 py-1.5 text-sm font-medium transition-colors border-l border-border",
+              "focus-ring px-3 py-1.5 text-sm font-medium transition-colors border-l border-border",
               viewMode === "kanban"
-                ? "bg-brand-500 text-white"
-                : "bg-surface text-muted hover:text-foreground"
+                ? "bg-accent text-accent-on"
+                : "bg-surface-1 text-muted hover:text-foreground"
             )}
           >
             Kanban
@@ -430,8 +438,9 @@ function StoriesTab({ projectId }: { projectId: string }) {
 
         {(statusFilter.length > 0 || priorityFilter.length > 0) && (
           <button
+            type="button"
             onClick={() => { setStatusFilter([]); setPriorityFilter([]); }}
-            className="text-xs text-muted hover:text-foreground transition-colors"
+            className="focus-ring rounded text-xs text-muted hover:text-foreground transition-colors"
           >
             Clear filters
           </button>
@@ -504,8 +513,8 @@ export function ProjectDetailClient() {
   if (projectLoading) {
     return (
       <div className="space-y-6 animate-pulse">
-        <div className="h-8 bg-surface-sunken rounded w-1/3" />
-        <div className="h-4 bg-surface-sunken rounded w-1/2" />
+        <div className="h-8 bg-surface-1 rounded w-1/3" />
+        <div className="h-4 bg-surface-1 rounded w-1/2" />
       </div>
     );
   }

@@ -20,6 +20,7 @@ import type {
 } from "@/lib/api/types";
 import { PageHeader } from "@/components/primitives/PageHeader";
 import { Card } from "@/components/primitives/Card";
+import { Segmented } from "@/components/primitives/Segmented";
 
 // ── Example template ──────────────────────────────────────────────────────
 
@@ -68,8 +69,8 @@ function SeverityBadge({ severity }: { severity: "error" | "warning" }) {
       className={clsx(
         "inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
         severity === "error"
-          ? "bg-red-500/10 text-red-500 border border-red-500/20"
-          : "bg-yellow-500/10 text-yellow-500 border border-yellow-500/20"
+          ? "bg-danger/10 text-danger border border-danger/20"
+          : "bg-warning/10 text-warning border border-warning/20"
       )}
     >
       {severity}
@@ -93,8 +94,8 @@ function ValidationIssues({ result }: { result: SkillValidationResult }) {
   const allIssues = [...result.errors, ...result.warnings];
   if (allIssues.length === 0) return null;
   return (
-    <div className="rounded-lg border border-border bg-surface overflow-hidden">
-      <div className="px-3 py-2 border-b border-border bg-surface-raised">
+    <div className="rounded-lg border border-border bg-surface-0 overflow-hidden">
+      <div className="px-3 py-2 border-b border-border bg-surface-1">
         <p className="text-xs font-semibold text-muted uppercase tracking-wide">
           Validation issues ({allIssues.length})
         </p>
@@ -116,17 +117,17 @@ function ValidateResultPanel({ result }: { result: SkillValidationResult }) {
         className={clsx(
           "flex items-center gap-3 rounded-lg p-4 border",
           result.valid
-            ? "bg-green-500/10 border-green-500/20"
-            : "bg-red-500/10 border-red-500/20"
+            ? "bg-success/10 border-success/20"
+            : "bg-danger/10 border-danger/20"
         )}
       >
         {result.valid ? (
-          <CheckCircleIcon className="h-6 w-6 text-green-500 shrink-0" />
+          <CheckCircleIcon className="h-6 w-6 text-success shrink-0" />
         ) : (
-          <XCircleIcon className="h-6 w-6 text-red-500 shrink-0" />
+          <XCircleIcon className="h-6 w-6 text-danger shrink-0" />
         )}
         <div>
-          <p className={clsx("font-semibold", result.valid ? "text-green-500" : "text-red-500")}>
+          <p className={clsx("font-semibold", result.valid ? "text-success" : "text-danger")}>
             {result.valid ? "Valid skill" : "Validation failed"}
           </p>
           <p className="text-xs text-muted">
@@ -141,7 +142,7 @@ function ValidateResultPanel({ result }: { result: SkillValidationResult }) {
           {Object.entries(result.summary).map(([key, val]) => (
             <div
               key={key}
-              className="rounded-md border border-border bg-surface-raised p-2 text-center"
+              className="rounded-md border border-border bg-surface-1 p-2 text-center"
             >
               <p className="text-xs text-muted truncate">{key.replace(/_/g, " ")}</p>
               <p className="text-sm font-semibold text-foreground mt-0.5">
@@ -160,9 +161,9 @@ function ValidateResultPanel({ result }: { result: SkillValidationResult }) {
 // ── Evaluate result panel ─────────────────────────────────────────────────
 
 function scoreColor(score: number): { text: string; stroke: string; bg: string; border: string } {
-  if (score >= 0.8) return { text: "text-green-500",  stroke: "stroke-green-500",  bg: "bg-green-500/10",  border: "border-green-500/20"  };
-  if (score >= 0.5) return { text: "text-yellow-500", stroke: "stroke-yellow-500", bg: "bg-yellow-500/10", border: "border-yellow-500/20" };
-  return              { text: "text-red-500",    stroke: "stroke-red-500",    bg: "bg-red-500/10",    border: "border-red-500/20"    };
+  if (score >= 0.8) return { text: "text-success",  stroke: "stroke-success",  bg: "bg-success/10",  border: "border-success/20"  };
+  if (score >= 0.5) return { text: "text-warning", stroke: "stroke-warning", bg: "bg-warning/10", border: "border-warning/20" };
+  return              { text: "text-danger",    stroke: "stroke-danger",    bg: "bg-danger/10",    border: "border-danger/20"    };
 }
 
 function ScoreRing({ score, size = 96 }: { score: number; size?: number }) {
@@ -210,7 +211,7 @@ function DimensionCard({ dim }: { dim: SkillQualityScore }) {
           </div>
         </div>
       </div>
-      <div className="h-1.5 rounded-full bg-surface-sunken overflow-hidden">
+      <div className="h-1.5 rounded-full bg-surface-1 overflow-hidden">
         <div
           className={clsx("h-full transition-all", colors.bg, "bg-current", colors.text)}
           style={{ width: `${Math.round(dim.score * 100)}%` }}
@@ -231,7 +232,7 @@ function EvaluateResultPanel({ result }: { result: SkillEvaluationResult }) {
   return (
     <div className="flex flex-col gap-4">
       {/* Overall score banner */}
-      <div className="flex items-center gap-4 rounded-lg border border-border bg-surface-raised p-4">
+      <div className="flex items-center gap-4 rounded-lg border border-border bg-surface-1 p-4">
         <ScoreRing score={result.overall_score} />
         <div className="flex flex-col gap-0.5 min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wide text-subtle">
@@ -259,8 +260,8 @@ function EvaluateResultPanel({ result }: { result: SkillEvaluationResult }) {
 
       {/* Suggestions */}
       {result.suggestions.length > 0 && (
-        <div className="rounded-lg border border-border bg-surface overflow-hidden">
-          <div className="px-3 py-2 border-b border-border bg-surface-raised flex items-center gap-2">
+        <div className="rounded-lg border border-border bg-surface-0 overflow-hidden">
+          <div className="px-3 py-2 border-b border-border bg-surface-1 flex items-center gap-2">
             <LightBulbIcon className="h-4 w-4 text-accent" />
             <p className="text-xs font-semibold text-muted uppercase tracking-wide">
               Suggestions ({result.suggestions.length})
@@ -276,40 +277,6 @@ function EvaluateResultPanel({ result }: { result: SkillEvaluationResult }) {
 
       {/* Validation issues surface below */}
       <ValidationIssues result={result.validation} />
-    </div>
-  );
-}
-
-// ── Mode toggle ───────────────────────────────────────────────────────────
-
-function ModeToggle({
-  mode, onChange,
-}: {
-  mode: Mode;
-  onChange: (m: Mode) => void;
-}) {
-  return (
-    <div className="inline-flex rounded-md border border-border bg-surface p-0.5 text-xs">
-      {(["validate", "evaluate"] as Mode[]).map((m) => {
-        const active = m === mode;
-        return (
-          <button
-            key={m}
-            onClick={() => onChange(m)}
-            className={clsx(
-              "flex items-center gap-1.5 rounded px-3 py-1.5 font-medium transition-colors capitalize",
-              active
-                ? "bg-accent text-white"
-                : "text-muted hover:text-foreground hover:bg-surface-raised"
-            )}
-          >
-            {m === "validate"
-              ? <ShieldCheckIcon className="h-3.5 w-3.5" />
-              : <SparklesIcon className="h-3.5 w-3.5" />}
-            {m}
-          </button>
-        );
-      })}
     </div>
   );
 }
@@ -366,16 +333,32 @@ export default function SkillValidatePage() {
         title="Skill Validator"
         description="Check schema validity or evaluate overall quality of a skill file."
         actions={
-          <div className="flex items-center gap-2">
-            <ModeToggle mode={mode} onChange={setMode} />
-            <button
-              onClick={handleLoadExample}
-              className="text-xs rounded-md border border-border px-3 py-1.5 text-muted hover:text-foreground hover:bg-surface-raised transition-colors"
-            >
-              Load example
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleLoadExample}
+            className="focus-ring text-xs rounded-md border border-border px-3 py-1.5 text-muted hover:text-foreground hover:bg-surface-1 transition-colors"
+          >
+            Load example
+          </button>
         }
+      />
+
+      <Segmented<Mode>
+        aria-label="Mode"
+        value={mode}
+        onChange={setMode}
+        options={[
+          {
+            value: "validate",
+            label: "Validate",
+            icon: <ShieldCheckIcon className="h-3.5 w-3.5" />,
+          },
+          {
+            value: "evaluate",
+            label: "Evaluate",
+            icon: <SparklesIcon className="h-3.5 w-3.5" />,
+          },
+        ]}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -390,7 +373,7 @@ export default function SkillValidatePage() {
               value={filename}
               onChange={(e) => setFilename(e.target.value)}
               placeholder="e.g. my-skill.md"
-              className="rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-foreground placeholder:text-subtle focus:outline-none focus:ring-2 focus:ring-accent/40"
+              className="rounded-md border border-border bg-surface-1 px-3 py-1.5 text-sm text-foreground placeholder:text-subtle focus-ring transition-colors"
             />
           </div>
 
@@ -403,18 +386,19 @@ export default function SkillValidatePage() {
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder={"---\nname: my-skill\ndescription: ...\n---\n\n# My Skill\n\n..."}
-              className="font-mono text-xs rounded-md border border-border bg-surface px-3 py-2 text-foreground placeholder:text-subtle focus:outline-none focus:ring-2 focus:ring-accent/40 resize-y w-full"
+              className="font-mono text-xs rounded-md border border-border bg-surface-1 px-3 py-2 text-foreground placeholder:text-subtle focus-ring transition-colors resize-y w-full"
             />
           </div>
 
           <button
+            type="button"
             onClick={handleSubmit}
             disabled={loading || !content.trim()}
             className={clsx(
-              "flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors",
+              "focus-ring flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors",
               loading || !content.trim()
-                ? "bg-surface-raised text-subtle cursor-not-allowed"
-                : "bg-accent text-white hover:bg-accent/90"
+                ? "bg-surface-1 text-subtle cursor-not-allowed"
+                : "bg-accent text-accent-on hover:bg-accent-soft"
             )}
           >
             {mode === "validate"
@@ -449,9 +433,9 @@ export default function SkillValidatePage() {
           )}
 
           {error && (
-            <div className="flex items-start gap-2 rounded-lg border border-red-500/20 bg-red-500/10 p-4">
-              <ExclamationTriangleIcon className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
-              <p className="text-sm text-red-500">{error}</p>
+            <div className="flex items-start gap-2 rounded-lg border border-danger/20 bg-danger/10 p-4">
+              <ExclamationTriangleIcon className="h-4 w-4 text-danger shrink-0 mt-0.5" />
+              <p className="text-sm text-danger">{error}</p>
             </div>
           )}
 

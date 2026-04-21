@@ -21,16 +21,24 @@ import type {
   ArtifactWithRevision,
   ATDocument,
   CategoryInfo,
+  ChatMessage,
+  ChatMessageCreateInput,
+  ChatMessageListResult,
   ChatRoom,
+  ChatRoomCreateInput,
+  ChatRoomListResult,
   DocContent,
   FileContent,
   FileTreeNode,
   FRDocument,
   HealthReport,
   Instruction,
+  InstructionCreateInput,
   InstructionDetail,
   InstructionFilter,
   LLMCall,
+  LLMCallMetric,
+  MetricListResult,
   NPLCoverage,
   NPLElement,
   NPLLoadRequest,
@@ -41,6 +49,7 @@ import type {
   PRDDetail,
   PRDSummary,
   Project,
+  ProjectCreateInput,
   Session,
   SessionFilter,
   SessionTreeNode,
@@ -51,9 +60,12 @@ import type {
   ToMarkdownRequest,
   ToMarkdownResult,
   ToolCall,
+  ToolCallMetric,
   ToolError,
   ToolEntry,
   ToolInvokeResult,
+  OrchestrationTriggerInput,
+  OrchestrationTriggerResult,
 } from "../types";
 
 // ── Base URL (dev proxy to backend on :8765) ─────────────────────────────
@@ -185,6 +197,9 @@ export const instructions = {
       `/api/instructions/${encodeURIComponent(uuid)}`
     );
   },
+  async create(input: InstructionCreateInput): Promise<InstructionDetail> {
+    return post<InstructionDetail>("/api/instructions", input);
+  },
 };
 
 // ── Projects / Personas / Stories ────────────────────────────────────────
@@ -195,6 +210,9 @@ export const projects = {
   },
   async get(id: string): Promise<Project | null> {
     return tryGet<Project>(`/api/projects/${encodeURIComponent(id)}`);
+  },
+  async create(input: ProjectCreateInput): Promise<Project> {
+    return post<Project>("/api/projects", input);
   },
 };
 
@@ -232,11 +250,36 @@ export const stories = {
 // ── Metrics ──────────────────────────────────────────────────────────────
 
 export const metrics = {
-  async recentToolCalls(limit = 30): Promise<ToolCall[]> {
-    return get<ToolCall[]>(`/api/metrics/tool-calls?limit=${limit}`);
+  async recentToolCalls(limit: number = 20): Promise<ToolCall[]> {
+    const r = await fetch(url(`/api/metrics/tool-calls?limit=${limit}`));
+    if (r.status === 501) return []; // not yet provisioned
+    if (!r.ok) throw new Error(`/api/metrics/tool-calls returned ${r.status}`);
+    const data: MetricListResult<ToolCallMetric> = await r.json();
+    return data.items.map((item) => ({
+      id: String(item.id),
+      tool_name: item.tool_name,
+      session_id: item.session_id,
+      args_summary: "",
+      status: (item.status === "ok" ? "ok" : "error") as "ok" | "error",
+      error_message: null,
+      response_time_ms: item.response_time_ms ?? 0,
+      created_at: item.created_at ?? new Date().toISOString(),
+    }));
   },
-  async recentLLMCalls(limit = 20): Promise<LLMCall[]> {
-    return get<LLMCall[]>(`/api/metrics/llm-calls?limit=${limit}`);
+  async recentLLMCalls(limit: number = 20): Promise<LLMCall[]> {
+    const r = await fetch(url(`/api/metrics/llm-calls?limit=${limit}`));
+    if (r.status === 501) return []; // not yet provisioned
+    if (!r.ok) throw new Error(`/api/metrics/llm-calls returned ${r.status}`);
+    const data: MetricListResult<LLMCallMetric> = await r.json();
+    return data.items.map((item) => ({
+      id: String(item.id),
+      model: item.model,
+      purpose: item.purpose ?? "",
+      tokens_in: item.tokens_in ?? 0,
+      tokens_out: item.tokens_out ?? 0,
+      duration_ms: item.duration_ms ?? 0,
+      created_at: item.created_at ?? new Date().toISOString(),
+    }));
   },
   async recentErrors(limit = 50): Promise<ToolError[]> {
     return get<ToolError[]>(`/api/errors?limit=${limit}`);
@@ -247,10 +290,25 @@ export const metrics = {
 
 export const chat = {
   async listRooms(): Promise<ChatRoom[]> {
-    return get<ChatRoom[]>("/api/chat/rooms");
+    const r = await fetch(url("/api/chat/rooms"));
+    if (!r.ok) throw new Error(`/api/chat/rooms returned ${r.status}`);
+    const data: ChatRoomListResult = await r.json();
+    return data.items;
   },
   async getRoom(id: string): Promise<ChatRoom | null> {
     return tryGet<ChatRoom>(`/api/chat/rooms/${encodeURIComponent(id)}`);
+  },
+  async createRoom(input: ChatRoomCreateInput): Promise<ChatRoom> {
+    return post<ChatRoom>("/api/chat/rooms", input);
+  },
+  async sendMessage(roomId: number, input: ChatMessageCreateInput): Promise<ChatMessage> {
+    return post<ChatMessage>(`/api/chat/rooms/${roomId}/messages`, input);
+  },
+  async listMessages(roomId: number, limit: number = 50): Promise<ChatMessage[]> {
+    const r = await fetch(url(`/api/chat/rooms/${roomId}/messages?limit=${limit}`));
+    if (!r.ok) throw new Error(`/api/chat/rooms/${roomId}/messages returned ${r.status}`);
+    const data: ChatMessageListResult = await r.json();
+    return data.items;
   },
 };
 
@@ -283,6 +341,9 @@ export const orchestration = {
   },
   async recentRuns(): Promise<PipelineRun[]> {
     return get<PipelineRun[]>("/api/orchestration/runs");
+  },
+  async trigger(input: OrchestrationTriggerInput): Promise<OrchestrationTriggerResult> {
+    return post<OrchestrationTriggerResult>("/api/orchestration/trigger", input);
   },
 };
 

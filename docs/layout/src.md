@@ -79,12 +79,20 @@ src/
 │   │   ├── static/                 #     Built frontend assets (gitignored)
 │   │   └── .gitignore
 │   │
-│   ├── artifacts/                  #   Versioned artifact management (stubs)
-│   ├── chat/                       #   Event-sourced chat rooms (stubs)
+│   ├── artifacts/                  #   Versioned artifact management (CRUD + revisions)
+│   │   ├── __init__.py
+│   │   └── artifacts.py            #     artifact_create/get/list/add_revision
+│   ├── chat/                       #   Chat rooms + messages (REST CRUD)
+│   │   ├── __init__.py
+│   │   └── chat.py                 #     room_list/create/get, message_list/create
+│   ├── sessions/                   #   Generic session lifecycle (work-sessions)
+│   │   ├── __init__.py
+│   │   └── sessions.py             #     session_create/get/list/update
+│   ├── tasks/                      #   Task CRUD with status tracking
+│   │   ├── __init__.py
+│   │   └── tasks.py                #     task_create/get/list/update_status
 │   ├── executors/                  #   Tasker agent management (stubs)
-│   ├── scripts/                    #   Shell script wrappers (stubs)
-│   ├── sessions/                   #   Session lifecycle (stubs)
-│   └── tasks/                      #   Task queues (stubs)
+│   └── scripts/                    #   Shell script wrappers (stubs)
 │
 └── mcp.py                          # Minimal FastMCP server (hello tool, SSE on 127.0.0.1:8765)
 ```
@@ -96,12 +104,16 @@ Active modules with implementations:
 - `meta_tools/` — Tool catalog, search (text + LLM intent), definition, help, summaries, caching
 - `npl/` — NPL YAML loading, syntax parsing, reference resolution
 - `pm_tools/` — PRD, user story, and persona access (file-based + database-backed)
-- `instructions/` — Instruction management with vector embeddings
+- `instructions/` — Instruction CRUD + versioning + vector embeddings (create/get/list/update)
 - `tool_sessions/` — Tool session lifecycle and project management
 - `browser/` — Ping, Screenshot, Download, Rest, Secrets, ToMarkdown
 - `storage/` — PostgreSQL async connection pool
+- `artifacts/` — Versioned artifact storage (create/get/list/add_revision)
+- `chat/` — Chat rooms + messages REST CRUD (npl_chat_rooms / npl_chat_messages)
+- `sessions/` — Generic work-session lifecycle (npl_generic_sessions)
+- `tasks/` — Task CRUD with status transitions (npl_tasks)
 - `launcher.py` — Server lifecycle management
 - `convention_formatter.py` — NPL convention YAML formatting
 
 Stub modules (tools raise `NotImplementedError`):
-- `artifacts/`, `chat/`, `executors/`, `scripts/`, `sessions/`, `tasks/`
+- `executors/`, `scripts/`

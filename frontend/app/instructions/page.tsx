@@ -3,7 +3,6 @@
 import { useState, useMemo } from "react";
 import useSWR from "swr";
 import Link from "next/link";
-import clsx from "clsx";
 import { BookOpenIcon } from "@heroicons/react/24/outline";
 
 import { api } from "@/lib/api/client";
@@ -14,7 +13,11 @@ import { Badge } from "@/components/primitives/Badge";
 import { Tag } from "@/components/primitives/Tag";
 import { EmptyState } from "@/components/primitives/EmptyState";
 import { PageHeader } from "@/components/primitives/PageHeader";
+import { Button } from "@/components/primitives/Button";
+import { Segmented } from "@/components/primitives/Segmented";
+import { SkeletonGrid } from "@/components/primitives/SkeletonGrid";
 import { SearchBox } from "@/components/forms/SearchBox";
+import { FilterBar } from "@/components/composites/FilterBar";
 
 import { relativeTime } from "@/lib/utils/format";
 
@@ -22,7 +25,7 @@ import { relativeTime } from "@/lib/utils/format";
 
 function InstructionCard({ instruction }: { instruction: Instruction }) {
   return (
-    <Link href={`/instructions/${instruction.uuid}`} className="block">
+    <Link href={`/instructions/${instruction.uuid}`} className="block rounded-lg focus-ring">
       <Card hoverable className="h-full flex flex-col gap-2">
         <div className="flex items-start justify-between gap-2 min-w-0">
           <span className="font-semibold text-sm text-foreground truncate flex-1">
@@ -37,17 +40,20 @@ function InstructionCard({ instruction }: { instruction: Instruction }) {
           {instruction.description}
         </p>
 
-        <div className="flex items-center justify-between gap-2 mt-1">
-          <div className="flex flex-wrap gap-1 min-w-0">
-            {instruction.tags.map((tag) => (
-              <Badge key={tag} variant="default" size="sm">
-                {tag}
-              </Badge>
-            ))}
+        <div className="grid gap-2 mt-1">
+          {instruction.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 min-w-0">
+              {instruction.tags.map((tag) => (
+                <Badge key={tag} variant="default" size="sm">
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          )}
+          <div className="flex items-center justify-between gap-2 text-xs text-subtle">
+            <span>Updated {relativeTime(instruction.updated_at)}</span>
+            <span>{instruction.tags.length} {instruction.tags.length === 1 ? "tag" : "tags"}</span>
           </div>
-          <span className="text-xs text-subtle shrink-0">
-            {relativeTime(instruction.updated_at)}
-          </span>
         </div>
       </Card>
     </Link>
@@ -120,91 +126,85 @@ export default function InstructionsPage() {
         description="Versioned instruction documents with text and intent search."
       />
 
-      {/* Tag cloud */}
-      {allTags.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
-          {allTags.map((tag) => (
-            <button
-              key={tag}
-              type="button"
-              onClick={() => toggleTag(tag)}
-              className="shrink-0"
-              aria-pressed={activeTags.has(tag)}
-            >
-              <Tag label={tag} active={activeTags.has(tag)} />
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Search + mode toggle */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="flex-1 min-w-[180px]">
+      {/* Search + mode toggle (row 1) + tag cloud (row 2) */}
+      <FilterBar
+        search={
           <SearchBox
             value={search}
             onChange={setSearch}
             onClear={() => setSearch("")}
             placeholder="Search instructions…"
           />
-        </div>
-
-        {/* Mode pills */}
-        <div className="flex gap-1 rounded-lg bg-surface-raised border border-border p-1 shrink-0">
-          {(["text", "intent"] as const).map((mode) => (
-            <button
-              key={mode}
-              type="button"
-              onClick={() => setSearchMode(mode)}
-              className={clsx(
-                "rounded-md px-3 py-1 text-xs font-medium capitalize transition-colors",
-                searchMode === mode
-                  ? "bg-brand-500 text-white"
-                  : "text-muted hover:text-foreground"
-              )}
+        }
+        filters={
+          <Segmented
+            aria-label="Search mode"
+            value={searchMode}
+            onChange={setSearchMode}
+            options={[
+              { value: "text", label: "Text" },
+              { value: "intent", label: "Intent (mock)" },
+            ]}
+          />
+        }
+        secondary={
+          allTags.length > 0 ? (
+            <div
+              className="flex flex-wrap gap-2"
+              role="group"
+              aria-label="Filter by tag"
             >
-              {mode === "intent" ? "Intent (mock)" : "Text"}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Result count hint */}
-      {!isLoading && instructions && (
-        <p className="text-xs text-muted -mt-2">
-          {filtered.length} {filtered.length === 1 ? "instruction" : "instructions"}
-          {activeTags.size > 0 && ` · ${activeTags.size} tag${activeTags.size > 1 ? "s" : ""} active`}
-          {searchMode === "intent" && search.trim() && (
-            <span className="ml-1 text-subtle italic">(intent search is simulated)</span>
-          )}
-        </p>
-      )}
+              {allTags.map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => toggleTag(tag)}
+                  className="focus-ring rounded-full shrink-0"
+                  aria-pressed={activeTags.has(tag)}
+                >
+                  <Tag label={tag} active={activeTags.has(tag)} />
+                </button>
+              ))}
+            </div>
+          ) : undefined
+        }
+        hasActive={Boolean(search) || activeTags.size > 0}
+        onClear={() => {
+          setSearch("");
+          setActiveTags(new Set());
+        }}
+        summary={
+          !isLoading && instructions ? (
+            <>
+              {filtered.length} {filtered.length === 1 ? "instruction" : "instructions"}
+              {activeTags.size > 0 && ` · ${activeTags.size} tag${activeTags.size > 1 ? "s" : ""} active`}
+              {searchMode === "intent" && search.trim() && (
+                <span className="ml-1 text-subtle italic">(intent search is simulated)</span>
+              )}
+            </>
+          ) : undefined
+        }
+      />
 
       {/* Grid */}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-32 rounded-lg bg-surface-raised border border-border animate-pulse"
-            />
-          ))}
-        </div>
+        <SkeletonGrid as="card" count={6} />
       ) : filtered.length === 0 ? (
         <EmptyState
           icon={<BookOpenIcon />}
           title="No instructions match your filters"
           description="Try adjusting your search query or clearing active tags."
           action={
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => {
                 setSearch("");
                 setActiveTags(new Set());
               }}
-              className="text-sm text-accent hover:underline"
             >
               Clear all filters
-            </button>
+            </Button>
           }
         />
       ) : (

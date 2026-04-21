@@ -1,68 +1,92 @@
 "use client";
 
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import useSWR from "swr";
 import { api } from "@/lib/api/client";
 import { Card } from "@/components/primitives/Card";
+import { Button } from "@/components/primitives/Button";
 import { EmptyState } from "@/components/primitives/EmptyState";
 import { PageHeader } from "@/components/primitives/PageHeader";
+import { useToast } from "@/components/primitives/ToastContainer";
 import { relativeTime } from "@/lib/utils/format";
 
-// ── Static mock messages ──────────────────────────────────────────────────
+// ── Author color helper ───────────────────────────────────────────────────
 
-const MOCK_MESSAGES = [
-  {
-    id: "msg-1",
-    author: "npl-tdd-coder",
-    timestamp: "2026-04-21T09:14:00Z",
-    body: "Pushed initial test suite for the NPLLoad refactor. Coverage is at 87%.",
-  },
-  {
-    id: "msg-2",
-    author: "npl-prd-editor",
-    timestamp: "2026-04-21T09:22:00Z",
-    body: "PRD-007 updated with revised acceptance criteria for the web interface section.",
-  },
-  {
-    id: "msg-3",
-    author: "npl-tdd-debugger",
-    timestamp: "2026-04-21T10:05:00Z",
-    body: "Root cause found: the FastMCP 3.x upgrade changed the tool dispatch signature. Fix incoming.",
-  },
-  {
-    id: "msg-4",
-    author: "npl-winnower",
-    timestamp: "2026-04-21T10:47:00Z",
-    body: "Response quality scores for the last 20 tool invocations are within acceptable bounds.",
-  },
-  {
-    id: "msg-5",
-    author: "npl-tasker-sonnet",
-    timestamp: "2026-04-21T11:30:00Z",
-    body: "Assigned to npl-core task queue. Estimated completion: 2 pipeline cycles.",
-  },
+const AUTHOR_COLORS = [
+  "text-blue-400",
+  "text-emerald-400",
+  "text-violet-400",
+  "text-amber-400",
+  "text-rose-400",
+  "text-cyan-400",
+  "text-fuchsia-400",
+  "text-lime-400",
 ];
+
+function authorColor(author: string): string {
+  let hash = 0;
+  for (let i = 0; i < author.length; i++) {
+    hash = (hash * 31 + author.charCodeAt(i)) & 0xffff;
+  }
+  return AUTHOR_COLORS[hash % AUTHOR_COLORS.length];
+}
 
 // ── Component ─────────────────────────────────────────────────────────────
 
 export default function ChatRoomClient() {
   const params = useParams<{ id: string }>();
-  const { data: room, isLoading } = useSWR(
-    params?.id ? `chat.room.${params.id}` : null,
-    () => api.chat.getRoom(params!.id)
+  const id = params?.id ?? "";
+  const { toast } = useToast();
+
+  const { data: room, isLoading: roomLoading } = useSWR(
+    id ? `chat.room.${id}` : null,
+    () => api.chat.getRoom(id)
   );
+
+  const { data: messages, mutate: mutateMessages } = useSWR(
+    id ? `chat.messages.${id}` : null,
+    () => api.chat.listMessages(Number(id)),
+    { refreshInterval: 3000 }
+  );
+
+  const [draft, setDraft] = useState("");
+  const [sending, setSending] = useState(false);
+  const feedRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to bottom when messages update
+  useEffect(() => {
+    if (feedRef.current) {
+      feedRef.current.scrollTop = feedRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  const sendMessage = async () => {
+    if (!draft.trim() || sending) return;
+    setSending(true);
+    try {
+      await api.chat.sendMessage(Number(id), { content: draft.trim() });
+      setDraft("");
+      mutateMessages();
+    } catch {
+      toast("Failed to send message", "error");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
 
   return (
     <div className="flex flex-col gap-6 max-w-3xl">
-      {/* Banner */}
-      <div className="rounded-md border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning">
-        <strong>Preview only — chat module not yet implemented (PRD-004).</strong> Mock rooms are
-        shown for UI preview only.
-      </div>
-
-      {isLoading ? (
-        <div className="h-24 rounded-lg bg-surface-raised border border-border animate-pulse" />
+      {roomLoading ? (
+        <div className="h-24 rounded-lg bg-surface-1 border border-border animate-pulse" />
       ) : room ? (
         <PageHeader title={room.name} description={room.description} />
       ) : (
@@ -72,7 +96,7 @@ export default function ChatRoomClient() {
           action={
             <Link
               href="/chat"
-              className="inline-flex items-center gap-1 rounded-md bg-brand-500 px-4 py-2 text-sm text-white hover:bg-brand-600"
+              className="inline-flex items-center gap-1 rounded-md bg-accent px-4 py-2 text-sm text-accent-on hover:bg-accent-soft"
             >
               Back to chat rooms
             </Link>
@@ -82,39 +106,54 @@ export default function ChatRoomClient() {
 
       {/* Message feed */}
       <Card className="flex flex-col gap-0 p-0 overflow-hidden">
-        <div className="px-4 py-3 border-b border-border bg-surface">
-          <h2 className="text-sm font-semibold text-foreground">Messages (mock)</h2>
+        <div className="px-4 py-3 border-b border-border bg-surface-1">
+          <h2 className="text-sm font-semibold text-foreground">Messages</h2>
         </div>
-        <div className="flex flex-col divide-y divide-border">
-          {MOCK_MESSAGES.map((msg) => (
-            <div key={msg.id} className="px-4 py-4 flex flex-col gap-1">
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-xs font-semibold text-foreground">
-                  {msg.author}
-                </span>
-                <span className="text-xs text-subtle">{relativeTime(msg.timestamp)}</span>
-              </div>
-              <p className="text-sm text-muted">{msg.body}</p>
+        <div
+          ref={feedRef}
+          className="flex flex-col divide-y divide-border max-h-[480px] overflow-y-auto"
+        >
+          {!messages || messages.length === 0 ? (
+            <div className="px-4 py-8 text-center text-sm text-subtle">
+              No messages yet. Start the conversation.
             </div>
-          ))}
+          ) : (
+            messages.map((msg) => (
+              <div key={msg.id} className="px-4 py-4 flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <span className={`font-mono text-xs font-semibold ${authorColor(msg.author)}`}>
+                    {msg.author}
+                  </span>
+                  <span className="text-xs text-subtle">{msg.created_at ? relativeTime(msg.created_at) : "—"}</span>
+                </div>
+                <p className="text-sm text-muted">{msg.content}</p>
+              </div>
+            ))
+          )}
         </div>
       </Card>
 
-      {/* Disabled input */}
+      {/* Message input */}
       <Card className="flex flex-col gap-3">
         <textarea
-          disabled
-          placeholder="Chat unavailable in preview"
-          className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-muted placeholder:text-subtle resize-none h-20 cursor-not-allowed opacity-60"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Type a message… (Enter to send, Shift+Enter for newline)"
+          disabled={sending}
+          className="w-full rounded-md border border-border bg-surface-1 px-3 py-2 text-sm text-foreground placeholder:text-subtle resize-none h-20 focus:outline-none focus:ring-2 focus:ring-accent"
         />
         <div className="flex justify-end">
-          <button
+          <Button
             type="button"
-            disabled
-            className="px-4 py-2 rounded-md bg-brand-500 text-white text-sm font-medium opacity-40 cursor-not-allowed"
+            variant="primary"
+            size="sm"
+            loading={sending}
+            disabled={!draft.trim()}
+            onClick={sendMessage}
           >
             Send
-          </button>
+          </Button>
         </div>
       </Card>
     </div>

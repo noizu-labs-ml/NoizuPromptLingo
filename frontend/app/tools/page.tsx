@@ -14,8 +14,11 @@ import { Card } from "@/components/primitives/Card";
 import { Badge } from "@/components/primitives/Badge";
 import { EmptyState } from "@/components/primitives/EmptyState";
 import { PageHeader } from "@/components/primitives/PageHeader";
+import { SkeletonGrid } from "@/components/primitives/SkeletonGrid";
+import { Button } from "@/components/primitives/Button";
 import { SearchBox } from "@/components/forms/SearchBox";
 import { FilterListbox } from "@/components/forms/FilterListbox";
+import { FilterBar } from "@/components/composites/FilterBar";
 
 // ── Category tree helpers ─────────────────────────────────────────────────
 
@@ -64,13 +67,13 @@ function buildCategoryTree(categories: CategoryInfo[]): CategoryNode[] {
 
 function ToolCard({ tool }: { tool: ToolEntry }) {
   return (
-    <Link href={`/tools/${encodeURIComponent(tool.name)}`} className="block">
+    <Link href={`/tools/${encodeURIComponent(tool.name)}`} className="block rounded-lg focus-ring">
       <Card hoverable className="h-full flex flex-col gap-2">
         <div className="flex items-start justify-between gap-2 min-w-0">
           <span className="font-mono text-sm font-semibold text-foreground truncate">
             {tool.name}
           </span>
-          <Badge variant="info" size="sm">
+          <Badge variant="accent" size="sm">
             {tool.category}
           </Badge>
         </div>
@@ -108,10 +111,10 @@ function CategorySidebar({
         type="button"
         onClick={() => onSelect("")}
         className={clsx(
-          "text-left px-3 py-2 rounded-md text-sm font-medium transition-colors",
+          "focus-ring text-left px-3 py-2 rounded-md text-sm font-medium transition-colors",
           selected === ""
             ? "bg-accent/20 text-accent"
-            : "text-muted hover:text-foreground hover:bg-surface"
+            : "text-muted hover:text-foreground hover:bg-surface-1"
         )}
       >
         All tools
@@ -124,10 +127,10 @@ function CategorySidebar({
             type="button"
             onClick={() => onSelect(node.fullPath)}
             className={clsx(
-              "text-left px-3 py-2 rounded-md text-sm font-medium transition-colors",
+              "focus-ring text-left px-3 py-2 rounded-md text-sm font-medium transition-colors",
               selected === node.fullPath
                 ? "bg-accent/20 text-accent"
-                : "text-muted hover:text-foreground hover:bg-surface"
+                : "text-muted hover:text-foreground hover:bg-surface-1"
             )}
           >
             {node.name}
@@ -139,10 +142,10 @@ function CategorySidebar({
               <>
                 <DisclosureButton
                   className={clsx(
-                    "flex w-full items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                    "focus-ring flex w-full items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition-colors",
                     selected === node.fullPath
                       ? "bg-accent/20 text-accent"
-                      : "text-muted hover:text-foreground hover:bg-surface"
+                      : "text-muted hover:text-foreground hover:bg-surface-1"
                   )}
                   onClick={(e: React.MouseEvent) => {
                     // Allow category select on name click; disclosure handles expand
@@ -173,10 +176,10 @@ function CategorySidebar({
                       type="button"
                       onClick={() => onSelect(child.fullPath)}
                       className={clsx(
-                        "text-left px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
+                        "focus-ring text-left px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
                         selected === child.fullPath
                           ? "bg-accent/20 text-accent"
-                          : "text-muted hover:text-foreground hover:bg-surface"
+                          : "text-muted hover:text-foreground hover:bg-surface-1"
                       )}
                     >
                       {child.name}
@@ -278,52 +281,60 @@ export default function ToolsPage() {
         {/* ── Right pane ───────────────────────────────────────────────── */}
         <div className="flex-1 min-w-0 flex flex-col gap-4">
           {/* Filters row */}
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex-1 min-w-[180px]">
+          <FilterBar
+            search={
               <SearchBox
                 value={search}
                 onChange={setSearch}
                 onClear={() => setSearch("")}
                 placeholder="Search tools…"
               />
-            </div>
-            {tagOptions.length > 0 && (
-              <FilterListbox
-                label="Tags"
-                options={tagOptions}
-                selected={selectedTags}
-                onChange={setSelectedTags}
-              />
-            )}
-          </div>
+            }
+            filters={
+              tagOptions.length > 0 ? (
+                <FilterListbox
+                  label="Tags"
+                  options={tagOptions}
+                  selected={selectedTags}
+                  onChange={setSelectedTags}
+                />
+              ) : undefined
+            }
+            hasActive={Boolean(search || selectedCategory || selectedTags.length > 0)}
+            onClear={() => {
+              setSearch("");
+              setSelectedCategory("");
+              setSelectedTags([]);
+            }}
+            summary={
+              tools
+                ? `${filtered.length} ${filtered.length === 1 ? "tool" : "tools"}${
+                    selectedCategory ? ` in ${selectedCategory}` : ""
+                  }`
+                : undefined
+            }
+          />
 
           {/* Tool grid */}
           {toolsLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="h-32 rounded-lg bg-surface-raised border border-border animate-pulse"
-                />
-              ))}
-            </div>
+            <SkeletonGrid as="card" count={6} />
           ) : filtered.length === 0 ? (
             <EmptyState
               icon={<WrenchScrewdriverIcon />}
               title="No tools match your filters"
               description="Try adjusting your search query, category selection, or tag filters."
               action={
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => {
                     setSearch("");
                     setSelectedCategory("");
                     setSelectedTags([]);
                   }}
-                  className="text-sm text-accent hover:underline"
                 >
                   Clear all filters
-                </button>
+                </Button>
               }
             />
           ) : (

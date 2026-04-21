@@ -6,25 +6,35 @@ import Link from "next/link";
 import useSWR from "swr";
 import clsx from "clsx";
 import {
-  TabGroup,
-  TabList,
-  Tab,
-  TabPanels,
-  TabPanel,
   Disclosure,
   DisclosureButton,
   DisclosurePanel,
+  TabPanel,
 } from "@headlessui/react";
 import { ChevronRightIcon } from "@heroicons/react/24/outline";
 
 import { api } from "@/lib/api/client";
-import type { Session, SessionTreeNode } from "@/lib/api/types";
+import type { SessionTreeNode } from "@/lib/api/types";
 
 import { Badge } from "@/components/primitives/Badge";
 import { Card } from "@/components/primitives/Card";
 import { EmptyState } from "@/components/primitives/EmptyState";
-import { PageHeader } from "@/components/primitives/PageHeader";
-import { truncate } from "@/lib/utils/format";
+import { Textarea } from "@/components/primitives/Textarea";
+import { Button } from "@/components/primitives/Button";
+import { FormField } from "@/components/primitives/FormField";
+import { DetailHeader } from "@/components/composites/DetailHeader";
+import { TabBar } from "@/components/composites/TabBar";
+import { truncate, relativeTime } from "@/lib/utils/format";
+
+// ── Activity event type ───────────────────────────────────────────────────
+
+interface ActivityEvent {
+  id: string;
+  type: "sub_session" | "error" | "note" | "artifact";
+  summary: string;
+  detail?: string | null;
+  created_at: string | null;
+}
 
 // ── Metadata row helper ───────────────────────────────────────────────────
 
@@ -63,8 +73,8 @@ function TreeNode({
                 className={clsx(
                   "flex items-center gap-2 rounded-md px-3 py-2 text-sm text-left transition-colors w-full",
                   isCurrent
-                    ? "border-l-2 border-brand-500 bg-surface-raised text-foreground font-medium"
-                    : "text-muted hover:text-foreground hover:bg-surface-raised"
+                    ? "border-l-2 border-accent bg-surface-1 text-foreground font-medium"
+                    : "text-muted hover:text-foreground hover:bg-surface-1"
                 )}
               >
                 <ChevronRightIcon
@@ -97,8 +107,8 @@ function TreeNode({
           className={clsx(
             "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
             isCurrent
-              ? "border-l-2 border-brand-500 bg-surface-raised text-foreground font-medium"
-              : "text-muted hover:text-foreground hover:bg-surface-raised"
+              ? "border-l-2 border-accent bg-surface-1 text-foreground font-medium"
+              : "text-muted hover:text-foreground hover:bg-surface-1"
           )}
         >
           <span className="h-3.5 w-3.5 shrink-0" />
@@ -162,11 +172,18 @@ export default function SessionDetailClient() {
     () => api.sessions.tree(rootUuid!)
   );
 
+  const { data: activity } = useSWR(
+    uuid ? `sessions.${uuid}.activity` : null,
+    () => fetch(`/api/sessions/${encodeURIComponent(uuid)}/activity?limit=50`)
+      .then(r => r.ok ? r.json() : { items: [], count: 0 })
+      .then((d: { items: ActivityEvent[] }) => d.items),
+  );
+
   if (sessionLoading) {
     return (
       <div className="flex flex-col gap-6">
-        <div className="h-16 bg-surface-raised border border-border rounded-lg animate-pulse" />
-        <div className="h-64 bg-surface-raised border border-border rounded-lg animate-pulse" />
+        <div className="h-16 bg-surface-1 border border-border rounded-lg animate-pulse" />
+        <div className="h-64 bg-surface-1 border border-border rounded-lg animate-pulse" />
       </div>
     );
   }
@@ -185,147 +202,163 @@ export default function SessionDetailClient() {
     );
   }
 
-  const TAB_NAMES = ["Overview", "Hierarchy", "Activity"];
-
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader
+      <DetailHeader
+        breadcrumbs={[
+          { label: "Sessions", href: "/sessions" },
+          { label: session.agent },
+        ]}
+        backHref="/sessions"
+        backLabel="Back to sessions"
         title={session.agent}
         description={session.brief}
-        actions={<Badge variant="info">{session.project}</Badge>}
+        actions={<Badge variant="accent">{session.project}</Badge>}
       />
 
-      <TabGroup>
-        <TabList className="flex gap-1 border-b border-border pb-0">
-          {TAB_NAMES.map((name) => (
-            <Tab
-              key={name}
-              className={({ selected }: { selected: boolean }) =>
-                clsx(
-                  "px-4 py-2 text-sm font-medium rounded-t-md transition-colors focus:outline-none",
-                  selected
-                    ? "bg-surface-raised text-foreground border border-border border-b-surface-raised -mb-px"
-                    : "text-muted hover:text-foreground"
-                )
-              }
-            >
-              {name}
-            </Tab>
-          ))}
-        </TabList>
+      <TabBar
+        tabs={[
+          { id: "overview", label: "Overview" },
+          { id: "hierarchy", label: "Hierarchy" },
+          { id: "activity", label: "Activity" },
+        ]}
+        defaultIndex={0}
+      >
+        {/* ── Overview Tab ─────────────────────────────────────────── */}
+        <TabPanel>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Metadata card */}
+            <Card>
+              <h3 className="text-sm font-semibold text-foreground mb-3">Metadata</h3>
+              <MetaRow label="UUID">
+                <span className="font-mono text-xs break-all">{session.uuid}</span>
+              </MetaRow>
+              <MetaRow label="Agent">
+                <span className="font-mono">{session.agent}</span>
+              </MetaRow>
+              <MetaRow label="Task">
+                <span className="text-muted">{session.task}</span>
+              </MetaRow>
+              <MetaRow label="Project">
+                <Badge variant="accent">{session.project}</Badge>
+              </MetaRow>
+              <MetaRow label="Created">
+                <span className="text-muted">{new Date(session.created_at).toLocaleString()}</span>
+              </MetaRow>
+              <MetaRow label="Updated">
+                <span className="text-muted">{new Date(session.updated_at).toLocaleString()}</span>
+              </MetaRow>
+              {session.parent && (
+                <MetaRow label="Parent">
+                  <Link
+                    href={`/sessions/${session.parent}`}
+                    className="font-mono text-xs text-accent hover:underline"
+                  >
+                    {session.parent}
+                  </Link>
+                </MetaRow>
+              )}
+            </Card>
 
-        <TabPanels className="mt-4">
-          {/* ── Overview Tab ─────────────────────────────────────────── */}
-          <TabPanel>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Metadata card */}
-              <Card>
-                <h3 className="text-sm font-semibold text-foreground mb-3">Metadata</h3>
-                <MetaRow label="UUID">
-                  <span className="font-mono text-xs break-all">{session.uuid}</span>
-                </MetaRow>
-                <MetaRow label="Agent">
-                  <span className="font-mono">{session.agent}</span>
-                </MetaRow>
-                <MetaRow label="Task">
-                  <span className="text-muted">{session.task}</span>
-                </MetaRow>
-                <MetaRow label="Project">
-                  <Badge variant="info">{session.project}</Badge>
-                </MetaRow>
-                <MetaRow label="Created">
-                  <span className="text-muted">{new Date(session.created_at).toLocaleString()}</span>
-                </MetaRow>
-                <MetaRow label="Updated">
-                  <span className="text-muted">{new Date(session.updated_at).toLocaleString()}</span>
-                </MetaRow>
-                {session.parent && (
-                  <MetaRow label="Parent">
-                    <Link
-                      href={`/sessions/${session.parent}`}
-                      className="font-mono text-xs text-accent hover:underline"
-                    >
-                      {session.parent}
-                    </Link>
-                  </MetaRow>
-                )}
-              </Card>
+            {/* Notes card */}
+            <Card>
+              <h3 className="text-sm font-semibold text-foreground mb-3">Notes</h3>
+              {session.notes ? (
+                <p className="text-sm text-foreground whitespace-pre-wrap">{session.notes}</p>
+              ) : (
+                <p className="text-sm text-muted">No notes.</p>
+              )}
 
-              {/* Notes card */}
-              <Card>
-                <h3 className="text-sm font-semibold text-foreground mb-3">Notes</h3>
-                {session.notes ? (
-                  <p className="text-sm text-foreground whitespace-pre-wrap">{session.notes}</p>
-                ) : (
-                  <p className="text-sm text-muted">No notes.</p>
-                )}
-
-                <div className="mt-4 pt-3 border-t border-border flex flex-col gap-2">
-                  <label className="text-xs font-medium text-subtle uppercase tracking-wide">
-                    Append note
-                  </label>
-                  <textarea
+              <div className="mt-4 pt-3 border-t border-border flex flex-col gap-2">
+                <FormField
+                  label="Append note"
+                  htmlFor="session-append-note"
+                  helper="Substring-deduped: if the exact text already exists in notes, no update is made."
+                >
+                  <Textarea
+                    id="session-append-note"
                     rows={3}
                     value={newNote}
                     onChange={(e) => setNewNote(e.target.value)}
                     placeholder="Cross-agent worklog note…"
                     disabled={noteSubmitting}
-                    className="font-mono text-xs rounded-md border border-border bg-surface-sunken px-3 py-2 text-foreground placeholder:text-subtle focus:outline-none focus:ring-2 focus:ring-accent/40 resize-y"
+                    mono
                   />
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="text-xs">
-                      {noteError && <span className="text-danger">{noteError}</span>}
-                      {!noteError && lastAction === "appended" && (
-                        <span className="text-success">Note appended.</span>
-                      )}
-                      {!noteError && lastAction === "noop" && (
-                        <span className="text-muted">Note already present — no change.</span>
-                      )}
-                    </div>
-                    <button
-                      onClick={handleAppendNote}
-                      disabled={noteSubmitting || !newNote.trim()}
-                      className={clsx(
-                        "text-xs rounded-md px-3 py-1.5 font-medium transition-colors",
-                        noteSubmitting || !newNote.trim()
-                          ? "bg-surface-raised text-subtle cursor-not-allowed"
-                          : "bg-accent text-white hover:bg-accent/90"
-                      )}
-                    >
-                      {noteSubmitting ? "Appending…" : "Append"}
-                    </button>
+                </FormField>
+                <div className="flex items-center justify-between gap-2">
+                  <div
+                    className="text-xs"
+                    role={noteError ? "alert" : "status"}
+                    aria-live="polite"
+                  >
+                    {noteError && <span className="text-danger">{noteError}</span>}
+                    {!noteError && lastAction === "appended" && (
+                      <span className="text-success">Note appended.</span>
+                    )}
+                    {!noteError && lastAction === "noop" && (
+                      <span className="text-muted">Note already present — no change.</span>
+                    )}
                   </div>
-                  <p className="text-[10px] text-subtle">
-                    Substring-deduped: if the exact text already exists in notes, no update is made.
-                  </p>
+                  <Button
+                    size="sm"
+                    onClick={handleAppendNote}
+                    disabled={noteSubmitting || !newNote.trim()}
+                    loading={noteSubmitting}
+                  >
+                    {noteSubmitting ? "Appending…" : "Append"}
+                  </Button>
                 </div>
-              </Card>
-            </div>
-          </TabPanel>
-
-          {/* ── Hierarchy Tab ─────────────────────────────────────────── */}
-          <TabPanel>
-            <Card>
-              <h3 className="text-sm font-semibold text-foreground mb-3">Session Tree</h3>
-              {tree ? (
-                <div className="flex flex-col gap-0.5">
-                  <TreeNode node={tree} currentUuid={session.uuid} depth={0} />
-                </div>
-              ) : (
-                <p className="text-sm text-muted">Loading tree…</p>
-              )}
+              </div>
             </Card>
-          </TabPanel>
+          </div>
+        </TabPanel>
 
-          {/* ── Activity Tab ─────────────────────────────────────────── */}
-          <TabPanel>
+        {/* ── Hierarchy Tab ─────────────────────────────────────────── */}
+        <TabPanel>
+          <Card>
+            <h3 className="text-sm font-semibold text-foreground mb-3">Session Tree</h3>
+            {tree ? (
+              <div className="flex flex-col gap-0.5">
+                <TreeNode node={tree} currentUuid={session.uuid} depth={0} />
+              </div>
+            ) : (
+              <p className="text-sm text-muted">Loading tree…</p>
+            )}
+          </Card>
+        </TabPanel>
+
+        {/* ── Activity Tab ─────────────────────────────────────────── */}
+        <TabPanel>
+          {!activity || activity.length === 0 ? (
             <EmptyState
-              title="Activity coming soon"
-              description="Activity instrumentation coming soon. Will show tool calls, artifact updates, and sub-agent events for this session."
+              title="No activity yet"
+              description="Sub-agent spawns, errors, and tool calls will appear here."
             />
-          </TabPanel>
-        </TabPanels>
-      </TabGroup>
+          ) : (
+            <div className="space-y-2">
+              {activity.map((event) => (
+                <div key={event.id} className="flex items-start gap-3 rounded-md border border-border p-3 text-sm">
+                  <span className={clsx(
+                    "mt-0.5 h-2 w-2 shrink-0 rounded-full",
+                    event.type === "error" ? "bg-danger" : event.type === "sub_session" ? "bg-accent" : "bg-success"
+                  )} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-foreground truncate">{event.summary}</p>
+                    {event.created_at && (
+                      <p className="text-xs text-muted mt-0.5">{relativeTime(event.created_at)}</p>
+                    )}
+                  </div>
+                  {event.type === "sub_session" && event.detail && (
+                    <Link href={`/sessions/${event.detail}`} className="text-xs text-accent hover:underline shrink-0">
+                      View
+                    </Link>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </TabPanel>
+      </TabBar>
     </div>
   );
 }

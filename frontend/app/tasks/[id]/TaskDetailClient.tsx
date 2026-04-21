@@ -1,14 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import useSWR from "swr";
 import clsx from "clsx";
-import {
-  ArrowLeftIcon,
-  QueueListIcon,
-} from "@heroicons/react/24/outline";
+import { QueueListIcon } from "@heroicons/react/24/outline";
 
 import { api } from "@/lib/api/client";
 import type { Task, TaskStatus } from "@/lib/api/types";
@@ -16,7 +12,10 @@ import { Card } from "@/components/primitives/Card";
 import { Badge } from "@/components/primitives/Badge";
 import type { BadgeProps } from "@/components/primitives/Badge";
 import { EmptyState } from "@/components/primitives/EmptyState";
-import { PageHeader } from "@/components/primitives/PageHeader";
+import { DetailHeader } from "@/components/composites/DetailHeader";
+import { FormField } from "@/components/primitives/FormField";
+import { Textarea } from "@/components/primitives/Textarea";
+import { Button } from "@/components/primitives/Button";
 
 const STATUSES: TaskStatus[] = ["pending", "in_progress", "blocked", "review", "done"];
 
@@ -89,9 +88,9 @@ export function TaskDetailClient() {
   if (isLoading) {
     return (
       <div className="space-y-6 animate-pulse">
-        <div className="h-8 bg-surface-sunken rounded w-1/3" />
-        <div className="h-4 bg-surface-sunken rounded w-2/3" />
-        <div className="h-40 bg-surface-sunken rounded" />
+        <div className="h-8 bg-surface-1 rounded w-1/3" />
+        <div className="h-4 bg-surface-1 rounded w-2/3" />
+        <div className="h-40 bg-surface-1 rounded" />
       </div>
     );
   }
@@ -99,12 +98,15 @@ export function TaskDetailClient() {
   if (error || !task) {
     return (
       <div className="space-y-4">
-        <Link
-          href="/tasks"
-          className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors"
-        >
-          <ArrowLeftIcon className="h-3.5 w-3.5" /> Back to tasks
-        </Link>
+        <DetailHeader
+          breadcrumbs={[
+            { label: "Tasks", href: "/tasks" },
+            { label: idRaw || "—" },
+          ]}
+          backHref="/tasks"
+          backLabel="Back to tasks"
+          title="Task not found"
+        />
         <EmptyState
           icon={<QueueListIcon />}
           title="Task not found"
@@ -116,14 +118,13 @@ export function TaskDetailClient() {
 
   return (
     <div className="space-y-6">
-      <Link
-        href="/tasks"
-        className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors"
-      >
-        <ArrowLeftIcon className="h-3.5 w-3.5" /> Back to tasks
-      </Link>
-
-      <PageHeader
+      <DetailHeader
+        breadcrumbs={[
+          { label: "Tasks", href: "/tasks" },
+          { label: `#${task.id}` },
+        ]}
+        backHref="/tasks"
+        backLabel="Back to tasks"
         title={task.title}
         description={task.description || undefined}
         actions={
@@ -146,34 +147,33 @@ export function TaskDetailClient() {
             ) : (
               <p className="text-sm text-subtle italic">No notes yet.</p>
             )}
-            <div className="mt-4 pt-3 border-t border-border flex flex-col gap-2">
-              <label className="text-xs font-medium text-subtle uppercase tracking-wide">
-                Append note
-              </label>
-              <textarea
-                rows={3}
-                value={newNote}
-                onChange={(e) => setNewNote(e.target.value)}
-                placeholder="Substring-deduped against existing notes."
-                disabled={noteSubmitting}
-                className="font-mono text-xs rounded-md border border-border bg-surface-sunken px-3 py-2 text-foreground placeholder:text-subtle focus:outline-none focus:ring-2 focus:ring-accent/40 resize-y"
-              />
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs">
-                  {noteError && <span className="text-danger">{noteError}</span>}
-                </span>
-                <button
+            <div className="mt-4 pt-3 border-t border-border">
+              <FormField
+                label="Append note"
+                htmlFor="task-append-note"
+                error={noteError ?? undefined}
+                helper="Substring-deduped against existing notes."
+              >
+                <Textarea
+                  id="task-append-note"
+                  rows={3}
+                  mono
+                  value={newNote}
+                  onChange={(e) => setNewNote(e.target.value)}
+                  placeholder="Substring-deduped against existing notes."
+                  disabled={noteSubmitting}
+                />
+              </FormField>
+              <div className="mt-2 flex items-center justify-end">
+                <Button
+                  size="sm"
+                  variant="primary"
                   onClick={handleAppendNote}
+                  loading={noteSubmitting}
                   disabled={noteSubmitting || !newNote.trim()}
-                  className={clsx(
-                    "text-xs rounded-md px-3 py-1.5 font-medium transition-colors",
-                    noteSubmitting || !newNote.trim()
-                      ? "bg-surface-raised text-subtle cursor-not-allowed"
-                      : "bg-accent text-white hover:bg-accent/90"
-                  )}
                 >
                   {noteSubmitting ? "Appending…" : "Append"}
-                </button>
+                </Button>
               </div>
             </div>
           </Card>
@@ -188,13 +188,14 @@ export function TaskDetailClient() {
               {STATUSES.map((s) => (
                 <button
                   key={s}
+                  type="button"
                   onClick={() => handleStatusChange(s)}
                   disabled={statusSubmitting || s === task.status}
                   className={clsx(
-                    "flex items-center justify-between gap-2 text-xs rounded-md px-3 py-1.5 transition-colors border",
+                    "flex items-center justify-between gap-2 text-xs rounded-md px-3 py-1.5 transition-colors border focus-ring",
                     s === task.status
                       ? "border-accent/40 bg-accent/10 text-accent font-medium"
-                      : "border-border text-muted hover:text-foreground hover:bg-surface-raised"
+                      : "border-border text-muted hover:text-foreground hover:bg-surface-1",
                   )}
                 >
                   <span className="font-mono">{s}</span>
@@ -208,31 +209,37 @@ export function TaskDetailClient() {
             <h2 className="text-sm font-semibold uppercase tracking-wide text-subtle mb-3">
               Metadata
             </h2>
-            <dl className="space-y-2 text-sm">
-              <div className="flex items-center justify-between gap-2">
-                <dt className="text-xs text-subtle uppercase tracking-wide">ID</dt>
-                <dd className="font-mono text-foreground">#{task.id}</dd>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <dt className="text-xs text-subtle uppercase tracking-wide">Priority</dt>
-                <dd className="font-mono text-foreground">{task.priority}</dd>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <dt className="text-xs text-subtle uppercase tracking-wide">Assignee</dt>
-                <dd className="text-foreground">{task.assigned_to ?? <span className="text-subtle">—</span>}</dd>
-              </div>
-              <div className="flex flex-col gap-1">
-                <dt className="text-xs text-subtle uppercase tracking-wide">Created</dt>
-                <dd className="text-foreground font-mono text-xs">{task.created_at ?? "—"}</dd>
-              </div>
-              <div className="flex flex-col gap-1">
-                <dt className="text-xs text-subtle uppercase tracking-wide">Updated</dt>
-                <dd className="text-foreground font-mono text-xs">{task.updated_at ?? "—"}</dd>
-              </div>
-            </dl>
+            <MetadataList task={task} />
           </Card>
         </div>
       </div>
     </div>
+  );
+}
+
+function MetadataList({ task }: { task: Task }) {
+  return (
+    <dl className="space-y-2 text-sm">
+      <div className="flex items-center justify-between gap-2">
+        <dt className="text-xs text-subtle uppercase tracking-wide">ID</dt>
+        <dd className="font-mono text-foreground">#{task.id}</dd>
+      </div>
+      <div className="flex items-center justify-between gap-2">
+        <dt className="text-xs text-subtle uppercase tracking-wide">Priority</dt>
+        <dd className="font-mono text-foreground">{task.priority}</dd>
+      </div>
+      <div className="flex items-center justify-between gap-2">
+        <dt className="text-xs text-subtle uppercase tracking-wide">Assignee</dt>
+        <dd className="text-foreground">{task.assigned_to ?? <span className="text-subtle">—</span>}</dd>
+      </div>
+      <div className="flex flex-col gap-1">
+        <dt className="text-xs text-subtle uppercase tracking-wide">Created</dt>
+        <dd className="text-foreground font-mono text-xs">{task.created_at ?? "—"}</dd>
+      </div>
+      <div className="flex flex-col gap-1">
+        <dt className="text-xs text-subtle uppercase tracking-wide">Updated</dt>
+        <dd className="text-foreground font-mono text-xs">{task.updated_at ?? "—"}</dd>
+      </div>
+    </dl>
   );
 }

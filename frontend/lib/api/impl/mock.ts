@@ -313,7 +313,7 @@ export const chat = {
     return delay(CHAT_ROOMS);
   },
   async getRoom(id: string) {
-    return delay(CHAT_ROOMS.find((r) => r.id === id) ?? null);
+    return delay(CHAT_ROOMS.find((r) => r.id === Number(id)) ?? null);
   },
 };
 

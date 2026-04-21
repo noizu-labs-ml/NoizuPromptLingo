@@ -29,7 +29,7 @@ export function FilterListbox({
       <Listbox value={selected} onChange={onChange} multiple>
         <ListboxButton
           className={clsx(
-            "flex items-center gap-2 rounded-md border border-border bg-surface-sunken",
+            "flex items-center gap-2 rounded-md border border-border bg-surface-1",
             "px-3 py-2 text-sm text-foreground",
             "hover:border-border-strong focus:outline-none focus:border-accent transition-colors"
           )}
@@ -46,7 +46,7 @@ export function FilterListbox({
         <ListboxOptions
           className={clsx(
             "absolute z-20 mt-1 min-w-[180px] w-full",
-            "rounded-lg border border-border bg-surface-raised shadow-lg",
+            "rounded-lg border border-border bg-surface-2 shadow-elevated",
             "py-1 focus:outline-none"
           )}
         >
@@ -57,7 +57,7 @@ export function FilterListbox({
               className={({ focus }: { focus: boolean }) =>
                 clsx(
                   "flex items-center gap-2 px-3 py-2 text-sm cursor-pointer select-none",
-                  focus ? "bg-surface text-foreground" : "text-foreground"
+                  focus ? "bg-surface-1 text-foreground" : "text-foreground"
                 )
               }
             >

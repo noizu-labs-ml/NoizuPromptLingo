@@ -37,10 +37,10 @@ function TreeNode({ node, selectedPath, onSelect, depth = 0 }: TreeNodeProps) {
         type="button"
         onClick={() => onSelect(node.path)}
         className={clsx(
-          "flex items-center gap-1.5 w-full text-left rounded px-1.5 py-0.5 text-sm transition-colors",
+          "focus-ring flex items-center gap-1.5 w-full text-left rounded px-1.5 py-0.5 text-sm transition-colors",
           isSelected
             ? "bg-accent/10 text-accent font-medium"
-            : "text-muted hover:bg-surface-raised hover:text-foreground"
+            : "text-muted hover:bg-surface-1 hover:text-foreground"
         )}
         style={{ paddingLeft: `${(depth + 1) * 12 + 6}px` }}
       >
@@ -60,8 +60,8 @@ function TreeNode({ node, selectedPath, onSelect, depth = 0 }: TreeNodeProps) {
         type="button"
         onClick={() => setOpen((o) => !o)}
         className={clsx(
-          "flex items-center gap-1.5 w-full text-left rounded px-1.5 py-0.5 text-sm transition-colors",
-          "text-foreground hover:bg-surface-raised"
+          "focus-ring flex items-center gap-1.5 w-full text-left rounded px-1.5 py-0.5 text-sm transition-colors",
+          "text-foreground hover:bg-surface-1"
         )}
         style={{ paddingLeft: `${depth * 12 + 6}px` }}
       >
@@ -95,6 +95,35 @@ function TreeNode({ node, selectedPath, onSelect, depth = 0 }: TreeNodeProps) {
   );
 }
 
+// ── File preview header (DetailHeader-like slot) ─────────────────────────
+
+function FilePreviewHeader({ path }: { path: string }) {
+  const segments = path.split("/").filter(Boolean);
+  const filename = segments[segments.length - 1] ?? path;
+  const dirSegments = segments.slice(0, -1);
+
+  return (
+    <div className="flex flex-col gap-1 px-1 pb-2 border-b border-border">
+      {dirSegments.length > 0 && (
+        <div className="flex items-center gap-1 text-label uppercase text-subtle flex-wrap">
+          {dirSegments.map((seg, i) => (
+            <span key={i} className="inline-flex items-center gap-1">
+              <span className="font-mono normal-case tracking-normal">{seg}</span>
+              <ChevronRightIcon className="h-3 w-3 text-subtle" aria-hidden="true" />
+            </span>
+          ))}
+        </div>
+      )}
+      <div className="flex items-center gap-2">
+        <DocumentIcon className="h-4 w-4 text-muted shrink-0" aria-hidden="true" />
+        <h2 className="text-sm font-semibold font-mono text-foreground truncate">
+          {filename}
+        </h2>
+      </div>
+    </div>
+  );
+}
+
 // ── Inner content (uses useSearchParams — must be inside Suspense) ────────
 
 function ExplorerContent() {
@@ -124,7 +153,7 @@ function ExplorerContent() {
   return (
     <div className="flex gap-4 min-h-0 flex-1 lg:flex-row flex-col">
       {/* ── Left panel: tree ── */}
-      <aside className="lg:w-80 shrink-0 rounded-lg border border-border bg-surface-raised overflow-y-auto max-h-[70vh] lg:max-h-[calc(100vh-220px)] lg:sticky lg:top-4 p-2">
+      <aside className="lg:w-80 shrink-0 rounded-lg border border-border bg-surface-1 overflow-y-auto max-h-[70vh] lg:max-h-[calc(100vh-220px)] lg:sticky lg:top-4 p-2">
         {treeLoading ? (
           <div className="animate-pulse space-y-1 p-2">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -161,10 +190,10 @@ function ExplorerContent() {
             description="Pick a file from the tree on the left to view its contents."
           />
         ) : fileLoading ? (
-          <div className="h-64 rounded-lg bg-surface-raised border border-border animate-pulse" />
+          <div className="h-64 rounded-lg bg-surface-1 border border-border animate-pulse" />
         ) : fileContent ? (
           <div className="flex flex-col gap-2">
-            <div className="text-xs font-mono text-muted px-1">{fileContent.path}</div>
+            <FilePreviewHeader path={fileContent.path} />
             {fileContent.kind === "binary" ? (
               <EmptyState
                 icon={<DocumentIcon />}
@@ -209,7 +238,7 @@ export default function ExplorerPage() {
       />
       <Suspense
         fallback={
-          <div className="h-64 rounded-lg bg-surface-raised border border-border animate-pulse" />
+          <div className="h-64 rounded-lg bg-surface-1 border border-border animate-pulse" />
         }
       >
         <ExplorerContent />

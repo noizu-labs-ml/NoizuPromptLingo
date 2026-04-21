@@ -22,14 +22,22 @@ import type {
   ArtifactWithRevision,
   ATDocument,
   CategoryInfo,
+  ChatMessage,
+  ChatMessageCreateInput,
+  ChatMessageListResult,
   ChatRoom,
+  ChatRoomCreateInput,
+  ChatRoomListResult,
   DocContent,
   FRDocument,
   HealthReport,
   Instruction,
+  InstructionCreateInput,
   InstructionDetail,
   InstructionFilter,
   LLMCall,
+  LLMCallMetric,
+  MetricListResult,
   NPLCoverage,
   NPLElement,
   NPLLoadRequest,
@@ -40,6 +48,7 @@ import type {
   PRDDetail,
   PRDSummary,
   Project,
+  ProjectCreateInput,
   Session,
   SessionFilter,
   SessionTreeNode,
@@ -55,11 +64,14 @@ import type {
   ToMarkdownRequest,
   ToMarkdownResult,
   ToolCall,
+  ToolCallMetric,
   ToolError,
   FileContent,
   FileTreeNode,
   ToolEntry,
   ToolInvokeResult,
+  OrchestrationTriggerInput,
+  OrchestrationTriggerResult,
 } from "./types";
 
 // ── Implementation swap point ────────────────────────────────────────────
@@ -99,11 +111,13 @@ export interface SessionsAPI {
 export interface InstructionsAPI {
   list(filter?: InstructionFilter): Promise<Instruction[]>;
   get(uuid: string): Promise<InstructionDetail | null>;
+  create(input: InstructionCreateInput): Promise<InstructionDetail>;
 }
 
 export interface ProjectsAPI {
   list(): Promise<Project[]>;
   get(id: string): Promise<Project | null>;
+  create(input: ProjectCreateInput): Promise<Project>;
 }
 
 export interface PersonasAPI {
@@ -129,6 +143,9 @@ export interface MetricsAPI {
 export interface ChatAPI {
   listRooms(): Promise<ChatRoom[]>;
   getRoom(id: string): Promise<ChatRoom | null>;
+  createRoom(input: ChatRoomCreateInput): Promise<ChatRoom>;
+  sendMessage(roomId: number, input: ChatMessageCreateInput): Promise<ChatMessage>;
+  listMessages(roomId: number, limit?: number): Promise<ChatMessage[]>;
 }
 
 export interface ArtifactsAPI {
@@ -142,6 +159,7 @@ export interface ArtifactsAPI {
 export interface OrchestrationAPI {
   agents(): Promise<AgentDefinition[]>;
   recentRuns(): Promise<PipelineRun[]>;
+  trigger(input: OrchestrationTriggerInput): Promise<OrchestrationTriggerResult>;
 }
 
 export interface PRDsAPI {

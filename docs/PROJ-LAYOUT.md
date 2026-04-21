@@ -13,18 +13,26 @@ NoizuPromptLingo/
 │   │   ├── web/                    #     FastAPI routes + static assets
 │   │   ├── storage/                #     PostgreSQL async wrapper (asyncpg)
 │   │   ├── browser/                #     Ping, Screenshot, Download, Rest, Secrets, ToMarkdown
-│   │   ├── artifacts/              #     Versioned artifact management (stubs)
-│   │   ├── chat/                   #     Event-sourced chat rooms (stubs)
+│   │   ├── artifacts/              #     Versioned artifact CRUD + revisions
+│   │   ├── chat/                   #     Chat rooms + messages (REST CRUD)
+│   │   ├── sessions/               #     Generic work-session lifecycle
+│   │   ├── tasks/                  #     Task CRUD with status tracking
 │   │   ├── executors/              #     Tasker agent management (stubs)
 │   │   ├── scripts/                #     Shell script wrappers (stubs)
-│   │   ├── sessions/               #     Session lifecycle (stubs)
-│   │   ├── tasks/                  #     Task queues (stubs)
 │   │   ├── convention_formatter.py #     NPL convention YAML formatter
 │   │   └── launcher.py             #     CLI entry point with server management
 │   └── mcp.py                      #   Minimal FastMCP hello-world server
 ├── frontend/                       # Next.js web UI (React/TypeScript/Tailwind)
 │   ├── app/                        #   App router (layout, page, globals)
 │   ├── components/                 #   React components
+│   │   ├── modals/                 #     QuickCreateModal (global create flow)
+│   │   ├── primitives/             #     Tokens: Button/Input/Toast/Badge/… (30+ components)
+│   │   ├── composites/             #     FilterBar/DetailHeader/ListRow/TabBar
+│   │   ├── forms/                  #     SearchBox/FilterListbox
+│   │   └── shell/                  #     AppShell/TopBar/Sidebar/CommandPalette
+│   ├── lib/                        #   API client + utilities
+│   │   ├── api/                    #     Facade + hybrid/rest/mock impls + types
+│   │   └── utils/                  #     format, badges, focusRing helpers
 │   ├── package.json                #   Node dependencies
 │   └── tsconfig.json               #   TypeScript config
 ├── tests/                          # Test suites → [layout/tests.md](layout/tests.md)
@@ -57,8 +65,8 @@ NoizuPromptLingo/
 ├── scripts/                        # Operational scripts (port forwarding, etc.)
 ├── gh-pages                        # GitHub Pages submodule (static site)
 ├── liquibase/                      # Database migrations (Liquibase YAML changelogs)
-│   ├── changelogs/                 #   Migration changesets (001–008)
-│   ├── liquibase.properties        #   Connection config
+│   ├── changelogs/                 #   Migration changesets (001–013)
+│   ├── liquibase.properties        #   Connection config (gitignored)
 │   └── liquibase.properties.example#   Template for local setup
 ├── docker/                         # Docker configuration
 │   └── postgres-init/              #   PostgreSQL init scripts

@@ -602,6 +602,65 @@ async def instructions_get(uuid: str) -> dict:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
+class InstructionCreateBody(BaseModel):
+    title: str
+    description: str = ""
+    tags: list[str] = []
+    body: str = ""
+    session: Optional[str] = None
+
+
+@router.post("/instructions")
+async def instructions_create_endpoint(body: InstructionCreateBody) -> dict:
+    """Create a new instruction document with its first version."""
+    try:
+        from npl_mcp.instructions.instructions import instructions_create
+        result = await instructions_create(
+            title=body.title,
+            description=body.description,
+            tags=body.tags,
+            body=body.body,
+            session=body.session,
+        )
+        if result.get("status") == "error":
+            raise HTTPException(status_code=400, detail=result.get("message", "Invalid request"))
+        if result.get("status") == "not_found":
+            raise HTTPException(status_code=404, detail="Not found")
+        # instructions_create returns {"uuid": ..., "version": 1, "status": "ok"}
+        # Fetch the full record to return consistent shape with GET /instructions/{uuid}
+        uuid_val = result.get("uuid")
+        if uuid_val:
+            import uuid as _uuid_mod
+            import shortuuid as _su
+            try:
+                uid = _su.decode(uuid_val)
+            except Exception:
+                uid = _uuid_mod.UUID(uuid_val)
+            pool = await _get_db_pool()
+            instr = await pool.fetchrow(
+                """SELECT id, title, description, tags, active_version,
+                          session_id, created_at, updated_at
+                   FROM npl_instructions WHERE id = $1""",
+                uid,
+            )
+            if instr:
+                return {
+                    "uuid": uuid_val,
+                    "title": instr["title"],
+                    "description": instr["description"] or "",
+                    "tags": instr["tags"] or [],
+                    "active_version": instr["active_version"],
+                    "session_id": _uuid_str(instr["session_id"]),
+                    "created_at": _dt(instr["created_at"]),
+                    "updated_at": _dt(instr["updated_at"]),
+                }
+        return result
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
 # ---------------------------------------------------------------------------
 # Projects endpoints
 # ---------------------------------------------------------------------------
@@ -682,6 +741,44 @@ async def projects_get(id: str) -> dict:
         raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+class ProjectCreateBody(BaseModel):
+    name: str
+    title: str = ""
+    description: str = ""
+
+
+@router.post("/projects")
+async def projects_create_endpoint(body: ProjectCreateBody) -> dict:
+    """Create a new project."""
+    try:
+        import uuid as _uuid_mod
+        import shortuuid as _su
+        pool = await _get_db_pool()
+        row = await pool.fetchrow(
+            """
+            INSERT INTO npl_projects (name, title, description, created_at, updated_at)
+            VALUES ($1, $2, $3, NOW(), NOW())
+            RETURNING id, name, title, description, created_at
+            """,
+            body.name,
+            body.title or body.name,
+            body.description,
+        )
+        return {
+            "id": _uuid_str(row["id"]),
+            "name": row["name"],
+            "title": row.get("title") or row["name"],
+            "description": row["description"] or "",
+            "persona_count": 0,
+            "story_count": 0,
+            "created_at": _dt(row["created_at"]),
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
 
 
 @router.get("/projects/{id}/personas")
@@ -1545,6 +1642,26 @@ async def errors_list(
 
 
 # ---------------------------------------------------------------------------
+# Metrics endpoints (stubs — tables not yet provisioned)
+# ---------------------------------------------------------------------------
+
+@router.get("/metrics/tool-calls")
+async def metrics_tool_calls(limit: int = Query(default=20, ge=1, le=100)) -> dict:
+    raise HTTPException(
+        status_code=501,
+        detail="Tool call metrics table not yet provisioned",
+    )
+
+
+@router.get("/metrics/llm-calls")
+async def metrics_llm_calls(limit: int = Query(default=20, ge=1, le=100)) -> dict:
+    raise HTTPException(
+        status_code=501,
+        detail="LLM call metrics table not yet provisioned",
+    )
+
+
+# ---------------------------------------------------------------------------
 # Skills validation  (US-119)
 # ---------------------------------------------------------------------------
 
@@ -1933,6 +2050,123 @@ async def artifacts_add_revision_endpoint(
 
 
 # ---------------------------------------------------------------------------
+# Orchestration trigger  (Wave O)
+# ---------------------------------------------------------------------------
+
+class OrchestrationTriggerBody(BaseModel):
+    feature_description: str
+    agent: str = "npl-tdd-coder"
+
+
+@router.post("/orchestration/trigger")
+async def orchestration_trigger(body: OrchestrationTriggerBody) -> dict:
+    """Queue an orchestration pipeline run as a task."""
+    try:
+        pool = await _get_db_pool()
+        from npl_mcp.tasks.tasks import task_create
+        result = await task_create(
+            title=f"[Orchestration] {body.feature_description[:200]}",
+            description=f"Triggered via orchestration UI. Agent: {body.agent}",
+            status="pending",
+            priority=2,
+        )
+        if result.get("status") == "error":
+            raise HTTPException(status_code=400, detail=result.get("message", "Failed to queue"))
+        task_id = result.get("id")
+        return {
+            "run_id": str(task_id),
+            "status": "queued",
+            "task_id": task_id,
+            "created_at": result.get("created_at"),
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+# ---------------------------------------------------------------------------
+# Sessions activity feed  (Wave O)
+# ---------------------------------------------------------------------------
+
+@router.get("/sessions/{uuid}/activity")
+async def sessions_activity(
+    uuid: str,
+    limit: int = Query(default=50, ge=1, le=200),
+) -> dict:
+    """Return an activity feed for a session (child sessions + errors)."""
+    try:
+        pool = await _get_db_pool()
+
+        import uuid as _uuid_mod
+
+        uid: Optional[_uuid_mod.UUID] = None
+        try:
+            uid = shortuuid.decode(uuid)
+        except Exception:
+            try:
+                uid = _uuid_mod.UUID(uuid)
+            except Exception:
+                raise HTTPException(status_code=404, detail="Invalid UUID format")
+
+        # 1. Child sessions (sub-agents spawned under this session)
+        child_rows = await pool.fetch(
+            """
+            SELECT id, agent, brief, task, created_at
+            FROM npl_tool_sessions
+            WHERE parent_id = $1
+            ORDER BY created_at DESC
+            LIMIT $2
+            """,
+            uid,
+            limit,
+        )
+        child_events = [
+            {
+                "id": f"session_{_uuid_str(row['id'])}",
+                "type": "sub_session",
+                "summary": f"Sub-agent: {row['agent']} — {(row['brief'] or row['task'] or '')[:80]}",
+                "detail": _uuid_str(row['id']),
+                "created_at": _dt(row['created_at']),
+            }
+            for row in child_rows
+        ]
+
+        # 2. Errors associated with this session (UUID stored as text in session_id)
+        error_rows = await pool.fetch(
+            """
+            SELECT id, tool_name, error_type, error_message, created_at
+            FROM npl_tool_errors
+            WHERE session_id = $1
+            ORDER BY created_at DESC
+            LIMIT $2
+            """,
+            str(uid),
+            limit,
+        )
+        error_events = [
+            {
+                "id": f"error_{row['id']}",
+                "type": "error",
+                "summary": f"Error in {row['tool_name']}: {(row['error_message'] or '')[:80]}",
+                "detail": row['error_type'],
+                "created_at": _dt(row['created_at']),
+            }
+            for row in error_rows
+        ]
+
+        all_events = child_events + error_events
+        all_events.sort(key=lambda e: e['created_at'] or '', reverse=True)
+        all_events = all_events[:limit]
+
+        return {"items": all_events, "count": len(all_events)}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+# ---------------------------------------------------------------------------
 # Agents endpoints (US-221)
 # ---------------------------------------------------------------------------
 
@@ -2064,3 +2298,86 @@ async def skills_evaluate(body: SkillEvaluateRequest) -> dict:
         return await evaluate_skill(body.content, body.filename or None)
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+# ---------------------------------------------------------------------------
+# Chat (PRD-007)
+# ---------------------------------------------------------------------------
+
+class ChatRoomCreateBody(BaseModel):
+    name: str
+    description: str = ""
+
+
+class ChatMessageCreateBody(BaseModel):
+    content: str
+    author: str = "user"
+
+
+@router.get("/chat/rooms")
+async def chat_rooms_list(limit: int = Query(default=50, ge=1, le=200)) -> dict:
+    try:
+        pool = await _get_db_pool()
+        from npl_mcp.chat.chat import room_list
+        items = await room_list(pool, limit=limit)
+        return {"items": items, "count": len(items)}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+@router.post("/chat/rooms")
+async def chat_rooms_create(body: ChatRoomCreateBody) -> dict:
+    try:
+        pool = await _get_db_pool()
+        from npl_mcp.chat.chat import room_create
+        return await room_create(pool, name=body.name, description=body.description)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+@router.get("/chat/rooms/{room_id}")
+async def chat_room_get(room_id: int) -> dict:
+    try:
+        pool = await _get_db_pool()
+        from npl_mcp.chat.chat import room_get
+        room = await room_get(pool, room_id)
+        if room is None:
+            raise HTTPException(status_code=404, detail="Chat room not found")
+        return room
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+@router.get("/chat/rooms/{room_id}/messages")
+async def chat_messages_list(
+    room_id: int,
+    limit: int = Query(default=50, ge=1, le=200),
+    before_id: Optional[int] = Query(default=None),
+) -> dict:
+    try:
+        pool = await _get_db_pool()
+        from npl_mcp.chat.chat import message_list
+        items = await message_list(pool, room_id=room_id, limit=limit, before_id=before_id)
+        return {"items": items, "count": len(items)}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+@router.post("/chat/rooms/{room_id}/messages")
+async def chat_message_create(room_id: int, body: ChatMessageCreateBody) -> dict:
+    try:
+        pool = await _get_db_pool()
+        from npl_mcp.chat.chat import message_create
+        return await message_create(pool, room_id=room_id, content=body.content, author=body.author)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc

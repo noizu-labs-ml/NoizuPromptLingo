@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import useSWR from "swr";
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from "@headlessui/react";
 import clsx from "clsx";
@@ -7,8 +8,10 @@ import { api } from "@/lib/api/client";
 import type { AgentDefinition, PipelineRun } from "@/lib/api/types";
 import { Card } from "@/components/primitives/Card";
 import { Badge } from "@/components/primitives/Badge";
+import { ComingSoonBanner } from "@/components/primitives/ComingSoonBanner";
 import { PageHeader } from "@/components/primitives/PageHeader";
 import { DataTable } from "@/components/primitives/DataTable";
+import { useToast } from "@/components/primitives/ToastContainer";
 
 import { relativeTime } from "@/lib/utils/format";
 
@@ -41,6 +44,25 @@ function PipelinesPanel() {
   const { data: runs, isLoading } = useSWR("orchestration.recentRuns", () =>
     api.orchestration.recentRuns()
   );
+
+  const [featureDescription, setFeatureDescription] = useState("");
+  const [triggering, setTriggering] = useState(false);
+  const { toast } = useToast();
+
+  const handleTrigger = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!featureDescription.trim()) return;
+    setTriggering(true);
+    try {
+      const result = await api.orchestration.trigger({ feature_description: featureDescription.trim() });
+      toast(`Pipeline queued (run ${result.run_id})`, "success");
+      setFeatureDescription("");
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Failed to trigger pipeline", "error");
+    } finally {
+      setTriggering(false);
+    }
+  };
 
   const columns = [
     {
@@ -89,31 +111,34 @@ function PipelinesPanel() {
       {/* Trigger form */}
       <Card>
         <h2 className="text-sm font-semibold text-foreground mb-4">Trigger TDD Pipeline</h2>
-        <div className="flex flex-col gap-3">
+        <form onSubmit={handleTrigger} className="flex flex-col gap-3">
           <label className="flex flex-col gap-1.5">
             <span className="text-sm text-muted">Feature description</span>
             <textarea
-              className="rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder:text-subtle resize-none h-24 focus:outline-none focus:ring-2 focus:ring-brand-500/50"
+              className="rounded-md border border-border bg-surface-1 px-3 py-2 text-sm text-foreground placeholder:text-subtle resize-none h-24 focus-ring transition-colors"
               placeholder="Describe the feature to implement via the TDD pipeline…"
+              value={featureDescription}
+              onChange={(e) => setFeatureDescription(e.target.value)}
+              disabled={triggering}
             />
           </label>
           <div className="flex justify-end">
             <button
-              type="button"
-              onClick={() => alert("Pipeline triggering not implemented — preview only.")}
-              className="px-4 py-2 rounded-md bg-brand-500 text-white text-sm font-medium hover:opacity-90 transition-opacity"
+              type="submit"
+              disabled={triggering || !featureDescription.trim()}
+              className="px-4 py-2 rounded-md bg-accent text-accent-on text-sm font-medium hover:bg-accent-soft transition-colors focus-ring disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Trigger TDD pipeline
+              {triggering ? "Queuing…" : "Trigger TDD pipeline"}
             </button>
           </div>
-        </div>
+        </form>
       </Card>
 
       {/* Recent runs */}
       <Card>
         <h2 className="text-sm font-semibold text-foreground mb-4">Recent Runs</h2>
         {isLoading ? (
-          <div className="h-48 rounded bg-surface animate-pulse" />
+          <div className="h-48 rounded bg-surface-1 animate-pulse" />
         ) : (
           <DataTable<PipelineRun>
             columns={columns}
@@ -140,7 +165,7 @@ function AgentsPanel() {
         {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={i}
-            className="h-28 rounded-lg bg-surface-raised border border-border animate-pulse"
+            className="h-28 rounded-lg bg-surface-1 border border-border animate-pulse"
           />
         ))}
       </div>
@@ -176,15 +201,14 @@ export default function OrchestrationPage() {
         description="Pipeline execution and agent coordination."
       />
 
-      {/* Banner */}
-      <div className="rounded-md border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning">
-        <strong>Preview only — pipeline execution coming with PRD-011/012.</strong> Agent list and
-        pipeline runs shown for preview only.
-      </div>
+      <ComingSoonBanner
+        description="Pipeline execution pending. Agent list and pipeline runs shown for preview only."
+        prdRef="PRD-011/012"
+      />
 
       {/* Tabs */}
       <TabGroup>
-        <TabList className="flex gap-1 rounded-lg bg-surface-raised border border-border p-1 w-fit">
+        <TabList className="flex gap-1 rounded-lg bg-surface-1 border border-border p-1 w-fit">
           {TABS.map((tab) => (
             <Tab
               key={tab}
@@ -192,8 +216,8 @@ export default function OrchestrationPage() {
                 clsx(
                   "px-4 py-1.5 rounded-md text-sm font-medium transition-colors focus:outline-none",
                   selected
-                    ? "bg-brand-500 text-white"
-                    : "text-muted hover:text-foreground hover:bg-surface"
+                    ? "bg-accent text-accent-on"
+                    : "text-muted hover:text-foreground hover:bg-surface-1"
                 )
               }
             >

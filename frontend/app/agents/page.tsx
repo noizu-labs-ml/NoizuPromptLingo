@@ -12,7 +12,10 @@ import { PageHeader } from "@/components/primitives/PageHeader";
 import { EmptyState } from "@/components/primitives/EmptyState";
 import { Badge } from "@/components/primitives/Badge";
 import type { BadgeProps } from "@/components/primitives/Badge";
+import { SkeletonGrid } from "@/components/primitives/SkeletonGrid";
+import { SearchBox } from "@/components/forms/SearchBox";
 import { FilterListbox } from "@/components/forms/FilterListbox";
+import { FilterBar } from "@/components/composites/FilterBar";
 
 function kindBadgeVariant(kind: AgentInfo["kind"]): BadgeProps["variant"] {
   switch (kind) {
@@ -30,7 +33,7 @@ const KIND_OPTIONS = [
 
 function AgentCard({ agent }: { agent: AgentInfo }) {
   return (
-    <Link href={`/agents/${agent.name}`} className="block group">
+    <Link href={`/agents/${agent.name}`} className="block rounded-lg group focus-ring">
       <Card hoverable className="h-full flex flex-col gap-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex flex-col min-w-0">
@@ -77,6 +80,8 @@ export default function AgentsPage() {
     return true;
   });
 
+  const hasActive = Boolean(search) || kindFilter.length > 0;
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -84,47 +89,45 @@ export default function AgentsPage() {
         description="TDD pipeline agents and utility/executor agents defined in agents/*.md."
       />
 
-      <div className="flex flex-wrap gap-3 items-center">
-        <input
-          type="search"
-          placeholder="Search agents..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-foreground placeholder:text-subtle focus:outline-none focus:ring-2 focus:ring-accent/50 w-64"
-        />
-        <FilterListbox
-          label="Kind"
-          options={KIND_OPTIONS}
-          selected={kindFilter}
-          onChange={setKindFilter}
-        />
-        {(search || kindFilter.length > 0) && (
-          <button
-            onClick={() => { setSearch(""); setKindFilter([]); }}
-            className="text-xs text-muted hover:text-foreground transition-colors"
-          >
-            Clear filters
-          </button>
-        )}
-      </div>
+      <FilterBar
+        search={
+          <SearchBox
+            value={search}
+            onChange={setSearch}
+            onClear={() => setSearch("")}
+            placeholder="Search agents..."
+          />
+        }
+        filters={
+          <FilterListbox
+            label="Kind"
+            options={KIND_OPTIONS}
+            selected={kindFilter}
+            onChange={setKindFilter}
+          />
+        }
+        hasActive={hasActive}
+        onClear={() => {
+          setSearch("");
+          setKindFilter([]);
+        }}
+        summary={
+          !isLoading && agents
+            ? `${filtered.length} ${filtered.length === 1 ? "agent" : "agents"}`
+            : undefined
+        }
+      />
 
       {error && (
-        <div className="rounded-md border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
+        <div
+          role="alert"
+          className="rounded-md border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger"
+        >
           Failed to load agents: {String(error)}
         </div>
       )}
 
-      {isLoading && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Card key={i} className="animate-pulse">
-              <div className="h-4 bg-surface-sunken rounded w-3/4 mb-2" />
-              <div className="h-3 bg-surface-sunken rounded w-1/2 mb-3" />
-              <div className="h-3 bg-surface-sunken rounded w-full" />
-            </Card>
-          ))}
-        </div>
-      )}
+      {isLoading && <SkeletonGrid as="card" count={6} />}
 
       {!isLoading && filtered.length === 0 && (
         <EmptyState

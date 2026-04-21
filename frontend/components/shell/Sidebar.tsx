@@ -94,8 +94,8 @@ const NAV_GROUPS: NavGroup[] = [
     heading: "Collab",
     items: [
       { label: "Agents", href: "/agents", icon: UserGroupIcon },
-      { label: "Chat", href: "/chat", icon: ChatBubbleLeftRightIcon, soon: true },
-      { label: "Artifacts", href: "/artifacts", icon: DocumentIcon, soon: true },
+      { label: "Chat", href: "/chat", icon: ChatBubbleLeftRightIcon },
+      { label: "Artifacts", href: "/artifacts", icon: DocumentIcon },
     ],
   },
   {
@@ -103,7 +103,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "Health", href: "/health", icon: HeartIcon },
       { label: "Orchestration", href: "/orchestration", icon: CpuChipIcon, soon: true },
-      { label: "Metrics", href: "/metrics", icon: ChartBarIcon, soon: true },
+      { label: "Metrics", href: "/metrics", icon: ChartBarIcon },
     ],
   },
 ];

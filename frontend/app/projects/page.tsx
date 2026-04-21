@@ -33,10 +33,10 @@ export default function ProjectsPage() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => (
             <Card key={i} className="animate-pulse">
-              <div className="h-4 bg-surface-sunken rounded w-3/4 mb-2" />
-              <div className="h-3 bg-surface-sunken rounded w-1/2 mb-4" />
-              <div className="h-3 bg-surface-sunken rounded w-full mb-1" />
-              <div className="h-3 bg-surface-sunken rounded w-5/6" />
+              <div className="h-4 bg-surface-1 rounded w-3/4 mb-2" />
+              <div className="h-3 bg-surface-1 rounded w-1/2 mb-4" />
+              <div className="h-3 bg-surface-1 rounded w-full mb-1" />
+              <div className="h-3 bg-surface-1 rounded w-5/6" />
             </Card>
           ))}
         </div>
@@ -53,7 +53,7 @@ export default function ProjectsPage() {
       {!isLoading && projects && projects.length > 0 && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((project) => (
-            <Link key={project.id} href={`/projects/${project.id}`} className="block group">
+            <Link key={project.id} href={`/projects/${project.id}`} className="block rounded-lg group focus-ring">
               <Card hoverable className="h-full flex flex-col gap-3">
                 <div className="flex flex-col gap-1">
                   <h2 className="text-base font-semibold text-foreground group-hover:text-accent transition-colors">

@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import clsx from "clsx";
 import { DocumentArrowDownIcon } from "@heroicons/react/24/outline";
 
 import { api } from "@/lib/api/client";
 import type { ToMarkdownResult } from "@/lib/api/types";
 import { PageHeader } from "@/components/primitives/PageHeader";
 import { CodeBlock } from "@/components/primitives/CodeBlock";
+import { Button } from "@/components/primitives/Button";
+import { Input } from "@/components/primitives/Input";
+import { FormField } from "@/components/primitives/FormField";
 
 // ── Page ──────────────────────────────────────────────────────────────────
 
@@ -54,48 +56,46 @@ export default function MarkdownConverterPage() {
         {/* Left column: form */}
         <div className="flex flex-col gap-4">
           {/* Source input */}
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-muted uppercase tracking-wide">
-              URL or file path <span className="text-red-500">*</span>
-            </label>
-            <input
+          <FormField label={<>URL or file path <span className="text-danger">*</span></>} htmlFor="md-source">
+            <Input
+              id="md-source"
               type="text"
               value={source}
               onChange={(e) => setSource(e.target.value)}
               placeholder="https://example.com or /path/to/file.html"
-              className="rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-foreground placeholder:text-subtle focus:outline-none focus:ring-2 focus:ring-accent/40"
             />
-          </div>
+          </FormField>
 
           {/* Heading filter */}
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-muted uppercase tracking-wide">
-              Heading filter <span className="normal-case font-normal">(optional)</span>
-            </label>
-            <input
+          <FormField
+            label={<>Heading filter <span className="normal-case font-normal">(optional)</span></>}
+            htmlFor="md-heading-filter"
+          >
+            <Input
+              id="md-heading-filter"
               type="text"
               value={headingFilter}
               onChange={(e) => setHeadingFilter(e.target.value)}
               placeholder='e.g. "Overview" or "API Reference"'
-              className="rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-foreground placeholder:text-subtle focus:outline-none focus:ring-2 focus:ring-accent/40"
             />
-          </div>
+          </FormField>
 
           {/* Collapse depth */}
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-muted uppercase tracking-wide">
-              Collapse depth <span className="normal-case font-normal">(1–6, optional)</span>
-            </label>
-            <input
+          <FormField
+            label={<>Collapse depth <span className="normal-case font-normal">(1–6, optional)</span></>}
+            htmlFor="md-collapse-depth"
+            className="w-28"
+          >
+            <Input
+              id="md-collapse-depth"
               type="number"
               min={1}
               max={6}
               value={collapseDepth}
               onChange={(e) => setCollapseDepth(e.target.value)}
               placeholder="e.g. 3"
-              className="rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-foreground placeholder:text-subtle focus:outline-none focus:ring-2 focus:ring-accent/40 w-28"
             />
-          </div>
+          </FormField>
 
           {/* Checkboxes */}
           <div className="flex flex-col gap-2">
@@ -104,7 +104,7 @@ export default function MarkdownConverterPage() {
                 type="checkbox"
                 checked={bare}
                 onChange={(e) => setBare(e.target.checked)}
-                className="h-4 w-4 rounded border-border accent-accent"
+                className="focus-ring h-4 w-4 rounded border-border accent-accent"
               />
               <span className="text-sm text-foreground">Bare mode (extract matched section only)</span>
             </label>
@@ -113,31 +113,29 @@ export default function MarkdownConverterPage() {
                 type="checkbox"
                 checked={withImageDescriptions}
                 onChange={(e) => setWithImageDescriptions(e.target.checked)}
-                className="h-4 w-4 rounded border-border accent-accent"
+                className="focus-ring h-4 w-4 rounded border-border accent-accent"
               />
               <span className="text-sm text-foreground">Inject image descriptions</span>
             </label>
           </div>
 
           {/* Convert button */}
-          <button
+          <Button
             onClick={handleConvert}
             disabled={loading || !source.trim()}
-            className={clsx(
-              "flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors",
-              loading || !source.trim()
-                ? "bg-surface-raised text-subtle cursor-not-allowed"
-                : "bg-accent text-white hover:bg-accent/90"
-            )}
+            loading={loading}
+            leadingIcon={!loading ? <DocumentArrowDownIcon className="h-4 w-4" /> : undefined}
           >
-            <DocumentArrowDownIcon className="h-4 w-4" />
             {loading ? "Converting…" : "Convert"}
-          </button>
+          </Button>
 
           {/* Error */}
           {error && (
-            <div className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3">
-              <p className="text-sm text-red-500">{error}</p>
+            <div
+              role="alert"
+              className="rounded-lg border border-danger/20 bg-danger/10 px-4 py-3"
+            >
+              <p className="text-sm text-danger">{error}</p>
             </div>
           )}
         </div>

@@ -3,11 +3,6 @@
 import { useParams } from "next/navigation";
 import useSWR from "swr";
 import {
-  TabGroup,
-  TabList,
-  Tab,
-  TabPanels,
-  TabPanel,
   Disclosure,
   DisclosureButton,
   DisclosurePanel,
@@ -20,7 +15,8 @@ import { Card } from "@/components/primitives/Card";
 import { Badge } from "@/components/primitives/Badge";
 import type { BadgeProps } from "@/components/primitives/Badge";
 import { EmptyState } from "@/components/primitives/EmptyState";
-import { PageHeader } from "@/components/primitives/PageHeader";
+import { DetailHeader } from "@/components/composites/DetailHeader";
+import { TabBar, TabPanel } from "@/components/composites/TabBar";
 import type { FRDocument, ATDocument } from "@/lib/api/types";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -41,7 +37,7 @@ function DocDisclosure({ doc }: { doc: FRDocument | ATDocument }) {
     <Disclosure>
       {({ open }) => (
         <Card className="p-0 overflow-hidden">
-          <DisclosureButton className="w-full flex items-center justify-between gap-2 px-4 py-3 text-left hover:bg-surface-raised transition-colors">
+          <DisclosureButton className="w-full flex items-center justify-between gap-2 px-4 py-3 text-left hover:bg-surface-1 transition-colors">
             <div className="flex items-center gap-3 min-w-0">
               <span className="font-mono text-xs text-muted shrink-0">{doc.id}</span>
               <span className="text-sm font-medium text-foreground truncate">{doc.title}</span>
@@ -83,9 +79,9 @@ export function PRDDetailClient() {
   if (isLoading) {
     return (
       <div className="space-y-6 animate-pulse">
-        <div className="h-8 bg-surface-sunken rounded w-1/3" />
-        <div className="h-4 bg-surface-sunken rounded w-1/2" />
-        <div className="h-64 bg-surface-sunken rounded" />
+        <div className="h-8 bg-surface-1 rounded w-1/3" />
+        <div className="h-4 bg-surface-1 rounded w-1/2" />
+        <div className="h-64 bg-surface-1 rounded" />
       </div>
     );
   }
@@ -100,9 +96,35 @@ export function PRDDetailClient() {
     );
   }
 
+  const tabs = [
+    { id: "overview", label: "Overview" },
+    {
+      id: "frs",
+      label: "Functional Requirements",
+      badge:
+        prd.functional_requirements.length > 0
+          ? `(${prd.functional_requirements.length})`
+          : undefined,
+    },
+    {
+      id: "ats",
+      label: "Acceptance Tests",
+      badge:
+        prd.acceptance_tests.length > 0
+          ? `(${prd.acceptance_tests.length})`
+          : undefined,
+    },
+  ];
+
   return (
     <div className="space-y-6">
-      <PageHeader
+      <DetailHeader
+        breadcrumbs={[
+          { label: "PRDs", href: "/prds" },
+          { label: prd.title },
+        ]}
+        backHref="/prds"
+        backLabel="Back to PRDs"
         title={prd.title}
         description={prd.path}
         actions={
@@ -115,32 +137,7 @@ export function PRDDetailClient() {
         }
       />
 
-      <TabGroup>
-        <TabList className="flex gap-1 border-b border-border">
-          {["Overview", "Functional Requirements", "Acceptance Tests"].map((tab, i) => (
-            <Tab
-              key={tab}
-              className={({ selected }: { selected: boolean }) =>
-                clsx(
-                  "px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px",
-                  selected
-                    ? "border-accent text-accent"
-                    : "border-transparent text-muted hover:text-foreground"
-                )
-              }
-            >
-              {tab}
-              {i === 1 && prd.functional_requirements.length > 0 && (
-                <span className="ml-1.5 text-xs text-subtle">({prd.functional_requirements.length})</span>
-              )}
-              {i === 2 && prd.acceptance_tests.length > 0 && (
-                <span className="ml-1.5 text-xs text-subtle">({prd.acceptance_tests.length})</span>
-              )}
-            </Tab>
-          ))}
-        </TabList>
-
-        <TabPanels className="mt-4">
+      <TabBar tabs={tabs}>
           {/* Overview */}
           <TabPanel>
             <Card>
@@ -181,8 +178,7 @@ export function PRDDetailClient() {
               </div>
             )}
           </TabPanel>
-        </TabPanels>
-      </TabGroup>
+      </TabBar>
     </div>
   );
 }

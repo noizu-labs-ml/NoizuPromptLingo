@@ -12,6 +12,14 @@ export type BadgeVariant =
   | "accent"
   | "dot";
 
+export type BadgeDotTone =
+  | "default"
+  | "accent"
+  | "success"
+  | "warning"
+  | "danger"
+  | "info";
+
 export interface BadgeProps {
   children?: ReactNode;
   variant?: BadgeVariant;
@@ -22,6 +30,12 @@ export interface BadgeProps {
    * renders ONLY a circle with no pill chrome.
    */
   dot?: boolean;
+  /**
+   * Tint applied to the `dot` *variant* only (the standalone circle). Has no
+   * effect when `variant !== "dot"` — in that case the leading `dot` uses the
+   * variant's own color. Defaults to `"default"`.
+   */
+  tone?: BadgeDotTone;
   className?: string;
 }
 
@@ -49,11 +63,21 @@ const dotColor: Record<Exclude<BadgeVariant, "dot">, string> = {
   accent: "bg-accent",
 };
 
+const toneColor: Record<BadgeDotTone, string> = {
+  default: "bg-muted",
+  accent: "bg-accent",
+  success: "bg-success",
+  warning: "bg-warning",
+  danger: "bg-danger",
+  info: "bg-info",
+};
+
 export function Badge({
   children,
   variant = "default",
   size = "sm",
   dot = false,
+  tone = "default",
   className,
 }: BadgeProps) {
   // `dot` variant: just a small filled circle, no pill chrome.
@@ -61,7 +85,8 @@ export function Badge({
     return (
       <span
         className={clsx(
-          "inline-block h-1.5 w-1.5 rounded-full bg-muted",
+          "inline-block h-1.5 w-1.5 rounded-full",
+          toneColor[tone],
           className
         )}
         aria-hidden="true"

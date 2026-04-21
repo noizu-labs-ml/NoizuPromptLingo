@@ -27,9 +27,9 @@ export function SearchBox({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className={clsx(
-          "w-full bg-surface-sunken border border-border rounded-md",
+          "w-full bg-surface-1 border border-border rounded-md",
           "pl-9 pr-3 py-2 text-sm text-foreground placeholder:text-muted",
-          "focus:outline-none focus:border-accent transition-colors",
+          "focus-ring transition-colors",
           showClear && "pr-9"
         )}
       />
@@ -37,7 +37,7 @@ export function SearchBox({
         <button
           type="button"
           onClick={onClear}
-          className="absolute right-2 rounded p-0.5 text-muted hover:text-foreground transition-colors"
+          className="focus-ring absolute right-2 rounded p-0.5 text-muted hover:text-foreground transition-colors"
           aria-label="Clear search"
         >
           <XMarkIcon className="h-4 w-4" />

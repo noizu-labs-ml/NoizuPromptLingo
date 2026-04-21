@@ -1,9 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import useSWR from "swr";
-import { ArrowLeftIcon, DocumentTextIcon } from "@heroicons/react/24/outline";
+import { DocumentTextIcon } from "@heroicons/react/24/outline";
 
 import { api } from "@/lib/api/client";
 import type { Story, StoryStatus, StoryPriority } from "@/lib/api/types";
@@ -11,7 +10,7 @@ import { Card } from "@/components/primitives/Card";
 import { Badge } from "@/components/primitives/Badge";
 import type { BadgeProps } from "@/components/primitives/Badge";
 import { EmptyState } from "@/components/primitives/EmptyState";
-import { PageHeader } from "@/components/primitives/PageHeader";
+import { DetailHeader } from "@/components/composites/DetailHeader";
 
 function statusBadgeVariant(status: StoryStatus): BadgeProps["variant"] {
   switch (status) {
@@ -35,8 +34,19 @@ function priorityBadgeVariant(priority: StoryPriority): BadgeProps["variant"] {
 }
 
 function StoryHeader({ story }: { story: Story }) {
+  const backHref = story.project_id ? `/projects/${story.project_id}` : "/projects";
+  const backLabel = story.project_id ? "Back to project" : "Back to projects";
   return (
-    <PageHeader
+    <DetailHeader
+      breadcrumbs={[
+        { label: "Projects", href: "/projects" },
+        ...(story.project_id
+          ? [{ label: "Project", href: `/projects/${story.project_id}` }]
+          : []),
+        { label: story.title },
+      ]}
+      backHref={backHref}
+      backLabel={backLabel}
       title={story.title}
       description={story.story_text || undefined}
       actions={
@@ -64,40 +74,25 @@ export function StoryDetailClient() {
   if (isLoading) {
     return (
       <div className="space-y-6 animate-pulse">
-        <div className="h-8 bg-surface-sunken rounded w-1/3" />
-        <div className="h-4 bg-surface-sunken rounded w-2/3" />
-        <div className="h-40 bg-surface-sunken rounded" />
+        <div className="h-8 bg-surface-1 rounded w-1/3" />
+        <div className="h-4 bg-surface-1 rounded w-2/3" />
+        <div className="h-40 bg-surface-1 rounded" />
       </div>
     );
   }
 
   if (error || !story) {
     return (
-      <div className="space-y-4">
-        <Link
-          href="/projects"
-          className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors"
-        >
-          <ArrowLeftIcon className="h-3.5 w-3.5" /> Back to projects
-        </Link>
-        <EmptyState
-          icon={<DocumentTextIcon />}
-          title="Story not found"
-          description={`No story with id "${id}" was found.`}
-        />
-      </div>
+      <EmptyState
+        icon={<DocumentTextIcon />}
+        title="Story not found"
+        description={`No story with id "${id}" was found.`}
+      />
     );
   }
 
   return (
     <div className="space-y-6">
-      <Link
-        href={story.project_id ? `/projects/${story.project_id}` : "/projects"}
-        className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors"
-      >
-        <ArrowLeftIcon className="h-3.5 w-3.5" /> Back to project
-      </Link>
-
       <StoryHeader story={story} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">

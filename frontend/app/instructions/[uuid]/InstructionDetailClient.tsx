@@ -12,7 +12,7 @@ import type { InstructionVersion } from "@/lib/api/types";
 import { Card } from "@/components/primitives/Card";
 import { Badge } from "@/components/primitives/Badge";
 import { EmptyState } from "@/components/primitives/EmptyState";
-import { PageHeader } from "@/components/primitives/PageHeader";
+import { DetailHeader } from "@/components/composites/DetailHeader";
 
 import { relativeTime } from "@/lib/utils/format";
 
@@ -34,11 +34,11 @@ function VersionItem({
       type="button"
       onClick={onClick}
       className={clsx(
-        "w-full text-left px-3 py-2.5 rounded-md transition-colors",
+        "focus-ring w-full text-left px-3 py-2.5 rounded-md transition-colors",
         "border-l-2",
         isSelected
-          ? "border-l-brand-500 bg-surface-raised"
-          : "border-l-transparent hover:bg-surface-raised"
+          ? "border-l-accent bg-surface-1"
+          : "border-l-transparent hover:bg-surface-1"
       )}
     >
       <div className="flex items-center gap-2">
@@ -103,8 +103,8 @@ export function InstructionDetailClient() {
   if (isLoading) {
     return (
       <div className="flex flex-col gap-6">
-        <div className="h-16 rounded-lg bg-surface-raised border border-border animate-pulse" />
-        <div className="h-64 rounded-lg bg-surface-raised border border-border animate-pulse" />
+        <div className="h-16 rounded-lg bg-surface-1 border border-border animate-pulse" />
+        <div className="h-64 rounded-lg bg-surface-1 border border-border animate-pulse" />
       </div>
     );
   }
@@ -127,7 +127,13 @@ export function InstructionDetailClient() {
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
-      <PageHeader
+      <DetailHeader
+        breadcrumbs={[
+          { label: "Instructions", href: "/instructions" },
+          { label: instruction.title },
+        ]}
+        backHref="/instructions"
+        backLabel="Back to instructions"
         title={instruction.title}
         description={instruction.description}
         actions={

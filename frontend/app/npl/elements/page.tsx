@@ -2,19 +2,20 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/react";
-import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
-import clsx from "clsx";
 
 import { api } from "@/lib/api/client";
 import type { NPLElement } from "@/lib/api/types";
 import { Badge } from "@/components/primitives/Badge";
-import { Card } from "@/components/primitives/Card";
 import { DataTable } from "@/components/primitives/DataTable";
 import { PageHeader } from "@/components/primitives/PageHeader";
+import { Input } from "@/components/primitives/Input";
+import { Select } from "@/components/primitives/Select";
+import { FormField } from "@/components/primitives/FormField";
+import { SkeletonGrid } from "@/components/primitives/SkeletonGrid";
+import { FilterBar } from "@/components/composites/FilterBar";
 import type { ColumnDef } from "@/components/primitives/DataTable";
 
-const SECTION_BADGE_VARIANT: Record<string, "default" | "info" | "success" | "warning" | "danger"> = {
+const SECTION_BADGE_VARIANT: Record<string, "default" | "info" | "success" | "warning" | "danger" | "accent"> = {
   syntax: "info",
   directives: "success",
   pumps: "warning",
@@ -22,7 +23,7 @@ const SECTION_BADGE_VARIANT: Record<string, "default" | "info" | "success" | "wa
   declarations: "danger",
 };
 
-function sectionVariant(section: string): "default" | "info" | "success" | "warning" | "danger" {
+function sectionVariant(section: string): "default" | "info" | "success" | "warning" | "danger" | "accent" {
   return SECTION_BADGE_VARIANT[section] ?? "default";
 }
 
@@ -122,6 +123,8 @@ export default function NPLElementsPage() {
     router.push(`/npl?expr=${encodeURIComponent(expr)}`);
   };
 
+  const hasActive = Boolean(search) || selectedSection !== "all";
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -130,54 +133,55 @@ export default function NPLElementsPage() {
       />
 
       {/* Filters */}
-      <Card className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
-        {/* Search */}
-        <div className="flex-1">
-          <input
-            type="text"
-            placeholder="Search by name, brief, or tag…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-md border border-border bg-surface-sunken px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand-500"
-          />
-        </div>
-
-        {/* Section filter */}
-        <div className="w-48">
-          <Listbox value={selectedSection} onChange={setSelectedSection}>
-            <div className="relative">
-              <ListboxButton className="relative w-full cursor-default rounded-md border border-border bg-surface-sunken py-2 pl-3 pr-10 text-left text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand-500">
-                <span className="block truncate capitalize">{selectedSection}</span>
-                <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                  <ChevronUpDownIcon className="h-4 w-4 text-muted" />
-                </span>
-              </ListboxButton>
-              <ListboxOptions className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md border border-border bg-surface py-1 text-sm shadow-lg focus:outline-none">
-                {sections.map((s) => (
-                  <ListboxOption
-                    key={s}
-                    value={s}
-                    className={({ focus }: { focus: boolean }) =>
-                      clsx(
-                        "cursor-default select-none px-3 py-2 capitalize",
-                        focus ? "bg-surface-raised text-foreground" : "text-muted"
-                      )
-                    }
-                  >
-                    {s}
-                  </ListboxOption>
-                ))}
-              </ListboxOptions>
-            </div>
-          </Listbox>
-        </div>
-      </Card>
+      <FilterBar
+        search={
+          <FormField label="Search" htmlFor="npl-elements-search">
+            <Input
+              id="npl-elements-search"
+              type="text"
+              placeholder="Search by name, brief, or tag…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </FormField>
+        }
+        filters={
+          <FormField label="Section" htmlFor="npl-elements-section" className="w-48">
+            <Select
+              id="npl-elements-section"
+              value={selectedSection}
+              onChange={(e) => setSelectedSection(e.target.value)}
+            >
+              {sections.map((s) => (
+                <option key={s} value={s} className="capitalize">
+                  {s}
+                </option>
+              ))}
+            </Select>
+          </FormField>
+        }
+        hasActive={hasActive}
+        onClear={() => {
+          setSearch("");
+          setSelectedSection("all");
+        }}
+        summary={
+          !loading && !error
+            ? `${filtered.length} ${filtered.length === 1 ? "element" : "elements"}`
+            : undefined
+        }
+      />
 
       {/* Table */}
       {error ? (
-        <div className="rounded-md bg-danger/10 px-4 py-3 text-sm text-danger">{error}</div>
+        <div
+          role="alert"
+          className="rounded-md border border-danger/20 bg-danger/10 px-4 py-3 text-sm text-danger"
+        >
+          {error}
+        </div>
       ) : loading ? (
-        <div className="py-16 text-center text-sm text-muted">Loading elements…</div>
+        <SkeletonGrid as="table" count={8} />
       ) : (
         <DataTable
           columns={COLUMNS}

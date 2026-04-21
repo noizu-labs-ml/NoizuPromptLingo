@@ -43,11 +43,12 @@ const AGENT_LIST: AgentDefinition[] = [
 function generateRooms(): ChatRoom[] {
   const rng = makeRandom(11111);
   return ROOM_NAMES.map((name, i) => ({
-    id: `room-${shortUuid(rng, 6)}`,
+    id: i + 1,
     name,
     description: `Shared context for ${name.replace(/-/g, " ")}.`,
     message_count: 4 + Math.floor(rng() * 120),
     last_activity: hoursAgo(Math.floor(rng() * 240)),
+    created_at: daysAgo(30 - i),
   }));
 }
 

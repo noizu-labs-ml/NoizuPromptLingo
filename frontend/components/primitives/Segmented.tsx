@@ -21,8 +21,8 @@ export interface SegmentedProps<V extends string> {
 }
 
 const sizeClasses: Record<NonNullable<SegmentedProps<string>["size"]>, string> = {
-  sm: "py-0.5 px-2 text-[11px]",
-  md: "px-3 py-1 text-xs",
+  sm: "py-1 px-2.5 text-xs",
+  md: "px-3 py-1.5 text-sm",
 };
 
 /**

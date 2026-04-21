@@ -12,6 +12,9 @@ import { PageHeader } from "@/components/primitives/PageHeader";
 import { EmptyState } from "@/components/primitives/EmptyState";
 import { Badge } from "@/components/primitives/Badge";
 import type { BadgeProps } from "@/components/primitives/Badge";
+import { SkeletonGrid } from "@/components/primitives/SkeletonGrid";
+import { FilterBar } from "@/components/composites/FilterBar";
+import { SearchBox } from "@/components/forms/SearchBox";
 import { FilterListbox } from "@/components/forms/FilterListbox";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -36,7 +39,7 @@ const STATUS_OPTIONS = [
 
 function PRDCard({ prd }: { prd: PRDSummary }) {
   return (
-    <Link href={`/prds/${prd.id}`} className="block group">
+    <Link href={`/prds/${prd.id}`} className="block rounded-lg group focus-ring">
       <Card hoverable className="h-full flex flex-col gap-3">
         <div className="flex items-start gap-3">
           <span className="font-mono text-xs text-muted shrink-0 mt-0.5">
@@ -54,12 +57,12 @@ function PRDCard({ prd }: { prd: PRDSummary }) {
             <Badge variant={statusVariant(prd.status)}>{prd.status}</Badge>
           )}
           {prd.has_frs && (
-            <span className="inline-flex items-center rounded-full bg-surface-sunken border border-border text-muted px-2 py-0.5 text-xs">
+            <span className="inline-flex items-center rounded-full bg-surface-1 border border-border text-muted px-2 py-0.5 text-xs">
               FRs
             </span>
           )}
           {prd.has_ats && (
-            <span className="inline-flex items-center rounded-full bg-surface-sunken border border-border text-muted px-2 py-0.5 text-xs">
+            <span className="inline-flex items-center rounded-full bg-surface-1 border border-border text-muted px-2 py-0.5 text-xs">
               ATs
             </span>
           )}
@@ -85,6 +88,8 @@ export default function PRDsPage() {
     return true;
   });
 
+  const hasActive = Boolean(search) || statusFilter.length > 0;
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -92,42 +97,30 @@ export default function PRDsPage() {
         description="Product requirement documents."
       />
 
-      {/* Controls */}
-      <div className="flex flex-wrap gap-3 items-center">
-        <input
-          type="search"
-          placeholder="Search PRDs..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-foreground placeholder:text-subtle focus:outline-none focus:ring-2 focus:ring-accent/50 w-64"
-        />
-        <FilterListbox
-          label="Status"
-          options={STATUS_OPTIONS}
-          selected={statusFilter}
-          onChange={setStatusFilter}
-        />
-        {(search || statusFilter.length > 0) && (
-          <button
-            onClick={() => { setSearch(""); setStatusFilter([]); }}
-            className="text-xs text-muted hover:text-foreground transition-colors"
-          >
-            Clear filters
-          </button>
-        )}
-      </div>
+      <FilterBar
+        search={
+          <SearchBox
+            value={search}
+            onChange={setSearch}
+            placeholder="Search PRDs..."
+            onClear={() => setSearch("")}
+          />
+        }
+        filters={
+          <FilterListbox
+            label="Status"
+            options={STATUS_OPTIONS}
+            selected={statusFilter}
+            onChange={setStatusFilter}
+          />
+        }
+        hasActive={hasActive}
+        onClear={() => { setSearch(""); setStatusFilter([]); }}
+        summary={`${filtered.length} result${filtered.length === 1 ? "" : "s"}`}
+      />
 
       {/* Loading skeleton */}
-      {isLoading && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Card key={i} className="animate-pulse">
-              <div className="h-4 bg-surface-sunken rounded w-3/4 mb-2" />
-              <div className="h-3 bg-surface-sunken rounded w-1/2" />
-            </Card>
-          ))}
-        </div>
-      )}
+      {isLoading && <SkeletonGrid as="card" count={6} />}
 
       {/* Empty */}
       {!isLoading && filtered.length === 0 && (
@@ -135,7 +128,7 @@ export default function PRDsPage() {
           icon={<DocumentTextIcon />}
           title="No PRDs found"
           description={
-            search || statusFilter.length > 0
+            hasActive
               ? "Try adjusting the search or filters."
               : "PRDs will appear here once they are created."
           }

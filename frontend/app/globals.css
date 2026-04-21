@@ -187,7 +187,14 @@ code, pre, kbd, samp {
     animation: shimmer 1.8s ease-in-out infinite;
   }
   @media (prefers-reduced-motion: reduce) {
-    .animate-shimmer { animation: none; }
+    .animate-shimmer,
+    .animate-pulse,
+    .animate-spin,
+    .animate-spin-slow,
+    .animate-bounce,
+    .animate-ping,
+    .animate-fade-in,
+    .animate-slide-up { animation: none; }
   }
 
   /* Uniform focus ring — use via className="focus-ring" */

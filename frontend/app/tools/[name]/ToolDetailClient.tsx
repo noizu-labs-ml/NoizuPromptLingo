@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import useSWR from "swr";
-import clsx from "clsx";
 import { WrenchScrewdriverIcon } from "@heroicons/react/24/outline";
 
 import { api } from "@/lib/api/client";
@@ -13,8 +12,12 @@ import { Card } from "@/components/primitives/Card";
 import { Badge } from "@/components/primitives/Badge";
 import { CodeBlock } from "@/components/primitives/CodeBlock";
 import { EmptyState } from "@/components/primitives/EmptyState";
-import { PageHeader } from "@/components/primitives/PageHeader";
 import { DataTable } from "@/components/primitives/DataTable";
+import { Button } from "@/components/primitives/Button";
+import { Input } from "@/components/primitives/Input";
+import { Textarea } from "@/components/primitives/Textarea";
+import { FormField } from "@/components/primitives/FormField";
+import { DetailHeader } from "@/components/composites/DetailHeader";
 
 // ── Param input ───────────────────────────────────────────────────────────
 
@@ -27,12 +30,6 @@ function ParamInput({
   value: string;
   onChange: (v: string) => void;
 }) {
-  const baseClass = clsx(
-    "w-full bg-surface-sunken border border-border rounded-md",
-    "px-3 py-2 text-sm text-foreground placeholder:text-muted",
-    "focus:outline-none focus:border-accent transition-colors"
-  );
-
   if (param.type === "bool") {
     return (
       <div className="flex items-center gap-2">
@@ -41,7 +38,7 @@ function ParamInput({
           id={`param-${param.name}`}
           checked={value === "true"}
           onChange={(e) => onChange(e.target.checked ? "true" : "false")}
-          className="h-4 w-4 rounded border-border text-accent focus:ring-accent"
+          className="focus-ring h-4 w-4 rounded border-border text-accent"
         />
         <label htmlFor={`param-${param.name}`} className="text-sm text-muted">
           {value === "true" ? "true" : "false"}
@@ -52,11 +49,10 @@ function ParamInput({
 
   if (param.type === "int" || param.type === "float") {
     return (
-      <input
+      <Input
         type="number"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={baseClass}
         placeholder={`Enter ${param.type}…`}
         step={param.type === "float" ? "any" : "1"}
       />
@@ -65,11 +61,10 @@ function ParamInput({
 
   if (param.type === "list") {
     return (
-      <textarea
+      <Textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
         rows={3}
-        className={clsx(baseClass, "resize-y")}
         placeholder="One item per line…"
       />
     );
@@ -77,22 +72,21 @@ function ParamInput({
 
   if (param.type === "dict") {
     return (
-      <textarea
+      <Textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
         rows={4}
-        className={clsx(baseClass, "resize-y font-mono text-xs")}
+        mono
         placeholder='{"key": "value"}'
       />
     );
   }
 
   return (
-    <input
+    <Input
       type="text"
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className={baseClass}
       placeholder="Enter value…"
     />
   );
@@ -181,56 +175,53 @@ function TryItPanel({
         <p className="text-sm text-muted">This tool takes no parameters.</p>
       ) : (
         <div className="flex flex-col gap-4">
-          {params.map((param) => (
-            <div key={param.name} className="flex flex-col gap-1">
-              <label className="flex items-center gap-2 text-sm font-medium text-foreground">
-                <span className="font-mono">{param.name}</span>
+          {params.map((param) => {
+            const fieldId = `param-${param.name}`;
+            const label = (
+              <span className="flex items-center gap-2 normal-case tracking-normal">
+                <span className="font-mono text-sm text-foreground">{param.name}</span>
                 <span className="text-xs text-subtle font-mono">({param.type})</span>
                 {param.required && (
                   <Badge variant="warning" size="sm">
                     required
                   </Badge>
                 )}
-              </label>
-              {param.description && (
-                <p className="text-xs text-muted">{param.description}</p>
-              )}
-              <ParamInput
-                param={param}
-                value={values[param.name] ?? ""}
-                onChange={(v) => setValue(param.name, v)}
-              />
-            </div>
-          ))}
+              </span>
+            );
+            return (
+              <FormField
+                key={param.name}
+                label={label}
+                htmlFor={fieldId}
+                helper={param.description || undefined}
+              >
+                <ParamInput
+                  param={param}
+                  value={values[param.name] ?? ""}
+                  onChange={(v) => setValue(param.name, v)}
+                />
+              </FormField>
+            );
+          })}
         </div>
       )}
 
       <div>
-        <button
+        <Button
           type="button"
           onClick={handleInvoke}
           disabled={loading}
-          className={clsx(
-            "inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium",
-            "bg-brand-500 text-white transition-colors",
-            loading
-              ? "opacity-60 cursor-not-allowed"
-              : "hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-accent"
-          )}
+          loading={loading}
         >
-          {loading ? (
-            <>
-              <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              Invoking…
-            </>
-          ) : (
-            "Invoke"
-          )}
-        </button>
+          {loading ? "Invoking…" : "Invoke"}
+        </Button>
       </div>
 
       {error && (
-        <div className="rounded-md bg-danger/10 border border-danger/30 px-4 py-3">
+        <div
+          role="alert"
+          className="rounded-md bg-danger/10 border border-danger/30 px-4 py-3"
+        >
           <p className="text-sm text-danger font-medium">Error</p>
           <p className="text-sm text-danger mt-1">{error}</p>
         </div>
@@ -299,8 +290,8 @@ export function ToolDetailClient() {
   if (isLoading) {
     return (
       <div className="flex flex-col gap-6">
-        <div className="h-16 rounded-lg bg-surface-raised border border-border animate-pulse" />
-        <div className="h-64 rounded-lg bg-surface-raised border border-border animate-pulse" />
+        <div className="h-16 rounded-lg bg-surface-1 border border-border animate-pulse" />
+        <div className="h-64 rounded-lg bg-surface-1 border border-border animate-pulse" />
       </div>
     );
   }
@@ -351,7 +342,13 @@ export function ToolDetailClient() {
   return (
     <div className="flex flex-col gap-8">
       {/* Header */}
-      <PageHeader
+      <DetailHeader
+        breadcrumbs={[
+          { label: "Tools", href: "/tools" },
+          { label: tool.name },
+        ]}
+        backHref="/tools"
+        backLabel="Back to tools"
         title={tool.name}
         description={tool.description}
         actions={
@@ -359,7 +356,7 @@ export function ToolDetailClient() {
             <Badge variant="success" size="sm">
               registered
             </Badge>
-            <Badge variant="info" size="sm">
+            <Badge variant="accent" size="sm">
               {tool.category}
             </Badge>
             {(tool.tags ?? []).map((tag) => (

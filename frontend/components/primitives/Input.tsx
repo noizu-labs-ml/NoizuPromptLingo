@@ -55,7 +55,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         hasError &&
           "border-danger focus-visible:shadow-[0_0_0_3px_hsl(var(--danger)/0.25)]",
         disabled && "opacity-60 cursor-not-allowed bg-surface-0",
-        !hasAffix && className,
+        className,
       )}
       {...rest}
     />
@@ -64,7 +64,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   if (!hasAffix) return inputEl;
 
   return (
-    <div className={clsx("relative flex items-center", className)}>
+    <div className="relative flex items-center w-full">
       {prefixEl && (
         <span
           className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 flex items-center text-subtle"

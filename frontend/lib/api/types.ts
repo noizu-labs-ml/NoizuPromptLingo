@@ -221,11 +221,12 @@ export interface LLMCall {
 // ── Chat / Artifacts (Tier 3 stub) ───────────────────────────────────────
 
 export interface ChatRoom {
-  id: string;
+  id: number;
   name: string;
   description: string;
   message_count: number;
-  last_activity: string;
+  last_activity: string | null;
+  created_at: string;
 }
 
 export type ArtifactKind = "markdown" | "json" | "yaml" | "code" | "text" | "other";
@@ -485,4 +486,90 @@ export interface HealthReport {
     stub_tools: number;
   };
   frontend_build: SubsystemHealth & { dist_path: string };
+}
+
+// ── Create inputs ────────────────────────────────────────────────────────
+
+export interface InstructionCreateInput {
+  title: string;
+  description?: string;
+  body?: string;
+  tags?: string[];
+}
+
+export interface ProjectCreateInput {
+  name: string;
+  title?: string;
+  description?: string;
+}
+
+// ── Chat messages ────────────────────────────────────────────────────────
+
+export interface ChatMessage {
+  id: number;
+  room_id: number;
+  content: string;
+  author: string;
+  created_at: string | null;
+}
+
+export interface ChatMessageListResult {
+  items: ChatMessage[];
+  count: number;
+}
+
+export interface ChatRoomListResult {
+  items: ChatRoom[];
+  count: number;
+}
+
+export interface ChatRoomCreateInput {
+  name: string;
+  description?: string;
+}
+
+export interface ChatMessageCreateInput {
+  content: string;
+  author?: string;
+}
+
+// ── Orchestration trigger (Wave O) ───────────────────────────────────────
+
+export interface OrchestrationTriggerInput {
+  feature_description: string;
+  agent?: string;
+}
+
+export interface OrchestrationTriggerResult {
+  run_id: string;
+  status: "queued";
+  task_id: number | null;
+  created_at: string | null;
+}
+
+// ── Metrics (live data) ──────────────────────────────────────────────────
+
+export interface ToolCallMetric {
+  id: number;
+  tool_name: string;
+  status: string;
+  response_time_ms: number | null;
+  session_id: string | null;
+  created_at: string | null;
+}
+
+export interface LLMCallMetric {
+  id: number;
+  model: string;
+  purpose: string | null;
+  tokens_in: number | null;
+  tokens_out: number | null;
+  duration_ms: number | null;
+  session_id: string | null;
+  created_at: string | null;
+}
+
+export interface MetricListResult<T> {
+  items: T[];
+  count: number;
 }

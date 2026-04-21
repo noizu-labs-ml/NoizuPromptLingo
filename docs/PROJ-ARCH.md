@@ -13,11 +13,13 @@ graph TB
     subgraph Clients
         CC[Claude Code]
         Other[Other MCP Clients]
+        Browser[Web Browser]
     end
 
-    subgraph "NPL MCP Server"
-        API[FastAPI App<br/>pure-ASGI fallback middleware]
-        MCP[FastMCP 3.x Instance<br/>11 tools registered<br/>tags + meta populated]
+    subgraph "NPL MCP Server (FastAPI + FastMCP)"
+        MW[Pure-ASGI Middleware<br/>fallback + SSE-safe]
+        MCP[FastMCP 3.x Instance<br/>11 tools registered]
+        REST[REST API Layer<br/>/api/* routes]
         Meta[Discovery Tools<br/>5 discovery + 6 functional]
         Hidden[Hidden Tools<br/>22 via ToolCall]
         Stubs[Stub Catalog<br/>92 planned tools]
@@ -29,15 +31,18 @@ graph TB
         DB[(PostgreSQL<br/>localhost:5111)]
     end
 
-    CC -->|SSE| API
-    Other -->|SSE| API
-    API --> MCP
+    CC -->|SSE /sse| MW
+    Other -->|SSE /sse| MW
+    Browser -->|HTTP /api/*| MW
+    Browser -->|HTTP static| FE
+    MW --> MCP
+    MW --> REST
     MCP --> Meta
     Meta --> Hidden
     Meta --> Stubs
     Meta -->|intent search| LLM
     Hidden -->|sessions, instructions, PM| DB
-    API --> FE
+    REST -->|tasks, artifacts, chat, sessions,<br/>instructions, projects| DB
 ```
 
 ## Core Components
@@ -45,6 +50,7 @@ graph TB
 | Component | Location | Purpose |
 |-----------|----------|---------|
 | Launcher | `src/npl_mcp/launcher.py` | `create_app()` + `create_asgi_app()`, CLI, Uvicorn |
+| REST API Router | `src/npl_mcp/api/router.py` | All `/api/*` HTTP endpoints (CRUD for tasks, artifacts, chat, sessions, instructions, projects, metrics, orchestration) |
 | Meta Tools | `src/npl_mcp/meta_tools/` | Discovery tools (ToolSummary, ToolSearch, ToolDefinition, ToolHelp, ToolCall) + catalog builder + `mcp_discoverable` helper + stub catalog |
 | NPL Spec | `src/npl_mcp/convention_formatter.py` | NPLSpec tool — generate NPL definitions from convention YAMLs |
 | Markdown Tools | `src/npl_mcp/markdown/` | Converter, viewer, filters, image descriptions |
@@ -52,9 +58,13 @@ graph TB
 | PM Tools | `src/npl_mcp/pm_tools/` | PRD/story/persona access (file-based + DB-backed CRUD) |
 | Instructions | `src/npl_mcp/instructions/` | Versioned instruction documents with embeddings |
 | Tool Sessions | `src/npl_mcp/tool_sessions/` | Session tracking by (project, agent, task) triple |
+| Artifacts | `src/npl_mcp/artifacts/` | Versioned artifact CRUD + revision history |
+| Chat | `src/npl_mcp/chat/` | Chat rooms + messages (REST CRUD, npl_chat_rooms/messages) |
+| Work Sessions | `src/npl_mcp/sessions/` | Generic work-session lifecycle (npl_generic_sessions) |
+| Tasks | `src/npl_mcp/tasks/` | Task CRUD with status transitions (npl_tasks) |
 | Browser Tools | `src/npl_mcp/browser/` | ToMarkdown, Ping, Download, Screenshot, Rest, Secret |
 | Storage | `src/npl_mcp/storage/` | PostgreSQL async connection pool (asyncpg) |
-| Frontend | `frontend/` | Next.js + Tailwind web UI |
+| Frontend | `frontend/` | Next.js + Tailwind web UI with hybrid REST/mock API facade |
 | Minimal Server | `src/mcp.py` | Standalone hello-world for quick experiments |
 
 ## Meta Tool Pattern
@@ -120,23 +130,37 @@ graph TB
 
 ## Module Architecture
 
-| Module | Status | Tools | Description |
-|--------|--------|-------|-------------|
-| `meta_tools/` | Active | 5 registered | Discovery layer + catalog builder + stub catalog |
-| `convention_formatter.py` | Active | 1 registered | NPLSpec — NPL definition generation |
-| `markdown/` | Active | 0 (library) | Converter, viewer, caching, filters |
-| `npl/` | Active | 0 (library) | NPL YAML loading, syntax parsing |
-| `pm_tools/` | Active | 13 hidden + 8 stubs | DB-backed project/persona/story CRUD + file-based stubs |
-| `instructions/` | Active | 3 registered + 3 hidden | Versioned instructions with vector embeddings |
-| `tool_sessions/` | Active | 2 registered | Session tracking by (project, agent, task) |
-| `browser/` | Active | 6 hidden + 32 stubs | ToMarkdown, Ping, Download, Screenshot, Rest, Secret + stubs |
-| `storage/` | Active | 0 (library) | PostgreSQL async connection pool (asyncpg) |
-| `artifacts/` | Stub | 5 (in catalog) | Versioned artifact management |
-| `chat/` | Stub | 8 (in catalog) | Event-sourced chat rooms |
-| `tasks/` | Stub | 13 (in catalog) | Task queue management |
-| `executors/` | Stub | 11 (in catalog) | Agent lifecycle management |
-| `sessions/` | Stub | 4 (in catalog) | Session lifecycle |
-| `scripts/` | Stub | 5 (in catalog) | Shell script wrappers |
+| Module | Status | MCP Tools | REST Endpoints | Description |
+|--------|--------|-----------|----------------|-------------|
+| `meta_tools/` | Active | 5 registered | — | Discovery layer + catalog builder + stub catalog |
+| `convention_formatter.py` | Active | 1 registered | — | NPLSpec — NPL definition generation |
+| `markdown/` | Active | 0 (library) | `POST /api/browser/to-markdown` | Converter, viewer, caching, filters |
+| `npl/` | Active | 0 (library) | `GET /api/npl/elements`, `GET /api/npl/coverage` | NPL YAML loading, syntax parsing |
+| `pm_tools/` | Active | 13 hidden + 8 stubs | `GET /api/projects*`, `POST /api/projects` | DB-backed project/persona/story CRUD |
+| `instructions/` | Active | 3 registered + 3 hidden | `GET/POST /api/instructions*` | Versioned instructions with vector embeddings |
+| `tool_sessions/` | Active | 2 registered | `GET /api/sessions*` | Session tracking by (project, agent, task) |
+| `artifacts/` | Active | — | `GET/POST /api/artifacts*` | Versioned artifact CRUD + revision history |
+| `chat/` | Active | — | `GET/POST /api/chat/rooms*` | Chat rooms + messages (npl_chat_rooms/messages) |
+| `sessions/` | Active | — | `GET/POST /api/work-sessions*` | Generic work-session lifecycle |
+| `tasks/` | Active | — | `GET/POST/PATCH /api/tasks*` | Task CRUD with status transitions |
+| `browser/` | Active | 6 hidden + 32 stubs | — | ToMarkdown, Ping, Download, Screenshot, Rest, Secret |
+| `storage/` | Active | 0 (library) | — | PostgreSQL async connection pool (asyncpg) |
+| `executors/` | Stub | 11 (in catalog) | — | Agent lifecycle management |
+| `scripts/` | Stub | 5 (in catalog) | — | Shell script wrappers |
+
+## Frontend Architecture
+
+The Next.js frontend (`frontend/`) uses a **pluggable API facade** pattern. All pages import from `lib/api/client.ts` — a stable surface that delegates to an implementation module:
+
+| Impl | File | When used |
+|------|------|-----------|
+| `hybrid` | `impl/hybrid.ts` | **Active** — REST for live endpoints, mock for unimplemented |
+| `rest` | `impl/rest.ts` | Full REST (swap import to go all-live) |
+| `mock` | `impl/mock.ts` | All mock data (no backend required) |
+
+The hybrid impl currently routes: tasks, artifacts, sessions, instructions, projects, chat, agents, tools, skills, docs → REST. NPL load/spec → mock (MCP-only, no REST equivalent).
+
+Key frontend primitives added in Waves A–P: full design token system (violet-indigo palette, 5 surface tiers, Geist fonts), 30+ primitive components, composites (FilterBar, DetailHeader, TabBar), toast notification system, and QuickCreateModal (global ✨ New flow accessible from any page).
 
 ## Entry Points
 
@@ -157,8 +181,10 @@ graph TB
 - **Pure-ASGI fallback middleware**: `BaseHTTPMiddleware` buffered response bodies and crashed SSE (empty 202s on `/sse/messages/`). Replaced with a pure ASGI middleware that only intercepts 404 GETs and leaves streaming responses untouched
 - **LiteLLM proxy**: Routes LLM calls through a local proxy for model flexibility and key management
 - **Dynamic catalog builder**: Merges MCP-registered, hidden, and stub tools into a unified 125-tool catalog
-- **PostgreSQL for state**: Sessions, instructions, projects, personas, stories, and secrets all DB-backed
+- **PostgreSQL for state**: Sessions, instructions, projects, personas, stories, artifacts, tasks, chat, and secrets all DB-backed; schema managed by Liquibase (13 changesets)
 - **Next.js static export**: Frontend builds to `web/static/` and is served by the FastAPI fallback middleware
+- **Frontend API facade**: `lib/api/client.ts` is a stable interface; switching from mock → REST requires changing a single import. The `hybrid` impl mixes live REST and mock per domain, enabling incremental feature rollout
+- **REST API parallel to MCP**: The `/api/*` router serves the web UI directly (CRUD for tasks, artifacts, chat, etc.); MCP SSE serves AI clients. Same PostgreSQL backend, different access paths
 
 ## Agent Orchestration
 

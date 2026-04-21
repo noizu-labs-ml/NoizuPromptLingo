@@ -15,11 +15,11 @@
  *   npl.coverage   → rest  (/api/npl/coverage)
  *   npl.load/spec  → mock  (MCP tools only)
  *   explorer.*     → rest  (/api/project/tree, /api/project/file)
- *   metrics.recentErrors → rest  (/api/errors)
- *   metrics.recentToolCalls/LLMCalls → mock  (no backend yet)
- *   chat.*         → mock  (no backend yet)
- *   artifacts.*    → mock  (no backend yet)
- *   orchestration.*→ mock  (no backend yet)
+ *   metrics.*      → rest  (/api/errors, /api/metrics/* — 501 returns [] for unprovisioned)
+ *   chat.*         → rest  (/api/chat/rooms*)
+ *   artifacts.*    → rest  (/api/artifacts*)
+ *   orchestration.trigger → rest  (/api/orchestration/trigger)
+ *   orchestration.agents/recentRuns → mock  (not yet wired)
  *   skills.*       → rest  (/api/skills/validate)
  *   browser.*      → rest  (/api/browser/to-markdown)
  *   agents.*       → rest  (/api/agents*)
@@ -47,15 +47,17 @@ export const npl = {
   coverage: rest.npl.coverage.bind(rest.npl),
 };
 
-// metrics: tool errors are live (real DB endpoint), others remain mock
+// metrics: all methods now via rest (tool-calls/llm-calls return [] on 501)
 export const metrics = {
-  ...mock.metrics,
-  recentErrors: rest.metrics.recentErrors.bind(rest.metrics),
+  ...rest.metrics,
 };
 
-// Domains kept on mock (no backend endpoint yet)
-export const chat = mock.chat;
-export const orchestration = mock.orchestration;
+// chat: wired to REST endpoint (/api/chat/rooms*)
+export const chat = rest.chat;
+export const orchestration = {
+  ...mock.orchestration,
+  trigger: rest.orchestration.trigger.bind(rest.orchestration),
+};
 
 // Artifacts: wired to REST endpoint (/api/artifacts*) — PRD-002 MVP
 export const artifacts = rest.artifacts;

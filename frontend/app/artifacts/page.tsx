@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useState } from "react";
 import useSWR from "swr";
-import clsx from "clsx";
 import {
   DocumentIcon,
   PlusIcon,
@@ -17,6 +16,13 @@ import { PageHeader } from "@/components/primitives/PageHeader";
 import { EmptyState } from "@/components/primitives/EmptyState";
 import { Badge } from "@/components/primitives/Badge";
 import type { BadgeProps } from "@/components/primitives/Badge";
+import { Button } from "@/components/primitives/Button";
+import { Input } from "@/components/primitives/Input";
+import { Select } from "@/components/primitives/Select";
+import { Textarea } from "@/components/primitives/Textarea";
+import { FormField } from "@/components/primitives/FormField";
+import { SkeletonGrid } from "@/components/primitives/SkeletonGrid";
+import { FilterBar } from "@/components/composites/FilterBar";
 
 import { relativeTime } from "@/lib/utils/format";
 import { kindVariant } from "@/lib/utils/badges";
@@ -62,12 +68,14 @@ function NewArtifactForm({ onCreated }: { onCreated: () => void }) {
 
   if (!open) {
     return (
-      <button
+      <Button
+        variant="primary"
+        size="sm"
+        leadingIcon={<PlusIcon className="h-4 w-4" />}
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-white hover:bg-accent/90 transition-colors"
       >
-        <PlusIcon className="h-4 w-4" /> New artifact
-      </button>
+        New artifact
+      </Button>
     );
   }
 
@@ -75,76 +83,67 @@ function NewArtifactForm({ onCreated }: { onCreated: () => void }) {
     <Card className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-foreground">New artifact</h3>
-        <button
+        <Button
+          variant="icon"
           onClick={() => setOpen(false)}
-          className="text-muted hover:text-foreground"
           aria-label="Close"
         >
           <XMarkIcon className="h-4 w-4" />
-        </button>
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-muted uppercase tracking-wide">Title</label>
-          <input
+        <FormField label="Title">
+          <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g. Draft PRD"
-            className="rounded-md border border-border bg-surface-sunken px-3 py-1.5 text-sm text-foreground placeholder:text-subtle focus:outline-none focus:ring-2 focus:ring-accent/40"
           />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-muted uppercase tracking-wide">Kind</label>
-          <select
+        </FormField>
+        <FormField label="Kind">
+          <Select
             value={kind}
             onChange={(e) => setKind(e.target.value as ArtifactKind)}
-            className="rounded-md border border-border bg-surface-sunken px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent/40"
           >
             {KINDS.map((k) => <option key={k} value={k}>{k}</option>)}
-          </select>
-        </div>
-        <div className="md:col-span-2 flex flex-col gap-1">
-          <label className="text-xs font-medium text-muted uppercase tracking-wide">Description</label>
-          <input
+          </Select>
+        </FormField>
+        <FormField label="Description" className="md:col-span-2">
+          <Input
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="rounded-md border border-border bg-surface-sunken px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent/40"
           />
-        </div>
-        <div className="md:col-span-2 flex flex-col gap-1">
-          <label className="text-xs font-medium text-muted uppercase tracking-wide">Content (revision 1)</label>
-          <textarea
+        </FormField>
+        <FormField label="Content (revision 1)" className="md:col-span-2">
+          <Textarea
             rows={8}
+            mono
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Artifact body..."
-            className="font-mono text-xs rounded-md border border-border bg-surface-sunken px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-accent/40 resize-y"
           />
-        </div>
+        </FormField>
       </div>
 
-      {error && <p className="text-xs text-danger">{error}</p>}
+      {error && (
+        <p className="text-xs text-danger" role="alert" aria-live="polite">
+          {error}
+        </p>
+      )}
 
       <div className="flex items-center justify-end gap-2">
-        <button
-          onClick={() => setOpen(false)}
-          className="text-xs rounded-md border border-border px-3 py-1.5 text-muted hover:text-foreground hover:bg-surface-raised transition-colors"
-        >
+        <Button variant="secondary" size="sm" onClick={() => setOpen(false)}>
           Cancel
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="primary"
+          size="sm"
+          loading={submitting}
+          disabled={!title.trim() || !content.trim()}
           onClick={handleSubmit}
-          disabled={submitting || !title.trim() || !content.trim()}
-          className={clsx(
-            "text-xs rounded-md px-3 py-1.5 font-medium transition-colors",
-            submitting || !title.trim() || !content.trim()
-              ? "bg-surface-raised text-subtle cursor-not-allowed"
-              : "bg-accent text-white hover:bg-accent/90"
-          )}
         >
           {submitting ? "Creating…" : "Create"}
-        </button>
+        </Button>
       </div>
     </Card>
   );
@@ -167,46 +166,34 @@ export default function ArtifactsPage() {
         actions={<NewArtifactForm onCreated={() => mutate()} />}
       />
 
-      <Card className="flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2">
-          <label className="text-xs font-medium text-muted uppercase tracking-wide">Kind</label>
-          <select
-            value={kindFilter}
-            onChange={(e) => setKindFilter(e.target.value as ArtifactKind | "")}
-            className="text-xs rounded border border-border bg-surface-sunken px-2 py-1 text-foreground focus:outline-none focus:ring-2 focus:ring-accent/40"
-          >
-            <option value="">All</option>
-            {KINDS.map((k) => <option key={k} value={k}>{k}</option>)}
-          </select>
-        </div>
-        {kindFilter && (
-          <button
-            onClick={() => setKindFilter("")}
-            className="text-xs text-muted hover:text-foreground transition-colors"
-          >
-            Clear
-          </button>
-        )}
-        <span className="ml-auto text-xs text-subtle">
-          {data?.count ?? 0} artifact{(data?.count ?? 0) === 1 ? "" : "s"}
-        </span>
-      </Card>
+      <FilterBar
+        filters={
+          <FormField label="Kind">
+            <Select
+              inputSize="sm"
+              value={kindFilter}
+              onChange={(e) => setKindFilter(e.target.value as ArtifactKind | "")}
+            >
+              <option value="">All</option>
+              {KINDS.map((k) => <option key={k} value={k}>{k}</option>)}
+            </Select>
+          </FormField>
+        }
+        hasActive={Boolean(kindFilter)}
+        onClear={() => setKindFilter("")}
+        summary={`${data?.count ?? 0} artifact${(data?.count ?? 0) === 1 ? "" : "s"}`}
+      />
 
       {error && (
-        <div className="rounded-md border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
+        <div
+          role="alert"
+          className="rounded-md border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger"
+        >
           Failed to load artifacts: {String(error)}
         </div>
       )}
 
-      {isLoading && (
-        <div className="space-y-2">
-          {[1, 2, 3].map((i) => (
-            <Card key={i} className="animate-pulse h-14">
-              <div className="h-4 bg-surface-sunken rounded w-1/3" />
-            </Card>
-          ))}
-        </div>
-      )}
+      {isLoading && <SkeletonGrid as="row" count={6} />}
 
       {!isLoading && artifacts.length === 0 && (
         <EmptyState
@@ -219,7 +206,7 @@ export default function ArtifactsPage() {
       {!isLoading && artifacts.length > 0 && (
         <div className="flex flex-col gap-2">
           {artifacts.map((a: Artifact) => (
-            <Link key={a.id} href={`/artifacts/${a.id}`} className="block">
+            <Link key={a.id} href={`/artifacts/${a.id}`} className="block rounded-lg focus-ring">
               <Card hoverable className="flex items-center gap-3">
                 <div className="flex-1 min-w-0 flex flex-col gap-0.5">
                   <div className="flex items-center gap-2 min-w-0">

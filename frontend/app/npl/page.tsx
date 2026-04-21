@@ -12,6 +12,9 @@ import { Card } from "@/components/primitives/Card";
 import { Badge } from "@/components/primitives/Badge";
 import { CodeBlock } from "@/components/primitives/CodeBlock";
 import { PageHeader } from "@/components/primitives/PageHeader";
+import { Button } from "@/components/primitives/Button";
+import { Select } from "@/components/primitives/Select";
+import { FormField } from "@/components/primitives/FormField";
 import type { NPLResponse } from "@/lib/api/types";
 
 // ── Quick-pick pills ─────────────────────────────────────────────────────
@@ -28,7 +31,7 @@ const QUICK_PICKS = [
 
 function ErrorBlock({ message }: { message: string }) {
   return (
-    <div className="bg-danger/10 text-danger p-3 rounded-md text-sm">
+    <div role="alert" className="bg-danger/10 text-danger p-3 rounded-md text-sm">
       {message}
     </div>
   );
@@ -59,7 +62,7 @@ function PreviewPanel({
       ) : response ? (
         <CodeBlock code={response.markdown} language="markdown" maxHeight="70vh" />
       ) : (
-        <div className="rounded-lg border border-border bg-surface-sunken px-6 py-12 text-center text-sm text-muted">
+        <div className="rounded-lg border border-border bg-surface-1 px-6 py-12 text-center text-sm text-muted">
           Results will appear here.
         </div>
       )}
@@ -143,7 +146,7 @@ function ExpressionTab() {
             type="text"
             value={expression}
             onChange={(e) => setExpression(e.target.value)}
-            className="rounded-md border border-border bg-surface-sunken px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="focus-ring rounded-md border border-border bg-surface-1 px-3 py-2 text-sm text-foreground placeholder:text-muted transition-colors"
           />
           <p className="text-xs text-muted leading-relaxed">
             Grammar:{" "}
@@ -173,7 +176,7 @@ function ExpressionTab() {
             value={skipInput}
             onChange={(e) => setSkipInput(e.target.value)}
             placeholder="e.g. syntax#placeholder, pumps"
-            className="rounded-md border border-border bg-surface-sunken px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="focus-ring rounded-md border border-border bg-surface-1 px-3 py-2 text-sm text-foreground placeholder:text-muted transition-colors"
           />
           <p className="text-xs text-muted leading-relaxed">
             Comma-separated terms to exclude, using the same grammar as the
@@ -182,26 +185,19 @@ function ExpressionTab() {
         </div>
 
         {/* Layout select */}
-        <div className="flex flex-col gap-1.5">
-          <label
-            htmlFor="npl-layout"
-            className="text-sm font-medium text-foreground"
-          >
-            Layout
-          </label>
-          <select
+        <FormField label="Layout" htmlFor="npl-layout">
+          <Select
             id="npl-layout"
             value={layout}
             onChange={(e) =>
               setLayout(e.target.value as "yaml_order" | "classic" | "grouped")
             }
-            className="rounded-md border border-border bg-surface-sunken px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand-500"
           >
             <option value="yaml_order">yaml_order</option>
             <option value="classic">classic</option>
             <option value="grouped">grouped</option>
-          </select>
-        </div>
+          </Select>
+        </FormField>
 
         {/* Quick-pick pills */}
         <div className="flex flex-col gap-2">
@@ -210,17 +206,16 @@ function ExpressionTab() {
           </span>
           <div className="flex flex-wrap gap-2">
             {QUICK_PICKS.map((pill) => (
-              <button
+              <Button
                 key={pill}
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => setExpression(pill)}
-                className={clsx(
-                  "rounded-full border border-border px-3 py-1 text-xs font-mono transition-colors",
-                  "bg-surface-sunken text-muted hover:bg-surface-raised hover:text-foreground"
-                )}
+                className="font-mono"
               >
                 {pill}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -231,10 +226,10 @@ function ExpressionTab() {
           onClick={handleLoad}
           disabled={loading || !expression.trim()}
           className={clsx(
-            "flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold text-white transition-colors",
+            "focus-ring flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold text-accent-on transition-colors",
             loading || !expression.trim()
-              ? "bg-brand-500/50 cursor-not-allowed"
-              : "bg-brand-500 hover:bg-brand-600"
+              ? "bg-accent/50 cursor-not-allowed"
+              : "bg-accent hover:bg-accent-soft"
           )}
         >
           {loading && <ArrowPathIcon className="h-4 w-4 animate-spin" />}
@@ -308,7 +303,7 @@ function ComponentComposerTab() {
             placeholder={
               "pumps#chain-of-thought\nsyntax#placeholder\ndirectives"
             }
-            className="rounded-md border border-border bg-surface-sunken px-3 py-2 text-sm font-mono text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand-500 resize-y"
+            className="focus-ring rounded-md border border-border bg-surface-1 px-3 py-2 text-sm font-mono text-foreground placeholder:text-muted transition-colors resize-y"
           />
           <p className="text-xs text-muted">
             Comma- or newline-separated entries, e.g.{" "}
@@ -342,7 +337,7 @@ function ComponentComposerTab() {
                 type="checkbox"
                 checked={value}
                 onChange={(e) => setter(e.target.checked)}
-                className="h-4 w-4 rounded border-border bg-surface-sunken accent-brand-500"
+                className="focus-ring h-4 w-4 rounded border-border bg-surface-1 accent-[hsl(var(--accent))]"
               />
               {label}
             </label>
@@ -355,10 +350,10 @@ function ComponentComposerTab() {
           onClick={handleGenerate}
           disabled={loading || !components.trim()}
           className={clsx(
-            "flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold text-white transition-colors",
+            "focus-ring flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold text-accent-on transition-colors",
             loading || !components.trim()
-              ? "bg-brand-500/50 cursor-not-allowed"
-              : "bg-brand-500 hover:bg-brand-600"
+              ? "bg-accent/50 cursor-not-allowed"
+              : "bg-accent hover:bg-accent-soft"
           )}
         >
           {loading && <ArrowPathIcon className="h-4 w-4 animate-spin" />}
@@ -408,7 +403,7 @@ export default function NPLPlaygroundPage() {
       />
 
       <TabGroup>
-        <TabList className="flex gap-1 rounded-lg bg-surface-raised border border-border p-1 w-fit">
+        <TabList className="flex gap-1 rounded-lg bg-surface-1 border border-border p-1 w-fit">
           {["Expression DSL", "Component Composer"].map((tab) => (
             <Tab
               key={tab}
@@ -416,7 +411,7 @@ export default function NPLPlaygroundPage() {
                 clsx(
                   "rounded-md px-4 py-1.5 text-sm font-medium transition-colors focus:outline-none",
                   selected
-                    ? "bg-brand-500 text-white shadow-sm"
+                    ? "bg-accent text-accent-on shadow-sm"
                     : "text-muted hover:text-foreground"
                 )
               }

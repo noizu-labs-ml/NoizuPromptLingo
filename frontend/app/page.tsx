@@ -8,6 +8,8 @@ import {
   FolderIcon,
   WrenchScrewdriverIcon,
   ChevronRightIcon,
+  ClipboardDocumentListIcon,
+  ArchiveBoxIcon,
 } from "@heroicons/react/24/outline";
 
 import { api } from "@/lib/api/client";
@@ -15,41 +17,9 @@ import { Card } from "@/components/primitives/Card";
 import { Badge } from "@/components/primitives/Badge";
 import { PageHeader } from "@/components/primitives/PageHeader";
 import { DataTable } from "@/components/primitives/DataTable";
+import { StatTile } from "@/components/primitives/StatTile";
 import type { Session } from "@/lib/api/types";
 import { relativeTime, truncate } from "@/lib/utils/format";
-
-function StatTile({
-  label,
-  value,
-  href,
-  icon: Icon,
-  description,
-}: {
-  label: string;
-  value: number | string;
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-  description: string;
-}) {
-  return (
-    <Link href={href} className="block group">
-      <Card hoverable>
-        <div className="flex items-start justify-between">
-          <div>
-            <div className="text-sm uppercase tracking-wide text-muted">
-              {label}
-            </div>
-            <div className="mt-1 text-3xl font-semibold text-foreground">
-              {value}
-            </div>
-            <div className="mt-1 text-xs text-subtle">{description}</div>
-          </div>
-          <Icon className="h-6 w-6 text-muted group-hover:text-accent transition-colors" />
-        </div>
-      </Card>
-    </Link>
-  );
-}
 
 
 export default function Home() {
@@ -63,47 +33,73 @@ export default function Home() {
   const { data: projects } = useSWR("projects.list", () => api.projects.list());
 
   const mcpCount = tools?.filter((t) => t.category !== "Uncategorized").length ?? 0;
+  const fmt = (n: number | undefined): string =>
+    typeof n === "number" ? n.toLocaleString() : "—";
 
   return (
     <div className="space-y-8">
-      <PageHeader
-        title="NPL MCP Companion"
-        description="A dashboard view of the Noizu Prompt Lingua MCP server — catalog, sessions, instructions, projects, and more."
-        actions={
-          <Badge variant="info" size="sm">
-            mock data
-          </Badge>
-        }
-      />
+      <div className="space-y-3">
+        <PageHeader
+          title="NPL MCP Companion"
+          description="Build structured prompts with the NoizuPromptLingo (NPL) syntax system. Catalog tools, compose instructions, version docs, collaborate with your team."
+        />
+        <p className="text-sm text-muted max-w-2xl">
+          New here? <Link href="/style-guide" className="text-accent hover:text-accent-soft">View the style guide</Link> to learn NPL syntax and explore the UI.
+        </p>
+      </div>
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile
           label="Catalog tools"
-          value={tools?.length ?? "—"}
+          value={fmt(tools?.length)}
           href="/tools"
-          icon={WrenchScrewdriverIcon}
-          description={`${mcpCount} categorized`}
+          icon={<WrenchScrewdriverIcon className="h-4 w-4" />}
+          delta={{ value: `${mcpCount} categorized`, trend: "flat" }}
         />
         <StatTile
           label="Sessions"
-          value={sessions?.length ?? "—"}
+          value={fmt(sessions?.length)}
           href="/sessions"
-          icon={ClockIcon}
-          description="Last 24h (mock)"
+          icon={<ClockIcon className="h-4 w-4" />}
+          delta={{ value: "Last 24h (mock)", trend: "flat" }}
         />
         <StatTile
           label="Instructions"
-          value={instructions?.length ?? "—"}
+          value={fmt(instructions?.length)}
           href="/instructions"
-          icon={BookOpenIcon}
-          description="Versioned documents"
+          icon={<BookOpenIcon className="h-4 w-4" />}
+          delta={{ value: "Versioned docs", trend: "flat" }}
         />
         <StatTile
           label="Projects"
-          value={projects?.length ?? "—"}
+          value={fmt(projects?.length)}
           href="/projects"
-          icon={FolderIcon}
-          description="Personas + stories"
+          icon={<FolderIcon className="h-4 w-4" />}
+          delta={{ value: "Personas + stories", trend: "flat" }}
+        />
+      </section>
+
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <StatTile
+          label="Tasks"
+          value="—"
+          href="/tasks"
+          icon={<ClipboardDocumentListIcon className="h-4 w-4" />}
+          delta={{ value: "Browse queue", trend: "flat" }}
+        />
+        <StatTile
+          label="Sessions"
+          value={fmt(sessions?.length)}
+          href="/sessions"
+          icon={<ClockIcon className="h-4 w-4" />}
+          delta={{ value: "Recent", trend: "flat" }}
+        />
+        <StatTile
+          label="Artifacts"
+          value="—"
+          href="/artifacts"
+          icon={<ArchiveBoxIcon className="h-4 w-4" />}
+          delta={{ value: "Versioned outputs", trend: "flat" }}
         />
       </section>
 

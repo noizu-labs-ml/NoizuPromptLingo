@@ -2,7 +2,7 @@
 
 ```
 NoizuPromptLingo/
-├── src/npl_mcp/            # Main package (launcher, markdown, meta_tools, npl, pm_tools, instructions, tool_sessions, browser, storage, web + stubs)
+├── src/npl_mcp/            # Main package (launcher, markdown, meta_tools, npl, pm_tools, instructions, tool_sessions, browser, storage, artifacts, chat, sessions, tasks, web)
 ├── src/mcp.py              # Minimal FastMCP hello-world server
 ├── frontend/               # Next.js web UI (React/TypeScript/Tailwind)
 ├── tests/                  # 27 test files incl. conftest.py (shared fixtures), test_catalog_migration.py (FastMCP integration), test_mcp_server.py (e2e)
@@ -15,7 +15,7 @@ NoizuPromptLingo/
 ├── sub-agent-prompts/      # Reusable prompts for parallel agents
 ├── scripts/                # Operational scripts (port forwarding)
 ├── gh-pages                # GitHub Pages submodule (static site)
-├── liquibase/              # Database migrations (Liquibase YAML, changesets 001–008)
+├── liquibase/              # Database migrations (Liquibase YAML, changesets 001–013)
 ├── docker/                 # Docker config (PostgreSQL init)
 ├── tools/                  # Utility scripts (git, markdown, validators)
 ├── worktrees/              # Git worktrees (gitignored: main, npl-update, redo, take-3)

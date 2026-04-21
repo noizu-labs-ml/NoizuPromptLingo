@@ -11,8 +11,11 @@ import { Badge } from "@/components/primitives/Badge";
 import { DataTable } from "@/components/primitives/DataTable";
 import { EmptyState } from "@/components/primitives/EmptyState";
 import { PageHeader } from "@/components/primitives/PageHeader";
+import { SkeletonGrid } from "@/components/primitives/SkeletonGrid";
+import { Button } from "@/components/primitives/Button";
 import { SearchBox } from "@/components/forms/SearchBox";
 import { FilterListbox } from "@/components/forms/FilterListbox";
+import { FilterBar } from "@/components/composites/FilterBar";
 
 import { ClockIcon } from "@heroicons/react/24/outline";
 import { relativeTime, truncate } from "@/lib/utils/format";
@@ -107,6 +110,16 @@ export default function SessionsPage() {
     },
   ];
 
+  const hasActive = Boolean(
+    search || selectedProjects.length > 0 || selectedAgents.length > 0
+  );
+
+  const clearAll = () => {
+    setSearch("");
+    setSelectedProjects([]);
+    setSelectedAgents([]);
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
@@ -121,50 +134,52 @@ export default function SessionsPage() {
         }
       />
 
-      {/* Filter row */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="flex-1 min-w-[200px]">
+      <FilterBar
+        search={
           <SearchBox
             value={search}
             onChange={setSearch}
             onClear={() => setSearch("")}
             placeholder="Search brief or notes…"
           />
-        </div>
-        <FilterListbox
-          label="Project"
-          options={projectOptions}
-          selected={selectedProjects}
-          onChange={setSelectedProjects}
-        />
-        <FilterListbox
-          label="Agent"
-          options={agentOptions}
-          selected={selectedAgents}
-          onChange={setSelectedAgents}
-        />
-      </div>
+        }
+        filters={
+          <>
+            <FilterListbox
+              label="Project"
+              options={projectOptions}
+              selected={selectedProjects}
+              onChange={setSelectedProjects}
+            />
+            <FilterListbox
+              label="Agent"
+              options={agentOptions}
+              selected={selectedAgents}
+              onChange={setSelectedAgents}
+            />
+          </>
+        }
+        hasActive={hasActive}
+        onClear={clearAll}
+        summary={
+          sessions
+            ? `${filtered.length} ${filtered.length === 1 ? "session" : "sessions"}`
+            : undefined
+        }
+      />
 
       {/* Table */}
       {isLoading ? (
-        <div className="h-64 rounded-lg bg-surface-raised border border-border animate-pulse" />
+        <SkeletonGrid as="row" count={6} />
       ) : filtered.length === 0 ? (
         <EmptyState
           icon={<ClockIcon />}
           title="No sessions found"
           description="Try adjusting your search or filter criteria."
           action={
-            <button
-              type="button"
-              onClick={() => {
-                setSearch("");
-                setSelectedProjects([]);
-                setSelectedAgents([]);
-              }}
-              className="text-sm text-accent hover:underline"
-            >
+            <Button variant="ghost" size="sm" onClick={clearAll}>
               Clear all filters
-            </button>
+            </Button>
           }
         />
       ) : (
