@@ -5,11 +5,11 @@ NoizuPromptLingo/
 ├── src/npl_mcp/            # Main package (launcher, markdown, meta_tools, npl, pm_tools, instructions, tool_sessions, browser, storage, web + stubs)
 ├── src/mcp.py              # Minimal FastMCP hello-world server
 ├── frontend/               # Next.js web UI (React/TypeScript/Tailwind)
-├── tests/                  # 25 test files (markdown, NPL, PM tools, meta tools, browser, instructions, sessions)
+├── tests/                  # 27 test files incl. conftest.py (shared fixtures), test_catalog_migration.py (FastMCP integration), test_mcp_server.py (e2e)
 ├── docs/                   # Architecture, reference, layout, schema, agents, claude, pending, prior-version, winnower design
 ├── project-management/     # Personas, 147 user stories, 21 PRDs (001–017), TODOs
-├── conventions/            # NPL convention YAML definitions
-├── npl/                    # NPL language specifications (YAML + Markdown)
+├── conventions/            # NPL convention YAML definitions (source of truth)
+├── npl/                    # Generated NPL artifacts (npl-full.md rendered from conventions/)
 ├── agents/                 # TDD agent definitions (npl-*.md, incl. npl-winnower)
 ├── commands/               # Claude Code slash commands (8 commands)
 ├── sub-agent-prompts/      # Reusable prompts for parallel agents

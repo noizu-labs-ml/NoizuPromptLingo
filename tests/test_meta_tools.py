@@ -480,7 +480,16 @@ class TestMCPRegistration:
         assert tool_names == {
             "ToolSummary", "ToolSearch", "ToolDefinition", "ToolHelp", "ToolCall",
             "ToolSession", "ToolSession.Generate", "Instructions", "Instructions.Create",
-            "Instructions.List", "NPLSpec",
+            "Instructions.List", "NPLSpec", "NPLLoad", "Skill.Validate", "Skill.Evaluate",
+            # US-086: agent spec loading
+            "Agent.List", "Agent.Load",
+            # PRD-005 MVP: tasks
+            "Tasks.Create", "Tasks.Get", "Tasks.List", "Tasks.UpdateStatus",
+            # PRD-002 MVP: artifacts
+            "Artifact.Create", "Artifact.AddRevision", "Artifact.Get",
+            "Artifact.List", "Artifact.ListRevisions",
+            # PRD-004 MVP: generic sessions
+            "Session.Create", "Session.Get", "Session.List", "Session.Update",
         }
 
 
@@ -582,7 +591,8 @@ class TestToolCall:
     async def test_call_stub_tool(self, _mcp_app):
         """ToolCall returns stub status for tools without implementation."""
         tool = await _mcp_app.get_tool("ToolCall")
-        result = await tool.run({"tool": "dump_files", "arguments": {"path": "/tmp"}})
+        # create_artifact is a stable Artifacts stub (Scripts tools are now implemented)
+        result = await tool.run({"tool": "create_artifact", "arguments": {}})
         data = json.loads(result.content[0].text)
         assert data["status"] == "stub"
         assert "no implementation" in data["message"].lower()

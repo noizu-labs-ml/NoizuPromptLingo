@@ -157,9 +157,63 @@ Relationship metadata lives in YAML index files, NOT markdown:
 
 ## MCP Tool Discovery
 
-This server uses a **meta-discovery pattern**. 5 Discovery tools are always visible: `ToolSummary`, `ToolSearch`, `ToolDefinition`, `ToolHelp`, and `ToolCall`. All ~124 catalog tools are discoverable via these tools.
+This server uses a **meta-discovery pattern**. 5 Discovery tools are always visible: `ToolSummary`, `ToolSearch`, `ToolDefinition`, `ToolHelp`, and `ToolCall`. All ~125 catalog tools are discoverable via these tools.
 
 **Use `ToolCall` to invoke any catalog tool by name** (e.g. `ToolCall(tool="Ping", arguments={"url": "https://example.com"})`).
+
+---
+
+## NPL Convention Loading
+
+The `conventions/*.yaml` directory is the **single source of truth** for NPL syntax definitions. Two MCP tools expose it:
+
+| Tool | Input | When to use |
+|------|-------|-------------|
+| `NPLLoad` | Expression DSL: `"syntax#placeholder:+2 directives -pumps"` | Quick agent-facing snippet retrieval. Prefer for ad-hoc loading. |
+| `NPLSpec` | Structured `ComponentSpec` list + flags | Full spec generation with `⌜NPL@1.0⌝` markers, dependency resolution, and extension blocks. |
+
+### Expression DSL (NPLLoad)
+
+Space-separated terms, each of the form `section[#component][:+priority]`. Prefix `-` to subtract.
+
+```
+# A single full section
+NPLLoad(expression="syntax")
+
+# One specific component
+NPLLoad(expression="pumps#chain-of-thought")
+
+# Multiple sections with priority filter
+NPLLoad(expression="syntax:+2 directives:+2")
+
+# Multi-section with subtraction
+NPLLoad(expression="syntax directives -syntax#literal-string")
+
+# Alternate layout
+NPLLoad(expression="pumps", layout="grouped")
+```
+
+Sections: `syntax`, `declarations`, `directives`, `prefixes`, `prompt-sections`, `special-sections`, `pumps`, `fences`.
+Layouts: `yaml_order` (default), `classic`, `grouped`.
+
+### Full-spec generation (NPLSpec)
+
+Use for generating the complete framework block (wrapped in `⌜NPL@1.0⌝...⌞NPL@1.0⌟`), for example when bootstrapping a prompt for a new agent or regenerating `npl/npl-full.md`:
+
+```
+NPLSpec(components=[], concise=True)          # all conventions, concise mode
+NPLSpec(components=[ComponentSpec(spec="syntax#placeholder")])  # subset
+```
+
+### Regenerating `npl-full.md`
+
+`npl/npl-full.md` is a **generated artifact** rendered from `conventions/*.yaml` via `NPLSpec`:
+
+```bash
+uv run npl-docs-regen              # regenerate in place
+uv run npl-docs-regen --check      # CI/pre-commit guard (exit 1 if stale)
+uv run npl-docs-regen --stdout     # preview without writing
+```
 
 ---
 

@@ -336,10 +336,15 @@ async def call_tool(tool_name: str, arguments: dict[str, Any] | None = None) -> 
     if info is None:
         raise KeyError(f"Tool '{tool_name}' not found in discoverable registry")
 
-    result = info.fn(**(arguments or {}))
-    if asyncio.iscoroutine(result):
-        result = await result
-    return result
+    try:
+        result = info.fn(**(arguments or {}))
+        if asyncio.iscoroutine(result):
+            result = await result
+        return result
+    except Exception as exc:
+        from npl_mcp.storage.error_log import log_tool_error
+        await log_tool_error(tool_name, exc)
+        raise
 
 
 # ---------------------------------------------------------------------------

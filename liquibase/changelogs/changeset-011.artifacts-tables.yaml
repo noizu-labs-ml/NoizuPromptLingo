@@ -1,0 +1,126 @@
+databaseChangeLog:
+  # ===========================================================================
+  # Changeset 011: npl_artifacts + npl_artifact_revisions (tier-C MVP)
+  # ===========================================================================
+  - changeSet:
+      id: 011-create-npl-artifacts-tables
+      author: npl
+      comment: Versioned artifact storage (PRD-002 MVP)
+      changes:
+        - createTable:
+            tableName: npl_artifacts
+            columns:
+              - column:
+                  name: id
+                  type: bigserial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: title
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: kind
+                  type: VARCHAR(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: created_by
+                  type: VARCHAR(256)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: latest_revision
+                  type: INT
+                  defaultValueNumeric: 1
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: npl_artifact_revisions
+            columns:
+              - column:
+                  name: id
+                  type: bigserial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: artifact_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_artifact_rev_artifact
+                    references: npl_artifacts(id)
+              - column:
+                  name: revision
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: content
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: notes
+                  type: TEXT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: created_by
+                  type: VARCHAR(256)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: npl_artifact_revisions
+            columnNames: artifact_id, revision
+            constraintName: uq_artifact_revision_pair
+        - createIndex:
+            indexName: idx_artifacts_kind
+            tableName: npl_artifacts
+            columns:
+              - column:
+                  name: kind
+        - createIndex:
+            indexName: idx_artifacts_created_at
+            tableName: npl_artifacts
+            columns:
+              - column:
+                  name: created_at
+                  descending: true
+        - createIndex:
+            indexName: idx_artifact_revisions_artifact_id
+            tableName: npl_artifact_revisions
+            columns:
+              - column:
+                  name: artifact_id
+      rollback:
+        - dropTable:
+            tableName: npl_artifact_revisions
+        - dropTable:
+            tableName: npl_artifacts

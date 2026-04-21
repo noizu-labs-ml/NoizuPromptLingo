@@ -20,3 +20,15 @@ databaseChangeLog:
   - include:
       file: changelogs/changeset-008.instruction-embeddings.yaml
       relativeToChangelogFile: false
+  - include:
+      file: changelogs/changeset-009.tool-errors-table.yaml
+      relativeToChangelogFile: false
+  - include:
+      file: changelogs/changeset-010.tasks-table.yaml
+      relativeToChangelogFile: false
+  - include:
+      file: changelogs/changeset-011.artifacts-tables.yaml
+      relativeToChangelogFile: false
+  - include:
+      file: changelogs/changeset-012.generic-sessions-table.yaml
+      relativeToChangelogFile: false

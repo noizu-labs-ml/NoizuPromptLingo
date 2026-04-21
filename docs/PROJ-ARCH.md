@@ -45,7 +45,7 @@ graph TB
 | Component | Location | Purpose |
 |-----------|----------|---------|
 | Launcher | `src/npl_mcp/launcher.py` | `create_app()` + `create_asgi_app()`, CLI, Uvicorn |
-| Meta Tools | `src/npl_mcp/meta_tools/` | ToolSummary, ToolSearch, ToolDefinition, ToolHelp, ToolCall |
+| Meta Tools | `src/npl_mcp/meta_tools/` | Discovery tools (ToolSummary, ToolSearch, ToolDefinition, ToolHelp, ToolCall) + catalog builder + `mcp_discoverable` helper + stub catalog |
 | NPL Spec | `src/npl_mcp/convention_formatter.py` | NPLSpec tool — generate NPL definitions from convention YAMLs |
 | Markdown Tools | `src/npl_mcp/markdown/` | Converter, viewer, filters, image descriptions |
 | NPL Parser | `src/npl_mcp/npl/` | YAML loader, syntax parser, reference resolver |

@@ -7,7 +7,11 @@ from unittest.mock import AsyncMock, patch
 import pytest
 import shortuuid
 
-from npl_mcp.tool_sessions.tool_sessions import tool_session, tool_session_generate
+from npl_mcp.tool_sessions.tool_sessions import (
+    append_session_notes,
+    tool_session,
+    tool_session_generate,
+)
 from npl_mcp.tool_sessions.projects import project_uuid
 
 
@@ -275,3 +279,88 @@ class TestToolSession:
     async def test_invalid_uuid(self):
         result = await tool_session("!!invalid!!")
         assert result["status"] == "not_found"
+
+
+# ---------------------------------------------------------------------------
+# append_session_notes
+# ---------------------------------------------------------------------------
+
+
+class TestAppendSessionNotes:
+    async def test_empty_note_rejected(self):
+        result = await append_session_notes(shortuuid.encode(uuid.uuid4()), "   ")
+        assert result["status"] == "error"
+
+    async def test_invalid_uuid(self):
+        result = await append_session_notes("!!nope!!", "a note")
+        assert result["status"] == "not_found"
+
+    @patch("npl_mcp.tool_sessions.tool_sessions.get_pool")
+    async def test_session_missing(self, mock_get_pool):
+        pool = AsyncMock()
+        pool.fetchrow.return_value = None
+        mock_get_pool.return_value = pool
+
+        result = await append_session_notes(shortuuid.encode(uuid.uuid4()), "hi")
+        assert result["status"] == "not_found"
+
+    @patch("npl_mcp.tool_sessions.tool_sessions.get_pool")
+    async def test_appends_new_note(self, mock_get_pool):
+        sid = uuid.uuid4()
+        parent = None
+        now = datetime.now(tz=timezone.utc)
+        pool = AsyncMock()
+        pool.fetchrow.side_effect = [
+            {
+                "id": sid, "agent": "ag", "brief": "br", "task": "tk",
+                "notes": "existing", "parent_id": parent,
+                "created_at": now, "updated_at": now, "project": "proj",
+            },
+            {"updated_at": now},
+        ]
+        mock_get_pool.return_value = pool
+
+        result = await append_session_notes(shortuuid.encode(sid), "new")
+        assert result["status"] == "ok"
+        assert result["action"] == "appended"
+        assert result["notes"] == "existing\nnew"
+        assert result["project"] == "proj"
+        pool.execute.assert_called_once()
+
+    @patch("npl_mcp.tool_sessions.tool_sessions.get_pool")
+    async def test_appends_to_empty_notes(self, mock_get_pool):
+        sid = uuid.uuid4()
+        now = datetime.now(tz=timezone.utc)
+        pool = AsyncMock()
+        pool.fetchrow.side_effect = [
+            {
+                "id": sid, "agent": "ag", "brief": "br", "task": "tk",
+                "notes": None, "parent_id": None,
+                "created_at": now, "updated_at": now, "project": "proj",
+            },
+            {"updated_at": now},
+        ]
+        mock_get_pool.return_value = pool
+
+        result = await append_session_notes(shortuuid.encode(sid), "first")
+        assert result["status"] == "ok"
+        assert result["notes"] == "first"
+        pool.execute.assert_called_once()
+
+    @patch("npl_mcp.tool_sessions.tool_sessions.get_pool")
+    async def test_dedupes_substring(self, mock_get_pool):
+        sid = uuid.uuid4()
+        now = datetime.now(tz=timezone.utc)
+        pool = AsyncMock()
+        pool.fetchrow.return_value = {
+            "id": sid, "agent": "ag", "brief": "br", "task": "tk",
+            "notes": "already here\nwith more", "parent_id": None,
+            "created_at": now, "updated_at": now, "project": "proj",
+        }
+        mock_get_pool.return_value = pool
+
+        result = await append_session_notes(shortuuid.encode(sid), "already here")
+        assert result["status"] == "ok"
+        assert result["action"] == "noop"
+        assert result["notes"] == "already here\nwith more"
+        pool.execute.assert_not_called()

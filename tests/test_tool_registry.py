@@ -133,4 +133,4 @@ class TestCallTool:
     async def test_call_stub_raises_key_error(self):
         """Stub tools are in catalog but not in discoverable registry."""
         with pytest.raises(KeyError):
-            await call_tool("dump_files")
+            await call_tool("create_artifact")

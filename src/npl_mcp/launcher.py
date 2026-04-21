@@ -12,6 +12,7 @@ Usage:
     npl-mcp --reload         # Auto-reload on file changes
 """
 
+import datetime
 import subprocess
 import sys
 from typing import Any, Optional
@@ -23,6 +24,8 @@ from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastmcp import FastMCP
 
+# Module-level start time — captured once at import for uptime calculation.
+_STARTED_AT: datetime.datetime = datetime.datetime.now(datetime.timezone.utc)
 
 HOST = "127.0.0.1"
 PORT = "8765"
@@ -128,6 +131,62 @@ def create_app() -> "FastMCP":
             extension=extension,
             flags={"concise": concise, "xml": xml},
         )
+
+    # ------------------------------------------------------------------
+    # NPLLoad tool (MCP-visible) — expression DSL for selective loading
+    # ------------------------------------------------------------------
+
+    @mcp_discoverable(
+        mcp,
+        name="NPLLoad",
+        category="NPL",
+        description="Load NPL components by expression DSL — agent-friendly alternative to NPLSpec",
+    )
+    def npl_load(
+        expression: str,
+        layout: str = "yaml_order",
+        skip: Optional[list[str]] = None,
+    ) -> str:
+        """Load NPL components via expression DSL.
+
+        Expression grammar (space-separated terms):
+          - ``syntax`` — the entire syntax section
+          - ``syntax#placeholder`` — a specific component
+          - ``syntax#placeholder:+2`` — component plus examples with priority ≤ 2
+          - ``syntax directives`` — multiple sections
+          - ``syntax -syntax#literal`` — subtract specific component
+          - ``pumps#chain-of-thought pumps#plan-of-action`` — multiple components
+
+        Sections: syntax, declarations, directives, prefixes, prompt-sections,
+        special-sections, pumps, fences.
+
+        Args:
+            expression: NPL loading expression as described above.
+            layout: One of "yaml_order" (default, flat section order),
+                    "classic" (grouped by first label), or "grouped" (by section).
+            skip: Optional list of expression terms already loaded elsewhere —
+                their components are excluded from this load. Same grammar as
+                *expression* (without leading ``-``). Example:
+                ``["syntax#placeholder", "pumps"]``.
+
+        Returns:
+            Markdown-formatted NPL components matching the expression.
+        """
+        from pathlib import Path
+        from npl_mcp.npl.loader import load_npl
+        from npl_mcp.npl.layout import LayoutStrategy
+
+        layout_map = {
+            "yaml_order": LayoutStrategy.YAML_ORDER,
+            "classic": LayoutStrategy.CLASSIC,
+            "grouped": LayoutStrategy.GROUPED,
+        }
+        strategy = layout_map.get(layout.lower(), LayoutStrategy.YAML_ORDER)
+
+        # Locate conventions/ relative to project root (the parent of src/)
+        conventions_dir = Path(__file__).resolve().parent.parent.parent / "conventions"
+
+        return load_npl(expression, npl_dir=conventions_dir, layout=strategy, skip=skip)
 
     # ------------------------------------------------------------------
     # Discovery tools (5 MCP-visible)
@@ -405,6 +464,364 @@ def create_app() -> "FastMCP":
         return await _list(session=session, query=query, mode=mode, tags=tags, limit=limit)
 
     # ------------------------------------------------------------------
+    # Agents tools (2 MCP-visible) — US-086
+    # ------------------------------------------------------------------
+
+    @mcp_discoverable(
+        mcp,
+        name="Agent.List",
+        category="Agents",
+        description="List available agent definitions from agents/ directory",
+    )
+    async def agent_list() -> list[dict]:
+        """Return metadata for all agent definitions.
+
+        Returns a list of dicts with: name, display_name, description,
+        model, allowed_tools, kind, path, body_length.
+        Body is omitted for brevity — use Agent.Load to get the full spec.
+        """
+        from npl_mcp.agents.catalog import list_agents
+        return await list_agents()
+
+    @mcp_discoverable(
+        mcp,
+        name="Agent.Load",
+        category="Agents",
+        description="Load full agent specification (frontmatter + body) by name",
+    )
+    async def agent_load(name: str) -> dict:
+        """Load an agent spec by name.
+
+        Returns the full agent specification including the markdown body.
+
+        Args:
+            name: Agent name to load (e.g. "npl-tasker-fast").
+
+        Returns:
+            Dict with: name, display_name, description, model,
+            allowed_tools, kind, path, body, body_length.
+            On failure: {"status": "error", "message": "..."}.
+        """
+        from npl_mcp.agents.catalog import get_agent
+        result = await get_agent(name)
+        if result is None:
+            return {"status": "error", "message": f"Agent '{name}' not found"}
+        return result
+
+    # ------------------------------------------------------------------
+    # Tasks tools (4 MCP-visible) — PRD-005 MVP
+    # ------------------------------------------------------------------
+
+    @mcp_discoverable(
+        mcp,
+        name="Tasks.Create",
+        category="Tasks",
+        description="Create a task row in npl_tasks (flat MVP — no queue)",
+    )
+    async def tasks_create(
+        title: str,
+        description: Optional[str] = None,
+        status: str = "pending",
+        priority: int = 1,
+        assigned_to: Optional[str] = None,
+        notes: Optional[str] = None,
+    ) -> dict:
+        """Create a new task.
+
+        Args:
+            title: Required non-empty title.
+            description: Optional longer body.
+            status: One of pending|in_progress|blocked|review|done (default pending).
+            priority: Integer priority (0=low, 3=urgent). Default 1.
+            assigned_to: Optional assignee identifier.
+            notes: Optional initial notes.
+
+        Returns the created task fields alongside ``status: "ok"``.
+        """
+        from npl_mcp.tasks import task_create
+        return await task_create(
+            title=title,
+            description=description,
+            status=status,
+            priority=priority,
+            assigned_to=assigned_to,
+            notes=notes,
+        )
+
+    @mcp_discoverable(
+        mcp,
+        name="Tasks.Get",
+        category="Tasks",
+        description="Fetch a task by integer id",
+    )
+    async def tasks_get(task_id: int) -> dict:
+        """Get a single task.
+
+        Returns ``{"status": "ok", ...}`` or ``{"status": "not_found", "id": N}``.
+        """
+        from npl_mcp.tasks import task_get
+        return await task_get(task_id)
+
+    @mcp_discoverable(
+        mcp,
+        name="Tasks.List",
+        category="Tasks",
+        description="List tasks, optionally filtered by status and/or assignee",
+    )
+    async def tasks_list(
+        status: Optional[str] = None,
+        assigned_to: Optional[str] = None,
+        limit: int = 100,
+    ) -> dict:
+        """List tasks ordered by created_at desc.
+
+        Args:
+            status: Filter to this status if provided.
+            assigned_to: Filter to this assignee if provided.
+            limit: 1..500 (default 100).
+        """
+        from npl_mcp.tasks import task_list
+        return await task_list(status=status, assigned_to=assigned_to, limit=limit)
+
+    @mcp_discoverable(
+        mcp,
+        name="Tasks.UpdateStatus",
+        category="Tasks",
+        description="Update a task's status; optionally append a note",
+    )
+    async def tasks_update_status(
+        task_id: int,
+        status: str,
+        notes: Optional[str] = None,
+    ) -> dict:
+        """Change a task's status.
+
+        Args:
+            task_id: Integer id.
+            status: New status.
+            notes: Optional note — substring-deduped against existing notes.
+        """
+        from npl_mcp.tasks import task_update_status
+        return await task_update_status(task_id=task_id, status=status, notes=notes)
+
+    # ------------------------------------------------------------------
+    # Artifacts tools (5 MCP-visible) — PRD-002 MVP
+    # ------------------------------------------------------------------
+
+    @mcp_discoverable(
+        mcp,
+        name="Artifact.Create",
+        category="Artifacts",
+        description="Create a new text artifact with its initial revision",
+    )
+    async def artifact_create_tool(
+        title: str,
+        content: str,
+        kind: str = "markdown",
+        description: Optional[str] = None,
+        created_by: Optional[str] = None,
+        notes: Optional[str] = None,
+    ) -> dict:
+        """Create a versioned text artifact.
+
+        Args:
+            title: Non-empty human-readable title.
+            content: Initial body (revision 1).
+            kind: One of markdown|json|yaml|code|text|other (default markdown).
+            description: Optional long description.
+            created_by: Optional persona slug.
+            notes: Optional notes attached to revision 1.
+        """
+        from npl_mcp.artifacts import artifact_create
+        return await artifact_create(
+            title=title, content=content, kind=kind,
+            description=description, created_by=created_by, notes=notes,
+        )
+
+    @mcp_discoverable(
+        mcp,
+        name="Artifact.AddRevision",
+        category="Artifacts",
+        description="Append a new revision to an existing artifact",
+    )
+    async def artifact_add_revision_tool(
+        artifact_id: int,
+        content: str,
+        notes: Optional[str] = None,
+        created_by: Optional[str] = None,
+    ) -> dict:
+        """Add a new revision (N+1) to an artifact."""
+        from npl_mcp.artifacts import artifact_add_revision
+        return await artifact_add_revision(
+            artifact_id=artifact_id, content=content,
+            notes=notes, created_by=created_by,
+        )
+
+    @mcp_discoverable(
+        mcp,
+        name="Artifact.Get",
+        category="Artifacts",
+        description="Fetch an artifact + one of its revisions",
+    )
+    async def artifact_get_tool(
+        artifact_id: int,
+        revision: Optional[int] = None,
+    ) -> dict:
+        """Get an artifact with its latest (or specific) revision body."""
+        from npl_mcp.artifacts import artifact_get
+        return await artifact_get(artifact_id=artifact_id, revision=revision)
+
+    @mcp_discoverable(
+        mcp,
+        name="Artifact.List",
+        category="Artifacts",
+        description="List artifacts (optionally filtered by kind)",
+    )
+    async def artifact_list_tool(
+        kind: Optional[str] = None,
+        limit: int = 100,
+    ) -> dict:
+        """List artifact head rows (no revision bodies)."""
+        from npl_mcp.artifacts import artifact_list
+        return await artifact_list(kind=kind, limit=limit)
+
+    @mcp_discoverable(
+        mcp,
+        name="Artifact.ListRevisions",
+        category="Artifacts",
+        description="List all revisions for an artifact (summaries only)",
+    )
+    async def artifact_list_revisions_tool(artifact_id: int) -> dict:
+        """List revision summaries for an artifact."""
+        from npl_mcp.artifacts import artifact_list_revisions
+        return await artifact_list_revisions(artifact_id=artifact_id)
+
+    # ------------------------------------------------------------------
+    # Generic Sessions tools (4 MCP-visible) — PRD-004 MVP
+    # Distinct from ToolSession which is per-agent-task; these group
+    # arbitrary work (chat rooms + artifacts + tasks) under a logical session.
+    # ------------------------------------------------------------------
+
+    @mcp_discoverable(
+        mcp,
+        name="Session.Create",
+        category="Sessions",
+        description="Create a generic work session (distinct from ToolSession)",
+    )
+    async def session_create_tool(
+        title: Optional[str] = None,
+        description: Optional[str] = None,
+        status: str = "active",
+        created_by: Optional[str] = None,
+    ) -> dict:
+        """Create a generic session.
+
+        Args:
+            title: Optional title.
+            description: Optional long description.
+            status: active|paused|completed|archived (default active).
+            created_by: Optional creator identifier.
+        """
+        from npl_mcp.sessions import session_create
+        return await session_create(
+            title=title, description=description,
+            status=status, created_by=created_by,
+        )
+
+    @mcp_discoverable(
+        mcp,
+        name="Session.Get",
+        category="Sessions",
+        description="Fetch a generic session by uuid",
+    )
+    async def session_get_tool(session_id: str) -> dict:
+        """Fetch one generic session."""
+        from npl_mcp.sessions import session_get
+        return await session_get(session_id)
+
+    @mcp_discoverable(
+        mcp,
+        name="Session.List",
+        category="Sessions",
+        description="List generic sessions, optionally filtered by status",
+    )
+    async def session_list_tool(
+        status: Optional[str] = None,
+        limit: int = 50,
+    ) -> dict:
+        """List generic sessions."""
+        from npl_mcp.sessions import session_list
+        return await session_list(status=status, limit=limit)
+
+    @mcp_discoverable(
+        mcp,
+        name="Session.Update",
+        category="Sessions",
+        description="Update title/status/description on a generic session",
+    )
+    async def session_update_tool(
+        session_id: str,
+        title: Optional[str] = None,
+        status: Optional[str] = None,
+        description: Optional[str] = None,
+    ) -> dict:
+        """Partial update of a generic session."""
+        from npl_mcp.sessions import session_update
+        return await session_update(
+            session_id=session_id, title=title,
+            status=status, description=description,
+        )
+
+    # ------------------------------------------------------------------
+    # Skills tools (1 MCP-visible)
+    # ------------------------------------------------------------------
+
+    @mcp_discoverable(
+        mcp,
+        name="Skill.Validate",
+        category="Skills",
+        description="Validate a skill file's structure and content against NPL skill conventions",
+    )
+    async def skill_validate(content: str, filename: str = "") -> dict:
+        """Validate a skill file.
+
+        Checks frontmatter (YAML parse, required fields, field lengths),
+        name/filename consistency, unknown fields, and body structure
+        (headings, minimum length).
+
+        Args:
+            content: Full text of the skill markdown file (frontmatter + body).
+            filename: Optional filename for filename/name-field cross-check.
+        """
+        from npl_mcp.skills.validator import validate_skill
+        return await validate_skill(content, filename or None)
+
+    @mcp_discoverable(
+        mcp,
+        name="Skill.Evaluate",
+        category="Skills",
+        description="Score a skill file across quality dimensions (description, examples, structure, completeness)",
+    )
+    async def skill_evaluate(content: str, filename: str = "") -> dict:
+        """Evaluate a skill file's quality across heuristic dimensions.
+
+        Returns a per-dimension score (0.0–1.0) plus an overall score and
+        actionable suggestions.  Embeds the full US-119 validation result.
+
+        Dimensions scored:
+          - description: length and clarity of the frontmatter description field
+          - examples:    number of fenced code blocks in the body
+          - structure:   heading depth, sub-sections, and clear opener
+          - completeness: ratio of required + recommended frontmatter fields set
+
+        Args:
+            content: Full text of the skill markdown file (frontmatter + body).
+            filename: Optional filename for name/filename cross-check.
+        """
+        from npl_mcp.skills.validator import evaluate_skill
+        return await evaluate_skill(content, filename or None)
+
+    # ------------------------------------------------------------------
     # Initialize catalog and register discoverable tools
     # ------------------------------------------------------------------
 
@@ -427,6 +844,10 @@ def create_asgi_app() -> FastAPI:
 
     api = FastAPI(title="NPL MCP Server")
     api.mount("/sse", mcp_sse_app)
+
+    # Mount read-only REST API router
+    from npl_mcp.api.router import router as api_router
+    api.include_router(api_router)
 
     if DIST_DIR.exists() and (DIST_DIR / "index.html").exists():
         try:

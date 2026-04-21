@@ -29,6 +29,7 @@ SSE_URL = f"http://{HOST}:{PORT}/sse"
 # MCP tools that should always be visible on the npl-mcp launcher.
 EXPECTED_MCP_TOOLS = {
     "NPLSpec",
+    "NPLLoad",
     "ToolSummary",
     "ToolSearch",
     "ToolDefinition",
@@ -200,5 +201,22 @@ async def test_npl_spec_generates_definition() -> None:
                 f"NPLSpec output did not start with NPL definition marker: {text[:80]}"
             )
             assert "⌞NPL@" in text, "NPLSpec output missing closing marker"
+    except (httpx.ConnectError, httpx.TimeoutException):
+        pytest.skip(f"Could not connect to server at {SSE_URL}")
+
+
+@pytest.mark.asyncio
+async def test_npl_load_expression_dsl() -> None:
+    """NPLLoad accepts the expression DSL and returns matching NPL markdown."""
+    client = _fastmcp_client()
+    try:
+        async with client:
+            result = await client.call_tool(
+                "NPLLoad", {"expression": "pumps#chain-of-thought"}
+            )
+            text = _tool_result_text(result)
+            assert "chain-of-thought" in text.lower(), (
+                f"NPLLoad did not return chain-of-thought content: {text[:120]}"
+            )
     except (httpx.ConnectError, httpx.TimeoutException):
         pytest.skip(f"Could not connect to server at {SSE_URL}")

@@ -35,34 +35,35 @@ The server backbone is fully operational:
 
 ### 2. NPL Definition System
 
-**Status: Functional, two parallel systems**
+**Status: Functional, single source of truth**
 
-Two independent formatters exist for rendering NPL syntax definitions from YAML convention files:
+Both the older Convention Formatter and the newer NPL Module now read from the same authoritative `conventions/*.yaml` directory. The stale duplicate `npl/*.yaml` files were deleted after schema compatibility was verified.
 
-#### Convention Formatter (older, richer)
+#### Convention Formatter
 - `convention_formatter.py` + `conventions/*.yaml` (8 YAML files)
 - `ConventionFormatter.format_convention()`: category grouping, syntax rendering, fenced/XML examples, concise/verbose modes, heading offsets, greedy minimal example set cover
 - `NPLDefinition.format()`: wraps output in `⌜NPL@{version}⌝...⌞NPL@{version}⌟` markers, resolves transitive `require` dependencies, supports extension blocks
 - YAML schema: `name`, `title`, `brief`, `description`, `purpose`, `categories[]`, `components[]` with `syntax[]`, `examples[]`, `require[]`, `priority`
 - Exposed as `NPLSpec` MCP tool (MCP-visible)
 
-#### NPL Module (newer, simpler)
-- `src/npl_mcp/npl/` (parser, resolver, loader, layout) reading from `npl/*.yaml`
+#### NPL Module — expression DSL
+- `src/npl_mcp/npl/` (parser, resolver, loader, layout), default `npl_dir=conventions/`
 - Expression DSL: `syntax#placeholder:+2 -pumps` — space-separated terms, `section[#component][:+N]`, `-` to subtract
 - 8 sections: syntax, declarations, directives, prefixes, prompt-sections, special-sections, pumps, fences
 - 3 layout strategies: YAML_ORDER (flat), CLASSIC (grouped by first label), GROUPED (by section type)
-- `load_npl(expression, npl_dir, layout, include_instructional)` → markdown string
+- `load_npl(expression, npl_dir=Path("conventions"), ...)` → markdown string
+- **Not yet exposed as an MCP tool** — currently internal-only Python function
 
 #### Static Spec
-- `npl/npl-full.md`: 1,777-line pre-rendered full NPL specification
+- `npl/npl-full.md`: 1,777-line pre-rendered full NPL specification (hand-maintained; could be regenerated from `NPLSpec`)
 
-**Tests**: `test_npl_loading.py` (88 tests) — covers the convention formatter path
+**Tests**: `test_npl_loading.py` (88 tests) — uses synthetic fixtures, covers the expression DSL path end-to-end
 
 **Remaining work:**
-- [ ] Test coverage for `npl/` module (parser, resolver, loader, layout) — 0 tests today
-- [ ] Clarify relationship between the two systems — consolidate or document distinct use cases
+- [ ] Expose `load_npl()` as an MCP tool (e.g. `NPLLoad`) so agents can use the ergonomic expression DSL
+- [ ] Wire a `docs-regen` task that calls `NPLSpec` and writes to disk (enables regenerating `npl-full.md` and per-section docs)
+- [ ] Document in `CLAUDE.md` how agents should request NPL snippets
 - [ ] `include_instructional` parameter in `load_npl()` is stubbed ("reserved for future use")
-- [ ] Verify `npl/*.yaml` files match the schema expected by the `npl/` resolver (may differ from `conventions/*.yaml` schema)
 
 ---
 

@@ -28,6 +28,7 @@ from npl_mcp.meta_tools.catalog import (
 
 EXPECTED_MCP_TOOL_NAMES = {
     "NPLSpec",
+    "NPLLoad",
     "ToolSummary",
     "ToolSearch",
     "ToolDefinition",
@@ -38,6 +39,27 @@ EXPECTED_MCP_TOOL_NAMES = {
     "Instructions",
     "Instructions.Create",
     "Instructions.List",
+    "Skill.Validate",
+    "Skill.Evaluate",
+    # US-086: agent spec loading
+    "Agent.List",
+    "Agent.Load",
+    # PRD-005 MVP: tasks
+    "Tasks.Create",
+    "Tasks.Get",
+    "Tasks.List",
+    "Tasks.UpdateStatus",
+    # PRD-002 MVP: artifacts
+    "Artifact.Create",
+    "Artifact.AddRevision",
+    "Artifact.Get",
+    "Artifact.List",
+    "Artifact.ListRevisions",
+    # PRD-004 MVP: generic sessions
+    "Session.Create",
+    "Session.Get",
+    "Session.List",
+    "Session.Update",
 }
 
 EXPECTED_DISCOVERABLE_NAMES = {
@@ -55,6 +77,8 @@ EXPECTED_DISCOVERABLE_NAMES = {
     # Stories (DB)
     "Proj.UserStories.Create", "Proj.UserStories.Get", "Proj.UserStories.Update",
     "Proj.UserStories.Delete", "Proj.UserStories.List",
+    # Scripts — PRD-008
+    "dump_files", "git_tree", "git_tree_depth", "npl_load", "web_to_md",
 }
 
 
@@ -86,11 +110,11 @@ class TestMCPToolIntrospection:
             assert hasattr(t, "parameters")
 
     @pytest.mark.asyncio
-    async def test_mcp_tool_count_is_11(self, _mcp_app):
-        """Exactly 11 MCP-visible tools are registered."""
+    async def test_mcp_tool_count(self, _mcp_app):
+        """Exactly the expected number of MCP-visible tools are registered."""
         tools = await _list_mcp_tools(_mcp_app)
-        assert len(tools) == 11, (
-            f"Expected 11 MCP tools, got {len(tools)}: "
+        assert len(tools) == len(EXPECTED_MCP_TOOL_NAMES), (
+            f"Expected {len(EXPECTED_MCP_TOOL_NAMES)} MCP tools, got {len(tools)}: "
             f"{sorted(t.name for t in tools)}"
         )
 
@@ -161,7 +185,7 @@ class TestCatalogBuilder:
 
     @pytest.mark.asyncio
     async def test_all_expected_discoverable_registered(self, _mcp_app):
-        """All 22 expected discoverable (hidden) tools are in the registry."""
+        """All 27 expected discoverable (hidden) tools are in the registry."""
         missing = EXPECTED_DISCOVERABLE_NAMES - set(_DISCOVERABLE_TOOLS)
         assert not missing, f"Missing discoverable registrations: {missing}"
 
@@ -337,10 +361,10 @@ class TestCatalogEntryFields:
     async def test_stub_entry_has_tags(self, _mcp_app):
         """Stub entries gain tags from their category during build_catalog()."""
         catalog = await build_catalog()
-        # Pick a known stub entry
-        stub = next(e for e in catalog if e["name"] == "dump_files")
+        # Pick a known stub entry (create_artifact is a stable Artifacts stub)
+        stub = next(e for e in catalog if e["name"] == "create_artifact")
         assert "tags" in stub
-        assert "scripts" in stub["tags"]
+        assert "artifacts" in stub["tags"]
 
     @pytest.mark.asyncio
     async def test_hierarchical_stub_tags(self, _mcp_app):
@@ -394,7 +418,8 @@ class TestToolCallStatusDistinction:
     async def test_toolcall_on_stub_still_returns_status_stub(self, _mcp_app):
         """Calling a catalog-only stub via ToolCall still returns status='stub'."""
         tool_call_handler = await _mcp_app.get_tool("ToolCall")
-        result = await tool_call_handler.run({"tool": "dump_files", "arguments": {}})
+        # create_artifact is a stable Artifacts stub (Scripts tools are now implemented)
+        result = await tool_call_handler.run({"tool": "create_artifact", "arguments": {}})
         import json
         data = json.loads(result.content[0].text)
         assert data["status"] == "stub", f"Expected status=stub, got: {data}"
@@ -409,3 +434,52 @@ class TestToolCallStatusDistinction:
         data = json.loads(result.content[0].text)
         assert data["status"] == "error"
         assert "not found" in data["message"].lower()
+
+
+# ── NPLLoad MCP tool (expression DSL) ────────────────────────────────────
+
+class TestNPLLoad:
+    """Validates the NPLLoad MCP tool — agent-friendly expression DSL."""
+
+    @pytest.mark.asyncio
+    async def test_npl_load_registered(self, _mcp_app):
+        """NPLLoad is registered with FastMCP under the NPL category."""
+        tool = await _mcp_app.get_tool("NPLLoad")
+        assert tool is not None
+        assert tool.meta.get("npl_category") == "NPL"
+        assert "npl" in (tool.tags or set())
+
+    @pytest.mark.asyncio
+    async def test_npl_load_section(self, _mcp_app):
+        """NPLLoad returns content for a full section by name."""
+        tool = await _mcp_app.get_tool("NPLLoad")
+        result = await tool.run({"expression": "syntax"})
+        text = result.content[0].text
+        assert text.strip(), "NPLLoad returned empty output"
+        # Output should contain a component heading
+        assert "###" in text
+
+    @pytest.mark.asyncio
+    async def test_npl_load_single_component(self, _mcp_app):
+        """NPLLoad can target a specific component with #component syntax."""
+        tool = await _mcp_app.get_tool("NPLLoad")
+        result = await tool.run({"expression": "pumps#chain-of-thought"})
+        text = result.content[0].text
+        assert "chain-of-thought" in text.lower()
+
+    @pytest.mark.asyncio
+    async def test_npl_load_multi_section(self, _mcp_app):
+        """NPLLoad accepts space-separated multi-section expressions."""
+        tool = await _mcp_app.get_tool("NPLLoad")
+        result = await tool.run({"expression": "syntax directives"})
+        text = result.content[0].text
+        # Both sections contribute content
+        assert len(text) > 100
+
+    @pytest.mark.asyncio
+    async def test_npl_load_layout_strategy(self, _mcp_app):
+        """NPLLoad accepts a layout parameter."""
+        tool = await _mcp_app.get_tool("NPLLoad")
+        result = await tool.run({"expression": "syntax", "layout": "classic"})
+        text = result.content[0].text
+        assert text.strip(), "Classic layout returned empty output"

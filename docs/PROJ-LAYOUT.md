@@ -5,7 +5,7 @@ NoizuPromptLingo/
 ├── src/                            # Application source → [layout/src.md](layout/src.md)
 │   ├── npl_mcp/                    #   Main NPL MCP package
 │   │   ├── markdown/               #     Markdown converter, viewer, filters
-│   │   ├── meta_tools/             #     Tool catalog, search, definition, help, LLM client
+│   │   ├── meta_tools/             #     Catalog + discovery: summary/search/definition/help, mcp_discoverable helper, stub_catalog, discoverable_tools, LLM client
 │   │   ├── npl/                    #     NPL syntax parser and loader
 │   │   ├── pm_tools/               #     PRD/story/persona management tools (file + DB)
 │   │   ├── instructions/           #     Instruction management + vector embeddings
@@ -28,6 +28,9 @@ NoizuPromptLingo/
 │   ├── package.json                #   Node dependencies
 │   └── tsconfig.json               #   TypeScript config
 ├── tests/                          # Test suites → [layout/tests.md](layout/tests.md)
+│   ├── conftest.py                 #   Shared fixtures (_mcp_app session scope, cache clearing)
+│   ├── test_catalog_migration.py   #   FastMCP ↔ catalog integration tests (30 tests)
+│   └── test_mcp_server.py          #   End-to-end tests against a running server (8 tests)
 ├── docs/                           # Documentation → [layout/docs.md](layout/docs.md)
 │   ├── arch/                       #   Architecture docs
 │   ├── agents/                     #   Agent-specific documentation
@@ -46,8 +49,8 @@ NoizuPromptLingo/
 │   ├── user-stories/               #   147 user stories with index.yaml
 │   ├── PRDs/                       #   Product requirement documents (PRD-001–017)
 │   └── TODO/                       #   Backlog items
-├── conventions/                    # NPL convention YAML definitions
-├── npl/                            # NPL language specifications (YAML + Markdown)
+├── conventions/                    # NPL convention YAML definitions (source of truth for NPLSpec + load_npl)
+├── npl/                            # Generated NPL artifacts (npl-full.md rendered from conventions/)
 ├── agents/                         # TDD agent definitions (npl-*.md, incl. npl-winnower)
 ├── commands/                       # Claude Code slash commands (8 commands)
 ├── sub-agent-prompts/              # Reusable prompts for parallel agent spawning

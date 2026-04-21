@@ -188,5 +188,47 @@ def register_all() -> None:
         fn=story_list,
     )
 
+    # ------------------------------------------------------------------
+    # Scripts tools — PRD-008
+    # ------------------------------------------------------------------
+    from npl_mcp.scripts.wrapper import (
+        dump_files,
+        git_tree,
+        git_tree_depth,
+        npl_load as scripts_npl_load,
+        web_to_md,
+    )
+
+    register_discoverable(
+        "dump_files",
+        category="Scripts",
+        fn=dump_files,
+        category_description="Shell script wrappers for file dumping, directory trees, NPL resource loading",
+    )
+
+    register_discoverable(
+        "git_tree",
+        category="Scripts",
+        fn=git_tree,
+    )
+
+    register_discoverable(
+        "git_tree_depth",
+        category="Scripts",
+        fn=git_tree_depth,
+    )
+
+    register_discoverable(
+        "npl_load",
+        category="Scripts",
+        fn=scripts_npl_load,
+    )
+
+    register_discoverable(
+        "web_to_md",
+        category="Scripts",
+        fn=web_to_md,
+    )
+
 
 register_all()

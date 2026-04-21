@@ -64,6 +64,8 @@ packages = ["src/npl_mcp", "tools"]
 
 [project.scripts]
 npl-mcp = "npl_mcp.launcher:main"
+npl-docs-regen = "npl_mcp.docs_regen:main"
+npl-tmlanguage = "npl_mcp.scripts.tmlanguage:main"
 git-dump = "tools.git_dump:main"
 git-tree = "tools.git_tree:main"
 2md = "tools.convert_to_markdown:main"

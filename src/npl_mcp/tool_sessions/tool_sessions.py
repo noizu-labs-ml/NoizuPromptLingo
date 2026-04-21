@@ -121,6 +121,73 @@ async def tool_session_generate(
     return {"uuid": _encode(new_id), "action": "created", "project": project, "status": "ok"}
 
 
+async def append_session_notes(
+    session_id: str,
+    note: str,
+) -> dict[str, Any]:
+    """Append *note* to an existing session's notes field.
+
+    The append is substring-deduped: if *note* is already contained in the
+    existing notes, the call is a no-op and returns the session unchanged.
+
+    Returns ``{status: "ok" | "not_found" | "error", ...session fields}``.
+    """
+    if not note or not note.strip():
+        return {"status": "error", "message": "note must be a non-empty string."}
+
+    uid = _decode(session_id)
+    if uid is None:
+        return {"status": "not_found", "uuid": session_id}
+
+    pool = await get_pool()
+    row = await pool.fetchrow(
+        """SELECT s.id, s.agent, s.brief, s.task, s.notes,
+                  s.parent_id, s.created_at, s.updated_at,
+                  p.name AS project
+           FROM npl_tool_sessions s
+           JOIN npl_projects p ON s.project_id = p.id
+           WHERE s.id = $1""",
+        uid,
+    )
+    if row is None:
+        return {"status": "not_found", "uuid": session_id}
+
+    existing_notes = row["notes"] or ""
+    action = "noop"
+    new_notes = existing_notes
+
+    if note not in existing_notes:
+        new_notes = f"{existing_notes}\n{note}".strip() if existing_notes else note
+        await pool.execute(
+            "UPDATE npl_tool_sessions SET notes = $1, updated_at = NOW() WHERE id = $2",
+            new_notes,
+            row["id"],
+        )
+        action = "appended"
+
+    updated_at = row["updated_at"]
+    if action == "appended":
+        updated_row = await pool.fetchrow(
+            "SELECT updated_at FROM npl_tool_sessions WHERE id = $1", row["id"]
+        )
+        if updated_row is not None:
+            updated_at = updated_row["updated_at"]
+
+    return {
+        "status": "ok",
+        "action": action,
+        "uuid": _encode(row["id"]),
+        "agent": row["agent"],
+        "brief": row["brief"],
+        "task": row["task"],
+        "project": row["project"],
+        "parent": _encode(row["parent_id"]) if row["parent_id"] else None,
+        "notes": new_notes,
+        "created_at": row["created_at"].isoformat() if row["created_at"] else None,
+        "updated_at": updated_at.isoformat() if updated_at else None,
+    }
+
+
 async def tool_session(
     uuid: str,
     verbose: bool = False,

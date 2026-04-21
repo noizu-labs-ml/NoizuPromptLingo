@@ -1,55 +1,169 @@
-export default function Home() {
+"use client";
+
+import Link from "next/link";
+import useSWR from "swr";
+import {
+  ClockIcon,
+  BookOpenIcon,
+  FolderIcon,
+  WrenchScrewdriverIcon,
+  ChevronRightIcon,
+} from "@heroicons/react/24/outline";
+
+import { api } from "@/lib/api/client";
+import { Card } from "@/components/primitives/Card";
+import { Badge } from "@/components/primitives/Badge";
+import { PageHeader } from "@/components/primitives/PageHeader";
+import { DataTable } from "@/components/primitives/DataTable";
+import type { Session } from "@/lib/api/types";
+import { relativeTime, truncate } from "@/lib/utils/format";
+
+function StatTile({
+  label,
+  value,
+  href,
+  icon: Icon,
+  description,
+}: {
+  label: string;
+  value: number | string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  description: string;
+}) {
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-950 to-gray-900 text-white">
-      <div className="container mx-auto flex min-h-screen flex-col items-center justify-center px-4">
-        <div className="z-10 max-w-5xl w-full items-center justify-center font-mono text-sm lg:flex">
-          <div className="fixed bottom-0 left-0 flex h-48 w-full justify-center border-t border-white/10 bg-gradient-to-b from-transparent via-transparent via-blue-950 to-transparent lg:static lg:h-auto lg:w-auto lg:bg-none lg:border-none">
-          </div>
-
-          <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:translate-y-1/3 before:rounded-full before:bg-blue-500/20 before:blur-3xl before:content-[''] lg:block">
-          </div>
-
-          <div className="relative flex flex-col items-center justify-center w-full">
-            <h1 className="text-6xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
-              NPL MCP Server
-            </h1>
-            <p className="text-xl text-gray-300 mb-8 text-center">
-              NoizuPromptLingo Model Context Protocol Server
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-3xl mb-8">
-              <div className="bg-white/5 border border-white/10 rounded-lg p-6 hover:bg-white/10 transition-all">
-                <h3 className="font-semibold mb-2 text-blue-400">MCP Tools</h3>
-                <p className="text-sm text-gray-400">Access 96+ integrated tools for Markdown conversion, project management, and more.</p>
-              </div>
-              <div className="bg-white/5 border border-white/10 rounded-lg p-6 hover:bg-white/10 transition-all">
-                <h3 className="font-semibold mb-2 text-purple-400">Chat Rooms</h3>
-                <p className="text-sm text-gray-400">Event-sourced collaborative chat rooms with persona-based interactions.</p>
-              </div>
-              <div className="bg-white/5 border border-white/10 rounded-lg p-6 hover:bg-white/10 transition-all">
-                <h3 className="font-semibold mb-2 text-pink-400">Artifacts</h3>
-                <p className="text-sm text-gray-400">Versioned artifacts with review workflows and markdown support.</p>
-              </div>
+    <Link href={href} className="block group">
+      <Card hoverable>
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="text-sm uppercase tracking-wide text-muted">
+              {label}
             </div>
-
-            <div className="code-window bg-black/50 rounded-lg border border-white/10 p-4 w-full max-w-2xl">
-              <div className="flex gap-2 mb-3">
-                <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                <div className="w-3 h-3 rounded-full bg-green-500"></div>
-              </div>
-              <pre className="text-sm text-green-400 overflow-x-auto">
-                <code>
-                  <span className="text-gray-500">$</span> npl-mcp --status <br/>
-                  Server running at http://127.0.0.1:8765<br/>
-                  <br/>
-                  <span className="text-gray-500">$</span> npl-mcp<br/>
-                  Starting NPL MCP server at http://127.0.0.1:8765/sse
-                </code>
-              </pre>
+            <div className="mt-1 text-3xl font-semibold text-foreground">
+              {value}
             </div>
+            <div className="mt-1 text-xs text-subtle">{description}</div>
           </div>
+          <Icon className="h-6 w-6 text-muted group-hover:text-accent transition-colors" />
         </div>
-      </div>
-    </main>
+      </Card>
+    </Link>
+  );
+}
+
+
+export default function Home() {
+  const { data: tools } = useSWR("tools.list", () => api.tools.list());
+  const { data: sessions } = useSWR("sessions.list", () =>
+    api.sessions.list({ limit: 10 }),
+  );
+  const { data: instructions } = useSWR("instructions.list", () =>
+    api.instructions.list(),
+  );
+  const { data: projects } = useSWR("projects.list", () => api.projects.list());
+
+  const mcpCount = tools?.filter((t) => t.category !== "Uncategorized").length ?? 0;
+
+  return (
+    <div className="space-y-8">
+      <PageHeader
+        title="NPL MCP Companion"
+        description="A dashboard view of the Noizu Prompt Lingua MCP server — catalog, sessions, instructions, projects, and more."
+        actions={
+          <Badge variant="info" size="sm">
+            mock data
+          </Badge>
+        }
+      />
+
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatTile
+          label="Catalog tools"
+          value={tools?.length ?? "—"}
+          href="/tools"
+          icon={WrenchScrewdriverIcon}
+          description={`${mcpCount} categorized`}
+        />
+        <StatTile
+          label="Sessions"
+          value={sessions?.length ?? "—"}
+          href="/sessions"
+          icon={ClockIcon}
+          description="Last 24h (mock)"
+        />
+        <StatTile
+          label="Instructions"
+          value={instructions?.length ?? "—"}
+          href="/instructions"
+          icon={BookOpenIcon}
+          description="Versioned documents"
+        />
+        <StatTile
+          label="Projects"
+          value={projects?.length ?? "—"}
+          href="/projects"
+          icon={FolderIcon}
+          description="Personas + stories"
+        />
+      </section>
+
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-foreground">
+            Recent sessions
+          </h2>
+          <Link
+            href="/sessions"
+            className="text-sm text-muted hover:text-foreground inline-flex items-center gap-1"
+          >
+            View all <ChevronRightIcon className="h-4 w-4" />
+          </Link>
+        </div>
+
+        <Card padded={false}>
+          <DataTable<Session>
+            rowKey={(s) => s.uuid}
+            rows={sessions ?? []}
+            emptyMessage="No sessions yet."
+            columns={[
+              {
+                key: "agent",
+                header: "Agent",
+                render: (s) => (
+                  <span className="font-mono text-sm">{s.agent}</span>
+                ),
+              },
+              {
+                key: "brief",
+                header: "Brief",
+                render: (s) => (
+                  <span className="text-foreground">
+                    {truncate(s.brief, 60)}
+                  </span>
+                ),
+              },
+              {
+                key: "project",
+                header: "Project",
+                render: (s) => (
+                  <Badge variant="info" size="sm">
+                    {s.project}
+                  </Badge>
+                ),
+              },
+              {
+                key: "updated_at",
+                header: "Updated",
+                render: (s) => (
+                  <span className="text-muted text-sm">
+                    {relativeTime(s.updated_at)}
+                  </span>
+                ),
+              },
+            ]}
+          />
+        </Card>
+      </section>
+    </div>
   );
 }

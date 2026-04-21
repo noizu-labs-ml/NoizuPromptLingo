@@ -1349,3 +1349,80 @@ class TestDataClasses:
         assert hasattr(component, "description")
         assert hasattr(component, "examples")
         assert hasattr(component, "priority_filtered")
+
+
+# =============================================================================
+# US-224: skip-loaded-resources flag for load_npl()
+# =============================================================================
+
+
+class TestSkipLoadedResources:
+    """load_npl(skip=...) excludes components listed in the skip expression(s)."""
+
+    def test_skip_string_excludes_component(self, npl_test_dir: Path):
+        """Single skip expression as a string removes the named component."""
+        from npl_mcp.npl.loader import load_npl
+
+        # Use literal-string which doesn't appear in sibling component copy
+        result = load_npl("syntax", npl_dir=npl_test_dir, skip="syntax#literal-string")
+        assert "literal-string" not in result
+        # Other syntax components should still be present
+        assert "qualifier" in result
+
+    def test_skip_list_excludes_multiple_components(self, npl_test_dir: Path):
+        """Skip list removes every listed component."""
+        from npl_mcp.npl.loader import load_npl
+
+        result = load_npl(
+            "syntax",
+            npl_dir=npl_test_dir,
+            skip=["syntax#literal-string", "syntax#omission"],
+        )
+        assert "literal-string" not in result
+        assert "omission" not in result
+        assert "qualifier" in result
+
+    def test_skip_empty_list_is_noop(self, npl_test_dir: Path):
+        """Empty skip list returns same result as no skip."""
+        from npl_mcp.npl.loader import load_npl
+
+        baseline = load_npl("syntax#placeholder", npl_dir=npl_test_dir)
+        skipped = load_npl("syntax#placeholder", npl_dir=npl_test_dir, skip=[])
+        assert baseline == skipped
+
+    def test_skip_none_is_noop(self, npl_test_dir: Path):
+        """skip=None preserves backward compatibility."""
+        from npl_mcp.npl.loader import load_npl
+
+        baseline = load_npl("syntax#placeholder", npl_dir=npl_test_dir)
+        skipped = load_npl("syntax#placeholder", npl_dir=npl_test_dir, skip=None)
+        assert baseline == skipped
+
+    def test_skip_whitespace_only_entries_ignored(self, npl_test_dir: Path):
+        """Empty / whitespace skip entries don't raise and don't affect output."""
+        from npl_mcp.npl.loader import load_npl
+
+        baseline = load_npl("syntax", npl_dir=npl_test_dir)
+        padded = load_npl("syntax", npl_dir=npl_test_dir, skip=["", "   ", ""])
+        assert baseline == padded
+
+    def test_skip_entire_section(self, npl_test_dir: Path):
+        """Skipping an entire section removes all its components from combined output."""
+        from npl_mcp.npl.loader import load_npl
+
+        # With skip="syntax", the syntax additions should all be cancelled.
+        result = load_npl("syntax directives", npl_dir=npl_test_dir, skip="syntax")
+        # Syntax components should all be gone
+        assert "literal-string" not in result
+        assert "omission" not in result
+        # Directives should still appear
+        assert "table-formatting" in result
+
+    def test_skip_invalid_expression_raises(self, npl_test_dir: Path):
+        """Invalid skip expressions surface NPLParseError like the main expression."""
+        import pytest as _pytest
+        from npl_mcp.npl.loader import load_npl
+        from npl_mcp.npl.exceptions import NPLParseError
+
+        with _pytest.raises(NPLParseError):
+            load_npl("syntax", npl_dir=npl_test_dir, skip="not@valid")

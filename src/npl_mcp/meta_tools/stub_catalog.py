@@ -43,54 +43,6 @@ STUB_CATEGORIES: dict[str, str] = {
 
 STUB_CATALOG: list[ToolEntry] = [
     # ======================================================================
-    # Scripts (5)
-    # ======================================================================
-    {
-        "name": "dump_files",
-        "category": "Scripts",
-        "description": "Dump contents of files in a directory respecting .gitignore.",
-        "parameters": [
-            {"name": "path", "type": "str", "required": True, "description": "Absolute path to directory to dump"},
-            {"name": "glob_filter", "type": "str", "required": False, "description": "Optional glob pattern to filter files"},
-        ],
-    },
-    {
-        "name": "git_tree",
-        "category": "Scripts",
-        "description": "Display directory tree respecting .gitignore.",
-        "parameters": [
-            {"name": "path", "type": "str", "required": False, "description": "Absolute path to directory (default '.')"},
-        ],
-    },
-    {
-        "name": "git_tree_depth",
-        "category": "Scripts",
-        "description": "List directories with nesting depth information.",
-        "parameters": [
-            {"name": "path", "type": "str", "required": True, "description": "Absolute path to directory"},
-        ],
-    },
-    {
-        "name": "npl_load",
-        "category": "Scripts",
-        "description": "Load NPL components, metadata, or style guides.",
-        "parameters": [
-            {"name": "resource_type", "type": "str", "required": True, "description": "Resource type to load (c, m, s, agent, etc.)"},
-            {"name": "items", "type": "str", "required": True, "description": "Comma-separated items to load"},
-            {"name": "skip", "type": "str", "required": False, "description": "Comma-separated items to skip (already loaded)"},
-        ],
-    },
-    {
-        "name": "web_to_md",
-        "category": "Scripts",
-        "description": "Fetch a web page and return its content as markdown using Jina Reader.",
-        "parameters": [
-            {"name": "url", "type": "str", "required": True, "description": "The URL of the web page to fetch"},
-            {"name": "timeout", "type": "int", "required": False, "description": "Request timeout in seconds (default 30)"},
-        ],
-    },
-
-    # ======================================================================
     # Artifacts (5)
     # ======================================================================
     {
