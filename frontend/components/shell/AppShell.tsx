@@ -29,13 +29,17 @@ export function AppShell({ children }: AppShellProps) {
   }, []);
 
   return (
-    <div className="flex h-full bg-background text-foreground">
+    <div className="flex h-full bg-canvas text-foreground">
+      {/* Skip link — visually hidden until focused */}
+      <a href="#main-content" className="skip-link">
+        Skip to content
+      </a>
       {/* ── Desktop sidebar ─────────────────────────────────────────── */}
       <aside
         className={clsx(
           "hidden lg:flex flex-col shrink-0",
           SIDEBAR_WIDTH,
-          "border-r border-border bg-surface"
+          "border-r border-border bg-surface-0"
         )}
       >
         {/* Brand in sidebar on desktop */}
@@ -78,7 +82,7 @@ export function AppShell({ children }: AppShellProps) {
                 className={clsx(
                   "flex flex-col",
                   SIDEBAR_WIDTH,
-                  "border-r border-border bg-surface"
+                  "border-r border-border bg-surface-0"
                 )}
               >
                 <div className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-4">
@@ -94,14 +98,19 @@ export function AppShell({ children }: AppShellProps) {
 
       {/* ── Main area ───────────────────────────────────────────────── */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <TopBar
-          onMobileMenuOpen={() => setMobileOpen((v) => !v)}
-          mobileMenuOpen={mobileOpen}
-          onOpenPalette={() => setPaletteOpen(true)}
-        />
+        <div className="aurora-bg">
+          <TopBar
+            onMobileMenuOpen={() => setMobileOpen((v) => !v)}
+            mobileMenuOpen={mobileOpen}
+            onOpenPalette={() => setPaletteOpen(true)}
+          />
+        </div>
 
-        <main className="flex-1 overflow-y-auto scrollbar-thin bg-background">
-          <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
+        <main
+          id="main-content"
+          className="flex-1 overflow-y-auto scrollbar-thin bg-canvas"
+        >
+          <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
             {children}
           </div>
         </main>

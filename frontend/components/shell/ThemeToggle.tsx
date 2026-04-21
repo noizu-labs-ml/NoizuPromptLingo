@@ -43,7 +43,7 @@ export function ThemeToggle() {
       type="button"
       onClick={toggle}
       aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-      className="flex h-8 w-8 items-center justify-center rounded-md text-muted hover:bg-surface-raised hover:text-foreground transition-colors"
+      className="flex h-8 w-8 items-center justify-center rounded-md text-muted hover:bg-surface-1 hover:text-foreground focus-ring transition-colors"
     >
       {theme === "dark" ? (
         <SunIcon className="h-4 w-4" />

@@ -11,11 +11,13 @@ import {
   ComboboxOptions,
   ComboboxOption,
 } from "@headlessui/react";
-import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { MagnifyingGlassIcon, SparklesIcon } from "@heroicons/react/24/outline";
 import useSWR from "swr";
 import clsx from "clsx";
 import { api } from "@/lib/api/client";
 import { Badge } from "@/components/primitives/Badge";
+import { Kbd } from "@/components/primitives/Kbd";
+import { EmptyState } from "@/components/primitives/EmptyState";
 
 // ── Types ────────────────────────────────────────────────────────────────
 
@@ -164,7 +166,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
       <div className="fixed inset-0 flex items-start justify-center pt-[20vh] px-4">
         <DialogPanel
           transition
-          className="w-full max-w-lg rounded-xl border border-border bg-surface shadow-glow overflow-hidden transition data-[closed]:opacity-0 data-[closed]:scale-95 data-[enter]:duration-150 data-[leave]:duration-100"
+          className="w-full max-w-lg rounded-xl border border-border-strong bg-elevated/95 backdrop-blur-md shadow-elevated overflow-hidden transition data-[closed]:opacity-0 data-[closed]:scale-95 data-[enter]:duration-150 data-[leave]:duration-100"
         >
           <Combobox onChange={handleSelect}>
             {/* Input */}
@@ -172,7 +174,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
               <MagnifyingGlassIcon className="h-4 w-4 shrink-0 text-muted" />
               <ComboboxInput
                 autoFocus
-                className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted outline-none"
+                className="flex-1 bg-transparent focus-ring rounded-sm text-sm text-foreground placeholder:text-subtle outline-none"
                 placeholder="Jump to…"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -181,27 +183,37 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                 <button
                   type="button"
                   onClick={() => setQuery("")}
-                  className="text-xs text-muted hover:text-foreground transition-colors"
+                  className="text-xs text-muted hover:text-foreground focus-ring rounded-sm transition-colors"
                 >
                   Clear
                 </button>
               )}
-              <kbd className="shrink-0 inline-flex items-center rounded border border-border px-1.5 text-[10px] font-mono text-subtle">
-                ESC
-              </kbd>
+              <Kbd className="shrink-0">ESC</Kbd>
             </div>
 
-            {/* Results */}
-            <ComboboxOptions static className="max-h-80 overflow-y-auto scrollbar-thin py-2">
+            {/* Screen-reader result count announcer */}
+            <span className="sr-only" role="status" aria-live="polite">
+              {filtered.length} result{filtered.length === 1 ? "" : "s"}
+            </span>
+
+            {/* Results — Combobox already applies listbox semantics; aria-live is handled by the sr-only status above */}
+            <ComboboxOptions
+              static
+              className="max-h-80 overflow-y-auto scrollbar-thin py-2"
+            >
               {grouped.size === 0 ? (
-                <div className="px-4 py-6 text-center text-sm text-muted">
-                  No results for &ldquo;{query}&rdquo;
+                <div className="px-4 py-4">
+                  <EmptyState
+                    icon={<SparklesIcon />}
+                    title="No results"
+                    description={`Nothing matches “${query}”.`}
+                  />
                 </div>
               ) : (
                 Array.from(grouped.entries()).map(([kind, items]) => (
                   <div key={kind}>
                     <div className="px-4 py-1.5">
-                      <span className="text-[10px] font-semibold uppercase tracking-widest text-subtle">
+                      <span className="text-[11px] font-semibold uppercase tracking-widest text-subtle">
                         {KIND_LABELS[kind]}
                       </span>
                     </div>
@@ -213,8 +225,8 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                           clsx(
                             "flex items-center gap-3 px-4 py-2 cursor-pointer transition-colors",
                             focus
-                              ? "bg-brand-500/20 text-foreground"
-                              : "text-muted hover:bg-surface-raised hover:text-foreground"
+                              ? "bg-accent/15 text-accent shadow-ring"
+                              : "text-muted hover:bg-surface-1 hover:text-foreground"
                           )
                         }
                       >
