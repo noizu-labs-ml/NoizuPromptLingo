@@ -42,58 +42,7 @@ STUB_CATEGORIES: dict[str, str] = {
 }
 
 STUB_CATALOG: list[ToolEntry] = [
-    # ======================================================================
-    # Artifacts (5)
-    # ======================================================================
-    {
-        "name": "create_artifact",
-        "category": "Artifacts",
-        "description": "Create a new artifact with initial revision.",
-        "parameters": [
-            {"name": "name", "type": "str", "required": True, "description": "Name of the artifact"},
-            {"name": "artifact_type", "type": "str", "required": True, "description": "Type of artifact (e.g., 'screenshot', 'document')"},
-            {"name": "file_content_base64", "type": "str", "required": True, "description": "Base64-encoded file content"},
-            {"name": "filename", "type": "str", "required": True, "description": "Original filename"},
-            {"name": "created_by", "type": "str", "required": False, "description": "Persona slug of creator"},
-            {"name": "purpose", "type": "str", "required": False, "description": "Purpose description for the artifact"},
-        ],
-    },
-    {
-        "name": "add_revision",
-        "category": "Artifacts",
-        "description": "Add a new revision to an artifact.",
-        "parameters": [
-            {"name": "artifact_id", "type": "int", "required": True, "description": "ID of the artifact"},
-            {"name": "file_content_base64", "type": "str", "required": True, "description": "Base64-encoded file content"},
-            {"name": "filename", "type": "str", "required": True, "description": "Filename for the revision"},
-            {"name": "created_by", "type": "str", "required": False, "description": "Persona slug of creator"},
-            {"name": "purpose", "type": "str", "required": False, "description": "Purpose of this revision"},
-            {"name": "notes", "type": "str", "required": False, "description": "Revision notes"},
-        ],
-    },
-    {
-        "name": "get_artifact",
-        "category": "Artifacts",
-        "description": "Get artifact and its revision content.",
-        "parameters": [
-            {"name": "artifact_id", "type": "int", "required": True, "description": "ID of the artifact"},
-            {"name": "revision", "type": "int", "required": False, "description": "Specific revision number (latest if omitted)"},
-        ],
-    },
-    {
-        "name": "list_artifacts",
-        "category": "Artifacts",
-        "description": "List all artifacts.",
-        "parameters": [],
-    },
-    {
-        "name": "get_artifact_history",
-        "category": "Artifacts",
-        "description": "Get revision history for an artifact.",
-        "parameters": [
-            {"name": "artifact_id", "type": "int", "required": True, "description": "ID of the artifact"},
-        ],
-    },
+    # Artifacts: replaced by Artifact.Create/AddRevision/Get/List/ListRevisions/GetBinary MCP tools
 
     # ======================================================================
     # Reviews (6)
@@ -199,31 +148,11 @@ STUB_CATALOG: list[ToolEntry] = [
     },
 
     # ======================================================================
-    # Chat (8)
+    # Chat (5 stubs remaining — 3 replaced by Chat.* MCP tools)
     # ======================================================================
-    {
-        "name": "create_chat_room",
-        "category": "Chat",
-        "description": "Create a new chat room.",
-        "parameters": [
-            {"name": "name", "type": "str", "required": True, "description": "Name of the chat room"},
-            {"name": "members", "type": "list[str]", "required": True, "description": "List of persona slugs to add as members"},
-            {"name": "description", "type": "str", "required": False, "description": "Optional room description"},
-            {"name": "session_id", "type": "str", "required": False, "description": "Optional session ID to associate with"},
-            {"name": "session_title", "type": "str", "required": False, "description": "Optional session title (creates session if needed)"},
-        ],
-    },
-    {
-        "name": "send_message",
-        "category": "Chat",
-        "description": "Send a message to a chat room.",
-        "parameters": [
-            {"name": "room_id", "type": "int", "required": True, "description": "ID of the chat room"},
-            {"name": "persona", "type": "str", "required": True, "description": "Persona slug of sender"},
-            {"name": "message", "type": "str", "required": True, "description": "Message content"},
-            {"name": "reply_to_id", "type": "int", "required": False, "description": "Optional event ID to reply to"},
-        ],
-    },
+    # Replaced: create_chat_room → Chat.CreateRoom
+    # Replaced: send_message → Chat.SendMessage
+    # Replaced: get_chat_feed → Chat.ListMessages
     {
         "name": "react_to_message",
         "category": "Chat",
@@ -254,16 +183,6 @@ STUB_CATALOG: list[ToolEntry] = [
             {"name": "persona", "type": "str", "required": True, "description": "Persona slug of creator"},
             {"name": "description", "type": "str", "required": True, "description": "Todo item description"},
             {"name": "assigned_to", "type": "str", "required": False, "description": "Optional persona to assign to"},
-        ],
-    },
-    {
-        "name": "get_chat_feed",
-        "category": "Chat",
-        "description": "Get chat event feed for a room.",
-        "parameters": [
-            {"name": "room_id", "type": "int", "required": True, "description": "ID of the chat room"},
-            {"name": "since", "type": "str", "required": False, "description": "ISO timestamp to get events after"},
-            {"name": "limit", "type": "int", "required": False, "description": "Maximum events to return (default 50)"},
         ],
     },
     {

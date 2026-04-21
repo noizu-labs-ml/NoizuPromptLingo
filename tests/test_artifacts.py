@@ -44,6 +44,8 @@ def _revision_row(**overrides) -> dict:
         "artifact_id": 7,
         "revision": 1,
         "content": "# Draft\n\nBody.",
+        "mime_type": None,
+        "binary_content": None,
         "notes": None,
         "created_by": "npl-prd-editor",
         "created_at": now,
@@ -103,7 +105,11 @@ class TestArtifactAddRevision:
         result = await artifact_add_revision("abc", "body")  # type: ignore[arg-type]
         assert result["status"] == "error"
 
-    async def test_rejects_none_content(self):
+    @patch("npl_mcp.artifacts.artifacts.get_pool")
+    async def test_rejects_none_content_text_kind(self, mock_pool):
+        pool = AsyncMock()
+        pool.fetchrow.return_value = {"id": 1, "kind": "markdown", "latest_revision": 1}
+        mock_pool.return_value = pool
         result = await artifact_add_revision(1, None)  # type: ignore[arg-type]
         assert result["status"] == "error"
 
@@ -120,7 +126,7 @@ class TestArtifactAddRevision:
     async def test_appends_new_revision(self, mock_pool):
         pool = AsyncMock()
         pool.fetchrow.side_effect = [
-            {"id": 7, "latest_revision": 3},              # existence + latest lookup
+            {"id": 7, "kind": "markdown", "latest_revision": 3},  # existence + latest + kind
             _revision_row(revision=4, content="new"),     # insert revision
             _artifact_row(latest_revision=4),              # update artifact
         ]
@@ -285,4 +291,7 @@ class TestArtifactListRevisions:
 
 class TestValidKinds:
     def test_expected_kinds_set(self):
-        assert VALID_KINDS == {"markdown", "json", "yaml", "code", "text", "other"}
+        assert VALID_KINDS == {
+            "markdown", "json", "yaml", "code", "text", "other",
+            "image", "video", "audio", "pdf", "binary",
+        }

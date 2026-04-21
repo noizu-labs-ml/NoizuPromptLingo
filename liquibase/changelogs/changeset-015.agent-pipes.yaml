@@ -1,0 +1,212 @@
+databaseChangeLog:
+  # ===========================================================================
+  # Changeset 015: Agent pipe tables — inter-agent pub/sub messaging
+  # ===========================================================================
+  - changeSet:
+      id: 015-agent-pipe-tables
+      author: npl-mcp
+      comment: Agent groups, group membership, and pipe entries for inter-agent communication
+      changes:
+        # ── npl_agent_groups ──────────────────────────────────────────────
+        - createTable:
+            tableName: npl_agent_groups
+            columns:
+              - column:
+                  name: id
+                  type: SERIAL
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: group_name
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: group_handle
+                  type: UUID
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: npl_agent_groups
+            columnNames: group_name
+            constraintName: uq_agent_groups_name
+        - addUniqueConstraint:
+            tableName: npl_agent_groups
+            columnNames: group_handle
+            constraintName: uq_agent_groups_handle
+
+        # ── npl_agent_group_members ───────────────────────────────────────
+        - createTable:
+            tableName: npl_agent_group_members
+            columns:
+              - column:
+                  name: id
+                  type: SERIAL
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: group_id
+                  type: INT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_group_members_group
+                    references: npl_agent_groups(id)
+                    deleteCascade: true
+              - column:
+                  name: session_id
+                  type: UUID
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_group_members_session
+                    references: npl_tool_sessions(id)
+              - column:
+                  name: agent_handle
+                  type: TEXT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+
+        # ── npl_agent_pipe_entries ─────────────────────────────────────────
+        - createTable:
+            tableName: npl_agent_pipe_entries
+            columns:
+              - column:
+                  name: id
+                  type: SERIAL
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: sender_agent_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_pipe_sender_session
+                    references: npl_tool_sessions(id)
+              - column:
+                  name: sender_agent_handle
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: message_name
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: target_agent
+                  type: UUID
+                  constraints:
+                    nullable: true
+              - column:
+                  name: target_agent_handle
+                  type: TEXT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: target_group
+                  type: TEXT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: target_group_handle
+                  type: UUID
+                  constraints:
+                    nullable: true
+              - column:
+                  name: body
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_pipe_entries_sender
+            tableName: npl_agent_pipe_entries
+            columns:
+              - column:
+                  name: sender_agent_id
+        - createIndex:
+            indexName: idx_pipe_entries_target_agent
+            tableName: npl_agent_pipe_entries
+            columns:
+              - column:
+                  name: target_agent
+        - createIndex:
+            indexName: idx_pipe_entries_target_handle
+            tableName: npl_agent_pipe_entries
+            columns:
+              - column:
+                  name: target_agent_handle
+        - createIndex:
+            indexName: idx_pipe_entries_target_group
+            tableName: npl_agent_pipe_entries
+            columns:
+              - column:
+                  name: target_group
+        - createIndex:
+            indexName: idx_pipe_entries_message
+            tableName: npl_agent_pipe_entries
+            columns:
+              - column:
+                  name: sender_agent_id
+              - column:
+                  name: message_name
+        - createIndex:
+            indexName: idx_pipe_entries_updated
+            tableName: npl_agent_pipe_entries
+            columns:
+              - column:
+                  name: updated_at
+                  descending: true
+        # Functional unique index for upsert — COALESCE NULLs to empty strings
+        - sql:
+            sql: >-
+              CREATE UNIQUE INDEX uq_pipe_entry_target
+              ON npl_agent_pipe_entries (
+                sender_agent_id,
+                message_name,
+                COALESCE(target_agent::text, ''),
+                COALESCE(target_agent_handle, ''),
+                COALESCE(target_group, ''),
+                COALESCE(target_group_handle::text, '')
+              )
+      rollback:
+        - dropTable:
+            tableName: npl_agent_pipe_entries
+        - dropTable:
+            tableName: npl_agent_group_members
+        - dropTable:
+            tableName: npl_agent_groups

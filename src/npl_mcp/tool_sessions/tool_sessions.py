@@ -245,3 +245,74 @@ async def tool_session(
         )
 
     return result
+
+
+async def session_activity(
+    session_uuid: str,
+    limit: int = 50,
+) -> dict[str, Any]:
+    """Get the activity feed for a tool session.
+
+    Merges child tool sessions and errors, sorted by time descending.
+    """
+    uid = _decode(session_uuid)
+    if uid is None:
+        return {"status": "not_found", "uuid": session_uuid}
+
+    pool = await get_pool()
+
+    exists = await pool.fetchval(
+        "SELECT id FROM npl_tool_sessions WHERE id = $1", uid,
+    )
+    if exists is None:
+        return {"status": "not_found", "uuid": session_uuid}
+
+    lim = max(1, min(500, limit))
+
+    sub_sessions = await pool.fetch(
+        """SELECT id, agent, brief, task, created_at
+           FROM npl_tool_sessions
+           WHERE parent_id = $1
+           ORDER BY created_at DESC
+           LIMIT $2""",
+        uid,
+        lim,
+    )
+
+    errors = await pool.fetch(
+        """SELECT id, tool_name, error_type, error_message, created_at
+           FROM npl_tool_errors
+           WHERE session_id = $1
+           ORDER BY created_at DESC
+           LIMIT $2""",
+        uid,
+        lim,
+    )
+
+    items: list[dict[str, Any]] = []
+    for r in sub_sessions:
+        items.append({
+            "type": "sub_session",
+            "id": _encode(r["id"]),
+            "summary": f"{r['agent']}: {r['brief']}",
+            "detail": r["task"],
+            "created_at": r["created_at"].isoformat() if r["created_at"] else None,
+        })
+    for r in errors:
+        items.append({
+            "type": "error",
+            "id": r["id"],
+            "summary": f"{r['tool_name']}: {r['error_type']}",
+            "detail": r["error_message"],
+            "created_at": r["created_at"].isoformat() if r["created_at"] else None,
+        })
+
+    items.sort(key=lambda x: x.get("created_at") or "", reverse=True)
+    items = items[:lim]
+
+    return {
+        "status": "ok",
+        "uuid": _encode(uid),
+        "items": items,
+        "count": len(items),
+    }

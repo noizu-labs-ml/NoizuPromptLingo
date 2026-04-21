@@ -477,20 +477,8 @@ class TestMCPRegistration:
     async def test_only_discovery_and_registered_tools_registered(self, _mcp_app):
         tools = await _mcp_app.list_tools()
         tool_names = {t.name for t in tools}
-        assert tool_names == {
-            "ToolSummary", "ToolSearch", "ToolDefinition", "ToolHelp", "ToolCall",
-            "ToolSession", "ToolSession.Generate", "Instructions", "Instructions.Create",
-            "Instructions.List", "NPLSpec", "NPLLoad", "Skill.Validate", "Skill.Evaluate",
-            # US-086: agent spec loading
-            "Agent.List", "Agent.Load",
-            # PRD-005 MVP: tasks
-            "Tasks.Create", "Tasks.Get", "Tasks.List", "Tasks.UpdateStatus",
-            # PRD-002 MVP: artifacts
-            "Artifact.Create", "Artifact.AddRevision", "Artifact.Get",
-            "Artifact.List", "Artifact.ListRevisions",
-            # PRD-004 MVP: generic sessions
-            "Session.Create", "Session.Get", "Session.List", "Session.Update",
-        }
+        from tests.test_catalog_migration import EXPECTED_MCP_TOOL_NAMES
+        assert tool_names == EXPECTED_MCP_TOOL_NAMES
 
 
 # ---------------------------------------------------------------------------
@@ -550,10 +538,10 @@ class TestToolDefinition:
     @pytest.mark.asyncio
     async def test_hidden_tools_accessible(self):
         """ToolDefinition can look up any catalog tool, not just MCP-registered ones."""
-        result = await tool_definition(["browser_click", "create_artifact"])
+        result = await tool_definition(["browser_click", "create_review"])
         assert len(result["definitions"]) == 2
         assert result["definitions"][0]["name"] == "browser_click"
-        assert result["definitions"][1]["name"] == "create_artifact"
+        assert result["definitions"][1]["name"] == "create_review"
 
 
 # ---------------------------------------------------------------------------
@@ -591,8 +579,8 @@ class TestToolCall:
     async def test_call_stub_tool(self, _mcp_app):
         """ToolCall returns stub status for tools without implementation."""
         tool = await _mcp_app.get_tool("ToolCall")
-        # create_artifact is a stable Artifacts stub (Scripts tools are now implemented)
-        result = await tool.run({"tool": "create_artifact", "arguments": {}})
+        # create_review is a stable Reviews stub
+        result = await tool.run({"tool": "create_review", "arguments": {}})
         data = json.loads(result.content[0].text)
         assert data["status"] == "stub"
         assert "no implementation" in data["message"].lower()

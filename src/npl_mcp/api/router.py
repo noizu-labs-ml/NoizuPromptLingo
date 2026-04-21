@@ -2254,6 +2254,96 @@ async def artifacts_raw_endpoint(artifact_id: int, revision: int) -> Response:
 
 
 # ---------------------------------------------------------------------------
+# Agent pipes (REST)
+# ---------------------------------------------------------------------------
+
+
+class PipeOutputBody(BaseModel):
+    agent: str
+    body: str
+
+
+class PipeInputBody(BaseModel):
+    agent: str
+    since: Optional[str] = None
+    full: bool = False
+    with_sections: Optional[list[str]] = None
+
+
+@router.post("/pipes/output")
+async def pipes_output_endpoint(req: PipeOutputBody) -> dict:
+    try:
+        from npl_mcp.pipes import agent_output_pipe
+        result = await agent_output_pipe(agent=req.agent, body=req.body)
+        if result.get("status") == "error":
+            raise HTTPException(status_code=400, detail=result.get("message", "Invalid request"))
+        return result
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+@router.post("/pipes/input")
+async def pipes_input_endpoint(req: PipeInputBody) -> dict:
+    try:
+        from npl_mcp.pipes import agent_input_pipe
+        result = await agent_input_pipe(
+            agent=req.agent,
+            since=req.since,
+            full=req.full,
+            with_sections=req.with_sections,
+        )
+        if result.get("status") == "error":
+            raise HTTPException(status_code=400, detail=result.get("message", "Invalid request"))
+        return result
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+# ---------------------------------------------------------------------------
+# Agent Pipes (inter-agent messaging)
+# ---------------------------------------------------------------------------
+
+
+class PipeInputBody(BaseModel):
+    agent: str
+    since: Optional[str] = None
+    full: bool = False
+    with_sections: Optional[list[str]] = None
+
+
+class PipeOutputBody(BaseModel):
+    agent: str
+    body: str
+
+
+@router.post("/pipes/input")
+async def pipes_input_endpoint(body: PipeInputBody) -> dict:
+    try:
+        from npl_mcp.pipes import agent_input_pipe
+        return await agent_input_pipe(
+            agent=body.agent,
+            since=body.since,
+            full=body.full,
+            with_sections=body.with_sections,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/pipes/output")
+async def pipes_output_endpoint(body: PipeOutputBody) -> dict:
+    try:
+        from npl_mcp.pipes import agent_output_pipe
+        return await agent_output_pipe(agent=body.agent, body=body.body)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+# ---------------------------------------------------------------------------
 # Orchestration trigger  (Wave O)
 # ---------------------------------------------------------------------------
 

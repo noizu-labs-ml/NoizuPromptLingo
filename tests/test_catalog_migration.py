@@ -41,25 +41,31 @@ EXPECTED_MCP_TOOL_NAMES = {
     "Instructions.List",
     "Skill.Validate",
     "Skill.Evaluate",
-    # US-086: agent spec loading
     "Agent.List",
     "Agent.Load",
-    # PRD-005 MVP: tasks
     "Tasks.Create",
     "Tasks.Get",
     "Tasks.List",
     "Tasks.UpdateStatus",
-    # PRD-002 MVP: artifacts
     "Artifact.Create",
     "Artifact.AddRevision",
     "Artifact.Get",
+    "Artifact.GetBinary",
     "Artifact.List",
     "Artifact.ListRevisions",
-    # PRD-004 MVP: generic sessions
     "Session.Create",
     "Session.Get",
     "Session.List",
     "Session.Update",
+    "Session.Activity",
+    "AgentInputPipe",
+    "AgentOutputPipe",
+    "Chat.ListRooms",
+    "Chat.CreateRoom",
+    "Chat.GetRoom",
+    "Chat.ListMessages",
+    "Chat.SendMessage",
+    "Orchestration.Trigger",
 }
 
 EXPECTED_DISCOVERABLE_NAMES = {
@@ -361,10 +367,10 @@ class TestCatalogEntryFields:
     async def test_stub_entry_has_tags(self, _mcp_app):
         """Stub entries gain tags from their category during build_catalog()."""
         catalog = await build_catalog()
-        # Pick a known stub entry (create_artifact is a stable Artifacts stub)
-        stub = next(e for e in catalog if e["name"] == "create_artifact")
+        # Pick a known stub entry (create_review is a stable Reviews stub)
+        stub = next(e for e in catalog if e["name"] == "create_review")
         assert "tags" in stub
-        assert "artifacts" in stub["tags"]
+        assert "reviews" in stub["tags"]
 
     @pytest.mark.asyncio
     async def test_hierarchical_stub_tags(self, _mcp_app):
@@ -418,8 +424,8 @@ class TestToolCallStatusDistinction:
     async def test_toolcall_on_stub_still_returns_status_stub(self, _mcp_app):
         """Calling a catalog-only stub via ToolCall still returns status='stub'."""
         tool_call_handler = await _mcp_app.get_tool("ToolCall")
-        # create_artifact is a stable Artifacts stub (Scripts tools are now implemented)
-        result = await tool_call_handler.run({"tool": "create_artifact", "arguments": {}})
+        # create_review is a stable Reviews stub
+        result = await tool_call_handler.run({"tool": "create_review", "arguments": {}})
         import json
         data = json.loads(result.content[0].text)
         assert data["status"] == "stub", f"Expected status=stub, got: {data}"

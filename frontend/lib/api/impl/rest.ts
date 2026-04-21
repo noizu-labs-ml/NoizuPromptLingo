@@ -68,6 +68,10 @@ import type {
   ToolInvokeResult,
   OrchestrationTriggerInput,
   OrchestrationTriggerResult,
+  PipeInputRequest,
+  PipeInputResult,
+  PipeOutputRequest,
+  PipeOutputResult,
 } from "../types";
 
 // ── Base URL (dev proxy to backend on :8765) ─────────────────────────────
@@ -492,5 +496,16 @@ export const health = {
   },
   async ping(): Promise<{ status: string; ts: string }> {
     return get<{ status: string; ts: string }>("/api/health/ping");
+  },
+};
+
+// ── Pipes ────────────────────────────────────────────────────────────────
+
+export const pipes = {
+  async input(request: PipeInputRequest): Promise<PipeInputResult> {
+    return post<PipeInputResult>("/api/pipes/input", request);
+  },
+  async output(request: PipeOutputRequest): Promise<PipeOutputResult> {
+    return post<PipeOutputResult>("/api/pipes/output", request);
   },
 };

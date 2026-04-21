@@ -582,6 +582,41 @@ export interface ChatMessageCreateInput {
   author?: string;
 }
 
+// ── Agent Pipes ─────────────────────────────────────────────────────────
+
+export interface PipeInputRequest {
+  agent: string;
+  since?: string;
+  full?: boolean;
+  with_sections?: string[];
+}
+
+export interface PipeDashboardEntry {
+  sender: { agent_id: string; agent_handle: string };
+  updated_at: string | null;
+  data: unknown;
+}
+
+export interface PipeInputResult {
+  status: string;
+  agent: string;
+  agent_handle: string;
+  groups: string[];
+  entries: number;
+  dashboard: Record<string, PipeDashboardEntry | PipeDashboardEntry[]>;
+}
+
+export interface PipeOutputRequest {
+  agent: string;
+  body: string;
+}
+
+export interface PipeOutputResult {
+  status: string;
+  upserted: number;
+  sender: string;
+}
+
 // ── Orchestration trigger (Wave O) ───────────────────────────────────────
 
 export interface OrchestrationTriggerInput {

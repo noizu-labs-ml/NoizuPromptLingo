@@ -95,6 +95,7 @@ const NAV_GROUPS: NavGroup[] = [
     heading: "Collab",
     items: [
       { label: "Agents", href: "/agents", icon: UserGroupIcon },
+      { label: "Pipes", href: "/pipes", icon: QueueListIcon },
       { label: "Chat", href: "/chat", icon: ChatBubbleLeftRightIcon },
       { label: "Artifacts", href: "/artifacts", icon: DocumentIcon },
     ],

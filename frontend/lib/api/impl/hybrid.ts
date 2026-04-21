@@ -71,3 +71,6 @@ export const health = rest.health;
 
 // Tasks: wired to REST endpoint (/api/tasks*)
 export const tasks = rest.tasks;
+
+// Pipes: wired to REST endpoint (/api/pipes/*)
+export const pipes = rest.pipes;

@@ -74,6 +74,10 @@ import type {
   ToolInvokeResult,
   OrchestrationTriggerInput,
   OrchestrationTriggerResult,
+  PipeInputRequest,
+  PipeInputResult,
+  PipeOutputRequest,
+  PipeOutputResult,
 } from "./types";
 
 // ── Implementation swap point ────────────────────────────────────────────
@@ -199,6 +203,11 @@ export interface HealthAPI {
   ping(): Promise<{ status: string; ts: string }>;
 }
 
+export interface PipesAPI {
+  input(request: PipeInputRequest): Promise<PipeInputResult>;
+  output(request: PipeOutputRequest): Promise<PipeOutputResult>;
+}
+
 export interface TasksAPI {
   list(filter?: TaskFilter): Promise<TaskListResult>;
   get(id: number): Promise<Task | null>;
@@ -228,6 +237,7 @@ export const api = {
   agents: impl.agents as AgentsAPI,
   health: impl.health as HealthAPI,
   tasks: impl.tasks as TasksAPI,
+  pipes: impl.pipes as PipesAPI,
 };
 
 export type API = typeof api;

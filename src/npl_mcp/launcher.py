@@ -616,26 +616,39 @@ def create_app() -> "FastMCP":
     )
     async def artifact_create_tool(
         title: str,
-        content: str,
+        content: str = "",
         kind: str = "markdown",
         description: Optional[str] = None,
         created_by: Optional[str] = None,
         notes: Optional[str] = None,
+        binary_content_b64: Optional[str] = None,
+        mime_type: Optional[str] = None,
     ) -> dict:
-        """Create a versioned text artifact.
+        """Create a versioned artifact.
+
+        For text artifacts pass ``content``.  For binary artifacts (image,
+        video, audio, pdf, binary) pass ``binary_content_b64`` (base64
+        encoded bytes) and ``mime_type``.
 
         Args:
             title: Non-empty human-readable title.
-            content: Initial body (revision 1).
-            kind: One of markdown|json|yaml|code|text|other (default markdown).
+            content: Initial body (revision 1) — for text kinds.
+            kind: markdown|json|yaml|code|text|other|image|video|audio|pdf|binary.
             description: Optional long description.
             created_by: Optional persona slug.
             notes: Optional notes attached to revision 1.
+            binary_content_b64: Base64-encoded binary content (for media kinds).
+            mime_type: MIME type (e.g. image/png) — required when binary_content_b64 set.
         """
+        import base64
         from npl_mcp.artifacts import artifact_create
+        binary_content = None
+        if binary_content_b64:
+            binary_content = base64.b64decode(binary_content_b64)
         return await artifact_create(
             title=title, content=content, kind=kind,
             description=description, created_by=created_by, notes=notes,
+            binary_content=binary_content, mime_type=mime_type,
         )
 
     @mcp_discoverable(
@@ -646,15 +659,25 @@ def create_app() -> "FastMCP":
     )
     async def artifact_add_revision_tool(
         artifact_id: int,
-        content: str,
+        content: str = "",
         notes: Optional[str] = None,
         created_by: Optional[str] = None,
+        binary_content_b64: Optional[str] = None,
+        mime_type: Optional[str] = None,
     ) -> dict:
-        """Add a new revision (N+1) to an artifact."""
+        """Add a new revision (N+1) to an artifact.
+
+        For binary kinds pass ``binary_content_b64`` + ``mime_type``.
+        """
+        import base64
         from npl_mcp.artifacts import artifact_add_revision
+        binary_content = None
+        if binary_content_b64:
+            binary_content = base64.b64decode(binary_content_b64)
         return await artifact_add_revision(
             artifact_id=artifact_id, content=content,
             notes=notes, created_by=created_by,
+            binary_content=binary_content, mime_type=mime_type,
         )
 
     @mcp_discoverable(
@@ -695,6 +718,36 @@ def create_app() -> "FastMCP":
         """List revision summaries for an artifact."""
         from npl_mcp.artifacts import artifact_list_revisions
         return await artifact_list_revisions(artifact_id=artifact_id)
+
+    @mcp_discoverable(
+        mcp,
+        name="Artifact.GetBinary",
+        category="Artifacts",
+        description="Fetch raw binary content of an artifact revision as base64",
+    )
+    async def artifact_get_binary_tool(
+        artifact_id: int,
+        revision: Optional[int] = None,
+    ) -> dict:
+        """Get binary content as base64 + mime_type.
+
+        Returns ``{status, mime_type, content_b64, size_bytes}``.
+        Only works for binary-kind artifacts (image/video/audio/pdf/binary).
+        """
+        import base64
+        from npl_mcp.artifacts import artifact_get_binary
+        result = await artifact_get_binary(artifact_id=artifact_id, revision=revision)
+        if result.get("status") != "ok":
+            return result
+        raw = result["binary_content"]
+        return {
+            "status": "ok",
+            "mime_type": result["mime_type"],
+            "content_b64": base64.b64encode(raw).decode("ascii"),
+            "size_bytes": len(raw),
+            "title": result.get("title"),
+            "revision": result.get("revision"),
+        }
 
     # ------------------------------------------------------------------
     # Generic Sessions tools (4 MCP-visible) — PRD-004 MVP
@@ -771,6 +824,195 @@ def create_app() -> "FastMCP":
             session_id=session_id, title=title,
             status=status, description=description,
         )
+
+    # ------------------------------------------------------------------
+    # Agent pipes (2 MCP-visible)
+    # ------------------------------------------------------------------
+
+    @mcp_discoverable(
+        mcp,
+        name="AgentInputPipe",
+        category="Pipes",
+        description="Pull incoming messages addressed to this agent (by UUID, handle, or group)",
+    )
+    async def agent_input_pipe_tool(
+        agent: str,
+        since: Optional[str] = None,
+        full: bool = False,
+        with_sections: Optional[list[str]] = None,
+    ) -> dict:
+        """Pull messages addressed to this agent from the pipe.
+
+        Returns a YAML dashboard of all entries matching the agent's
+        session UUID, agent handle, or group memberships.
+
+        Args:
+            agent: Session UUID (short or full) of the requesting agent.
+            since: ISO-8601 UTC timestamp — only entries updated after this.
+            full: If True, ignore ``since`` and return all entries.
+            with_sections: Optional list of message_name values to include.
+        """
+        from npl_mcp.pipes import agent_input_pipe
+        return await agent_input_pipe(
+            agent=agent,
+            since=since,
+            full=full,
+            with_sections=with_sections,
+        )
+
+    @mcp_discoverable(
+        mcp,
+        name="AgentOutputPipe",
+        category="Pipes",
+        description="Push structured YAML data to target agents or groups",
+    )
+    async def agent_output_pipe_tool(
+        agent: str,
+        body: str,
+    ) -> dict:
+        """Push structured YAML data to target agents/groups.
+
+        ``body`` is a YAML mapping of message sections.  Each section has
+        a ``target`` block (agent, agent-handle, group, group-handle) and
+        a ``data`` block with the payload.  Entries are upserted — calling
+        again with the same message name and target replaces the previous.
+
+        Args:
+            agent: Session UUID (short or full) of the sending agent.
+            body: YAML string with message sections.
+        """
+        from npl_mcp.pipes import agent_output_pipe
+        return await agent_output_pipe(agent=agent, body=body)
+
+    # ------------------------------------------------------------------
+    # Chat tools (5 MCP-visible)
+    # ------------------------------------------------------------------
+
+    @mcp_discoverable(
+        mcp,
+        name="Chat.ListRooms",
+        category="Chat",
+        description="List chat rooms",
+    )
+    async def chat_list_rooms(limit: int = 50) -> dict:
+        """List chat rooms ordered by most recent activity."""
+        from npl_mcp.chat.chat import room_list
+        return await room_list(limit=limit)
+
+    @mcp_discoverable(
+        mcp,
+        name="Chat.CreateRoom",
+        category="Chat",
+        description="Create a new chat room",
+    )
+    async def chat_create_room(name: str, description: Optional[str] = None) -> dict:
+        """Create a chat room."""
+        from npl_mcp.chat.chat import room_create
+        return await room_create(name=name, description=description)
+
+    @mcp_discoverable(
+        mcp,
+        name="Chat.GetRoom",
+        category="Chat",
+        description="Get a chat room by ID",
+    )
+    async def chat_get_room(room_id: int) -> dict:
+        """Get a chat room's details."""
+        from npl_mcp.chat.chat import room_get
+        return await room_get(room_id=room_id)
+
+    @mcp_discoverable(
+        mcp,
+        name="Chat.ListMessages",
+        category="Chat",
+        description="List messages in a chat room",
+    )
+    async def chat_list_messages(
+        room_id: int,
+        limit: int = 50,
+        before_id: Optional[int] = None,
+    ) -> dict:
+        """List messages in a room, newest first. Use ``before_id`` for pagination."""
+        from npl_mcp.chat.chat import message_list
+        return await message_list(room_id=room_id, limit=limit, before_id=before_id)
+
+    @mcp_discoverable(
+        mcp,
+        name="Chat.SendMessage",
+        category="Chat",
+        description="Send a message to a chat room",
+    )
+    async def chat_send_message(
+        room_id: int,
+        content: str,
+        author: Optional[str] = None,
+    ) -> dict:
+        """Post a message to a chat room."""
+        from npl_mcp.chat.chat import message_create
+        return await message_create(room_id=room_id, content=content, author=author)
+
+    # ------------------------------------------------------------------
+    # Orchestration tool (1 MCP-visible)
+    # ------------------------------------------------------------------
+
+    @mcp_discoverable(
+        mcp,
+        name="Orchestration.Trigger",
+        category="Orchestration",
+        description="Trigger the agent orchestration pipeline for a feature",
+    )
+    async def orchestration_trigger_tool(
+        feature_description: str,
+        agent: str = "npl-tdd-coder",
+    ) -> dict:
+        """Queue an orchestration run for a feature description.
+
+        Creates a task tagged with the orchestration pipeline and returns
+        a run_id for tracking.
+
+        Args:
+            feature_description: Natural-language description of the feature.
+            agent: Agent to assign (default npl-tdd-coder).
+        """
+        import shortuuid
+        from npl_mcp.tasks.tasks import task_create
+        run_id = shortuuid.uuid()[:12]
+        result = await task_create(
+            title=f"[Orchestration] {feature_description}",
+            description=f"run_id={run_id} agent={agent}\n\n{feature_description}",
+            status="pending",
+        )
+        return {
+            "run_id": run_id,
+            "status": "queued",
+            "task_id": result.get("id"),
+            "created_at": result.get("created_at"),
+        }
+
+    # ------------------------------------------------------------------
+    # Session.Activity tool (1 MCP-visible)
+    # ------------------------------------------------------------------
+
+    @mcp_discoverable(
+        mcp,
+        name="Session.Activity",
+        category="Sessions",
+        description="Get the activity feed for a session (sub-sessions, errors)",
+    )
+    async def session_activity_tool(
+        session_uuid: str,
+        limit: int = 50,
+    ) -> dict:
+        """Return recent activity for a tool session.
+
+        Includes child tool sessions and errors, merged and sorted by time.
+
+        Args:
+            session_uuid: Session UUID (short or full).
+            limit: Max items to return (default 50).
+        """
+        from npl_mcp.tool_sessions.tool_sessions import session_activity
+        return await session_activity(session_uuid, limit=limit)
 
     # ------------------------------------------------------------------
     # Skills tools (1 MCP-visible)
