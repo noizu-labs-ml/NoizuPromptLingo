@@ -3,18 +3,35 @@
 import clsx from "clsx";
 import { ReactNode } from "react";
 
+export type BadgeVariant =
+  | "default"
+  | "success"
+  | "warning"
+  | "danger"
+  | "info"
+  | "accent"
+  | "dot";
+
 export interface BadgeProps {
-  children: ReactNode;
-  variant?: "default" | "success" | "warning" | "danger" | "info";
+  children?: ReactNode;
+  variant?: BadgeVariant;
   size?: "sm" | "md";
+  /**
+   * When true, prepends a small 6px filled circle (in the variant's text
+   * color) before the children. Distinct from the `dot` variant, which
+   * renders ONLY a circle with no pill chrome.
+   */
+  dot?: boolean;
+  className?: string;
 }
 
-const variantClasses: Record<NonNullable<BadgeProps["variant"]>, string> = {
-  default: "bg-muted/20 text-muted",
-  success: "bg-success/20 text-success",
-  warning: "bg-warning/20 text-warning",
-  danger: "bg-danger/20 text-danger",
-  info: "bg-accent/20 text-accent",
+const variantClasses: Record<Exclude<BadgeVariant, "dot">, string> = {
+  default: "bg-muted/16 text-muted",
+  success: "bg-success/16 text-success",
+  warning: "bg-warning/16 text-warning",
+  danger: "bg-danger/16 text-danger",
+  info: "bg-info/16 text-info",
+  accent: "bg-accent/16 text-accent",
 };
 
 const sizeClasses: Record<NonNullable<BadgeProps["size"]>, string> = {
@@ -22,19 +39,54 @@ const sizeClasses: Record<NonNullable<BadgeProps["size"]>, string> = {
   md: "px-2.5 py-1 text-sm",
 };
 
+/** Color used by the dot-variant and the optional leading dot. */
+const dotColor: Record<Exclude<BadgeVariant, "dot">, string> = {
+  default: "bg-muted",
+  success: "bg-success",
+  warning: "bg-warning",
+  danger: "bg-danger",
+  info: "bg-info",
+  accent: "bg-accent",
+};
+
 export function Badge({
   children,
   variant = "default",
   size = "sm",
+  dot = false,
+  className,
 }: BadgeProps) {
+  // `dot` variant: just a small filled circle, no pill chrome.
+  if (variant === "dot") {
+    return (
+      <span
+        className={clsx(
+          "inline-block h-1.5 w-1.5 rounded-full bg-muted",
+          className
+        )}
+        aria-hidden="true"
+      />
+    );
+  }
+
   return (
     <span
       className={clsx(
-        "inline-flex items-center rounded-full font-medium",
+        "inline-flex items-center gap-1.5 rounded-full font-medium",
         variantClasses[variant],
-        sizeClasses[size]
+        sizeClasses[size],
+        className
       )}
     >
+      {dot && (
+        <span
+          className={clsx(
+            "inline-block h-1.5 w-1.5 rounded-full shrink-0",
+            dotColor[variant]
+          )}
+          aria-hidden="true"
+        />
+      )}
       {children}
     </span>
   );

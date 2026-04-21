@@ -9,7 +9,7 @@ export interface SkeletonProps {
 export function Skeleton({ width, height, className }: SkeletonProps) {
   return (
     <div
-      className={clsx("animate-pulse bg-surface-raised rounded", className)}
+      className={clsx("rounded bg-surface-1 animate-shimmer", className)}
       style={{ width, height }}
     />
   );

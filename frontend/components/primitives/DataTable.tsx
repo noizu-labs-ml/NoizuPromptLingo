@@ -26,15 +26,15 @@ export function DataTable<T>({
   onRowClick,
 }: DataTableProps<T>) {
   return (
-    <div className="w-full overflow-x-auto rounded-lg border border-border">
+    <div className="w-full overflow-x-auto rounded-lg border border-border shadow-ambient">
       <table className="table-auto w-full text-sm">
-        <thead className="sticky top-0 z-10 bg-surface">
+        <thead className="sticky top-0 z-10 bg-surface-1/95 backdrop-blur-sm border-b border-border">
           <tr>
             {columns.map((col) => (
               <th
                 key={col.key}
                 className={clsx(
-                  "px-4 py-3 text-left font-medium text-muted border-b border-border",
+                  "px-4 py-3 text-left font-medium text-muted",
                   col.className
                 )}
               >
@@ -43,7 +43,7 @@ export function DataTable<T>({
             ))}
           </tr>
         </thead>
-        <tbody>
+        <tbody className="divide-y divide-border/50">
           {rows.length === 0 ? (
             <tr>
               <td
@@ -59,7 +59,7 @@ export function DataTable<T>({
                 key={rowKey(row)}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
                 className={clsx(
-                  "border-t border-border hover:bg-surface-raised",
+                  "hover:bg-accent/5 transition-colors",
                   onRowClick && "cursor-pointer"
                 )}
               >

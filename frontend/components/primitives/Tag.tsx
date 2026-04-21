@@ -13,10 +13,10 @@ export function Tag({ label, onRemove, active = false }: TagProps) {
   return (
     <span
       className={clsx(
-        "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium",
+        "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium border",
         active
-          ? "bg-brand-500/20 text-brand-400 border border-brand-500/40"
-          : "bg-surface-raised text-foreground border border-border"
+          ? "bg-accent/15 text-accent border-accent/30"
+          : "bg-surface-1/80 text-muted border-border/50"
       )}
     >
       {label}
@@ -25,8 +25,8 @@ export function Tag({ label, onRemove, active = false }: TagProps) {
           type="button"
           onClick={onRemove}
           className={clsx(
-            "rounded-full p-0.5 hover:bg-black/10 transition-colors",
-            active ? "text-brand-400" : "text-muted"
+            "focus-ring rounded-full p-0.5 hover:bg-black/10 transition-colors",
+            active ? "text-accent" : "text-muted"
           )}
           aria-label={`Remove ${label}`}
         >
