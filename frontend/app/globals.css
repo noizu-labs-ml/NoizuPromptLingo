@@ -2,35 +2,128 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * NPL Studio — design tokens
+ *
+ * Tokens are HSL triplets so downstream code can opacity-mix via
+ *     hsl(var(--accent) / 0.25)   or  bg-accent/25  (Tailwind arbitrary opacity).
+ *
+ * Layer model (dark):
+ *    canvas  ->  surface-0  ->  surface-1  ->  surface-2  ->  elevated
+ *    page       cards          inputs/hover    modals        palette/toast
+ *
+ * Light mode mirrors the same layer model but inverted.
+ */
+
 :root {
-  /* Dark palette (default) */
-  --background: #0a0a0f;
-  --foreground: #ededed;
-  --surface: #111118;
-  --surface-raised: #1a1a24;
-  --surface-sunken: #06060a;
-  --border: #272733;
-  --border-strong: #3a3a4a;
-  --muted: #8a8a9c;
-  --subtle: #5a5a6c;
-  --accent: #60a5fa;
-  --accent-fg: #0a0a0f;
+  /* Layered surfaces (dark default) */
+  --canvas:       240 15% 6%;
+  --surface-0:    240 14% 9%;
+  --surface-1:    240 13% 12%;
+  --surface-2:    240 12% 16%;
+  --elevated:     240 11% 20%;
+
+  /* Borders */
+  --border:        240 10% 22%;
+  --border-strong: 240 10% 34%;
+
+  /* Text tiers (warm near-white on dark) */
+  --foreground: 40  20% 96%;
+  --muted:      240 5%  70%;
+  --subtle:     240 5%  50%;
+
+  /* Brand accent (violet) */
+  --accent:      255 92% 68%;
+  --accent-soft: 255 80% 58%;
+  --accent-on:   240 15% 6%;
+
+  /* Semantic */
+  --success: 160 65% 50%;
+  --warning: 38  95% 60%;
+  --danger:  355 80% 62%;
+  --info:    200 90% 62%;
+
+  /* Shadows / glows (composable strings) */
+  --shadow-ambient:
+    0 1px 2px hsl(240 15% 3% / 0.4),
+    0 2px 4px hsl(240 15% 3% / 0.2);
+  --shadow-elevated:
+    0 4px 12px hsl(240 15% 3% / 0.5),
+    0 8px 24px hsl(240 15% 3% / 0.25);
+  --ring-accent: 0 0 0 3px hsl(var(--accent) / 0.25);
+  --glow-accent: 0 0 32px hsl(var(--accent) / 0.35);
+
+  /* Legacy aliases (kept so existing string refs keep working during migration) */
+  --background:     var(--canvas);
+  --surface:        var(--surface-0);
+  --surface-raised: var(--surface-1);
+  --surface-sunken: var(--canvas);
+  --accent-fg:      var(--accent-on);
 }
 
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
-    --background: #f8fafc;
-    --foreground: #0f172a;
-    --surface: #ffffff;
-    --surface-raised: #ffffff;
-    --surface-sunken: #f1f5f9;
-    --border: #e2e8f0;
-    --border-strong: #cbd5e1;
-    --muted: #64748b;
-    --subtle: #94a3b8;
-    --accent: #2563eb;
-    --accent-fg: #ffffff;
+    --canvas:     40  20% 97%;
+    --surface-0:  0   0%  100%;
+    --surface-1:  40  16% 94%;
+    --surface-2:  40  14% 90%;
+    --elevated:   0   0%  100%;
+
+    --border:        240 10% 86%;
+    --border-strong: 240 10% 72%;
+
+    --foreground: 240 15% 10%;
+    --muted:      240 6%  38%;
+    --subtle:     240 5%  54%;
+
+    --accent:      255 75% 54%;
+    --accent-soft: 255 80% 48%;
+    --accent-on:   0 0% 100%;
+
+    --success: 160 65% 38%;
+    --warning: 38  95% 44%;
+    --danger:  355 80% 50%;
+    --info:    200 85% 44%;
+
+    --shadow-ambient:
+      0 1px 2px hsl(240 20% 50% / 0.08),
+      0 2px 4px hsl(240 20% 50% / 0.05);
+    --shadow-elevated:
+      0 4px 12px hsl(240 20% 50% / 0.1),
+      0 8px 24px hsl(240 20% 50% / 0.08);
   }
+}
+
+/* Data-theme override (ThemeToggle writes data-theme="light" | "dark") */
+[data-theme="light"] {
+  --canvas:     40  20% 97%;
+  --surface-0:  0   0%  100%;
+  --surface-1:  40  16% 94%;
+  --surface-2:  40  14% 90%;
+  --elevated:   0   0%  100%;
+
+  --border:        240 10% 86%;
+  --border-strong: 240 10% 72%;
+
+  --foreground: 240 15% 10%;
+  --muted:      240 6%  38%;
+  --subtle:     240 5%  54%;
+
+  --accent:      255 75% 54%;
+  --accent-soft: 255 80% 48%;
+  --accent-on:   0 0% 100%;
+
+  --success: 160 65% 38%;
+  --warning: 38  95% 44%;
+  --danger:  355 80% 50%;
+  --info:    200 85% 44%;
+
+  --shadow-ambient:
+    0 1px 2px hsl(240 20% 50% / 0.08),
+    0 2px 4px hsl(240 20% 50% / 0.05);
+  --shadow-elevated:
+    0 4px 12px hsl(240 20% 50% / 0.1),
+    0 8px 24px hsl(240 20% 50% / 0.08);
 }
 
 html,
@@ -39,32 +132,92 @@ body {
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    sans-serif;
+  color: hsl(var(--foreground));
+  background: hsl(var(--canvas));
+  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-feature-settings: "ss01", "cv11";  /* Geist stylistic sets */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+code, pre, kbd, samp {
+  font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
+  .text-balance { text-wrap: balance; }
+
+  /* Aurora gradient that sits behind the top nav — soft violet glow */
+  .aurora-bg {
+    background:
+      radial-gradient(
+        ellipse 80% 50% at 50% -20%,
+        hsl(var(--accent) / 0.15),
+        transparent 70%
+      );
   }
+
+  /* Thin scrollbar, uniform across themes */
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: var(--border-strong) transparent;
+    scrollbar-color: hsl(var(--border-strong)) transparent;
   }
   .scrollbar-thin::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: var(--border-strong);
+    background-color: hsl(var(--border-strong));
     border-radius: 4px;
+  }
+
+  /* Shimmer animation for skeleton loaders */
+  @keyframes shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  .animate-shimmer {
+    background-image: linear-gradient(
+      90deg,
+      hsl(var(--surface-1)) 0%,
+      hsl(var(--surface-2)) 50%,
+      hsl(var(--surface-1)) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.8s ease-in-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .animate-shimmer { animation: none; }
+  }
+
+  /* Uniform focus ring — use via className="focus-ring" */
+  .focus-ring {
+    outline: none;
+  }
+  .focus-ring:focus-visible {
+    box-shadow: var(--ring-accent);
+    border-color: hsl(var(--accent));
+  }
+
+  /* Glow for "active" / "focused" cards */
+  .glow-accent {
+    box-shadow: var(--glow-accent);
+  }
+
+  /* Skip-link (visually hidden until focused) */
+  .skip-link {
+    position: absolute;
+    top: -48px;
+    left: 12px;
+    z-index: 100;
+    padding: 8px 16px;
+    background: hsl(var(--accent));
+    color: hsl(var(--accent-on));
+    border-radius: 8px;
+    font-weight: 600;
+    transition: top 0.15s ease-out;
+  }
+  .skip-link:focus {
+    top: 12px;
   }
 }
