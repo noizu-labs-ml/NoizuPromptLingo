@@ -1,7 +1,7 @@
 # Project Architecture Summary
 
 ## Overview
-NPL MCP is a Model Context Protocol server built on FastMCP 3.x (`>=3.0.0,<4.0.0`) using a three-tier tool pattern: 11 MCP-visible tools at startup (5 discovery + 1 NPL spec + 2 session + 3 instruction), 22 hidden tools callable via ToolCall, 92 stub tools for planned features. Unified catalog of 125 tools. Every MCP-registered tool carries hierarchical `tags` and NPL-specific `meta` (`npl_category`, `npl_discoverable`) so 3.x-native clients can filter/group natively. FastAPI for routing (68 REST endpoints) with a pure-ASGI fallback middleware (SSE-safe), Next.js frontend, LiteLLM proxy for LLM-powered features, PostgreSQL for persistent storage. Companion `npl_persona` CLI package for offline persona simulation.
+NPL MCP is a Model Context Protocol server built on FastMCP 3.x (`>=3.0.0,<4.0.0`) using a two-tier tool pattern: 58 MCP-visible tools across 16 categories, 22 hidden tools callable via ToolCall. 80 total implemented tools. Every MCP-registered tool carries hierarchical `tags` and NPL-specific `meta` (`npl_category`, `npl_discoverable`) so 3.x-native clients can filter/group natively. FastAPI for routing (68 REST endpoints) with a pure-ASGI fallback middleware (SSE-safe), Next.js frontend, LiteLLM proxy for LLM-powered features, PostgreSQL for persistent storage. Companion `npl_persona` CLI package for offline persona simulation.
 
 ## Components
 - **Launcher** (`launcher.py`): create_app() + create_asgi_app(), CLI, Uvicorn, pure-ASGI `FrontendFallbackMiddleware`
@@ -36,14 +36,23 @@ MCP protocol, FastMCP 3.x, FastAPI, Uvicorn, pure-ASGI middleware, SSE transport
 - Docker Compose for PostgreSQL, Liquibase for schema
 
 ## Key Design Decisions
-- FastMCP 3.x with custom catalog retained (hidden-but-callable has no native equivalent; `AggregateProvider` merge semantics don't match our three-tier pattern)
-- `mcp_discoverable` helper combines `@mcp.tool` + `@discoverable` and auto-populates 3.x `tags` + `meta` from NPL category
-- `ToolCall` distinguishes 4 statuses: dispatched result / `"mcp"` / `"stub"` / `"error"`
-- Pure-ASGI fallback middleware replaces `BaseHTTPMiddleware` which broke SSE
-- REST API (`/api/*`) runs parallel to MCP SSE — same DB, different access paths (web UI vs AI clients)
-- Frontend API facade (`lib/api/client.ts`): pluggable hybrid/rest/mock impls; single import swap to go fully live
-- Agent pipes for inter-agent structured YAML messaging (DB-backed, per-session)
-- Liquibase manages all DB tables across 17 changesets (YAML format, PostgreSQL)
+- FastMCP 3.x with custom catalog (hidden-but-callable has no native equivalent)
+- `mcp_discoverable` helper combines `@mcp.tool` + `@discoverable` with auto-populated tags/meta
+- Pure-ASGI fallback middleware (SSE-safe, replaces BaseHTTPMiddleware)
+- REST API (68 endpoints) parallel to MCP SSE — same DB, different access paths
+- Frontend API facade: pluggable hybrid/rest/mock impls
+- Agent pipes: inter-agent structured YAML messaging with upsert semantics and group targeting
+- NPL convention system: YAML source of truth → parse → resolve → layout pipeline with expression DSL
+- Liquibase manages all DB tables across 17 changesets
+
+## Detailed References
+- `arch/rest-api.md` — Full REST endpoint reference (68 endpoints)
+- `arch/mcp-tools.md` — Complete per-tool reference (58 visible + 22 hidden)
+- `arch/npl-conventions.md` — Convention system architecture and expression DSL
+- `arch/agent-pipes.md` — Pipe messaging schema, targeting, and lifecycle
+- `reference/persona-cli.md` — Persona CLI package documentation
+- `arch/meta-tools.md` — Catalog architecture and LLM configuration
+- `arch/agent-orchestration.md` — TDD pipeline workflow details
 
 ## Agent Orchestration
 30+ agents organized by role: TDD pipeline (idea-to-spec → prd-editor → tdd-tester → tdd-coder → tdd-debugger), taskers (haiku/fast/sonnet/opus/ultra), authoring (author, marketing-writer, technical-writer), analysis (winnower, gopher-scout, thinker, grader), persona (persona, persona-manager), coordination (project-coordinator, prd-manager), domain specialists (sql-architect, build-master, cpp-modernizer, perf-profiler, threat-modeler), and utilities (fim, templater, nimps). Inter-agent communication via pipes module. Companion `npl_persona` CLI for offline persona simulation.

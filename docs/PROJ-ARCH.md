@@ -73,42 +73,19 @@ graph TB
 | Persona CLI | `src/npl_persona/` | Offline persona simulation, journal, knowledge, teams, templates |
 | Minimal Server | `src/mcp.py` | Standalone hello-world for quick experiments |
 
-## Meta Tool Pattern
+## MCP Tool System
 
-**11 MCP-visible tools** are registered at startup. All ~125 catalog tools are discoverable via meta tools and callable via `ToolCall`.
-
-### Three-Tier Tool Registration
+**58 MCP-visible tools** across 16 categories are registered at startup. An additional **22 hidden tools** are callable via `ToolCall`. 5 discovery tools provide catalog browsing and search.
 
 | Tier | Count | Visibility | Description |
 |------|-------|------------|-------------|
-| MCP-Visible | 11 | In `tools/list` | Registered via `@mcp_discoverable(mcp, ...)` (combines `@mcp.tool` + `@discoverable`, auto-populates tags/meta) |
-| Hidden/Discoverable | 22 | Via `ToolCall` only | Registered via `register_discoverable()`; tags auto-derived from category |
-| Stubs | 92 | In catalog, not callable | Static definitions for planned features; tags derived at catalog-build time |
+| MCP-Visible | 58 | In `tools/list` | Registered via `@mcp_discoverable(mcp, ...)` |
+| Hidden/Discoverable | 22 | Via `ToolCall` only | Registered via `register_discoverable()` |
 
-`ToolCall` returns one of four statuses: the dispatched result, `"mcp"` (tool is in FastMCP — call via MCP protocol directly), `"stub"` (no implementation), or `"error"` (not found / invocation failed).
+`ToolCall` returns one of four statuses: the dispatched result, `"mcp"` (tool is in FastMCP — call directly), `"stub"` (no implementation), or `"error"` (not found / invocation failed).
 
-### Discovery Tools (5)
-
-| Tool | Purpose |
-|------|---------|
-| **ToolSummary** | Browse catalog: exposed tools, category drill-down, `#Tool` lookup |
-| **ToolSearch** | Search by text (substring) or intent (LLM-powered semantic) |
-| **ToolDefinition** | Get full definitions for one or more catalog tools by name |
-| **ToolHelp** | Get LLM-driven instructions on how to use a tool for a specific task |
-| **ToolCall** | Call any catalog tool by name (hidden or stub) |
-
-### Functional Tools (6 MCP-visible)
-
-| Tool | Purpose |
-|------|---------|
-| **NPLSpec** | Generate NPL definitions from convention YAML files |
-| **ToolSession.Generate** | Create/lookup session by (project, agent, task) |
-| **ToolSession** | Retrieve session info by UUID |
-| **Instructions** | Retrieve versioned instruction documents |
-| **Instructions.Create** | Create new instruction with v1 |
-| **Instructions.List** | Search instructions by text/intent/tags |
-
-→ *See [arch/meta-tools.md](arch/meta-tools.md) for full details, catalog structure, and LLM configuration*
+→ *See [arch/mcp-tools.md](arch/mcp-tools.md) for complete per-tool reference*
+→ *See [arch/meta-tools.md](arch/meta-tools.md) for catalog architecture and LLM configuration*
 
 ## Technology Stack
 
@@ -182,7 +159,7 @@ Key frontend primitives added in Waves A–P: full design token system (violet-i
 
 ## Key Design Decisions
 
-- **Three-tier tool registration**: MCP-visible (11) for core functionality, hidden (22) callable via ToolCall, stubs (92) for planned features
+- **Three-tier tool registration**: MCP-visible (58) for core functionality, hidden (22) callable via ToolCall
 - **FastMCP 3.x**: Upgraded from 2.x. Uses `list_tools()`/`get_tool()` public API; keeps a custom catalog layer rather than adopting `AggregateProvider` — our three-tier merge (MCP + hidden + stubs) and hierarchical categories have no native equivalent in 3.x's flat tag system and version-based merge
 - **Hidden-but-callable preserved as custom code**: 3.x's `enabled=False` makes tools both invisible *and* uncallable via `mcp.call_tool()`. Our `@discoverable` + `_DISCOVERABLE_TOOLS` registry provides the hidden-yet-callable semantic 3.x cannot express natively
 - **3.x-native metadata populated alongside**: Every MCP-registered tool carries `tags` (derived from category hierarchy) and `meta` (`npl_category`, `npl_discoverable`), so 3.x-native clients can filter/group without reading our catalog structures
@@ -193,7 +170,14 @@ Key frontend primitives added in Waves A–P: full design token system (violet-i
 - **PostgreSQL for state**: Sessions, instructions, projects, personas, stories, artifacts, tasks, chat, pipes, and secrets all DB-backed; schema managed by Liquibase (17 changesets)
 - **Next.js static export**: Frontend builds to `web/static/` and is served by the FastAPI fallback middleware
 - **Frontend API facade**: `lib/api/client.ts` is a stable interface; switching from mock → REST requires changing a single import. The `hybrid` impl mixes live REST and mock per domain, enabling incremental feature rollout
-- **REST API parallel to MCP**: The `/api/*` router serves the web UI directly (CRUD for tasks, artifacts, chat, etc.); MCP SSE serves AI clients. Same PostgreSQL backend, different access paths
+- **REST API parallel to MCP**: The `/api/*` router (68 endpoints) serves the web UI directly; MCP SSE serves AI clients. Same PostgreSQL backend, different access paths
+- **Agent pipes**: Inter-agent structured YAML messaging with upsert semantics, group targeting, and time-based polling
+- **NPL convention system**: YAML-based source of truth with layered pipeline (parse → resolve → layout) and expression DSL for selective loading
+
+→ *See [arch/rest-api.md](arch/rest-api.md) for full REST endpoint reference*
+→ *See [arch/agent-pipes.md](arch/agent-pipes.md) for pipe messaging details*
+→ *See [arch/npl-conventions.md](arch/npl-conventions.md) for convention system architecture*
+→ *See [reference/persona-cli.md](reference/persona-cli.md) for persona CLI documentation*
 
 ## Agent Orchestration
 
