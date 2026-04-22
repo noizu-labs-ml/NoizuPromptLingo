@@ -41,3 +41,9 @@ databaseChangeLog:
   - include:
       file: changelogs/changeset-015.agent-pipes.yaml
       relativeToChangelogFile: false
+  - include:
+      file: changelogs/changeset-016.taskers-table.yaml
+      relativeToChangelogFile: false
+  - include:
+      file: changelogs/changeset-017.enhanced-managers.yaml
+      relativeToChangelogFile: false

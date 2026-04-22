@@ -204,3 +204,70 @@ async def session_update(
     result["status"] = "ok"
     result["session_status"] = session_status
     return result
+
+
+# ---------------------------------------------------------------------------
+# Enhanced session operations (ported from main's SessionManager)
+# ---------------------------------------------------------------------------
+
+
+async def session_get_contents(session_id: str) -> dict[str, Any]:
+    """Aggregate a session with its associated chat rooms and artifacts."""
+    uid = _decode(session_id)
+    if uid is None:
+        return {"status": "not_found", "uuid": session_id}
+
+    pool = await get_pool()
+    row = await pool.fetchrow(
+        """SELECT id, title, status, description, created_by, created_at, updated_at
+           FROM npl_generic_sessions WHERE id = $1""",
+        uid,
+    )
+    if row is None:
+        return {"status": "not_found", "uuid": session_id}
+
+    session = _row_to_dict(row)
+
+    rooms = await pool.fetch(
+        """SELECT r.id, r.name, r.description, COUNT(m.id) AS message_count,
+                  MAX(m.created_at) AS last_activity, r.created_at
+           FROM npl_chat_rooms r
+           LEFT JOIN npl_chat_messages m ON m.room_id = r.id
+           GROUP BY r.id
+           ORDER BY r.created_at DESC""",
+    )
+
+    artifacts = await pool.fetch(
+        """SELECT id, title, kind, description, created_by, latest_revision,
+                  created_at, updated_at
+           FROM npl_artifacts
+           ORDER BY created_at DESC""",
+    )
+
+    return {
+        "status": "ok",
+        "session": session,
+        "chat_rooms": [
+            {
+                "id": r["id"],
+                "name": r["name"],
+                "message_count": r["message_count"],
+                "last_activity": r["last_activity"].isoformat() if r["last_activity"] else None,
+            }
+            for r in rooms
+        ],
+        "artifacts": [
+            {
+                "id": a["id"],
+                "title": a["title"],
+                "kind": a["kind"],
+                "latest_revision": a["latest_revision"],
+            }
+            for a in artifacts
+        ],
+    }
+
+
+async def session_archive(session_id: str) -> dict[str, Any]:
+    """Convenience wrapper to archive a session."""
+    return await session_update(session_id, status="archived")

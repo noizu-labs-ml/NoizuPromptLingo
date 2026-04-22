@@ -78,6 +78,21 @@ import type {
   PipeInputResult,
   PipeOutputRequest,
   PipeOutputResult,
+  ChatRoomMember,
+  ChatEvent,
+  ChatNotification,
+  Review,
+  InlineComment,
+  ReviewCreateInput,
+  ReviewCommentInput,
+  TaskQueue,
+  TaskQueueCreateInput,
+  TaskEvent,
+  TaskArtifact,
+  TaskArtifactInput,
+  Tasker,
+  TaskerSpawnInput,
+  SessionContents,
 } from "./types";
 
 // ── Implementation swap point ────────────────────────────────────────────
@@ -112,6 +127,8 @@ export interface SessionsAPI {
   get(uuid: string): Promise<Session | null>;
   tree(rootUuid: string): Promise<SessionTreeNode | null>;
   appendNote(uuid: string, note: string): Promise<Session>;
+  getContents(uuid: string): Promise<SessionContents | null>;
+  archive(uuid: string): Promise<Session>;
 }
 
 export interface InstructionsAPI {
@@ -152,6 +169,11 @@ export interface ChatAPI {
   createRoom(input: ChatRoomCreateInput): Promise<ChatRoom>;
   sendMessage(roomId: number, input: ChatMessageCreateInput): Promise<ChatMessage>;
   listMessages(roomId: number, limit?: number): Promise<ChatMessage[]>;
+  listMembers(roomId: number): Promise<ChatRoomMember[]>;
+  addMember(roomId: number, persona_slug: string): Promise<void>;
+  listEvents(roomId: number, limit?: number): Promise<ChatEvent[]>;
+  listNotifications(persona: string, unreadOnly?: boolean): Promise<ChatNotification[]>;
+  markNotificationRead(notificationId: number): Promise<void>;
 }
 
 export interface ArtifactsAPI {
@@ -213,6 +235,27 @@ export interface TasksAPI {
   get(id: number): Promise<Task | null>;
   create(input: TaskCreateInput): Promise<Task>;
   updateStatus(id: number, status: TaskStatus, notes?: string): Promise<Task>;
+  listQueues(): Promise<TaskQueue[]>;
+  getQueue(id: number): Promise<TaskQueue | null>;
+  createQueue(input: TaskQueueCreateInput): Promise<TaskQueue>;
+  listArtifacts(taskId: number): Promise<TaskArtifact[]>;
+  addArtifact(taskId: number, input: TaskArtifactInput): Promise<TaskArtifact>;
+  getFeed(taskId: number, limit?: number): Promise<TaskEvent[]>;
+  assignComplexity(taskId: number, complexity: number, notes?: string): Promise<Task>;
+}
+
+export interface ReviewsAPI {
+  create(input: ReviewCreateInput): Promise<Review>;
+  get(id: number): Promise<Review | null>;
+  addComment(reviewId: number, input: ReviewCommentInput): Promise<InlineComment>;
+  complete(reviewId: number, overall_comment?: string): Promise<Review>;
+}
+
+export interface TaskersAPI {
+  spawn(input: TaskerSpawnInput): Promise<Tasker>;
+  list(): Promise<Tasker[]>;
+  get(id: string): Promise<Tasker | null>;
+  dismiss(id: string, reason?: string): Promise<void>;
 }
 
 // ── Assembled facade ─────────────────────────────────────────────────────
@@ -238,6 +281,8 @@ export const api = {
   health: impl.health as HealthAPI,
   tasks: impl.tasks as TasksAPI,
   pipes: impl.pipes as PipesAPI,
+  reviews: impl.reviews as ReviewsAPI,
+  taskers: impl.taskers as TaskersAPI,
 };
 
 export type API = typeof api;

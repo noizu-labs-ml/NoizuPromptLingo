@@ -1,0 +1,458 @@
+databaseChangeLog:
+  # ===========================================================================
+  # Changeset 017: Enhanced manager tables — chat events, reviews, task queues
+  # ===========================================================================
+  - changeSet:
+      id: 017-enhanced-managers
+      author: npl-mcp
+      comment: Event-driven chat, review system, task queues with complexity scoring
+      changes:
+        # ── Chat room members ────────────────────────────────────────────
+        - createTable:
+            tableName: npl_chat_room_members
+            columns:
+              - column:
+                  name: id
+                  type: SERIAL
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: room_id
+                  type: INT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_chat_members_room
+                    references: npl_chat_rooms(id)
+                    deleteCascade: true
+              - column:
+                  name: persona_slug
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: joined_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: npl_chat_room_members
+            columnNames: room_id, persona_slug
+            constraintName: uq_chat_room_member
+
+        # ── Chat events ──────────────────────────────────────────────────
+        - createTable:
+            tableName: npl_chat_events
+            columns:
+              - column:
+                  name: id
+                  type: SERIAL
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: room_id
+                  type: INT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_chat_events_room
+                    references: npl_chat_rooms(id)
+                    deleteCascade: true
+              - column:
+                  name: event_type
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: persona
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: data
+                  type: JSONB
+                  defaultValue: "{}"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: reply_to_id
+                  type: INT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_chat_events_room
+            tableName: npl_chat_events
+            columns:
+              - column:
+                  name: room_id
+              - column:
+                  name: created_at
+
+        # ── Chat notifications ───────────────────────────────────────────
+        - createTable:
+            tableName: npl_chat_notifications
+            columns:
+              - column:
+                  name: id
+                  type: SERIAL
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: persona
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: event_id
+                  type: INT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_chat_notifications_event
+                    references: npl_chat_events(id)
+                    deleteCascade: true
+              - column:
+                  name: notification_type
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: read_at
+                  type: TIMESTAMPTZ
+                  constraints:
+                    nullable: true
+        - createIndex:
+            indexName: idx_notifications_persona
+            tableName: npl_chat_notifications
+            columns:
+              - column:
+                  name: persona
+              - column:
+                  name: read_at
+
+        # ── Reviews ──────────────────────────────────────────────────────
+        - createTable:
+            tableName: npl_reviews
+            columns:
+              - column:
+                  name: id
+                  type: SERIAL
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: artifact_id
+                  type: INT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_reviews_artifact
+                    references: npl_artifacts(id)
+                    deleteCascade: true
+              - column:
+                  name: revision_id
+                  type: INT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_reviews_revision
+                    references: npl_artifact_revisions(id)
+              - column:
+                  name: reviewer_persona
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: TEXT
+                  defaultValue: "in_progress"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: overall_comment
+                  type: TEXT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+
+        # ── Inline comments ──────────────────────────────────────────────
+        - createTable:
+            tableName: npl_inline_comments
+            columns:
+              - column:
+                  name: id
+                  type: SERIAL
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: review_id
+                  type: INT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_inline_comments_review
+                    references: npl_reviews(id)
+                    deleteCascade: true
+              - column:
+                  name: location
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: comment
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: persona
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+
+        # ── Task queues ──────────────────────────────────────────────────
+        - createTable:
+            tableName: npl_task_queues
+            columns:
+              - column:
+                  name: id
+                  type: SERIAL
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: session_id
+                  type: TEXT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: chat_room_id
+                  type: INT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: status
+                  type: TEXT
+                  defaultValue: "active"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: npl_task_queues
+            columnNames: name
+            constraintName: uq_task_queue_name
+
+        # ── Task events ──────────────────────────────────────────────────
+        - createTable:
+            tableName: npl_task_events
+            columns:
+              - column:
+                  name: id
+                  type: SERIAL
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: task_id
+                  type: INT
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_task_events_task
+                    references: npl_tasks(id)
+                    deleteCascade: true
+              - column:
+                  name: queue_id
+                  type: INT
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_task_events_queue
+                    references: npl_task_queues(id)
+                    deleteCascade: true
+              - column:
+                  name: event_type
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: persona
+                  type: TEXT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: data
+                  type: JSONB
+                  defaultValue: "{}"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_task_events_task
+            tableName: npl_task_events
+            columns:
+              - column:
+                  name: task_id
+              - column:
+                  name: created_at
+
+        # ── Task artifacts ───────────────────────────────────────────────
+        - createTable:
+            tableName: npl_task_artifacts
+            columns:
+              - column:
+                  name: id
+                  type: SERIAL
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: task_id
+                  type: INT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_task_artifacts_task
+                    references: npl_tasks(id)
+                    deleteCascade: true
+              - column:
+                  name: artifact_type
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: artifact_id
+                  type: INT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: git_branch
+                  type: TEXT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: description
+                  type: TEXT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: created_by
+                  type: TEXT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+
+        # ── Alter npl_tasks: add queue/complexity columns ────────────────
+        - addColumn:
+            tableName: npl_tasks
+            columns:
+              - column:
+                  name: queue_id
+                  type: INT
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_tasks_queue
+                    references: npl_task_queues(id)
+              - column:
+                  name: acceptance_criteria
+                  type: TEXT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: deadline
+                  type: TIMESTAMPTZ
+                  constraints:
+                    nullable: true
+              - column:
+                  name: complexity
+                  type: INT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: complexity_notes
+                  type: TEXT
+                  constraints:
+                    nullable: true
+
+      rollback:
+        - dropTable:
+            tableName: npl_task_artifacts
+        - dropTable:
+            tableName: npl_task_events
+        - dropTable:
+            tableName: npl_task_queues
+        - dropTable:
+            tableName: npl_inline_comments
+        - dropTable:
+            tableName: npl_reviews
+        - dropTable:
+            tableName: npl_chat_notifications
+        - dropTable:
+            tableName: npl_chat_events
+        - dropTable:
+            tableName: npl_chat_room_members
+        - sql:
+            sql: >-
+              ALTER TABLE npl_tasks
+              DROP COLUMN IF EXISTS queue_id,
+              DROP COLUMN IF EXISTS acceptance_criteria,
+              DROP COLUMN IF EXISTS deadline,
+              DROP COLUMN IF EXISTS complexity,
+              DROP COLUMN IF EXISTS complexity_notes

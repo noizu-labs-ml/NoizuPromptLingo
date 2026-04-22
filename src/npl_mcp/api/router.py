@@ -2675,3 +2675,587 @@ async def chat_message_create(room_id: int, body: ChatMessageCreateBody) -> dict
         raise
     except Exception as exc:
         raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+# ---------------------------------------------------------------------------
+# Chat enhanced endpoints
+# ---------------------------------------------------------------------------
+
+
+class ChatMemberAddBody(BaseModel):
+    persona_slug: str
+
+
+class ChatEventCreateBody(BaseModel):
+    event_type: str
+    persona: str
+    data: Optional[dict] = None
+
+
+class ChatReactBody(BaseModel):
+    persona: str
+    emoji: str
+
+
+class ChatTodoBody(BaseModel):
+    persona: str
+    description: str
+    assigned_to: Optional[str] = None
+
+
+class ChatShareArtifactBody(BaseModel):
+    persona: str
+    artifact_id: int
+    revision: Optional[int] = None
+
+
+@router.get("/chat/rooms/{room_id}/members")
+async def chat_room_members_list(room_id: int) -> dict:
+    """List members of a chat room."""
+    try:
+        from npl_mcp.chat.chat import room_list_members
+        return await room_list_members(room_id=room_id)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+@router.post("/chat/rooms/{room_id}/members")
+async def chat_room_member_add(room_id: int, body: ChatMemberAddBody) -> dict:
+    """Add a persona member to a chat room."""
+    try:
+        from npl_mcp.chat.chat import room_add_member
+        return await room_add_member(room_id=room_id, persona_slug=body.persona_slug)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+@router.get("/chat/rooms/{room_id}/events")
+async def chat_room_events_list(
+    room_id: int,
+    since: Optional[str] = Query(None),
+    limit: int = Query(default=50, ge=1, le=200),
+) -> dict:
+    """List chat events in a room."""
+    try:
+        from npl_mcp.chat.chat import event_list
+        return await event_list(room_id=room_id, since=since, limit=limit)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+@router.post("/chat/rooms/{room_id}/events")
+async def chat_room_event_create(room_id: int, body: ChatEventCreateBody) -> dict:
+    """Create a chat event in a room."""
+    try:
+        from npl_mcp.chat.chat import event_create
+        return await event_create(
+            room_id=room_id, event_type=body.event_type,
+            persona=body.persona, data=body.data,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+@router.post("/chat/rooms/{room_id}/events/{event_id}/react")
+async def chat_event_react(room_id: int, event_id: int, body: ChatReactBody) -> dict:
+    """React to a chat event with an emoji."""
+    try:
+        from npl_mcp.chat.chat import react_to_event
+        return await react_to_event(event_id=event_id, persona=body.persona, emoji=body.emoji)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+@router.post("/chat/rooms/{room_id}/todos")
+async def chat_room_todo_create(room_id: int, body: ChatTodoBody) -> dict:
+    """Create a todo item in a chat room."""
+    try:
+        from npl_mcp.chat.chat import create_todo
+        return await create_todo(
+            room_id=room_id, persona=body.persona,
+            description=body.description, assigned_to=body.assigned_to,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+@router.post("/chat/rooms/{room_id}/share-artifact")
+async def chat_room_share_artifact(room_id: int, body: ChatShareArtifactBody) -> dict:
+    """Share an artifact in a chat room."""
+    try:
+        from npl_mcp.chat.chat import share_artifact
+        return await share_artifact(
+            room_id=room_id, persona=body.persona,
+            artifact_id=body.artifact_id, revision=body.revision,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+@router.get("/chat/notifications/{persona}")
+async def chat_notifications_list(
+    persona: str,
+    unread_only: bool = Query(default=True),
+) -> dict:
+    """List notifications for a persona."""
+    try:
+        from npl_mcp.chat.chat import notification_list
+        return await notification_list(persona=persona, unread_only=unread_only)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+@router.patch("/chat/notifications/{notification_id}/read")
+async def chat_notification_mark_read(notification_id: int) -> dict:
+    """Mark a notification as read."""
+    try:
+        from npl_mcp.chat.chat import notification_mark_read
+        return await notification_mark_read(notification_id=notification_id)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+# ---------------------------------------------------------------------------
+# Sessions enhanced endpoints
+# ---------------------------------------------------------------------------
+
+
+@router.get("/work-sessions/{session_id}/contents")
+async def work_session_contents(session_id: str) -> dict:
+    """Get aggregated session contents (chat rooms, artifacts)."""
+    try:
+        from npl_mcp.sessions.sessions import session_get_contents
+        result = await session_get_contents(session_id)
+        if result.get("status") == "not_found":
+            raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
+        return result
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+@router.post("/work-sessions/{session_id}/archive")
+async def work_session_archive(session_id: str) -> dict:
+    """Archive a session."""
+    try:
+        from npl_mcp.sessions.sessions import session_archive
+        result = await session_archive(session_id)
+        if result.get("status") == "not_found":
+            raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
+        return result
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+# ---------------------------------------------------------------------------
+# Task queue and enhanced task endpoints
+# ---------------------------------------------------------------------------
+
+
+class TaskQueueCreateBody(BaseModel):
+    name: str
+    description: Optional[str] = None
+    session_id: Optional[str] = None
+    chat_room_id: Optional[int] = None
+
+
+class TaskInQueueCreateBody(BaseModel):
+    title: str
+    description: Optional[str] = None
+    status: str = "pending"
+    priority: int = 1
+    assigned_to: Optional[str] = None
+    acceptance_criteria: Optional[str] = None
+    deadline: Optional[str] = None
+    complexity: Optional[int] = None
+    complexity_notes: Optional[str] = None
+
+
+class TaskComplexityBody(BaseModel):
+    complexity: int
+    notes: Optional[str] = None
+
+
+class TaskArtifactBody(BaseModel):
+    artifact_type: str
+    artifact_id: Optional[int] = None
+    git_branch: Optional[str] = None
+    description: Optional[str] = None
+    created_by: Optional[str] = None
+
+
+@router.get("/task-queues")
+async def task_queues_list(
+    status: Optional[str] = Query(None),
+    limit: int = Query(default=50, ge=1, le=200),
+) -> dict:
+    """List task queues."""
+    try:
+        from npl_mcp.tasks.tasks import task_queue_list
+        return await task_queue_list(status=status, limit=limit)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+@router.post("/task-queues")
+async def task_queues_create(body: TaskQueueCreateBody) -> dict:
+    """Create a task queue."""
+    try:
+        from npl_mcp.tasks.tasks import task_queue_create
+        result = await task_queue_create(
+            name=body.name, description=body.description,
+            session_id=body.session_id, chat_room_id=body.chat_room_id,
+        )
+        if result.get("status") == "error":
+            raise HTTPException(status_code=400, detail=result.get("message", "Invalid request"))
+        return result
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+@router.get("/task-queues/{queue_id}")
+async def task_queue_get_endpoint(queue_id: int) -> dict:
+    """Get a task queue with task counts."""
+    try:
+        from npl_mcp.tasks.tasks import task_queue_get
+        result = await task_queue_get(queue_id)
+        if result.get("status") == "not_found":
+            raise HTTPException(status_code=404, detail=f"Queue {queue_id} not found")
+        return result
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+@router.get("/task-queues/{queue_id}/feed")
+async def task_queue_feed_endpoint(
+    queue_id: int,
+    since: Optional[str] = Query(None),
+    limit: int = Query(default=100, ge=1, le=500),
+) -> dict:
+    """Get activity feed for a task queue."""
+    try:
+        from npl_mcp.tasks.tasks import queue_feed
+        return await queue_feed(queue_id=queue_id, since=since, limit=limit)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+@router.post("/task-queues/{queue_id}/tasks")
+async def task_queue_create_task(queue_id: int, body: TaskInQueueCreateBody) -> dict:
+    """Create a task within a queue."""
+    try:
+        from npl_mcp.tasks.tasks import task_create_in_queue
+        result = await task_create_in_queue(
+            queue_id=queue_id, title=body.title,
+            description=body.description, status=body.status,
+            priority=body.priority, assigned_to=body.assigned_to,
+            acceptance_criteria=body.acceptance_criteria,
+            deadline=body.deadline, complexity=body.complexity,
+            complexity_notes=body.complexity_notes,
+        )
+        if result.get("status") == "error":
+            raise HTTPException(status_code=400, detail=result.get("message", "Invalid request"))
+        return result
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+@router.patch("/tasks/{task_id}/complexity")
+async def task_assign_complexity_endpoint(task_id: int, body: TaskComplexityBody) -> dict:
+    """Assign complexity score to a task."""
+    try:
+        from npl_mcp.tasks.tasks import task_assign_complexity
+        result = await task_assign_complexity(
+            task_id=task_id, complexity=body.complexity, notes=body.notes,
+        )
+        if result.get("status") == "not_found":
+            raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+        return result
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+@router.post("/tasks/{task_id}/artifacts")
+async def task_add_artifact_endpoint(task_id: int, body: TaskArtifactBody) -> dict:
+    """Link an artifact or git branch to a task."""
+    try:
+        from npl_mcp.tasks.tasks import task_add_artifact
+        return await task_add_artifact(
+            task_id=task_id, artifact_type=body.artifact_type,
+            artifact_id=body.artifact_id, git_branch=body.git_branch,
+            description=body.description, created_by=body.created_by,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+@router.get("/tasks/{task_id}/artifacts")
+async def task_list_artifacts_endpoint(task_id: int) -> dict:
+    """List artifacts linked to a task."""
+    try:
+        from npl_mcp.tasks.tasks import task_list_artifacts
+        return await task_list_artifacts(task_id=task_id)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+@router.get("/tasks/{task_id}/feed")
+async def task_feed_endpoint(
+    task_id: int,
+    since: Optional[str] = Query(None),
+    limit: int = Query(default=50, ge=1, le=200),
+) -> dict:
+    """Get activity feed for a task."""
+    try:
+        from npl_mcp.tasks.tasks import task_feed
+        return await task_feed(task_id=task_id, since=since, limit=limit)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+# ---------------------------------------------------------------------------
+# Reviews endpoints
+# ---------------------------------------------------------------------------
+
+
+class ReviewCreateBody(BaseModel):
+    artifact_id: int
+    revision_id: int
+    reviewer_persona: str
+
+
+class ReviewCommentBody(BaseModel):
+    location: str
+    comment: str
+    persona: str
+
+
+class ReviewCompleteBody(BaseModel):
+    overall_comment: Optional[str] = None
+
+
+@router.post("/reviews")
+async def review_create_endpoint(body: ReviewCreateBody) -> dict:
+    """Start a review session for an artifact revision."""
+    try:
+        from npl_mcp.artifacts.reviews import review_create
+        return await review_create(
+            artifact_id=body.artifact_id,
+            revision_id=body.revision_id,
+            reviewer_persona=body.reviewer_persona,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+@router.get("/reviews/{review_id}")
+async def review_get_endpoint(
+    review_id: int,
+    include_comments: bool = Query(default=True),
+) -> dict:
+    """Fetch a review with optional inline comments."""
+    try:
+        from npl_mcp.artifacts.reviews import review_get
+        result = await review_get(review_id=review_id, include_comments=include_comments)
+        if result.get("status") == "not_found":
+            raise HTTPException(status_code=404, detail=f"Review {review_id} not found")
+        return result
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+@router.post("/reviews/{review_id}/comments")
+async def review_add_comment_endpoint(review_id: int, body: ReviewCommentBody) -> dict:
+    """Add an inline comment to a review."""
+    try:
+        from npl_mcp.artifacts.reviews import review_add_comment
+        result = await review_add_comment(
+            review_id=review_id, location=body.location,
+            comment=body.comment, persona=body.persona,
+        )
+        if result.get("status") == "not_found":
+            raise HTTPException(status_code=404, detail=f"Review {review_id} not found")
+        return result
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+@router.post("/reviews/{review_id}/complete")
+async def review_complete_endpoint(review_id: int, body: ReviewCompleteBody) -> dict:
+    """Mark a review as completed."""
+    try:
+        from npl_mcp.artifacts.reviews import review_complete
+        result = await review_complete(
+            review_id=review_id, overall_comment=body.overall_comment,
+        )
+        if result.get("status") == "not_found":
+            raise HTTPException(status_code=404, detail=f"Review {review_id} not found")
+        return result
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
+
+
+# ---------------------------------------------------------------------------
+# Executor endpoints — Taskers
+# ---------------------------------------------------------------------------
+
+
+class TaskerSpawnBody(BaseModel):
+    task: str
+    chat_room_id: int
+    parent_agent_id: str = "primary"
+    patterns: Optional[list[str]] = None
+    session_id: Optional[str] = None
+    timeout_minutes: int = 15
+    nag_minutes: int = 5
+
+
+class TaskerDismissBody(BaseModel):
+    reason: Optional[str] = None
+
+
+@router.post("/taskers")
+async def tasker_spawn_endpoint(body: TaskerSpawnBody) -> dict:
+    """Spawn an ephemeral tasker."""
+    try:
+        from npl_mcp.executors.manager import spawn_tasker
+        return await spawn_tasker(
+            task=body.task, chat_room_id=body.chat_room_id,
+            parent_agent_id=body.parent_agent_id,
+            patterns=body.patterns, session_id=body.session_id,
+            timeout_minutes=body.timeout_minutes,
+            nag_minutes=body.nag_minutes,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Service unavailable: {exc}") from exc
+
+
+@router.get("/taskers")
+async def taskers_list_endpoint(
+    status: Optional[str] = Query(None),
+    session_id: Optional[str] = Query(None),
+) -> dict:
+    """List taskers with optional filtering."""
+    try:
+        from npl_mcp.executors.manager import list_taskers
+        items = await list_taskers(status=status, session_id=session_id)
+        return {"taskers": items, "count": len(items)}
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Service unavailable: {exc}") from exc
+
+
+@router.get("/taskers/{tasker_id}")
+async def tasker_get_endpoint(tasker_id: str) -> dict:
+    """Get a tasker by ID."""
+    try:
+        from npl_mcp.executors.manager import get_tasker
+        result = await get_tasker(tasker_id)
+        if result is None:
+            raise HTTPException(status_code=404, detail=f"Tasker '{tasker_id}' not found")
+        return result
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Service unavailable: {exc}") from exc
+
+
+@router.post("/taskers/{tasker_id}/dismiss")
+async def tasker_dismiss_endpoint(tasker_id: str, body: TaskerDismissBody) -> dict:
+    """Dismiss a tasker."""
+    try:
+        from npl_mcp.executors.manager import dismiss_tasker
+        return await dismiss_tasker(tasker_id=tasker_id, reason=body.reason)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Service unavailable: {exc}") from exc
+
+
+@router.post("/taskers/{tasker_id}/keep-alive")
+async def tasker_keep_alive_endpoint(tasker_id: str) -> dict:
+    """Keep a tasker alive in response to a nag."""
+    try:
+        from npl_mcp.executors.manager import keep_alive
+        return await keep_alive(tasker_id)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Service unavailable: {exc}") from exc
+
+
+@router.post("/taskers/{tasker_id}/touch")
+async def tasker_touch_endpoint(tasker_id: str) -> dict:
+    """Touch a tasker to reset its idle timer."""
+    try:
+        from npl_mcp.executors.manager import touch_tasker
+        await touch_tasker(tasker_id)
+        return {"status": "ok", "tasker_id": tasker_id}
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Service unavailable: {exc}") from exc
+
+
+# ---------------------------------------------------------------------------
+# Executor endpoints — Fabric
+# ---------------------------------------------------------------------------
+
+
+class FabricApplyBody(BaseModel):
+    content: str
+    pattern: str
+    model: Optional[str] = None
+    timeout: int = 300
+
+
+class FabricAnalyzeBody(BaseModel):
+    content: str
+    patterns: list[str]
+    combine_results: bool = True
+
+
+@router.post("/fabric/apply")
+async def fabric_apply_endpoint(body: FabricApplyBody) -> dict:
+    """Apply a fabric pattern to content."""
+    try:
+        from npl_mcp.executors.fabric import apply_fabric_pattern
+        return await apply_fabric_pattern(
+            content=body.content, pattern=body.pattern,
+            model=body.model, timeout=body.timeout,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Service unavailable: {exc}") from exc
+
+
+@router.post("/fabric/analyze")
+async def fabric_analyze_endpoint(body: FabricAnalyzeBody) -> dict:
+    """Apply multiple fabric patterns to content."""
+    try:
+        from npl_mcp.executors.fabric import analyze_with_patterns
+        return await analyze_with_patterns(
+            content=body.content, patterns=body.patterns,
+            combine_results=body.combine_results,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Service unavailable: {exc}") from exc
+
+
+@router.get("/fabric/patterns")
+async def fabric_list_patterns_endpoint() -> dict:
+    """List available fabric patterns."""
+    try:
+        from npl_mcp.executors.fabric import list_patterns
+        return await list_patterns()
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Service unavailable: {exc}") from exc

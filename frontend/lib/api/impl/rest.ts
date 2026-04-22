@@ -72,6 +72,21 @@ import type {
   PipeInputResult,
   PipeOutputRequest,
   PipeOutputResult,
+  ChatRoomMember,
+  ChatEvent,
+  ChatNotification,
+  Review,
+  InlineComment,
+  ReviewCreateInput,
+  ReviewCommentInput,
+  TaskQueue,
+  TaskQueueCreateInput,
+  TaskEvent,
+  TaskArtifact,
+  TaskArtifactInput,
+  Tasker,
+  TaskerSpawnInput,
+  SessionContents,
 } from "../types";
 
 // ── Base URL (dev proxy to backend on :8765) ─────────────────────────────
@@ -189,6 +204,12 @@ export const sessions = {
       `/api/sessions/${encodeURIComponent(uuid)}/notes`,
       { note },
     );
+  },
+  async getContents(uuid: string): Promise<SessionContents | null> {
+    return tryGet<SessionContents>(`/api/work-sessions/${encodeURIComponent(uuid)}/contents`);
+  },
+  async archive(uuid: string): Promise<Session> {
+    return post<Session>(`/api/work-sessions/${encodeURIComponent(uuid)}/archive`, {});
   },
 };
 
@@ -321,6 +342,25 @@ export const chat = {
     if (!r.ok) throw new Error(`/api/chat/rooms/${roomId}/messages returned ${r.status}`);
     const data: ChatMessageListResult = await r.json();
     return data.items;
+  },
+  async listMembers(roomId: number): Promise<ChatRoomMember[]> {
+    const data = await get<{ members: ChatRoomMember[] }>(`/api/chat/rooms/${roomId}/members`);
+    return data.members;
+  },
+  async addMember(roomId: number, persona_slug: string): Promise<void> {
+    await post(`/api/chat/rooms/${roomId}/members`, { persona_slug });
+  },
+  async listEvents(roomId: number, limit?: number): Promise<ChatEvent[]> {
+    const data = await get<{ events: ChatEvent[] }>(`/api/chat/rooms/${roomId}/events?limit=${limit ?? 50}`);
+    return data.events;
+  },
+  async listNotifications(persona: string, unreadOnly?: boolean): Promise<ChatNotification[]> {
+    const qs = unreadOnly !== false ? '?unread_only=true' : '';
+    const data = await get<{ notifications: ChatNotification[] }>(`/api/chat/notifications/${encodeURIComponent(persona)}${qs}`);
+    return data.notifications;
+  },
+  async markNotificationRead(notificationId: number): Promise<void> {
+    await patch(`/api/chat/notifications/${notificationId}/read`, {});
   },
 };
 
@@ -486,6 +526,30 @@ export const tasks = {
   async updateStatus(id: number, status: TaskStatus, notes?: string): Promise<Task> {
     return patch<Task>(`/api/tasks/${id}/status`, { status, ...(notes ? { notes } : {}) });
   },
+  async listQueues(): Promise<TaskQueue[]> {
+    const data = await get<{ queues: TaskQueue[] }>('/api/task-queues');
+    return data.queues;
+  },
+  async getQueue(id: number): Promise<TaskQueue | null> {
+    return tryGet<TaskQueue>(`/api/task-queues/${id}`);
+  },
+  async createQueue(input: TaskQueueCreateInput): Promise<TaskQueue> {
+    return post<TaskQueue>('/api/task-queues', input);
+  },
+  async listArtifacts(taskId: number): Promise<TaskArtifact[]> {
+    const data = await get<{ artifacts: TaskArtifact[] }>(`/api/tasks/${taskId}/artifacts`);
+    return data.artifacts;
+  },
+  async addArtifact(taskId: number, input: TaskArtifactInput): Promise<TaskArtifact> {
+    return post<TaskArtifact>(`/api/tasks/${taskId}/artifacts`, input);
+  },
+  async getFeed(taskId: number, limit?: number): Promise<TaskEvent[]> {
+    const data = await get<{ events: TaskEvent[] }>(`/api/tasks/${taskId}/feed?limit=${limit ?? 50}`);
+    return data.events;
+  },
+  async assignComplexity(taskId: number, complexity: number, notes?: string): Promise<Task> {
+    return patch<Task>(`/api/tasks/${taskId}/complexity`, { complexity, ...(notes ? { notes } : {}) });
+  },
 };
 
 // ── Health ───────────────────────────────────────────────────────────────
@@ -507,5 +571,39 @@ export const pipes = {
   },
   async output(request: PipeOutputRequest): Promise<PipeOutputResult> {
     return post<PipeOutputResult>("/api/pipes/output", request);
+  },
+};
+
+// ── Reviews ─────────────────────────────────────────────────────────────
+
+export const reviews = {
+  async create(input: ReviewCreateInput): Promise<Review> {
+    return post<Review>('/api/reviews', input);
+  },
+  async get(id: number): Promise<Review | null> {
+    return tryGet<Review>(`/api/reviews/${id}`);
+  },
+  async addComment(reviewId: number, input: ReviewCommentInput): Promise<InlineComment> {
+    return post<InlineComment>(`/api/reviews/${reviewId}/comments`, input);
+  },
+  async complete(reviewId: number, overall_comment?: string): Promise<Review> {
+    return post<Review>(`/api/reviews/${reviewId}/complete`, { overall_comment });
+  },
+};
+
+// ── Taskers ─────────────────────────────────────────────────────────────
+
+export const taskers = {
+  async spawn(input: TaskerSpawnInput): Promise<Tasker> {
+    return post<Tasker>('/api/taskers', input);
+  },
+  async list(): Promise<Tasker[]> {
+    return get<Tasker[]>('/api/taskers');
+  },
+  async get(id: string): Promise<Tasker | null> {
+    return tryGet<Tasker>(`/api/taskers/${encodeURIComponent(id)}`);
+  },
+  async dismiss(id: string, reason?: string): Promise<void> {
+    await post(`/api/taskers/${encodeURIComponent(id)}/dismiss`, { reason });
   },
 };

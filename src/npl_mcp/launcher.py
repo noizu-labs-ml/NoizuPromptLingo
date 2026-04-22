@@ -605,6 +605,176 @@ def create_app() -> "FastMCP":
         return await task_update_status(task_id=task_id, status=status, notes=notes)
 
     # ------------------------------------------------------------------
+    # Task queue and enhanced task tools (10 MCP-visible)
+    # ------------------------------------------------------------------
+
+    @mcp_discoverable(
+        mcp,
+        name="TaskQueue.Create",
+        category="Tasks",
+        description="Create a task queue",
+    )
+    async def task_queue_create_tool(
+        name: str,
+        description: Optional[str] = None,
+        session_id: Optional[str] = None,
+        chat_room_id: Optional[int] = None,
+    ) -> dict:
+        """Create a named task queue, optionally linked to a session or chat room."""
+        from npl_mcp.tasks.tasks import task_queue_create
+        return await task_queue_create(
+            name=name, description=description,
+            session_id=session_id, chat_room_id=chat_room_id,
+        )
+
+    @mcp_discoverable(
+        mcp,
+        name="TaskQueue.Get",
+        category="Tasks",
+        description="Get a task queue by ID with task counts",
+    )
+    async def task_queue_get_tool(queue_id: int) -> dict:
+        """Get a task queue and its task status counts."""
+        from npl_mcp.tasks.tasks import task_queue_get
+        return await task_queue_get(queue_id)
+
+    @mcp_discoverable(
+        mcp,
+        name="TaskQueue.List",
+        category="Tasks",
+        description="List task queues, optionally filtered by status",
+    )
+    async def task_queue_list_tool(
+        status: Optional[str] = None,
+        limit: int = 50,
+    ) -> dict:
+        """List task queues."""
+        from npl_mcp.tasks.tasks import task_queue_list
+        return await task_queue_list(status=status, limit=limit)
+
+    @mcp_discoverable(
+        mcp,
+        name="Tasks.CreateInQueue",
+        category="Tasks",
+        description="Create a task within a queue with enhanced fields",
+    )
+    async def tasks_create_in_queue_tool(
+        queue_id: int,
+        title: str,
+        description: Optional[str] = None,
+        status: str = "pending",
+        priority: int = 1,
+        assigned_to: Optional[str] = None,
+        acceptance_criteria: Optional[str] = None,
+        deadline: Optional[str] = None,
+        complexity: Optional[int] = None,
+        complexity_notes: Optional[str] = None,
+    ) -> dict:
+        """Create a task within a specific queue.
+
+        Args:
+            queue_id: Queue to add the task to.
+            title: Task title.
+            description: Optional long description.
+            status: pending|in_progress|blocked|done|cancelled (default pending).
+            priority: 1-5 (default 1).
+            assigned_to: Persona slug.
+            acceptance_criteria: Definition of done.
+            deadline: ISO-8601 deadline.
+            complexity: Complexity score (e.g. 1-13 Fibonacci).
+            complexity_notes: Rationale for complexity.
+        """
+        from npl_mcp.tasks.tasks import task_create_in_queue
+        return await task_create_in_queue(
+            queue_id=queue_id, title=title,
+            description=description, status=status,
+            priority=priority, assigned_to=assigned_to,
+            acceptance_criteria=acceptance_criteria,
+            deadline=deadline, complexity=complexity,
+            complexity_notes=complexity_notes,
+        )
+
+    @mcp_discoverable(
+        mcp,
+        name="Tasks.AssignComplexity",
+        category="Tasks",
+        description="Assign a complexity score to a task",
+    )
+    async def tasks_assign_complexity_tool(
+        task_id: int,
+        complexity: int,
+        notes: Optional[str] = None,
+    ) -> dict:
+        """Assign or update the complexity score on a task."""
+        from npl_mcp.tasks.tasks import task_assign_complexity
+        return await task_assign_complexity(
+            task_id=task_id, complexity=complexity, notes=notes,
+        )
+
+    @mcp_discoverable(
+        mcp,
+        name="Tasks.AddArtifact",
+        category="Tasks",
+        description="Link an artifact or git branch to a task",
+    )
+    async def tasks_add_artifact_tool(
+        task_id: int,
+        artifact_type: str,
+        artifact_id: Optional[int] = None,
+        git_branch: Optional[str] = None,
+        description: Optional[str] = None,
+        created_by: Optional[str] = None,
+    ) -> dict:
+        """Attach an artifact reference (or git branch) to a task."""
+        from npl_mcp.tasks.tasks import task_add_artifact
+        return await task_add_artifact(
+            task_id=task_id, artifact_type=artifact_type,
+            artifact_id=artifact_id, git_branch=git_branch,
+            description=description, created_by=created_by,
+        )
+
+    @mcp_discoverable(
+        mcp,
+        name="Tasks.ListArtifacts",
+        category="Tasks",
+        description="List artifacts linked to a task",
+    )
+    async def tasks_list_artifacts_tool(task_id: int) -> dict:
+        """List all artifact links for a task."""
+        from npl_mcp.tasks.tasks import task_list_artifacts
+        return await task_list_artifacts(task_id=task_id)
+
+    @mcp_discoverable(
+        mcp,
+        name="Tasks.Feed",
+        category="Tasks",
+        description="Get activity feed for a task",
+    )
+    async def tasks_feed_tool(
+        task_id: int,
+        since: Optional[str] = None,
+        limit: int = 50,
+    ) -> dict:
+        """Return the event/activity feed for a single task."""
+        from npl_mcp.tasks.tasks import task_feed
+        return await task_feed(task_id=task_id, since=since, limit=limit)
+
+    @mcp_discoverable(
+        mcp,
+        name="TaskQueue.Feed",
+        category="Tasks",
+        description="Get activity feed for a task queue",
+    )
+    async def task_queue_feed_tool(
+        queue_id: int,
+        since: Optional[str] = None,
+        limit: int = 100,
+    ) -> dict:
+        """Return the event/activity feed for a task queue."""
+        from npl_mcp.tasks.tasks import queue_feed
+        return await queue_feed(queue_id=queue_id, since=since, limit=limit)
+
+    # ------------------------------------------------------------------
     # Artifacts tools (5 MCP-visible) — PRD-002 MVP
     # ------------------------------------------------------------------
 
@@ -826,6 +996,32 @@ def create_app() -> "FastMCP":
         )
 
     # ------------------------------------------------------------------
+    # Sessions enhanced tools (2 MCP-visible)
+    # ------------------------------------------------------------------
+
+    @mcp_discoverable(
+        mcp,
+        name="Session.Contents",
+        category="Sessions",
+        description="Get aggregated session contents (chat rooms, artifacts)",
+    )
+    async def session_contents_tool(session_id: str) -> dict:
+        """Return session details with associated chat rooms and artifacts."""
+        from npl_mcp.sessions.sessions import session_get_contents
+        return await session_get_contents(session_id)
+
+    @mcp_discoverable(
+        mcp,
+        name="Session.Archive",
+        category="Sessions",
+        description="Archive a generic session",
+    )
+    async def session_archive_tool(session_id: str) -> dict:
+        """Set a session's status to archived."""
+        from npl_mcp.sessions.sessions import session_archive
+        return await session_archive(session_id)
+
+    # ------------------------------------------------------------------
     # Agent pipes (2 MCP-visible)
     # ------------------------------------------------------------------
 
@@ -952,6 +1148,137 @@ def create_app() -> "FastMCP":
         return await message_create(room_id=room_id, content=content, author=author)
 
     # ------------------------------------------------------------------
+    # Chat enhanced tools (9 MCP-visible)
+    # ------------------------------------------------------------------
+
+    @mcp_discoverable(
+        mcp,
+        name="Chat.AddMember",
+        category="Chat",
+        description="Add a persona to a chat room",
+    )
+    async def chat_add_member(room_id: int, persona_slug: str) -> dict:
+        """Add a persona member to a chat room."""
+        from npl_mcp.chat.chat import room_add_member
+        return await room_add_member(room_id=room_id, persona_slug=persona_slug)
+
+    @mcp_discoverable(
+        mcp,
+        name="Chat.ListMembers",
+        category="Chat",
+        description="List members of a chat room",
+    )
+    async def chat_list_members(room_id: int) -> dict:
+        """List all persona members of a chat room."""
+        from npl_mcp.chat.chat import room_list_members
+        return await room_list_members(room_id=room_id)
+
+    @mcp_discoverable(
+        mcp,
+        name="Chat.CreateEvent",
+        category="Chat",
+        description="Create a chat event in a room",
+    )
+    async def chat_create_event(
+        room_id: int,
+        event_type: str,
+        persona: str,
+        data: Optional[dict] = None,
+    ) -> dict:
+        """Create a structured chat event (message, action, todo, etc.)."""
+        from npl_mcp.chat.chat import event_create
+        return await event_create(
+            room_id=room_id, event_type=event_type,
+            persona=persona, data=data,
+        )
+
+    @mcp_discoverable(
+        mcp,
+        name="Chat.ListEvents",
+        category="Chat",
+        description="List chat events in a room",
+    )
+    async def chat_list_events(
+        room_id: int,
+        since: Optional[str] = None,
+        limit: int = 50,
+    ) -> dict:
+        """List chat events for a room, optionally filtered by time."""
+        from npl_mcp.chat.chat import event_list
+        return await event_list(room_id=room_id, since=since, limit=limit)
+
+    @mcp_discoverable(
+        mcp,
+        name="Chat.React",
+        category="Chat",
+        description="Add an emoji reaction to a chat event",
+    )
+    async def chat_react(event_id: int, persona: str, emoji: str) -> dict:
+        """React to a chat event with an emoji."""
+        from npl_mcp.chat.chat import react_to_event
+        return await react_to_event(event_id=event_id, persona=persona, emoji=emoji)
+
+    @mcp_discoverable(
+        mcp,
+        name="Chat.CreateTodo",
+        category="Chat",
+        description="Create a todo item in a chat room",
+    )
+    async def chat_create_todo(
+        room_id: int,
+        persona: str,
+        description: str,
+        assigned_to: Optional[str] = None,
+    ) -> dict:
+        """Create a todo item as a chat event."""
+        from npl_mcp.chat.chat import create_todo
+        return await create_todo(
+            room_id=room_id, persona=persona,
+            description=description, assigned_to=assigned_to,
+        )
+
+    @mcp_discoverable(
+        mcp,
+        name="Chat.ShareArtifact",
+        category="Chat",
+        description="Share an artifact in a chat room",
+    )
+    async def chat_share_artifact(
+        room_id: int,
+        persona: str,
+        artifact_id: int,
+        revision: Optional[int] = None,
+    ) -> dict:
+        """Share an artifact (optionally at a specific revision) in a chat room."""
+        from npl_mcp.chat.chat import share_artifact
+        return await share_artifact(
+            room_id=room_id, persona=persona,
+            artifact_id=artifact_id, revision=revision,
+        )
+
+    @mcp_discoverable(
+        mcp,
+        name="Chat.Notifications",
+        category="Chat",
+        description="List notifications for a persona",
+    )
+    async def chat_notifications(persona: str, unread_only: bool = True) -> dict:
+        """List chat notifications for a persona."""
+        from npl_mcp.chat.chat import notification_list
+        return await notification_list(persona=persona, unread_only=unread_only)
+
+    @mcp_discoverable(
+        mcp,
+        name="Chat.ReadNotification",
+        category="Chat",
+        description="Mark a notification as read",
+    )
+    async def chat_read_notification(notification_id: int) -> dict:
+        """Mark a single chat notification as read."""
+        from npl_mcp.chat.chat import notification_mark_read
+        return await notification_mark_read(notification_id=notification_id)
+
+    # ------------------------------------------------------------------
     # Orchestration tool (1 MCP-visible)
     # ------------------------------------------------------------------
 
@@ -1062,6 +1389,496 @@ def create_app() -> "FastMCP":
         """
         from npl_mcp.skills.validator import evaluate_skill
         return await evaluate_skill(content, filename or None)
+
+    # ------------------------------------------------------------------
+    # Review tools (5 MCP-visible)
+    # ------------------------------------------------------------------
+
+    @mcp_discoverable(
+        mcp,
+        name="Review.Create",
+        category="Reviews",
+        description="Start a review session for an artifact revision",
+    )
+    async def review_create_tool(
+        artifact_id: int,
+        revision_id: int,
+        reviewer_persona: str,
+    ) -> dict:
+        """Create a new review for an artifact revision."""
+        from npl_mcp.artifacts.reviews import review_create
+        return await review_create(
+            artifact_id=artifact_id, revision_id=revision_id,
+            reviewer_persona=reviewer_persona,
+        )
+
+    @mcp_discoverable(
+        mcp,
+        name="Review.AddComment",
+        category="Reviews",
+        description="Add an inline comment to a review",
+    )
+    async def review_add_comment_tool(
+        review_id: int,
+        location: str,
+        comment: str,
+        persona: str,
+    ) -> dict:
+        """Add an inline comment to a review at a location (e.g. 'line:58')."""
+        from npl_mcp.artifacts.reviews import review_add_comment
+        return await review_add_comment(
+            review_id=review_id, location=location,
+            comment=comment, persona=persona,
+        )
+
+    @mcp_discoverable(
+        mcp,
+        name="Review.AddOverlay",
+        category="Reviews",
+        description="Add an image overlay annotation to a review",
+    )
+    async def review_add_overlay_tool(
+        review_id: int,
+        x: int,
+        y: int,
+        comment: str,
+        persona: str,
+    ) -> dict:
+        """Add a coordinate-based overlay annotation to a review."""
+        from npl_mcp.artifacts.reviews import review_add_overlay
+        return await review_add_overlay(
+            review_id=review_id, x=x, y=y,
+            comment=comment, persona=persona,
+        )
+
+    @mcp_discoverable(
+        mcp,
+        name="Review.Get",
+        category="Reviews",
+        description="Fetch a review with optional inline comments",
+    )
+    async def review_get_tool(
+        review_id: int,
+        include_comments: bool = True,
+    ) -> dict:
+        """Get a review by ID, optionally including all inline comments."""
+        from npl_mcp.artifacts.reviews import review_get
+        return await review_get(review_id=review_id, include_comments=include_comments)
+
+    @mcp_discoverable(
+        mcp,
+        name="Review.Complete",
+        category="Reviews",
+        description="Mark a review as completed",
+    )
+    async def review_complete_tool(
+        review_id: int,
+        overall_comment: Optional[str] = None,
+    ) -> dict:
+        """Complete a review with an optional overall comment."""
+        from npl_mcp.artifacts.reviews import review_complete
+        return await review_complete(review_id=review_id, overall_comment=overall_comment)
+
+    # ------------------------------------------------------------------
+    # Executor tools — Taskers (6 MCP-visible)
+    # ------------------------------------------------------------------
+
+    @mcp_discoverable(
+        mcp,
+        name="Tasker.Spawn",
+        category="Executors",
+        description="Spawn an ephemeral tasker for a sub-task",
+    )
+    async def tasker_spawn_tool(
+        task: str,
+        chat_room_id: int,
+        parent_agent_id: str = "primary",
+        patterns: Optional[list[str]] = None,
+        session_id: Optional[str] = None,
+        timeout_minutes: int = 15,
+        nag_minutes: int = 5,
+    ) -> dict:
+        """Spawn an ephemeral tasker to handle a sub-task.
+
+        Args:
+            task: Description of the work to perform.
+            chat_room_id: Chat room for tasker communication.
+            parent_agent_id: ID of the spawning agent.
+            patterns: Optional fabric patterns to apply.
+            session_id: Optional session to associate with.
+            timeout_minutes: Auto-terminate after this many idle minutes.
+            nag_minutes: Send nag after this many idle minutes.
+        """
+        from npl_mcp.executors.manager import spawn_tasker
+        return await spawn_tasker(
+            task=task, chat_room_id=chat_room_id,
+            parent_agent_id=parent_agent_id, patterns=patterns,
+            session_id=session_id, timeout_minutes=timeout_minutes,
+            nag_minutes=nag_minutes,
+        )
+
+    @mcp_discoverable(
+        mcp,
+        name="Tasker.Get",
+        category="Executors",
+        description="Get a tasker's current state",
+    )
+    async def tasker_get_tool(tasker_id: str) -> dict:
+        """Fetch a tasker by ID."""
+        from npl_mcp.executors.manager import get_tasker
+        result = await get_tasker(tasker_id)
+        if result is None:
+            return {"status": "not_found", "tasker_id": tasker_id}
+        return result
+
+    @mcp_discoverable(
+        mcp,
+        name="Tasker.List",
+        category="Executors",
+        description="List taskers with optional status/session filters",
+    )
+    async def tasker_list_tool(
+        status: Optional[str] = None,
+        session_id: Optional[str] = None,
+    ) -> dict:
+        """List all taskers, optionally filtered by status or session."""
+        from npl_mcp.executors.manager import list_taskers
+        items = await list_taskers(status=status, session_id=session_id)
+        return {"taskers": items, "count": len(items)}
+
+    @mcp_discoverable(
+        mcp,
+        name="Tasker.Touch",
+        category="Executors",
+        description="Update a tasker's last activity timestamp",
+    )
+    async def tasker_touch_tool(tasker_id: str) -> dict:
+        """Touch a tasker to reset its idle timer."""
+        from npl_mcp.executors.manager import touch_tasker
+        await touch_tasker(tasker_id)
+        return {"status": "ok", "tasker_id": tasker_id}
+
+    @mcp_discoverable(
+        mcp,
+        name="Tasker.Dismiss",
+        category="Executors",
+        description="Dismiss/terminate a tasker",
+    )
+    async def tasker_dismiss_tool(
+        tasker_id: str,
+        reason: Optional[str] = None,
+    ) -> dict:
+        """Explicitly dismiss a tasker."""
+        from npl_mcp.executors.manager import dismiss_tasker
+        return await dismiss_tasker(tasker_id=tasker_id, reason=reason)
+
+    @mcp_discoverable(
+        mcp,
+        name="Tasker.KeepAlive",
+        category="Executors",
+        description="Respond to a nag by keeping a tasker alive",
+    )
+    async def tasker_keep_alive_tool(tasker_id: str) -> dict:
+        """Keep a tasker alive in response to a nag."""
+        from npl_mcp.executors.manager import keep_alive
+        return await keep_alive(tasker_id)
+
+    # ------------------------------------------------------------------
+    # Executor tools — Fabric (3 MCP-visible)
+    # ------------------------------------------------------------------
+
+    @mcp_discoverable(
+        mcp,
+        name="Fabric.Apply",
+        category="Executors",
+        description="Apply a fabric pattern to content",
+    )
+    async def fabric_apply_tool(
+        content: str,
+        pattern: str,
+        model: Optional[str] = None,
+        timeout: int = 300,
+    ) -> dict:
+        """Apply a single fabric pattern to content."""
+        from npl_mcp.executors.fabric import apply_fabric_pattern
+        return await apply_fabric_pattern(
+            content=content, pattern=pattern,
+            model=model, timeout=timeout,
+        )
+
+    @mcp_discoverable(
+        mcp,
+        name="Fabric.Analyze",
+        category="Executors",
+        description="Apply multiple fabric patterns to content",
+    )
+    async def fabric_analyze_tool(
+        content: str,
+        patterns: list[str],
+        combine_results: bool = True,
+    ) -> dict:
+        """Apply multiple fabric patterns and optionally combine results."""
+        from npl_mcp.executors.fabric import analyze_with_patterns
+        return await analyze_with_patterns(
+            content=content, patterns=patterns,
+            combine_results=combine_results,
+        )
+
+    @mcp_discoverable(
+        mcp,
+        name="Fabric.ListPatterns",
+        category="Executors",
+        description="List available fabric patterns",
+    )
+    async def fabric_list_patterns_tool() -> dict:
+        """List available fabric CLI patterns."""
+        from npl_mcp.executors.fabric import list_patterns
+        return await list_patterns()
+
+    # ------------------------------------------------------------------
+    # Browser enhanced tools (10 MCP-visible)
+    # ------------------------------------------------------------------
+
+    @mcp_discoverable(
+        mcp,
+        name="Browser.Capture",
+        category="Browser",
+        description="Capture a screenshot of a web page",
+    )
+    async def browser_capture_tool(
+        url: str,
+        viewport: str = "desktop",
+        theme: str = "light",
+        full_page: bool = False,
+        session_key: Optional[str] = None,
+    ) -> dict:
+        """Capture a screenshot and return base64-encoded PNG.
+
+        Args:
+            url: URL to capture.
+            viewport: desktop|mobile|tablet|4k or WIDTHxHEIGHT.
+            theme: light or dark.
+            full_page: Capture entire scrollable page.
+            session_key: Optional key for browser session persistence.
+        """
+        import base64
+        from npl_mcp.browser.capture import capture_screenshot
+        result = await capture_screenshot(
+            url=url, viewport=viewport, theme=theme,
+            full_page=full_page, session_key=session_key,
+        )
+        return {
+            "status": "ok",
+            "image_b64": base64.b64encode(result.image_bytes).decode("ascii"),
+            "width": result.width,
+            "height": result.height,
+            "url": result.url,
+            "viewport_preset": result.viewport_preset,
+            "theme": result.theme,
+            "captured_at": result.captured_at,
+        }
+
+    @mcp_discoverable(
+        mcp,
+        name="Browser.Interact.Navigate",
+        category="Browser",
+        description="Navigate a browser session to a URL",
+    )
+    async def browser_interact_navigate_tool(session_id: str, url: str) -> dict:
+        """Navigate an interactive browser session to a URL."""
+        from npl_mcp.browser.interact import get_or_create_session
+        session = await get_or_create_session(session_id)
+        result = await session.navigate(url)
+        return {"success": result.success, "action": result.action, "message": result.message}
+
+    @mcp_discoverable(
+        mcp,
+        name="Browser.Interact.Click",
+        category="Browser",
+        description="Click an element in a browser session",
+    )
+    async def browser_interact_click_tool(session_id: str, selector: str) -> dict:
+        """Click a CSS-selected element in an interactive browser session."""
+        from npl_mcp.browser.interact import get_or_create_session
+        session = await get_or_create_session(session_id)
+        result = await session.click(selector)
+        return {"success": result.success, "action": result.action, "message": result.message}
+
+    @mcp_discoverable(
+        mcp,
+        name="Browser.Interact.Fill",
+        category="Browser",
+        description="Fill a form field in a browser session",
+    )
+    async def browser_interact_fill_tool(session_id: str, selector: str, value: str) -> dict:
+        """Fill a form field in an interactive browser session."""
+        from npl_mcp.browser.interact import get_or_create_session
+        session = await get_or_create_session(session_id)
+        result = await session.fill(selector, value)
+        return {"success": result.success, "action": result.action, "message": result.message}
+
+    @mcp_discoverable(
+        mcp,
+        name="Browser.Interact.GetState",
+        category="Browser",
+        description="Get current page state of a browser session",
+    )
+    async def browser_interact_get_state_tool(session_id: str) -> dict:
+        """Get the current URL, title, and page state of a browser session."""
+        from npl_mcp.browser.interact import get_or_create_session
+        session = await get_or_create_session(session_id)
+        state = await session.get_page_state()
+        return {
+            "url": state.url,
+            "title": state.title,
+            "viewport": state.viewport,
+            "has_focus": state.has_focus,
+            "scroll_position": state.scroll_position,
+        }
+
+    @mcp_discoverable(
+        mcp,
+        name="Browser.ListSessions",
+        category="Browser",
+        description="List active browser session IDs",
+    )
+    async def browser_list_sessions_tool() -> dict:
+        """List all active interactive browser sessions."""
+        from npl_mcp.browser.interact import list_sessions
+        ids = await list_sessions()
+        return {"sessions": ids, "count": len(ids)}
+
+    @mcp_discoverable(
+        mcp,
+        name="Browser.CloseSession",
+        category="Browser",
+        description="Close an interactive browser session",
+    )
+    async def browser_close_session_tool(session_id: str) -> dict:
+        """Close and remove an interactive browser session."""
+        from npl_mcp.browser.interact import close_session
+        await close_session(session_id)
+        return {"status": "ok", "session_id": session_id}
+
+    @mcp_discoverable(
+        mcp,
+        name="Browser.Diff",
+        category="Browser",
+        description="Compare two screenshots and return diff statistics",
+    )
+    async def browser_diff_tool(
+        baseline_bytes: str,
+        comparison_bytes: str,
+        threshold: float = 0.1,
+    ) -> dict:
+        """Compare two base64-encoded PNG screenshots.
+
+        Args:
+            baseline_bytes: Base64-encoded baseline PNG.
+            comparison_bytes: Base64-encoded comparison PNG.
+            threshold: Color sensitivity 0.0-1.0 (lower = more sensitive).
+        """
+        import base64
+        from npl_mcp.browser.diff import compare_screenshots
+        baseline = base64.b64decode(baseline_bytes)
+        comparison = base64.b64decode(comparison_bytes)
+        result = compare_screenshots(
+            baseline_bytes=baseline,
+            comparison_bytes=comparison,
+            threshold=threshold,
+        )
+        diff_b64 = base64.b64encode(result.diff_image).decode("ascii") if result.diff_image else None
+        return {
+            "status": result.status.value if hasattr(result.status, 'value') else str(result.status),
+            "diff_percentage": result.diff_percentage,
+            "diff_pixels": result.diff_pixels,
+            "total_pixels": result.total_pixels,
+            "diff_image_b64": diff_b64,
+            "baseline_dimensions": result.baseline_dimensions,
+            "comparison_dimensions": result.comparison_dimensions,
+        }
+
+    @mcp_discoverable(
+        mcp,
+        name="Browser.Checkpoint",
+        category="Browser",
+        description="Capture a visual checkpoint of multiple URLs",
+    )
+    async def browser_checkpoint_tool(
+        name: str,
+        urls: list[str],
+        base_url: Optional[str] = None,
+        viewports: Optional[list[str]] = None,
+        themes: Optional[list[str]] = None,
+    ) -> dict:
+        """Capture a checkpoint with screenshots across viewports and themes.
+
+        Args:
+            name: Human-readable checkpoint name.
+            urls: List of URLs to capture (relative paths if base_url set).
+            base_url: Base URL for relative paths.
+            viewports: List of viewport names (default: desktop, mobile).
+            themes: List of theme names (default: light, dark).
+        """
+        from npl_mcp.browser.checkpoint import capture_checkpoint
+        url_configs = [{"name": u.split("/")[-1] or "root", "url": u} for u in urls]
+        result = await capture_checkpoint(
+            name=name, urls=url_configs,
+            base_url=base_url or "",
+            viewports=viewports, themes=themes,
+        )
+        return {
+            "status": "ok",
+            "slug": result.slug,
+            "name": result.name,
+            "total_screenshots": result.total_screenshots,
+            "timestamp": result.timestamp,
+        }
+
+    @mcp_discoverable(
+        mcp,
+        name="Browser.ListCheckpoints",
+        category="Browser",
+        description="List all visual checkpoints",
+    )
+    async def browser_list_checkpoints_tool() -> dict:
+        """List all captured visual checkpoints."""
+        from npl_mcp.browser.checkpoint import list_checkpoints
+        items = await list_checkpoints()
+        return {"checkpoints": items, "count": len(items)}
+
+    @mcp_discoverable(
+        mcp,
+        name="Browser.CompareCheckpoints",
+        category="Browser",
+        description="Compare two visual checkpoints for regressions",
+    )
+    async def browser_compare_checkpoints_tool(
+        baseline_slug: str,
+        comparison_slug: str,
+        threshold: float = 0.1,
+    ) -> dict:
+        """Compare two checkpoints and return diff summary.
+
+        Args:
+            baseline_slug: Slug of the baseline checkpoint.
+            comparison_slug: Slug of the comparison checkpoint.
+            threshold: Diff sensitivity 0.0-1.0 (lower = more sensitive).
+        """
+        from npl_mcp.browser.checkpoint import compare_checkpoints
+        result = await compare_checkpoints(
+            baseline_slug=baseline_slug,
+            comparison_slug=comparison_slug,
+            threshold=threshold,
+        )
+        return {
+            "status": "ok",
+            "comparison_id": result.comparison_id,
+            "baseline_checkpoint": result.baseline_checkpoint,
+            "comparison_checkpoint": result.comparison_checkpoint,
+            "summary": result.summary,
+            "total_comparisons": len(result.details),
+        }
 
     # ------------------------------------------------------------------
     # Initialize catalog and register discoverable tools

@@ -657,3 +657,145 @@ export interface MetricListResult<T> {
   items: T[];
   count: number;
 }
+
+// ── Chat Enhanced ───────────────────────────────────────────────────────
+
+export interface ChatRoomMember {
+  persona_slug: string;
+  joined_at: string | null;
+}
+
+export interface ChatEvent {
+  id: number;
+  event_type: string;
+  persona: string;
+  data: Record<string, unknown>;
+  reply_to_id: number | null;
+  created_at: string | null;
+}
+
+export interface ChatNotification {
+  id: number;
+  notification_type: string;
+  event_type: string;
+  room_id: number;
+  data: Record<string, unknown>;
+  created_at: string | null;
+  read_at: string | null;
+}
+
+// ── Reviews ─────────────────────────────────────────────────────────────
+
+export interface Review {
+  review_id: number;
+  artifact_id: number;
+  revision_id: number;
+  reviewer_persona: string;
+  review_status: string;
+  overall_comment: string | null;
+  created_at: string | null;
+  comments?: InlineComment[];
+}
+
+export interface InlineComment {
+  id: number;
+  location: string;
+  comment: string;
+  persona: string;
+  created_at: string | null;
+}
+
+export interface ReviewCreateInput {
+  artifact_id: number;
+  revision_id: number;
+  reviewer_persona: string;
+}
+
+export interface ReviewCommentInput {
+  location: string;
+  comment: string;
+  persona: string;
+}
+
+// ── Task Queues ─────────────────────────────────────────────────────────
+
+export interface TaskQueue {
+  id: number;
+  name: string;
+  description: string;
+  session_id: string | null;
+  chat_room_id: number | null;
+  queue_status: string;
+  task_counts?: Record<string, number>;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface TaskQueueCreateInput {
+  name: string;
+  description?: string;
+  session_id?: string;
+  chat_room_id?: number;
+}
+
+export interface TaskEvent {
+  id: number;
+  event_type: string;
+  persona: string | null;
+  data: Record<string, unknown>;
+  created_at: string | null;
+}
+
+export interface TaskArtifact {
+  id: number;
+  artifact_type: string;
+  artifact_id: number | null;
+  git_branch: string | null;
+  description: string | null;
+  created_by: string | null;
+  created_at: string | null;
+}
+
+export interface TaskArtifactInput {
+  artifact_type: string;
+  artifact_id?: number;
+  git_branch?: string;
+  description?: string;
+  created_by?: string;
+}
+
+// ── Executors / Taskers ─────────────────────────────────────────────────
+
+export interface Tasker {
+  tasker_id: string;
+  task: string;
+  patterns: string[];
+  parent_agent_id: string;
+  chat_room_id: number;
+  session_id: string | null;
+  status: string;
+  timeout_minutes: number;
+  nag_minutes: number;
+  created_at: string | null;
+  last_activity: string | null;
+  terminated_at: string | null;
+  termination_reason: string | null;
+}
+
+export interface TaskerSpawnInput {
+  task: string;
+  chat_room_id: number;
+  parent_agent_id?: string;
+  patterns?: string[];
+  session_id?: string;
+  timeout_minutes?: number;
+  nag_minutes?: number;
+}
+
+// ── Session Contents ────────────────────────────────────────────────────
+
+export interface SessionContents {
+  session: Record<string, unknown>;
+  chat_rooms: Array<{ id: number; name: string; message_count: number; last_activity: string | null }>;
+  artifacts: Array<{ id: number; title: string; kind: string; latest_revision: number }>;
+}

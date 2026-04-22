@@ -66,6 +66,58 @@ EXPECTED_MCP_TOOL_NAMES = {
     "Chat.ListMessages",
     "Chat.SendMessage",
     "Orchestration.Trigger",
+    # Chat enhanced
+    "Chat.AddMember",
+    "Chat.ListMembers",
+    "Chat.CreateEvent",
+    "Chat.ListEvents",
+    "Chat.React",
+    "Chat.CreateTodo",
+    "Chat.ShareArtifact",
+    "Chat.Notifications",
+    "Chat.ReadNotification",
+    # Sessions enhanced
+    "Session.Contents",
+    "Session.Archive",
+    # Tasks enhanced
+    "TaskQueue.Create",
+    "TaskQueue.Get",
+    "TaskQueue.List",
+    "TaskQueue.Feed",
+    "Tasks.CreateInQueue",
+    "Tasks.AssignComplexity",
+    "Tasks.AddArtifact",
+    "Tasks.ListArtifacts",
+    "Tasks.Feed",
+    # Reviews
+    "Review.Create",
+    "Review.AddComment",
+    "Review.AddOverlay",
+    "Review.Get",
+    "Review.Complete",
+    # Executors / Taskers
+    "Tasker.Spawn",
+    "Tasker.Get",
+    "Tasker.List",
+    "Tasker.Touch",
+    "Tasker.Dismiss",
+    "Tasker.KeepAlive",
+    # Fabric
+    "Fabric.Apply",
+    "Fabric.Analyze",
+    "Fabric.ListPatterns",
+    # Browser enhanced
+    "Browser.Capture",
+    "Browser.Interact.Navigate",
+    "Browser.Interact.Click",
+    "Browser.Interact.Fill",
+    "Browser.Interact.GetState",
+    "Browser.ListSessions",
+    "Browser.CloseSession",
+    "Browser.Diff",
+    "Browser.Checkpoint",
+    "Browser.ListCheckpoints",
+    "Browser.CompareCheckpoints",
 }
 
 EXPECTED_DISCOVERABLE_NAMES = {

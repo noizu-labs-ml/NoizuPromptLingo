@@ -744,3 +744,21 @@ export const health = {
     return delay({ status: "ok", ts: new Date().toISOString() });
   },
 };
+
+// ── Reviews (mock fallback) ─────────────────────────────────────────────
+
+export const reviews = {
+  async create(): Promise<never> { throw new Error("Reviews not available in mock mode"); },
+  async get(): Promise<null> { return null; },
+  async addComment(): Promise<never> { throw new Error("Reviews not available in mock mode"); },
+  async complete(): Promise<never> { throw new Error("Reviews not available in mock mode"); },
+};
+
+// ── Taskers (mock fallback) ─────────────────────────────────────────────
+
+export const taskers = {
+  async spawn(): Promise<never> { throw new Error("Taskers not available in mock mode"); },
+  async list(): Promise<never[]> { return []; },
+  async get(): Promise<null> { return null; },
+  async dismiss(): Promise<void> {},
+};

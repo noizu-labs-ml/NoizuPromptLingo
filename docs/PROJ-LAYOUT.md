@@ -4,23 +4,28 @@
 NoizuPromptLingo/
 ├── src/                            # Application source → [layout/src.md](layout/src.md)
 │   ├── npl_mcp/                    #   Main NPL MCP package
+│   │   ├── agents/                 #     Agent catalog and registry
+│   │   ├── api/                    #     FastAPI REST router
+│   │   ├── artifacts/              #     Versioned artifact CRUD + revisions
+│   │   ├── browser/                #     Web tools: Ping, Screenshot, Download, Rest, Secrets, ToMarkdown, Capture, Checkpoint, Diff, Interact, Report
+│   │   ├── chat/                   #     Chat rooms + messages (REST CRUD)
+│   │   ├── executors/              #     Tasker agent management (stubs)
+│   │   ├── instructions/           #     Instruction management + vector embeddings
 │   │   ├── markdown/               #     Markdown converter, viewer, filters
 │   │   ├── meta_tools/             #     Catalog + discovery: summary/search/definition/help, mcp_discoverable helper, stub_catalog, discoverable_tools, LLM client
 │   │   ├── npl/                    #     NPL syntax parser and loader
+│   │   ├── pipes/                  #     Agent input/output pipe management
 │   │   ├── pm_tools/               #     PRD/story/persona management tools (file + DB)
-│   │   ├── instructions/           #     Instruction management + vector embeddings
+│   │   ├── scripts/                #     Shell script wrappers (stubs)
+│   │   ├── sessions/               #     Generic work-session lifecycle
+│   │   ├── skills/                 #     Skill validation tools
+│   │   ├── storage/                #     PostgreSQL async wrapper (asyncpg)
+│   │   ├── tasks/                  #     Task CRUD with status tracking
 │   │   ├── tool_sessions/          #     Tool session and project management
 │   │   ├── web/                    #     FastAPI routes + static assets
-│   │   ├── storage/                #     PostgreSQL async wrapper (asyncpg)
-│   │   ├── browser/                #     Ping, Screenshot, Download, Rest, Secrets, ToMarkdown
-│   │   ├── artifacts/              #     Versioned artifact CRUD + revisions
-│   │   ├── chat/                   #     Chat rooms + messages (REST CRUD)
-│   │   ├── sessions/               #     Generic work-session lifecycle
-│   │   ├── tasks/                  #     Task CRUD with status tracking
-│   │   ├── executors/              #     Tasker agent management (stubs)
-│   │   ├── scripts/                #     Shell script wrappers (stubs)
 │   │   ├── convention_formatter.py #     NPL convention YAML formatter
 │   │   └── launcher.py             #     CLI entry point with server management
+│   ├── npl_persona/                #   Persona simulation CLI (analysis, journal, knowledge, teams, templates)
 │   └── mcp.py                      #   Minimal FastMCP hello-world server
 ├── frontend/                       # Next.js web UI (React/TypeScript/Tailwind)
 │   ├── app/                        #   App router (layout, page, globals)
@@ -37,8 +42,7 @@ NoizuPromptLingo/
 │   └── tsconfig.json               #   TypeScript config
 ├── tests/                          # Test suites → [layout/tests.md](layout/tests.md)
 │   ├── conftest.py                 #   Shared fixtures (_mcp_app session scope, cache clearing)
-│   ├── test_catalog_migration.py   #   FastMCP ↔ catalog integration tests (30 tests)
-│   └── test_mcp_server.py          #   End-to-end tests against a running server (8 tests)
+│   └── 35 test files               #   Unit/integration/e2e (catalog, browser, markdown, PM, sessions, etc.)
 ├── docs/                           # Documentation → [layout/docs.md](layout/docs.md)
 │   ├── arch/                       #   Architecture docs
 │   ├── agents/                     #   Agent-specific documentation
@@ -59,13 +63,13 @@ NoizuPromptLingo/
 │   └── TODO/                       #   Backlog items
 ├── conventions/                    # NPL convention YAML definitions (source of truth for NPLSpec + load_npl)
 ├── npl/                            # Generated NPL artifacts (npl-full.md rendered from conventions/)
-├── agents/                         # TDD agent definitions (npl-*.md, incl. npl-winnower)
-├── commands/                       # Claude Code slash commands (8 commands)
+├── agents/                         # Agent definitions (30+ agents: TDD, taskers, persona, coordinator, etc.)
+├── commands/                       # Claude Code slash commands (14 commands)
 ├── sub-agent-prompts/              # Reusable prompts for parallel agent spawning
 ├── scripts/                        # Operational scripts (port forwarding, etc.)
 ├── gh-pages                        # GitHub Pages submodule (static site)
 ├── liquibase/                      # Database migrations (Liquibase YAML changelogs)
-│   ├── changelogs/                 #   Migration changesets (001–013)
+│   ├── changelogs/                 #   Migration changesets (001–017)
 │   ├── liquibase.properties        #   Connection config (gitignored)
 │   └── liquibase.properties.example#   Template for local setup
 ├── docker/                         # Docker configuration
@@ -120,19 +124,20 @@ NoizuPromptLingo/
 | `liquibase/liquibase.properties` | Copy from `.example`, configure DB connection |
 | `docker-compose.yaml` | `docker compose up -d` for PostgreSQL at localhost:5111 |
 
-## TDD Agent Workflow
+## Agent Definitions
 
 Agents defined in `agents/` (mirrored in `.claude/agents`):
 
-| Agent | Purpose |
-|-------|---------|
-| `npl-idea-to-spec` | Transform ideas to personas + user stories |
-| `npl-prd-editor` | Generate PRD documents from user stories |
-| `npl-tdd-tester` | Create comprehensive test suites |
-| `npl-tdd-coder` | Implement features using TDD cycle |
-| `npl-tdd-debugger` | Diagnose and fix test failures |
-| `npl-winnower` | Response winnowing and quality filtering |
-| `npl-tasker-*` | Task execution agents (haiku/fast/sonnet/opus/ultra) |
+| Category | Agents | Purpose |
+|----------|--------|---------|
+| TDD Pipeline | `npl-idea-to-spec`, `npl-prd-editor`, `npl-tdd-tester`, `npl-tdd-coder`, `npl-tdd-debugger` | Feature specification through implementation |
+| Taskers | `npl-tasker`, `npl-tasker-haiku/fast/sonnet/opus/ultra` | Task execution at various cost/capability levels |
+| Authoring | `npl-author`, `npl-marketing-writer`, `npl-technical-writer` | Content generation and NPL prompt authoring |
+| Analysis | `npl-winnower`, `npl-gopher-scout`, `npl-thinker`, `npl-grader` | Code exploration, reasoning, validation |
+| Persona | `npl-persona`, `npl-persona-manager` | Character simulation and persona management |
+| Coordination | `npl-project-coordinator`, `npl-prd-manager` | Task orchestration and PRD lifecycle |
+| Domain | `npl-sql-architect`, `npl-build-master`, `npl-cpp-modernizer`, `npl-perf-profiler`, `npl-threat-modeler` | Specialized domain expertise |
+| Other | `npl-fim`, `npl-templater`, `nimps` | Visualization, template management |
 
 ## Generated Directories (gitignored)
 

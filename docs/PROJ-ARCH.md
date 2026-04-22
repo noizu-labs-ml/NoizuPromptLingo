@@ -4,7 +4,7 @@
 
 NPL MCP is a Model Context Protocol (MCP) server built on FastMCP 3.x. Rather than exposing all ~125 tools directly (which overwhelms clients), it uses a **meta tool pattern**: 11 tools are visible at startup (5 discovery + 1 NPL spec + 2 session + 3 instruction). An additional 22 implemented tools are hidden but callable via `ToolCall`, plus 92 stub tools for planned features. Every MCP-visible tool carries hierarchical `tags` and NPL-specific `meta` (`npl_category`, `npl_discoverable`) so 3.x-native clients can group and filter tools natively.
 
-The server combines FastMCP for MCP protocol handling, FastAPI for HTTP routing and a Next.js frontend, LiteLLM proxy for LLM-powered features (intent search, image descriptions), and PostgreSQL for persistent storage of sessions, instructions, projects, personas, stories, and secrets.
+The server combines FastMCP for MCP protocol handling, FastAPI for HTTP routing (68 REST endpoints) and a Next.js frontend, LiteLLM proxy for LLM-powered features (intent search, image descriptions), and PostgreSQL for persistent storage of sessions, instructions, projects, personas, stories, artifacts, pipes, and secrets. A companion `npl_persona` CLI package provides offline persona simulation, journal management, and team coordination.
 
 ## System Diagram
 
@@ -19,10 +19,11 @@ graph TB
     subgraph "NPL MCP Server (FastAPI + FastMCP)"
         MW[Pure-ASGI Middleware<br/>fallback + SSE-safe]
         MCP[FastMCP 3.x Instance<br/>11 tools registered]
-        REST[REST API Layer<br/>/api/* routes]
+        REST[REST API Layer<br/>68 endpoints on /api/*]
         Meta[Discovery Tools<br/>5 discovery + 6 functional]
         Hidden[Hidden Tools<br/>22 via ToolCall]
         Stubs[Stub Catalog<br/>92 planned tools]
+        Pipes[Agent Pipes<br/>inter-agent messaging]
         FE[Next.js Frontend<br/>static export]
     end
 
@@ -42,7 +43,8 @@ graph TB
     Meta --> Stubs
     Meta -->|intent search| LLM
     Hidden -->|sessions, instructions, PM| DB
-    REST -->|tasks, artifacts, chat, sessions,<br/>instructions, projects| DB
+    REST -->|tasks, artifacts, chat, sessions,<br/>instructions, projects, pipes| DB
+    Pipes -->|structured YAML| DB
 ```
 
 ## Core Components
@@ -62,9 +64,13 @@ graph TB
 | Chat | `src/npl_mcp/chat/` | Chat rooms + messages (REST CRUD, npl_chat_rooms/messages) |
 | Work Sessions | `src/npl_mcp/sessions/` | Generic work-session lifecycle (npl_generic_sessions) |
 | Tasks | `src/npl_mcp/tasks/` | Task CRUD with status transitions (npl_tasks) |
-| Browser Tools | `src/npl_mcp/browser/` | ToMarkdown, Ping, Download, Screenshot, Rest, Secret |
+| Browser Tools | `src/npl_mcp/browser/` | ToMarkdown, Ping, Download, Screenshot, Rest, Secret, Capture, Checkpoint, Diff, Interact, Report |
+| Agents | `src/npl_mcp/agents/` | Agent catalog — parses `agents/*.md` frontmatter, list/get API |
+| Pipes | `src/npl_mcp/pipes/` | Agent input/output pipes — inter-agent structured YAML messaging |
+| Skills | `src/npl_mcp/skills/` | Skill file validation and quality scoring |
 | Storage | `src/npl_mcp/storage/` | PostgreSQL async connection pool (asyncpg) |
 | Frontend | `frontend/` | Next.js + Tailwind web UI with hybrid REST/mock API facade |
+| Persona CLI | `src/npl_persona/` | Offline persona simulation, journal, knowledge, teams, templates |
 | Minimal Server | `src/mcp.py` | Standalone hello-world for quick experiments |
 
 ## Meta Tool Pattern
@@ -132,18 +138,21 @@ graph TB
 
 | Module | Status | MCP Tools | REST Endpoints | Description |
 |--------|--------|-----------|----------------|-------------|
-| `meta_tools/` | Active | 5 registered | — | Discovery layer + catalog builder + stub catalog |
-| `convention_formatter.py` | Active | 1 registered | — | NPLSpec — NPL definition generation |
+| `meta_tools/` | Active | 5 registered | `GET /api/catalog*` | Discovery layer + catalog builder + stub catalog |
+| `convention_formatter.py` | Active | 1 registered | `POST /api/npl/spec` | NPLSpec — NPL definition generation |
 | `markdown/` | Active | 0 (library) | `POST /api/browser/to-markdown` | Converter, viewer, caching, filters |
 | `npl/` | Active | 0 (library) | `GET /api/npl/elements`, `GET /api/npl/coverage` | NPL YAML loading, syntax parsing |
 | `pm_tools/` | Active | 13 hidden + 8 stubs | `GET /api/projects*`, `POST /api/projects` | DB-backed project/persona/story CRUD |
 | `instructions/` | Active | 3 registered + 3 hidden | `GET/POST /api/instructions*` | Versioned instructions with vector embeddings |
 | `tool_sessions/` | Active | 2 registered | `GET /api/sessions*` | Session tracking by (project, agent, task) |
-| `artifacts/` | Active | — | `GET/POST /api/artifacts*` | Versioned artifact CRUD + revision history |
+| `artifacts/` | Active | — | `GET/POST /api/artifacts*` | Versioned artifact CRUD + revision history + binary upload |
 | `chat/` | Active | — | `GET/POST /api/chat/rooms*` | Chat rooms + messages (npl_chat_rooms/messages) |
 | `sessions/` | Active | — | `GET/POST /api/work-sessions*` | Generic work-session lifecycle |
 | `tasks/` | Active | — | `GET/POST/PATCH /api/tasks*` | Task CRUD with status transitions |
-| `browser/` | Active | 6 hidden + 32 stubs | — | ToMarkdown, Ping, Download, Screenshot, Rest, Secret |
+| `browser/` | Active | 6 hidden + 32 stubs | — | ToMarkdown, Ping, Download, Screenshot, Rest, Secret, Capture, Checkpoint, Diff, Interact, Report |
+| `agents/` | Active | — | `GET /api/agents*` | Agent catalog — parses agent markdown frontmatter |
+| `pipes/` | Active | — | `POST /api/pipes/*` | Inter-agent structured YAML messaging (input/output) |
+| `skills/` | Active | — | `POST /api/skills/validate`, `POST /api/skills/evaluate` | Skill file validation + quality scoring |
 | `storage/` | Active | 0 (library) | — | PostgreSQL async connection pool (asyncpg) |
 | `executors/` | Stub | 11 (in catalog) | — | Agent lifecycle management |
 | `scripts/` | Stub | 5 (in catalog) | — | Shell script wrappers |
@@ -181,22 +190,27 @@ Key frontend primitives added in Waves A–P: full design token system (violet-i
 - **Pure-ASGI fallback middleware**: `BaseHTTPMiddleware` buffered response bodies and crashed SSE (empty 202s on `/sse/messages/`). Replaced with a pure ASGI middleware that only intercepts 404 GETs and leaves streaming responses untouched
 - **LiteLLM proxy**: Routes LLM calls through a local proxy for model flexibility and key management
 - **Dynamic catalog builder**: Merges MCP-registered, hidden, and stub tools into a unified 125-tool catalog
-- **PostgreSQL for state**: Sessions, instructions, projects, personas, stories, artifacts, tasks, chat, and secrets all DB-backed; schema managed by Liquibase (13 changesets)
+- **PostgreSQL for state**: Sessions, instructions, projects, personas, stories, artifacts, tasks, chat, pipes, and secrets all DB-backed; schema managed by Liquibase (17 changesets)
 - **Next.js static export**: Frontend builds to `web/static/` and is served by the FastAPI fallback middleware
 - **Frontend API facade**: `lib/api/client.ts` is a stable interface; switching from mock → REST requires changing a single import. The `hybrid` impl mixes live REST and mock per domain, enabling incremental feature rollout
 - **REST API parallel to MCP**: The `/api/*` router serves the web UI directly (CRUD for tasks, artifacts, chat, etc.); MCP SSE serves AI clients. Same PostgreSQL backend, different access paths
 
 ## Agent Orchestration
 
-The project implements a TDD-driven workflow system with 5 specialized agents that transform feature ideas into tested code, plus utility agents:
+The project implements a TDD-driven workflow system with 30+ specialized agents organized by role:
 
-1. **npl-idea-to-spec** → Personas + user stories
-2. **npl-prd-editor** → PRD documents
-3. **npl-tdd-tester** → Test suites
-4. **npl-tdd-coder** → Implementation (runs until tests pass)
-5. **npl-tdd-debugger** → Root cause analysis on failures
-6. **npl-winnower** → Response winnowing and quality filtering
-7. **npl-tasker-*** → Task execution agents (haiku/fast/sonnet/opus/ultra)
+| Category | Agents | Purpose |
+|----------|--------|---------|
+| TDD Pipeline | idea-to-spec, prd-editor, tdd-tester, tdd-coder, tdd-debugger | Feature specification through implementation |
+| Taskers | tasker, tasker-haiku/fast/sonnet/opus/ultra | Task execution at various cost/capability levels |
+| Authoring | author, marketing-writer, technical-writer | Content generation and NPL prompt authoring |
+| Analysis | winnower, gopher-scout, thinker, grader | Code exploration, reasoning, validation |
+| Persona | persona, persona-manager | Character simulation and persona management |
+| Coordination | project-coordinator, prd-manager | Task orchestration and PRD lifecycle |
+| Domain | sql-architect, build-master, cpp-modernizer, perf-profiler, threat-modeler | Specialized domain expertise |
+| Other | fim, templater, nimps | Visualization, template management |
+
+Inter-agent communication uses the `pipes/` module for structured YAML messaging. The `npl_persona` CLI package provides offline persona simulation with journals, knowledge bases, and team coordination.
 
 → *See [arch/agent-orchestration.summary.md](arch/agent-orchestration.summary.md) for details*
 → *See [winnower-design.md](winnower-design.md) for winnower agent spec*

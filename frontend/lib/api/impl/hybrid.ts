@@ -74,3 +74,9 @@ export const tasks = rest.tasks;
 
 // Pipes: wired to REST endpoint (/api/pipes/*)
 export const pipes = rest.pipes;
+
+// Reviews: wired to REST endpoint (/api/reviews*)
+export const reviews = rest.reviews;
+
+// Taskers: wired to REST endpoint (/api/taskers*)
+export const taskers = rest.taskers;

@@ -52,14 +52,27 @@ src/
 │   │   ├── utils.py                #     Shared utilities
 │   │   └── exceptions.py           #     PM-specific exceptions
 │   │
-│   ├── browser/                    #   Browser/network tools (implemented)
+│   ├── agents/                     #   Agent catalog and registry
+│   │   ├── __init__.py
+│   │   └── catalog.py              #     Agent listing and loading
+│   │
+│   ├── api/                        #   FastAPI REST router
+│   │   ├── __init__.py
+│   │   └── router.py               #     HTTP API endpoints
+│   │
+│   ├── browser/                    #   Browser/network tools
 │   │   ├── __init__.py
 │   │   ├── ping.py                 #     URL ping tool
 │   │   ├── screenshot.py           #     Page screenshot tool
 │   │   ├── download.py             #     File download tool
 │   │   ├── rest.py                 #     REST API client tool
 │   │   ├── secrets.py              #     Secret management tool
-│   │   └── to_markdown.py          #     URL-to-markdown conversion
+│   │   ├── to_markdown.py          #     URL-to-markdown conversion
+│   │   ├── capture.py              #     Page capture tool
+│   │   ├── checkpoint.py           #     Page checkpoint/snapshot tool
+│   │   ├── diff.py                 #     Page diff comparison tool
+│   │   ├── interact.py             #     Browser interaction tool
+│   │   └── report.py               #     Browser report generation
 │   │
 │   ├── instructions/               #   Instruction management
 │   │   ├── __init__.py
@@ -91,8 +104,33 @@ src/
 │   ├── tasks/                      #   Task CRUD with status tracking
 │   │   ├── __init__.py
 │   │   └── tasks.py                #     task_create/get/list/update_status
+│   ├── pipes/                      #   Agent input/output pipe management
+│   │   ├── __init__.py
+│   │   └── pipes.py                #     Agent pipe CRUD and messaging
+│   │
+│   ├── skills/                     #   Skill validation
+│   │   ├── __init__.py
+│   │   └── validator.py            #     Skill syntax and structure validation
+│   │
 │   ├── executors/                  #   Tasker agent management (stubs)
 │   └── scripts/                    #   Shell script wrappers (stubs)
+│
+├── npl_persona/                    # Persona simulation CLI package
+│   ├── __init__.py
+│   ├── cli.py                      #   CLI entry point
+│   ├── persona.py                  #   Core persona simulation engine
+│   ├── models.py                   #   Data models
+│   ├── config.py                   #   Configuration management
+│   ├── analysis.py                 #   Persona analysis tools
+│   ├── journal.py                  #   Persona journal/memory system
+│   ├── knowledge.py                #   Knowledge base management
+│   ├── tasks.py                    #   Persona task handling
+│   ├── teams.py                    #   Multi-persona team management
+│   ├── templates.py                #   Persona templates
+│   ├── parsers.py                  #   Input parsing utilities
+│   ├── paths.py                    #   Path management
+│   ├── io.py                       #   I/O utilities
+│   └── compat.py                   #   Compatibility helpers
 │
 └── mcp.py                          # Minimal FastMCP server (hello tool, SSE on 127.0.0.1:8765)
 ```
@@ -100,20 +138,27 @@ src/
 ## Active vs Stub Modules
 
 Active modules with implementations:
+- `agents/` — Agent catalog and registry
+- `api/` — FastAPI REST router
+- `artifacts/` — Versioned artifact storage (create/get/list/add_revision)
+- `browser/` — Ping, Screenshot, Download, Rest, Secrets, ToMarkdown, Capture, Checkpoint, Diff, Interact, Report
+- `chat/` — Chat rooms + messages REST CRUD (npl_chat_rooms / npl_chat_messages)
+- `instructions/` — Instruction CRUD + versioning + vector embeddings (create/get/list/update)
 - `markdown/` — Full markdown conversion, viewing, caching, filtering, image descriptions
 - `meta_tools/` — Tool catalog, search (text + LLM intent), definition, help, summaries, caching
 - `npl/` — NPL YAML loading, syntax parsing, reference resolution
+- `pipes/` — Agent input/output pipe management
 - `pm_tools/` — PRD, user story, and persona access (file-based + database-backed)
-- `instructions/` — Instruction CRUD + versioning + vector embeddings (create/get/list/update)
-- `tool_sessions/` — Tool session lifecycle and project management
-- `browser/` — Ping, Screenshot, Download, Rest, Secrets, ToMarkdown
-- `storage/` — PostgreSQL async connection pool
-- `artifacts/` — Versioned artifact storage (create/get/list/add_revision)
-- `chat/` — Chat rooms + messages REST CRUD (npl_chat_rooms / npl_chat_messages)
 - `sessions/` — Generic work-session lifecycle (npl_generic_sessions)
+- `skills/` — Skill validation tools
+- `storage/` — PostgreSQL async connection pool
 - `tasks/` — Task CRUD with status transitions (npl_tasks)
+- `tool_sessions/` — Tool session lifecycle and project management
 - `launcher.py` — Server lifecycle management
 - `convention_formatter.py` — NPL convention YAML formatting
+
+Separate package:
+- `npl_persona/` — Persona simulation CLI (analysis, journal, knowledge, teams, templates)
 
 Stub modules (tools raise `NotImplementedError`):
 - `executors/`, `scripts/`

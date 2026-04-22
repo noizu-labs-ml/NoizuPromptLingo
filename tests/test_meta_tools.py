@@ -210,7 +210,7 @@ class TestToolSummaryCategory:
     async def test_expand_browser_root(self):
         result = await tool_summary(filter="Browser")
         assert result["category"] == "Browser"
-        assert result["tool_count"] == 37
+        assert result["tool_count"] == 48
         assert "subcategories" in result
         assert "tools" in result
         direct_names = {t["name"] for t in result["tools"]}
