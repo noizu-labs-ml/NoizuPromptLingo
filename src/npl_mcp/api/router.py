@@ -2671,9 +2671,8 @@ class ChatMessageCreateBody(BaseModel):
 @router.get("/chat/rooms")
 async def chat_rooms_list(limit: int = Query(default=50, ge=1, le=200)) -> dict:
     try:
-        pool = await _get_db_pool()
         from npl_mcp.chat.chat import room_list
-        items = await room_list(pool, limit=limit)
+        items = await room_list(limit=limit)
         return {"items": items, "count": len(items)}
     except HTTPException:
         raise
@@ -2684,9 +2683,8 @@ async def chat_rooms_list(limit: int = Query(default=50, ge=1, le=200)) -> dict:
 @router.post("/chat/rooms")
 async def chat_rooms_create(body: ChatRoomCreateBody) -> dict:
     try:
-        pool = await _get_db_pool()
         from npl_mcp.chat.chat import room_create
-        return await room_create(pool, name=body.name, description=body.description)
+        return await room_create(name=body.name, description=body.description)
     except HTTPException:
         raise
     except Exception as exc:
@@ -2696,9 +2694,8 @@ async def chat_rooms_create(body: ChatRoomCreateBody) -> dict:
 @router.get("/chat/rooms/{room_id}")
 async def chat_room_get(room_id: int) -> dict:
     try:
-        pool = await _get_db_pool()
         from npl_mcp.chat.chat import room_get
-        room = await room_get(pool, room_id)
+        room = await room_get(room_id)
         if room is None:
             raise HTTPException(status_code=404, detail="Chat room not found")
         return room
@@ -2715,9 +2712,8 @@ async def chat_messages_list(
     before_id: Optional[int] = Query(default=None),
 ) -> dict:
     try:
-        pool = await _get_db_pool()
         from npl_mcp.chat.chat import message_list
-        items = await message_list(pool, room_id=room_id, limit=limit, before_id=before_id)
+        items = await message_list(room_id=room_id, limit=limit, before_id=before_id)
         return {"items": items, "count": len(items)}
     except HTTPException:
         raise
@@ -2728,9 +2724,8 @@ async def chat_messages_list(
 @router.post("/chat/rooms/{room_id}/messages")
 async def chat_message_create(room_id: int, body: ChatMessageCreateBody) -> dict:
     try:
-        pool = await _get_db_pool()
         from npl_mcp.chat.chat import message_create
-        return await message_create(pool, room_id=room_id, content=body.content, author=body.author)
+        return await message_create(room_id=room_id, content=body.content, author=body.author)
     except HTTPException:
         raise
     except Exception as exc:

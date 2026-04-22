@@ -11,20 +11,42 @@ import { Button } from "@/components/primitives/Button";
 import { Input } from "@/components/primitives/Input";
 import { useToast } from "@/components/primitives/ToastContainer";
 import { relativeTime } from "@/lib/utils/format";
+import { cyAttrs } from "@/lib/utils/cyAttrs";
 
 // ── Room card ─────────────────────────────────────────────────────────────
 
 function RoomCard({ room }: { room: ChatRoom }) {
   return (
-    <Link href={`/chat/${room.id}`} className="block rounded-lg focus-ring">
+    <Link
+      href={`/chat/${room.id}`}
+      className="block rounded-lg focus-ring"
+      {...cyAttrs({ cy: "room-card", cyId: room.id })}
+    >
       <Card hoverable className="flex flex-col gap-2 h-full">
         <div className="flex items-start justify-between gap-2">
-          <span className="font-mono text-sm font-semibold text-foreground">{room.name}</span>
-          <span className="text-xs text-muted shrink-0">{room.last_activity ? relativeTime(room.last_activity) : "—"}</span>
+          <span
+            className="font-mono text-sm font-semibold text-foreground"
+            {...cyAttrs({ cy: "room-name" })}
+          >
+            {room.name}
+          </span>
+          <span
+            className="text-xs text-muted shrink-0"
+            {...cyAttrs({ cy: "room-activity" })}
+          >
+            {room.last_activity ? relativeTime(room.last_activity) : "—"}
+          </span>
         </div>
-        <p className="text-sm text-muted flex-1">{room.description}</p>
+        <p
+          className="text-sm text-muted flex-1"
+          {...cyAttrs({ cy: "room-description" })}
+        >
+          {room.description}
+        </p>
         <div className="flex items-center gap-1 text-xs text-subtle">
-          <span>{room.message_count} messages</span>
+          <span {...cyAttrs({ cy: "message-count", cyValue: room.message_count })}>
+            {room.message_count} messages
+          </span>
         </div>
       </Card>
     </Link>
@@ -41,7 +63,12 @@ function NewRoomForm({ onCreated }: { onCreated: () => void }) {
 
   if (!open) {
     return (
-      <Button variant="primary" size="sm" onClick={() => setOpen(true)}>
+      <Button
+        variant="primary"
+        size="sm"
+        onClick={() => setOpen(true)}
+        {...cyAttrs({ cy: "new-room-btn" })}
+      >
         New Room
       </Button>
     );
@@ -65,17 +92,35 @@ function NewRoomForm({ onCreated }: { onCreated: () => void }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex items-center gap-2">
+    <form
+      onSubmit={handleSubmit}
+      className="flex items-center gap-2"
+      {...cyAttrs({ cy: "new-room-form" })}
+    >
       <Input
         placeholder="Room name..."
         value={name}
         onChange={(e) => setName(e.target.value)}
         disabled={loading}
+        {...cyAttrs({ cy: "room-name-input" })}
       />
-      <Button type="submit" variant="primary" size="sm" loading={loading} disabled={!name.trim()}>
+      <Button
+        type="submit"
+        variant="primary"
+        size="sm"
+        loading={loading}
+        disabled={!name.trim()}
+        {...cyAttrs({ cy: "create-room-btn" })}
+      >
         Create
       </Button>
-      <Button type="button" variant="ghost" size="sm" onClick={() => setOpen(false)}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => setOpen(false)}
+        {...cyAttrs({ cy: "cancel-room-btn" })}
+      >
         Cancel
       </Button>
     </form>
@@ -90,7 +135,10 @@ export default function ChatPage() {
   );
 
   return (
-    <div className="flex flex-col gap-6">
+    <div
+      className="flex flex-col gap-6"
+      {...cyAttrs({ cy: "chat-page", cyScope: "chat" })}
+    >
       <div className="flex items-start justify-between gap-4">
         <PageHeader
           title="Chat"
@@ -103,7 +151,10 @@ export default function ChatPage() {
 
       {/* Room grid */}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+          {...cyAttrs({ cy: "rooms-loading" })}
+        >
           {Array.from({ length: 5 }).map((_, i) => (
             <div
               key={i}
@@ -112,7 +163,10 @@ export default function ChatPage() {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+          {...cyAttrs({ cy: "rooms-grid", cyValue: (rooms ?? []).length })}
+        >
           {(rooms ?? []).map((room) => (
             <RoomCard key={room.id} room={room} />
           ))}

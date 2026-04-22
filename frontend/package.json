@@ -7,7 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "export": "next build && next export"
+    "export": "next build && next export",
+    "cy:open": "cypress open",
+    "cy:run": "cypress run",
+    "cy:run:chat": "cypress run --spec 'cypress/e2e/features/chat/**/*.feature'"
+  },
+  "cypress-cucumber-preprocessor": {
+    "stepDefinitions": "cypress/e2e/step_definitions/**/*.ts",
+    "nonGlobalStepDefinitions": false
   },
   "dependencies": {
     "@headlessui/react": "^2.2.10",
@@ -22,11 +29,14 @@
     "swr": "^2.4.1"
   },
   "devDependencies": {
+    "@badeball/cypress-cucumber-preprocessor": "^24.0.1",
+    "@bahmutov/cypress-esbuild-preprocessor": "^2.2.8",
     "@tailwindcss/typography": "^0.5.19",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.20",
+    "cypress": "^15.14.1",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.9.3"

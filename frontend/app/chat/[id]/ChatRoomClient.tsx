@@ -11,6 +11,7 @@ import { EmptyState } from "@/components/primitives/EmptyState";
 import { PageHeader } from "@/components/primitives/PageHeader";
 import { useToast } from "@/components/primitives/ToastContainer";
 import { relativeTime } from "@/lib/utils/format";
+import { cyAttrs } from "@/lib/utils/cyAttrs";
 
 // ── Author color helper ───────────────────────────────────────────────────
 
@@ -84,9 +85,15 @@ export default function ChatRoomClient() {
   };
 
   return (
-    <div className="flex flex-col gap-6 max-w-3xl">
+    <div
+      className="flex flex-col gap-6 max-w-3xl"
+      {...cyAttrs({ cy: "chat-room-page", cyScope: "chat-room", cyId: id })}
+    >
       {roomLoading ? (
-        <div className="h-24 rounded-lg bg-surface-1 border border-border animate-pulse" />
+        <div
+          className="h-24 rounded-lg bg-surface-1 border border-border animate-pulse"
+          {...cyAttrs({ cy: "room-loading" })}
+        />
       ) : room ? (
         <PageHeader title={room.name} description={room.description} />
       ) : (
@@ -97,6 +104,7 @@ export default function ChatRoomClient() {
             <Link
               href="/chat"
               className="inline-flex items-center gap-1 rounded-md bg-accent px-4 py-2 text-sm text-accent-on hover:bg-accent-soft"
+              {...cyAttrs({ cy: "back-to-rooms-link" })}
             >
               Back to chat rooms
             </Link>
@@ -107,26 +115,52 @@ export default function ChatRoomClient() {
       {/* Message feed */}
       <Card className="flex flex-col gap-0 p-0 overflow-hidden">
         <div className="px-4 py-3 border-b border-border bg-surface-1">
-          <h2 className="text-sm font-semibold text-foreground">Messages</h2>
+          <h2
+            className="text-sm font-semibold text-foreground"
+            {...cyAttrs({ cy: "messages-heading" })}
+          >
+            Messages
+          </h2>
         </div>
         <div
           ref={feedRef}
           className="flex flex-col divide-y divide-border max-h-[480px] overflow-y-auto"
+          {...cyAttrs({ cy: "message-feed", cyValue: messages?.length ?? 0 })}
         >
           {!messages || messages.length === 0 ? (
-            <div className="px-4 py-8 text-center text-sm text-subtle">
+            <div
+              className="px-4 py-8 text-center text-sm text-subtle"
+              {...cyAttrs({ cy: "empty-messages" })}
+            >
               No messages yet. Start the conversation.
             </div>
           ) : (
             messages.map((msg) => (
-              <div key={msg.id} className="px-4 py-4 flex flex-col gap-1">
+              <div
+                key={msg.id}
+                className="px-4 py-4 flex flex-col gap-1"
+                {...cyAttrs({ cy: "message-item", cyId: msg.id })}
+              >
                 <div className="flex items-center gap-2">
-                  <span className={`font-mono text-xs font-semibold ${authorColor(msg.author)}`}>
+                  <span
+                    className={`font-mono text-xs font-semibold ${authorColor(msg.author)}`}
+                    {...cyAttrs({ cy: "message-author", cyValue: msg.author })}
+                  >
                     {msg.author}
                   </span>
-                  <span className="text-xs text-subtle">{msg.created_at ? relativeTime(msg.created_at) : "—"}</span>
+                  <span
+                    className="text-xs text-subtle"
+                    {...cyAttrs({ cy: "message-time" })}
+                  >
+                    {msg.created_at ? relativeTime(msg.created_at) : "—"}
+                  </span>
                 </div>
-                <p className="text-sm text-muted">{msg.content}</p>
+                <p
+                  className="text-sm text-muted"
+                  {...cyAttrs({ cy: "message-content" })}
+                >
+                  {msg.content}
+                </p>
               </div>
             ))
           )}
@@ -134,7 +168,7 @@ export default function ChatRoomClient() {
       </Card>
 
       {/* Message input */}
-      <Card className="flex flex-col gap-3">
+      <Card className="flex flex-col gap-3" {...cyAttrs({ cy: "message-composer" })}>
         <textarea
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
@@ -142,6 +176,7 @@ export default function ChatRoomClient() {
           placeholder="Type a message… (Enter to send, Shift+Enter for newline)"
           disabled={sending}
           className="w-full rounded-md border border-border bg-surface-1 px-3 py-2 text-sm text-foreground placeholder:text-subtle resize-none h-20 focus:outline-none focus:ring-2 focus:ring-accent"
+          {...cyAttrs({ cy: "message-input" })}
         />
         <div className="flex justify-end">
           <Button
@@ -151,6 +186,7 @@ export default function ChatRoomClient() {
             loading={sending}
             disabled={!draft.trim()}
             onClick={sendMessage}
+            {...cyAttrs({ cy: "send-btn" })}
           >
             Send
           </Button>
