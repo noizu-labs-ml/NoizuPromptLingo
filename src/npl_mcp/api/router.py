@@ -2421,6 +2421,24 @@ async def orchestration_trigger(body: OrchestrationTriggerBody) -> dict:
         raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
 
 
+@router.get("/orchestration/patterns")
+async def orchestration_patterns() -> dict:
+    """List registered orchestration patterns."""
+    from npl_mcp.orchestration import PATTERN_REGISTRY
+    return {
+        "status": "ok",
+        "patterns": [
+            {
+                "name": name,
+                "class": cls.__name__,
+                "doc": (cls.__doc__ or "").strip().split("\n")[0],
+            }
+            for name, cls in PATTERN_REGISTRY.items()
+        ],
+        "count": len(PATTERN_REGISTRY),
+    }
+
+
 # ---------------------------------------------------------------------------
 # Sessions activity feed  (Wave O)
 # ---------------------------------------------------------------------------

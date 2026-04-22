@@ -1279,7 +1279,7 @@ def create_app() -> "FastMCP":
         return await notification_mark_read(notification_id=notification_id)
 
     # ------------------------------------------------------------------
-    # Orchestration tool (1 MCP-visible)
+    # Orchestration tools (4 MCP-visible)
     # ------------------------------------------------------------------
 
     @mcp_discoverable(
@@ -1314,6 +1314,109 @@ def create_app() -> "FastMCP":
             "status": "queued",
             "task_id": result.get("id"),
             "created_at": result.get("created_at"),
+        }
+
+    @mcp_discoverable(
+        mcp,
+        name="Orchestration.Patterns",
+        category="Orchestration",
+        description="List registered orchestration patterns",
+    )
+    async def orchestration_patterns_tool() -> dict:
+        """List all registered orchestration patterns.
+
+        Returns pattern names and their class descriptions.
+        """
+        from npl_mcp.orchestration import PATTERN_REGISTRY
+        return {
+            "status": "ok",
+            "patterns": [
+                {
+                    "name": name,
+                    "class": cls.__name__,
+                    "doc": (cls.__doc__ or "").strip().split("\n")[0],
+                }
+                for name, cls in PATTERN_REGISTRY.items()
+            ],
+            "count": len(PATTERN_REGISTRY),
+        }
+
+    @mcp_discoverable(
+        mcp,
+        name="Orchestration.Execute",
+        category="Orchestration",
+        description="Execute an orchestration pattern (e.g. pipeline) with initial context",
+    )
+    async def orchestration_execute_tool(
+        pattern: str = "pipeline",
+        feature_description: str = "",
+        context: Optional[dict] = None,
+    ) -> dict:
+        """Execute a registered orchestration pattern.
+
+        For the ``pipeline`` pattern, creates the standard TDD pipeline
+        and runs it with the provided context.
+
+        Args:
+            pattern: Pattern name from the registry (default: "pipeline").
+            feature_description: Feature description for TDD pipeline.
+            context: Optional initial context dict passed to execute().
+
+        Returns:
+            Execution result including status and per-stage results.
+        """
+        from npl_mcp.orchestration import PATTERN_REGISTRY, create_tdd_pipeline
+
+        if pattern not in PATTERN_REGISTRY:
+            return {
+                "status": "error",
+                "message": f"Pattern '{pattern}' not found. Available: {list(PATTERN_REGISTRY.keys())}",
+            }
+
+        ctx = dict(context or {})
+        if feature_description:
+            ctx["feature_description"] = feature_description
+
+        if pattern == "pipeline" and feature_description:
+            instance = create_tdd_pipeline(feature_description)
+        else:
+            cls = PATTERN_REGISTRY[pattern]
+            instance = cls()
+
+        result = await instance.execute(ctx)
+        result["run_id"] = instance.run_id
+        return result
+
+    @mcp_discoverable(
+        mcp,
+        name="Orchestration.Status",
+        category="Orchestration",
+        description="Get the status of an orchestration pattern instance",
+    )
+    async def orchestration_status_tool(
+        pattern: str = "pipeline",
+    ) -> dict:
+        """Get status information for a pattern type.
+
+        Note: In the MVP this returns pattern metadata rather than a
+        specific run status (run tracking requires persistence).
+
+        Args:
+            pattern: Pattern name to query.
+        """
+        from npl_mcp.orchestration import PATTERN_REGISTRY
+
+        if pattern not in PATTERN_REGISTRY:
+            return {
+                "status": "error",
+                "message": f"Pattern '{pattern}' not found.",
+            }
+        cls = PATTERN_REGISTRY[pattern]
+        return {
+            "status": "ok",
+            "pattern": pattern,
+            "class": cls.__name__,
+            "doc": (cls.__doc__ or "").strip(),
         }
 
     # ------------------------------------------------------------------

@@ -66,6 +66,9 @@ EXPECTED_MCP_TOOL_NAMES = {
     "Chat.ListMessages",
     "Chat.SendMessage",
     "Orchestration.Trigger",
+    "Orchestration.Patterns",
+    "Orchestration.Execute",
+    "Orchestration.Status",
     # Chat enhanced
     "Chat.AddMember",
     "Chat.ListMembers",

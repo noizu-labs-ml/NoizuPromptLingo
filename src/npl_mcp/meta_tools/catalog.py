@@ -310,15 +310,46 @@ def mcp_discoverable(
         meta.update(extra_meta)
 
     def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
+        import functools
+        import json
+        import time
+
+        @functools.wraps(fn)
+        async def _metered(*args: Any, **kwargs: Any) -> Any:
+            start = time.perf_counter()
+            try:
+                result = fn(*args, **kwargs)
+                if asyncio.iscoroutine(result):
+                    result = await result
+                elapsed_ms = int((time.perf_counter() - start) * 1000)
+                from npl_mcp.storage.metrics import record_tool_call
+                await record_tool_call(
+                    tool_name=name,
+                    arguments=json.dumps(kwargs, default=str)[:4096] if kwargs else None,
+                    result_summary=str(result)[:2048],
+                    response_time_ms=elapsed_ms,
+                )
+                return result
+            except Exception as exc:
+                elapsed_ms = int((time.perf_counter() - start) * 1000)
+                from npl_mcp.storage.metrics import record_tool_call
+                await record_tool_call(
+                    tool_name=name,
+                    arguments=json.dumps(kwargs, default=str)[:4096] if kwargs else None,
+                    error=str(exc)[:2048],
+                    response_time_ms=elapsed_ms,
+                )
+                raise
+
         # Apply @mcp.tool() first so FastMCP records the tool with metadata.
-        fn = mcp.tool(name=name, tags=tags, meta=meta)(fn)
+        _metered = mcp.tool(name=name, tags=tags, meta=meta)(_metered)
         # Then record in our catalog — only needs to set _MCP_TOOL_CATEGORIES.
         return discoverable(
             category=category,
             name=name,
             mcp_registered=True,
             description=description,
-        )(fn)
+        )(_metered)
 
     return decorator
 
@@ -332,17 +363,37 @@ async def call_tool(tool_name: str, arguments: dict[str, Any] | None = None) -> 
 
     Returns the tool's result or raises ``KeyError`` / propagates exceptions.
     """
+    import json
+    import time
+
     info = _DISCOVERABLE_TOOLS.get(tool_name)
     if info is None:
         raise KeyError(f"Tool '{tool_name}' not found in discoverable registry")
 
+    start = time.perf_counter()
     try:
         result = info.fn(**(arguments or {}))
         if asyncio.iscoroutine(result):
             result = await result
+        elapsed_ms = int((time.perf_counter() - start) * 1000)
+        from npl_mcp.storage.metrics import record_tool_call
+        await record_tool_call(
+            tool_name=tool_name,
+            arguments=json.dumps(arguments or {}, default=str)[:4096],
+            result_summary=str(result)[:2048],
+            response_time_ms=elapsed_ms,
+        )
         return result
     except Exception as exc:
+        elapsed_ms = int((time.perf_counter() - start) * 1000)
         from npl_mcp.storage.error_log import log_tool_error
+        from npl_mcp.storage.metrics import record_tool_call
+        await record_tool_call(
+            tool_name=tool_name,
+            arguments=json.dumps(arguments or {}, default=str)[:4096],
+            error=str(exc)[:2048],
+            response_time_ms=elapsed_ms,
+        )
         await log_tool_error(tool_name, exc)
         raise
 
