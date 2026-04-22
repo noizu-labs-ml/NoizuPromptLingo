@@ -10,6 +10,39 @@ from typing import Any, Optional
 from npl_mcp.storage import get_pool
 
 
+async def review_list_by_artifact(
+    artifact_id: int,
+    limit: int = 50,
+) -> dict[str, Any]:
+    """List all reviews for a given artifact."""
+    pool = await get_pool()
+    rows = await pool.fetch(
+        """SELECT id, artifact_id, revision_id, reviewer_persona, status,
+                  overall_comment, created_at
+        FROM npl_reviews
+        WHERE artifact_id = $1
+        ORDER BY created_at DESC
+        LIMIT $2""",
+        artifact_id,
+        limit,
+    )
+    return {
+        "status": "ok",
+        "reviews": [
+            {
+                "review_id": r["id"],
+                "artifact_id": r["artifact_id"],
+                "revision_id": r["revision_id"],
+                "reviewer_persona": r["reviewer_persona"],
+                "review_status": r["status"],
+                "overall_comment": r["overall_comment"],
+                "created_at": r["created_at"].isoformat() if r["created_at"] else None,
+            }
+            for r in rows
+        ],
+    }
+
+
 async def review_create(
     artifact_id: int,
     revision_id: int,

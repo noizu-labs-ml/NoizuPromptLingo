@@ -302,7 +302,9 @@ export default function MetricsPage() {
         description="Tool call history and LLM usage."
       />
 
-      <ComingSoonBanner description="Tool call and LLM metrics coming soon — provisioning in progress. Tool errors are live." />
+      {!tcLoading && !llmLoading && !(toolCalls?.length) && !(llmCalls?.length) && (
+        <ComingSoonBanner description="Tool call and LLM metrics coming soon — provisioning in progress. Tool errors are live." />
+      )}
 
       <TabBar tabs={tabs} defaultIndex={0}>
         {/* Tool Calls */}

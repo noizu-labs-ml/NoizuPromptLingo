@@ -29,10 +29,11 @@
     "target": "ES2017"
   },
   "include": [
-    "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "next-env.d.ts",
+    "../src/npl_mcp/web/static/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

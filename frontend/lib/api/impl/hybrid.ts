@@ -13,19 +13,17 @@
  *   docs.*         → rest  (/api/docs/*)
  *   npl.elements   → rest  (/api/npl/elements)
  *   npl.coverage   → rest  (/api/npl/coverage)
- *   npl.load/spec  → mock  (MCP tools only)
+ *   npl.*          → rest  (/api/npl/*)
  *   explorer.*     → rest  (/api/project/tree, /api/project/file)
  *   metrics.*      → rest  (/api/errors, /api/metrics/* — 501 returns [] for unprovisioned)
  *   chat.*         → rest  (/api/chat/rooms*)
  *   artifacts.*    → rest  (/api/artifacts*)
- *   orchestration.trigger → rest  (/api/orchestration/trigger)
- *   orchestration.agents/recentRuns → mock  (not yet wired)
+ *   orchestration.*  → rest  (/api/orchestration/*)
  *   skills.*       → rest  (/api/skills/validate)
  *   browser.*      → rest  (/api/browser/to-markdown)
  *   agents.*       → rest  (/api/agents*)
  */
 
-import * as mock from "./mock";
 import * as rest from "./rest";
 
 // Domains wired to real REST endpoints
@@ -49,10 +47,7 @@ export const metrics = {
 
 // chat: wired to REST endpoint (/api/chat/rooms*)
 export const chat = rest.chat;
-export const orchestration = {
-  ...mock.orchestration,
-  trigger: rest.orchestration.trigger.bind(rest.orchestration),
-};
+export const orchestration = rest.orchestration;
 
 // Artifacts: wired to REST endpoint (/api/artifacts*) — PRD-002 MVP
 export const artifacts = rest.artifacts;

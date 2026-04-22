@@ -1,4 +1,4 @@
-# PRD-017: Project Management MCP Tools
+# PRD-018: Project Management MCP Tools
 
 **Version**: 1.0
 **Status**: Draft

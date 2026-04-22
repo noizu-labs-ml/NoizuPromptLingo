@@ -1733,18 +1733,20 @@ async def errors_list(
 
 @router.get("/metrics/tool-calls")
 async def metrics_tool_calls(limit: int = Query(default=20, ge=1, le=100)) -> dict:
-    raise HTTPException(
-        status_code=501,
-        detail="Tool call metrics table not yet provisioned",
-    )
+    try:
+        from npl_mcp.storage.metrics import list_tool_calls
+        return await list_tool_calls(limit=limit)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
 
 
 @router.get("/metrics/llm-calls")
 async def metrics_llm_calls(limit: int = Query(default=20, ge=1, le=100)) -> dict:
-    raise HTTPException(
-        status_code=501,
-        detail="LLM call metrics table not yet provisioned",
-    )
+    try:
+        from npl_mcp.storage.metrics import list_llm_calls
+        return await list_llm_calls(limit=limit)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
 
 
 # ---------------------------------------------------------------------------
@@ -2350,6 +2352,46 @@ async def pipes_output_endpoint(body: PipeOutputBody) -> dict:
 class OrchestrationTriggerBody(BaseModel):
     feature_description: str
     agent: str = "npl-tdd-coder"
+
+
+@router.get("/orchestration/agents")
+async def orchestration_agents() -> list[dict]:
+    """List agents relevant to orchestration pipelines."""
+    from npl_mcp.agents.catalog import list_agents
+    agents = await list_agents()
+    return [
+        {"name": a.name, "purpose": a.purpose, "kind": a.kind}
+        for a in agents
+        if a.kind == "pipeline" or a.name.startswith("npl-tdd")
+    ]
+
+
+@router.get("/orchestration/runs")
+async def orchestration_runs(limit: int = Query(default=20)) -> list[dict]:
+    """List recent orchestration pipeline runs (tasks tagged [Orchestration])."""
+    try:
+        pool = await _get_db_pool()
+        rows = await pool.fetch(
+            """SELECT id, title, status, description, priority, created_at
+            FROM npl_tasks
+            WHERE title LIKE '[Orchestration]%'
+            ORDER BY created_at DESC
+            LIMIT $1""",
+            limit,
+        )
+        return [
+            {
+                "id": str(r["id"]),
+                "feature": r["title"].replace("[Orchestration] ", "", 1),
+                "status": r["status"] if r["status"] in ("pending", "running", "failed", "complete") else "pending",
+                "stage": r["status"],
+                "started_at": r["created_at"].isoformat() if r["created_at"] else None,
+                "completed_at": None,
+            }
+            for r in rows
+        ]
+    except Exception:
+        return []
 
 
 @router.post("/orchestration/trigger")
@@ -3043,6 +3085,19 @@ class ReviewCommentBody(BaseModel):
 
 class ReviewCompleteBody(BaseModel):
     overall_comment: Optional[str] = None
+
+
+@router.get("/reviews")
+async def review_list_endpoint(
+    artifact_id: int = Query(...),
+    limit: int = Query(default=50),
+) -> dict:
+    """List reviews for an artifact."""
+    try:
+        from npl_mcp.artifacts.reviews import review_list_by_artifact
+        return await review_list_by_artifact(artifact_id=artifact_id, limit=limit)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Database unavailable: {exc}") from exc
 
 
 @router.post("/reviews")

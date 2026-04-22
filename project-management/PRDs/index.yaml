@@ -1,6 +1,6 @@
-version: 1
-updated: '2026-02-02'
-documentation_source: worktrees/main/mcp-server
+version: 2
+updated: '2026-04-22'
+documentation_source: src/npl_mcp
 
 prds:
   - id: PRD-001
@@ -96,7 +96,7 @@ prds:
   - id: PRD-007
     title: Web Interface
     file: PRD-007-web-interface.md
-    status: documented
+    status: superseded
     version: 1.0
     categories: [C-09]
     tools: []
@@ -126,7 +126,7 @@ prds:
   - id: PRD-009
     title: External Executors
     file: PRD-009-external-executors.md
-    status: documented
+    status: implemented
     version: 1.0
     categories: [C-10]
     tools: []
@@ -134,11 +134,105 @@ prds:
     personas: []
     database_tables: [taskers]
     web_routes: []
-    implementation_source: worktrees/main/mcp-server
     implementation_modules: [src/npl_mcp/executors/manager.py, src/npl_mcp/executors/fabric.py]
-    documentation_brief: .tmp/mcp-server/categories/10-external-executors.md
     test_coverage: null
-    notes: Complete implementation exists but NO MCP tools exposed in unified.py - potential enhancement opportunity
+    notes: Complete implementation exists but NO MCP tools exposed - potential enhancement opportunity
+
+  - id: PRD-010
+    title: MCP Tools Implementation
+    file: PRD-010-mcp-tools-implementation
+    status: superseded
+    version: 1.0
+    tools: [create_artifact, version_artifact, create_review, add_inline_comment, complete_review, annotate_screenshot, create_chat_room, send_message, react, share_artifact, create_todo, receive_notifications, create_task, pick_task, update_status, assign_task, link_artifact, ask_question, assign_complexity, navigate, screenshot, form_fill, compare_screenshots, manage_session, inject_scripts, timeout_retry]
+    user_stories: [US-114, US-115, US-116, US-117, US-118]
+    database_tables: [artifacts, revisions, reviews, inline_comments, chat_rooms, chat_events, tasks, task_queues]
+    test_coverage: null
+    notes: Superseded by domain-specific PRDs (PRD-002 through PRD-006). Nearly all tools now implemented.
+
+  - id: PRD-011
+    title: Agent Ecosystem Definition
+    file: PRD-011-agent-ecosystem
+    status: partial
+    version: 1.0
+    tools: []
+    user_stories: [US-084, US-086]
+    database_tables: []
+    test_coverage: 0%
+    notes: Basic agent catalog implemented (agents/catalog.py). Advanced features (dependency resolution, templates, validation) not implemented.
+
+  - id: PRD-012
+    title: Multi-Agent Orchestration Framework
+    file: PRD-012-multi-agent-orchestration
+    status: draft
+    version: 1.0
+    tools: []
+    user_stories: [US-058, US-059, US-060, US-064, US-065, US-066, US-079]
+    database_tables: []
+    test_coverage: 0%
+    notes: HIGH PRIORITY. Key missing piece for TDD pipeline. Only a task-creation stub (Orchestration.Trigger) exists.
+
+  - id: PRD-013
+    title: NPL Syntax Parser
+    file: PRD-013-npl-syntax-parser
+    status: partial
+    version: 1.0
+    tools: [npl-syntax]
+    user_stories: [US-080, US-087, US-220, US-221, US-222, US-223]
+    database_tables: []
+    test_coverage: 0%
+    notes: Loading expression parser implemented (npl/parser.py, resolver.py). Full document AST parser not implemented.
+
+  - id: PRD-014
+    title: CLI Utilities Implementation
+    file: PRD-014-cli-utilities
+    status: partial
+    version: 1.0
+    tools: [npl-load, npl-persona, npl-session, dump-files, git-tree, npl-syntax, npl-check]
+    user_stories: [US-001, US-002, US-025, US-085, US-224, US-225]
+    database_tables: []
+    test_coverage: 0%
+
+  - id: PRD-015
+    title: NPL Advanced Loading Extension
+    file: PRD-015-npl-loading-extension
+    status: implemented
+    version: 1.0
+    tools: [NPLLoad]
+    user_stories: [US-201, US-202, US-203, US-204, US-205]
+    database_tables: []
+    notes: All 5 FRs implemented (parser, resolver, layout engine, skip/dedup, MCP tool).
+
+  - id: PRD-016
+    title: Skill Validator Tool
+    file: PRD-016-skill-validator-tool
+    status: partial
+    version: 1.0
+    tools: [skill_validator, skill_evaluator]
+    user_stories: [US-119, US-120]
+    database_tables: []
+    notes: Basic validation + heuristic scoring implemented. Arize Phoenix integration deferred.
+
+  - id: PRD-017
+    title: Markdown Conversion and Viewing Tools
+    file: PRD-017-markdown-tools
+    status: in-progress
+    version: 1.0
+    tools: [2md, md-view, view-md, to_markdown, view_markdown]
+    user_stories: [US-206, US-207, US-208, US-209, US-210, US-211, US-212, US-213, US-214]
+    database_tables: []
+    test_coverage: ~40%
+    notes: Phase 1 (CLI tools) implemented. Phase 2 (MCP tools) pending.
+
+  - id: PRD-018
+    title: PM MCP Tools (Project Management)
+    file: PRD-018-pm-mcp-tools
+    status: implemented
+    version: 1.0
+    tools: [get_story, list_stories, get_prd, get_prd_functional_requirement, get_prd_acceptance_test, update_story_metadata, get_persona, list_personas]
+    user_stories: [US-226, US-227, US-228, US-229, US-230, US-231, US-232]
+    database_tables: []
+    test_coverage: 0%
+    notes: Renamed from PRD-017-pm-mcp-tools. All 7 FRs implemented. Needs README.md added.
 
 tool_to_prd_mapping:
   # PRD-002: Artifact Management
@@ -303,61 +397,84 @@ us_to_prd_mapping:
   # PRD-008: NPL Script Wrappers
   US-018: [PRD-008]
 
+  # PRD-010: MCP Tools Implementation
+  US-114: [PRD-010]
+  US-115: [PRD-010]
+  US-116: [PRD-010]
+  US-117: [PRD-010]
+  US-118: [PRD-010]
+
+  # PRD-011: Agent Ecosystem
+  US-084: [PRD-011]
+  US-086: [PRD-011]
+
+  # PRD-012: Multi-Agent Orchestration
+  US-058: [PRD-004, PRD-012]
+  US-059: [PRD-004, PRD-012]
+  US-060: [PRD-012]
+  US-065: [PRD-012]
+  US-066: [PRD-012]
+  US-079: [PRD-012]
+
+  # PRD-013: NPL Syntax Parser
+  US-080: [PRD-013]
+  US-087: [PRD-013]
+  US-220: [PRD-013]
+  US-221: [PRD-013]
+  US-222: [PRD-013]
+  US-223: [PRD-013]
+
+  # PRD-014: CLI Utilities
+  US-085: [PRD-014]
+  US-224: [PRD-014]
+  US-225: [PRD-014]
+
+  # PRD-015: NPL Advanced Loading
+  US-201: [PRD-015]
+  US-202: [PRD-015]
+  US-203: [PRD-015]
+  US-204: [PRD-015]
+  US-205: [PRD-015]
+
+  # PRD-016: Skill Validator
+  US-119: [PRD-016]
+  US-120: [PRD-016]
+
+  # PRD-017: Markdown Tools
+  US-206: [PRD-017]
+  US-207: [PRD-017]
+  US-208: [PRD-017]
+  US-209: [PRD-017]
+  US-210: [PRD-017]
+  US-211: [PRD-017]
+  US-212: [PRD-017]
+  US-213: [PRD-017]
+  US-214: [PRD-017]
+
+  # PRD-018: PM MCP Tools
+  US-226: [PRD-018]
+  US-227: [PRD-018]
+  US-228: [PRD-018]
+  US-229: [PRD-018]
+  US-230: [PRD-018]
+  US-231: [PRD-018]
+  US-232: [PRD-018]
+
 statistics:
-  total_prds: 9
-  total_tools: 73
-  total_user_stories: 90
-  total_database_tables: 16
-  total_web_routes: 17
-  prd_with_tools: 6
-  prd_infrastructure: 2
-  prd_ui: 1
-  prd_tool_distribution:
-    PRD-002: 5
-    PRD-003: 6
-    PRD-004: 12
-    PRD-005: 13
-    PRD-006: 32
-    PRD-008: 5
+  total_prds: 18
+  total_user_stories: 140+
+  status_distribution:
+    implemented: 7
+    in-progress: 1
+    draft: 10
   coverage_distribution:
-    documented: 9
     with_test_coverage: 4
     highest_coverage: "PRD-001 (82%)"
-    lowest_coverage: "PRD-005, PRD-007, PRD-008 (0%)"
-    average_coverage: "31%"
-  category_coverage:
-    C-01: 82%
-    C-02: 53%
-    C-03: 25%
-    C-04: 78%
-    C-05: 0%
-    C-06: 0%
-    C-07: null
-    C-08: 0%
-    C-09: 0%
-    C-10: null
-
-persona_engagement:
-  P-001: [PRD-001, PRD-002, PRD-004, PRD-005, PRD-006, PRD-008]
-  P-002: [PRD-002, PRD-003, PRD-004, PRD-007]
-  P-003: [PRD-002, PRD-003, PRD-004, PRD-005, PRD-006, PRD-008]
-  P-004: [PRD-001, PRD-004, PRD-005]
-  P-005: [PRD-001, PRD-002, PRD-003, PRD-005, PRD-008]
-
-next_steps:
-  - Generate individual PRD markdown files (PRD-001.md through PRD-009.md)
-  - Create comprehensive extraction summary document
-  - Update user-stories/index.yaml with implementation_status for all stories
-  - Generate tool reference documentation from tool_to_prd_mapping
-  - Create cross-reference matrix for PRD dependencies
-  - Document test coverage improvement roadmap
+    lowest_coverage: "PRD-005, PRD-007, PRD-008, PRD-011 through PRD-016, PRD-018 (0%)"
 
 notes:
-  - Index created on 2026-02-02 from extraction data
-  - Source: worktrees/main/mcp-server (production-ready code)
-  - 73 MCP tools across 6 PRDs with exposed tool interfaces
-  - 3 PRDs cover infrastructure and UI (no direct tool exposure)
-  - 90 user stories mapped across all 9 PRDs
-  - Test coverage varies: 82% (database) to 0% (tasks, sessions, web, scripts)
-  - Some user stories span multiple PRDs (cross-cutting concerns)
-  - PRD-009 (External Executors) has complete implementation but no MCP exposure
+  - Index rebuilt on 2026-04-22 to include PRD-010 through PRD-018
+  - PRD-017-pm-mcp-tools renamed to PRD-018-pm-mcp-tools to resolve duplicate ID
+  - Source migrated from worktrees/main/mcp-server to src/npl_mcp
+  - Test coverage varies: 82% (database) to 0% (most draft PRDs)
+  - PRD-010 is cross-cutting; many tools now covered by domain-specific PRDs

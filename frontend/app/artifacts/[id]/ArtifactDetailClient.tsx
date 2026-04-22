@@ -4,7 +4,12 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import useSWR from "swr";
 import clsx from "clsx";
-import { DocumentIcon, PlusIcon } from "@heroicons/react/24/outline";
+import {
+  ChatBubbleLeftRightIcon,
+  DocumentIcon,
+  DocumentTextIcon,
+  PlusIcon,
+} from "@heroicons/react/24/outline";
 
 import { api } from "@/lib/api/client";
 import type { ArtifactRevisionSummary } from "@/lib/api/types";
@@ -18,6 +23,8 @@ import { Input } from "@/components/primitives/Input";
 import { Textarea } from "@/components/primitives/Textarea";
 import { FormField } from "@/components/primitives/FormField";
 import { DetailHeader } from "@/components/composites/DetailHeader";
+import { TabBar, TabPanel } from "@/components/composites/TabBar";
+import { ReviewPanel } from "@/components/composites/ReviewPanel";
 
 import { kindVariant } from "@/lib/utils/badges";
 
@@ -35,6 +42,7 @@ export default function ArtifactDetailClient() {
   const [submitting, setSubmitting] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("content");
 
   const { data: artifact, isLoading, mutate: mutateArtifact } = useSWR(
     validId ? `artifact.${id}.rev.${activeRevision ?? "latest"}` : null,
@@ -223,7 +231,7 @@ export default function ArtifactDetailClient() {
                     rows={5}
                     value={newContent}
                     onChange={(e) => setNewContent(e.target.value)}
-                    placeholder="New content body…"
+                    placeholder="New content body..."
                     mono
                   />
                 </FormField>
@@ -249,38 +257,63 @@ export default function ArtifactDetailClient() {
                 loading={submitting}
                 className="w-full"
               >
-                {submitting ? "Saving…" : `Save as v${artifact.latest_revision + 1}`}
+                {submitting ? "Saving..." : `Save as v${artifact.latest_revision + 1}`}
               </Button>
             </Card>
           )}
         </aside>
 
-        {/* Content */}
+        {/* Content and Reviews tabs */}
         <div className="flex-1 min-w-0 space-y-4">
-          <Card>
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-semibold text-foreground">
-                Content <span className="font-mono text-xs text-muted ml-1">v{artifact.revision.revision}</span>
-              </h3>
-              {artifact.revision.created_at && (
-                <span className="text-xs text-subtle font-mono">
-                  {artifact.revision.created_at}
-                </span>
-              )}
-            </div>
-            {artifact.revision.notes && (
-              <p className="text-xs text-muted italic mb-2">“{artifact.revision.notes}”</p>
-            )}
-            {isBinary ? (
-              <MediaPreview kind={artifact.kind} mime={mime} rawUrl={rawUrl} title={artifact.title} />
-            ) : (
-              <CodeBlock
-                code={artifact.revision.content}
-                language={artifact.kind === "markdown" ? "markdown" : artifact.kind}
-                maxHeight="500px"
+          <TabBar
+            tabs={[
+              {
+                id: "content",
+                label: "Content",
+                icon: <DocumentTextIcon className="h-3.5 w-3.5" />,
+              },
+              {
+                id: "reviews",
+                label: "Reviews",
+                icon: <ChatBubbleLeftRightIcon className="h-3.5 w-3.5" />,
+              },
+            ]}
+            value={activeTab}
+            onChange={setActiveTab}
+          >
+            <TabPanel>
+              <Card>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-semibold text-foreground">
+                    Content <span className="font-mono text-xs text-muted ml-1">v{artifact.revision.revision}</span>
+                  </h3>
+                  {artifact.revision.created_at && (
+                    <span className="text-xs text-subtle font-mono">
+                      {artifact.revision.created_at}
+                    </span>
+                  )}
+                </div>
+                {artifact.revision.notes && (
+                  <p className="text-xs text-muted italic mb-2">&ldquo;{artifact.revision.notes}&rdquo;</p>
+                )}
+                {isBinary ? (
+                  <MediaPreview kind={artifact.kind} mime={mime} rawUrl={rawUrl} title={artifact.title} />
+                ) : (
+                  <CodeBlock
+                    code={artifact.revision.content}
+                    language={artifact.kind === "markdown" ? "markdown" : artifact.kind}
+                    maxHeight="500px"
+                  />
+                )}
+              </Card>
+            </TabPanel>
+            <TabPanel>
+              <ReviewPanel
+                artifactId={artifact.id}
+                revisionId={artifact.revision.revision}
               />
-            )}
-          </Card>
+            </TabPanel>
+          </TabBar>
         </div>
       </div>
     </div>
@@ -340,7 +373,7 @@ function MediaPreview({
       </div>
     );
   }
-  // binary / unknown — offer download
+  // binary / unknown -- offer download
   return (
     <div className="rounded-lg border border-border/50 bg-surface-1 p-6 text-center space-y-3">
       <p className="text-sm text-muted">Binary artifact ({mime || "unknown type"}).</p>

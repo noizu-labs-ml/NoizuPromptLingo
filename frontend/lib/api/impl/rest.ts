@@ -580,14 +580,18 @@ export const reviews = {
   async create(input: ReviewCreateInput): Promise<Review> {
     return post<Review>('/api/reviews', input);
   },
-  async get(id: number): Promise<Review | null> {
-    return tryGet<Review>(`/api/reviews/${id}`);
+  async get(id: number, include_comments = true): Promise<Review | null> {
+    const qs = include_comments ? '?include_comments=true' : '';
+    return tryGet<Review>(`/api/reviews/${id}${qs}`);
   },
   async addComment(reviewId: number, input: ReviewCommentInput): Promise<InlineComment> {
     return post<InlineComment>(`/api/reviews/${reviewId}/comments`, input);
   },
   async complete(reviewId: number, overall_comment?: string): Promise<Review> {
     return post<Review>(`/api/reviews/${reviewId}/complete`, { overall_comment });
+  },
+  async listByArtifact(artifactId: number): Promise<Review[]> {
+    return get<Review[]>(`/api/reviews?artifact_id=${artifactId}`);
   },
 };
 

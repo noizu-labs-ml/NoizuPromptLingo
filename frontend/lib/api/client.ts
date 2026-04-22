@@ -246,9 +246,10 @@ export interface TasksAPI {
 
 export interface ReviewsAPI {
   create(input: ReviewCreateInput): Promise<Review>;
-  get(id: number): Promise<Review | null>;
+  get(id: number, include_comments?: boolean): Promise<Review | null>;
   addComment(reviewId: number, input: ReviewCommentInput): Promise<InlineComment>;
   complete(reviewId: number, overall_comment?: string): Promise<Review>;
+  listByArtifact(artifactId: number): Promise<Review[]>;
 }
 
 export interface TaskersAPI {
