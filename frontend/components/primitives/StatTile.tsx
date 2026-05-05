@@ -14,7 +14,7 @@ export interface StatTileDelta {
   trend?: StatTileTrend;
 }
 
-export interface StatTileProps {
+export interface StatTileProps extends Omit<React.HTMLAttributes<HTMLElement>, 'children' | 'className'> {
   /** Uppercase label ("tasks", "sessions"). Rendered via typography.label. */
   label: ReactNode;
   /** Large value — usually a number. */
@@ -98,16 +98,17 @@ export function StatTile({
   icon,
   href,
   className,
+  ...rest
 }: StatTileProps) {
   if (href) {
     return (
-      <Link href={href} className={clsx(shellClasses, focusRing, className)}>
+      <Link {...rest} href={href} className={clsx(shellClasses, focusRing, className)}>
         <TileContent label={label} value={value} delta={delta} icon={icon} />
       </Link>
     );
   }
   return (
-    <div className={clsx(shellClasses, className)}>
+    <div {...rest} className={clsx(shellClasses, className)}>
       <TileContent label={label} value={value} delta={delta} icon={icon} />
     </div>
   );

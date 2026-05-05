@@ -3,7 +3,7 @@
 import { ReactNode } from "react";
 import { heading, text } from "@/lib/ui/typography";
 
-export interface PageHeaderProps {
+export interface PageHeaderProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'children'> {
   title: string;
   description?: string;
   actions?: ReactNode;
@@ -20,9 +20,10 @@ export function PageHeader({
   description,
   actions,
   eyebrow,
+  ...rest
 }: PageHeaderProps) {
   return (
-    <div className="flex items-start justify-between gap-4">
+    <div {...rest} className="flex items-start justify-between gap-4">
       <div className="flex flex-col gap-2">
         {eyebrow && (
           <div className="text-label uppercase text-subtle flex items-center gap-2">

@@ -3,7 +3,7 @@
 import clsx from "clsx";
 import { ReactNode } from "react";
 
-export interface FormFieldProps {
+export interface FormFieldProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'children' | 'className'> {
   /** Visible label above the control. */
   label?: ReactNode;
   /** Secondary descriptive text below the control. Hidden when `error` is present. */
@@ -33,11 +33,12 @@ export function FormField({
   htmlFor,
   children,
   className,
+  ...rest
 }: FormFieldProps) {
   const showError = Boolean(error);
 
   return (
-    <div className={clsx("flex flex-col gap-1", className)}>
+    <div {...rest} className={clsx("flex flex-col gap-1", className)}>
       {label && (
         <label
           htmlFor={htmlFor}

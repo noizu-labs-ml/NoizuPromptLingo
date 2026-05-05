@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "tool_name": "ToolSearch",
+    "error_type": "KeyError",
+    "error_message": "'session_id'",
+    "session_id": null,
+    "stack_excerpt": "Traceback (most recent call last):\n  File \"npl_mcp/toolsearch.py\", line 42, in handle\n    result = await _process(args)\nKeyError: 'session_id'",
+    "created_at": "2026-04-23T08:30:00Z"
+  },
+  {
+    "id": 2,
+    "tool_name": "Ping",
+    "error_type": "ConnectionError",
+    "error_message": "Connection refused: 127.0.0.1:5432",
+    "session_id": "sess-abc123",
+    "stack_excerpt": null,
+    "created_at": "2026-04-22T14:00:00Z"
+  }
+]

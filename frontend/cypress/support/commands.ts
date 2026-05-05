@@ -4,6 +4,7 @@ declare global {
       getByCy(selector: string): Chainable<JQuery<HTMLElement>>;
       getByCyId(selector: string, id: string | number): Chainable<JQuery<HTMLElement>>;
       getByCyScope(scope: string): Chainable<JQuery<HTMLElement>>;
+      getByCyValue(selector: string, value: string | number): Chainable<JQuery<HTMLElement>>;
     }
   }
 }
@@ -18,6 +19,10 @@ Cypress.Commands.add("getByCyId", (selector: string, id: string | number) => {
 
 Cypress.Commands.add("getByCyScope", (scope: string) => {
   return cy.get(`[data-cy-scope="${scope}"]`);
+});
+
+Cypress.Commands.add("getByCyValue", (selector: string, value: string | number) => {
+  return cy.get(`[data-cy="${selector}"][data-cy-value="${value}"]`);
 });
 
 export {};

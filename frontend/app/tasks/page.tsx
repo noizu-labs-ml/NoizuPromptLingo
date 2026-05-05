@@ -10,6 +10,7 @@ import {
 
 import { api } from "@/lib/api/client";
 import type { Task, TaskStatus } from "@/lib/api/types";
+import { cyAttrs } from "@/lib/utils/cyAttrs";
 import { Card } from "@/components/primitives/Card";
 import { PageHeader } from "@/components/primitives/PageHeader";
 import { EmptyState } from "@/components/primitives/EmptyState";
@@ -46,6 +47,7 @@ function TaskRow({ task, onStatusChange }: {
   return (
     <ListRow
       href={`/tasks/${task.id}`}
+      {...cyAttrs({ cy: "task-row", cyId: task.id })}
       actions={
         <>
           <Badge variant={priorityVariant(task.priority)} size="sm">
@@ -60,6 +62,7 @@ function TaskRow({ task, onStatusChange }: {
             onClick={(e) => e.stopPropagation()}
             onChange={(e) => onStatusChange(task.id, e.target.value as TaskStatus)}
             className="w-auto"
+            {...cyAttrs({ cy: "task-status-select" })}
           >
             {STATUSES.map((s) => (
               <option key={s} value={s}>{s}</option>
@@ -123,6 +126,7 @@ function NewTaskForm({ onCreated }: { onCreated: () => void }) {
         size="sm"
         leadingIcon={<PlusIcon className="h-4 w-4" />}
         onClick={() => setOpen(true)}
+        {...cyAttrs({ cy: "new-task-btn" })}
       >
         New task
       </Button>
@@ -130,13 +134,14 @@ function NewTaskForm({ onCreated }: { onCreated: () => void }) {
   }
 
   return (
-    <Card className="flex flex-col gap-3">
+    <Card className="flex flex-col gap-3" {...cyAttrs({ cy: "new-task-form" })}>
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-foreground">New task</h3>
         <Button
           variant="icon"
           onClick={() => setOpen(false)}
           aria-label="Close"
+          {...cyAttrs({ cy: "close-form-btn" })}
         >
           <XMarkIcon className="h-4 w-4" />
         </Button>
@@ -148,6 +153,7 @@ function NewTaskForm({ onCreated }: { onCreated: () => void }) {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Short, imperative title"
+            {...cyAttrs({ cy: "task-title-input" })}
           />
         </FormField>
         <FormField label="Description" className="md:col-span-2">
@@ -155,12 +161,14 @@ function NewTaskForm({ onCreated }: { onCreated: () => void }) {
             rows={2}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
+            {...cyAttrs({ cy: "task-description-input" })}
           />
         </FormField>
         <FormField label="Priority">
           <Select
             value={priority}
             onChange={(e) => setPriority(parseInt(e.target.value))}
+            {...cyAttrs({ cy: "task-priority-select" })}
           >
             <option value={0}>0 — low</option>
             <option value={1}>1 — normal</option>
@@ -173,18 +181,19 @@ function NewTaskForm({ onCreated }: { onCreated: () => void }) {
             value={assignedTo}
             onChange={(e) => setAssignedTo(e.target.value)}
             placeholder="optional"
+            {...cyAttrs({ cy: "task-assignee-input" })}
           />
         </FormField>
       </div>
 
       {error && (
-        <p className="text-xs text-danger" role="alert" aria-live="polite">
+        <p className="text-xs text-danger" role="alert" aria-live="polite" {...cyAttrs({ cy: "task-error" })}>
           {error}
         </p>
       )}
 
       <div className="flex items-center justify-end gap-2">
-        <Button variant="secondary" size="sm" onClick={() => setOpen(false)}>
+        <Button variant="secondary" size="sm" onClick={() => setOpen(false)} {...cyAttrs({ cy: "cancel-form-btn" })}>
           Cancel
         </Button>
         <Button
@@ -193,6 +202,7 @@ function NewTaskForm({ onCreated }: { onCreated: () => void }) {
           loading={submitting}
           disabled={!title.trim()}
           onClick={handleSubmit}
+          {...cyAttrs({ cy: "create-task-btn" })}
         >
           {submitting ? "Creating…" : "Create"}
         </Button>
@@ -227,7 +237,7 @@ export default function TasksPage() {
   const hasActive = Boolean(statusFilter) || Boolean(assigneeFilter);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" {...cyAttrs({ cy: "tasks-page", cyScope: "tasks" })}>
       <PageHeader
         title="Tasks"
         description="Flat work-item queue. Filter by status/assignee; flip status inline."
@@ -244,6 +254,7 @@ export default function TasksPage() {
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as TaskStatus | "")}
                 className="w-32"
+                {...cyAttrs({ cy: "status-filter" })}
               >
                 <option value="">All</option>
                 {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -258,6 +269,7 @@ export default function TasksPage() {
                 onChange={(e) => setAssigneeFilter(e.target.value)}
                 placeholder="exact match…"
                 className="w-40"
+                {...cyAttrs({ cy: "assignee-filter" })}
               />
             </label>
           </>
@@ -271,12 +283,13 @@ export default function TasksPage() {
         <div
           role="alert"
           className="rounded-md border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger"
+          {...cyAttrs({ cy: "task-error" })}
         >
           Failed to load tasks: {String(error)}
         </div>
       )}
 
-      {isLoading && <SkeletonGrid as="row" count={4} />}
+      {isLoading && <SkeletonGrid as="row" count={4} {...cyAttrs({ cy: "tasks-loading" })} />}
 
       {!isLoading && tasks.length === 0 && (
         <EmptyState
@@ -287,11 +300,12 @@ export default function TasksPage() {
               ? "No tasks match the current filters."
               : "Create the first task to get started."
           }
+          {...cyAttrs({ cy: "tasks-empty" })}
         />
       )}
 
       {!isLoading && tasks.length > 0 && (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2" {...cyAttrs({ cy: "tasks-list" })}>
           {tasks.map((t) => (
             <TaskRow key={t.id} task={t} onStatusChange={handleStatusChange} />
           ))}

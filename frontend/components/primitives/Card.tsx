@@ -6,7 +6,7 @@ import { ReactNode } from "react";
 export type CardDensity = "compact" | "normal" | "spacious";
 export type CardSurface = 0 | 1 | 2 | "elevated";
 
-export interface CardProps {
+export interface CardProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'children' | 'className'> {
   children: ReactNode;
   className?: string;
   /**
@@ -42,6 +42,7 @@ export function Card({
   density = "normal",
   surface = 0,
   hoverable = false,
+  ...rest
 }: CardProps) {
   const surfaceKey = (surface === "elevated" ? "elevated" : String(surface)) as
     | "0"
@@ -51,6 +52,7 @@ export function Card({
 
   return (
     <div
+      {...rest}
       className={clsx(
         "border border-border rounded-lg",
         surfaceClasses[surfaceKey],

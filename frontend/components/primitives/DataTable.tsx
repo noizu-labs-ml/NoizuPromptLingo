@@ -10,7 +10,7 @@ export interface ColumnDef<T> {
   className?: string;
 }
 
-export interface DataTableProps<T> {
+export interface DataTableProps<T> extends Omit<React.HTMLAttributes<HTMLDivElement>, 'children'> {
   columns: ColumnDef<T>[];
   rows: T[];
   rowKey: (row: T) => string;
@@ -24,9 +24,10 @@ export function DataTable<T>({
   rowKey,
   emptyMessage = "No data available.",
   onRowClick,
+  ...rest
 }: DataTableProps<T>) {
   return (
-    <div className="w-full overflow-x-auto rounded-lg border border-border shadow-ambient">
+    <div {...rest} className="w-full overflow-x-auto rounded-lg border border-border shadow-ambient">
       <table className="table-auto w-full text-sm">
         <thead className="sticky top-0 z-10 bg-surface-1/95 backdrop-blur-sm border-b border-border">
           <tr>
@@ -57,6 +58,7 @@ export function DataTable<T>({
             rows.map((row) => (
               <tr
                 key={rowKey(row)}
+                data-cy-id={rowKey(row)}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
                 className={clsx(
                   "hover:bg-accent/5 transition-colors",

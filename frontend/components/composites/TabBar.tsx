@@ -19,7 +19,7 @@ export interface TabItem {
   badge?: ReactNode;
 }
 
-export interface TabBarProps {
+export interface TabBarProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'children' | 'className' | 'onChange'> {
   tabs: TabItem[];
   /** Controlled selected tab id. */
   value?: string;
@@ -60,6 +60,7 @@ export function TabBar({
   defaultIndex,
   children,
   className,
+  ...rest
 }: TabBarProps) {
   const controlled = value !== undefined;
   const selectedIndex = controlled
@@ -76,6 +77,7 @@ export function TabBar({
 
   return (
     <TabGroup
+      {...rest}
       selectedIndex={selectedIndex}
       defaultIndex={controlled ? undefined : defaultIndex}
       onChange={handleChange}
@@ -85,6 +87,7 @@ export function TabBar({
         {tabs.map((tab) => (
           <Tab
             key={tab.id}
+            data-cy-id={tab.id}
             className={({ selected }) =>
               clsx(selected ? selectedClass : unselectedClass)
             }

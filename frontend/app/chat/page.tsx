@@ -119,7 +119,7 @@ function NewRoomForm({ onCreated }: { onCreated: () => void }) {
         variant="ghost"
         size="sm"
         onClick={() => setOpen(false)}
-        {...cyAttrs({ cy: "cancel-room-btn" })}
+        {...cyAttrs({ cy: "cancel-btn" })}
       >
         Cancel
       </Button>

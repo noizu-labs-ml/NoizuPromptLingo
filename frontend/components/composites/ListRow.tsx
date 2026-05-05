@@ -6,7 +6,7 @@ import { KeyboardEvent, ReactNode } from "react";
 import { Card } from "@/components/primitives/Card";
 import { focusRing } from "@/lib/utils/focusRing";
 
-export interface ListRowProps {
+export interface ListRowProps extends Omit<React.HTMLAttributes<HTMLElement>, 'children' | 'className' | 'onClick'> {
   /** Primary content on the left — usually title + optional description below. */
   children: ReactNode;
 
@@ -42,6 +42,7 @@ export function ListRow({
   selected,
   density = "compact",
   className,
+  ...rest
 }: ListRowProps) {
   const interactive = Boolean(href) || Boolean(onClick);
 
@@ -50,24 +51,28 @@ export function ListRow({
     className,
   );
 
+  const cardContent = (
+    <div className="flex items-center gap-3">
+      <div className="flex-1 min-w-0">{children}</div>
+      {actions && (
+        <div className="flex items-center gap-2 shrink-0">{actions}</div>
+      )}
+    </div>
+  );
+
   const content = (
     <Card
       density={density}
       hoverable={interactive}
       className={cardClassName}
     >
-      <div className="flex items-center gap-3">
-        <div className="flex-1 min-w-0">{children}</div>
-        {actions && (
-          <div className="flex items-center gap-2 shrink-0">{actions}</div>
-        )}
-      </div>
+      {cardContent}
     </Card>
   );
 
   if (href) {
     return (
-      <Link href={href} className={clsx("block rounded-lg", focusRing)}>
+      <Link {...rest} href={href} className={clsx("block rounded-lg", focusRing)}>
         {content}
       </Link>
     );
@@ -83,6 +88,7 @@ export function ListRow({
 
     return (
       <div
+        {...rest}
         role="button"
         tabIndex={0}
         onClick={onClick}
@@ -94,5 +100,14 @@ export function ListRow({
     );
   }
 
-  return content;
+  return (
+    <Card
+      {...rest}
+      density={density}
+      hoverable={interactive}
+      className={cardClassName}
+    >
+      {cardContent}
+    </Card>
+  );
 }

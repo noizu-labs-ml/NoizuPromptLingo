@@ -20,29 +20,40 @@ import { SearchBox } from "@/components/forms/SearchBox";
 import { FilterBar } from "@/components/composites/FilterBar";
 
 import { relativeTime } from "@/lib/utils/format";
+import { cyAttrs } from "@/lib/utils/cyAttrs";
 
 // ── Instruction card ──────────────────────────────────────────────────────
 
 function InstructionCard({ instruction }: { instruction: Instruction }) {
   return (
-    <Link href={`/instructions/${instruction.uuid}`} className="block rounded-lg focus-ring">
+    <Link
+      href={`/instructions/${instruction.uuid}`}
+      className="block rounded-lg focus-ring"
+      {...cyAttrs({ cy: "instruction-card", cyId: instruction.uuid })}
+    >
       <Card hoverable className="h-full flex flex-col gap-2">
         <div className="flex items-start justify-between gap-2 min-w-0">
-          <span className="font-semibold text-sm text-foreground truncate flex-1">
+          <span
+            className="font-semibold text-sm text-foreground truncate flex-1"
+            {...cyAttrs({ cy: "instruction-title" })}
+          >
             {instruction.title}
           </span>
-          <Badge variant="info" size="sm">
+          <Badge variant="info" size="sm" {...cyAttrs({ cy: "instruction-version" })}>
             v{instruction.active_version}
           </Badge>
         </div>
 
-        <p className="text-sm text-muted line-clamp-2 flex-1">
+        <p
+          className="text-sm text-muted line-clamp-2 flex-1"
+          {...cyAttrs({ cy: "instruction-description" })}
+        >
           {instruction.description}
         </p>
 
         <div className="grid gap-2 mt-1">
           {instruction.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1 min-w-0">
+            <div className="flex flex-wrap gap-1 min-w-0" {...cyAttrs({ cy: "instruction-tags" })}>
               {instruction.tags.map((tag) => (
                 <Badge key={tag} variant="default" size="sm">
                   {tag}
@@ -72,7 +83,6 @@ export default function InstructionsPage() {
     () => api.instructions.list()
   );
 
-  // Collect all unique tags from all instructions
   const allTags = useMemo(() => {
     const set = new Set<string>();
     (instructions ?? []).forEach((instr) =>
@@ -93,19 +103,16 @@ export default function InstructionsPage() {
     });
   };
 
-  // Client-side filtering
   const filtered = useMemo(() => {
     if (!instructions) return [];
     let list = instructions;
 
-    // Tag filter (AND semantics)
     if (activeTags.size > 0) {
       list = list.filter((i) =>
         Array.from(activeTags).every((t) => i.tags.includes(t))
       );
     }
 
-    // Text/intent filter (same mock behaviour for both modes)
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       list = list.filter(
@@ -120,13 +127,15 @@ export default function InstructionsPage() {
   }, [instructions, activeTags, search]);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div
+      className="flex flex-col gap-6"
+      {...cyAttrs({ cy: "instructions-page", cyScope: "instructions" })}
+    >
       <PageHeader
         title="Instructions"
         description="Versioned instruction documents with text and intent search."
       />
 
-      {/* Search + mode toggle (row 1) + tag cloud (row 2) */}
       <FilterBar
         search={
           <SearchBox
@@ -145,6 +154,7 @@ export default function InstructionsPage() {
               { value: "text", label: "Text" },
               { value: "intent", label: "Intent (mock)" },
             ]}
+            {...cyAttrs({ cy: "search-mode-toggle" })}
           />
         }
         secondary={
@@ -153,6 +163,7 @@ export default function InstructionsPage() {
               className="flex flex-wrap gap-2"
               role="group"
               aria-label="Filter by tag"
+              {...cyAttrs({ cy: "tag-cloud" })}
             >
               {allTags.map((tag) => (
                 <button
@@ -161,6 +172,7 @@ export default function InstructionsPage() {
                   onClick={() => toggleTag(tag)}
                   className="focus-ring rounded-full shrink-0"
                   aria-pressed={activeTags.has(tag)}
+                  {...cyAttrs({ cy: "tag-filter-btn", cyValue: tag })}
                 >
                   <Tag label={tag} active={activeTags.has(tag)} />
                 </button>
@@ -175,18 +187,17 @@ export default function InstructionsPage() {
         }}
         summary={
           !isLoading && instructions ? (
-            <>
+            <span {...cyAttrs({ cy: "results-summary" })}>
               {filtered.length} {filtered.length === 1 ? "instruction" : "instructions"}
               {activeTags.size > 0 && ` · ${activeTags.size} tag${activeTags.size > 1 ? "s" : ""} active`}
               {searchMode === "intent" && search.trim() && (
                 <span className="ml-1 text-subtle italic">(intent search is simulated)</span>
               )}
-            </>
+            </span>
           ) : undefined
         }
       />
 
-      {/* Grid */}
       {isLoading ? (
         <SkeletonGrid as="card" count={6} />
       ) : filtered.length === 0 ? (
@@ -206,9 +217,13 @@ export default function InstructionsPage() {
               Clear all filters
             </Button>
           }
+          {...cyAttrs({ cy: "instructions-empty" })}
         />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div
+          className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"
+          {...cyAttrs({ cy: "instructions-grid", cyValue: filtered.length })}
+        >
           {filtered.map((instr) => (
             <InstructionCard key={instr.uuid} instruction={instr} />
           ))}

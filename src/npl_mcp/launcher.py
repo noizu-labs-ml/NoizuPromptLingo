@@ -10,6 +10,7 @@ Usage:
     npl-mcp --host HOST      # Use custom host (default 127.0.0.1)
     npl-mcp --no-frontend    # Start server without frontend build
     npl-mcp --reload         # Auto-reload on file changes
+    npl-mcp --watch-frontend # Rebuild frontend on file changes
 """
 
 import datetime
@@ -74,6 +75,52 @@ def build_frontend() -> bool:
         print("Warning: npm not found. Skipping frontend build.")
         print("To build frontend, install Node.js and run: cd frontend && npm install && npm run build")
         return False
+
+
+def start_frontend_watcher() -> None:
+    """Watch frontend/ for changes and rebuild the static export in a background thread."""
+    import threading
+    import time
+
+    WATCH_EXTENSIONS = {".tsx", ".ts", ".css", ".scss", ".json", ".js", ".jsx"}
+    DEBOUNCE_SECONDS = 2.0
+
+    def _rebuild_loop() -> None:
+        from watchfiles import watch
+
+        print(f"[watch-frontend] Watching {FRONTEND_DIR} for changes...")
+        last_build = 0.0
+        for changes in watch(
+            FRONTEND_DIR,
+            watch_filter=lambda change, path: (
+                Path(path).suffix in WATCH_EXTENSIONS
+                and "node_modules" not in path
+                and ".next" not in path
+            ),
+        ):
+            now = time.monotonic()
+            if now - last_build < DEBOUNCE_SECONDS:
+                continue
+            changed_files = [p for _, p in changes]
+            short = [str(Path(p).relative_to(FRONTEND_DIR)) for p in changed_files[:5]]
+            extra = f" (+{len(changed_files) - 5} more)" if len(changed_files) > 5 else ""
+            print(f"[watch-frontend] Changed: {', '.join(short)}{extra}")
+            print("[watch-frontend] Rebuilding...")
+            try:
+                subprocess.run(
+                    ["npm", "run", "build"],
+                    cwd=str(FRONTEND_DIR),
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+                last_build = time.monotonic()
+                print("[watch-frontend] Build complete.")
+            except subprocess.CalledProcessError as e:
+                print(f"[watch-frontend] Build failed: {e.stderr[-500:] if e.stderr else e}")
+
+    t = threading.Thread(target=_rebuild_loop, daemon=True, name="frontend-watcher")
+    t.start()
 
 
 def create_app() -> "FastMCP":
@@ -2124,7 +2171,7 @@ def main() -> None:
         elif args[i] == "--host" and i + 1 < len(args):
             HOST = args[i + 1]
             i += 2
-        elif args[i] in ("--no-frontend", "--reload"):
+        elif args[i] in ("--no-frontend", "--reload", "--watch-frontend"):
             i += 1
         else:
             i += 1
@@ -2133,6 +2180,9 @@ def main() -> None:
     frontend_built = False
     if not no_frontend:
         frontend_built = build_frontend()
+
+    if "--watch-frontend" in args and not no_frontend and FRONTEND_DIR.exists():
+        start_frontend_watcher()
 
     reload = "--reload" in args
 

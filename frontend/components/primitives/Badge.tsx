@@ -20,7 +20,7 @@ export type BadgeDotTone =
   | "danger"
   | "info";
 
-export interface BadgeProps {
+export interface BadgeProps extends Omit<React.HTMLAttributes<HTMLSpanElement>, 'children' | 'className'> {
   children?: ReactNode;
   variant?: BadgeVariant;
   size?: "sm" | "md";
@@ -79,11 +79,13 @@ export function Badge({
   dot = false,
   tone = "default",
   className,
+  ...rest
 }: BadgeProps) {
   // `dot` variant: just a small filled circle, no pill chrome.
   if (variant === "dot") {
     return (
       <span
+        {...rest}
         className={clsx(
           "inline-block h-1.5 w-1.5 rounded-full",
           toneColor[tone],
@@ -96,6 +98,7 @@ export function Badge({
 
   return (
     <span
+      {...rest}
       className={clsx(
         "inline-flex items-center gap-1.5 rounded-full font-medium",
         variantClasses[variant],

@@ -4,16 +4,16 @@ import clsx from "clsx";
 import { ReactNode } from "react";
 import { heading } from "@/lib/ui/typography";
 
-export interface EmptyStateProps {
+export interface EmptyStateProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'children'> {
   icon?: ReactNode;
   title: string;
   description?: string;
   action?: ReactNode;
 }
 
-export function EmptyState({ icon, title, description, action }: EmptyStateProps) {
+export function EmptyState({ icon, title, description, action, ...rest }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center">
+    <div {...rest} className="flex flex-col items-center justify-center gap-3 py-16 px-4 text-center">
       {icon && (
         <div
           className={clsx(

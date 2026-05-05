@@ -1,0 +1,36 @@
+[
+  {
+    "name": "Ping",
+    "category": "browser",
+    "description": "Check whether a URL is reachable.",
+    "parameters": [
+      { "name": "url", "type": "str", "required": true, "description": "URL to ping" }
+    ],
+    "tags": ["network", "browser"],
+    "title": "Ping",
+    "version": "1.0"
+  },
+  {
+    "name": "NPLLoad",
+    "category": "npl",
+    "description": "Load NPL conventions by expression DSL.",
+    "parameters": [
+      { "name": "expression", "type": "str", "required": true, "description": "Expression DSL string" },
+      { "name": "layout", "type": "str", "required": false, "description": "Layout mode" }
+    ],
+    "tags": ["npl", "conventions"],
+    "title": "NPL Load",
+    "version": "1.0"
+  },
+  {
+    "name": "ToolSearch",
+    "category": "meta",
+    "description": "Search the tool catalog by name or description.",
+    "parameters": [
+      { "name": "query", "type": "str", "required": true, "description": "Search query" }
+    ],
+    "tags": ["meta", "discovery"],
+    "title": "Tool Search",
+    "version": "1.0"
+  }
+]

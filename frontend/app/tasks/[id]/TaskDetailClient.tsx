@@ -8,6 +8,7 @@ import { QueueListIcon } from "@heroicons/react/24/outline";
 
 import { api } from "@/lib/api/client";
 import type { Task, TaskStatus } from "@/lib/api/types";
+import { cyAttrs } from "@/lib/utils/cyAttrs";
 import { Card } from "@/components/primitives/Card";
 import { Badge } from "@/components/primitives/Badge";
 import type { BadgeProps } from "@/components/primitives/Badge";
@@ -87,7 +88,7 @@ export function TaskDetailClient() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6 animate-pulse">
+      <div className="space-y-6 animate-pulse" {...cyAttrs({ cy: "tasks-loading" })}>
         <div className="h-8 bg-surface-1 rounded w-1/3" />
         <div className="h-4 bg-surface-1 rounded w-2/3" />
         <div className="h-40 bg-surface-1 rounded" />
@@ -97,7 +98,7 @@ export function TaskDetailClient() {
 
   if (error || !task) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4" {...cyAttrs({ cy: "task-error" })}>
         <DetailHeader
           breadcrumbs={[
             { label: "Tasks", href: "/tasks" },
@@ -117,7 +118,7 @@ export function TaskDetailClient() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" {...cyAttrs({ cy: "task-detail-page", cyScope: "task-detail" })}>
       <DetailHeader
         breadcrumbs={[
           { label: "Tasks", href: "/tasks" },
@@ -143,9 +144,9 @@ export function TaskDetailClient() {
           <Card>
             <h2 className="text-sm font-semibold uppercase tracking-wide text-subtle mb-2">Notes</h2>
             {task.notes ? (
-              <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{task.notes}</p>
+              <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed" {...cyAttrs({ cy: "task-notes" })}>{task.notes}</p>
             ) : (
-              <p className="text-sm text-subtle italic">No notes yet.</p>
+              <p className="text-sm text-subtle italic" {...cyAttrs({ cy: "task-notes" })}>No notes yet.</p>
             )}
             <div className="mt-4 pt-3 border-t border-border">
               <FormField
@@ -162,6 +163,7 @@ export function TaskDetailClient() {
                   onChange={(e) => setNewNote(e.target.value)}
                   placeholder="Substring-deduped against existing notes."
                   disabled={noteSubmitting}
+                  {...cyAttrs({ cy: "note-input" })}
                 />
               </FormField>
               <div className="mt-2 flex items-center justify-end">
@@ -171,6 +173,7 @@ export function TaskDetailClient() {
                   onClick={handleAppendNote}
                   loading={noteSubmitting}
                   disabled={noteSubmitting || !newNote.trim()}
+                  {...cyAttrs({ cy: "append-note-btn" })}
                 >
                   {noteSubmitting ? "Appending…" : "Append"}
                 </Button>
@@ -184,13 +187,14 @@ export function TaskDetailClient() {
             <h2 className="text-sm font-semibold uppercase tracking-wide text-subtle mb-3">
               Status
             </h2>
-            <div className="grid grid-cols-1 gap-1.5">
+            <div className="grid grid-cols-1 gap-1.5" {...cyAttrs({ cy: "task-status-select" })}>
               {STATUSES.map((s) => (
                 <button
                   key={s}
                   type="button"
                   onClick={() => handleStatusChange(s)}
                   disabled={statusSubmitting || s === task.status}
+                  {...cyAttrs({ cy: "status-option", cyId: s })}
                   className={clsx(
                     "flex items-center justify-between gap-2 text-xs rounded-md px-3 py-1.5 transition-colors border focus-ring",
                     s === task.status

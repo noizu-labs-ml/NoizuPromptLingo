@@ -3,6 +3,22 @@ import { Given, When, Then } from "@badeball/cypress-cucumber-preprocessor";
 // ── Background ───────────────────────────────────────────────────────────
 
 Given("I am in chat room {string}", (roomId: string) => {
+  if (roomId === "99999") {
+    cy.intercept("GET", `**/api/chat/rooms/${roomId}`, {
+      statusCode: 404,
+      body: { detail: "Not found" },
+    }).as("getRoom");
+    cy.intercept("GET", `**/api/chat/rooms/${roomId}/messages*`, {
+      body: { items: [], count: 0 },
+    }).as("getMessages");
+  } else {
+    cy.intercept("GET", `**/api/chat/rooms/${roomId}`, { fixture: "chat/room-1.json" }).as("getRoom");
+    cy.intercept("GET", `**/api/chat/rooms/${roomId}/messages*`, { fixture: "chat/messages-1.json" }).as("getMessages");
+  }
+  cy.intercept("POST", `**/api/chat/rooms/${roomId}/messages`, {
+    statusCode: 200,
+    body: { id: 99, room_id: Number(roomId), content: "", author: "user", created_at: "2026-04-23T12:00:00Z" },
+  }).as("sendMessage");
   cy.visit(`/chat/${roomId}`);
 });
 
@@ -93,6 +109,17 @@ Then("the send button should be disabled", () => {
 
 // ── Room Not Found ───────────────────────────────────────────────────────
 
+Given("I am in a room that returns not found", () => {
+  cy.intercept("GET", "**/api/chat/rooms/5", {
+    statusCode: 404,
+    body: { detail: "Not found" },
+  }).as("getRoom404");
+  cy.intercept("GET", "**/api/chat/rooms/5/messages*", {
+    body: { items: [], count: 0 },
+  }).as("getMessages404");
+  cy.visit("/chat/5");
+});
+
 Then("I should see the room not found state", () => {
   cy.contains("Room not found").should("be.visible");
 });
@@ -108,8 +135,4 @@ Given("the API will fail on message send", () => {
     statusCode: 500,
     body: { detail: "Internal server error" },
   }).as("failedSend");
-});
-
-Then("an error toast should appear with {string}", (message: string) => {
-  cy.contains(message).should("be.visible");
 });

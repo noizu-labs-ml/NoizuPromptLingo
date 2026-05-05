@@ -75,7 +75,7 @@ export function FilterBar({
               <span className="text-xs text-subtle">{summary}</span>
             )}
             {hasActive && (
-              <Button variant="ghost" size="sm" onClick={onClear}>
+              <Button variant="ghost" size="sm" onClick={onClear} data-cy="clear-filters-btn">
                 Clear
               </Button>
             )}

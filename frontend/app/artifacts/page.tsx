@@ -26,6 +26,7 @@ import { FilterBar } from "@/components/composites/FilterBar";
 
 import { relativeTime } from "@/lib/utils/format";
 import { kindVariant } from "@/lib/utils/badges";
+import { cyAttrs } from "@/lib/utils/cyAttrs";
 
 const KINDS: ArtifactKind[] = [
   "markdown", "json", "yaml", "code", "text", "other",
@@ -106,6 +107,7 @@ function NewArtifactForm({ onCreated }: { onCreated: () => void }) {
         size="sm"
         leadingIcon={<PlusIcon className="h-4 w-4" />}
         onClick={() => setOpen(true)}
+        {...cyAttrs({ cy: "new-artifact-btn" })}
       >
         New artifact
       </Button>
@@ -113,7 +115,7 @@ function NewArtifactForm({ onCreated }: { onCreated: () => void }) {
   }
 
   return (
-    <Card className="flex flex-col gap-3">
+    <Card className="flex flex-col gap-3" {...cyAttrs({ cy: "artifact-form" })}>
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-foreground">New artifact</h3>
         <Button
@@ -131,12 +133,14 @@ function NewArtifactForm({ onCreated }: { onCreated: () => void }) {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g. Draft PRD"
+            {...cyAttrs({ cy: "artifact-title-input" })}
           />
         </FormField>
         <FormField label="Kind">
           <Select
             value={kind}
             onChange={(e) => setKind(e.target.value as ArtifactKind)}
+            {...cyAttrs({ cy: "artifact-kind-select" })}
           >
             {KINDS.map((k) => <option key={k} value={k}>{k}</option>)}
           </Select>
@@ -145,6 +149,7 @@ function NewArtifactForm({ onCreated }: { onCreated: () => void }) {
           <Input
             value={description}
             onChange={(e) => setDescription(e.target.value)}
+            {...cyAttrs({ cy: "artifact-description-input" })}
           />
         </FormField>
         {isMedia ? (
@@ -157,6 +162,7 @@ function NewArtifactForm({ onCreated }: { onCreated: () => void }) {
               type="file"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
               className="focus-ring block w-full text-sm text-foreground file:mr-3 file:rounded file:border-0 file:bg-accent file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-accent-on hover:file:bg-accent-soft"
+              data-cy="file-input"
             />
             {file && (
               <p className="mt-1 text-xs text-muted font-mono">
@@ -172,19 +178,20 @@ function NewArtifactForm({ onCreated }: { onCreated: () => void }) {
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Artifact body..."
+              {...cyAttrs({ cy: "artifact-content-input" })}
             />
           </FormField>
         )}
       </div>
 
       {error && (
-        <p className="text-xs text-danger" role="alert" aria-live="polite">
+        <p className="text-xs text-danger" role="alert" aria-live="polite" data-cy="artifact-error">
           {error}
         </p>
       )}
 
       <div className="flex items-center justify-end gap-2">
-        <Button variant="secondary" size="sm" onClick={() => setOpen(false)}>
+        <Button variant="secondary" size="sm" onClick={() => setOpen(false)} {...cyAttrs({ cy: "cancel-btn" })}>
           Cancel
         </Button>
         <Button
@@ -193,6 +200,7 @@ function NewArtifactForm({ onCreated }: { onCreated: () => void }) {
           loading={submitting}
           disabled={!title.trim() || (isMedia ? !file : !content.trim())}
           onClick={handleSubmit}
+          {...cyAttrs({ cy: "create-artifact-btn" })}
         >
           {submitting ? "Creating…" : "Create"}
         </Button>
@@ -211,7 +219,7 @@ export default function ArtifactsPage() {
   const artifacts = data?.artifacts ?? [];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" {...cyAttrs({ cy: "artifacts-page", cyScope: "artifacts" })}>
       <PageHeader
         title="Artifacts"
         description="Versioned text artifacts (PRD-002 MVP). Each artifact has a history of revisions."
@@ -225,6 +233,7 @@ export default function ArtifactsPage() {
               inputSize="sm"
               value={kindFilter}
               onChange={(e) => setKindFilter(e.target.value as ArtifactKind | "")}
+              {...cyAttrs({ cy: "kind-filter" })}
             >
               <option value="">All</option>
               {KINDS.map((k) => <option key={k} value={k}>{k}</option>)}
@@ -240,26 +249,28 @@ export default function ArtifactsPage() {
         <div
           role="alert"
           className="rounded-md border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger"
+          data-cy="artifact-error"
         >
           Failed to load artifacts: {String(error)}
         </div>
       )}
 
-      {isLoading && <SkeletonGrid as="row" count={6} />}
+      {isLoading && <div data-cy="artifacts-loading"><SkeletonGrid as="row" count={6} /></div>}
 
       {!isLoading && artifacts.length === 0 && (
         <EmptyState
           icon={<DocumentIcon />}
           title="No artifacts"
           description={kindFilter ? "No artifacts match the filter." : "Create the first artifact to get started."}
+          {...cyAttrs({ cy: "artifacts-empty" })}
         />
       )}
 
       {!isLoading && artifacts.length > 0 && (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2" data-cy="artifacts-list">
           {artifacts.map((a: Artifact) => (
             <Link key={a.id} href={`/artifacts/${a.id}`} className="block rounded-lg focus-ring">
-              <Card hoverable className="flex items-center gap-3">
+              <Card hoverable className="flex items-center gap-3" {...cyAttrs({ cy: "artifact-card", cyId: a.id })}>
                 {a.kind === "image" ? (
                   <img
                     src={api.artifacts.rawUrl(a.id, a.latest_revision)}

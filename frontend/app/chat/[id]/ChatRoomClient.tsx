@@ -168,7 +168,8 @@ export default function ChatRoomClient() {
       </Card>
 
       {/* Message input */}
-      <Card className="flex flex-col gap-3" {...cyAttrs({ cy: "message-composer" })}>
+      <div {...cyAttrs({ cy: "message-composer" })}>
+      <Card className="flex flex-col gap-3">
         <textarea
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
@@ -192,6 +193,7 @@ export default function ChatRoomClient() {
           </Button>
         </div>
       </Card>
+      </div>
     </div>
   );
 }

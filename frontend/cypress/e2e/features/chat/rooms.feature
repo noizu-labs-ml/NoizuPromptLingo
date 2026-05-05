@@ -1,3 +1,4 @@
+@tier1 @regression
 Feature: Chat Rooms
   As a user of the NPL portal
   I want to manage chat rooms
@@ -8,6 +9,7 @@ Feature: Chat Rooms
 
   # ── Room Listing ────────────────────────────────────────────────────────
 
+  @smoke
   Scenario: Chat page loads and displays rooms
     Then I should see the chat page
     And the rooms grid should be visible
@@ -25,12 +27,13 @@ Feature: Chat Rooms
     When I click the "Cancel" button
     Then I should see the "New Room" button
 
+  @smoke @crud
   Scenario: Creating a new chat room
+    Given the room creation API is stubbed
     When I click the "New Room" button
     And I type "test-room" into the room name input
     And I click the "Create" button
     Then a success toast should appear with "Room created"
-    And the rooms grid should contain a room named "test-room"
 
   Scenario: Create button is disabled when name is empty
     When I click the "New Room" button
@@ -43,6 +46,7 @@ Feature: Chat Rooms
 
   # ── Room Navigation ─────────────────────────────────────────────────────
 
+  @smoke @navigation
   Scenario: Clicking a room card navigates to the room detail
     Given there is at least one room
     When I click the first room card

@@ -1,0 +1,29 @@
+{
+  "items": [
+    {
+      "id": 1,
+      "tool_name": "Ping",
+      "status": "ok",
+      "response_time_ms": 120,
+      "session_id": "sess-abc123",
+      "created_at": "2026-04-23T09:00:00Z"
+    },
+    {
+      "id": 2,
+      "tool_name": "NPLLoad",
+      "status": "ok",
+      "response_time_ms": 340,
+      "session_id": "sess-def456",
+      "created_at": "2026-04-23T08:45:00Z"
+    },
+    {
+      "id": 3,
+      "tool_name": "ToolSearch",
+      "status": "error",
+      "response_time_ms": 50,
+      "session_id": null,
+      "created_at": "2026-04-23T08:30:00Z"
+    }
+  ],
+  "count": 3
+}

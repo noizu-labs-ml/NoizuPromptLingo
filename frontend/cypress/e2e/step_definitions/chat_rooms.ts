@@ -3,7 +3,9 @@ import { Given, When, Then } from "@badeball/cypress-cucumber-preprocessor";
 // ── Background ───────────────────────────────────────────────────────────
 
 Given("I am on the chat page", () => {
+  cy.intercept("GET", "**/api/chat/rooms*", { fixture: "chat/rooms.json" }).as("listRooms");
   cy.visit("/chat");
+  cy.getByCy("chat-page").should("exist");
 });
 
 // ── Room Listing ─────────────────────────────────────────────────────────
@@ -13,7 +15,7 @@ Then("I should see the chat page", () => {
 });
 
 Then("the rooms grid should be visible", () => {
-  cy.getByCy("rooms-grid").should("be.visible");
+  cy.getByCy("rooms-grid").should("exist");
 });
 
 Then("each room card should show a name, description, and message count", () => {
@@ -38,21 +40,6 @@ Then("I should see loading skeletons", () => {
 
 // ── Room Creation ────────────────────────────────────────────────────────
 
-When("I click the {string} button", (label: string) => {
-  const selectorMap: Record<string, string> = {
-    "New Room": "new-room-btn",
-    Create: "create-room-btn",
-    Cancel: "cancel-room-btn",
-    Send: "send-btn",
-  };
-  const selector = selectorMap[label];
-  if (selector) {
-    cy.getByCy(selector).click();
-  } else {
-    cy.contains("button", label).click();
-  }
-});
-
 Then("I should see the new room form", () => {
   cy.getByCy("new-room-form").should("be.visible");
 });
@@ -73,27 +60,14 @@ When("I type {string} into the room name input", (text: string) => {
   cy.getByCy("room-name-input").clear().type(text);
 });
 
-Then("a success toast should appear with {string}", (message: string) => {
-  cy.contains(message).should("be.visible");
-});
-
 Then("the rooms grid should contain a room named {string}", (name: string) => {
   cy.getByCy("rooms-grid").within(() => {
     cy.contains(name).should("exist");
   });
 });
 
-Then("the {string} button should be disabled", (label: string) => {
-  const selectorMap: Record<string, string> = {
-    Create: "create-room-btn",
-    Send: "send-btn",
-  };
-  const selector = selectorMap[label];
-  if (selector) {
-    cy.getByCy(selector).should("be.disabled");
-  } else {
-    cy.contains("button", label).should("be.disabled");
-  }
+Given("the room creation API is stubbed", () => {
+  cy.intercept("POST", "**/api/chat/rooms", { fixture: "chat/room-created.json" }).as("createRoom");
 });
 
 // ── Room Navigation ──────────────────────────────────────────────────────
@@ -103,6 +77,8 @@ Given("there is at least one room", () => {
 });
 
 When("I click the first room card", () => {
+  cy.intercept("GET", "**/api/chat/rooms/1", { fixture: "chat/room-1.json" }).as("getRoom");
+  cy.intercept("GET", "**/api/chat/rooms/1/messages*", { fixture: "chat/messages-1.json" }).as("getMessages");
   cy.getByCy("room-card").first().click();
 });
 

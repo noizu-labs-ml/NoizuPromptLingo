@@ -10,14 +10,13 @@ export interface SegmentedOption<V extends string> {
   icon?: ReactNode;
 }
 
-export interface SegmentedProps<V extends string> {
+export interface SegmentedProps<V extends string> extends Omit<React.HTMLAttributes<HTMLDivElement>, 'children' | 'className' | 'onChange'> {
   value: V;
   onChange: (value: V) => void;
   options: SegmentedOption<V>[];
   /** Visual size. Defaults to `"md"`. */
   size?: "sm" | "md";
   className?: string;
-  "aria-label"?: string;
 }
 
 const sizeClasses: Record<NonNullable<SegmentedProps<string>["size"]>, string> = {
@@ -36,9 +35,11 @@ export function Segmented<V extends string>({
   size = "md",
   className,
   "aria-label": ariaLabel,
+  ...rest
 }: SegmentedProps<V>) {
   return (
     <div
+      {...rest}
       role="tablist"
       aria-label={ariaLabel}
       className={clsx(
@@ -51,6 +52,7 @@ export function Segmented<V extends string>({
         return (
           <button
             key={opt.value}
+            data-cy-value={opt.value}
             type="button"
             role="tab"
             aria-selected={active}
