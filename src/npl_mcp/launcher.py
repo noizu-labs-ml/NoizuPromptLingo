@@ -1189,10 +1189,11 @@ def create_app() -> "FastMCP":
         room_id: int,
         content: str,
         author: Optional[str] = None,
+        persona: Optional[str] = None,
     ) -> dict:
         """Post a message to a chat room."""
         from npl_mcp.chat.chat import message_create
-        return await message_create(room_id=room_id, content=content, author=author)
+        return await message_create(room_id=room_id, content=content, author=persona or author)
 
     # ------------------------------------------------------------------
     # Chat enhanced tools (9 MCP-visible)
