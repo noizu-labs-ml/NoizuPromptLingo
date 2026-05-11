@@ -1,5 +1,3 @@
-version: "3.8"
-
 networks:
   npl-network:
     driver: bridge
@@ -27,25 +25,53 @@ services:
       timeout: 5s
       retries: 5
 
-  npl-redis:
-    image: redis:8.4.0
-    container_name: npl-redis
+  npl-valkey:
+    image: valkey/valkey:8.1
+    container_name: npl-valkey
     restart: unless-stopped
     networks:
       - npl-network
     ports:
-      - "${NPL_REDIS_PORT:-6379}:6379"
-    command: redis-server
+      - "${NPL_VALKEY_PORT:-6379}:6379"
+    command: valkey-server
     volumes:
-      - npl-redis-data:/data
+      - npl-valkey-data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "valkey-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
 
+  npl-mcp:
+    build: .
+    container_name: npl-mcp
+    restart: unless-stopped
+    networks:
+      - npl-network
+    ports:
+      - "${NPL_MCP_PORT:-8765}:8765"
+    environment:
+      NPL_DB_HOST: npl-timescaledb
+      NPL_DB_PORT: 5432
+      NPL_DB_NAME: ${NPL_DB_NAME:-npl}
+      NPL_DB_USER: ${NPL_DB_USER:-npl}
+      NPL_DB_PASSWORD: ${NPL_DB_PASSWORD:-npl_secret}
+      NPL_VALKEY_HOST: npl-valkey
+      NPL_VALKEY_PORT: 6379
+    depends_on:
+      npl-timescaledb:
+        condition: service_healthy
+      npl-valkey:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8765/api/health/ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
 volumes:
   npl-timescaledb-data:
     name: npl-timescaledb-data
-  npl-redis-data:
-    name: npl-redis-data
+  npl-valkey-data:
+    name: npl-valkey-data
