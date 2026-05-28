@@ -1,0 +1,113 @@
+{{- if .Values.postgresql.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "npl-mcp.fullname" . }}-postgresql
+  labels:
+    {{- include "npl-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postgresql
+spec:
+  ports:
+    - name: postgresql
+      port: 5432
+      targetPort: postgresql
+  selector:
+    {{- include "npl-mcp.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: postgresql
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "npl-mcp.fullname" . }}-postgresql
+  labels:
+    {{- include "npl-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postgresql
+spec:
+  serviceName: {{ include "npl-mcp.fullname" . }}-postgresql
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "npl-mcp.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: postgresql
+  template:
+    metadata:
+      labels:
+        {{- include "npl-mcp.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: postgresql
+    spec:
+      containers:
+        - name: postgresql
+          image: "{{ .Values.postgresql.image.repository }}:{{ .Values.postgresql.image.tag }}"
+          imagePullPolicy: {{ .Values.postgresql.image.pullPolicy }}
+          ports:
+            - name: postgresql
+              containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: {{ .Values.database.name | quote }}
+            - name: POSTGRES_USER
+              value: {{ .Values.database.user | quote }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ default (include "npl-mcp.secretName" .) .Values.database.existingSecret }}
+                  key: {{ .Values.database.passwordKey }}
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - {{ .Values.database.user | quote }}
+                - -d
+                - {{ .Values.database.name | quote }}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - {{ .Values.database.user | quote }}
+                - -d
+                - {{ .Values.database.name | quote }}
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            {{- toYaml .Values.postgresql.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            {{- if .Values.postgresql.initdb.enabled }}
+            {{- range $name, $_ := .Values.postgresql.initdb.scripts }}
+            - name: initdb
+              mountPath: /docker-entrypoint-initdb.d/{{ $name }}
+              subPath: {{ $name }}
+            {{- end }}
+            {{- end }}
+      {{- if or .Values.postgresql.initdb.enabled (not .Values.postgresql.persistence.enabled) }}
+      volumes:
+        {{- if .Values.postgresql.initdb.enabled }}
+        - name: initdb
+          configMap:
+            name: {{ include "npl-mcp.fullname" . }}-postgresql-initdb
+        {{- end }}
+        {{- if not .Values.postgresql.persistence.enabled }}
+        - name: data
+          emptyDir: {}
+        {{- end }}
+      {{- end }}
+  {{- if .Values.postgresql.persistence.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        {{- with .Values.postgresql.persistence.storageClass }}
+        storageClassName: {{ . | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.postgresql.persistence.size }}
+  {{- end }}
+{{- end }}

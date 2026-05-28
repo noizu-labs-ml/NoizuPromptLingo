@@ -1,0 +1,8 @@
+.git/
+.gitignore
+.DS_Store
+*.swp
+*.tmp
+charts/
+ci/
+README.md.gotmpl

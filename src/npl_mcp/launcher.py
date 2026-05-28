@@ -2108,6 +2108,7 @@ def create_asgi_app() -> FastAPI:
     mcp_streamable_app = mcp.http_app(path="/", transport="streamable-http")
 
     api = FastAPI(title="NPL MCP Server", lifespan=mcp_streamable_app.lifespan, redirect_slashes=False)
+    api.add_middleware(MountPathNormalizerMiddleware)
     api.mount("/sse", mcp_sse_app)
     api.mount("/mcp", mcp_streamable_app)
 
@@ -2125,6 +2126,27 @@ def create_asgi_app() -> FastAPI:
         serve_fallback(api)
 
     return api
+
+
+class MountPathNormalizerMiddleware:
+    """Fix Starlette Mount trailing-slash routing gap.
+
+    Starlette's Mount("/mcp") strips the prefix and passes path="" to the
+    sub-app for requests to exactly "/mcp" (no trailing slash).  The sub-app's
+    Route at "/" compiles to regex ^/$ which does NOT match "".  Adding "/" here
+    before routing reaches the mounts makes "/mcp" and "/sse" behave the same
+    as "/mcp/" and "/sse/".
+    """
+
+    _MOUNT_ROOTS: frozenset = frozenset({"/sse", "/mcp"})
+
+    def __init__(self, app) -> None:
+        self.app = app
+
+    async def __call__(self, scope, receive, send) -> None:
+        if scope.get("type") == "http" and scope.get("path") in self._MOUNT_ROOTS:
+            scope = {**scope, "path": scope["path"] + "/"}
+        await self.app(scope, receive, send)
 
 
 class FrontendFallbackMiddleware:

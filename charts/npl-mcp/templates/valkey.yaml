@@ -1,0 +1,84 @@
+{{- if .Values.valkey.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "npl-mcp.fullname" . }}-valkey
+  labels:
+    {{- include "npl-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: valkey
+spec:
+  ports:
+    - name: valkey
+      port: 6379
+      targetPort: valkey
+  selector:
+    {{- include "npl-mcp.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: valkey
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "npl-mcp.fullname" . }}-valkey
+  labels:
+    {{- include "npl-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: valkey
+spec:
+  serviceName: {{ include "npl-mcp.fullname" . }}-valkey
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "npl-mcp.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: valkey
+  template:
+    metadata:
+      labels:
+        {{- include "npl-mcp.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: valkey
+    spec:
+      containers:
+        - name: valkey
+          image: "{{ .Values.valkey.image.repository }}:{{ .Values.valkey.image.tag }}"
+          imagePullPolicy: {{ .Values.valkey.image.pullPolicy }}
+          ports:
+            - name: valkey
+              containerPort: 6379
+          command:
+            - valkey-server
+          readinessProbe:
+            exec:
+              command:
+                - valkey-cli
+                - ping
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command:
+                - valkey-cli
+                - ping
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            {{- toYaml .Values.valkey.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+  {{- if .Values.valkey.persistence.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        {{- with .Values.valkey.persistence.storageClass }}
+        storageClassName: {{ . | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.valkey.persistence.size }}
+  {{- else }}
+      volumes:
+        - name: data
+          emptyDir: {}
+  {{- end }}
+{{- end }}
