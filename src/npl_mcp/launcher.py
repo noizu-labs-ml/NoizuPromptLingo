@@ -14,16 +14,22 @@ Usage:
 """
 
 import datetime
+import logging
 import subprocess
 import sys
 from typing import Any, Optional
 from pathlib import Path
 
 import uvicorn
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastmcp import FastMCP
+
+from npl_mcp.structured_logging import (
+    configure_jsonl_logging,
+    subprocess_output_metadata,
+)
 
 # Module-level start time — captured once at import for uptime calculation.
 _STARTED_AT: datetime.datetime = datetime.datetime.now(datetime.timezone.utc)
@@ -35,6 +41,7 @@ PORT = "8765"
 REPO_ROOT = Path(__file__).parent.parent.parent
 FRONTEND_DIR = REPO_ROOT / "frontend"
 DIST_DIR = Path(__file__).parent.resolve() / "web" / "static"
+logger = logging.getLogger(__name__)
 
 
 def build_frontend() -> bool:
@@ -49,31 +56,54 @@ def build_frontend() -> bool:
 
     # Check if frontend directory exists
     if not FRONTEND_DIR.exists():
-        print("Warning: Frontend directory not found. Starting without frontend.")
+        logger.warning(
+            "Frontend directory not found; starting without frontend",
+            extra={
+                "event.name": "frontend.build_skipped",
+                "reason": "frontend_dir_missing",
+                "frontend.dir": str(FRONTEND_DIR),
+            },
+        )
         return False
 
-    print("Building Next.js frontend...")
+    logger.info(
+        "Building Next.js frontend",
+        extra={"event.name": "frontend.build_started"},
+    )
     try:
-        result = subprocess.run(
+        subprocess.run(
             ["npm", "run", "build"],
             cwd=str(FRONTEND_DIR),
             check=True,
             capture_output=True,
             text=True,
         )
-        print("Frontend build completed successfully.")
+        logger.info(
+            "Frontend build completed successfully",
+            extra={"event.name": "frontend.build_completed"},
+        )
         return True
     except subprocess.CalledProcessError as e:
-        print(f"Warning: Frontend build failed: {e}")
-        print("Starting server without frontend.")
-        if e.stdout:
-            print(f"stdout: {e.stdout}")
-        if e.stderr:
-            print(f"stderr: {e.stderr}")
+        logger.warning(
+            "Frontend build failed; continuing without frontend",
+            extra=dict(
+                subprocess_output_metadata(
+                    "frontend.build_failed",
+                    e,
+                    cwd=FRONTEND_DIR,
+                )
+            ),
+        )
         return False
     except FileNotFoundError:
-        print("Warning: npm not found. Skipping frontend build.")
-        print("To build frontend, install Node.js and run: cd frontend && npm install && npm run build")
+        logger.warning(
+            "npm not found; skipping frontend build",
+            extra={
+                "event.name": "frontend.build_skipped",
+                "reason": "npm_not_found",
+                "frontend.dir": str(FRONTEND_DIR),
+            },
+        )
         return False
 
 
@@ -88,7 +118,13 @@ def start_frontend_watcher() -> None:
     def _rebuild_loop() -> None:
         from watchfiles import watch
 
-        print(f"[watch-frontend] Watching {FRONTEND_DIR} for changes...")
+        logger.info(
+            "Watching frontend for changes",
+            extra={
+                "event.name": "frontend.watch_started",
+                "frontend.dir": str(FRONTEND_DIR),
+            },
+        )
         last_build = 0.0
         for changes in watch(
             FRONTEND_DIR,
@@ -103,9 +139,15 @@ def start_frontend_watcher() -> None:
                 continue
             changed_files = [p for _, p in changes]
             short = [str(Path(p).relative_to(FRONTEND_DIR)) for p in changed_files[:5]]
-            extra = f" (+{len(changed_files) - 5} more)" if len(changed_files) > 5 else ""
-            print(f"[watch-frontend] Changed: {', '.join(short)}{extra}")
-            print("[watch-frontend] Rebuilding...")
+            logger.info(
+                "Frontend changes detected; rebuilding",
+                extra={
+                    "event.name": "frontend.watch_changed",
+                    "changed_files.count": len(changed_files),
+                    "changed_files.sample": short,
+                    "changed_files.truncated": len(changed_files) > 5,
+                },
+            )
             try:
                 subprocess.run(
                     ["npm", "run", "build"],
@@ -115,9 +157,21 @@ def start_frontend_watcher() -> None:
                     text=True,
                 )
                 last_build = time.monotonic()
-                print("[watch-frontend] Build complete.")
+                logger.info(
+                    "Frontend rebuild completed",
+                    extra={"event.name": "frontend.watch_build_completed"},
+                )
             except subprocess.CalledProcessError as e:
-                print(f"[watch-frontend] Build failed: {e.stderr[-500:] if e.stderr else e}")
+                logger.warning(
+                    "Frontend rebuild failed",
+                    extra=dict(
+                        subprocess_output_metadata(
+                            "frontend.watch_build_failed",
+                            e,
+                            cwd=FRONTEND_DIR,
+                        )
+                    ),
+                )
 
     t = threading.Thread(target=_rebuild_loop, daemon=True, name="frontend-watcher")
     t.start()
@@ -2051,9 +2105,11 @@ def create_asgi_app() -> FastAPI:
     """
     mcp = create_app()
     mcp_sse_app = mcp.http_app(path="/", transport="sse")
+    mcp_streamable_app = mcp.http_app(path="/", transport="streamable-http")
 
-    api = FastAPI(title="NPL MCP Server")
+    api = FastAPI(title="NPL MCP Server", lifespan=mcp_streamable_app.lifespan, redirect_slashes=False)
     api.mount("/sse", mcp_sse_app)
+    api.mount("/mcp", mcp_streamable_app)
 
     # Mount read-only REST API router
     from npl_mcp.api.router import router as api_router
@@ -2147,6 +2203,7 @@ def main() -> None:
     """Main entry point."""
     global HOST, PORT
 
+    configure_jsonl_logging()
     args = sys.argv[1:]
 
     if "--help" in args or "-h" in args:
@@ -2156,9 +2213,18 @@ def main() -> None:
     if "--status" in args:
         import httpx
         try:
-            resp = httpx.get(f"http://{HOST}:{PORT}/", timeout=1.0)
+            httpx.get(f"http://{HOST}:{PORT}/", timeout=1.0)
             print(f"Server running at http://{HOST}:{PORT}")
-        except Exception:
+        except Exception as exc:
+            logger.warning(
+                "Server status check failed",
+                extra={
+                    "event.name": "server.status_unreachable",
+                    "server.host": HOST,
+                    "server.port": PORT,
+                    "error.type": type(exc).__name__,
+                },
+            )
             print("Server not running")
         return
 
@@ -2178,9 +2244,8 @@ def main() -> None:
             i += 1
 
     # Build frontend unless explicitly disabled
-    frontend_built = False
     if not no_frontend:
-        frontend_built = build_frontend()
+        build_frontend()
 
     if "--watch-frontend" in args and not no_frontend and FRONTEND_DIR.exists():
         start_frontend_watcher()
@@ -2196,10 +2261,11 @@ def main() -> None:
             port=int(PORT),
             reload=True,
             reload_dirs=[str(Path(__file__).parent)],
+            log_config=None,
         )
     else:
         api = create_asgi_app()
-        uvicorn.run(api, host=HOST, port=int(PORT))
+        uvicorn.run(api, host=HOST, port=int(PORT), log_config=None)
 
 
 def serve_fallback(api: FastAPI) -> None:
