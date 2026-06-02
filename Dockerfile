@@ -65,3 +65,6 @@ HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
     CMD curl -sf http://localhost:8765/api/health/ping || exit 1
 
 CMD ["npl-mcp", "--host", "0.0.0.0", "--port", "8765"]
+
+# docker-build targets "production" for non-dev builds.
+FROM runtime AS production

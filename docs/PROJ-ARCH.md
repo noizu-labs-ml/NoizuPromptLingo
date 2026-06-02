@@ -4,7 +4,7 @@
 
 NPL MCP is a Model Context Protocol (MCP) server built on FastMCP 3.x. Rather than exposing all ~125 tools directly (which overwhelms clients), it uses a **meta tool pattern**: 11 tools are visible at startup (5 discovery + 1 NPL spec + 2 session + 3 instruction). An additional 22 implemented tools are hidden but callable via `ToolCall`, plus 92 stub tools for planned features. Every MCP-visible tool carries hierarchical `tags` and NPL-specific `meta` (`npl_category`, `npl_discoverable`) so 3.x-native clients can group and filter tools natively.
 
-The server combines FastMCP for MCP protocol handling, FastAPI for HTTP routing (68 REST endpoints) and a Next.js frontend, LiteLLM proxy for LLM-powered features (intent search, image descriptions), and PostgreSQL for persistent storage of sessions, instructions, projects, personas, stories, artifacts, pipes, and secrets. A companion `npl_persona` CLI package provides offline persona simulation, journal management, and team coordination.
+The server combines FastMCP for MCP protocol handling, FastAPI for HTTP routing (~105 REST endpoints) and a Next.js frontend, LiteLLM proxy for LLM-powered features (intent search, image descriptions), and PostgreSQL for persistent storage of sessions, instructions, projects, personas, stories, artifacts, pipes, and secrets. A companion `npl_persona` CLI package provides offline persona simulation, journal management, and team coordination. An `orchestration/` module provides sequential pipeline execution with quality gates and a pattern registry, driving the TDD workflow pipeline and UI-triggered orchestration runs.
 
 ## System Diagram
 
@@ -19,7 +19,7 @@ graph TB
     subgraph "NPL MCP Server (FastAPI + FastMCP)"
         MW[Pure-ASGI Middleware<br/>fallback + SSE-safe]
         MCP[FastMCP 3.x Instance<br/>11 tools registered]
-        REST[REST API Layer<br/>68 endpoints on /api/*]
+        REST[REST API Layer<br/>~105 endpoints on /api/*]
         Meta[Discovery Tools<br/>5 discovery + 6 functional]
         Hidden[Hidden Tools<br/>22 via ToolCall]
         Stubs[Stub Catalog<br/>92 planned tools]
@@ -68,8 +68,11 @@ graph TB
 | Agents | `src/npl_mcp/agents/` | Agent catalog — parses `agents/*.md` frontmatter, list/get API |
 | Pipes | `src/npl_mcp/pipes/` | Agent input/output pipes — inter-agent structured YAML messaging |
 | Skills | `src/npl_mcp/skills/` | Skill file validation and quality scoring |
+| Orchestration | `src/npl_mcp/orchestration/` | Multi-agent pipeline execution — pattern registry, sequential stages, quality gates, TDD pipeline |
+| Structured Logging | `src/npl_mcp/structured_logging.py` | JSONL structured logging with severity numbers and extra attribute extraction |
+| NPL Docs Regen | `src/npl_mcp/docs_regen.py` | Regenerate `npl/npl-full.md` from `conventions/` (CLI: `npl-docs-regen`) |
 | Storage | `src/npl_mcp/storage/` | PostgreSQL async connection pool (asyncpg) |
-| Frontend | `frontend/` | Next.js + Tailwind web UI with hybrid REST/mock API facade |
+| Frontend | `frontend/` | Next.js + Tailwind web UI with hybrid REST/mock API facade; Cypress E2E test suite |
 | Persona CLI | `src/npl_persona/` | Offline persona simulation, journal, knowledge, teams, templates |
 | Minimal Server | `src/mcp.py` | Standalone hello-world for quick experiments |
 
@@ -130,7 +133,9 @@ graph TB
 | `agents/` | Active | — | `GET /api/agents*` | Agent catalog — parses agent markdown frontmatter |
 | `pipes/` | Active | — | `POST /api/pipes/*` | Inter-agent structured YAML messaging (input/output) |
 | `skills/` | Active | — | `POST /api/skills/validate`, `POST /api/skills/evaluate` | Skill file validation + quality scoring |
+| `orchestration/` | Active | — | `GET/POST /api/orchestration/*` (agents, runs, trigger, patterns) | Sequential pipeline execution with quality gates, pattern registry, TDD pipeline |
 | `storage/` | Active | 0 (library) | — | PostgreSQL async connection pool (asyncpg) |
+| `structured_logging.py` | Active | 0 (library) | — | JSONL structured logging for service diagnostics |
 | `executors/` | Stub | 11 (in catalog) | — | Agent lifecycle management |
 | `scripts/` | Stub | 5 (in catalog) | — | Shell script wrappers |
 
@@ -148,6 +153,8 @@ The hybrid impl currently routes: tasks, artifacts, sessions, instructions, proj
 
 Key frontend primitives added in Waves A–P: full design token system (violet-indigo palette, 5 surface tiers, Geist fonts), 30+ primitive components, composites (FilterBar, DetailHeader, TabBar), toast notification system, and QuickCreateModal (global ✨ New flow accessible from any page).
 
+**Cypress E2E**: The `frontend/cypress/` directory provides an end-to-end test suite (e2e/, fixtures/, support/) configured via `cypress.config.ts`. Makefile targets `cy-open` and `cy-run` drive interactive and headless execution against the live app.
+
 ## Entry Points
 
 | Entry Point | Command | Description |
@@ -156,10 +163,14 @@ Key frontend primitives added in Waves A–P: full design token system (violet-i
 | Console script | `npl-mcp` | Full server (requires package installed) |
 | Module | `uv run -m npl_mcp` | Same as console script via module |
 | Minimal | `uv run src/mcp.py` | Hello-world server only |
+| Docs regen | `uv run npl-docs-regen` | Regenerate `npl/npl-full.md` from `conventions/` |
+| TM Language | `uv run npl-tmlanguage` | Generate NPL TextMate grammar |
+| Git tools | `git-dump`, `git-tree` | Repo dump/tree CLI utilities |
+| Markdown tools | `2md`, `md-view`, `view-md` | Markdown conversion and viewing CLIs |
 
 ## Key Design Decisions
 
-- **Three-tier tool registration**: MCP-visible (58) for core functionality, hidden (22) callable via ToolCall
+- **Three-tier tool registration**: MCP-visible (58) for core functionality, hidden (22) callable via ToolCall, stubs (~45) for planned features
 - **FastMCP 3.x**: Upgraded from 2.x. Uses `list_tools()`/`get_tool()` public API; keeps a custom catalog layer rather than adopting `AggregateProvider` — our three-tier merge (MCP + hidden + stubs) and hierarchical categories have no native equivalent in 3.x's flat tag system and version-based merge
 - **Hidden-but-callable preserved as custom code**: 3.x's `enabled=False` makes tools both invisible *and* uncallable via `mcp.call_tool()`. Our `@discoverable` + `_DISCOVERABLE_TOOLS` registry provides the hidden-yet-callable semantic 3.x cannot express natively
 - **3.x-native metadata populated alongside**: Every MCP-registered tool carries `tags` (derived from category hierarchy) and `meta` (`npl_category`, `npl_discoverable`), so 3.x-native clients can filter/group without reading our catalog structures
@@ -167,7 +178,9 @@ Key frontend primitives added in Waves A–P: full design token system (violet-i
 - **Pure-ASGI fallback middleware**: `BaseHTTPMiddleware` buffered response bodies and crashed SSE (empty 202s on `/sse/messages/`). Replaced with a pure ASGI middleware that only intercepts 404 GETs and leaves streaming responses untouched
 - **LiteLLM proxy**: Routes LLM calls through a local proxy for model flexibility and key management
 - **Dynamic catalog builder**: Merges MCP-registered, hidden, and stub tools into a unified 125-tool catalog
-- **PostgreSQL for state**: Sessions, instructions, projects, personas, stories, artifacts, tasks, chat, pipes, and secrets all DB-backed; schema managed by Liquibase (17 changesets)
+- **PostgreSQL for state**: Sessions, instructions, projects, personas, stories, artifacts, tasks, chat, pipes, secrets, metrics, and tasker tracking all DB-backed; schema managed by Liquibase (18 changesets)
+- **Orchestration pipeline**: `orchestration/` provides a pattern registry (starting with `PipelinePattern`), sequential stage execution with `QualityGate` retry logic, and a pre-built TDD pipeline. REST endpoints at `/api/orchestration/*` expose patterns, trigger runs, and list history
+- **Structured JSONL logging**: `structured_logging.py` provides a `JsonFormatter` with severity numbers, extra attribute pass-through, and configurable output stream for diagnostic log capture
 - **Next.js static export**: Frontend builds to `web/static/` and is served by the FastAPI fallback middleware
 - **Frontend API facade**: `lib/api/client.ts` is a stable interface; switching from mock → REST requires changing a single import. The `hybrid` impl mixes live REST and mock per domain, enabling incremental feature rollout
 - **REST API parallel to MCP**: The `/api/*` router (68 endpoints) serves the web UI directly; MCP SSE serves AI clients. Same PostgreSQL backend, different access paths
@@ -192,9 +205,11 @@ The project implements a TDD-driven workflow system with 30+ specialized agents 
 | Persona | persona, persona-manager | Character simulation and persona management |
 | Coordination | project-coordinator, prd-manager | Task orchestration and PRD lifecycle |
 | Domain | sql-architect, build-master, cpp-modernizer, perf-profiler, threat-modeler | Specialized domain expertise |
-| Other | fim, templater, nimps | Visualization, template management |
+| Other | fim, templater, nimps, nb | Visualization, template management, notebook |
 
-Inter-agent communication uses the `pipes/` module for structured YAML messaging. The `npl_persona` CLI package provides offline persona simulation with journals, knowledge bases, and team coordination.
+Additional specialist agents (24+) live in `agents/additional-agents/` and template scaffolds in `agents/skeleton/`.
+
+Inter-agent communication uses the `pipes/` module for structured YAML messaging. The `npl_persona` CLI package provides offline persona simulation with journals, knowledge bases, and team coordination. The `orchestration/` module implements the TDD workflow as a `PipelinePattern` with quality gates, and exposes `/api/orchestration/trigger` for UI-driven pipeline runs.
 
 → *See [arch/agent-orchestration.summary.md](arch/agent-orchestration.summary.md) for details*
 → *See [winnower-design.md](winnower-design.md) for winnower agent spec*
@@ -220,4 +235,8 @@ Inter-agent communication uses the `pipes/` module for structured YAML messaging
 | LiteLLM Proxy | 4111 | LLM routing |
 | PostgreSQL | 5111 | Database (`npl`) |
 
-Services defined in `docker-compose.yaml` (PostgreSQL) with init scripts in `docker/postgres-init/`. Schema managed by Liquibase changelogs in `liquibase/`.
+Services defined in `docker-compose.yaml` (PostgreSQL) with init scripts in `docker/postgres-init/`. Schema managed by Liquibase changelogs in `liquibase/` (18 changesets).
+
+**Container deployment**: A multi-stage `Dockerfile` builds the frontend (Node 22), installs Python deps via uv, and assembles a `python:3.13-slim` runtime image. A Helm chart in `charts/npl-mcp/` packages the container for Kubernetes deployment with configurable values and schema validation.
+
+**Build automation**: `Makefile` provides `install`, `serve`, `serve-dev`, `test`, `lint`, `fmt`, `docs-regen`, `fe-build`, `cy-open`, `cy-run` targets for local development and CI.
