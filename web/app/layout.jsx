@@ -1,9 +1,11 @@
 import { SessionProvider } from "next-auth/react";
 import { auth } from "../auth";
+import Sidebar from "../components/sidebar";
+import "./globals.css";
 
 export const metadata = {
-  title: "Hello World MCP",
-  description: "A hello-world MCP server with a Next.js frontend",
+  title: "Tobor Locker",
+  description: "MCP collaboration portal",
 };
 
 export default async function RootLayout({ children }) {
@@ -11,7 +13,14 @@ export default async function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <SessionProvider session={session}>{children}</SessionProvider>
+        <SessionProvider session={session}>
+          <div style={{ display: "flex", minHeight: "100vh" }}>
+            <Sidebar />
+            <main style={{ marginLeft: "var(--sidebar-w)", flex: 1, padding: 24, overflow: "auto" }}>
+              {children}
+            </main>
+          </div>
+        </SessionProvider>
       </body>
     </html>
   );

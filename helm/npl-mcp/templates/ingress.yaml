@@ -23,9 +23,11 @@ spec:
   tls:
     - hosts:
         - {{ .Values.domain }}
+        - "*.{{ .Values.domain }}"
       secretName: {{ .Values.tls.secretName }}
   {{- end }}
   rules:
+    # ── Root domain ──
     - host: {{ .Values.domain }}
       http:
         paths:
@@ -44,6 +46,38 @@ spec:
                 port:
                   name: mcp
           - path: /health
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: mcp
+          - path: /api/
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: mcp
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: http
+    # ── Wildcard subdomains — all MCP traffic to backend ──
+    - host: "*.{{ .Values.domain }}"
+      http:
+        paths:
+          - path: /mcp
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: mcp
+          - path: /assets/
             pathType: Prefix
             backend:
               service:

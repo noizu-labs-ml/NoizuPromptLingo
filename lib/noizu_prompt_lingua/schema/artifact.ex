@@ -11,6 +11,7 @@ defmodule NoizuPromptLingua.Schema.Artifact do
     field :kind, :string
     field :title, :string
     field :mime_type, :string
+    field :project_id, :binary_id
 
     has_many :revisions, NoizuPromptLingua.Schema.ArtifactRevision
 
@@ -19,7 +20,7 @@ defmodule NoizuPromptLingua.Schema.Artifact do
 
   def changeset(artifact, attrs) do
     artifact
-    |> cast(attrs, [:kind, :title, :mime_type])
+    |> cast(attrs, [:kind, :title, :mime_type, :project_id])
     |> validate_required([:kind, :title])
     |> validate_inclusion(:kind, @kinds)
   end

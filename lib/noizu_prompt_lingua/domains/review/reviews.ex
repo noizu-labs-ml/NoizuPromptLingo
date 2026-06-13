@@ -38,6 +38,14 @@ defmodule NoizuPromptLingua.Domains.Reviews do
     |> Repo.all()
   end
 
+  def list(opts \\ []) do
+    Review
+    |> maybe_filter_status(opts[:status])
+    |> order_by([r], desc: r.updated_at)
+    |> limit(^(opts[:limit] || 50))
+    |> Repo.all()
+  end
+
   def count_by_status do
     Review
     |> group_by([r], r.status)
@@ -45,4 +53,7 @@ defmodule NoizuPromptLingua.Domains.Reviews do
     |> Repo.all()
     |> Map.new()
   end
+
+  defp maybe_filter_status(query, nil), do: query
+  defp maybe_filter_status(query, status), do: where(query, [r], r.status == ^status)
 end

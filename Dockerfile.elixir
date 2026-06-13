@@ -15,7 +15,7 @@ COPY lib ./lib
 COPY priv ./priv
 RUN mix compile
 
-FROM elixir:1.20-otp-29-alpine
+FROM elixir:1.20-otp-29-alpine AS production
 
 RUN apk add --no-cache libstdc++
 
@@ -34,4 +34,4 @@ ENV MIX_ENV=prod
 EXPOSE 4040
 HEALTHCHECK --interval=15s --timeout=3s --start-period=10s --retries=3 \
   CMD wget -qO- http://localhost:4040/health || exit 1
-CMD ["mix", "run", "--no-halt"]
+CMD mix ecto.migrate && mix run --no-halt

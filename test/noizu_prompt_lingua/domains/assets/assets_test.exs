@@ -1,7 +1,7 @@
 defmodule NoizuPromptLingua.Domains.AssetsTest do
   use NoizuPromptLingua.DataCase, async: true
 
-  alias NoizuPromptLingua.Domains.Assets
+  alias NoizuPromptLingua.Domains.{Assets, Projects}
 
   @sample_yaml """
   schema: "0.4"
@@ -17,10 +17,17 @@ defmodule NoizuPromptLingua.Domains.AssetsTest do
       height: 1024
   """
 
+  defp create_project(slug \\ nil) do
+    slug = slug || "proj-#{System.unique_integer([:positive])}"
+    {:ok, project} = Projects.create(%{name: "Test Project", slug: slug})
+    project
+  end
+
   defp create_entry(attrs \\ %{}) do
+    project = attrs[:_project] || create_project()
     defaults = %{slug: "asset-#{System.unique_integer([:positive])}", title: "Test Asset",
-                 asset_type: "image", prompt_yaml: @sample_yaml}
-    Assets.create(Map.merge(defaults, attrs))
+                 asset_type: "image", prompt_yaml: @sample_yaml, project_id: project.id}
+    Assets.create(Map.merge(defaults, Map.drop(attrs, [:_project])))
   end
 
   describe "entry CRUD" do
@@ -30,6 +37,12 @@ defmodule NoizuPromptLingua.Domains.AssetsTest do
       assert entry.asset_type == "image"
       assert entry.status == "draft"
       assert entry.prompt_yaml =~ "futuristic"
+      assert entry.project_id
+    end
+
+    test "create requires project_id" do
+      result = Assets.create(%{slug: "orphan", title: "Orphan", asset_type: "image", prompt_yaml: @sample_yaml})
+      assert {:error, _} = result
     end
 
     test "create logs history" do
@@ -39,15 +52,37 @@ defmodule NoizuPromptLingua.Domains.AssetsTest do
       assert hd(history).action == "created"
     end
 
-    test "unique slug" do
-      {:ok, _} = create_entry(%{slug: "dupe-asset"})
-      assert {:error, _} = create_entry(%{slug: "dupe-asset"})
+    test "unique slug scoped to project" do
+      project = create_project()
+      {:ok, _} = create_entry(%{slug: "dupe-asset", _project: project})
+      assert {:error, _} = create_entry(%{slug: "dupe-asset", _project: project})
+    end
+
+    test "same slug allowed in different projects" do
+      p1 = create_project("proj-a")
+      p2 = create_project("proj-b")
+      assert {:ok, _} = create_entry(%{slug: "shared-slug", _project: p1})
+      assert {:ok, _} = create_entry(%{slug: "shared-slug", _project: p2})
     end
 
     test "get by slug and id" do
       {:ok, entry} = create_entry(%{slug: "find-asset"})
       assert Assets.get("find-asset").id == entry.id
       assert Assets.get(entry.id).id == entry.id
+    end
+
+    test "get_by_project_slug" do
+      project = create_project("my-project")
+      {:ok, entry} = create_entry(%{slug: "my-asset", _project: project})
+      found = Assets.get_by_project_slug("my-project", "my-asset")
+      assert found.id == entry.id
+    end
+
+    test "get_by_project_slug returns nil for wrong project" do
+      project = create_project("right-proj")
+      create_project("wrong-proj")
+      {:ok, _} = create_entry(%{slug: "scoped-asset", _project: project})
+      assert Assets.get_by_project_slug("wrong-proj", "scoped-asset") == nil
     end
 
     test "update prompt and tags" do
@@ -58,8 +93,9 @@ defmodule NoizuPromptLingua.Domains.AssetsTest do
     end
 
     test "list with filters" do
-      {:ok, _} = create_entry(%{asset_type: "image", tags: ["brand"]})
-      {:ok, _} = create_entry(%{asset_type: "video"})
+      project = create_project()
+      {:ok, _} = create_entry(%{asset_type: "image", tags: ["brand"], _project: project})
+      {:ok, _} = create_entry(%{asset_type: "video", _project: project})
 
       images = Assets.list(asset_type: "image")
       assert Enum.all?(images, &(&1.asset_type == "image"))
@@ -91,6 +127,13 @@ defmodule NoizuPromptLingua.Domains.AssetsTest do
       assert output.variant_number == 1
       assert output.artifact_id
       assert output.entry_id == entry.id
+    end
+
+    test "generated artifact inherits project_id" do
+      {:ok, entry} = create_entry()
+      {:ok, output} = Assets.generate(entry.id)
+      {artifact, _rev} = NoizuPromptLingua.Domains.Artifacts.get(output.artifact_id)
+      assert artifact.project_id == entry.project_id
     end
 
     test "generate increments variant number" do

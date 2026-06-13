@@ -12,6 +12,7 @@ defmodule NoizuPromptLingua.Domains.Artifacts.Tools.ArtifactCreate do
       "title" => %{"type" => "string", "description" => "Artifact title"},
       "content" => %{"type" => "string", "description" => "Initial content (text or base64 for binary)"},
       "mime_type" => %{"type" => "string", "description" => "MIME type (e.g. text/markdown, image/png)"},
+      "project_id" => %{"type" => "string", "description" => "Project UUID"},
       "metadata" => %{"type" => "object", "description" => "Additional metadata"}
     },
     "required" => ["kind", "title", "content"]
@@ -25,7 +26,8 @@ defmodule NoizuPromptLingua.Domains.Artifacts.Tools.ArtifactCreate do
       kind: args["kind"],
       title: args["title"],
       content: args["content"],
-      mime_type: args["mime_type"]
+      mime_type: args["mime_type"],
+      project_id: args["project_id"]
     }
 
     case Artifacts.create(attrs) do

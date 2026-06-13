@@ -1,0 +1,2105 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tobor Locker — Dashboard</title>
+<style>
+/* ── Reset & Base ──────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-0: #09090b;
+  --bg-1: #111114;
+  --bg-2: #18181b;
+  --bg-3: #1e1e22;
+  --bg-hover: #27272a;
+  --border: #2a2a2e;
+  --border-subtle: #1f1f23;
+  --text-0: #fafafa;
+  --text-1: #a1a1aa;
+  --text-2: #71717a;
+  --text-3: #52525b;
+  --accent: #7c3aed;
+  --accent-dim: rgba(124, 58, 237, 0.15);
+  --accent-glow: rgba(124, 58, 237, 0.25);
+  --green: #22c55e;
+  --green-dim: rgba(34, 197, 94, 0.15);
+  --yellow: #eab308;
+  --yellow-dim: rgba(234, 179, 8, 0.15);
+  --red: #ef4444;
+  --red-dim: rgba(239, 68, 68, 0.15);
+  --blue: #3b82f6;
+  --blue-dim: rgba(59, 130, 246, 0.15);
+  --orange: #f97316;
+  --orange-dim: rgba(249, 115, 22, 0.15);
+  --cyan: #06b6d4;
+  --cyan-dim: rgba(6, 182, 212, 0.15);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+  --sidebar-w: 240px;
+  --topbar-h: 56px;
+}
+
+html { font-size: 14px; }
+body {
+  font-family: var(--font);
+  background: var(--bg-0);
+  color: var(--text-0);
+  line-height: 1.5;
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* ── Layout Shell ──────────────────────────────────────── */
+.shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  grid-template-rows: var(--topbar-h) 1fr;
+  grid-template-areas: "sidebar topbar" "sidebar main";
+  height: 100vh;
+}
+
+/* ── Topbar ────────────────────────────────────────────── */
+.topbar {
+  grid-area: topbar;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-1);
+  z-index: 10;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-2);
+  font-size: 13px;
+}
+.breadcrumb .sep { color: var(--text-3); }
+.breadcrumb .current { color: var(--text-0); font-weight: 600; }
+
+.search-bar {
+  position: relative;
+  width: 360px;
+}
+.search-bar input {
+  width: 100%;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px 8px 36px;
+  color: var(--text-0);
+  font-size: 13px;
+  font-family: var(--font);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.search-bar input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+.search-bar input::placeholder { color: var(--text-3); }
+.search-bar .search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-3);
+  font-size: 14px;
+}
+.search-bar .kbd {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 11px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  position: relative;
+  font-size: 16px;
+  transition: background 0.15s, color 0.15s;
+}
+.icon-btn:hover { background: var(--bg-hover); color: var(--text-0); }
+.icon-btn .badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--red);
+  border: 2px solid var(--bg-1);
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 13px;
+  color: white;
+  cursor: pointer;
+}
+
+/* ── Sidebar ───────────────────────────────────────────── */
+.sidebar {
+  grid-area: sidebar;
+  background: var(--bg-1);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.sidebar-brand {
+  height: var(--topbar-h);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.sidebar-brand .logo {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--accent), #a855f7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+}
+.sidebar-brand .name {
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: -0.02em;
+}
+.sidebar-brand .instance {
+  font-size: 11px;
+  color: var(--text-3);
+  background: var(--bg-3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+}
+
+.sidebar-section {
+  padding: 16px 12px 8px;
+}
+.sidebar-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-3);
+  padding: 0 8px;
+  margin-bottom: 4px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--text-1);
+  font-size: 13px;
+  transition: background 0.1s, color 0.1s;
+  text-decoration: none;
+  position: relative;
+}
+.nav-item:hover { background: var(--bg-hover); color: var(--text-0); }
+.nav-item.active { background: var(--accent-dim); color: var(--accent); }
+.nav-item .nav-icon { width: 18px; text-align: center; font-size: 15px; flex-shrink: 0; }
+.nav-item .nav-count {
+  margin-left: auto;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-3);
+  background: var(--bg-3);
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+.nav-item .nav-dot {
+  margin-left: auto;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.nav-item .nav-dot.green { background: var(--green); }
+.nav-item .nav-dot.yellow { background: var(--yellow); }
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.instance-switcher {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-2);
+  cursor: pointer;
+  border: 1px solid var(--border);
+}
+.instance-switcher .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+}
+.instance-switcher .inst-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-1);
+}
+.instance-switcher .inst-label {
+  font-size: 10px;
+  color: var(--text-3);
+  margin-left: auto;
+  font-family: var(--font-mono);
+}
+
+/* ── Main Content ──────────────────────────────────────── */
+.main {
+  grid-area: main;
+  overflow-y: auto;
+  padding: 24px;
+  background: var(--bg-0);
+}
+
+/* ── Dashboard View ────────────────────────────────────── */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.dashboard-header h1 {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.dashboard-header .actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--font);
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+  color: var(--text-1);
+  transition: all 0.15s;
+}
+.btn:hover { background: var(--bg-hover); color: var(--text-0); border-color: var(--text-3); }
+.btn-primary {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+.btn-primary:hover { opacity: 0.9; background: var(--accent); border-color: var(--accent); }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.btn-ghost { background: transparent; border-color: transparent; }
+.btn-ghost:hover { background: var(--bg-hover); border-color: transparent; }
+
+/* ── Bento Grid ────────────────────────────────────────── */
+.bento {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color 0.15s;
+}
+.stat-card:hover { border-color: var(--text-3); }
+.stat-card .stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.stat-card .stat-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+.stat-card .stat-change {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.stat-card .stat-value {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-family: var(--font-mono);
+}
+.stat-card .stat-label {
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+/* ── Content Panels ────────────────────────────────────── */
+.panels {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.panel {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.panel-header h3 {
+  font-size: 14px;
+  font-weight: 600;
+}
+.panel-header .panel-tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-2);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+}
+.panel-tab {
+  padding: 4px 12px;
+  font-size: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-2);
+  border: none;
+  background: transparent;
+  font-family: var(--font);
+  transition: all 0.15s;
+}
+.panel-tab:hover { color: var(--text-0); }
+.panel-tab.active { background: var(--bg-3); color: var(--text-0); }
+
+.panel-body {
+  padding: 0;
+}
+
+/* ── Activity Feed ─────────────────────────────────────── */
+.feed-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background 0.1s;
+  cursor: pointer;
+}
+.feed-item:hover { background: var(--bg-hover); }
+.feed-item:last-child { border-bottom: none; }
+
+.feed-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.feed-content {
+  flex: 1;
+  min-width: 0;
+}
+.feed-content .feed-text {
+  font-size: 13px;
+  color: var(--text-1);
+  line-height: 1.4;
+}
+.feed-content .feed-text strong {
+  color: var(--text-0);
+  font-weight: 500;
+}
+.feed-content .feed-text .entity {
+  color: var(--accent);
+  cursor: pointer;
+}
+.feed-content .feed-text .entity:hover { text-decoration: underline; }
+.feed-meta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-3);
+}
+.feed-meta .domain-tag {
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+/* ── Task List ─────────────────────────────────────────── */
+.task-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.task-item:hover { background: var(--bg-hover); }
+.task-item:last-child { border-bottom: none; }
+
+.task-check {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1.5px solid var(--text-3);
+  margin-top: 2px;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.task-check:hover { border-color: var(--accent); }
+.task-check.done { background: var(--accent); border-color: var(--accent); }
+
+.task-info { flex: 1; }
+.task-info .task-title {
+  font-size: 13px;
+  color: var(--text-0);
+}
+.task-info .task-sub {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 2px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.priority-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.priority-dot.high { background: var(--red); }
+.priority-dot.medium { background: var(--yellow); }
+.priority-dot.low { background: var(--green); }
+
+/* ── Status Badges ─────────────────────────────────────── */
+.badge-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.badge-status.draft { background: var(--bg-3); color: var(--text-2); }
+.badge-status.active, .badge-status.published { background: var(--green-dim); color: var(--green); }
+.badge-status.review { background: var(--yellow-dim); color: var(--yellow); }
+.badge-status.archived { background: var(--bg-3); color: var(--text-3); }
+.badge-status.generating { background: var(--blue-dim); color: var(--blue); }
+.badge-status.open { background: var(--blue-dim); color: var(--blue); }
+.badge-status.closed { background: var(--green-dim); color: var(--green); }
+
+/* ── Domain-Specific Colors ────────────────────────────── */
+.domain-sessions    { background: var(--blue-dim);   color: var(--blue); }
+.domain-tickets     { background: var(--orange-dim);  color: var(--orange); }
+.domain-review      { background: var(--yellow-dim);  color: var(--yellow); }
+.domain-chat        { background: var(--green-dim);   color: var(--green); }
+.domain-wiki        { background: var(--cyan-dim);    color: var(--cyan); }
+.domain-assets      { background: var(--accent-dim);  color: var(--accent); }
+.domain-artifacts   { background: rgba(168,85,247,0.15); color: #a855f7; }
+.domain-projects    { background: rgba(236,72,153,0.15); color: #ec4899; }
+.domain-agents      { background: rgba(245,158,11,0.15); color: #f59e0b; }
+
+/* ── Bottom Panels Row ─────────────────────────────────── */
+.panels-3col {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+/* ── Asset Grid ────────────────────────────────────────── */
+.asset-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 16px 20px;
+}
+
+.asset-card {
+  background: var(--bg-2);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.asset-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+.asset-thumb {
+  height: 80px;
+  background: linear-gradient(135deg, var(--bg-3), var(--bg-hover));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: var(--text-3);
+}
+.asset-meta {
+  padding: 10px 12px;
+}
+.asset-meta .asset-name {
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.asset-meta .asset-type {
+  font-size: 10px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  margin-top: 2px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ── Chat Preview ──────────────────────────────────────── */
+.chat-room {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.chat-room:hover { background: var(--bg-hover); }
+
+.chat-room-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+.chat-room-info { flex: 1; }
+.chat-room-info .room-name {
+  font-size: 13px;
+  font-weight: 500;
+}
+.chat-room-info .room-last {
+  font-size: 11px;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+.unread-badge {
+  background: var(--accent);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-family: var(--font-mono);
+}
+
+/* ── Review Queue ──────────────────────────────────────── */
+.review-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.review-item:hover { background: var(--bg-hover); }
+
+.review-thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+.review-info { flex: 1; }
+.review-info .review-title {
+  font-size: 13px;
+  font-weight: 500;
+}
+.review-info .review-sub {
+  font-size: 11px;
+  color: var(--text-3);
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 2px;
+}
+
+/* ── Team / Personas ───────────────────────────────────── */
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  padding: 16px 20px;
+}
+.team-member {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-2);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.team-member:hover { background: var(--bg-hover); }
+.team-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  position: relative;
+}
+.team-avatar .online-dot {
+  position: absolute;
+  bottom: -1px;
+  right: -1px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  border: 2px solid var(--bg-2);
+}
+.team-member .member-name {
+  font-size: 12px;
+  font-weight: 500;
+}
+.team-member .member-role {
+  font-size: 10px;
+  color: var(--text-3);
+}
+
+/* ── Comment Compose ───────────────────────────────────── */
+.comment-compose {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-subtle);
+}
+.comment-input-row {
+  display: flex;
+  gap: 8px;
+}
+.comment-input-row input {
+  flex: 1;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--text-0);
+  font-family: var(--font);
+  outline: none;
+}
+.comment-input-row input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+/* ── Tool Search Panel ─────────────────────────────────── */
+.tool-search-results {
+  padding: 12px 20px;
+}
+.tool-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.tool-item:last-child { border-bottom: none; }
+.tool-name {
+  font-size: 12px;
+  font-weight: 500;
+  font-family: var(--font-mono);
+  color: var(--accent);
+}
+.tool-desc {
+  font-size: 11px;
+  color: var(--text-2);
+  flex: 1;
+}
+.tool-domain {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+}
+
+/* ── Command Palette Overlay ───────────────────────────── */
+.cmd-palette-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 120px;
+}
+.cmd-palette-overlay.open { display: flex; }
+
+.cmd-palette {
+  width: 560px;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.cmd-palette input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  padding: 16px 20px;
+  font-size: 16px;
+  color: var(--text-0);
+  font-family: var(--font);
+  outline: none;
+}
+.cmd-palette input::placeholder { color: var(--text-3); }
+.cmd-results {
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 8px;
+}
+.cmd-result {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.cmd-result:hover, .cmd-result.selected { background: var(--bg-hover); }
+.cmd-result .cmd-icon { width: 20px; text-align: center; color: var(--text-2); }
+.cmd-result .cmd-label { font-size: 14px; }
+.cmd-result .cmd-hint {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+}
+.cmd-footer {
+  padding: 8px 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 16px;
+  font-size: 11px;
+  color: var(--text-3);
+}
+.cmd-footer kbd {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0 4px;
+  font-family: var(--font-mono);
+}
+
+/* ── Detail Drawer ─────────────────────────────────────── */
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 50;
+  display: none;
+}
+.drawer-overlay.open { display: block; }
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 480px;
+  height: 100vh;
+  background: var(--bg-1);
+  border-left: 1px solid var(--border);
+  z-index: 51;
+  transform: translateX(100%);
+  transition: transform 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+.drawer.open { transform: translateX(0); }
+
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.drawer-header h2 {
+  font-size: 16px;
+  font-weight: 600;
+}
+.drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+.drawer-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.detail-field {
+  margin-bottom: 16px;
+}
+.detail-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-3);
+  margin-bottom: 4px;
+}
+.detail-value {
+  font-size: 14px;
+  color: var(--text-0);
+}
+
+.detail-tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.tag {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  background: var(--bg-3);
+  color: var(--text-2);
+  font-family: var(--font-mono);
+}
+
+/* ── Comment Thread ────────────────────────────────────── */
+.comment-thread {
+  margin-top: 20px;
+}
+.comment {
+  display: flex;
+  gap: 10px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border-subtle);
+}
+.comment-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.comment-body { flex: 1; }
+.comment-author {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-0);
+}
+.comment-time {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-left: 8px;
+}
+.comment-text {
+  font-size: 13px;
+  color: var(--text-1);
+  margin-top: 2px;
+  line-height: 1.5;
+}
+.comment-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+.comment-action {
+  font-size: 11px;
+  color: var(--text-3);
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: var(--font);
+  padding: 0;
+}
+.comment-action:hover { color: var(--text-1); }
+
+/* ── Quick Action FAB ──────────────────────────────────── */
+.fab-group {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+.fab {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px var(--accent-glow);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.fab:hover { transform: scale(1.05); box-shadow: 0 6px 20px var(--accent-glow); }
+
+.fab-menu {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+}
+.fab-menu.open { display: flex; }
+.fab-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-0);
+  white-space: nowrap;
+  transition: background 0.1s;
+}
+.fab-menu-item:hover { background: var(--bg-hover); }
+
+/* ── Scrollbar ─────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg-3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+
+/* ── Page Variants (hidden by default) ─────────────────── */
+.page { display: none; }
+.page.active { display: block; }
+
+/* ── Assets Page ───────────────────────────────────────── */
+.assets-toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.filter-group {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-2);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+  border: 1px solid var(--border);
+}
+.filter-btn {
+  padding: 5px 12px;
+  font-size: 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-2);
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: all 0.1s;
+}
+.filter-btn:hover { color: var(--text-0); }
+.filter-btn.active { background: var(--bg-3); color: var(--text-0); }
+
+.assets-list-view {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.assets-list-header {
+  display: grid;
+  grid-template-columns: 2fr 100px 100px 80px 100px 80px;
+  gap: 8px;
+  padding: 10px 20px;
+  border-bottom: 2px solid var(--border);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-3);
+}
+.asset-row {
+  display: grid;
+  grid-template-columns: 2fr 100px 100px 80px 100px 80px;
+  gap: 8px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  align-items: center;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.asset-row:hover { background: var(--bg-hover); }
+.asset-row:last-child { border-bottom: none; }
+.asset-row .asset-title-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.asset-row .asset-title-cell .asset-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.asset-row .cell-title { font-size: 13px; font-weight: 500; }
+.asset-row .cell-slug {
+  font-size: 11px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+}
+.asset-row .cell-type {
+  font-size: 12px;
+  color: var(--text-2);
+  font-family: var(--font-mono);
+}
+.asset-row .cell-score {
+  font-size: 13px;
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
+.asset-row .cell-actions {
+  display: flex;
+  gap: 4px;
+}
+
+/* ── Responsive ────────────────────────────────────────── */
+@media (max-width: 1200px) {
+  .panels-3col { grid-template-columns: 1fr 1fr; }
+  .bento { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+  .shell { grid-template-columns: 1fr; grid-template-areas: "topbar" "main"; }
+  .sidebar { display: none; }
+  .bento { grid-template-columns: 1fr; }
+  .panels { grid-template-columns: 1fr; }
+  .panels-3col { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <!-- ═══ SIDEBAR ═══ -->
+  <nav class="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo">T</div>
+      <span class="name">Tobor Locker</span>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Overview</div>
+      <a class="nav-item active" data-page="dashboard" onclick="switchPage('dashboard', this)">
+        <span class="nav-icon">◫</span> Dashboard
+      </a>
+      <a class="nav-item" data-page="tool-search" onclick="switchPage('tool-search', this)">
+        <span class="nav-icon">⌕</span> Tool Search
+      </a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Workspaces</div>
+      <a class="nav-item" data-page="projects" onclick="switchPage('projects', this)">
+        <span class="nav-icon">▦</span> Projects
+        <span class="nav-count">4</span>
+      </a>
+      <a class="nav-item" data-page="sessions" onclick="switchPage('sessions', this)">
+        <span class="nav-icon">◉</span> Sessions
+        <span class="nav-dot green"></span>
+      </a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Content</div>
+      <a class="nav-item" data-page="tickets" onclick="switchPage('tickets', this)">
+        <span class="nav-icon">☐</span> Tickets
+        <span class="nav-count">23</span>
+      </a>
+      <a class="nav-item" data-page="assets" onclick="switchPage('assets', this)">
+        <span class="nav-icon">◈</span> Assets
+        <span class="nav-count">18</span>
+      </a>
+      <a class="nav-item" data-page="artifacts" onclick="switchPage('artifacts', this)">
+        <span class="nav-icon">◇</span> Artifacts
+        <span class="nav-count">42</span>
+      </a>
+      <a class="nav-item" data-page="wiki" onclick="switchPage('wiki', this)">
+        <span class="nav-icon">☰</span> Wiki
+      </a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Collaboration</div>
+      <a class="nav-item" data-page="chat" onclick="switchPage('chat', this)">
+        <span class="nav-icon">◬</span> Chat
+        <span class="nav-count" style="background:var(--accent);color:white;">3</span>
+      </a>
+      <a class="nav-item" data-page="reviews" onclick="switchPage('reviews', this)">
+        <span class="nav-icon">◎</span> Reviews
+        <span class="nav-dot yellow"></span>
+      </a>
+      <a class="nav-item" data-page="agents" onclick="switchPage('agents', this)">
+        <span class="nav-icon">⬡</span> Agents
+        <span class="nav-dot green"></span>
+      </a>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="instance-switcher" onclick="document.querySelector('.cmd-palette-overlay').classList.add('open')">
+        <span class="dot"></span>
+        <span class="inst-name">noizu-primary</span>
+        <span class="inst-label">us-west</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══ TOPBAR ═══ -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="breadcrumb">
+        <span>Tobor Locker</span>
+        <span class="sep">/</span>
+        <span class="current" id="breadcrumb-current">Dashboard</span>
+      </div>
+    </div>
+
+    <div class="search-bar">
+      <span class="search-icon">⌕</span>
+      <input type="text" placeholder="Search tools, assets, tickets..." id="globalSearch">
+      <span class="kbd">⌘K</span>
+    </div>
+
+    <div class="topbar-right">
+      <button class="icon-btn" title="Notifications">
+        ◉
+        <span class="badge"></span>
+      </button>
+      <button class="icon-btn" title="Settings">⚙</button>
+      <div class="avatar" title="Keith Brings">KB</div>
+    </div>
+  </header>
+
+  <!-- ═══ MAIN CONTENT ═══ -->
+  <main class="main">
+
+    <!-- ── DASHBOARD PAGE ──────────────────────────────── -->
+    <div class="page active" id="page-dashboard">
+      <div class="dashboard-header">
+        <h1>Dashboard</h1>
+        <div class="actions">
+          <button class="btn" onclick="toggleCmdPalette()">⌘ Command Palette</button>
+          <button class="btn btn-primary" onclick="toggleFab()">+ New</button>
+        </div>
+      </div>
+
+      <!-- Stats Row -->
+      <div class="bento">
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="stat-icon" style="background:var(--blue-dim);color:var(--blue)">◉</div>
+            <span class="stat-change" style="background:var(--green-dim);color:var(--green)">+2</span>
+          </div>
+          <div class="stat-value">3</div>
+          <div class="stat-label">Active Sessions</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="stat-icon" style="background:var(--orange-dim);color:var(--orange)">☐</div>
+            <span class="stat-change" style="background:var(--yellow-dim);color:var(--yellow)">5 open</span>
+          </div>
+          <div class="stat-value">23</div>
+          <div class="stat-label">Tickets</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="stat-icon" style="background:var(--accent-dim);color:var(--accent)">◈</div>
+            <span class="stat-change" style="background:var(--green-dim);color:var(--green)">12 pub</span>
+          </div>
+          <div class="stat-value">18</div>
+          <div class="stat-label">Assets</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="stat-icon" style="background:var(--yellow-dim);color:var(--yellow)">◎</div>
+            <span class="stat-change" style="background:var(--red-dim);color:var(--red)">2 pending</span>
+          </div>
+          <div class="stat-value">7</div>
+          <div class="stat-label">Reviews</div>
+        </div>
+      </div>
+
+      <!-- Activity + Tasks -->
+      <div class="panels">
+        <div class="panel">
+          <div class="panel-header">
+            <h3>Activity Feed</h3>
+            <div class="panel-tabs">
+              <button class="panel-tab active">All</button>
+              <button class="panel-tab">Mentions</button>
+              <button class="panel-tab">My Work</button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="feed-item">
+              <div class="feed-avatar" style="background:var(--green-dim);color:var(--green)">A</div>
+              <div class="feed-content">
+                <div class="feed-text"><strong>Architect</strong> published asset <span class="entity">hero-landing-img</span></div>
+                <div class="feed-meta">
+                  <span>2m ago</span>
+                  <span class="domain-tag domain-assets">assets</span>
+                </div>
+              </div>
+            </div>
+            <div class="feed-item">
+              <div class="feed-avatar" style="background:var(--blue-dim);color:var(--blue)">K</div>
+              <div class="feed-content">
+                <div class="feed-text"><strong>Keith</strong> commented on ticket <span class="entity">NPL-42: Auth middleware refactor</span></div>
+                <div class="feed-meta">
+                  <span>12m ago</span>
+                  <span class="domain-tag domain-tickets">tickets</span>
+                </div>
+              </div>
+            </div>
+            <div class="feed-item">
+              <div class="feed-avatar" style="background:var(--accent-dim);color:var(--accent)">R</div>
+              <div class="feed-content">
+                <div class="feed-text"><strong>Reviewer</strong> completed review of <span class="entity">api-diagram-v3</span> — <span style="color:var(--green)">approved</span></div>
+                <div class="feed-meta">
+                  <span>28m ago</span>
+                  <span class="domain-tag domain-review">review</span>
+                </div>
+              </div>
+            </div>
+            <div class="feed-item">
+              <div class="feed-avatar" style="background:var(--cyan-dim);color:var(--cyan)">W</div>
+              <div class="feed-content">
+                <div class="feed-text"><strong>Writer</strong> updated wiki page <span class="entity">Deployment Runbook</span></div>
+                <div class="feed-meta">
+                  <span>1h ago</span>
+                  <span class="domain-tag domain-wiki">wiki</span>
+                </div>
+              </div>
+            </div>
+            <div class="feed-item">
+              <div class="feed-avatar" style="background:rgba(245,158,11,0.15);color:#f59e0b">O</div>
+              <div class="feed-content">
+                <div class="feed-text"><strong>Orchestrator</strong> triggered pipeline <span class="entity">asset-gen-batch</span> — 4 images queued</div>
+                <div class="feed-meta">
+                  <span>2h ago</span>
+                  <span class="domain-tag domain-agents">agents</span>
+                </div>
+              </div>
+            </div>
+            <div class="feed-item">
+              <div class="feed-avatar" style="background:var(--green-dim);color:var(--green)">C</div>
+              <div class="feed-content">
+                <div class="feed-text"><strong>Coder</strong> sent message in <span class="entity">#npl-backend</span>: "migration looks good, merging"</div>
+                <div class="feed-meta">
+                  <span>3h ago</span>
+                  <span class="domain-tag domain-chat">chat</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <h3>My Tasks</h3>
+            <button class="btn btn-sm btn-ghost" onclick="openDrawer('task')">+ Add</button>
+          </div>
+          <div class="panel-body">
+            <div class="task-item">
+              <div class="task-check"></div>
+              <div class="task-info">
+                <div class="task-title">Review hero image outputs</div>
+                <div class="task-sub"><span class="priority-dot high"></span> High · Assets</div>
+              </div>
+            </div>
+            <div class="task-item">
+              <div class="task-check"></div>
+              <div class="task-info">
+                <div class="task-title">Update auth middleware PRD</div>
+                <div class="task-sub"><span class="priority-dot high"></span> High · Tickets</div>
+              </div>
+            </div>
+            <div class="task-item">
+              <div class="task-check"></div>
+              <div class="task-info">
+                <div class="task-title">Write deployment runbook section</div>
+                <div class="task-sub"><span class="priority-dot medium"></span> Medium · Wiki</div>
+              </div>
+            </div>
+            <div class="task-item">
+              <div class="task-check done"></div>
+              <div class="task-info">
+                <div class="task-title" style="text-decoration: line-through; color: var(--text-3);">Merge chat notification fix</div>
+                <div class="task-sub"><span class="priority-dot low"></span> Low · Chat</div>
+              </div>
+            </div>
+            <div class="task-item">
+              <div class="task-check"></div>
+              <div class="task-info">
+                <div class="task-title">Evaluate media-tool SVG output</div>
+                <div class="task-sub"><span class="priority-dot medium"></span> Medium · Review</div>
+              </div>
+            </div>
+          </div>
+          <div class="comment-compose">
+            <div class="comment-input-row">
+              <input type="text" placeholder="Add a task...">
+              <button class="btn btn-sm btn-primary">Add</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Row: Assets + Chat + Reviews -->
+      <div class="panels-3col">
+        <div class="panel">
+          <div class="panel-header">
+            <h3>Recent Assets</h3>
+            <button class="btn btn-sm btn-ghost" onclick="switchPage('assets', document.querySelector('[data-page=assets]'))">View All →</button>
+          </div>
+          <div class="panel-body">
+            <div class="asset-grid">
+              <div class="asset-card" onclick="openDrawer('asset')">
+                <div class="asset-thumb" style="background: linear-gradient(135deg, #4f46e5, #7c3aed);">🖼</div>
+                <div class="asset-meta">
+                  <div class="asset-name">Hero Landing</div>
+                  <div class="asset-type">image <span class="badge-status published">pub</span></div>
+                </div>
+              </div>
+              <div class="asset-card">
+                <div class="asset-thumb" style="background: linear-gradient(135deg, #0891b2, #06b6d4);">◇</div>
+                <div class="asset-meta">
+                  <div class="asset-name">API Architecture</div>
+                  <div class="asset-type">diagram <span class="badge-status review">rev</span></div>
+                </div>
+              </div>
+              <div class="asset-card">
+                <div class="asset-thumb" style="background: linear-gradient(135deg, #059669, #22c55e);">♪</div>
+                <div class="asset-meta">
+                  <div class="asset-name">Intro Jingle</div>
+                  <div class="asset-type">music <span class="badge-status generating">gen</span></div>
+                </div>
+              </div>
+              <div class="asset-card">
+                <div class="asset-thumb" style="background: linear-gradient(135deg, #d97706, #f59e0b);">▣</div>
+                <div class="asset-meta">
+                  <div class="asset-name">Login Form</div>
+                  <div class="asset-type">component <span class="badge-status draft">draft</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <h3>Chat Rooms</h3>
+            <button class="btn btn-sm btn-ghost">+ New</button>
+          </div>
+          <div class="panel-body">
+            <div class="chat-room">
+              <div class="chat-room-icon" style="background:var(--accent-dim)">◬</div>
+              <div class="chat-room-info">
+                <div class="room-name">#npl-backend</div>
+                <div class="room-last">Coder: migration looks good</div>
+              </div>
+              <span class="unread-badge">3</span>
+            </div>
+            <div class="chat-room">
+              <div class="chat-room-icon" style="background:var(--green-dim)">◬</div>
+              <div class="chat-room-info">
+                <div class="room-name">#design-review</div>
+                <div class="room-last">Architect: updated the hero</div>
+              </div>
+            </div>
+            <div class="chat-room">
+              <div class="chat-room-icon" style="background:var(--blue-dim)">◬</div>
+              <div class="chat-room-info">
+                <div class="room-name">#infrastructure</div>
+                <div class="room-last">Keith: cert rotation done</div>
+              </div>
+            </div>
+            <div class="chat-room">
+              <div class="chat-room-icon" style="background:var(--orange-dim)">◬</div>
+              <div class="chat-room-info">
+                <div class="room-name">#agent-ops</div>
+                <div class="room-last">Orchestrator: batch complete</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <h3>Pending Reviews</h3>
+          </div>
+          <div class="panel-body">
+            <div class="review-item">
+              <div class="review-thumb" style="background:var(--yellow-dim);color:var(--yellow)">◎</div>
+              <div class="review-info">
+                <div class="review-title">api-diagram-v3</div>
+                <div class="review-sub">
+                  <span class="badge-status review">in progress</span>
+                  <span>Reviewer</span>
+                </div>
+              </div>
+            </div>
+            <div class="review-item">
+              <div class="review-thumb" style="background:var(--orange-dim);color:var(--orange)">◎</div>
+              <div class="review-info">
+                <div class="review-title">hero-landing-v2</div>
+                <div class="review-sub">
+                  <span class="badge-status open">pending</span>
+                  <span>Unassigned</span>
+                </div>
+              </div>
+            </div>
+            <div class="review-item">
+              <div class="review-thumb" style="background:var(--green-dim);color:var(--green)">✓</div>
+              <div class="review-info">
+                <div class="review-title">login-form-comp</div>
+                <div class="review-sub">
+                  <span class="badge-status closed">approved</span>
+                  <span>Architect</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Team -->
+      <div class="panel" style="max-width: 600px;">
+        <div class="panel-header">
+          <h3>Team Personas</h3>
+          <span style="font-size:11px;color:var(--text-3);">3 instances connected</span>
+        </div>
+        <div class="team-grid">
+          <div class="team-member">
+            <div class="team-avatar" style="background:var(--blue-dim);color:var(--blue)">KB
+              <span class="online-dot"></span>
+            </div>
+            <div>
+              <div class="member-name">Keith Brings</div>
+              <div class="member-role">Owner · us-west</div>
+            </div>
+          </div>
+          <div class="team-member">
+            <div class="team-avatar" style="background:var(--accent-dim);color:var(--accent)">AR
+              <span class="online-dot"></span>
+            </div>
+            <div>
+              <div class="member-name">Architect</div>
+              <div class="member-role">Agent · us-west</div>
+            </div>
+          </div>
+          <div class="team-member">
+            <div class="team-avatar" style="background:var(--green-dim);color:var(--green)">CD
+              <span class="online-dot"></span>
+            </div>
+            <div>
+              <div class="member-name">Coder</div>
+              <div class="member-role">Agent · us-east</div>
+            </div>
+          </div>
+          <div class="team-member">
+            <div class="team-avatar" style="background:var(--yellow-dim);color:var(--yellow)">RV</div>
+            <div>
+              <div class="member-name">Reviewer</div>
+              <div class="member-role">Agent · eu-central</div>
+            </div>
+          </div>
+          <div class="team-member">
+            <div class="team-avatar" style="background:var(--cyan-dim);color:var(--cyan)">WR</div>
+            <div>
+              <div class="member-name">Writer</div>
+              <div class="member-role">Agent · us-west</div>
+            </div>
+          </div>
+          <div class="team-member">
+            <div class="team-avatar" style="background:rgba(245,158,11,0.15);color:#f59e0b">OC</div>
+            <div>
+              <div class="member-name">Orchestrator</div>
+              <div class="member-role">Agent · us-west</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ASSETS PAGE ─────────────────────────────────── -->
+    <div class="page" id="page-assets">
+      <div class="dashboard-header">
+        <h1>Assets</h1>
+        <div class="actions">
+          <button class="btn">↓ Import</button>
+          <button class="btn btn-primary" onclick="openDrawer('asset-create')">+ Create Asset</button>
+        </div>
+      </div>
+
+      <div class="assets-toolbar">
+        <div class="filter-group">
+          <button class="filter-btn active">All</button>
+          <button class="filter-btn">Images</button>
+          <button class="filter-btn">Video</button>
+          <button class="filter-btn">Diagrams</button>
+          <button class="filter-btn">Components</button>
+        </div>
+        <div class="filter-group">
+          <button class="filter-btn active">All Status</button>
+          <button class="filter-btn">Draft</button>
+          <button class="filter-btn">Published</button>
+          <button class="filter-btn">Review</button>
+        </div>
+        <div style="flex:1"></div>
+        <span style="font-size:12px;color:var(--text-3)">18 assets</span>
+      </div>
+
+      <div class="assets-list-view">
+        <div class="assets-list-header">
+          <span>Asset</span>
+          <span>Type</span>
+          <span>Status</span>
+          <span>Score</span>
+          <span>Outputs</span>
+          <span></span>
+        </div>
+        <div class="asset-row" onclick="openDrawer('asset')">
+          <div class="asset-title-cell">
+            <div class="asset-icon" style="background: linear-gradient(135deg, #4f46e5, #7c3aed);">🖼</div>
+            <div>
+              <div class="cell-title">Hero Landing Image</div>
+              <div class="cell-slug">hero-landing-img</div>
+            </div>
+          </div>
+          <div class="cell-type">image</div>
+          <div><span class="badge-status published">published</span></div>
+          <div class="cell-score" style="color:var(--green)">0.92</div>
+          <div style="font-size:12px;color:var(--text-2)">3 variants</div>
+          <div class="cell-actions">
+            <button class="btn btn-sm btn-ghost">⋯</button>
+          </div>
+        </div>
+        <div class="asset-row">
+          <div class="asset-title-cell">
+            <div class="asset-icon" style="background: linear-gradient(135deg, #0891b2, #06b6d4);">◇</div>
+            <div>
+              <div class="cell-title">API Architecture Diagram</div>
+              <div class="cell-slug">api-arch-diagram</div>
+            </div>
+          </div>
+          <div class="cell-type">diagram</div>
+          <div><span class="badge-status review">review</span></div>
+          <div class="cell-score" style="color:var(--yellow)">0.78</div>
+          <div style="font-size:12px;color:var(--text-2)">2 variants</div>
+          <div class="cell-actions">
+            <button class="btn btn-sm btn-ghost">⋯</button>
+          </div>
+        </div>
+        <div class="asset-row">
+          <div class="asset-title-cell">
+            <div class="asset-icon" style="background: linear-gradient(135deg, #059669, #22c55e);">♪</div>
+            <div>
+              <div class="cell-title">Product Intro Jingle</div>
+              <div class="cell-slug">intro-jingle</div>
+            </div>
+          </div>
+          <div class="cell-type">music</div>
+          <div><span class="badge-status generating">generating</span></div>
+          <div class="cell-score" style="color:var(--text-3)">—</div>
+          <div style="font-size:12px;color:var(--text-2)">1 variant</div>
+          <div class="cell-actions">
+            <button class="btn btn-sm btn-ghost">⋯</button>
+          </div>
+        </div>
+        <div class="asset-row">
+          <div class="asset-title-cell">
+            <div class="asset-icon" style="background: linear-gradient(135deg, #d97706, #f59e0b);">▣</div>
+            <div>
+              <div class="cell-title">Login Form Component</div>
+              <div class="cell-slug">login-form</div>
+            </div>
+          </div>
+          <div class="cell-type">component</div>
+          <div><span class="badge-status draft">draft</span></div>
+          <div class="cell-score" style="color:var(--text-3)">—</div>
+          <div style="font-size:12px;color:var(--text-2)">0 variants</div>
+          <div class="cell-actions">
+            <button class="btn btn-sm btn-ghost">⋯</button>
+          </div>
+        </div>
+        <div class="asset-row">
+          <div class="asset-title-cell">
+            <div class="asset-icon" style="background: linear-gradient(135deg, #7c3aed, #a855f7);">◇</div>
+            <div>
+              <div class="cell-title">Brand Style Guide</div>
+              <div class="cell-slug">brand-guide-svg</div>
+            </div>
+          </div>
+          <div class="cell-type">svg</div>
+          <div><span class="badge-status published">published</span></div>
+          <div class="cell-score" style="color:var(--green)">0.88</div>
+          <div style="font-size:12px;color:var(--text-2)">5 variants</div>
+          <div class="cell-actions">
+            <button class="btn btn-sm btn-ghost">⋯</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TOOL SEARCH PAGE ────────────────────────────── -->
+    <div class="page" id="page-tool-search">
+      <div class="dashboard-header">
+        <h1>Tool Search</h1>
+      </div>
+      <div class="search-bar" style="width:100%;max-width:640px;margin-bottom:24px;">
+        <span class="search-icon">⌕</span>
+        <input type="text" placeholder="Search across 120+ MCP tools..." style="width:100%;">
+      </div>
+
+      <div class="panels" style="grid-template-columns: 1fr 1fr;">
+        <div class="panel">
+          <div class="panel-header"><h3>Sessions (8 tools)</h3></div>
+          <div class="tool-search-results">
+            <div class="tool-item"><span class="tool-name">Session.Create</span><span class="tool-desc">Start a new session</span><span class="tool-domain domain-sessions">sessions</span></div>
+            <div class="tool-item"><span class="tool-name">Session.List</span><span class="tool-desc">List active sessions</span><span class="tool-domain domain-sessions">sessions</span></div>
+            <div class="tool-item"><span class="tool-name">Session.Get</span><span class="tool-desc">Get session details</span><span class="tool-domain domain-sessions">sessions</span></div>
+            <div class="tool-item"><span class="tool-name">Session.Archive</span><span class="tool-desc">Archive a session</span><span class="tool-domain domain-sessions">sessions</span></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><h3>Tickets (22 tools)</h3></div>
+          <div class="tool-search-results">
+            <div class="tool-item"><span class="tool-name">Ticket.Create</span><span class="tool-desc">Create a ticket</span><span class="tool-domain domain-tickets">tickets</span></div>
+            <div class="tool-item"><span class="tool-name">Ticket.List</span><span class="tool-desc">List/filter tickets</span><span class="tool-domain domain-tickets">tickets</span></div>
+            <div class="tool-item"><span class="tool-name">Ticket.Link</span><span class="tool-desc">Link two tickets</span><span class="tool-domain domain-tickets">tickets</span></div>
+            <div class="tool-item"><span class="tool-name">Queue.StatusCounts</span><span class="tool-desc">Ticket counts per queue</span><span class="tool-domain domain-tickets">tickets</span></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><h3>Assets (15 tools)</h3></div>
+          <div class="tool-search-results">
+            <div class="tool-item"><span class="tool-name">Asset.Create</span><span class="tool-desc">Create asset entry</span><span class="tool-domain domain-assets">assets</span></div>
+            <div class="tool-item"><span class="tool-name">Asset.Generate</span><span class="tool-desc">Trigger generation</span><span class="tool-domain domain-assets">assets</span></div>
+            <div class="tool-item"><span class="tool-name">Asset.Publish</span><span class="tool-desc">Publish an asset</span><span class="tool-domain domain-assets">assets</span></div>
+            <div class="tool-item"><span class="tool-name">Asset.RequestReview</span><span class="tool-desc">Create review for output</span><span class="tool-domain domain-assets">assets</span></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><h3>Chat (14 tools)</h3></div>
+          <div class="tool-search-results">
+            <div class="tool-item"><span class="tool-name">Chat.SendMessage</span><span class="tool-desc">Send a message</span><span class="tool-domain domain-chat">chat</span></div>
+            <div class="tool-item"><span class="tool-name">Chat.CreateRoom</span><span class="tool-desc">Create chat room</span><span class="tool-domain domain-chat">chat</span></div>
+            <div class="tool-item"><span class="tool-name">Chat.CreateEvent</span><span class="tool-desc">Log decision/milestone</span><span class="tool-domain domain-chat">chat</span></div>
+            <div class="tool-item"><span class="tool-name">Chat.Notifications</span><span class="tool-desc">List notifications</span><span class="tool-domain domain-chat">chat</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Placeholder pages -->
+    <div class="page" id="page-projects"><div class="dashboard-header"><h1>Projects</h1><div class="actions"><button class="btn btn-primary">+ New Project</button></div></div><p style="color:var(--text-2);">Project list with member management, ticket summaries, and asset counts per project.</p></div>
+    <div class="page" id="page-sessions"><div class="dashboard-header"><h1>Sessions</h1></div><p style="color:var(--text-2);">Active and archived MCP sessions with connection status and activity timeline.</p></div>
+    <div class="page" id="page-tickets"><div class="dashboard-header"><h1>Tickets</h1><div class="actions"><button class="btn btn-primary">+ New Ticket</button></div></div><p style="color:var(--text-2);">Kanban board and list view with status filters, type/priority sorting, and queue grouping.</p></div>
+    <div class="page" id="page-artifacts"><div class="dashboard-header"><h1>Artifacts</h1></div><p style="color:var(--text-2);">Artifact browser with kind filter, revision history, and binary preview/download.</p></div>
+    <div class="page" id="page-wiki"><div class="dashboard-header"><h1>Wiki</h1></div><p style="color:var(--text-2);">Wiki spaces and pages with tree navigation, tag filter, and inline editing.</p></div>
+    <div class="page" id="page-chat"><div class="dashboard-header"><h1>Chat</h1></div><p style="color:var(--text-2);">Full chat interface with rooms, threaded messages, events (decisions/milestones), and file attachments.</p></div>
+    <div class="page" id="page-reviews"><div class="dashboard-header"><h1>Reviews</h1></div><p style="color:var(--text-2);">Review queue with overlay annotations, comment threads, verdicts, and compile reports.</p></div>
+    <div class="page" id="page-agents"><div class="dashboard-header"><h1>Agents</h1></div><p style="color:var(--text-2);">Agent pipe messages, orchestration status, instruction management, and persona configuration.</p></div>
+
+  </main>
+</div>
+
+<!-- ═══ DETAIL DRAWER ═══ -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <h2 id="drawerTitle">Asset Detail</h2>
+    <button class="icon-btn" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body" id="drawerBody">
+    <!-- Asset detail -->
+    <div id="drawer-asset">
+      <div class="detail-field">
+        <div class="detail-label">Title</div>
+        <div class="detail-value">Hero Landing Image</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Slug</div>
+        <div class="detail-value" style="font-family:var(--font-mono);font-size:13px;color:var(--text-2)">hero-landing-img</div>
+      </div>
+      <div style="display:flex;gap:16px;">
+        <div class="detail-field" style="flex:1">
+          <div class="detail-label">Type</div>
+          <div class="detail-value">image</div>
+        </div>
+        <div class="detail-field" style="flex:1">
+          <div class="detail-label">Status</div>
+          <div><span class="badge-status published">published</span></div>
+        </div>
+        <div class="detail-field" style="flex:1">
+          <div class="detail-label">Quality</div>
+          <div class="detail-value">high</div>
+        </div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Tags</div>
+        <div class="detail-tags">
+          <span class="tag">hero</span>
+          <span class="tag">landing</span>
+          <span class="tag">brand</span>
+        </div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Active Output</div>
+        <div style="background:var(--bg-2);border-radius:var(--radius-md);padding:12px;margin-top:4px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <span style="font-size:13px;font-weight:500;">Variant #3</span>
+            <span class="badge-status active" style="background:var(--green-dim);color:var(--green)">active</span>
+          </div>
+          <div style="display:flex;gap:16px;font-size:12px;color:var(--text-2);">
+            <span>Provider: <span style="color:var(--text-0)">gemini</span></span>
+            <span>Model: <span style="color:var(--text-0)">imagen-4.0</span></span>
+          </div>
+          <div style="display:flex;gap:16px;font-size:12px;color:var(--text-2);margin-top:4px;">
+            <span>Score: <span style="color:var(--green);font-family:var(--font-mono)">0.92</span></span>
+            <span>Eval: <span style="color:var(--green)">passed</span></span>
+          </div>
+        </div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Prompt YAML</div>
+        <pre style="background:var(--bg-2);border-radius:var(--radius-sm);padding:12px;font-family:var(--font-mono);font-size:12px;color:var(--text-1);overflow-x:auto;margin-top:4px;">schema: "0.4"
+type: image
+quality: high
+prompt:
+  text: "A futuristic cityscape at sunset,
+         neon reflections on glass towers"
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080</pre>
+      </div>
+
+      <!-- Comments Section -->
+      <div class="comment-thread">
+        <div class="detail-label" style="margin-bottom:8px;">Comments</div>
+        <div class="comment">
+          <div class="comment-avatar" style="background:var(--accent-dim);color:var(--accent)">AR</div>
+          <div class="comment-body">
+            <span class="comment-author">Architect</span>
+            <span class="comment-time">2h ago</span>
+            <div class="comment-text">Variant 3 has the best composition. The neon palette matches our brand guidelines.</div>
+            <div class="comment-actions">
+              <button class="comment-action">Reply</button>
+              <button class="comment-action">React</button>
+            </div>
+          </div>
+        </div>
+        <div class="comment">
+          <div class="comment-avatar" style="background:var(--blue-dim);color:var(--blue)">KB</div>
+          <div class="comment-body">
+            <span class="comment-author">Keith</span>
+            <span class="comment-time">1h ago</span>
+            <div class="comment-text">Agreed. Let's publish this one and archive the others.</div>
+            <div class="comment-actions">
+              <button class="comment-action">Reply</button>
+              <button class="comment-action">React</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="drawer-footer">
+    <div class="comment-input-row">
+      <input type="text" placeholder="Add a comment...">
+      <button class="btn btn-sm btn-primary">Send</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ COMMAND PALETTE ═══ -->
+<div class="cmd-palette-overlay" id="cmdPalette" onclick="toggleCmdPalette()">
+  <div class="cmd-palette" onclick="event.stopPropagation()">
+    <input type="text" placeholder="Type a command or search..." autofocus id="cmdInput">
+    <div class="cmd-results">
+      <div class="cmd-result selected">
+        <span class="cmd-icon">+</span>
+        <span class="cmd-label">Create Ticket</span>
+        <span class="cmd-hint">tickets.tobor.locker</span>
+      </div>
+      <div class="cmd-result">
+        <span class="cmd-icon">+</span>
+        <span class="cmd-label">Create Asset</span>
+        <span class="cmd-hint">assets.tobor.locker</span>
+      </div>
+      <div class="cmd-result">
+        <span class="cmd-icon">◬</span>
+        <span class="cmd-label">Open Chat Room</span>
+        <span class="cmd-hint">chat.tobor.locker</span>
+      </div>
+      <div class="cmd-result">
+        <span class="cmd-icon">⌕</span>
+        <span class="cmd-label">Search Tools</span>
+        <span class="cmd-hint">120+ tools</span>
+      </div>
+      <div class="cmd-result">
+        <span class="cmd-icon">⬡</span>
+        <span class="cmd-label">Trigger Orchestration</span>
+        <span class="cmd-hint">agents.tobor.locker</span>
+      </div>
+      <div class="cmd-result">
+        <span class="cmd-icon">◉</span>
+        <span class="cmd-label">Switch Instance</span>
+        <span class="cmd-hint">3 connected</span>
+      </div>
+    </div>
+    <div class="cmd-footer">
+      <span><kbd>↑</kbd> <kbd>↓</kbd> navigate</span>
+      <span><kbd>↵</kbd> select</span>
+      <span><kbd>esc</kbd> close</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ FAB ═══ -->
+<div class="fab-group">
+  <div class="fab-menu" id="fabMenu">
+    <div class="fab-menu-item" onclick="switchPage('tickets',document.querySelector('[data-page=tickets]'))">☐ New Ticket</div>
+    <div class="fab-menu-item" onclick="openDrawer('asset-create')">◈ New Asset</div>
+    <div class="fab-menu-item">◬ New Chat Room</div>
+    <div class="fab-menu-item">☰ New Wiki Page</div>
+    <div class="fab-menu-item" onclick="openDrawer('task')">☑ Add Task</div>
+  </div>
+  <button class="fab" onclick="toggleFab()" id="fabBtn">+</button>
+</div>
+
+<script>
+function switchPage(page, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const target = document.getElementById('page-' + page);
+  if (target) target.classList.add('active');
+  if (el) el.classList.add('active');
+  document.getElementById('breadcrumb-current').textContent =
+    page.charAt(0).toUpperCase() + page.slice(1).replace(/-/g, ' ');
+}
+
+function toggleCmdPalette() {
+  const el = document.getElementById('cmdPalette');
+  el.classList.toggle('open');
+  if (el.classList.contains('open')) {
+    setTimeout(() => document.getElementById('cmdInput').focus(), 50);
+  }
+}
+
+function openDrawer(type) {
+  document.getElementById('drawerOverlay').classList.add('open');
+  document.getElementById('drawer').classList.add('open');
+  if (type === 'asset') {
+    document.getElementById('drawerTitle').textContent = 'Asset Detail';
+  } else if (type === 'task') {
+    document.getElementById('drawerTitle').textContent = 'Add Task';
+  } else {
+    document.getElementById('drawerTitle').textContent = 'Create Asset';
+  }
+}
+
+function closeDrawer() {
+  document.getElementById('drawerOverlay').classList.remove('open');
+  document.getElementById('drawer').classList.remove('open');
+}
+
+function toggleFab() {
+  document.getElementById('fabMenu').classList.toggle('open');
+  const btn = document.getElementById('fabBtn');
+  btn.textContent = document.getElementById('fabMenu').classList.contains('open') ? '✕' : '+';
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault();
+    toggleCmdPalette();
+  }
+  if (e.key === 'Escape') {
+    document.getElementById('cmdPalette').classList.remove('open');
+    closeDrawer();
+    document.getElementById('fabMenu').classList.remove('open');
+    document.getElementById('fabBtn').textContent = '+';
+  }
+});
+
+// Task checkbox toggle
+document.querySelectorAll('.task-check').forEach(check => {
+  check.addEventListener('click', (e) => {
+    e.stopPropagation();
+    check.classList.toggle('done');
+    const title = check.nextElementSibling?.querySelector('.task-title');
+    if (title) {
+      title.style.textDecoration = check.classList.contains('done') ? 'line-through' : 'none';
+      title.style.color = check.classList.contains('done') ? 'var(--text-3)' : '';
+    }
+  });
+});
+
+// Filter buttons toggle
+document.querySelectorAll('.filter-group').forEach(group => {
+  group.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      group.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+});
+
+// Panel tab toggle
+document.querySelectorAll('.panel-tabs').forEach(tabs => {
+  tabs.querySelectorAll('.panel-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+    });
+  });
+});
+</script>
+</body>
+</html>

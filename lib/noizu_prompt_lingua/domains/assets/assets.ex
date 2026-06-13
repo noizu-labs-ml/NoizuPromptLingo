@@ -26,6 +26,13 @@ defmodule NoizuPromptLingua.Domains.Assets do
     end
   end
 
+  def get_by_project_slug(project_slug, asset_slug) do
+    AssetEntry
+    |> join(:inner, [e], p in NoizuPromptLingua.Schema.Project, on: e.project_id == p.id)
+    |> where([e, p], p.slug == ^project_slug and e.slug == ^asset_slug)
+    |> Repo.one()
+  end
+
   def update(slug_or_id, attrs, opts \\ []) do
     case get(slug_or_id) do
       nil -> {:error, :not_found}
@@ -96,7 +103,8 @@ defmodule NoizuPromptLingua.Domains.Assets do
         kind: artifact_kind,
         title: "#{entry.title} (generated)",
         content: entry.prompt_yaml,
-        mime_type: opts[:mime_type]
+        mime_type: opts[:mime_type],
+        project_id: entry.project_id
       })
 
       next_variant = next_variant_number(entry_id)

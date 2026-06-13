@@ -35,6 +35,7 @@ defmodule NoizuPromptLingua.Domains.Artifacts do
   def list(opts \\ []) do
     Artifact
     |> maybe_filter_kind(opts[:kind])
+    |> maybe_filter_project(opts[:project_id])
     |> maybe_search(opts[:search])
     |> order_by([a], desc: a.inserted_at)
     |> limit(^(opts[:limit] || 50))
@@ -97,6 +98,9 @@ defmodule NoizuPromptLingua.Domains.Artifacts do
 
   defp maybe_filter_kind(query, nil), do: query
   defp maybe_filter_kind(query, kind), do: where(query, [a], a.kind == ^kind)
+
+  defp maybe_filter_project(query, nil), do: query
+  defp maybe_filter_project(query, project_id), do: where(query, [a], a.project_id == ^project_id)
 
   defp maybe_search(query, nil), do: query
   defp maybe_search(query, search) do

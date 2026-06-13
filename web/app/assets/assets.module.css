@@ -1,0 +1,63 @@
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.title { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
+.count { font-size: 13px; color: var(--text-3); }
+
+.table {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.tableHeader {
+  display: grid;
+  grid-template-columns: 2fr 100px 100px 80px 100px;
+  gap: 8px;
+  padding: 10px 20px;
+  border-bottom: 2px solid var(--border);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-3);
+}
+.row {
+  display: grid;
+  grid-template-columns: 2fr 100px 100px 80px 100px;
+  gap: 8px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.1s;
+}
+.row:hover { background: var(--bg-hover); }
+.row:last-child { border-bottom: none; }
+
+.titleCell { display: flex; align-items: center; gap: 10px; }
+.icon {
+  width: 32px; height: 32px; border-radius: var(--radius-sm);
+  background: var(--bg-3); display: flex; align-items: center;
+  justify-content: center; font-size: 14px; flex-shrink: 0;
+}
+.assetTitle { font-size: 13px; font-weight: 500; }
+.slug { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); }
+.typeLabel { font-size: 12px; color: var(--text-2); font-family: var(--font-mono); }
+.quality { font-size: 12px; color: var(--text-2); }
+.time { font-size: 11px; color: var(--text-3); }
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+  width: fit-content;
+}
+.draft { background: var(--bg-3); color: var(--text-2); }
+.generating { background: var(--blue-dim); color: var(--blue); }
+.review { background: var(--yellow-dim); color: var(--yellow); }
+.published { background: var(--green-dim); color: var(--green); }
+.archived { background: var(--bg-3); color: var(--text-3); }
+
+.empty { padding: 40px 20px; text-align: center; color: var(--text-3); font-size: 14px; }

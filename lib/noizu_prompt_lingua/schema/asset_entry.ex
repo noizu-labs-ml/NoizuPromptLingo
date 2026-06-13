@@ -28,11 +28,11 @@ defmodule NoizuPromptLingua.Schema.AssetEntry do
     entry
     |> cast(attrs, [:slug, :title, :asset_type, :status, :quality, :prompt_yaml,
                      :tags, :product_targets, :project_id, :active_output_id])
-    |> validate_required([:slug, :title, :asset_type, :prompt_yaml])
+    |> validate_required([:slug, :title, :asset_type, :prompt_yaml, :project_id])
     |> validate_inclusion(:asset_type, @asset_types)
     |> validate_inclusion(:status, @statuses)
     |> validate_inclusion(:quality, @qualities ++ [nil])
-    |> unique_constraint(:slug)
+    |> unique_constraint([:project_id, :slug])
   end
 
   def asset_types, do: @asset_types

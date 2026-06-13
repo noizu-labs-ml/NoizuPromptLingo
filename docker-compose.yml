@@ -37,8 +37,8 @@ services:
     environment:
       - DATABASE_URL=ecto://tobor:tobor_dev_password@postgres:5432/tobor_locker
     depends_on:
-      migrations:
-        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
 
   nextjs:
     build:

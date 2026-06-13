@@ -1,10 +1,15 @@
 replicas: 1
 domain: tobor.locker
 
+npl-mcp:
+  image:
+    repository: ops.noizu.com/npl-mcp/server
+    tag: latest
+
 backend:
   image:
-    repository: ""
-    tag: ""
+    repository: ops.noizu.com/npl-mcp/server
+    tag: latest
     pullPolicy: IfNotPresent
   port: 4040
   resources:
@@ -25,11 +30,13 @@ backend:
       initialDelaySeconds: 5
       periodSeconds: 10
       failureThreshold: 3
+  env:
+    secretName: npl-mcp-secrets
 
 frontend:
   image:
-    repository: ""
-    tag: ""
+    repository: ops.noizu.com/npl-mcp/frontend
+    tag: latest
     pullPolicy: IfNotPresent
   port: 3000
   resources:
@@ -41,12 +48,12 @@ frontend:
       memory: 256Mi
   probes:
     liveness:
-      path: /
+      path: /api/auth/session
       initialDelaySeconds: 10
       periodSeconds: 15
       failureThreshold: 3
     readiness:
-      path: /
+      path: /api/auth/session
       initialDelaySeconds: 5
       periodSeconds: 10
       failureThreshold: 3

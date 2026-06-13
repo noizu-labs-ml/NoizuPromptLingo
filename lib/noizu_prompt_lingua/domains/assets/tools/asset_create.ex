@@ -15,7 +15,7 @@ defmodule NoizuPromptLingua.Domains.Assets.Tools.AssetCreate do
       "project_id" => %{"type" => "string", "description" => "Project UUID"},
       "actor" => %{"type" => "string", "description" => "Creator persona"}
     },
-    "required" => ["slug", "title", "asset_type", "prompt_yaml"]
+    "required" => ["slug", "title", "asset_type", "prompt_yaml", "project_id"]
   }
 
   alias NoizuPromptLingua.Domains.Assets

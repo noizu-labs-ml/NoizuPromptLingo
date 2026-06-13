@@ -9,6 +9,7 @@ defmodule NoizuPromptLingua.Domains.Artifacts.Tools.ArtifactList do
   input do
     field :kind, :string, description: "Filter by kind (code, document, image, wiki, config, binary)"
     field :search, :string, description: "Search in title"
+    field :project_id, :string, description: "Filter by project UUID"
     field :limit, :integer, description: "Max results (default 50)"
     field :offset, :integer, description: "Pagination offset"
   end
@@ -18,7 +19,7 @@ defmodule NoizuPromptLingua.Domains.Artifacts.Tools.ArtifactList do
   @impl true
   def call(args, _ctx) do
     opts =
-      [:kind, :search, :limit, :offset]
+      [:kind, :search, :project_id, :limit, :offset]
       |> Enum.reduce([], fn k, acc ->
         val = args[k] || args[Atom.to_string(k)]
         if val, do: [{k, val} | acc], else: acc
