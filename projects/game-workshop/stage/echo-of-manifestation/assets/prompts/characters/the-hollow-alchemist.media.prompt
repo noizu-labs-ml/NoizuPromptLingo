@@ -1,0 +1,31 @@
+schema: "0.3"
+id: echo-of-manifestation-character-the-hollow-alchemist
+type: image
+service: gemini
+
+prompt:
+  text: >
+    Dark fantasy concept art portrait of the Hollow Alchemist — a male figure consumed by
+    shadow, half-materialized between the material world and the Plane of Echoes. His right
+    side is still human: pale skin, visible bone structure, a portion of an alchemist's coat.
+    His left side dissolves into sentient shadow that moves with its own agency, tendrils of
+    darkness reaching outward as if hungry for more substance. Deep alchemical symbols are
+    carved into his exposed skin — not tattoos but gouged channels that leak a dark essence
+    like liquid shadow, the substance dripping and floating upward in defiance of gravity.
+    His expression is manic — eyes too wide, a grin that stretches beyond what a human face
+    should allow, caught between ecstasy and agony. One hand reaches toward the viewer while
+    the shadow-half attempts to claw its way free from his body. The background is swirling
+    dark essence and fragmented transmutation circles. Painterly style, atmospheric lighting,
+    body horror elements handled with restraint rather than gore. The mood is tragic
+    corruption — someone who pushed transmutation too far and became the experiment.
+  negative: "bright, cheerful, cartoon, anime, clean magic, simple villain, generic demon, excessive gore, colorful palette, low detail, flat shading, clean edges"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1024
+    height: 1536
+    aspect_ratio: "2:3"
+
+tags: [character, antagonist, hollow-alchemist, corrupted, portrait, concept-art, dark-fantasy, body-horror]

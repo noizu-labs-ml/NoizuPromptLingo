@@ -1,0 +1,34 @@
+schema: "0.3"
+id: echo-of-manifestation-env-resonance-core
+type: image
+service: gemini
+
+prompt:
+  text: >
+    Dark fantasy concept art of the Resonance Core — Zone 6 of the Twilight Zone. A vast
+    industrial engine room of impossible scale, the machinery that keeps the boundary between
+    worlds intact — or perhaps the machinery that is tearing it apart. Massive gears and
+    pistons made of solidified shadow fill the space, their surfaces absorbing light rather
+    than reflecting it. Steam — or something like steam, but darker, heavier — rises from
+    joints and vents throughout the chamber. Molten copper seams run through the shadow-metal
+    machinery, glowing white-hot at stress points and cooling to deep amber in the troughs,
+    providing the primary illumination. The copper veins pulse with rhythmic intensity, like
+    a heartbeat. Walkways and catwalks of rusted iron spiral around the central mechanism —
+    a massive rotating cylinder of shadow and copper that extends beyond sight in both
+    directions, up into darkness and down into darkness. Pressure gauges read in alchemical
+    symbols rather than numbers. Pipes and conduits carry the molten copper through the
+    shadow machinery. The scale is overwhelming — the player would be insect-small against
+    these mechanisms. The lighting is industrial: white-hot copper, deep amber cooling,
+    and absolute shadow where the copper light cannot reach. Painterly style, dramatic
+    industrial atmosphere. The mood is the machinery of reality itself, vast and indifferent.
+  negative: "bright, cheerful, cartoon, anime, clean magic, clean factory, modern industrial, colorful palette, steampunk whimsy, brass brightness, low detail, flat shading, human scale"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1536
+    height: 1024
+    aspect_ratio: "3:2"
+
+tags: [environment, zone-6, industrial, engine, machinery, concept-art, dark-fantasy]
