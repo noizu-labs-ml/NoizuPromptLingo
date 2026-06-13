@@ -1,5 +1,6 @@
 use crate::os_input_output::{command_exists, AsyncReader};
 use crate::panes::PaneId;
+use zellij_utils::envs;
 
 use nix::{
     fcntl::{fcntl, FcntlArg, OFlag},
@@ -218,6 +219,9 @@ fn handle_openpty(
                     current_dir.display()
                 );
             }
+        }
+        if envs::tmux_compat_enabled() {
+            command.env("TMUX_PANE", format!("%{}", terminal_id));
         }
         command
             .args(&cmd.args)

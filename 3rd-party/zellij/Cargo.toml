@@ -4,7 +4,7 @@ build = "src/build.rs"
 authors = ["Aram Drevekenin <aram@poor.dev>"]
 description = "A terminal workspace with batteries included"
 homepage = "https://zellij.dev"
-include = ["src/**/*", "assets/layouts/*", "assets/config/*", "LICENSE.md", "README.md", "!**/*_test.*", "!**/tests/**/*"]
+include = ["src/**/*", "zellij-cct-tmux/**/*", "assets/layouts/*", "assets/config/*", "LICENSE.md", "README.md", "!**/*_test.*", "!**/tests/**/*"]
 # See 'workspace.package' for concrete values
 license.workspace = true
 repository.workspace = true
@@ -14,9 +14,18 @@ rust-version.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[[bin]]
+name = "zellij"
+path = "src/main.rs"
+
+[[bin]]
+name = "zellij-tmux-shim"
+path = "src/tmux_shim_main.rs"
+
 [dependencies]
 zellij-client = { path = "zellij-client/", version = "0.45.0" }
 zellij-server = { path = "zellij-server/", version = "0.45.0" }
+zellij-cct-tmux = { path = "zellij-cct-tmux/", version = "0.1.0" }
 zellij-utils = { workspace = true }
 anyhow = { workspace = true }
 clap = { workspace = true }
@@ -64,6 +73,7 @@ members = [
     "zellij-tile",
     "zellij-tile-utils",
     "xtask",
+    "zellij-cct-tmux",
     ".",
 ]
 

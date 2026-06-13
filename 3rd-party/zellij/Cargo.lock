@@ -4808,9 +4808,19 @@ dependencies = [
  "suggest",
  "thiserror 1.0.61",
  "vte 0.11.0",
+ "zellij-cct-tmux",
  "zellij-client",
  "zellij-server",
  "zellij-utils",
+]
+
+[[package]]
+name = "zellij-cct-tmux"
+version = "0.1.0"
+dependencies = [
+ "log",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

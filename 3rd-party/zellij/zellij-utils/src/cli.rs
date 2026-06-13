@@ -19,10 +19,8 @@ fn validate_session(name: &str) -> Result<String, String> {
         socket_path.push(name);
 
         if socket_path.as_os_str().len() >= ZELLIJ_SOCK_MAX_LENGTH {
-            // socket path must be less than 108 bytes
-            let available_length = ZELLIJ_SOCK_MAX_LENGTH
-                .saturating_sub(socket_path.as_os_str().len())
-                .saturating_sub(1);
+            let dir_len = crate::consts::ZELLIJ_SOCK_DIR.as_os_str().len() + 1;
+            let available_length = ZELLIJ_SOCK_MAX_LENGTH.saturating_sub(dir_len);
 
             return Err(format!(
                 "session name must be less than {} characters",

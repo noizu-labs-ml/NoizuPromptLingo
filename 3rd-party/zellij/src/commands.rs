@@ -674,6 +674,13 @@ fn attach_with_session_name(
 }
 
 pub(crate) fn start_client(opts: CliArgs) {
+    if let Ok(val) = std::env::var(envs::ZELLIJ_ENV_KEY) {
+        if !val.is_empty() {
+            eprintln!("You are already inside a Zellij session. Nesting sessions is not supported.");
+            eprintln!("If you meant to run a command, use: zellij run -- <command>");
+            process::exit(1);
+        }
+    }
     // look for old YAML config/layout/theme files and convert them to KDL
     convert_old_yaml_files(&opts);
     let (

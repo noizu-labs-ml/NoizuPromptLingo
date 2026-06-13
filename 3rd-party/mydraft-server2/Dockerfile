@@ -14,7 +14,7 @@ RUN npm run build
 RUN cp ./.env ./dist/
 
 # setup react app
-RUN cd ./dist/ && git clone https://github.com/mydraft-cc/ui.git
+RUN cd ./dist/ && git clone --branch 1.1 --depth 1 https://github.com/mydraft-cc/ui.git
 
 RUN cd ./dist/ui && echo "VITE_SERVER_URL=/api" > ./.env
 RUN cd ./dist/ui && rm -rf ./package-lock.json

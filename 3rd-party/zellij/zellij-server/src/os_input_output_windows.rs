@@ -1,5 +1,6 @@
 use crate::os_input_output::{resolve_command, AsyncReader};
 use crate::panes::PaneId;
+use zellij_utils::envs;
 
 use std::{
     collections::BTreeMap,
@@ -174,7 +175,7 @@ fn build_command_line(cmd: &RunCommand) -> Vec<u16> {
 fn build_environment_block(terminal_id: u32) -> Vec<u16> {
     let mut block: Vec<u16> = Vec::new();
     for (key, value) in std::env::vars() {
-        if key == "ZELLIJ_PANE_ID" {
+        if key == "ZELLIJ_PANE_ID" || key == "TMUX_PANE" {
             continue;
         }
         let entry = format!("{}={}", key, value);
@@ -184,6 +185,11 @@ fn build_environment_block(terminal_id: u32) -> Vec<u16> {
     let pane_entry = format!("ZELLIJ_PANE_ID={}", terminal_id);
     block.extend(OsStr::new(&pane_entry).encode_wide());
     block.push(0);
+    if envs::tmux_compat_enabled() {
+        let tmux_pane_entry = format!("TMUX_PANE=%{}", terminal_id);
+        block.extend(OsStr::new(&tmux_pane_entry).encode_wide());
+        block.push(0);
+    }
     block.push(0); // double-null terminator
     block
 }

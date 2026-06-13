@@ -31,6 +31,23 @@ pub fn get_socket_dir() -> Result<String> {
     Ok(var(SOCKET_DIR_ENV_KEY)?)
 }
 
+pub const TMUX_COMPAT_ENV_KEY: &str = "ZELLIJ_TMUX_COMPAT";
+pub fn tmux_compat_enabled() -> bool {
+    var(TMUX_COMPAT_ENV_KEY).map(|v| v == "1").unwrap_or(false)
+}
+
+pub fn set_tmux_compat_vars(session_name: &str) {
+    if tmux_compat_enabled() {
+        set_var("TMUX", format!("zellij-cct:{},{},0", session_name, std::process::id()));
+    }
+}
+
+pub fn set_tmux_compat_pane(terminal_id: u32) {
+    if tmux_compat_enabled() {
+        set_var("TMUX_PANE", format!("%{}", terminal_id));
+    }
+}
+
 /// Manage ENVIRONMENT VARIABLES from the configuration and the layout files
 #[derive(Default, Clone, PartialEq, Serialize, Deserialize)]
 pub struct EnvironmentVariables {

@@ -39,6 +39,32 @@
     </a>
 </p>
 
+## Claude Code Tmux Compatibility Mode (Fork Addition)
+
+This fork adds a **tmux compatibility layer** (`zellij-cct-tmux`) that lets Claude Code Agent Teams run natively inside Zellij. A Rust shim binary impersonates `tmux` — intercepting Claude's `tmux` CLI calls and translating them to `zellij action` commands. Claude Code sees tmux; Zellij does the multiplexing.
+
+**What it does:**
+- Shim binary (`zellij-cct-tmux`) handles `split-window`, `send-keys`, `kill-pane`, `list-panes`, `display-message`, and 15+ other tmux subcommands
+- Zellij exports `TMUX` and `TMUX_PANE` env vars (when `ZELLIJ_TMUX_COMPAT=1`) so Claude Code's `TmuxBackend` activates
+- Pane ID mapping (`terminal_3` → `%2`) gives Claude Code the tmux-shaped IDs it expects
+- Built-in shell readiness detection avoids the `send-keys` race condition present in real tmux
+
+**Quick setup:**
+```bash
+# Build the shim
+cargo build -p zellij-cct-tmux --release
+
+# Inside a Zellij session:
+source scripts/activate-tmux-compat.sh
+
+# Or set permanently:
+export ZELLIJ_TMUX_COMPAT=1
+```
+
+> **Full details:** [`claude-shim-setup.md`](claude-shim-setup.md) (setup guide) · [`zellij-cct-tmux/docs/ARCHITECTURE.md`](zellij-cct-tmux/docs/ARCHITECTURE.md) (architecture) · [`docs/arch/cct-tmux-shim.md`](docs/arch/cct-tmux-shim.md) (design doc)
+
+---
+
 # What is this?
 
 [Zellij](#origin-of-the-name) is a workspace aimed at developers, ops-oriented people and anyone who loves the terminal. Similar programs are sometimes called "Terminal Multiplexers".

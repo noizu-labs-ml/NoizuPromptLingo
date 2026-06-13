@@ -1,0 +1,15 @@
+[package]
+name = "zellij-cct-tmux"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+description = "tmux compatibility shim for Zellij — translates tmux CLI calls to zellij action commands"
+
+[[bin]]
+name = "zellij-tmux-shim"
+path = "src/main.rs"
+
+[dependencies]
+log = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }

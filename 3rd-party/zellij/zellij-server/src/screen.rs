@@ -57,6 +57,7 @@ use zellij_utils::pane_size::{PaneGeom, Size, SizeInPixels};
 use zellij_utils::shared::clean_string_from_control_and_linebreak;
 use zellij_utils::{
     consts::{session_info_folder_for_session, ZELLIJ_SOCK_DIR},
+    envs,
     envs::set_session_name,
     input::command::TerminalAction,
     input::layout::{
@@ -8792,6 +8793,7 @@ pub(crate) fn screen_thread_main(
 
                     // set the env variable
                     set_session_name(name.clone());
+                    envs::set_tmux_compat_vars(&name);
                     let connected_client_ids: Vec<ClientId> =
                         screen.active_tab_ids.keys().copied().collect();
                     for client_id in connected_client_ids {
