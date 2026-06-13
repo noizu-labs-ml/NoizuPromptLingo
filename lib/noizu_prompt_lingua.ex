@@ -17,9 +17,17 @@ defmodule NoizuPromptLingua.MCP do
   use Noizu.MCP.Server,
     name: "noizu_prompt_lingua",
     version: "0.1.0",
-    instructions: "Noizu Prompt Lingua MCP server. Provides NPL specification loading and generation tools."
+    instructions:
+      "Noizu Prompt Lingua MCP server. Use the Discovery tools (ToolSummary, ToolSearch, " <>
+        "ToolDefinition, ToolHelp, ToolCall) to find and invoke all available tools."
 
-  tool NoizuPromptLingua.Tools.Greet
-  tool NoizuPromptLingua.Tools.NPLLoad
-  tool NoizuPromptLingua.Tools.NPLSpec
+  tool NoizuPromptLingua.Tools.Greet, category: "Utility"
+  tool NoizuPromptLingua.Tools.NPLLoad, category: "NPL"
+  tool NoizuPromptLingua.Tools.NPLSpec, category: "NPL"
+
+  tool NoizuPromptLingua.Tools.ToolSummary
+  tool NoizuPromptLingua.Tools.ToolSearch
+  tool NoizuPromptLingua.Tools.ToolDefinition
+  tool NoizuPromptLingua.Tools.ToolCall
+  tool NoizuPromptLingua.Tools.ToolHelp
 end
