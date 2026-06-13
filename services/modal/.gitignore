@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+.logs/
+*.pid
+generated/
+.DS_Store
+uv.lock
