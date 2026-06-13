@@ -8,7 +8,10 @@ let _db: DB;
 
 export function getDb(): DB {
   if (!_db) {
-    const connectionString = process.env.DATABASE_URL ?? '';
+    const connectionString = process.env.DATABASE_URL;
+    if (!connectionString) {
+      throw new Error('DATABASE_URL is not set. Cannot initialize database connection.');
+    }
     const client = postgres(connectionString);
     _db = drizzle(client, { schema });
   }

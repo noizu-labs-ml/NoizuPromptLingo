@@ -14,6 +14,7 @@
   import DuplicateIcon from '~icons/material-symbols/content-copy-outline-rounded';
   import ContrastIcon from '~icons/material-symbols/contrast';
   import PluginIcon from '~icons/material-symbols/electrical-services-rounded';
+  import FolderIcon from '~icons/material-symbols/folder-outline-rounded';
   import MenuIcon from '~icons/material-symbols/menu-rounded';
   import CommunityIcon from '~icons/material-symbols/person-play-outline-rounded';
   import PlaygroundIcon from '~icons/material-symbols/shape-line-outline';
@@ -32,62 +33,95 @@
   }
 
   const menuItems: MenuItem[] = $derived([
-    { label: 'New', icon: AddIcon, href: $urlsStore.new, renderer: menuItem },
-    { label: 'Duplicate', icon: DuplicateIcon, href: window.location.href, renderer: menuItem },
+    { href: $urlsStore.new, icon: AddIcon, label: 'New', renderer: menuItem },
+    { href: '/diagrams', icon: FolderIcon, label: 'My Diagrams', renderer: internalMenuItem },
     {
-      href: $urlsStore.mermaidChart({ medium: 'main_menu' }).playground,
-      icon: PlaygroundIcon,
-      isSectionEnd: true,
-      label: 'Edit in Playground',
-      onclick: () => logMermaidChartClick('editInPlayground'),
-      renderer: mcMenuItem
+      href: window.location.href,
+      icon: DuplicateIcon,
+      isSectionEnd: !env.hidePromotions,
+      label: 'Duplicate',
+      renderer: menuItem
     },
+    ...(!env.hidePromotions
+      ? [
+          {
+            href: $urlsStore.mermaidChart({ medium: 'main_menu' }).playground,
+            icon: PlaygroundIcon,
+            isSectionEnd: true,
+            label: 'Edit in Playground',
+            onclick: () => logMermaidChartClick('editInPlayground'),
+            renderer: mcMenuItem
+          }
+        ]
+      : []),
     {
-      label: 'Mermaid.js',
-      icon: MermaidTailIcon,
       href: env.docsUrl,
+      icon: MermaidTailIcon,
+      label: 'Mermaid.js',
       renderer: menuItem
     },
     {
-      label: 'Documentation',
-      icon: BookIcon,
       href: `${env.docsUrl}/intro/`,
+      icon: BookIcon,
+      label: 'Documentation',
       renderer: menuItem
     },
     {
-      label: 'Community',
-      icon: CommunityIcon,
       href: 'https://discord.gg/sKeNQX4Wtj',
+      icon: CommunityIcon,
+      label: 'Community',
       renderer: menuItem
     },
-    {
-      checkDiagramType: false,
-      href: $urlsStore.mermaidChart({ medium: 'main_menu' }).plugins,
-      icon: PluginIcon,
-      label: 'Plugins',
-      onclick: () => logMermaidChartClick('plugins'),
-      renderer: mcMenuItem,
-      sharesData: false
-    },
+    ...(!env.hidePromotions
+      ? [
+          {
+            checkDiagramType: false,
+            href: $urlsStore.mermaidChart({ medium: 'main_menu' }).plugins,
+            icon: PluginIcon,
+            label: 'Plugins',
+            onclick: () => logMermaidChartClick('plugins'),
+            renderer: mcMenuItem,
+            sharesData: false
+          }
+        ]
+      : []),
     {
       href: '#',
       icon: ContrastIcon,
-      isSectionEnd: true,
+      isSectionEnd: !env.hidePromotions,
       label: 'Dark Mode',
       renderer: darkModeMenuItem
     },
-    {
-      checkDiagramType: false,
-      class: 'text-accent border-b-0',
-      href: $urlsStore.mermaidChart({ medium: 'main_menu' }).home,
-      icon: MermaidChartIcon,
-      label: 'Mermaid',
-      onclick: () => logMermaidChartClick('mermaidHome'),
-      renderer: mcMenuItem,
-      sharesData: false
-    }
+    ...(!env.hidePromotions
+      ? [
+          {
+            checkDiagramType: false,
+            class: 'text-accent border-b-0',
+            href: $urlsStore.mermaidChart({ medium: 'main_menu' }).home,
+            icon: MermaidChartIcon,
+            label: 'Mermaid',
+            onclick: () => logMermaidChartClick('mermaidHome'),
+            renderer: mcMenuItem,
+            sharesData: false
+          }
+        ]
+      : [])
   ]);
 </script>
+
+{#snippet internalMenuItem(options: MenuItem)}
+  <a
+    href={options.href}
+    onclick={options.onclick}
+    class={cn(
+      'flex items-center justify-start gap-2 border-b-2 p-2 px-3 hover:bg-muted',
+      options.isSectionEnd && 'border-border-dark',
+      options.class
+    )}>
+    <options.icon class="size-5" />
+    {options.label}
+  </a>
+{/snippet}
 
 {#snippet menuItem(options: MenuItem)}
   <a

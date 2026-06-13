@@ -53,14 +53,14 @@
           <ExclamationCircleIcon class="size-6 text-destructive" aria-hidden="true" />
           <div class="flex flex-col">
             <p>Syntax error</p>
-            {#if env.isEnabledMermaidChartLinks && $stateStore.editorMode === 'code'}
+            {#if !env.hidePromotions && env.isEnabledMermaidChartLinks && $stateStore.editorMode === 'code'}
               <p class="text-xs text-white/60" data-testid={TID.aiHelpText}>
                 Create a free account to repair with AI
               </p>
             {/if}
           </div>
         </div>
-        {#if $stateStore.editorMode === 'code'}
+        {#if !env.hidePromotions && $stateStore.editorMode === 'code'}
           <McWrapper>
             <Button
               variant="accent"

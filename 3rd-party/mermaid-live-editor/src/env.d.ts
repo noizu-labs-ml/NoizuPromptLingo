@@ -9,6 +9,10 @@ interface ImportMetaEnv {
   readonly MERMAID_IS_ENABLED_MERMAID_CHART_LINKS?: string;
   readonly MERMAID_PRIVACY_POLICY_URL?: string;
   readonly MERMAID_HIDE_PRIVACY_POLICY?: string;
+  readonly MERMAID_HIDE_PROMOTIONS?: string;
+  readonly SENDGRID_API_KEY?: string;
+  readonly SENDGRID_FROM_EMAIL?: string;
+  readonly SENDGRID_FROM_NAME?: string;
   // more env variables...
 }
 

@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { State, ValidatedState } from '$/types';
   import { recordRenderTime, shouldRefreshView } from '$/util/autoSync';
+  import { attachDiagramLinkHandlers, resolveDiagramLinks } from '$/util/diagram-click-handler';
   import { render as renderDiagram } from '$/util/mermaid';
   import { PanZoomState } from '$/util/panZoom';
   import { inputStateStore, stateStore, updateCodeStore } from '$/util/state';
@@ -118,6 +119,10 @@
           if (state.panZoom) {
             handlePanZoom(state, graphDiv);
           }
+
+          // Wire up mermaid:// inter-diagram links
+          attachDiagramLinkHandlers(container);
+          void resolveDiagramLinks(container);
         }
         if (view?.parentElement && scroll) {
           view.parentElement.scrollTop = scroll;

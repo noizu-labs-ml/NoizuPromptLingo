@@ -25,13 +25,13 @@ ARG MERMAID_BASE_PATH
 
 COPY . ./
 
-RUN pnpm build
+RUN GOGC=off GOMAXPROCS=1 NODE_OPTIONS=--max-old-space-size=4096 pnpm build
 
-FROM mermaid-live-editor-builder AS mermaid-dev
+FROM mermaid-live-editor-builder AS dev
 
 ENTRYPOINT ["pnpm", "dev"]
 
-FROM docker.io/library/node:22.15.0-alpine3.21 AS mermaid
+FROM docker.io/library/node:22.15.0-alpine3.21 AS production
 
 WORKDIR /app
 

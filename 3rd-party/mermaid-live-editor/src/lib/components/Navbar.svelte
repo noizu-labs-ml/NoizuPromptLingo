@@ -12,6 +12,7 @@
   import { Button } from '$/components/ui/button';
   import { Separator } from '$/components/ui/separator';
   import { dismissPromotion, getActivePromotion } from '$lib/util/promos/promo';
+  import { env } from '$lib/util/env';
   import { authClient } from '$lib/auth-client';
   import type { ComponentProps, Snippet } from 'svelte';
   import MermaidIcon from '~icons/custom/mermaid';
@@ -43,7 +44,9 @@
     }
   ];
 
-  let activePromotion = $state(hidePromotion ? undefined : getActivePromotion());
+  let activePromotion = $state(
+    hidePromotion || env.hidePromotions ? undefined : getActivePromotion()
+  );
 
   const trackBannerClick = () => {
     if (!activePromotion) {
@@ -102,9 +105,14 @@
     <Separator orientation="vertical" />
     {#if $session.data?.user}
       <div class="flex items-center gap-2">
-        <span class="text-sm text-muted-foreground">
+        <Button variant="ghost" size="sm" onclick={() => (window.location.href = '/diagrams')}>
+          My Diagrams
+        </Button>
+        <a
+          href="/profile"
+          class="text-sm text-muted-foreground no-underline transition-colors hover:text-foreground">
           @{$session.data.user.handle ?? $session.data.user.name ?? 'user'}
-        </span>
+        </a>
         <Button
           variant="ghost"
           size="sm"
