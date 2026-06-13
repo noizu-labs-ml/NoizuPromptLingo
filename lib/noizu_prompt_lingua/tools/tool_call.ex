@@ -25,11 +25,12 @@ defmodule NoizuPromptLingua.Tools.ToolCall do
   alias NoizuPromptLingua.Tools.Catalog
 
   @impl true
-  def call(args, _ctx) do
+  def call(args, ctx) do
     tool_name = args["tool"]
     arguments = args["arguments"] || %{}
+    server = (ctx && ctx.server) || NoizuPromptLingua.MCP
 
-    case Catalog.call_hidden_tool(tool_name, arguments) do
+    case Catalog.call_hidden_tool(tool_name, arguments, server) do
       {:ok, result} -> {:ok, result}
       {:mcp, message} -> {:ok, %{status: "mcp", message: message}}
       {:error, reason} -> {:error, to_string(reason)}

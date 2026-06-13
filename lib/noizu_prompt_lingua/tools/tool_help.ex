@@ -20,18 +20,19 @@ defmodule NoizuPromptLingua.Tools.ToolHelp do
   alias NoizuPromptLingua.Tools.Catalog
 
   @impl true
-  def call(args, _ctx) do
+  def call(args, ctx) do
     task = args.task
     tool_name = Map.get(args, :tool) || Map.get(args, "tool")
+    server = (ctx && ctx.server) || NoizuPromptLingua.MCP
 
     if tool_name do
-      tool_specific_help(tool_name, task)
+      tool_specific_help(tool_name, task, server)
     else
-      task_recommendation(task)
+      task_recommendation(task, server)
     end
   end
 
-  defp tool_specific_help(tool_name, task) do
+  defp tool_specific_help(tool_name, task, _server) do
     case Catalog.get_tool(tool_name) do
       nil ->
         {:ok, %{tool: tool_name, status: "error", message: "Tool '#{tool_name}' not found in catalog."}}
@@ -69,8 +70,8 @@ defmodule NoizuPromptLingua.Tools.ToolHelp do
     end
   end
 
-  defp task_recommendation(task) do
-    catalog = Catalog.build()
+  defp task_recommendation(task, server) do
+    catalog = Catalog.build(server)
     q = String.downcase(task)
 
     matches =

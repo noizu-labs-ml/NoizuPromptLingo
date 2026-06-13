@@ -16,10 +16,11 @@ defmodule NoizuPromptLingua.Tools.ToolDefinition do
   alias NoizuPromptLingua.Tools.Catalog
 
   @impl true
-  def call(args, _ctx) do
+  def call(args, ctx) do
     tool_input = args.tool
     names = tool_input |> String.split(",") |> Enum.map(&String.trim/1)
-    catalog = Catalog.build()
+    server = (ctx && ctx.server) || NoizuPromptLingua.MCP
+    catalog = Catalog.build(server)
     by_name = Map.new(catalog, &{&1.name, &1})
 
     {definitions, not_found} =

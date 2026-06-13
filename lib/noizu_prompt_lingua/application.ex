@@ -6,9 +6,30 @@ defmodule NoizuPromptLingua.Application do
     children = [
       NoizuPromptLingua.Repo,
       NoizuPromptLingua.MCP,
-      {Bandit, plug: NoizuPromptLingua.Router, port: 4040}
+      NoizuPromptLingua.Domains.Sessions.MCP,
+      NoizuPromptLingua.Domains.Tickets.MCP,
+      NoizuPromptLingua.Domains.Review.MCP,
+      NoizuPromptLingua.Domains.Chat.MCP,
+      NoizuPromptLingua.Domains.Wiki.MCP,
+      NPLWeb.Endpoint
     ]
 
-    Supervisor.start_link(children, strategy: :one_for_one, name: NoizuPromptLingua.Supervisor)
+    result = Supervisor.start_link(children, strategy: :one_for_one, name: NoizuPromptLingua.Supervisor)
+
+    case result do
+      {:ok, _pid} ->
+        seed_ticket_definitions()
+        result
+      other ->
+        other
+    end
+  end
+
+  defp seed_ticket_definitions do
+    try do
+      NoizuPromptLingua.Domains.Tickets.Seed.run()
+    rescue
+      e -> require Logger; Logger.warning("Ticket seed skipped: #{inspect(e)}")
+    end
   end
 end

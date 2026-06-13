@@ -25,22 +25,23 @@ defmodule NoizuPromptLingua.Tools.ToolSearch do
   alias NoizuPromptLingua.Tools.Catalog
 
   @impl true
-  def call(args, _ctx) do
+  def call(args, ctx) do
     query = args.query
     mode = Map.get(args, :mode, :text)
     limit = Map.get(args, :limit, 10)
+    server = (ctx && ctx.server) || NoizuPromptLingua.MCP
 
     result =
       case mode do
-        :intent -> intent_search(query, limit)
-        _ -> text_search(query, limit)
+        :intent -> intent_search(query, limit, server)
+        _ -> text_search(query, limit, server)
       end
 
     {:ok, result}
   end
 
-  defp text_search(query, limit) do
-    catalog = Catalog.build()
+  defp text_search(query, limit, server) do
+    catalog = Catalog.build(server)
     q = String.downcase(query)
 
     {exact, name_match, desc_match} =
@@ -70,8 +71,8 @@ defmodule NoizuPromptLingua.Tools.ToolSearch do
     }
   end
 
-  defp intent_search(query, limit) do
-    case text_search(query, limit) do
+  defp intent_search(query, limit, server) do
+    case text_search(query, limit, server) do
       result ->
         Map.merge(result, %{
           mode: "intent",

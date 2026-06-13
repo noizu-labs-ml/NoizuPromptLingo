@@ -22,15 +22,23 @@ defmodule NoizuPromptLingua.Tools.Catalog do
         }
 
   @aliases %{
-    "Tasks.Create" => "Ticket.Create"
+    "Tasks.Create" => "Ticket.Create",
+    "Tasks.Get" => "Ticket.Get",
+    "Tasks.UpdateStatus" => "Ticket.Update",
+    "Tasks.List" => "Ticket.List",
+    "Tasks.Feed" => "Ticket.Feed",
+    "Tasks.AddArtifact" => "Ticket.Attach",
+    "TaskQueue.Create" => "Ticket.Queue.Create",
+    "TaskQueue.Get" => "Ticket.Queue.Get",
+    "TaskQueue.List" => "Ticket.Queue.List",
+    "TaskQueue.Feed" => "Ticket.Queue.Feed"
   }
 
   def resolve_alias(name) do
     Map.get(@aliases, name, name)
   end
 
-  def build do
-    server = NoizuPromptLingua.MCP
+  def build(server \\ NoizuPromptLingua.MCP) do
     specs = server.__mcp__(:tools) |> Noizu.MCP.Server.Features.Tools.expand()
 
     Enum.map(specs, fn spec ->
@@ -65,9 +73,8 @@ defmodule NoizuPromptLingua.Tools.Catalog do
     |> Enum.sort_by(& &1.name)
   end
 
-  def call_hidden_tool(name, arguments) do
+  def call_hidden_tool(name, arguments, server \\ NoizuPromptLingua.MCP) do
     name = resolve_alias(name)
-    server = NoizuPromptLingua.MCP
     specs = server.__mcp__(:tools) |> Noizu.MCP.Server.Features.Tools.expand()
 
     case Enum.find(specs, &(&1.definition.name == name)) do
