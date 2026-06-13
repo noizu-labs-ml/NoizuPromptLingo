@@ -1,0 +1,600 @@
+- id: US-001
+  title: "Deploy ERC-20 ROKO token contract on L2 testnet"
+  persona: P01
+  priority: must-have
+  category: token
+  file: US-001.md
+- id: US-002
+  title: "Mint initial token supply to protocol treasury"
+  persona: P07
+  priority: must-have
+  category: token
+  file: US-002.md
+- id: US-003
+  title: "Register as a compute miner with GPU capabilities"
+  persona: P01
+  priority: must-have
+  category: mining
+  file: US-003.md
+- id: US-004
+  title: "Stake ROKO as collateral to activate miner status"
+  persona: P01
+  priority: must-have
+  category: mining
+  file: US-004.md
+- id: US-005
+  title: "Receive ROKO rewards for serving inference requests"
+  persona: P01
+  priority: must-have
+  category: mining
+  file: US-005.md
+- id: US-006
+  title: "View my miner dashboard with earnings and uptime stats"
+  persona: P01
+  priority: must-have
+  category: mining
+  file: US-006.md
+- id: US-007
+  title: "Unstake ROKO after the cooldown period"
+  persona: P01
+  priority: must-have
+  category: mining
+  file: US-007.md
+- id: US-008
+  title: "Get slashed for submitting incorrect inference results"
+  persona: P05
+  priority: must-have
+  category: security
+  file: US-008.md
+- id: US-009
+  title: "Claim block rewards for being online and available"
+  persona: P01
+  priority: must-have
+  category: mining
+  file: US-009.md
+- id: US-010
+  title: "View real-time token supply and emission rate"
+  persona: P04
+  priority: should-have
+  category: token
+  file: US-010.md
+- id: US-011
+  title: "Set my hardware tier based on benchmark results"
+  persona: P01
+  priority: must-have
+  category: mining
+  file: US-011.md
+- id: US-012
+  title: "Receive tier-adjusted rewards based on hardware class"
+  persona: P01
+  priority: must-have
+  category: mining
+  file: US-012.md
+- id: US-013
+  title: "View the token distribution breakdown"
+  persona: P04
+  priority: should-have
+  category: token
+  file: US-013.md
+- id: US-014
+  title: "Transfer ROKO tokens between wallets"
+  persona: P04
+  priority: must-have
+  category: token
+  file: US-014.md
+- id: US-015
+  title: "Approve token spending for the API gateway contract"
+  persona: P02
+  priority: must-have
+  category: api
+  file: US-015.md
+- id: US-016
+  title: "Burn ROKO to request compute (burn-and-mint model)"
+  persona: P02
+  priority: must-have
+  category: api
+  file: US-016.md
+- id: US-017
+  title: "Stake ROKO for passive compute credits (stake-for-access)"
+  persona: P04
+  priority: should-have
+  category: token
+  file: US-017.md
+- id: US-018
+  title: "View historical ROKO price and volume on DEX"
+  persona: P04
+  priority: should-have
+  category: token
+  file: US-018.md
+- id: US-019
+  title: "Add liquidity to ROKO/ETH pool on Uniswap"
+  persona: P04
+  priority: could-have
+  category: token
+  file: US-019.md
+- id: US-020
+  title: "Vote on emission rate adjustment proposal"
+  persona: P07
+  priority: must-have
+  category: governance
+  file: US-020.md
+- id: US-021
+  title: "Propose a change to the miner slashing threshold"
+  persona: P07
+  priority: should-have
+  category: governance
+  file: US-021.md
+- id: US-022
+  title: "View miner leaderboard ranked by inference quality"
+  persona: P01
+  priority: should-have
+  category: mining
+  file: US-022.md
+- id: US-023
+  title: "Receive bonus rewards for early network participation"
+  persona: P01
+  priority: should-have
+  category: mining
+  file: US-023.md
+- id: US-024
+  title: "Monitor my miner node health and auto-restart on failure"
+  persona: P01
+  priority: must-have
+  category: mining
+  file: US-024.md
+- id: US-025
+  title: "Set custom pricing for my specialized compute capabilities"
+  persona: P01
+  priority: could-have
+  category: marketplace
+  file: US-025.md
+- id: US-026
+  title: "View network-wide compute utilization metrics"
+  persona: P07
+  priority: should-have
+  category: governance
+  file: US-026.md
+- id: US-027
+  title: "Withdraw accumulated ROKO rewards to my wallet"
+  persona: P01
+  priority: must-have
+  category: mining
+  file: US-027.md
+- id: US-028
+  title: "Delegate my staked ROKO to another miner"
+  persona: P04
+  priority: should-have
+  category: token
+  file: US-028.md
+- id: US-029
+  title: "Receive delegation rewards as a delegatee miner"
+  persona: P01
+  priority: should-have
+  category: mining
+  file: US-029.md
+- id: US-030
+  title: "View the vesting schedule for team/investor allocations"
+  persona: P04
+  priority: must-have
+  category: token
+  file: US-030.md
+- id: US-031
+  title: "Participate in the initial token distribution event"
+  persona: P04
+  priority: must-have
+  category: token
+  file: US-031.md
+- id: US-032
+  title: "Bridge ROKO tokens between L1 and L2"
+  persona: P04
+  priority: should-have
+  category: token
+  file: US-032.md
+- id: US-033
+  title: "Verify miner hardware attestation via TEE"
+  persona: P05
+  priority: must-have
+  category: security
+  file: US-033.md
+- id: US-034
+  title: "Run benchmark suite to prove hardware capabilities"
+  persona: P01
+  priority: must-have
+  category: mining
+  file: US-034.md
+- id: US-035
+  title: "Submit an inference request via the API gateway contract"
+  persona: P02
+  priority: must-have
+  category: api
+  file: US-035.md
+- id: US-036
+  title: "Pay for inference with ROKO tokens via escrow"
+  persona: P02
+  priority: must-have
+  category: api
+  file: US-036.md
+- id: US-037
+  title: "Pay for inference with ETH/USDC (auto-swapped to ROKO)"
+  persona: P02
+  priority: should-have
+  category: api
+  file: US-037.md
+- id: US-038
+  title: "Receive inference results referenced by IPFS hash"
+  persona: P02
+  priority: must-have
+  category: api
+  file: US-038.md
+- id: US-039
+  title: "Reclaim escrowed ROKO if task deadline passes without result"
+  persona: P02
+  priority: must-have
+  category: api
+  file: US-039.md
+- id: US-040
+  title: "Challenge a miner's inference result"
+  persona: P02
+  priority: should-have
+  category: api
+  file: US-040.md
+- id: US-041
+  title: "View my API usage history and spend dashboard"
+  persona: P02
+  priority: should-have
+  category: frontend
+  file: US-041.md
+- id: US-042
+  title: "Set a maximum fee cap per inference request"
+  persona: P02
+  priority: must-have
+  category: api
+  file: US-042.md
+- id: US-043
+  title: "Batch multiple inference requests in a single transaction"
+  persona: P02
+  priority: should-have
+  category: api
+  file: US-043.md
+- id: US-044
+  title: "Use a TypeScript SDK to interact with the ROKO API"
+  persona: P02
+  priority: must-have
+  category: api
+  file: US-044.md
+- id: US-045
+  title: "Use a Python SDK to interact with the ROKO API"
+  persona: P06
+  priority: must-have
+  category: api
+  file: US-045.md
+- id: US-046
+  title: "Browse available compute capabilities on the marketplace"
+  persona: P03
+  priority: must-have
+  category: marketplace
+  file: US-046.md
+- id: US-047
+  title: "Filter miners by hardware tier, latency, and pricing"
+  persona: P03
+  priority: should-have
+  category: marketplace
+  file: US-047.md
+- id: US-048
+  title: "Reserve dedicated compute capacity for SLA guarantees"
+  persona: P03
+  priority: should-have
+  category: marketplace
+  file: US-048.md
+- id: US-049
+  title: "View detailed miner performance metrics and uptime history"
+  persona: P03
+  priority: should-have
+  category: marketplace
+  file: US-049.md
+- id: US-050
+  title: "Negotiate enterprise pricing via staked ROKO commitments"
+  persona: P03
+  priority: could-have
+  category: marketplace
+  file: US-050.md
+- id: US-051
+  title: "Submit a training job to the distributed compute network"
+  persona: P06
+  priority: should-have
+  category: api
+  file: US-051.md
+- id: US-052
+  title: "Monitor training job progress with checkpointing"
+  persona: P06
+  priority: should-have
+  category: api
+  file: US-052.md
+- id: US-053
+  title: "Resume an interrupted training job from last checkpoint"
+  persona: P06
+  priority: should-have
+  category: api
+  file: US-053.md
+- id: US-054
+  title: "Access academic discount tier for research workloads"
+  persona: P06
+  priority: could-have
+  category: marketplace
+  file: US-054.md
+- id: US-055
+  title: "Export inference results in structured JSON format"
+  persona: P02
+  priority: should-have
+  category: api
+  file: US-055.md
+- id: US-056
+  title: "Set up webhook notifications for completed inference tasks"
+  persona: P02
+  priority: should-have
+  category: api
+  file: US-056.md
+- id: US-057
+  title: "Rate limit my API usage to stay within budget"
+  persona: P02
+  priority: should-have
+  category: api
+  file: US-057.md
+- id: US-058
+  title: "View real-time marketplace supply/demand metrics"
+  persona: P07
+  priority: should-have
+  category: governance
+  file: US-058.md
+- id: US-059
+  title: "Route inference to specific geographic regions for latency"
+  persona: P03
+  priority: should-have
+  category: marketplace
+  file: US-059.md
+- id: US-060
+  title: "Encrypt inference inputs so miners can't see raw data"
+  persona: P03
+  priority: should-have
+  category: security
+  file: US-060.md
+- id: US-061
+  title: "Use the marketplace for non-LLM compute (image gen, speech)"
+  persona: P02
+  priority: should-have
+  category: marketplace
+  file: US-061.md
+- id: US-062
+  title: "Preview estimated cost before submitting inference request"
+  persona: P02
+  priority: must-have
+  category: api
+  file: US-062.md
+- id: US-063
+  title: "Access a testnet faucet for development and testing"
+  persona: P02
+  priority: must-have
+  category: api
+  file: US-063.md
+- id: US-064
+  title: "View API documentation with interactive examples"
+  persona: P02
+  priority: must-have
+  category: frontend
+  file: US-064.md
+- id: US-065
+  title: "Monitor marketplace fee revenue flowing to protocol treasury"
+  persona: P07
+  priority: should-have
+  category: governance
+  file: US-065.md
+- id: US-066
+  title: "Set up a prepaid ROKO balance for frictionless API calls"
+  persona: P02
+  priority: should-have
+  category: api
+  file: US-066.md
+- id: US-067
+  title: "Receive SLA violation refunds automatically via smart contract"
+  persona: P03
+  priority: should-have
+  category: marketplace
+  file: US-067.md
+- id: US-068
+  title: "Create on-chain governance proposal with voting"
+  persona: P07
+  priority: must-have
+  category: governance
+  file: US-068.md
+- id: US-069
+  title: "Vote on governance proposals weighted by staked ROKO"
+  persona: P04
+  priority: must-have
+  category: governance
+  file: US-069.md
+- id: US-070
+  title: "Delegate voting power to another address"
+  persona: P04
+  priority: should-have
+  category: governance
+  file: US-070.md
+- id: US-071
+  title: "View proposal history with vote tallies and outcomes"
+  persona: P07
+  priority: should-have
+  category: governance
+  file: US-071.md
+- id: US-072
+  title: "Execute approved proposals automatically via timelock"
+  persona: P07
+  priority: must-have
+  category: governance
+  file: US-072.md
+- id: US-073
+  title: "Set quorum thresholds for different proposal categories"
+  persona: P07
+  priority: should-have
+  category: governance
+  file: US-073.md
+- id: US-074
+  title: "Propose treasury allocation for ecosystem grants"
+  persona: P07
+  priority: should-have
+  category: governance
+  file: US-074.md
+- id: US-075
+  title: "Review and approve protocol upgrade via proxy pattern"
+  persona: P07
+  priority: must-have
+  category: governance
+  file: US-075.md
+- id: US-076
+  title: "Veto a malicious proposal during timelock window"
+  persona: P05
+  priority: must-have
+  category: governance
+  file: US-076.md
+- id: US-077
+  title: "View governance participation metrics and voter turnout"
+  persona: P07
+  priority: should-have
+  category: governance
+  file: US-077.md
+- id: US-078
+  title: "Propose new subnet or capability category for the network"
+  persona: P07
+  priority: should-have
+  category: governance
+  file: US-078.md
+- id: US-079
+  title: "Entity receives 5% protocol fee into its treasury"
+  persona: P08
+  priority: must-have
+  category: entity
+  file: US-079.md
+- id: US-080
+  title: "Entity commissions inference tasks for self-improvement"
+  persona: P08
+  priority: must-have
+  category: entity
+  file: US-080.md
+- id: US-081
+  title: "Entity autonomously invests treasury funds via DeFi"
+  persona: P08
+  priority: could-have
+  category: entity
+  file: US-081.md
+- id: US-082
+  title: "Entity acquires dedicated compute hardware via marketplace"
+  persona: P08
+  priority: could-have
+  category: entity
+  file: US-082.md
+- id: US-083
+  title: "Entity publishes capability reports to token holders"
+  persona: P08
+  priority: should-have
+  category: entity
+  file: US-083.md
+- id: US-084
+  title: "Entity proposes compute resource acquisition to governance"
+  persona: P08
+  priority: should-have
+  category: entity
+  file: US-084.md
+- id: US-085
+  title: "Entity generates revenue by serving premium API endpoints"
+  persona: P08
+  priority: should-have
+  category: entity
+  file: US-085.md
+- id: US-086
+  title: "Entity delegates compute tasks to optimal miners"
+  persona: P08
+  priority: must-have
+  category: entity
+  file: US-086.md
+- id: US-087
+  title: "Entity maintains a public audit log of all treasury actions"
+  persona: P08
+  priority: must-have
+  category: entity
+  file: US-087.md
+- id: US-088
+  title: "Entity evolves decision-making via reinforcement learning"
+  persona: P08
+  priority: could-have
+  category: entity
+  file: US-088.md
+- id: US-089
+  title: "Run Slither static analysis on all protocol contracts"
+  persona: P05
+  priority: must-have
+  category: security
+  file: US-089.md
+- id: US-090
+  title: "Execute fuzz testing campaign against core contracts"
+  persona: P05
+  priority: must-have
+  category: security
+  file: US-090.md
+- id: US-091
+  title: "Verify upgrade proxy cannot be exploited via storage collision"
+  persona: P05
+  priority: must-have
+  category: security
+  file: US-091.md
+- id: US-092
+  title: "Audit the slashing mechanism for griefing attack vectors"
+  persona: P05
+  priority: must-have
+  category: security
+  file: US-092.md
+- id: US-093
+  title: "Verify oracle price feeds cannot be manipulated for ROKO"
+  persona: P05
+  priority: must-have
+  category: security
+  file: US-093.md
+- id: US-094
+  title: "Test flash loan attack resistance on staking contracts"
+  persona: P05
+  priority: must-have
+  category: security
+  file: US-094.md
+- id: US-095
+  title: "Conduct formal verification of token minting invariants"
+  persona: P05
+  priority: should-have
+  category: security
+  file: US-095.md
+- id: US-096
+  title: "Connect wallet (MetaMask/Phantom) to the ROKO dApp"
+  persona: P02
+  priority: must-have
+  category: frontend
+  file: US-096.md
+- id: US-097
+  title: "View unified dashboard with token balance, staking, and earnings"
+  persona: P04
+  priority: must-have
+  category: frontend
+  file: US-097.md
+- id: US-098
+  title: "Browse compute marketplace with filters and sorting"
+  persona: P03
+  priority: must-have
+  category: frontend
+  file: US-098.md
+- id: US-099
+  title: "Submit inference requests via web form with cost preview"
+  persona: P02
+  priority: must-have
+  category: frontend
+  file: US-099.md
+- id: US-100
+  title: "View network health dashboard with miner count, throughput, and uptime"
+  persona: P07
+  priority: must-have
+  category: frontend
+  file: US-100.md
