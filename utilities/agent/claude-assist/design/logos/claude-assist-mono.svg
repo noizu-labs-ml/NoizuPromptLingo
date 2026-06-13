@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="48" viewBox="0 0 320 48">
+  <title>Claude Assist — Monochrome</title>
+  <!-- Mark (monochrome) -->
+  <g transform="translate(0, 4)">
+    <rect x="2" y="8" width="26" height="8" rx="1" fill="#CDCDE0"/>
+    <rect x="5" y="19" width="20" height="8" rx="1" fill="#CDCDE0" opacity="0.6"/>
+    <polygon points="36,26 32,30 36,34 40,30" fill="#CDCDE0"/>
+  </g>
+  <!-- Wordmark (monochrome) -->
+  <text x="56" y="31" font-family="Inter, system-ui, sans-serif" font-weight="500" font-size="22" letter-spacing="0.02em" fill="#CDCDE0">claude-assist</text>
+</svg>

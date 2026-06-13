@@ -1,0 +1,165 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 800" width="1280" height="800">
+  <defs>
+    <clipPath id="clip-main">
+      <rect x="220" y="56" width="1060" height="744" />
+    </clipPath>
+  </defs>
+
+  <!-- ======================== CANVAS ======================== -->
+  <rect width="1280" height="800" fill="#0F0F14" />
+
+  <!-- ======================== NAVBAR (56px) ======================== -->
+  <rect x="0" y="0" width="1280" height="56" fill="#0F0F14" />
+  <!-- Navbar bottom border -->
+  <line x1="0" y1="56" x2="1280" y2="56" stroke="#2A2A3A" stroke-width="1" />
+
+  <!-- Logo mark: stylized rectangles -->
+  <rect x="20" y="16" width="10" height="24" rx="2" fill="#06B6D4" />
+  <rect x="33" y="20" width="10" height="20" rx="2" fill="#06B6D4" opacity="0.6" />
+  <rect x="46" y="24" width="10" height="16" rx="2" fill="#06B6D4" opacity="0.3" />
+  <!-- App name -->
+  <text x="66" y="34" font-family="Inter, system-ui, sans-serif" font-size="15" font-weight="600" fill="#CDCDE0">claude-assist</text>
+
+  <!-- Center-right: compact search bar -->
+  <rect x="780" y="14" width="340" height="28" rx="6" fill="#18181F" stroke="#2A2A3A" stroke-width="1" />
+  <!-- Search icon (simple magnifying glass) -->
+  <circle cx="798" cy="28" r="6" fill="none" stroke="#5C5C72" stroke-width="1.5" />
+  <line x1="803" y1="33" x2="807" y2="37" stroke="#5C5C72" stroke-width="1.5" stroke-linecap="round" />
+  <text x="814" y="33" font-family="Inter, system-ui, sans-serif" font-size="12" fill="#5C5C72">Search conversations...</text>
+
+  <!-- Far right: green dot + Indexed -->
+  <circle cx="1180" cy="28" r="4" fill="#22C55E" />
+  <text x="1190" y="32" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#5C5C72">Indexed</text>
+
+  <!-- ======================== SIDEBAR (220px) ======================== -->
+  <rect x="0" y="56" width="220" height="744" fill="#18181F" />
+  <!-- Sidebar right border -->
+  <line x1="220" y1="56" x2="220" y2="800" stroke="#2A2A3A" stroke-width="1" />
+
+  <!-- Nav items -->
+  <!-- Dashboard — ACTIVE -->
+  <rect x="0" y="76" width="220" height="36" fill="rgba(6,182,212,0.08)" />
+  <rect x="0" y="76" width="3" height="36" fill="#06B6D4" />
+  <!-- Dashboard icon: grid -->
+  <rect x="20" y="86" width="7" height="7" rx="1" fill="#06B6D4" opacity="0.8" />
+  <rect x="29" y="86" width="7" height="7" rx="1" fill="#06B6D4" opacity="0.8" />
+  <rect x="20" y="95" width="7" height="7" rx="1" fill="#06B6D4" opacity="0.8" />
+  <rect x="29" y="95" width="7" height="7" rx="1" fill="#06B6D4" opacity="0.8" />
+  <text x="44" y="98" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="500" fill="#06B6D4">Dashboard</text>
+
+  <!-- Search -->
+  <!-- Search icon -->
+  <circle cx="27" cy="130" r="5" fill="none" stroke="#7A7A94" stroke-width="1.2" />
+  <line x1="31" y1="134" x2="34" y2="137" stroke="#7A7A94" stroke-width="1.2" stroke-linecap="round" />
+  <text x="44" y="134" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#7A7A94">Search</text>
+
+  <!-- Browse -->
+  <!-- Folder icon -->
+  <path d="M21,163 h4 l2,-3 h7 v10 h-13 z" fill="none" stroke="#7A7A94" stroke-width="1.2" stroke-linejoin="round" />
+  <text x="44" y="170" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#7A7A94">Browse</text>
+
+  <!-- Datasets -->
+  <!-- Database icon -->
+  <ellipse cx="27" cy="197" rx="7" ry="3" fill="none" stroke="#7A7A94" stroke-width="1.2" />
+  <line x1="20" y1="197" x2="20" y2="207" stroke="#7A7A94" stroke-width="1.2" />
+  <line x1="34" y1="197" x2="34" y2="207" stroke="#7A7A94" stroke-width="1.2" />
+  <ellipse cx="27" cy="207" rx="7" ry="3" fill="none" stroke="#7A7A94" stroke-width="1.2" />
+  <text x="44" y="206" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#7A7A94">Datasets</text>
+
+  <!-- Separator -->
+  <line x1="16" y1="230" x2="204" y2="230" stroke="#2A2A3A" stroke-width="1" />
+
+  <!-- Settings -->
+  <!-- Gear icon (simple) -->
+  <circle cx="27" cy="254" r="5" fill="none" stroke="#7A7A94" stroke-width="1.2" />
+  <circle cx="27" cy="254" r="2" fill="#7A7A94" />
+  <text x="44" y="258" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#7A7A94">Settings</text>
+
+  <!-- ======================== MAIN CONTENT ======================== -->
+  <g clip-path="url(#clip-main)">
+
+    <!-- ======== SEARCH BAR (prominent) ======== -->
+    <rect x="252" y="88" width="996" height="44" rx="8" fill="#18181F" stroke="#2A2A3A" stroke-width="1" />
+    <!-- Search icon -->
+    <circle cx="276" cy="110" r="7" fill="none" stroke="#5C5C72" stroke-width="1.5" />
+    <line x1="282" y1="116" x2="287" y2="121" stroke="#5C5C72" stroke-width="1.5" stroke-linecap="round" />
+    <!-- Placeholder text -->
+    <text x="296" y="115" font-family="Inter, system-ui, sans-serif" font-size="14" fill="#5C5C72">Search conversations...</text>
+
+    <!-- Pill tabs: Text (active) + Semantic -->
+    <rect x="1128" y="98" width="52" height="24" rx="12" fill="#06B6D4" />
+    <text x="1140" y="114" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="600" fill="#0F0F14">Text</text>
+
+    <rect x="1186" y="98" width="52" height="24" rx="12" fill="none" stroke="#2A2A3A" stroke-width="1" />
+    <text x="1191" y="114" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="500" fill="#5C5C72">Semantic</text>
+
+    <!-- ======== STAT CARDS (4 in a row) ======== -->
+    <!-- Card 1: Conversations -->
+    <rect x="252" y="152" width="237" height="80" rx="6" fill="#18181F" stroke="#2A2A3A" stroke-width="1" />
+    <text x="276" y="188" font-family="JetBrains Mono, monospace" font-size="28" font-weight="700" fill="#EDEDF4">247</text>
+    <text x="276" y="214" font-family="Inter, system-ui, sans-serif" font-size="10" font-weight="600" fill="#5C5C72" letter-spacing="1">CONVERSATIONS</text>
+
+    <!-- Card 2: Projects -->
+    <rect x="505" y="152" width="237" height="80" rx="6" fill="#18181F" stroke="#2A2A3A" stroke-width="1" />
+    <text x="529" y="188" font-family="JetBrains Mono, monospace" font-size="28" font-weight="700" fill="#EDEDF4">13</text>
+    <text x="529" y="214" font-family="Inter, system-ui, sans-serif" font-size="10" font-weight="600" fill="#5C5C72" letter-spacing="1">PROJECTS</text>
+
+    <!-- Card 3: Dataset Entries -->
+    <rect x="758" y="152" width="237" height="80" rx="6" fill="#18181F" stroke="#2A2A3A" stroke-width="1" />
+    <text x="782" y="188" font-family="JetBrains Mono, monospace" font-size="28" font-weight="700" fill="#EDEDF4">48</text>
+    <text x="782" y="214" font-family="Inter, system-ui, sans-serif" font-size="10" font-weight="600" fill="#5C5C72" letter-spacing="1">DATASET ENTRIES</text>
+
+    <!-- Card 4: Last Indexed -->
+    <rect x="1011" y="152" width="237" height="80" rx="6" fill="#18181F" stroke="#2A2A3A" stroke-width="1" />
+    <text x="1035" y="188" font-family="JetBrains Mono, monospace" font-size="28" font-weight="700" fill="#EDEDF4">2m ago</text>
+    <text x="1035" y="214" font-family="Inter, system-ui, sans-serif" font-size="10" font-weight="600" fill="#5C5C72" letter-spacing="1">LAST INDEXED</text>
+
+    <!-- ======== RECENT CONVERSATIONS HEADER ======== -->
+    <text x="252" y="280" font-family="Inter, system-ui, sans-serif" font-size="18" font-weight="600" fill="#CDCDE0">Recent Conversations</text>
+
+    <!-- ======== THREAD CARD 1 ======== -->
+    <rect x="252" y="300" width="996" height="82" rx="6" fill="#18181F" stroke="#2A2A3A" stroke-width="1" />
+    <!-- Project badge -->
+    <rect x="272" y="316" width="72" height="20" rx="10" fill="rgba(6,182,212,0.15)" />
+    <text x="283" y="330" font-family="JetBrains Mono, monospace" font-size="10" font-weight="500" fill="#06B6D4">codefre.sh</text>
+    <!-- Title -->
+    <text x="354" y="330" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="500" fill="#CDCDE0">Setting up Phoenix LiveView authentication flow</text>
+    <!-- Snippet -->
+    <text x="272" y="350" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#7A7A94">Implementing phx_gen_auth with custom session management and token refresh for the API layer...</text>
+    <!-- Meta line -->
+    <text x="272" y="370" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#5C5C72">38 messages · claude-opus-4-7 · 2h ago</text>
+
+    <!-- ======== THREAD CARD 2 ======== -->
+    <rect x="252" y="390" width="996" height="82" rx="6" fill="#18181F" stroke="#2A2A3A" stroke-width="1" />
+    <rect x="272" y="406" width="68" height="20" rx="10" fill="rgba(6,182,212,0.15)" />
+    <text x="282" y="420" font-family="JetBrains Mono, monospace" font-size="10" font-weight="500" fill="#06B6D4">derobot.is</text>
+    <text x="350" y="420" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="500" fill="#CDCDE0">Portfolio page bento grid layout and responsive breakpoints</text>
+    <text x="272" y="440" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#7A7A94">Creating a CSS grid bento layout for project cards with fluid resizing across mobile, tablet, and desktop...</text>
+    <text x="272" y="460" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#5C5C72">24 messages · claude-opus-4-7 · 5h ago</text>
+
+    <!-- ======== THREAD CARD 3 ======== -->
+    <rect x="252" y="480" width="996" height="82" rx="6" fill="#18181F" stroke="#2A2A3A" stroke-width="1" />
+    <rect x="272" y="496" width="82" height="20" rx="10" fill="rgba(6,182,212,0.15)" />
+    <text x="280" y="510" font-family="JetBrains Mono, monospace" font-size="10" font-weight="500" fill="#06B6D4">aifighter.com</text>
+    <text x="364" y="510" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="500" fill="#CDCDE0">WebSocket game state synchronization architecture</text>
+    <text x="272" y="530" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#7A7A94">Designing the Phoenix Channels layer for real-time game state sync with conflict resolution and rollback...</text>
+    <text x="272" y="550" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#5C5C72">51 messages · claude-opus-4-7 · 8h ago</text>
+
+    <!-- ======== THREAD CARD 4 ======== -->
+    <rect x="252" y="570" width="996" height="82" rx="6" fill="#18181F" stroke="#2A2A3A" stroke-width="1" />
+    <rect x="272" y="586" width="46" height="20" rx="10" fill="rgba(6,182,212,0.15)" />
+    <text x="281" y="600" font-family="JetBrains Mono, monospace" font-size="10" font-weight="500" fill="#06B6D4">skills</text>
+    <text x="328" y="600" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="500" fill="#CDCDE0">Skill engineer prompt structure and validation pipeline</text>
+    <text x="272" y="620" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#7A7A94">Refactoring SKILL.md entry points to use structured YAML frontmatter with automated schema validation...</text>
+    <text x="272" y="640" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#5C5C72">19 messages · claude-opus-4-7 · 1d ago</text>
+
+    <!-- ======== THREAD CARD 5 ======== -->
+    <rect x="252" y="660" width="996" height="82" rx="6" fill="#18181F" stroke="#2A2A3A" stroke-width="1" />
+    <rect x="272" y="676" width="68" height="20" rx="10" fill="rgba(6,182,212,0.15)" />
+    <text x="279" y="690" font-family="JetBrains Mono, monospace" font-size="10" font-weight="500" fill="#06B6D4">incubator</text>
+    <text x="350" y="690" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="500" fill="#CDCDE0">Docker compose port assignment conflicts</text>
+    <text x="272" y="710" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#7A7A94">Resolving port collisions in docker-compose.yaml between the Postgres instances for codefresh and derobot...</text>
+    <text x="272" y="730" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#5C5C72">12 messages · claude-sonnet-4 · 2d ago</text>
+
+  </g>
+</svg>
