@@ -2,6 +2,8 @@
 
 How to write `.media.prompt` files that produce consistent, usable game art assets, audio direction, and marketing materials. These files are structured generation requests — not raw prompts — designed to be processed by AI image, audio, and video generation tools.
 
+> **Schema v0.4:** Lead with `quality:` (low/medium/high) and an `eval:` block. The tool selects the best available provider automatically and retries with fallback providers until output passes your criteria. Pinning a specific `service:` is available for advanced cases but is no longer the default authoring pattern.
+
 ## File Naming Convention
 
 ```

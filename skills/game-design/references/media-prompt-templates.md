@@ -1,6 +1,6 @@
 # Game Media Prompt Templates
 
-Ready-to-use `.media.prompt` templates organized by game asset type. Adapt the `prompt.text`, `service`, `model`, and `output.dimensions` to match your game's visual style and technical requirements.
+Ready-to-use `.media.prompt` templates organized by game asset type. Templates use schema v0.4 quality-based selection by default — adapt the `prompt.text`, `quality`, and `output.dimensions` to match your game's style and requirements. Service pinning (`service:`) remains available for advanced cases (e.g., pinning a specific text provider for SVG/diagram types).
 
 > For the full media-tools reference and provider options, see the `content-media-engine` skill or the media-tools README.
 
@@ -12,10 +12,10 @@ Ready-to-use `.media.prompt` templates organized by game asset type. Adapt the `
 
 ```yaml
 # characters/<name>-base.media.prompt
-schema: "0.3"
+schema: "0.4"
 id: char-<name>-base
 type: image
-service: gemini
+quality: high             # high for hero/key characters; medium for supporting cast
 
 prompt:
   text: "Fantasy RPG character portrait, <description>, detailed digital art, dark background, dramatic lighting"
@@ -29,6 +29,24 @@ output:
     height: 1024
     aspect_ratio: "1:1"
 
+eval:
+  pass_threshold: 0.7
+  required_pass: [anatomy]
+  criteria:
+    anatomy:
+      weight: 3
+      description: "Correct proportions, no extra limbs, natural pose"
+      fail_signals: ["extra limbs", "malformed hands"]
+    style_consistency:
+      weight: 3
+      description: "Matches the game's visual style — consistent art direction"
+    technical:
+      weight: 2
+      description: "Sharp focus on face, no compression artifacts"
+  reject_if:
+    - "extra limbs or malformed anatomy"
+    - "watermark or signature"
+
 tags: [character, portrait, rpg]
 ```
 
@@ -36,10 +54,10 @@ tags: [character, portrait, rpg]
 
 ```yaml
 # characters/<name>-action.media.prompt
-schema: "0.3"
+schema: "0.4"
 id: char-<name>-action
 type: image
-service: gemini
+quality: high
 
 depends_on:
   - ref: char-<name>-base
@@ -70,10 +88,10 @@ tags: [character, action, rpg, key-art]
 
 ```yaml
 # characters/<name>-sprites.media.prompt
-schema: "0.3"
+schema: "0.4"
 id: char-<name>-sprites
 type: image
-service: gemini
+quality: medium
 
 prompt:
   text: "Pixel art sprite sheet, <character description>, 16x16 grid, 8 directional walk cycle, attack animation 6 frames, idle 4 frames, white background, clean pixel art style, no anti-aliasing"
@@ -87,6 +105,23 @@ output:
     height: 1024
     aspect_ratio: "1:1"
 
+eval:
+  pass_threshold: 0.7
+  criteria:
+    anatomy:
+      weight: 3
+      description: "All animation frames have correct proportions, no extra limbs or malformed pixels"
+      fail_signals: ["extra limbs", "distorted frames"]
+    style_consistency:
+      weight: 3
+      description: "Consistent pixel style and color palette across all frames"
+    technical:
+      weight: 2
+      description: "Clean pixel art — no anti-aliasing, correct grid layout"
+  reject_if:
+    - "anti-aliased edges"
+    - "inconsistent character scale across frames"
+
 tags: [character, sprite-sheet, pixel-art]
 ```
 
@@ -98,10 +133,10 @@ tags: [character, sprite-sheet, pixel-art]
 
 ```yaml
 # environments/<scene>.media.prompt
-schema: "0.3"
+schema: "0.4"
 id: env-<scene>
 type: image
-service: gemini
+quality: high
 
 prompt:
   text: "Game background art, <scene description>, parallax layers, <art style>, no characters, wide panoramic, game-ready"
@@ -115,6 +150,22 @@ output:
     height: 1080
     aspect_ratio: "16:9"
 
+eval:
+  pass_threshold: 0.7
+  criteria:
+    composition:
+      weight: 3
+      description: "Clear foreground/midground/background separation, strong focal point"
+    style_consistency:
+      weight: 3
+      description: "Matches the game's art direction — color palette, lighting, and tone are consistent"
+    technical:
+      weight: 2
+      description: "Correct 16:9 aspect ratio, no compression artifacts"
+  reject_if:
+    - "UI elements or text visible"
+    - "characters present in environment-only scene"
+
 tags: [environment, background, level-art]
 ```
 
@@ -122,10 +173,10 @@ tags: [environment, background, level-art]
 
 ```yaml
 # environments/<biome>-tiles.media.prompt
-schema: "0.3"
+schema: "0.4"
 id: env-<biome>-tiles
 type: image
-service: gemini
+quality: medium
 
 prompt:
   text: "Top-down tile set for <biome> biome, 32x32 pixel tiles, includes: ground, walls, water, trees, rocks, path, 4x4 grid layout, seamless edges, pixel art style, consistent lighting"
@@ -150,9 +201,10 @@ tags: [environment, tileset, pixel-art]
 
 ```yaml
 # ui/<icon-name>.media.prompt
-schema: "0.3"
+schema: "0.4"
 id: ui-<icon-name>
 type: svg
+# service: pins to a text-capable provider — required for SVG/text output types
 service: anthropic
 
 prompt:
@@ -172,9 +224,10 @@ tags: [ui, icon, svg]
 
 ```yaml
 # ui/<screen-name>.media.prompt
-schema: "0.3"
+schema: "0.4"
 id: ui-<screen-name>
 type: html
+# service: pins to anthropic — required for HTML text-output types
 service: anthropic
 
 prompt:
@@ -205,9 +258,10 @@ tags: [ui, mockup, screen]
 
 ```yaml
 # prototypes/<mechanic>.media.prompt
-schema: "0.3"
+schema: "0.4"
 id: proto-<mechanic>
 type: html
+# service: pins to z.ai — required for HTML text-output; z.ai is fast and cost-effective for prototypes
 service: z.ai
 
 prompt:
@@ -287,15 +341,17 @@ Create a card battler prototype:
 
 ### Background Music
 
+Use `type: music` — the tool selects a music provider (Suno etc.) by quality tier. Note: audio is not yet auto-gradable; omit `eval` blocks for music tracks.
+
 ```yaml
 # audio/<track-name>.media.prompt
-schema: "0.3"
+schema: "0.4"
 id: audio-<track-name>
-type: audio
-service: suno
+type: music
+quality: medium           # low=Suno V4; medium/high=Suno V4_5ALL
 
 prompt:
-  text: "<genre/mood description, 2-3 minutes>"
+  text: "<genre/mood description>"
   provider_options:
     customMode: true
     instrumental: true
@@ -304,8 +360,11 @@ prompt:
     negativeTags: "<excluded styles>"
 
 output:
+  duration: 120            # target duration in seconds
   formats:
     - format: mp3
+
+# eval: omitted — audio is not yet auto-gradable; generation accepts first successful output
 
 tags: [audio, music, <track-type>]
 ```
@@ -323,12 +382,14 @@ tags: [audio, music, <track-type>]
 
 ### Voice / Dialogue Lines
 
+Use `type: voice` for TTS. Provider is selected by quality tier (medium = openai-tts first, high = elevenlabs first). Note: audio is not yet auto-gradable; omit `eval` blocks.
+
 ```yaml
 # audio/npc-<name>-<line>.media.prompt
-schema: "0.3"
+schema: "0.4"
 id: voice-npc-<name>-<line>
-type: audio
-service: openai-tts
+type: voice
+quality: medium
 
 prompt:
   text: "<dialogue text>"
@@ -340,6 +401,8 @@ prompt:
 output:
   formats:
     - format: mp3
+
+# eval: omitted — audio is not yet auto-gradable; generation accepts first successful output
 
 tags: [audio, voice, npc, dialogue]
 ```
@@ -364,10 +427,10 @@ tags: [audio, voice, npc, dialogue]
 
 ```yaml
 # video/<trailer-name>.media.prompt
-schema: "0.3"
+schema: "0.4"
 id: video-<trailer-name>
 type: video
-service: veo
+quality: high
 
 depends_on:
   - ref: <key-art-id>
@@ -381,15 +444,29 @@ attachments:
 
 prompt:
   text: "<cinematic description, camera movement, mood>"
-  provider_options:
-    durationSeconds: 6
-    resolution: "1080p"
 
 output:
+  duration: 6              # seconds — mapped to provider-specific param automatically
   formats:
     - format: mp4
   dimensions:
     aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.7
+  criteria:
+    motion_quality:
+      weight: 3
+      description: "Smooth camera movement, no warping or temporal artifacts"
+    prompt_adherence:
+      weight: 3
+      description: "Key described elements visible — character, environment, action"
+    technical:
+      weight: 2
+      description: "Correct aspect ratio, full duration rendered"
+  reject_if:
+    - "abrupt cut or black frames"
+    - "watermark visible"
 
 tags: [video, trailer, cinematic]
 ```
@@ -398,18 +475,16 @@ tags: [video, trailer, cinematic]
 
 ```yaml
 # video/<clip-name>.media.prompt
-schema: "0.3"
+schema: "0.4"
 id: video-<clip-name>
 type: video
-service: grok-video
+quality: medium
 
 prompt:
   text: "<gameplay scene description, action, effects>"
-  provider_options:
-    duration: 10
-    resolution: "720p"
 
 output:
+  duration: 10             # seconds
   formats:
     - format: mp4
   dimensions:
@@ -426,9 +501,10 @@ tags: [video, gameplay, b-roll]
 
 ```yaml
 # diagrams/core-loop.media.prompt
-schema: "0.3"
+schema: "0.4"
 id: diag-core-loop
 type: diagram
+# service: pins to anthropic — required for diagram text-output types
 service: anthropic
 
 prompt:
@@ -451,9 +527,10 @@ tags: [diagram, core-loop, game-design]
 
 ```yaml
 # diagrams/economy-flow.media.prompt
-schema: "0.3"
+schema: "0.4"
 id: diag-economy
 type: diagram
+# service: pins to anthropic — required for diagram text-output types
 service: anthropic
 
 prompt:
@@ -479,9 +556,10 @@ tags: [diagram, economy, game-design]
 
 ```yaml
 # diagrams/progression-tree.media.prompt
-schema: "0.3"
+schema: "0.4"
 id: diag-progression
 type: diagram
+# service: pins to anthropic — required for diagram text-output types
 service: anthropic
 
 prompt:
@@ -510,10 +588,10 @@ tags: [diagram, progression, game-design]
 
 ```yaml
 # items/<category>-icons.media.prompt
-schema: "0.3"
+schema: "0.4"
 id: items-<category>
 type: image
-service: gemini
+quality: medium
 
 prompt:
   text: "Game item icon sheet, <category> items, <list items>, arranged in a grid, <art style>, consistent size and lighting, transparent-style background, game-ready assets"
@@ -534,10 +612,10 @@ tags: [items, icons, game-assets]
 
 ```yaml
 # marketing/app-icon.media.prompt
-schema: "0.3"
+schema: "0.4"
 id: mkt-app-icon
 type: image
-service: gemini
+quality: high
 
 prompt:
   text: "Mobile game app icon, <game description>, bold readable at small sizes, vibrant colors, <art style>, no text, rounded square composition"
@@ -556,10 +634,10 @@ tags: [marketing, app-icon, store]
 
 ```yaml
 # marketing/feature-graphic.media.prompt
-schema: "0.3"
+schema: "0.4"
 id: mkt-feature-graphic
 type: image
-service: gemini
+quality: high
 
 prompt:
   text: "Google Play feature graphic, <game> gameplay showcase, dynamic action scene, <key characters>, vibrant, exciting, game title area on left"

@@ -1,6 +1,6 @@
 # Asset Prompt Payload Schema
 
-> v0.3 — Multi-type artifact prompt payloads with multi-provider support (media APIs + chat completion APIs + renderers), attachments, dependency resolution, post-processing, and interactive refinement.
+> v0.4 — Quality-based provider selection, eval-gated generation with provider fallback, `music`/`voice` types, and `output.duration` for time-based media.
 
 ---
 
@@ -8,12 +8,13 @@
 
 Every generatable asset in this system ships with its own `.media.prompt` file containing a structured YAML payload that:
 1. **Specifies the prompt** — text, negative prompt, style, and provider-specific hints
-2. **Selects a service** — which generation provider to use (Gemini, OpenAI, Stability, local, etc.)
-3. **Declares output** — format(s), dimensions, quality targets
-4. **Attaches references** — existing files that inform generation (style refs, masks, base images)
-5. **Declares dependencies** — references to other prompts that must be generated first
-6. **Defines evaluation criteria** — weighted rubric for automated or AI-assisted grading
-7. **Specifies post-processing** — format conversion, resizing, optimization after generation
+2. **Declares quality intent** — `quality: low|medium|high` drives automatic provider selection
+3. **Selects a service (optional)** — explicit service/model pins the provider, bypassing auto-selection
+4. **Declares output** — format(s), dimensions, duration (for time-based media)
+5. **Attaches references** — existing files that inform generation (style refs, masks, base images)
+6. **Declares dependencies** — references to other prompts that must be generated first
+7. **Defines evaluation criteria** — weighted rubric for automated grading and provider fallback
+8. **Specifies post-processing** — format conversion, resizing, optimization after generation
 
 ---
 
@@ -26,7 +27,8 @@ assets/
 ├── landing-hero.media.prompt        # Image — standalone
 ├── signup-modal.media.prompt        # Image — depends on landing-hero
 ├── hero-animation.media.prompt      # Video — depends on landing-hero
-├── click-feedback.media.prompt      # Audio — standalone
+├── click-feedback.media.prompt      # Voice — standalone
+├── background-music.media.prompt    # Music — standalone
 ├── signup-modal-cmp.media.prompt    # Component — depends on signup-modal
 └── brand-logo.media.prompt          # Image — multi-format output (png + svg + webp)
 ```
@@ -38,14 +40,21 @@ The `generate-media-prompt` tool reads these files, resolves the dependency DAG,
 ## Schema Envelope
 
 ```yaml
-# asset-prompt-payload v0.3
-schema: "0.3"                            # Schema version (required — enables migration tooling)
+# asset-prompt-payload v0.4
+schema: "0.4"                            # Schema version (required — enables migration tooling)
 id: string                              # Unique identifier (required)
 type: string                            # Asset type (required, see Asset Types below)
 
-# --- Provider ---
-service: string                          # Generation provider (required for generatable types)
-model: string                            # Model identifier (provider-specific, optional)
+# --- Quality (NEW in v0.4) ---
+quality: medium                          # low | medium | high (default: medium)
+                                         # Drives automatic provider/model selection.
+                                         # Omit to accept the default (medium).
+
+# --- Provider (now optional — advanced pinning) ---
+# service: string                        # Pin to a specific provider (skips auto-selection).
+#                                        # Use only when you need a particular provider.
+#                                        # v0.3 files with service: set continue to work unchanged.
+# model: string                          # Model override (only meaningful with service:).
 
 # --- Prompt ---
 prompt:
@@ -71,6 +80,8 @@ depends_on:
 
 # --- Output ---
 output:
+  duration: integer                      # NEW in v0.4: duration in seconds, for video/music/voice
+                                         # Alias: length (either field is accepted)
   formats:                               # One or more output formats (required)
     - format: string                     # Image: png, jpg, webp, svg
                                          # Audio: mp3, wav, ogg
@@ -101,15 +112,17 @@ requirements: { ... }                    # Type-specific constraints (see per-ty
 
 # --- Evaluation ---
 eval:
-  pass_threshold: float
-  required_pass: [string]
+  pass_threshold: float                  # Weighted normalized score in [0,1] required to pass.
+                                         # Default: 0.7. Scores are computed as Σ(weight·score/10)/Σweight.
+  max_attempts: integer                  # Max provider candidates to try before accepting best.
+                                         # Default: all available candidates.
+  required_pass: [string]                # Criterion names that must individually reach pass_threshold.
   criteria:
     <name>:
-      weight: float
-      scale: [1, 5]
-      description: string
-      fail_signals: [string]
-  reject_if: [string]
+      weight: float                      # Relative weight in the weighted average.
+      description: string                # Instruction to the grading model.
+      fail_signals: [string]             # Phrases that, if present in the grader's notes, fail the criterion.
+  reject_if: [string]                    # Any matching phrase in grader output causes outright rejection.
 
 # --- Metadata ---
 tags: [string]                           # Grouping tags for filtering
@@ -127,8 +140,14 @@ The `type` field determines what kind of artifact is generated and which provide
 | Type | Output Formats | Description |
 |------|---------------|-------------|
 | `image` | png, jpg, webp, svg | Raster/vector images |
-| `audio` | mp3, wav, ogg | Sound effects, music, TTS |
+| `music` | mp3, wav | AI-generated music tracks (Suno etc.) |
+| `voice` | mp3, wav, ogg | Text-to-speech and voice generation |
+| `audio` | mp3, wav, ogg | Alias for `voice` when no service is specified |
 | `video` | mp4, webm | Motion video |
+
+> **v0.4 type clarification:** `music` and `voice` replace the ambiguous `audio` + service combos
+> from v0.3. Bare `audio` with no service pinned is treated as `voice`. Existing files using
+> `type: audio` with an explicit `service:` continue to work unchanged.
 
 ### Code/Document Types (text output via chat completion APIs)
 
@@ -141,7 +160,7 @@ The `type` field determines what kind of artifact is generated and which provide
 | `diagram` | mmd, puml, dot, svg | Diagrams from text descriptions (+ optional rendering) |
 | `document` | md, txt, json, yaml | Structured documents |
 
-Code/document types use the `prompt.system` field for LLM role instructions and dispatch to chat completion providers (z.ai, Anthropic, Gemini, OpenAI).
+Code/document types use the `prompt.system` field for LLM role instructions and dispatch to chat completion providers (Anthropic, Gemini, OpenAI).
 
 ### Diagram Sub-Types
 
@@ -158,15 +177,81 @@ Rendering is triggered via `post_processing` with `action: render`.
 
 ---
 
+## Provider Selection
+
+In v0.4, **`service` and `model` are optional**. Omit them and declare `quality` instead — the tool selects the best available provider automatically.
+
+### Quality → Provider Candidate Table
+
+| Kind | `low` | `medium` | `high` |
+|------|-------|----------|--------|
+| `image` | gemini / imagen-4.0-fast-generate-001 | gemini / imagen-4.0-generate-001 | gemini / imagen-4.0-ultra-generate-001 → imagen-4.0-generate-001 |
+| `video` | grok-video → veo / veo-3.0-fast-generate-001 | veo / veo-3.0-fast-generate-001 → grok-video | veo / veo-3.0-generate-001 → grok-video |
+| `music` | suno / V4 | suno / V4_5ALL | suno / V4_5ALL |
+| `voice` | qwen-tts / qwen3-tts-flash → openai-tts / gpt-4o-mini-tts | openai-tts / gpt-4o-mini-tts → elevenlabs / eleven_multilingual_v2 | elevenlabs / eleven_multilingual_v2 → openai-tts / gpt-4o-mini-tts |
+| `chat` (component / react-page / html / style-guide / diagram / document) | gemini-chat / gemini-2.5-flash → openai-chat / gpt-4.1 | anthropic / claude-sonnet-4-6 → openai-chat / gpt-4.1 → gemini-chat / gemini-2.5-flash | anthropic / claude-opus-4-6 → anthropic / claude-sonnet-4-6 → gemini-chat / gemini-2.5-pro |
+
+Candidates are filtered at runtime by API key availability. If no key is set for any candidate → hard error listing the missing environment variables.
+
+**Override order (highest priority first):** `--service` / `--model` CLI flags → YAML `service:` → quality table.
+
+### Service Pinning (Advanced)
+
+Set `service:` (and optionally `model:`) when you need a specific provider — for example, to use a provider-specific feature or for reproducibility. Pinning bypasses auto-selection and disables provider fallback.
+
+```yaml
+# Pin explicitly — skips quality table, single provider, no fallback
+service: gemini
+model: imagen-4.0-ultra-generate-001
+```
+
+---
+
+## Evaluation and Provider Fallback
+
+The `eval` block drives automated quality grading and provider fallback. When present and the evaluator is reachable:
+
+1. The tool generates output with the first candidate provider.
+2. Each variant is graded: weighted score computed, `required_pass` criteria checked individually, `reject_if` phrases scanned.
+3. If the best variant passes → accept, stop.
+4. Otherwise → try next candidate provider, repeat.
+5. If all candidates exhausted without a pass → keep the globally best-scoring output and emit a warning.
+
+Without an `eval` block, or when the evaluator is unreachable, the tool uses legacy behavior: generate, pick best (Groq fallback if available, else first), accept immediately.
+
+### Eval Fields
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `pass_threshold` | float 0–1 | 0.7 | Minimum weighted normalized score to pass. Score = Σ(weight·score/10)/Σweight. |
+| `max_attempts` | integer | all | Cap on how many candidate providers to try. |
+| `required_pass` | [string] | [] | Criteria that must each individually reach `pass_threshold`. |
+| `criteria.<name>.weight` | float | — | Relative weight in the aggregate score. |
+| `criteria.<name>.description` | string | — | Instruction to the grading model for this criterion. |
+| `criteria.<name>.fail_signals` | [string] | [] | If any phrase appears in the grader's notes for this criterion, the criterion fails. |
+| `reject_if` | [string] | [] | Outright rejection if any phrase matches the grader's overall notes. |
+
+### Grading Request Format
+
+The evaluator (Qwen 3.6, hosted on a LAN inference server) receives the artifact plus criteria and must reply with:
+
+```json
+{"scores": {"<criterion>": 0-10, ...}, "reject_hits": ["<matched reject_if>"], "notes": "..."}
+```
+
+Artifact handling: images → base64 inline; text formats (svg/html/mmd/etc.) → inline text (truncated ~32KB); video → up to 4 evenly-spaced frames via ffmpeg; audio → un-scorable (warns and accepts first successful generation — audio-capable eval not yet wired).
+
+---
+
 ## Service Providers
 
-The `service` field selects which generation API to use. The `model` field is optional and provider-specific. Providers fall into two categories: **media providers** (binary output) and **chat completion providers** (text/code output).
+The optional `service` field selects which generation API to use. When `service` is omitted, the quality table drives selection (see above).
 
 ### Image Providers
 
 | Service | Models | Notes |
 |---------|--------|-------|
-| `gemini` | `imagen-3.0-generate-002`, `gemini-2.0-flash-preview-image-generation` | Google AI Studio. Default for images. |
+| `gemini` | `imagen-4.0-generate-001`, `imagen-4.0-ultra-generate-001`, `imagen-4.0-fast-generate-001` | Google AI Studio. Default for images. |
 | `openai` | `dall-e-3`, `dall-e-2`, `gpt-image-1` | OpenAI. Supports quality, size, style params. |
 | `stability` | `stable-diffusion-3.5-large`, `sdxl-turbo`, `stable-image-core` | Stability AI. Supports steps, cfg_scale, sampler. |
 | `replicate` | Any model ID (e.g., `black-forest-labs/flux-1.1-pro`) | Replicate. Generic runner for open models. |
@@ -178,21 +263,29 @@ The `service` field selects which generation API to use. The `model` field is op
 | `together` | Any Together AI model ID | Together AI inference. |
 | `fireworks` | Any Fireworks model ID | Fireworks AI inference. |
 
-### Audio Providers
+### Music Providers
+
+| Service | Models | Notes |
+|---------|--------|-------|
+| `suno` | `V4`, `V4_5ALL` | Music generation. `V4_5ALL` used for medium/high quality. |
+| `udio` | — | Music generation. |
+| `musicgen` | `facebook/musicgen-medium`, `facebook/musicgen-large` | Meta's music generation. |
+
+### Voice Providers
 
 | Service | Models | Notes |
 |---------|--------|-------|
 | `elevenlabs` | `eleven_multilingual_v2`, `eleven_turbo_v2` | TTS and voice cloning. |
-| `suno` | `chirp-v4` | Music generation. |
-| `udio` | — | Music generation. |
+| `openai-tts` | `gpt-4o-mini-tts` | OpenAI TTS. 13 voices, steerable via instructions. |
+| `qwen-tts` | `qwen3-tts-flash` | Alibaba Qwen TTS via DashScope. 40+ voices, 10 languages. |
 | `bark` | `suno/bark` | Open-source TTS with voice presets. |
-| `musicgen` | `facebook/musicgen-medium`, `facebook/musicgen-large` | Meta's music generation. |
-| `local` | Any local TTS/audio model | Local generation. |
 
 ### Video Providers
 
 | Service | Models | Notes |
 |---------|--------|-------|
+| `veo` | `veo-3.0-generate-001`, `veo-3.0-fast-generate-001` | Google Veo via Gemini API. 4-8s, up to 4K. |
+| `grok-video` | `grok-imagine-video` | xAI Grok Imagine video. 1-15s, up to 720p. |
 | `runway` | `gen-3-alpha`, `gen-3-alpha-turbo` | Image-to-video, text-to-video. |
 | `pika` | `pika-2.0` | Video generation. |
 | `kling` | `kling-v1`, `kling-v1-pro` | Video generation. |
@@ -203,10 +296,9 @@ The `service` field selects which generation API to use. The `model` field is op
 
 | Service | Models | Notes |
 |---------|--------|-------|
-| `z.ai` | varies | z.ai inference API (OpenAI-compatible). Primary for code gen. |
 | `anthropic` | `claude-sonnet-4-6`, `claude-opus-4-6`, `claude-haiku-4-5` | Best at complex code gen and system prompt adherence. |
 | `gemini-chat` | `gemini-2.5-flash`, `gemini-2.5-pro` | Shares `GEMINI_API_KEY` with image provider. |
-| `openai-chat` | `gpt-4o`, `gpt-4o-mini` | Shares `OPENAI_API_KEY` with image provider. |
+| `openai-chat` | `gpt-4o`, `gpt-4o-mini`, `gpt-4.1` | Shares `OPENAI_API_KEY` with image provider. |
 
 Chat completion providers use `prompt.system` for role instructions and `prompt.text` as the user message. They output text/code to a file rather than binary media.
 
@@ -282,13 +374,6 @@ prompt:
 
 # --- Chat Completion Providers ---
 
-# z.ai / OpenAI-chat (same format)
-prompt:
-  provider_options:
-    max_tokens: 8192
-    temperature: 0.3
-    top_p: 1.0
-
 # Anthropic
 prompt:
   provider_options:
@@ -297,7 +382,7 @@ prompt:
     thinking:
       budget_tokens: 4096       # Extended thinking for complex generation
 
-# Gemini-chat
+# Gemini-chat / OpenAI-chat (same format)
 prompt:
   provider_options:
     maxOutputTokens: 8192
@@ -381,6 +466,7 @@ The `output` section declares what the tool should produce. A single prompt can 
 
 ```yaml
 output:
+  duration: 8                            # Seconds (for video, music, voice). Alias: length.
   formats:
     - format: png
       quality: 100
@@ -395,6 +481,8 @@ output:
   color_space: sRGB
   dpi: 72
 ```
+
+`output.duration` flows into `GenerationOptions.duration_seconds` and is wired per provider where the API supports it (veo `durationSeconds`, grok-video duration param, suno track-length hint). For providers that don't support duration it is ignored with a verbose log note.
 
 ### Output Filename Resolution
 
@@ -511,7 +599,7 @@ requirements:
     focus_trap: boolean
 ```
 
-### Audio Requirements
+### Music / Voice / Audio Requirements
 
 ```yaml
 requirements:
@@ -524,6 +612,8 @@ requirements:
   loudness_lufs: float
   content_type: sfx | music | tts | ambient
 ```
+
+Note: `output.duration` (top-level) is the preferred way to declare target duration for music and voice. The `requirements.duration` min/max range remains supported for validation constraints.
 
 ### Video Requirements
 
@@ -622,15 +712,9 @@ requirements:
 | `responsive` | 0.15 | Mobile/tablet/desktop widths |
 | `api_quality` | 0.20 | Clean properties, events, slots, docs |
 
-### Audio
+### Music / Voice
 
-| Criterion | Weight | Measures |
-|-----------|--------|----------|
-| `clarity` | 0.25 | No clipping, artifacts, appropriate dynamic range |
-| `mood_match` | 0.25 | Conveys intended mood |
-| `technical` | 0.20 | Meets duration, format, loudness specs |
-| `brand_fit` | 0.15 | Matches project tone |
-| `usability` | 0.15 | Works in target context, clean start/end |
+Audio artifacts are currently **un-scorable** by the eval system — audio files do not block generation; they warn and accept the first successful output. An audio-capable eval model is not yet wired. Omit `eval` blocks for `music` and `voice` types or include them for documentation purposes only (they will not gate generation).
 
 ### Video
 
@@ -665,32 +749,37 @@ requirements:
 
 ## Scoring Guide
 
+Criteria scores are on a 0–10 scale (the grading model returns 0–10 per criterion).
+
 | Score | Meaning |
 |-------|---------|
-| 1 | Unusable — wrong subject, major artifacts, fundamentally broken |
-| 2 | Poor — recognizable intent but significant issues |
-| 3 | Acceptable — meets minimum bar, usable with post-processing |
-| 4 | Good — solid quality, minor polish needed at most |
-| 5 | Excellent — production-ready, no changes needed |
+| 0–2 | Unusable — wrong subject, major artifacts, fundamentally broken |
+| 3–4 | Poor — recognizable intent but significant issues |
+| 5–6 | Acceptable — meets minimum bar, usable with post-processing |
+| 7–8 | Good — solid quality, minor polish needed at most |
+| 9–10 | Excellent — production-ready, no changes needed |
+
+`pass_threshold: 0.7` (default) means the weighted normalized score must be ≥ 0.7, equivalent to an average criterion score of 7/10.
 
 ---
 
-## Complete Example
+## Complete Examples
+
+### Example 1: Quality-Based (Recommended)
+
+Omit `service` — the tool selects the best available provider for the declared quality tier.
 
 ```yaml
 # hero-landing.media.prompt
-schema: "0.3"
+schema: "0.4"
 id: hero-landing-001
 type: image
-service: gemini
-model: imagen-3.0-generate-002
+quality: high
 
 prompt:
   text: "Modern SaaS landing page hero, dark gradient background with floating 3D geometric shapes, prominent 'Start Free Trial' CTA button, clean sans-serif typography, dashboard preview in browser mockup below the fold"
   negative: "wireframe, lorem ipsum, cluttered, dated design, light theme"
   style: screenshot-mockup
-  provider_options:
-    safety_filter_level: BLOCK_MEDIUM_AND_ABOVE
 
 attachments:
   - path: ./refs/brand-palette.png
@@ -729,36 +818,110 @@ tags: [hero, landing, tier-0]
 product_targets: [hero-image, og-card]
 
 eval:
-  pass_threshold: 3.5
+  pass_threshold: 0.75
+  max_attempts: 3
   required_pass: [relevance, web_ready]
   criteria:
     relevance:
-      weight: 0.25
-      scale: [1, 5]
-      description: "Matches SaaS landing page intent"
+      weight: 3
+      description: "Matches SaaS landing page intent with visible CTA and dashboard mockup"
+      fail_signals: ["missing CTA", "no dashboard"]
     composition:
-      weight: 0.15
-      scale: [1, 5]
-      description: "Clear visual hierarchy, CTA prominence"
+      weight: 2
+      description: "Clear visual hierarchy, CTA prominence, rule of thirds"
     technical:
-      weight: 0.15
-      scale: [1, 5]
-      description: "Sharp, no artifacts"
+      weight: 2
+      description: "Sharp, no artifacts, correct aspect ratio"
     web_ready:
-      weight: 0.20
-      scale: [1, 5]
-      description: "Correct dimensions, fast load"
+      weight: 3
+      description: "Correct dimensions, text overlay space reserved, fast-load safe"
+      fail_signals: ["watermark", "text bleeding to edges"]
     brand_fit:
-      weight: 0.10
-      scale: [1, 5]
+      weight: 1
       description: "Matches dark SaaS aesthetic"
-    stopping_power:
-      weight: 0.15
-      scale: [1, 5]
-      description: "Would stop scrolling"
   reject_if:
+    - "watermark or signature visible"
     - "obvious AI artifacts (hands, faces, screen text)"
-    - "watermarks"
+```
+
+### Example 2: Video with Duration
+
+```yaml
+# promo-video.media.prompt
+schema: "0.4"
+id: promo-video-001
+type: video
+quality: high
+
+prompt:
+  text: "A robot hand placing the final glowing piece of a circuit board puzzle, camera pulls back to reveal a complete futuristic cityscape, warm golden lighting, hopeful tone"
+
+output:
+  duration: 8
+  formats:
+    - format: mp4
+  dimensions:
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.7
+  criteria:
+    motion_quality:
+      weight: 3
+      description: "Smooth camera pull-back, no warping"
+    prompt_adherence:
+      weight: 3
+      description: "Robot hand, circuit board, cityscape reveal all visible"
+    technical:
+      weight: 2
+      description: "720p or higher, full 8s duration"
+  reject_if:
+    - "abrupt cut before cityscape reveal"
+
+tags: [promo, cinematic]
+product_targets: [landing-page, youtube-ad]
+```
+
+### Example 3: Service Pinning (Advanced Override)
+
+Use `service:` when you need a specific provider — for example, to use a provider-only parameter.
+
+```yaml
+# logo-recraft.media.prompt
+schema: "0.4"
+id: logo-recraft-001
+type: image
+# service: pins provider explicitly — bypasses quality table and provider fallback
+service: recraft
+model: recraft-v3-svg
+
+prompt:
+  text: "Minimal geometric logomark, interconnected hexagons, electric cyan on navy"
+  negative: "realistic, photographic, text"
+
+output:
+  formats:
+    - format: svg
+  dimensions:
+    width: 1024
+    height: 1024
+    aspect_ratio: "1:1"
+  transparency: required
+
+eval:
+  pass_threshold: 0.7
+  criteria:
+    relevance:
+      weight: 3
+      description: "Hexagon motif clearly present"
+    technical:
+      weight: 3
+      description: "Valid SVG, clean paths, no raster content"
+      fail_signals: ["raster image embedded", "invalid SVG"]
+  reject_if:
+    - "contains text or letterforms"
+
+tags: [logo, brand]
 ```
 
 ---
@@ -777,13 +940,16 @@ eval:
 
 ## Backward Compatibility
 
-- `schema` field is required in v0.3 — payloads without it are treated as v0.1
-- v0.1/v0.2 payloads using `*.png.prompt` naming still work — the tool accepts both `.media.prompt` and `*.{ext}.prompt` files
-- `tool_hints` is accepted as an alias for `provider_options`
-- `requirements.format` is accepted as a shorthand for `output.formats[0].format`
-- `requirements.dimensions` is accepted as a shorthand for `output.dimensions`
-- If `service` is omitted, defaults to `gemini` for images
+- v0.3 files with `service:` set continue to work — `service` present means pinned provider as before.
+- v0.3 files without `service:` get quality-based auto-selection (medium tier default); implicit gemini default is dropped.
+- `schema: "0.3"` is accepted; the engine upgrades behavior on the fly.
+- v0.1/v0.2 payloads using `*.png.prompt` naming still work.
+- `tool_hints` is accepted as an alias for `provider_options`.
+- `requirements.format` is accepted as a shorthand for `output.formats[0].format`.
+- `requirements.dimensions` is accepted as a shorthand for `output.dimensions`.
+- `output.length` is accepted as an alias for `output.duration`.
+- `type: audio` with no `service:` is treated as `voice`.
 
 ---
 
-*Version: 0.3.0*
+*Version: 0.4.0*
