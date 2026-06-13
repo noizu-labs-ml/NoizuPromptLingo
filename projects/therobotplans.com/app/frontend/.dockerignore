@@ -1,0 +1,10 @@
+node_modules
+.next
+.cache
+.git
+*.md
+cypress
+cypress.config.ts
+Dockerfile*
+.dockerignore
+.env*
