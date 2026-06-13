@@ -36,6 +36,19 @@ tool MyApp.Tools.Search
 tool MyApp.Tools.Search, name: "search", description: "Alias for search_docs"
 ```
 
+Two more `use` options round out the metadata: `category: "Docs"` attaches a
+grouping label that rides on the wire in `_meta.category`, and `hidden: true`
+omits the tool from `tools/list` while leaving it callable by name. Both also
+work as registration-level overrides — see the
+[Toolkits, Categories & Hidden Tools](toolkits_and_discovery.md) guide.
+
+> #### Many small tools? {: .tip}
+>
+> One module per tool is ceremony for a bundle of one-liners.
+> `Noizu.MCP.Server.Toolkit` defines several tools in one module via `@mcp`
+> function annotations, with schemas as plain data — see the
+> [Toolkits, Categories & Hidden Tools](toolkits_and_discovery.md) guide.
+
 ## The field DSL
 
 | Type | Options | JSON Schema |
@@ -89,6 +102,16 @@ def call(%{"query" => query}, _ctx), do: {:ok, "found: #{query}"}
 ```
 
 `output_schema %{...}` is the equivalent for structured output.
+
+Both macros also accept the schema as **raw JSON text**, decoded at compile
+time (malformed JSON is a compile error) — handy when pasting a schema block
+from the spec or another tool's definition:
+
+```elixir
+input_schema """
+{"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}
+"""
+```
 
 ## Return contract
 
@@ -148,3 +171,9 @@ Hand-written `handle_call_tool/3` receives raw string-keyed arguments — no
 validation is applied unless you do it yourself (`Noizu.MCP.Schema` exposes
 the same JSV plumbing the DSL uses). See `examples/no_dsl_server` for a
 complete behaviour-only server.
+
+A middle ground: keep the DSL registrations and hand-write only the *list*
+callback over the registry helpers (`Noizu.MCP.Server.Features.Tools`) —
+e.g. for session-gated visibility. That pattern, along with multi-tool
+modules and discovery, lives in
+[Toolkits, Categories & Hidden Tools](toolkits_and_discovery.md).

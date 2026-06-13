@@ -41,7 +41,7 @@ defmodule Noizu.MCP.Server.Resource do
   @callback definition() :: Types.Resource.t()
 
   @doc false
-  @callback __mcp_resource__(:subscribable | :mime_type) :: term()
+  @callback __mcp_resource__(:subscribable | :mime_type | :hidden) :: term()
 
   defmacro __using__(opts) do
     quote bind_quoted: [opts: opts] do
@@ -72,6 +72,7 @@ defmodule Noizu.MCP.Server.Resource do
       @impl Noizu.MCP.Server.Resource
       def __mcp_resource__(:subscribable), do: @__mcp_resource_opts__[:subscribable] == true
       def __mcp_resource__(:mime_type), do: @__mcp_resource_opts__[:mime_type]
+      def __mcp_resource__(:hidden), do: @__mcp_resource_opts__[:hidden] == true
     end
   end
 end

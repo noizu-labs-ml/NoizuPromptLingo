@@ -47,6 +47,11 @@ Passing `progress:` automatically attaches a progress token; the callback
 runs in its own task. A request that exceeds `timeout:` is **cancelled on
 the server** (`notifications/cancelled`) and returns `{:error, :timeout}`.
 
+Note that `list_tools/1` only shows what the server chooses to list — servers
+may keep tools hidden yet callable by name (a `noizu_mcp` server's `catalog`
+tool, when registered, reveals them; see
+[Toolkits, Categories & Hidden Tools](toolkits_and_discovery.md)).
+
 ## The rest of the surface
 
 ```elixir

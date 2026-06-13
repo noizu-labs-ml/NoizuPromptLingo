@@ -60,6 +60,11 @@ end
 There is nothing else to declare: the `tools` capability (and every other
 capability) is derived from what you register.
 
+One module per tool scales down poorly for bundles of small tools —
+`Noizu.MCP.Server.Toolkit` defines several tools in one module via `@mcp`
+function annotations, registered with a single `tool MyApp.Toolkit` line. See
+[Toolkits, Categories & Hidden Tools](toolkits_and_discovery.md).
+
 ## Running it
 
 Over **stdio** — add it to your supervision tree and start the VM with the

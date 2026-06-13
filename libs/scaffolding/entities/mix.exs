@@ -1,63 +1,97 @@
-#-------------------------------------------------------------------------------
-# Author: Keith Brings
-# Copyright (C) 2018 Noizu Labs, Inc. All rights reserved.
-#-------------------------------------------------------------------------------
-
-defmodule Noizu.Scaffolding.Mixfile do
+defmodule Noizu.Entities.MixProject do
   use Mix.Project
 
   def project do
-    [app: :noizu_scaffolding,
-     version: "1.2.10",
-     elixir: "~> 1.13",
-     package: package(),
-     deps: deps(),
-     elixirc_paths: elixirc_paths(Mix.env),
-     description: "Noizu Scaffolding",
-     docs: docs()
-   ]
-  end # end project
-
-  # Specifies which paths to compile per environment.
-  defp elixirc_paths(:test), do: ["lib", "test/fixtures"]
-  defp elixirc_paths(_),     do: ["lib"]
-
-  defp package do
     [
-      maintainers: ["noizu"],
+      app: :noizu_labs_entities,
+      name: "NoizuLabs Entities",
+      version: "0.3.1",
+      elixir: "~> 1.14",
+      package: package(),
+      description: description(),
+      start_permanent: Mix.env() == :prod,
+      deps: deps(),
+      docs: docs(),
+      dialyzer: dialyzer(),
+      test_coverage: test_coverage(),
+      elixirc_paths: elixirc_paths(Mix.env())
+    ]
+  end
+
+  def docs() do
+    [
+      main: "Noizu",
+      extras: ["README.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE"]
+    ]
+  end
+
+  def dialyzer() do
+    [
+      plt_file: {:no_warn, "priv/plts/project.plt"},
+      exclude: ["lib/mix/tasks/*"]
+    ]
+  end
+
+  defp test_coverage() do
+    [
+      summary: [
+        threshold: 40
+      ],
+      ignore_modules: []
+    ]
+  end
+
+  defp description() do
+    "Elixir Entities (Structs with MetaData and Noizu EntityReference Protocol support from noizu-labs-scaffolding/core built in."
+  end
+
+  defp package() do
+    [
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/noizu/elixir_scaffolding"}
+      links: %{
+        project: "https://github.com/noizu-labs-scaffolding/entities",
+        developer: "https://github.com/noizu"
+      }
     ]
-  end # end package
+  end
 
+  def elixirc_paths(:test), do: ["lib", "test/support"]
+  def elixirc_paths(_), do: ["lib"]
+
+  # Run "mix help compile.app" to learn about applications.
   def application do
-    [ applications: [:logger],
-      extra_applications: [:mnesia, :amnesia, :noizu_core, :noizu_mnesia_versioning, :plug, :poison, :redix, :fastglobal, :semaphore]
+    [
+      extra_applications: [:logger]
     ]
-  end # end application
+  end
 
+  # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:amnesia, git: "https://github.com/noizu/amnesia.git", ref: "9266002", optional: true}, # Mnesia Wrapper
-      {:ex_doc, "~> 0.28.3", only: [:dev], optional: true}, # Documentation Provider
-      {:markdown, github: "devinus/markdown", only: [:dev], optional: true}, # Markdown processor for ex_doc
-      {:noizu_core, github: "noizu/ElixirCore", tag: "1.0.17"},
-      {:noizu_mnesia_versioning, github: "noizu/MnesiaVersioning", tag: "0.1.10"},
-      {:redix, github: "whatyouhide/redix", tag: "v0.7.0", optional: true},
-      {:poison, "~> 3.1.0", optional: true},
-      {:fastglobal, "~> 1.0"}, # https://github.com/discordapp/fastglobal
-      {:semaphore, "~> 1.0"}, # https://github.com/discordapp/semaphore
-      {:plug, "~> 1.0", optional: true},
-      {:elixir_uuid, "~> 1.2", only: :test, optional: true},
-      {:telemetry, "~> 1.1.0", optional: true},
+      # @TODO - prepare hex releases (or abandon) jason and amnesi
+      {:ex_doc, ">= 0.0.0", only: [:dev, :test], runtime: false},
+      {:mimic, "~> 1.0.0", only: :test},
+      {:ecto_sql, "~> 3.6"},
+      {:nuamnesia, "~> 0.3.0", optional: true},
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:credo, "~> 1.0", runtime: false},
+      {:junit_formatter, "~> 3.4", only: [:test]},
+      {:shortuuid, "~> 4.0"},
+      {:elixir_uuid, "~> 1.2", optional: true},
+      {:inflex28, "~> 2.1.0"}
+      # {:dep_from_hexpm, "~> 0.3.0"},
+      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
     ]
-  end # end deps
-
-  defp docs do
-    [
-      source_url_pattern: "https://github.com/noizu/ElixirScaffolding/blob/master/%{path}#L%{line}",
-      extras: ["README.md", "markdown/sample_conventions_doc.md"]
-    ]
-  end # end docs
-
-end # end defmodule
+    |> then(fn deps ->
+      if Application.get_env(:noizu_labs_entities, :umbrella) do
+        deps ++ [{:noizu_labs_core, in_umbrella: true}]
+      else
+        deps ++
+          [
+            {:noizu_labs_core, "~> 0.1.8"}
+            # {:noizu_labs_core,            github: "noizu-labs-scaffolding/core", branch: "develop", override: true},
+          ]
+      end
+    end)
+  end
+end

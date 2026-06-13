@@ -1,4 +1,4 @@
-elixir 1.19.5-otp-28
-erlang 28.0
+elixir 1.20.1-otp-29
+erlang 29.0.2
 cmake 3.31.11
 nodejs 22.22.0

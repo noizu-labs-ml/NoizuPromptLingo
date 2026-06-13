@@ -1,6 +1,13 @@
 defmodule Noizu.MCP.Server.Features.Prompts do
-  @moduledoc false
-  # Feature glue for prompts/list and prompts/get.
+  @moduledoc """
+  Prompts feature plumbing: the helpers behind the generated
+  `handle_list_prompts/2` and `handle_get_prompt/3` defaults.
+
+  Most servers never call this module directly. Hand-written list callbacks
+  that still want the registry-driven behavior can call `list_registered/3`
+  — e.g. with `include_hidden: true` for session-gated visibility (see the
+  Toolkits, Categories & Hidden Tools guide).
+  """
 
   alias Noizu.MCP.Error
   alias Noizu.MCP.Server.Features.Pagination
@@ -20,9 +27,27 @@ defmodule Noizu.MCP.Server.Features.Prompts do
     end
   end
 
+  @doc "Returns true if the registered prompt should be hidden from listings."
+  def hidden?({module, opts}) do
+    case Keyword.fetch(opts, :hidden) do
+      {:ok, v} ->
+        v == true
+
+      :error ->
+        try do
+          module.__mcp_prompt__(:hidden) == true
+        rescue
+          FunctionClauseError -> false
+          UndefinedFunctionError -> false
+        end
+    end
+  end
+
   @doc "Default `handle_list_prompts` over registered prompt modules."
-  def list_registered(registered, cursor) do
-    definitions = Enum.map(registered, fn {module, opts} -> definition(module, opts) end)
+  def list_registered(registered, cursor, opts \\ []) do
+    include_hidden = Keyword.get(opts, :include_hidden, false)
+    visible = if include_hidden, do: registered, else: Enum.reject(registered, &hidden?/1)
+    definitions = Enum.map(visible, fn {module, entry_opts} -> definition(module, entry_opts) end)
     Pagination.paginate(definitions, cursor)
   end
 

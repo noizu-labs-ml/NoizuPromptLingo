@@ -94,6 +94,39 @@ client = connect(MyApp.MCP, handler: StubHandler)
 assert {:ok, result} = call_tool(client, "consult_llm", %{"question" => "?"})
 ```
 
+## Testing toolkit and hidden tools
+
+Toolkit tools (`use Noizu.MCP.Server.Toolkit` + `@mcp`) test exactly like
+classic ones — `call_tool/4` by wire name. For hidden items, assert both
+halves of the contract: excluded from listings, still callable:
+
+```elixir
+test "hidden tools are unlisted but callable", %{client: client} do
+  {:ok, tools} = list_tools(client)
+  refute "internal_tool" in Enum.map(tools, & &1.name)
+
+  assert {:ok, result} = call_tool(client, "internal_tool", %{})
+  assert result.is_error == false
+end
+
+test "catalog reveals hidden tools", %{client: client} do
+  {:ok, result} = call_tool(client, "catalog", %{"type" => "tools"})
+  entry = Enum.find(result.structured["tools"], &(&1["name"] == "internal_tool"))
+  assert entry["hidden"] == true
+end
+```
+
+The same pattern covers hidden prompts (`list_prompts/2` + `get_prompt/4`)
+and hidden resources (`list_resources/2` + `read_resource/3`). For
+session-gated visibility, flip the gate and assert the `list_changed`
+notification:
+
+```elixir
+{:ok, _} = call_tool(client, "unlock", %{})        # sets the session assign
+assert_notification(client, "notifications/tools/list_changed")
+{:ok, tools} = list_tools(client)                  # now includes gated tools
+```
+
 ## Conformance
 
 The library's own suite validates wire output against the vendored official

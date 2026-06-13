@@ -166,6 +166,31 @@ defmodule Noizu.MCP.Ctx do
     end
   end
 
+  # ── Noizu.Context integration ────────────────────────────────────────────────
+
+  require Noizu.Context.Records
+  import Noizu.Context.Records, only: [context: 0, context: 1]
+
+  @doc """
+  Build a `Noizu.Context` record from this MCP context, stashing the full
+  `%Ctx{}` under the `:mcp_ctx` option key.  Pass an optional `caller` ref
+  to override the default `:system` identity.
+  """
+  @spec to_context(t()) :: record(:context)
+  @spec to_context(t(), term()) :: record(:context)
+  def to_context(%__MODULE__{} = ctx, caller \\ nil) do
+    base = if caller, do: Noizu.Context.dummy_for_user(caller) |> elem(1), else: Noizu.Context.system()
+    Noizu.Context.with_option(base, :mcp_ctx, ctx)
+  end
+
+  @doc """
+  Extract the `%Ctx{}` previously stashed in a `Noizu.Context` record's options.
+  """
+  @spec from_context(record(:context)) :: {:ok, t()} | {:error, {:no_option, :mcp_ctx}}
+  def from_context(context() = context) do
+    Noizu.Context.option(context, :mcp_ctx)
+  end
+
   @doc "Put a value in this invocation's local assigns."
   @spec assign(t(), atom(), term()) :: t()
   def assign(%__MODULE__{} = ctx, key, value) when is_atom(key) do

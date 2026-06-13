@@ -1,7 +1,7 @@
 defmodule Noizu.MCP.MixProject do
   use Mix.Project
 
-  @version "0.1.0"
+  @version "0.1.4"
   @source_url "https://github.com/noizu-labs/noizu-mcp"
 
   def project do
@@ -40,11 +40,14 @@ defmodule Noizu.MCP.MixProject do
       {:jason, "~> 1.4"},
       {:jsv, "~> 0.19"},
       {:telemetry, "~> 1.2"},
+      {:noizu_labs_core, "~> 0.1.8"},
       # Streamable HTTP server transport (optional — stdio-only servers don't need it)
       {:plug, "~> 1.16", optional: true},
       {:bandit, "~> 1.5", optional: true},
       # Streamable HTTP client transport
       {:req, "~> 0.5", optional: true},
+      # JWT verification (CompoundJWTVerifier)
+      {:jose, "~> 1.11"},
       {:ex_doc, "~> 0.34", only: :dev, runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:stream_data, "~> 1.1", only: [:dev, :test]}
@@ -80,6 +83,7 @@ defmodule Noizu.MCP.MixProject do
         "CHANGELOG.md",
         "guides/getting_started.md",
         "guides/tools.md",
+        "guides/toolkits_and_discovery.md",
         "guides/resources_and_prompts.md",
         "guides/handler_context.md",
         "guides/client.md",
@@ -87,6 +91,7 @@ defmodule Noizu.MCP.MixProject do
         "guides/stdio.md",
         "guides/authentication.md",
         "guides/testing.md",
+        "guides/inspector.md",
         "cheatsheets/mcp.cheatmd"
       ],
       groups_for_extras: [
@@ -99,6 +104,7 @@ defmodule Noizu.MCP.MixProject do
         "Handler Context": [Noizu.MCP.Ctx],
         Types: ~r/Noizu\.MCP\.Types\./,
         Transports: ~r/Noizu\.MCP\.Transport($|\.)/,
+        Inspector: ~r/Noizu\.MCP\.Inspector($|\.)/,
         Authorization: ~r/Noizu\.MCP\.Auth($|\.)/,
         Testing: [Noizu.MCP.Test],
         Protocol: ~r/Noizu\.MCP\.(JsonRpc|Peer|Protocol|Schema|Error|UriTemplate)($|\.)/

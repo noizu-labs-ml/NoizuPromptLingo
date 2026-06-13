@@ -34,6 +34,13 @@ defmodule Noizu.MCP.Server.Tool do
     * `:annotations` — keyword list of behavior hints (`:read_only_hint`,
       `:destructive_hint`, `:idempotent_hint`, `:open_world_hint`, `:title`)
     * `:icons`, `:meta` — passed through to the wire definition
+    * `:hidden` — when `true`, the tool is omitted from `tools/list` responses
+      but remains callable. Useful for internal or privileged tools.
+    * `:category` — free-form grouping label. Rides on the wire in
+      `_meta.category` (merged into `:meta`) and is filterable through the
+      built-in `Noizu.MCP.Server.Tools.Catalog` tool.
+
+  Need several small tools in one module? See `Noizu.MCP.Server.Toolkit`.
 
   ## Schemas
 
@@ -51,6 +58,13 @@ defmodule Noizu.MCP.Server.Tool do
         "properties" => %{"query" => %{"type" => "string"}},
         "required" => ["query"]
       }
+
+  `input_schema`/`output_schema` also accept the schema as **raw JSON text**
+  (decoded at compile time — malformed JSON is a compile error):
+
+      input_schema \"\"\"
+      {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}
+      \"\"\"
 
   `output do ... end` (or `output_schema %{...}`) declares `outputSchema`; map
   return values are validated against it and sent as `structuredContent`.
@@ -75,9 +89,8 @@ defmodule Noizu.MCP.Server.Tool do
   @doc "The wire definition advertised by `tools/list`."
   @callback definition() :: Types.Tool.t()
 
-  @doc false
-  @callback __mcp_tool__(:cast_plan) :: list() | nil
-  @callback __mcp_tool__(:output_schema) :: map() | nil
+  @doc "Normalized runtime descriptor(s) — one-element list for classic tool modules."
+  @callback __mcp_tools__() :: [Noizu.MCP.Server.Tool.Spec.t()]
 
   defmacro __using__(opts) do
     quote bind_quoted: [opts: opts] do
@@ -142,24 +155,64 @@ defmodule Noizu.MCP.Server.Tool do
 
     name = Keyword.get(opts, :name, default_name)
 
-    quote do
-      @impl Noizu.MCP.Server.Tool
-      def definition do
-        %Noizu.MCP.Types.Tool{
-          name: unquote(name),
-          title: unquote(opts[:title]),
-          description: unquote(opts[:description]),
-          input_schema: @__mcp_input_schema__ || %{"type" => "object"},
-          output_schema: @__mcp_output_schema__,
-          annotations: unquote(opts[:annotations]),
-          icons: unquote(opts[:icons]),
-          meta: unquote(opts[:meta])
-        }
+    input_schema =
+      case Module.get_attribute(env.module, :__mcp_input_schema__) do
+        nil ->
+          %{"type" => "object"}
+
+        schema ->
+          Noizu.MCP.Server.Tool.Fields.decode_schema!(
+            schema,
+            "#{inspect(env.module)} input_schema"
+          )
       end
 
+    output_schema =
+      case Module.get_attribute(env.module, :__mcp_output_schema__) do
+        nil ->
+          nil
+
+        schema ->
+          Noizu.MCP.Server.Tool.Fields.decode_schema!(
+            schema,
+            "#{inspect(env.module)} output_schema"
+          )
+      end
+
+    meta =
+      case {opts[:meta], opts[:category]} do
+        {nil, nil} -> nil
+        {meta, nil} -> meta
+        {meta, category} -> Map.put(meta || %{}, "category", category)
+      end
+
+    definition = %Noizu.MCP.Types.Tool{
+      name: name,
+      title: opts[:title],
+      description: opts[:description],
+      input_schema: input_schema,
+      output_schema: output_schema,
+      annotations: opts[:annotations],
+      icons: opts[:icons],
+      meta: meta
+    }
+
+    spec = %Noizu.MCP.Server.Tool.Spec{
+      module: env.module,
+      fun: :call,
+      arity: 2,
+      definition: definition,
+      cast_plan: Module.get_attribute(env.module, :__mcp_input_cast_plan__),
+      output_schema: output_schema,
+      hidden: opts[:hidden] == true
+    }
+
+    quote do
       @impl Noizu.MCP.Server.Tool
-      def __mcp_tool__(:cast_plan), do: @__mcp_input_cast_plan__
-      def __mcp_tool__(:output_schema), do: @__mcp_output_schema__
+      def definition, do: unquote(Macro.escape(definition))
+
+      @impl Noizu.MCP.Server.Tool
+      def __mcp_tools__, do: unquote(Macro.escape([spec]))
     end
   end
 end

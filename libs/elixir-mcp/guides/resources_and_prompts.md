@@ -113,6 +113,31 @@ end
 - Return `{:ok, messages}` or `{:ok, messages, description: "..."}` to
   override the description per call.
 
+## Hidden resources, templates & prompts
+
+`hidden: true` works on resources, resource templates, and prompts exactly as
+it does on tools — the item is omitted from `resources/list` /
+`resources/templates/list` / `prompts/list` but stays fully readable/gettable
+by URI or name:
+
+```elixir
+use Noizu.MCP.Server.Resource, uri: "internal://secrets", hidden: true
+use Noizu.MCP.Server.Prompt, name: "internal_prompt", hidden: true
+
+# or per registration:
+resource MyApp.Resources.Config, hidden: true
+prompt MyApp.Prompts.CodeReview, hidden: true
+```
+
+Hand-written list callbacks can opt hidden items back in: the registry
+helpers behind the generated defaults
+(`Noizu.MCP.Server.Features.Resources.list_registered/5`,
+`list_registered_templates/3`, and
+`Noizu.MCP.Server.Features.Prompts.list_registered/3`) take
+`include_hidden: true`. The full hidden-items story — overrides, the catalog
+discovery tool, session-gated visibility — lives in
+[Toolkits, Categories & Hidden Tools](toolkits_and_discovery.md).
+
 ## Completion
 
 `completion/complete` requests are routed automatically:

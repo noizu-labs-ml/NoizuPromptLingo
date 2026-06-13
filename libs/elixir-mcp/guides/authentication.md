@@ -46,6 +46,12 @@ The plug then:
 - on success exposes the claims to every handler as
   `ctx.assigns.auth_claims`
 
+One adjacent caution: hiding tools from `tools/list` (`hidden: true`, see
+[Toolkits, Categories & Hidden Tools](toolkits_and_discovery.md)) is
+presentation, not authorization — hidden tools remain callable by name.
+Enforce real permissions here (token scopes, `ctx.assigns.auth_claims`
+checks inside handlers), never via listing visibility.
+
 Serve the RFC 9728 document next to it:
 
 ```elixir

@@ -1,9 +1,15 @@
 defmodule Noizu.MCP.Server.Tool.Fields do
   @moduledoc false
-  # Compile-time machinery for the `input do ... field ... end` schema DSL:
-  # extracts field definitions from the macro AST, compiles them to a JSON
-  # Schema map (string keys, wire-ready), and produces a cast plan used at
-  # runtime to atomize keys, apply defaults, and cast enum values.
+  # Compile-time machinery for tool schemas. Two front ends produce the same
+  # `[%Field{}]` representation:
+  #
+  #   * `extract/2` — the `input do ... field ... end` macro DSL (AST)
+  #   * `from_spec/1` — a plain data literal (keyword list), used by
+  #     `@mcp input:`/`output:` toolkit annotations
+  #
+  # Fields compile to a JSON Schema map (string keys, wire-ready) via
+  # `to_json_schema/1` and to a cast plan (`to_cast_plan/1`) used at runtime to
+  # atomize keys, apply defaults, and cast enum values.
 
   @scalar_types [:string, :integer, :number, :boolean]
 
@@ -95,6 +101,13 @@ defmodule Noizu.MCP.Server.Tool.Fields do
   end
 
   defp validate_type!(name, type, opts, children, caller) do
+    case check_type(name, type, opts, children) do
+      :ok -> :ok
+      {:error, message} -> compile_error!(caller, message)
+    end
+  end
+
+  defp check_type(name, type, opts, children) do
     valid_scalar = type in @scalar_types
     valid_enum = type == :enum and is_list(opts[:values]) and opts[:values] != []
     valid_object = type == :object
@@ -102,19 +115,20 @@ defmodule Noizu.MCP.Server.Tool.Fields do
 
     cond do
       type == :enum and not valid_enum ->
-        compile_error!(caller, "field #{name}: :enum requires values: [...]")
+        {:error, "field #{name}: :enum requires values: [...]"}
 
       valid_object and (children == nil or children == []) ->
-        compile_error!(caller, "field #{name}: :object requires a do-block of fields")
+        {:error, "field #{name}: :object requires nested fields (a do-block or fields: [...])"}
 
       valid_array and elem(type, 1) == :object and children in [nil, []] ->
-        compile_error!(caller, "field #{name}: {:array, :object} requires a do-block of fields")
+        {:error,
+         "field #{name}: {:array, :object} requires nested fields (a do-block or fields: [...])"}
 
       valid_scalar or valid_enum or valid_object or valid_array ->
         :ok
 
       true ->
-        compile_error!(caller, "field #{name}: unknown type #{inspect(type)}")
+        {:error, "field #{name}: unknown type #{inspect(type)}"}
     end
   end
 
@@ -125,6 +139,114 @@ defmodule Noizu.MCP.Server.Tool.Fields do
 
   defp line_of({_, meta, _}, caller), do: Keyword.get(meta, :line, caller.line)
   defp line_of(_, caller), do: caller.line
+
+  # ── Data-form specs ───────────────────────────────────────────────────────
+
+  @doc """
+  Build `[%Field{}]` from a plain data spec (no AST) — the data equivalent of
+  the `input do ... end` field DSL, used by `@mcp input:`/`output:` toolkit
+  annotations:
+
+      [
+        message: [type: :string, required: true, description: "..."],
+        repeat:  [type: :integer, min: 1, max: 10, default: 1],
+        mode:    [type: :enum, values: [:plain, :loud], default: :plain],
+        address: [type: :object, required: true, fields: [street: [type: :string]]],
+        tags:    [type: {:array, :string}],
+        rows:    [type: {:array, :object}, fields: [id: [type: :integer]]],
+        note:    :string                       # shorthand: bare type
+      ]
+
+  `:type` is required (or use the bare-type shorthand); `:fields` carries
+  children for `:object` / `{:array, :object}` entries; all other options pass
+  through as field options. Raises `ArgumentError` on invalid specs (callers
+  invoke this at compile time, so errors still surface during compilation).
+  """
+  def from_spec(spec) do
+    unless Keyword.keyword?(spec) do
+      raise ArgumentError,
+            "field spec must be a keyword list of `name: type` or " <>
+              "`name: [type: ..., ...]` entries, got: #{inspect(spec)}"
+    end
+
+    Enum.map(spec, &spec_field/1)
+  end
+
+  defp spec_field({name, type}) when is_atom(type),
+    do: build_spec_field(name, type, [], nil)
+
+  defp spec_field({name, {:array, inner}}) when is_atom(inner),
+    do: build_spec_field(name, {:array, inner}, [], nil)
+
+  defp spec_field({name, opts}) when is_list(opts) do
+    unless Keyword.keyword?(opts) do
+      raise ArgumentError, "field #{name}: options must be a keyword list, got: #{inspect(opts)}"
+    end
+
+    {type, opts} = Keyword.pop(opts, :type)
+    {fields, opts} = Keyword.pop(opts, :fields)
+
+    unless type do
+      raise ArgumentError,
+            "field #{name}: spec requires a :type (or use the `#{name}: :type` shorthand)"
+    end
+
+    children = fields && from_spec(fields)
+    build_spec_field(name, type, opts, children)
+  end
+
+  defp spec_field({name, other}) do
+    raise ArgumentError,
+          "field #{name}: expected a type or an options keyword list, got: #{inspect(other)}"
+  end
+
+  defp build_spec_field(name, type, opts, children) do
+    unless is_atom(name) do
+      raise ArgumentError, "field name must be an atom, got: #{inspect(name)}"
+    end
+
+    type = spec_type(name, type)
+
+    case check_type(name, type, opts, children) do
+      :ok -> %Field{name: name, type: type, opts: opts, children: children}
+      {:error, message} -> raise ArgumentError, message
+    end
+  end
+
+  defp spec_type(_name, type) when is_atom(type), do: type
+  defp spec_type(_name, {:array, inner}) when is_atom(inner), do: {:array, inner}
+
+  defp spec_type(name, other),
+    do: raise(ArgumentError, "field #{name}: unknown type #{inspect(other)}")
+
+  # ── Raw schemas ───────────────────────────────────────────────────────────
+
+  @doc """
+  Normalize a raw schema given as a map or as JSON text. Binary input is
+  decoded at the call site's compile time; the result must be a JSON object.
+  `context` names the owning tool/module for error messages.
+  """
+  def decode_schema!(%{} = schema, _context), do: schema
+
+  def decode_schema!(schema, context) when is_binary(schema) do
+    case Jason.decode(schema) do
+      {:ok, %{} = map} ->
+        map
+
+      {:ok, other} ->
+        raise ArgumentError,
+              "#{context}: JSON schema text must decode to an object, got: #{inspect(other)}"
+
+      {:error, error} ->
+        raise ArgumentError,
+              "#{context}: invalid JSON schema text — #{Exception.message(error)}"
+    end
+  end
+
+  def decode_schema!(other, context) do
+    raise ArgumentError,
+          "#{context}: expected a schema map or JSON text, got: #{inspect(other)}"
+  end
 
   # ── JSON Schema compilation ───────────────────────────────────────────────
 

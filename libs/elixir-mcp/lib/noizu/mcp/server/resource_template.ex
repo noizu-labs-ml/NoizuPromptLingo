@@ -57,7 +57,7 @@ defmodule Noizu.MCP.Server.ResourceTemplate do
   @callback definition() :: Types.ResourceTemplate.t()
 
   @doc false
-  @callback __mcp_resource_template__(:subscribable | :mime_type | :variables) :: term()
+  @callback __mcp_resource_template__(:subscribable | :mime_type | :variables | :hidden) :: term()
 
   @optional_callbacks complete: 3, list: 1
 
@@ -95,6 +95,7 @@ defmodule Noizu.MCP.Server.ResourceTemplate do
 
       def __mcp_resource_template__(:mime_type), do: @__mcp_template_opts__[:mime_type]
       def __mcp_resource_template__(:variables), do: @__mcp_template_vars__
+      def __mcp_resource_template__(:hidden), do: @__mcp_template_opts__[:hidden] == true
     end
   end
 end

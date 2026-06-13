@@ -293,6 +293,102 @@ defmodule Noizu.MCP.Fixtures.WhoAmI do
   end
 end
 
+defmodule Noizu.MCP.Fixtures.HiddenTool do
+  @moduledoc false
+  use Noizu.MCP.Server.Tool,
+    name: "hidden_tool",
+    description: "A hidden internal tool",
+    hidden: true
+
+  @impl true
+  def call(_args, _ctx), do: {:ok, "hidden result"}
+end
+
+defmodule Noizu.MCP.Fixtures.HiddenPrompt do
+  @moduledoc false
+  use Noizu.MCP.Server.Prompt,
+    name: "hidden_prompt",
+    description: "A hidden internal prompt",
+    hidden: true
+
+  @impl true
+  def get(_args, _ctx) do
+    {:ok, [Noizu.MCP.Types.PromptMessage.user("hidden")]}
+  end
+end
+
+defmodule Noizu.MCP.Fixtures.HiddenResource do
+  @moduledoc false
+  use Noizu.MCP.Server.Resource,
+    uri: "internal://secret",
+    name: "Secret Resource",
+    description: "A hidden internal resource",
+    hidden: true
+
+  @impl true
+  def read("internal://secret", _ctx), do: {:ok, "secret data"}
+end
+
+defmodule Noizu.MCP.Fixtures.HiddenTemplate do
+  @moduledoc false
+  use Noizu.MCP.Server.ResourceTemplate,
+    uri_template: "internal://{id}/data",
+    name: "Hidden Template",
+    description: "A hidden internal resource template",
+    hidden: true
+
+  @impl true
+  def read(_uri, _vars, _ctx), do: {:ok, "hidden template data"}
+end
+
+defmodule Noizu.MCP.Fixtures.Kit do
+  @moduledoc false
+  # Toolkit fixture: multiple tools in one module via @mcp annotations.
+  use Noizu.MCP.Server.Toolkit, category: "Fixture"
+
+  @mcp name: "kit.echo",
+       category: "Echoes",
+       description: "Echo via toolkit",
+       input: [
+         message: [type: :string, required: true, description: "Message to echo"],
+         mode: [type: :enum, values: [:plain, :loud], default: :plain]
+       ],
+       output: [text: [type: :string, required: true]]
+  def kit_echo(%{message: message, mode: mode}, _ctx) do
+    {:ok, %{text: if(mode == :loud, do: String.upcase(message), else: message)}}
+  end
+
+  @mcp description: "Minimal arity-1 tool (name derives from the function)"
+  def kit_min(args), do: {:ok, "min:#{map_size(args)}"}
+
+  @mcp description: "Arity-0 tool"
+  def kit_zero, do: {:ok, "zero"}
+
+  # Multiple @mcp lines merge (later wins on conflict).
+  @mcp visible: false
+  @mcp description: "Hidden toolkit tool"
+  def kit_hidden(_args, _ctx), do: {:ok, "kit hidden"}
+
+  @mcp name: "kit.raw",
+       description: "Raw JSON-text input schema",
+       input: """
+       {"type": "object", "properties": {"q": {"type": "string"}}, "required": ["q"]}
+       """
+  def kit_raw(args, _ctx), do: {:ok, "raw:#{args["q"]}"}
+end
+
+defmodule Noizu.MCP.Fixtures.KitServer do
+  @moduledoc false
+  use Noizu.MCP.Server,
+    name: "kit_fixture",
+    version: "1.0.0",
+    instructions: "Server for toolkit tests."
+
+  tool Noizu.MCP.Fixtures.Kit
+  tool Noizu.MCP.Fixtures.Echo
+  tool Noizu.MCP.Server.Tools.Catalog, hidden: true
+end
+
 defmodule Noizu.MCP.Fixtures.Server do
   @moduledoc false
   use Noizu.MCP.Server,
@@ -349,4 +445,25 @@ end
 defmodule Noizu.MCP.Fixtures.EmptyServer do
   @moduledoc false
   use Noizu.MCP.Server, name: "empty", version: "0.1.0"
+end
+
+defmodule Noizu.MCP.Fixtures.HiddenServer do
+  @moduledoc false
+  use Noizu.MCP.Server,
+    name: "hidden_fixture",
+    version: "1.0.0",
+    instructions: "Server for hidden-item tests."
+
+  tool Noizu.MCP.Fixtures.Echo
+  tool Noizu.MCP.Fixtures.HiddenTool
+  tool Noizu.MCP.Server.Tools.Catalog, hidden: true
+
+  prompt Noizu.MCP.Fixtures.CodeReviewPrompt
+  prompt Noizu.MCP.Fixtures.HiddenPrompt
+
+  resource Noizu.MCP.Fixtures.ConfigResource
+  resource Noizu.MCP.Fixtures.HiddenResource
+
+  resource_template Noizu.MCP.Fixtures.TableSchema
+  resource_template Noizu.MCP.Fixtures.HiddenTemplate
 end

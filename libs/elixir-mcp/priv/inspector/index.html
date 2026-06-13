@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MCP Inspector</title>
+  <link rel="stylesheet" href="/assets/app.css">
+</head>
+<body>
+  <div id="app">
+    <nav id="sidebar">
+      <div class="sidebar-header">MCP Inspector</div>
+      <button class="tab-btn active" data-tab="connection">Connection</button>
+      <button class="tab-btn" data-tab="tools">Tools</button>
+      <button class="tab-btn" data-tab="resources">Resources</button>
+      <button class="tab-btn" data-tab="prompts">Prompts</button>
+      <button class="tab-btn" data-tab="history">History</button>
+      <button class="tab-btn" data-tab="notifications">Notifications</button>
+      <button class="tab-btn" data-tab="pending">Pending <span class="badge hidden" id="pending-badge">0</span></button>
+    </nav>
+    <main id="content">
+      <div id="tab-connection" class="tab-panel active"></div>
+      <div id="tab-tools" class="tab-panel"></div>
+      <div id="tab-resources" class="tab-panel"></div>
+      <div id="tab-prompts" class="tab-panel"></div>
+      <div id="tab-history" class="tab-panel"></div>
+      <div id="tab-notifications" class="tab-panel"></div>
+      <div id="tab-pending" class="tab-panel"></div>
+    </main>
+    <div id="toast-area"></div>
+    <div id="error-banner" class="hidden"></div>
+  </div>
+  <script type="module" src="/assets/js/app.js"></script>
+</body>
+</html>

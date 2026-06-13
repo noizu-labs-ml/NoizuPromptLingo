@@ -8,6 +8,14 @@ mounted via `Plug.Router` on Bandit:
   cancellation via `Noizu.MCP.Ctx.cancelled?/1`), `consult_llm`
   (server→client sampling with graceful `isError` fallback when the client
   lacks the `sampling` capability)
+- **Toolkit** (`HttpKitchenSink.Toolkit` — several tools in one module via
+  `@mcp` annotations): `util.reverse` (data-form input spec, category
+  "Utility") and `server_time` (arity-0, category "Time")
+- **Hidden tools** — omitted from `tools/list` but callable by name:
+  `util.checksum` (`visible: false`, JSON-text input schema) and `catalog`
+  (the built-in `Noizu.MCP.Server.Tools.Catalog` discovery tool registered
+  with `hidden: true`; call it for full definitions of everything, hidden
+  items included, with `type`/`query`/`category`/`include_hidden` filters)
 - **Resources**: `config://app` (subscribable JSON) and a `note://{id}`
   resource template with argument completion
 - **Prompt**: `brainstorm`, whose `style` argument supports
@@ -62,6 +70,22 @@ curl -X POST http://localhost:4040/mcp \
 
 Call `long_task` with a `"_meta":{"progressToken":"p1"}` in `params` to watch
 the response upgrade to an SSE stream of progress notifications.
+
+Discover the hidden tools (the `catalog` tool itself never appears in
+`tools/list`, but answers by name):
+
+```sh
+curl -X POST http://localhost:4040/mcp \
+  -H 'content-type: application/json' \
+  -H 'accept: application/json, text/event-stream' \
+  -H "mcp-session-id: $SID" \
+  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{
+        "name":"catalog","arguments":{"type":"tools"}}}'
+```
+
+Each entry in the structured result carries a `"hidden"` flag (and a
+`"category"` where declared) — then call `util.checksum` directly even though
+it was never listed.
 
 ## Mounting in Phoenix instead
 

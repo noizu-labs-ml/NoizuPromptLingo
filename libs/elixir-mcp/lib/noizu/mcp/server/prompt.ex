@@ -52,6 +52,7 @@ defmodule Noizu.MCP.Server.Prompt do
 
   @doc false
   @callback __mcp_prompt__(:static_completions) :: map()
+  @callback __mcp_prompt__(:hidden) :: boolean()
 
   @optional_callbacks complete: 3
 
@@ -152,6 +153,7 @@ defmodule Noizu.MCP.Server.Prompt do
 
       @impl Noizu.MCP.Server.Prompt
       def __mcp_prompt__(:static_completions), do: unquote(Macro.escape(static_completions))
+      def __mcp_prompt__(:hidden), do: unquote(opts[:hidden] == true)
     end
   end
 end

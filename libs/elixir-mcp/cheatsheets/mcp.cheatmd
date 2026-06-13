@@ -93,7 +93,57 @@ input_schema %{
   "required" => ["q"]
 }
 # call/2 then receives string keys
+
+input_schema """
+{"type": "object", "required": ["q"],
+ "properties": {"q": {"type": "string"}}}
+"""
+# JSON text — decoded at compile time
 ```
+
+### Toolkit (many tools, one module)
+
+```elixir
+defmodule MyApp.Toolkit do
+  use Noizu.MCP.Server.Toolkit,
+    category: "Utility"          # default category
+
+  @mcp name: "files.read", category: "Files",
+       description: "Read a file",
+       input: [path: [type: :string, required: true]]
+  def read_file(%{path: path}, _ctx),
+    do: {:ok, File.read!(path)}
+
+  @mcp visible: false            # hidden, still callable
+  @mcp input: """
+  {"type": "object",
+   "properties": {"q": {"type": "string"}}}
+  """
+  def lookup(args, _ctx), do: {:ok, args["q"] || ""}
+end
+```
+
+Arity 0–2 (`args, ctx` trimmed); multiple `@mcp` lines
+merge (later wins); data-form `input:` ⇒ atom keys,
+map/JSON text ⇒ string keys. `category` rides in
+`_meta.category`.
+
+### Hidden tools & discovery
+
+```elixir
+use Noizu.MCP.Server.Tool, hidden: true, ...
+# registration overrides (kit-wide for toolkits):
+tool MyApp.Toolkit                  # all @mcp tools
+tool MyApp.Tools.X, hidden: true
+tool MyApp.Tools.Y, visible: false  # alias
+tool MyApp.Toolkit, category: "Admin"
+# built-in discovery tool (lists hidden too):
+tool Noizu.MCP.Server.Tools.Catalog, hidden: true
+```
+
+Hidden items skip `tools/list` but stay callable by
+name. Catalog args: `type`, `query`, `category`,
+`include_hidden`.
 
 ### Resource / template / prompt
 

@@ -1,8 +1,18 @@
 defmodule Noizu.MCP.Server.Features.Resources do
-  @moduledoc false
-  # Feature glue for resources/list, resources/templates/list, resources/read,
-  # and subscribe checks. Direct resources match by exact URI; templates match
-  # via Noizu.MCP.UriTemplate.
+  @moduledoc """
+  Resources feature plumbing: the helpers behind the generated
+  `handle_list_resources/2`, `handle_list_resource_templates/2`,
+  `handle_read_resource/2`, and `handle_subscribe/2` defaults.
+
+  Most servers never call this module directly. Hand-written list callbacks
+  that still want the registry-driven behavior can call `list_registered/5`
+  and `list_registered_templates/3` — e.g. with `include_hidden: true` for
+  session-gated visibility (see the Toolkits, Categories & Hidden Tools
+  guide).
+
+  Direct resources match by exact URI; templates match via
+  `Noizu.MCP.UriTemplate`.
+  """
 
   alias Noizu.MCP.{Error, UriTemplate}
   alias Noizu.MCP.Server.Features.Pagination
@@ -24,12 +34,51 @@ defmodule Noizu.MCP.Server.Features.Resources do
     end
   end
 
+  @doc "Returns true if the registered resource should be hidden from listings."
+  def hidden?({module, opts}) do
+    case Keyword.fetch(opts, :hidden) do
+      {:ok, v} ->
+        v == true
+
+      :error ->
+        try do
+          module.__mcp_resource__(:hidden) == true
+        rescue
+          FunctionClauseError -> false
+          UndefinedFunctionError -> false
+        end
+    end
+  end
+
+  @doc "Returns true if the registered resource template should be hidden from listings."
+  def hidden_template?({module, opts}) do
+    case Keyword.fetch(opts, :hidden) do
+      {:ok, v} ->
+        v == true
+
+      :error ->
+        try do
+          module.__mcp_resource_template__(:hidden) == true
+        rescue
+          FunctionClauseError -> false
+          UndefinedFunctionError -> false
+        end
+    end
+  end
+
   @doc "Default `handle_list_resources`: registered resources + enumerable templates."
-  def list_registered(resources, templates, cursor, ctx) do
-    direct = Enum.map(resources, fn {module, opts} -> definition(module, opts) end)
+  def list_registered(resources, templates, cursor, ctx, opts \\ []) do
+    include_hidden = Keyword.get(opts, :include_hidden, false)
+    visible_resources = if include_hidden, do: resources, else: Enum.reject(resources, &hidden?/1)
+
+    direct =
+      Enum.map(visible_resources, fn {module, entry_opts} -> definition(module, entry_opts) end)
+
+    visible_templates =
+      if include_hidden, do: templates, else: Enum.reject(templates, &hidden_template?/1)
 
     from_templates =
-      Enum.flat_map(templates, fn {module, _opts} ->
+      Enum.flat_map(visible_templates, fn {module, _entry_opts} ->
         if function_exported?(module, :list, 1) do
           case module.list(ctx) do
             {:ok, items} -> items
@@ -60,8 +109,10 @@ defmodule Noizu.MCP.Server.Features.Resources do
   end
 
   @doc "Default `handle_list_resource_templates` over registered template modules."
-  def list_registered_templates(templates, cursor) do
-    definitions = Enum.map(templates, fn {module, _opts} -> module.definition() end)
+  def list_registered_templates(templates, cursor, opts \\ []) do
+    include_hidden = Keyword.get(opts, :include_hidden, false)
+    visible = if include_hidden, do: templates, else: Enum.reject(templates, &hidden_template?/1)
+    definitions = Enum.map(visible, fn {module, _entry_opts} -> module.definition() end)
     Pagination.paginate(definitions, cursor)
   end
 
@@ -134,7 +185,8 @@ defmodule Noizu.MCP.Server.Features.Resources do
       end)
   end
 
-  defp definition(module, opts) do
+  @doc "A resource module's effective definition with per-registration overrides applied."
+  def definition(module, opts) do
     definition = module.definition()
 
     Enum.reduce(opts, definition, fn

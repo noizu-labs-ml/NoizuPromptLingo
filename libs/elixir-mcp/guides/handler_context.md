@@ -74,7 +74,10 @@ end
 ```
 
 On authenticated HTTP transports the verified token claims appear at
-`ctx.assigns.auth_claims` (see [Authentication](authentication.md)).
+`ctx.assigns.auth_claims` (see [Authentication](authentication.md)). Session
+assigns also drive session-gated tool visibility — `put_session/3` a flag,
+list with `include_hidden:`, and `notify_changed(:tools)`; see
+[Toolkits, Categories & Hidden Tools](toolkits_and_discovery.md).
 
 ## Talking back to the client
 

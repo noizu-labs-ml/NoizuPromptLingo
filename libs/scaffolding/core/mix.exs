@@ -1,64 +1,54 @@
-#-------------------------------------------------------------------------------
-# Author: Keith Brings
-# Copyright (C) 2018 Noizu Labs, Inc. All rights reserved.
-#-------------------------------------------------------------------------------
-
-defmodule Noizu.ElixirCore.Mixfile do
+defmodule Noizu.Core.MixProject do
   use Mix.Project
-
+  
   def project do
-    [app: :noizu_core,
-     version: "1.0.26",
-     elixir: ">= 1.13.1",
-      elixirc_paths: elixirc_paths(Mix.env),
+    [
+      app: :noizu_labs_core,
+      name: "Noizu Core",
+      version: "0.1.8",
       package: package(),
-     deps: deps(),
-     description: "Request Context Helper",
-     docs: docs(),
-      test_coverage: [
-        summary: [
-          threshold: 10
-        ],
-        ignore_modules: [
-        ]
-      ]
-   ]
+      description: description(),
+      elixir: "~> 1.14",
+      elixirc_paths: elixirc_paths(Mix.env()),
+      start_permanent: Mix.env() == :prod,
+      deps: deps()
+    ]
   end
-
+  
+  defp description() do
+    "Core Noizu Scaffolding libraries"
+  end
+  
+  defp package() do
+    [
+      licenses: ["MIT"],
+      links: %{
+        project: "https://github.com/noizu-labs-scaffolding/core",
+        noizu_labs: "https://github.com/noizu-labs",
+        developer: "https://github.com/noizu"
+      }
+    ]
+  end
+  
   # Specifies which paths to compile per environment.
   defp elixirc_paths(:test), do: ["lib", "test/support"]
-  defp elixirc_paths(_),     do: ["lib"]
-
-  defp package do
+  defp elixirc_paths(_), do: ["lib"]
+  
+  # Run "mix help compile.app" to learn about applications.
+  def application do
     [
-      maintainers: ["noizu"],
-      licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/noizu/ElixirCore"}
+      # applications: [:noizu_labs_erp],
+      extra_applications: [:logger]
     ]
   end
-
-  def application do
-    [ applications: [:logger, :crypto] ]
-  end
-
+  
+  # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:junit_formatter, "~> 3.3", only: [:test]},
-      {:ex_doc, "~> 0.28.3", only: [:dev, :test], optional: true, runtime: false}, # Documentation Provider
-      {:markdown, github: "devinus/markdown", only: [:dev], optional: true}, # Markdown processor for ex_doc
-      {:fastglobal, "~> 1.0"}, # https://github.com/discordapp/fastglobal
-      {:semaphore, "~> 1.0"}, # https://github.com/discordapp/semaphore
-      {:noizu_mnesia_versioning, github: "noizu/MnesiaVersioning", tag: "0.1.10"},
-      {:amnesia, git: "https://github.com/noizu/amnesia.git", ref: "9266002", optional: true}, # Mnesia Wrapper
-      {:elixir_uuid, "~> 1.2", only: :test, optional: true}
+      {:credo, "~> 1.7.12", runtime: false},
+      {:ex_doc, "~> 0.35", only: :dev, runtime: false}
+      # {:dep_from_hexpm, "~> 0.3.0"},
+      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
     ]
   end
-
-  defp docs do
-    [
-      source_url_pattern: "https://github.com/noizu/ElixirCore/blob/master/%{path}#L%{line}",
-      extras: ["README.md"]
-    ]
-  end
-
 end

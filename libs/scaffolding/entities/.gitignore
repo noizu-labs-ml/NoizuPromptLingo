@@ -1,25 +1,31 @@
-.idea
-.iml
-# Core Dumps
-core.*
+.DS_Store
 
-# App artifacts
-/_build
-/db
-/deps
-/*.ez
+.envrc
+*.iml
+.idea/
+# The directory Mix will write compiled artifacts to.
+/_build/
 
-# Generate on crash by the VM
+# If you run "mix test --cover", coverage assets end up here.
+/cover/
+
+# The directory Mix downloads your dependencies sources to.
+/deps/
+
+# Where third-party dependencies like ExDoc output generated docs.
+/doc/
+
+# Ignore .fetch files in case you like to edit your project deps locally.
+/.fetch
+
+# If the VM crashes, it generates a dump, let's ignore it too.
 erl_crash.dump
 
-# Log output
-/log
-log
-log.nonode@nohost
+# Also ignore archive artifacts (built via "mix archive.build").
+*.ez
 
-# work around for occasional mix docs submodule issue
-tmp.git
+# Ignore package tarball (built via "mix hex.build").
+noizu_labs_entities-*.tar
 
-/Mnesia.nonode@nohost
-
-noizu_scaffolding.iml
+# Temporary files, for example, from tests.
+/tmp/
