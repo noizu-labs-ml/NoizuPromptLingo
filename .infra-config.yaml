@@ -582,6 +582,72 @@ project:
   # ===========================================================================
   docker:
     images:
+      - name: chartdb
+        context: 3rd-party/chartdb
+        dockerfile: Dockerfile
+        registry_path: chartdb/chartdb
+        single_stage: true
+
+      - name: clickhouse
+        context: 3rd-party/clickhouse/docker/server
+        dockerfile: Dockerfile.ubuntu
+        registry_path: 3rd/clickhouse/clickhouse-server
+        single_stage: true
+
+      - name: clickhouse-keeper
+        context: 3rd-party/clickhouse/docker/keeper
+        dockerfile: Dockerfile
+        registry_path: 3rd/clickhouse/clickhouse-keeper
+        single_stage: true
+
+      - name: directus
+        context: 3rd-party/directus
+        dockerfile: Dockerfile
+        registry_path: 3rd/directus
+        single_stage: true
+
+      - name: drawio
+        context: 3rd-party/drawio
+        dockerfile: Dockerfile.noizu
+        registry_path: 3rd/drawio
+        single_stage: true
+
+      - name: excalidraw
+        context: 3rd-party/excalidraw
+        dockerfile: Dockerfile
+        registry_path: 3rd/excalidraw
+        single_stage: true
+
+      - name: excalidraw-room
+        context: 3rd-party/excalidraw-room
+        dockerfile: Dockerfile
+        registry_path: 3rd/excalidraw-room
+        single_stage: true
+
+      - name: kroki-bpmn
+        context: 3rd-party/kroki/bpmn
+        dockerfile: Dockerfile
+        registry_path: 3rd/kroki/bpmn
+        single_stage: true
+
+      - name: kroki-diagrams-net
+        context: 3rd-party/kroki/diagrams.net
+        dockerfile: Dockerfile
+        registry_path: 3rd/kroki/diagrams.net
+        single_stage: true
+
+      - name: kroki-excalidraw
+        context: 3rd-party/kroki/excalidraw
+        dockerfile: Dockerfile
+        registry_path: 3rd/kroki/excalidraw
+        single_stage: true
+
+      - name: kroki-mermaid
+        context: 3rd-party/kroki/mermaid
+        dockerfile: Dockerfile
+        registry_path: 3rd/kroki/mermaid
+        single_stage: true
+
       - name: mermaid-live-editor
         context: 3rd-party/mermaid-live-editor
         dockerfile: Dockerfile
@@ -590,3 +656,51 @@ project:
           chart_path: kubernetes/helm/creative/mermaid
           values_path: .image.tag
           format: tag
+
+      - name: mermaid-live-editor-db
+        context: 3rd-party/mermaid-live-editor/db
+        dockerfile: Dockerfile
+        registry_path: 3rd/mermaid-live-editor/db
+        single_stage: true
+
+      - name: mydraft-server2
+        context: 3rd-party/mydraft-server2
+        dockerfile: Dockerfile
+        registry_path: noizu/mydraft-server
+        single_stage: true
+
+      - name: n8n
+        context: 3rd-party/n8n
+        dockerfile: Dockerfile.noizu
+        registry_path: 3rd/n8n
+        single_stage: true
+
+      - name: n8n-runners
+        context: 3rd-party/n8n
+        dockerfile: Dockerfile.runners.noizu
+        registry_path: 3rd/n8n/runners
+        single_stage: true
+
+      - name: penpot-frontend
+        context: 3rd-party/penpot
+        dockerfile: Dockerfile.frontend.noizu
+        registry_path: 3rd/penpot/frontend
+        single_stage: true
+
+      - name: plantuml
+        context: 3rd-party/plantuml
+        dockerfile: Dockerfile
+        registry_path: 3rd/plantuml
+        single_stage: true
+
+      - name: plantuml-server
+        context: 3rd-party/plantuml-server
+        dockerfile: Dockerfile.jetty
+        registry_path: 3rd/plantuml-server
+        single_stage: true
+
+      - name: webstudio
+        context: 3rd-party/webstudio
+        dockerfile: Dockerfile.noizu
+        registry_path: webstudio/builder
+        single_stage: true
