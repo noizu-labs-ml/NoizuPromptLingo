@@ -1,0 +1,112 @@
+mallm: "1.0"
+name: helm-upgrade
+version: "1.0.0"
+summary: Orchestrated multi-project Helm chart upgrade utility
+
+description: |
+  Discovers project.yaml files across the k8 repository, resolves chart
+  dependencies by tier, and performs ordered helm upgrade --install operations
+  with pre/post apply hooks. Supports dry-run, filtering by chart name,
+  namespace, or tier, and interactive confirmation mode.
+
+usage:
+  synopsis: "utils/helm-upgrade [OPTIONS]"
+  examples:
+    - command: "utils/helm-upgrade --list"
+      description: "Show all discovered charts with tier and namespace"
+    - command: "utils/helm-upgrade --dry-run"
+      description: "Preview full upgrade without executing"
+    - command: "utils/helm-upgrade --include bob-infra"
+      description: "Upgrade a single chart by name"
+    - command: "utils/helm-upgrade --namespace webui-ns"
+      description: "Upgrade all charts in a namespace"
+    - command: "utils/helm-upgrade --tier 0"
+      description: "Deploy only tier 0 (secrets management)"
+    - command: "utils/helm-upgrade --interactive"
+      description: "Prompt before each chart upgrade"
+
+arguments:
+  - name: --list
+    type: flag
+    description: Show all discovered charts with tier/namespace
+  - name: --dry-run
+    type: flag
+    description: Preview full upgrade without executing any helm commands
+  - name: --include
+    type: option
+    value: chart-name
+    description: Upgrade only the specified chart
+  - name: --namespace
+    type: option
+    value: namespace
+    description: Upgrade all charts in the given Kubernetes namespace
+  - name: --tier
+    type: option
+    value: "0-5"
+    description: Deploy only charts at the specified tier level
+    choices: ["0", "1", "2", "3", "4", "5"]
+  - name: --interactive
+    type: flag
+    description: Prompt for confirmation before each chart upgrade
+
+environment:
+  - name: KUBECONFIG
+    required: true
+    description: Path to kubeconfig file for target cluster
+
+files:
+  - path: utils/helm-upgrade
+    description: Main orchestrator script
+  - path: utils/lib/project-registry.sh
+    description: Project discovery library (load_project_registry)
+  - path: utils/lib/common.sh
+    description: Shared shell utilities
+  - path: projects/*/project.yaml
+    description: Per-project metadata driving discovery
+
+related:
+  - name: docker-build
+    description: Build Docker images before deploying
+  - name: docker-push
+    description: Push Docker images to registry before deploying
+  - name: hydrate-envrc
+    description: Populate .envrc files from Infisical before upgrading
+
+context:
+  when_to_use: |
+    Use when deploying or updating one or more Kubernetes services in the
+    k8 repository. Prefer over raw `helm upgrade` for multi-chart deployments
+    because it handles tier ordering, pre/post apply hooks, and project discovery.
+  when_not_to_use: |
+    Don't use for single-chart one-off installs outside this repository.
+    Don't use when you need to pass arbitrary helm flags — use `helm upgrade`
+    directly for those cases.
+  common_patterns:
+    - name: Full deployment
+      description: Build, push, then deploy everything
+      steps:
+        - "utils/docker-build"
+        - "utils/docker-push"
+        - "utils/helm-upgrade --dry-run"
+        - "utils/helm-upgrade"
+    - name: Single service update
+      steps:
+        - "utils/helm-upgrade --include <service-name>"
+    - name: Tiered rollout
+      description: Deploy in order, verifying each tier
+      steps:
+        - "utils/helm-upgrade --tier 0"
+        - "make health-test"
+        - "utils/helm-upgrade --tier 1"
+        - "utils/helm-upgrade --tier 2"
+  gotchas:
+    - "Charts are deployed in tier order (0→5) regardless of --include filtering"
+    - "preApply/postApply manifests are kubectl-applied, not helm-managed — they won't be cleaned up by helm uninstall"
+    - "The --list flag does a discovery pass without connecting to the cluster, so it works offline"
+
+output:
+  stdout: Progress messages, chart names, helm output
+  stderr: Errors and warnings
+  exit_codes:
+    0: All upgrades succeeded
+    1: One or more upgrades failed

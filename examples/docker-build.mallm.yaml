@@ -1,0 +1,62 @@
+mallm: "1.0"
+name: docker-build
+version: "1.0.0"
+summary: Build Docker images defined in project.yaml manifests
+
+description: |
+  Scans project.yaml files for docker.images[] declarations and builds
+  the specified image (or all images). Supports build args, custom
+  Dockerfiles, and composite projects with multiple services.
+
+usage:
+  synopsis: "utils/docker-build [image-name]"
+  examples:
+    - command: "utils/docker-build"
+      description: "Build all discovered Docker images"
+    - command: "utils/docker-build my-image"
+      description: "Build a specific image by name"
+
+arguments:
+  - name: image-name
+    type: positional
+    required: false
+    description: Name of the image to build (from project.yaml docker.images[].name). Omit to build all.
+
+files:
+  - path: utils/docker-build
+    description: Main build script
+  - path: utils/lib/docker-config.sh
+    description: Discovery library scanning project.yaml files
+  - path: projects/*/project.yaml
+    description: Image definitions (docker.images[] section)
+
+related:
+  - name: docker-push
+    description: Push built images to registry
+  - name: helm-upgrade
+    description: Deploy after building and pushing images
+
+context:
+  when_to_use: |
+    Use when you need to build Docker images defined in this repository's
+    project.yaml manifests. Always run before docker-push.
+  when_not_to_use: |
+    Don't use for building arbitrary Dockerfiles outside the project.yaml
+    system. Use `docker build` directly for those.
+  common_patterns:
+    - name: Build and deploy
+      steps:
+        - "utils/docker-build"
+        - "utils/docker-push"
+        - "utils/helm-upgrade"
+  gotchas:
+    - "Build context is relative to the project root, not the Dockerfile location"
+    - "build_args from project.yaml are passed as --build-arg KEY=VALUE"
+    - "Composite projects use type: composite with projects[].services[] instead of docker.images[]"
+
+output:
+  stdout: Docker build output
+  stderr: Build errors
+  exit_codes:
+    0: Build succeeded
+    1: Build failed

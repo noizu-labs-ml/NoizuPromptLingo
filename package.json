@@ -1,0 +1,27 @@
+{
+  "name": "mallm",
+  "version": "0.1.0",
+  "description": "man pages for LLMs — structured CLI documentation for AI agents",
+  "type": "module",
+  "bin": {
+    "mallm": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "commander": "^13.1.0",
+    "yaml": "^2.7.1",
+    "chalk": "^5.4.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

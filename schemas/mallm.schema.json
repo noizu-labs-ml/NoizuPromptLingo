@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mallm.dev/schemas/mallm.schema.json",
+  "title": "mallm.yaml",
+  "description": "LLM-friendly documentation schema for CLI tools",
+  "type": "object",
+  "required": ["mallm", "name", "summary"],
+  "properties": {
+    "mallm": {
+      "type": "string",
+      "description": "Schema version",
+      "enum": ["1.0"]
+    },
+    "name": {
+      "type": "string",
+      "description": "Command name"
+    },
+    "version": {
+      "type": "string",
+      "description": "Tool version"
+    },
+    "summary": {
+      "type": "string",
+      "description": "One-line summary (what it does)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Multi-line detailed description"
+    },
+    "usage": {
+      "type": "object",
+      "properties": {
+        "synopsis": {
+          "type": "string",
+          "description": "Usage synopsis (e.g. 'tool [OPTIONS] <file>')"
+        },
+        "examples": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["command", "description"],
+            "properties": {
+              "command": { "type": "string" },
+              "description": { "type": "string" },
+              "output": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "arguments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "type", "description"],
+        "properties": {
+          "name": { "type": "string" },
+          "type": { "type": "string", "enum": ["flag", "option", "positional", "variadic"] },
+          "required": { "type": "boolean" },
+          "default": { "type": "string" },
+          "value": { "type": "string", "description": "Value placeholder for options" },
+          "description": { "type": "string" },
+          "choices": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "subcommands": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "summary"],
+        "properties": {
+          "name": { "type": "string" },
+          "summary": { "type": "string" },
+          "description": { "type": "string" },
+          "arguments": { "$ref": "#/properties/arguments" },
+          "examples": { "$ref": "#/properties/usage/properties/examples" }
+        }
+      }
+    },
+    "environment": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "description"],
+        "properties": {
+          "name": { "type": "string" },
+          "required": { "type": "boolean" },
+          "default": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "description"],
+        "properties": {
+          "path": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "skills": {
+      "type": "array",
+      "description": "Links to skill definitions or extended documentation",
+      "items": {
+        "type": "object",
+        "required": ["name", "description"],
+        "properties": {
+          "name": { "type": "string" },
+          "path": { "type": "string" },
+          "url": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "related": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "description"],
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "context": {
+      "type": "object",
+      "description": "LLM-specific guidance on when and how to use this tool",
+      "properties": {
+        "when_to_use": { "type": "string" },
+        "when_not_to_use": { "type": "string" },
+        "common_patterns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "steps"],
+            "properties": {
+              "name": { "type": "string" },
+              "description": { "type": "string" },
+              "steps": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        },
+        "gotchas": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "properties": {
+        "stdout": { "type": "string" },
+        "stderr": { "type": "string" },
+        "exit_codes": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "formats": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "install": {
+      "type": "object",
+      "properties": {
+        "method": { "type": "string" },
+        "command": { "type": "string" },
+        "url": { "type": "string" }
+      }
+    }
+  }
+}
