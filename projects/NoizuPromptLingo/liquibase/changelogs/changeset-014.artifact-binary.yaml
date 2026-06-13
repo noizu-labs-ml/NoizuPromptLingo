@@ -1,0 +1,30 @@
+databaseChangeLog:
+  # ===========================================================================
+  # Changeset 014: Add binary_content + mime_type to npl_artifact_revisions
+  # Supports image/video/audio/pdf/binary artifact kinds.
+  # ===========================================================================
+  - changeSet:
+      id: 014-artifact-binary-columns
+      author: npl-mcp
+      comment: Add binary_content (BYTEA) and mime_type (TEXT) to npl_artifact_revisions for media artifacts
+      changes:
+        - addColumn:
+            tableName: npl_artifact_revisions
+            columns:
+              - column:
+                  name: mime_type
+                  type: TEXT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: binary_content
+                  type: BYTEA
+                  constraints:
+                    nullable: true
+      rollback:
+        - dropColumn:
+            tableName: npl_artifact_revisions
+            columnName: binary_content
+        - dropColumn:
+            tableName: npl_artifact_revisions
+            columnName: mime_type

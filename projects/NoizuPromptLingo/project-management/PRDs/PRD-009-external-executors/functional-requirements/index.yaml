@@ -1,0 +1,30 @@
+functional_requirements:
+  - id: FR-001
+    name: "Ephemeral Tasker Lifecycle Management"
+    description: "Automatic lifecycle management with timeouts and context buffering"
+    status: completed
+    related_stories:
+      - US-009-001
+    expected_tests: 12
+    coverage_target: 100
+    file: FR-001-tasker-lifecycle-management.md
+
+  - id: FR-002
+    name: "Fabric CLI Integration"
+    description: "Integration with Fabric CLI for LLM-based output analysis"
+    status: completed
+    related_stories:
+      - US-009-002
+    expected_tests: 10
+    coverage_target: 100
+    file: FR-002-fabric-cli-integration.md
+
+  - id: FR-003
+    name: "MCP Tool Exposure"
+    description: "Expose tasker and Fabric functionality as MCP tools"
+    status: draft
+    related_stories:
+      - US-009-003
+    expected_tests: 10
+    coverage_target: 100
+    file: FR-003-mcp-tool-exposure.md

@@ -1,0 +1,277 @@
+functional_requirements:
+  # Artifact Management Tools (6 tools)
+  - id: FR-001
+    name: "create_artifact Tool"
+    description: "Create a new versioned artifact with metadata"
+    status: draft
+    related_stories:
+      - US-008-030
+    expected_tests: 10
+    coverage_target: 100
+    file: FR-001-create-artifact.md
+
+  - id: FR-002
+    name: "version_artifact Tool"
+    description: "Create a new version of an existing artifact"
+    status: draft
+    related_stories:
+      - US-008-030
+    expected_tests: 12
+    coverage_target: 100
+    file: FR-002-version-artifact.md
+
+  - id: FR-003
+    name: "create_review Tool"
+    description: "Initiate a code review on a specific artifact version"
+    status: draft
+    related_stories:
+      - US-008-030
+    expected_tests: 9
+    coverage_target: 100
+    file: FR-003-create-review.md
+
+  - id: FR-004
+    name: "add_inline_comment Tool"
+    description: "Add a line-specific comment during a code review"
+    status: draft
+    related_stories:
+      - US-008-030
+    expected_tests: 11
+    coverage_target: 100
+    file: FR-004-add-inline-comment.md
+
+  - id: FR-005
+    name: "complete_review Tool"
+    description: "Finalize a review with approval or rejection decision"
+    status: draft
+    related_stories:
+      - US-008-030
+    expected_tests: 11
+    coverage_target: 100
+    file: FR-005-complete-review.md
+
+  - id: FR-006
+    name: "annotate_screenshot Tool"
+    description: "Add visual annotations to a captured screenshot artifact"
+    status: draft
+    related_stories:
+      - US-008-030
+    expected_tests: 9
+    coverage_target: 100
+    file: FR-006-annotate-screenshot.md
+
+  # Chat Room Tools (7 tools)
+  - id: FR-007
+    name: "create_chat_room Tool"
+    description: "Create a persistent chat room for collaboration"
+    status: draft
+    related_stories:
+      - US-031-045
+    expected_tests: 9
+    coverage_target: 100
+    file: FR-007-create-chat-room.md
+
+  - id: FR-008
+    name: "send_message Tool"
+    description: "Send a message to a chat room with threading and mentions"
+    status: draft
+    related_stories:
+      - US-031-045
+    expected_tests: 11
+    coverage_target: 100
+    file: FR-008-send-message.md
+
+  - id: FR-009
+    name: "react Tool"
+    description: "Add or remove emoji reaction to a message"
+    status: draft
+    related_stories:
+      - US-031-045
+    expected_tests: 9
+    coverage_target: 100
+    file: FR-009-react.md
+
+  - id: FR-010
+    name: "share_artifact Tool"
+    description: "Share an artifact in a chat room with preview generation"
+    status: draft
+    related_stories:
+      - US-031-045
+      - US-078-083
+    expected_tests: 11
+    coverage_target: 100
+    file: FR-010-share-artifact.md
+
+  - id: FR-011
+    name: "create_todo Tool"
+    description: "Create a todo item associated with a chat room"
+    status: draft
+    related_stories:
+      - US-031-045
+    expected_tests: 9
+    coverage_target: 100
+    file: FR-011-create-todo.md
+
+  - id: FR-012
+    name: "receive_notifications Tool"
+    description: "Retrieve pending notifications for the current user with pagination"
+    status: draft
+    related_stories:
+      - US-031-045
+    expected_tests: 11
+    coverage_target: 100
+    file: FR-012-receive-notifications.md
+
+  - id: FR-013
+    name: "role_based_access Tool"
+    description: "Manage room member roles and permissions"
+    status: draft
+    related_stories:
+      - US-031-045
+    expected_tests: 11
+    coverage_target: 100
+    file: FR-013-role-based-access.md
+
+  # Task Queue Tools (7 tools)
+  - id: FR-014
+    name: "create_task Tool"
+    description: "Create a task in the queue with priority and labels"
+    status: draft
+    related_stories:
+      - US-046-060
+    expected_tests: 11
+    coverage_target: 100
+    file: FR-014-create-task.md
+
+  - id: FR-015
+    name: "pick_task Tool"
+    description: "Claim the next available task from queue with filtering"
+    status: draft
+    related_stories:
+      - US-046-060
+    expected_tests: 14
+    coverage_target: 100
+    file: FR-015-pick-task.md
+
+  - id: FR-016
+    name: "update_status Tool"
+    description: "Update task status with history tracking"
+    status: draft
+    related_stories:
+      - US-046-060
+    expected_tests: 14
+    coverage_target: 100
+    file: FR-016-update-status.md
+
+  - id: FR-017
+    name: "assign_task Tool"
+    description: "Assign task to specific agent with reassignment support"
+    status: draft
+    related_stories:
+      - US-046-060
+    expected_tests: 11
+    coverage_target: 100
+    file: FR-017-assign-task.md
+
+  - id: FR-018
+    name: "link_artifact Tool"
+    description: "Link an artifact to a task with relationship type"
+    status: draft
+    related_stories:
+      - US-046-060
+      - US-078-083
+    expected_tests: 11
+    coverage_target: 100
+    file: FR-018-link-artifact.md
+
+  - id: FR-019
+    name: "ask_question Tool"
+    description: "Submit a question about a task that optionally blocks progress"
+    status: draft
+    related_stories:
+      - US-046-060
+    expected_tests: 11
+    coverage_target: 100
+    file: FR-019-ask-question.md
+
+  - id: FR-020
+    name: "assign_complexity Tool"
+    description: "Score task complexity using Fibonacci-like scale"
+    status: draft
+    related_stories:
+      - US-046-060
+    expected_tests: 11
+    coverage_target: 100
+    file: FR-020-assign-complexity.md
+
+  # Browser Automation Tools (7 tools)
+  - id: FR-021
+    name: "navigate Tool"
+    description: "Navigate browser to URL with wait conditions"
+    status: draft
+    related_stories:
+      - US-061-077
+    expected_tests: 11
+    coverage_target: 100
+    file: FR-021-navigate.md
+
+  - id: FR-022
+    name: "screenshot Tool"
+    description: "Capture browser screenshot as versioned artifact"
+    status: draft
+    related_stories:
+      - US-061-077
+      - US-078-083
+    expected_tests: 11
+    coverage_target: 100
+    file: FR-022-screenshot.md
+
+  - id: FR-023
+    name: "form_fill Tool"
+    description: "Fill form fields on page with different input types"
+    status: draft
+    related_stories:
+      - US-061-077
+    expected_tests: 14
+    coverage_target: 100
+    file: FR-023-form-fill.md
+
+  - id: FR-024
+    name: "compare_screenshots Tool"
+    description: "Compare two screenshots for visual differences with diff generation"
+    status: draft
+    related_stories:
+      - US-061-077
+    expected_tests: 14
+    coverage_target: 100
+    file: FR-024-compare-screenshots.md
+
+  - id: FR-025
+    name: "manage_session Tool"
+    description: "Create, configure, or destroy browser session"
+    status: draft
+    related_stories:
+      - US-061-077
+    expected_tests: 11
+    coverage_target: 100
+    file: FR-025-manage-session.md
+
+  - id: FR-026
+    name: "inject_scripts Tool"
+    description: "Inject JavaScript into page context with result capture"
+    status: draft
+    related_stories:
+      - US-061-077
+    expected_tests: 14
+    coverage_target: 100
+    file: FR-026-inject-scripts.md
+
+  - id: FR-027
+    name: "timeout_retry Tool"
+    description: "Execute action with timeout and exponential backoff retry logic"
+    status: draft
+    related_stories:
+      - US-061-077
+    expected_tests: 14
+    coverage_target: 100
+    file: FR-027-timeout-retry.md

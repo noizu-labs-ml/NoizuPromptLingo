@@ -1,0 +1,246 @@
+acceptance_tests:
+  - id: AT-001
+    name: "2md Converts URLs to Markdown"
+    description: "Validates that 2md converts URLs via Jina API"
+    category: integration
+    related_fr: [FR-002, FR-008]
+    status: passing
+    file: AT-001-2md-converts-urls.md
+  - id: AT-002
+    name: "2md Caches Local Files Next to Source"
+    description: "Validates local file cache path generation"
+    category: unit
+    related_fr: [FR-001, FR-008]
+    status: passing
+    file: AT-002-2md-caches-local-files.md
+  - id: AT-003
+    name: "2md Caches URLs in .tmp/cache/markdown/"
+    description: "Validates URL cache path generation with hashing"
+    category: unit
+    related_fr: [FR-001, FR-008]
+    status: passing
+    file: AT-003-2md-caches-urls-in-tmp.md
+  - id: AT-004
+    name: "2md Respects --no-cache Flag"
+    description: "Validates force refresh bypasses cache"
+    category: integration
+    related_fr: [FR-002, FR-008]
+    status: passing
+    file: AT-004-2md-respects-no-cache.md
+  - id: AT-005
+    name: "2md Supports Output Formats"
+    description: "Validates rich, plain, and json output modes"
+    category: unit
+    related_fr: [FR-008]
+    status: passing
+    file: AT-005-2md-output-formats.md
+  - id: AT-006
+    name: "md-view Filters by Heading Name"
+    description: "Validates case-insensitive heading name matching"
+    category: unit
+    related_fr: [FR-003, FR-009]
+    status: passing
+    file: AT-006-md-view-filters-by-heading-name.md
+  - id: AT-007
+    name: "md-view Filters by Heading Level"
+    description: "Validates h1-h6 level selector filtering"
+    category: unit
+    related_fr: [FR-003, FR-009]
+    status: passing
+    file: AT-007-md-view-filters-by-level.md
+  - id: AT-008
+    name: "md-view Filters by Nested Path"
+    description: "Validates nested path navigation with > separator"
+    category: unit
+    related_fr: [FR-003, FR-009]
+    status: passing
+    file: AT-008-md-view-filters-nested-path.md
+  - id: AT-009
+    name: "md-view Collapses Sections Below Depth"
+    description: "Validates collapsing sections below specified depth"
+    category: unit
+    related_fr: [FR-007, FR-009]
+    status: passing
+    file: AT-009-md-view-collapses-sections.md
+  - id: AT-010
+    name: "md-view Reads from stdin Only"
+    description: "Validates pure pipe filter behavior"
+    category: integration
+    related_fr: [FR-009]
+    status: passing
+    file: AT-010-md-view-stdin-only.md
+  - id: AT-011
+    name: "md-view Combines Filtering and Collapsing"
+    description: "Validates combined filter + collapse operations"
+    category: integration
+    related_fr: [FR-007, FR-009]
+    status: passing
+    file: AT-011-md-view-combines-operations.md
+  - id: AT-012
+    name: "md-view Supports Rich Formatting"
+    description: "Validates Rich library terminal formatting"
+    category: unit
+    related_fr: [FR-009]
+    status: passing
+    file: AT-012-md-view-rich-formatting.md
+  - id: AT-013
+    name: "view-md Converts URLs, Files, and Images"
+    description: "Validates multi-source conversion"
+    category: integration
+    related_fr: [FR-002, FR-010]
+    status: passing
+    file: AT-013-view-md-converts-sources.md
+  - id: AT-014
+    name: "view-md Applies Filtering and Collapsing"
+    description: "Validates post-conversion filtering/collapsing"
+    category: integration
+    related_fr: [FR-010]
+    status: passing
+    file: AT-014-view-md-applies-filters.md
+  - id: AT-015
+    name: "view-md Supports --bare Flag"
+    description: "Validates filtered-only output mode"
+    category: unit
+    related_fr: [FR-010]
+    status: passing
+    file: AT-015-view-md-bare-flag.md
+  - id: AT-016
+    name: "view-md Supports --depth Flag"
+    description: "Validates controlled collapsing with depth"
+    category: unit
+    related_fr: [FR-010]
+    status: passing
+    file: AT-016-view-md-depth-flag.md
+  - id: AT-017
+    name: "view-md Supports --rich Flag"
+    description: "Validates Rich formatting for output"
+    category: unit
+    related_fr: [FR-010]
+    status: passing
+    file: AT-017-view-md-rich-flag.md
+  - id: AT-018
+    name: "view-md Respects Caching Options"
+    description: "Validates --no-cache and --cache-dir options"
+    category: integration
+    related_fr: [FR-010]
+    status: passing
+    file: AT-018-view-md-caching-options.md
+  - id: AT-019
+    name: "to_markdown MCP Tool Registered"
+    description: "Validates MCP tool registration in server"
+    category: integration
+    related_fr: [FR-011]
+    status: not_started
+    file: AT-019-mcp-to-markdown-registered.md
+  - id: AT-020
+    name: "view_markdown MCP Tool Registered"
+    description: "Validates MCP tool registration in server"
+    category: integration
+    related_fr: [FR-012]
+    status: not_started
+    file: AT-020-mcp-view-markdown-registered.md
+  - id: AT-021
+    name: "MCP Tools Return Structured Responses"
+    description: "Validates MCP response format with metadata"
+    category: integration
+    related_fr: [FR-011, FR-012]
+    status: not_started
+    file: AT-021-mcp-structured-responses.md
+  - id: AT-022
+    name: "view_markdown Combines Conversion and Filtering"
+    description: "Validates single-call combined operations"
+    category: integration
+    related_fr: [FR-012]
+    status: not_started
+    file: AT-022-mcp-view-markdown-combines.md
+  - id: AT-023
+    name: "URL Caches Expire After max_age"
+    description: "Validates URL cache expiry logic"
+    category: unit
+    related_fr: [FR-001]
+    status: passing
+    file: AT-023-url-cache-expiry.md
+  - id: AT-024
+    name: "Local File Caches Never Expire"
+    description: "Validates local cache persistence"
+    category: unit
+    related_fr: [FR-001]
+    status: passing
+    file: AT-024-local-cache-never-expires.md
+  - id: AT-025
+    name: "Cache Directories Created Automatically"
+    description: "Validates auto-creation of cache directories"
+    category: unit
+    related_fr: [FR-001]
+    status: passing
+    file: AT-025-cache-dirs-auto-created.md
+  - id: AT-026
+    name: "Same URL Produces Same Cache Path"
+    description: "Validates deterministic cache path generation"
+    category: unit
+    related_fr: [FR-001]
+    status: passing
+    file: AT-026-cache-path-deterministic.md
+  - id: AT-027
+    name: "Heading Filter is Case-Insensitive"
+    description: "Validates case-insensitive heading matching"
+    category: unit
+    related_fr: [FR-003]
+    status: passing
+    file: AT-027-heading-filter-case-insensitive.md
+  - id: AT-028
+    name: "Nested Paths Navigate Hierarchy Correctly"
+    description: "Validates hierarchical path navigation"
+    category: unit
+    related_fr: [FR-003]
+    status: passing
+    file: AT-028-nested-paths-navigate-correctly.md
+  - id: AT-029
+    name: "Wildcard Returns All Children at Level"
+    description: "Validates wildcard * child extraction"
+    category: unit
+    related_fr: [FR-003]
+    status: passing
+    file: AT-029-wildcard-returns-all-children.md
+  - id: AT-030
+    name: "Missing Sections Return Error Messages"
+    description: "Validates error handling for missing sections"
+    category: unit
+    related_fr: [FR-003]
+    status: passing
+    file: AT-030-missing-sections-return-error.md
+  - id: AT-031
+    name: "Filter Type Auto-Detection Works"
+    description: "Validates automatic filter type detection"
+    category: unit
+    related_fr: [FR-004]
+    status: passing
+    file: AT-031-filter-type-auto-detection.md
+  - id: AT-032
+    name: "Cache Module Has Comprehensive Test Coverage"
+    description: "Validates 12+ tests for cache module"
+    category: unit
+    related_fr: [FR-001]
+    status: passing
+    file: AT-032-cache-module-test-coverage.md
+  - id: AT-033
+    name: "Viewer Module Has Comprehensive Test Coverage"
+    description: "Validates 18+ tests for viewer module"
+    category: unit
+    related_fr: [FR-007]
+    status: passing
+    file: AT-033-viewer-module-test-coverage.md
+  - id: AT-034
+    name: "Heading Filter Has Comprehensive Test Coverage"
+    description: "Validates 15+ tests for heading filter"
+    category: unit
+    related_fr: [FR-003]
+    status: passing
+    file: AT-034-heading-filter-test-coverage.md
+  - id: AT-035
+    name: "All Markdown Tests Pass"
+    description: "Validates full test suite passes (45+ tests)"
+    category: integration
+    related_fr: [FR-001, FR-002, FR-003, FR-007]
+    status: passing
+    file: AT-035-all-markdown-tests-pass.md

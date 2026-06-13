@@ -1,0 +1,102 @@
+databaseChangeLog:
+  # ===========================================================================
+  # Changeset 013: Chat rooms + messages (PRD-007 MVP)
+  # ===========================================================================
+  - changeSet:
+      id: 013-create-npl-chat-rooms-table
+      author: npl
+      comment: Chat rooms for collaborative conversations
+      changes:
+        - createTable:
+            tableName: npl_chat_rooms
+            columns:
+              - column:
+                  name: id
+                  type: SERIAL
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+                  defaultValue: ''
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_chat_rooms_created_at
+            tableName: npl_chat_rooms
+            columns:
+              - column:
+                  name: created_at
+                  descending: true
+      rollback:
+        - dropTable:
+            tableName: npl_chat_rooms
+
+  - changeSet:
+      id: 013-create-npl-chat-messages-table
+      author: npl
+      comment: Chat messages within rooms
+      changes:
+        - createTable:
+            tableName: npl_chat_messages
+            columns:
+              - column:
+                  name: id
+                  type: SERIAL
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: room_id
+                  type: INTEGER
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_chat_messages_room
+                    references: npl_chat_rooms(id)
+                    deleteCascade: true
+              - column:
+                  name: content
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: author
+                  type: TEXT
+                  defaultValue: user
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_chat_messages_room_id
+            tableName: npl_chat_messages
+            columns:
+              - column:
+                  name: room_id
+        - createIndex:
+            indexName: idx_chat_messages_created_at
+            tableName: npl_chat_messages
+            columns:
+              - column:
+                  name: created_at
+      rollback:
+        - dropTable:
+            tableName: npl_chat_messages

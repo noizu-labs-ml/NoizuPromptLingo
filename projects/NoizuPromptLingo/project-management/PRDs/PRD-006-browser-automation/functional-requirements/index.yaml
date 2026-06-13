@@ -1,0 +1,83 @@
+functional_requirements:
+  - id: FR-001
+    name: "Screenshot & Visual Testing"
+    description: "Screenshot capture and visual diffing with viewport/theme control"
+    status: active
+    tool_count: 3
+    related_stories:
+      - US-012
+      - US-013
+    expected_tests: 15
+    coverage_target: 100
+    file: FR-001-screenshot-visual-testing.md
+
+  - id: FR-002
+    name: "Navigation & Page State"
+    description: "Page navigation controls and network state management"
+    status: active
+    tool_count: 5
+    related_stories:
+      - US-021
+      - US-052
+    expected_tests: 15
+    coverage_target: 100
+    file: FR-002-navigation-page-state.md
+
+  - id: FR-003
+    name: "Element Interaction"
+    description: "Comprehensive element interaction including clicking, typing, selecting, and keyboard input"
+    status: active
+    tool_count: 9
+    related_stories:
+      - US-019
+      - US-020
+      - US-021
+      - US-052
+    expected_tests: 25
+    coverage_target: 100
+    file: FR-003-element-interaction.md
+
+  - id: FR-004
+    name: "Content Extraction"
+    description: "Content extraction including text, HTML, element queries, and JavaScript evaluation"
+    status: active
+    tool_count: 4
+    related_stories:
+      - US-021
+      - US-029
+    expected_tests: 15
+    coverage_target: 100
+    file: FR-004-content-extraction.md
+
+  - id: FR-005
+    name: "Page Modification"
+    description: "Page modification through script and style injection"
+    status: active
+    tool_count: 2
+    related_stories:
+      - US-029
+    expected_tests: 10
+    coverage_target: 100
+    file: FR-005-page-modification.md
+
+  - id: FR-006
+    name: "State Management"
+    description: "Browser state management including viewport, cookies, and localStorage"
+    status: active
+    tool_count: 7
+    related_stories:
+      - US-024
+    expected_tests: 18
+    coverage_target: 100
+    file: FR-006-state-management.md
+
+  - id: FR-007
+    name: "Session Management"
+    description: "Session lifecycle management with listing and cleanup"
+    status: active
+    tool_count: 2
+    related_stories:
+      - US-024
+    expected_tests: 8
+    coverage_target: 100
+    file: FR-007-session-management.md

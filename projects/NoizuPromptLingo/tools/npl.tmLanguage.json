@@ -1,0 +1,152 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "NPL (Noizu Prompt Lingua)",
+  "scopeName": "source.npl",
+  "fileTypes": [
+    "npl",
+    "npl.md"
+  ],
+  "patterns": [
+    {
+      "include": "#framework-markers"
+    },
+    {
+      "include": "#agent-markers"
+    },
+    {
+      "include": "#pumps"
+    },
+    {
+      "include": "#directives"
+    },
+    {
+      "include": "#prefixes"
+    },
+    {
+      "include": "#placeholders"
+    },
+    {
+      "include": "#in-fill"
+    },
+    {
+      "include": "#qualifiers"
+    },
+    {
+      "include": "#highlights"
+    },
+    {
+      "include": "#attention"
+    }
+  ],
+  "repository": {
+    "framework-markers": {
+      "patterns": [
+        {
+          "name": "keyword.control.framework.npl",
+          "match": "⌜(?:extend:)?NPL@[0-9]+(?:\\.[0-9]+)*(?:\\|[^⌝]*)?⌝"
+        },
+        {
+          "name": "keyword.control.framework.npl",
+          "match": "⌞(?:extend:)?NPL@[0-9]+(?:\\.[0-9]+)*⌟"
+        }
+      ]
+    },
+    "agent-markers": {
+      "patterns": [
+        {
+          "name": "entity.name.class.agent.npl",
+          "match": "⌜[^⌝\\n]+⌝"
+        },
+        {
+          "name": "entity.name.class.agent.npl",
+          "match": "⌞[^⌟\\n]+⌟"
+        }
+      ]
+    },
+    "pumps": {
+      "patterns": [
+        {
+          "name": "meta.tag.pump.block.npl",
+          "begin": "<(npl-cot|npl-critique|npl-flag|npl-flags|npl-hormones|npl-intent|npl-mindread|npl-mode|npl-mood|npl-poa|npl-ref|npl-rubric|npl-thought|npl-vos)(?:\\s+[^>]*)?>",
+          "end": "</(npl-cot|npl-critique|npl-flag|npl-flags|npl-hormones|npl-intent|npl-mindread|npl-mode|npl-mood|npl-poa|npl-ref|npl-rubric|npl-thought|npl-vos)\\s*>",
+          "contentName": "meta.embedded.pump.npl",
+          "beginCaptures": {
+            "1": {
+              "name": "entity.name.tag.pump.npl"
+            }
+          },
+          "endCaptures": {
+            "1": {
+              "name": "entity.name.tag.pump.npl"
+            }
+          }
+        },
+        {
+          "name": "meta.tag.pump.self-closing.npl",
+          "match": "<(npl-cot|npl-critique|npl-flag|npl-flags|npl-hormones|npl-intent|npl-mindread|npl-mode|npl-mood|npl-poa|npl-ref|npl-rubric|npl-thought|npl-vos)(?:\\s+[^/>]*)?/>",
+          "captures": {
+            "1": {
+              "name": "entity.name.tag.pump.npl"
+            }
+          }
+        }
+      ]
+    },
+    "directives": {
+      "patterns": [
+        {
+          "name": "support.function.directive.npl",
+          "match": "⟪[^⟫\\n]*⟫"
+        }
+      ]
+    },
+    "prefixes": {
+      "patterns": [
+        {
+          "name": "keyword.operator.prefix.npl",
+          "match": "[^\\s]+?➤"
+        }
+      ]
+    },
+    "placeholders": {
+      "patterns": [
+        {
+          "name": "variable.other.placeholder.npl",
+          "match": "\\{[A-Za-z_][A-Za-z0-9_.\\-\\s]*(?::[^}\\n]+)?\\}"
+        }
+      ]
+    },
+    "in-fill": {
+      "patterns": [
+        {
+          "name": "variable.other.infill.npl",
+          "match": "\\[\\.\\.\\.(?::[^\\]\\n]+)?(?:\\|[^\\]\\n]*)?\\]"
+        }
+      ]
+    },
+    "qualifiers": {
+      "patterns": [
+        {
+          "name": "storage.modifier.qualifier.npl",
+          "match": "\\|<[^>\\n]+>"
+        }
+      ]
+    },
+    "highlights": {
+      "patterns": [
+        {
+          "name": "markup.bold.highlight.npl",
+          "match": "!<[^>\\n]+>"
+        }
+      ]
+    },
+    "attention": {
+      "patterns": [
+        {
+          "name": "markup.bold.attention.npl",
+          "match": "🎯[^\\n]*"
+        }
+      ]
+    }
+  }
+}

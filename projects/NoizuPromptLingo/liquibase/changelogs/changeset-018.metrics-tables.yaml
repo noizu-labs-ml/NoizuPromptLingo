@@ -1,0 +1,131 @@
+databaseChangeLog:
+  - changeSet:
+      id: 018-npl-tool-calls-table
+      author: system
+      changes:
+        - createTable:
+            tableName: npl_tool_calls
+            columns:
+              - column:
+                  name: id
+                  type: bigserial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tool_name
+                  type: varchar(128)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: session_id
+                  type: varchar(64)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: arguments
+                  type: text
+                  constraints:
+                    nullable: true
+              - column:
+                  name: result_summary
+                  type: text
+                  constraints:
+                    nullable: true
+              - column:
+                  name: response_time_ms
+                  type: integer
+                  constraints:
+                    nullable: true
+              - column:
+                  name: error
+                  type: text
+                  constraints:
+                    nullable: true
+              - column:
+                  name: called_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_tool_calls_called_at
+            tableName: npl_tool_calls
+            columns:
+              - column:
+                  name: called_at
+                  descending: true
+        - createIndex:
+            indexName: idx_tool_calls_tool_name
+            tableName: npl_tool_calls
+            columns:
+              - column:
+                  name: tool_name
+
+  - changeSet:
+      id: 018-npl-llm-calls-table
+      author: system
+      changes:
+        - createTable:
+            tableName: npl_llm_calls
+            columns:
+              - column:
+                  name: id
+                  type: bigserial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: model
+                  type: varchar(128)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: purpose
+                  type: varchar(128)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: prompt_tokens
+                  type: integer
+                  constraints:
+                    nullable: true
+              - column:
+                  name: completion_tokens
+                  type: integer
+                  constraints:
+                    nullable: true
+              - column:
+                  name: total_tokens
+                  type: integer
+                  constraints:
+                    nullable: true
+              - column:
+                  name: latency_ms
+                  type: integer
+                  constraints:
+                    nullable: true
+              - column:
+                  name: session_id
+                  type: varchar(64)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: called_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_llm_calls_called_at
+            tableName: npl_llm_calls
+            columns:
+              - column:
+                  name: called_at
+                  descending: true
+        - createIndex:
+            indexName: idx_llm_calls_model
+            tableName: npl_llm_calls
+            columns:
+              - column:
+                  name: model

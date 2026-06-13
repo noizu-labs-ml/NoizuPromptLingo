@@ -1,0 +1,49 @@
+acceptance_tests:
+  - id: AT-001
+    name: "Session Listing Display"
+    description: "Validate session listing page displays all sessions"
+    category: integration
+    related_fr:
+      - FR-001
+    status: not_started
+    file: AT-001-session-listing.md
+  - id: AT-002
+    name: "Session Detail View"
+    description: "Validate session detail page displays rooms and artifacts"
+    category: integration
+    related_fr:
+      - FR-001
+    status: not_started
+    file: AT-002-session-detail.md
+  - id: AT-003
+    name: "Chat Message Posting"
+    description: "Validate chat messages can be posted and appear in feed"
+    category: integration
+    related_fr:
+      - FR-002
+    status: not_started
+    file: AT-003-chat-message-posting.md
+  - id: AT-004
+    name: "Screenshot Checkpoint Listing"
+    description: "Validate screenshot checkpoints are listed properly"
+    category: integration
+    related_fr:
+      - FR-003
+    status: not_started
+    file: AT-004-screenshot-checkpoint-listing.md
+  - id: AT-005
+    name: "REST API Sessions"
+    description: "Validate REST API endpoints return proper JSON for sessions"
+    category: integration
+    related_fr:
+      - FR-004
+    status: not_started
+    file: AT-005-rest-api-sessions.md
+  - id: AT-006
+    name: "MCP Protocol Endpoint"
+    description: "Validate MCP protocol endpoint handles POST and SSE requests"
+    category: integration
+    related_fr:
+      - FR-005
+    status: not_started
+    file: AT-006-mcp-protocol-endpoint.md

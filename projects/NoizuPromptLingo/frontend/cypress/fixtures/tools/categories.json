@@ -1,0 +1,6 @@
+[
+  { "name": "browser", "description": "Web browsing and content extraction tools", "tool_count": 5 },
+  { "name": "npl", "description": "NPL convention loading and spec generation", "tool_count": 4 },
+  { "name": "meta", "description": "Meta-discovery and catalog tools", "tool_count": 5 },
+  { "name": "pm", "description": "Project management tools", "tool_count": 8 }
+]

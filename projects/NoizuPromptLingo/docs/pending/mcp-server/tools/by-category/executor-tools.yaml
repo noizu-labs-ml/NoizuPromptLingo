@@ -1,0 +1,281 @@
+category: external-executors
+category_id: C-10
+tool_count: 0
+documentation_source: worktrees/main/mcp-server
+status: implemented_not_exposed
+note: |
+  Complete implementation exists in src/npl_mcp/executors/ but NO MCP tools
+  are currently registered in unified.py. The infrastructure is production-ready
+  but requires MCP tool wrappers to be exposed to Claude Code.
+
+implementation_modules:
+  - name: TaskerManager
+    file: worktrees/main/mcp-server/src/npl_mcp/executors/manager.py
+    description: Ephemeral tasker lifecycle management with auto-termination
+    key_methods:
+      - spawn_tasker
+      - get_tasker
+      - list_taskers
+      - touch_tasker
+      - store_context
+      - get_context
+      - dismiss_tasker
+      - keep_alive
+      - start_lifecycle_monitor
+      - stop_lifecycle_monitor
+    database_tables:
+      - taskers
+    lifecycle_states:
+      - IDLE
+      - ACTIVE
+      - NAGGING
+      - TERMINATED
+
+  - name: fabric
+    file: worktrees/main/mcp-server/src/npl_mcp/executors/fabric.py
+    description: Fabric CLI integration for LLM-based output analysis
+    key_functions:
+      - find_fabric
+      - apply_fabric_pattern
+      - analyze_with_patterns
+      - list_patterns
+      - select_pattern_for_task
+    external_dependency: danielmiessler/fabric CLI
+    common_patterns:
+      - summarize
+      - extract_wisdom
+      - analyze_logs
+      - explain_code
+      - extract_main_idea
+      - analyze_claims
+      - create_summary
+
+potential_mcp_tools:
+  # These tools SHOULD exist but are not currently exposed
+
+  - name: spawn_tasker
+    signature: 'spawn_tasker(task: str, chat_room_id: int, parent_agent_id: str = "primary", patterns: Optional[List[str]] = None, session_id: Optional[str] = None, timeout_minutes: int = 15, nag_minutes: int = 5) -> dict'
+    description: Spawn an ephemeral tasker agent for a specific task with automatic lifecycle management
+    implementation_method: TaskerManager.spawn_tasker
+    returns: |
+      {
+        "tasker_id": "tsk-xxxxxxxx",
+        "task": "...",
+        "patterns": [...],
+        "chat_room_id": 42,
+        "session_id": "...",
+        "timeout_minutes": 15,
+        "nag_minutes": 5,
+        "status": "idle"
+      }
+    example: |
+      tasker = await spawn_tasker(
+          task="Analyze test failures in auth module",
+          chat_room_id=42,
+          patterns=["analyze_logs", "extract_wisdom"],
+          timeout_minutes=15
+      )
+
+  - name: get_tasker
+    signature: 'get_tasker(tasker_id: str) -> dict'
+    description: Get tasker details and current status
+    implementation_method: TaskerManager.get_tasker
+    returns: |
+      {
+        "id": "tsk-xxxxxxxx",
+        "task": "...",
+        "status": "active",
+        "created_at": "...",
+        "last_activity": "...",
+        ...
+      }
+
+  - name: list_taskers
+    signature: 'list_taskers(status: Optional[str] = None, session_id: Optional[str] = None) -> list'
+    description: List taskers with optional status or session filtering
+    implementation_method: TaskerManager.list_taskers
+    filters:
+      - status: idle, active, nagging, terminated
+      - session_id: Filter by session
+
+  - name: touch_tasker
+    signature: 'touch_tasker(tasker_id: str) -> dict'
+    description: Update tasker activity timestamp and reset nag state
+    implementation_method: TaskerManager.touch_tasker
+    use_case: Call after executing command to keep tasker alive
+
+  - name: dismiss_tasker
+    signature: 'dismiss_tasker(tasker_id: str, reason: Optional[str] = None) -> dict'
+    description: Explicitly terminate a tasker before timeout
+    implementation_method: TaskerManager.dismiss_tasker
+    returns: |
+      {
+        "tasker_id": "tsk-xxxxxxxx",
+        "status": "dismissed",
+        "duration_seconds": 345.67,
+        "tasks_completed": 5,
+        "termination_reason": "task_complete"
+      }
+
+  - name: keep_alive_tasker
+    signature: 'keep_alive_tasker(tasker_id: str) -> dict'
+    description: Respond to nag message by keeping tasker alive
+    implementation_method: TaskerManager.keep_alive
+    use_case: Parent agent responds to nag to prevent auto-termination
+
+  - name: apply_fabric_pattern
+    signature: 'apply_fabric_pattern(content: str, pattern: str, model: Optional[str] = None, timeout: int = 300) -> dict'
+    description: Apply a single fabric pattern to content for LLM-based analysis
+    implementation_function: fabric.apply_fabric_pattern
+    returns: |
+      {
+        "success": true,
+        "result": "...",
+        "pattern": "analyze_logs",
+        "model": "..."
+      }
+    example: |
+      result = await apply_fabric_pattern(
+          content=test_output,
+          pattern="analyze_logs",
+          timeout=300
+      )
+
+  - name: analyze_with_fabric
+    signature: 'analyze_with_fabric(content: str, patterns: List[str], combine_results: bool = True) -> dict'
+    description: Apply multiple fabric patterns to content and optionally combine results
+    implementation_function: fabric.analyze_with_patterns
+    returns: |
+      {
+        "success": true,
+        "result": "## pattern1\n\n...\n\n---\n\n## pattern2\n\n...",
+        "patterns": ["pattern1", "pattern2"],
+        "individual_results": {...}
+      }
+    example: |
+      result = await analyze_with_fabric(
+          content=docs,
+          patterns=["extract_wisdom", "create_summary"],
+          combine_results=True
+      )
+
+  - name: list_fabric_patterns
+    signature: 'list_fabric_patterns() -> dict'
+    description: List all available fabric patterns
+    implementation_function: fabric.list_patterns
+    returns: |
+      {
+        "success": true,
+        "patterns": ["summarize", "analyze_logs", ...],
+        "count": 42
+      }
+
+  - name: store_tasker_context
+    signature: 'store_tasker_context(tasker_id: str, command: str, raw_output: str, analysis: str, result: str) -> dict'
+    description: Store execution context for follow-up queries
+    implementation_method: TaskerManager.store_context
+    use_case: Buffer command outputs for contextual follow-up analysis
+
+  - name: get_tasker_context
+    signature: 'get_tasker_context(tasker_id: str) -> dict'
+    description: Retrieve tasker execution context for follow-up queries
+    implementation_method: TaskerManager.get_context
+    returns: |
+      {
+        "task": "...",
+        "patterns": [...],
+        "command_history": [{...}],
+        "last_raw_output": "...",
+        "last_analysis": "..."
+      }
+
+database_schema:
+  taskers:
+    description: Tasker registry with lifecycle state and configuration
+    columns:
+      - id: TEXT PRIMARY KEY (tsk-xxxxxxxx)
+      - parent_agent_id: TEXT NOT NULL
+      - session_id: TEXT (optional)
+      - chat_room_id: INTEGER NOT NULL
+      - task: TEXT NOT NULL
+      - patterns: TEXT (JSON array of fabric patterns)
+      - status: TEXT NOT NULL (idle/active/nagging/terminated)
+      - timeout_minutes: INTEGER DEFAULT 15
+      - nag_minutes: INTEGER DEFAULT 5
+      - created_at: TEXT NOT NULL
+      - last_activity: TEXT NOT NULL
+      - terminated_at: TEXT
+      - termination_reason: TEXT
+    indexes:
+      - status
+      - session_id
+      - chat_room_id
+
+lifecycle_flow:
+  - state: idle
+    description: Tasker spawned, awaiting first command
+    transitions:
+      - active: on touch_tasker()
+      - nagging: after nag_minutes of inactivity
+      - terminated: after timeout_minutes total
+
+  - state: active
+    description: Tasker executing commands, updating activity
+    transitions:
+      - idle: natural return after command
+      - nagging: after nag_minutes of inactivity
+      - terminated: after timeout_minutes total
+
+  - state: nagging
+    description: Sent nag to parent, awaiting response
+    window: 2 minutes to respond with keep_alive
+    transitions:
+      - idle: on keep_alive()
+      - terminated: after 2 minutes without response
+
+  - state: terminated
+    description: Tasker dismissed, context cleaned up
+    reasons:
+      - timeout: Exceeded timeout_minutes
+      - nag_timeout: No response to nag within 2 minutes
+      - dismissed: Explicit dismissal by parent
+      - task_complete: Completed successfully
+
+integration_dependencies:
+  internal:
+    - chat_manager: For sending nag messages to parent agent
+    - session_manager: Optional session grouping
+    - database: Persistent tasker state storage
+
+  external:
+    - fabric_cli: LLM-based output analysis patterns
+    - asyncio: Lifecycle monitoring task
+
+testing:
+  status: undocumented
+  coverage: unknown
+  test_files: none_found
+  critical_test_cases:
+    - Tasker lifecycle state transitions
+    - Timeout and nag behavior
+    - Fabric pattern application and fallback
+    - Chat notification delivery
+    - Context buffering for follow-ups
+    - Lifecycle monitor background task
+
+documentation_gaps:
+  - No README section for executors
+  - No USAGE examples for tasker spawning
+  - No PRD for executor features
+  - No test coverage in PROJECT_STATUS.md
+  - No ENHANCEMENTS plans for executor expansion
+  - No web UI for tasker monitoring
+
+recommended_next_steps:
+  1. Expose MCP tools in unified.py
+  2. Add test coverage for lifecycle management
+  3. Document usage patterns in USAGE.md
+  4. Add web UI for tasker dashboard
+  5. Create PRD for executor features
+  6. Integrate with task queue system
+  7. Add real-time WebSocket updates

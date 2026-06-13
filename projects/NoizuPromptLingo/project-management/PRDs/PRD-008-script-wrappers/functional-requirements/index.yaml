@@ -1,0 +1,38 @@
+functional_requirements:
+  - id: FR-001
+    name: "File Content Aggregation"
+    description: "Aggregate file contents with glob filtering"
+    status: implemented
+    related_stories:
+      - US-047
+    expected_tests: 6
+    coverage_target: 0
+    file: FR-001-file-content-aggregation.md
+  - id: FR-002
+    name: "Directory Tree Visualization"
+    description: "Visualize directory structure and depth analysis"
+    status: implemented
+    related_stories:
+      - US-025
+    expected_tests: 8
+    coverage_target: 0
+    file: FR-002-directory-tree-visualization.md
+  - id: FR-003
+    name: "NPL Resource Loading"
+    description: "Load NPL framework resources with redundancy prevention"
+    status: implemented
+    related_stories:
+      - US-001
+      - US-002
+    expected_tests: 10
+    coverage_target: 0
+    file: FR-003-npl-resource-loading.md
+  - id: FR-004
+    name: "Web to Markdown Conversion"
+    description: "Fetch web content as markdown via Jina Reader API"
+    status: implemented
+    related_stories:
+      - US-003
+    expected_tests: 8
+    coverage_target: 100
+    file: FR-004-web-to-markdown.md

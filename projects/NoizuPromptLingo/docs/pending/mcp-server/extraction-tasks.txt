@@ -1,0 +1,32 @@
+Category: Task Queue System
+Tools extracted: 13
+Database tables: 4 (task_queues, tasks, task_events, task_artifacts)
+Web routes: 16 (9 HTML views, 7 API endpoints)
+Test coverage: 0%
+Files created:
+- categories/06-task-queue.md
+- tools/by-category/task-tools.yaml
+Status: Complete
+
+Summary:
+Extracted comprehensive documentation for Task Queue System (C-06) with 13 MCP tools covering:
+- Queue management (create, get, list)
+- Task lifecycle (create, get, list, update)
+- Status workflow (update_task_status with enforced flow)
+- Complexity assessment (assign_task_complexity)
+- Artifact linking (add_task_artifact)
+- Activity feeds (add_task_message, get_task_feed, get_task_queue_feed)
+
+Database schema defined in migration 5 (migrations.py) with 4 tables and 11 indexes.
+Full web UI integration with HTML views and REST API endpoints.
+Integration with sessions, chat rooms, and artifact system.
+
+Notable findings:
+- Fully implemented feature with 0% test coverage
+- Not documented in README.md or USAGE.md
+- No PRD found
+- No coverage metrics in PROJECT_STATUS.md
+- Status workflow enforces human-only completion (only human operators can mark done)
+- Polling-optimized feeds with next_since timestamps
+- Priority system (0-3) and complexity scale (1-5)
+- Multi-artifact linking (artifacts, git branches, files)

@@ -1,0 +1,9 @@
+Category: Artifact Management
+Tools extracted: 5
+Database tables: 2
+Web routes: 5
+Test coverage: 53%
+Files created:
+- categories/02-artifact-management.md
+- tools/by-category/artifact-tools.yaml
+Status: Complete

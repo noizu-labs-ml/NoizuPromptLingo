@@ -1,0 +1,556 @@
+category: database
+category_id: C-01
+tool_count: 0
+documentation_source: worktrees/main/mcp-server
+description: Database infrastructure layer - not MCP tools, but foundational schema and migrations
+
+tables:
+  - name: artifacts
+    purpose: Main artifact registry
+    columns:
+      - name: id
+        type: INTEGER PRIMARY KEY AUTOINCREMENT
+        description: Unique artifact identifier
+      - name: name
+        type: TEXT NOT NULL UNIQUE
+        description: Artifact name (unique)
+      - name: type
+        type: TEXT NOT NULL
+        description: Artifact type (document, image, code, data, etc.)
+      - name: created_at
+        type: TEXT NOT NULL DEFAULT (datetime('now'))
+        description: Creation timestamp
+      - name: current_revision_id
+        type: INTEGER
+        description: Foreign key to current revision
+      - name: session_id
+        type: TEXT
+        description: Foreign key to sessions (added in migration 2)
+    foreign_keys:
+      - current_revision_id REFERENCES revisions(id)
+      - session_id REFERENCES sessions(id)
+    indexes:
+      - idx_artifacts_session ON session_id
+
+  - name: revisions
+    purpose: Version history for artifacts
+    columns:
+      - name: id
+        type: INTEGER PRIMARY KEY AUTOINCREMENT
+        description: Unique revision identifier
+      - name: artifact_id
+        type: INTEGER NOT NULL
+        description: Parent artifact
+      - name: revision_num
+        type: INTEGER NOT NULL
+        description: Revision number (0, 1, 2, ...)
+      - name: created_at
+        type: TEXT NOT NULL DEFAULT (datetime('now'))
+        description: Creation timestamp
+      - name: created_by
+        type: TEXT
+        description: Persona slug who created this revision
+      - name: file_path
+        type: TEXT NOT NULL
+        description: Relative path in data/artifacts/
+      - name: meta_path
+        type: TEXT NOT NULL
+        description: Path to .meta.md file
+      - name: purpose
+        type: TEXT
+        description: Purpose of this revision
+      - name: notes
+        type: TEXT
+        description: Additional notes
+    foreign_keys:
+      - artifact_id REFERENCES artifacts(id)
+    unique_constraints:
+      - UNIQUE(artifact_id, revision_num)
+    indexes:
+      - idx_revisions_artifact ON artifact_id
+
+  - name: reviews
+    purpose: Artifact review sessions
+    columns:
+      - name: id
+        type: INTEGER PRIMARY KEY AUTOINCREMENT
+        description: Unique review identifier
+      - name: artifact_id
+        type: INTEGER NOT NULL
+        description: Artifact being reviewed
+      - name: revision_id
+        type: INTEGER NOT NULL
+        description: Specific revision being reviewed
+      - name: reviewer_persona
+        type: TEXT NOT NULL
+        description: Reviewer persona slug
+      - name: created_at
+        type: TEXT NOT NULL DEFAULT (datetime('now'))
+        description: Review creation timestamp
+      - name: status
+        type: TEXT DEFAULT 'in_progress'
+        description: Review status (in_progress, completed)
+      - name: overall_comment
+        type: TEXT
+        description: Overall review summary
+    foreign_keys:
+      - artifact_id REFERENCES artifacts(id)
+      - revision_id REFERENCES revisions(id)
+    indexes:
+      - idx_reviews_artifact ON artifact_id
+      - idx_reviews_revision ON revision_id
+
+  - name: inline_comments
+    purpose: Line-by-line or position-based review comments
+    columns:
+      - name: id
+        type: INTEGER PRIMARY KEY AUTOINCREMENT
+        description: Unique comment identifier
+      - name: review_id
+        type: INTEGER NOT NULL
+        description: Parent review
+      - name: location
+        type: TEXT NOT NULL
+        description: "Location string: 'line:58' or '@x:100,y:200' for images"
+      - name: comment
+        type: TEXT NOT NULL
+        description: Comment text
+      - name: persona
+        type: TEXT NOT NULL
+        description: Commenter persona slug
+      - name: created_at
+        type: TEXT NOT NULL DEFAULT (datetime('now'))
+        description: Comment timestamp
+    foreign_keys:
+      - review_id REFERENCES reviews(id)
+    indexes:
+      - idx_inline_comments_review ON review_id
+
+  - name: review_overlays
+    purpose: Image annotation overlay files
+    columns:
+      - name: id
+        type: INTEGER PRIMARY KEY AUTOINCREMENT
+        description: Unique overlay identifier
+      - name: review_id
+        type: INTEGER NOT NULL
+        description: Parent review
+      - name: overlay_file
+        type: TEXT NOT NULL
+        description: Path to overlay image/annotation
+      - name: created_at
+        type: TEXT NOT NULL DEFAULT (datetime('now'))
+        description: Overlay creation timestamp
+    foreign_keys:
+      - review_id REFERENCES reviews(id)
+
+  - name: chat_rooms
+    purpose: Collaboration spaces for multi-persona chat
+    columns:
+      - name: id
+        type: INTEGER PRIMARY KEY AUTOINCREMENT
+        description: Unique room identifier
+      - name: name
+        type: TEXT NOT NULL UNIQUE
+        description: Room name (unique)
+      - name: created_at
+        type: TEXT NOT NULL DEFAULT (datetime('now'))
+        description: Room creation timestamp
+      - name: description
+        type: TEXT
+        description: Room description
+      - name: session_id
+        type: TEXT
+        description: Foreign key to sessions (added in migration 3)
+    foreign_keys:
+      - session_id REFERENCES sessions(id)
+    indexes:
+      - idx_chat_rooms_session ON session_id
+
+  - name: room_members
+    purpose: Persona membership in chat rooms
+    columns:
+      - name: room_id
+        type: INTEGER NOT NULL
+        description: Chat room
+      - name: persona_slug
+        type: TEXT NOT NULL
+        description: Persona identifier
+      - name: joined_at
+        type: TEXT NOT NULL DEFAULT (datetime('now'))
+        description: Join timestamp
+    primary_key:
+      - (room_id, persona_slug)
+    foreign_keys:
+      - room_id REFERENCES chat_rooms(id)
+
+  - name: chat_events
+    purpose: All events in chat rooms (messages, reactions, shares, todos)
+    columns:
+      - name: id
+        type: INTEGER PRIMARY KEY AUTOINCREMENT
+        description: Unique event identifier
+      - name: room_id
+        type: INTEGER NOT NULL
+        description: Chat room
+      - name: event_type
+        type: TEXT NOT NULL
+        description: "Event type: message, emoji_reaction, artifact_share, todo_create, persona_join, persona_leave"
+      - name: persona
+        type: TEXT NOT NULL
+        description: Persona who triggered event
+      - name: timestamp
+        type: TEXT NOT NULL DEFAULT (datetime('now'))
+        description: Event timestamp
+      - name: data
+        type: TEXT NOT NULL
+        description: JSON-encoded event data
+      - name: reply_to_id
+        type: INTEGER
+        description: Optional ID of event being replied to
+    foreign_keys:
+      - room_id REFERENCES chat_rooms(id)
+      - reply_to_id REFERENCES chat_events(id)
+    indexes:
+      - idx_chat_events_room ON room_id
+      - idx_chat_events_timestamp ON timestamp
+
+  - name: notifications
+    purpose: User notifications from @mentions and events
+    columns:
+      - name: id
+        type: INTEGER PRIMARY KEY AUTOINCREMENT
+        description: Unique notification identifier
+      - name: persona
+        type: TEXT NOT NULL
+        description: Persona receiving notification
+      - name: event_id
+        type: INTEGER NOT NULL
+        description: Event that triggered notification
+      - name: notification_type
+        type: TEXT NOT NULL
+        description: "Notification type: mention, artifact_share, todo_assign, etc."
+      - name: read_at
+        type: TEXT
+        description: Timestamp when notification was read (NULL if unread)
+      - name: created_at
+        type: TEXT NOT NULL DEFAULT (datetime('now'))
+        description: Notification creation timestamp
+    foreign_keys:
+      - event_id REFERENCES chat_events(id)
+    indexes:
+      - idx_notifications_persona ON persona
+      - idx_notifications_read ON (persona, read_at)
+
+  - name: sessions
+    purpose: Session grouping for related chat rooms and artifacts
+    columns:
+      - name: id
+        type: TEXT PRIMARY KEY
+        description: Unique session identifier (user-provided or generated)
+      - name: title
+        type: TEXT
+        description: Optional human-readable session title
+      - name: created_at
+        type: TEXT NOT NULL DEFAULT (datetime('now'))
+        description: Session creation timestamp
+      - name: updated_at
+        type: TEXT NOT NULL DEFAULT (datetime('now'))
+        description: Last activity timestamp
+      - name: status
+        type: TEXT DEFAULT 'active'
+        description: "Session status: active, archived, etc."
+    indexes:
+      - idx_sessions_updated ON updated_at DESC
+      - idx_sessions_status ON status
+    added_in: Migration 1
+
+  - name: taskers
+    purpose: Ephemeral executor agent tracking for timeout and nag operations
+    columns:
+      - name: id
+        type: TEXT PRIMARY KEY
+        description: Unique tasker identifier
+      - name: parent_agent_id
+        type: TEXT NOT NULL
+        description: Parent agent who spawned this tasker
+      - name: session_id
+        type: TEXT
+        description: Associated session
+      - name: chat_room_id
+        type: INTEGER
+        description: Associated chat room
+      - name: task
+        type: TEXT NOT NULL
+        description: Task description
+      - name: patterns
+        type: TEXT
+        description: Expected output patterns (JSON)
+      - name: status
+        type: TEXT DEFAULT 'active'
+        description: "Tasker status: active, completed, timed_out, terminated"
+      - name: timeout_minutes
+        type: INTEGER DEFAULT 15
+        description: Timeout threshold in minutes
+      - name: nag_minutes
+        type: INTEGER DEFAULT 5
+        description: Nag reminder interval in minutes
+      - name: created_at
+        type: TEXT NOT NULL
+        description: Tasker creation timestamp
+      - name: last_activity
+        type: TEXT NOT NULL
+        description: Last activity timestamp
+      - name: terminated_at
+        type: TEXT
+        description: Termination timestamp
+      - name: termination_reason
+        type: TEXT
+        description: Reason for termination
+    foreign_keys:
+      - session_id REFERENCES sessions(id)
+      - chat_room_id REFERENCES chat_rooms(id)
+    indexes:
+      - idx_taskers_status ON status
+      - idx_taskers_session ON session_id
+      - idx_taskers_parent ON parent_agent_id
+    added_in: Migration 4
+
+  - name: task_queues
+    purpose: Task queue registry with chat room for Q&A
+    columns:
+      - name: id
+        type: INTEGER PRIMARY KEY AUTOINCREMENT
+        description: Unique queue identifier
+      - name: name
+        type: TEXT NOT NULL UNIQUE
+        description: Queue name (unique)
+      - name: description
+        type: TEXT
+        description: Queue description
+      - name: chat_room_id
+        type: INTEGER
+        description: Associated chat room for Q&A
+      - name: session_id
+        type: TEXT
+        description: Associated session
+      - name: created_at
+        type: TEXT NOT NULL DEFAULT (datetime('now'))
+        description: Queue creation timestamp
+      - name: updated_at
+        type: TEXT NOT NULL DEFAULT (datetime('now'))
+        description: Last activity timestamp
+      - name: status
+        type: TEXT DEFAULT 'active'
+        description: "Queue status: active, archived, etc."
+    foreign_keys:
+      - chat_room_id REFERENCES chat_rooms(id)
+      - session_id REFERENCES sessions(id)
+    indexes:
+      - idx_task_queues_status ON status
+      - idx_task_queues_session ON session_id
+    added_in: Migration 5
+
+  - name: tasks
+    purpose: Individual tasks within queues
+    columns:
+      - name: id
+        type: INTEGER PRIMARY KEY AUTOINCREMENT
+        description: Unique task identifier
+      - name: queue_id
+        type: INTEGER NOT NULL
+        description: Parent queue
+      - name: title
+        type: TEXT NOT NULL
+        description: Task title
+      - name: description
+        type: TEXT
+        description: Task description
+      - name: acceptance_criteria
+        type: TEXT
+        description: Acceptance criteria for completion
+      - name: priority
+        type: INTEGER DEFAULT 0
+        description: Task priority (higher = more important)
+      - name: deadline
+        type: TEXT
+        description: Deadline timestamp
+      - name: complexity
+        type: INTEGER
+        description: Complexity score (1-5)
+      - name: complexity_notes
+        type: TEXT
+        description: Complexity assessment notes
+      - name: status
+        type: TEXT DEFAULT 'pending'
+        description: "Task status: pending, in_progress, completed, blocked, cancelled"
+      - name: created_by
+        type: TEXT
+        description: Persona who created task
+      - name: assigned_to
+        type: TEXT
+        description: Persona assigned to task
+      - name: created_at
+        type: TEXT NOT NULL DEFAULT (datetime('now'))
+        description: Task creation timestamp
+      - name: updated_at
+        type: TEXT NOT NULL DEFAULT (datetime('now'))
+        description: Last update timestamp
+    foreign_keys:
+      - queue_id REFERENCES task_queues(id)
+    indexes:
+      - idx_tasks_queue ON queue_id
+      - idx_tasks_status ON status
+      - idx_tasks_priority ON priority DESC
+      - idx_tasks_deadline ON deadline
+      - idx_tasks_assigned ON assigned_to
+    added_in: Migration 5
+
+  - name: task_events
+    purpose: Activity feed for task lifecycle events
+    columns:
+      - name: id
+        type: INTEGER PRIMARY KEY AUTOINCREMENT
+        description: Unique event identifier
+      - name: task_id
+        type: INTEGER NOT NULL
+        description: Associated task
+      - name: queue_id
+        type: INTEGER NOT NULL
+        description: Associated queue
+      - name: event_type
+        type: TEXT NOT NULL
+        description: "Event type: created, updated, assigned, status_changed, commented, etc."
+      - name: persona
+        type: TEXT
+        description: Persona who triggered event
+      - name: data
+        type: TEXT NOT NULL
+        description: JSON-encoded event data
+      - name: created_at
+        type: TEXT NOT NULL DEFAULT (datetime('now'))
+        description: Event timestamp
+    foreign_keys:
+      - task_id REFERENCES tasks(id)
+      - queue_id REFERENCES task_queues(id)
+    indexes:
+      - idx_task_events_task ON task_id
+      - idx_task_events_queue ON queue_id
+      - idx_task_events_created ON created_at
+    added_in: Migration 5
+
+  - name: task_artifacts
+    purpose: Link artifacts and git branches to tasks
+    columns:
+      - name: id
+        type: INTEGER PRIMARY KEY AUTOINCREMENT
+        description: Unique link identifier
+      - name: task_id
+        type: INTEGER NOT NULL
+        description: Associated task
+      - name: artifact_id
+        type: INTEGER
+        description: Associated artifact (if any)
+      - name: artifact_type
+        type: TEXT NOT NULL
+        description: "Type of artifact: revision, git_branch, file, etc."
+      - name: git_branch
+        type: TEXT
+        description: Git branch name (if applicable)
+      - name: description
+        type: TEXT
+        description: Link description
+      - name: created_by
+        type: TEXT
+        description: Persona who created link
+      - name: created_at
+        type: TEXT NOT NULL DEFAULT (datetime('now'))
+        description: Link creation timestamp
+    foreign_keys:
+      - task_id REFERENCES tasks(id)
+      - artifact_id REFERENCES artifacts(id)
+    indexes:
+      - idx_task_artifacts_task ON task_id
+      - idx_task_artifacts_artifact ON artifact_id
+    added_in: Migration 5
+
+  - name: schema_version
+    purpose: Track applied database migrations
+    columns:
+      - name: version
+        type: INTEGER PRIMARY KEY
+        description: Migration version number
+      - name: description
+        type: TEXT
+        description: Migration description
+      - name: applied_at
+        type: TEXT NOT NULL
+        description: Timestamp when migration was applied
+    added_in: Migration system bootstrap
+
+migrations:
+  - version: 1
+    description: Add sessions table
+    tables_created:
+      - sessions
+    indexes_created:
+      - idx_sessions_updated
+      - idx_sessions_status
+
+  - version: 2
+    description: Add session_id to artifacts
+    columns_added:
+      - table: artifacts
+        column: session_id
+    indexes_created:
+      - idx_artifacts_session
+
+  - version: 3
+    description: Add session_id to chat_rooms
+    columns_added:
+      - table: chat_rooms
+        column: session_id
+    indexes_created:
+      - idx_chat_rooms_session
+
+  - version: 4
+    description: Add taskers table
+    tables_created:
+      - taskers
+    indexes_created:
+      - idx_taskers_status
+      - idx_taskers_session
+      - idx_taskers_parent
+
+  - version: 5
+    description: Add task queues and related tables
+    tables_created:
+      - task_queues
+      - tasks
+      - task_events
+      - task_artifacts
+    indexes_created:
+      - idx_task_queues_status
+      - idx_task_queues_session
+      - idx_tasks_queue
+      - idx_tasks_status
+      - idx_tasks_priority
+      - idx_tasks_deadline
+      - idx_tasks_assigned
+      - idx_task_events_task
+      - idx_task_events_queue
+      - idx_task_events_created
+      - idx_task_artifacts_task
+      - idx_task_artifacts_artifact
+
+coverage:
+  database_layer: 82%
+  migrations: included_in_database_layer
+
+test_files:
+  - worktrees/main/mcp-server/tests/test_basic.py
+
+source_files:
+  - worktrees/main/mcp-server/src/npl_mcp/storage/schema.sql
+  - worktrees/main/mcp-server/src/npl_mcp/storage/db.py
+  - worktrees/main/mcp-server/src/npl_mcp/storage/migrations.py

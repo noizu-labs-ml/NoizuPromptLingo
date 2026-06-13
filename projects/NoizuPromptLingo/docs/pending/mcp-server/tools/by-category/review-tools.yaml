@@ -1,0 +1,138 @@
+category: review-system
+category_id: C-03
+tool_count: 6
+documentation_source: worktrees/main/mcp-server
+tools:
+  - name: create_review
+    signature: 'create_review(artifact_id: int, revision_id: int, reviewer_persona: str) -> dict'
+    description: Start a new review for an artifact revision
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/artifacts/reviews.py'
+    implementation_lines: '21-69'
+    database_tables:
+      - reviews
+      - revisions
+      - artifacts
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: 25
+    example: |
+      # Create review for artifact revision
+      review = await create_review(
+          artifact_id=1,
+          revision_id=2,
+          reviewer_persona="mike-developer"
+      )
+      # Returns: {"review_id": 1, "status": "in_progress", ...}
+
+  - name: add_inline_comment
+    signature: 'add_inline_comment(review_id: int, location: str, comment: str, persona: str) -> dict'
+    description: Add an inline comment to a review at specific location (line:N or @x:X,y:Y)
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/artifacts/reviews.py'
+    implementation_lines: '71-117'
+    database_tables:
+      - inline_comments
+      - reviews
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: 25
+    example: |
+      # Add comment at line 58
+      comment = await add_inline_comment(
+          review_id=1,
+          location="line:58",
+          comment="This section needs refactoring for better readability",
+          persona="mike-developer"
+      )
+      # Returns: {"comment_id": 1, "location": "line:58", ...}
+
+  - name: add_overlay_annotation
+    signature: 'add_overlay_annotation(review_id: int, x: int, y: int, comment: str, persona: str) -> dict'
+    description: Add image overlay annotation at pixel coordinates
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/artifacts/reviews.py'
+    implementation_lines: '119-140'
+    database_tables:
+      - inline_comments
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: 25
+    example: |
+      # Add annotation at pixel coordinates
+      annotation = await add_overlay_annotation(
+          review_id=1,
+          x=100,
+          y=200,
+          comment="Button placement seems off-center here",
+          persona="mike-developer"
+      )
+      # Returns: {"comment_id": 2, "location": "@x:100,y:200", ...}
+
+  - name: get_review
+    signature: 'get_review(review_id: int) -> dict'
+    description: Get review with all its comments and metadata
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/artifacts/reviews.py'
+    implementation_lines: '142-191'
+    database_tables:
+      - reviews
+      - inline_comments
+      - artifacts
+      - revisions
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: 0
+    example: |
+      # Get full review
+      full_review = await get_review(review_id=1)
+      # Returns: {
+      #   "review_id": 1,
+      #   "artifact_name": "design-mockup-v1",
+      #   "revision_num": 1,
+      #   "reviewer_persona": "mike-developer",
+      #   "comments": [...]
+      # }
+
+  - name: generate_annotated_artifact
+    signature: 'generate_annotated_artifact(artifact_id: int, revision_id: int) -> dict'
+    description: Generate annotated version with all review comments as footnotes plus per-reviewer files
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/artifacts/reviews.py'
+    implementation_lines: '193-327'
+    database_tables:
+      - reviews
+      - inline_comments
+      - revisions
+      - artifacts
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: 0
+    example: |
+      # Generate annotated version with footnotes
+      annotated = await generate_annotated_artifact(
+          artifact_id=1,
+          revision_id=2
+      )
+      # Returns: {
+      #   "annotated_content": "...with [^mike-developer-1], [^ceo-1] markers",
+      #   "reviewer_files": {
+      #     "mike-developer": "# Inline Comments by @mike-developer\n...",
+      #     "ceo": "# Inline Comments by @ceo\n..."
+      #   },
+      #   "total_comments": 3,
+      #   "reviewers": ["mike-developer", "ceo"]
+      # }
+
+  - name: complete_review
+    signature: 'complete_review(review_id: int, overall_comment: Optional[str] = None) -> dict'
+    description: Mark review as completed with optional overall summary comment
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/artifacts/reviews.py'
+    implementation_lines: '329-366'
+    database_tables:
+      - reviews
+    web_routes: []
+    user_stories: []
+    test_coverage_percent: 0
+    example: |
+      # Complete review with overall assessment
+      await complete_review(
+          review_id=1,
+          overall_comment="Great work! Just minor adjustments needed."
+      )
+      # Returns: {"review_id": 1, "status": "completed", "overall_comment": "..."}

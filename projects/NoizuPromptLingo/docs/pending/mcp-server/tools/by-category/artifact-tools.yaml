@@ -1,0 +1,88 @@
+category: artifact-management
+category_id: C-02
+tool_count: 5
+documentation_source: worktrees/main/mcp-server
+tools:
+  - name: create_artifact
+    signature: 'create_artifact(name: str, artifact_type: str, file_content_base64: str, filename: str, created_by: Optional[str] = None, purpose: Optional[str] = None) -> dict'
+    description: Create a new artifact with initial revision. Stores file in data/artifacts/{name}/revision-0-{filename} and returns artifact ID, revision ID, and web URL.
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/artifacts/manager.py'
+    database_tables: [artifacts, revisions]
+    web_routes: ['GET /artifact/{id}']
+    user_stories: [US-001, US-004]
+    test_coverage_percent: 53
+    example: |
+      artifact = await create_artifact(
+          name="design-mockup-v1",
+          artifact_type="image",
+          file_content_base64=base64_encoded_image,
+          filename="mockup.png",
+          created_by="sarah-designer",
+          purpose="Initial design concept for dashboard"
+      )
+      # Returns: {"artifact_id": 1, "revision_num": 0, "revision_id": 1, "web_url": "..."}
+
+  - name: add_revision
+    signature: 'add_revision(artifact_id: int, file_content_base64: str, filename: str, created_by: Optional[str] = None, purpose: Optional[str] = None, notes: Optional[str] = None) -> dict'
+    description: Add a new revision to an existing artifact. Increments revision number, stores new file, and updates artifact's current_revision_id pointer.
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/artifacts/manager.py'
+    database_tables: [revisions, artifacts]
+    web_routes: ['GET /artifact/{id}']
+    user_stories: [US-002, US-004]
+    test_coverage_percent: 53
+    example: |
+      revision = await add_revision(
+          artifact_id=1,
+          file_content_base64=base64_encoded_updated_image,
+          filename="mockup-v2.png",
+          created_by="sarah-designer",
+          purpose="Updated colors per feedback",
+          notes="Changed primary color to #3498db"
+      )
+      # Returns: {"revision_id": 2, "revision_num": 1, "web_url": "..."}
+
+  - name: get_artifact
+    signature: 'get_artifact(artifact_id: int, revision: Optional[int] = None) -> dict'
+    description: Get artifact and its revision content. Returns current revision by default or specified revision if provided. Content is base64-encoded.
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/artifacts/manager.py'
+    database_tables: [artifacts, revisions]
+    web_routes: ['GET /artifact/{id}', 'GET /api/artifact/{id}']
+    user_stories: [US-003]
+    test_coverage_percent: 53
+    example: |
+      # Get current artifact
+      current = await get_artifact(artifact_id=1)
+
+      # Get specific revision
+      old_version = await get_artifact(artifact_id=1, revision=0)
+      # Returns: {"artifact_id": 1, "name": "...", "content_base64": "...", ...}
+
+  - name: list_artifacts
+    signature: 'list_artifacts() -> list'
+    description: List all artifacts with summary metadata (no file content). Returns artifact ID, name, type, current revision number, and creation timestamp.
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/artifacts/manager.py'
+    database_tables: [artifacts, revisions]
+    web_routes: ['GET /api/artifacts']
+    user_stories: [US-003, US-005]
+    test_coverage_percent: 0
+    example: |
+      artifacts = await list_artifacts()
+      # Returns: [
+      #   {"artifact_id": 1, "name": "design-mockup-v1", "artifact_type": "image", "current_revision": 2, "created_at": "..."},
+      #   {"artifact_id": 2, "name": "q4-report", "artifact_type": "document", "current_revision": 0, "created_at": "..."}
+      # ]
+
+  - name: get_artifact_history
+    signature: 'get_artifact_history(artifact_id: int) -> list'
+    description: Get revision history for an artifact. Returns chronological list of all revisions (newest first) with metadata but no file content.
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/artifacts/manager.py'
+    database_tables: [revisions]
+    web_routes: ['GET /api/artifact/{id}/history']
+    user_stories: [US-002, US-005]
+    test_coverage_percent: 0
+    example: |
+      history = await get_artifact_history(artifact_id=1)
+      # Returns: [
+      #   {"revision_num": 1, "created_by": "sarah-designer", "purpose": "Updated colors...", "filename": "mockup-v2.png", "created_at": "..."},
+      #   {"revision_num": 0, "created_by": "sarah-designer", "purpose": "Initial design...", "filename": "mockup.png", "created_at": "..."}
+      # ]

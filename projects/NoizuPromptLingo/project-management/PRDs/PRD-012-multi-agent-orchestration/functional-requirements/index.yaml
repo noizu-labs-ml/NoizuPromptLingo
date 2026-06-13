@@ -1,0 +1,111 @@
+functional_requirements:
+  - id: FR-001
+    name: "Orchestration Engine"
+    description: "Execute patterns with pause/resume/cancel and status queries"
+    status: draft
+    related_stories:
+      - US-058
+      - US-059
+      - US-060
+      - US-061
+      - US-062
+      - US-064
+    expected_tests: 18
+    coverage_target: 100
+    file: FR-001-orchestration-engine.md
+
+  - id: FR-002
+    name: "Communication Protocol"
+    description: "Structured inter-agent communication via worklog entries"
+    status: draft
+    related_stories:
+      - US-058
+      - US-060
+      - US-062
+      - US-079
+    expected_tests: 13
+    coverage_target: 100
+    file: FR-002-communication-protocol.md
+
+  - id: FR-003
+    name: "Worklog Integration"
+    description: "Shared worklog with cursor-based reading and subscriptions"
+    status: draft
+    related_stories:
+      - US-064
+      - US-079
+    expected_tests: 11
+    coverage_target: 100
+    file: FR-003-worklog-integration.md
+
+  - id: FR-004
+    name: "Progress Monitoring"
+    description: "Track progress and provide visibility into metrics"
+    status: draft
+    related_stories:
+      - US-059
+      - US-061
+      - US-063
+    expected_tests: 9
+    coverage_target: 100
+    file: FR-004-progress-monitoring.md
+
+  - id: FR-005
+    name: "Consensus Pattern Implementation"
+    description: "Parallel analysts with weighted voting and synthesis"
+    status: draft
+    related_stories:
+      - US-058
+    expected_tests: 11
+    coverage_target: 100
+    file: FR-005-consensus-pattern-implementation.md
+
+  - id: FR-006
+    name: "Pipeline Pattern Implementation"
+    description: "Sequential stages with quality gates and feedback loops"
+    status: draft
+    related_stories:
+      - US-059
+    expected_tests: 13
+    coverage_target: 100
+    file: FR-006-pipeline-pattern-implementation.md
+
+  - id: FR-007
+    name: "Hierarchical Pattern Implementation"
+    description: "Coordinator-based decomposition with teams and aggregation"
+    status: draft
+    related_stories:
+      - US-060
+    expected_tests: 11
+    coverage_target: 100
+    file: FR-007-hierarchical-pattern-implementation.md
+
+  - id: FR-008
+    name: "Iterative Pattern Implementation"
+    description: "Refinement spiral with quality-based termination"
+    status: draft
+    related_stories:
+      - US-061
+    expected_tests: 11
+    coverage_target: 100
+    file: FR-008-iterative-pattern-implementation.md
+
+  - id: FR-009
+    name: "Synthesis Pattern Implementation"
+    description: "Multi-perspective analysis with integration matrix"
+    status: draft
+    related_stories:
+      - US-062
+    expected_tests: 11
+    coverage_target: 100
+    file: FR-009-synthesis-pattern-implementation.md
+
+  - id: FR-010
+    name: "Pattern Composition"
+    description: "Compose patterns into complex multi-stage workflows"
+    status: draft
+    related_stories:
+      - US-065
+    expected_tests: 9
+    coverage_target: 100
+    file: FR-010-pattern-composition.md

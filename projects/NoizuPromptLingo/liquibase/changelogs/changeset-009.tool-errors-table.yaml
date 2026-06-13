@@ -1,0 +1,58 @@
+databaseChangeLog:
+  - changeSet:
+      id: 009-tool-errors-table
+      author: system
+      changes:
+        - createTable:
+            tableName: npl_tool_errors
+            columns:
+              - column:
+                  name: id
+                  type: bigserial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tool_name
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: error_type
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: error_message
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: session_id
+                  type: text
+                  constraints:
+                    nullable: true
+              - column:
+                  name: stack_excerpt
+                  type: text
+                  constraints:
+                    nullable: true
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_tool_errors_created_at
+            tableName: npl_tool_errors
+            columns:
+              - column:
+                  name: created_at
+                  descending: true
+        - createIndex:
+            indexName: idx_tool_errors_tool_name
+            tableName: npl_tool_errors
+            columns:
+              - column:
+                  name: tool_name

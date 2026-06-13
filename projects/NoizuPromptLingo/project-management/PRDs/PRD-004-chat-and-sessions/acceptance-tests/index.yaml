@@ -1,0 +1,45 @@
+acceptance_tests:
+  - id: AT-001
+    name: "@Mention Notification"
+    description: "Validates @mentions trigger notifications"
+    category: integration
+    related_fr:
+      - FR-001
+    status: passing
+    file: AT-001-mention-notification.md
+
+  - id: AT-002
+    name: "Artifact Sharing in Chat"
+    description: "Validates artifact sharing in chat rooms"
+    category: integration
+    related_fr:
+      - FR-001
+    status: passing
+    file: AT-002-artifact-sharing.md
+
+  - id: AT-003
+    name: "Session Dashboard Display"
+    description: "Validates session dashboard shows all rooms"
+    category: e2e
+    related_fr:
+      - FR-002
+    status: not_started
+    file: AT-003-session-dashboard.md
+
+  - id: AT-004
+    name: "Message Reactions"
+    description: "Validates emoji reactions on messages"
+    category: unit
+    related_fr:
+      - FR-001
+    status: passing
+    file: AT-004-message-reactions.md
+
+  - id: AT-005
+    name: "Todo Creation from Chat"
+    description: "Validates todos created from chat messages"
+    category: integration
+    related_fr:
+      - FR-001
+    status: passing
+    file: AT-005-todo-from-chat.md
