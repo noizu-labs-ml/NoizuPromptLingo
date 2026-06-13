@@ -1,0 +1,28 @@
+name: my-app
+version: 2.1.0
+endpoints:
+  - host: api.example.com
+    port: 443
+    protocol: https
+  - host: internal.example.com
+    port: 8080
+    protocol: http
+  - host: backup.example.com
+    port: 443
+    protocol: https
+features:
+  dark_mode: true
+  beta: false
+matrix:
+  - - 1
+    - 2
+    - 3
+  - - 4
+    - 5
+    - 6
+metadata:
+  owner: team-alpha
+  priority: high
+  labels:
+    env: staging
+    tier: "3"

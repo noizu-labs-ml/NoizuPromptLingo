@@ -1,0 +1,71 @@
+#!/bin/sh
+# dc-init — Bootstrap script for direnv-config shell integration
+# Outputs shell code that registers a precmd hook for IPC (version watching)
+# Usage: eval "$(dc-init zsh)" or eval "$(dc-init bash)"
+
+set -e
+
+SHELL_TYPE="${1:-zsh}"
+
+case "$SHELL_TYPE" in
+  zsh)
+    cat <<'SHELL'
+# direnv-config: IPC hook — watches .version for child process writes
+_dc_precmd_hook() {
+  local root="${DC_ROOT:-}"
+  [ -z "$root" ] && return
+  local vfile="$root/.version"
+  [ -f "$vfile" ] || return
+  local cur
+  cur=$(cat "$vfile" 2>/dev/null) || return
+  if [ "${_DC_LAST_VERSION:-}" != "$cur" ]; then
+    _DC_LAST_VERSION="$cur"
+    # Re-export env vars from resolved config
+    eval "$(dc env 2>/dev/null)" || true
+    # Bridge to tabbing-on if loaded
+    if type tabbing-status >/dev/null 2>&1; then
+      local new_status new_theme new_emoji
+      new_status=$(dc get tab status 2>/dev/null) || true
+      new_theme=$(dc get tab theme 2>/dev/null) || true
+      new_emoji=$(dc get tab emoji 2>/dev/null) || true
+      [ -n "$new_status" ] && [ "$new_status" != "${TAB_STATUS:-}" ] && tabbing-status "$new_status" 2>/dev/null || true
+      [ -n "$new_theme" ] && [ "$new_theme" != "${TAB_THEME:-}" ] && tabbing-style --theme="$new_theme" 2>/dev/null || true
+      [ -n "$new_emoji" ] && [ "$new_emoji" != "${TAB_EMOJI:-}" ] && tabbing-style -e "$new_emoji" 2>/dev/null || true
+    fi
+  fi
+}
+precmd_functions=(${precmd_functions:#_dc_precmd_hook} _dc_precmd_hook)
+SHELL
+    ;;
+  bash)
+    cat <<'SHELL'
+# direnv-config: IPC hook — watches .version for child process writes
+_dc_precmd_hook() {
+  local root="${DC_ROOT:-}"
+  [ -z "$root" ] && return
+  local vfile="$root/.version"
+  [ -f "$vfile" ] || return
+  local cur
+  cur=$(cat "$vfile" 2>/dev/null) || return
+  if [ "${_DC_LAST_VERSION:-}" != "$cur" ]; then
+    _DC_LAST_VERSION="$cur"
+    eval "$(dc env 2>/dev/null)" || true
+    if type tabbing-status >/dev/null 2>&1; then
+      local new_status new_theme new_emoji
+      new_status=$(dc get tab status 2>/dev/null) || true
+      new_theme=$(dc get tab theme 2>/dev/null) || true
+      new_emoji=$(dc get tab emoji 2>/dev/null) || true
+      [ -n "$new_status" ] && [ "$new_status" != "${TAB_STATUS:-}" ] && tabbing-status "$new_status" 2>/dev/null || true
+      [ -n "$new_theme" ] && [ "$new_theme" != "${TAB_THEME:-}" ] && tabbing-style --theme="$new_theme" 2>/dev/null || true
+      [ -n "$new_emoji" ] && [ "$new_emoji" != "${TAB_EMOJI:-}" ] && tabbing-style -e "$new_emoji" 2>/dev/null || true
+    fi
+  fi
+}
+PROMPT_COMMAND="_dc_precmd_hook;${PROMPT_COMMAND:-}"
+SHELL
+    ;;
+  *)
+    echo "Usage: dc-init [zsh|bash]" >&2
+    exit 1
+    ;;
+esac

@@ -1,0 +1,69 @@
+# Expected resolved state for: demo/root/projects/design/
+# Inherited: cluster (unchanged), cloudflare (unchanged), build (unchanged), services (modified)
+# Modified: tab (merge — theme + status + emoji), services (merge — postgres pool + database)
+# Pruned: npl (entire config removed)
+# Added: project
+# Runtime layer: tab.status overridden by dc_set
+
+cluster:                                   # unchanged from parent chain
+  name: noizu
+  kubeconfig: ~/.kube/noizu/config
+  context: noizu
+  region: us-east-1
+  node_pool:
+    min: 2
+    max: 8
+    instance_type: m5.xlarge
+
+cloudflare:                                # unchanged from parent chain
+  account_id: a75e7459...
+  zone_id: 46014d24...
+  zone_id_trl: 9793b993...
+  api_token: ""
+  access:
+    client_id: 7ebfc690...access
+    client_secret: ""
+  tunnel:
+    enabled: true
+    name: noizu-tunnel
+
+tab:
+  theme: rose-pine                         # was: catppuccin (from projects/)
+  status: ready                            # base layer says "design", local layer overrides to "ready"
+  emoji: palette                           # NEW
+
+build:                                     # unchanged from parent chain
+  env: prod
+  registry: ghcr.io/noizu
+  push_on_build: false
+
+# npl: PRUNED — dc_prune npl removed this entire config
+
+services:
+  postgres:
+    host: postgres.default.svc             # inherited from projects/
+    port: 5432                             # inherited from projects/
+    pool_size: 5                           # was: 10 (deep merge overwrote)
+    database: design_dev                   # NEW (deep merge added)
+  redis:                                   # inherited from projects/ unchanged
+    host: redis.default.svc
+    port: 6379
+
+project:                                   # NEW — added at this level
+  namespace: design-ns
+  domain: design.noizu.com
+  features:
+    hot_reload: true
+    debug_panel: true
+    analytics: false
+
+# New env vars:
+#   KUBE_NAMESPACE=design-ns
+#   APP_DOMAIN=design.noizu.com
+# Changed:
+#   TAB_THEME=rose-pine
+#   TAB_STATUS=ready (local layer)
+#   TAB_EMOJI=palette
+#   POSTGRES_PORT=5432 (unchanged but re-exported)
+# Removed:
+#   NPL_PROJECT (pruned)

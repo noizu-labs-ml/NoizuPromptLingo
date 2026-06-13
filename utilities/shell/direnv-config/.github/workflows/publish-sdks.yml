@@ -1,0 +1,95 @@
+name: Publish SDKs
+
+on:
+  push:
+    tags:
+      - "sdk-v*"
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  rust-sdk:
+    name: Publish Rust SDK to crates.io
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sdk/rust
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test
+      - run: cargo publish --dry-run
+      - run: cargo publish
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+  typescript-sdk:
+    name: Publish TypeScript SDK to npm
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sdk/typescript
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+      - run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  python-sdk:
+    name: Publish Python SDK to PyPI
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sdk/python
+    environment:
+      name: pypi
+      url: https://pypi.org/p/noizu-direnv-config
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install build twine
+      - run: python -m build
+      - run: twine check dist/*
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: sdk/python/dist/
+
+  elixir-sdk:
+    name: Publish Elixir SDK to Hex.pm
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sdk/elixir
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: "26"
+          elixir-version: "1.16"
+      - run: mix deps.get
+      - run: mix test
+      - run: mix hex.publish --yes
+        env:
+          HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+
+  php-sdk:
+    name: Tag PHP SDK for Packagist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Packagist webhook
+        run: |
+          echo "PHP packages are published via Packagist webhook on push."
+          echo "Ensure the repo is registered at https://packagist.org/packages/noizu/direnv-config"
+          echo "Packagist auto-updates on GitHub push if the webhook is configured."

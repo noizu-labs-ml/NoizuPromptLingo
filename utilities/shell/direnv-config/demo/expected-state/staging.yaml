@@ -1,0 +1,66 @@
+# Expected resolved state for: demo/root/projects/staging/
+# Inherited: npl (unchanged), services (unchanged)
+# Replaced: cloudflare (--replace wiped parent, wrote fresh)
+# Partially replaced: cluster (--replace-key node_pool — only that branch replaced)
+# Modified: build (merge), tab (merge)
+# Added: project
+
+cluster:
+  name: noizu                              # inherited — not touched by --replace-key
+  kubeconfig: ~/.kube/noizu/config         # inherited
+  context: noizu                           # inherited
+  region: us-east-1                        # inherited
+  node_pool:                               # REPLACED — only min + max survive
+    min: 1                                 # was: 2
+    max: 3                                 # was: 8
+    # instance_type: GONE — --replace-key wiped the whole branch
+
+cloudflare:                                # REPLACED — parent's config entirely gone
+  account_id: staging-cf-account           # was: a75e7459...
+  zone_id: staging-zone-id                 # was: 46014d24...
+  api_token: staging-api-token             # secrets layer also replaced
+  tunnel:
+    enabled: false                         # was: true + had name key
+  # zone_id_trl: GONE
+  # access: GONE (entire branch)
+
+tab:
+  theme: safe                              # was: catppuccin (from projects/)
+  status: staging                          # was: projects
+  emoji: construction                      # NEW
+
+build:
+  env: staging                             # was: prod (deep merge overwrote)
+  registry: ghcr.io/noizu                  # inherited
+  push_on_build: true                      # was: false (deep merge overwrote)
+
+npl:                                       # unchanged from parent chain
+  project: noizu-infra
+
+services:                                  # unchanged from projects/
+  postgres:
+    host: postgres.default.svc
+    port: 5432
+    pool_size: 10
+  redis:
+    host: redis.default.svc
+    port: 6379
+
+project:                                   # NEW
+  namespace: staging-ns
+  domain: staging.noizu.com
+  ttl: 7200
+  cleanup:
+    enabled: true
+    max_age_hours: 72
+
+# Key differences from parent:
+#   CF_ACCOUNT_ID=staging-cf-account (replaced)
+#   CF_ZONE_ID=staging-zone-id (replaced)
+#   CF_API_TOKEN=staging-api-token (replaced)
+#   CF_ACCESS_CLIENT_ID — GONE (not in replaced cloudflare)
+#   CF_ZONE_ID_THEROBOTLIVES — GONE
+#   BUILD_ENV=staging (was prod)
+#   KUBE_NAMESPACE=staging-ns
+#   APP_DOMAIN=staging.noizu.com
+#   APP_TTL=7200

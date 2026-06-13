@@ -1,0 +1,91 @@
+#!/bin/sh
+# tabbing-on-step — Set Zellij pane title to a step name + emoji
+#
+# Usage:
+#   tabbing-on-step "run app" -rocket
+#   tabbing-on-step "deploy" -ship
+#   tabbing-on-step "build" --emoji 🔨
+#   tabbing-on-step "test suite"              # no emoji
+#   tabbing-on-step --clear                   # reset pane title
+#
+# Emoji shortcuts (prefix with -):
+#   -rocket 🚀   -ship 🚢     -check ✅   -cross ❌
+#   -hammer 🔨   -gear ⚙️     -bug 🐛     -lock 🔒
+#   -fire 🔥     -star ⭐     -package 📦  -test 🧪
+#   -deploy 🚀   -build 🔨    -clean 🧹   -watch 👀
+#   -db 🗄️      -sync 🔄     -warn ⚠️    -ok 👍
+#
+# If not running in Zellij, exits silently (no-op).
+
+set -e
+
+# --- Zellij gate ---
+if [ -z "$ZELLIJ" ]; then
+  exit 0
+fi
+
+# --- Emoji map ---
+resolve_emoji() {
+  case "$1" in
+    -rocket|--rocket|-deploy|--deploy)  printf '🚀' ;;
+    -ship|--ship)                       printf '🚢' ;;
+    -check|--check|-ok|--ok)            printf '✅' ;;
+    -cross|--cross|-fail|--fail)        printf '❌' ;;
+    -hammer|--hammer|-build|--build)    printf '🔨' ;;
+    -gear|--gear)                       printf '⚙️' ;;
+    -bug|--bug)                         printf '🐛' ;;
+    -lock|--lock)                       printf '🔒' ;;
+    -fire|--fire)                       printf '🔥' ;;
+    -star|--star)                       printf '⭐' ;;
+    -package|--package|-pkg|--pkg)      printf '📦' ;;
+    -test|--test)                       printf '🧪' ;;
+    -clean|--clean)                     printf '🧹' ;;
+    -watch|--watch)                     printf '👀' ;;
+    -db|--db)                           printf '🗄️' ;;
+    -sync|--sync)                       printf '🔄' ;;
+    -warn|--warn)                       printf '⚠️' ;;
+    -thumbsup|--thumbsup)              printf '👍' ;;
+    *)                                  printf '%s' "$1" ;;
+  esac
+}
+
+# --- Args ---
+step=""
+emoji=""
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --clear)
+      zellij action rename-pane ""
+      exit 0
+      ;;
+    --emoji)
+      shift
+      emoji="$1"
+      ;;
+    -*)
+      emoji=$(resolve_emoji "$1")
+      ;;
+    *)
+      step="$1"
+      ;;
+  esac
+  shift
+done
+
+if [ -z "$step" ] && [ -z "$emoji" ]; then
+  echo "Usage: tabbing-on-step \"step name\" [-emoji_shortcut]" >&2
+  exit 1
+fi
+
+# --- Build title ---
+if [ -n "$emoji" ] && [ -n "$step" ]; then
+  title="$emoji $step"
+elif [ -n "$emoji" ]; then
+  title="$emoji"
+else
+  title="$step"
+fi
+
+# --- Set pane title ---
+zellij action rename-pane "$title"

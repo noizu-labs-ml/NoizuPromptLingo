@@ -1,0 +1,14 @@
+name: noizu
+kubeconfig: ~/.kube/noizu/config
+context: noizu
+region: us-east-1
+node_pool:
+  min: 2
+  max: 8
+  instance_type: m5.xlarge
+tags:
+  - production
+  - us-east
+  - primary
+enabled: true
+port: 6443

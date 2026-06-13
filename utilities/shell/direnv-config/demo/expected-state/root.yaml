@@ -1,0 +1,53 @@
+# Expected resolved state for: demo/root/
+# Named configs present: cluster, cloudflare, tab, build, npl, _dc
+
+cluster:
+  name: noizu
+  kubeconfig: ~/.kube/noizu/config
+  context: noizu
+  region: us-east-1
+  node_pool:
+    min: 2
+    max: 8
+    instance_type: m5.xlarge
+
+cloudflare:
+  account_id: a75e7459...
+  zone_id: 46014d24...
+  zone_id_trl: 9793b993...
+  api_token: ""                        # from secrets layer (seeded empty)
+  access:
+    client_id: 7ebfc690...access
+    client_secret: ""                  # from secrets layer (seeded empty)
+  tunnel:
+    enabled: true
+    name: noizu-tunnel
+
+tab:
+  theme: kanagawa
+  status: idle
+
+build:
+  env: prod
+  registry: ghcr.io/noizu
+  push_on_build: false
+
+npl:
+  project: noizu-infra
+
+# Exported env vars:
+#   KUBECONFIG=~/.kube/noizu/config
+#   KUBECTX_CURRENT_CONTEXT=noizu
+#   CLUSTER_NAME=noizu
+#   CLUSTER_REGION=us-east-1
+#   CF_ACCOUNT_ID=a75e7459...
+#   CF_ZONE_ID=46014d24...
+#   CF_ZONE_ID_THEROBOTLIVES=9793b993...
+#   CF_API_TOKEN=
+#   CF_ACCESS_CLIENT_ID=7ebfc690...access
+#   CF_ACCESS_CLIENT_SECRET=
+#   BUILD_ENV=prod
+#   DOCKER_REGISTRY=ghcr.io/noizu
+#   NPL_PROJECT=noizu-infra
+#   TAB_THEME=kanagawa
+#   TAB_STATUS=idle

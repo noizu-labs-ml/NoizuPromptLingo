@@ -1,0 +1,61 @@
+# Expected resolved state for: demo/root/projects/terraform/
+# Pruned: cluster (entire), services (entire), npl (entire), build (entire)
+# Pruned partial: cloudflare.tunnel (branch), cloudflare.zone_id_trl (key via unset)
+# Modified: tab (merge)
+# Added: terraform
+#
+# This demonstrates heavy pruning — terraform only keeps what it needs.
+# All operations used --no-bump, finalized with single dc_bump.
+
+# cluster: PRUNED
+# services: PRUNED
+# npl: PRUNED
+# build: PRUNED
+
+cloudflare:
+  account_id: a75e7459...                  # inherited — Terraform CF provider needs this
+  zone_id: 46014d24...                     # inherited
+  api_token: ""                            # inherited from secrets layer
+  access:                                  # inherited
+    client_id: 7ebfc690...access
+    client_secret: ""
+  # zone_id_trl: GONE — dc_unset removed this individual key
+  # tunnel: GONE — dc_prune cloudflare tunnel removed this branch
+
+tab:
+  theme: nord                              # was: catppuccin (from projects/)
+  status: terraform                        # was: projects
+  emoji: wrench                            # NEW
+
+terraform:                                 # NEW — terraform-specific config
+  workspace: production
+  backend:
+    type: s3
+    bucket: noizu-tf-state
+    region: us-east-1
+    lock_table: noizu-tf-locks
+    encrypt: true
+  providers:
+    cloudflare:
+      version: "~> 4.0"
+    aws:
+      version: "~> 5.0"
+      region: us-east-1
+
+# Exported env vars (much smaller set — most configs pruned):
+#   CF_ACCOUNT_ID=a75e7459...
+#   CF_ZONE_ID=46014d24...
+#   CF_API_TOKEN=
+#   TAB_THEME=nord
+#   TAB_STATUS=terraform
+#   TAB_EMOJI=wrench
+#   TF_WORKSPACE=production
+#   TF_STATE_BUCKET=noizu-tf-state
+#   TF_STATE_REGION=us-east-1
+#
+# GONE (pruned):
+#   KUBECONFIG, KUBECTX_CURRENT_CONTEXT, CLUSTER_NAME, CLUSTER_REGION
+#   POSTGRES_HOST, POSTGRES_PORT, REDIS_HOST, REDIS_PORT
+#   NPL_PROJECT
+#   BUILD_ENV, DOCKER_REGISTRY
+#   CF_ZONE_ID_THEROBOTLIVES (unset)
