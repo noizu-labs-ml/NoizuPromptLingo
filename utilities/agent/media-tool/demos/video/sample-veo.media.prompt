@@ -1,0 +1,20 @@
+schema: "0.3"
+id: promo-veo-001
+type: video
+service: veo
+
+prompt:
+  text: "A robot hand carefully placing the final piece of a glowing circuit board puzzle, camera pulls back to reveal a complete futuristic cityscape. Warm golden lighting, hopeful tone."
+  provider_options:
+    durationSeconds: 8
+    resolution: "720p"
+    personGeneration: "allow_all"
+
+output:
+  formats:
+    - format: mp4
+  dimensions:
+    aspect_ratio: "16:9"
+
+tags: [promo, robot, cinematic]
+product_targets: [landing-page, youtube-ad]
