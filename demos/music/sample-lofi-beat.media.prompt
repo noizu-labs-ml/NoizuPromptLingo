@@ -1,0 +1,20 @@
+schema: "0.3"
+id: background-music-001
+type: audio
+service: suno
+
+prompt:
+  text: "A calm lo-fi hip hop beat with soft piano chords, vinyl crackle, and a gentle bass line. Relaxing study music vibes."
+  negative: "Heavy Metal, Screaming, Aggressive"
+  provider_options:
+    instrumental: true
+    customMode: true
+    style: "Lo-fi Hip Hop, Chill, Ambient"
+    title: "Study Session"
+
+output:
+  formats:
+    - format: mp3
+
+tags: [background, lofi, ambient]
+product_targets: [video-background, podcast-intro]

@@ -1,0 +1,67 @@
+schema: "0.3"
+id: hero-with-logo-001
+type: image
+service: gemini
+model: imagen-4.0-generate-001
+
+attachments:
+  - path: ./refs/brand-palette.png
+    role: style
+    description: "Reference palette: deep navy (#0A1628), electric cyan (#00D4FF), warm white (#F5F5F0)"
+
+prompt:
+  text: "Modern SaaS landing page hero section, dark navy gradient background, a minimal geometric logomark of interconnected hexagons centered above the headline 'Build Smarter', floating geometric shapes in cyan, clean sans-serif typography, 16:10 aspect ratio, color palette from the reference image"
+  negative: "wireframe, cluttered, light theme, realistic photo, stock photo"
+  style: screenshot-mockup
+
+output:
+  formats:
+    - format: png
+      quality: 100
+    - format: webp
+      quality: 85
+  dimensions:
+    width: 1440
+    height: 900
+    aspect_ratio: "16:9"
+  transparency: none
+  color_space: sRGB
+  dpi: 72
+
+post_processing:
+  - action: resize
+    params:
+      width: 1200
+      height: 750
+      fit: cover
+
+tags: [hero, landing, tier-1]
+product_targets: [hero-image, og-card]
+
+eval:
+  pass_threshold: 3.0
+  required_pass: [relevance]
+  criteria:
+    relevance:
+      weight: 0.30
+      scale: [1, 5]
+      description: "SaaS landing page with logo and headline"
+    composition:
+      weight: 0.20
+      scale: [1, 5]
+      description: "Clear visual hierarchy, CTA prominence"
+    technical:
+      weight: 0.20
+      scale: [1, 5]
+      description: "Sharp, correct dimensions"
+    web_ready:
+      weight: 0.15
+      scale: [1, 5]
+      description: "Web-optimized, has text overlay space"
+    brand_fit:
+      weight: 0.15
+      scale: [1, 5]
+      description: "Matches dark tech brand aesthetic"
+  reject_if:
+    - "obvious AI artifacts"
+    - "wrong aspect ratio"
