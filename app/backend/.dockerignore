@@ -1,0 +1,12 @@
+_build
+deps
+.elixir_ls
+.git
+*.md
+Dockerfile*
+.dockerignore
+.env*
+.formatter.exs
+test
+cover
+doc
