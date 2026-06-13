@@ -1,0 +1,561 @@
+import { describe, it, expect } from 'vitest';
+import { sqlImportToDiagram } from '../index';
+import { DatabaseType } from '@/lib/domain/database-type';
+
+describe('sqlImportToDiagram', () => {
+    it('should parse a simple PostgreSQL table and return a valid diagram', async () => {
+        const sql = `
+            CREATE TABLE users (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                email VARCHAR(255) UNIQUE
+            );
+        `;
+
+        const diagram = await sqlImportToDiagram({
+            sqlContent: sql,
+            sourceDatabaseType: DatabaseType.POSTGRESQL,
+            targetDatabaseType: DatabaseType.POSTGRESQL,
+        });
+
+        // Verify diagram structure
+        expect(diagram).toBeDefined();
+        expect(diagram.id).toBeDefined();
+        expect(diagram.databaseType).toBe(DatabaseType.POSTGRESQL);
+
+        // Verify table was parsed
+        expect(diagram.tables).toHaveLength(1);
+        expect(diagram.tables?.[0].name).toBe('users');
+
+        // Verify fields were parsed
+        const fields = diagram.tables?.[0].fields;
+        expect(fields).toHaveLength(3);
+
+        const fieldNames = fields?.map((f) => f.name);
+        expect(fieldNames).toContain('id');
+        expect(fieldNames).toContain('name');
+        expect(fieldNames).toContain('email');
+
+        // Verify primary key
+        const idField = fields?.find((f) => f.name === 'id');
+        expect(idField?.primaryKey).toBe(true);
+
+        // Verify nullable constraints
+        const nameField = fields?.find((f) => f.name === 'name');
+        expect(nameField?.nullable).toBe(false);
+
+        // Verify unique constraint
+        const emailField = fields?.find((f) => f.name === 'email');
+        expect(emailField?.unique).toBe(true);
+    });
+
+    it('should parse foreign key constraints properly', async () => {
+        const sql = `
+            CREATE SCHEMA IF NOT EXISTS "public";
+
+CREATE TABLE "public"."playlists" (
+    "playlist_id" SERIAL,
+    "user_id" int NOT NULL,
+    PRIMARY KEY ("playlist_id")
+);
+
+CREATE TABLE "public"."users" (
+    "user_id" SERIAL,
+    PRIMARY KEY ("user_id")
+);
+
+-- Foreign key constraints
+-- Schema: public
+ALTER TABLE "public"."playlists" ADD CONSTRAINT "fk_playlists_user_id_users_user_id" FOREIGN KEY("user_id") REFERENCES "public"."users"("user_id");
+        `;
+
+        const diagram = await sqlImportToDiagram({
+            sqlContent: sql,
+            sourceDatabaseType: DatabaseType.POSTGRESQL,
+            targetDatabaseType: DatabaseType.POSTGRESQL,
+        });
+
+        // Verify diagram structure
+        expect(diagram).toBeDefined();
+
+        const playlistTable = diagram.tables?.find(
+            (t) => t.name === 'playlists'
+        );
+        expect(playlistTable).toBeDefined();
+
+        const playlistUserIdField = playlistTable?.fields?.find(
+            (f) => f.name === 'user_id'
+        );
+        expect(playlistUserIdField).toBeDefined();
+
+        const usersTable = diagram.tables?.find((t) => t.name === 'users');
+        expect(usersTable).toBeDefined();
+
+        const usersUserIdField = usersTable?.fields?.find(
+            (f) => f.name === 'user_id'
+        );
+        expect(usersUserIdField).toBeDefined();
+
+        // verify relationships
+        expect(diagram.relationships).toBeDefined();
+        expect(diagram.relationships).toHaveLength(1);
+
+        const relationship = diagram.relationships?.[0];
+        expect(relationship?.sourceSchema).toBe('public');
+        expect(relationship?.sourceTableId).toBe(usersTable?.id);
+        expect(relationship?.sourceFieldId).toBe(usersUserIdField?.id);
+        expect(relationship?.sourceCardinality).toBe('one');
+
+        expect(relationship?.targetSchema).toBe('public');
+        expect(relationship?.targetTableId).toBe(playlistTable?.id);
+        expect(relationship?.targetFieldId).toBe(playlistUserIdField?.id);
+        expect(relationship?.targetCardinality).toBe('many');
+    });
+
+    it('should parse foreign key constraints properly - MySQL', async () => {
+        const sql = `
+CREATE TABLE \`users\` (
+    \`user_id\` INT AUTO_INCREMENT,
+    PRIMARY KEY (\`user_id\`)
+) ENGINE=InnoDB;
+
+CREATE TABLE \`playlists\` (
+    \`playlist_id\` INT AUTO_INCREMENT,
+    \`user_id\` INT NOT NULL,
+    PRIMARY KEY (\`playlist_id\`),
+    CONSTRAINT \`fk_playlists_user_id\` FOREIGN KEY (\`user_id\`) REFERENCES \`users\`(\`user_id\`)
+) ENGINE=InnoDB;
+        `;
+
+        const diagram = await sqlImportToDiagram({
+            sqlContent: sql,
+            sourceDatabaseType: DatabaseType.MYSQL,
+            targetDatabaseType: DatabaseType.MYSQL,
+        });
+
+        // Verify diagram structure
+        expect(diagram).toBeDefined();
+
+        const playlistTable = diagram.tables?.find(
+            (t) => t.name === 'playlists'
+        );
+        expect(playlistTable).toBeDefined();
+
+        const playlistUserIdField = playlistTable?.fields?.find(
+            (f) => f.name === 'user_id'
+        );
+        expect(playlistUserIdField).toBeDefined();
+
+        const usersTable = diagram.tables?.find((t) => t.name === 'users');
+        expect(usersTable).toBeDefined();
+
+        const usersUserIdField = usersTable?.fields?.find(
+            (f) => f.name === 'user_id'
+        );
+        expect(usersUserIdField).toBeDefined();
+
+        // verify relationships
+        expect(diagram.relationships).toBeDefined();
+        expect(diagram.relationships).toHaveLength(1);
+
+        const relationship = diagram.relationships?.[0];
+        expect(relationship?.sourceTableId).toBe(usersTable?.id);
+        expect(relationship?.sourceFieldId).toBe(usersUserIdField?.id);
+        expect(relationship?.sourceCardinality).toBe('one');
+
+        expect(relationship?.targetTableId).toBe(playlistTable?.id);
+        expect(relationship?.targetFieldId).toBe(playlistUserIdField?.id);
+        expect(relationship?.targetCardinality).toBe('many');
+    });
+
+    it('should parse foreign key constraints properly - MariaDB', async () => {
+        const sql = `
+CREATE TABLE \`users\` (
+    \`user_id\` INT AUTO_INCREMENT,
+    PRIMARY KEY (\`user_id\`)
+) ENGINE=InnoDB;
+
+CREATE TABLE \`playlists\` (
+    \`playlist_id\` INT AUTO_INCREMENT,
+    \`user_id\` INT NOT NULL,
+    PRIMARY KEY (\`playlist_id\`),
+    CONSTRAINT \`fk_playlists_user_id\` FOREIGN KEY (\`user_id\`) REFERENCES \`users\`(\`user_id\`)
+) ENGINE=InnoDB;
+        `;
+
+        const diagram = await sqlImportToDiagram({
+            sqlContent: sql,
+            sourceDatabaseType: DatabaseType.MARIADB,
+            targetDatabaseType: DatabaseType.MARIADB,
+        });
+
+        // Verify diagram structure
+        expect(diagram).toBeDefined();
+
+        const playlistTable = diagram.tables?.find(
+            (t) => t.name === 'playlists'
+        );
+        expect(playlistTable).toBeDefined();
+
+        const playlistUserIdField = playlistTable?.fields?.find(
+            (f) => f.name === 'user_id'
+        );
+        expect(playlistUserIdField).toBeDefined();
+
+        const usersTable = diagram.tables?.find((t) => t.name === 'users');
+        expect(usersTable).toBeDefined();
+
+        const usersUserIdField = usersTable?.fields?.find(
+            (f) => f.name === 'user_id'
+        );
+        expect(usersUserIdField).toBeDefined();
+
+        // verify relationships
+        expect(diagram.relationships).toBeDefined();
+        expect(diagram.relationships).toHaveLength(1);
+
+        const relationship = diagram.relationships?.[0];
+        expect(relationship?.sourceTableId).toBe(usersTable?.id);
+        expect(relationship?.sourceFieldId).toBe(usersUserIdField?.id);
+        expect(relationship?.sourceCardinality).toBe('one');
+
+        expect(relationship?.targetTableId).toBe(playlistTable?.id);
+        expect(relationship?.targetFieldId).toBe(playlistUserIdField?.id);
+        expect(relationship?.targetCardinality).toBe('many');
+    });
+
+    it('should parse foreign key constraints properly - SQL Server', async () => {
+        const sql = `
+CREATE TABLE [dbo].[users] (
+    [user_id] INT IDENTITY(1,1) NOT NULL,
+    PRIMARY KEY ([user_id])
+);
+
+CREATE TABLE [dbo].[playlists] (
+    [playlist_id] INT IDENTITY(1,1) NOT NULL,
+    [user_id] INT NOT NULL,
+    PRIMARY KEY ([playlist_id]),
+    CONSTRAINT [fk_playlists_user_id] FOREIGN KEY ([user_id]) REFERENCES [dbo].[users]([user_id])
+);
+        `;
+
+        const diagram = await sqlImportToDiagram({
+            sqlContent: sql,
+            sourceDatabaseType: DatabaseType.SQL_SERVER,
+            targetDatabaseType: DatabaseType.SQL_SERVER,
+        });
+
+        // Verify diagram structure
+        expect(diagram).toBeDefined();
+
+        const playlistTable = diagram.tables?.find(
+            (t) => t.name === 'playlists'
+        );
+        expect(playlistTable).toBeDefined();
+
+        const playlistUserIdField = playlistTable?.fields?.find(
+            (f) => f.name === 'user_id'
+        );
+        expect(playlistUserIdField).toBeDefined();
+
+        const usersTable = diagram.tables?.find((t) => t.name === 'users');
+        expect(usersTable).toBeDefined();
+
+        const usersUserIdField = usersTable?.fields?.find(
+            (f) => f.name === 'user_id'
+        );
+        expect(usersUserIdField).toBeDefined();
+
+        // verify relationships
+        expect(diagram.relationships).toBeDefined();
+        expect(diagram.relationships).toHaveLength(1);
+
+        const relationship = diagram.relationships?.[0];
+        expect(relationship?.sourceSchema).toBe('dbo');
+        expect(relationship?.sourceTableId).toBe(usersTable?.id);
+        expect(relationship?.sourceFieldId).toBe(usersUserIdField?.id);
+        expect(relationship?.sourceCardinality).toBe('one');
+
+        expect(relationship?.targetSchema).toBe('dbo');
+        expect(relationship?.targetTableId).toBe(playlistTable?.id);
+        expect(relationship?.targetFieldId).toBe(playlistUserIdField?.id);
+        expect(relationship?.targetCardinality).toBe('many');
+    });
+
+    it('should parse foreign key constraints properly - SQLite', async () => {
+        const sql = `
+CREATE TABLE users (
+    user_id INTEGER PRIMARY KEY AUTOINCREMENT
+);
+
+CREATE TABLE playlists (
+    playlist_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+        `;
+
+        const diagram = await sqlImportToDiagram({
+            sqlContent: sql,
+            sourceDatabaseType: DatabaseType.SQLITE,
+            targetDatabaseType: DatabaseType.SQLITE,
+        });
+
+        // Verify diagram structure
+        expect(diagram).toBeDefined();
+
+        const playlistTable = diagram.tables?.find(
+            (t) => t.name === 'playlists'
+        );
+        expect(playlistTable).toBeDefined();
+
+        const playlistUserIdField = playlistTable?.fields?.find(
+            (f) => f.name === 'user_id'
+        );
+        expect(playlistUserIdField).toBeDefined();
+
+        const usersTable = diagram.tables?.find((t) => t.name === 'users');
+        expect(usersTable).toBeDefined();
+
+        const usersUserIdField = usersTable?.fields?.find(
+            (f) => f.name === 'user_id'
+        );
+        expect(usersUserIdField).toBeDefined();
+
+        // verify relationships
+        expect(diagram.relationships).toBeDefined();
+        expect(diagram.relationships).toHaveLength(1);
+
+        const relationship = diagram.relationships?.[0];
+        expect(relationship?.sourceTableId).toBe(usersTable?.id);
+        expect(relationship?.sourceFieldId).toBe(usersUserIdField?.id);
+        expect(relationship?.sourceCardinality).toBe('one');
+
+        expect(relationship?.targetTableId).toBe(playlistTable?.id);
+        expect(relationship?.targetFieldId).toBe(playlistUserIdField?.id);
+        expect(relationship?.targetCardinality).toBe('many');
+    });
+
+    it('should parse PostgreSQL table with schema, decimal types, and various column types', async () => {
+        const sql = `
+            CREATE TABLE "inventory"."order_summary" (
+                "order_id" SERIAL PRIMARY KEY,
+                "customer_id" int,
+                "product_id" int,
+                "batch_id" int,
+                "order_date" date,
+                "total_amount" decimal(15,2),
+                "discount_amount" decimal(15,2),
+                "items_count" int,
+                "units_sold" int
+            );
+        `;
+
+        const diagram = await sqlImportToDiagram({
+            sqlContent: sql,
+            sourceDatabaseType: DatabaseType.POSTGRESQL,
+            targetDatabaseType: DatabaseType.POSTGRESQL,
+        });
+
+        // Verify diagram structure
+        expect(diagram).toBeDefined();
+        expect(diagram.databaseType).toBe(DatabaseType.POSTGRESQL);
+
+        // Verify table was parsed
+        expect(diagram.tables).toHaveLength(1);
+        const table = diagram.tables?.[0];
+        expect(table?.name).toBe('order_summary');
+        expect(table?.schema).toBe('inventory');
+
+        // Verify all fields were parsed
+        const fields = table?.fields;
+        expect(fields).toHaveLength(9);
+
+        const fieldNames = fields?.map((f) => f.name);
+        expect(fieldNames).toContain('order_id');
+        expect(fieldNames).toContain('customer_id');
+        expect(fieldNames).toContain('product_id');
+        expect(fieldNames).toContain('batch_id');
+        expect(fieldNames).toContain('order_date');
+        expect(fieldNames).toContain('total_amount');
+        expect(fieldNames).toContain('discount_amount');
+        expect(fieldNames).toContain('items_count');
+        expect(fieldNames).toContain('units_sold');
+
+        // Verify primary key - serial is preserved (not converted to int)
+        const pkField = fields?.find((f) => f.name === 'order_id');
+        expect(pkField?.primaryKey).toBe(true);
+        expect(pkField?.type.name).toBe('serial');
+
+        // Verify decimal fields (decimal is normalized to numeric in PostgreSQL)
+        const totalAmountField = fields?.find((f) => f.name === 'total_amount');
+        expect(totalAmountField?.type.name).toBe('numeric');
+        expect(totalAmountField?.type.id).toBe('numeric');
+        expect(totalAmountField?.precision).toBe(15);
+        expect(totalAmountField?.scale).toBe(2);
+
+        const discountAmountField = fields?.find(
+            (f) => f.name === 'discount_amount'
+        );
+        expect(discountAmountField?.type.name).toBe('numeric');
+        expect(discountAmountField?.type.id).toBe('numeric');
+        expect(discountAmountField?.precision).toBe(15);
+        expect(discountAmountField?.scale).toBe(2);
+
+        // Verify date field
+        const orderDateField = fields?.find((f) => f.name === 'order_date');
+        expect(orderDateField?.type.name).toBe('date');
+
+        // Verify int fields
+        const customerIdField = fields?.find((f) => f.name === 'customer_id');
+        expect(customerIdField?.type.name).toBe('int');
+    });
+
+    it('should parse PostgreSQL table with GENERATED BY DEFAULT AS IDENTITY, decimal precision/scale, and various constraints', async () => {
+        const sql = `
+            CREATE TABLE "accounting"."invoices" (
+              "id" INT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+              "code" varchar(5) NOT NULL,
+              "number" int NOT NULL,
+              "fk_customer" int NOT NULL,
+              "fk_operation" int NOT NULL,
+              "fk_provider" int NOT NULL,
+              "issue_date" date NOT NULL,
+              "reference" varchar(128),
+              "suggested_amount" decimal(15,2),
+              "gross_amount" decimal(15,2) NOT NULL,
+              "fk_type" int NOT NULL,
+              "tax_rate_1" decimal(13,4),
+              "tax_rate_2" decimal(13,4),
+              "tax_rate_3" decimal(13,4),
+              "net_amount" decimal(15,2),
+              "paid_amount" decimal(15,2),
+              "payment_date" date,
+              "created_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              "updated_at" timestamp,
+              "fk_created_by" int NOT NULL,
+              "fk_updated_by" int,
+              "fk_status" int NOT NULL DEFAULT 1
+            );
+        `;
+
+        const diagram = await sqlImportToDiagram({
+            sqlContent: sql,
+            sourceDatabaseType: DatabaseType.POSTGRESQL,
+            targetDatabaseType: DatabaseType.POSTGRESQL,
+        });
+
+        // Verify diagram structure
+        expect(diagram).toBeDefined();
+        expect(diagram.databaseType).toBe(DatabaseType.POSTGRESQL);
+
+        // Verify table was parsed
+        expect(diagram.tables).toHaveLength(1);
+        const table = diagram.tables?.[0];
+        expect(table?.name).toBe('invoices');
+        expect(table?.schema).toBe('accounting');
+
+        // Verify all fields were parsed (22 columns)
+        const fields = table?.fields;
+        expect(fields).toHaveLength(22);
+
+        // Verify id - GENERATED BY DEFAULT AS IDENTITY should be:
+        // - type: integer (INT is normalized to integer)
+        // - primaryKey: true
+        // - nullable: false (primary keys are not nullable)
+        // - increment: true (GENERATED BY DEFAULT AS IDENTITY marks it as auto-increment)
+        const pkField = fields?.find((f) => f.name === 'id');
+        expect(pkField).toBeDefined();
+        expect(pkField?.type.name).toBe('int');
+        expect(pkField?.primaryKey).toBe(true);
+        expect(pkField?.nullable).toBe(false);
+        expect(pkField?.increment).toBe(true);
+
+        // Verify number - int NOT NULL (should NOT be auto-increment)
+        const numberField = fields?.find((f) => f.name === 'number');
+        expect(numberField).toBeDefined();
+        expect(numberField?.type.name).toBe('int');
+        expect(numberField?.nullable).toBe(false);
+        expect(numberField?.increment).toBeFalsy();
+
+        // Verify code - varchar(5) NOT NULL
+        const codeField = fields?.find((f) => f.name === 'code');
+        expect(codeField).toBeDefined();
+        expect(codeField?.type.name).toBe('varchar');
+        expect(codeField?.nullable).toBe(false);
+        expect(codeField?.characterMaximumLength).toBe('5');
+
+        // Verify reference - varchar(128) nullable
+        const referenceField = fields?.find((f) => f.name === 'reference');
+        expect(referenceField).toBeDefined();
+        expect(referenceField?.type.name).toBe('varchar');
+        expect(referenceField?.nullable).toBe(true);
+        expect(referenceField?.characterMaximumLength).toBe('128');
+
+        // Verify gross_amount - decimal(15,2) NOT NULL
+        // decimal is normalized to numeric in PostgreSQL
+        const grossAmountField = fields?.find((f) => f.name === 'gross_amount');
+        expect(grossAmountField).toBeDefined();
+        expect(grossAmountField?.type.name).toBe('numeric');
+        expect(grossAmountField?.type.id).toBe('numeric');
+        expect(grossAmountField?.nullable).toBe(false);
+        expect(grossAmountField?.precision).toBe(15);
+        expect(grossAmountField?.scale).toBe(2);
+
+        // Verify tax_rate_1 - decimal(13,4) nullable
+        const taxRate1Field = fields?.find((f) => f.name === 'tax_rate_1');
+        expect(taxRate1Field).toBeDefined();
+        expect(taxRate1Field?.type.name).toBe('numeric');
+        expect(taxRate1Field?.nullable).toBe(true);
+        expect(taxRate1Field?.precision).toBe(13);
+        expect(taxRate1Field?.scale).toBe(4);
+
+        // Verify issue_date - date NOT NULL
+        const issueDateField = fields?.find((f) => f.name === 'issue_date');
+        expect(issueDateField).toBeDefined();
+        expect(issueDateField?.type.name).toBe('date');
+        expect(issueDateField?.nullable).toBe(false);
+
+        // Verify payment_date - date nullable
+        const paymentDateField = fields?.find((f) => f.name === 'payment_date');
+        expect(paymentDateField).toBeDefined();
+        expect(paymentDateField?.type.name).toBe('date');
+        expect(paymentDateField?.nullable).toBe(true);
+
+        // Verify created_at - timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+        const createdAtField = fields?.find((f) => f.name === 'created_at');
+        expect(createdAtField).toBeDefined();
+        expect(createdAtField?.type.name).toBe('timestamp');
+        expect(createdAtField?.nullable).toBe(false);
+        expect(createdAtField?.default).toBe('CURRENT_TIMESTAMP');
+
+        // Verify updated_at - timestamp nullable (no default)
+        const updatedAtField = fields?.find((f) => f.name === 'updated_at');
+        expect(updatedAtField).toBeDefined();
+        expect(updatedAtField?.type.name).toBe('timestamp');
+        expect(updatedAtField?.nullable).toBe(true);
+
+        // Verify fk_status - int NOT NULL DEFAULT 1
+        const fkStatusField = fields?.find((f) => f.name === 'fk_status');
+        expect(fkStatusField).toBeDefined();
+        expect(fkStatusField?.type.name).toBe('int');
+        expect(fkStatusField?.nullable).toBe(false);
+        expect(fkStatusField?.default).toBe('1');
+
+        // Verify fk_updated_by - int nullable (no NOT NULL constraint)
+        const fkUpdatedByField = fields?.find(
+            (f) => f.name === 'fk_updated_by'
+        );
+        expect(fkUpdatedByField).toBeDefined();
+        expect(fkUpdatedByField?.type.name).toBe('int');
+        expect(fkUpdatedByField?.nullable).toBe(true);
+
+        // Verify fk_created_by - int NOT NULL
+        const fkCreatedByField = fields?.find(
+            (f) => f.name === 'fk_created_by'
+        );
+        expect(fkCreatedByField).toBeDefined();
+        expect(fkCreatedByField?.type.name).toBe('int');
+        expect(fkCreatedByField?.nullable).toBe(false);
+    });
+});
