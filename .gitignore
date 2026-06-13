@@ -1,0 +1,6 @@
+.idea
+.iml
+_build
+deps
+noizu_core.iml
+Mnesia.nonode@nohost
