@@ -1,4 +1,0 @@
-[submodule "gh-pages"]
-	path = gh-pages
-	url = git@github.com:noizu-labs-ml/NoizuPromptLingo.git
-	branch = gh-pages

@@ -1,7 +1,0 @@
-{
-  "server": { "status": "ok", "uptime_seconds": 120, "fastmcp_version": "3.x.x" },
-  "database": { "status": "ok", "latency_ms": 2.1 },
-  "litellm": { "status": "not_configured" },
-  "catalog": { "status": "ok", "tool_count": 126, "mcp_tools": 14, "hidden_tools": 27, "stub_tools": 87 },
-  "frontend_build": { "status": "ok", "dist_path": "/mock/dist" }
-}

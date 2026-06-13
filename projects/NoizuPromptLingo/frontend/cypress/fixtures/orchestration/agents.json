@@ -1,8 +1,0 @@
-[
-  { "name": "npl-idea-to-spec", "purpose": "Feature ideas -> personas + user stories", "kind": "pipeline" },
-  { "name": "npl-prd-editor", "purpose": "User stories -> PRD documents", "kind": "pipeline" },
-  { "name": "npl-tdd-tester", "purpose": "PRD -> test suites", "kind": "pipeline" },
-  { "name": "npl-tdd-coder", "purpose": "Test suites -> implementation", "kind": "pipeline" },
-  { "name": "npl-winnower", "purpose": "Response quality filtering", "kind": "utility" },
-  { "name": "npl-tasker-fast", "purpose": "Moderate tasks (fastest)", "kind": "executor" }
-]
