@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  rust-cli:
+    name: Rust CLI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test
+      - run: cargo clippy -- -D warnings
+
+  rust-sdk:
+    name: Rust SDK
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sdk/rust
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test
+      - run: cargo clippy -- -D warnings
+
+  typescript-sdk:
+    name: TypeScript SDK
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sdk/typescript
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+
+  python-sdk:
+    name: Python SDK
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sdk/python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]"
+      - run: pytest
+
+  elixir-sdk:
+    name: Elixir SDK
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sdk/elixir
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: "26"
+          elixir-version: "1.16"
+      - run: mix deps.get
+      - run: mix compile --warnings-as-errors
+      - run: mix test
+
+  php-sdk:
+    name: PHP SDK
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sdk/php
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+      - run: composer install
+      - run: vendor/bin/phpunit

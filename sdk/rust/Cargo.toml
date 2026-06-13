@@ -1,0 +1,25 @@
+[package]
+name = "direnv-config"
+version = "0.1.0"
+edition = "2021"
+description = "Rust SDK for direnv-config (dc) — read and write YAML-backed directory configuration"
+license = "MIT"
+repository = "https://github.com/noizu/direnv-config"
+homepage = "https://github.com/noizu/direnv-config"
+documentation = "https://docs.rs/direnv-config"
+readme = "README.md"
+keywords = ["direnv", "config", "yaml", "environment", "configuration"]
+categories = ["config", "development-tools"]
+authors = ["Keith Brings <keith.brings@noizu.com>"]
+rust-version = "1.70"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_yaml = "0.9"
+sha2 = "0.10"
+dirs = "6"
+anyhow = "1"
+chrono = "0.4"
+
+[dev-dependencies]
+tempfile = "3"

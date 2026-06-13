@@ -1,0 +1,56 @@
+# Expected resolved state for: demo/root/projects/
+# Inherited: cluster, cloudflare, build, npl (unchanged from parent)
+# Modified: tab (deep merge — theme + status overwritten)
+# Added: services
+
+cluster:
+  name: noizu
+  kubeconfig: ~/.kube/noizu/config
+  context: noizu
+  region: us-east-1
+  node_pool:
+    min: 2
+    max: 8
+    instance_type: m5.xlarge
+
+cloudflare:                                # unchanged from parent
+  account_id: a75e7459...
+  zone_id: 46014d24...
+  zone_id_trl: 9793b993...
+  api_token: ""
+  access:
+    client_id: 7ebfc690...access
+    client_secret: ""
+  tunnel:
+    enabled: true
+    name: noizu-tunnel
+
+tab:                                       # deep merge: theme + status overwritten
+  theme: catppuccin                        # was: kanagawa
+  status: projects                         # was: idle
+
+build:                                     # unchanged from parent
+  env: prod
+  registry: ghcr.io/noizu
+  push_on_build: false
+
+npl:                                       # unchanged from parent
+  project: noizu-infra
+
+services:                                  # NEW — added at this level
+  postgres:
+    host: postgres.default.svc
+    port: 5432
+    pool_size: 10
+  redis:
+    host: redis.default.svc
+    port: 6379
+
+# New env vars added:
+#   POSTGRES_HOST=postgres.default.svc
+#   POSTGRES_PORT=5432
+#   REDIS_HOST=redis.default.svc
+#   REDIS_PORT=6379
+# Changed:
+#   TAB_THEME=catppuccin (was kanagawa)
+#   TAB_STATUS=projects (was idle)
