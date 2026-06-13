@@ -1,0 +1,31 @@
+---
+source: zellij-server/src/plugins/./unit/plugin_tests.rs
+expression: "format!(\"{:#?}\",\nswitch_session_event).replace(&format!(\"{:?}\", temp_folder.path()), \"\\\"CWD\\\"\")"
+---
+Some(
+    SwitchSession(
+        ConnectToSession {
+            name: Some(
+                "my_new_session",
+            ),
+            tab_position: None,
+            pane_id: None,
+            layout: None,
+            cwd: Some(
+                "CWD",
+            ),
+        },
+        1,
+        Some(
+            NotificationEnd {
+                channel: None,
+                exit_status: None,
+                unblock_condition: None,
+                affected_pane_id: None,
+                affected_tab_id: None,
+                error_message: None,
+                stdout_message: None,
+            },
+        ),
+    ),
+)

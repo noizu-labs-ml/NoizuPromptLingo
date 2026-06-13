@@ -1,0 +1,9 @@
+---
+source: zellij-utils/src/setup.rs
+expression: "format!(\"{:#?}\", layout_info)"
+---
+Some(
+    BuiltIn(
+        "default",
+    ),
+)

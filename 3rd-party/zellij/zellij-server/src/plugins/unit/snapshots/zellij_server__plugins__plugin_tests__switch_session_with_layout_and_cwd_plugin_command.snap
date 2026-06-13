@@ -1,0 +1,35 @@
+---
+source: zellij-server/src/plugins/./unit/plugin_tests.rs
+expression: "format!(\"{:#?}\", switch_session_event)"
+---
+Some(
+    SwitchSession(
+        ConnectToSession {
+            name: Some(
+                "my_other_new_session_with_cwd",
+            ),
+            tab_position: None,
+            pane_id: None,
+            layout: Some(
+                BuiltIn(
+                    "compact",
+                ),
+            ),
+            cwd: Some(
+                "/foo/bar",
+            ),
+        },
+        1,
+        Some(
+            NotificationEnd {
+                channel: None,
+                exit_status: None,
+                unblock_condition: None,
+                affected_pane_id: None,
+                affected_tab_id: None,
+                error_message: None,
+                stdout_message: None,
+            },
+        ),
+    ),
+)

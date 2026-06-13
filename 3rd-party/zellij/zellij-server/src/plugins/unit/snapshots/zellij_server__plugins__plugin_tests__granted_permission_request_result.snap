@@ -1,0 +1,21 @@
+---
+source: zellij-server/src/plugins/./unit/plugin_tests.rs
+expression: "format!(\"{:#?}\", permissions)"
+---
+Some(
+    [
+        ReadApplicationState,
+        ChangeApplicationState,
+        OpenFiles,
+        RunCommands,
+        OpenTerminalsOrPlugins,
+        WriteToStdin,
+        WebAccess,
+        ReadCliPipes,
+        MessageAndLaunchOtherPlugins,
+        Reconfigure,
+        RunActionsAsUser,
+        WriteToClipboard,
+        ReadSessionEnvironmentVariables,
+    ],
+)

@@ -1,0 +1,39 @@
+---
+source: zellij-server/src/plugins/./unit/plugin_tests.rs
+expression: "format!(\"{:#?}\", new_tab_event)"
+---
+Some(
+    NewTab(
+        Some(
+            "/path/to/my/cwd",
+        ),
+        None,
+        None,
+        [],
+        Some(
+            "new_tab_name",
+        ),
+        (
+            None,
+            None,
+        ),
+        None,
+        false,
+        true,
+        (
+            1,
+            false,
+        ),
+        Some(
+            NotificationEnd {
+                channel: None,
+                exit_status: None,
+                unblock_condition: None,
+                affected_pane_id: None,
+                affected_tab_id: None,
+                error_message: None,
+                stdout_message: None,
+            },
+        ),
+    ),
+)

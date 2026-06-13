@@ -1,0 +1,28 @@
+---
+source: src/tests/e2e/cases.rs
+expression: last_snapshot
+---
+ Zellij (e2e-test)  Tab #1 
+┌ Pane #1 ─────────────────────────────────────────────────┐┌ Pane #2 ─────────────────────────────────── SCROLL:  3/3 ┐
+│$                                                         ││$ cat /usr/src/zellij/fixtures/e2e/scrolling_inside_a_pane│
+│                                                          ││line1                                                     │
+│                                                          ││line2                                                     │
+│                                                          ││line3                                                     │
+│                                                          ││line4                                                     │
+│                                                          ││line5                                                     │
+│                                                          ││line6                                                     │
+│                                                          ││line7                                                     │
+│                                                          ││line8                                                     │
+│                                                          ││line9                                                     │
+│                                                          ││line10                                                    │
+│                                                          ││line11                                                    │
+│                                                          ││line12                                                    │
+│                                                          ││line13                                                    │
+│                                                          ││line14                                                    │
+│                                                          ││line15                                                    │
+│                                                          ││line16                                                    │
+│                                                          ││line17                                                    │
+│                                                          ││line18                                                    │
+│                                                          ││li█e19                                                    │
+└──────────────────────────────────────────────────────────┘└──────────────────────────────────────────────────────────┘
+ Ctrl + <g> LOCK  <p> PANE  <t> TAB  <n> RESIZE  <h> MOVE  <s> SEARCH  <o> SESSION  <q> QUIT        ...

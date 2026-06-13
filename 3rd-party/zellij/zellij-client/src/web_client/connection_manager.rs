@@ -1,0 +1,203 @@
+use crate::os_input_output::ClientOsApi;
+use crate::web_client::control_message::WebServerToWebClientControlMessage;
+use crate::web_client::types::{ClientChannels, ClientConnectionBus, ConnectionTable};
+use axum::extract::ws::{CloseFrame, Message};
+use std::sync::{atomic::AtomicBool, Arc};
+use tokio::sync::mpsc::UnboundedSender;
+use tokio_util::sync::CancellationToken;
+
+impl ConnectionTable {
+    pub fn add_new_client(
+        &mut self,
+        client_id: String,
+        client_os_api: Box<dyn ClientOsApi>,
+        is_read_only: bool,
+        session_token_hash: String,
+    ) {
+        self.client_id_to_channels
+            .insert(client_id.clone(), ClientChannels::new(client_os_api));
+        self.client_read_only_status
+            .insert(client_id.clone(), is_read_only);
+        self.client_session_token_hash
+            .insert(client_id, session_token_hash);
+    }
+
+    pub fn verify_client_ownership(&self, client_id: &str, session_token_hash: &str) -> bool {
+        self.client_session_token_hash
+            .get(client_id)
+            .map(|hash| hash == session_token_hash)
+            .unwrap_or(false)
+    }
+
+    pub fn is_client_read_only(&self, client_id: &str) -> bool {
+        self.client_read_only_status
+            .get(client_id)
+            .copied()
+            .unwrap_or(false)
+    }
+
+    pub fn add_client_control_tx(
+        &mut self,
+        client_id: &str,
+        control_channel_tx: UnboundedSender<Message>,
+    ) {
+        self.client_id_to_channels
+            .get_mut(client_id)
+            .map(|c| c.add_control_tx(control_channel_tx));
+    }
+
+    pub fn add_client_terminal_tx(
+        &mut self,
+        client_id: &str,
+        terminal_channel_tx: UnboundedSender<String>,
+    ) {
+        self.client_id_to_channels
+            .get_mut(client_id)
+            .map(|c| c.add_terminal_tx(terminal_channel_tx));
+    }
+
+    pub fn add_client_terminal_channel_cancellation_token(
+        &mut self,
+        client_id: &str,
+        terminal_channel_cancellation_token: CancellationToken,
+    ) {
+        self.client_id_to_channels.get_mut(client_id).map(|c| {
+            c.add_terminal_channel_cancellation_token(terminal_channel_cancellation_token)
+        });
+    }
+
+    pub fn get_client_os_api(&self, client_id: &str) -> Option<&Box<dyn ClientOsApi>> {
+        self.client_id_to_channels.get(client_id).map(|c| &c.os_api)
+    }
+
+    pub fn get_client_terminal_tx(&self, client_id: &str) -> Option<UnboundedSender<String>> {
+        self.client_id_to_channels
+            .get(client_id)
+            .and_then(|c| c.terminal_channel_tx.clone())
+    }
+
+    pub fn get_client_control_tx(&self, client_id: &str) -> Option<UnboundedSender<Message>> {
+        self.client_id_to_channels
+            .get(client_id)
+            .and_then(|c| c.control_channel_tx.clone())
+    }
+
+    pub fn remove_client(&mut self, client_id: &str) {
+        if let Some(mut client_channels) = self.client_id_to_channels.remove(client_id).take() {
+            client_channels.cleanup();
+        }
+        self.client_read_only_status.remove(client_id);
+        self.client_session_token_hash.remove(client_id);
+    }
+
+    pub fn get_should_not_reconnect_flag(&self, client_id: &str) -> Option<Arc<AtomicBool>> {
+        self.client_id_to_channels
+            .get(client_id)
+            .map(|c| c.should_not_reconnect.clone())
+    }
+}
+
+impl ClientConnectionBus {
+    pub fn send_stdout(&mut self, stdout: String) {
+        match self.stdout_channel_tx.as_ref() {
+            Some(stdout_channel_tx) => {
+                let _ = stdout_channel_tx.send(stdout);
+            },
+            None => {
+                self.get_stdout_channel_tx();
+                if let Some(stdout_channel_tx) = self.stdout_channel_tx.as_ref() {
+                    let _ = stdout_channel_tx.send(stdout);
+                } else {
+                    log::error!("Failed to send STDOUT message to client");
+                }
+            },
+        }
+    }
+
+    pub fn send_control(&mut self, message: WebServerToWebClientControlMessage) {
+        let message = Message::Text(serde_json::to_string(&message).unwrap().into());
+        match self.control_channel_tx.as_ref() {
+            Some(control_channel_tx) => {
+                let _ = control_channel_tx.send(message);
+            },
+            None => {
+                self.get_control_channel_tx();
+                if let Some(control_channel_tx) = self.control_channel_tx.as_ref() {
+                    let _ = control_channel_tx.send(message);
+                } else {
+                    log::error!("Failed to send control message to client");
+                }
+            },
+        }
+    }
+    pub fn close_connection(&mut self) {
+        let should_not_reconnect = self
+            .connection_table
+            .lock()
+            .unwrap()
+            .get_should_not_reconnect_flag(&self.web_client_id)
+            .map(|f| f.load(std::sync::atomic::Ordering::Relaxed))
+            .unwrap_or(false);
+        let code = if should_not_reconnect {
+            4001u16
+        } else {
+            axum::extract::ws::close_code::NORMAL
+        };
+        let close_frame = CloseFrame {
+            code,
+            reason: "Connection closed".into(),
+        };
+        let close_message = Message::Close(Some(close_frame));
+        match self.control_channel_tx.as_ref() {
+            Some(control_channel_tx) => {
+                let _ = control_channel_tx.send(close_message);
+            },
+            None => {
+                self.get_control_channel_tx();
+                if let Some(control_channel_tx) = self.control_channel_tx.as_ref() {
+                    let _ = control_channel_tx.send(close_message);
+                } else {
+                    log::error!("Failed to send close message to client");
+                }
+            },
+        }
+        self.connection_table
+            .lock()
+            .unwrap()
+            .remove_client(&self.web_client_id);
+    }
+
+    pub fn close_connection_kicked(&mut self) {
+        if let Some(flag) = self
+            .connection_table
+            .lock()
+            .unwrap()
+            .get_should_not_reconnect_flag(&self.web_client_id)
+        {
+            flag.store(true, std::sync::atomic::Ordering::Relaxed);
+        }
+        self.close_connection();
+    }
+
+    fn get_control_channel_tx(&mut self) {
+        if let Some(control_channel_tx) = self
+            .connection_table
+            .lock()
+            .unwrap()
+            .get_client_control_tx(&self.web_client_id)
+        {
+            self.control_channel_tx = Some(control_channel_tx);
+        }
+    }
+
+    fn get_stdout_channel_tx(&mut self) {
+        if let Some(stdout_channel_tx) = self
+            .connection_table
+            .lock()
+            .unwrap()
+            .get_client_terminal_tx(&self.web_client_id)
+        {
+            self.stdout_channel_tx = Some(stdout_channel_tx);
+        }
+    }
+}

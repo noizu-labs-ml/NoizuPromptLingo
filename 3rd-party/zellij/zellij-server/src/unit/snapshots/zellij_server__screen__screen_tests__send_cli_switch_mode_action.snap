@@ -1,0 +1,5 @@
+---
+source: zellij-server/src/./unit/screen_tests.rs
+expression: "format!(\"{:?}\", switch_mode_action)"
+---
+Some(ChangeMode(10, Locked))

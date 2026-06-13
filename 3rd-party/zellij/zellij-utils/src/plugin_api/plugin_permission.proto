@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package api.plugin_permission;
+
+enum PermissionType {
+  ReadApplicationState = 0;
+  ChangeApplicationState = 1;
+  OpenFiles = 2;
+  RunCommands = 3;
+  OpenTerminalsOrPlugins = 4;
+  WriteToStdin = 5;
+  WebAccess = 6;
+  ReadCliPipes = 7;
+  MessageAndLaunchOtherPlugins = 8;
+  Reconfigure = 9;
+  FullHdAccess = 10;
+  StartWebServer = 11;
+  InterceptInput = 12;
+  ReadPaneContents = 13;
+  RunActionsAsUser = 14;
+  WriteToClipboard = 15;
+  ReadSessionEnvironmentVariables = 16;
+}
