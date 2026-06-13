@@ -1,0 +1,247 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 800" font-family="Inter, system-ui, sans-serif">
+  <defs>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+    <filter id="searchGlow">
+      <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#06B6D4" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Canvas -->
+  <rect width="1280" height="800" fill="#0F0F14"/>
+
+  <!-- ==================== NAVBAR (56px) ==================== -->
+  <rect x="0" y="0" width="1280" height="56" fill="#18181F"/>
+  <line x1="0" y1="56" x2="1280" y2="56" stroke="#2A2A3A" stroke-width="1"/>
+
+  <!-- Logo mark -->
+  <circle cx="24" cy="28" r="10" fill="none" stroke="#06B6D4" stroke-width="1.5"/>
+  <path d="M20 28 L24 24 L28 28 L24 32 Z" fill="#06B6D4" opacity="0.6"/>
+  <text x="42" y="33" fill="#CDCDE0" font-size="15" font-weight="600" letter-spacing="0.3">claude-assist</text>
+
+  <!-- Compact search (center-right) -->
+  <rect x="860" y="14" width="260" height="28" rx="4" fill="#22222E" stroke="#2A2A3A" stroke-width="1"/>
+  <!-- Search icon small -->
+  <circle cx="876" cy="28" r="6" fill="none" stroke="#5C5C72" stroke-width="1.2"/>
+  <line x1="880.5" y1="32.5" x2="884" y2="36" stroke="#5C5C72" stroke-width="1.2" stroke-linecap="round"/>
+  <text x="892" y="32" fill="#5C5C72" font-size="12">Search conversations...</text>
+
+  <!-- Index status -->
+  <circle cx="1180" cy="28" r="4" fill="#06B6D4" opacity="0.7"/>
+  <text x="1190" y="32" fill="#5C5C72" font-size="11">Index: Live</text>
+
+  <!-- ==================== SIDEBAR (220px) ==================== -->
+  <rect x="0" y="56" width="220" height="744" fill="#18181F"/>
+  <line x1="220" y1="56" x2="220" y2="800" stroke="#2A2A3A" stroke-width="1"/>
+
+  <!-- Sidebar items -->
+  <!-- Dashboard -->
+  <g transform="translate(0, 80)">
+    <rect x="0" y="0" width="220" height="40" fill="transparent"/>
+    <!-- grid icon -->
+    <rect x="24" y="12" width="7" height="7" rx="1" fill="none" stroke="#7A7A94" stroke-width="1.2"/>
+    <rect x="34" y="12" width="7" height="7" rx="1" fill="none" stroke="#7A7A94" stroke-width="1.2"/>
+    <rect x="24" y="22" width="7" height="7" rx="1" fill="none" stroke="#7A7A94" stroke-width="1.2"/>
+    <rect x="34" y="22" width="7" height="7" rx="1" fill="none" stroke="#7A7A94" stroke-width="1.2"/>
+    <text x="52" y="24" fill="#7A7A94" font-size="13" font-weight="500">Dashboard</text>
+  </g>
+
+  <!-- Search (ACTIVE) -->
+  <g transform="translate(0, 120)">
+    <rect x="0" y="0" width="220" height="40" fill="rgba(6,182,212,0.08)"/>
+    <rect x="0" y="0" width="3" height="40" fill="#06B6D4"/>
+    <!-- search icon -->
+    <circle cx="30" cy="20" r="7" fill="none" stroke="#06B6D4" stroke-width="1.4"/>
+    <line x1="35" y1="25" x2="39" y2="29" stroke="#06B6D4" stroke-width="1.4" stroke-linecap="round"/>
+    <text x="52" y="24" fill="#06B6D4" font-size="13" font-weight="600">Search</text>
+  </g>
+
+  <!-- Browse -->
+  <g transform="translate(0, 160)">
+    <rect x="0" y="0" width="220" height="40" fill="transparent"/>
+    <!-- folder icon -->
+    <path d="M24 14 L30 14 L32 17 L41 17 L41 28 L24 28 Z" fill="none" stroke="#7A7A94" stroke-width="1.2" stroke-linejoin="round"/>
+    <text x="52" y="24" fill="#7A7A94" font-size="13" font-weight="500">Browse</text>
+  </g>
+
+  <!-- Datasets -->
+  <g transform="translate(0, 200)">
+    <rect x="0" y="0" width="220" height="40" fill="transparent"/>
+    <!-- database icon -->
+    <ellipse cx="32" cy="15" rx="9" ry="4" fill="none" stroke="#7A7A94" stroke-width="1.2"/>
+    <path d="M23 15 L23 27 C23 29.2 27 31 32 31 C37 31 41 29.2 41 27 L41 15" fill="none" stroke="#7A7A94" stroke-width="1.2"/>
+    <path d="M23 21 C23 23.2 27 25 32 25 C37 25 41 23.2 41 21" fill="none" stroke="#7A7A94" stroke-width="1.2"/>
+    <text x="52" y="24" fill="#7A7A94" font-size="13" font-weight="500">Datasets</text>
+  </g>
+
+  <!-- Settings -->
+  <g transform="translate(0, 240)">
+    <rect x="0" y="0" width="220" height="40" fill="transparent"/>
+    <!-- gear icon -->
+    <circle cx="32" cy="20" r="5" fill="none" stroke="#7A7A94" stroke-width="1.2"/>
+    <circle cx="32" cy="20" r="2" fill="#7A7A94"/>
+    <line x1="32" y1="12" x2="32" y2="15" stroke="#7A7A94" stroke-width="1.2"/>
+    <line x1="32" y1="25" x2="32" y2="28" stroke="#7A7A94" stroke-width="1.2"/>
+    <line x1="25" y1="16" x2="27.5" y2="17.5" stroke="#7A7A94" stroke-width="1.2"/>
+    <line x1="36.5" y1="22.5" x2="39" y2="24" stroke="#7A7A94" stroke-width="1.2"/>
+    <line x1="25" y1="24" x2="27.5" y2="22.5" stroke="#7A7A94" stroke-width="1.2"/>
+    <line x1="36.5" y1="17.5" x2="39" y2="16" stroke="#7A7A94" stroke-width="1.2"/>
+    <text x="52" y="24" fill="#7A7A94" font-size="13" font-weight="500">Settings</text>
+  </g>
+
+  <!-- ==================== MAIN CONTENT ==================== -->
+  <g transform="translate(252, 88)">
+
+    <!-- ===== SEARCH BAR (48px tall, full width) ===== -->
+    <rect x="0" y="0" width="996" height="48" rx="6" fill="#18181F" stroke="#06B6D4" stroke-width="1.5" filter="url(#searchGlow)"/>
+
+    <!-- Search icon -->
+    <circle cx="24" cy="24" r="8" fill="none" stroke="#06B6D4" stroke-width="1.5"/>
+    <line x1="30" y1="30" x2="35" y2="35" stroke="#06B6D4" stroke-width="1.5" stroke-linecap="round"/>
+
+    <!-- Query text -->
+    <text x="46" y="29" fill="#CDCDE0" font-size="15" font-family="Inter, system-ui, sans-serif">auth middleware</text>
+
+    <!-- Cursor blink -->
+    <rect x="162" y="13" width="1.5" height="22" fill="#06B6D4" opacity="0.8"/>
+
+    <!-- Pill tabs (right side) -->
+    <!-- Text (active) -->
+    <rect x="838" y="10" width="60" height="28" rx="14" fill="#06B6D4"/>
+    <text x="856" y="29" fill="#0F0F14" font-size="12" font-weight="600" text-anchor="middle">Text</text>
+    <!-- Semantic (inactive) -->
+    <rect x="906" y="10" width="80" height="28" rx="14" fill="#2A2A38"/>
+    <text x="936" y="29" fill="#7A7A94" font-size="12" font-weight="500" text-anchor="middle">Semantic</text>
+
+    <!-- ===== FILTER BAR ===== -->
+    <g transform="translate(0, 64)">
+      <!-- All Projects (active) -->
+      <rect x="0" y="0" width="100" height="30" rx="15" fill="rgba(6,182,212,0.08)" stroke="#06B6D4" stroke-width="1"/>
+      <text x="50" y="20" fill="#06B6D4" font-size="12" font-weight="500" text-anchor="middle">All Projects</text>
+
+      <!-- Last 7 days -->
+      <rect x="112" y="0" width="90" height="30" rx="15" fill="#18181F" stroke="#2A2A3A" stroke-width="1"/>
+      <text x="157" y="20" fill="#7A7A94" font-size="12" font-weight="500" text-anchor="middle">Last 7 days</text>
+
+      <!-- User + Assistant -->
+      <rect x="214" y="0" width="120" height="30" rx="15" fill="#18181F" stroke="#2A2A3A" stroke-width="1"/>
+      <text x="274" y="20" fill="#7A7A94" font-size="12" font-weight="500" text-anchor="middle">User + Assistant</text>
+
+      <!-- Result count -->
+      <text x="996" y="20" fill="#5C5C72" font-size="13" text-anchor="end">12 results</text>
+    </g>
+
+    <!-- ===== RESULT CARDS ===== -->
+
+    <!-- Result 1 -->
+    <g transform="translate(0, 110)">
+      <rect x="0" y="0" width="996" height="100" rx="6" fill="#18181F" stroke="#2A2A3A" stroke-width="1"/>
+
+      <!-- Project badge -->
+      <rect x="20" y="16" width="80" height="22" rx="4" fill="rgba(6,182,212,0.15)"/>
+      <text x="60" y="31" fill="#06B6D4" font-size="11" font-weight="500" text-anchor="middle" font-family="JetBrains Mono, monospace">codefre.sh</text>
+
+      <!-- Title -->
+      <text x="112" y="31" fill="#CDCDE0" font-size="14" font-weight="500">Setting up Phoenix LiveView authentication flow</text>
+
+      <!-- Snippet -->
+      <text x="20" y="56" fill="#7A7A94" font-size="13">
+        <tspan>...I need to add </tspan>
+        <tspan fill="#06B6D4" font-weight="500">auth middleware</tspan>
+        <tspan fill="#7A7A94"> to the Phoenix LiveView app. Should use phx_gen_auth...</tspan>
+      </text>
+
+      <!-- Meta -->
+      <text x="20" y="80" fill="#5C5C72" font-size="12">38 messages</text>
+      <circle cx="103" cy="77" r="1.5" fill="#5C5C72"/>
+      <text x="113" y="80" fill="#5C5C72" font-size="12">95% relevance</text>
+      <circle cx="205" cy="77" r="1.5" fill="#5C5C72"/>
+      <text x="215" y="80" fill="#5C5C72" font-size="12">2h ago</text>
+    </g>
+
+    <!-- Result 2 -->
+    <g transform="translate(0, 218)">
+      <rect x="0" y="0" width="996" height="100" rx="6" fill="#18181F" stroke="#2A2A3A" stroke-width="1"/>
+
+      <!-- Project badge -->
+      <rect x="20" y="16" width="96" height="22" rx="4" fill="rgba(6,182,212,0.15)"/>
+      <text x="68" y="31" fill="#06B6D4" font-size="11" font-weight="500" text-anchor="middle" font-family="JetBrains Mono, monospace">aifighter.com</text>
+
+      <!-- Title -->
+      <text x="128" y="31" fill="#CDCDE0" font-size="14" font-weight="500">WebSocket authentication and session tokens</text>
+
+      <!-- Snippet -->
+      <text x="20" y="56" fill="#7A7A94" font-size="13">
+        <tspan>...the </tspan>
+        <tspan fill="#06B6D4" font-weight="500">auth middleware</tspan>
+        <tspan fill="#7A7A94"> validates JWT tokens before upgrading to WebSocket...</tspan>
+      </text>
+
+      <!-- Meta -->
+      <text x="20" y="80" fill="#5C5C72" font-size="12">24 messages</text>
+      <circle cx="103" cy="77" r="1.5" fill="#5C5C72"/>
+      <text x="113" y="80" fill="#5C5C72" font-size="12">87% relevance</text>
+      <circle cx="205" cy="77" r="1.5" fill="#5C5C72"/>
+      <text x="215" y="80" fill="#5C5C72" font-size="12">1d ago</text>
+    </g>
+
+    <!-- Result 3 -->
+    <g transform="translate(0, 326)">
+      <rect x="0" y="0" width="996" height="100" rx="6" fill="#18181F" stroke="#2A2A3A" stroke-width="1"/>
+
+      <!-- Project badge -->
+      <rect x="20" y="16" width="52" height="22" rx="4" fill="rgba(6,182,212,0.15)"/>
+      <text x="46" y="31" fill="#06B6D4" font-size="11" font-weight="500" text-anchor="middle" font-family="JetBrains Mono, monospace">skills</text>
+
+      <!-- Title -->
+      <text x="84" y="31" fill="#CDCDE0" font-size="14" font-weight="500">Skill engineer prompt structure and validation</text>
+
+      <!-- Snippet -->
+      <text x="20" y="56" fill="#7A7A94" font-size="13">
+        <tspan>...added </tspan>
+        <tspan fill="#06B6D4" font-weight="500">auth</tspan>
+        <tspan fill="#7A7A94"> checks to the </tspan>
+        <tspan fill="#06B6D4" font-weight="500">middleware</tspan>
+        <tspan fill="#7A7A94"> chain for MCP server connections...</tspan>
+      </text>
+
+      <!-- Meta -->
+      <text x="20" y="80" fill="#5C5C72" font-size="12">56 messages</text>
+      <circle cx="103" cy="77" r="1.5" fill="#5C5C72"/>
+      <text x="113" y="80" fill="#5C5C72" font-size="12">72% relevance</text>
+      <circle cx="205" cy="77" r="1.5" fill="#5C5C72"/>
+      <text x="215" y="80" fill="#5C5C72" font-size="12">3d ago</text>
+    </g>
+
+    <!-- Result 4 -->
+    <g transform="translate(0, 434)">
+      <rect x="0" y="0" width="996" height="100" rx="6" fill="#18181F" stroke="#2A2A3A" stroke-width="1"/>
+
+      <!-- Project badge -->
+      <rect x="20" y="16" width="72" height="22" rx="4" fill="rgba(6,182,212,0.15)"/>
+      <text x="56" y="31" fill="#06B6D4" font-size="11" font-weight="500" text-anchor="middle" font-family="JetBrains Mono, monospace">incubator</text>
+
+      <!-- Title -->
+      <text x="104" y="31" fill="#CDCDE0" font-size="14" font-weight="500">Docker compose networking and service auth</text>
+
+      <!-- Snippet -->
+      <text x="20" y="56" fill="#7A7A94" font-size="13">
+        <tspan>...configure nginx </tspan>
+        <tspan fill="#06B6D4" font-weight="500">auth</tspan>
+        <tspan fill="#7A7A94"> proxy </tspan>
+        <tspan fill="#06B6D4" font-weight="500">middleware</tspan>
+        <tspan fill="#7A7A94"> for inter-service communication...</tspan>
+      </text>
+
+      <!-- Meta -->
+      <text x="20" y="80" fill="#5C5C72" font-size="12">19 messages</text>
+      <circle cx="103" cy="77" r="1.5" fill="#5C5C72"/>
+      <text x="113" y="80" fill="#5C5C72" font-size="12">68% relevance</text>
+      <circle cx="205" cy="77" r="1.5" fill="#5C5C72"/>
+      <text x="215" y="80" fill="#5C5C72" font-size="12">5d ago</text>
+    </g>
+
+  </g>
+</svg>

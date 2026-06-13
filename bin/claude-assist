@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PROJ_DIR="$(cd "$(dirname "$(readlink -f "$0" 2>/dev/null || realpath "$0")")/.." && pwd)"
+API_PORT="${CLAUDE_ASSIST_API_PORT:-3100}"
+WEB_PORT="${CLAUDE_ASSIST_WEB_PORT:-5173}"
+
+is_api_running() {
+  curl -sf --max-time 1 "http://localhost:${API_PORT}/api/health" >/dev/null 2>&1
+}
+
+start_api() {
+  if is_api_running; then
+    echo "[claude-assist] API already running on port ${API_PORT}"
+    return 0
+  fi
+  echo "[claude-assist] Starting API on port ${API_PORT}..."
+  cd "$PROJ_DIR"
+  PORT="$API_PORT" pnpm dev:api
+}
+
+start_web() {
+  echo "[claude-assist] Starting Web UI on port ${WEB_PORT}..."
+  cd "$PROJ_DIR"
+  pnpm dev:web
+}
+
+use_zellij() {
+  if ! command -v zellij >/dev/null 2>&1; then
+    return 1
+  fi
+  # Don't nest zellij sessions
+  if [ -n "${ZELLIJ:-}" ]; then
+    return 1
+  fi
+  return 0
+}
+
+layout_file() {
+  local tmp
+  tmp="$(mktemp "${TMPDIR:-/tmp}/claude-assist-layout.XXXXXX.kdl")"
+  local api_cmd="PORT=${API_PORT} pnpm dev:api"
+  if is_api_running; then
+    api_cmd="echo '[claude-assist] API already running on port ${API_PORT}'; read -r -p 'Press enter to close this pane...'"
+  fi
+  cat > "$tmp" <<LAYOUT
+layout {
+    pane split_direction="vertical" {
+        pane command="bash" size="80%" {
+            args "-c" "cd ${PROJ_DIR} && pnpm dev:web"
+            name "web"
+        }
+    }
+    pane command="bash" size="20%" {
+        args "-c" "cd ${PROJ_DIR} && ${api_cmd}"
+        name "api"
+    }
+}
+LAYOUT
+  echo "$tmp"
+}
+
+case "${1:-}" in
+  api)
+    start_api
+    ;;
+  web)
+    start_web
+    ;;
+  --no-zellij)
+    # Run both in foreground without zellij (api backgrounded)
+    if ! is_api_running; then
+      echo "[claude-assist] Starting API in background..."
+      cd "$PROJ_DIR"
+      PORT="$API_PORT" pnpm dev:api &
+      API_PID=$!
+      trap "kill $API_PID 2>/dev/null" EXIT
+      # Wait for API to be ready
+      for _ in $(seq 1 30); do
+        is_api_running && break
+        sleep 0.3
+      done
+    else
+      echo "[claude-assist] API already running on port ${API_PORT}"
+    fi
+    start_web
+    ;;
+  *)
+    if use_zellij; then
+      layout="$(layout_file)"
+      trap "rm -f '$layout'" EXIT
+      echo "[claude-assist] Launching with zellij..."
+      zellij --layout "$layout" options --session-name claude-assist
+    else
+      # Fallback: same as --no-zellij
+      exec "$0" --no-zellij
+    fi
+    ;;
+esac

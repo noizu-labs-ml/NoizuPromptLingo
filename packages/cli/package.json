@@ -1,0 +1,29 @@
+{
+  "name": "@claude-assist/cli",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "claude-assist": "./bin.ts"
+  },
+  "scripts": {
+    "dev": "tsx --watch src/app.tsx",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "ink": "^5.2.0",
+    "@inkjs/ui": "^2.0.0",
+    "react": "^18.3.0",
+    "@claude-assist/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "vitest": "^3.0.0",
+    "@types/react": "^18.3.0",
+    "typescript": "^5.7.0",
+    "ink-testing-library": "^4.0.0"
+  }
+}
