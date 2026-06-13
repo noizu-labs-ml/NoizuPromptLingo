@@ -1,0 +1,30 @@
+# .gemini/config.yaml — Default config for Next.js 15 + Phoenix 1.8 projects
+# Copy this .gemini/ directory into your project root.
+
+have_fun: false
+
+ignore_patterns:
+  - "**/node_modules/**"
+  - "**/.next/**"
+  - "**/_build/**"
+  - "**/deps/**"
+  - "**/.elixir_ls/**"
+  - "**/priv/static/assets/**"
+  - "**/*.lock"
+  - "**/package-lock.json"
+  - "**/.cache/**"
+  - "**/generated-*.css"
+  - "nginx/conf.d/**"
+
+memory_config:
+  disabled: false
+
+code_review:
+  disable: false
+  comment_severity_threshold: MEDIUM
+  max_review_comments: 15
+  pull_request_opened:
+    help: false
+    summary: true
+    code_review: true
+    include_drafts: false
