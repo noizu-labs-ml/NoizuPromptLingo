@@ -40,9 +40,9 @@
   --text-inverse:    #06060C;
 
   /* === TYPOGRAPHY === */
-  --font-display: var(--font-space-grotesk), 'Arial Black', sans-serif;
-  --font-body: var(--font-dm-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --font-data: var(--font-jetbrains-mono), 'Fira Code', monospace;
+  --font-display: 'Arial Black', Impact, ui-sans-serif, system-ui, sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-data: 'SFMono-Regular', 'Cascadia Code', 'Fira Code', ui-monospace, monospace;
 
   /* === GLOW PRESETS === */
   --glow-synapse:  0 0 10px rgba(0,255,170,0.4), 0 0 40px rgba(0,255,170,0.12);

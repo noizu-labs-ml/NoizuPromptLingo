@@ -6,10 +6,10 @@ teaser:
   port: 8080
   resources:
     requests:
-      cpu: 10m
+      cpu: 25m
       memory: 32Mi
     limits:
-      cpu: 50m
+      cpu: 100m
       memory: 64Mi
 
 imagePullSecrets:
@@ -21,6 +21,9 @@ ingress:
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/proxy-body-size: "1m"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "5"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "10"
+    nginx.ingress.kubernetes.io/upstream-keepalive-connections: "10"
   cloudflareOnly: true
 
 tls:
@@ -30,9 +33,10 @@ tls:
     enabled: true
     resyncInterval: 300
     credentialsSecret: universal-auth-credentials
-    credentialsNamespace: infisical-operator-system
+    credentialsNamespace: infra
     projectSlug: k8-infra
     envSlug: prod
+    hostAPI: https://infisical.noizu.com/api
     secretsPath: "/apps/tls/derobotis"
     crtKey: DEROBOTIS_TLS_CRT
     keyKey: DEROBOTIS_TLS_KEY

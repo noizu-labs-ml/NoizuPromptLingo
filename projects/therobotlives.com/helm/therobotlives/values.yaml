@@ -30,9 +30,10 @@ tls:
     enabled: true
     resyncInterval: 300
     credentialsSecret: universal-auth-credentials
-    credentialsNamespace: infisical-operator-system
+    credentialsNamespace: infra
     projectSlug: k8-infra
     envSlug: prod
+    hostAPI: https://infisical.noizu.com/api
     secretsPath: "/apps/tls/therobotlives"
     crtKey: THEROBOTLIVES_TLS_CRT
     keyKey: THEROBOTLIVES_TLS_KEY

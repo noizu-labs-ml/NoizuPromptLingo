@@ -3,10 +3,8 @@
 import { useEffect, useRef } from "react";
 
 // Neural Combat Palette
-const VOID: [number, number, number] = [6, 6, 12];
 const SYNAPSE: [number, number, number] = [0, 255, 170];
 const COMBAT: [number, number, number] = [255, 45, 85];
-const SIGNAL: [number, number, number] = [41, 121, 255];
 
 interface FighterNode {
   baseX: number;

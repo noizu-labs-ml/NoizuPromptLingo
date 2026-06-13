@@ -30,9 +30,10 @@ tls:
     enabled: true
     resyncInterval: 300
     credentialsSecret: universal-auth-credentials
-    credentialsNamespace: infisical-operator-system
+    credentialsNamespace: infra
     projectSlug: k8-infra
     envSlug: prod
+    hostAPI: https://infisical.noizu.com/api
     secretsPath: "/apps/tls/iotgo"
     crtKey: IOTGO_TLS_CRT
     keyKey: IOTGO_TLS_KEY

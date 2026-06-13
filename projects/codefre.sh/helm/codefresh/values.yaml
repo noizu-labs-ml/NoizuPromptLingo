@@ -34,7 +34,7 @@ migrate:
       memory: 256Mi
 
 database:
-  host: postgresql
+  host: app-timescaledb
   port: 5432
   name: codefresh
 
@@ -65,9 +65,10 @@ tls:
     enabled: true
     resyncInterval: 300
     credentialsSecret: universal-auth-credentials
-    credentialsNamespace: infisical-operator-system
+    credentialsNamespace: infra
     projectSlug: k8-infra
     envSlug: prod
+    hostAPI: https://infisical.noizu.com/api
     secretsPath: "/apps/tls/codefresh"
     crtKey: CODEFRESH_TLS_CRT
     keyKey: CODEFRESH_TLS_KEY
