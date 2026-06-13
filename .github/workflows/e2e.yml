@@ -1,0 +1,63 @@
+name: End to End tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test-e2e:
+    name: Build generic binary and run tests on it
+    runs-on: ubuntu-latest
+    environment: cachix
+
+    services:
+      ssh:
+        image: ghcr.io/linuxserver/openssh-server
+        env:
+          PUID: 1001
+          PGID: 1000
+          TZ: Europe/Vienna
+          PASSWORD_ACCESS: true
+          USER_PASSWORD: test
+          USER_NAME: test
+        ports:
+          - 2222:2222
+        options: -v ${{ github.workspace }}/target:/usr/src/zellij --name ssh
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install Protoc
+      uses: arduino/setup-protoc@v2
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Install musl-tools
+      run: sudo apt-get install -y --no-install-recommends musl-tools
+
+    - name: Install Rust
+      uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        rustflags: ""
+
+    - name: Create target folder
+      run: mkdir -p ${{ github.workspace }}/target
+      # we copy this manually into the target folder instead of mounting it because
+      # github actions creates the service first, and if it has a mount that is part
+      # of your yet unchecked out code, you cannot checkout the code after the mount
+
+    - name: Copy fixtures folder to target
+      run: cp -r ${{ github.workspace }}/src/tests/fixtures ${{ github.workspace }}/target
+
+    - name: Restart ssh container
+      # we need to do this because otherwise the volume will not be mounted
+      # on the docker container, since it was created before the folder existed
+      uses: docker://docker
+      with:
+        args: docker restart ssh
+    - name: Test
+      run: cargo xtask ci e2e --test

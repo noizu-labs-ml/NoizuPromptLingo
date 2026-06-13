@@ -1,0 +1,15 @@
+---
+source: zellij-server/src/plugins/./unit/plugin_tests.rs
+expression: "format!(\"{:#?}\", focus_pane_event)"
+---
+Some(
+    FocusPaneWithId(
+        Terminal(
+            1,
+        ),
+        true,
+        false,
+        1,
+        None,
+    ),
+)

@@ -1,0 +1,28 @@
+---
+source: zellij-server/src/plugins/./unit/plugin_tests.rs
+expression: "format!(\"{:#?}\", rerun_command_pane_event)"
+---
+Some(
+    WriteToPaneId(
+        [
+            102,
+            111,
+            111,
+            10,
+        ],
+        Terminal(
+            2,
+        ),
+        Some(
+            NotificationEnd {
+                channel: None,
+                exit_status: None,
+                unblock_condition: None,
+                affected_pane_id: None,
+                affected_tab_id: None,
+                error_message: None,
+                stdout_message: None,
+            },
+        ),
+    ),
+)

@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+package api.style;
+
+message Style {
+  Palette palette = 1 [deprecated = true];
+  bool rounded_corners = 2;
+  bool hide_session_name = 3;
+  Styling styling = 4;
+}
+
+message Palette {
+  ThemeHue theme_hue = 1;
+  Color fg = 2;
+  Color bg = 3;
+  Color black = 4;
+  Color red = 5;
+  Color green = 6;
+  Color yellow = 7;
+  Color blue = 8;
+  Color magenta = 9;
+  Color cyan = 10;
+  Color white = 11;
+  Color orange = 12;
+  Color gray = 13;
+  Color purple = 14;
+  Color gold = 15;
+  Color silver = 16;
+  Color pink = 17;
+  Color brown = 18;
+}
+
+message Color {
+  ColorType color_type = 1;
+  oneof payload {
+    RgbColorPayload rgb_color_payload = 2;
+    uint32 eight_bit_color_payload = 3;
+  }
+}
+
+message RgbColorPayload {
+  uint32 red = 1;
+  uint32 green = 2;
+  uint32 blue = 3;
+}
+
+enum ColorType {
+  Rgb = 0;
+  EightBit = 1;
+}
+
+enum ThemeHue {
+  Dark = 0;
+  Light = 1;
+}
+
+message Styling {
+    repeated Color text_unselected = 1;
+    repeated Color text_selected = 2;
+    repeated Color ribbon_unselected = 3;
+    repeated Color ribbon_selected =4;
+    repeated Color table_title = 5;
+    repeated Color table_cell_unselected = 6;
+    repeated Color table_cell_selected = 7;
+    repeated Color list_unselected = 8;
+    repeated Color list_selected = 9;
+    repeated Color frame_unselected = 10;
+    repeated Color frame_selected = 11;
+    repeated Color frame_highlight = 12;
+    repeated Color exit_code_success = 13;
+    repeated Color exit_code_error = 14;
+    repeated Color multiplayer_user_colors = 15;
+}

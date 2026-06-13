@@ -1,0 +1,32 @@
+---
+source: zellij-server/src/plugins/./unit/plugin_tests.rs
+expression: "format!(\"{:#?}\", new_tab_event)"
+---
+Some(
+    StartOrReloadPluginPane(
+        RunPlugin(
+            RunPlugin {
+                _allow_exec_host_cmd: false,
+                location: File(
+                    "/path/to/my/plugin.wasm",
+                ),
+                configuration: PluginUserConfiguration(
+                    {},
+                ),
+                initial_cwd: None,
+            },
+        ),
+        None,
+        Some(
+            NotificationEnd {
+                channel: None,
+                exit_status: None,
+                unblock_condition: None,
+                affected_pane_id: None,
+                affected_tab_id: None,
+                error_message: None,
+                stdout_message: None,
+            },
+        ),
+    ),
+)
