@@ -1,0 +1,9 @@
+.coverage
+.tmp/
+.envrc
+.envrc.dc
+.env
+_build/
+deps/
+web/node_modules/
+web/.next/

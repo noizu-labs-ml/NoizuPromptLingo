@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-extension-citext
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: CREATE EXTENSION IF NOT EXISTS citext;
+      rollback:
+        - sql:
+            sql: DROP EXTENSION IF EXISTS citext;
+
+  - changeSet:
+      id: create-extension-uuid-ossp
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+      rollback:
+        - sql:
+            sql: DROP EXTENSION IF EXISTS "uuid-ossp";

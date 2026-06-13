@@ -1,0 +1,10 @@
+_build/
+deps/
+.git
+web/
+db/
+nginx/
+.env*
+.envrc*
+.claude/
+docker-compose.yml

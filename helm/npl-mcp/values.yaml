@@ -1,0 +1,83 @@
+replicas: 1
+domain: tobor.locker
+
+backend:
+  image:
+    repository: ""
+    tag: ""
+    pullPolicy: IfNotPresent
+  port: 4040
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+  probes:
+    liveness:
+      path: /health
+      initialDelaySeconds: 10
+      periodSeconds: 15
+      failureThreshold: 3
+    readiness:
+      path: /health
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      failureThreshold: 3
+
+frontend:
+  image:
+    repository: ""
+    tag: ""
+    pullPolicy: IfNotPresent
+  port: 3000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+  probes:
+    liveness:
+      path: /
+      initialDelaySeconds: 10
+      periodSeconds: 15
+      failureThreshold: 3
+    readiness:
+      path: /
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      failureThreshold: 3
+
+ingress:
+  enabled: true
+  className: nginx
+  cloudflareWhitelist: true
+  annotations: {}
+
+tls:
+  enabled: true
+  secretName: toborlocker-tls
+  infisical:
+    enabled: true
+    hostAPI: https://infisical.noizu.io/api
+    credentialsNamespace: infra
+    secretName: universal-auth-credentials
+    secretNamespace: infra
+    projectSlug: incubator-apps
+    envSlug: prod
+    secretsPath: /apps/tls/toborlocker
+    crtKey: TOBORLOCKER_TLS_CRT
+    keyKey: TOBORLOCKER_TLS_KEY
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1

@@ -1,0 +1,37 @@
+FROM elixir:1.20-otp-29-alpine AS build
+
+RUN apk add --no-cache build-base
+
+WORKDIR /app
+ENV MIX_ENV=prod
+
+RUN mix local.hex --force && mix local.rebar --force
+
+COPY mix.exs mix.lock ./
+COPY config config
+RUN mix deps.get --only prod && mix deps.compile
+
+COPY lib ./lib
+COPY priv ./priv
+RUN mix compile
+
+FROM elixir:1.20-otp-29-alpine
+
+RUN apk add --no-cache libstdc++
+
+WORKDIR /app
+
+RUN mix local.hex --force && mix local.rebar --force
+
+COPY --from=build /app/_build/prod /app/_build/prod
+COPY --from=build /app/deps /app/deps
+COPY --from=build /app/mix.exs /app/mix.lock ./
+COPY --from=build /app/config /app/config
+COPY --from=build /app/lib ./lib
+COPY --from=build /app/priv ./priv
+
+ENV MIX_ENV=prod
+EXPOSE 4040
+HEALTHCHECK --interval=15s --timeout=3s --start-period=10s --retries=3 \
+  CMD wget -qO- http://localhost:4040/health || exit 1
+CMD ["mix", "run", "--no-halt"]

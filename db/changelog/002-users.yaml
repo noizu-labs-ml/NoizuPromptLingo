@@ -1,0 +1,35 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-table-users
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE users (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                sub varchar(255) NOT NULL UNIQUE,
+                email citext NOT NULL UNIQUE,
+                name varchar(255),
+                status user_status_enum NOT NULL DEFAULT 'active',
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: users
+
+  - changeSet:
+      id: create-index-users-sub
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_users_sub
+            tableName: users
+            unique: true
+            columns:
+              - column:
+                  name: sub
+      rollback:
+        - dropIndex:
+            indexName: idx_users_sub
+            tableName: users
