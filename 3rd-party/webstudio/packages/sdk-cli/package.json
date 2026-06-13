@@ -1,0 +1,28 @@
+{
+  "name": "@webstudio-is/sdk-cli",
+  "version": "0.94.0",
+  "description": "Webstudio CLI for SDK development",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "type": "module",
+  "bin": {
+    "webstudio-sdk": "./src/bin.ts"
+  },
+  "files": [
+    "src/*",
+    "!*.{test,stories}.*"
+  ],
+  "scripts": {
+    "typecheck": "tsgo --noEmit"
+  },
+  "license": "AGPL-3.0-or-later",
+  "dependencies": {
+    "@webstudio-is/react-sdk": "workspace:^",
+    "@webstudio-is/sdk": "workspace:^",
+    "@webstudio-is/template": "workspace:^",
+    "change-case": "^5.4.4"
+  },
+  "devDependencies": {
+    "@webstudio-is/tsconfig": "workspace:^"
+  }
+}

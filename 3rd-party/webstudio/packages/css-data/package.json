@@ -1,0 +1,43 @@
+{
+  "name": "@webstudio-is/css-data",
+  "version": "0.0.0",
+  "description": "CSS Data",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsgo --noEmit",
+    "build:html.css": "tsx ./bin/html.css.ts && prettier --write ./src/__generated__/html.ts",
+    "build:mdn-data": "tsx ./bin/mdn-data.ts ./src/__generated__ &&  prettier --write \"./src/__generated__/\" \"../css-engine/src/__generated__/\"",
+    "build:descriptions": "tsx ./bin/property-value-descriptions.ts && prettier --write ./src/__generated__/property-value-descriptions.ts",
+    "test": "vitest run"
+  },
+  "bin": {
+    "css-to-ws": "./bin/css-to-ws.ts"
+  },
+  "devDependencies": {
+    "@webstudio-is/tsconfig": "workspace:*",
+    "html-tags": "^4.0.0",
+    "mdn-data": "2.23.0",
+    "vitest": "^3.1.2",
+    "zod": "^3.24.2"
+  },
+  "peerDependencies": {
+    "zod": "^3.19.1"
+  },
+  "exports": {
+    "webstudio": "./src/index.ts"
+  },
+  "license": "AGPL-3.0-or-later",
+  "private": true,
+  "sideEffects": false,
+  "dependencies": {
+    "@webstudio-is/css-engine": "workspace:*",
+    "change-case": "^5.4.4",
+    "colorjs.io": "^0.6.1",
+    "css-tree": "^3.1.0",
+    "openai": "^3.2.1",
+    "p-retry": "^6.2.1",
+    "warn-once": "^0.1.1"
+  }
+}

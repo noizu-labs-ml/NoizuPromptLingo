@@ -1,0 +1,21 @@
+{
+  "name": "@webstudio-is/feature-flags",
+  "version": "0.0.0",
+  "description": "Feature flags used to enable/disable a feature over env variable",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsgo --noEmit"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@webstudio-is/tsconfig": "workspace:*"
+  },
+  "exports": {
+    "webstudio": "./src/index.ts"
+  },
+  "license": "AGPL-3.0-or-later",
+  "private": true,
+  "sideEffects": false
+}

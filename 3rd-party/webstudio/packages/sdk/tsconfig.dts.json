@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/index.ts",
+    "src/runtime.ts",
+    "src/__generated__/normalize.css.ts"
+  ],
+  "compilerOptions": {
+    "declarationDir": "lib/types"
+  }
+}

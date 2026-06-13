@@ -1,0 +1,31 @@
+{
+  "name": "@webstudio-is/dashboard",
+  "version": "0.0.0",
+  "description": "Webstudio Dashboard",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsgo --noEmit"
+  },
+  "dependencies": {
+    "@webstudio-is/project": "workspace:*",
+    "@webstudio-is/trpc-interface": "workspace:*",
+    "type-fest": "^4.37.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@webstudio-is/tsconfig": "workspace:*"
+  },
+  "exports": {
+    ".": {
+      "webstudio": "./src/index.ts"
+    },
+    "./index.server": {
+      "webstudio": "./src/index.server.ts"
+    }
+  },
+  "license": "AGPL-3.0-or-later",
+  "private": true,
+  "sideEffects": false
+}

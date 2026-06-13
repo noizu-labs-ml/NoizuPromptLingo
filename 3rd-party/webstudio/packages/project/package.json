@@ -1,0 +1,36 @@
+{
+  "name": "@webstudio-is/project",
+  "version": "0.0.0",
+  "description": "Webstudio Project",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsgo --noEmit"
+  },
+  "dependencies": {
+    "@trpc/server": "^10.45.2",
+    "@webstudio-is/asset-uploader": "workspace:*",
+    "@webstudio-is/authorization-token": "workspace:*",
+    "@webstudio-is/project-build": "workspace:*",
+    "@webstudio-is/trpc-interface": "workspace:*",
+    "nanoid": "^5.1.5",
+    "slugify": "^1.6.6",
+    "type-fest": "^4.37.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@webstudio-is/tsconfig": "workspace:*"
+  },
+  "exports": {
+    ".": {
+      "webstudio": "./src/index.ts"
+    },
+    "./index.server": {
+      "webstudio": "./src/index.server.ts"
+    }
+  },
+  "license": "AGPL-3.0-or-later",
+  "private": true,
+  "sideEffects": false
+}

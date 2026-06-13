@@ -1,0 +1,29 @@
+{
+  "name": "@webstudio-is/generate-arg-types",
+  "version": "0.0.0",
+  "description": "Generate components property types",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsgo --noEmit"
+  },
+  "dependencies": {
+    "@webstudio-is/html-data": "workspace:*",
+    "@webstudio-is/sdk": "workspace:*",
+    "@webstudio-is/react-sdk": "workspace:*",
+    "fast-glob": "^3.3.2",
+    "react-docgen-typescript": "^2.2.2",
+    "typescript": "5.8.2",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@webstudio-is/tsconfig": "workspace:*"
+  },
+  "bin": {
+    "generate-arg-types": "./src/cli.ts"
+  },
+  "license": "AGPL-3.0-or-later",
+  "private": true,
+  "sideEffects": false
+}

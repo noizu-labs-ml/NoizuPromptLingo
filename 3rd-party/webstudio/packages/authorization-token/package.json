@@ -1,0 +1,31 @@
+{
+  "name": "@webstudio-is/authorization-token",
+  "version": "0.0.0",
+  "description": "Webstudio Authorization Token",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsgo --noEmit"
+  },
+  "dependencies": {
+    "@webstudio-is/postgrest": "workspace:*",
+    "@webstudio-is/trpc-interface": "workspace:*",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@webstudio-is/tsconfig": "workspace:*",
+    "type-fest": "^4.37.0"
+  },
+  "exports": {
+    ".": {
+      "webstudio": "./src/index.ts"
+    },
+    "./index.server": {
+      "webstudio": "./src/index.server.ts"
+    }
+  },
+  "license": "AGPL-3.0-or-later",
+  "private": true,
+  "sideEffects": false
+}

@@ -1,0 +1,203 @@
+{
+  "build": {
+    "id": "8f0fdff2-e76b-4f86-9203-ea7df5f1143c",
+    "projectId": "8a7358b1-7de3-459d-b7b1-56dddfb6ce1e",
+    "version": 7,
+    "createdAt": "2026-01-04T10:46:48.415+00:00",
+    "updatedAt": "2026-01-04T10:46:48.415+00:00",
+    "pages": {
+      "meta": {},
+      "homePage": {
+        "id": "Y60VJnVZMU_ifI0GnAR1N",
+        "name": "Home",
+        "title": "\"Home\"",
+        "rootInstanceId": "iavYtlaxaMTf7HB5DBf8e",
+        "systemDataSourceId": "XE93KQdVwfiA3TCf8hQAQ",
+        "meta": {},
+        "path": ""
+      },
+      "pages": [
+        {
+          "id": "fOBamlMdmM461hLaITmV7",
+          "name": "Untitled",
+          "title": "\"Untitled\"",
+          "rootInstanceId": "6dkXcbi85BtasJdJdkV9L",
+          "meta": {
+            "description": "\"\"",
+            "excludePageFromSearch": "true",
+            "language": "\"\"",
+            "socialImageUrl": "\"\"",
+            "status": "302",
+            "redirect": "\"/\"",
+            "documentType": "html",
+            "custom": [
+              {
+                "property": "",
+                "content": "\"\""
+              }
+            ]
+          },
+          "marketplace": {
+            "include": false
+          },
+          "path": "/redirect"
+        }
+      ],
+      "folders": [
+        {
+          "id": "root",
+          "name": "Root",
+          "slug": "",
+          "children": ["Y60VJnVZMU_ifI0GnAR1N", "fOBamlMdmM461hLaITmV7"]
+        }
+      ]
+    },
+    "breakpoints": [
+      [
+        "pTyOZEX5PG52onfyt3-Vg",
+        {
+          "id": "pTyOZEX5PG52onfyt3-Vg",
+          "label": "Base"
+        }
+      ],
+      [
+        "GzBytedsc258Pp7rh1hiD",
+        {
+          "id": "GzBytedsc258Pp7rh1hiD",
+          "label": "Tablet",
+          "maxWidth": 991
+        }
+      ],
+      [
+        "ugRM71O_Lm78kMKjkrtyz",
+        {
+          "id": "ugRM71O_Lm78kMKjkrtyz",
+          "label": "Mobile landscape",
+          "maxWidth": 767
+        }
+      ],
+      [
+        "NKdYAYw-oxmW8laNbpiwK",
+        {
+          "id": "NKdYAYw-oxmW8laNbpiwK",
+          "label": "Mobile portrait",
+          "maxWidth": 479
+        }
+      ]
+    ],
+    "styles": [],
+    "styleSources": [],
+    "styleSourceSelections": [],
+    "props": [],
+    "dataSources": [
+      [
+        "XE93KQdVwfiA3TCf8hQAQ",
+        {
+          "id": "XE93KQdVwfiA3TCf8hQAQ",
+          "scopeInstanceId": "iavYtlaxaMTf7HB5DBf8e",
+          "name": "system",
+          "type": "parameter"
+        }
+      ]
+    ],
+    "resources": [],
+    "instances": [
+      [
+        "iavYtlaxaMTf7HB5DBf8e",
+        {
+          "type": "instance",
+          "id": "iavYtlaxaMTf7HB5DBf8e",
+          "component": "Body",
+          "children": [
+            {
+              "type": "id",
+              "value": "cenhRks51W1S2iJMoGmqx"
+            }
+          ]
+        }
+      ],
+      [
+        "cenhRks51W1S2iJMoGmqx",
+        {
+          "type": "instance",
+          "id": "cenhRks51W1S2iJMoGmqx",
+          "component": "Heading",
+          "children": [
+            {
+              "type": "text",
+              "value": "FIXTURE-CLIENT-DO-NOT-TOUCH"
+            }
+          ]
+        }
+      ],
+      [
+        "6dkXcbi85BtasJdJdkV9L",
+        {
+          "type": "instance",
+          "id": "6dkXcbi85BtasJdJdkV9L",
+          "component": "ws:element",
+          "tag": "body",
+          "children": []
+        }
+      ]
+    ],
+    "deployment": {
+      "destination": "saas",
+      "domains": ["fixture-client-do-not-touch-wsmel"],
+      "assetsDomain": "fixture-client-do-not-touch-wsmel",
+      "excludeWstdDomainFromSearch": false
+    }
+  },
+  "page": {
+    "id": "Y60VJnVZMU_ifI0GnAR1N",
+    "name": "Home",
+    "title": "\"Home\"",
+    "rootInstanceId": "iavYtlaxaMTf7HB5DBf8e",
+    "systemDataSourceId": "XE93KQdVwfiA3TCf8hQAQ",
+    "meta": {},
+    "path": ""
+  },
+  "pages": [
+    {
+      "id": "Y60VJnVZMU_ifI0GnAR1N",
+      "name": "Home",
+      "title": "\"Home\"",
+      "rootInstanceId": "iavYtlaxaMTf7HB5DBf8e",
+      "systemDataSourceId": "XE93KQdVwfiA3TCf8hQAQ",
+      "meta": {},
+      "path": ""
+    },
+    {
+      "id": "fOBamlMdmM461hLaITmV7",
+      "name": "Untitled",
+      "title": "\"Untitled\"",
+      "rootInstanceId": "6dkXcbi85BtasJdJdkV9L",
+      "meta": {
+        "description": "\"\"",
+        "excludePageFromSearch": "true",
+        "language": "\"\"",
+        "socialImageUrl": "\"\"",
+        "status": "302",
+        "redirect": "\"/\"",
+        "documentType": "html",
+        "custom": [
+          {
+            "property": "",
+            "content": "\"\""
+          }
+        ]
+      },
+      "marketplace": {
+        "include": false
+      },
+      "path": "/redirect"
+    }
+  ],
+  "assets": [],
+  "user": {
+    "email": "hello@webstudio.is"
+  },
+  "projectDomain": "fixture-client-do-not-touch-wsmel",
+  "projectTitle": "FIXTURE-CLIENT-DO-NOT-TOUCH",
+  "origin": "https://main.development.webstudio.is"
+}

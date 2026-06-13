@@ -1,0 +1,98 @@
+import * as TooltipPrimitive from "@radix-ui/react-tooltip";
+import { getClosestInstance, type Hook } from "@webstudio-is/react-sdk/runtime";
+
+import {
+  forwardRef,
+  type ComponentPropsWithoutRef,
+  type ReactNode,
+  Children,
+  useState,
+  useEffect,
+} from "react";
+
+export const Tooltip = forwardRef<
+  HTMLDivElement,
+  Omit<ComponentPropsWithoutRef<typeof TooltipPrimitive.Root>, "defaultOpen">
+>((props, _ref) => {
+  const currentOpen = props.open ?? false;
+  const [open, setOpen] = useState(currentOpen);
+  // synchronize external value with local one when changed
+  useEffect(() => setOpen(currentOpen), [currentOpen]);
+  return (
+    <TooltipPrimitive.Provider>
+      <TooltipPrimitive.Root {...props} open={open} onOpenChange={setOpen} />
+    </TooltipPrimitive.Provider>
+  );
+});
+
+/**
+ * We're not exposing the 'asChild' property for the Trigger.
+ * Instead, we're enforcing 'asChild=true' for the Trigger and making it style-less.
+ * This avoids situations where the Trigger inadvertently passes all styles to its child,
+ * which would prevent us from displaying styles properly in the builder.
+ */
+export const TooltipTrigger = forwardRef<
+  HTMLButtonElement,
+  { children: ReactNode }
+>(({ children, ...props }, ref) => {
+  const firstChild = Children.toArray(children)[0];
+
+  return (
+    <TooltipPrimitive.Trigger asChild={true} ref={ref} {...props}>
+      {firstChild ?? <button>Add button or link</button>}
+    </TooltipPrimitive.Trigger>
+  );
+});
+
+export const TooltipContent = forwardRef<
+  HTMLDivElement,
+  ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
+>(({ sideOffset = 4, hideWhenDetached = true, ...props }, ref) => (
+  <TooltipPrimitive.Portal>
+    <TooltipPrimitive.Content
+      ref={ref}
+      // Do not show content if trigger is detached
+      hideWhenDetached={hideWhenDetached}
+      sideOffset={sideOffset}
+      {...props}
+    />
+  </TooltipPrimitive.Portal>
+));
+
+/* BUILDER HOOKS */
+
+const namespace = "@webstudio-is/sdk-components-react-radix";
+
+// For each TooltipContent component within the selection,
+// we identify its closest parent Tooltip component
+// and update its open prop bound to variable.
+export const hooksTooltip: Hook = {
+  onNavigatorUnselect: (context, event) => {
+    for (const instance of event.instancePath) {
+      if (instance.component === `${namespace}:TooltipContent`) {
+        const tooltip = getClosestInstance(
+          event.instancePath,
+          instance,
+          `${namespace}:Tooltip`
+        );
+        if (tooltip) {
+          context.setMemoryProp(tooltip, "open", undefined);
+        }
+      }
+    }
+  },
+  onNavigatorSelect: (context, event) => {
+    for (const instance of event.instancePath) {
+      if (instance.component === `${namespace}:TooltipContent`) {
+        const tooltip = getClosestInstance(
+          event.instancePath,
+          instance,
+          `${namespace}:Tooltip`
+        );
+        if (tooltip) {
+          context.setMemoryProp(tooltip, "open", true);
+        }
+      }
+    }
+  },
+};

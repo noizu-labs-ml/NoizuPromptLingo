@@ -1,0 +1,69 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+node_modules
+.pnp
+.pnp.js
+yarn.lock
+
+# testing
+coverage
+
+# remix
+build
+_build
+.cache
+.vercel
+.output
+.netlify
+
+# misc
+.DS_Store
+*.pem
+!https/*.pem
+/.idea
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# local env files
+# .env
+.env.development
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# data
+/data
+*.db
+*.db-journal
+
+# migrations
+**/prisma/migrations/lockfile
+**/prisma/migrations/*/client
+
+# builds
+packages/**/lib
+generated
+storybook-static
+tsconfig.tsbuildinfo
+
+# to save thunder https://marketplace.visualstudio.com/items?itemName=rangav.vscode-thunder-client files
+.thunder
+.env*.local
+
+# wrangler builds
+dist
+
+# should be here otherwise if placed inside prisma-client pnpm deploy doesn't copy it
+packages/prisma-client/src/__generated__
+
+.temp
+*.timestamp-*.mjs
+
+# copilot instructions
+.github/instructions

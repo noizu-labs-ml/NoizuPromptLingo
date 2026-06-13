@@ -1,0 +1,47 @@
+{
+  "name": "@webstudio-is/icons",
+  "version": "0.0.0-webstudio-version",
+  "description": "Webstudio Icons",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "type": "module",
+  "scripts": {
+    "build": "rm -rf lib && esbuild src/index.ts src/__generated__/svg.ts --outdir=lib --bundle --format=esm --packages=external",
+    "dts": "tsc --declarationDir lib/types",
+    "generate": "rm -fr src/__generated__ && tsx generate.ts && prettier --write src/__generated__",
+    "typecheck": "tsgo --noEmit"
+  },
+  "devDependencies": {
+    "@svgo/jsx": "^0.4.2",
+    "@types/react": "^18.2.70",
+    "@types/react-dom": "^18.2.25",
+    "@webstudio-is/tsconfig": "workspace:*",
+    "change-case": "^5.4.4",
+    "react": "18.3.0-canary-14898b6a9-20240318",
+    "react-dom": "18.3.0-canary-14898b6a9-20240318",
+    "svgo": "^3.0.2"
+  },
+  "peerDependencies": {
+    "react": "18.3.0-canary-14898b6a9-20240318",
+    "react-dom": "18.3.0-canary-14898b6a9-20240318"
+  },
+  "exports": {
+    ".": {
+      "webstudio": "./src/index.ts",
+      "types": "./lib/types/index.d.ts",
+      "import": "./lib/index.js"
+    },
+    "./svg": {
+      "webstudio": "./src/__generated__/svg.ts",
+      "types": "./lib/types/__generated__/svg.d.ts",
+      "import": "./lib/__generated__/svg.js"
+    }
+  },
+  "files": [
+    "lib/*",
+    "!*.{test,stories}.*"
+  ],
+  "license": "AGPL-3.0-or-later",
+  "private": false,
+  "sideEffects": false
+}

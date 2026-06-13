@@ -1,0 +1,22 @@
+{
+  "private": true,
+  "sideEffects": false,
+  "type": "module",
+  "scripts": {
+    "build": "remix vite:build",
+    "deploy": "npm run build && wrangler pages deploy ./build/client",
+    "dev": "remix vite:dev",
+    "start": "wrangler pages dev ./build/client",
+    "typegen": "wrangler types",
+    "preview": "npm run build && wrangler pages dev ./build/client",
+    "build-cf-types": "wrangler types"
+  },
+  "dependencies": {
+    "@remix-run/cloudflare": "2.16.5",
+    "@remix-run/cloudflare-pages": "2.16.5"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240620.0",
+    "wrangler": "^3.63.2"
+  }
+}

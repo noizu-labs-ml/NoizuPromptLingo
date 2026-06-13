@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/private-src/components.ts",
+    "src/components.ts",
+    "src/metas.ts",
+    "src/hooks.ts"
+  ],
+  "compilerOptions": {
+    "declarationDir": "lib/types"
+  }
+}

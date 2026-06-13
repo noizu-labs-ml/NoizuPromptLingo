@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Default",
+  "compilerOptions": {
+    "module": "ES2022",
+    "target": "ES2023",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "inlineSources": false,
+    "isolatedModules": true,
+    "moduleResolution": "bundler",
+    "customConditions": ["webstudio"],
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noUncheckedSideEffectImports": true,
+    "preserveWatchOutput": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "strictBuiltinIteratorReturn": true,
+    "erasableSyntaxOnly": true,
+    "allowJs": false,
+    "jsx": "react-jsx",
+    "resolveJsonModule": true,
+    "noFallthroughCasesInSwitch": true,
+    "verbatimModuleSyntax": true,
+    "emitDeclarationOnly": true,
+    "declaration": true,
+    // types should be generated to provide additional checks
+    // needed only for generation
+    // there is no other way to enable these checks
+    "declarationDir": "node_modules/.ws-typecheck-tmp"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "extends": "@webstudio-is/tsconfig/base.json",
+  "include": ["**/*.ts", "**/*.tsx", "**/*.mjs"],
+  "compilerOptions": {
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "types": ["vite/client", "@webstudio-is/react-sdk/placeholder"],
+    "module": "esnext",
+    "allowJs": true,
+    "checkJs": true,
+    "noUncheckedSideEffectImports": false
+  }
+}
