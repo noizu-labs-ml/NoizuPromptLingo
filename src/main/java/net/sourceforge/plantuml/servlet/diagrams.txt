@@ -1,0 +1,56 @@
+## Class diagram ##
+###################
+
+@startuml
+hide empty members
+hide empty methods
+hide empty fields
+abstract class UmlDiagramService {
+  + doGet(request: HttpServletRequest, response: HttpServletResponse) : void
+  + doPost(request: HttpServletRequest, response: HttpServletResponse) : void
+  + {abstract} getOutputFormat() : FileFormat
+}
+class DiagramResponse {
+  + DiagramResponse(res: HttpServletResponse, fmt: FileFormat, req: HttpServletRequest)
+  + sendDiagram(uml: String, idx: int) : void
+  + sendMap(uml: String, idx: int) : void
+  + sendCheck(uml: String) : void
+}
+HttpServlet <|-- CheckSyntaxServlet
+HttpServlet <|-- LanguageServlet
+HttpServlet <|-- MapServlet
+HttpServlet <|-- PlantUmlServlet
+HttpServlet <|-- ProxyServlet
+HttpServlet <|-- OldProxyServlet
+HttpServlet <|-- UmlDiagramService
+UmlDiagramService <|-- AsciiServlet
+UmlDiagramService <|-- Base64Servlet
+UmlDiagramService <|-- EpsServlet
+UmlDiagramService <|-- EpsTextServlet
+UmlDiagramService <|-- ImgServlet
+UmlDiagramService <|-- SvgServlet
+UmlDiagramService o-- DiagramResponse
+DiagramResponse --o CheckSyntaxServlet
+DiagramResponse --o MapServlet
+DiagramResponse --o ProxyServlet
+@enduml
+
+## Sequence diagram ##
+######################
+
+@startuml
+title Generation of a PNG image illustrated
+ImgServlet -> UrlDataExtractor : getEncodedDiagram()
+UrlDataExtractor --> ImgServlet : encoded
+ImgServlet -> UrlDataExtractor : getIndex()
+UrlDataExtractor --> ImgServlet : index
+ImgServlet -> UmlExtractor : getUmlSource()
+UmlExtractor --> ImgServlet : decoded
+ImgServlet -> ImgServlet : getOutputFormat()
+ImgServlet -> "dr:DiagramResponse" as dr ** : <<create>>
+ImgServlet -> dr : sendDiagram()
+participant "PlantUML library" as Lib #99FF99
+dr -> Lib : generateImage()
+Lib --> dr
+dr --> ImgServlet
+@enduml
