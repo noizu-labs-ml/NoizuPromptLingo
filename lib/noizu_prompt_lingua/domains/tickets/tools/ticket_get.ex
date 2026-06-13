@@ -34,6 +34,7 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.TicketGet do
           priority: ticket.priority,
           assignee: ticket.assignee,
           reporter: ticket.reporter,
+          project_id: ticket.project_id,
           queue_id: ticket.queue_id,
           parent_id: ticket.parent_id,
           custom_fields: ticket.custom_fields,

@@ -1,27 +1,29 @@
 defmodule NoizuPromptLingua.Domains.Chat.Tools.Overview do
   use Noizu.MCP.Server.Tool,
     name: "Chat.Overview",
-    description: "List chat tools and active room counts.",
+    description: "List chat tools and room activity summary.",
     annotations: [read_only_hint: true],
     category: "Chat"
 
   input do
   end
 
+  alias NoizuPromptLingua.Domains.Chat
+
   @impl true
   def call(_args, _ctx) do
     {:ok, %{
       domain: "Chat",
       subdomain: "chat.tobor.locker",
-      status: "stub",
-      tools: [
-        "Chat.CreateRoom", "Chat.GetRoom", "Chat.ListRooms",
-        "Chat.SendMessage", "Chat.ListMessages",
-        "Chat.CreateEvent", "Chat.ListEvents",
-        "Chat.AddMember", "Chat.ListMembers",
-        "Chat.Attach", "Chat.React",
-        "Chat.Notifications", "Chat.Notification.Clear"
-      ]
+      room_count: Chat.room_count(),
+      tools: %{
+        rooms: ["Chat.CreateRoom", "Chat.GetRoom", "Chat.ListRooms"],
+        messages: ["Chat.SendMessage", "Chat.ListMessages"],
+        events: ["Chat.CreateEvent", "Chat.ListEvents"],
+        members: ["Chat.AddMember", "Chat.ListMembers"],
+        interactions: ["Chat.Attach", "Chat.React"],
+        notifications: ["Chat.Notifications", "Chat.Notification.Clear"]
+      }
     }}
   end
 end

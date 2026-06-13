@@ -25,6 +25,20 @@ defmodule NoizuPromptLingua.MCP do
   tool NoizuPromptLingua.Tools.NPLLoad, category: "NPL"
   tool NoizuPromptLingua.Tools.NPLSpec, category: "NPL"
 
+  # Agent domain (unrouted — served from root)
+  tool NoizuPromptLingua.Domains.Agents.Tools.Overview, category: "Agents"
+  tool NoizuPromptLingua.Domains.Agents.Tools.AgentList, category: "Agents"
+  tool NoizuPromptLingua.Domains.Agents.Tools.AgentLoad, category: "Agents"
+  tool NoizuPromptLingua.Domains.Agents.Tools.PipeIn, category: "Agents.Pipes"
+  tool NoizuPromptLingua.Domains.Agents.Tools.PipeOut, category: "Agents.Pipes"
+  tool NoizuPromptLingua.Domains.Agents.Tools.OrchestrationTrigger, category: "Agents.Orchestration"
+  tool NoizuPromptLingua.Domains.Agents.Tools.OrchestrationExecute, category: "Agents.Orchestration"
+  tool NoizuPromptLingua.Domains.Agents.Tools.OrchestrationPatterns, category: "Agents.Orchestration"
+  tool NoizuPromptLingua.Domains.Agents.Tools.OrchestrationStatus, category: "Agents.Orchestration"
+  tool NoizuPromptLingua.Domains.Agents.Tools.Instructions, category: "Agents.Instructions"
+  tool NoizuPromptLingua.Domains.Agents.Tools.InstructionsCreate, category: "Agents.Instructions"
+  tool NoizuPromptLingua.Domains.Agents.Tools.InstructionsList, category: "Agents.Instructions"
+
   tool NoizuPromptLingua.Tools.ToolSummary
   tool NoizuPromptLingua.Tools.ToolSearch
   tool NoizuPromptLingua.Tools.ToolDefinition

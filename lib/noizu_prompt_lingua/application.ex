@@ -11,6 +11,9 @@ defmodule NoizuPromptLingua.Application do
       NoizuPromptLingua.Domains.Review.MCP,
       NoizuPromptLingua.Domains.Chat.MCP,
       NoizuPromptLingua.Domains.Wiki.MCP,
+      NoizuPromptLingua.Domains.Projects.MCP,
+      NoizuPromptLingua.Domains.Artifacts.MCP,
+      NoizuPromptLingua.Domains.Assets.MCP,
       NPLWeb.Endpoint
     ]
 

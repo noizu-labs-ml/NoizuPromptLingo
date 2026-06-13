@@ -14,6 +14,7 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.TicketUpdate do
       "status" => %{"type" => "string", "description" => "New status"},
       "priority" => %{"type" => "string", "description" => "New priority"},
       "assignee" => %{"type" => "string", "description" => "New assignee"},
+      "project_id" => %{"type" => "string", "description" => "New project UUID"},
       "queue_id" => %{"type" => "string", "description" => "New queue UUID"},
       "parent_id" => %{"type" => "string", "description" => "New parent UUID"},
       "custom_fields" => %{"type" => "object", "description" => "Fields to merge into existing custom_fields"}
@@ -26,7 +27,7 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.TicketUpdate do
   @impl true
   def call(args, _ctx) do
     ticket_id = args["ticket_id"]
-    attrs = extract(args, ~w(title description status priority assignee queue_id parent_id custom_fields))
+    attrs = extract(args, ~w(title description status priority assignee project_id queue_id parent_id custom_fields))
 
     case Tickets.update(ticket_id, attrs) do
       {:ok, ticket} ->

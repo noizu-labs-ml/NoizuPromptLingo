@@ -39,6 +39,7 @@ defmodule NoizuPromptLingua.Domains.Tickets do
     |> maybe_filter(:assignee, opts[:assignee])
     |> maybe_filter(:queue_id, opts[:queue_id])
     |> maybe_filter(:parent_id, opts[:parent_id])
+    |> maybe_filter(:project_id, opts[:project_id])
     |> order_by([t], desc: t.inserted_at)
     |> limit(^(opts[:limit] || 50))
     |> offset(^(opts[:offset] || 0))
@@ -98,4 +99,5 @@ defmodule NoizuPromptLingua.Domains.Tickets do
   defp maybe_filter(query, :assignee, val), do: where(query, [t], t.assignee == ^val)
   defp maybe_filter(query, :queue_id, val), do: where(query, [t], t.queue_id == ^val)
   defp maybe_filter(query, :parent_id, val), do: where(query, [t], t.parent_id == ^val)
+  defp maybe_filter(query, :project_id, val), do: where(query, [t], t.project_id == ^val)
 end

@@ -17,6 +17,7 @@ defmodule NoizuPromptLingua.Schema.Ticket do
     field :reporter, :string
     field :custom_fields, :map, default: %{}
 
+    belongs_to :project, NoizuPromptLingua.Schema.Project
     belongs_to :queue, NoizuPromptLingua.Schema.TicketQueue
     belongs_to :parent, NoizuPromptLingua.Schema.Ticket
 
@@ -26,9 +27,10 @@ defmodule NoizuPromptLingua.Schema.Ticket do
   def changeset(ticket, attrs) do
     ticket
     |> cast(attrs, [:title, :description, :ticket_type, :status, :priority,
-                     :assignee, :reporter, :queue_id, :parent_id, :custom_fields])
+                     :assignee, :reporter, :project_id, :queue_id, :parent_id, :custom_fields])
     |> validate_required([:title, :ticket_type])
     |> validate_inclusion(:priority, @priorities ++ [nil])
+    |> foreign_key_constraint(:project_id)
     |> foreign_key_constraint(:queue_id)
     |> foreign_key_constraint(:parent_id)
   end
@@ -36,7 +38,7 @@ defmodule NoizuPromptLingua.Schema.Ticket do
   def update_changeset(ticket, attrs) do
     ticket
     |> cast(attrs, [:title, :description, :status, :priority,
-                     :assignee, :queue_id, :parent_id, :custom_fields])
+                     :assignee, :project_id, :queue_id, :parent_id, :custom_fields])
     |> validate_inclusion(:priority, @priorities ++ [nil])
   end
 end

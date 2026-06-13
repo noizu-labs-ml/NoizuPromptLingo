@@ -26,6 +26,21 @@ defmodule NPLWeb.Router do
       NPLWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Chat.MCP)
   end
 
+  scope "/", host: "assets." do
+    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
+      NPLWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Assets.MCP)
+  end
+
+  scope "/", host: "artifacts." do
+    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
+      NPLWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Artifacts.MCP)
+  end
+
+  scope "/", host: "projects." do
+    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
+      NPLWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Projects.MCP)
+  end
+
   scope "/", host: "wiki." do
     forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
       NPLWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Wiki.MCP)

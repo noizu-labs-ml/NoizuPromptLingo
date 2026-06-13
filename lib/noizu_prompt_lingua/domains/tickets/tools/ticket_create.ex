@@ -15,6 +15,7 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.TicketCreate do
       "priority" => %{"type" => "string", "description" => "low, medium, high, critical"},
       "assignee" => %{"type" => "string", "description" => "Assignee persona slug"},
       "reporter" => %{"type" => "string", "description" => "Reporter persona slug"},
+      "project_id" => %{"type" => "string", "description" => "Project UUID"},
       "queue_id" => %{"type" => "string", "description" => "Queue UUID"},
       "parent_id" => %{"type" => "string", "description" => "Parent ticket UUID"},
       "custom_fields" => %{"type" => "object", "description" => "Type-specific field values as {slug: value}"}
@@ -26,7 +27,7 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.TicketCreate do
 
   @impl true
   def call(args, _ctx) do
-    attrs = extract(args, ~w(title description ticket_type status priority assignee reporter queue_id parent_id custom_fields))
+    attrs = extract(args, ~w(title description ticket_type status priority assignee reporter project_id queue_id parent_id custom_fields))
     attrs = Map.put_new(attrs, :ticket_type, "task")
 
     case Tickets.create(attrs) do

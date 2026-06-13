@@ -1,0 +1,30 @@
+defmodule NoizuPromptLingua.Schema.Review do
+  use Ecto.Schema
+  import Ecto.Changeset
+
+  @primary_key {:id, :binary_id, autogenerate: true}
+  @foreign_key_type :binary_id
+
+  @statuses ~w(open in_progress completed)
+  @verdicts ~w(approved changes_requested rejected)
+
+  schema "reviews" do
+    field :artifact_id, :binary_id
+    field :revision_id, :binary_id
+    field :reviewer_persona, :string
+    field :title, :string
+    field :status, :string, default: "open"
+    field :summary, :string
+    field :verdict, :string
+
+    timestamps(type: :utc_datetime)
+  end
+
+  def changeset(review, attrs) do
+    review
+    |> cast(attrs, [:artifact_id, :revision_id, :reviewer_persona, :title, :status, :summary, :verdict])
+    |> validate_required([:artifact_id, :revision_id, :reviewer_persona])
+    |> validate_inclusion(:status, @statuses)
+    |> validate_inclusion(:verdict, @verdicts ++ [nil])
+  end
+end

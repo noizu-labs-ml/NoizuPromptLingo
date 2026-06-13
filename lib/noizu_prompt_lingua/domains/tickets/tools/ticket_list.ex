@@ -11,6 +11,7 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.TicketList do
     field :ticket_type, :string, description: "Filter by type slug"
     field :priority, :string, description: "Filter by priority"
     field :assignee, :string, description: "Filter by assignee"
+    field :project_id, :string, description: "Filter by project UUID"
     field :queue_id, :string, description: "Filter by queue UUID"
     field :parent_id, :string, description: "Filter by parent ticket UUID"
     field :limit, :integer, description: "Max results (default 50)"
@@ -22,7 +23,7 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.TicketList do
   @impl true
   def call(args, _ctx) do
     opts =
-      [:status, :ticket_type, :priority, :assignee, :queue_id, :parent_id, :limit, :offset]
+      [:status, :ticket_type, :priority, :assignee, :project_id, :queue_id, :parent_id, :limit, :offset]
       |> Enum.reduce([], fn key, acc ->
         val = args[key] || args[Atom.to_string(key)]
         if val, do: [{key, val} | acc], else: acc
