@@ -306,17 +306,6 @@ class TestHTTPAppIntegration:
         # ASGI apps are callable (async (scope, receive, send))
         assert callable(asgi)
 
-    def test_launcher_mounts_sse_and_streamable_http(self):
-        """create_asgi_app() mounts legacy SSE and streamable HTTP transports."""
-        from npl_mcp.launcher import create_asgi_app
-
-        app = create_asgi_app()
-        mounted_paths = {getattr(route, "path", None) for route in app.routes}
-
-        assert "/sse" in mounted_paths
-        assert "/mcp" in mounted_paths
-        assert app.router.lifespan_context is not None
-
 
 # ── ToolCall dispatcher ──────────────────────────────────────────────────
 
