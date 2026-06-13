@@ -1,0 +1,31 @@
+schema: "0.3"
+id: echo-of-manifestation-character-the-librarian
+type: image
+service: gemini
+
+prompt:
+  text: >
+    Dark fantasy concept art portrait of an older man known as the Librarian, standing in a
+    vast dark archive that stretches into infinity behind him. He wears tattered scholar robes
+    of deep burgundy and faded black, patched and resewn many times, with alchemical symbols
+    embroidered in tarnished gold thread along the hems. Books and scrolls float in the
+    darkness around him at various heights, their pages fluttering as if caught in an unseen
+    breeze, some glowing faintly with amber script. His face is lined with centuries of
+    accumulated knowledge and weariness — deep-set eyes behind cracked spectacles that reflect
+    candlelight. A warm golden candlelight emanates from a candelabra beside him, creating a
+    small island of warmth in the oppressive dark. His expression is erudite but profoundly
+    weary, a man who has read every book in this archive and regrets most of what he learned.
+    One hand rests on a massive tome, the other hangs at his side. Painterly style, atmospheric
+    lighting, Rembrandt-quality chiaroscuro. The mood is forgotten knowledge and the weight
+    of understanding.
+  negative: "bright, cheerful, cartoon, anime, clean magic, wizard hat, staff, glowing magic, colorful palette, modern clothing, clean robes, low detail, flat shading"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1024
+    height: 1536
+    aspect_ratio: "2:3"
+
+tags: [character, npc, librarian, scholar, portrait, concept-art, dark-fantasy]

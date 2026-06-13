@@ -1,0 +1,34 @@
+schema: "0.3"
+id: echo-of-manifestation-character-the-grand-manifestation
+type: image
+service: gemini
+
+prompt:
+  text: >
+    Dark fantasy concept art of the Grand Manifestation — the final boss entity. This is NOT
+    a humanoid figure but an abstract, shape-shifting entity made entirely of crystallized
+    transmutation energy. Its form is composed of jagged geometric crystalline structures
+    that constantly shift and reconfigure — shards of solidified alchemical force that catch
+    and refract light in impossible ways. The entity simultaneously reflects all weapon types
+    used by the player: one crystalline protrusion forms a massive blade, another a bow shape
+    with arrows of frozen light, another a barricade of interlocking geometric plates, another
+    a potion flask shape leaking liquid energy. The entire entity is rendered in STRICTLY black
+    and white only — no amber, no indigo, no color whatsoever. Pure white crystalline edges
+    against pure black void, with infinite shades of gray in the crystalline depths. The
+    geometry is wrong — non-Euclidean angles, shapes that shouldn't connect but do, forms that
+    suggest a weapon from one angle and something else entirely from another. No single fixed
+    shape — it is all weapons, all tools, all transmutations given malevolent form. The
+    background is absolute void. Painterly style but with sharp crystalline edges. The mood
+    is cosmic horror through the lens of alchemy — the transmutation principle taken to its
+    logical, terrifying extreme.
+  negative: "bright, cheerful, cartoon, anime, humanoid, face, limbs, organic, flesh, colorful, amber, indigo, warm tones, clean magic, simple monster, generic boss, low detail, flat shading, any color except black white and gray"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1024
+    height: 1536
+    aspect_ratio: "2:3"
+
+tags: [character, final-boss, grand-manifestation, entity, concept-art, dark-fantasy, black-and-white, abstract]

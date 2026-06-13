@@ -1,0 +1,32 @@
+schema: "0.3"
+id: echo-of-manifestation-character-the-first-alchemist
+type: image
+service: gemini
+
+prompt:
+  text: >
+    Dark fantasy concept art portrait of the First Alchemist — a historical figure rendered
+    as if from an age centuries before the game's events. He stands in full alchemist regalia:
+    a heavy leather apron over dark robes, fingerless gloves stained with reagents, a chain
+    of alchemical symbols around his neck serving as both ornamentation and functional
+    apparatus. Beneath his feet, a transmutation circle glows with intense amber light, its
+    geometric patterns casting sharp shadows upward across his form. In his hands he holds a
+    leather-bound journal, its pages visible and filled with cramped handwritten equations
+    and diagrams — the original research that would eventually tear the boundary between
+    worlds. His expression is one of terrible resolve and grief — the face of a man who
+    understands exactly what his discovery will cost and has chosen to proceed anyway. Tears
+    track down one cheek but his jaw is set. The background is the moment of the first
+    transmutation: the air cracking open with amber light, the boundary splitting. Painterly
+    style, dramatic atmospheric lighting from the circle below. The mood is the weight of
+    original sin in alchemical form.
+  negative: "bright, cheerful, cartoon, anime, clean magic, generic wizard, modern clothing, colorful palette, smiling, heroic pose, low detail, flat shading, clean magic circles"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1024
+    height: 1536
+    aspect_ratio: "2:3"
+
+tags: [character, lore-figure, first-alchemist, historical, portrait, concept-art, dark-fantasy]

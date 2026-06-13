@@ -1,0 +1,55 @@
+schema: "0.3"
+id: audio-004-workshop-sfx
+type: audio
+service: suno
+
+prompt:
+  text: |
+    A collection of warm, satisfying sound effects for a crafting workshop
+    in a cozy game. Every sound should be warm, quiet, and tactile -- like
+    ASMR for a woodworker's shop. These are UI-adjacent sounds that play
+    during the crafting loop.
+
+    INDIVIDUAL SOUNDS NEEDED (generate as a sequence with 2-second gaps):
+
+    1. CRAFT START (0:00-0:03): The satisfying "thunk" of placing an item
+       on a wooden workbench. Solid, warm, like placing a heavy book on oak.
+       Not a slam -- a placement.
+
+    2. INGREDIENT ADDED (0:05-0:07): A gentle wooden tap followed by a
+       brief, pleasant crystalline tone. Like dropping a component into a
+       carved depression on the bench. Each material sounds slightly different
+       but this is the "wood" variant.
+
+    3. CRAFTING IN PROGRESS (0:09-0:14): A rhythmic woodworking sound --
+       gentle planing or sanding. Rhythmic, satisfying, ASMR quality. The
+       sound of patient, skilled handwork. 5 seconds.
+
+    4. CRAFT COMPLETE (0:16-0:20): A rising three-note chime (wooden xylophone
+       or marimba, warm-toned) followed by a soft "settling" sound -- the
+       finished item being placed down. Satisfaction without fanfare. Growth,
+       not explosion.
+
+    5. QUALITY REVEAL (0:22-0:25): For when the star rating appears. A gentle
+       ascending guitar arpeggio -- warm, brief, pleasant. More stars = more
+       notes (this is the 4-star variant: four ascending notes).
+
+    6. ERROR/MISSING INGREDIENT (0:27-0:29): A soft wooden "thunk" -- not
+       harsh or punitive. Just "that didn't work." A dropped piece of wood
+       sound, gentle.
+
+    ALL SOUNDS:
+    - Recorded with room tone (small wooden room, warm acoustic space).
+    - Warm frequency range. No harsh highs. No rumbling lows.
+    - Quiet enough to sit beneath music and ambience.
+    - Multiple variants implied (record quality suggests 3-5 takes for
+      natural variation in production).
+  provider_options:
+    duration: 30
+    style: "sound effects foley workshop wood crafting"
+
+output:
+  formats:
+    - format: mp3
+
+tags: [audio, sfx, workshop, crafting, ui-sounds, foley, warm]
