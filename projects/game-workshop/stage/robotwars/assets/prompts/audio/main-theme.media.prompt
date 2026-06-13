@@ -1,7 +1,7 @@
-schema: "0.3"
+schema: "0.4"
 id: audio-001-main-theme
-type: audio
-service: suno
+type: music
+quality: high
 
 prompt:
   text: |
@@ -43,11 +43,13 @@ prompt:
 
     TEMPO: ~85 BPM. Unhurried but not sluggish. The tempo of a pleasant walk.
   provider_options:
-    duration: 150
     style: "acoustic folk ambient"
 
 output:
   formats:
     - format: mp3
+  duration: 150
+
+# eval: audio not yet auto-gradable
 
 tags: [audio, music, main-theme, title, acoustic, warm, folk]

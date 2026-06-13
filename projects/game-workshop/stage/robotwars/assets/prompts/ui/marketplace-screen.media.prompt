@@ -1,7 +1,7 @@
-schema: "0.3"
+schema: "0.4"
 id: ui-002-marketplace
 type: image
-service: gemini
+quality: medium
 
 prompt:
   system: |
@@ -74,5 +74,17 @@ output:
     width: 1920
     height: 1080
     aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.7
+  criteria:
+    readability: {weight: 3, description: "UI elements are clearly legible and distinct at full and reduced resolution"}
+    style_consistency: {weight: 3, description: "Warm parchment aesthetic, hand-drawn icons, no clinical or modern UI chrome"}
+    prompt_fidelity: {weight: 2, description: "All specified screen elements present with correct layout structure"}
+    non_intrusive: {weight: 2, description: "Interface feels inviting and browsable, not spreadsheet-like"}
+  reject_if:
+    - "dark or clinical UI aesthetic"
+    - "modern flat design or mobile game chrome"
+    - "text illegible at intended size"
 
 tags: [ui, marketplace, trading, interface, mockup, economy, game-design]

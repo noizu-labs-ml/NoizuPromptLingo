@@ -1,7 +1,7 @@
-schema: "0.3"
+schema: "0.4"
 id: audio-002-copperwood-ambience
-type: audio
-service: suno
+type: music
+quality: medium
 
 prompt:
   text: |
@@ -49,11 +49,13 @@ prompt:
 
     LOOP: Must loop seamlessly. Minimum 3 minutes before the loop point.
   provider_options:
-    duration: 210
     style: "atmospheric celtic ambient forest"
 
 output:
   formats:
     - format: mp3
+  duration: 210
+
+# eval: audio not yet auto-gradable
 
 tags: [audio, music, biome, copperwood, forest, fay, ambient, celtic, atmospheric]

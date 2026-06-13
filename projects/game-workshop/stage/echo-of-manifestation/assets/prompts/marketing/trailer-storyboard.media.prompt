@@ -1,7 +1,8 @@
-schema: "0.3"
+schema: "0.4"
 id: echo-of-manifestation-marketing-trailer-storyboard
 type: image
-service: gemini
+service: anthropic
+quality: high
 
 prompt:
   text: >

@@ -1,6 +1,7 @@
-schema: "0.3"
+schema: "0.4"
 id: proto-001-service-loop
 type: html
+quality: medium
 service: anthropic
 
 prompt:
@@ -68,8 +69,6 @@ prompt:
     - Is the session length satisfying? (Target: 3-5 minutes per "day")
 
     SIZE: Single HTML file, under 500 lines. Playable in any modern browser.
-  provider_options:
-    model: "claude-sonnet-4-20250514"
 
 output:
   formats:

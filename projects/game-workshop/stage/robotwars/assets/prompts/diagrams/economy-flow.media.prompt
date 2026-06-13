@@ -1,6 +1,7 @@
-schema: "0.3"
+schema: "0.4"
 id: diag-001-economy-flow
 type: svg
+quality: medium
 service: anthropic
 
 prompt:
@@ -59,8 +60,6 @@ prompt:
     - POD: 5%
 
     SIZE: 1200x800 viewport. Clean, readable at both full size and 50%.
-  provider_options:
-    model: "claude-sonnet-4-20250514"
 
 output:
   formats:

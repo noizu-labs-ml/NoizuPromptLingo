@@ -1,7 +1,7 @@
-schema: "0.3"
+schema: "0.4"
 id: echo-of-manifestation-audio-boss-combat-theme
-type: audio
-service: suno
+type: music
+quality: medium
 
 prompt:
   text: >
@@ -46,5 +46,8 @@ prompt:
 output:
   formats:
     - format: mp3
+  duration: 120
+
+# eval: audio not yet auto-gradable
 
 tags: [audio, music, boss-battle, combat, orchestral, dark-fantasy, soundtrack]

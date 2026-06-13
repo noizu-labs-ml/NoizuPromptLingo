@@ -1,7 +1,8 @@
-schema: "0.3"
+schema: "0.4"
 id: echo-of-manifestation-map-overworld
 type: diagram
 service: anthropic
+quality: medium
 
 prompt:
   text: >

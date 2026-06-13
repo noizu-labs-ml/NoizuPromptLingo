@@ -1,7 +1,7 @@
-schema: "0.3"
+schema: "0.4"
 id: env-004-ashlands
 type: image
-service: gemini
+quality: medium
 
 prompt:
   system: |
@@ -69,5 +69,17 @@ output:
     width: 1920
     height: 1080
     aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.7
+  criteria:
+    atmosphere: {weight: 3, description: "Warm, inviting mood — cozy 4X sandbox feel, not threatening"}
+    composition: {weight: 2, description: "Clear spatial structure with inviting depth"}
+    prompt_fidelity: {weight: 3, description: "Key environmental details from prompt present"}
+    style_consistency: {weight: 2, description: "Painterly, warm palette, Ghibli-inspired, isometric-compatible perspective"}
+  reject_if:
+    - "dark, grim, or horror atmosphere"
+    - "photorealistic rendering"
+    - "modern urban setting"
 
 tags: [environment, biome, ashlands, volcanic, nei, server, isometric, concept-art]

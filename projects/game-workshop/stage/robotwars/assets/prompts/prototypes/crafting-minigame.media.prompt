@@ -1,6 +1,7 @@
-schema: "0.3"
+schema: "0.4"
 id: proto-002-crafting
 type: html
+quality: medium
 service: anthropic
 
 prompt:
@@ -70,8 +71,6 @@ prompt:
     - Does biome synergy encourage exploration across zones?
 
     SIZE: Single HTML file, under 600 lines.
-  provider_options:
-    model: "claude-sonnet-4-20250514"
 
 output:
   formats:

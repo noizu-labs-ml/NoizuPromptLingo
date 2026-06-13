@@ -1,7 +1,7 @@
-schema: "0.3"
+schema: "0.4"
 id: echo-of-manifestation-items-essence-crystals
 type: image
-service: gemini
+quality: medium
 
 prompt:
   text: >
@@ -45,5 +45,15 @@ output:
     width: 1536
     height: 1024
     aspect_ratio: "3:2"
+
+eval:
+  pass_threshold: 0.7
+  criteria:
+    clarity: {weight: 3, description: "Items clearly distinguishable, readable silhouettes"}
+    prompt_fidelity: {weight: 3, description: "All described items present with correct visual details"}
+    style_consistency: {weight: 2, description: "Dark fantasy painterly style, consistent with game aesthetic"}
+  reject_if:
+    - "photorealistic rendering"
+    - "modern items or anachronistic elements"
 
 tags: [items, essence, crystals, resource, game-assets, concept-art, dark-fantasy]

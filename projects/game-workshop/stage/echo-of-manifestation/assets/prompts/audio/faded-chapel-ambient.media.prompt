@@ -1,7 +1,7 @@
-schema: "0.3"
+schema: "0.4"
 id: echo-of-manifestation-audio-faded-chapel-ambient
-type: audio
-service: suno
+type: music
+quality: medium
 
 prompt:
   text: >
@@ -38,5 +38,8 @@ prompt:
 output:
   formats:
     - format: mp3
+  duration: 120
+
+# eval: audio not yet auto-gradable
 
 tags: [audio, music, ambient, zone-1, chapel, dark-fantasy, soundtrack]

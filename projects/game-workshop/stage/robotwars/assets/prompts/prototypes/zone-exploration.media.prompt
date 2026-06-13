@@ -1,6 +1,7 @@
-schema: "0.3"
+schema: "0.4"
 id: proto-003-exploration
 type: html
+quality: medium
 service: anthropic
 
 prompt:
@@ -82,8 +83,6 @@ prompt:
     - Is the energy budget meaningful? (Can't explore everything in one day)
 
     SIZE: Single HTML file, under 700 lines.
-  provider_options:
-    model: "claude-sonnet-4-20250514"
 
 output:
   formats:

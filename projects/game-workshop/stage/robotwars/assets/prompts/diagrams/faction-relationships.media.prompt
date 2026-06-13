@@ -1,6 +1,7 @@
-schema: "0.3"
+schema: "0.4"
 id: diag-003-faction-relationships
 type: svg
+quality: medium
 service: anthropic
 
 prompt:
@@ -71,8 +72,6 @@ prompt:
     lines cross the center space.
 
     SIZE: 1200x1200 viewport (square). Must be readable at 50% zoom.
-  provider_options:
-    model: "claude-sonnet-4-20250514"
 
 output:
   formats:

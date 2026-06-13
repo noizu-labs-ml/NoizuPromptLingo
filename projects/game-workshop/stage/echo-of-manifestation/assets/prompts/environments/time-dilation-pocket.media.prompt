@@ -1,7 +1,7 @@
-schema: "0.3"
+schema: "0.4"
 id: echo-of-manifestation-env-time-dilation-pocket
 type: image
-service: gemini
+quality: medium
 
 prompt:
   text: >
@@ -30,5 +30,17 @@ output:
     width: 1536
     height: 1024
     aspect_ratio: "3:2"
+
+eval:
+  pass_threshold: 0.7
+  criteria:
+    atmosphere: {weight: 3, description: "Mood matches prompt — dark, corrupted, liminal space feeling"}
+    composition: {weight: 2, description: "Depth and spatial structure readable, foreground-midground-background layers"}
+    prompt_fidelity: {weight: 3, description: "Key architectural/environmental details from prompt present"}
+    style_consistency: {weight: 2, description: "Dark fantasy painterly style, chiaroscuro lighting, indigo-amber palette"}
+  reject_if:
+    - "bright sunlight or cheerful atmosphere"
+    - "modern or clean architecture"
+    - "cartoon or anime style"
 
 tags: [environment, gameplay, safe-zone, time-dilation, rest-area, concept-art, dark-fantasy]

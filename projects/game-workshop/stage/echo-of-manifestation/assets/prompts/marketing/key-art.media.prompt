@@ -1,7 +1,7 @@
-schema: "0.3"
+schema: "0.4"
 id: echo-of-manifestation-marketing-key-art
 type: image
-service: gemini
+quality: high
 
 prompt:
   text: >
@@ -48,5 +48,18 @@ output:
     width: 1920
     height: 1080
     aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.75
+  max_attempts: 3
+  criteria:
+    impact: {weight: 3, description: "Immediately striking, would stop a scroll on a store page"}
+    composition: {weight: 3, description: "Professional cinematic composition, clear focal point"}
+    prompt_fidelity: {weight: 2, description: "Key characters and setting elements present as described"}
+    brand_consistency: {weight: 2, description: "Consistent dark fantasy aesthetic with amber-indigo palette"}
+  reject_if:
+    - "watermark or signature"
+    - "text or UI elements unless specified"
+    - "low resolution or blurry"
 
 tags: [marketing, key-art, hero-image, cinematic, concept-art, dark-fantasy]

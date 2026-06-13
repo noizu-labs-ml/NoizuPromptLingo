@@ -1,7 +1,7 @@
-schema: "0.3"
+schema: "0.4"
 id: audio-003-ashlands-ambience
-type: audio
-service: suno
+type: music
+quality: medium
 
 prompt:
   text: |
@@ -53,11 +53,13 @@ prompt:
     LOOP: Must loop seamlessly. Minimum 4 minutes for the minimalist
     structure to develop properly.
   provider_options:
-    duration: 270
     style: "minimalist ambient electronic warm contemplative"
 
 output:
   formats:
     - format: mp3
+  duration: 270
+
+# eval: audio not yet auto-gradable
 
 tags: [audio, music, biome, ashlands, nei, ambient, minimalist, electronic, contemplative]

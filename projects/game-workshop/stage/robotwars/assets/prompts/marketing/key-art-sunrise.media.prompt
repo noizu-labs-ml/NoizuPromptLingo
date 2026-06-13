@@ -1,7 +1,7 @@
-schema: "0.3"
+schema: "0.4"
 id: mktg-001-key-art
 type: image
-service: gemini
+quality: high
 
 prompt:
   system: |
@@ -80,5 +80,18 @@ output:
     width: 1920
     height: 1080
     aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.75
+  max_attempts: 3
+  criteria:
+    impact: {weight: 3, description: "Warm and inviting, would attract cozy-game audience on store page"}
+    composition: {weight: 3, description: "Professional composition, clear focal point, marketing-ready framing"}
+    prompt_fidelity: {weight: 2, description: "Key characters and setting elements present"}
+    brand_consistency: {weight: 2, description: "Consistent warm painterly aesthetic with game's cozy tone"}
+  reject_if:
+    - "watermark or signature"
+    - "dark or grim tone"
+    - "low resolution or blurry"
 
 tags: [marketing, key-art, promotional, sunrise, all-species, hero-image]
