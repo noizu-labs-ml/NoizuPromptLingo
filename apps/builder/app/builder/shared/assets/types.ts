@@ -1,0 +1,28 @@
+import type { Asset } from "@webstudio-is/sdk";
+
+type PreviewAsset = Pick<
+  Asset,
+  "name" | "filename" | "id" | "format" | "description" | "type"
+>;
+
+export type UploadedAssetContainer = {
+  status: "uploaded";
+  asset: Asset;
+};
+
+export type UploadingAssetContainer = {
+  status: "uploading";
+  objectURL: string;
+  asset: PreviewAsset;
+};
+
+/**
+ * Assets that can be shown in the UI
+ */
+export type AssetContainer = UploadedAssetContainer | UploadingAssetContainer;
+
+export type AssetActionResponse = {
+  uploadedAssets?: Array<Asset>;
+  deletedAssets?: Array<Asset>;
+  errors?: string;
+};

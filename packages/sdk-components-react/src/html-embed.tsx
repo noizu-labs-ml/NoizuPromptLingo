@@ -1,0 +1,293 @@
+import {
+  forwardRef,
+  useContext,
+  useEffect,
+  useRef,
+  type ForwardedRef,
+  useSyncExternalStore,
+  useState,
+  type ReactNode,
+  useMemo,
+} from "react";
+import { mergeRefs } from "@react-aria/utils";
+import { ReactSdkContext } from "@webstudio-is/react-sdk/runtime";
+import { executeDomEvents, patchDomEvents } from "./html-embed-patchers";
+
+export const __testing__ = {
+  scriptTestIdPrefix: "client-",
+};
+
+const insertScript = (sourceScript: HTMLScriptElement): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    const hasSrc = sourceScript.hasAttribute("src");
+
+    const isTypeModule = sourceScript.type === "module";
+
+    // Copy all attributes from the source script to the new script, because we are going to replace the source script with the new one
+    // and the user might rely on some attributes.
+    for (const { name, value } of sourceScript.attributes) {
+      script.setAttribute(name, value);
+    }
+
+    // For testing purposes, we add a prefix to the testid to differentiate between server and client rendered scripts.
+    if (script.dataset.testid !== undefined) {
+      script.dataset.testid = `${__testing__.scriptTestIdPrefix}${script.dataset.testid}`;
+    }
+
+    if (hasSrc) {
+      script.addEventListener("load", () => {
+        resolve();
+      });
+      script.addEventListener("error", reject);
+    } else {
+      // Module scripts are deferred by default, and there's no direct 'load' event for inline scripts.
+      // By creating a Blob and using dynamic import(), we can detect when the script has been
+      // loaded, parsed, and executed. This approach allows us to handle inline module scripts
+      // in a way that preserves execution order and provides a mechanism to know when execution is complete.
+      if (isTypeModule) {
+        const blob = new Blob([sourceScript.innerText], {
+          type: "text/javascript",
+        });
+        const url = URL.createObjectURL(blob);
+        import(/* @vite-ignore */ url)
+          .then(resolve)
+          .catch(reject)
+          .finally(() => {
+            URL.revokeObjectURL(url);
+          });
+        return;
+      }
+
+      script.textContent = sourceScript.innerText;
+    }
+
+    sourceScript.replaceWith(script);
+
+    // Run the callback immediately for inline scripts.
+    if (hasSrc === false) {
+      resolve();
+    }
+  });
+};
+
+type ScriptTask = () => Promise<void>;
+
+/**
+ * We want to execute scripts from all embeds sequentially to preserve execution order.
+ */
+const syncTasksQueue: ScriptTask[] = [];
+let processing = false;
+
+const processSyncTasks = async (syncTasks: ScriptTask[]) => {
+  syncTasksQueue.push(...syncTasks);
+
+  // await 1 tick so tasks from all HTMLEmbeds are added to the queue
+  await Promise.resolve();
+
+  if (processing) {
+    return;
+  }
+
+  patchDomEvents();
+
+  processing = true;
+
+  while (syncTasksQueue.length > 0) {
+    const task = syncTasksQueue.shift()!;
+    await task();
+  }
+
+  executeDomEvents();
+
+  processing = false;
+};
+
+// Inspiration https://ghinda.net/article/script-tags
+const execute = (container: HTMLElement) => {
+  const scripts = container.querySelectorAll("script");
+  const syncTasks: Array<ScriptTask> = [];
+  const asyncTasks: Array<ScriptTask> = [];
+
+  scripts.forEach((script) => {
+    const tasks = script.hasAttribute("async") ? asyncTasks : syncTasks;
+
+    tasks.push(() => {
+      return insertScript(script);
+    });
+  });
+
+  // Insert the script tags in parallel.
+  for (const task of asyncTasks) {
+    task();
+  }
+
+  processSyncTasks(syncTasks);
+};
+
+type ChildProps = {
+  innerRef: ForwardedRef<HTMLDivElement>;
+  // code can be actually undefined when prop is not provided
+  code?: string;
+  className?: string;
+};
+
+const Placeholder = (props: ChildProps) => {
+  const { code, innerRef, ...rest } = props;
+  return (
+    <div ref={innerRef} {...rest} style={{ display: "block", padding: 20 }}>
+      {'Open the "Settings" panel to insert HTML code.'}
+    </div>
+  );
+};
+
+const useIsServer = () => {
+  // https://tkdodo.eu/blog/avoiding-hydration-mismatches-with-use-sync-external-store
+  const isServer = useSyncExternalStore(
+    () => () => {},
+    () => false,
+    () => true
+  );
+  return isServer;
+};
+
+const ClientOnly = (props: { children: ReactNode }) => {
+  const isServer = useIsServer();
+
+  if (isServer) {
+    return;
+  }
+  return props.children;
+};
+
+/**
+ * Executes scripts when rendered in the builder manually, because innerHTML doesn't execute scripts.
+ * Also executes scripts on the published site when `clientOnly` is true.
+ */
+const ClientEmbed = (props: ChildProps) => {
+  const { code, innerRef, ...rest } = props;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const executeScripts = useRef(true);
+
+  const html = useMemo(
+    () => ({
+      __html: code ?? "",
+    }),
+    [code]
+  );
+
+  useEffect(() => {
+    const container = containerRef.current;
+
+    if (container && executeScripts.current) {
+      executeScripts.current = false;
+      execute(container);
+    }
+  }, []);
+
+  return (
+    <div
+      {...rest}
+      ref={mergeRefs(innerRef, containerRef)}
+      dangerouslySetInnerHTML={html}
+    />
+  );
+};
+
+/**
+ * Scripts are executed when rendered server side without any manual intervention.
+ */
+const ServerEmbed = (props: ChildProps) => {
+  const { code, innerRef, ...rest } = props;
+
+  return (
+    <div
+      {...rest}
+      ref={innerRef}
+      dangerouslySetInnerHTML={{ __html: code ?? "" }}
+    />
+  );
+};
+
+const ClientEmbedWithNonExecutableScripts = ServerEmbed;
+
+type HtmlEmbedProps = {
+  code: string;
+  executeScriptOnCanvas?: boolean;
+  clientOnly?: boolean;
+  className?: string;
+  // avoid builder passing it to dom
+  children?: never;
+};
+
+export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
+  (props, ref) => {
+    const { code, executeScriptOnCanvas, clientOnly, children, ...rest } =
+      props;
+    const { renderer, isSafeMode } = useContext(ReactSdkContext);
+
+    const isServer = useIsServer();
+
+    const [ssrRendered] = useState(isServer);
+
+    // - code can be actually undefined when prop is not provided
+    // - cast code to string in case non-string value is computed from expression
+    if (code === undefined || String(code).trim().length === 0) {
+      return <Placeholder innerRef={ref} {...rest} />;
+    }
+
+    if (ssrRendered) {
+      // We are on published site, on server rendering or after hydration
+      if (clientOnly !== true) {
+        return <ServerEmbed innerRef={ref} code={code} {...rest} />;
+      }
+
+      return (
+        <ClientOnly>
+          <ClientEmbed innerRef={ref} code={code} {...rest} />
+        </ClientOnly>
+      );
+    }
+    // We are or on canvas | preview | published site after client routing
+
+    // In safe mode, never execute scripts regardless of other settings
+    if (isSafeMode) {
+      return (
+        <ClientOnly>
+          <ClientEmbedWithNonExecutableScripts
+            innerRef={ref}
+            code={code}
+            {...rest}
+          />
+        </ClientOnly>
+      );
+    }
+
+    // The only case we need to prevent script execution if it's explicitly disabled on the canvas
+    if (renderer === "canvas" && executeScriptOnCanvas !== true) {
+      return (
+        <ClientOnly>
+          <ClientEmbedWithNonExecutableScripts
+            innerRef={ref}
+            code={code}
+            {...rest}
+          />
+        </ClientOnly>
+      );
+    }
+
+    return (
+      <ClientOnly>
+        <ClientEmbed
+          // Use key={code} to allow scripts to be reexecuted when code has changed
+          key={code}
+          innerRef={ref}
+          code={code}
+          {...rest}
+        />
+      </ClientOnly>
+    );
+  }
+);
+
+HtmlEmbed.displayName = "HtmlEmbed";

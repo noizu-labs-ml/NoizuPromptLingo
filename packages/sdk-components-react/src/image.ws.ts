@@ -1,0 +1,58 @@
+import type { PresetStyle, WsComponentMeta } from "@webstudio-is/sdk";
+import { img } from "@webstudio-is/sdk/normalize.css";
+import type { defaultTag } from "./image";
+import { props } from "./__generated__/image.props";
+
+const presetStyle = {
+  img: [
+    ...img,
+
+    // Otherwise on new image insert onto canvas it can overfit screen size multiple times
+    {
+      property: "max-width",
+      value: { type: "unit", unit: "%", value: 100 },
+    },
+    // inline | inline-block is not suitable because without line-height: 0 on the parent you get unsuitable spaces/margins
+    // see https://stackoverflow.com/questions/24771194/is-the-margin-of-inline-block-4px-is-static-for-all-browsers
+    {
+      property: "display",
+      value: { type: "keyword", value: "block" },
+    },
+    // Set image height to "auto" to reduce layout shift, improving compatibility across browsers like Safari.
+    // Unlike "fit-content," "auto" preserves the aspect ratio when the width exceeds max-width. (in Safari)
+    // See https://web.dev/articles/optimize-cls#best_practice_for_setting_image_dimensions
+    {
+      property: "height",
+      value: { type: "keyword", value: "auto" },
+    },
+  ],
+} satisfies PresetStyle<typeof defaultTag>;
+
+export const meta: WsComponentMeta = {
+  category: "media",
+  description:
+    "Add an image asset to the page. Webstudio automatically converts images to WebP or AVIF format and makes them responsive for best performance.",
+  presetStyle,
+  order: 0,
+  initialProps: [
+    "id",
+    "class",
+    "src",
+    "width",
+    "height",
+    "alt",
+    "loading",
+    "optimize",
+  ],
+  props: {
+    ...props,
+    // Automatically generated props don't have the right control.
+    src: {
+      type: "string",
+      control: "file",
+      label: "Source",
+      required: false,
+      accept: "image/*",
+    },
+  },
+};

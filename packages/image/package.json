@@ -1,0 +1,43 @@
+{
+  "name": "@webstudio-is/image",
+  "version": "0.0.0-webstudio-version",
+  "description": "Image optimization",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsgo --noEmit",
+    "test": "vitest run",
+    "build": "rm -rf lib && esbuild src/index.ts --outdir=lib --bundle --format=esm --packages=external",
+    "dts": "tsc --project tsconfig.dts.json"
+  },
+  "dependencies": {
+    "@webstudio-is/sdk": "workspace:*",
+    "react": "18.3.0-canary-14898b6a9-20240318",
+    "warn-once": "^0.1.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.70",
+    "@types/react-dom": "^18.2.25",
+    "@webstudio-is/tsconfig": "workspace:*",
+    "react": "18.3.0-canary-14898b6a9-20240318",
+    "react-dom": "18.3.0-canary-14898b6a9-20240318",
+    "vitest": "^3.1.2"
+  },
+  "peerDependencies": {
+    "react": "18.3.0-canary-14898b6a9-20240318",
+    "react-dom": "18.3.0-canary-14898b6a9-20240318"
+  },
+  "exports": {
+    "webstudio": "./src/index.ts",
+    "types": "./lib/types/index.d.ts",
+    "import": "./lib/index.js"
+  },
+  "files": [
+    "lib/*",
+    "!*.{test,stories}.*"
+  ],
+  "license": "AGPL-3.0-or-later",
+  "private": false,
+  "sideEffects": false
+}

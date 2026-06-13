@@ -1,0 +1,21 @@
+<svg
+  width="16"
+  height="16"
+  viewBox="0 0 16 16"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <path
+    d="M6.0567 6C6.21801 5.55444 6.53639 5.17874 6.95547 4.93942C7.37455 4.7001 7.86726 4.61262 8.34636 4.69247C8.82545 4.77232 9.26001 5.01435 9.57305 5.37568C9.88609 5.73702 10.0567 6.20703 10.0567 6.66666C10.0567 8 7.99838 8.66666 7.99838 8.66666"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <circle cx="8" cy="8" r="6.5" stroke="currentColor" />
+  <path
+    d="M8 11.3333H8.0001"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>

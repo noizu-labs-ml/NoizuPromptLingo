@@ -1,0 +1,25 @@
+{
+  "extends": "@webstudio-is/tsconfig/base.json",
+  "include": ["app", "**/*.ts", "**/*.tsx", "../../@types/**/*.d.ts"],
+
+  "compilerOptions": {
+    "target": "ES2023",
+    "types": [
+      "@remix-run/node",
+      "vite/client",
+      "react/canary",
+      "react-dom/canary",
+      "@types/dom-navigation"
+    ],
+
+    "paths": {
+      "~/*": ["./app/*"]
+    },
+    "declaration": false,
+    "emitDeclarationOnly": false,
+    "declarationDir": null,
+    "noEmit": true,
+    "allowJs": true,
+    "checkJs": true
+  }
+}
