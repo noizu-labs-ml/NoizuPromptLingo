@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
 
 ---
 
@@ -157,7 +157,7 @@ Relationship metadata lives in YAML index files, NOT markdown:
 
 ## MCP Tool Discovery
 
-This server uses a **meta-discovery pattern**. 5 Discovery tools are always visible: `ToolSummary`, `ToolSearch`, `ToolDefinition`, `ToolHelp`, and `ToolCall`. All ~224 catalog tools are discoverable via these tools.
+This server uses a **meta-discovery pattern**. 5 Discovery tools are always visible: `ToolSummary`, `ToolSearch`, `ToolDefinition`, `ToolHelp`, and `ToolCall`. All ~125 catalog tools are discoverable via these tools.
 
 **Use `ToolCall` to invoke any catalog tool by name** (e.g. `ToolCall(tool="Ping", arguments={"url": "https://example.com"})`).
 
@@ -294,4 +294,4 @@ Save shared prompt templates to `./sub-agent-prompts/{task-name}.md`. Test with 
 
 ---
 
-*End of CLAUDE.md*
+*End of AGENTS.md*

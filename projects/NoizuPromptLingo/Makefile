@@ -128,6 +128,51 @@ _check-app:
 		exit 1; \
 	}
 
+# -- Docker ----------------------------------------------------------------
+
+REGISTRY := ops.noizu.com
+IMAGE := npl-mcp
+TAG ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
+
+.PHONY: docker-build
+docker-build: ## Build Docker image
+	docker build -t $(REGISTRY)/$(IMAGE):$(TAG) -t $(REGISTRY)/$(IMAGE):latest .
+
+.PHONY: docker-push
+docker-push: ## Push Docker image to registry
+	docker push $(REGISTRY)/$(IMAGE):$(TAG)
+	docker push $(REGISTRY)/$(IMAGE):latest
+
+.PHONY: docker-run
+docker-run: ## Run full stack via docker-compose
+	docker compose up -d
+
+.PHONY: docker-down
+docker-down: ## Stop docker-compose stack
+	docker compose down
+
+.PHONY: docker-logs
+docker-logs: ## Tail docker-compose logs
+	docker compose logs -f
+
+# -- Helm ------------------------------------------------------------------
+
+CHART_DIR := charts/npl-mcp
+
+.PHONY: helm-lint
+helm-lint: ## Lint Helm chart
+	helm lint $(CHART_DIR)
+
+.PHONY: helm-template
+helm-template: ## Render Helm templates locally
+	helm template npl-mcp $(CHART_DIR)
+
+.PHONY: helm-publish
+helm-publish: ## Package and push chart to OCI registry
+	helm package $(CHART_DIR)
+	helm push npl-mcp-*.tgz oci://ghcr.io/the-robot-lives/charts
+	rm -f npl-mcp-*.tgz
+
 # -- Help ------------------------------------------------------------------
 
 .PHONY: help

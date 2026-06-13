@@ -7,6 +7,8 @@ src/
 │   ├── __main__.py                 #   Module entry point (`python -m npl_mcp`)
 │   ├── launcher.py                 #   CLI entry point — PID mgmt, Uvicorn, --status/--stop
 │   ├── convention_formatter.py     #   NPL convention YAML formatter
+│   ├── docs_regen.py               #   Regenerate npl-full.md from conventions/ (npl-docs-regen CLI)
+│   ├── structured_logging.py       #   Structured logging utilities
 │   │
 │   ├── markdown/                   #   Markdown processing tools
 │   │   ├── __init__.py
@@ -31,6 +33,13 @@ src/
 │   │   ├── stub_catalog.py         #     Stub catalog for testing/fallback
 │   │   ├── inference_cache.py      #     In-memory LLM cache (MD5-keyed)
 │   │   └── llm_client.py           #     LiteLLM client (chat_completion, describe_image)
+│   │
+│   ├── orchestration/              #   Multi-agent orchestration
+│   │   ├── __init__.py
+│   │   ├── patterns.py             #     Orchestration patterns library
+│   │   ├── pipeline.py             #     Pipeline execution engine
+│   │   ├── stages.py               #     Stage definitions and lifecycle
+│   │   └── tdd_pipeline.py         #     TDD-specific pipeline integration
 │   │
 │   ├── npl/                        #   NPL syntax parser and loader
 │   │   ├── __init__.py
@@ -147,6 +156,7 @@ Active modules with implementations:
 - `markdown/` — Full markdown conversion, viewing, caching, filtering, image descriptions
 - `meta_tools/` — Tool catalog, search (text + LLM intent), definition, help, summaries, caching
 - `npl/` — NPL YAML loading, syntax parsing, reference resolution
+- `orchestration/` — Multi-agent orchestration patterns, pipeline execution, TDD pipeline
 - `pipes/` — Agent input/output pipe management
 - `pm_tools/` — PRD, user story, and persona access (file-based + database-backed)
 - `sessions/` — Generic work-session lifecycle (npl_generic_sessions)

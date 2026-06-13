@@ -1,0 +1,28 @@
+databaseChangeLog:
+  - changeSet:
+      id: 019-ticket-type
+      author: npl-mcp
+      comment: Add ticket_type column to npl_tasks for typed tickets (task/story/bug/epic)
+      changes:
+        - addColumn:
+            tableName: npl_tasks
+            columns:
+              - column:
+                  name: ticket_type
+                  type: VARCHAR(64)
+                  defaultValue: task
+                  constraints:
+                    nullable: true
+        - createIndex:
+            tableName: npl_tasks
+            indexName: idx_npl_tasks_ticket_type
+            columns:
+              - column:
+                  name: ticket_type
+      rollback:
+        - dropIndex:
+            tableName: npl_tasks
+            indexName: idx_npl_tasks_ticket_type
+        - dropColumn:
+            tableName: npl_tasks
+            columnName: ticket_type

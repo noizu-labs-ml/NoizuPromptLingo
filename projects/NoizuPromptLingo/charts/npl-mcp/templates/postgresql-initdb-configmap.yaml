@@ -1,0 +1,14 @@
+{{- if and .Values.postgresql.enabled .Values.postgresql.initdb.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "npl-mcp.fullname" . }}-postgresql-initdb
+  labels:
+    {{- include "npl-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postgresql
+data:
+  {{- range $name, $content := .Values.postgresql.initdb.scripts }}
+  {{ $name }}: |
+    {{- $content | nindent 4 }}
+  {{- end }}
+{{- end }}
