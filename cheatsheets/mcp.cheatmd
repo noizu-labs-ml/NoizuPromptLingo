@@ -1,0 +1,274 @@
+# Noizu MCP Cheatsheet
+
+## Server
+{: .col-2}
+
+### Define a server
+
+```elixir
+defmodule MyApp.MCP do
+  use Noizu.MCP.Server,
+    name: "myapp",
+    version: "1.0.0",
+    instructions: "..."
+
+  tool MyApp.Tools.Search
+  tool MyApp.Tools.Search, name: "alias"
+  resource MyApp.Resources.Config
+  resource_template MyApp.Resources.Table
+  prompt MyApp.Prompts.Review
+end
+```
+
+Capabilities are derived — never declared.
+
+### Run it
+
+```elixir
+# stdio
+children = [{MyApp.MCP, transport: :stdio}]
+
+# HTTP (Phoenix)
+forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
+  server: MyApp.MCP
+
+# HTTP (standalone)
+children = [
+  MyApp.MCP,
+  {Bandit, plug: {Noizu.MCP.Transport.StreamableHTTP.Plug,
+                  server: MyApp.MCP}, port: 4040}
+]
+```
+
+### Tool
+
+```elixir
+defmodule MyApp.Tools.Search do
+  use Noizu.MCP.Server.Tool,
+    name: "search",
+    description: "...",
+    annotations: [read_only_hint: true]
+
+  input do
+    field :q, :string, required: true, min_length: 2
+    field :limit, :integer, min: 1, max: 50, default: 10
+    field :scope, :enum, values: [:all, :docs], default: :all
+    field :filters, :object do
+      field :tags, {:array, :string}
+    end
+  end
+
+  output do
+    field :count, :integer, required: true
+  end
+
+  @impl true
+  def call(%{q: q, limit: limit}, ctx) do
+    Noizu.MCP.Ctx.report_progress(ctx, 0.5)
+    {:ok, %{count: 7}}
+  end
+end
+```
+
+Args arrive atom-keyed, defaults applied, enums cast.
+
+### Tool return values
+
+```elixir
+{:ok, "text"}                 # text block
+{:ok, %{key: "val"}}          # structuredContent
+{:ok, [%Content{...}]}        # explicit blocks
+{:ok, %ToolResult{...}}       # verbatim
+{:error, "msg"}               # isError result
+{:error, %Noizu.MCP.Error{}}  # protocol error
+raise "boom"                  # sanitized isError
+```
+
+### Raw schema escape hatch
+
+```elixir
+input_schema %{
+  "type" => "object",
+  "properties" => %{"q" => %{"type" => "string"}},
+  "required" => ["q"]
+}
+# call/2 then receives string keys
+```
+
+### Resource / template / prompt
+
+```elixir
+use Noizu.MCP.Server.Resource,
+  uri: "config://app", name: "Config",
+  mime_type: "application/json", subscribable: true
+def read("config://app", _ctx), do: {:ok, json}
+# binary: {:ok, {:blob, bytes}}
+
+use Noizu.MCP.Server.ResourceTemplate,
+  uri_template: "db://{table}/schema", name: "Schema"
+def read(_uri, %{table: t}, _ctx), do: {:ok, ...}
+def complete(:table, prefix, _ctx), do: {:ok, [...]}
+def list(_ctx), do: {:ok, [%Types.Resource{...}]}
+
+use Noizu.MCP.Server.Prompt, name: "review"
+arguments do
+  arg :code, required: true
+  arg :style, complete: ["strict", "friendly"]
+end
+def get(%{"code" => code}, _ctx),
+  do: {:ok, [Types.PromptMessage.user(code)]}
+```
+
+### Notify from anywhere
+
+```elixir
+MyApp.MCP.notify_resource_updated("config://app")
+MyApp.MCP.notify_changed(:tools)   # :resources :prompts
+```
+
+## Handler context (`Noizu.MCP.Ctx`)
+{: .col-2}
+
+### Outbound
+
+```elixir
+Ctx.report_progress(ctx, 0.5, total: 1.0, message: "...")
+Ctx.info(ctx, "cache miss")          # debug..emergency
+Ctx.log(ctx, :warning, %{...}, logger: "myapp")
+```
+
+### State & cancellation
+
+```elixir
+Ctx.assign(ctx, :key, v)        # this handler / init/2
+Ctx.put_session(ctx, :key, v)   # future requests
+ctx.assigns.auth_claims         # verified OAuth claims
+Ctx.cancelled?(ctx)             # poll in long loops
+```
+
+### Call the client back
+
+```elixir
+{:ok, r} = Ctx.sample(ctx, %{"messages" => [...],
+            "maxTokens" => 200}, timeout: 30_000)
+
+case Ctx.elicit(ctx, "Proceed?", schema, timeout: 60_000) do
+  {:ok, {:accept, fields}} -> ...
+  {:ok, :decline} -> ...
+  {:ok, :cancel} -> ...
+end
+
+{:ok, roots} = Ctx.list_roots(ctx)
+```
+
+## Client
+{: .col-2}
+
+### Connect
+
+```elixir
+{Noizu.MCP.Client,
+ name: MyApp.FS,
+ transport: {:stdio, command: "npx", args: [...]},
+ # transport: {:streamable_http, url: "https://...",
+ #   auth: {Noizu.MCP.Auth.Static, token: t}},
+ handler: MyApp.Handler,
+ client_info: %{name: "myapp", version: "1.0"}}
+
+:ok = Client.await_ready(MyApp.FS, 15_000)
+```
+
+### Call
+
+```elixir
+{:ok, tools} = Client.list_tools(c)
+{:ok, r} = Client.call_tool(c, "name", %{"k" => "v"},
+             timeout: 60_000, progress: fn p -> ... end)
+{:ok, contents} = Client.read_resource(c, uri)
+:ok = Client.subscribe_resource(c, uri)
+{:ok, %{messages: m}} = Client.get_prompt(c, "name", %{})
+{:ok, %{values: v}} = Client.complete(c, {:prompt, "name"}, "arg", "pre")
+:ok = Client.set_log_level(c, :warning)
+:ok = Client.set_roots(c, [%Types.Root{uri: "file:///w"}])
+```
+
+### Async
+
+```elixir
+ref = Client.async(c, "tools/call", %{...})
+{:ok, r} = Client.await(c, ref, 5_000)
+Client.cancel(c, ref, "reason")
+```
+
+### Handler (sampling / elicitation)
+
+```elixir
+@behaviour Noizu.MCP.Client.Handler
+def handle_sampling(params, _s),
+  do: {:ok, %{"role" => "assistant", "model" => "m",
+        "content" => %{"type" => "text", "text" => "..."}}}
+def handle_elicitation(_params, _s),
+  do: {:ok, :accept, %{"confirm" => true}}
+  # | {:ok, :decline} | {:ok, :cancel}
+def handle_notification(method, params, _s), do: :ok
+```
+
+## Testing
+{: .col-2}
+
+### Connect & call
+
+```elixir
+import Noizu.MCP.Test
+
+client = connect(MyApp.MCP)             # async-safe
+client = connect(MyApp.MCP, handler: StubHandler)
+
+{:ok, r} = call_tool(client, "search", %{"q" => "x"})
+{:ok, r} = request(client, "ping")
+```
+
+### Notifications
+
+```elixir
+params = assert_notification(client, "notifications/resources/updated")
+params = assert_progress(client)
+refute_notification(client, "notifications/progress")
+```
+
+### Cancellation race
+
+```elixir
+id = send_request(client, "tools/call", %{...})
+cancel(client, id, "changed my mind")
+```
+
+## OAuth 2.1
+{: .col-2}
+
+### Server (resource server)
+
+```elixir
+forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
+  server: MyApp.MCP,
+  auth: [verifier: {MyVerifier, []},
+         resource_metadata: "https://.../.well-known/oauth-protected-resource"]
+
+# behaviour:
+def verify(token, _conn_info, _opts) do
+  {:ok, claims}
+  # | {:error, :invalid_token}            → 401
+  # | {:error, :insufficient_scope, %{scope: "s"}}  → 403
+end
+```
+
+### Client
+
+```elixir
+auth: {Noizu.MCP.Auth.Static, token: token}
+
+auth: {Noizu.MCP.Auth.OAuth,
+  client_id: "...", redirect_uri: "http://localhost:8914/cb",
+  scope: "mcp", authorize_user: &MyApp.Browser.run/1}
+# authorize_user.(url) → {:ok, %{"code" => c, "state" => s}}
+```
