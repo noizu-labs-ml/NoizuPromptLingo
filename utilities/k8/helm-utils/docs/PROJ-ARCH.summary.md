@@ -6,7 +6,7 @@ CLI utilities for tiered Helm chart lifecycle management on Kubernetes.
 
 - **bin/helm-upgrade** -- Tier-ordered upgrade with MD5 change detection, env overlays, interactive UI, manifest preview, and server-side apply conflict auto-fix.
 - **bin/helm-rollback** -- Reverse-tier rollback via explicit selection, auto-detect unhealthy pods, or time-window mode.
-- **../k8-lib** -- Sibling shared library providing logging, tier definitions, namespace lookup, and Helm helpers.
+- **../share/k8-lib/bin** -- Sibling shared library providing logging, tier definitions, namespace lookup, and Helm helpers.
 - **.helm-state/** -- Persisted checksums for skip-unchanged behavior.
 
 ## Data Flow

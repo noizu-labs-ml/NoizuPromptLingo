@@ -33,7 +33,11 @@ help:
 compile:
 	@if [ -f Cargo.toml ]; then \
 		echo "==> Building dc binary (release)"; \
-		$(CARGO) build --release; \
+		if command -v $(CARGO) >/dev/null 2>&1; then \
+			$(CARGO) build --release; \
+		else \
+			echo "==> Skipping compile: cargo not found."; \
+		fi; \
 	else \
 		echo "==> Cargo.toml not yet created — skipping compile"; \
 	fi
@@ -45,7 +49,11 @@ build: compile
 test:
 	@echo "==> Running direnv-config tests"
 	@if [ -f Cargo.toml ]; then \
-		$(CARGO) test; \
+		if command -v $(CARGO) >/dev/null 2>&1; then \
+			$(CARGO) test; \
+		else \
+			echo "==> Skipping tests: cargo not found."; \
+		fi; \
 	else \
 		echo "    Cargo.toml not yet created — skipping Rust tests"; \
 	fi
@@ -215,6 +223,10 @@ sdk-clean:
 clean:
 	@echo "==> Cleaning build artifacts"
 	@if [ -f Cargo.toml ]; then \
-		$(CARGO) clean; \
+		if command -v $(CARGO) >/dev/null 2>&1; then \
+			$(CARGO) clean; \
+		else \
+			echo "==> Skipping clean: cargo not found."; \
+		fi; \
 	fi
 	@rm -rf .test-tmp

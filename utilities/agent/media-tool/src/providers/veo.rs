@@ -36,10 +36,16 @@ impl MediaProvider for VeoProvider {
             .or_else(|| options.provider_options.get("aspectRatio").and_then(|v| v.as_str()))
             .unwrap_or("16:9");
 
+        // duration_seconds from GenerationOptions takes precedence over provider_options
         let duration = options
-            .provider_options
-            .get("durationSeconds")
-            .and_then(|v| v.as_u64().or_else(|| v.as_str().and_then(|s| s.parse().ok())))
+            .duration_seconds
+            .map(|d| d as u64)
+            .or_else(|| {
+                options
+                    .provider_options
+                    .get("durationSeconds")
+                    .and_then(|v| v.as_u64().or_else(|| v.as_str().and_then(|s| s.parse().ok())))
+            })
             .unwrap_or(8);
 
         let resolution = options

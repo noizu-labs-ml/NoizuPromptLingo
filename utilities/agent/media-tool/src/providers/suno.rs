@@ -30,64 +30,100 @@ impl MediaProvider for SunoProvider {
             &options.model
         };
 
-        let custom_mode = options
-            .provider_options
-            .get("customMode")
-            .and_then(|v| v.as_bool())
-            .unwrap_or(false);
-
-        let instrumental = options
-            .provider_options
-            .get("instrumental")
-            .and_then(|v| v.as_bool())
-            .unwrap_or(false);
-
-        let mut body = json!({
-            "prompt": prompt_text,
-            "model": model,
-            "customMode": custom_mode,
-            "instrumental": instrumental,
-        });
-
-        if custom_mode {
-            if let Some(style) = options.provider_options.get("style").and_then(|v| v.as_str()) {
-                body["style"] = json!(style);
-            }
-            if let Some(title) = options.provider_options.get("title").and_then(|v| v.as_str()) {
-                body["title"] = json!(title);
-            }
-            if let Some(pid) = options.provider_options.get("personaId").and_then(|v| v.as_str()) {
-                body["personaId"] = json!(pid);
-            }
-            if let Some(pm) = options.provider_options.get("personaModel").and_then(|v| v.as_str()) {
-                body["personaModel"] = json!(pm);
-            }
-        }
-
-        if let Some(neg) = options.negative_prompt.as_deref().or_else(|| {
-            options.provider_options.get("negativeTags").and_then(|v| v.as_str())
-        }) {
-            body["negativeTags"] = json!(neg);
-        }
-
-        if let Some(vg) = options.provider_options.get("vocalGender").and_then(|v| v.as_str()) {
-            body["vocalGender"] = json!(vg);
-        }
-
-        for float_key in &["styleWeight", "weirdnessConstraint", "audioWeight"] {
-            if let Some(val) = options.provider_options.get(*float_key).and_then(|v| v.as_f64()) {
-                body[*float_key] = json!(val);
-            }
-        }
+        let is_sfx = model.contains("SOUND") || model.contains("sfx")
+            || model.to_lowercase() == "sound";
 
         let callback_url = options
             .provider_options
             .get("callBackUrl")
             .and_then(|v| v.as_str())
             .unwrap_or("https://httpbin.org/post");
-        body["callBackUrl"] = json!(callback_url);
 
-        let url = format!("{}/api/v1/generate", API_BASE);
+        // SFX uses a separate endpoint and request shape
+        let (url, body) = if is_sfx {
+            let sfx_model = "V5";
+            let sound_loop = options.provider_options.get("soundLoop")
+                .and_then(|v| v.as_bool()).unwrap_or(false);
+            let sound_tempo = options.provider_options.get("soundTempo")
+                .and_then(|v| v.as_u64()).unwrap_or(120) as u32;
+            let sound_key = options.provider_options.get("soundKey")
+                .and_then(|v| v.as_str()).unwrap_or("Any");
+
+            let mut b = json!({
+                "prompt": prompt_text,
+                "model": sfx_model,
+                "soundLoop": sound_loop,
+                "soundTempo": sound_tempo,
+                "soundKey": sound_key,
+                "grabLyrics": false,
+                "callBackUrl": callback_url,
+            });
+
+            if let Some(dur) = options.duration_seconds {
+                b["duration"] = json!(dur as u32);
+            }
+
+            (format!("{}/api/v1/generate/sounds", API_BASE), b)
+        } else {
+            // Music generation
+            let has_style = options.provider_options.get("style").and_then(|v| v.as_str()).is_some();
+            let custom_mode = options
+                .provider_options
+                .get("customMode")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(has_style || prompt_text.len() > 200);
+
+            let instrumental = options
+                .provider_options
+                .get("instrumental")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(true);
+
+            let mut b = json!({
+                "prompt": prompt_text,
+                "model": model,
+                "customMode": custom_mode,
+                "instrumental": instrumental,
+                "callBackUrl": callback_url,
+            });
+
+            if custom_mode {
+                if let Some(style) = options.provider_options.get("style").and_then(|v| v.as_str()) {
+                    b["style"] = json!(style);
+                }
+                if let Some(title) = options.provider_options.get("title").and_then(|v| v.as_str()) {
+                    b["title"] = json!(title);
+                }
+                if let Some(pid) = options.provider_options.get("personaId").and_then(|v| v.as_str()) {
+                    b["personaId"] = json!(pid);
+                }
+                if let Some(pm) = options.provider_options.get("personaModel").and_then(|v| v.as_str()) {
+                    b["personaModel"] = json!(pm);
+                }
+            }
+
+            if let Some(dur) = options.duration_seconds {
+                b["duration"] = json!(dur as u32);
+            }
+
+            if let Some(neg) = options.negative_prompt.as_deref().or_else(|| {
+                options.provider_options.get("negativeTags").and_then(|v| v.as_str())
+            }) {
+                b["negativeTags"] = json!(neg);
+            }
+
+            if let Some(vg) = options.provider_options.get("vocalGender").and_then(|v| v.as_str()) {
+                b["vocalGender"] = json!(vg);
+            }
+
+            for float_key in &["styleWeight", "weirdnessConstraint", "audioWeight"] {
+                if let Some(val) = options.provider_options.get(*float_key).and_then(|v| v.as_f64()) {
+                    b[*float_key] = json!(val);
+                }
+            }
+
+            (format!("{}/api/v1/generate", API_BASE), b)
+        };
 
         if options.verbose {
             ui::verbose(&format!("POST {}", url));
@@ -97,7 +133,11 @@ impl MediaProvider for SunoProvider {
                 preview,
                 if prompt_text.len() > 120 { "..." } else { "" }
             ));
-            ui::verbose(&format!("Model: {}, custom={}, instrumental={}", model, custom_mode, instrumental));
+            if is_sfx {
+                ui::verbose(&format!("Model: V5 (sound generation), sfx=true"));
+            } else {
+                ui::verbose(&format!("Model: {}", model));
+            }
         }
 
         let client = reqwest::Client::new();

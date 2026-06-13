@@ -8,7 +8,11 @@ all: install
 
 # Build the Rust binary
 compile:
-	@cd $(RUST_DIR) && cargo build --release
+	@if ! command -v cargo >/dev/null 2>&1; then \
+		echo "secret-utils: cargo not found; skipping Rust build."; \
+	else \
+		cd $(RUST_DIR) && cargo build --release; \
+	fi
 
 # Run any tests (stub for now)
 test:
@@ -16,14 +20,20 @@ test:
 
 # Install the Rust binary (default)
 install: compile
-	@mkdir -p $(INSTALL_DIR)
-	@install -m 755 $(RUST_BIN) $(INSTALL_DIR)/infisical
-	@echo "✓ Installed infisical → $(INSTALL_DIR)/infisical"
-	@echo ""
-	@echo "Usage: infisical <command>"
-	@echo "  infisical verify   infisical fetch <path>   infisical audit"
-	@echo "  infisical populate infisical set <name>     infisical view-dc"
-	@echo "  infisical rebuild  infisical find-dc-line   infisical bootstrap"
+	@if ! command -v cargo >/dev/null 2>&1; then \
+		echo "secret-utils: cargo not found; skipping Rust install."; \
+		$(MAKE) install-legacy; \
+	else \
+		mkdir -p $(INSTALL_DIR); \
+		install -m 755 $(RUST_BIN) $(INSTALL_DIR)/infisical; \
+		echo "✓ Installed infisical → $(INSTALL_DIR)/infisical"; \
+		echo ""; \
+		echo "Usage: infisical <command>"; \
+		echo "  infisical verify   infisical fetch <path>   infisical audit"; \
+		echo "  infisical populate infisical set <name>     infisical view-dc"; \
+		echo "  infisical rebuild  infisical find-dc-line   infisical bootstrap"; \
+		$(MAKE) install-legacy; \
+	fi
 
 install-rust: install
 

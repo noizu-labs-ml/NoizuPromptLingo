@@ -17,7 +17,7 @@ make install    # Installs hydrate-envrc, infisical-populate-secrets, infisical-
 
 ## Configuration
 
-All configuration lives in `infra-config.yaml` with credentials in `.envrc.k8.dc` (see [k8-lib README](../k8-lib/README.md) for setup).
+All configuration lives in `infra-config.yaml` with credentials in `.envrc.k8.dc` (see `~/.local/share/k8-lib/README.md` for setup).
 
 ### Relevant Sections
 

@@ -1,6 +1,8 @@
 # HOW-TO: Writing `.media.prompt` Files
 
-Quick reference for creating media prompt files. Start with the minimal template for your asset type, then add sections as needed.
+Quick reference for creating media prompt files. **Lead with `quality:` and an `eval:` block** — the tool selects the best provider automatically and retries until output passes your criteria. Pinning a specific `service:` is an advanced override for when you need a particular provider feature.
+
+Start with the minimal template for your asset type, then add sections as needed.
 
 Working examples live in `demos/` — browse by asset type:
 
@@ -34,13 +36,15 @@ The name before `.media.prompt` becomes the default output filename. Place the f
 
 ## Minimal Templates by Asset Type
 
-### Image (Gemini Imagen)
+### Image (quality-based — recommended)
+
+Omit `service:` to let the tool pick the best available provider for the declared quality tier.
 
 ```yaml
-schema: "0.3"
+schema: "0.4"
 id: my-image-001
 type: image
-service: gemini
+quality: medium           # low | medium | high — drives provider selection
 
 prompt:
   text: "A minimal geometric logo, blue hexagons on dark background"
@@ -53,14 +57,27 @@ output:
     width: 1024
     height: 1024
     aspect_ratio: "1:1"
+
+eval:
+  pass_threshold: 0.7
+  criteria:
+    relevance:
+      weight: 3
+      description: "Hexagon motif, logo-style composition"
+    technical:
+      weight: 3
+      description: "Clean edges, no artifacts"
+  reject_if:
+    - "contains text or letterforms"
 ```
 
 ### SVG (Gemini Chat — text output)
 
 ```yaml
-schema: "0.3"
+schema: "0.4"
 id: my-icon-001
 type: image
+# service pins the provider — needed here because gemini-chat is a specific text-capable provider
 service: gemini-chat
 model: gemini-2.5-flash
 
@@ -77,14 +94,13 @@ output:
   text_format: svg
 ```
 
-### Diagram — Mermaid (Anthropic — text output + render)
+### Diagram — Mermaid (quality-based)
 
 ```yaml
-schema: "0.3"
+schema: "0.4"
 id: my-diagram-001
 type: diagram
-service: anthropic
-model: claude-sonnet-4-6
+quality: medium
 
 prompt:
   system: "Output ONLY valid Mermaid markup. No code fences. No explanation."
@@ -107,14 +123,13 @@ post_processing:
       theme: dark
 ```
 
-### HTML Page (Anthropic — text output)
+### HTML Page (quality-based)
 
 ```yaml
-schema: "0.3"
+schema: "0.4"
 id: my-page-001
 type: html
-service: anthropic
-model: claude-sonnet-4-6
+quality: medium
 
 prompt:
   system: "Generate a complete, self-contained HTML page with inline CSS. No external dependencies."
@@ -128,13 +143,15 @@ output:
     - format: html
 ```
 
-### Voiceover (ElevenLabs TTS)
+### Voiceover (quality-based voice)
+
+Use `type: voice` for TTS and voice generation. Provider is selected automatically by quality tier.
 
 ```yaml
-schema: "0.3"
+schema: "0.4"
 id: my-voiceover-001
-type: audio
-service: elevenlabs
+type: voice
+quality: medium
 
 prompt:
   text: "Welcome to the future of development."
@@ -148,13 +165,15 @@ output:
     - format: mp3
 ```
 
-### Music (Suno)
+### Music (quality-based)
+
+Use `type: music` for AI-generated tracks. Provider is selected automatically by quality tier.
 
 ```yaml
-schema: "0.3"
+schema: "0.4"
 id: my-music-001
-type: audio
-service: suno
+type: music
+quality: medium
 
 prompt:
   text: "Calm lo-fi hip hop beat with piano and vinyl crackle"
@@ -170,33 +189,48 @@ output:
     - format: mp3
 ```
 
-### Video (Google Veo)
+### Video (quality-based with duration)
+
+Use `output.duration` (seconds) instead of per-provider `durationSeconds`/`duration` params — the tool maps it to the right API field.
 
 ```yaml
-schema: "0.3"
+schema: "0.4"
 id: my-video-001
 type: video
-service: veo
+quality: high
 
 prompt:
   text: "A robot hand placing a glowing puzzle piece, camera pulls back to reveal a cityscape"
-  provider_options:
-    durationSeconds: 8
-    resolution: "720p"
 
 output:
+  duration: 8
   formats:
     - format: mp4
   dimensions:
     aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.7
+  criteria:
+    motion_quality:
+      weight: 3
+      description: "Smooth camera pull-back, no warping or flickering"
+    prompt_adherence:
+      weight: 3
+      description: "Robot hand and cityscape reveal both visible"
+  reject_if:
+    - "abrupt cut or missing cityscape"
 ```
 
-### Video (Grok Video)
+### Video (service pinned — advanced)
+
+Pin `service:` when you need provider-specific parameters not covered by `output.duration`.
 
 ```yaml
-schema: "0.3"
+schema: "0.4"
 id: my-grok-video-001
 type: video
+# service: pins grok-video explicitly for its resolution parameter
 service: grok-video
 
 prompt:
@@ -276,25 +310,30 @@ post_processing:
 
 ### Evaluation Criteria
 
-Automatically score generated outputs against weighted criteria:
+Eval blocks drive automatic grading and provider fallback. Add one to any image, video, or text-output prompt. `pass_threshold` is a normalized 0–1 score (default 0.7). Criterion weights are relative integers — only their ratios matter.
 
 ```yaml
 eval:
-  pass_threshold: 3.0
+  pass_threshold: 0.7    # 0-1 normalized; 0.7 = average criterion score ≥ 7/10
+  max_attempts: 3        # try at most 3 providers before accepting best
   required_pass: [relevance]
   criteria:
     relevance:
-      weight: 0.40
+      weight: 3
       description: "Matches the described scene"
+      fail_signals: ["wrong subject"]
     composition:
-      weight: 0.30
+      weight: 2
       description: "Clear visual hierarchy"
     technical:
-      weight: 0.30
+      weight: 2
       description: "Sharp, correct dimensions"
   reject_if:
     - "obvious AI artifacts"
+    - "watermark visible"
 ```
+
+> **Music and voice**: audio files are not yet auto-gradable. Omit `eval` blocks for `music` and `voice` types — the tool will warn and accept the first successful generation.
 
 ### Tags and Product Targets
 
@@ -307,12 +346,14 @@ product_targets: [hero-image, og-card, social-preview]
 
 ## Service / Provider Quick Reference
 
+In v0.4, **declare `quality:` instead of `service:`** for most prompts. The tool picks from these providers based on quality tier. Use `service:` only when pinning is required.
+
 | Service | Type | Default Model | API Key |
 |---------|------|---------------|---------|
 | `gemini` | Image | `imagen-4.0-generate-001` | `GEMINI_API_KEY` |
-| `gemini-chat` | Text/SVG | `gemini-2.5-flash` | `GEMINI_API_KEY` |
+| `gemini-chat` | Text/SVG/diagrams | `gemini-2.5-flash` | `GEMINI_API_KEY` |
 | `anthropic` | Text/diagrams | `claude-sonnet-4-6` | `ANTHROPIC_API_KEY` |
-| `openai-chat` | Text | GPT-4 | `OPENAI_API_KEY` |
+| `openai-chat` | Text | `gpt-4.1` | `OPENAI_API_KEY` |
 | `openai-tts` | Voice | `gpt-4o-mini-tts` | `OPENAI_API_KEY` |
 | `elevenlabs` | Voice | `eleven_multilingual_v2` | `ELEVENLABS_API_KEY` |
 | `qwen-tts` | Voice | `qwen3-tts-flash` | `DASHSCOPE_API_KEY` |
@@ -347,7 +388,7 @@ generate-media-prompt --refine hero.media.prompt
 
 ### Generating Multiple Variants
 
-Use `-n` to generate several candidates. The engine picks the best one via vision evaluation (if `GROQ_API_KEY` is set) or uses the first:
+Use `-n` to generate several candidates per provider attempt. When an `eval` block is present, all variants from each attempt are graded and the best is kept. Without eval, the engine picks via Groq (if `GROQ_API_KEY` is set) or uses the first:
 
 ```bash
 generate-media-prompt -n 3 hero.media.prompt

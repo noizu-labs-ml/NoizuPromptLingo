@@ -13,7 +13,7 @@ graph TB
         HR[bin/helm-rollback]
     end
 
-    subgraph k8-lib ["../k8-lib (shared library)"]
+    subgraph k8-lib ["../share/k8-lib/bin (shared library)"]
         COM[common.sh — colors, logging, die/warn/ok]
         HC[helm-common.sh — tiers, namespaces, env overlays, preview]
     end
@@ -36,8 +36,8 @@ graph TB
 |-----------|---------|
 | `bin/helm-upgrade` | Tier-ordered `helm upgrade --install` with MD5 change detection, env overlays, interactive selection, manifest preview, and conflict auto-fix |
 | `bin/helm-rollback` | Reverse-tier rollback with three modes: explicit chart selection, auto-detect unhealthy pods, and time-window (`--back-to`) |
-| `../k8-lib/common.sh` | Shared shell library: color codes, `step`/`info`/`warn`/`ok`/`fail`/`die` logging, `_in_list` helper |
-| `../k8-lib/helm-common.sh` | Tier definitions, namespace lookup, env overlay resolution, release naming, timeout config, manifest diff/preview |
+| `../share/k8-lib/bin/common.sh` | Shared shell library: color codes, `step`/`info`/`warn`/`ok`/`fail`/`die` logging, `_in_list` helper |
+| `../share/k8-lib/bin/helm-common.sh` | Tier definitions, namespace lookup, env overlay resolution, release naming, timeout config, manifest diff/preview |
 | `.helm-state/` | Persisted MD5 checksums keyed by release name; used by `helm-upgrade` to skip unchanged charts |
 
 ## Data Flow
@@ -65,7 +65,7 @@ graph TB
 
 - **MD5 change detection**: Avoids unnecessary Helm releases; checksums are per-release so staging and production track independently
 - **Tier-ordered execution**: Guarantees infrastructure (tier 0) deploys before workloads (tier 4+); rollback reverses this order
-- **Shared k8-lib**: Common shell functions live in a sibling submodule to avoid duplication across devops tools
+- **Shared share/k8-lib**: Common shell functions live in a sibling submodule to avoid duplication across devops tools
 - **No external dependencies beyond Helm/kubectl/jq**: Portable across any system with a standard shell
 
 ## Technology Stack

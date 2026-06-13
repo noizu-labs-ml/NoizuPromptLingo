@@ -1,8 +1,7 @@
-schema: "0.3"
+schema: "0.4"
 id: base-logo-001
 type: image
-service: gemini
-model: imagen-4.0-generate-001
+quality: high
 
 prompt:
   text: "Minimal geometric logomark, interconnected hexagons forming a brain shape, electric cyan and deep navy gradient, clean vector lines on transparent background"
@@ -25,25 +24,23 @@ tags: [logo, brand, tier-0]
 product_targets: [favicon, og-card, hero-image]
 
 eval:
-  pass_threshold: 3.5
+  pass_threshold: 0.7
   required_pass: [relevance]
   criteria:
     relevance:
-      weight: 0.30
-      scale: [1, 5]
+      weight: 3
       description: "Recognizable brain/hexagon logomark"
+      fail_signals: ["no hexagons", "text present"]
     composition:
-      weight: 0.20
-      scale: [1, 5]
-      description: "Balanced, works at small sizes"
+      weight: 2
+      description: "Balanced, works at small sizes, reads as a logomark"
     technical:
-      weight: 0.25
-      scale: [1, 5]
-      description: "Clean edges, proper transparency"
+      weight: 3
+      description: "Clean edges, proper transparency, no compression artifacts"
     brand_fit:
-      weight: 0.25
-      scale: [1, 5]
-      description: "Matches tech/AI brand aesthetic"
+      weight: 2
+      description: "Matches tech/AI brand aesthetic — cyan on navy"
   reject_if:
     - "contains text or letterforms"
     - "photorealistic"
+    - "watermark or signature"

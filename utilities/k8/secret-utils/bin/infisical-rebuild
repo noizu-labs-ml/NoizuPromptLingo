@@ -87,16 +87,34 @@ for cmd in yq jq curl openssl; do
   command -v "$cmd" &>/dev/null || die "$cmd required but not found."
 done
 
+find_secrets_config() {
+  local arg="${1:-}"
+  if [[ -n "$arg" ]]; then
+    [[ -f "$arg" ]] && echo "$arg" && return 0
+    return 1
+  fi
+  if [[ -n "${INFISICAL_SECRETS_FILE:-}" ]]; then
+    [[ -f "$INFISICAL_SECRETS_FILE" ]] && echo "$INFISICAL_SECRETS_FILE" && return 0
+    return 1
+  fi
+
+  local dir="$PWD"
+  local candidate
+  while [[ "$dir" != "/" ]]; do
+    for candidate in \
+      "$dir/.infisical-secrets.yaml" \
+      "$dir/.infra-config.yaml" \
+      "$dir/infisical-secrets.yaml" \
+      "$dir/secrets.yaml"; do
+      [[ -f "$candidate" ]] && echo "$candidate" && return 0
+    done
+    dir="$(dirname "$dir")"
+  done
+  return 1
+}
+
 # -- Config discovery ---------------------------------------------------------
-CONFIG=""
-for candidate in \
-  "$CONFIG_ARG" \
-  "${INFISICAL_SECRETS_FILE:-}" \
-  "$INFRA_ROOT/.infisical-secrets.yaml" \
-  "$INFRA_ROOT/infisical-secrets.yaml" \
-  "$INFRA_ROOT/secrets.yaml"; do
-  [[ -n "$candidate" && -f "$candidate" ]] && CONFIG="$candidate" && break
-done
+CONFIG="$(find_secrets_config "$CONFIG_ARG" || true)"
 [[ -z "$CONFIG" ]] && die "No .infisical-secrets.yaml found."
 
 yq -e '.apiVersion == "secrets-tools/v1"' "$CONFIG" &>/dev/null \

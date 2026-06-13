@@ -2,7 +2,12 @@
 .tmp
 .envrc
 .DS_Store
+*.swp
+*.swo
+*~
+.env
 rust/target/
+**/*.rs.bk
 ink-plan/node_modules/
 ink-plan/dist/
 ink-plan/package-lock.json

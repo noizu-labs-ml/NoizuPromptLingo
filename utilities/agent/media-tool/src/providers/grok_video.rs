@@ -30,10 +30,16 @@ impl MediaProvider for GrokVideoProvider {
             &options.model
         };
 
+        // duration_seconds from GenerationOptions takes precedence over provider_options
         let duration = options
-            .provider_options
-            .get("duration")
-            .and_then(|v| v.as_u64())
+            .duration_seconds
+            .map(|d| d as u64)
+            .or_else(|| {
+                options
+                    .provider_options
+                    .get("duration")
+                    .and_then(|v| v.as_u64())
+            })
             .unwrap_or(10);
 
         let aspect_ratio = options

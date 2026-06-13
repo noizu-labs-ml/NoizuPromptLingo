@@ -16,7 +16,7 @@ make install    # Installs staging-* tools to ~/.local/bin
 
 ## Configuration
 
-All tools load settings from `infra-config.yaml` via the shared k8-lib config chain (see [k8-lib README](../k8-lib/README.md)). Relevant sections:
+All tools load settings from `infra-config.yaml` via the shared k8-lib config chain (see `~/.local/share/k8-lib/README.md`). Relevant sections:
 
 | YAML Path | Env Override | Default | Purpose |
 |-----------|-------------|---------|---------|

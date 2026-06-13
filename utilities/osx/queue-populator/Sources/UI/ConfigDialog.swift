@@ -2,11 +2,26 @@ import AppKit
 import AVFoundation
 
 @MainActor
+private final class ModalCloseDelegate: NSObject, NSWindowDelegate {
+    private let close: () -> Void
+
+    init(close: @escaping () -> Void) {
+        self.close = close
+    }
+
+    func windowShouldClose(_ sender: NSWindow) -> Bool {
+        close()
+        return false
+    }
+}
+
+@MainActor
 func showConfigDialog(config: QueuePopulatorConfig) -> QueuePopulatorConfig? {
     let app = NSApplication.shared
+    fputs("queue-populator: config dialog opening\n", stderr)
 
     let panel = NSPanel(
-        contentRect: NSRect(x: 0, y: 0, width: 480, height: 580),
+        contentRect: NSRect(x: 0, y: 0, width: 480, height: 612),
         styleMask: [.titled, .closable],
         backing: .buffered,
         defer: false
@@ -23,7 +38,7 @@ func showConfigDialog(config: QueuePopulatorConfig) -> QueuePopulatorConfig? {
     let fieldWidth: CGFloat = 330
     let rowHeight: CGFloat = 32
     let sectionGap: CGFloat = 12
-    var y: CGFloat = 545
+    var y: CGFloat = 577
     let audioDevices = AVCaptureDevice.DiscoverySession(
         deviceTypes: [.microphone, .external],
         mediaType: .audio,
@@ -63,6 +78,7 @@ func showConfigDialog(config: QueuePopulatorConfig) -> QueuePopulatorConfig? {
     makeSectionHeader("VOICE PHRASES")
     let wakeField = addRow(label: "Wake:", value: config.phrases.wake, placeholder: "hey robot")
     let endField = addRow(label: "End:", value: config.phrases.end, placeholder: "full stop")
+    let approveMemoField = addRow(label: "Approve memo:", value: config.phrases.approveMemo, placeholder: "approve memo")
     let cancelField = addRow(label: "Cancel:", value: config.phrases.cancel, placeholder: "cancel that")
     let approveField = addRow(label: "Approve:", value: config.phrases.approve, placeholder: "looks good")
     let reviseField = addRow(label: "Revise:", value: config.phrases.revise, placeholder: "revise that")
@@ -228,27 +244,40 @@ func showConfigDialog(config: QueuePopulatorConfig) -> QueuePopulatorConfig? {
     cancelButton.keyEquivalent = "\u{1b}"
     contentView.addSubview(cancelButton)
 
-    var accepted = false
-    let saveTarget = BlockTarget { accepted = true; app.stopModal() }
-    let cancelTarget = BlockTarget { accepted = false; app.stopModal() }
+    let saveTarget = BlockTarget {
+        panel.orderOut(nil)
+        app.stopModal(withCode: .OK)
+    }
+    let cancelTarget = BlockTarget {
+        panel.orderOut(nil)
+        app.stopModal(withCode: .cancel)
+    }
+    let closeDelegate = ModalCloseDelegate {
+        panel.orderOut(nil)
+        app.stopModal(withCode: .cancel)
+    }
+    panel.delegate = closeDelegate
     saveButton.target = saveTarget
     saveButton.action = #selector(BlockTarget.invoke)
     cancelButton.target = cancelTarget
     cancelButton.action = #selector(BlockTarget.invoke)
 
     panel.center()
-    app.activate(ignoringOtherApps: true)
-    panel.makeKeyAndOrderFront(nil)
-    app.runModal(for: panel)
+    showInteractiveWindow(panel)
+    let response = app.runModal(for: panel)
     panel.orderOut(nil)
+    panel.delegate = nil
+    panel.close()
+    fputs("queue-populator: config dialog closed response=\(response.rawValue)\n", stderr)
 
-    _ = (fetchTarget, testTarget, saveTarget, cancelTarget)
+    _ = (fetchTarget, testTarget, saveTarget, cancelTarget, closeDelegate)
 
-    guard accepted else { return nil }
+    guard response == .OK else { return nil }
 
     var updated = config
     updated.phrases.wake = wakeField.stringValue.lowercased().trimmingCharacters(in: .whitespaces)
     updated.phrases.end = endField.stringValue.lowercased().trimmingCharacters(in: .whitespaces)
+    updated.phrases.approveMemo = approveMemoField.stringValue.lowercased().trimmingCharacters(in: .whitespaces)
     updated.phrases.cancel = cancelField.stringValue.lowercased().trimmingCharacters(in: .whitespaces)
     updated.phrases.approve = approveField.stringValue.lowercased().trimmingCharacters(in: .whitespaces)
     updated.phrases.revise = reviseField.stringValue.lowercased().trimmingCharacters(in: .whitespaces)

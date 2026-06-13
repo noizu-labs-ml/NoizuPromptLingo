@@ -14,7 +14,7 @@ Multi-command CLI for developer environment setup and infrastructure import.
 | `state-upgrade` | Migrate Terraformer legacy provider state to TF 1.x format |
 | `doctor` | Verify tooling and configuration health |
 
-Sources shared functions from `k8-lib/*.sh` (resolved relative to script location).
+Sources shared functions from `share/k8-lib/bin/*.sh` (resolved relative to script location).
 
 ## bin/deploy-one-off
 

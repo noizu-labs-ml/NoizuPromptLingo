@@ -1,1 +1,10 @@
-.build
+.build/
+.swiftpm/
+Package.resolved
+xcuserdata/
+.DS_Store
+*.swp
+*.swo
+*~
+.env
+.envrc.local

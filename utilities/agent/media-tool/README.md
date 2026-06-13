@@ -29,16 +29,16 @@ generate-media-prompt --refine hero.media.prompt
 
 ## Prompt File Format
 
-Prompt files use the **`.media.prompt`** extension and contain YAML following the [asset-prompt-payload schema v0.3](../../../skills/shared/asset-prompt-payload-schema.md).
+Prompt files use the **`.media.prompt`** extension and contain YAML following the [asset-prompt-payload schema v0.4](../../../skills/shared/asset-prompt-payload-schema.md).
 
 ### Minimal Example
 
 ```yaml
 # logo.media.prompt
-schema: "0.3"
+schema: "0.4"
 id: logo-001
 type: image
-service: gemini
+quality: medium            # low | medium | high — drives provider selection
 
 prompt:
   text: "Minimal geometric logomark, blue hexagons on dark background"
@@ -57,11 +57,10 @@ output:
 
 ```yaml
 # hero-page.media.prompt
-schema: "0.3"
+schema: "0.4"
 id: hero-page-001
 type: image
-service: gemini
-model: imagen-3.0-generate-002
+quality: high
 
 depends_on:
   - ref: logo-001
@@ -108,20 +107,16 @@ eval:
   required_pass: [relevance]
   criteria:
     relevance:
-      weight: 0.30
-      scale: [1, 5]
+      weight: 3
       description: "Matches SaaS landing page intent"
     composition:
-      weight: 0.25
-      scale: [1, 5]
+      weight: 2
       description: "Clear visual hierarchy"
     technical:
-      weight: 0.25
-      scale: [1, 5]
+      weight: 2
       description: "Sharp, correct dimensions"
     brand_fit:
-      weight: 0.20
-      scale: [1, 5]
+      weight: 2
       description: "Matches dark tech aesthetic"
   reject_if:
     - "obvious AI artifacts"
@@ -133,17 +128,19 @@ eval:
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| `schema` | Yes | Schema version string, currently `"0.3"` |
+| `schema` | Yes | Schema version string, currently `"0.4"` |
 | `id` | Yes | Unique identifier for dependency resolution |
-| `type` | Yes | `image`, `audio`, `video`, or `component` |
-| `service` | Yes | Generation provider (see [Providers](#providers)) |
-| `model` | No | Provider-specific model ID (has sensible defaults) |
+| `type` | Yes | `image`, `music`, `voice`, `audio`, `video`, `component`, etc. |
+| `quality` | No | `low`, `medium` (default), or `high` — drives provider auto-selection |
+| `service` | No | Pin to a specific provider (advanced; bypasses auto-selection) |
+| `model` | No | Provider-specific model ID (only meaningful with `service`) |
 | `prompt.text` | Yes | The generation prompt |
 | `prompt.negative` | No | Negative prompt / exclusions |
 | `prompt.style` | No | Style template slug (e.g., `kawaii`, `photography`) |
 | `prompt.provider_options` | No | Provider-specific parameters (see per-provider docs) |
 | `attachments[]` | No | Files to include with the request (see [Attachments](#attachments)) |
 | `depends_on[]` | No | Dependency references (see [Dependencies](#dependencies)) |
+| `output.duration` | No | Duration in seconds for video, music, and voice (alias: `length`) |
 | `output.formats[]` | Yes | Output format(s) with optional quality and filename override |
 | `output.dimensions` | No | Width, height, aspect_ratio |
 | `output.transparency` | No | `required`, `preferred`, or `none` |
@@ -152,7 +149,7 @@ eval:
 | `post_processing[]` | No | Post-generation steps (see [Post-Processing](#post-processing)) |
 | `tags[]` | No | Grouping tags for filtering |
 | `product_targets[]` | No | What the asset is used on (t-shirt, hero-image, etc.) |
-| `eval` | No | Evaluation criteria for automated grading (see schema doc) |
+| `eval` | No | Evaluation criteria for grading and provider fallback (see schema doc) |
 
 ---
 
@@ -170,7 +167,12 @@ generate-media-prompt [flags] <file.prompt|directory> [...]
 | `--dry-run` | off | Show the generation plan without making API calls |
 | `--force` | off | Overwrite existing output files (default: skip existing) |
 | `--refine` | off | Interactive refinement loop — review, give feedback, regenerate |
+| `--quality <low\|medium\|high>` | from file | Override the quality tier declared in the prompt file |
+| `--service <svc>` | from file | Pin to a specific provider (overrides quality table) |
 | `--model <model>` | per-provider | Override the generation model |
+| `--no-eval` | off | Skip grading and provider fallback; accept first generation |
+| `--eval-url <url>` | auto | Evaluator base URL (overrides endpoint resolution order) |
+| `--eval-model <id>` | auto | Evaluator model ID (overrides auto-discovery) |
 | `--verbose` | off | Show detailed output (prompt text, attachments, schema version) |
 | `--config <path>` | auto | Alternate k8-lib config file |
 | `-h`, `--help` | — | Show usage |
@@ -477,6 +479,56 @@ post_processing:
 
 ---
 
+## Evaluation
+
+When a prompt file includes an `eval` block and a grading endpoint is reachable, the tool grades each generated variant and drives provider fallback until a passing variant is found.
+
+### Endpoint Resolution
+
+The evaluator is an OpenAI-compatible chat completions API. The tool probes endpoints in this order (first reachable wins — probe is `GET {base}/models` with a 2-second timeout):
+
+| Priority | URL | When active |
+|----------|-----|-------------|
+| 1 | `MEDIA_EVAL_BASE_URL` env / `--eval-url` | Always checked first if set |
+| 2 | `http://192.168.68.59:3713/v1` | LAN inference server hosting Qwen 3.6 (also forwards to noizu.server for the cluster bridge) |
+| 3 | `http://noizu.server:3713/v1` | noizu.server forward of the LAN inference server |
+| 4 | `http://lmstudio-proxy:3713/v1` | In-cluster service (platform-ai namespace) |
+| 5 | `http://127.0.0.1:3713/v1` | Local port-forward of the in-cluster bridge |
+
+If no endpoint is reachable, evaluation is skipped (legacy behavior: pick first or Groq-graded best, no provider fallback).
+
+### Model Discovery
+
+Model: `MEDIA_EVAL_MODEL` env / `--eval-model` flag, else auto-discovered from the `/models` endpoint — prefers any model ID containing `qwen3.6` or `qwen-3.6`, then any `qwen`, then the first non-embedding model.
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MEDIA_EVAL_BASE_URL` | — | Override evaluator base URL (takes highest priority) |
+| `MEDIA_EVAL_MODEL` | auto-discover | Evaluator model ID |
+| `MEDIA_EVAL_API_KEY` | `lm-studio` | API key sent to the evaluator endpoint |
+| `MEDIA_EVAL_TIMEOUT` | `300` | Grading request timeout in seconds — the hosted Qwen 3.6 is a reasoning model and responses are slow |
+
+### Grading Flow
+
+1. For each candidate provider (ordered by quality table, capped by `eval.max_attempts`):
+   - Generate `variant_count` variants.
+   - Grade each variant: compute weighted normalized score, check `required_pass` individually, scan `reject_if`.
+   - Best variant passes → accept, stop.
+2. If all candidates exhausted: keep globally best-scoring output, emit warning with scores.
+3. Without `eval` block or evaluator unreachable: accept first successful generation (or Groq-graded best if `GROQ_API_KEY` is set).
+
+### Local Access to the Cluster Evaluator
+
+If the LAN inference server (`192.168.68.59:3713`) is not directly reachable from your machine, use `bin/media-eval-port-forward` to forward the in-cluster `lmstudio-proxy` service to `localhost:3713`:
+
+```bash
+bin/media-eval-port-forward   # loops kubectl port-forward svc/lmstudio-proxy 3713:3713
+```
+
+---
+
 ## API Key Resolution
 
 Each provider uses its own API key, resolved in this order:
@@ -525,14 +577,16 @@ In `--dry-run` mode, missing keys are tolerated (the plan is shown without API c
 
 Legacy `*.{ext}.prompt` files (v0.1/v0.2 schema) are fully supported. The engine auto-detects and normalizes:
 
-| Legacy Field | Maps To |
-|-------------|---------|
+| Legacy Field / Condition | Maps To |
+|--------------------------|---------|
 | `requirements.format` | `output.formats[0].format` |
 | `requirements.dimensions` | `output.dimensions` |
 | `prompt.tool_hints` | `prompt.provider_options` |
+| `output.length` | `output.duration` (alias) |
 | (missing `type`) | defaults to `image` |
-| (missing `service`) | defaults to `gemini` |
+| (missing `service`, v0.3) | quality-based auto-selection; implicit gemini default removed |
 | (missing `schema`) | treated as `"0.1"` |
+| `type: audio` + no `service:` | treated as `voice` |
 
 Both `*.media.prompt` and `*.{ext}.prompt` files can coexist in the same directory and reference each other via `depends_on`.
 
@@ -589,7 +643,7 @@ Use `generate_gemini` as the reference implementation.
 - [ ] **Post-processing: trim** — Whitespace removal via ImageMagick `-trim`
 - [ ] **Manifest support** — `--manifest assets.yaml` flag for cross-directory batch processing (see [asset-manifest-schema](../../../skills/shared/asset-manifest-schema.md))
 - [ ] **Tag filtering** — `--tag hero` to generate only matching prompts
-- [ ] **Eval integration** — After generation, score outputs using eval criteria via LLM
+- [x] **Eval integration** — After generation, score outputs using eval criteria via LLM (hosted Qwen 3.6 on the LAN inference server; provider fallback until pass or candidates exhausted)
 - [ ] **Variable substitution for `collapse: inline` and `collapse: context`** — currently only `collapse: file` works
 
 ### Lower Priority
@@ -617,7 +671,7 @@ Use `generate_gemini` as the reference implementation.
 
 ## Related
 
-- [Asset Prompt Payload Schema v0.3](../../../skills/shared/asset-prompt-payload-schema.md) — full YAML schema specification
+- [Asset Prompt Payload Schema v0.4](../../../skills/shared/asset-prompt-payload-schema.md) — full YAML schema specification
 - [Asset Manifest Schema](../../../skills/shared/asset-manifest-schema.md) — optional project-level manifest for batch generation
 - [12-Screens Style Guide Section](../../../skills/user-experience-engineer/references/outputs/styleguide-sections/12-screens.md) — how prompts integrate with style guide screen templates
 - [Print-on-Demand Prompt Library](../../../skills/print-on-demand/references/prompt-library.md) — reusable style templates with full payloads

@@ -29,6 +29,13 @@ final class SpeechEngine: @unchecked Sendable {
     private var didReportFirstRecognitionCallback: Bool = false
     private(set) var isRunning: Bool = false
 
+    /// Format of the live mic input, available once recognition has started.
+    private(set) var currentInputFormat: AVAudioFormat?
+
+    /// Optional sink for raw mic buffers (used to route audio to virtual devices).
+    /// Invoked on the audio render thread for every captured buffer.
+    var onAudioBuffer: (@Sendable (AVAudioPCMBuffer) -> Void)?
+
     weak var delegate: SpeechEngineDelegate?
 
     init(locale: String = "en-US", onDevice: Bool = true, inputDeviceId: String? = nil, verbose: Bool = false) {
@@ -65,6 +72,7 @@ final class SpeechEngine: @unchecked Sendable {
         let inputNode = audioEngine.inputNode
         let inputDescription = try configureInputDeviceIfNeeded(on: inputNode)
         let recordingFormat = inputNode.outputFormat(forBus: 0)
+        self.currentInputFormat = recordingFormat
 
         let request = SFSpeechAudioBufferRecognitionRequest()
         request.shouldReportPartialResults = true
@@ -117,8 +125,9 @@ final class SpeechEngine: @unchecked Sendable {
             }
         }
 
-        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { buffer, _ in
+        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { [weak self] buffer, _ in
             request.append(buffer)
+            self?.onAudioBuffer?(buffer)
         }
         tapInstalled = true
 

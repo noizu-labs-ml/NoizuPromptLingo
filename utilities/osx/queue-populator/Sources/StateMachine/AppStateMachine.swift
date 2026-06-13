@@ -3,6 +3,8 @@ import Foundation
 enum SideEffect: Sendable {
     case startRecording
     case stopRecording
+    case showMemoReview(String)
+    case hideMemoReview
     case sendToLlm(transcript: String)
     case sendRevisionToLlm(original: [ProposedEntry], revision: String)
     case showReview([ProposedEntry])
@@ -29,12 +31,29 @@ final class AppStateMachine {
                 state = .idle
                 return [.stopRecording, .showOverlay("Nothing heard"), .returnToIdle]
             }
-            state = .processing
-            return [.stopRecording, .showOverlay("Processing..."), .sendToLlm(transcript: trimmed)]
+            state = .memoReview(trimmed)
+            return [.stopRecording, .showOverlay("Review memo"), .showMemoReview(trimmed)]
 
         case (.recording, .cancelDetected):
             state = .idle
             return [.stopRecording, .showOverlay("Cancelled"), .returnToIdle]
+
+        case (.memoReview, .memoApproved(let transcript)):
+            let trimmed = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else {
+                state = .idle
+                return [.hideMemoReview, .showOverlay("Nothing heard"), .returnToIdle]
+            }
+            state = .processing
+            return [.hideMemoReview, .showOverlay("Processing..."), .sendToLlm(transcript: trimmed)]
+
+        case (.memoReview(let transcript), .approveMemoDetected):
+            state = .processing
+            return [.hideMemoReview, .showOverlay("Processing..."), .sendToLlm(transcript: transcript)]
+
+        case (.memoReview, .cancelDetected):
+            state = .idle
+            return [.hideMemoReview, .showOverlay("Memo discarded"), .returnToIdle]
 
         case (.processing, .llmCompleted(let entries)):
             guard !entries.isEmpty else {

@@ -183,17 +183,30 @@ infisical_list_secrets() {
 # -- Secrets YAML Parser -----------------------------------------------------
 
 # Find the secrets YAML config file
-# Order: argument → INFISICAL_SECRETS_FILE env → .infisical-secrets.yaml → secrets.yaml
+# Order: argument → INFISICAL_SECRETS_FILE env → walk up for default names
 # Returns: path to config file, or empty if not found
 secrets_find_config() {
   local arg="${1:-}"
-  for candidate in \
-    "$arg" \
-    "${INFISICAL_SECRETS_FILE:-}" \
-    "./.infisical-secrets.yaml" \
-    "./infisical-secrets.yaml" \
-    "./secrets.yaml"; do
-    [[ -n "$candidate" && -f "$candidate" ]] && echo "$candidate" && return 0
+  if [[ -n "$arg" ]]; then
+    [[ -f "$arg" ]] && echo "$arg" && return 0
+    return 1
+  fi
+  if [[ -n "${INFISICAL_SECRETS_FILE:-}" ]]; then
+    [[ -f "$INFISICAL_SECRETS_FILE" ]] && echo "$INFISICAL_SECRETS_FILE" && return 0
+    return 1
+  fi
+
+  local dir="$PWD"
+  local candidate
+  while [[ "$dir" != "/" ]]; do
+    for candidate in \
+      "$dir/.infisical-secrets.yaml" \
+      "$dir/.infra-config.yaml" \
+      "$dir/infisical-secrets.yaml" \
+      "$dir/secrets.yaml"; do
+      [[ -f "$candidate" ]] && echo "$candidate" && return 0
+    done
+    dir="$(dirname "$dir")"
   done
   return 1
 }
@@ -234,7 +247,7 @@ secrets_get_by_name() {
       | {
           name: $name,
           folder: .key,
-          scope: "infra",  # Legacy format doesn't have explicit scope
+          scope: "infra",  # Legacy format has no explicit scope
           item_path: "",
           definition: (.value | tojson)
         }

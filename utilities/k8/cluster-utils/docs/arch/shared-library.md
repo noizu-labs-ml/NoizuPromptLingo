@@ -1,11 +1,12 @@
-# Shared Library — `k8-lib/`
+# Shared Library — `share/k8-lib/`
 
 ## Structure
 
 ```
-k8-lib/
-├── config.sh    # Cluster-specific variables
-└── common.sh    # Shared formatting and utilities
+share/k8-lib/
+├── bin/
+│   ├── config.sh    # Cluster-specific variables
+│   └── common.sh    # Shared formatting and utilities
 ```
 
 ## `config.sh`
@@ -32,8 +33,8 @@ Scripts locate the library relative to their own directory:
 
 ```bash
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/../k8-lib/config.sh"
-source "$SCRIPT_DIR/../k8-lib/common.sh"
+source "$SCRIPT_DIR/../share/k8-lib/bin/config.sh"
+source "$SCRIPT_DIR/../share/k8-lib/bin/common.sh"
 ```
 
-This works regardless of where the script is invoked from, but requires `k8-lib/` to be a sibling of `bin/` in the project tree. Installed copies in `~/.local/bin` will not find the library — they are designed to be run from the repo or symlinked.
+This works regardless of where the script is invoked from, but requires `share/k8-lib/` to be installed relative to `bin/` at `../share/k8-lib` or `~/.local/share/k8-lib`. Installed copies in `~/.local/bin` use the latter layout by default.

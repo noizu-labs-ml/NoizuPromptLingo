@@ -11,10 +11,13 @@ final class Coordinator: SpeechEngineDelegate {
     private var speechEngine: SpeechEngine
     private var phraseDetector: PhraseDetector
     private let overlay = StateOverlay()
+    private let memoReviewWindow = MemoReviewWindow()
     private let reviewWindow = ReviewWindow()
-    private let transcriptWindow: TranscriptWindow?
+    private let transcriptWindow: TranscriptWindow
     private let statusBar: StatusBarController
     private var llmClient: LlmClient
+    private let micRouter = VirtualMicRouter()
+    private let memoAudioRecorder = MemoAudioRecorder()
 
     private var finalizedChunks: [String] = []
     private var currentPartial: String = ""
@@ -32,25 +35,42 @@ final class Coordinator: SpeechEngineDelegate {
         self.phraseDetector = PhraseDetector(phrases: config.phrases)
         self.llmClient = LlmClient(config: config.llm)
         self.statusBar = StatusBarController(config: config)
-        self.transcriptWindow = config.ui.showTranscriptWindow ? TranscriptWindow() : nil
+        self.transcriptWindow = TranscriptWindow()
 
         speechEngine.delegate = self
+        wireMicRouting()
+        transcriptWindow.setOnConfigure { [weak self] in self?.showConfig() }
+        transcriptWindow.setOnBrowseQueue { [weak self] in self?.browseQueueFolder() }
+        transcriptWindow.updateCommands(phrases: config.phrases)
+    }
+
+    /// Feed the speech engine's captured mic buffers into the virtual-mic router.
+    /// Runs on the audio thread, so it only touches the (thread-safe) router.
+    private func wireMicRouting() {
+        let router = micRouter
+        let memoRecorder = memoAudioRecorder
+        speechEngine.onAudioBuffer = { buffer in
+            memoRecorder.append(buffer)
+            router.forward(buffer)
+        }
     }
 
     func start() {
         statusBar.setup(
             onConfigure: { [weak self] in self?.showConfig() },
-            onShowTranscript: { [weak self] in self?.transcriptWindow?.show() },
+            onShowTranscript: { [weak self] in self?.transcriptWindow.show() },
             onTogglePause: { [weak self] in self?.togglePause() },
             onQuit: { [weak self] in self?.quit() }
         )
         NSApplication.shared.activate(ignoringOtherApps: true)
         startListening()
         statusBar.updateState(.idle)
-        showConfig()
+        transcriptWindow.show()
+        transcriptWindow.updateCommands(phrases: config.phrases)
 
         fputs("queue-populator: listening for \"\(config.phrases.wake)\"\n", stderr)
         fputs("  end: \"\(config.phrases.end)\"  cancel: \"\(config.phrases.cancel)\"\n", stderr)
+        fputs("  approve memo: \"\(config.phrases.approveMemo)\"\n", stderr)
         fputs("  approve: \"\(config.phrases.approve)\"  revise: \"\(config.phrases.revise)\"\n", stderr)
         fputs("  queue: \(config.resolvedQueueBasePath)\n", stderr)
         fputs("  llm: \(config.llm.provider) / \(config.llm.effectiveModel)\n", stderr)
@@ -69,6 +89,7 @@ final class Coordinator: SpeechEngineDelegate {
         Task { @MainActor in
             self.finalizedChunks.append(text)
             self.currentPartial = ""
+            self.clipTranscriptBufferIfNeeded()
             log("  [finalized] \"\(text)\"")
             log("  [buffer] chunks=\(self.finalizedChunks.count) total=\"\(self.buildFullTranscript())\"")
         }
@@ -77,7 +98,7 @@ final class Coordinator: SpeechEngineDelegate {
     nonisolated func speechEngine(_ engine: SpeechEngine, didReceiveRecognitionError message: String) {
         Task { @MainActor in
             self.log("  [speech] \(message)")
-            self.transcriptWindow?.appendEvent("Speech: \(message)")
+            self.transcriptWindow.appendEvent("Speech: \(message)")
             if message != "Speech recognizer callback received" {
                 self.statusBar.setPaused(true)
             }
@@ -98,12 +119,34 @@ final class Coordinator: SpeechEngineDelegate {
         return parts.joined(separator: " ")
     }
 
+    private func transcriptForState(_ state: AppState) -> String {
+        let text = buildFullTranscript()
+        return shouldClipTranscript(in: state) ? String(text.suffix(512)) : text
+    }
+
+    private func clipTranscriptBufferIfNeeded() {
+        guard shouldClipTranscript(in: stateMachine.state) else { return }
+        let clipped = String(buildFullTranscript().suffix(512))
+        finalizedChunks = clipped.isEmpty ? [] : [clipped]
+        currentPartial = ""
+    }
+
+    private func shouldClipTranscript(in state: AppState) -> Bool {
+        switch state {
+        case .recording, .revising:
+            false
+        case .idle, .memoReview, .processing, .review:
+            true
+        }
+    }
+
     private func processTranscript() {
-        let text = fullTranscript
         let currentState = stateMachine.state
-        transcriptWindow?.updateLiveTranscript(text, state: currentState)
+        let text = transcriptForState(currentState)
+        transcriptWindow.updateLiveTranscript(text, state: currentState)
 
         guard let event = phraseDetector.detect(in: text, forState: currentState) else { return }
+        playCommandSound()
 
         switch event {
         case .wakeDetected:
@@ -116,8 +159,9 @@ final class Coordinator: SpeechEngineDelegate {
             let effects = stateMachine.handle(event)
             execute(effects)
 
-        case .endDetected:
-            let memo = extractMemo(from: fullTranscript)
+        case .endDetected(let detectedTranscript):
+            let detectedMemo = detectedTranscript.trimmingCharacters(in: .whitespacesAndNewlines)
+            let memo = detectedMemo.isEmpty ? extractMemo(from: fullTranscript) : detectedMemo
             log("━━━ END PHRASE DETECTED ━━━")
             log("  state: \(currentState.label) → Processing")
             log("  raw transcript: \"\(fullTranscript)\"")
@@ -127,6 +171,12 @@ final class Coordinator: SpeechEngineDelegate {
                 log("  ⚠ memo is EMPTY — will show 'Nothing heard'")
             }
             let effects = stateMachine.handle(.endDetected(transcript: memo))
+            execute(effects)
+
+        case .approveMemoDetected:
+            log("━━━ APPROVE MEMO PHRASE DETECTED ━━━")
+            let memo = memoReviewWindow.currentText
+            let effects = stateMachine.handle(.memoApproved(transcript: memo))
             execute(effects)
 
         case .cancelDetected:
@@ -148,6 +198,24 @@ final class Coordinator: SpeechEngineDelegate {
             let effects = stateMachine.handle(event)
             execute(effects)
 
+        case .micOpen(let target):
+            log("━━━ MIC OPEN: \(target.label) ━━━")
+            finalizedChunks = []
+            currentPartial = ""
+            phraseDetector.reset()
+            micRouter.open(target, inputFormat: speechEngine.currentInputFormat)
+            overlay.show(message: "\(target.label) mic open", icon: "🎙")
+            transcriptWindow.appendEvent("Virtual mic open: \(target.label)")
+
+        case .micClose(let target):
+            log("━━━ MIC CLOSE: \(target.label) ━━━")
+            finalizedChunks = []
+            currentPartial = ""
+            phraseDetector.reset()
+            micRouter.close(target)
+            overlay.show(message: "\(target.label) mic muted", icon: "🔇")
+            transcriptWindow.appendEvent("Virtual mic muted: \(target.label)")
+
         default:
             let effects = stateMachine.handle(event)
             execute(effects)
@@ -162,6 +230,52 @@ final class Coordinator: SpeechEngineDelegate {
         return memo.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    private func startMemoAudioRecordingIfNeeded() {
+        guard stateMachine.state == .recording, !memoAudioRecorder.isRecording else { return }
+        do {
+            let outputURL = try memoAudioRecorder.start(
+                format: speechEngine.currentInputFormat,
+                outputDirectory: personalDevelopmentOutputDirectory()
+            )
+            transcriptWindow.appendEvent("Memo audio recording: \(outputURL.path)")
+            log("  [memo-audio] recording to \(outputURL.path)")
+        } catch {
+            transcriptWindow.appendEvent("Memo audio disabled: \(error.localizedDescription)")
+            log("  [memo-audio] disabled: \(error.localizedDescription)")
+        }
+    }
+
+    private func finishMemoAudioRecordingIfNeeded() {
+        guard memoAudioRecorder.isRecording else { return }
+
+        guard case .memoReview = stateMachine.state else {
+            memoAudioRecorder.cancel()
+            log("  [memo-audio] cancelled")
+            return
+        }
+
+        do {
+            if let outputURL = try memoAudioRecorder.stopAndExportMP3() {
+                transcriptWindow.appendEvent("Memo audio exported: \(outputURL.path)")
+                log("  [memo-audio] exported \(outputURL.path)")
+            } else {
+                transcriptWindow.appendEvent("Memo audio skipped: no audio frames captured")
+                log("  [memo-audio] skipped: no audio frames captured")
+            }
+        } catch {
+            transcriptWindow.appendEvent("Memo audio export failed: \(error.localizedDescription)")
+            log("  [memo-audio] export failed: \(error.localizedDescription)")
+        }
+    }
+
+    private func personalDevelopmentOutputDirectory() -> URL {
+        let queueURL = URL(fileURLWithPath: config.resolvedQueueBasePath, isDirectory: true)
+        if queueURL.lastPathComponent == "queue" {
+            return queueURL.deletingLastPathComponent()
+        }
+        return queueURL
+    }
+
     // MARK: - Side effects
 
     private func execute(_ effects: [SideEffect]) {
@@ -170,20 +284,48 @@ final class Coordinator: SpeechEngineDelegate {
             case .startRecording:
                 phraseDetector.reset()
                 statusBar.updateState(stateMachine.state)
+                startMemoAudioRecordingIfNeeded()
+                playMemoModeSound()
                 NSApplication.shared.activate(ignoringOtherApps: true)
-                transcriptWindow?.show()
+                transcriptWindow.show()
                 overlay.showState(stateMachine.state, phrases: config.phrases)
-                transcriptWindow?.appendEvent("Recording started")
+                transcriptWindow.appendEvent("Recording started")
 
             case .stopRecording:
+                finishMemoAudioRecordingIfNeeded()
                 statusBar.updateState(stateMachine.state)
+
+            case .showMemoReview(let memo):
+                statusBar.updateState(stateMachine.state)
+                phraseDetector.reset()
+                finalizedChunks = []
+                currentPartial = ""
+                NSApplication.shared.activate(ignoringOtherApps: true)
+                transcriptWindow.show()
+                transcriptWindow.appendBlock(
+                    title: "MEMO REVIEW",
+                    body: memo,
+                    color: .systemBlue
+                )
+                memoReviewWindow.show(
+                    memo: memo,
+                    process: { [weak self] editedMemo in
+                        self?.handleButtonEvent(.memoApproved(transcript: editedMemo))
+                    },
+                    cancel: { [weak self] in
+                        self?.handleButtonEvent(.cancelDetected)
+                    }
+                )
+
+            case .hideMemoReview:
+                memoReviewWindow.hide()
 
             case .sendToLlm(let transcript):
                 statusBar.updateState(.processing)
                 overlay.showState(.processing, phrases: config.phrases)
                 NSApplication.shared.activate(ignoringOtherApps: true)
-                transcriptWindow?.show()
-                transcriptWindow?.appendEvent("Sending to LLM: \(transcript)")
+                transcriptWindow.show()
+                transcriptWindow.appendEvent("Sending to LLM: \(transcript)")
                 log("━━━ SENDING TO LLM ━━━")
                 log("  provider: \(config.llm.provider)")
                 log("  model: \(config.llm.effectiveModel)")
@@ -194,8 +336,8 @@ final class Coordinator: SpeechEngineDelegate {
                 statusBar.updateState(.processing)
                 overlay.showState(.processing, phrases: config.phrases)
                 NSApplication.shared.activate(ignoringOtherApps: true)
-                transcriptWindow?.show()
-                transcriptWindow?.appendEvent("Sending revision: \(revision)")
+                transcriptWindow.show()
+                transcriptWindow.appendEvent("Sending revision: \(revision)")
                 log("━━━ SENDING REVISION TO LLM ━━━")
                 log("  original entries: \(original.count)")
                 log("  revision: \"\(revision)\"")
@@ -232,7 +374,7 @@ final class Coordinator: SpeechEngineDelegate {
 
             case .showError(let error):
                 overlay.show(message: "Error: \(error)", icon: "⚠️", duration: 5.0)
-                transcriptWindow?.appendEvent("Error: \(error)")
+                transcriptWindow.appendEvent("Error: \(error)")
                 log("  [ERROR] \(error)")
 
             case .returnToIdle:
@@ -251,6 +393,22 @@ final class Coordinator: SpeechEngineDelegate {
         execute(effects)
     }
 
+    private func playMemoModeSound() {
+        if let sound = NSSound(named: "Glass") {
+            sound.play()
+        } else {
+            NSSound.beep()
+        }
+    }
+
+    private func playCommandSound() {
+        if let sound = NSSound(named: "Tink") {
+            sound.play()
+        } else {
+            NSSound.beep()
+        }
+    }
+
     // MARK: - LLM
 
     private func classifyTranscript(_ transcript: String) async {
@@ -258,7 +416,7 @@ final class Coordinator: SpeechEngineDelegate {
             transcript: transcript,
             systemOverride: config.systemPromptOverride
         )
-        transcriptWindow?.appendBlock(
+        transcriptWindow.appendBlock(
             title: "LLM REQUEST  \(config.llm.provider) / \(config.llm.effectiveModel)",
             body: """
             SYSTEM:
@@ -275,7 +433,7 @@ final class Coordinator: SpeechEngineDelegate {
         do {
             let result = try await llmClient.classifyWithTrace(system: system, user: user)
             let response = result.response
-            transcriptWindow?.appendBlock(
+            transcriptWindow.appendBlock(
                 title: "LLM RESPONSE",
                 body: """
                 RAW:
@@ -297,7 +455,7 @@ final class Coordinator: SpeechEngineDelegate {
             let effects = stateMachine.handle(.llmCompleted(response.entries))
             execute(effects)
         } catch {
-            transcriptWindow?.appendBlock(
+            transcriptWindow.appendBlock(
                 title: "LLM ERROR",
                 body: "\(error)",
                 color: .systemRed
@@ -315,7 +473,7 @@ final class Coordinator: SpeechEngineDelegate {
             revision: revision,
             systemOverride: config.systemPromptOverride
         )
-        transcriptWindow?.appendBlock(
+        transcriptWindow.appendBlock(
             title: "LLM REVISION REQUEST  \(config.llm.provider) / \(config.llm.effectiveModel)",
             body: """
             SYSTEM:
@@ -331,7 +489,7 @@ final class Coordinator: SpeechEngineDelegate {
         do {
             let result = try await llmClient.classifyWithTrace(system: system, user: user)
             let response = result.response
-            transcriptWindow?.appendBlock(
+            transcriptWindow.appendBlock(
                 title: "LLM REVISION RESPONSE",
                 body: """
                 RAW:
@@ -349,7 +507,7 @@ final class Coordinator: SpeechEngineDelegate {
             let effects = stateMachine.handle(.llmCompleted(response.entries))
             execute(effects)
         } catch {
-            transcriptWindow?.appendBlock(
+            transcriptWindow.appendBlock(
                 title: "LLM REVISION ERROR",
                 body: "\(error)",
                 color: .systemRed
@@ -391,13 +549,13 @@ final class Coordinator: SpeechEngineDelegate {
         do {
             let count = try QueueWriter.appendAll(entries: entries, basePath: config.resolvedQueueBasePath)
             log("━━━ WROTE \(count) ENTRIES ━━━")
-            transcriptWindow?.appendEvent("Wrote \(count) entries")
+            transcriptWindow.appendEvent("Wrote \(count) entries")
             let effects = stateMachine.handle(.writeCompleted(count))
             execute(effects)
         } catch {
             log("━━━ WRITE ERROR: \(error) ━━━")
             overlay.show(message: "Write error: \(error.localizedDescription)", icon: "⚠️", duration: 5.0)
-            transcriptWindow?.appendEvent("Write error: \(error)")
+            transcriptWindow.appendEvent("Write error: \(error)")
         }
     }
 
@@ -407,7 +565,7 @@ final class Coordinator: SpeechEngineDelegate {
         if paused {
             speechEngine.stop()
             log("━━━ PAUSED ━━━")
-            transcriptWindow?.appendEvent("Listening paused")
+            transcriptWindow.appendEvent("Listening paused")
             overlay.show(message: "Paused", icon: "⏸")
         } else {
             startListening()
@@ -415,12 +573,13 @@ final class Coordinator: SpeechEngineDelegate {
             currentPartial = ""
             phraseDetector.reset()
             log("━━━ RESUMED ━━━")
-            transcriptWindow?.appendEvent("Listening resumed")
+            transcriptWindow.appendEvent("Listening resumed")
             overlay.show(message: "Resumed", icon: "▶️")
         }
     }
 
     private func quit() {
+        micRouter.closeAll()
         speechEngine.stop()
         unloadLaunchAgent()
         NSApplication.shared.terminate(nil)
@@ -443,11 +602,13 @@ final class Coordinator: SpeechEngineDelegate {
     }
 
     private func showConfig() {
+        log("queue-populator: show config requested")
+        defer { transcriptWindow.show() }
         guard let updated = showConfigDialog(config: config) else { return }
         saveConfig(updated)
         applyConfig(updated)
         overlay.show(message: "Configuration saved", icon: "✓")
-        transcriptWindow?.appendEvent("Configuration saved")
+        transcriptWindow.appendEvent("Configuration saved")
         log("━━━ CONFIG UPDATED ━━━")
         log("  llm: \(config.llm.provider) / \(config.llm.effectiveModel)")
     }
@@ -465,15 +626,43 @@ final class Coordinator: SpeechEngineDelegate {
             verbose: appConfig.verbose
         )
         speechEngine.delegate = self
+        wireMicRouting()
         if wasListening {
             startListening()
         }
         statusBar.updateConfig(updated)
+        transcriptWindow.updateCommands(phrases: updated.phrases)
+    }
+
+    private func browseQueueFolder() {
+        let path = config.resolvedQueueBasePath
+        do {
+            try FileManager.default.createDirectory(
+                at: URL(fileURLWithPath: path),
+                withIntermediateDirectories: true
+            )
+            NSWorkspace.shared.open(URL(fileURLWithPath: path, isDirectory: true))
+            transcriptWindow.appendEvent("Opened queue folder: \(path)")
+        } catch {
+            overlay.show(message: "Folder error: \(error.localizedDescription)", icon: "⚠️", duration: 5.0)
+            transcriptWindow.appendEvent("Folder error: \(error)")
+        }
     }
 
     private func startListening() {
-        if let permissionError = recognitionPermissionError() {
-            requestPermissionsThenStartListening(reason: permissionError)
+        switch recognitionPermissionStatus() {
+        case .authorized:
+            break
+        case .requestNeeded(let reason):
+            requestPermissionsThenStartListening(reason: reason)
+            return
+        case .blocked(let reason):
+            statusBar.setPaused(true)
+            overlay.show(message: reason, icon: "⚠️", duration: 5.0)
+            transcriptWindow.show()
+            transcriptWindow.appendEvent(reason)
+            log("━━━ MIC PERMISSION BLOCKED ━━━")
+            log("  \(reason)")
             return
         }
 
@@ -481,14 +670,14 @@ final class Coordinator: SpeechEngineDelegate {
         case .started(let inputDescription):
             log("━━━ MIC STARTED ━━━")
             log("  input: \(inputDescription)")
-            transcriptWindow?.appendEvent("Mic listening: \(inputDescription)")
+            transcriptWindow.appendEvent("Mic listening: \(inputDescription)")
         case .alreadyRunning:
             log("━━━ MIC ALREADY RUNNING ━━━")
         case .failed(let error):
             statusBar.setPaused(true)
             overlay.show(message: "Mic failed: \(error)", icon: "⚠️", duration: 5.0)
-            transcriptWindow?.show()
-            transcriptWindow?.appendEvent("Mic failed: \(error)")
+            transcriptWindow.show()
+            transcriptWindow.appendEvent("Mic failed: \(error)")
             log("━━━ MIC FAILED ━━━")
             log("  \(error)")
         }
@@ -497,41 +686,83 @@ final class Coordinator: SpeechEngineDelegate {
     private func requestPermissionsThenStartListening(reason: String) {
         log("━━━ MIC PERMISSION NEEDED ━━━")
         log("  \(reason)")
-        transcriptWindow?.show()
-        transcriptWindow?.appendEvent("Requesting microphone and speech permissions")
+        transcriptWindow.show()
+        transcriptWindow.appendEvent("Requesting microphone and speech permissions")
 
         Task { @MainActor in
             await requestPermissions()
-            if let permissionError = recognitionPermissionError() {
+            if case .authorized = recognitionPermissionStatus() {
+                startListening()
+            } else {
+                let permissionError = recognitionPermissionStatus().message
                 statusBar.setPaused(true)
                 overlay.show(message: permissionError, icon: "⚠️", duration: 5.0)
-                transcriptWindow?.show()
-                transcriptWindow?.appendEvent(permissionError)
+                transcriptWindow.show()
+                transcriptWindow.appendEvent(permissionError)
                 log("━━━ MIC PERMISSION FAILED ━━━")
                 log("  \(permissionError)")
-                return
             }
-            startListening()
         }
     }
 
-    private func recognitionPermissionError() -> String? {
+    private enum PermissionStatus {
+        case authorized
+        case requestNeeded(String)
+        case blocked(String)
+
+        var message: String {
+            switch self {
+            case .authorized:
+                "Authorized"
+            case .requestNeeded(let message), .blocked(let message):
+                message
+            }
+        }
+    }
+
+    private func recognitionPermissionStatus() -> PermissionStatus {
         if #available(macOS 14.0, *) {
-            guard AVAudioApplication.shared.recordPermission == .granted else {
-                return "Microphone not authorized."
+            switch AVAudioApplication.shared.recordPermission {
+            case .granted:
+                break
+            case .undetermined:
+                break
+            case .denied:
+                return .blocked("Microphone access is denied. Enable it in System Settings > Privacy & Security > Microphone.")
+            @unknown default:
+                return .blocked("Microphone authorization is unavailable.")
             }
         } else {
-            guard AVCaptureDevice.authorizationStatus(for: .audio) == .authorized else {
-                return "Microphone not authorized."
+            switch AVCaptureDevice.authorizationStatus(for: .audio) {
+            case .authorized:
+                break
+            case .notDetermined:
+                return .requestNeeded("Microphone permission has not been requested.")
+            case .denied:
+                return .blocked("Microphone access is denied. Enable it in System Settings > Privacy & Security > Microphone.")
+            case .restricted:
+                return .blocked("Microphone access is restricted on this device.")
+            @unknown default:
+                return .blocked("Microphone authorization is unavailable.")
             }
         }
-        guard SFSpeechRecognizer.authorizationStatus() == .authorized else {
-            return "Speech recognition not authorized."
+
+        switch SFSpeechRecognizer.authorizationStatus() {
+        case .authorized:
+            break
+        case .notDetermined:
+            break
+        case .denied:
+            return .blocked("Speech recognition is denied. Enable it in System Settings > Privacy & Security > Speech Recognition.")
+        case .restricted:
+            return .blocked("Speech recognition is restricted on this device.")
+        @unknown default:
+            return .blocked("Speech recognition authorization is unavailable.")
         }
         guard SFSpeechRecognizer(locale: Locale(identifier: config.recognition.locale))?.isAvailable == true else {
-            return "Speech recognizer unavailable for \(config.recognition.locale)."
+            return .blocked("Speech recognizer unavailable for \(config.recognition.locale).")
         }
-        return nil
+        return .authorized
     }
 
     private func log(_ message: String) {

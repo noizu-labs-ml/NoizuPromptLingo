@@ -1,8 +1,7 @@
-schema: "0.3"
+schema: "0.4"
 id: hero-with-logo-001
 type: image
-service: gemini
-model: imagen-4.0-generate-001
+quality: high
 
 attachments:
   - path: ./refs/brand-palette.png
@@ -39,29 +38,27 @@ tags: [hero, landing, tier-1]
 product_targets: [hero-image, og-card]
 
 eval:
-  pass_threshold: 3.0
+  pass_threshold: 0.75
+  max_attempts: 3
   required_pass: [relevance]
   criteria:
     relevance:
-      weight: 0.30
-      scale: [1, 5]
-      description: "SaaS landing page with logo and headline"
+      weight: 3
+      description: "SaaS landing page with hexagon logomark and 'Build Smarter' headline visible"
+      fail_signals: ["missing headline", "no logomark"]
     composition:
-      weight: 0.20
-      scale: [1, 5]
-      description: "Clear visual hierarchy, CTA prominence"
+      weight: 2
+      description: "Clear visual hierarchy, CTA prominence, floating shapes balanced"
     technical:
-      weight: 0.20
-      scale: [1, 5]
-      description: "Sharp, correct dimensions"
+      weight: 2
+      description: "Sharp, correct 16:9 dimensions, no artifacts"
     web_ready:
-      weight: 0.15
-      scale: [1, 5]
-      description: "Web-optimized, has text overlay space"
+      weight: 2
+      description: "Web-optimized, has text overlay space, dark background maintained"
     brand_fit:
-      weight: 0.15
-      scale: [1, 5]
-      description: "Matches dark tech brand aesthetic"
+      weight: 1
+      description: "Matches dark tech brand aesthetic — navy and cyan palette"
   reject_if:
     - "obvious AI artifacts"
     - "wrong aspect ratio"
+    - "watermark visible"

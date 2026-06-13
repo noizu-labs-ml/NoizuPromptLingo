@@ -1,3 +1,4 @@
+# v0.3 back-compat fixture — pins service: explicitly; kept as-is for backward-compatibility testing
 schema: "0.3"
 id: html-pricing-001
 type: html

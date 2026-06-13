@@ -108,8 +108,7 @@ final class ReviewWindow {
         }
 
         window.title = "Review \(entries.count) Entries"
-        window.makeKeyAndOrderFront(nil)
-        NSApplication.shared.activate(ignoringOtherApps: true)
+        showInteractiveWindow(window)
     }
 
     func hide() {

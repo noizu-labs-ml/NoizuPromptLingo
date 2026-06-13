@@ -5,7 +5,7 @@ PATH_add ./utils/
 # =============================================================================
 dc_yaml --no-bump infra <<'YAML'
 root: /Users/keithbrings/Github/infra/noizu-infra
-k8_lib_dir: /Users/keithbrings/Github/infra/noizu-infra/incubator/utilities/devops/k8-lib
+k8_lib_dir: ${HOME}/.local/share/k8-lib
 build_env: prod
 npl_project: noizu-infra
 YAML
@@ -451,4 +451,3 @@ export REGISTRY_TLS_KEY="$(cat "$REGISTRY_TLS_KEY_FILE" 2>/dev/null)"
 # MinIO TLS — reuses the wildcard *.noizu.com cert
 export MINIO_TLS_CRT="$(cat .secrets/tls/noizu.com/cert.pem 2>/dev/null)"
 export MINIO_TLS_KEY="$(cat .secrets/tls/noizu.com/key.pem 2>/dev/null)"
-

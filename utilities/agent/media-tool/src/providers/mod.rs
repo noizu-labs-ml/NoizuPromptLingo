@@ -14,6 +14,11 @@ use std::collections::HashMap;
 use std::path::Path;
 
 use crate::attachments::LoadedAttachment;
+use crate::schema::{AssetType, AudioKind, Quality};
+
+// ---------------------------------------------------------------------------
+// GenerationOptions
+// ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone)]
 pub struct GenerationOptions {
@@ -22,7 +27,12 @@ pub struct GenerationOptions {
     pub negative_prompt: Option<String>,
     pub provider_options: HashMap<String, serde_yaml::Value>,
     pub verbose: bool,
+    pub duration_seconds: Option<f64>,
 }
+
+// ---------------------------------------------------------------------------
+// Provider traits
+// ---------------------------------------------------------------------------
 
 #[async_trait::async_trait]
 pub trait MediaProvider: Send + Sync {
@@ -53,6 +63,110 @@ pub trait ChatProvider: Send + Sync {
     fn name(&self) -> &str;
 }
 
+// ---------------------------------------------------------------------------
+// Candidate selection
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone)]
+pub struct Candidate {
+    pub service: &'static str,
+    pub model: &'static str,
+}
+
+/// Returns candidates ordered best-first for the given asset type / audio kind / quality tier.
+/// The list is NOT filtered by API-key availability — call `available()` to filter.
+pub fn candidates_for(asset_type: AssetType, audio_kind: AudioKind, quality: Quality) -> Vec<Candidate> {
+    match asset_type {
+        AssetType::Image => match quality {
+            Quality::Low => vec![
+                Candidate { service: "gemini", model: "imagen-4.0-fast-generate-001" },
+            ],
+            Quality::Medium => vec![
+                Candidate { service: "gemini", model: "imagen-4.0-generate-001" },
+            ],
+            Quality::High => vec![
+                Candidate { service: "gemini", model: "imagen-4.0-ultra-generate-001" },
+                Candidate { service: "gemini", model: "imagen-4.0-generate-001" },
+            ],
+        },
+
+        AssetType::Video => match quality {
+            Quality::Low => vec![
+                Candidate { service: "grok-video", model: "grok-imagine-video" },
+                Candidate { service: "veo",        model: "veo-3.0-fast-generate-001" },
+            ],
+            Quality::Medium => vec![
+                Candidate { service: "veo",        model: "veo-3.0-fast-generate-001" },
+                Candidate { service: "grok-video", model: "grok-imagine-video" },
+            ],
+            Quality::High => vec![
+                Candidate { service: "veo",        model: "veo-3.0-generate-001" },
+                Candidate { service: "grok-video", model: "grok-imagine-video" },
+            ],
+        },
+
+        AssetType::Audio => match audio_kind {
+            AudioKind::Music => vec![
+                Candidate { service: "suno", model: "V5_5" },
+            ],
+            AudioKind::Sfx => vec![
+                Candidate { service: "suno", model: "V5_SOUND" },
+            ],
+            AudioKind::Voice => match quality {
+                Quality::Low => vec![
+                    Candidate { service: "qwen-tts",    model: "qwen3-tts-flash" },
+                    Candidate { service: "openai-tts",  model: "gpt-4o-mini-tts" },
+                ],
+                Quality::Medium => vec![
+                    Candidate { service: "openai-tts",  model: "gpt-4o-mini-tts" },
+                    Candidate { service: "elevenlabs",  model: "eleven_multilingual_v2" },
+                ],
+                Quality::High => vec![
+                    Candidate { service: "elevenlabs",  model: "eleven_multilingual_v2" },
+                    Candidate { service: "openai-tts",  model: "gpt-4o-mini-tts" },
+                ],
+            },
+        },
+
+        // Chat / code generation types
+        AssetType::Component
+        | AssetType::ReactPage
+        | AssetType::Html
+        | AssetType::StyleGuide
+        | AssetType::Diagram
+        | AssetType::Document => match quality {
+            Quality::Low => vec![
+                Candidate { service: "gemini-chat", model: "gemini-2.5-flash" },
+                Candidate { service: "openai-chat", model: "gpt-4.1" },
+            ],
+            Quality::Medium => vec![
+                Candidate { service: "anthropic",   model: "claude-sonnet-4-6" },
+                Candidate { service: "openai-chat", model: "gpt-4.1" },
+                Candidate { service: "gemini-chat", model: "gemini-2.5-flash" },
+            ],
+            Quality::High => vec![
+                Candidate { service: "anthropic",   model: "claude-opus-4-6" },
+                Candidate { service: "anthropic",   model: "claude-sonnet-4-6" },
+                Candidate { service: "gemini-chat", model: "gemini-2.5-pro" },
+            ],
+        },
+
+        AssetType::Unknown => vec![
+            Candidate { service: "gemini", model: "imagen-4.0-generate-001" },
+        ],
+    }
+}
+
+/// Returns true if the candidate's required API key env var is set and non-empty.
+pub fn available(c: &Candidate) -> bool {
+    let env = api_key_env(c.service);
+    std::env::var(env).map(|v| !v.is_empty()).unwrap_or(false)
+}
+
+// ---------------------------------------------------------------------------
+// Provider factory helpers
+// ---------------------------------------------------------------------------
+
 pub fn get_provider(service: &str) -> Option<Box<dyn MediaProvider>> {
     match service {
         "gemini" => Some(Box::new(gemini::GeminiProvider)),
@@ -77,7 +191,21 @@ pub fn get_chat_provider(service: &str) -> Option<Box<dyn ChatProvider>> {
 }
 
 pub fn is_stub_provider(service: &str) -> bool {
-    !matches!(service, "gemini" | "suno" | "openai-tts" | "elevenlabs" | "qwen-tts" | "grok-video" | "veo" | "anthropic" | "gemini-chat" | "openai-chat" | "zai" | "z.ai")
+    !matches!(
+        service,
+        "gemini"
+            | "suno"
+            | "openai-tts"
+            | "elevenlabs"
+            | "qwen-tts"
+            | "grok-video"
+            | "veo"
+            | "anthropic"
+            | "gemini-chat"
+            | "openai-chat"
+            | "zai"
+            | "z.ai"
+    )
 }
 
 pub fn api_key_env(service: &str) -> &'static str {
@@ -124,10 +252,8 @@ pub fn sanitize_chat_output(raw: &str, output_path: &Path) -> String {
             }
             if !text.contains("</svg>") {
                 if text.contains("<svg") {
-                    // Remove the last incomplete tag (truncated mid-attribute)
                     if let Some(last_open) = text.rfind('<') {
                         let after = &text[last_open..];
-                        // If the tag isn't closed with > it's truncated
                         if !after.contains('>') {
                             text.truncate(last_open);
                         }
@@ -138,7 +264,6 @@ pub fn sanitize_chat_output(raw: &str, output_path: &Path) -> String {
             }
         }
         "mmd" => {
-            // Mermaid: strip any remaining fence markers
             text = text
                 .trim_start_matches("```mermaid")
                 .trim_start_matches("```")
@@ -147,7 +272,6 @@ pub fn sanitize_chat_output(raw: &str, output_path: &Path) -> String {
                 .to_string();
         }
         "puml" => {
-            // PlantUML: ensure @startuml/@enduml present
             if !text.contains("@startuml") {
                 text = format!("@startuml\n{}", text);
             }
@@ -161,10 +285,28 @@ pub fn sanitize_chat_output(raw: &str, output_path: &Path) -> String {
     text
 }
 
+/// Provider constraints that affect prompt preparation.
+pub struct ProviderConstraints {
+    pub max_prompt_chars: Option<usize>,
+}
+
+pub fn constraints(service: &str) -> ProviderConstraints {
+    match service {
+        // Suno music: 3000 in custom mode (auto-enabled). Sounds endpoint: 500.
+        // Use 3000 here; SFX constraint enforced via suno-sfx key below.
+        "suno" => ProviderConstraints { max_prompt_chars: Some(3000) },
+        "suno-sfx" => ProviderConstraints { max_prompt_chars: Some(500) },
+        "gemini" => ProviderConstraints { max_prompt_chars: Some(4000) },
+        "veo" => ProviderConstraints { max_prompt_chars: Some(1000) },
+        "grok-video" => ProviderConstraints { max_prompt_chars: Some(1000) },
+        _ => ProviderConstraints { max_prompt_chars: None },
+    }
+}
+
 pub fn default_model(service: &str) -> &'static str {
     match service {
         "gemini" => "imagen-4.0-generate-001",
-        "suno" => "V4_5ALL",
+        "suno" => "V5_5",
         "openai-tts" => "gpt-4o-mini-tts",
         "elevenlabs" => "eleven_multilingual_v2",
         "qwen-tts" => "qwen3-tts-flash",

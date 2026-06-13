@@ -55,6 +55,8 @@ final class StateOverlay {
             return ("Listening for \"\(phrases.wake)\"", "👂")
         case .recording:
             return ("Recording... say \"\(phrases.end)\" to finish", "🔴")
+        case .memoReview:
+            return ("Review memo, edit, or say \"\(phrases.approveMemo)\"", "📝")
         case .processing:
             return ("Classifying with LLM...", "🧠")
         case .review(let entries):

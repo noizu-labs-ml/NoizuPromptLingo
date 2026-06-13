@@ -1,2 +1,10 @@
 node_modules/
 dist/
+*.tsbuildinfo
+.DS_Store
+*.swp
+*.swo
+*~
+.env
+.env.local
+.envrc.local

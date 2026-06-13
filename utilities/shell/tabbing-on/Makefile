@@ -16,28 +16,39 @@ SYMLINKS := tabbing-off tabbing-status tabbing-info tabbing-clear tabbing-todo t
 # --- Rust (default) ---
 
 compile:
-	cd $(RUST_DIR) && cargo build --release
+	@if ! command -v cargo >/dev/null 2>&1; then \
+		echo "tabbing-on: cargo not found; skipping Rust build."; \
+	else \
+		cd $(RUST_DIR) && cargo build --release; \
+	fi
 
 test:
-	cd $(RUST_DIR) && cargo test
+	@if ! command -v cargo >/dev/null 2>&1; then \
+		echo "tabbing-on: cargo not found; skipping tests."; \
+	else \
+		cd $(RUST_DIR) && cargo test; \
+	fi
 
 install: compile
-	@mkdir -p $(INSTALL_DIR)
-	@install -m 755 $(RUST_DIR)/target/release/tabbing-on $(INSTALL_DIR)/tabbing-on
-	@for link in $(SYMLINKS); do \
-		ln -sf $(INSTALL_DIR)/tabbing-on $(INSTALL_DIR)/$$link; \
-	done
-	@# Install shell adapters + libs for shell integration (prompt hooks)
-	@mkdir -p $(SHARE_DIR)/lib $(SHARE_DIR)/shell
-	@install -m 644 $(SHELL_DIR)/lib/*.sh $(SHARE_DIR)/lib/
-	@install -m 644 $(SHELL_DIR)/shell/tabbing.bash $(SHELL_DIR)/shell/tabbing.zsh $(SHARE_DIR)/shell/
-	@# Install direnv helper for use_tabbing
-	@mkdir -p $(DIRENV_LIB)
-	@install -m 644 $(SHELL_DIR)/direnv/tabbing.sh $(DIRENV_LIB)/tabbing.sh
-	@echo "Installed: tabbing-on (rust) → $(INSTALL_DIR)"
-	@echo "  Symlinks: $(SYMLINKS)"
-	@echo "  Shell libs → $(SHARE_DIR)"
-	@echo "  direnv helper → $(DIRENV_LIB)/tabbing.sh"
+	@if ! command -v cargo >/dev/null 2>&1; then \
+		echo "tabbing-on: cargo not found; using shell fallback install."; \
+		$(MAKE) install-shell; \
+	else \
+		mkdir -p $(INSTALL_DIR); \
+		install -m 755 $(RUST_DIR)/target/release/tabbing-on $(INSTALL_DIR)/tabbing-on; \
+		for link in $(SYMLINKS); do \
+			ln -sf $(INSTALL_DIR)/tabbing-on $(INSTALL_DIR)/$$link; \
+		done; \
+		mkdir -p $(SHARE_DIR)/lib $(SHARE_DIR)/shell; \
+		install -m 644 $(SHELL_DIR)/lib/*.sh $(SHARE_DIR)/lib/; \
+		install -m 644 $(SHELL_DIR)/shell/tabbing.bash $(SHELL_DIR)/shell/tabbing.zsh $(SHARE_DIR)/shell/; \
+		mkdir -p $(DIRENV_LIB); \
+		install -m 644 $(SHELL_DIR)/direnv/tabbing.sh $(DIRENV_LIB)/tabbing.sh; \
+		echo "Installed: tabbing-on (rust) → $(INSTALL_DIR)"; \
+		echo "  Symlinks: $(SYMLINKS)"; \
+		echo "  Shell libs → $(SHARE_DIR)"; \
+		echo "  direnv helper → $(DIRENV_LIB)/tabbing.sh"; \
+	fi
 
 uninstall:
 	@rm -f $(INSTALL_DIR)/tabbing-on

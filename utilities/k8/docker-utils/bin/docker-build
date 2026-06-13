@@ -249,7 +249,9 @@ _nudge_containerd_store() {
 
 # Detect daemon capability once up front
 HAS_CONTAINERD_STORE=false
-_has_containerd_image_store && HAS_CONTAINERD_STORE=true
+if ! $FLAG_DRY_RUN; then
+  _has_containerd_image_store && HAS_CONTAINERD_STORE=true
+fi
 
 # Resolve target platforms
 if [[ -n "$EXPLICIT_PLATFORMS" ]]; then
@@ -938,7 +940,7 @@ echo "  Logs: ${LOG_DIR}/"
 echo ""
 
 # --- Push phase (sequential — Infisical auth is interactive) -----------------
-if (( ${#SUCCEEDED[@]} > 0 )); then
+if (( ${#SUCCEEDED[@]} > 0 )) && ! $FLAG_DRY_RUN; then
   _push_flags=()
   $MULTI_PLATFORM && _push_flags+=(--remote)
 

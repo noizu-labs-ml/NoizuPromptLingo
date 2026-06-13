@@ -100,12 +100,18 @@ This skill includes a complete system for generating text-based media assets via
 
 ### Provider Selection
 
-Quick rules for choosing the right LLM provider and model:
+In schema v0.4, **declare `quality:` and omit `service:`** for most prompts — the tool selects providers automatically. Use `service:` only for explicit pinning (e.g., a text-capable provider for SVG/diagram generation, or a specific audio voice).
 
-- **Structured markup** (Mermaid, PlantUML, SVG, LaTeX): use `anthropic` with `claude-sonnet-4-6`
-- **Complex architecture** (React/TSX): use `anthropic` with `claude-opus-4-6`
-- **Fast/cheap simple diagrams**: use `gemini-chat` with `gemini-2.5-flash`
-- **Music notation**: use `gemini-chat` (good syntax adherence)
+Quick rules for `quality:` tier selection:
+- **Low**: fast prototyping, batch drafts, cost-sensitive
+- **Medium** (default): production assets, balanced quality/cost
+- **High**: hero images, launch assets, premium voice
+
+When `service:` pinning is required (text-output types that need a specific chat provider):
+- **Structured markup** (Mermaid, PlantUML, SVG, LaTeX): `service: anthropic`, `model: claude-sonnet-4-6`
+- **Complex architecture** (React/TSX): `service: anthropic`, `model: claude-opus-4-6`
+- **Fast/cheap simple diagrams**: `service: gemini-chat`, `model: gemini-2.5-flash`
+- **Music notation**: `service: gemini-chat` (good syntax adherence)
 
 > For the full decision tree and provider configuration templates, see [references/provider-selection.md](references/provider-selection.md).
 

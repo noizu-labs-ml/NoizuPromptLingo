@@ -51,6 +51,7 @@ pub fn discover_config(explicit: Option<&str>) -> Result<PathBuf> {
 
     let candidates = [
         ".infisical-secrets.yaml",
+        ".infra-config.yaml",
         "infisical-secrets.yaml",
         "secrets.yaml",
     ];

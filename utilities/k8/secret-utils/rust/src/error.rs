@@ -9,7 +9,7 @@ pub enum InfisicalError {
     #[error("Authentication failed: {0}")]
     Auth(String),
 
-    #[error("Config not found — checked: .infisical-secrets.yaml, infisical-secrets.yaml, secrets.yaml")]
+    #[error("Config not found — checked parent directories for .infisical-secrets.yaml, .infra-config.yaml, infisical-secrets.yaml, secrets.yaml")]
     ConfigNotFound,
 
     #[error("Config parse error: {0}")]

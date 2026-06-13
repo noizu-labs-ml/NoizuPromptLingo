@@ -10,8 +10,15 @@ test:
 	@true
 
 install: ## Install deps + symlink claude-assist to ~/.local/bin
-	@echo "==> Installing pnpm dependencies..."
-	cd "$(PROJ_DIR)" && pnpm install
+	@if [ -d "$(PROJ_DIR)/node_modules" ]; then \
+		echo "==> pnpm dependencies already present; skipping refresh."; \
+	elif ! command -v curl >/dev/null 2>&1 || ! curl -fsS --max-time 3 https://registry.npmjs.org >/dev/null 2>&1; then \
+		echo "==> Fatal: registry.npmjs.org not reachable and node_modules is missing."; \
+		exit 1; \
+	else \
+		echo "==> Installing pnpm dependencies..."; \
+		cd "$(PROJ_DIR)" && CI=true pnpm install --prefer-offline; \
+	fi
 	@echo "==> Symlinking claude-assist → $(PREFIX)/bin/claude-assist"
 	@mkdir -p "$(PREFIX)/bin"
 	@ln -sf "$(PROJ_DIR)/bin/claude-assist" "$(PREFIX)/bin/claude-assist"

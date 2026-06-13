@@ -1,6 +1,57 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
+
+// ---------------------------------------------------------------------------
+// Quality enum
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum Quality {
+    Low,
+    #[default]
+    Medium,
+    High,
+}
+
+impl Quality {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Quality::Low => "low",
+            Quality::Medium => "medium",
+            Quality::High => "high",
+        }
+    }
+}
+
+impl FromStr for Quality {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "low" => Ok(Quality::Low),
+            "medium" | "med" => Ok(Quality::Medium),
+            "high" => Ok(Quality::High),
+            other => Err(format!("Unknown quality '{}'; expected low|medium|high", other)),
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// AudioKind
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum AudioKind {
+    Music,
+    #[default]
+    Voice,
+    Sfx,
+}
+
+// ---------------------------------------------------------------------------
+// PromptPayload (top-level schema struct)
+// ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct PromptPayload {
@@ -10,10 +61,14 @@ pub struct PromptPayload {
     pub id: Option<String>,
     #[serde(default = "default_type")]
     pub r#type: String,
-    #[serde(default = "default_service")]
-    pub service: String,
+    // service is now Option — absent means auto-select
+    #[serde(default)]
+    pub service: Option<String>,
     #[serde(default)]
     pub model: Option<String>,
+    // quality tier (new v0.4)
+    #[serde(default)]
+    pub quality: Option<String>,
     #[serde(default)]
     pub prompt: PromptSection,
     #[serde(default)]
@@ -40,9 +95,10 @@ fn default_schema() -> String {
 fn default_type() -> String {
     "image".into()
 }
-fn default_service() -> String {
-    "gemini".into()
-}
+
+// ---------------------------------------------------------------------------
+// PromptSection
+// ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct PromptSection {
@@ -60,6 +116,10 @@ pub struct PromptSection {
     pub tool_hints: Option<HashMap<String, serde_yaml::Value>>,
 }
 
+// ---------------------------------------------------------------------------
+// OutputSection
+// ---------------------------------------------------------------------------
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct OutputSection {
     #[serde(default)]
@@ -76,6 +136,9 @@ pub struct OutputSection {
     pub diagram_type: Option<String>,
     #[serde(default)]
     pub text_format: Option<String>,
+    /// Duration in seconds for video/audio — serde alias "length" for back-compat.
+    #[serde(default, alias = "length")]
+    pub duration: Option<f64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -85,6 +148,11 @@ pub struct FormatEntry {
     pub quality: Option<u32>,
     #[serde(default)]
     pub filename: Option<String>,
+    /// Per-output description. When set, this becomes the generation prompt
+    /// for this specific output (with system context prepended), enabling
+    /// multi-output prompts where each file has its own creative brief.
+    #[serde(default)]
+    pub description: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -97,6 +165,10 @@ pub struct DimensionsSection {
     pub aspect_ratio: Option<String>,
 }
 
+// ---------------------------------------------------------------------------
+// RequirementsSection (legacy)
+// ---------------------------------------------------------------------------
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct RequirementsSection {
     #[serde(default)]
@@ -104,6 +176,10 @@ pub struct RequirementsSection {
     #[serde(default)]
     pub dimensions: Option<DimensionsSection>,
 }
+
+// ---------------------------------------------------------------------------
+// Attachments / Dependencies / Post-processing
+// ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AttachmentEntry {
@@ -143,16 +219,28 @@ pub struct PostProcessStep {
     pub params: HashMap<String, serde_yaml::Value>,
 }
 
+// ---------------------------------------------------------------------------
+// EvalSection / EvalCriterion
+// ---------------------------------------------------------------------------
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct EvalSection {
     #[serde(default)]
     pub pass_threshold: Option<f64>,
+    #[serde(default)]
+    pub max_attempts: Option<usize>,
     #[serde(default)]
     pub required_pass: Vec<String>,
     #[serde(default)]
     pub criteria: HashMap<String, EvalCriterion>,
     #[serde(default)]
     pub reject_if: Vec<String>,
+}
+
+impl EvalSection {
+    pub fn effective_pass_threshold(&self) -> f64 {
+        self.pass_threshold.unwrap_or(0.7)
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -163,20 +251,34 @@ pub struct EvalCriterion {
     pub scale: Option<Vec<u32>>,
     #[serde(default)]
     pub description: Option<String>,
+    #[serde(default)]
+    pub fail_signals: Vec<String>,
 }
+
+// ---------------------------------------------------------------------------
+// PromptMeta (resolved, runtime metadata)
+// ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone)]
 pub struct PromptMeta {
     pub path: PathBuf,
     pub asset_type: AssetType,
+    pub audio_kind: AudioKind,
     pub output_formats: Vec<FormatEntry>,
     pub name_stem: String,
     pub output_dir: PathBuf,
     pub id: String,
-    pub service: String,
+    /// Pinned service from YAML (None = auto-select)
+    pub service: Option<String>,
     pub model: Option<String>,
     pub schema_version: String,
+    pub quality: Quality,
+    pub duration: Option<f64>,
 }
+
+// ---------------------------------------------------------------------------
+// AssetType
+// ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AssetType {
@@ -203,18 +305,20 @@ impl AssetType {
         }
     }
 
-    pub fn from_type_str(s: &str) -> Self {
+    pub fn from_type_str(s: &str) -> (Self, AudioKind) {
         match s {
-            "image" => AssetType::Image,
-            "audio" => AssetType::Audio,
-            "video" => AssetType::Video,
-            "component" => AssetType::Component,
-            "react-page" => AssetType::ReactPage,
-            "html" => AssetType::Html,
-            "style-guide" => AssetType::StyleGuide,
-            "diagram" => AssetType::Diagram,
-            "document" => AssetType::Document,
-            _ => AssetType::Unknown,
+            "image" => (AssetType::Image, AudioKind::Voice),
+            "audio" | "voice" => (AssetType::Audio, AudioKind::Voice),
+            "music" => (AssetType::Audio, AudioKind::Music),
+            "sfx" => (AssetType::Audio, AudioKind::Sfx),
+            "video" => (AssetType::Video, AudioKind::Voice),
+            "component" => (AssetType::Component, AudioKind::Voice),
+            "react-page" => (AssetType::ReactPage, AudioKind::Voice),
+            "html" => (AssetType::Html, AudioKind::Voice),
+            "style-guide" => (AssetType::StyleGuide, AudioKind::Voice),
+            "diagram" => (AssetType::Diagram, AudioKind::Voice),
+            "document" => (AssetType::Document, AudioKind::Voice),
+            _ => (AssetType::Unknown, AudioKind::Voice),
         }
     }
 
@@ -232,13 +336,34 @@ impl AssetType {
             AssetType::Unknown => "bin",
         }
     }
+
+    /// True for chat-based generation types.
+    pub fn is_chat_type(&self) -> bool {
+        matches!(
+            self,
+            AssetType::Component
+                | AssetType::ReactPage
+                | AssetType::Html
+                | AssetType::StyleGuide
+                | AssetType::Diagram
+                | AssetType::Document
+        )
+    }
 }
+
+// ---------------------------------------------------------------------------
+// ParsedPrompt
+// ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone)]
 pub struct ParsedPrompt {
     pub payload: PromptPayload,
     pub meta: PromptMeta,
 }
+
+// ---------------------------------------------------------------------------
+// Public helpers
+// ---------------------------------------------------------------------------
 
 pub fn is_media_prompt(path: &Path) -> bool {
     path.file_name()
@@ -257,7 +382,7 @@ pub fn parse_prompt_file(path: &Path) -> color_eyre::Result<ParsedPrompt> {
 
     normalize_to_v03(&mut payload);
 
-    let (asset_type, output_formats) = detect_asset_info(&path, &payload);
+    let (asset_type, audio_kind, output_formats) = detect_asset_info(&path, &payload);
 
     let name_stem = if is_media_prompt(&path) {
         let name = path.file_name().unwrap().to_str().unwrap();
@@ -271,9 +396,20 @@ pub fn parse_prompt_file(path: &Path) -> color_eyre::Result<ParsedPrompt> {
     let output_dir = path.parent().unwrap_or(Path::new(".")).to_path_buf();
     let id = payload.id.clone().unwrap_or_else(|| name_stem.clone());
 
+    // Resolve quality: YAML > default Medium
+    let quality = payload
+        .quality
+        .as_deref()
+        .and_then(|q| q.parse().ok())
+        .unwrap_or(Quality::Medium);
+
+    // Resolve duration from output section
+    let duration = payload.output.duration;
+
     let meta = PromptMeta {
         path: path.clone(),
         asset_type,
+        audio_kind,
         output_formats,
         name_stem,
         output_dir,
@@ -281,13 +417,16 @@ pub fn parse_prompt_file(path: &Path) -> color_eyre::Result<ParsedPrompt> {
         service: payload.service.clone(),
         model: payload.model.clone(),
         schema_version: payload.schema.clone(),
+        quality,
+        duration,
     };
 
     Ok(ParsedPrompt { payload, meta })
 }
 
 fn normalize_to_v03(payload: &mut PromptPayload) {
-    if payload.schema.starts_with("0.3") {
+    // v0.4 and v0.3 share the same tool_hints → provider_options path
+    if payload.schema.starts_with("0.3") || payload.schema.starts_with("0.4") {
         if let Some(hints) = payload.prompt.tool_hints.take() {
             if payload.prompt.provider_options.is_empty() {
                 payload.prompt.provider_options = hints;
@@ -304,6 +443,7 @@ fn normalize_to_v03(payload: &mut PromptPayload) {
                     format: fmt.clone(),
                     quality: None,
                     filename: None,
+                    description: None,
                 });
             }
         }
@@ -319,26 +459,26 @@ fn normalize_to_v03(payload: &mut PromptPayload) {
     }
 }
 
-fn detect_asset_info(path: &Path, payload: &PromptPayload) -> (AssetType, Vec<FormatEntry>) {
+fn detect_asset_info(path: &Path, payload: &PromptPayload) -> (AssetType, AudioKind, Vec<FormatEntry>) {
     if is_media_prompt(path) {
-        let asset_type = AssetType::from_type_str(&payload.r#type);
+        let (asset_type, audio_kind) = AssetType::from_type_str(&payload.r#type);
         let formats = if !payload.output.formats.is_empty() {
             payload.output.formats.clone()
         } else if let Some(ref reqs) = payload.requirements {
             if let Some(ref fmt) = reqs.format {
-                vec![FormatEntry { format: fmt.clone(), quality: None, filename: None }]
+                vec![FormatEntry { format: fmt.clone(), quality: None, filename: None, description: None }]
             } else {
-                vec![FormatEntry { format: asset_type.default_extension().into(), quality: None, filename: None }]
+                vec![FormatEntry { format: asset_type.default_extension().into(), quality: None, filename: None, description: None }]
             }
         } else {
-            vec![FormatEntry { format: asset_type.default_extension().into(), quality: None, filename: None }]
+            vec![FormatEntry { format: asset_type.default_extension().into(), quality: None, filename: None, description: None }]
         };
-        (asset_type, formats)
+        (asset_type, audio_kind, formats)
     } else {
         let name = path.file_name().unwrap().to_str().unwrap();
         let base = name.strip_suffix(".prompt").unwrap();
         let ext = base.rsplit_once('.').map(|(_, e)| e).unwrap_or("png");
         let asset_type = AssetType::from_extension(ext);
-        (asset_type, vec![FormatEntry { format: ext.into(), quality: None, filename: None }])
+        (asset_type, AudioKind::Voice, vec![FormatEntry { format: ext.into(), quality: None, filename: None, description: None }])
     }
 }

@@ -1,4 +1,10 @@
 .tmp
 .envrc
 .DS_Store
+*.swp
+*.swo
+*~
+.env
 rust/target/
+target/
+**/*.rs.bk

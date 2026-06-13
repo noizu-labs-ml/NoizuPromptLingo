@@ -9,14 +9,14 @@ func loadConfig() -> QueuePopulatorConfig {
           let config = try? JSONDecoder().decode(QueuePopulatorConfig.self, from: data) else {
         return QueuePopulatorConfig()
     }
-    return config
+    return config.sanitized()
 }
 
 func saveConfig(_ config: QueuePopulatorConfig) {
     try? FileManager.default.createDirectory(at: configDir, withIntermediateDirectories: true)
     let encoder = JSONEncoder()
     encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-    if let data = try? encoder.encode(config) {
+    if let data = try? encoder.encode(config.sanitized()) {
         try? data.write(to: configFile)
     }
 }

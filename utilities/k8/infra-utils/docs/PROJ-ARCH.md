@@ -2,7 +2,7 @@
 
 ## Overview
 
-A CLI toolkit providing developer-facing commands for Kubernetes cluster setup, ordered Helm deployments, monitoring dashboard access, and AWS IAM policy management. Scripts are installed to `~/.local/bin` via `make install` and share a common shell library (`k8-lib/`) for logging, color output, and configuration helpers.
+A CLI toolkit providing developer-facing commands for Kubernetes cluster setup, ordered Helm deployments, monitoring dashboard access, and AWS IAM policy management. Scripts are installed to `~/.local/bin` via `make install` and share a common shell library (`share/k8-lib/bin/`) for logging, color output, and configuration helpers.
 
 ## System Diagram
 
@@ -14,7 +14,7 @@ graph TB
         BIN --> DO[deploy-one-off]
         BIN --> OD[open-dashboard]
         BIN --> AP[add-import-permissions]
-        II -->|sources| LIB[k8-lib/*.sh]
+        II -->|sources| LIB[share/k8-lib/bin/*.sh]
     end
 
     II -->|terraform init/import| TF[Terraform]
@@ -46,6 +46,6 @@ graph TB
 ## Key Decisions
 
 - **Flat `bin/` layout**: All scripts are standalone executables with no inter-script dependencies — keeps installation and PATH management simple
-- **Shared library via `k8-lib/`**: `infra-init` sources `../k8-lib/*.sh` for common helpers; other scripts are self-contained
+- **Shared library via `share/k8-lib/bin/`**: `infra-init` sources `../share/k8-lib/bin/*.sh` for common helpers; other scripts are self-contained
 - **Template pattern for deploy-one-off**: Deployment order is documented as commented-out steps rather than a dynamic engine — clarity over automation for one-off recovery scenarios
 - **Environment-driven configuration**: Dashboard namespaces, service names, and AWS profiles are overridable via `K8_*` environment variables with sensible defaults

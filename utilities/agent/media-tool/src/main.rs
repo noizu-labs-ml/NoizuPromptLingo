@@ -3,18 +3,20 @@ mod dag;
 mod eval;
 mod output;
 mod pipeline;
+mod prep;
 mod providers;
 mod refine;
 mod renderers;
 mod schema;
 mod ui;
+mod validate;
 
 use std::path::{Path, PathBuf};
 
 use clap::Parser;
 
 use pipeline::PipelineConfig;
-use schema::parse_prompt_file;
+use schema::{parse_prompt_file, Quality};
 
 #[derive(Parser, Debug)]
 #[command(
@@ -50,6 +52,30 @@ struct Cli {
     /// Show detailed output
     #[arg(long)]
     verbose: bool,
+
+    /// Quality tier override: low|medium|high (default: per-prompt or medium)
+    #[arg(long, value_name = "TIER")]
+    quality: Option<String>,
+
+    /// Pin provider service (skips auto-selection)
+    #[arg(long, value_name = "SVC")]
+    service: Option<String>,
+
+    /// Skip eval grading and provider fallback
+    #[arg(long)]
+    no_eval: bool,
+
+    /// Skip LLM prompt preparation (send raw prompt text to provider)
+    #[arg(long)]
+    no_prep: bool,
+
+    /// Override eval endpoint base URL
+    #[arg(long, value_name = "URL")]
+    eval_url: Option<String>,
+
+    /// Override eval model ID
+    #[arg(long, value_name = "ID")]
+    eval_model: Option<String>,
 }
 
 #[tokio::main]
@@ -60,6 +86,18 @@ async fn main() -> color_eyre::Result<()> {
     if cli.variants < 1 {
         color_eyre::eyre::bail!("Variant count must be at least 1");
     }
+
+    // Parse quality override
+    let quality_override: Option<Quality> = if let Some(ref q) = cli.quality {
+        match q.parse::<Quality>() {
+            Ok(v) => Some(v),
+            Err(e) => {
+                color_eyre::eyre::bail!("--quality: {}", e);
+            }
+        }
+    } else {
+        None
+    };
 
     // Load .envrc.k8.dc for API keys (GEMINI, SUNO, OPENAI, ELEVENLABS, DASHSCOPE)
     try_load_envrc();
@@ -95,11 +133,13 @@ async fn main() -> color_eyre::Result<()> {
     for path in &prompt_files {
         let p = parse_prompt_file(path)?;
         if cli.verbose {
+            let svc = p.meta.service.as_deref().unwrap_or("auto");
             ui::verbose(&format!(
-                "Loaded: {} ({:?}, service={}, schema=v{})",
+                "Loaded: {} ({:?}, service={}, quality={}, schema=v{})",
                 path.display(),
                 p.meta.asset_type,
-                p.meta.service,
+                svc,
+                p.meta.quality.as_str(),
                 p.meta.schema_version
             ));
         }
@@ -115,6 +155,12 @@ async fn main() -> color_eyre::Result<()> {
         model_override: cli.model,
         verbose: cli.verbose,
         refine: cli.refine,
+        quality_override,
+        service_override: cli.service,
+        no_eval: cli.no_eval,
+        no_prep: cli.no_prep,
+        eval_url: cli.eval_url,
+        eval_model: cli.eval_model,
     };
 
     pipeline::run_generation(prompts, &config).await?;

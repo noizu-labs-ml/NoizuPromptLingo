@@ -485,15 +485,27 @@ fi
 # --- Auth ---------------------------------------------------------------------
 echo "🔑  Authenticating with Infisical..."
 
-AUTH_CURL_CMD="curl -s -X POST ${INFISICAL_HOST}/api/v1/auth/universal-auth/login -H 'Content-Type: application/json' -d '{\"clientId\":\"<redacted>\",\"clientSecret\":\"<redacted>\"}'"
+AUTH_CURL_CMD="curl -sS -X POST ${INFISICAL_HOST}/api/v1/auth/universal-auth/login -H 'Content-Type: application/json' -d '{\"clientId\":\"<redacted>\",\"clientSecret\":\"<redacted>\"}'"
 
-LOGIN_RESPONSE=$(curl -s ${CF_HEADERS[@]+"${CF_HEADERS[@]}"} -X POST "${INFISICAL_HOST}/api/v1/auth/universal-auth/login" \
+LOGIN_BODY_FILE="$(mktemp "${TMPDIR:-/tmp}/docker-push-infisical-auth.XXXXXX")"
+LOGIN_ERR_FILE="$(mktemp "${TMPDIR:-/tmp}/docker-push-infisical-auth.err.XXXXXX")"
+LOGIN_HTTP_CODE=$(curl -sS ${CF_HEADERS[@]+"${CF_HEADERS[@]}"} -o "$LOGIN_BODY_FILE" -w "%{http_code}" \
+  -X POST "${INFISICAL_HOST}/api/v1/auth/universal-auth/login" \
   -H "Content-Type: application/json" \
-  -d "{\"clientId\":\"${EKS_OPERATOR_CLIENT_ID}\",\"clientSecret\":\"${EKS_OPERATOR_CLIENT_SECRET}\"}" 2>&1) || true
+  -d "{\"clientId\":\"${EKS_OPERATOR_CLIENT_ID}\",\"clientSecret\":\"${EKS_OPERATOR_CLIENT_SECRET}\"}" \
+  2>"$LOGIN_ERR_FILE" || true)
+LOGIN_RESPONSE="$(cat "$LOGIN_BODY_FILE" 2>/dev/null || true)"
+LOGIN_ERROR="$(cat "$LOGIN_ERR_FILE" 2>/dev/null || true)"
+rm -f "$LOGIN_BODY_FILE" "$LOGIN_ERR_FILE"
 
 API_TOKEN=$(echo "$LOGIN_RESPONSE" | grep -o '"accessToken":"[^"]*"' | cut -d'"' -f4 || true)
 if [[ -z "$API_TOKEN" ]]; then
   echo "❌  Authentication failed"
+  echo "   HTTP status: ${LOGIN_HTTP_CODE:-unknown}"
+  if [[ -n "$LOGIN_ERROR" ]]; then
+    echo "   curl error:"
+    echo "   $LOGIN_ERROR"
+  fi
   echo ""
   echo "   Replay manually:"
   echo "   $AUTH_CURL_CMD"
@@ -505,9 +517,16 @@ fi
 echo "  ✅  Authenticated"
 
 if [[ -z "$PROJECT_ID" && -n "${PROJECT_SLUG:-}" ]]; then
-  PROJECT_RESPONSE=$(curl -s ${CF_HEADERS[@]+"${CF_HEADERS[@]}"} -X GET "${INFISICAL_HOST}/api/v1/projects/slug/${PROJECT_SLUG}" \
+  PROJECT_BODY_FILE="$(mktemp "${TMPDIR:-/tmp}/docker-push-infisical-project.XXXXXX")"
+  PROJECT_ERR_FILE="$(mktemp "${TMPDIR:-/tmp}/docker-push-infisical-project.err.XXXXXX")"
+  PROJECT_HTTP_CODE=$(curl -sS ${CF_HEADERS[@]+"${CF_HEADERS[@]}"} -o "$PROJECT_BODY_FILE" -w "%{http_code}" \
+    -X GET "${INFISICAL_HOST}/api/v1/projects/slug/${PROJECT_SLUG}" \
     -H "Authorization: Bearer ${API_TOKEN}" \
-    -H "Content-Type: application/json" 2>&1) || true
+    -H "Content-Type: application/json" \
+    2>"$PROJECT_ERR_FILE" || true)
+  PROJECT_RESPONSE="$(cat "$PROJECT_BODY_FILE" 2>/dev/null || true)"
+  PROJECT_ERROR="$(cat "$PROJECT_ERR_FILE" 2>/dev/null || true)"
+  rm -f "$PROJECT_BODY_FILE" "$PROJECT_ERR_FILE"
   if command -v jq &>/dev/null; then
     PROJECT_ID="$(echo "$PROJECT_RESPONSE" | jq -r '.id // .project.id // empty' 2>/dev/null || true)"
   else
@@ -516,6 +535,18 @@ if [[ -z "$PROJECT_ID" && -n "${PROJECT_SLUG:-}" ]]; then
 fi
 if [[ -z "$PROJECT_ID" ]]; then
   echo "❌  Could not resolve Infisical project ID"
+  echo "   Project slug: ${PROJECT_SLUG:-<unset>}"
+  if [[ -n "${PROJECT_HTTP_CODE:-}" ]]; then
+    echo "   HTTP status: ${PROJECT_HTTP_CODE}"
+  fi
+  if [[ -n "${PROJECT_ERROR:-}" ]]; then
+    echo "   curl error:"
+    echo "   $PROJECT_ERROR"
+  fi
+  if [[ -n "${PROJECT_RESPONSE:-}" ]]; then
+    echo "   Response:"
+    echo "   $PROJECT_RESPONSE"
+  fi
   echo "   Set INFISICAL_PROJECT_ID or configure secrets.infisical.project_slug"
   exit 1
 fi
@@ -525,9 +556,10 @@ _fetch_secret() {
   local key="$1"
   local response
   response=$(curl -s ${CF_HEADERS[@]+"${CF_HEADERS[@]}"} \
-    "${INFISICAL_HOST}/api/v4/secrets/${key}" \
+    "${INFISICAL_HOST}/api/v3/secrets/raw/${key}" \
     -H "Authorization: Bearer ${API_TOKEN}" \
     -G --data-urlencode "projectId=${PROJECT_ID}" \
+       --data-urlencode "workspaceId=${PROJECT_ID}" \
        --data-urlencode "environment=${ENV_SLUG}" \
        --data-urlencode "secretPath=${VERSIONS_PATH}" \
        --data-urlencode "type=shared" \
@@ -540,17 +572,17 @@ _update_secret() {
   local http_code
 
   http_code=$(curl -s ${CF_HEADERS[@]+"${CF_HEADERS[@]}"} -o /dev/null -w "%{http_code}" \
-    -X POST "${INFISICAL_HOST}/api/v4/secrets/${key}" \
+    -X POST "${INFISICAL_HOST}/api/v3/secrets/raw/${key}" \
     -H "Authorization: Bearer ${API_TOKEN}" \
     -H "Content-Type: application/json" \
-    -d "{\"projectId\":\"${PROJECT_ID}\",\"environment\":\"${ENV_SLUG}\",\"secretPath\":\"${VERSIONS_PATH}\",\"secretValue\":\"${value}\",\"type\":\"shared\"}")
+    -d "{\"workspaceId\":\"${PROJECT_ID}\",\"environment\":\"${ENV_SLUG}\",\"secretPath\":\"${VERSIONS_PATH}\",\"secretValue\":\"${value}\",\"type\":\"shared\"}")
 
   if [[ "$http_code" != "200" && "$http_code" != "201" ]]; then
     http_code=$(curl -s ${CF_HEADERS[@]+"${CF_HEADERS[@]}"} -o /dev/null -w "%{http_code}" \
-      -X PATCH "${INFISICAL_HOST}/api/v4/secrets/${key}" \
+      -X PATCH "${INFISICAL_HOST}/api/v3/secrets/raw/${key}" \
       -H "Authorization: Bearer ${API_TOKEN}" \
       -H "Content-Type: application/json" \
-      -d "{\"projectId\":\"${PROJECT_ID}\",\"environment\":\"${ENV_SLUG}\",\"secretPath\":\"${VERSIONS_PATH}\",\"secretValue\":\"${value}\",\"type\":\"shared\"}")
+      -d "{\"workspaceId\":\"${PROJECT_ID}\",\"environment\":\"${ENV_SLUG}\",\"secretPath\":\"${VERSIONS_PATH}\",\"secretValue\":\"${value}\",\"type\":\"shared\"}")
   fi
   echo "$http_code"
 }

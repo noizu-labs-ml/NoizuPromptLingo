@@ -5,10 +5,9 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 APP_DIR="/Applications/Queue Populator.app"
 APP_CONTENTS="$APP_DIR/Contents"
 APP_MACOS="$APP_CONTENTS/MacOS"
+APP_RESOURCES="$APP_CONTENTS/Resources"
 APP_BIN="$APP_MACOS/queue-populator"
-PLIST_SRC="$SCRIPT_DIR/com.noizu.queue-populator.plist"
 PLIST_DST="$HOME/Library/LaunchAgents/com.noizu.queue-populator.plist"
-LABEL="com.noizu.queue-populator"
 DOMAIN="gui/$UID"
 
 echo "Building queue-populator..."
@@ -17,9 +16,15 @@ swift build -c release
 
 BINARY="$(swift build -c release --show-bin-path)/queue-populator"
 
-mkdir -p "$APP_MACOS"
+mkdir -p "$APP_MACOS" "$APP_RESOURCES"
 cp "$BINARY" "$APP_BIN"
 chmod +x "$APP_BIN"
+if [ -f "$SCRIPT_DIR/Assets/QueuePopulator.icns" ]; then
+    cp "$SCRIPT_DIR/Assets/QueuePopulator.icns" "$APP_RESOURCES/QueuePopulator.icns"
+fi
+if [ -f "$SCRIPT_DIR/Assets/StatusIcon.png" ]; then
+    cp "$SCRIPT_DIR/Assets/StatusIcon.png" "$APP_RESOURCES/StatusIcon.png"
+fi
 cat > "$APP_CONTENTS/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -31,6 +36,10 @@ cat > "$APP_CONTENTS/Info.plist" <<'PLIST'
 	<string>com.noizu.queue-populator</string>
 	<key>CFBundleName</key>
 	<string>Queue Populator</string>
+	<key>CFBundleIconFile</key>
+	<string>QueuePopulator.icns</string>
+	<key>CFBundleIconName</key>
+	<string>QueuePopulator</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -46,19 +55,13 @@ cat > "$APP_CONTENTS/Info.plist" <<'PLIST'
 PLIST
 echo "Installed app to $APP_DIR"
 
-if [ -f "$PLIST_SRC" ]; then
-    mkdir -p "$HOME/Library/LaunchAgents"
-    sed "s|__BINARY__|$APP_BIN|g" "$PLIST_SRC" > "$PLIST_DST"
+# Remove any previously-installed LaunchAgent so the app no longer auto-starts at login.
+if [ -f "$PLIST_DST" ]; then
     launchctl bootout "$DOMAIN" "$PLIST_DST" 2>/dev/null || true
     launchctl unload "$PLIST_DST" 2>/dev/null || true
-    if launchctl bootstrap "$DOMAIN" "$PLIST_DST" 2>/dev/null; then
-        launchctl kickstart -k "$DOMAIN/$LABEL" 2>/dev/null || true
-    else
-        launchctl load "$PLIST_DST"
-    fi
-    echo "LaunchAgent installed, loaded, and started"
-else
-    echo "No plist found — skipping LaunchAgent setup"
+    rm -f "$PLIST_DST"
+    echo "Removed old LaunchAgent (app is now launched manually)"
 fi
 
-echo "Done. Run 'queue-populator --authorize' to grant permissions."
+echo "Done. Launch from /Applications, then run '$APP_BIN --authorize' to grant permissions."
+echo "For the Recording/Claude/Codex/Llama virtual microphones, run: ./Driver/build-virtual-mics.sh (needs Xcode + admin)."

@@ -74,9 +74,11 @@ pub async fn interactive_refine_loop(
                     negative_prompt: prompt.payload.prompt.negative.clone(),
                     provider_options: prompt.payload.prompt.provider_options.clone(),
                     verbose,
+                    duration_seconds: prompt.meta.duration,
                 };
 
-                if let Some(provider) = get_provider(&prompt.meta.service) {
+                let refine_service = prompt.meta.service.as_deref().unwrap_or("gemini");
+                if let Some(provider) = get_provider(refine_service) {
                     for output_path in output_paths {
                         let candidate = genai_candidate_path(output_path);
                         match provider

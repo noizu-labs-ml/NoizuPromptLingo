@@ -3,6 +3,7 @@ import Foundation
 enum AppState: Sendable, Equatable {
     case idle
     case recording
+    case memoReview(String)
     case processing
     case review([ProposedEntry])
     case revising([ProposedEntry])
@@ -11,6 +12,7 @@ enum AppState: Sendable, Equatable {
         switch self {
         case .idle: "Idle"
         case .recording: "Recording"
+        case .memoReview: "Memo Review"
         case .processing: "Processing"
         case .review: "Review"
         case .revising: "Revising"
@@ -19,7 +21,7 @@ enum AppState: Sendable, Equatable {
 
     var isListening: Bool {
         switch self {
-        case .idle, .recording, .review, .revising: true
+        case .idle, .recording, .memoReview, .review, .revising: true
         case .processing: false
         }
     }
@@ -27,7 +29,8 @@ enum AppState: Sendable, Equatable {
     var activePhraseHints: String {
         switch self {
         case .idle: "Say wake phrase to begin"
-        case .recording: "Say end phrase to finish, or cancel phrase to abort"
+        case .recording: "Say end phrase to review memo, or cancel phrase to abort"
+        case .memoReview: "Edit then process, or say approve memo"
         case .processing: "Processing..."
         case .review: "Say approve, revise, or cancel"
         case .revising: "Say end phrase to submit revision, or cancel"
