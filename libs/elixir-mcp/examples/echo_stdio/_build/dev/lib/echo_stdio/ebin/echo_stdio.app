@@ -1,0 +1,1 @@
+{application,echo_stdio,[{modules,['Elixir.EchoStdio.Application','Elixir.EchoStdio.MCP','Elixir.EchoStdio.Tools.Echo','Elixir.EchoStdio.Tools.SystemTime']},{optional_applications,[]},{applications,[kernel,stdlib,elixir,logger,noizu_mcp]},{description,"echo_stdio"},{registered,[]},{vsn,"0.1.0"},{mod,{'Elixir.EchoStdio.Application',[]}}]}.

@@ -1,0 +1,1 @@
+{application,no_dsl_server,[{modules,['Elixir.NoDslServer.Application','Elixir.NoDslServer.MCP']},{optional_applications,[]},{applications,[kernel,stdlib,elixir,logger,noizu_mcp]},{description,"no_dsl_server"},{registered,[]},{vsn,"0.1.0"},{mod,{'Elixir.NoDslServer.Application',[]}}]}.

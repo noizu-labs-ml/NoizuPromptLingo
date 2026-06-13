@@ -1,0 +1,1 @@
+{application,agent_client,[{modules,['Elixir.AgentClient','Elixir.AgentClient.Handler','Elixir.Mix.Tasks.Agent.Demo']},{optional_applications,[]},{applications,[kernel,stdlib,elixir,logger,noizu_mcp]},{description,"agent_client"},{registered,[]},{vsn,"0.1.0"}]}.

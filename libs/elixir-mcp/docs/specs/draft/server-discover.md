@@ -1,0 +1,91 @@
+<!--
+  Source: https://modelcontextprotocol.io/specification/draft/server/discover
+  Fetched: 2026-06-13
+  Status: DRAFT (2026-07-28-RC)
+  WARNING: This is draft content and may change before final release.
+-->
+
+# Discovery
+
+`server/discover` lets a client query a server's supported protocol versions,
+capabilities, and identity before sending any other requests. Servers **MUST**
+implement it.
+
+## Request
+
+The request carries no body parameters beyond the standard `_meta`:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "discover-1",
+  "method": "server/discover",
+  "params": {
+    "_meta": {
+      "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+      "io.modelcontextprotocol/clientInfo": {
+        "name": "ExampleClient",
+        "version": "1.0.0"
+      },
+      "io.modelcontextprotocol/clientCapabilities": {}
+    }
+  }
+}
+```
+
+## Response
+
+The server replies with its supported protocol versions, capabilities, and
+identity. This operation supports caching.
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "discover-1",
+  "result": {
+    "resultType": "complete",
+    "supportedVersions": ["2026-07-28"],
+    "capabilities": {
+      "tools": {},
+      "resources": {}
+    },
+    "serverInfo": {
+      "name": "ExampleServer",
+      "version": "1.0.0"
+    },
+    "instructions": "This server provides weather and resource utilities.",
+    "ttlMs": 3600000,
+    "cacheScope": "public"
+  }
+}
+```
+
+### Response Fields
+
+| Field               | Type                 | Required | Description                                                                                  |
+| ------------------- | -------------------- | -------- | -------------------------------------------------------------------------------------------- |
+| `supportedVersions` | `string[]`           | yes      | Protocol versions the server supports. The client should choose one for subsequent requests. |
+| `capabilities`      | `ServerCapabilities` | yes      | Capabilities the server supports (tools, resources, prompts, etc.).                          |
+| `serverInfo`        | `Implementation`     | yes      | Name and version of the server software.                                                     |
+| `instructions`      | `string`             | no       | Natural-language guidance for LLMs on how to use this server effectively.                    |
+
+## When to Call
+
+Calling `server/discover` is optional for clients -- a client may invoke any
+RPC inline and handle `UnsupportedProtocolVersionError` if the server does not
+support the requested version. However, `server/discover` is useful in two
+scenarios:
+
+- **Up-front version selection.** The client learns the server's supported
+  versions before sending any other request, avoiding a round-trip error.
+- **stdio backward-compatibility probe.** On stdio, there is no per-request
+  HTTP status code to drive fallback. A client that supports both modern
+  (per-request `_meta`) and legacy (`initialize` handshake) servers **SHOULD**
+  send `server/discover` first; see
+  [stdio: Backward Compatibility](https://modelcontextprotocol.io/specification/draft/basic/transports/stdio#backward-compatibility)
+  for the fallback rules.
+
+See [Protocol Version Negotiation](https://modelcontextprotocol.io/specification/draft/basic/versioning#protocol-version-negotiation)
+for the full version-selection flow. For HTTP-specific status codes returned for
+unknown methods, see the [Protocol Version Header](https://modelcontextprotocol.io/specification/draft/basic/transports/streamable-http#protocol-version-header)
+section in Transports.
