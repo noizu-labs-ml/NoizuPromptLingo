@@ -1,0 +1,25 @@
+.idea
+.iml
+# Core Dumps
+core.*
+
+# App artifacts
+/_build
+/db
+/deps
+/*.ez
+
+# Generate on crash by the VM
+erl_crash.dump
+
+# Log output
+/log
+log
+log.nonode@nohost
+
+# work around for occasional mix docs submodule issue
+tmp.git
+
+/Mnesia.nonode@nohost
+
+noizu_scaffolding.iml
