@@ -1,9 +1,0 @@
-syntax = "proto3";
-
-package api.command;
-
-message Command {
-  string path = 1;
-  repeated string args = 2;
-  optional string cwd = 3;
-}

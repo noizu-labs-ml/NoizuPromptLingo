@@ -1,2 +1,0 @@
-ALTER TABLE file
-  ADD COLUMN vern int NOT NULL DEFAULT 0;

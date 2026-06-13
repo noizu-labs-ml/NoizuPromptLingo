@@ -1,9 +1,0 @@
-semantic-groups:
-  - name: States
-    description: Feedback and status indicators for system messages, alerts, and validation.
-  - name: Actions
-    description: Interactive intent classes for buttons, links, and calls-to-action.
-  - name: Content
-    description: Typographic and editorial modifiers for content category and visual weight.
-  - name: Workflow
-    description: Lifecycle and content-state classes from creation through publication.

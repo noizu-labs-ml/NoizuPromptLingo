@@ -1,1 +1,0 @@
-Dummy manifest to trigger security checks on JS dependencies

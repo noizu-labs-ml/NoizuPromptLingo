@@ -1,3 +1,0 @@
-# .dockerignore -- stuff we don't need during image builds
-
-/.git/

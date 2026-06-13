@@ -1,7 +1,0 @@
-service: suno
-model: V5_SOUND
-timestamp: 1781326404
-provider_options:
-  style: String("sound effects foley workshop wood crafting warm cozy")
-prompt: |
-  Rising three-note chime (wooden xylophone or marimba, warm-toned) followed by a soft settling sound — the finished item being placed down. Satisfaction without fanfare.

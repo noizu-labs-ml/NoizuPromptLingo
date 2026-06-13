@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-# bin/tabbing-info — full info dump CLI
-source "$(dirname "${BASH_SOURCE[0]}")/_tabbing-wrapper"
-_tabbing_check_version "$@"
-
-_tabbing_ensure_tab_id
-_tabbing_info "${1:-$TAB_ID}"

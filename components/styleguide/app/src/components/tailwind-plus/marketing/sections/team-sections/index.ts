@@ -1,9 +1,0 @@
-export { GridWithLargeRoundImages08 } from './GridWithLargeRoundImages08';
-export { GridWithRoundImages03 } from './GridWithRoundImages03';
-export { LargeGridWithCards04 } from './LargeGridWithCards04';
-export { LargeImages02 } from './LargeImages02';
-export { MediumImages09 } from './MediumImages09';
-export { SmallImages01 } from './SmallImages01';
-export { WithImageAndShortParagraph05 } from './WithImageAndShortParagraph05';
-export { WithVerticalImages06 } from './WithVerticalImages06';
-export { WithVerticalImagesFullWidth07 } from './WithVerticalImagesFullWidth07';

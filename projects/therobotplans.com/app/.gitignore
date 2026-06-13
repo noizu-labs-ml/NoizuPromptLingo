@@ -1,4 +1,0 @@
-.env
-.env.*
-!.env.example
-docker-compose.local.yaml

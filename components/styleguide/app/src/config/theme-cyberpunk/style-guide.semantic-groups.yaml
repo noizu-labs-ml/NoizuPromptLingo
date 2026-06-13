@@ -1,9 +1,0 @@
-semantic-groups:
-  - name: States
-    description: Feedback and status indicators. Use for system messages, alerts, validation responses, and anything communicating outcome.
-  - name: Actions
-    description: Interactive intent classes. Apply to buttons, links, and calls-to-action to signal interaction weight.
-  - name: Content
-    description: Typographic and editorial modifiers. Use to signal content category, editorial tone, or visual weight.
-  - name: Workflow
-    description: Lifecycle and content-state classes. Track content from creation through publication and beyond.

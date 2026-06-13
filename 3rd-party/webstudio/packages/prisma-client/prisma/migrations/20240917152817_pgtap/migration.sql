@@ -1,4 +1,0 @@
-CREATE SCHEMA IF NOT EXISTS pgtap;
-
--- Enable pg_tap
-CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA pgtap;

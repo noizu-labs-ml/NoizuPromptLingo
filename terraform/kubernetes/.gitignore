@@ -1,4 +1,0 @@
-# Cluster backups — contain base64 secrets (TLS certs, passwords). Never commit.
-cluster-backup-*/
-.terragrunt-cache/
-.terraform.d/

@@ -1,2 +1,0 @@
-export const MAX_TABLES_IN_DIAGRAM = 500;
-export const MAX_TABLES_WITHOUT_SHOWING_FILTER = 50;

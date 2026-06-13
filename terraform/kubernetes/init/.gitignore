@@ -1,8 +1,0 @@
-# Terraform variable files (may hold secrets: MinIO root password, wildcard TLS key)
-terraform.tfvars
-*.secret.tfvars
-*.secret.tfvars.json
-
-# Terraform state (contains secrets in plaintext)
-*.tfstate
-*.tfstate.*

@@ -1,2 +1,0 @@
-* xref:project/get-help.adoc[Get Help]
-* xref:architecture.adoc[Architecture]

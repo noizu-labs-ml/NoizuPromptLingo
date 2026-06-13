@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-# Deploys all staging services. See docs/prd/stage-and-dev-flow.md
-set -euo pipefail
-
-# --assist: AI-powered help
-_K8_ASSIST_LIB="${K8_LIB_DIR:-${HOME}/.local/share/k8-lib}/bin/assist.sh"
-[[ -f "$_K8_ASSIST_LIB" ]] && { source "$_K8_ASSIST_LIB"; _k8_check_assist "$0" "$@"; }
-exec helm-upgrade --env stage --force "$@"

@@ -1,3 +1,0 @@
-Table "public"."table_3"{
-    "id" bigint [pk]
-}

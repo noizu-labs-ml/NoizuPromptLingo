@@ -1,7 +1,0 @@
-{
-  "name": "Rename layers plugin",
-  "description": "Change the name of one or several layers",
-  "code": "/assets/plugin.js",
-  "icon": "/assets/icon.png",
-  "permissions": ["content:read", "content:write"]
-}

@@ -1,8 +1,0 @@
-rust/target
-**/*.rs.bk
-.DS_Store
-*.swp
-*.swo
-*~
-.env
-.envrc.local

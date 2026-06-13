@@ -1,2 +1,0 @@
-ALTER TABLE file_change
-ALTER COLUMN data DROP NOT NULL;

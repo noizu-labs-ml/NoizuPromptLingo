@@ -1,7 +1,0 @@
-{
-  "name": "plugin-types",
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/plugin-types",
-  "projectType": "library",
-  "targets": {}
-}

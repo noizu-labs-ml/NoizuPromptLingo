@@ -1,4 +1,0 @@
-[submodule "doc"]
-	path = doc
-	url = git@github.com:noizu/ElixirCore.git
-	branch = gh-pages

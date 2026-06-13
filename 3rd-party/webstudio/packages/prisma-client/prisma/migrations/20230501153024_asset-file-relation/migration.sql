@@ -1,2 +1,0 @@
--- AddForeignKey
-ALTER TABLE "Asset" ADD CONSTRAINT "Asset_name_fkey" FOREIGN KEY ("name") REFERENCES "File"("name") ON DELETE RESTRICT ON UPDATE CASCADE;

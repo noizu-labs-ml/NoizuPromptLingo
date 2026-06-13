@@ -1,6 +1,0 @@
-{
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "webstudio-app",
-  "compatibility_date": "2025-04-28",
-  "main": "./workers/app.ts"
-}

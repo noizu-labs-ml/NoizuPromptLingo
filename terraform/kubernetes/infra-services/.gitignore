@@ -1,7 +1,0 @@
-.terraform/
-terraform.tfvars
-*.secret.tfvars
-*.secret.tfvars.json
-backend.secret.hcl
-*.tfstate
-*.tfstate.*

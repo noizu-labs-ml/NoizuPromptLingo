@@ -1,3 +1,0 @@
-// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
-
-exports[`Mount component 1`] = `"<v-icon-stub name="star" filled="false" sup="false" left="false" right="false" disabled="false" clickable="false" xsmall="false" small="true" large="false" xlarge="false"></v-icon-stub>"`;

@@ -1,7 +1,0 @@
-service: suno
-model: V5_SOUND
-timestamp: 1781326276
-provider_options:
-  style: String("sound effects foley workshop wood crafting warm cozy")
-prompt: |
-  Gentle wooden tap followed by a brief pleasant crystalline tone. Like dropping a component into a carved depression on the bench. Wood variant.

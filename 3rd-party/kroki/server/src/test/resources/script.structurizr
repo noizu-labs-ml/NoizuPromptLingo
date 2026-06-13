@@ -1,7 +1,0 @@
-workspace {
-  !script kotlin {
-    workspace.views.createDefaultViews()
-    workspace.views.views.forEach { it.disableAutomaticLayout() }
-  }
-}
-

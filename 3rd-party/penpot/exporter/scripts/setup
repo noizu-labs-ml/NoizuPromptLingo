@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-
-set -e;
-
-corepack enable;
-corepack install;
-pnpm install;
-pnpx playwright install chromium

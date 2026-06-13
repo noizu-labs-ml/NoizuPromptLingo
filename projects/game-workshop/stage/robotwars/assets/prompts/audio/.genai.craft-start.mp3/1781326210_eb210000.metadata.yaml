@@ -1,7 +1,0 @@
-service: suno
-model: V5_SOUND
-timestamp: 1781326243
-provider_options:
-  style: String("sound effects foley workshop wood crafting warm cozy")
-prompt: |
-  Satisfying thunk of placing an item on a wooden workbench. Solid, warm, like placing a heavy book on oak. Not a slam — a placement.

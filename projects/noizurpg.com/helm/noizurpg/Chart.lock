@@ -1,6 +1,0 @@
-dependencies:
-- name: static-site
-  repository: file://../../../../components/static-site/helm/static-site
-  version: 0.1.0
-digest: sha256:647b5e7c5acb18a50bb22bb927075b8b8c7180bf4ef32238abc63cbaaad07cdd
-generated: "2026-06-12T16:27:18.145646+07:00"

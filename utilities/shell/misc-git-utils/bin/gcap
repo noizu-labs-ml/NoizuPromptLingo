@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-if [ $# -eq 0 ]; then
-  echo "Usage: gcap <commit message>" >&2
-  exit 1
-fi
-git commit -a -m "$1" && git push origin HEAD

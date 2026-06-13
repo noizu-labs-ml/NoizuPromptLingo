@@ -1,5 +1,0 @@
-{
-  "~:type": "~:restriction",
-  "~:code": "~:email-does-not-match-invitation",
-  "~:hint": "email should match the invitation"
-}

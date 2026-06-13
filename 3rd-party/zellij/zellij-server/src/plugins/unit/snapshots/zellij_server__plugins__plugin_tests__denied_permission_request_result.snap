@@ -1,7 +1,0 @@
----
-source: zellij-server/src/plugins/./unit/plugin_tests.rs
-expression: "format!(\"{:#?}\", permissions)"
----
-Some(
-    [],
-)

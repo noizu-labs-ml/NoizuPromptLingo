@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-# bin/tabbing-theme — CLI wrapper for tabbing-theme
-# Sources full libs via wrapper, then calls the theme command
-source "$(dirname "${BASH_SOURCE[0]}")/_tabbing-wrapper"
-_tabbing_check_version "$@"
-_tabbing_theme_cmd "$@"

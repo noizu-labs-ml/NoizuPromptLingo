@@ -1,4 +1,0 @@
-@the-robot-lives:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
-@noizu:registry=https://npm.noizu.com
-//npm.noizu.com/:_authToken=${VERDACCIO_TOKEN}

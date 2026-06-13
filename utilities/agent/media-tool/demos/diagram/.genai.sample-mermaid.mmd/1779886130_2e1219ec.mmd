@@ -1,9 +1,0 @@
-flowchart TD
-    LB[Load Balancer] -->|route| AS1[App Server 1]
-    LB -->|route| AS2[App Server 2]
-    LB -->|route| AS3[App Server 3]
-    AS1 & AS2 & AS3 -->|pool| PG[(PostgreSQL)]
-    AS1 & AS2 & AS3 -->|pool| RD[(Redis)]
-    LB -.->|GET /health| AS1 & AS2 & AS3
-    classDef pool fill:#f9f,stroke:#333
-    class AS1,AS2,AS3 pool

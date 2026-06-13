@@ -1,6 +1,0 @@
-# Port overlay — unique host port for this project
-# Source of truth: docker/ports.yaml
-services:
-  nginx:
-    ports:
-      - "8083:80"

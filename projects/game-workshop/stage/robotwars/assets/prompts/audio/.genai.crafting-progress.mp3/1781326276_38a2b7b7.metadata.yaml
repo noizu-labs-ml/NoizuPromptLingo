@@ -1,7 +1,0 @@
-service: suno
-model: V5_SOUND
-timestamp: 1781326371
-provider_options:
-  style: String("sound effects foley workshop wood crafting warm cozy")
-prompt: |
-  Rhythmic woodworking sound — gentle planing or sanding. Rhythmic, satisfying, ASMR quality. The sound of patient, skilled handwork.

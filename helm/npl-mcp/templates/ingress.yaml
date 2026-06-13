@@ -1,0 +1,60 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "npl-mcp.fullname" . }}
+  labels:
+    {{- include "npl-mcp.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.ingress.cloudflareWhitelist }}
+    nginx.ingress.kubernetes.io/whitelist-source-range: {{ include "npl-mcp.cloudflareWhitelist" . }}
+    {{- end }}
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "86400"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "86400"
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  {{- if .Values.tls.enabled }}
+  tls:
+    - hosts:
+        - {{ .Values.domain }}
+      secretName: {{ .Values.tls.secretName }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.domain }}
+      http:
+        paths:
+          - path: /mcp
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: mcp
+          - path: /sse
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: mcp
+          - path: /health
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: mcp
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: http
+{{- end }}

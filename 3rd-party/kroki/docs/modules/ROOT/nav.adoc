@@ -1,2 +1,0 @@
-* xref:features.adoc[How Kroki Can Help]
-* xref:diagram-types.adoc[Diagram Types]

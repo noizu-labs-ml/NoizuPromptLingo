@@ -1,6 +1,0 @@
-_build/
-deps/
-*.ez
-codefresh
-erl_crash.dump
-.elixir_ls/

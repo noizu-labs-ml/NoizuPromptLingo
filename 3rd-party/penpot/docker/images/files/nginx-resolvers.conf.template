@@ -1,1 +1,0 @@
-resolver $PENPOT_INTERNAL_RESOLVER valid=10s;

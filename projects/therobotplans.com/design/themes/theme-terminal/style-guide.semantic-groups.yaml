@@ -1,9 +1,0 @@
-semantic-groups:
-  - name: States
-    description: "Exit codes and process states. [OK], [WARN], [ERR], [INFO]."
-  - name: Actions
-    description: "Interactive intent — primary commands, secondary flags, linked references."
-  - name: Content
-    description: "Content classification — log levels, output types, editorial context."
-  - name: Workflow
-    description: "Process lifecycle — queued, running, done, failed."

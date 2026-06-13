@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - include:
+      file: 000-extensions.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 001-enums.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 002-users.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 003-mcp-api-keys.yaml
+      relativeToChangelogFile: true

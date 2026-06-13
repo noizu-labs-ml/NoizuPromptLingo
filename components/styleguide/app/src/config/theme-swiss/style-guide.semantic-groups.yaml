@@ -1,5 +1,0 @@
-semantic-groups:
-  - name: "States"
-    description: "Functional state colors — success, warning, danger, info."
-  - name: "Brand"
-    description: "Bauhaus primaries — the structural colors of the system."

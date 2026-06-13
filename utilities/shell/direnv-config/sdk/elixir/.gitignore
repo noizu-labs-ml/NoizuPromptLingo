@@ -1,6 +1,0 @@
-/_build/
-/deps/
-/doc/
-*.beam
-*.ez
-mix.lock

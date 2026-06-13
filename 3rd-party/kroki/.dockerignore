@@ -1,5 +1,0 @@
-.git/
-.registry/oci/*
-*.iml
-.vertx/
-**/node_modules/
