@@ -1,0 +1,56 @@
+'m:release':
+- changed-files:
+  - any-glob-to-any-file:
+    - 'CHANGELOG.md'
+    - 'gradle.properties'
+
+'m:docs':
+- changed-files:
+  - any-glob-to-any-file:
+    - '**.md'
+    - 'docs/**/*'
+
+'m:workflow':
+- changed-files:
+  - any-glob-to-any-file:
+    - .github/**
+
+'m:gradle':
+- changed-files:
+  - any-glob-to-any-file:
+    - 'gradle*'
+    - 'gradle/**'
+    - '**/settings.gradle.*'
+    - '**/build.gradle.*'
+    - 'sjpp.jar'
+
+'m:source':
+- changed-files:
+  - any-glob-to-any-file:
+    - 'skin/**/*'
+    - 'src/**/*'
+    - 'stdlib/**/*'
+    - 'svg/**/*'
+    - 'themes/**/*'
+    - 'manifest.txt'
+
+'m:test':
+- changed-files:
+  - any-glob-to-any-file:
+    - 'test/**/*'
+
+'m:license':
+- changed-files:
+  - any-glob-to-any-file:
+    - '**/*license.txt'
+
+'m:docker':
+- changed-files:
+  - any-glob-to-any-file:
+    - Dockerfile
+
+'m:native':
+- changed-files:
+  - any-glob-to-any-file:
+    - .github/workflows/native-image-snapshot.yml
+    - .github/workflows/native-image-release.yml
