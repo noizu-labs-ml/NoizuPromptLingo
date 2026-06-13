@@ -1,0 +1,121 @@
+functional_requirements:
+  - id: FR-001
+    name: "Hybrid Cache Manager"
+    description: "Implement caching strategy based on source type (local vs URL)"
+    status: completed
+    related_stories:
+      - US-206
+      - US-207
+      - US-208
+    expected_tests: 12
+    coverage_target: 100
+    file: FR-001-hybrid-cache-manager.md
+  - id: FR-002
+    name: "Markdown Converter"
+    description: "Convert various sources to markdown with automatic caching"
+    status: completed
+    related_stories:
+      - US-206
+      - US-207
+    expected_tests: 10
+    coverage_target: 100
+    file: FR-002-markdown-converter.md
+  - id: FR-003
+    name: "Heading Filter"
+    description: "Filter markdown content by heading paths and level selectors"
+    status: completed
+    related_stories:
+      - US-209
+      - US-210
+    expected_tests: 15
+    coverage_target: 100
+    file: FR-003-heading-filter.md
+  - id: FR-004
+    name: "Filter Type Detection"
+    description: "Auto-detect and route to appropriate filter implementation"
+    status: completed
+    related_stories:
+      - US-209
+      - US-210
+    expected_tests: 8
+    coverage_target: 100
+    file: FR-004-filter-type-detection.md
+  - id: FR-005
+    name: "CSS Filter (Stub)"
+    description: "Placeholder for Phase 2 CSS selector filtering"
+    status: draft
+    related_stories:
+      - US-209
+    expected_tests: 2
+    coverage_target: 100
+    file: FR-005-css-filter-stub.md
+  - id: FR-006
+    name: "XPath Filter (Stub)"
+    description: "Placeholder for Phase 2 XPath filtering"
+    status: draft
+    related_stories:
+      - US-209
+    expected_tests: 2
+    coverage_target: 100
+    file: FR-006-xpath-filter-stub.md
+  - id: FR-007
+    name: "Markdown Viewer"
+    description: "View markdown with collapsible sections and optional filtering"
+    status: completed
+    related_stories:
+      - US-212
+      - US-213
+    expected_tests: 18
+    coverage_target: 100
+    file: FR-007-markdown-viewer.md
+  - id: FR-008
+    name: "CLI Tool - 2md"
+    description: "Command-line interface for markdown conversion"
+    status: completed
+    related_stories:
+      - US-206
+      - US-207
+      - US-214
+    expected_tests: 10
+    coverage_target: 85
+    file: FR-008-cli-tool-2md.md
+  - id: FR-009
+    name: "CLI Tool - md-view"
+    description: "Pure pipe filter for markdown (stdin → stdout)"
+    status: completed
+    related_stories:
+      - US-209
+      - US-212
+      - US-213
+    expected_tests: 12
+    coverage_target: 85
+    file: FR-009-cli-tool-md-view.md
+  - id: FR-010
+    name: "CLI Tool - view-md"
+    description: "Combined tool for converting and viewing markdown"
+    status: completed
+    related_stories:
+      - US-206
+      - US-209
+      - US-213
+    expected_tests: 15
+    coverage_target: 85
+    file: FR-010-cli-tool-view-md.md
+  - id: FR-011
+    name: "MCP Tool - to_markdown"
+    description: "MCP tool for markdown conversion via FastMCP server"
+    status: active
+    related_stories:
+      - US-211
+    expected_tests: 8
+    coverage_target: 100
+    file: FR-011-mcp-tool-to-markdown.md
+  - id: FR-012
+    name: "MCP Tool - view_markdown"
+    description: "MCP tool for combined conversion + viewing"
+    status: active
+    related_stories:
+      - US-211
+    expected_tests: 12
+    coverage_target: 100
+    file: FR-012-mcp-tool-view-markdown.md

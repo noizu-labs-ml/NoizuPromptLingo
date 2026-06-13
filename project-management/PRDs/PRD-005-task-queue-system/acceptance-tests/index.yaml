@@ -1,0 +1,54 @@
+acceptance_tests:
+  - id: AT-001
+    name: "Queue Creation"
+    description: "Validate task queue creation with required and optional parameters"
+    category: unit
+    related_fr:
+      - FR-001
+    status: not_started
+    file: AT-001-queue-creation.md
+
+  - id: AT-002
+    name: "Task Creation"
+    description: "Validate task creation with all parameter combinations and priority levels"
+    category: unit
+    related_fr:
+      - FR-002
+    status: not_started
+    file: AT-002-task-creation.md
+
+  - id: AT-003
+    name: "Task Status Transitions"
+    description: "Validate status workflow and human-only 'done' enforcement"
+    category: unit
+    related_fr:
+      - FR-002
+    status: not_started
+    file: AT-003-status-transitions.md
+
+  - id: AT-004
+    name: "Task Complexity Assignment"
+    description: "Validate complexity rating assignment with range validation"
+    category: unit
+    related_fr:
+      - FR-002
+    status: not_started
+    file: AT-004-complexity-assignment.md
+
+  - id: AT-005
+    name: "Artifact Linking"
+    description: "Validate linking artifacts, git branches, and files to tasks"
+    category: integration
+    related_fr:
+      - FR-003
+    status: not_started
+    file: AT-005-artifact-linking.md
+
+  - id: AT-006
+    name: "Activity Feed with Polling"
+    description: "Validate activity feed posting, retrieval, and incremental polling"
+    category: integration
+    related_fr:
+      - FR-004
+    status: not_started
+    file: AT-006-activity-feed.md

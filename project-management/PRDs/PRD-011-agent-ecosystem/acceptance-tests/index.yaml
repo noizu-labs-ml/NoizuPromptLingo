@@ -1,0 +1,77 @@
+acceptance_tests:
+  - id: AT-001
+    name: "Agent Discovery Performance"
+    description: "Validate discovery completes under 100ms"
+    category: integration
+    related_fr:
+      - FR-001
+      - FR-002
+    status: not_started
+    file: AT-001-agent-discovery-performance.md
+
+  - id: AT-002
+    name: "Complete Schema Validation"
+    description: "All 45 agents pass schema validation (100% compliance)"
+    category: unit
+    related_fr:
+      - FR-003
+      - FR-004
+    status: not_started
+    file: AT-002-schema-validation-complete.md
+
+  - id: AT-003
+    name: "Registry Search Precision"
+    description: "Search returns relevant agents with >90% precision"
+    category: integration
+    related_fr:
+      - FR-005
+    status: not_started
+    file: AT-003-registry-search-precision.md
+
+  - id: AT-004
+    name: "Agent Dependency Resolution"
+    description: "Resolve dependencies including transitive and cycle detection"
+    category: integration
+    related_fr:
+      - FR-006
+    status: not_started
+    file: AT-004-dependency-resolution.md
+
+  - id: AT-005
+    name: "Agent Template Instantiation"
+    description: "Templates instantiate with custom parameters and variable substitution"
+    category: integration
+    related_fr:
+      - FR-007
+      - FR-008
+    status: not_started
+    file: AT-005-template-instantiation.md
+
+  - id: AT-006
+    name: "Markdown Agent Definition Parsing"
+    description: "Parse agents from markdown with YAML frontmatter"
+    category: unit
+    related_fr:
+      - FR-009
+    status: not_started
+    file: AT-006-markdown-parsing.md
+
+  - id: AT-007
+    name: "Agent Documentation Completeness"
+    description: "All 45 agents have complete documentation"
+    category: integration
+    related_fr:
+      - FR-010
+    status: not_started
+    file: AT-007-documentation-completeness.md
+
+  - id: AT-008
+    name: "End-to-End Agent Loading Workflow"
+    description: "Complete workflow from discovery to execution"
+    category: e2e
+    related_fr:
+      - FR-001
+      - FR-005
+      - FR-007
+    status: not_started
+    file: AT-008-end-to-end-workflow.md

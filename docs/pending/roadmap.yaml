@@ -1,0 +1,590 @@
+version: 1
+updated: '2026-02-02'
+title: NPL Features Roadmap - 4 Phases
+description: Implementation roadmap extracting features from legacy documentation
+
+phases:
+  - id: PHASE-1
+    name: Foundation
+    description: Core MCP tools, database, basic infrastructure
+    status: in_progress
+    priority: critical
+    target_completion: Q1-2026
+    features:
+      - F-001
+      - F-002
+      - F-003
+      - F-004
+
+  - id: PHASE-2
+    name: Intelligence
+    description: Agent system, NPL syntax, orchestration
+    status: planned
+    priority: high
+    target_completion: Q2-2026
+    features:
+      - F-005
+      - F-006
+      - F-007
+      - F-008
+
+  - id: PHASE-3
+    name: Collaboration
+    description: Chat rooms, sessions, multi-agent workflows
+    status: planned
+    priority: high
+    target_completion: Q3-2026
+    features:
+      - F-009
+      - F-010
+      - F-011
+      - F-012
+
+  - id: PHASE-4
+    name: Enterprise
+    description: Security, observability, error recovery
+    status: future
+    priority: medium
+    target_completion: Q4-2026
+    features:
+      - F-013
+      - F-014
+      - F-015
+      - F-016
+
+features:
+  # PHASE 1: Foundation
+  - id: F-001
+    name: MCP Artifact Management Tools
+    description: Create, version, review artifacts via MCP tools
+    status: planned
+    phase: PHASE-1
+    priority: critical
+    user_stories:
+      - US-008
+      - US-009
+      - US-010
+      - US-011
+      - US-023
+    prd: prd-009-mcp-tools-implementation
+    legacy_docs: .tmp/docs/PROJECT-ARCH.brief.md
+    implementation_status:
+      designed: true
+      documented: true
+      implemented: false
+      tested: false
+    gap_analysis:
+      documented_tools: 5
+      implemented_tools: 0
+      missing_components:
+        - ArtifactManager class
+        - RevisionStore schema
+        - ReviewManager with inline comments
+      blocking_stories:
+        - US-008
+        - US-009
+        - US-010
+    notes: Legacy docs describe comprehensive artifact system with versioning and review workflow
+
+  - id: F-002
+    name: Chat Room Collaboration
+    description: Multi-user chat with artifacts, reactions, todos
+    status: planned
+    phase: PHASE-1
+    priority: critical
+    user_stories:
+      - US-004
+      - US-005
+      - US-006
+      - US-007
+      - US-022
+      - US-027
+      - US-028
+    prd: prd-009-mcp-tools-implementation
+    legacy_docs: .tmp/docs/PROJECT-ARCH.brief.md
+    implementation_status:
+      designed: true
+      documented: true
+      implemented: false
+      tested: false
+    gap_analysis:
+      documented_tools: 6
+      implemented_tools: 0
+      missing_components:
+        - ChatManager class
+        - Message storage and retrieval
+        - Reaction and todo functionality
+      blocking_stories:
+        - US-007
+        - US-006
+        - US-027
+    notes: Event-sourced chat with immutable message history
+
+  - id: F-003
+    name: Task Queue System
+    description: Agent task assignment and progress tracking
+    status: planned
+    phase: PHASE-1
+    priority: high
+    user_stories:
+      - US-014
+      - US-015
+      - US-016
+      - US-017
+      - US-018
+      - US-026
+      - US-030
+    prd: prd-009-mcp-tools-implementation
+    legacy_docs: .tmp/docs/PROJECT-ARCH.brief.md
+    implementation_status:
+      designed: true
+      documented: true
+      implemented: false
+      tested: false
+    gap_analysis:
+      documented_tools: 5
+      implemented_tools: 0
+      missing_components:
+        - TaskManager class
+        - Task queuing and assignment
+        - Progress tracking and status updates
+      blocking_stories:
+        - US-016
+        - US-014
+        - US-018
+    notes: Task queue with assignment to specific agents and complexity tracking
+
+  - id: F-004
+    name: Browser Automation Tools
+    description: Screenshots, navigation, form automation
+    status: planned
+    phase: PHASE-1
+    priority: high
+    user_stories:
+      - US-012
+      - US-013
+      - US-019
+      - US-020
+      - US-021
+      - US-024
+      - US-029
+      - US-052
+    prd: prd-009-mcp-tools-implementation
+    legacy_docs: .tmp/docs/PROJECT-ARCH.brief.md
+    implementation_status:
+      designed: true
+      documented: true
+      implemented: false
+      tested: false
+    gap_analysis:
+      documented_tools: 7
+      implemented_tools: 0
+      missing_components:
+        - BrowserManager class
+        - Headless browser integration
+        - Screenshot and form filling
+      blocking_stories:
+        - US-021
+        - US-019
+        - US-012
+    notes: Headless browser automation for web interaction and visual capture
+
+  # PHASE 2: Intelligence
+  - id: F-005
+    name: Agent Definition System
+    description: Load and execute 45+ markdown-based agent specifications
+    status: planned
+    phase: PHASE-2
+    priority: high
+    user_stories: []
+    prd: prd-010-agent-ecosystem
+    legacy_docs: .tmp/docs/agents/summary.brief.md
+    implementation_status:
+      designed: true
+      documented: true
+      implemented: false
+      tested: false
+    gap_analysis:
+      documented_agents: 45
+      implemented_agents: 0
+      missing_components:
+        - Agent loader system
+        - Agent definition schema
+        - Agent persona mapping
+      blocking_stories: []
+    notes: 45+ agents documented across 8 categories, none implemented
+
+  - id: F-006
+    name: NPL Syntax Parser
+    description: Parse and validate 155+ NPL syntax elements
+    status: planned
+    phase: PHASE-2
+    priority: medium
+    user_stories:
+      - US-080
+    prd: prd-012-npl-syntax-parser
+    legacy_docs: .tmp/docs/npl-syntax-elements.brief.md
+    implementation_status:
+      designed: true
+      documented: true
+      implemented: false
+      tested: false
+    gap_analysis:
+      documented_elements: 155
+      implemented_elements: 0
+      missing_components:
+        - Regex pattern library
+        - Parser and validator
+        - AST builder
+    notes: 155 NPL syntax elements documented (agents, directives, prefixes, pumps, fences)
+
+  - id: F-007
+    name: CLI Utilities Implementation
+    description: npl-load, npl-persona, npl-session, dump-files commands
+    status: planned
+    phase: PHASE-2
+    priority: high
+    user_stories:
+      - US-001
+      - US-002
+      - US-003
+      - US-025
+      - US-047
+      - US-085
+    prd: prd-013-cli-utilities
+    legacy_docs: .tmp/docs/scripts/summary.brief.md
+    implementation_status:
+      designed: true
+      documented: true
+      implemented: false
+      tested: false
+    gap_analysis:
+      documented_scripts: 7
+      implemented_scripts: 0
+      missing_components:
+        - npl-load resource loader
+        - Hierarchical path resolver
+        - Dependency tracking
+      blocking_stories:
+        - US-001
+        - US-002
+    notes: 7 CLI scripts documented for resource loading and exploration
+
+  - id: F-008
+    name: Multi-Agent Orchestration Patterns
+    description: Implement 5 orchestration patterns for agent coordination
+    status: planned
+    phase: PHASE-2
+    priority: high
+    user_stories:
+      - US-079
+      - US-058
+      - US-059
+      - US-064
+      - US-065
+    prd: prd-011-multi-agent-orchestration
+    legacy_docs: .tmp/docs/multi-agent-orchestration.brief.md
+    implementation_status:
+      designed: true
+      documented: true
+      implemented: false
+      tested: false
+    gap_analysis:
+      documented_patterns: 5
+      implemented_patterns: 0
+      missing_components:
+        - Consensus algorithm
+        - Pipeline executor
+        - Hierarchical decomposition
+        - Iterative refiner
+        - Multi-perspective synthesizer
+    notes: 5 patterns - consensus-driven, pipeline, hierarchical, iterative, multi-perspective
+
+  # PHASE 3: Collaboration
+  - id: F-009
+    name: Session Management
+    description: Cross-agent session tracking with worklogs
+    status: planned
+    phase: PHASE-3
+    priority: high
+    user_stories:
+      - US-031
+      - US-032
+      - US-033
+      - US-048
+      - US-050
+      - US-056
+      - US-067
+    prd: prd-011-multi-agent-orchestration
+    legacy_docs: .tmp/docs/PROJECT-ARCH.brief.md
+    implementation_status:
+      designed: true
+      documented: true
+      implemented: false
+      tested: false
+    gap_analysis:
+      documented_features: 7
+      implemented_features: 0
+      missing_components:
+        - Session store
+        - Worklog tracking
+        - Cursor-based reads
+    notes: Immutable worklog with cursor-based reads for session progress
+
+  - id: F-010
+    name: Multi-Perspective Review
+    description: Multi-agent artifact reviews and consensus
+    status: planned
+    phase: PHASE-3
+    priority: high
+    user_stories:
+      - US-034
+      - US-035
+      - US-036
+      - US-060
+      - US-063
+    prd: prd-011-multi-agent-orchestration
+    legacy_docs: .tmp/docs/multi-agent-orchestration.brief.md
+    implementation_status:
+      designed: true
+      documented: true
+      implemented: false
+      tested: false
+    gap_analysis:
+      documented_features: 5
+      implemented_features: 0
+      missing_components:
+        - Review aggregation
+        - Consensus synthesis
+        - Multi-perspective tracking
+    notes: Agents review from different perspectives, control agent synthesizes
+
+  - id: F-011
+    name: Pair Programming & Chat Workflows
+    description: Real-time collaboration via chat rooms
+    status: planned
+    phase: PHASE-3
+    priority: medium
+    user_stories:
+      - US-036
+      - US-037
+      - US-043
+    prd: prd-011-multi-agent-orchestration
+    legacy_docs: .tmp/docs/PROJECT-ARCH.brief.md
+    implementation_status:
+      designed: true
+      documented: true
+      implemented: false
+      tested: false
+    gap_analysis:
+      documented_features: 3
+      implemented_features: 0
+      missing_components:
+        - Pair programming protocol
+        - Code quality tracking
+        - Shared context
+    notes: Live collaboration between humans and agents via chat
+
+  - id: F-012
+    name: Database Management & Migrations
+    description: Schema migrations, backup/restore, integrity checks
+    status: planned
+    phase: PHASE-3
+    priority: high
+    user_stories:
+      - US-038
+      - US-039
+      - US-040
+      - US-041
+      - US-042
+      - US-044
+      - US-045
+      - US-046
+      - US-055
+    prd: prd-014-database-management
+    legacy_docs: .tmp/docs/PROJECT-ARCH.brief.md
+    implementation_status:
+      designed: false
+      documented: true
+      implemented: false
+      tested: false
+    gap_analysis:
+      documented_features: 9
+      implemented_features: 0
+      missing_components:
+        - Migration system
+        - Backup/restore
+        - Integrity validation
+    notes: Comprehensive database lifecycle management for SQLite instances
+
+  # PHASE 4: Enterprise
+  - id: F-013
+    name: Security & Access Control
+    description: RBAC, artifact access policies, secret detection
+    status: future
+    phase: PHASE-4
+    priority: critical
+    user_stories:
+      - US-068
+      - US-069
+      - US-070
+      - US-071
+      - US-072
+      - US-073
+      - US-074
+      - US-075
+      - US-076
+      - US-077
+    prd: prd-015-security-framework
+    legacy_docs: .tmp/docs/PROJECT-ARCH.brief.md
+    implementation_status:
+      designed: false
+      documented: true
+      implemented: false
+      tested: false
+    gap_analysis:
+      documented_features: 10
+      implemented_features: 0
+      missing_components:
+        - RBAC engine
+        - Secret detection
+        - Encryption layer
+        - Audit logging
+    notes: Role-based access, artifact policies, secret detection for artifacts
+
+  - id: F-014
+    name: Error Recovery & Resilience
+    description: Error logging, retries, timeout handling, alerting
+    status: future
+    phase: PHASE-4
+    priority: high
+    user_stories:
+      - US-049
+      - US-051
+      - US-052
+      - US-053
+      - US-054
+      - US-057
+    prd: prd-016-error-recovery
+    legacy_docs: .tmp/docs/PROJECT-ARCH.brief.md
+    implementation_status:
+      designed: false
+      documented: true
+      implemented: false
+      tested: false
+    gap_analysis:
+      documented_features: 6
+      implemented_features: 0
+      missing_components:
+        - Error logging system
+        - Retry logic
+        - Timeout handling
+        - Alert framework
+    notes: Structured error logging, retries, timeout handling for resilience
+
+  - id: F-015
+    name: Observability & Monitoring
+    description: Metrics, dashboards, performance tracking
+    status: future
+    phase: PHASE-4
+    priority: medium
+    user_stories:
+      - US-050
+      - US-056
+      - US-062
+      - US-067
+    prd: prd-017-observability
+    legacy_docs: .tmp/docs/PROJECT-ARCH.brief.md
+    implementation_status:
+      designed: false
+      documented: true
+      implemented: false
+      tested: false
+    gap_analysis:
+      documented_features: 4
+      implemented_features: 0
+      missing_components:
+        - Metrics collection
+        - Dashboard system
+        - Performance profiling
+    notes: Agent performance metrics, token usage tracking, visual dashboards
+
+  - id: F-016
+    name: Consensus & Negotiation Protocols
+    description: Resource negotiation, priority scheduling, consensus
+    status: future
+    phase: PHASE-4
+    priority: medium
+    user_stories:
+      - US-058
+      - US-059
+      - US-061
+      - US-064
+      - US-065
+    prd: prd-018-consensus-protocols
+    legacy_docs: .tmp/docs/multi-agent-orchestration.brief.md
+    implementation_status:
+      designed: false
+      documented: true
+      implemented: false
+      tested: false
+    gap_analysis:
+      documented_features: 5
+      implemented_features: 0
+      missing_components:
+        - Consensus engine
+        - Priority scheduler
+        - Resource negotiator
+    notes: Multi-agent consensus, resource priority negotiation, workflow dependencies
+
+# Summary Statistics
+statistics:
+  total_features: 16
+  phases:
+    - name: Foundation
+      features: 4
+      priority: critical
+      status: in_progress
+    - name: Intelligence
+      features: 4
+      priority: high
+      status: planned
+    - name: Collaboration
+      features: 4
+      priority: high
+      status: planned
+    - name: Enterprise
+      features: 4
+      priority: medium
+      status: future
+
+  implementation_gaps:
+    - category: MCP Tools
+      documented: 23
+      implemented: 2
+      gap_percentage: 91
+    - category: Agents
+      documented: 45
+      implemented: 0
+      gap_percentage: 100
+    - category: Orchestration Patterns
+      documented: 5
+      implemented: 0
+      gap_percentage: 100
+    - category: NPL Syntax Elements
+      documented: 155
+      implemented: 0
+      gap_percentage: 100
+    - category: CLI Scripts
+      documented: 7
+      implemented: 0
+      gap_percentage: 100
+
+critical_path_stories:
+  - US-008  # Create artifact
+  - US-007  # Create chat room
+  - US-016  # Create task
+  - US-021  # Browser navigation
+  - US-080  # NPL parser
+  - US-085  # CLI utilities
+  - US-079  # Orchestration patterns

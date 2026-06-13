@@ -1,0 +1,3853 @@
+{
+  "catalog": [
+    {
+      "name": "NPLSpec",
+      "category": "NPL",
+      "description": "Generate an NPL definition or extension block.\n\nArgs:\n    components: List of component specs to include. Empty list includes all conventions.\n    rendered: List of component specs already rendered elsewhere.\n             These are excluded from output but treated as known for example selection.\n             Empty list means nothing pre-rendered.\n    component_priority: Default max component priority to include.\n    example_priority: Default max example priority to include.\n    extension: If True, wraps in extend markers instead of definition markers.\n    concise: If True, use brief descriptions (default True).\n    xml: If True, use XML tags for examples instead of fenced code blocks.",
+      "parameters": [
+        {
+          "name": "components",
+          "type": "list",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "rendered",
+          "type": "list",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "component_priority",
+          "type": "int",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "example_priority",
+          "type": "int",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "extension",
+          "type": "bool",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "concise",
+          "type": "bool",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "xml",
+          "type": "bool",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "npl"
+      ]
+    },
+    {
+      "name": "NPLLoad",
+      "category": "NPL",
+      "description": "Load NPL components via expression DSL.\n\nExpression grammar (space-separated terms):\n  - ``syntax`` \u2014 the entire syntax section\n  - ``syntax#placeholder`` \u2014 a specific component\n  - ``syntax#placeholder:+2`` \u2014 component plus examples with priority \u2264 2\n  - ``syntax directives`` \u2014 multiple sections\n  - ``syntax -syntax#literal`` \u2014 subtract specific component\n  - ``pumps#chain-of-thought pumps#plan-of-action`` \u2014 multiple components\n\nSections: syntax, declarations, directives, prefixes, prompt-sections,\nspecial-sections, pumps, fences.\n\nArgs:\n    expression: NPL loading expression as described above.\n    layout: One of \"yaml_order\" (default, flat section order),\n            \"classic\" (grouped by first label), or \"grouped\" (by section).\n\nReturns:\n    Markdown-formatted NPL components matching the expression.",
+      "parameters": [
+        {
+          "name": "expression",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "layout",
+          "type": "str",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "npl"
+      ]
+    },
+    {
+      "name": "ToolSummary",
+      "category": "Discovery",
+      "description": "List available tools, or drill into a catalog category.\n\nWithout filter: returns all non-Discovery tools grouped by category.\n\nWith filter: expands that catalog category to show tool\ndefinitions and subcategories. Use dot notation to drill deeper\n(e.g. \"Browser.Screenshots\").\n\nWith Category#ToolName: returns a single tool's full definition\n(e.g. \"Browser.Screenshots#screenshot_capture\").\n\nArgs:\n    filter: Category path to expand, or Category#Tool for a single tool.\n              Omit to see all tools.",
+      "parameters": [
+        {
+          "name": "filter",
+          "type": "str",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "discovery"
+      ]
+    },
+    {
+      "name": "ToolSearch",
+      "category": "Discovery",
+      "description": "Search for tools by name/description or by intent.\n\nTwo search modes:\n- \"text\": Fast substring matching against tool names and descriptions.\n- \"intent\": LLM-powered semantic search that explains HOW tools can\n  fulfill your goal, including multi-tool workflow suggestions.\n\nArgs:\n    query: Search text (tool name for text mode, natural language for intent mode).\n    mode: \"text\" or \"intent\" (default: \"text\").\n    limit: Maximum results (default: 10).\n    verbose: If True, include full parameter definitions in each match.\n\nReturns:\n    JSON with matches including tool name, description,\n    and (for intent mode) relevance and usage explanation.",
+      "parameters": [
+        {
+          "name": "query",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "limit",
+          "type": "int",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "verbose",
+          "type": "bool",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "discovery"
+      ]
+    },
+    {
+      "name": "ToolDefinition",
+      "category": "Discovery",
+      "description": "Get full definitions for one or more catalog tools by name.\n\nReturns complete tool info including all parameters. Use this\nafter ToolSearch or ToolSummary to get parameter details.\n\nArgs:\n    tools: List of tool names to look up (e.g. [\"ToMarkdown\", \"Ping\"]).\n\nReturns:\n    JSON with full tool definitions including parameters,\n    and any names that were not found.",
+      "parameters": [
+        {
+          "name": "tools",
+          "type": "list",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "discovery"
+      ]
+    },
+    {
+      "name": "ToolHelp",
+      "category": "Discovery",
+      "description": "Get LLM-driven instructions on how to use a tool for a specific task.\n\nReturns actionable guidance tailored to your task, with detail level\ncontrolled by verbose.\n\nArgs:\n    tool: Name of the catalog tool (e.g. \"ToMarkdown\").\n    task: What you are trying to accomplish.\n    verbose: Detail level: 1=brief, 2=standard, 3=detailed with examples.\n\nReturns:\n    JSON with tool name, task, and generated instructions.",
+      "parameters": [
+        {
+          "name": "tool",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "task",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "verbose",
+          "type": "int",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "discovery"
+      ]
+    },
+    {
+      "name": "ToolCall",
+      "category": "Discovery",
+      "description": "Invoke a discoverable tool by name.\n\nDiscoverable tools are hidden from the MCP tools/list but can be found\nvia ToolSummary / ToolSearch / ToolDefinition and called here.\n\nStatus values in the response:\n  * ``mcp`` \u2014 tool is MCP-registered; clients should call it directly\n    via the MCP protocol rather than through ToolCall.\n  * ``stub`` \u2014 tool is in the catalog but has no implementation.\n  * ``error`` \u2014 tool not found or invocation failed.\n\nArgs:\n    tool: Name of the discoverable tool to call.\n    arguments: Arguments to pass as a JSON object.",
+      "parameters": [
+        {
+          "name": "tool",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "arguments",
+          "type": "str",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "discovery"
+      ]
+    },
+    {
+      "name": "ToolSession.Generate",
+      "category": "ToolSessions",
+      "description": "Generate or look up a session UUID by (agent, task) pair.\n\nIf a session already exists for this agent/task pair, returns its UUID.\nIf notes are provided and not already present, appends them.\nIf no session exists, creates a new one.\n\nArgs:\n    agent: Agent identifier.\n    brief: Brief description of the session purpose.\n    task: Task identifier (unique per agent).\n    project: Project name for scoping (e.g. from $NPL_PROJECT).\n    parent: Optional parent session UUID for hierarchy.\n    notes: Optional notes to append to the session.",
+      "parameters": [
+        {
+          "name": "agent",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "brief",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "task",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "project",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "parent",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "notes",
+          "type": "str",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "toolsessions"
+      ]
+    },
+    {
+      "name": "ToolSession",
+      "category": "ToolSessions",
+      "description": "Retrieve session info by UUID.\n\nDefault returns agent, brief, and project name.  Verbose mode returns\nall fields including task, notes, parent, and timestamps.\n\nArgs:\n    uuid: Session UUID.\n    verbose: If True, return all fields (default False).",
+      "parameters": [
+        {
+          "name": "uuid",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "verbose",
+          "type": "bool",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "toolsessions"
+      ]
+    },
+    {
+      "name": "Instructions",
+      "category": "Instructions",
+      "description": "Retrieve instruction body by UUID.\n\nGets the active version by default, or a specific version if specified.\n\nArgs:\n    uuid: Instruction UUID.\n    session: A valid tool-session UUID (required for access gating).\n    version: Specific version number (active version if omitted).\n    json: If True, return full metadata as JSON. Default returns markdown.",
+      "parameters": [
+        {
+          "name": "uuid",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "session",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "version",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "json",
+          "type": "bool",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "instructions"
+      ]
+    },
+    {
+      "name": "Instructions.Create",
+      "category": "Instructions",
+      "description": "Create a new instruction document with its first version (v1).\n\nArgs:\n    title: Instruction title.\n    description: Instruction description.\n    tags: List of string tags for categorization.\n    body: Instruction body content.\n    session: A valid tool-session UUID to link this instruction to.",
+      "parameters": [
+        {
+          "name": "title",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "description",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "tags",
+          "type": "list",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "body",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "session",
+          "type": "str",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "instructions"
+      ]
+    },
+    {
+      "name": "Instructions.List",
+      "category": "Instructions",
+      "description": "Search and list instruction documents.\n\nModes:\n- \"text\": ILIKE search on title, description, tags, and embedding labels\n- \"intent\": Embed query, cosine similarity search against instruction embeddings\n- \"all\": Return all instructions (no search filter)\n\nArgs:\n    session: A valid tool-session UUID (required for access gating).\n    query: Search query string (required for text/intent modes).\n    mode: Search mode: \"text\", \"intent\", or \"all\" (default: \"text\").\n    tags: Optional tag filter (AND logic -- instruction must have all listed tags).\n    limit: Maximum results to return (default 20, max 100).",
+      "parameters": [
+        {
+          "name": "session",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "query",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "mode",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "tags",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "limit",
+          "type": "int",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "instructions"
+      ]
+    },
+    {
+      "name": "ToMarkdown",
+      "category": "Browser",
+      "description": "Convert a URL, file, or raw markdown string to filtered/collapsed markdown.\n\nArgs:\n    source: URL, file path, or raw markdown content string.\n    filter: Heading/CSS/XPath filter selector (e.g. ``\"API Reference\"``,\n        ``\"Overview > API\"``, ``\"css:#main\"``).\n    collapsed_depth: Collapse headings below this depth (1-6).\n    filtered_only: If True, extract only matched sections (bare mode).\n        If False (default), show full document with context.\n    output: File path to write result. If omitted, returned in payload.\n    with_image_descriptions: Inject LLM-generated image descriptions.\n    image_model: Multi-modal model for image descriptions.\n    fallback_parser: If True, fall back to html2text when Jina fails.\n        Default False (Jina only).\n\nReturns:\n    Dict with ``source``, ``content`` (or ``output_file``), ``content_length``,\n    and metadata about conversion.",
+      "parameters": [
+        {
+          "name": "source",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "filter",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "collapsed_depth",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "filtered_only",
+          "type": "bool",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "output",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "with_image_descriptions",
+          "type": "bool",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "image_model",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "fallback_parser",
+          "type": "bool",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "browser"
+      ]
+    },
+    {
+      "name": "Ping",
+      "category": "Browser",
+      "description": "Check connectivity to a URL and optionally validate response content.\n\nArgs:\n    url: URL to ping.\n    sentinel: Optional validation expression prefixed with\n        ``xpath:``, ``regex:``, or ``llm:``.\n    timeout: Request timeout in seconds.\n\nReturns:\n    Dict with status_code, response_time_ms, and optional sentinel_result.",
+      "parameters": [
+        {
+          "name": "url",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "sentinel",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "timeout",
+          "type": "float",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "browser"
+      ]
+    },
+    {
+      "name": "Download",
+      "category": "Browser",
+      "description": "Download a URL or copy a local file.\n\nArgs:\n    file: URL or local file path to download/copy from.\n    out: Local file path to save to. If omitted, returns content\n        in the response payload instead of writing to disk.\n    timeout: Request timeout in seconds for URL downloads (default 60).\n\nReturns:\n    Dict with source, source_type, and either ``output_file`` + ``size_bytes``\n    (when ``out`` is given) or ``content`` + ``content_length`` (when ``out`` is omitted).",
+      "parameters": [
+        {
+          "name": "file",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "out",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "timeout",
+          "type": "float",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "browser"
+      ]
+    },
+    {
+      "name": "Screenshot",
+      "category": "Browser",
+      "description": "Capture a screenshot of a URL.\n\nArgs:\n    url: URL to screenshot.\n    output: File path to save PNG. If omitted, returns base64 data.\n    max_width: Maximum width in pixels (scales down preserving aspect ratio).\n    max_height: Maximum height in pixels (scales down preserving aspect ratio).\n    full_page: Capture full scrollable page instead of viewport only.\n\nReturns:\n    Dict with url, dimensions, and either ``output_file`` or ``base64`` data.",
+      "parameters": [
+        {
+          "name": "url",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "output",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "max_width",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "max_height",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "full_page",
+          "type": "bool",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "browser"
+      ]
+    },
+    {
+      "name": "Rest",
+      "category": "Browser",
+      "description": "Make an HTTP request with optional secret injection.\n\nArgs:\n    url: Request URL.\n    method: HTTP method (GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS).\n    headers: Optional request headers dict.\n    accept: Default Accept header (won't override an explicit header).\n    encoding: Default Accept-Encoding header (won't override explicit).\n    body: Optional request body string.\n    timeout: Request timeout in seconds (default 30).\n\nReturns:\n    Dict with url, method, status_code, response_time_ms,\n    response_headers, body, and optionally secrets_injected.",
+      "parameters": [
+        {
+          "name": "url",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "method",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "headers",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "accept",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "encoding",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "body",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "timeout",
+          "type": "float",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "browser"
+      ]
+    },
+    {
+      "name": "Secret",
+      "category": "Utility",
+      "description": "Create or update a named secret.\n\nArgs:\n    name: Identifier matching ``[a-zA-Z_][a-zA-Z0-9_]*`` (max 128 chars).\n    value: Secret value (max 64 KB).\n\nReturns:\n    ``{name, action: \"created\"|\"updated\", status: \"ok\"}``",
+      "parameters": [
+        {
+          "name": "name",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "value",
+          "type": "str",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "utility"
+      ]
+    },
+    {
+      "name": "Instructions.Update",
+      "category": "Instructions",
+      "description": "Create a new version, optionally updating description/tags/body.\n\nThe new version number is ``active_version + 1`` and becomes active.\nIf *body* is omitted the body is carried forward from the current\nactive version.",
+      "parameters": [
+        {
+          "name": "uuid",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "change_note",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "description",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "tags",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "body",
+          "type": "str",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "instructions"
+      ]
+    },
+    {
+      "name": "Instructions.ActiveVersion",
+      "category": "Instructions",
+      "description": "Change the active version (rollback or forward).",
+      "parameters": [
+        {
+          "name": "uuid",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "version",
+          "type": "int",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "instructions"
+      ]
+    },
+    {
+      "name": "Instructions.Versions",
+      "category": "Instructions",
+      "description": "List all versions with change notes.",
+      "parameters": [
+        {
+          "name": "uuid",
+          "type": "str",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "instructions"
+      ]
+    },
+    {
+      "name": "Proj.Projects.Create",
+      "category": "Project Management",
+      "description": "Create a new project.",
+      "parameters": [
+        {
+          "name": "name",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "description",
+          "type": "str",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "project management"
+      ]
+    },
+    {
+      "name": "Proj.Projects.Get",
+      "category": "Project Management",
+      "description": "Retrieve a project by ID.",
+      "parameters": [
+        {
+          "name": "id",
+          "type": "str",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "project management"
+      ]
+    },
+    {
+      "name": "Proj.Projects.List",
+      "category": "Project Management",
+      "description": "List projects with pagination.",
+      "parameters": [
+        {
+          "name": "page",
+          "type": "int",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "page_size",
+          "type": "int",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "project management"
+      ]
+    },
+    {
+      "name": "Proj.UserPersonas.Create",
+      "category": "Project Management",
+      "description": "Create a new user persona.",
+      "parameters": [
+        {
+          "name": "project_id",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "name",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "role",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "description",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "goals",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "pain_points",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "behaviors",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "physical_description",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "persona_image",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "demographics",
+          "type": "str",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "project management"
+      ]
+    },
+    {
+      "name": "Proj.UserPersonas.Get",
+      "category": "Project Management",
+      "description": "Retrieve a user persona by ID.",
+      "parameters": [
+        {
+          "name": "id",
+          "type": "str",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "project management"
+      ]
+    },
+    {
+      "name": "Proj.UserPersonas.Update",
+      "category": "Project Management",
+      "description": "Update an existing user persona.",
+      "parameters": [
+        {
+          "name": "id",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "name",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "role",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "description",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "goals",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "pain_points",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "behaviors",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "physical_description",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "persona_image",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "demographics",
+          "type": "str",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "project management"
+      ]
+    },
+    {
+      "name": "Proj.UserPersonas.Delete",
+      "category": "Project Management",
+      "description": "Soft-delete a user persona.",
+      "parameters": [
+        {
+          "name": "id",
+          "type": "str",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "project management"
+      ]
+    },
+    {
+      "name": "Proj.UserPersonas.List",
+      "category": "Project Management",
+      "description": "List personas for a project with pagination.",
+      "parameters": [
+        {
+          "name": "project_id",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "page",
+          "type": "int",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "page_size",
+          "type": "int",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "project management"
+      ]
+    },
+    {
+      "name": "Proj.UserStories.Create",
+      "category": "Project Management",
+      "description": "Create a new user story.",
+      "parameters": [
+        {
+          "name": "project_id",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "title",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "persona_ids",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "story_text",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "description",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "priority",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "story_points",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "acceptance_criteria",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "tags",
+          "type": "str",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "project management"
+      ]
+    },
+    {
+      "name": "Proj.UserStories.Get",
+      "category": "Project Management",
+      "description": "Retrieve a user story by ID.\n\nArgs:\n    id: Story UUID.\n    include: Pass \"acceptance-criteria\" to include acceptance_criteria in response.",
+      "parameters": [
+        {
+          "name": "id",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "include",
+          "type": "str",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "project management"
+      ]
+    },
+    {
+      "name": "Proj.UserStories.Update",
+      "category": "Project Management",
+      "description": "Update an existing user story.",
+      "parameters": [
+        {
+          "name": "id",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "title",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "persona_ids",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "story_text",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "description",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "priority",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "story_points",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "acceptance_criteria",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "tags",
+          "type": "str",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "project management"
+      ]
+    },
+    {
+      "name": "Proj.UserStories.Delete",
+      "category": "Project Management",
+      "description": "Soft-delete a user story.",
+      "parameters": [
+        {
+          "name": "id",
+          "type": "str",
+          "required": true,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "project management"
+      ]
+    },
+    {
+      "name": "Proj.UserStories.List",
+      "category": "Project Management",
+      "description": "List stories for a project with optional filtering and pagination.",
+      "parameters": [
+        {
+          "name": "project_id",
+          "type": "str",
+          "required": true,
+          "description": ""
+        },
+        {
+          "name": "persona_id",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "priority",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "tags",
+          "type": "str",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "page",
+          "type": "int",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "page_size",
+          "type": "int",
+          "required": false,
+          "description": ""
+        }
+      ],
+      "tags": [
+        "project management"
+      ]
+    },
+    {
+      "name": "dump_files",
+      "category": "Scripts",
+      "description": "Dump contents of files in a directory respecting .gitignore.",
+      "parameters": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "description": "Absolute path to directory to dump"
+        },
+        {
+          "name": "glob_filter",
+          "type": "str",
+          "required": false,
+          "description": "Optional glob pattern to filter files"
+        }
+      ],
+      "tags": [
+        "scripts"
+      ]
+    },
+    {
+      "name": "git_tree",
+      "category": "Scripts",
+      "description": "Display directory tree respecting .gitignore.",
+      "parameters": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": false,
+          "description": "Absolute path to directory (default '.')"
+        }
+      ],
+      "tags": [
+        "scripts"
+      ]
+    },
+    {
+      "name": "git_tree_depth",
+      "category": "Scripts",
+      "description": "List directories with nesting depth information.",
+      "parameters": [
+        {
+          "name": "path",
+          "type": "str",
+          "required": true,
+          "description": "Absolute path to directory"
+        }
+      ],
+      "tags": [
+        "scripts"
+      ]
+    },
+    {
+      "name": "npl_load",
+      "category": "Scripts",
+      "description": "Load NPL components, metadata, or style guides.",
+      "parameters": [
+        {
+          "name": "resource_type",
+          "type": "str",
+          "required": true,
+          "description": "Resource type to load (c, m, s, agent, etc.)"
+        },
+        {
+          "name": "items",
+          "type": "str",
+          "required": true,
+          "description": "Comma-separated items to load"
+        },
+        {
+          "name": "skip",
+          "type": "str",
+          "required": false,
+          "description": "Comma-separated items to skip (already loaded)"
+        }
+      ],
+      "tags": [
+        "scripts"
+      ]
+    },
+    {
+      "name": "web_to_md",
+      "category": "Scripts",
+      "description": "Fetch a web page and return its content as markdown using Jina Reader.",
+      "parameters": [
+        {
+          "name": "url",
+          "type": "str",
+          "required": true,
+          "description": "The URL of the web page to fetch"
+        },
+        {
+          "name": "timeout",
+          "type": "int",
+          "required": false,
+          "description": "Request timeout in seconds (default 30)"
+        }
+      ],
+      "tags": [
+        "scripts"
+      ]
+    },
+    {
+      "name": "create_artifact",
+      "category": "Artifacts",
+      "description": "Create a new artifact with initial revision.",
+      "parameters": [
+        {
+          "name": "name",
+          "type": "str",
+          "required": true,
+          "description": "Name of the artifact"
+        },
+        {
+          "name": "artifact_type",
+          "type": "str",
+          "required": true,
+          "description": "Type of artifact (e.g., 'screenshot', 'document')"
+        },
+        {
+          "name": "file_content_base64",
+          "type": "str",
+          "required": true,
+          "description": "Base64-encoded file content"
+        },
+        {
+          "name": "filename",
+          "type": "str",
+          "required": true,
+          "description": "Original filename"
+        },
+        {
+          "name": "created_by",
+          "type": "str",
+          "required": false,
+          "description": "Persona slug of creator"
+        },
+        {
+          "name": "purpose",
+          "type": "str",
+          "required": false,
+          "description": "Purpose description for the artifact"
+        }
+      ],
+      "tags": [
+        "artifacts"
+      ]
+    },
+    {
+      "name": "add_revision",
+      "category": "Artifacts",
+      "description": "Add a new revision to an artifact.",
+      "parameters": [
+        {
+          "name": "artifact_id",
+          "type": "int",
+          "required": true,
+          "description": "ID of the artifact"
+        },
+        {
+          "name": "file_content_base64",
+          "type": "str",
+          "required": true,
+          "description": "Base64-encoded file content"
+        },
+        {
+          "name": "filename",
+          "type": "str",
+          "required": true,
+          "description": "Filename for the revision"
+        },
+        {
+          "name": "created_by",
+          "type": "str",
+          "required": false,
+          "description": "Persona slug of creator"
+        },
+        {
+          "name": "purpose",
+          "type": "str",
+          "required": false,
+          "description": "Purpose of this revision"
+        },
+        {
+          "name": "notes",
+          "type": "str",
+          "required": false,
+          "description": "Revision notes"
+        }
+      ],
+      "tags": [
+        "artifacts"
+      ]
+    },
+    {
+      "name": "get_artifact",
+      "category": "Artifacts",
+      "description": "Get artifact and its revision content.",
+      "parameters": [
+        {
+          "name": "artifact_id",
+          "type": "int",
+          "required": true,
+          "description": "ID of the artifact"
+        },
+        {
+          "name": "revision",
+          "type": "int",
+          "required": false,
+          "description": "Specific revision number (latest if omitted)"
+        }
+      ],
+      "tags": [
+        "artifacts"
+      ]
+    },
+    {
+      "name": "list_artifacts",
+      "category": "Artifacts",
+      "description": "List all artifacts.",
+      "parameters": [],
+      "tags": [
+        "artifacts"
+      ]
+    },
+    {
+      "name": "get_artifact_history",
+      "category": "Artifacts",
+      "description": "Get revision history for an artifact.",
+      "parameters": [
+        {
+          "name": "artifact_id",
+          "type": "int",
+          "required": true,
+          "description": "ID of the artifact"
+        }
+      ],
+      "tags": [
+        "artifacts"
+      ]
+    },
+    {
+      "name": "create_review",
+      "category": "Reviews",
+      "description": "Start a new review for an artifact revision.",
+      "parameters": [
+        {
+          "name": "artifact_id",
+          "type": "int",
+          "required": true,
+          "description": "ID of the artifact to review"
+        },
+        {
+          "name": "revision_id",
+          "type": "int",
+          "required": true,
+          "description": "ID of the revision to review"
+        },
+        {
+          "name": "reviewer_persona",
+          "type": "str",
+          "required": true,
+          "description": "Persona slug of the reviewer"
+        }
+      ],
+      "tags": [
+        "reviews"
+      ]
+    },
+    {
+      "name": "add_inline_comment",
+      "category": "Reviews",
+      "description": "Add an inline comment to a review.",
+      "parameters": [
+        {
+          "name": "review_id",
+          "type": "int",
+          "required": true,
+          "description": "ID of the review"
+        },
+        {
+          "name": "location",
+          "type": "str",
+          "required": true,
+          "description": "Location in artifact (e.g., line number, section)"
+        },
+        {
+          "name": "comment",
+          "type": "str",
+          "required": true,
+          "description": "Comment text"
+        },
+        {
+          "name": "persona",
+          "type": "str",
+          "required": true,
+          "description": "Persona slug of commenter"
+        }
+      ],
+      "tags": [
+        "reviews"
+      ]
+    },
+    {
+      "name": "add_overlay_annotation",
+      "category": "Reviews",
+      "description": "Add an image overlay annotation.",
+      "parameters": [
+        {
+          "name": "review_id",
+          "type": "int",
+          "required": true,
+          "description": "ID of the review"
+        },
+        {
+          "name": "x",
+          "type": "int",
+          "required": true,
+          "description": "X coordinate of annotation"
+        },
+        {
+          "name": "y",
+          "type": "int",
+          "required": true,
+          "description": "Y coordinate of annotation"
+        },
+        {
+          "name": "comment",
+          "type": "str",
+          "required": true,
+          "description": "Annotation comment text"
+        },
+        {
+          "name": "persona",
+          "type": "str",
+          "required": true,
+          "description": "Persona slug of annotator"
+        }
+      ],
+      "tags": [
+        "reviews"
+      ]
+    },
+    {
+      "name": "get_review",
+      "category": "Reviews",
+      "description": "Get a review with all its comments.",
+      "parameters": [
+        {
+          "name": "review_id",
+          "type": "int",
+          "required": true,
+          "description": "ID of the review"
+        }
+      ],
+      "tags": [
+        "reviews"
+      ]
+    },
+    {
+      "name": "generate_annotated_artifact",
+      "category": "Reviews",
+      "description": "Generate an annotated version of an artifact with all review comments.",
+      "parameters": [
+        {
+          "name": "artifact_id",
+          "type": "int",
+          "required": true,
+          "description": "ID of the artifact"
+        },
+        {
+          "name": "revision_id",
+          "type": "int",
+          "required": true,
+          "description": "ID of the revision"
+        }
+      ],
+      "tags": [
+        "reviews"
+      ]
+    },
+    {
+      "name": "complete_review",
+      "category": "Reviews",
+      "description": "Mark a review as completed.",
+      "parameters": [
+        {
+          "name": "review_id",
+          "type": "int",
+          "required": true,
+          "description": "ID of the review"
+        },
+        {
+          "name": "overall_comment",
+          "type": "str",
+          "required": false,
+          "description": "Optional overall review comment"
+        }
+      ],
+      "tags": [
+        "reviews"
+      ]
+    },
+    {
+      "name": "create_session",
+      "category": "Sessions",
+      "description": "Create a new session to group chat rooms and artifacts.",
+      "parameters": [
+        {
+          "name": "title",
+          "type": "str",
+          "required": false,
+          "description": "Optional session title"
+        },
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Optional custom session ID"
+        }
+      ],
+      "tags": [
+        "sessions"
+      ]
+    },
+    {
+      "name": "get_session",
+      "category": "Sessions",
+      "description": "Get session details and contents.",
+      "parameters": [
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": true,
+          "description": "Session ID to retrieve"
+        }
+      ],
+      "tags": [
+        "sessions"
+      ]
+    },
+    {
+      "name": "list_sessions",
+      "category": "Sessions",
+      "description": "List recent sessions.",
+      "parameters": [
+        {
+          "name": "status",
+          "type": "str",
+          "required": false,
+          "description": "Optional status filter"
+        },
+        {
+          "name": "limit",
+          "type": "int",
+          "required": false,
+          "description": "Maximum sessions to return (default 20)"
+        }
+      ],
+      "tags": [
+        "sessions"
+      ]
+    },
+    {
+      "name": "update_session",
+      "category": "Sessions",
+      "description": "Update session metadata.",
+      "parameters": [
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": true,
+          "description": "Session ID to update"
+        },
+        {
+          "name": "title",
+          "type": "str",
+          "required": false,
+          "description": "New title"
+        },
+        {
+          "name": "status",
+          "type": "str",
+          "required": false,
+          "description": "New status"
+        }
+      ],
+      "tags": [
+        "sessions"
+      ]
+    },
+    {
+      "name": "create_chat_room",
+      "category": "Chat",
+      "description": "Create a new chat room.",
+      "parameters": [
+        {
+          "name": "name",
+          "type": "str",
+          "required": true,
+          "description": "Name of the chat room"
+        },
+        {
+          "name": "members",
+          "type": "list[str]",
+          "required": true,
+          "description": "List of persona slugs to add as members"
+        },
+        {
+          "name": "description",
+          "type": "str",
+          "required": false,
+          "description": "Optional room description"
+        },
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Optional session ID to associate with"
+        },
+        {
+          "name": "session_title",
+          "type": "str",
+          "required": false,
+          "description": "Optional session title (creates session if needed)"
+        }
+      ],
+      "tags": [
+        "chat"
+      ]
+    },
+    {
+      "name": "send_message",
+      "category": "Chat",
+      "description": "Send a message to a chat room.",
+      "parameters": [
+        {
+          "name": "room_id",
+          "type": "int",
+          "required": true,
+          "description": "ID of the chat room"
+        },
+        {
+          "name": "persona",
+          "type": "str",
+          "required": true,
+          "description": "Persona slug of sender"
+        },
+        {
+          "name": "message",
+          "type": "str",
+          "required": true,
+          "description": "Message content"
+        },
+        {
+          "name": "reply_to_id",
+          "type": "int",
+          "required": false,
+          "description": "Optional event ID to reply to"
+        }
+      ],
+      "tags": [
+        "chat"
+      ]
+    },
+    {
+      "name": "react_to_message",
+      "category": "Chat",
+      "description": "Add an emoji reaction to a message.",
+      "parameters": [
+        {
+          "name": "event_id",
+          "type": "int",
+          "required": true,
+          "description": "ID of the event to react to"
+        },
+        {
+          "name": "persona",
+          "type": "str",
+          "required": true,
+          "description": "Persona slug of reactor"
+        },
+        {
+          "name": "emoji",
+          "type": "str",
+          "required": true,
+          "description": "Emoji to react with"
+        }
+      ],
+      "tags": [
+        "chat"
+      ]
+    },
+    {
+      "name": "share_artifact",
+      "category": "Chat",
+      "description": "Share an artifact in a chat room.",
+      "parameters": [
+        {
+          "name": "room_id",
+          "type": "int",
+          "required": true,
+          "description": "ID of the chat room"
+        },
+        {
+          "name": "persona",
+          "type": "str",
+          "required": true,
+          "description": "Persona slug of sharer"
+        },
+        {
+          "name": "artifact_id",
+          "type": "int",
+          "required": true,
+          "description": "ID of the artifact to share"
+        },
+        {
+          "name": "revision",
+          "type": "int",
+          "required": false,
+          "description": "Optional specific revision number"
+        }
+      ],
+      "tags": [
+        "chat"
+      ]
+    },
+    {
+      "name": "create_todo",
+      "category": "Chat",
+      "description": "Create a shared todo item in a chat room.",
+      "parameters": [
+        {
+          "name": "room_id",
+          "type": "int",
+          "required": true,
+          "description": "ID of the chat room"
+        },
+        {
+          "name": "persona",
+          "type": "str",
+          "required": true,
+          "description": "Persona slug of creator"
+        },
+        {
+          "name": "description",
+          "type": "str",
+          "required": true,
+          "description": "Todo item description"
+        },
+        {
+          "name": "assigned_to",
+          "type": "str",
+          "required": false,
+          "description": "Optional persona to assign to"
+        }
+      ],
+      "tags": [
+        "chat"
+      ]
+    },
+    {
+      "name": "get_chat_feed",
+      "category": "Chat",
+      "description": "Get chat event feed for a room.",
+      "parameters": [
+        {
+          "name": "room_id",
+          "type": "int",
+          "required": true,
+          "description": "ID of the chat room"
+        },
+        {
+          "name": "since",
+          "type": "str",
+          "required": false,
+          "description": "ISO timestamp to get events after"
+        },
+        {
+          "name": "limit",
+          "type": "int",
+          "required": false,
+          "description": "Maximum events to return (default 50)"
+        }
+      ],
+      "tags": [
+        "chat"
+      ]
+    },
+    {
+      "name": "get_notifications",
+      "category": "Chat",
+      "description": "Get notifications for a persona.",
+      "parameters": [
+        {
+          "name": "persona",
+          "type": "str",
+          "required": true,
+          "description": "Persona slug to get notifications for"
+        },
+        {
+          "name": "unread_only",
+          "type": "bool",
+          "required": false,
+          "description": "Only return unread notifications (default True)"
+        }
+      ],
+      "tags": [
+        "chat"
+      ]
+    },
+    {
+      "name": "mark_notification_read",
+      "category": "Chat",
+      "description": "Mark a notification as read.",
+      "parameters": [
+        {
+          "name": "notification_id",
+          "type": "int",
+          "required": true,
+          "description": "ID of the notification to mark read"
+        }
+      ],
+      "tags": [
+        "chat"
+      ]
+    },
+    {
+      "name": "screenshot_capture",
+      "category": "Browser.Screenshots",
+      "description": "Capture screenshot of a web page and store as artifact.",
+      "parameters": [
+        {
+          "name": "url",
+          "type": "str",
+          "required": true,
+          "description": "URL of the webpage to screenshot"
+        },
+        {
+          "name": "name",
+          "type": "str",
+          "required": true,
+          "description": "Name for the screenshot artifact"
+        },
+        {
+          "name": "viewport",
+          "type": "str",
+          "required": false,
+          "description": "Viewport preset: 'desktop' (1280x720), 'mobile' (375x667), or 'WIDTHxHEIGHT'"
+        },
+        {
+          "name": "theme",
+          "type": "str",
+          "required": false,
+          "description": "Color scheme: 'light' or 'dark'"
+        },
+        {
+          "name": "full_page",
+          "type": "bool",
+          "required": false,
+          "description": "Capture entire scrollable page (default True)"
+        },
+        {
+          "name": "wait_for",
+          "type": "str",
+          "required": false,
+          "description": "CSS selector to wait for before capture"
+        },
+        {
+          "name": "wait_timeout",
+          "type": "int",
+          "required": false,
+          "description": "Milliseconds to wait for selector (default 5000)"
+        },
+        {
+          "name": "network_idle",
+          "type": "bool",
+          "required": false,
+          "description": "Wait for network idle (default True)"
+        },
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Optional session to associate artifact with"
+        },
+        {
+          "name": "created_by",
+          "type": "str",
+          "required": false,
+          "description": "Persona slug of creator"
+        }
+      ],
+      "tags": [
+        "browser",
+        "browser.screenshots"
+      ]
+    },
+    {
+      "name": "screenshot_diff",
+      "category": "Browser.Screenshots",
+      "description": "Generate visual diff between two screenshot artifacts.",
+      "parameters": [
+        {
+          "name": "baseline_artifact_id",
+          "type": "int",
+          "required": true,
+          "description": "Artifact ID of baseline screenshot"
+        },
+        {
+          "name": "comparison_artifact_id",
+          "type": "int",
+          "required": true,
+          "description": "Artifact ID of comparison screenshot"
+        },
+        {
+          "name": "threshold",
+          "type": "float",
+          "required": false,
+          "description": "Diff sensitivity 0.0-1.0 (default 0.1)"
+        },
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Optional session to associate diff artifact with"
+        },
+        {
+          "name": "created_by",
+          "type": "str",
+          "required": false,
+          "description": "Persona slug of creator"
+        }
+      ],
+      "tags": [
+        "browser",
+        "browser.screenshots"
+      ]
+    },
+    {
+      "name": "browser_screenshot",
+      "category": "Browser.Screenshots",
+      "description": "Capture screenshot of current browser page or element.",
+      "parameters": [
+        {
+          "name": "name",
+          "type": "str",
+          "required": true,
+          "description": "Name for the screenshot artifact"
+        },
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Browser session ID (default 'default')"
+        },
+        {
+          "name": "full_page",
+          "type": "bool",
+          "required": false,
+          "description": "Capture entire scrollable page (default False)"
+        },
+        {
+          "name": "selector",
+          "type": "str",
+          "required": false,
+          "description": "Optional element to screenshot"
+        },
+        {
+          "name": "created_by",
+          "type": "str",
+          "required": false,
+          "description": "Persona slug of creator"
+        }
+      ],
+      "tags": [
+        "browser",
+        "browser.screenshots"
+      ]
+    },
+    {
+      "name": "browser_navigate",
+      "category": "Browser.Navigation",
+      "description": "Navigate browser to a URL.",
+      "parameters": [
+        {
+          "name": "url",
+          "type": "str",
+          "required": true,
+          "description": "URL to navigate to"
+        },
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Browser session ID (default 'default')"
+        },
+        {
+          "name": "wait_for",
+          "type": "str",
+          "required": false,
+          "description": "Optional CSS selector to wait for"
+        },
+        {
+          "name": "timeout",
+          "type": "int",
+          "required": false,
+          "description": "Navigation timeout in milliseconds (default 30000)"
+        }
+      ],
+      "tags": [
+        "browser",
+        "browser.navigation"
+      ]
+    },
+    {
+      "name": "browser_scroll",
+      "category": "Browser.Navigation",
+      "description": "Scroll the page or an element.",
+      "parameters": [
+        {
+          "name": "direction",
+          "type": "str",
+          "required": false,
+          "description": "Direction: 'up', 'down', 'left', 'right' (default 'down')"
+        },
+        {
+          "name": "amount",
+          "type": "int",
+          "required": false,
+          "description": "Pixels to scroll (default 500)"
+        },
+        {
+          "name": "selector",
+          "type": "str",
+          "required": false,
+          "description": "Optional element to scroll (scrolls page if None)"
+        },
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Browser session ID (default 'default')"
+        }
+      ],
+      "tags": [
+        "browser",
+        "browser.navigation"
+      ]
+    },
+    {
+      "name": "browser_go_back",
+      "category": "Browser.Navigation",
+      "description": "Navigate back in browser history.",
+      "parameters": [
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Browser session ID (default 'default')"
+        }
+      ],
+      "tags": [
+        "browser",
+        "browser.navigation"
+      ]
+    },
+    {
+      "name": "browser_go_forward",
+      "category": "Browser.Navigation",
+      "description": "Navigate forward in browser history.",
+      "parameters": [
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Browser session ID (default 'default')"
+        }
+      ],
+      "tags": [
+        "browser",
+        "browser.navigation"
+      ]
+    },
+    {
+      "name": "browser_reload",
+      "category": "Browser.Navigation",
+      "description": "Reload the current page.",
+      "parameters": [
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Browser session ID (default 'default')"
+        }
+      ],
+      "tags": [
+        "browser",
+        "browser.navigation"
+      ]
+    },
+    {
+      "name": "browser_click",
+      "category": "Browser.Input",
+      "description": "Click an element in the browser.",
+      "parameters": [
+        {
+          "name": "selector",
+          "type": "str",
+          "required": true,
+          "description": "CSS selector for element to click"
+        },
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Browser session ID (default 'default')"
+        },
+        {
+          "name": "timeout",
+          "type": "int",
+          "required": false,
+          "description": "Wait timeout in milliseconds (default 5000)"
+        },
+        {
+          "name": "screenshot_after",
+          "type": "bool",
+          "required": false,
+          "description": "Capture screenshot after click (default False)"
+        },
+        {
+          "name": "artifact_name",
+          "type": "str",
+          "required": false,
+          "description": "Name for screenshot artifact (required if screenshot_after=True)"
+        }
+      ],
+      "tags": [
+        "browser",
+        "browser.input"
+      ]
+    },
+    {
+      "name": "browser_fill",
+      "category": "Browser.Input",
+      "description": "Fill a form field in the browser.",
+      "parameters": [
+        {
+          "name": "selector",
+          "type": "str",
+          "required": true,
+          "description": "CSS selector for input element"
+        },
+        {
+          "name": "value",
+          "type": "str",
+          "required": true,
+          "description": "Value to fill"
+        },
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Browser session ID (default 'default')"
+        },
+        {
+          "name": "timeout",
+          "type": "int",
+          "required": false,
+          "description": "Wait timeout in milliseconds (default 5000)"
+        }
+      ],
+      "tags": [
+        "browser",
+        "browser.input"
+      ]
+    },
+    {
+      "name": "browser_type",
+      "category": "Browser.Input",
+      "description": "Type text character by character (simulates real typing).",
+      "parameters": [
+        {
+          "name": "selector",
+          "type": "str",
+          "required": true,
+          "description": "CSS selector for input element"
+        },
+        {
+          "name": "text",
+          "type": "str",
+          "required": true,
+          "description": "Text to type"
+        },
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Browser session ID (default 'default')"
+        },
+        {
+          "name": "delay",
+          "type": "int",
+          "required": false,
+          "description": "Delay between keystrokes in milliseconds (default 50)"
+        },
+        {
+          "name": "timeout",
+          "type": "int",
+          "required": false,
+          "description": "Wait timeout in milliseconds (default 5000)"
+        }
+      ],
+      "tags": [
+        "browser",
+        "browser.input"
+      ]
+    },
+    {
+      "name": "browser_select",
+      "category": "Browser.Input",
+      "description": "Select option from dropdown.",
+      "parameters": [
+        {
+          "name": "selector",
+          "type": "str",
+          "required": true,
+          "description": "CSS selector for select element"
+        },
+        {
+          "name": "value",
+          "type": "str",
+          "required": true,
+          "description": "Option value to select"
+        },
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Browser session ID (default 'default')"
+        },
+        {
+          "name": "timeout",
+          "type": "int",
+          "required": false,
+          "description": "Wait timeout in milliseconds (default 5000)"
+        }
+      ],
+      "tags": [
+        "browser",
+        "browser.input"
+      ]
+    },
+    {
+      "name": "browser_press_key",
+      "category": "Browser.Input",
+      "description": "Press a keyboard key.",
+      "parameters": [
+        {
+          "name": "key",
+          "type": "str",
+          "required": true,
+          "description": "Key to press (e.g., 'Enter', 'Tab', 'Escape', 'ArrowDown')"
+        },
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Browser session ID (default 'default')"
+        },
+        {
+          "name": "modifiers",
+          "type": "list[str]",
+          "required": false,
+          "description": "Optional list of modifiers: 'Control', 'Shift', 'Alt', 'Meta'"
+        }
+      ],
+      "tags": [
+        "browser",
+        "browser.input"
+      ]
+    },
+    {
+      "name": "browser_hover",
+      "category": "Browser.Input",
+      "description": "Hover over an element.",
+      "parameters": [
+        {
+          "name": "selector",
+          "type": "str",
+          "required": true,
+          "description": "CSS selector for element"
+        },
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Browser session ID (default 'default')"
+        },
+        {
+          "name": "timeout",
+          "type": "int",
+          "required": false,
+          "description": "Wait timeout in milliseconds (default 5000)"
+        }
+      ],
+      "tags": [
+        "browser",
+        "browser.input"
+      ]
+    },
+    {
+      "name": "browser_focus",
+      "category": "Browser.Input",
+      "description": "Focus on an element.",
+      "parameters": [
+        {
+          "name": "selector",
+          "type": "str",
+          "required": true,
+          "description": "CSS selector for element"
+        },
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Browser session ID (default 'default')"
+        },
+        {
+          "name": "timeout",
+          "type": "int",
+          "required": false,
+          "description": "Wait timeout in milliseconds (default 5000)"
+        }
+      ],
+      "tags": [
+        "browser",
+        "browser.input"
+      ]
+    },
+    {
+      "name": "browser_get_text",
+      "category": "Browser.Query",
+      "description": "Get text content of an element.",
+      "parameters": [
+        {
+          "name": "selector",
+          "type": "str",
+          "required": true,
+          "description": "CSS selector for element"
+        },
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Browser session ID (default 'default')"
+        },
+        {
+          "name": "timeout",
+          "type": "int",
+          "required": false,
+          "description": "Wait timeout in milliseconds (default 5000)"
+        }
+      ],
+      "tags": [
+        "browser",
+        "browser.query"
+      ]
+    },
+    {
+      "name": "browser_query_elements",
+      "category": "Browser.Query",
+      "description": "Query multiple elements matching a selector.",
+      "parameters": [
+        {
+          "name": "selector",
+          "type": "str",
+          "required": true,
+          "description": "CSS selector"
+        },
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Browser session ID (default 'default')"
+        },
+        {
+          "name": "limit",
+          "type": "int",
+          "required": false,
+          "description": "Maximum elements to return (default 10)"
+        }
+      ],
+      "tags": [
+        "browser",
+        "browser.query"
+      ]
+    },
+    {
+      "name": "browser_evaluate",
+      "category": "Browser.Query",
+      "description": "Evaluate JavaScript expression in page context.",
+      "parameters": [
+        {
+          "name": "expression",
+          "type": "str",
+          "required": true,
+          "description": "JavaScript expression to evaluate"
+        },
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Browser session ID (default 'default')"
+        }
+      ],
+      "tags": [
+        "browser",
+        "browser.query"
+      ]
+    },
+    {
+      "name": "browser_get_state",
+      "category": "Browser.Query",
+      "description": "Get current browser page state.",
+      "parameters": [
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Browser session ID (default 'default')"
+        }
+      ],
+      "tags": [
+        "browser",
+        "browser.query"
+      ]
+    },
+    {
+      "name": "browser_get_html",
+      "category": "Browser.Query",
+      "description": "Get HTML content of page or element.",
+      "parameters": [
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Browser session ID (default 'default')"
+        },
+        {
+          "name": "selector",
+          "type": "str",
+          "required": false,
+          "description": "Optional CSS selector (entire page if None)"
+        },
+        {
+          "name": "outer",
+          "type": "bool",
+          "required": false,
+          "description": "Include element's own tag: outerHTML vs innerHTML (default True)"
+        }
+      ],
+      "tags": [
+        "browser",
+        "browser.query"
+      ]
+    },
+    {
+      "name": "browser_close_session",
+      "category": "Browser.Session",
+      "description": "Close a browser session.",
+      "parameters": [
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": true,
+          "description": "Browser session ID to close"
+        }
+      ],
+      "tags": [
+        "browser",
+        "browser.session"
+      ]
+    },
+    {
+      "name": "browser_list_sessions",
+      "category": "Browser.Session",
+      "description": "List active browser sessions.",
+      "parameters": [],
+      "tags": [
+        "browser",
+        "browser.session"
+      ]
+    },
+    {
+      "name": "browser_set_viewport",
+      "category": "Browser.Session",
+      "description": "Change browser viewport size.",
+      "parameters": [
+        {
+          "name": "width",
+          "type": "int",
+          "required": true,
+          "description": "Viewport width in pixels"
+        },
+        {
+          "name": "height",
+          "type": "int",
+          "required": true,
+          "description": "Viewport height in pixels"
+        },
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Browser session ID (default 'default')"
+        }
+      ],
+      "tags": [
+        "browser",
+        "browser.session"
+      ]
+    },
+    {
+      "name": "browser_wait_for",
+      "category": "Browser.Wait",
+      "description": "Wait for an element to reach a state.",
+      "parameters": [
+        {
+          "name": "selector",
+          "type": "str",
+          "required": true,
+          "description": "CSS selector for element"
+        },
+        {
+          "name": "state",
+          "type": "str",
+          "required": false,
+          "description": "Target state: 'visible', 'hidden', 'attached', 'detached' (default 'visible')"
+        },
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Browser session ID (default 'default')"
+        },
+        {
+          "name": "timeout",
+          "type": "int",
+          "required": false,
+          "description": "Wait timeout in milliseconds (default 10000)"
+        }
+      ],
+      "tags": [
+        "browser",
+        "browser.wait"
+      ]
+    },
+    {
+      "name": "browser_wait_network_idle",
+      "category": "Browser.Wait",
+      "description": "Wait for network activity to become idle.",
+      "parameters": [
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Browser session ID (default 'default')"
+        },
+        {
+          "name": "timeout",
+          "type": "int",
+          "required": false,
+          "description": "Maximum wait time in milliseconds (default 30000)"
+        }
+      ],
+      "tags": [
+        "browser",
+        "browser.wait"
+      ]
+    },
+    {
+      "name": "browser_inject_script",
+      "category": "Browser.Inject",
+      "description": "Inject and execute JavaScript in the page via script tag.",
+      "parameters": [
+        {
+          "name": "script",
+          "type": "str",
+          "required": true,
+          "description": "JavaScript code to inject"
+        },
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Browser session ID (default 'default')"
+        }
+      ],
+      "tags": [
+        "browser",
+        "browser.inject"
+      ]
+    },
+    {
+      "name": "browser_inject_style",
+      "category": "Browser.Inject",
+      "description": "Inject CSS styles into the page.",
+      "parameters": [
+        {
+          "name": "css",
+          "type": "str",
+          "required": true,
+          "description": "CSS code to inject"
+        },
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Browser session ID (default 'default')"
+        }
+      ],
+      "tags": [
+        "browser",
+        "browser.inject"
+      ]
+    },
+    {
+      "name": "browser_get_cookies",
+      "category": "Browser.Storage",
+      "description": "Get all cookies for the current page.",
+      "parameters": [
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Browser session ID (default 'default')"
+        }
+      ],
+      "tags": [
+        "browser",
+        "browser.storage"
+      ]
+    },
+    {
+      "name": "browser_set_cookie",
+      "category": "Browser.Storage",
+      "description": "Set a cookie.",
+      "parameters": [
+        {
+          "name": "name",
+          "type": "str",
+          "required": true,
+          "description": "Cookie name"
+        },
+        {
+          "name": "value",
+          "type": "str",
+          "required": true,
+          "description": "Cookie value"
+        },
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Browser session ID (default 'default')"
+        },
+        {
+          "name": "domain",
+          "type": "str",
+          "required": false,
+          "description": "Cookie domain (uses current page domain if None)"
+        },
+        {
+          "name": "path",
+          "type": "str",
+          "required": false,
+          "description": "Cookie path (default '/')"
+        }
+      ],
+      "tags": [
+        "browser",
+        "browser.storage"
+      ]
+    },
+    {
+      "name": "browser_clear_cookies",
+      "category": "Browser.Storage",
+      "description": "Clear all cookies for the browser session.",
+      "parameters": [
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Browser session ID (default 'default')"
+        }
+      ],
+      "tags": [
+        "browser",
+        "browser.storage"
+      ]
+    },
+    {
+      "name": "browser_get_local_storage",
+      "category": "Browser.Storage",
+      "description": "Get localStorage value(s).",
+      "parameters": [
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Browser session ID (default 'default')"
+        },
+        {
+          "name": "key",
+          "type": "str",
+          "required": false,
+          "description": "Specific key to get (all items if None)"
+        }
+      ],
+      "tags": [
+        "browser",
+        "browser.storage"
+      ]
+    },
+    {
+      "name": "browser_set_local_storage",
+      "category": "Browser.Storage",
+      "description": "Set localStorage value.",
+      "parameters": [
+        {
+          "name": "key",
+          "type": "str",
+          "required": true,
+          "description": "Storage key"
+        },
+        {
+          "name": "value",
+          "type": "str",
+          "required": true,
+          "description": "Storage value"
+        },
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Browser session ID (default 'default')"
+        }
+      ],
+      "tags": [
+        "browser",
+        "browser.storage"
+      ]
+    },
+    {
+      "name": "create_task_queue",
+      "category": "Task Queues",
+      "description": "Create a new task queue for organizing work items.",
+      "parameters": [
+        {
+          "name": "name",
+          "type": "str",
+          "required": true,
+          "description": "Unique name for the queue"
+        },
+        {
+          "name": "description",
+          "type": "str",
+          "required": false,
+          "description": "Optional description of the queue's purpose"
+        },
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Optional session to associate with"
+        },
+        {
+          "name": "chat_room_id",
+          "type": "int",
+          "required": false,
+          "description": "Optional chat room for Q&A about tasks"
+        }
+      ],
+      "tags": [
+        "task queues"
+      ]
+    },
+    {
+      "name": "get_task_queue",
+      "category": "Task Queues",
+      "description": "Get task queue details with task counts.",
+      "parameters": [
+        {
+          "name": "queue_id",
+          "type": "int",
+          "required": true,
+          "description": "ID of the queue"
+        }
+      ],
+      "tags": [
+        "task queues"
+      ]
+    },
+    {
+      "name": "list_task_queues",
+      "category": "Task Queues",
+      "description": "List task queues with summary stats.",
+      "parameters": [
+        {
+          "name": "status",
+          "type": "str",
+          "required": false,
+          "description": "Optional status filter ('active', 'archived')"
+        },
+        {
+          "name": "limit",
+          "type": "int",
+          "required": false,
+          "description": "Maximum queues to return (default 50)"
+        }
+      ],
+      "tags": [
+        "task queues"
+      ]
+    },
+    {
+      "name": "create_task",
+      "category": "Task Queues",
+      "description": "Create a new task in a queue.",
+      "parameters": [
+        {
+          "name": "queue_id",
+          "type": "int",
+          "required": true,
+          "description": "ID of the task queue"
+        },
+        {
+          "name": "title",
+          "type": "str",
+          "required": true,
+          "description": "Task title"
+        },
+        {
+          "name": "description",
+          "type": "str",
+          "required": false,
+          "description": "Task description"
+        },
+        {
+          "name": "acceptance_criteria",
+          "type": "str",
+          "required": false,
+          "description": "Criteria for task completion"
+        },
+        {
+          "name": "priority",
+          "type": "int",
+          "required": false,
+          "description": "Priority level: 0=low, 1=normal, 2=high, 3=urgent (default 1)"
+        },
+        {
+          "name": "deadline",
+          "type": "str",
+          "required": false,
+          "description": "ISO timestamp deadline"
+        },
+        {
+          "name": "created_by",
+          "type": "str",
+          "required": false,
+          "description": "Persona who created the task"
+        },
+        {
+          "name": "assigned_to",
+          "type": "str",
+          "required": false,
+          "description": "Persona assigned to the task"
+        }
+      ],
+      "tags": [
+        "task queues"
+      ]
+    },
+    {
+      "name": "get_task",
+      "category": "Task Queues",
+      "description": "Get task details with linked artifacts.",
+      "parameters": [
+        {
+          "name": "task_id",
+          "type": "int",
+          "required": true,
+          "description": "ID of the task"
+        }
+      ],
+      "tags": [
+        "task queues"
+      ]
+    },
+    {
+      "name": "list_tasks",
+      "category": "Task Queues",
+      "description": "List tasks in a queue.",
+      "parameters": [
+        {
+          "name": "queue_id",
+          "type": "int",
+          "required": true,
+          "description": "ID of the queue"
+        },
+        {
+          "name": "status",
+          "type": "str",
+          "required": false,
+          "description": "Optional status filter (pending, in_progress, blocked, review, done)"
+        },
+        {
+          "name": "assigned_to",
+          "type": "str",
+          "required": false,
+          "description": "Optional assignee filter"
+        },
+        {
+          "name": "limit",
+          "type": "int",
+          "required": false,
+          "description": "Maximum tasks to return (default 100)"
+        }
+      ],
+      "tags": [
+        "task queues"
+      ]
+    },
+    {
+      "name": "update_task_status",
+      "category": "Task Queues",
+      "description": "Update task status.",
+      "parameters": [
+        {
+          "name": "task_id",
+          "type": "int",
+          "required": true,
+          "description": "ID of the task"
+        },
+        {
+          "name": "status",
+          "type": "str",
+          "required": true,
+          "description": "New status (pending, in_progress, blocked, review, done)"
+        },
+        {
+          "name": "persona",
+          "type": "str",
+          "required": false,
+          "description": "Persona making the change"
+        },
+        {
+          "name": "notes",
+          "type": "str",
+          "required": false,
+          "description": "Optional notes about the status change"
+        }
+      ],
+      "tags": [
+        "task queues"
+      ]
+    },
+    {
+      "name": "assign_task_complexity",
+      "category": "Task Queues",
+      "description": "Assign complexity score to a task (agent should call this after reviewing).",
+      "parameters": [
+        {
+          "name": "task_id",
+          "type": "int",
+          "required": true,
+          "description": "ID of the task"
+        },
+        {
+          "name": "complexity",
+          "type": "int",
+          "required": true,
+          "description": "Complexity score: 1=trivial, 2=simple, 3=moderate, 4=complex, 5=very complex"
+        },
+        {
+          "name": "notes",
+          "type": "str",
+          "required": false,
+          "description": "Notes about complexity assessment"
+        },
+        {
+          "name": "persona",
+          "type": "str",
+          "required": false,
+          "description": "Agent persona making the assessment"
+        }
+      ],
+      "tags": [
+        "task queues"
+      ]
+    },
+    {
+      "name": "update_task",
+      "category": "Task Queues",
+      "description": "Update task details.",
+      "parameters": [
+        {
+          "name": "task_id",
+          "type": "int",
+          "required": true,
+          "description": "ID of the task"
+        },
+        {
+          "name": "title",
+          "type": "str",
+          "required": false,
+          "description": "New title"
+        },
+        {
+          "name": "description",
+          "type": "str",
+          "required": false,
+          "description": "New description"
+        },
+        {
+          "name": "acceptance_criteria",
+          "type": "str",
+          "required": false,
+          "description": "New acceptance criteria"
+        },
+        {
+          "name": "priority",
+          "type": "int",
+          "required": false,
+          "description": "New priority"
+        },
+        {
+          "name": "deadline",
+          "type": "str",
+          "required": false,
+          "description": "New deadline"
+        },
+        {
+          "name": "assigned_to",
+          "type": "str",
+          "required": false,
+          "description": "New assignee"
+        },
+        {
+          "name": "persona",
+          "type": "str",
+          "required": false,
+          "description": "Persona making the change"
+        }
+      ],
+      "tags": [
+        "task queues"
+      ]
+    },
+    {
+      "name": "add_task_artifact",
+      "category": "Task Queues",
+      "description": "Link an artifact or git branch to a task.",
+      "parameters": [
+        {
+          "name": "task_id",
+          "type": "int",
+          "required": true,
+          "description": "ID of the task"
+        },
+        {
+          "name": "artifact_type",
+          "type": "str",
+          "required": true,
+          "description": "Type of artifact ('artifact', 'git_branch', 'file')"
+        },
+        {
+          "name": "artifact_id",
+          "type": "int",
+          "required": false,
+          "description": "ID of artifact if type is 'artifact'"
+        },
+        {
+          "name": "git_branch",
+          "type": "str",
+          "required": false,
+          "description": "Git branch name if type is 'git_branch'"
+        },
+        {
+          "name": "description",
+          "type": "str",
+          "required": false,
+          "description": "Description of the artifact"
+        },
+        {
+          "name": "created_by",
+          "type": "str",
+          "required": false,
+          "description": "Persona uploading the artifact"
+        }
+      ],
+      "tags": [
+        "task queues"
+      ]
+    },
+    {
+      "name": "add_task_message",
+      "category": "Task Queues",
+      "description": "Add a message/question to a task's activity feed.",
+      "parameters": [
+        {
+          "name": "task_id",
+          "type": "int",
+          "required": true,
+          "description": "ID of the task"
+        },
+        {
+          "name": "persona",
+          "type": "str",
+          "required": true,
+          "description": "Persona sending the message"
+        },
+        {
+          "name": "message",
+          "type": "str",
+          "required": true,
+          "description": "Message content"
+        }
+      ],
+      "tags": [
+        "task queues"
+      ]
+    },
+    {
+      "name": "get_task_queue_feed",
+      "category": "Task Queues",
+      "description": "Get activity feed for a task queue (for polling).",
+      "parameters": [
+        {
+          "name": "queue_id",
+          "type": "int",
+          "required": true,
+          "description": "ID of the queue"
+        },
+        {
+          "name": "since",
+          "type": "str",
+          "required": false,
+          "description": "ISO timestamp to get events after (for polling)"
+        },
+        {
+          "name": "limit",
+          "type": "int",
+          "required": false,
+          "description": "Maximum events to return (default 100)"
+        }
+      ],
+      "tags": [
+        "task queues"
+      ]
+    },
+    {
+      "name": "get_task_feed",
+      "category": "Task Queues",
+      "description": "Get activity feed for a specific task.",
+      "parameters": [
+        {
+          "name": "task_id",
+          "type": "int",
+          "required": true,
+          "description": "ID of the task"
+        },
+        {
+          "name": "since",
+          "type": "str",
+          "required": false,
+          "description": "ISO timestamp to get events after"
+        },
+        {
+          "name": "limit",
+          "type": "int",
+          "required": false,
+          "description": "Maximum events to return (default 50)"
+        }
+      ],
+      "tags": [
+        "task queues"
+      ]
+    },
+    {
+      "name": "spawn_tasker",
+      "category": "Executors",
+      "description": "Spawn a new ephemeral tasker agent with optional fabric patterns.",
+      "parameters": [
+        {
+          "name": "task",
+          "type": "str",
+          "required": true,
+          "description": "Description of the task/topic for the tasker"
+        },
+        {
+          "name": "chat_room_id",
+          "type": "int",
+          "required": true,
+          "description": "ID of chat room to join for nag messages"
+        },
+        {
+          "name": "parent_agent_id",
+          "type": "str",
+          "required": false,
+          "description": "Agent ID of spawning parent (default 'primary')"
+        },
+        {
+          "name": "patterns",
+          "type": "list[str]",
+          "required": false,
+          "description": "Fabric patterns to apply for analysis"
+        },
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Optional session to associate with"
+        },
+        {
+          "name": "timeout_minutes",
+          "type": "int",
+          "required": false,
+          "description": "Auto-dismiss timeout (default 15)"
+        },
+        {
+          "name": "nag_minutes",
+          "type": "int",
+          "required": false,
+          "description": "Idle time before nagging parent (default 5)"
+        }
+      ],
+      "tags": [
+        "executors"
+      ]
+    },
+    {
+      "name": "get_tasker",
+      "category": "Executors",
+      "description": "Get tasker details including status and context.",
+      "parameters": [
+        {
+          "name": "tasker_id",
+          "type": "str",
+          "required": true,
+          "description": "Tasker ID (e.g., 'tsk-abc12345')"
+        }
+      ],
+      "tags": [
+        "executors"
+      ]
+    },
+    {
+      "name": "list_taskers",
+      "category": "Executors",
+      "description": "List taskers with optional filtering.",
+      "parameters": [
+        {
+          "name": "status_filter",
+          "type": "str",
+          "required": false,
+          "description": "Filter by status ('idle', 'active', 'nagging', 'terminated')"
+        },
+        {
+          "name": "session_id",
+          "type": "str",
+          "required": false,
+          "description": "Filter by session ID"
+        }
+      ],
+      "tags": [
+        "executors"
+      ]
+    },
+    {
+      "name": "touch_tasker",
+      "category": "Executors",
+      "description": "Reset tasker's idle timer and mark as active.",
+      "parameters": [
+        {
+          "name": "tasker_id",
+          "type": "str",
+          "required": true,
+          "description": "Tasker ID"
+        }
+      ],
+      "tags": [
+        "executors"
+      ]
+    },
+    {
+      "name": "dismiss_tasker",
+      "category": "Executors",
+      "description": "Explicitly dismiss/terminate a tasker.",
+      "parameters": [
+        {
+          "name": "tasker_id",
+          "type": "str",
+          "required": true,
+          "description": "Tasker ID"
+        },
+        {
+          "name": "reason",
+          "type": "str",
+          "required": false,
+          "description": "Optional dismissal reason"
+        }
+      ],
+      "tags": [
+        "executors"
+      ]
+    },
+    {
+      "name": "keep_alive_tasker",
+      "category": "Executors",
+      "description": "Respond to nag by keeping tasker alive.",
+      "parameters": [
+        {
+          "name": "tasker_id",
+          "type": "str",
+          "required": true,
+          "description": "Tasker ID"
+        },
+        {
+          "name": "message",
+          "type": "str",
+          "required": false,
+          "description": "Optional message to acknowledge"
+        }
+      ],
+      "tags": [
+        "executors"
+      ]
+    },
+    {
+      "name": "apply_fabric_pattern",
+      "category": "Executors",
+      "description": "Apply a single fabric pattern to content for analysis.",
+      "parameters": [
+        {
+          "name": "pattern",
+          "type": "str",
+          "required": true,
+          "description": "Fabric pattern name (e.g., 'summarize', 'analyze_logs')"
+        },
+        {
+          "name": "content",
+          "type": "str",
+          "required": true,
+          "description": "Input content to analyze"
+        },
+        {
+          "name": "model",
+          "type": "str",
+          "required": false,
+          "description": "Optional model override"
+        },
+        {
+          "name": "timeout",
+          "type": "int",
+          "required": false,
+          "description": "Timeout in seconds (default 300)"
+        }
+      ],
+      "tags": [
+        "executors"
+      ]
+    },
+    {
+      "name": "analyze_with_fabric",
+      "category": "Executors",
+      "description": "Apply multiple fabric patterns to content.",
+      "parameters": [
+        {
+          "name": "patterns",
+          "type": "list[str]",
+          "required": true,
+          "description": "List of pattern names (e.g., ['summarize', 'extract_wisdom'])"
+        },
+        {
+          "name": "content",
+          "type": "str",
+          "required": true,
+          "description": "Input content to analyze"
+        },
+        {
+          "name": "combine_results",
+          "type": "bool",
+          "required": false,
+          "description": "Whether to combine results or return separately (default True)"
+        }
+      ],
+      "tags": [
+        "executors"
+      ]
+    },
+    {
+      "name": "list_fabric_patterns",
+      "category": "Executors",
+      "description": "List available fabric patterns.",
+      "parameters": [],
+      "tags": [
+        "executors"
+      ]
+    },
+    {
+      "name": "store_tasker_context",
+      "category": "Executors",
+      "description": "Store execution context for follow-up queries.",
+      "parameters": [
+        {
+          "name": "tasker_id",
+          "type": "str",
+          "required": true,
+          "description": "Tasker ID"
+        },
+        {
+          "name": "command",
+          "type": "str",
+          "required": false,
+          "description": "Command that was executed"
+        },
+        {
+          "name": "raw_output",
+          "type": "str",
+          "required": false,
+          "description": "Raw command output"
+        },
+        {
+          "name": "analysis",
+          "type": "str",
+          "required": false,
+          "description": "Fabric analysis result"
+        },
+        {
+          "name": "result",
+          "type": "str",
+          "required": false,
+          "description": "Distilled result"
+        }
+      ],
+      "tags": [
+        "executors"
+      ]
+    },
+    {
+      "name": "get_tasker_context",
+      "category": "Executors",
+      "description": "Retrieve stored context for follow-up queries.",
+      "parameters": [
+        {
+          "name": "tasker_id",
+          "type": "str",
+          "required": true,
+          "description": "Tasker ID"
+        }
+      ],
+      "tags": [
+        "executors"
+      ]
+    },
+    {
+      "name": "get_story",
+      "category": "Project Management",
+      "description": "Load a user story by ID from project-management/user-stories/.",
+      "parameters": [
+        {
+          "name": "story_id",
+          "type": "str",
+          "required": true,
+          "description": "User story ID (e.g., 'US-001', '001', or '1')"
+        }
+      ],
+      "tags": [
+        "project management"
+      ]
+    },
+    {
+      "name": "list_stories",
+      "category": "Project Management",
+      "description": "List and filter user stories.",
+      "parameters": [
+        {
+          "name": "status",
+          "type": "str",
+          "required": false,
+          "description": "Filter by status (draft, in-progress, documented, implemented, tested)"
+        },
+        {
+          "name": "priority",
+          "type": "str",
+          "required": false,
+          "description": "Filter by priority (critical, high, medium, low)"
+        },
+        {
+          "name": "persona",
+          "type": "str",
+          "required": false,
+          "description": "Filter by persona ID (e.g., 'P-001')"
+        },
+        {
+          "name": "prd_group",
+          "type": "str",
+          "required": false,
+          "description": "Filter by PRD group (e.g., 'mcp_tools', 'npl_load')"
+        },
+        {
+          "name": "prd",
+          "type": "str",
+          "required": false,
+          "description": "Filter by linked PRD (e.g., 'PRD-005')"
+        },
+        {
+          "name": "limit",
+          "type": "int",
+          "required": false,
+          "description": "Maximum stories to return (default 50)"
+        },
+        {
+          "name": "offset",
+          "type": "int",
+          "required": false,
+          "description": "Number of stories to skip (default 0)"
+        }
+      ],
+      "tags": [
+        "project management"
+      ]
+    },
+    {
+      "name": "update_story_metadata",
+      "category": "Project Management",
+      "description": "Update user story metadata in index.yaml.",
+      "parameters": [
+        {
+          "name": "story_id",
+          "type": "str",
+          "required": true,
+          "description": "User story ID (e.g., 'US-001')"
+        },
+        {
+          "name": "key",
+          "type": "str",
+          "required": true,
+          "description": "Metadata field (status, priority, prds, related_stories, related_personas)"
+        },
+        {
+          "name": "value",
+          "type": "str",
+          "required": true,
+          "description": "New value (string for scalar fields, comma-separated for arrays)"
+        }
+      ],
+      "tags": [
+        "project management"
+      ]
+    },
+    {
+      "name": "get_prd",
+      "category": "Project Management",
+      "description": "Load a PRD by ID from project-management/PRDs/.",
+      "parameters": [
+        {
+          "name": "prd_id",
+          "type": "str",
+          "required": true,
+          "description": "PRD ID (e.g., 'PRD-017', '017', or '17')"
+        }
+      ],
+      "tags": [
+        "project management"
+      ]
+    },
+    {
+      "name": "get_prd_functional_requirement",
+      "category": "Project Management",
+      "description": "Access PRD functional requirements.",
+      "parameters": [
+        {
+          "name": "prd_id",
+          "type": "str",
+          "required": true,
+          "description": "PRD ID (e.g., 'PRD-017')"
+        },
+        {
+          "name": "fr_id",
+          "type": "str",
+          "required": false,
+          "description": "FR ID (e.g., 'FR-001') or '*' to list all (default '*')"
+        }
+      ],
+      "tags": [
+        "project management"
+      ]
+    },
+    {
+      "name": "get_prd_acceptance_test",
+      "category": "Project Management",
+      "description": "Access PRD acceptance tests.",
+      "parameters": [
+        {
+          "name": "prd_id",
+          "type": "str",
+          "required": true,
+          "description": "PRD ID (e.g., 'PRD-017')"
+        },
+        {
+          "name": "at_id",
+          "type": "str",
+          "required": false,
+          "description": "AT ID (e.g., 'AT-001') or '*' to list all (default '*')"
+        },
+        {
+          "name": "fr_id",
+          "type": "str",
+          "required": false,
+          "description": "Optional FR ID to filter ATs by functional requirement"
+        }
+      ],
+      "tags": [
+        "project management"
+      ]
+    },
+    {
+      "name": "get_persona",
+      "category": "Project Management",
+      "description": "Load a persona by ID from project-management/personas/.",
+      "parameters": [
+        {
+          "name": "persona_id",
+          "type": "str",
+          "required": true,
+          "description": "Persona ID (e.g., 'P-001' for core persona, 'A-001' for agent)"
+        }
+      ],
+      "tags": [
+        "project management"
+      ]
+    },
+    {
+      "name": "list_personas",
+      "category": "Project Management",
+      "description": "List and filter personas.",
+      "parameters": [
+        {
+          "name": "tags",
+          "type": "str",
+          "required": false,
+          "description": "Comma-separated tags to filter by (OR logic)"
+        },
+        {
+          "name": "category",
+          "type": "str",
+          "required": false,
+          "description": "Category filter (e.g., 'Core', 'Infrastructure')"
+        }
+      ],
+      "tags": [
+        "project management"
+      ]
+    }
+  ],
+  "categories": [
+    {
+      "name": "Artifacts",
+      "description": "Create, retrieve, manage versioned artifacts with revision tracking",
+      "tool_count": 5
+    },
+    {
+      "name": "Browser",
+      "description": "Headless browser automation, markdown conversion, screenshots, downloads, connectivity, REST client",
+      "tool_count": 5
+    },
+    {
+      "name": "Browser.Inject",
+      "description": "Inject JavaScript and CSS into pages",
+      "tool_count": 2
+    },
+    {
+      "name": "Browser.Input",
+      "description": "Click, type, fill forms, and interact with page elements",
+      "tool_count": 7
+    },
+    {
+      "name": "Browser.Navigation",
+      "description": "Navigate, scroll, and control browser history",
+      "tool_count": 5
+    },
+    {
+      "name": "Browser.Query",
+      "description": "Read text, HTML, element state, and evaluate JavaScript",
+      "tool_count": 5
+    },
+    {
+      "name": "Browser.Screenshots",
+      "description": "Capture and compare screenshots of web pages",
+      "tool_count": 3
+    },
+    {
+      "name": "Browser.Session",
+      "description": "Manage browser sessions and viewport settings",
+      "tool_count": 3
+    },
+    {
+      "name": "Browser.Storage",
+      "description": "Manage cookies and localStorage",
+      "tool_count": 5
+    },
+    {
+      "name": "Browser.Wait",
+      "description": "Wait for elements or network idle states",
+      "tool_count": 2
+    },
+    {
+      "name": "Chat",
+      "description": "Event-sourced chat rooms: messaging, reactions, todo items, notifications",
+      "tool_count": 8
+    },
+    {
+      "name": "Discovery",
+      "description": "Tool discovery: search, browse, and inspect registered tools",
+      "tool_count": 5
+    },
+    {
+      "name": "Executors",
+      "description": "Ephemeral agent management: spawn, lifecycle, fabric pattern analysis",
+      "tool_count": 11
+    },
+    {
+      "name": "Instructions",
+      "description": "Versioned instruction documents: create, retrieve, update, rollback, list versions, and search",
+      "tool_count": 6
+    },
+    {
+      "name": "NPL",
+      "description": "Noizu Prompt Lingua specification generation and formatting",
+      "tool_count": 2
+    },
+    {
+      "name": "Project Management",
+      "description": "Project, persona, and user-story CRUD for product management",
+      "tool_count": 21
+    },
+    {
+      "name": "Reviews",
+      "description": "Review workflows: inline comments, overlay annotations, annotated output",
+      "tool_count": 6
+    },
+    {
+      "name": "Scripts",
+      "description": "Shell script wrappers for file dumping, directory trees, NPL resource loading",
+      "tool_count": 5
+    },
+    {
+      "name": "Sessions",
+      "description": "Session lifecycle for grouping chat rooms and artifacts",
+      "tool_count": 4
+    },
+    {
+      "name": "Task Queues",
+      "description": "Task queue management: create queues, add tasks, track status, activity feeds",
+      "tool_count": 13
+    },
+    {
+      "name": "ToolSessions",
+      "description": "Agent session tracking: generate, retrieve, and manage tool sessions keyed by agent/task pairs",
+      "tool_count": 2
+    },
+    {
+      "name": "Utility",
+      "description": "Secret management and miscellaneous utilities",
+      "tool_count": 1
+    }
+  ]
+}

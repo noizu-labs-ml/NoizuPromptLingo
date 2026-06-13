@@ -1,0 +1,42 @@
+acceptance_tests:
+  - id: AT-001
+    name: "Dump Files Basic Functionality"
+    description: "Validates file aggregation with glob filtering"
+    category: integration
+    related_fr:
+      - FR-001
+    status: not_started
+    file: AT-001-dump-files-basic.md
+  - id: AT-002
+    name: "Absolute Path Validation"
+    description: "Validates relative path rejection and error handling"
+    category: unit
+    related_fr:
+      - FR-001
+      - FR-002
+    status: not_started
+    file: AT-002-path-validation.md
+  - id: AT-003
+    name: "NPL Load Skip Parameter"
+    description: "Validates skip parameter prevents redundant loading"
+    category: integration
+    related_fr:
+      - FR-003
+    status: not_started
+    file: AT-003-npl-load-skip.md
+  - id: AT-004
+    name: "Web to Markdown Timeout Handling"
+    description: "Validates timeout configuration and exception handling"
+    category: integration
+    related_fr:
+      - FR-004
+    status: not_started
+    file: AT-004-web-to-md-timeout.md
+  - id: AT-005
+    name: "Git Tree Directory Visualization"
+    description: "Validates directory tree visualization output"
+    category: integration
+    related_fr:
+      - FR-002
+    status: not_started
+    file: AT-005-git-tree-visualization.md

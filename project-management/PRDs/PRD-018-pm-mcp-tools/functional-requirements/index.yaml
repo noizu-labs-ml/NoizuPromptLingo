@@ -1,0 +1,35 @@
+functional_requirements:
+  - id: FR-001
+    title: User Story Reader
+    file: FR-001-user-story-reader.md
+    description: Read and parse user story by ID with metadata extraction
+
+  - id: FR-002
+    title: User Story Lister
+    file: FR-002-user-story-lister.md
+    description: List and filter user stories with pagination
+
+  - id: FR-003
+    title: PRD Reader
+    file: FR-003-prd-reader.md
+    description: Read PRD document by ID with metadata and structure info
+
+  - id: FR-004
+    title: Functional Requirement Accessor
+    file: FR-004-functional-requirement-accessor.md
+    description: Access PRD functional requirements by ID
+
+  - id: FR-005
+    title: Acceptance Test Accessor
+    file: FR-005-acceptance-test-accessor.md
+    description: Access PRD acceptance tests by ID
+
+  - id: FR-006
+    title: Story Metadata Updater
+    file: FR-006-story-metadata-updater.md
+    description: Update user story metadata in index.yaml
+
+  - id: FR-007
+    title: Persona Accessor
+    file: FR-007-persona-accessor.md
+    description: List and access persona definitions

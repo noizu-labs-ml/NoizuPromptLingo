@@ -1,0 +1,200 @@
+databaseChangeLog:
+  # ===========================================================================
+  # Changeset 010: Create npl_projects table
+  # ===========================================================================
+  - changeSet:
+      id: 010-create-npl-projects-table
+      author: npl
+      comment: Create npl_projects table for project scoping of tool sessions
+      changes:
+        - createTable:
+            tableName: npl_projects
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(256)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: title
+                  type: TEXT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: description
+                  type: TEXT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: deleted_at
+                  type: TIMESTAMP WITHOUT TIME ZONE
+                  constraints:
+                    nullable: true
+      rollback:
+        - dropTable:
+            tableName: npl_projects
+
+  # ===========================================================================
+  # Changeset 011: Seed "legacy" project
+  # ===========================================================================
+  - changeSet:
+      id: 011-seed-legacy-project
+      author: npl
+      comment: Insert legacy project row for backfilling existing sessions (UUID5 of "npl/legacy")
+      changes:
+        - sql:
+            sql: >
+              INSERT INTO npl_projects (id, name, title, description, created_at, updated_at)
+              VALUES (
+                'abde7a0e-fe09-5a67-8e95-dd30da1862a2',
+                'legacy',
+                'Legacy Project',
+                'Default project for sessions created before project scoping was added.',
+                NOW(), NOW()
+              )
+              ON CONFLICT (name) DO NOTHING
+      rollback:
+        - sql:
+            sql: >
+              DELETE FROM npl_projects WHERE id = 'abde7a0e-fe09-5a67-8e95-dd30da1862a2'
+
+  # ===========================================================================
+  # Changeset 012: Alter npl_tool_sessions — add project_id and parent_id
+  # ===========================================================================
+  - changeSet:
+      id: 012-alter-tool-sessions-add-project-parent
+      author: npl
+      comment: Add project_id (required) and parent_id (optional self-FK) to npl_tool_sessions
+      changes:
+        - addColumn:
+            tableName: npl_tool_sessions
+            columns:
+              - column:
+                  name: project_id
+                  type: UUID
+                  constraints:
+                    nullable: true
+              - column:
+                  name: parent_id
+                  type: UUID
+                  constraints:
+                    nullable: true
+
+        # Backfill existing rows with legacy project
+        - sql:
+            sql: >
+              UPDATE npl_tool_sessions
+              SET project_id = 'abde7a0e-fe09-5a67-8e95-dd30da1862a2'
+              WHERE project_id IS NULL
+
+        # Make project_id NOT NULL after backfill
+        - addNotNullConstraint:
+            tableName: npl_tool_sessions
+            columnName: project_id
+            columnDataType: UUID
+
+        # FK to npl_projects
+        - addForeignKeyConstraint:
+            baseTableName: npl_tool_sessions
+            baseColumnNames: project_id
+            referencedTableName: npl_projects
+            referencedColumnNames: id
+            constraintName: fk_tool_sessions_project
+
+        # Self-FK for parent
+        - addForeignKeyConstraint:
+            baseTableName: npl_tool_sessions
+            baseColumnNames: parent_id
+            referencedTableName: npl_tool_sessions
+            referencedColumnNames: id
+            constraintName: fk_tool_sessions_parent
+
+        # Drop old unique constraint and add new one scoped to project
+        - dropUniqueConstraint:
+            tableName: npl_tool_sessions
+            constraintName: uq_npl_tool_sessions_agent_task
+
+        - addUniqueConstraint:
+            tableName: npl_tool_sessions
+            columnNames: project_id, agent, task
+            constraintName: uq_npl_tool_sessions_project_agent_task
+      rollback:
+        - dropUniqueConstraint:
+            tableName: npl_tool_sessions
+            constraintName: uq_npl_tool_sessions_project_agent_task
+        - addUniqueConstraint:
+            tableName: npl_tool_sessions
+            columnNames: agent, task
+            constraintName: uq_npl_tool_sessions_agent_task
+        - dropForeignKeyConstraint:
+            baseTableName: npl_tool_sessions
+            constraintName: fk_tool_sessions_parent
+        - dropForeignKeyConstraint:
+            baseTableName: npl_tool_sessions
+            constraintName: fk_tool_sessions_project
+        - dropColumn:
+            tableName: npl_tool_sessions
+            columnName: parent_id
+        - dropColumn:
+            tableName: npl_tool_sessions
+            columnName: project_id
+
+  # ===========================================================================
+  # Changeset 013: Alter npl_instructions — add session_id
+  # ===========================================================================
+  - changeSet:
+      id: 013-alter-instructions-add-session-id
+      author: npl
+      comment: Add optional session_id FK to npl_instructions for session-linked instructions
+      changes:
+        - addColumn:
+            tableName: npl_instructions
+            columns:
+              - column:
+                  name: session_id
+                  type: UUID
+                  constraints:
+                    nullable: true
+
+        - addForeignKeyConstraint:
+            baseTableName: npl_instructions
+            baseColumnNames: session_id
+            referencedTableName: npl_tool_sessions
+            referencedColumnNames: id
+            constraintName: fk_instructions_session
+
+        - createIndex:
+            tableName: npl_instructions
+            indexName: idx_instructions_session_id
+            columns:
+              - column:
+                  name: session_id
+      rollback:
+        - dropIndex:
+            tableName: npl_instructions
+            indexName: idx_instructions_session_id
+        - dropForeignKeyConstraint:
+            baseTableName: npl_instructions
+            constraintName: fk_instructions_session
+        - dropColumn:
+            tableName: npl_instructions
+            columnName: session_id

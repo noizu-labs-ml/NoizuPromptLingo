@@ -1,0 +1,64 @@
+acceptance_tests:
+  - id: AT-001
+    name: "Hierarchical Path Resolution"
+    description: "Validates npl-load resolves resources in correct priority order"
+    category: integration
+    related_fr:
+      - FR-001
+    status: not_started
+    file: AT-001-hierarchical-path-resolution.md
+
+  - id: AT-002
+    name: "Skip Flag Functionality"
+    description: "Validates --skip flag correctly skips already-loaded resources"
+    category: unit
+    related_fr:
+      - FR-001
+    status: not_started
+    file: AT-002-skip-flag-functionality.md
+
+  - id: AT-003
+    name: "Persona Journal Persistence"
+    description: "Validates persona journals are append-only and persist"
+    category: integration
+    related_fr:
+      - FR-002
+    status: not_started
+    file: AT-003-persona-journal-persistence.md
+
+  - id: AT-004
+    name: "Session Cursor Tracking"
+    description: "Validates session cursors track per-agent read positions"
+    category: integration
+    related_fr:
+      - FR-003
+    status: not_started
+    file: AT-004-session-cursor-tracking.md
+
+  - id: AT-005
+    name: ".gitignore Respect"
+    description: "Validates dump-files and git-tree respect .gitignore patterns"
+    category: integration
+    related_fr:
+      - FR-004
+      - FR-005
+    status: not_started
+    file: AT-005-gitignore-respect.md
+
+  - id: AT-006
+    name: "Syntax Validation Error Reporting"
+    description: "Validates npl-syntax reports errors with accurate positions"
+    category: unit
+    related_fr:
+      - FR-006
+    status: not_started
+    file: AT-006-syntax-validation-error-reporting.md
+
+  - id: AT-007
+    name: "Comprehensive Health Check"
+    description: "Validates npl-check performs health checks across all components"
+    category: e2e
+    related_fr:
+      - FR-007
+    status: not_started
+    file: AT-007-health-check-comprehensive.md

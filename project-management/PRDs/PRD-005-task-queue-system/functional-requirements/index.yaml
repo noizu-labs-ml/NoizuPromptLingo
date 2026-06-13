@@ -1,0 +1,46 @@
+functional_requirements:
+  - id: FR-001
+    name: "Task Queue Management"
+    description: "Create, retrieve, and list task queues with optional collaboration features"
+    status: active
+    related_stories:
+      - US-015
+      - US-016
+    expected_tests: 10
+    coverage_target: 100
+    file: FR-001-task-queue-management.md
+
+  - id: FR-002
+    name: "Task Lifecycle Management"
+    description: "Full task CRUD with status workflow, assignment, complexity, and updates"
+    status: active
+    related_stories:
+      - US-014
+      - US-016
+      - US-018
+      - US-030
+    expected_tests: 30
+    coverage_target: 100
+    file: FR-002-task-lifecycle.md
+
+  - id: FR-003
+    name: "Task Artifact Linking"
+    description: "Link artifacts, git branches, and files to tasks"
+    status: active
+    related_stories:
+      - US-017
+    expected_tests: 12
+    coverage_target: 100
+    file: FR-003-artifact-linking.md
+
+  - id: FR-004
+    name: "Activity Feed System"
+    description: "Task and queue activity feeds with polling support for real-time collaboration"
+    status: active
+    related_stories:
+      - US-015
+      - US-018
+      - US-026
+    expected_tests: 15
+    coverage_target: 100
+    file: FR-004-activity-feeds.md

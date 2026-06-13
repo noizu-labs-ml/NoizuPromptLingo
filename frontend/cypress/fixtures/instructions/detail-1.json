@@ -1,0 +1,30 @@
+{
+  "uuid": "inst-aaa111",
+  "title": "Session Initialization Protocol",
+  "description": "Mandatory steps each agent must take at the start of a conversation.",
+  "tags": ["agents", "sessions", "workflow"],
+  "active_version": 3,
+  "session_id": null,
+  "created_at": "2026-03-25T00:00:00Z",
+  "updated_at": "2026-04-20T00:00:00Z",
+  "versions": [
+    {
+      "version": 1,
+      "body": "# Session Initialization\n\n1. Call ToolSession.Generate.\n2. Save the UUID.\n\n<!-- earlier revision 1 -->",
+      "change_note": "Initial version.",
+      "created_at": "2026-03-25T00:00:00Z"
+    },
+    {
+      "version": 2,
+      "body": "# Session Initialization\n\n1. Call ToolSession.Generate with (agent, brief, task, project).\n2. Save the UUID.\n\n<!-- earlier revision 2 -->",
+      "change_note": "Clarified section on edge cases.",
+      "created_at": "2026-04-05T00:00:00Z"
+    },
+    {
+      "version": 3,
+      "body": "# Session Initialization\n\n1. Call ToolSession.Generate with (agent, brief, task, project).\n2. Save the returned UUID as the session ID.\n3. Use the UUID for all downstream tool calls requiring a session reference.\n",
+      "change_note": "Added troubleshooting block.",
+      "created_at": "2026-04-20T00:00:00Z"
+    }
+  ]
+}

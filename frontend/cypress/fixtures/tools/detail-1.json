@@ -1,0 +1,11 @@
+{
+  "name": "Ping",
+  "category": "browser",
+  "description": "Check whether a URL is reachable.",
+  "parameters": [
+    { "name": "url", "type": "str", "required": true, "description": "URL to ping" }
+  ],
+  "tags": ["network", "browser"],
+  "title": "Ping",
+  "version": "1.0"
+}

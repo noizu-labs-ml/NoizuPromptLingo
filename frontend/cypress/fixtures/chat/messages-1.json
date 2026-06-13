@@ -1,0 +1,19 @@
+{
+  "items": [
+    {
+      "id": 1,
+      "room_id": 1,
+      "content": "Hello everyone",
+      "author": "alice",
+      "created_at": "2026-04-23T09:55:00Z"
+    },
+    {
+      "id": 2,
+      "room_id": 1,
+      "content": "Welcome to the room!",
+      "author": "bob",
+      "created_at": "2026-04-23T10:00:00Z"
+    }
+  ],
+  "count": 2
+}

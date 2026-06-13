@@ -1,0 +1,21 @@
+{
+  "items": [
+    {
+      "id": 1,
+      "name": "general",
+      "description": "General discussion",
+      "message_count": 5,
+      "last_activity": "2026-04-23T10:00:00Z",
+      "created_at": "2026-04-20T08:00:00Z"
+    },
+    {
+      "id": 2,
+      "name": "dev-ops",
+      "description": "DevOps coordination",
+      "message_count": 12,
+      "last_activity": "2026-04-23T09:30:00Z",
+      "created_at": "2026-04-21T14:00:00Z"
+    }
+  ],
+  "count": 2
+}

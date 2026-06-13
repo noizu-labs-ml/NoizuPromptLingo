@@ -1,0 +1,29 @@
+[
+  {
+    "id": "PRD-001-database-infrastructure",
+    "number": 1,
+    "title": "PRD-001: Database Infrastructure",
+    "status": "Implemented",
+    "has_frs": true,
+    "has_ats": true,
+    "path": "project-management/PRDs/PRD-001-database-infrastructure"
+  },
+  {
+    "id": "PRD-002-artifact-management",
+    "number": 2,
+    "title": "PRD-002: Artifact Management",
+    "status": "Documented",
+    "has_frs": true,
+    "has_ats": true,
+    "path": "project-management/PRDs/PRD-002-artifact-management"
+  },
+  {
+    "id": "PRD-005-task-queue-system",
+    "number": 5,
+    "title": "PRD-005: Task Queue System",
+    "status": "Documented",
+    "has_frs": false,
+    "has_ats": false,
+    "path": "project-management/PRDs/PRD-005-task-queue-system.md"
+  }
+]

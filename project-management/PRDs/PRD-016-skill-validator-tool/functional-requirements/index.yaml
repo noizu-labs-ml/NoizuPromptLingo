@@ -1,0 +1,70 @@
+functional_requirements:
+  - id: FR-016-001
+    name: "Structure Validation Engine"
+    description: "Validates skill directory structure against SKILL-GUIDELINE.md"
+    status: draft
+    related_stories:
+      - US-016-001
+    expected_tests: 12
+    coverage_target: 100
+    file: FR-016-001-structure-validation-engine.md
+
+  - id: FR-016-002
+    name: "File Format Validators"
+    description: "Specialized validators for YAML, Parquet, and Markdown formats"
+    status: draft
+    related_stories:
+      - US-016-001
+    expected_tests: 14
+    coverage_target: 100
+    file: FR-016-002-file-format-validators.md
+
+  - id: FR-016-003
+    name: "CLI Interface"
+    description: "Command-line interface for skill validation"
+    status: draft
+    related_stories:
+      - US-016-001
+    expected_tests: 9
+    coverage_target: 100
+    file: FR-016-003-cli-interface.md
+
+  - id: FR-016-004
+    name: "Arize Phoenix Integration"
+    description: "Integration with Arize Phoenix for quality evaluation"
+    status: draft
+    related_stories:
+      - US-016-002
+    expected_tests: 11
+    coverage_target: 95
+    file: FR-016-004-arize-phoenix-integration.md
+
+  - id: FR-016-005
+    name: "EVAL Rubric Parser"
+    description: "Parses EVAL rubric markdown into structured format"
+    status: draft
+    related_stories:
+      - US-016-002
+    expected_tests: 9
+    coverage_target: 100
+    file: FR-016-005-eval-rubric-parser.md
+
+  - id: FR-016-006
+    name: "Evaluation Engine"
+    description: "Scores examples against rubric criteria"
+    status: draft
+    related_stories:
+      - US-016-002
+    expected_tests: 14
+    coverage_target: 100
+    file: FR-016-006-evaluation-engine.md
+
+  - id: FR-016-007
+    name: "Jupyter Notebook Generator"
+    description: "Generates interactive notebooks for quality exploration"
+    status: draft
+    related_stories:
+      - US-016-002
+    expected_tests: 9
+    coverage_target: 90
+    file: FR-016-007-jupyter-notebook-generator.md

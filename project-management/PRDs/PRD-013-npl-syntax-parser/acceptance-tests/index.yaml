@@ -1,0 +1,55 @@
+acceptance_tests:
+  - id: AT-001
+    name: "All 155 Syntax Elements Recognized"
+    description: "Validates parser recognizes all defined syntax elements"
+    category: integration
+    related_fr:
+      - FR-001
+    status: not_started
+    file: AT-001-element-coverage.md
+
+  - id: AT-002
+    name: "Zero False Positives on Valid Documents"
+    description: "Validates no false errors on known-good documents"
+    category: integration
+    related_fr:
+      - FR-002
+    status: not_started
+    file: AT-002-validation-accuracy.md
+
+  - id: AT-003
+    name: "Actionable Error Messages with Line Numbers"
+    description: "Validates error messages include position and clear descriptions"
+    category: integration
+    related_fr:
+      - FR-002
+      - FR-004
+    status: not_started
+    file: AT-003-error-messages.md
+
+  - id: AT-004
+    name: "Parse 10MB Document in Under 1 Second"
+    description: "Validates parser meets performance requirements"
+    category: performance
+    related_fr:
+      - FR-001
+    status: not_started
+    file: AT-004-performance.md
+
+  - id: AT-005
+    name: "CLI Exit Codes Suitable for CI Integration"
+    description: "Validates CLI uses appropriate exit codes"
+    category: integration
+    related_fr:
+      - FR-004
+    status: not_started
+    file: AT-005-cli-exit-codes.md
+
+  - id: AT-006
+    name: "AST Preserves All Structural Information"
+    description: "Validates AST contains complete document structure"
+    category: unit
+    related_fr:
+      - FR-003
+    status: not_started
+    file: AT-006-ast-completeness.md

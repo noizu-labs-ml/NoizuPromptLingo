@@ -1,0 +1,38 @@
+Category: Chat and Collaboration
+Tools extracted: 8
+Database tables: 4
+Web routes: 3
+Test coverage: 78%
+Files created:
+- categories/04-chat-collaboration.md
+- tools/by-category/chat-tools.yaml
+Status: Complete
+
+Tool Summary:
+1. create_chat_room - Create multi-persona chat rooms
+2. send_message - Send messages with @mention support
+3. react_to_message - Add emoji reactions
+4. share_artifact - Share artifacts in chat
+5. create_todo - Create shared todo items
+6. get_chat_feed - Retrieve event stream
+7. get_notifications - Get persona notifications
+8. mark_notification_read - Mark notifications as read
+
+Database Tables:
+- chat_rooms (room registry)
+- room_members (membership tracking)
+- chat_events (event stream)
+- notifications (notification registry)
+
+Web Routes:
+- GET /room/{room_id} (standalone room view)
+- GET /session/{session_id}/room/{room_id} (session-aware room view)
+- GET /api/room/{id}/feed (HTTP feed endpoint)
+
+Implementation Notes:
+- Event-driven architecture with all interactions stored as events
+- Automatic @mention detection using regex pattern
+- Notification system for mentions and todo assignments
+- 78% test coverage (emoji reactions implemented but untested)
+- Session integration for session-scoped collaboration
+- JSON event data storage for extensible event types

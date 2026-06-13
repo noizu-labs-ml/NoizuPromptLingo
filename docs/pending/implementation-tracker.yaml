@@ -1,0 +1,689 @@
+version: 1
+tracked_at: '2026-02-02'
+title: NPL Implementation Gap Tracker
+description: Comprehensive analysis of documented vs implemented features
+
+# LEGACY DOCUMENTATION SUMMARY
+legacy_documentation_summary:
+  total_files: 49
+  total_size_kb: 388
+  sections: 10
+  source: .tmp/docs/
+  key_files:
+    - PROJECT-ARCH.brief.md (architecture overview)
+    - agents/summary.brief.md (core agents)
+    - additional-agents.summary.md (specialized agents)
+    - multi-agent-orchestration.brief.md (orchestration patterns)
+    - npl-syntax-elements.brief.md (syntax reference)
+    - fastmcp.summary.md (FastMCP integration)
+    - scripts.summary.md (CLI utilities)
+
+# FEATURE COUNTS BY CATEGORY
+feature_counts:
+  mcp_tools:
+    documented: 23
+    implemented: 2
+    gap: 21
+    gap_percentage: 91
+    categories:
+      - Artifact Management (6 tools)
+      - Chat Rooms (7 tools)
+      - Task Queues (7 tools)
+      - Browser Automation (7 tools)
+
+  agents:
+    documented: 45
+    implemented: 0
+    gap: 45
+    gap_percentage: 100
+    categories:
+      - Core Agents (16)
+      - Infrastructure Agents (3)
+      - Project Management Agents (4)
+      - QA Agents (4)
+      - Additional Specialized Agents (18+)
+
+  orchestration_patterns:
+    documented: 5
+    implemented: 0
+    gap: 5
+    gap_percentage: 100
+    patterns:
+      - Consensus-driven
+      - Pipeline with gates
+      - Hierarchical decomposition
+      - Iterative refinement
+      - Multi-perspective synthesis
+
+  npl_syntax_elements:
+    documented: 155
+    implemented: 0
+    gap: 155
+    gap_percentage: 100
+    categories:
+      - Agent Directives (30)
+      - Prefixes (20)
+      - Pumps (15)
+      - Fences (40)
+      - Boundary Markers (8)
+      - Special Sections (22)
+      - Other (20)
+
+  cli_scripts:
+    documented: 7
+    implemented: 0
+    gap: 7
+    gap_percentage: 100
+    scripts:
+      - npl-load (hierarchical resource loader)
+      - npl-persona (persona management)
+      - npl-session (session reader)
+      - dump-files (file explorer)
+      - git-tree (git explorer)
+      - npl-syntax (syntax validator)
+      - npl-check (health check)
+
+  database_features:
+    documented: 7
+    implemented: 0
+    gap: 7
+    gap_percentage: 100
+    features:
+      - Artifact schema
+      - Chat schema
+      - Task schema
+      - Review schema
+      - Schema migrations
+      - Backup/restore
+      - Row-level security
+
+  security_features:
+    documented: 9
+    implemented: 0
+    gap: 9
+    gap_percentage: 100
+    features:
+      - Artifact access control
+      - Chat room RBAC
+      - Audit logging
+      - Secret detection
+      - Persona permission scopes
+      - Multi-user SQLite access
+      - API key vault
+      - Encrypted knowledge bases
+      - Access violation dashboard
+
+  observability_features:
+    documented: 9
+    implemented: 0
+    gap: 9
+    gap_percentage: 100
+    features:
+      - Structured error logging
+      - Worklog error propagation
+      - Browser timeout & retry
+      - Exception alerting
+      - Test error capture
+      - Database migration recovery
+      - Token usage tracking
+      - Agent performance metrics
+      - Debugging session replay
+
+# CRITICAL GAPS - BLOCKING CURRENT USER STORIES
+critical_gaps:
+  - id: gap-001
+    name: MCP Tool Suite
+    priority: critical
+    phase: PHASE-1
+    documented: 23
+    implemented: 2
+    gap: 21
+    gap_percentage: 91
+    blocking_stories:
+      - US-008 (Create versioned artifact)
+      - US-009 (Review artifact history)
+      - US-010 (Add inline comment)
+      - US-011 (Annotate screenshot)
+      - US-023 (Complete review)
+      - US-004 (Share artifact in chat)
+      - US-005 (View dashboard)
+      - US-006 (Send message to chat)
+      - US-007 (Create chat room)
+      - US-022 (Receive notifications)
+      - US-027 (React to message)
+      - US-028 (Create todo)
+      - US-014 (Pick task from queue)
+      - US-015 (View task progress)
+      - US-016 (Create task)
+      - US-017 (Link artifact to task)
+      - US-018 (Update task status)
+      - US-026 (Ask question on task)
+      - US-030 (Assign complexity)
+      - US-012 (Capture screenshot)
+      - US-013 (Compare screenshots)
+      - US-019 (Automate form submission)
+      - US-020 (Quick form fill)
+      - US-021 (Navigate pages)
+      - US-024 (Manage browser state)
+      - US-029 (Inject scripts)
+    user_story_count: 26
+    components_needed:
+      - ArtifactManager class with SQLite storage
+      - ChatManager class with event sourcing
+      - TaskManager class with queue operations
+      - BrowserManager class with headless integration
+      - 5 SQLite schemas (artifacts, chat, tasks, reviews, notifications)
+      - 23 MCP tool registrations in FastMCP
+    gap_analysis:
+      currently_implemented: "2 hello-world tools"
+      missing_core_managers: 4
+      missing_schemas: 5
+      missing_tools: 21
+    dependencies:
+      - Database infrastructure (partially ready)
+      - FastMCP server (ready)
+      - SQLite driver (ready)
+    estimated_effort: 12 weeks
+    estimated_story_points: 120
+    next_actions:
+      - Create PRD-009 with complete MCP tools specification
+      - Design all 5 database schemas with migration scripts
+      - Implement ArtifactManager first (unblocks artifact stories)
+      - Implement ChatManager second (unblocks collaboration)
+      - Implement TaskManager third (unblocks workflow)
+      - Implement BrowserManager fourth (unblocks automation)
+      - Create integration tests for all tools
+    legacy_docs: .tmp/docs/PROJECT-ARCH.brief.md
+    notes: |
+      This is the single largest gap and highest priority.
+      23 tools designed in legacy docs but only 2 exist.
+      Unblocks 26+ user stories across 5 PRD groups.
+      Critical path item for project viability.
+
+  - id: gap-002
+    name: Agent Definition System
+    priority: high
+    phase: PHASE-2
+    documented: 45
+    implemented: 0
+    gap: 45
+    gap_percentage: 100
+    blocking_stories:
+      - (New stories needed - not yet created)
+    components_needed:
+      - Agent definition schema (markdown + YAML metadata)
+      - Agent loader system to parse and execute definitions
+      - 45 agent markdown files with boundary markers
+      - Agent registry mapping IDs to implementations
+      - Agent factory for instantiation
+    gap_analysis:
+      currently_implemented: "0 agents"
+      documented_agents: 45
+      agent_categories: 8
+      missing_loaders: 8
+    dependencies:
+      - NPL syntax parser (for agent directives in definitions)
+      - MCP tools (for agent communication)
+      - CLI system (npl-load for loading agents)
+    estimated_effort: 10 weeks
+    estimated_story_points: 100
+    next_actions:
+      - Create PRD-010 for agent system with schema
+      - Extract all 45 agent definitions from legacy docs
+      - Design agent definition markdown format
+      - Implement agent loader and registry
+      - Create new user stories (US-084+) for each agent category
+      - Build category-specific loaders
+    legacy_docs: .tmp/docs/agents/summary.brief.md, .tmp/docs/additional-agents/summary.brief.md
+    notes: |
+      45+ agents documented but not implemented.
+      Critical for orchestration and multi-agent workflows.
+      Agent definitions are markdown files with special metadata.
+      Loader system must parse and validate definitions.
+
+  - id: gap-003
+    name: NPL Syntax Parser
+    priority: high
+    phase: PHASE-2
+    documented: 155
+    implemented: 0
+    gap: 155
+    gap_percentage: 100
+    blocking_stories:
+      - US-080 (Build NPL syntax parser)
+    components_needed:
+      - Regex pattern library for 155 syntax elements
+      - Parser engine to validate syntax
+      - AST builder for parsed content
+      - Validator for directives and special sections
+      - npl-syntax CLI command
+    gap_analysis:
+      currently_implemented: "0 elements"
+      documented_elements: 155
+      element_categories: 7
+      missing_validators: 155
+    dependencies:
+      - CLI infrastructure
+      - Regex library
+    estimated_effort: 6 weeks
+    estimated_story_points: 60
+    next_actions:
+      - Create PRD-012 for NPL syntax parser
+      - Extract all 155 elements from legacy docs
+      - Build comprehensive regex pattern library
+      - Implement parser and validator
+      - Create AST representation
+      - Build npl-syntax command for validation
+    legacy_docs: .tmp/docs/npl-syntax-elements.brief.md
+    notes: |
+      155 NPL syntax elements documented but parser not implemented.
+      Elements organized by type: directives, prefixes, pumps, fences, etc.
+      Parser needed for prompt validation before LLM consumption.
+      High complexity due to quantity of patterns.
+
+  - id: gap-004
+    name: CLI Utilities Implementation
+    priority: high
+    phase: PHASE-2
+    documented: 7
+    implemented: 0
+    gap: 7
+    gap_percentage: 100
+    blocking_stories:
+      - US-001 (Load NPL core components)
+      - US-002 (Load project context)
+      - US-003 (Fetch web as markdown)
+      - US-025 (Explore structure)
+      - US-047 (View database schema)
+      - US-085 (Implement CLI utilities)
+    components_needed:
+      - npl-load: hierarchical resource loader with path resolution
+      - npl-persona: persona manager for initialization and queries
+      - npl-session: session reader with cursor-based worklog access
+      - dump-files: codebase file explorer
+      - git-tree: git repository explorer
+      - npl-syntax: syntax validator (shared with parser)
+      - npl-check: health check and diagnostics
+    gap_analysis:
+      currently_implemented: "0 scripts"
+      documented_scripts: 7
+      critical_scripts: 2 (npl-load, npl-check)
+      high_priority_scripts: 2 (npl-persona, npl-session)
+    dependencies:
+      - File system access (ready)
+      - Git library (needs integration)
+      - NPL syntax parser (for npl-syntax)
+      - Database access (for npl-session, npl-persona)
+    estimated_effort: 8 weeks
+    estimated_story_points: 80
+    next_actions:
+      - Create PRD-013 for CLI utilities
+      - Implement npl-load FIRST (critical blocker)
+      - Implement hierarchical path resolver
+      - Add dependency tracking for resource loading
+      - Build remaining utilities in priority order
+      - Create test suite for all commands
+    legacy_docs: .tmp/docs/scripts/summary.brief.md
+    notes: |
+      7 CLI scripts documented but none implemented.
+      npl-load is critical blocker for core framework usage.
+      Hierarchical loading: env vars → project → user → system.
+      These are essential tools for developers using framework.
+
+  - id: gap-005
+    name: Multi-Agent Orchestration Framework
+    priority: high
+    phase: PHASE-2-3
+    documented: 5
+    implemented: 0
+    gap: 5
+    gap_percentage: 100
+    blocking_stories:
+      - US-058 (Facilitate consensus)
+      - US-059 (Chain workflows)
+      - US-064 (Agent handoff)
+      - US-065 (Parallel synthesis)
+      - US-032 (Assign to agents)
+    components_needed:
+      - Consensus engine for multi-agent voting
+      - Pipeline executor for staged handoffs
+      - Hierarchical task decomposer
+      - Iterative refinement loop manager
+      - Multi-perspective synthesizer
+      - Worklog integration for tracking decisions
+    gap_analysis:
+      currently_implemented: "0 patterns"
+      documented_patterns: 5
+      missing_engines: 5
+    dependencies:
+      - Agent system (for agent availability)
+      - Chat system (for agent communication)
+      - Task system (for work distribution)
+      - MCP tools (for agent operations)
+    estimated_effort: 8 weeks
+    estimated_story_points: 80
+    next_actions:
+      - Create PRD-011 for orchestration patterns
+      - Design consensus algorithm with voting
+      - Implement pipeline executor with gates
+      - Build task decomposition logic
+      - Create iterative refinement loop
+      - Implement multi-perspective synthesis
+    legacy_docs: .tmp/docs/multi-agent-orchestration.brief.md
+    notes: |
+      5 orchestration patterns documented in legacy.
+      Each pattern addresses different coordination need.
+      Core to enabling multi-agent capabilities.
+      Requires agent system to be implemented first.
+
+# SECONDARY GAPS - IMPORTANT BUT NOT BLOCKING PHASE 1
+secondary_gaps:
+  - name: Database Schema & Migrations
+    priority: high
+    phase: PHASE-3
+    documented_features: 7
+    implemented_features: 0
+    blocking_stories:
+      - US-038 (Database schema migration)
+      - US-039 (Backup and restore)
+      - US-040 (Monitor health)
+      - US-041 (Prevent write conflicts)
+      - US-042 (Audit version compatibility)
+      - US-043 (Export/import data)
+      - US-044 (Validate integrity)
+      - US-045 (Manage multiple instances)
+      - US-046 (Optimize storage)
+      - US-055 (Migration error recovery)
+    components_needed:
+      - Schema version tracker
+      - Migration runner with rollback
+      - Backup/restore system
+      - Integrity validator
+      - Multi-instance manager
+    estimated_effort: 6 weeks
+    next_actions:
+      - Create PRD-014 for database management
+      - Design schema versioning system
+      - Implement migration runner
+      - Add backup/restore tooling
+
+  - name: Security & Access Control
+    priority: critical
+    phase: PHASE-4
+    documented_features: 9
+    implemented_features: 0
+    blocking_stories:
+      - US-068 (Define access policies)
+      - US-069 (Chat room RBAC)
+      - US-070 (Audit logs)
+      - US-071 (Prevent secret leakage)
+      - US-072 (Permission scopes)
+      - US-073 (Multi-user SQLite)
+      - US-074 (Encrypt knowledge bases)
+      - US-075 (Review access control)
+      - US-076 (Security dashboard)
+      - US-077 (API key vault)
+    components_needed:
+      - RBAC engine
+      - Secret detector
+      - Encryption layer
+      - Audit logger
+      - Vault system
+    estimated_effort: 10 weeks
+    next_actions:
+      - Create PRD-015 for security framework
+      - Design RBAC model for all entities
+      - Implement secret detection patterns
+      - Build encryption system
+
+  - name: Error Recovery & Observability
+    priority: high
+    phase: PHASE-4
+    documented_features: 9
+    implemented_features: 0
+    blocking_stories:
+      - US-049 (Structured error logging)
+      - US-050 (Agent performance metrics)
+      - US-051 (Worklog error propagation)
+      - US-052 (Browser timeout & retry)
+      - US-053 (Exception alerting)
+      - US-054 (Test error capture)
+      - US-056 (Token usage tracking)
+      - US-057 (Session replay)
+    components_needed:
+      - Error logging system
+      - Metrics collection
+      - Retry logic
+      - Alert framework
+      - Session recorder
+    estimated_effort: 8 weeks
+    next_actions:
+      - Create PRD-016 for error recovery
+      - Create PRD-017 for observability
+      - Design error propagation protocol
+      - Build metrics collection system
+
+# NEW USER STORIES NEEDED FROM GAPS
+new_user_stories_needed:
+  - id: US-078
+    title: Implement MCP Artifact Creation Tool
+    from_gap: gap-001
+    priority: critical
+
+  - id: US-079
+    title: Define Multi-Agent Orchestration Patterns
+    from_gap: gap-005
+    priority: high
+
+  - id: US-080
+    title: Build NPL Syntax Parser
+    from_gap: gap-003
+    priority: high
+
+  - id: US-081
+    title: Implement MCP Chat Room Management Tools
+    from_gap: gap-001
+    priority: high
+
+  - id: US-082
+    title: Implement MCP Task Queue System
+    from_gap: gap-001
+    priority: high
+
+  - id: US-083
+    title: Implement Browser Automation Tools
+    from_gap: gap-001
+    priority: high
+
+  - id: US-084
+    title: Create Agent Definition System
+    from_gap: gap-002
+    priority: high
+
+  - id: US-085
+    title: Implement CLI Utilities (npl-load, npl-persona, npl-session)
+    from_gap: gap-004
+    priority: high
+
+  - id: US-086
+    title: Extract and Load 45 Agent Specifications
+    from_gap: gap-002
+    priority: high
+
+  - id: US-087
+    title: Build NPL Syntax Pattern Library (155 elements)
+    from_gap: gap-003
+    priority: high
+
+# NEW PRDS NEEDED FROM GAPS
+new_prds_needed:
+  - id: PRD-009
+    title: MCP Tools Implementation
+    from_gap: gap-001
+    priority: critical
+    user_stories: [US-008-030, US-078-083]
+    estimated_effort: 12 weeks
+
+  - id: PRD-010
+    title: Agent Ecosystem Definition
+    from_gap: gap-002
+    priority: high
+    user_stories: [US-084, US-086]
+    estimated_effort: 10 weeks
+
+  - id: PRD-011
+    title: Multi-Agent Orchestration Framework
+    from_gap: gap-005
+    priority: high
+    user_stories: [US-058-065, US-079]
+    estimated_effort: 8 weeks
+
+  - id: PRD-012
+    title: NPL Syntax Parser
+    from_gap: gap-003
+    priority: high
+    user_stories: [US-080, US-087]
+    estimated_effort: 6 weeks
+
+  - id: PRD-013
+    title: CLI Utilities Implementation
+    from_gap: gap-004
+    priority: high
+    user_stories: [US-001-003, US-025, US-047, US-085]
+    estimated_effort: 8 weeks
+
+  - id: PRD-014
+    title: Database Management & Migrations
+    from_gap: secondary_gaps[0]
+    priority: high
+    user_stories: [US-038-046, US-055]
+    estimated_effort: 6 weeks
+
+  - id: PRD-015
+    title: Security & Access Control Framework
+    from_gap: secondary_gaps[1]
+    priority: critical
+    user_stories: [US-068-077]
+    estimated_effort: 10 weeks
+
+  - id: PRD-016
+    title: Error Recovery & Resilience
+    from_gap: secondary_gaps[2]
+    priority: high
+    user_stories: [US-049-054, US-056]
+    estimated_effort: 8 weeks
+
+  - id: PRD-017
+    title: Observability & Monitoring
+    from_gap: secondary_gaps[2]
+    priority: high
+    user_stories: [US-050, US-056, US-062, US-067]
+    estimated_effort: 6 weeks
+
+# IMPLEMENTATION ROADMAP BY TIMELINE
+implementation_roadmap:
+  immediate_priority:
+    timeline: Next 2 weeks
+    focus: "Assessment and planning"
+    tasks:
+      - Review all critical gaps with team
+      - Create PRD-009 for MCP tools
+      - Plan architecture for database schemas
+      - Draft new user stories (US-078-090)
+    success_metric: "Consensus on Phase 1 approach"
+
+  phase_1_foundation:
+    timeline: Weeks 2-14
+    focus: "Build MCP tools infrastructure"
+    tasks:
+      - Implement database schemas
+      - Build ArtifactManager
+      - Build ChatManager
+      - Build TaskManager
+      - Build BrowserManager
+      - Register all 23 MCP tools
+      - Create integration tests
+    success_metric: "All 23 tools operational, 26+ stories unblocked"
+    effort_weeks: 12
+    prd: PRD-009
+
+  phase_2_intelligence:
+    timeline: Weeks 14-32
+    focus: "Build agent system and parsing"
+    tasks:
+      - Implement agent definition schema
+      - Build agent loader system
+      - Implement NPL syntax parser
+      - Build CLI utilities
+      - Create agent registry
+      - Extract 45 agent definitions
+    success_metric: "45 agents loadable, NPL syntax validated"
+    effort_weeks: 18
+    prds: [PRD-010, PRD-012, PRD-013, PRD-011]
+
+  phase_3_collaboration:
+    timeline: Weeks 32-48
+    focus: "Multi-agent coordination and database"
+    tasks:
+      - Implement orchestration patterns
+      - Build session management
+      - Create database migration system
+      - Build multi-perspective review
+    success_metric: "Multi-agent workflows operational"
+    effort_weeks: 16
+    prds: [PRD-011, PRD-014]
+
+  phase_4_enterprise:
+    timeline: Weeks 48-64
+    focus: "Security, observability, resilience"
+    tasks:
+      - Implement RBAC system
+      - Build error recovery framework
+      - Create metrics and dashboards
+      - Implement secret detection
+    success_metric: "Enterprise-ready security and monitoring"
+    effort_weeks: 16
+    prds: [PRD-015, PRD-016, PRD-017]
+
+# RISK ASSESSMENT
+risks:
+  - name: Scope Creep
+    probability: high
+    impact: critical
+    mitigation: "Focus on critical gaps in strict priority order"
+
+  - name: Database Schema Complexity
+    probability: medium
+    impact: high
+    mitigation: "Start with simple schemas, iterate with migrations"
+
+  - name: Agent Definition Variability
+    probability: medium
+    impact: high
+    mitigation: "Define strict schema before extracting 45 agents"
+
+  - name: Integration Complexity
+    probability: high
+    impact: high
+    mitigation: "Build integration tests continuously during development"
+
+  - name: Performance Under Load
+    probability: medium
+    impact: high
+    mitigation: "Profile early, optimize SQLite queries"
+
+# RESOURCE ALLOCATION
+resource_recommendations:
+  team_composition:
+    architects: 1
+    backend_developers: 2-3
+    database_specialists: 1
+    test_engineers: 1
+
+  estimated_total_effort: 50-60 weeks
+  estimated_velocity: 2-3 weeks per gap
+
+  bottlenecks:
+    - Database design (parallelizable after schema finalized)
+    - Agent system (depends on database, can parallelize loading)
+    - Orchestration (depends on agent system and MCP tools)

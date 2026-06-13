@@ -1,0 +1,46 @@
+functional_requirements:
+  - id: FR-001
+    name: "Session Views"
+    description: "HTML routes for session listing and detail views"
+    status: completed
+    related_stories:
+      - US-005
+    expected_tests: 10
+    coverage_target: 100
+    file: FR-001-session-views.md
+  - id: FR-002
+    name: "Chat Interface"
+    description: "HTML routes for chat rooms with message posting and @mention support"
+    status: completed
+    related_stories:
+      - US-004
+    expected_tests: 14
+    coverage_target: 100
+    file: FR-002-chat-interface.md
+  - id: FR-003
+    name: "Screenshot Views"
+    description: "HTML routes for screenshot checkpoints and comparisons"
+    status: completed
+    related_stories:
+      - US-003
+    expected_tests: 12
+    coverage_target: 100
+    file: FR-003-screenshot-views.md
+  - id: FR-004
+    name: "REST API"
+    description: "JSON REST API endpoints for sessions, chat, and screenshots"
+    status: completed
+    related_stories:
+      - US-004
+      - US-005
+    expected_tests: 17
+    coverage_target: 100
+    file: FR-004-rest-api.md
+  - id: FR-005
+    name: "MCP Protocol Route"
+    description: "MCP protocol endpoint for unified HTTP mode"
+    status: completed
+    related_stories: []
+    expected_tests: 10
+    coverage_target: 100
+    file: FR-005-mcp-protocol-route.md

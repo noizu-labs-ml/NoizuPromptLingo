@@ -1,0 +1,100 @@
+databaseChangeLog:
+  # ===========================================================================
+  # Changeset 016: Ephemeral tasker lifecycle tracking
+  # ===========================================================================
+  - changeSet:
+      id: 016-taskers-table
+      author: npl-mcp
+      comment: Ephemeral tasker agent lifecycle management
+      changes:
+        - createTable:
+            tableName: npl_taskers
+            columns:
+              - column:
+                  name: id
+                  type: TEXT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: parent_agent_id
+                  type: TEXT
+                  defaultValue: "primary"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: session_id
+                  type: TEXT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: chat_room_id
+                  type: INT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: task
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: patterns
+                  type: JSONB
+                  defaultValue: "[]"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: TEXT
+                  defaultValue: "idle"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: timeout_minutes
+                  type: INT
+                  defaultValueNumeric: 15
+                  constraints:
+                    nullable: false
+              - column:
+                  name: nag_minutes
+                  type: INT
+                  defaultValueNumeric: 5
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_activity
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: terminated_at
+                  type: TIMESTAMPTZ
+                  constraints:
+                    nullable: true
+              - column:
+                  name: termination_reason
+                  type: TEXT
+                  constraints:
+                    nullable: true
+        - createIndex:
+            indexName: idx_taskers_status
+            tableName: npl_taskers
+            columns:
+              - column:
+                  name: status
+        - createIndex:
+            indexName: idx_taskers_session
+            tableName: npl_taskers
+            columns:
+              - column:
+                  name: session_id
+      rollback:
+        - dropTable:
+            tableName: npl_taskers

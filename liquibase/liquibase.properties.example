@@ -1,0 +1,7 @@
+# Liquibase Configuration for NPL
+
+changeLogFile=changelogs/changelog.yaml
+url=jdbc:postgresql://localhost:5432/npl
+username=npl
+password=npl_secret
+driver=org.postgresql.Driver

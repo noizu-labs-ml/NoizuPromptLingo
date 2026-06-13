@@ -1,0 +1,99 @@
+acceptance_tests:
+  - id: AT-001
+    name: "Pattern Registration and Lookup"
+    description: "Validate all 5 patterns registered and retrievable"
+    category: unit
+    related_fr:
+      - FR-001
+    status: not_started
+    file: AT-001-pattern-registration-and-lookup.md
+
+  - id: AT-002
+    name: "Consensus Pattern Execution"
+    description: "End-to-end consensus with 3 analysts and synthesizer"
+    category: integration
+    related_fr:
+      - FR-005
+      - FR-001
+    status: not_started
+    file: AT-002-consensus-pattern-execution.md
+
+  - id: AT-003
+    name: "Pipeline with Gate Failure"
+    description: "Pipeline quality gate failure triggers rework loop"
+    category: integration
+    related_fr:
+      - FR-006
+      - FR-001
+    status: not_started
+    file: AT-003-pipeline-with-gate-failure.md
+
+  - id: AT-004
+    name: "Worklog Handoff Communication"
+    description: "Agent-to-agent handoff via worklog entries"
+    category: integration
+    related_fr:
+      - FR-002
+      - FR-003
+    status: not_started
+    file: AT-004-worklog-handoff-communication.md
+
+  - id: AT-005
+    name: "Progress Monitoring Visibility"
+    description: "Real-time progress tracking during orchestration"
+    category: integration
+    related_fr:
+      - FR-004
+      - FR-001
+    status: not_started
+    file: AT-005-progress-monitoring-visibility.md
+
+  - id: AT-006
+    name: "Hierarchical Decomposition and Aggregation"
+    description: "Coordinator decomposes, teams execute, results aggregated"
+    category: integration
+    related_fr:
+      - FR-007
+      - FR-001
+    status: not_started
+    file: AT-006-hierarchical-decomposition-aggregation.md
+
+  - id: AT-007
+    name: "Iterative Refinement Termination"
+    description: "Iterative loop terminates on quality threshold"
+    category: integration
+    related_fr:
+      - FR-008
+      - FR-001
+    status: not_started
+    file: AT-007-iterative-refinement-termination.md
+
+  - id: AT-008
+    name: "Synthesis Pattern Conflict Resolution"
+    description: "Multi-perspective conflicts resolved via weighted voting"
+    category: integration
+    related_fr:
+      - FR-009
+      - FR-001
+    status: not_started
+    file: AT-008-synthesis-pattern-conflict-resolution.md
+
+  - id: AT-009
+    name: "Pattern Composition"
+    description: "Composite pattern chains sub-patterns with data flow"
+    category: integration
+    related_fr:
+      - FR-010
+      - FR-001
+    status: not_started
+    file: AT-009-pattern-composition.md
+
+  - id: AT-010
+    name: "Error Recovery and Retry"
+    description: "Orchestration recovers from agent failures using retries"
+    category: integration
+    related_fr:
+      - FR-001
+      - FR-003
+    status: not_started
+    file: AT-010-error-recovery-and-retry.md

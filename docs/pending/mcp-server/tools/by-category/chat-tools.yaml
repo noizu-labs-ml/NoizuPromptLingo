@@ -1,0 +1,149 @@
+category: chat-collaboration
+category_id: C-04
+tool_count: 8
+documentation_source: worktrees/main/mcp-server
+tools:
+  - name: create_chat_room
+    signature: 'create_chat_room(name: str, members: List[str], description: Optional[str] = None, session_id: Optional[str] = None, session_title: Optional[str] = None) -> dict'
+    description: Create a new chat room with specified members. If session_id is provided, associates the room with that session. If session_id is not provided but session_title is, creates a new session first. All members receive persona_join events in the chat feed.
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/chat/rooms.py'
+    implementation_line: 21
+    database_tables: [chat_rooms, room_members, chat_events]
+    web_routes:
+      - 'GET /room/{room_id}'
+      - 'GET /session/{session_id}/room/{room_id}'
+    user_stories: [US-058, US-059, US-064]
+    test_coverage_percent: 78
+    example: |
+      # Create a chat room
+      room = await create_chat_room(
+          name="dashboard-redesign",
+          members=["sarah-designer", "mike-developer", "alex-pm"],
+          description="Discussion for dashboard redesign project"
+      )
+      # Returns: {"room_id": 1, "name": "dashboard-redesign", "members": [...], "web_url": "..."}
+
+  - name: send_message
+    signature: 'send_message(room_id: int, persona: str, message: str, reply_to_id: Optional[int] = None) -> dict'
+    description: Send a message to a chat room. Automatically extracts @mentions (e.g., "@mike-developer") and creates notifications for mentioned personas. Supports threaded replies via reply_to_id parameter.
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/chat/rooms.py'
+    implementation_line: 80
+    database_tables: [chat_events, notifications]
+    web_routes: []
+    user_stories: [US-058, US-064]
+    test_coverage_percent: 78
+    example: |
+      # Send message with @mention
+      message = await send_message(
+          room_id=1,
+          persona="sarah-designer",
+          message="Hey @mike-developer, I've uploaded the latest mockup."
+      )
+      # Returns: {"event_id": 1, "mentions": ["mike-developer"], "notifications": [...]}
+
+  - name: react_to_message
+    signature: 'react_to_message(event_id: int, persona: str, emoji: str) -> dict'
+    description: Add an emoji reaction to any chat event. Creates a new emoji_reaction event in the feed. Multiple personas can react to the same event with different emojis.
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/chat/rooms.py'
+    implementation_line: 144
+    database_tables: [chat_events]
+    web_routes: []
+    user_stories: [US-058]
+    test_coverage_percent: 0
+    example: |
+      # React to a message
+      reaction = await react_to_message(
+          event_id=1,
+          persona="alex-pm",
+          emoji="👍"
+      )
+      # Returns: {"event_id": 2, "emoji": "👍", "target_event_id": 1}
+
+  - name: share_artifact
+    signature: 'share_artifact(room_id: int, persona: str, artifact_id: int, revision: Optional[int] = None) -> dict'
+    description: Share an artifact in the chat room. If revision is not specified, shares the current revision. Creates an artifact_share event with artifact details and web URL.
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/chat/rooms.py'
+    implementation_line: 192
+    database_tables: [chat_events, artifacts, revisions]
+    web_routes: []
+    user_stories: [US-063]
+    test_coverage_percent: 78
+    example: |
+      # Share an artifact
+      share = await share_artifact(
+          room_id=1,
+          persona="mike-developer",
+          artifact_id=1,
+          revision=1
+      )
+      # Returns: {"event_id": 3, "artifact_id": 1, "revision_num": 1, "web_url": "..."}
+
+  - name: create_todo
+    signature: 'create_todo(room_id: int, persona: str, description: str, assigned_to: Optional[str] = None) -> dict'
+    description: Create a shared todo item in the chat. If assigned_to is specified, creates a notification for the assigned persona. Todo events appear in the chat feed.
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/chat/rooms.py'
+    implementation_line: 255
+    database_tables: [chat_events, notifications]
+    web_routes: []
+    user_stories: [US-059]
+    test_coverage_percent: 78
+    example: |
+      # Create a todo
+      todo = await create_todo(
+          room_id=1,
+          persona="alex-pm",
+          description="Update API documentation",
+          assigned_to="mike-developer"
+      )
+      # Returns: {"event_id": 4, "description": "Update API documentation", "assigned_to": "mike-developer"}
+
+  - name: get_chat_feed
+    signature: 'get_chat_feed(room_id: int, since: Optional[str] = None, limit: int = 50) -> list'
+    description: Retrieve the chronological event stream for a chat room. Supports pagination via since (ISO timestamp) and limit parameters. Events include messages, reactions, artifact shares, todos, and persona joins.
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/chat/rooms.py'
+    implementation_line: 312
+    database_tables: [chat_events]
+    web_routes:
+      - 'GET /api/room/{id}/feed'
+    user_stories: [US-058, US-064]
+    test_coverage_percent: 78
+    example: |
+      # Get chat feed
+      feed = await get_chat_feed(room_id=1, limit=50)
+      # Returns: [
+      #   {"event_type": "message", "persona": "sarah-designer", "data": {...}},
+      #   {"event_type": "artifact_share", "persona": "mike-developer", ...}
+      # ]
+
+  - name: get_notifications
+    signature: 'get_notifications(persona: str, unread_only: bool = True) -> list'
+    description: Retrieve notifications for a persona. By default shows only unread notifications. Notifications are created for @mentions, todo assignments, and artifact shares.
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/chat/rooms.py'
+    implementation_line: 371
+    database_tables: [notifications, chat_events]
+    web_routes: []
+    user_stories: [US-058, US-064]
+    test_coverage_percent: 78
+    example: |
+      # Check notifications
+      notifications = await get_notifications(
+          persona="mike-developer",
+          unread_only=True
+      )
+      # Returns: [
+      #   {"notification_id": 1, "notification_type": "mention", "event_data": {...}}
+      # ]
+
+  - name: mark_notification_read
+    signature: 'mark_notification_read(notification_id: int) -> dict'
+    description: Mark a notification as read by setting the read_at timestamp. Returns updated notification status.
+    implementation_file: 'worktrees/main/mcp-server/src/npl_mcp/chat/rooms.py'
+    implementation_line: 422
+    database_tables: [notifications]
+    web_routes: []
+    user_stories: [US-058]
+    test_coverage_percent: 78
+    example: |
+      # Mark notification as read
+      result = await mark_notification_read(notification_id=1)
+      # Returns: {"notification_id": 1, "read_at": "2025-10-09T14:30:00"}
