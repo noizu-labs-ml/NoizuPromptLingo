@@ -162,6 +162,13 @@ func (p *signozProvider) DataSources(_ context.Context) []func() datasource.Data
 	return []func() datasource.DataSource{
 		signozdatasource.NewAlertDataSource,
 		signozdatasource.NewDashboardDataSource,
+		signozdatasource.NewNotificationChannelDataSource,
+		signozdatasource.NewRoutePolicyDataSource,
+		signozdatasource.NewDowntimeScheduleDataSource,
+		signozdatasource.NewDataRetentionDataSource,
+		signozdatasource.NewSavedViewDataSource,
+		signozdatasource.NewIngestionKeyDataSource,
+		signozdatasource.NewLogPipelineDataSource,
 	}
 }
 
@@ -170,6 +177,13 @@ func (p *signozProvider) Resources(_ context.Context) []func() resource.Resource
 	return []func() resource.Resource{
 		signozresource.NewAlertResource,
 		signozresource.NewDashboardResource,
+		signozresource.NewNotificationChannelResource,
+		signozresource.NewRoutePolicyResource,
+		signozresource.NewDowntimeScheduleResource,
+		signozresource.NewDataRetentionResource,
+		signozresource.NewSavedViewResource,
+		signozresource.NewIngestionKeyResource,
+		signozresource.NewLogPipelineResource,
 	}
 }
 
