@@ -1,0 +1,8 @@
+.claude
+.tmp
+.envrc
+.DS_Store
+rust/target/
+ink-plan/node_modules/
+ink-plan/dist/
+ink-plan/package-lock.json

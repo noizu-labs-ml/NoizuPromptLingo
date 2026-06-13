@@ -1,0 +1,5 @@
+# Minimal theme — only bg and fg are required
+# All palette colors will default from these two values
+
+bg = #002B36
+fg = #839496
