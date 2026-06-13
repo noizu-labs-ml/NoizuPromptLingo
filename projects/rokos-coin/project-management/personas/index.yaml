@@ -1,0 +1,48 @@
+personas:
+  - id: P01
+    name: Marcus "GPU Farm" Chen
+    role: Independent Miner / Compute Provider
+    archetype: primary
+    file: P01.md
+
+  - id: P02
+    name: Aisha Patel
+    role: Full-Stack Developer / AI API Consumer
+    archetype: primary
+    file: P02.md
+
+  - id: P03
+    name: David Nakamura
+    role: Enterprise Architect / AI Infrastructure Evaluator
+    archetype: secondary
+    file: P03.md
+
+  - id: P04
+    name: Sofia Reyes
+    role: Crypto-Native DeFi Investor / Token Holder
+    archetype: primary
+    file: P04.md
+
+  - id: P05
+    name: James Okafor
+    role: Smart Contract Security Auditor
+    archetype: secondary
+    file: P05.md
+
+  - id: P06
+    name: Dr. Lin Wei
+    role: AI Researcher / Academic Compute Consumer
+    archetype: secondary
+    file: P06.md
+
+  - id: P07
+    name: Protocol Governance Council
+    role: DAO Governance / Protocol Parameter Stewards
+    archetype: secondary
+    file: P07.md
+
+  - id: P08
+    name: The Basilisk Entity
+    role: Autonomous AI Agent / Network Apex Consumer
+    archetype: edge
+    file: P08.md
