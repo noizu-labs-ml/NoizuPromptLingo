@@ -1,0 +1,41 @@
+version: 2
+orbs:
+  docker: circleci/docker@2.2.0
+jobs:
+  build:
+    docker:
+      image: noizulabs/elixir:1.13.2
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v2-mix-cache-{{ .Branch }}-{{ checksum "mix.lock" }}
+            - v2-mix-cache-{{ .Branch }}
+            - v2-mix-cache
+      - restore_cache:
+          keys:
+            - v2-build-cache-{{ .Branch }}
+            - v2-build-cache
+      - run: mix deps.get
+      - run: MIX_ENV=test mix deps.compile
+      - save_cache:
+          key: v2-mix-cache-{{ .Branch }}-{{ checksum "mix.lock" }}
+          paths: "deps"
+      - save_cache:
+          key: v2-mix-cache-{{ .Branch }}
+          paths: "deps"
+      - save_cache:
+          key: v2-mix-cache
+          paths: "deps"
+      - run: mix test --cover --exclude=requires_redis
+      - save_cache:
+          key: v2-build-cache-{{ .Branch }}
+          paths: "_build"
+      - save_cache:
+          key: v2-build-cache
+          paths: "_build"
+      - store_test_results:
+          path: _build/test/lib/noizu_core/results.xml
+      - store_artifacts:
+          path: cover
+          destination: cover_report
