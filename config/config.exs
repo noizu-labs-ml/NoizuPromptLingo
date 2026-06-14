@@ -7,6 +7,7 @@ config :noizu_prompt_lingua, NoizuPromptLingua.Repo,
   pool_size: 10
 
 config :noizu_prompt_lingua, NPLWeb.Endpoint,
+  adapter: Bandit.PhoenixAdapter,
   url: [host: "tobor.locker"],
   http: [port: 4040],
   secret_key_base: System.get_env("SECRET_KEY_BASE", "dev-secret-key-base-that-is-at-least-64-bytes-long-for-phoenix-to-be-happy-about-it"),

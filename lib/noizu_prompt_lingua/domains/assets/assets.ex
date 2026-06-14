@@ -98,12 +98,23 @@ defmodule NoizuPromptLingua.Domains.Assets do
     entry = Repo.get!(AssetEntry, entry_id)
     artifact_kind = type_to_artifact_kind(entry.asset_type)
 
+    content = if opts[:llm_generate] != false do
+      case NoizuPromptLingua.Domains.Assets.ContentGenerator.generate(entry.prompt_yaml, opts) do
+        {:ok, generated} -> generated
+        {:error, _reason} -> entry.prompt_yaml
+      end
+    else
+      entry.prompt_yaml
+    end
+
+    mime = opts[:mime_type] || type_to_mime(entry.asset_type)
+
     Repo.transaction(fn ->
       {:ok, artifact} = Artifacts.create(%{
         kind: artifact_kind,
         title: "#{entry.title} (generated)",
-        content: entry.prompt_yaml,
-        mime_type: opts[:mime_type],
+        content: content,
+        mime_type: mime,
         project_id: entry.project_id
       })
 
@@ -184,6 +195,18 @@ defmodule NoizuPromptLingua.Domains.Assets do
   defp next_variant_number(entry_id) do
     (AssetOutput |> where([o], o.entry_id == ^entry_id) |> select([o], max(o.variant_number)) |> Repo.one() || 0) + 1
   end
+
+  defp type_to_mime("image"), do: "image/png"
+  defp type_to_mime("svg"), do: "image/svg+xml"
+  defp type_to_mime("diagram"), do: "image/svg+xml"
+  defp type_to_mime("html"), do: "text/html"
+  defp type_to_mime("component"), do: "text/html"
+  defp type_to_mime("style_guide"), do: "text/html"
+  defp type_to_mime("document"), do: "text/markdown"
+  defp type_to_mime("video"), do: "video/mp4"
+  defp type_to_mime("music"), do: "audio/mpeg"
+  defp type_to_mime("voice"), do: "audio/mpeg"
+  defp type_to_mime(_), do: "application/octet-stream"
 
   defp type_to_artifact_kind(type) when type in ~w(image svg), do: "image"
   defp type_to_artifact_kind("video"), do: "binary"

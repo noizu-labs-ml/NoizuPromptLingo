@@ -19,6 +19,8 @@ defmodule NoizuPromptLingua.Domains.Assets.MCP do
   tool NoizuPromptLingua.Domains.Assets.Tools.AssetOutputReject, category: "Assets.Outputs"
   tool NoizuPromptLingua.Domains.Assets.Tools.AssetRequestReview, category: "Assets.Review"
   tool NoizuPromptLingua.Domains.Assets.Tools.AssetHistory, category: "Assets"
+  tool NoizuPromptLingua.Domains.Assets.Tools.AssetContentFormats, category: "Assets.Generation"
+  tool NoizuPromptLingua.Domains.Assets.Tools.AssetContentReference, category: "Assets.Generation"
 
   tool NoizuPromptLingua.Tools.ToolSummary, category: "Discovery"
   tool NoizuPromptLingua.Tools.ToolSearch, category: "Discovery"

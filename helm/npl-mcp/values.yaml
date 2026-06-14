@@ -4,12 +4,12 @@ domain: tobor.locker
 npl-mcp:
   image:
     repository: ops.noizu.com/npl-mcp/server
-    tag: latest
+    tag: "v1.0.1"
 
 backend:
   image:
     repository: ops.noizu.com/npl-mcp/server
-    tag: latest
+    tag: "v1.0.1"
     pullPolicy: IfNotPresent
   port: 4040
   resources:
@@ -36,7 +36,7 @@ backend:
 frontend:
   image:
     repository: ops.noizu.com/npl-mcp/frontend
-    tag: latest
+    tag: "v1.0.3"
     pullPolicy: IfNotPresent
   port: 3000
   resources:
@@ -62,7 +62,10 @@ ingress:
   enabled: true
   className: nginx
   cloudflareWhitelist: true
-  annotations: {}
+  annotations:
+    # Carried over from the retired platform/tobor-locker TF module — larger
+    # proxy buffer for auth headers/cookies on tobor.locker.
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
 
 tls:
   enabled: true

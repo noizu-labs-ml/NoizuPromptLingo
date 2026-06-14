@@ -14,12 +14,16 @@ export default async function RootLayout({ children }) {
     <html lang="en">
       <body>
         <SessionProvider session={session}>
-          <div style={{ display: "flex", minHeight: "100vh" }}>
-            <Sidebar />
-            <main style={{ marginLeft: "var(--sidebar-w)", flex: 1, padding: 24, overflow: "auto" }}>
-              {children}
-            </main>
-          </div>
+          {session ? (
+            <div style={{ display: "flex", minHeight: "100vh" }}>
+              <Sidebar />
+              <main style={{ marginLeft: "var(--sidebar-w)", flex: 1, padding: 24, overflow: "auto" }}>
+                {children}
+              </main>
+            </div>
+          ) : (
+            <main>{children}</main>
+          )}
         </SessionProvider>
       </body>
     </html>

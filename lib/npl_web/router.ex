@@ -50,6 +50,25 @@ defmodule NPLWeb.Router do
       NPLWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Wiki.MCP)
   end
 
+  # ── Mock MCP subdomain ───────────────────────────────────────
+  scope "/", host: "mockmcp." do
+    pipe_through :api
+
+    # CRUD API for mock MCP definitions
+    get "/api/definitions", NPLWeb.API.MockMCPAPIController, :index
+    get "/api/definitions/:slug", NPLWeb.API.MockMCPAPIController, :show
+    post "/api/definitions", NPLWeb.API.MockMCPAPIController, :create
+    put "/api/definitions/:slug", NPLWeb.API.MockMCPAPIController, :update
+    delete "/api/definitions/:slug", NPLWeb.API.MockMCPAPIController, :delete
+    post "/api/definitions/:slug/activate", NPLWeb.API.MockMCPAPIController, :activate
+    post "/api/definitions/:slug/generate-tools", NPLWeb.API.MockMCPAPIController, :generate_tools
+    post "/api/definitions/:slug/provision-db", NPLWeb.API.MockMCPAPIController, :provision_db
+    get "/api/definitions/:slug/calls", NPLWeb.API.MockMCPAPIController, :calls
+
+    # Dynamic MCP gateway — each mock gets its own endpoint
+    match :*, "/mcp/:slug/mcp", NPLWeb.MockMCPGatewayController, :handle
+  end
+
   # ── Root (default — no subdomain match) ───────────────────────
   scope "/" do
     pipe_through :api
@@ -81,6 +100,17 @@ defmodule NPLWeb.Router do
 
     get "/api/reviews", NPLWeb.API.ReviewsAPIController, :index
     get "/api/reviews/:id", NPLWeb.API.ReviewsAPIController, :show
+
+    # Mock MCP CRUD (also available at mockmcp.tobor.locker)
+    get "/api/mock-mcp", NPLWeb.API.MockMCPAPIController, :index
+    get "/api/mock-mcp/:slug", NPLWeb.API.MockMCPAPIController, :show
+    post "/api/mock-mcp", NPLWeb.API.MockMCPAPIController, :create
+    put "/api/mock-mcp/:slug", NPLWeb.API.MockMCPAPIController, :update
+    delete "/api/mock-mcp/:slug", NPLWeb.API.MockMCPAPIController, :delete
+    post "/api/mock-mcp/:slug/activate", NPLWeb.API.MockMCPAPIController, :activate
+    post "/api/mock-mcp/:slug/generate-tools", NPLWeb.API.MockMCPAPIController, :generate_tools
+    post "/api/mock-mcp/:slug/provision-db", NPLWeb.API.MockMCPAPIController, :provision_db
+    get "/api/mock-mcp/:slug/calls", NPLWeb.API.MockMCPAPIController, :calls
   end
 
   forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,

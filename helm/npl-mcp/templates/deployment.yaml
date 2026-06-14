@@ -16,6 +16,8 @@ spec:
       labels:
         {{- include "npl-mcp.selectorLabels" . | nindent 8 }}
     spec:
+      imagePullSecrets:
+        - name: ops-registry-secret
       securityContext:
         fsGroup: 1000
       containers:
