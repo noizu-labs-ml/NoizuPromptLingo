@@ -17,6 +17,24 @@ defmodule NoizuPromptLingua.Auth do
     end
   end
 
+  def get_user_by_sub(sub) do
+    Repo.get_by(User, sub: sub)
+  end
+
+  def update_profile(sub, attrs) do
+    case Repo.get_by(User, sub: sub) do
+      nil -> {:error, :not_found}
+      user ->
+        user
+        |> User.profile_changeset(%{
+          name: attrs["name"],
+          role: attrs["role"],
+          bio: attrs["bio"]
+        })
+        |> Repo.update()
+    end
+  end
+
   def generate_api_key(user_id, label \\ "default") do
     raw_key = :crypto.strong_rand_bytes(32) |> Base.url_encode64(padding: false)
     prefix = String.slice(raw_key, 0, 8)

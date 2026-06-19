@@ -1,0 +1,149 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-table-asset-entries
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE asset_entries (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                slug varchar(255) NOT NULL,
+                title varchar(255) NOT NULL,
+                asset_type varchar(255) NOT NULL,
+                status varchar(255) NOT NULL DEFAULT 'draft',
+                quality varchar(255),
+                prompt_yaml text NOT NULL,
+                tags text[] DEFAULT '{}',
+                product_targets text[] DEFAULT '{}',
+                project_id uuid REFERENCES projects(id) ON DELETE SET NULL,
+                active_output_id uuid,
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: asset_entries
+
+  - changeSet:
+      id: create-indexes-asset-entries
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_asset_entries_project_slug
+            tableName: asset_entries
+            unique: true
+            columns:
+              - column:
+                  name: project_id
+              - column:
+                  name: slug
+        - createIndex:
+            indexName: idx_asset_entries_asset_type
+            tableName: asset_entries
+            columns:
+              - column:
+                  name: asset_type
+        - createIndex:
+            indexName: idx_asset_entries_status
+            tableName: asset_entries
+            columns:
+              - column:
+                  name: status
+        - createIndex:
+            indexName: idx_asset_entries_project_id
+            tableName: asset_entries
+            columns:
+              - column:
+                  name: project_id
+        - sql:
+            sql: CREATE INDEX idx_asset_entries_tags ON asset_entries USING gin (tags);
+      rollback:
+        - dropIndex:
+            indexName: idx_asset_entries_project_slug
+        - dropIndex:
+            indexName: idx_asset_entries_asset_type
+        - dropIndex:
+            indexName: idx_asset_entries_status
+        - dropIndex:
+            indexName: idx_asset_entries_project_id
+        - dropIndex:
+            indexName: idx_asset_entries_tags
+
+  - changeSet:
+      id: create-table-asset-outputs
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE asset_outputs (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                entry_id uuid NOT NULL REFERENCES asset_entries(id) ON DELETE CASCADE,
+                artifact_id uuid,
+                provider varchar(255),
+                model varchar(255),
+                variant_number integer NOT NULL DEFAULT 1,
+                eval_score double precision,
+                eval_details jsonb,
+                eval_status varchar(255) NOT NULL DEFAULT 'pending',
+                status varchar(255) NOT NULL DEFAULT 'generated',
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: asset_outputs
+
+  - changeSet:
+      id: create-indexes-asset-outputs
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_asset_outputs_entry_id
+            tableName: asset_outputs
+            columns:
+              - column:
+                  name: entry_id
+        - createIndex:
+            indexName: idx_asset_outputs_eval_status
+            tableName: asset_outputs
+            columns:
+              - column:
+                  name: eval_status
+      rollback:
+        - dropIndex:
+            indexName: idx_asset_outputs_entry_id
+        - dropIndex:
+            indexName: idx_asset_outputs_eval_status
+
+  - changeSet:
+      id: create-table-asset-entry-history
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE asset_entry_history (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                entry_id uuid NOT NULL REFERENCES asset_entries(id) ON DELETE CASCADE,
+                action varchar(255) NOT NULL,
+                actor varchar(255),
+                details jsonb,
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: asset_entry_history
+
+  - changeSet:
+      id: create-index-asset-entry-history
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_asset_entry_history_entry_id
+            tableName: asset_entry_history
+            columns:
+              - column:
+                  name: entry_id
+      rollback:
+        - dropIndex:
+            indexName: idx_asset_entry_history_entry_id

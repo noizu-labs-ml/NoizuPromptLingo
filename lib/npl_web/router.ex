@@ -75,6 +75,8 @@ defmodule NPLWeb.Router do
 
     get "/health", NPLWeb.HealthController, :show
     post "/api/auth/sync", NPLWeb.AuthController, :sync
+    get "/api/auth/profile", NPLWeb.AuthController, :profile
+    put "/api/auth/profile", NPLWeb.AuthController, :update_profile
     post "/api/keys", NPLWeb.KeyController, :create
     get "/api/keys/:user_id", NPLWeb.KeyController, :index
     delete "/api/keys/:key_id", NPLWeb.KeyController, :delete

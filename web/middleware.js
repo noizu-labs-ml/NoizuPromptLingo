@@ -13,6 +13,11 @@ export async function middleware(request) {
   if (!session) {
     return Response.redirect(new URL("/", request.url));
   }
+
+  // Redirect to profile setup if profile is incomplete (but not if already on /profile)
+  if (session.user?.profileComplete === false && pathname !== "/profile") {
+    return Response.redirect(new URL("/profile", request.url));
+  }
 }
 
 export const config = {

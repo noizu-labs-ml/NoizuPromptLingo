@@ -12,5 +12,35 @@ databaseChangeLog:
       file: 003-mcp-api-keys.yaml
       relativeToChangelogFile: true
   - include:
-      file: 004-add-project-id-to-sessions.yaml
+      file: 004-projects.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 005-sessions.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 006-tickets.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 007-cross-cutting.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 008-artifacts.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 009-chat.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 010-reviews.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 011-wiki.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 012-agents.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 013-assets.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 014-mock-mcp.yaml
       relativeToChangelogFile: true

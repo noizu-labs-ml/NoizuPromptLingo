@@ -1,0 +1,106 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-table-projects
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE projects (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                name varchar(255) NOT NULL,
+                slug varchar(255) NOT NULL,
+                description text,
+                status varchar(255) NOT NULL DEFAULT 'active',
+                owner_id uuid REFERENCES users(id) ON DELETE SET NULL,
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: projects
+
+  - changeSet:
+      id: create-indexes-projects
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_projects_slug
+            tableName: projects
+            unique: true
+            columns:
+              - column:
+                  name: slug
+        - createIndex:
+            indexName: idx_projects_owner_id
+            tableName: projects
+            columns:
+              - column:
+                  name: owner_id
+        - createIndex:
+            indexName: idx_projects_status
+            tableName: projects
+            columns:
+              - column:
+                  name: status
+      rollback:
+        - dropIndex:
+            indexName: idx_projects_slug
+        - dropIndex:
+            indexName: idx_projects_owner_id
+        - dropIndex:
+            indexName: idx_projects_status
+
+  - changeSet:
+      id: create-table-project-members
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE project_members (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                project_id uuid NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+                user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                role varchar(255) NOT NULL DEFAULT 'member',
+                invited_by uuid REFERENCES users(id) ON DELETE SET NULL,
+                invited_at timestamptz,
+                accepted_at timestamptz,
+                status varchar(255) NOT NULL DEFAULT 'pending',
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: project_members
+
+  - changeSet:
+      id: create-indexes-project-members
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_project_members_project_id
+            tableName: project_members
+            columns:
+              - column:
+                  name: project_id
+        - createIndex:
+            indexName: idx_project_members_user_id
+            tableName: project_members
+            columns:
+              - column:
+                  name: user_id
+        - createIndex:
+            indexName: idx_project_members_unique
+            tableName: project_members
+            unique: true
+            columns:
+              - column:
+                  name: project_id
+              - column:
+                  name: user_id
+      rollback:
+        - dropIndex:
+            indexName: idx_project_members_project_id
+        - dropIndex:
+            indexName: idx_project_members_user_id
+        - dropIndex:
+            indexName: idx_project_members_unique

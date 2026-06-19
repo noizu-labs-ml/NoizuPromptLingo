@@ -16,7 +16,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async signIn({ user, profile }) {
       try {
-        await fetch(`${backendUrl}/api/auth/sync`, {
+        const res = await fetch(`${backendUrl}/api/auth/sync`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -25,19 +25,30 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             name: profile.name || user.name,
           }),
         });
+        if (res.ok) {
+          const data = await res.json();
+          user.backendId = data.id;
+          user.profileComplete = data.profile_complete;
+        }
       } catch (e) {
         console.error("Failed to sync user to backend:", e);
       }
       return true;
     },
-    async jwt({ token, profile }) {
+    async jwt({ token, profile, user }) {
       if (profile) {
         token.oidc_sub = profile.sub;
+      }
+      if (user?.backendId) {
+        token.backendId = user.backendId;
+        token.profileComplete = user.profileComplete;
       }
       return token;
     },
     async session({ session, token }) {
       session.user.oidc_sub = token.oidc_sub;
+      session.user.backendId = token.backendId;
+      session.user.profileComplete = token.profileComplete;
       return session;
     },
     authorized({ auth }) {

@@ -9,6 +9,9 @@ defmodule NoizuPromptLingua.Schema.User do
     field :sub, :string
     field :email, :string
     field :name, :string
+    field :role, :string
+    field :bio, :string
+    field :profile_complete, :boolean, default: false
     field :status, :string, default: "active"
     timestamps(inserted_at: :inserted_at, updated_at: :updated_at)
   end
@@ -19,5 +22,12 @@ defmodule NoizuPromptLingua.Schema.User do
     |> validate_required([:sub, :email])
     |> unique_constraint(:sub)
     |> unique_constraint(:email)
+  end
+
+  def profile_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:name, :role, :bio])
+    |> validate_required([:name])
+    |> put_change(:profile_complete, true)
   end
 end
