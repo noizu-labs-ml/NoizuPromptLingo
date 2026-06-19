@@ -1,10 +1,15 @@
-_build/
-deps/
-.git
-web/
-db/
-nginx/
-.env*
-.envrc*
-.claude/
-docker-compose.yml
+# Sandbox build — exclude build artifacts from source seed
+frontend/.next/
+frontend/node_modules/
+frontend/out/
+frontend/build/
+backend/_build/
+backend/deps/
+backend/cover/
+backend/doc/
+**/.git
+**/.DS_Store
+**/npm-debug.log*
+**/*.db
+**/*.db-*
+**/erl_crash.dump

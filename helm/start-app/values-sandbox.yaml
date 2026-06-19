@@ -1,0 +1,72 @@
+replicas: 0
+
+domain: start-app.noizu.com
+
+sandbox:
+  enabled: true
+  image: ops.noizu.com/start-app/sandbox:latest
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+  persistence:
+    enabled: true
+    size: 5Gi
+  service:
+    type: ClusterIP
+
+backend:
+  image: ops.noizu.com/start-app/backend:latest
+  port: 4000
+
+frontend:
+  image: ops.noizu.com/start-app/frontend:latest
+  port: 3000
+
+migrate:
+  enabled: false
+
+database:
+  host: shared-postgres.data-ns.svc.cluster.local
+  port: 5432
+  name: start_app
+
+secrets:
+  name: start-app-secrets
+  keys:
+    dbUser: START_APP_DB_USER
+    dbPassword: START_APP_DB_PASSWORD
+    secretKeyBase: START_APP_SECRET_KEY_BASE
+    guardianSecretKey: START_APP_GUARDIAN_SECRET_KEY
+    redisUrl: START_APP_REDIS_URL
+    databaseUrl: START_APP_DATABASE_URL
+    sendgridApiKey: START_APP_SENDGRID_API_KEY
+    oidcClientId: ""
+    oidcClientSecret: ""
+    googleClientId: ""
+    googleClientSecret: ""
+    facebookClientId: ""
+    facebookClientSecret: ""
+    githubClientId: ""
+    githubClientSecret: ""
+    linkedinClientId: ""
+    linkedinClientSecret: ""
+    samlSpCert: ""
+    samlSpKey: ""
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+  cloudflareOnly: true
+
+tls:
+  enabled: true
+  secretName: start-app-tls
+  infisical:
+    enabled: false

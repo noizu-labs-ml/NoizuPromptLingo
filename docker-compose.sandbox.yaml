@@ -1,0 +1,51 @@
+# Live-sandbox mode — run with:
+#   docker compose -f docker-compose.yaml -f docker-compose.sandbox.yaml up
+#   or: make run-sandbox
+#
+# Builds a combined container with Samba + dev servers.
+# Mount //localhost:445/workspace on your host to edit files live.
+
+services:
+  sandbox:
+    build:
+      context: .
+      dockerfile: Dockerfile.sandbox
+    image: ${PROJECT_DIR:-start-app}/sandbox:dev
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+    working_dir: /workspace
+    volumes:
+      - ./frontend:/seed/frontend:ro
+      - ./backend:/seed/backend:ro
+      - sandbox_workspace:/workspace
+    env_file:
+      - .env
+      - backend/.env
+    environment:
+      MIX_ENV: dev
+      PHX_SERVER: "true"
+      PHX_IP: "0.0.0.0"
+      PORT: "4000"
+      DB_HOST: db
+      HOSTNAME: "0.0.0.0"
+      GITHUB_TOKEN: "${GITHUB_TOKEN:-}"
+    ports:
+      - "${SANDBOX_SMB_PORT:-445}:445"
+      - "${SANDBOX_FRONTEND_PORT:-3000}:3000"
+      - "${SANDBOX_BACKEND_PORT:-4000}:4000"
+    networks:
+      - app
+      - infra
+    restart: unless-stopped
+
+  # Disable the separate frontend/backend containers when sandbox is active
+  backend:
+    profiles: ["disabled"]
+  frontend:
+    profiles: ["disabled"]
+  nginx:
+    profiles: ["disabled"]
+
+volumes:
+  sandbox_workspace:

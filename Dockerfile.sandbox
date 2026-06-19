@@ -1,0 +1,47 @@
+# Live-sandbox: combined Node.js + Elixir dev container with Samba file sharing.
+# Mount the exposed share from your host to edit files; watchers rebuild on change.
+#
+# Samba share: //container:445/workspace  (user: dev / password: dev)
+# Frontend dev server: :3000
+# Backend dev server:  :4000
+
+FROM elixir:1.19.5-otp-28-slim
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV ERL_AFLAGS="+JMsingle true"
+
+# Node.js 22.x
+RUN apt-get update -y && \
+    apt-get install -y curl gnupg2 && \
+    curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+    apt-get install -y \
+      nodejs \
+      build-essential git inotify-tools gettext-base \
+      samba supervisor procps && \
+    apt-get clean && rm -rf /var/lib/apt/lists/* && \
+    mix local.hex --force && mix local.rebar --force
+
+# Samba config — single share at /workspace, writable by 'dev' user
+RUN useradd -m -s /bin/bash dev && \
+    (printf 'dev\ndev\n' | smbpasswd -a -s dev)
+
+# Set up hex/rebar for dev user
+RUN su - dev -c "mix local.hex --force && mix local.rebar --force"
+
+RUN mkdir -p /workspace/frontend /workspace/backend && \
+    chown -R dev:dev /workspace
+
+COPY sandbox/smb.conf /etc/samba/smb.conf
+COPY sandbox/supervisord.conf /etc/supervisor/conf.d/sandbox.conf
+COPY sandbox/sandbox-entrypoint.sh /usr/local/bin/sandbox-entrypoint.sh
+RUN chmod +x /usr/local/bin/sandbox-entrypoint.sh
+
+# Bake source into /seed so K8s deployments (no volume mounts) get seeded on first start
+COPY frontend/ /seed/frontend/
+COPY backend/ /seed/backend/
+
+WORKDIR /workspace
+
+EXPOSE 139 445 3000 4000
+
+CMD ["/usr/local/bin/sandbox-entrypoint.sh"]

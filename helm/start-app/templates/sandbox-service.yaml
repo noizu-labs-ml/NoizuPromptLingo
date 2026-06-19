@@ -1,0 +1,27 @@
+{{- if .Values.sandbox.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "start-app.fullname" . }}-sandbox
+  labels:
+    {{- include "start-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: sandbox
+spec:
+  type: {{ .Values.sandbox.service.type | default "ClusterIP" }}
+  ports:
+  - name: smb
+    port: 445
+    targetPort: smb
+    protocol: TCP
+  - name: frontend
+    port: 3000
+    targetPort: frontend
+    protocol: TCP
+  - name: backend
+    port: 4000
+    targetPort: backend
+    protocol: TCP
+  selector:
+    {{- include "start-app.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: sandbox
+{{- end }}

@@ -1,61 +1,84 @@
-# Project Layout
+# Project Layout — start-app
 
-NoizuPromptLingo — Elixir/Phoenix MCP server + Next.js dashboard for the Tobor platform.
+Starter template for portfolio projects. Three-service Docker stack: **Next.js frontend**, **Phoenix backend**, **nginx reverse proxy** — orchestrated by Make and docker-compose, connecting to shared Postgres/Redis on the `lets-go_default` network.
+
+Scaffolded into `projects/{domain}/app/` via `init-proj-scaffold`. The project root (`projects/{domain}/`) holds design artifacts (README.md, design/, docs/); the `app/` subdirectory holds the runnable code.
 
 ```
-NoizuPromptLingo/
-├── config/                     # Elixir/Phoenix environment configs
-│   ├── config.exs              #   Shared config
-│   ├── dev.exs                 #   Dev overrides
-│   ├── prod.exs                #   Prod overrides
-│   ├── runtime.exs             #   Runtime (env-var driven)
-│   └── test.exs                #   Test overrides
-├── db/                         # Liquibase database migrations
-│   ├── changelog/              #   YAML changelogs (extensions, enums, users, api-keys)
-│   ├── Dockerfile              #   Liquibase runner image
-│   └── liquibase.properties    #   Connection config
-├── design/                     # UI prototypes
-├── docs/                       # Documentation
-│   ├── tools/                  #   MCP tool reference (per-domain guides)
-│   └── layout/                 #   Detailed layout breakdowns
-├── helm/                       # Helm chart → [layout/helm.md](layout/helm.md)
-│   └── npl-mcp/                #   K8s deployment chart
-├── lib/                        # Elixir source → [layout/lib.md](layout/lib.md)
-│   ├── noizu_prompt_lingua/    #   Core app (domains, schema, MCP tools, NPL engine)
-│   ├── npl_web/                #   Phoenix endpoint, router, controllers
-│   ├── noizu_prompt_lingua.ex  #   Top-level module
-│   └── npl_web.ex              #   Web module macros
-├── nginx/                      # Reverse proxy configs
-│   ├── build/                  #   Docker build for nginx image
-│   ├── nginx.conf              #   Dev config
-│   └── nginx.prod.conf         #   Prod config
-├── priv/                       # OTP priv resources
-│   ├── conventions/            #   NPL convention YAML definitions
-│   ├── repo/migrations/        #   Ecto migrations (21 files, 20260614–20260620)
-│   └── skills/                 #   Bundled skill definitions
-├── test/                       # ExUnit test suite
-│   ├── noizu_prompt_lingua/    #   Domain + schema tests
-│   └── support/                #   Test helpers (DataCase)
-├── web/                        # Next.js dashboard → [layout/web.md](layout/web.md)
-│   ├── app/                    #   App Router pages (dashboard, chat, tickets, reviews, projects)
-│   ├── components/             #   Shared React components (sidebar)
-│   └── lib/                    #   Client API helpers
-├── .dockerignore               # Docker build exclusions
-├── .env.example                # Environment variable template — copy to .env
-├── .gitignore
-├── .tool-versions              # asdf/mise runtime versions
-├── docker-compose.yml          # Local dev services (Postgres, app, nginx)
-├── Dockerfile                  # → Dockerfile.elixir (symlink)
-├── Dockerfile.elixir           # Elixir release build
-├── Dockerfile.nextjs           # Next.js dashboard build
-├── mix.exs                     # Elixir project definition + dependencies
-└── mix.lock                    # Locked dependency versions
+start-app/
+├── frontend/                       # Next.js 15 app → [frontend/docs/PROJ-LAYOUT.md](../frontend/docs/PROJ-LAYOUT.md)
+│   ├── src/                        #   App Router pages, components, theme YAML, auth context
+│   ├── docs/                       #   Frontend architecture + layout docs
+│   ├── docker-entrypoint.sh        #   Container entrypoint (runtime config injection)
+│   ├── Dockerfile                  #   Production container build
+│   └── Dockerfile.dev              #   Development container build (hot reload)
+├── backend/                        # Phoenix 1.8 API → [backend/docs/PROJ-LAYOUT.md](../backend/docs/PROJ-LAYOUT.md)
+│   ├── lib/                        #   Elixir source (Starter app + StarterWeb)
+│   ├── config/                     #   Mix config per environment
+│   ├── priv/repo/                  #   Ecto migrations and seeds
+│   ├── db/                         #   Liquibase schema management
+│   │   ├── changelog/              #     Versioned YAML changesets (000–010)
+│   │   ├── liquibase.properties    #     Liquibase connection config
+│   │   └── Dockerfile              #     Liquibase migration runner image
+│   ├── docs/                       #   Backend architecture + layout docs
+│   ├── Dockerfile                  #   Production container build
+│   └── Dockerfile.dev              #   Development container build (hot reload)
+├── nginx/                          # Reverse proxy
+│   ├── nginx.conf                  #   Route: /api/* → backend, /* → frontend
+│   └── Dockerfile                  #   Nginx container build
+├── helm/                           # Kubernetes deployment
+│   └── start-app/                  #   Helm chart (publishable to OCI registry)
+│       ├── Chart.yaml              #     Chart metadata
+│       ├── values.yaml             #     Default values
+│       └── templates/              #     K8s manifests (deployment, service, ingress, migrate-job)
+├── scripts/                        # Build utilities
+│   └── gen-env.sh                  #   Generates .env files with secrets for all services
+├── docs/                           # Root documentation
+│   ├── PROJ-LAYOUT.md              #   This file
+│   ├── PROJ-LAYOUT.summary.md     #   Tree-only quick reference
+│   ├── PROJ-ARCH.md                #   Architecture documentation
+│   └── PROJ-ARCH.summary.md       #   Architecture quick reference
+├── .env.example                    # Environment template — copy and configure
+├── .envrc                          # direnv — run `direnv allow`
+├── .tool-versions                  # asdf/mise versions (Elixir, Erlang, Node.js, Java, CMake)
+├── .gitignore                      # Git ignore rules
+├── docker-compose.yaml             # Production service definitions (nginx, backend, frontend)
+├── docker-compose.dev.yaml         # Development overrides (hot reload, volume mounts)
+└── Makefile                        # Build + lifecycle commands
 ```
 
 ## Key Files Requiring Setup
 
 | File | Action |
 |------|--------|
-| `.env` | Copy from `.env.example`, fill database URL + secrets |
-| `.tool-versions` | Install runtimes via `asdf install` or `mise install` |
-| `db/liquibase.properties` | Configure DB connection for Liquibase migrations |
+| `.env` | Run `make init` to generate from `.env.example` with real secrets |
+| `.envrc` | Run `direnv allow` |
+| `.tool-versions` | Run `mise install` or `asdf install` (Elixir 1.19, Erlang 28, Node 22) |
+| `frontend/.npmrc` | Copy from `frontend/.npmrc.template`, add GitHub Packages token |
+
+## Make Targets
+
+| Command | Purpose |
+|---------|---------|
+| `make init` | Generate `.env` + `backend/.env` + `frontend/.env` with secrets |
+| `make regen` | Regenerate design system CSS from theme YAML |
+| `make build` | Build all Docker images (backend, frontend, nginx) |
+| `make run` | Start all containers via docker-compose |
+| `make stop` | Stop containers |
+| `make restart` | Stop → rebuild → start |
+| `make logs` | Tail container logs |
+| `make clean` | Remove containers, volumes, and local images |
+| `make push` | Push pre-built images to registry |
+| `make build-push` | Build multi-arch (amd64+arm64) and push |
+
+## Network Architecture
+
+All services join the external `lets-go_default` Docker network, where shared Postgres and Redis containers run. Nginx listens on `$PORT` (default 8080) and routes:
+
+- `/api/*`, `/health` → backend (Phoenix on :4000)
+- `/_next/webpack-hmr` → frontend (WebSocket upgrade for HMR)
+- `/*` → frontend (Next.js on :3000)
+
+## Project Identity
+
+The Makefile derives project identity from the parent directory name. When scaffolded to `projects/{domain}/app/`, the Makefile detects it's inside `app/` and resolves `PROJECT_DIR` from the parent — i.e., `derobot.is`. This auto-resolves the correct slug, database name, and Redis DB number from built-in maps.

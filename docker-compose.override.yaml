@@ -1,0 +1,20 @@
+# Local override
+#  - pins the unique host port for this project (nginx)
+#  - routes the backend + migrations containers to the cluster app-timescaledb
+#    via a host port-forward. Start it first:
+#      KUBECONFIG=~/.kube/noizu/config \
+#        kubectl -n apps port-forward svc/app-timescaledb 54326:5432
+#    DB connection values (DATABASE_URL / DB_*) live in .env and point at
+#    host.docker.internal:54326 (tobor_locker).
+services:
+  nginx:
+    ports:
+      - "8095:80"
+
+  backend:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  migrations:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

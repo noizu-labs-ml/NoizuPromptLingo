@@ -1,0 +1,2 @@
+@noizu:registry=https://npm.noizu.com
+//npm.noizu.com/:_authToken=${NPM_TOKEN}

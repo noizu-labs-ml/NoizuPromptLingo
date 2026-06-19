@@ -1,9 +1,16 @@
-.coverage
-.tmp/
-.envrc
-.envrc.dc
+start-app*tar.gz
+# Generated secrets
+start-app*tgz
 .env
-_build/
-deps/
-web/node_modules/
-web/.next/
+.envrc
+backend/.env
+frontend/.env
+.npmrc
+# OS
+.DS_Store
+
+# Dependencies (if running locally)
+backend/_build/
+backend/deps/
+frontend/node_modules/
+frontend/.next/

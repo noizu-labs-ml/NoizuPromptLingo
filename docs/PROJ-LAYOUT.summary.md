@@ -1,33 +1,44 @@
-# Project Layout Summary
+# Project Layout Summary — start-app
 
 ```
-NoizuPromptLingo/
-├── config/                     # Elixir/Phoenix configs (dev, prod, runtime, test)
-├── db/                         # Liquibase migrations + Dockerfile
-├── design/                     # UI prototypes
-├── docs/                       # Documentation + MCP tool guides
-│   ├── tools/                  #   Per-domain tool reference
-│   └── layout/                 #   Detailed layout breakdowns
-├── helm/npl-mcp/               # K8s Helm chart
-├── lib/                        # Elixir source
-│   ├── noizu_prompt_lingua/    #   Core app
-│   │   ├── domains/            #     10 MCP domains (agents, artifacts, assets, chat, mock_mcp, projects, review, sessions, tickets, wiki)
-│   │   ├── npl/                #     NPL convention engine
-│   │   ├── plugs/              #     Auth plugs
-│   │   ├── schema/             #     35 Ecto schemas
-│   │   ├── services/           #     Cross-cutting (attach, comment, watch)
-│   │   └── tools/              #     Root MCP tools (discovery, NPL load/spec)
-│   └── npl_web/                #   Phoenix endpoint + router
-├── nginx/                      # Reverse proxy configs + Docker build
-├── priv/                       # Conventions YAML, Ecto migrations, skills
-├── test/                       # ExUnit tests
-├── web/                        # Next.js dashboard (App Router)
-│   ├── app/                    #   Pages (dashboard, chat, tickets, reviews, projects)
-│   ├── components/             #   Shared components
-│   └── lib/                    #   API client
-├── docker-compose.yml
-├── Dockerfile.elixir
-├── Dockerfile.nextjs
-├── mix.exs
-└── .env.example
+start-app/
+├── frontend/                       # Next.js 15 app
+│   ├── src/                        #   Pages, components, theme YAML, auth
+│   ├── docs/                       #   Frontend docs
+│   ├── docker-entrypoint.sh        #   Runtime config injection
+│   ├── Dockerfile                  #   Production build
+│   └── Dockerfile.dev              #   Dev build (hot reload)
+├── backend/                        # Phoenix 1.8 API
+│   ├── lib/                        #   Elixir source
+│   ├── config/                     #   Mix config
+│   ├── priv/repo/                  #   Ecto migrations, seeds
+│   ├── db/                         #   Liquibase schema management
+│   │   ├── changelog/              #     Versioned YAML changesets
+│   │   ├── liquibase.properties    #     Connection config
+│   │   └── Dockerfile              #     Migration runner image
+│   ├── docs/                       #   Backend docs
+│   ├── Dockerfile                  #   Production build
+│   └── Dockerfile.dev              #   Dev build (hot reload)
+├── nginx/                          # Reverse proxy
+│   ├── nginx.conf                  #   Routing rules
+│   └── Dockerfile
+├── helm/                           # Kubernetes deployment
+│   └── start-app/                  #   Helm chart
+│       ├── Chart.yaml
+│       ├── values.yaml
+│       └── templates/              #   K8s manifests
+├── scripts/
+│   └── gen-env.sh                  #   Env file generator
+├── docs/
+│   ├── PROJ-LAYOUT.md
+│   ├── PROJ-LAYOUT.summary.md
+│   ├── PROJ-ARCH.md
+│   └── PROJ-ARCH.summary.md
+├── .env.example                    # Env template
+├── .envrc                          # direnv
+├── .tool-versions                  # asdf/mise runtime versions
+├── .gitignore
+├── docker-compose.yaml             # Production services
+├── docker-compose.dev.yaml         # Dev overrides (hot reload)
+└── Makefile                        # Build + lifecycle
 ```
