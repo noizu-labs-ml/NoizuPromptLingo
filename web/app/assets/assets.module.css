@@ -10,7 +10,7 @@
 }
 .tableHeader {
   display: grid;
-  grid-template-columns: 2fr 100px 100px 80px 100px;
+  grid-template-columns: 2fr 100px 100px 80px 100px 100px;
   gap: 8px;
   padding: 10px 20px;
   border-bottom: 2px solid var(--border);
@@ -22,12 +22,11 @@
 }
 .row {
   display: grid;
-  grid-template-columns: 2fr 100px 100px 80px 100px;
+  grid-template-columns: 2fr 100px 100px 80px 100px 100px;
   gap: 8px;
   padding: 12px 20px;
   border-bottom: 1px solid var(--border-subtle);
   align-items: center;
-  text-decoration: none;
   color: inherit;
   transition: background 0.1s;
 }

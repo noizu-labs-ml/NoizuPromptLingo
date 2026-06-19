@@ -10,13 +10,14 @@ defmodule NoizuPromptLingua.Schema.Session do
     field :description, :string
     field :status, :string, default: "active"
     field :user_id, :binary_id
+    field :project_id, :binary_id
 
     timestamps(type: :utc_datetime)
   end
 
   def changeset(session, attrs) do
     session
-    |> cast(attrs, [:title, :description, :status, :user_id])
+    |> cast(attrs, [:title, :description, :status, :user_id, :project_id])
     |> validate_required([:title])
     |> validate_inclusion(:status, ["active", "archived", "completed"])
   end

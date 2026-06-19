@@ -11,3 +11,6 @@ databaseChangeLog:
   - include:
       file: 003-mcp-api-keys.yaml
       relativeToChangelogFile: true
+  - include:
+      file: 004-add-project-id-to-sessions.yaml
+      relativeToChangelogFile: true

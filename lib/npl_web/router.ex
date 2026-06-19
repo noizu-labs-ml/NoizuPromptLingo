@@ -87,19 +87,42 @@ defmodule NPLWeb.Router do
     # Domain APIs
     get "/api/projects", NPLWeb.API.ProjectsAPIController, :index
     get "/api/projects/:id", NPLWeb.API.ProjectsAPIController, :show
+    post "/api/projects", NPLWeb.API.ProjectsAPIController, :create
+    put "/api/projects/:id", NPLWeb.API.ProjectsAPIController, :update
+    delete "/api/projects/:id", NPLWeb.API.ProjectsAPIController, :delete
 
     get "/api/assets", NPLWeb.API.AssetsAPIController, :index
     get "/api/assets/:id", NPLWeb.API.AssetsAPIController, :show
     get "/api/assets/:id/history", NPLWeb.API.AssetsAPIController, :history
+    post "/api/assets", NPLWeb.API.AssetsAPIController, :create
+    put "/api/assets/:id", NPLWeb.API.AssetsAPIController, :update
+    delete "/api/assets/:id", NPLWeb.API.AssetsAPIController, :delete
 
     get "/api/tickets", NPLWeb.API.TicketsAPIController, :index
     get "/api/tickets/:id", NPLWeb.API.TicketsAPIController, :show
+    post "/api/tickets", NPLWeb.API.TicketsAPIController, :create
+    put "/api/tickets/:id", NPLWeb.API.TicketsAPIController, :update
+    delete "/api/tickets/:id", NPLWeb.API.TicketsAPIController, :delete
+
+    get "/api/ticket-definitions", NPLWeb.API.TicketsAPIController, :list_type_definitions
+    post "/api/ticket-definitions", NPLWeb.API.TicketsAPIController, :create_type_definition
+    put "/api/ticket-definitions/:id", NPLWeb.API.TicketsAPIController, :update_type_definition
+    delete "/api/ticket-definitions/:id", NPLWeb.API.TicketsAPIController, :delete_type_definition
+
+    get "/api/ticket-field-definitions", NPLWeb.API.TicketsAPIController, :list_field_definitions
+    post "/api/ticket-field-definitions", NPLWeb.API.TicketsAPIController, :create_field_definition
+    put "/api/ticket-field-definitions/:id", NPLWeb.API.TicketsAPIController, :update_field_definition
+    delete "/api/ticket-field-definitions/:id", NPLWeb.API.TicketsAPIController, :delete_field_definition
 
     get "/api/chat/rooms", NPLWeb.API.ChatAPIController, :rooms
     get "/api/chat/rooms/:room_id/messages", NPLWeb.API.ChatAPIController, :messages
+    post "/api/chat/rooms", NPLWeb.API.ChatAPIController, :create_room
+    post "/api/chat/rooms/:room_id/messages", NPLWeb.API.ChatAPIController, :send_message
 
     get "/api/reviews", NPLWeb.API.ReviewsAPIController, :index
     get "/api/reviews/:id", NPLWeb.API.ReviewsAPIController, :show
+    post "/api/reviews", NPLWeb.API.ReviewsAPIController, :create
+    post "/api/reviews/:id/complete", NPLWeb.API.ReviewsAPIController, :complete
 
     # Mock MCP CRUD (also available at mockmcp.tobor.locker)
     get "/api/mock-mcp", NPLWeb.API.MockMCPAPIController, :index

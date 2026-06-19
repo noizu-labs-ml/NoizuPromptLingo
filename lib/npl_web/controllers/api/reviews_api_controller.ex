@@ -31,4 +31,41 @@ defmodule NPLWeb.API.ReviewsAPIController do
         })
     end
   end
+
+  def create(conn, params) do
+    attrs = Map.take(params, ~w(artifact_id reviewer_persona title summary verdict status))
+    case Reviews.create(attrs) do
+      {:ok, review} ->
+        conn |> put_status(201) |> json(%{review: review_json(review)})
+      {:error, cs} ->
+        conn |> put_status(422) |> json(%{errors: format_errors(cs)})
+    end
+  end
+
+  def complete(conn, %{"id" => id} = params) do
+    attrs = Map.take(params, ~w(verdict summary))
+    case Reviews.complete(id, attrs) do
+      {:ok, review} ->
+        json(conn, %{review: review_json(review)})
+      {:error, :not_found} ->
+        conn |> put_status(404) |> json(%{error: "not_found"})
+      {:error, cs} ->
+        conn |> put_status(422) |> json(%{errors: format_errors(cs)})
+    end
+  end
+
+  defp review_json(r) do
+    %{id: r.id, artifact_id: r.artifact_id, reviewer: r.reviewer_persona,
+      status: r.status, verdict: r.verdict, title: r.title, summary: r.summary,
+      updated_at: r.updated_at}
+  end
+
+  defp format_errors(%Ecto.Changeset{} = cs) do
+    Ecto.Changeset.traverse_errors(cs, fn {msg, opts} ->
+      Regex.replace(~r"%{(\w+)}", msg, fn _, key ->
+        opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
+      end)
+    end)
+  end
+  defp format_errors(other), do: inspect(other)
 end

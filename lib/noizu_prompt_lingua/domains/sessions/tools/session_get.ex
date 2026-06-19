@@ -23,6 +23,7 @@ defmodule NoizuPromptLingua.Domains.Sessions.Tools.SessionGet do
           title: session.title,
           description: session.description,
           status: session.status,
+          project_id: session.project_id,
           created_at: session.inserted_at,
           updated_at: session.updated_at
         }}

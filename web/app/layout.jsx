@@ -1,6 +1,8 @@
 import { SessionProvider } from "next-auth/react";
 import { auth } from "../auth";
 import Sidebar from "../components/sidebar";
+import Topbar from "../components/topbar";
+import { ProjectProvider } from "../components/project-context";
 import "./globals.css";
 
 export const metadata = {
@@ -15,12 +17,17 @@ export default async function RootLayout({ children }) {
       <body>
         <SessionProvider session={session}>
           {session ? (
-            <div style={{ display: "flex", minHeight: "100vh" }}>
-              <Sidebar />
-              <main style={{ marginLeft: "var(--sidebar-w)", flex: 1, padding: 24, overflow: "auto" }}>
-                {children}
-              </main>
-            </div>
+            <ProjectProvider>
+              <div style={{ display: "flex", minHeight: "100vh" }}>
+                <Sidebar />
+                <div style={{ marginLeft: "var(--sidebar-w)", flex: 1, display: "flex", flexDirection: "column" }}>
+                  <Topbar />
+                  <main style={{ flex: 1, padding: 24, overflow: "auto" }}>
+                    {children}
+                  </main>
+                </div>
+              </div>
+            </ProjectProvider>
           ) : (
             <main>{children}</main>
           )}

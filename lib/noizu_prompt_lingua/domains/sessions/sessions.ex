@@ -25,11 +25,13 @@ defmodule NoizuPromptLingua.Domains.Sessions do
 
   def list(opts \\ []) do
     status = Keyword.get(opts, :status)
+    project_id = Keyword.get(opts, :project_id)
     limit = Keyword.get(opts, :limit, 50)
     offset = Keyword.get(opts, :offset, 0)
 
     Session
     |> maybe_filter_status(status)
+    |> maybe_filter_project(project_id)
     |> order_by([s], desc: s.inserted_at)
     |> limit(^limit)
     |> offset(^offset)
@@ -47,8 +49,21 @@ defmodule NoizuPromptLingua.Domains.Sessions do
     )
   end
 
+  def resolve_project_id(nil), do: {:ok, nil}
+  def resolve_project_id(slug_or_id) do
+    case NoizuPromptLingua.Domains.Projects.get(slug_or_id) do
+      nil -> {:error, :project_not_found}
+      project -> {:ok, project.id}
+    end
+  end
+
   defp maybe_filter_status(query, nil), do: query
   defp maybe_filter_status(query, status) do
     where(query, [s], s.status == ^status)
+  end
+
+  defp maybe_filter_project(query, nil), do: query
+  defp maybe_filter_project(query, project_id) do
+    where(query, [s], s.project_id == ^project_id)
   end
 end

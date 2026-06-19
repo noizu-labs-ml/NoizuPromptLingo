@@ -54,7 +54,45 @@ defmodule NPLWeb.API.AssetsAPIController do
       eval_status: o.eval_status, status: o.status, created_at: o.inserted_at}
   end
 
+  def create(conn, params) do
+    attrs = Map.take(params, ~w(slug title asset_type status quality tags product_targets project_id prompt_yaml))
+    case Assets.create(attrs) do
+      {:ok, entry} ->
+        conn |> put_status(201) |> json(%{asset: asset_json(entry)})
+      {:error, cs} ->
+        conn |> put_status(422) |> json(%{errors: format_errors(cs)})
+    end
+  end
+
+  def update(conn, %{"id" => id} = params) do
+    attrs = Map.take(params, ~w(slug title asset_type status quality tags product_targets prompt_yaml))
+    case Assets.update(id, attrs) do
+      {:ok, entry} ->
+        json(conn, %{asset: asset_json(entry)})
+      {:error, :not_found} ->
+        conn |> put_status(404) |> json(%{error: "not_found"})
+      {:error, cs} ->
+        conn |> put_status(422) |> json(%{errors: format_errors(cs)})
+    end
+  end
+
+  def delete(conn, %{"id" => id}) do
+    case Assets.archive(id) do
+      {:ok, _} -> json(conn, %{ok: true})
+      {:error, :not_found} -> conn |> put_status(404) |> json(%{error: "not_found"})
+    end
+  end
+
   defp to_int(nil, d), do: d
   defp to_int(v, d) when is_binary(v), do: (case Integer.parse(v) do {n,_} -> n; _ -> d end)
   defp to_int(v, _) when is_integer(v), do: v
+
+  defp format_errors(%Ecto.Changeset{} = cs) do
+    Ecto.Changeset.traverse_errors(cs, fn {msg, opts} ->
+      Regex.replace(~r"%{(\w+)}", msg, fn _, key ->
+        opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
+      end)
+    end)
+  end
+  defp format_errors(other), do: inspect(other)
 end
