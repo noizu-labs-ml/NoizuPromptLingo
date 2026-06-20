@@ -9,7 +9,9 @@ defmodule NoizuPromptLinguaWeb.Plugs.RequireAdmin do
   def call(conn, _opts) do
     case get_user(conn) do
       {:ok, user} ->
-        if Map.get(user, :admin, false) do
+        # Admin access is granted by the role enum (there is no separate
+        # `admin` column anymore — :admin and :owner are the elevated roles).
+        if user.role in [:admin, :owner] do
           assign(conn, :admin_user, user)
         else
           conn

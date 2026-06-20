@@ -19,7 +19,7 @@ defmodule NoizuPromptLingua.Schema.Authz.ScopedMembership do
     membership
     |> cast(attrs, [:group_id, :resource_type, :resource_id, :member_type, :member_id, :expires_at, :added_by])
     |> validate_required([:group_id, :resource_type, :resource_id, :member_type, :member_id])
-    |> validate_inclusion(:resource_type, ["organization", "project"])
+    |> validate_inclusion(:resource_type, ["organization", "project", "github_repo"])
     |> validate_inclusion(:member_type, ["user", "group"])
     |> unique_constraint([:resource_type, :resource_id, :member_type, :member_id])
   end

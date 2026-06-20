@@ -1,0 +1,17 @@
+color-modes:
+  light:
+    surface: "var(--white)"
+    surface-alt: "#f2f2f2"
+    text: "var(--black)"
+    text-secondary: "#1a1a1a"
+    text-muted: "#4d4d4d"
+    border: "#000000"
+    border-strong: "#000000"
+  dark:
+    surface: "#000000"
+    surface-alt: "#0d0d0d"
+    text: "#ffffff"
+    text-secondary: "#e6e6e6"
+    text-muted: "#b3b3b3"
+    border: "#ffffff"
+    border-strong: "#ffffff"

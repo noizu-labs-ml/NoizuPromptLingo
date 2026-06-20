@@ -1,0 +1,19 @@
+color-modes:
+  # Nocturne is dark-native. "light" is a dimmed slate, not a true paper white —
+  # the theme is meant to be lived in at night.
+  light:
+    surface: "#0d1117"
+    surface-alt: "#161b22"
+    text: "#e6edf3"
+    text-secondary: "#adbac7"
+    text-muted: "#768390"
+    border: "#21262d"
+    border-strong: "#30363d"
+  dark:
+    surface: "#010409"
+    surface-alt: "#0d1117"
+    text: "#e6edf3"
+    text-secondary: "#909dab"
+    text-muted: "#6e7681"
+    border: "#161b22"
+    border-strong: "#21262d"

@@ -1,9 +1,8 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/context/auth";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
 
 const ERROR_MESSAGES: Record<string, string> = {
   not_provisioned: "No account exists for this email. Please contact your administrator.",
@@ -21,6 +20,10 @@ function SSOCallback() {
   const searchParams = useSearchParams();
   const [error, setError] = useState("");
   const [verifying, setVerifying] = useState(true);
+  // The SSO code is single-use (GETDEL). React StrictMode double-invokes effects
+  // in dev, so guard to exchange exactly once — otherwise the second call 401s
+  // and the api client redirects to login even though the first call logged in.
+  const ran = useRef(false);
 
   useEffect(() => {
     const code = searchParams.get("code");
@@ -38,8 +41,11 @@ function SSOCallback() {
       return;
     }
 
+    if (ran.current) return;
+    ran.current = true;
+
     ssoExchange(code)
-      .then(() => router.push("/"))
+      .then(() => router.push("/app"))
       .catch(() => {
         setError("Failed to complete sign-in. The code may have expired.");
         setVerifying(false);
@@ -54,7 +60,7 @@ function SSOCallback() {
         {error && (
           <>
             <p className="sg-error">{error}</p>
-            <p><Link href="/login">Back to login</Link></p>
+            <p><a href="/auth/oidc">Back to sign in</a></p>
           </>
         )}
       </main>

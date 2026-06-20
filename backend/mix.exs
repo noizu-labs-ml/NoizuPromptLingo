@@ -43,6 +43,10 @@ defmodule NoizuPromptLingua.MixProject do
       {:bcrypt_elixir, "~> 3.0"},
 
       # SSO / OAuth
+      # castore provides the CA trust store for openid_connect's Finch/Mint
+      # HTTPS calls (discovery doc + token endpoint); it's only an optional
+      # transitive dep otherwise, so pull it in explicitly.
+      {:castore, "~> 1.0"},
       {:openid_connect, "~> 1.0"},
       {:samly, "~> 1.4"},
       {:ueberauth, "~> 0.10"},

@@ -8,45 +8,55 @@ defmodule NoizuPromptLinguaWeb.ProjectController do
   def index(conn, %{"org_id" => org_id}) do
     user_id = get_user_id(conn)
 
-    case Authz.authorize(user_id, "organization", org_id, "viewer") do
-      {:ok, _} ->
-        projects = Projects.list_for_user(user_id, org_id)
-        json(conn, %{projects: projects})
+    with {:ok, resolved_org_id} <- NoizuPromptLingua.Organizations.resolve_org_id(org_id) do
+      case Authz.authorize(user_id, "organization", resolved_org_id, "viewer") do
+        {:ok, _} ->
+          projects = Projects.list_for_user(user_id, resolved_org_id)
+          json(conn, %{projects: projects})
 
-      {:error, :not_a_member} ->
-        conn |> put_status(:forbidden) |> json(%{error: "Not a member of this organization"})
+        {:error, :not_a_member} ->
+          conn |> put_status(:forbidden) |> json(%{error: "Not a member of this organization"})
 
-      {:error, _} ->
-        conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
+        {:error, _} ->
+          conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
+      end
+    else
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Organization not found"})
     end
   end
 
   def create(conn, %{"org_id" => org_id, "project" => project_params}) do
     user_id = get_user_id(conn)
 
-    if Authz.check_permission(user_id, "organization", org_id, "project:create") do
-      attrs = %{
-        organization_id: org_id,
-        name: project_params["name"],
-        slug: project_params["slug"],
-        description: project_params["description"],
-        settings: project_params["settings"] || %{}
-      }
+    with {:ok, resolved_org_id} <- NoizuPromptLingua.Organizations.resolve_org_id(org_id) do
+      if Authz.check_permission(user_id, "organization", resolved_org_id, "project:create") do
+        attrs = %{
+          organization_id: resolved_org_id,
+          name: project_params["name"],
+          slug: project_params["slug"],
+          description: project_params["description"],
+          settings: project_params["settings"] || %{}
+        }
 
-      case Projects.create_with_owner(attrs, user_id) do
-        {:ok, project} ->
-          conn
-          |> put_status(:created)
-          |> json(%{project: %{id: project.id, name: project.name, slug: project.slug, organization_id: project.organization_id}})
+        case Projects.create_with_owner(attrs, user_id) do
+          {:ok, project} ->
+            conn
+            |> put_status(:created)
+            |> json(%{project: %{id: project.id, name: project.name, slug: project.slug, organization_id: project.organization_id}})
 
-        {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
-          conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+          {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
+            conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
 
-        {:error, reason} ->
-          conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
+          {:error, reason} ->
+            conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
+        end
+      else
+        conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
       end
     else
-      conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Organization not found"})
     end
   end
 

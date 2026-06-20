@@ -18,7 +18,7 @@ services:
     restart: "no"
 
   nginx:
-    image: ${REGISTRY:-ops.noizu.com}/${PROJECT_DIR:-start-app}/nginx:${TAG:-latest}
+    image: ${REGISTRY:-ops.noizu.com}/${IMAGE_NS:-start-app}/nginx:${TAG:-latest}
     ports:
       - "${PORT:-8080}:80"
     depends_on:
@@ -29,7 +29,7 @@ services:
     restart: unless-stopped
 
   backend:
-    image: ${REGISTRY:-ops.noizu.com}/${PROJECT_DIR:-start-app}/backend:${TAG:-latest}
+    image: ${REGISTRY:-ops.noizu.com}/${IMAGE_NS:-start-app}/backend:${TAG:-latest}
     env_file: .env
     environment:
       PHX_SERVER: "true"
@@ -45,7 +45,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    image: ${REGISTRY:-ops.noizu.com}/${PROJECT_DIR:-start-app}/frontend:${TAG:-latest}
+    image: ${REGISTRY:-ops.noizu.com}/${IMAGE_NS:-start-app}/frontend:${TAG:-latest}
     environment:
       PORT: "3000"
     expose:

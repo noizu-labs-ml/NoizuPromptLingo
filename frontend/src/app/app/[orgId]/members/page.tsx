@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/auth";
+import { useOrgId } from "@/context/org";
 import { toast } from "sonner";
 
 interface Member {
@@ -18,7 +18,7 @@ interface Member {
 const ROLES = ["viewer", "editor", "admin", "owner"];
 
 export default function MembersPage() {
-  const { orgId } = useParams<{ orgId: string }>();
+  const { orgId, loading: orgLoading } = useOrgId();
   const { user } = useAuth();
   const [members, setMembers] = useState<Member[]>([]);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -28,12 +28,14 @@ export default function MembersPage() {
   useEffect(() => {
     if (orgId) {
       api.listMembers(orgId).then((res) => { setMembers(res.members); setLoading(false); }).catch(() => setLoading(false));
+    } else if (!orgLoading) {
+      setLoading(false);
     }
-  }, [orgId]);
+  }, [orgId, orgLoading]);
 
   async function handleInvite(e: React.FormEvent) {
     e.preventDefault();
-    if (!inviteEmail) return;
+    if (!inviteEmail || !orgId) return;
     try {
       const res = await api.addMember(orgId, inviteEmail, inviteRole);
       setMembers(res.members);
@@ -45,6 +47,7 @@ export default function MembersPage() {
   }
 
   async function handleRoleChange(memberId: string, newRole: string) {
+    if (!orgId) return;
     try {
       const res = await api.updateMemberRole(orgId, memberId, newRole);
       setMembers(res.members);
@@ -55,7 +58,7 @@ export default function MembersPage() {
   }
 
   async function handleRemove(memberId: string) {
-    if (!confirm("Remove this member?")) return;
+    if (!confirm("Remove this member?") || !orgId) return;
     try {
       await api.removeMember(orgId, memberId);
       setMembers((prev) => prev.filter((m) => m.id !== memberId));

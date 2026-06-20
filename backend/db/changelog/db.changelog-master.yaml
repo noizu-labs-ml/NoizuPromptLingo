@@ -5,9 +5,8 @@ databaseChangeLog:
   - include:
       file: 001-enums.yaml
       relativeToChangelogFile: true
-  - include:
-      file: 002-seed-helper.yaml
-      relativeToChangelogFile: true
+  # 002-seed-helper removed: the seed_helper schema is owned by Ecto migrations
+  # (priv/repo/migrations/*_setup_seed_helper.exs), not Liquibase.
   - include:
       file: 003-versioned-entities.yaml
       relativeToChangelogFile: true
@@ -73,4 +72,46 @@ databaseChangeLog:
       relativeToChangelogFile: true
   - include:
       file: 024-media-variants-cache.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 025-session-claim-code.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 026-sessions.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 027-github-tokens-repos.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 028-mcp-api-keys.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 029-github-repo-acl.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 030-cross-cutting.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 031-artifacts.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 032-chat.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 033-reviews.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 034-domain-org-binding.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 035-tickets.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 036-wiki.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 037-ticket-definition-scopes.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 038-boards.yaml
       relativeToChangelogFile: true

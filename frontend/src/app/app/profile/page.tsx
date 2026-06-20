@@ -2,21 +2,28 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth";
-import { api } from "@/lib/api";
+import { api, SELF_ASSIGNABLE_ROLES } from "@/lib/api";
 import { toast } from "sonner";
+
+const ROLE_LABELS: Record<string, string> = {
+  user: "User",
+  other: "Other",
+};
 
 export default function ProfilePage() {
   const { user } = useAuth();
   const [userName, setUserName] = useState("");
   const [email, setEmail] = useState("");
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
+  const [role, setRole] = useState("user");
+  const [bio, setBio] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (user) {
       setUserName(user.user_name || "");
       setEmail(user.email || "");
+      setRole(user.role && SELF_ASSIGNABLE_ROLES.includes(user.role as never) ? user.role : "user");
+      setBio(user.bio || "");
     }
   }, [user]);
 
@@ -24,7 +31,18 @@ export default function ProfilePage() {
     e.preventDefault();
     setSaving(true);
     try {
-      await api.updateProfile({ user_name: userName, email });
+      const payload: { user_name: string; email: string; bio: string; role?: string } = {
+        user_name: userName,
+        email,
+        bio,
+      };
+      // Only submit role when it's a self-assignable value. A privileged role
+      // set by an admin stays selected/disabled in the UI; we must not echo it
+      // back, or the backend's self-escalation guard would 422 the whole save.
+      if (SELF_ASSIGNABLE_ROLES.includes(role as never)) {
+        payload.role = role;
+      }
+      await api.updateProfile(payload);
       toast.success("Profile updated");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Update failed");
@@ -33,57 +51,87 @@ export default function ProfilePage() {
     }
   }
 
-  async function handlePasswordChange(e: React.FormEvent) {
-    e.preventDefault();
-    if (!currentPassword || !newPassword) return;
-    setSaving(true);
-    try {
-      await api.updateProfile({ current_password: currentPassword, new_password: newPassword });
-      setCurrentPassword("");
-      setNewPassword("");
-      toast.success("Password updated");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Password change failed");
-    } finally {
-      setSaving(false);
-    }
-  }
-
   if (!user) return null;
 
+  // A self-assignable role list that still includes the user's current role,
+  // even if it's a privileged one set by an admin (shown disabled so it isn't
+  // silently downgraded on save).
+  const roleOptions = SELF_ASSIGNABLE_ROLES.includes(role as never)
+    ? [...SELF_ASSIGNABLE_ROLES]
+    : [role, ...SELF_ASSIGNABLE_ROLES];
+
   return (
-    <div style={{ maxWidth: 480, margin: "40px auto", padding: "0 24px" }}>
-      <h1 style={{ fontSize: 24, marginBottom: 24 }}>Profile</h1>
+    <div className="content narrow">
+      <main>
+        <h1 className="sg-page-title">Profile</h1>
+        <p className="sg-page-intro">Update your name, role, and bio.</p>
 
-      <form onSubmit={handleProfileUpdate} style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 18, marginBottom: 16 }}>Account</h2>
-        <label style={{ display: "block", marginBottom: 12 }}>
-          <span style={{ display: "block", fontSize: 14, marginBottom: 4 }}>Username</span>
-          <input type="text" value={userName} onChange={(e) => setUserName(e.target.value)} style={{ width: "100%", padding: 8, border: "1px solid #ccc", borderRadius: 4 }} />
-        </label>
-        <label style={{ display: "block", marginBottom: 12 }}>
-          <span style={{ display: "block", fontSize: 14, marginBottom: 4 }}>Email</span>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} style={{ width: "100%", padding: 8, border: "1px solid #ccc", borderRadius: 4 }} />
-        </label>
-        <button type="submit" disabled={saving} style={{ padding: "8px 16px", background: "#000", color: "#fff", border: "none", borderRadius: 4, cursor: "pointer" }}>
-          {saving ? "Saving..." : "Save Profile"}
-        </button>
-      </form>
+        <form onSubmit={handleProfileUpdate}>
+          <div className="sg-field">
+            <label htmlFor="profile-name">Name</label>
+            <input
+              id="profile-name"
+              type="text"
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+              placeholder="Your display name"
+            />
+          </div>
 
-      <form onSubmit={handlePasswordChange}>
-        <h2 style={{ fontSize: 18, marginBottom: 16 }}>Change Password</h2>
-        <label style={{ display: "block", marginBottom: 12 }}>
-          <span style={{ display: "block", fontSize: 14, marginBottom: 4 }}>Current Password</span>
-          <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} style={{ width: "100%", padding: 8, border: "1px solid #ccc", borderRadius: 4 }} />
-        </label>
-        <label style={{ display: "block", marginBottom: 12 }}>
-          <span style={{ display: "block", fontSize: 14, marginBottom: 4 }}>New Password</span>
-          <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} style={{ width: "100%", padding: 8, border: "1px solid #ccc", borderRadius: 4 }} />
-        </label>
-        <button type="submit" disabled={saving || !currentPassword || !newPassword} style={{ padding: "8px 16px", background: "#000", color: "#fff", border: "none", borderRadius: 4, cursor: "pointer" }}>
-          {saving ? "Saving..." : "Change Password"}
-        </button>
-      </form>
+          <div className="sg-field">
+            <label htmlFor="profile-email">Email</label>
+            <input
+              id="profile-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+
+          <div className="sg-field">
+            <label htmlFor="profile-role">Role</label>
+            <select
+              id="profile-role"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+            >
+              {roleOptions.map((r) => (
+                <option
+                  key={r}
+                  value={r}
+                  disabled={!SELF_ASSIGNABLE_ROLES.includes(r as never)}
+                >
+                  {ROLE_LABELS[r] ?? r.charAt(0).toUpperCase() + r.slice(1)}
+                  {!SELF_ASSIGNABLE_ROLES.includes(r as never) ? " (admin-assigned)" : ""}
+                </option>
+              ))}
+            </select>
+            <span className="sg-field__hint">
+              Elevated roles are assigned by an administrator.
+            </span>
+          </div>
+
+          <div className="sg-field">
+            <label htmlFor="profile-bio">Bio</label>
+            <textarea
+              id="profile-bio"
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="A short bio about yourself"
+              rows={4}
+            />
+          </div>
+
+          <div className="button-row">
+            <button type="submit" disabled={saving} className="sg-btn sg-btn--black">
+              {saving ? "Saving…" : "Save Profile"}
+            </button>
+            <button type="button" className="sg-btn sg-btn--outline" onClick={() => history.back()}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      </main>
     </div>
   );
 }

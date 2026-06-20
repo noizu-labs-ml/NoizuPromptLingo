@@ -1,0 +1,19 @@
+databaseChangeLog:
+  # One-time SSO hand-off code stored on the session row (replaces the Redis
+  # sso_code). Idempotent SQL so it is safe alongside a manual dev ALTER.
+  - changeSet:
+      id: 025-user-sessions-claim-code
+      author: starter
+      changes:
+        - sql:
+            sql: |
+              ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS claim_code varchar(255);
+              ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS claim_code_expires_at timestamptz;
+              CREATE INDEX IF NOT EXISTS idx_user_sessions_claim_code
+                ON user_sessions (claim_code) WHERE claim_code IS NOT NULL;
+      rollback:
+        - sql:
+            sql: |
+              DROP INDEX IF EXISTS idx_user_sessions_claim_code;
+              ALTER TABLE user_sessions DROP COLUMN IF EXISTS claim_code;
+              ALTER TABLE user_sessions DROP COLUMN IF EXISTS claim_code_expires_at;

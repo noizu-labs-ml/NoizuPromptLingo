@@ -9,6 +9,8 @@ interface User {
   email: string;
   user_name?: string;
   handle?: string;
+  role?: string;
+  bio?: string;
   status?: string;
   verified?: boolean;
 }
@@ -17,13 +19,12 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   organizations: Organization[];
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, inviteToken: string) => Promise<void>;
   requestMagicLink: (email: string) => Promise<{ message: string; dev_link?: string }>;
   loginWithMagicLink: (token: string) => Promise<void>;
   requestOtpLogin: (email: string) => Promise<{ message: string; dev_code?: string }>;
   verifyOtpLogin: (email: string, code: string) => Promise<void>;
   ssoExchange: (code: string) => Promise<void>;
+  ssoRegister: (payload: { token: string; first: string; last: string; bio: string }) => Promise<void>;
   logout: () => void;
 }
 
@@ -67,26 +68,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loadUser();
   }, [loadUser]);
 
-  async function login(email: string, password: string) {
-    const res = await api.login(email, password);
-    localStorage.setItem("access_token", res.access_token);
-    localStorage.setItem("refresh_token", res.refresh_token);
-    setAuthCookie(res.access_token);
-    setUser(res.user);
-    setOrganizations(res.organizations ?? []);
-    analytics.identify({ id: res.user.id, email: res.user.email });
-    analytics.trackEvent({ name: "login", properties: { method: "password" } });
-  }
-
-  async function register(email: string, password: string, inviteToken: string) {
-    const res = await api.register(email, password, inviteToken);
-    localStorage.setItem("access_token", res.access_token);
-    localStorage.setItem("refresh_token", res.refresh_token);
-    setAuthCookie(res.access_token);
-    setUser(res.user);
-    setOrganizations(res.organizations ?? []);
-  }
-
   async function requestMagicLink(email: string) {
     return api.requestMagicLink(email);
   }
@@ -128,6 +109,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     analytics.trackEvent({ name: "login", properties: { method: "sso" } });
   }
 
+  async function ssoRegister(payload: { token: string; first: string; last: string; bio: string }) {
+    const res = await api.ssoRegister(payload);
+    localStorage.setItem("access_token", res.access_token);
+    localStorage.setItem("refresh_token", res.refresh_token);
+    setAuthCookie(res.access_token);
+    setUser(res.user);
+    setOrganizations(res.organizations ?? []);
+    analytics.identify({ id: res.user.id, email: res.user.email });
+    analytics.trackEvent({ name: "login", properties: { method: "sso_register" } });
+  }
+
   function logout() {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
@@ -138,7 +130,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, organizations, login, register, requestMagicLink, loginWithMagicLink, requestOtpLogin, verifyOtpLogin, ssoExchange, logout }}>
+    <AuthContext.Provider value={{ user, loading, organizations, requestMagicLink, loginWithMagicLink, requestOtpLogin, verifyOtpLogin, ssoExchange, ssoRegister, logout }}>
       {children}
     </AuthContext.Provider>
   );

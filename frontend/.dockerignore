@@ -8,6 +8,7 @@ Dockerfile
 .dockerignore
 *.pem
 .env*
+.npmrc
 .DS_Store
 npm-debug.log*
 src/app/styleguide/

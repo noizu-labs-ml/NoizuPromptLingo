@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/context/auth";
 import { OrgProvider } from "@/context/org";
+import { SidebarProvider } from "@/context/sidebar";
 import { Navbar } from "@/components/navbar";
 import { AnalyticsProvider } from "@/components/analytics-provider";
 import { CookieConsentProvider } from "@/components/cookie-consent";
@@ -40,7 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script src="/__env.js" />
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){var s=localStorage.getItem('color-mode');var p=matchMedia('(prefers-color-scheme:dark)').matches;if(s==='dark'||(!s&&p))document.documentElement.classList.add('dark')})()`,
+            __html: `(function(){if(localStorage.getItem('color-mode')==='dark')document.documentElement.classList.add('dark')})()`,
           }}
         />
       </head>
@@ -50,8 +51,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <OrgProvider>
               <CookieConsentProvider>
                 <AnalyticsProvider>
-                  <Navbar />
-                  {children}
+                  <SidebarProvider>
+                    <Navbar />
+                    {children}
+                  </SidebarProvider>
                 </AnalyticsProvider>
               </CookieConsentProvider>
             </OrgProvider>

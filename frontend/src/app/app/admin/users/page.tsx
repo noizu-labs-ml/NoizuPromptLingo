@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
+import { useAuth } from "@/context/auth";
+import { toast } from "sonner";
 
 interface AdminUser {
   id: string;
@@ -9,15 +11,19 @@ interface AdminUser {
   user_name: string;
   status: string;
   verified: boolean;
-  admin: boolean;
+  role: string;
   created_at: string;
 }
 
+const ALL_ROLES = ["user", "moderator", "admin", "owner", "service", "other"];
+
 export default function AdminUsersPage() {
+  const { user: me } = useAuth();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [savingId, setSavingId] = useState<string | null>(null);
 
   useEffect(() => {
     api.adminListUsers(page).then((res) => {
@@ -27,38 +33,78 @@ export default function AdminUsersPage() {
     }).catch(() => setLoading(false));
   }, [page]);
 
-  if (loading) return <p style={{ padding: 40 }}>Loading...</p>;
+  async function changeRole(id: string, role: string) {
+    const prev = users.find((u) => u.id === id)?.role;
+    setSavingId(id);
+    // Optimistic update
+    setUsers((us) => us.map((u) => (u.id === id ? { ...u, role } : u)));
+    try {
+      await api.adminUpdateUserRole(id, role);
+      toast.success(`Role updated to ${role}`);
+    } catch (err) {
+      // Revert on failure
+      setUsers((us) => us.map((u) => (u.id === id ? { ...u, role: prev ?? u.role } : u)));
+      toast.error(err instanceof Error ? err.message : "Failed to update role");
+    } finally {
+      setSavingId(null);
+    }
+  }
+
+  if (loading) {
+    return <div className="content narrow"><main><p className="sg-page-intro">Loading…</p></main></div>;
+  }
 
   return (
-    <div style={{ maxWidth: 800, margin: "40px auto", padding: "0 24px" }}>
-      <h1 style={{ fontSize: 24, marginBottom: 8 }}>Users ({total})</h1>
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
-        <thead>
-          <tr style={{ borderBottom: "2px solid #eee", textAlign: "left" }}>
-            <th style={{ padding: 8 }}>Email</th>
-            <th style={{ padding: 8 }}>Username</th>
-            <th style={{ padding: 8 }}>Status</th>
-            <th style={{ padding: 8 }}>Verified</th>
-            <th style={{ padding: 8 }}>Admin</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((u) => (
-            <tr key={u.id} style={{ borderBottom: "1px solid #eee" }}>
-              <td style={{ padding: 8 }}>{u.email}</td>
-              <td style={{ padding: 8 }}>{u.user_name}</td>
-              <td style={{ padding: 8 }}>{u.status}</td>
-              <td style={{ padding: 8 }}>{u.verified ? "Yes" : "No"}</td>
-              <td style={{ padding: 8 }}>{u.admin ? "Yes" : "No"}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-        <button disabled={page <= 1} onClick={() => setPage(page - 1)} style={{ padding: "4px 12px" }}>Prev</button>
-        <span style={{ padding: "4px 8px" }}>Page {page}</span>
-        <button disabled={users.length < 50} onClick={() => setPage(page + 1)} style={{ padding: "4px 12px" }}>Next</button>
-      </div>
+    <div className="content">
+      <main>
+        <h1 className="sg-page-title">Users ({total})</h1>
+        <p className="sg-page-intro">Manage account roles. Elevated roles (admin, owner) grant access to this admin area.</p>
+        <div className="admin-table-wrap">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Username</th>
+                <th>Status</th>
+                <th>Verified</th>
+                <th>Role</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((u) => {
+                const isSelf = me?.id === u.id;
+                return (
+                  <tr key={u.id}>
+                    <td>{u.email}</td>
+                    <td>{u.user_name}</td>
+                    <td>{u.status}</td>
+                    <td>{u.verified ? "Yes" : "No"}</td>
+                    <td>
+                      <select
+                        className="admin-role-select"
+                        value={u.role}
+                        disabled={isSelf || savingId === u.id}
+                        title={isSelf ? "You cannot change your own role" : undefined}
+                        onChange={(e) => changeRole(u.id, e.target.value)}
+                      >
+                        {ALL_ROLES.map((r) => (
+                          <option key={r} value={r}>{r}</option>
+                        ))}
+                      </select>
+                      {isSelf && <span className="admin-role-self"> (you)</span>}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <div className="button-row" style={{ marginTop: "var(--space-4)" }}>
+          <button className="sg-btn sg-btn--outline sg-btn--sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>Prev</button>
+          <span className="sg-navbar__user" style={{ alignSelf: "center" }}>Page {page}</span>
+          <button className="sg-btn sg-btn--outline sg-btn--sm" disabled={users.length < 50} onClick={() => setPage(page + 1)}>Next</button>
+        </div>
+      </main>
     </div>
   );
 }

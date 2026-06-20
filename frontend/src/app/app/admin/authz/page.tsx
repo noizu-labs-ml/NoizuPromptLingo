@@ -1,0 +1,323 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { toast } from 'sonner';
+import { api, type McpApiKey, type McpTokenResponse, type McpServerConfig } from '@/lib/api';
+import McpSetupPanel from '@/components/mcp-setup-panel';
+
+interface AdminUser {
+  id: string;
+  email: string;
+  user_name: string;
+  status: string;
+  role: string;
+}
+
+export default function AdminAuthzPage() {
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [userId, setUserId] = useState('');
+  const [keys, setKeys] = useState<McpApiKey[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [loadingKeys, setLoadingKeys] = useState(false);
+
+  // New key form
+  const [label, setLabel] = useState('default');
+  const [creating, setCreating] = useState(false);
+
+  // The most recently minted raw key (shown once).
+  const [revealedKey, setRevealedKey] = useState<{ id: string; raw: string } | null>(null);
+
+  // MCP tokens by api key id (for setup panel).
+  const [tokens, setTokens] = useState<Record<string, McpTokenResponse>>({});
+
+  // Which key's setup panel is open.
+  const [setupKey, setSetupKey] = useState<string | null>(null);
+
+  // Server config from the backend (host-derived, never hardcoded).
+  const [servers, setServers] = useState<McpServerConfig[]>([]);
+
+  // Paste-an-existing-key flow (non-destructive token mint for the selected user).
+  const [pastedKey, setPastedKey] = useState('');
+  const [minting, setMinting] = useState(false);
+
+  const fetchKeys = useCallback(async (uid: string) => {
+    if (!uid) {
+      setKeys([]);
+      return;
+    }
+    setLoadingKeys(true);
+    setRevealedKey(null);
+    try {
+      const res = await api.adminListMcpKeys(uid);
+      setKeys(res.keys);
+    } catch {
+      toast.error('Failed to load MCP keys');
+    } finally {
+      setLoadingKeys(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    api
+      .adminListUsers()
+      .then((res) => {
+        setUsers(res.users);
+        const firstId = res.users[0]?.id ?? '';
+        setUserId(firstId);
+        fetchKeys(firstId);
+      })
+      .catch(() => toast.error('Failed to load users'))
+      .finally(() => setLoadingUsers(false));
+    api.mcpConfig().then((cfg) => setServers(cfg.servers)).catch(() => { /* non-fatal */ });
+  }, [fetchKeys]);
+
+  async function createKey(e: React.FormEvent) {
+    e.preventDefault();
+    if (!userId) return;
+    setCreating(true);
+    try {
+      const { key, raw_key } = await api.adminCreateMcpKey(userId, label.trim() || 'default');
+      setKeys((prev) => [key, ...prev.filter((k) => k.id !== key.id)]);
+      setRevealedKey({ id: key.id, raw: raw_key });
+      toast.success('MCP key created — copy it now, it won’t be shown again');
+
+      // Auto-mint a token for the new key so setup is one click. The
+      // authenticated mint is scoped to the logged-in admin, which is correct
+      // when the admin is minting for their own user; for other users the admin
+      // should share the raw key and let the user mint from the /mcp-keys page.
+      try {
+        const tokenData = await api.mintMcpTokenAuthenticated(raw_key);
+        setTokens((prev) => ({ ...prev, [key.id]: tokenData }));
+        setSetupKey(key.id);
+      } catch (tokenErr) {
+        console.error('Failed to mint token for new key:', tokenErr);
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to create key');
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  async function mintFromPaste(e: React.FormEvent) {
+    e.preventDefault();
+    const raw = pastedKey.trim();
+    if (!raw) return;
+    setMinting(true);
+    try {
+      const tokenData = await api.mintMcpTokenAuthenticated(raw);
+      await fetchKeys(userId);
+      setTokens((prev) => ({ ...prev, '__pasted__': tokenData }));
+      setSetupKey('__pasted__');
+      setPastedKey('');
+      toast.success('MCP token minted from pasted key');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to mint token');
+    } finally {
+      setMinting(false);
+    }
+  }
+
+  async function revokeKey(id: string) {
+    if (!userId || !confirm('Revoke this MCP key? Clients using it will lose access immediately.')) return;
+    try {
+      const { key } = await api.adminRevokeMcpKey(userId, id);
+      setKeys((prev) => prev.map((k) => (k.id === id ? key : k)));
+      setTokens((prev) => {
+        const n = { ...prev };
+        delete n[id];
+        return n;
+      });
+      toast.success('Key revoked');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to revoke key');
+    }
+  }
+
+  async function copyRaw(raw: string) {
+    try {
+      await navigator.clipboard.writeText(raw);
+      toast.success('Copied to clipboard');
+    } catch {
+      toast.error('Copy failed — select and copy manually');
+    }
+  }
+
+  function timeAgo(dt?: string | null) {
+    if (!dt) return 'never';
+    const diff = Date.now() - new Date(dt).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    return `${Math.floor(hrs / 24)}d ago`;
+  }
+
+  if (loadingUsers) {
+    return (
+      <div className="content">
+        <main>
+          <p className="sg-page-intro">Loading…</p>
+        </main>
+      </div>
+    );
+  }
+
+  return (
+    <div className="content">
+      <main>
+        <h1 className="sg-page-title">Authz — MCP Keys</h1>
+        <p className="sg-page-intro">
+          Mint and revoke long-lived MCP API keys for a user. Clients exchange a key for a short-lived MCP JWT at
+          <span className="font-mono"> POST /api/mcp/token</span>. The raw key is shown only once at creation.
+        </p>
+
+        <div className="sg-field">
+          <label htmlFor="authz-user">User</label>
+          <select id="authz-user" value={userId} onChange={(e) => { setUserId(e.target.value); fetchKeys(e.target.value); }}>
+            {users.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.email} ({u.role})
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Connect an existing key (non-destructive). */}
+        <section className="dash-panel" style={{ marginTop: 'var(--space-4)' }}>
+          <div className="dash-panel__head">
+            <h2 className="dash-panel__title">Connect an existing key</h2>
+          </div>
+          <p className="sg-page-intro" style={{ marginBottom: 12 }}>
+            Paste a raw API key — combined with your login it mints an MCP token. The backend verifies
+            ownership, so this only works for your own keys.
+          </p>
+          <form className="gh-add-form" onSubmit={mintFromPaste}>
+            <input
+              className="gh-add-form__input"
+              value={pastedKey}
+              onChange={(e) => setPastedKey(e.target.value)}
+              placeholder="Paste raw API key"
+              aria-label="Raw API key"
+              style={{ flex: 2 }}
+            />
+            <button className="sg-btn sg-btn--black sg-btn--sm" type="submit" disabled={minting || !pastedKey.trim()}>
+              {minting ? 'Minting…' : 'Mint Token'}
+            </button>
+          </form>
+        </section>
+
+        <section className="dash-panel" style={{ marginTop: 'var(--space-4)' }}>
+          <div className="dash-panel__head">
+            <h2 className="dash-panel__title">Create key</h2>
+          </div>
+
+          <form className="gh-add-form" onSubmit={createKey}>
+            <input
+              className="gh-add-form__input"
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+              placeholder="Label (e.g. ci-bot)"
+              aria-label="Label"
+            />
+            <button className="sg-btn sg-btn--black sg-btn--sm" type="submit" disabled={creating || !userId}>
+              {creating ? 'Creating…' : 'Generate key'}
+            </button>
+          </form>
+
+          {revealedKey && (
+            <div className="authz-reveal">
+              <div className="authz-reveal__label">Raw key (shown once):</div>
+              <div className="authz-reveal__row">
+                <code className="authz-reveal__key font-mono">{revealedKey.raw}</code>
+                <button className="sg-btn sg-btn--outline sg-btn--sm" onClick={() => copyRaw(revealedKey.raw)}>
+                  Copy
+                </button>
+              </div>
+              <p className="sg-page-intro">Store this securely — it cannot be retrieved again.</p>
+            </div>
+          )}
+        </section>
+
+        <section className="dash-panel" style={{ marginTop: 'var(--space-4)' }}>
+          <div className="dash-panel__head">
+            <h2 className="dash-panel__title">Keys</h2>
+            <span className="dash-badge">{keys.length}</span>
+          </div>
+
+          {loadingKeys ? (
+            <p className="sg-page-intro">Loading…</p>
+          ) : keys.length === 0 ? (
+            <p className="sg-page-intro">No MCP keys yet.</p>
+          ) : (
+            <ul className="admin-table-wrap">
+              {keys.map((k) => {
+                const hasToken = !!tokens[k.id];
+                return (
+                  <li key={k.id} className="gh-row">
+                    <div className="gh-row__main">
+                      <div className="gh-row__title">{k.label}</div>
+                      <div className="gh-row__sub font-mono">{k.key_prefix}…</div>
+                      <span className={`gh-grant__level gh-grant__level--${k.status === 'active' ? 'member' : 'viewer'}`}>
+                        {k.status}
+                      </span>
+                      <span className="gh-row__sub">last used {timeAgo(k.last_used_at)}</span>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      {k.status === 'active' && hasToken && (
+                        <>
+                          <button
+                            onClick={() => setSetupKey(setupKey === k.id ? null : k.id)}
+                            className="sg-btn sg-btn--outline sg-btn--sm"
+                            style={{
+                              ...(setupKey === k.id
+                                ? { background: 'var(--accent-dim)', color: 'var(--accent)', borderColor: 'var(--accent)' }
+                                : {})
+                            }}
+                          >
+                            Setup
+                          </button>
+                          <button
+                            className="sg-btn sg-btn--outline sg-btn--sm"
+                            onClick={() => copyRaw(tokens[k.id].token)}
+                          >
+                            Copy Token
+                          </button>
+                        </>
+                      )}
+                      {k.status === 'active' && !hasToken && (
+                        <span className="gh-row__sub">paste raw key above to mint a token</span>
+                      )}
+                      {k.status === 'active' && (
+                        <button className="sg-btn sg-btn--danger sg-btn--sm" onClick={() => revokeKey(k.id)}>
+                          Revoke
+                        </button>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+
+        {/* Setup panel for the selected key with a minted token. */}
+        {setupKey && tokens[setupKey] && servers.length > 0 && (
+          (() => {
+            const key = keys.find((k) => k.id === setupKey);
+            return (
+              <McpSetupPanel
+                token={tokens[setupKey].token}
+                keyLabel={key?.label ?? 'pasted key'}
+                servers={servers}
+                onClose={() => setSetupKey(null)}
+              />
+            );
+          })()
+        )}
+      </main>
+    </div>
+  );
+}

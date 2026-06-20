@@ -27,6 +27,16 @@ defmodule NoizuPromptLingua.Application do
       {Oban, Application.fetch_env!(:noizu_prompt_lingua, Oban)}
     ] ++ samly_children ++ [
       NoizuPromptLingua.Events.WebhookHandler,
+      # MCP servers (organization / project / session domains + root aggregator)
+      NoizuPromptLingua.MCP,
+      NoizuPromptLingua.MCP.Organizations,
+      NoizuPromptLingua.MCP.Projects,
+      NoizuPromptLingua.MCP.Sessions,
+      # MCP servers ported from the legacy project (artifacts / chat / review)
+      NoizuPromptLingua.Domains.Artifacts.MCP,
+      NoizuPromptLingua.Domains.Chat.MCP,
+      NoizuPromptLingua.Domains.Review.MCP,
+      NoizuPromptLingua.Domains.Wiki.MCP,
       NoizuPromptLinguaWeb.Endpoint
     ]
 

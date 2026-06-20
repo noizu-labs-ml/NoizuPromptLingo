@@ -20,17 +20,44 @@ defmodule NoizuPromptLinguaWeb.Plugs.RequireRole do
         conn |> send_json(400, %{error: "Organization ID required"}) |> halt()
 
       true ->
-        case NoizuPromptLingua.Organizations.authorize(user_id, org_id, required_role) do
-          {:ok, membership} ->
-            conn |> assign(:current_membership, membership)
+        case resolve_org_id(org_id) do
+          {:ok, uuid} ->
+            # Normalize the route param to the resolved UUID so every downstream
+            # controller and Authz call transparently receives a UUID, regardless
+            # of whether the URL carried a slug or a UUID.
+            conn =
+              conn
+              |> Map.update!(:params, &maybe_replace_org_id(&1, uuid))
+              |> Map.update!(:path_params, &Map.put(&1, "org_id", uuid))
 
-          {:error, :not_a_member} ->
-            conn |> send_json(403, %{error: "Not a member of this organization"}) |> halt()
+            case NoizuPromptLingua.Organizations.authorize(user_id, uuid, required_role) do
+              {:ok, membership} ->
+                conn |> assign(:current_membership, membership)
 
-          {:error, :insufficient_role} ->
-            conn |> send_json(403, %{error: "Insufficient permissions"}) |> halt()
+              {:error, :not_a_member} ->
+                conn |> send_json(403, %{error: "Not a member of this organization"}) |> halt()
+
+              {:error, :insufficient_role} ->
+                conn |> send_json(403, %{error: "Insufficient permissions"}) |> halt()
+            end
+
+          {:error, :not_found} ->
+            conn |> send_json(404, %{error: "Organization not found"}) |> halt()
         end
     end
+  end
+
+  defp resolve_org_id(org_id), do: NoizuPromptLingua.Organizations.resolve_org_id(org_id)
+
+  # Replace any org_id-shaped key present in params with the resolved UUID.
+  defp maybe_replace_org_id(params, uuid) do
+    params
+    |> maybe_put("org_id", uuid)
+    |> maybe_put("organization_id", uuid)
+  end
+
+  defp maybe_put(params, key, value) do
+    if Map.has_key?(params, key), do: Map.put(params, key, value), else: params
   end
 
   defp get_user_id(conn) do

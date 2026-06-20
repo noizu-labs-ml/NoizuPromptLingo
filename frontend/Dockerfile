@@ -1,15 +1,11 @@
 ARG NODE_VERSION=22-alpine
 
 FROM node:${NODE_VERSION} AS deps
-RUN apk add --no-cache gettext
 WORKDIR /app
-COPY package.json package-lock.json* .npmrc.template ./
-RUN --mount=type=secret,id=npm_token \
+COPY package.json package-lock.json* ./
+RUN --mount=type=secret,id=npmrc,target=/app/.npmrc \
     --mount=type=cache,target=/root/.npm \
-    NPM_TOKEN=$(cat /run/secrets/npm_token) \
-    envsubst < .npmrc.template > .npmrc && \
-    npm ci && \
-    rm -f .npmrc
+    npm ci
 
 FROM node:${NODE_VERSION} AS build
 WORKDIR /app

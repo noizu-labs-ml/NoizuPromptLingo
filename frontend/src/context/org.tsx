@@ -1,21 +1,39 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { useParams } from 'next/navigation';
 import { useAuth } from './auth';
-import { api, type Organization } from '@/lib/api';
+import { api, type Organization, type Project } from '@/lib/api';
 
 interface OrgContextType {
   currentOrg: Organization | null;
   organizations: Organization[];
   switchOrg: (orgId: string) => void;
+  refresh: (preferId?: string) => Promise<void>;
   loading: boolean;
+  // Projects belonging to the current org, plus the active "scope" project.
+  projects: Project[];
+  projectsLoading: boolean;
+  currentProject: Project | null;
+  switchProject: (project: Project | null, orgId?: string) => void;
+  refreshProjects: () => Promise<void>;
 }
+
+// Per-org persisted project selection. Keyed by org id so switching orgs
+// restores the project you last had open in that org.
+const projectKey = (orgId: string) => `currentProjectId:${orgId}`;
 
 const OrgContext = createContext<OrgContextType>({
   currentOrg: null,
   organizations: [],
   switchOrg: () => {},
+  refresh: async () => {},
   loading: true,
+  projects: [],
+  projectsLoading: false,
+  currentProject: null,
+  switchProject: () => {},
+  refreshProjects: async () => {},
 });
 
 export function OrgProvider({ children }: { children: ReactNode }) {
@@ -23,6 +41,9 @@ export function OrgProvider({ children }: { children: ReactNode }) {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
   const [loading, setLoading] = useState(true);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [projectsLoading, setProjectsLoading] = useState(false);
+  const [currentProject, setCurrentProject] = useState<Project | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -57,8 +78,75 @@ export function OrgProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Re-fetch the org list from the server (after create/edit/delete). When
+  // `preferId` is given, select that org if present; otherwise keep the saved
+  // selection or fall back to the first available org.
+  const refresh = useCallback(async (preferId?: string) => {
+    const res = await api.listOrganizations();
+    setOrganizations(res.organizations);
+    const targetId = preferId || localStorage.getItem('currentOrgId');
+    const next = res.organizations.find(o => o.id === targetId) || res.organizations[0] || null;
+    setCurrentOrg(next);
+    if (next) localStorage.setItem('currentOrgId', next.id);
+    else localStorage.removeItem('currentOrgId');
+  }, []);
+
+  // Load the current org's projects and restore its persisted project scope.
+  // Runs whenever the active org changes. The persisted id is read fresh from
+  // localStorage so a selection made just before switching (e.g. from the
+  // brand-mark switcher) is honoured once the list resolves.
+  const orgId = currentOrg?.id ?? null;
+  useEffect(() => {
+    if (!orgId) {
+      setProjects([]);
+      setCurrentProject(null);
+      return;
+    }
+    let cancelled = false;
+    setProjectsLoading(true);
+    api.listProjects(orgId)
+      .then(res => {
+        if (cancelled) return;
+        const list = res.projects ?? [];
+        setProjects(list);
+        const savedId = localStorage.getItem(projectKey(orgId));
+        setCurrentProject(list.find(p => p.id === savedId) ?? null);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setProjects([]);
+        setCurrentProject(null);
+      })
+      .finally(() => {
+        if (!cancelled) setProjectsLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [orgId]);
+
+  // Select (or clear) the active project. `orgId` may be passed for the case
+  // where the org was switched in the same tick and `currentOrg` hasn't settled.
+  const switchProject = useCallback((project: Project | null, forOrgId?: string) => {
+    const targetOrg = forOrgId || currentOrg?.id;
+    if (!targetOrg) return;
+    if (project) localStorage.setItem(projectKey(targetOrg), project.id);
+    else localStorage.removeItem(projectKey(targetOrg));
+    // Only reflect in state if it applies to the org currently in view.
+    if (!forOrgId || forOrgId === currentOrg?.id) setCurrentProject(project);
+  }, [currentOrg?.id]);
+
+  const refreshProjects = useCallback(async () => {
+    if (!orgId) return;
+    const res = await api.listProjects(orgId);
+    const list = res.projects ?? [];
+    setProjects(list);
+    setCurrentProject(prev => (prev ? list.find(p => p.id === prev.id) ?? null : null));
+  }, [orgId]);
+
   return (
-    <OrgContext.Provider value={{ currentOrg, organizations, switchOrg, loading }}>
+    <OrgContext.Provider value={{
+      currentOrg, organizations, switchOrg, refresh, loading,
+      projects, projectsLoading, currentProject, switchProject, refreshProjects,
+    }}>
       {children}
     </OrgContext.Provider>
   );
@@ -66,4 +154,22 @@ export function OrgProvider({ children }: { children: ReactNode }) {
 
 export function useOrg() {
   return useContext(OrgContext);
+}
+
+/**
+ * Resolves the org-scoped route param (a slug) to the org's UUID.
+ *
+ * Org URLs carry the slug (`/app/<slug>/projects`), but the API is UUID-keyed,
+ * so every org-scoped `api.*` call needs the resolved UUID. This hook reads the
+ * `orgId` route param and looks the org up by slug in the loaded org list.
+ *
+ * Returns `orgId: null` while the org list is still loading or the slug is
+ * unknown; callers should gate API calls on a non-null `orgId`.
+ */
+export function useOrgId() {
+  const params = useParams<{ orgId: string }>();
+  const { organizations, loading } = useOrg();
+  const slug = params?.orgId;
+  const org = slug ? organizations.find((o) => o.slug === slug) ?? null : null;
+  return { slug, orgId: org?.id ?? null, loading };
 }

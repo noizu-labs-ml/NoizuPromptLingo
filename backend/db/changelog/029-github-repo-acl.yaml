@@ -1,0 +1,51 @@
+databaseChangeLog:
+  # ── GitHub repo ACL ──────────────────────────────────────────────────────
+  # Make github_repos a first-class protected resource and give each repo an
+  # org-wide baseline visibility:
+  #   private   = invisible to org members unless granted via a group
+  #   org_read  = org members can view (read PRs, comment, read code)
+  #   org_write = org members can edit (create/edit PRs, edit code)
+  # Group-level read/write grants reuse the existing scoped_memberships table
+  # (resource_type = 'github_repo', member_type = 'group'), where the linked
+  # group's role (viewer = read, member = write) is the granted permission.
+  - changeSet:
+      id: 029-add-github-repo-resource-type
+      author: starter-scaffold
+      changes:
+        - sql:
+            # ALTER TYPE ... ADD VALUE cannot run inside a transaction; Liquibase
+            # runs each changeSet in one by default, so split into its own set.
+            sql: ALTER TYPE resource_type_enum ADD VALUE IF NOT EXISTS 'github_repo';
+      rollback:
+        - sql:
+            # Postgres cannot remove an enum value; recreate the type on rollback.
+            sql: |
+              ALTER TYPE resource_type_enum RENAME TO resource_type_enum_old;
+              CREATE TYPE resource_type_enum AS ENUM ('organization', 'project');
+              ALTER TABLE scoped_memberships ALTER COLUMN resource_type TYPE resource_type_enum
+                USING resource_type::text::resource_type_enum;
+              DROP TYPE resource_type_enum_old;
+
+  - changeSet:
+      id: 029-add-github-repo-default-acl
+      author: starter-scaffold
+      changes:
+        - addColumn:
+            tableName: github_repos
+            columns:
+              - column:
+                  name: default_acl
+                  type: varchar(12)
+                  defaultValueComputed: "'private'"
+                  constraints:
+                    nullable: false
+                    validateNullable: false
+        - sql:
+            sql: ALTER TABLE github_repos ADD CONSTRAINT github_repos_default_acl_check
+                 CHECK (default_acl IN ('private', 'org_read', 'org_write'));
+      rollback:
+        - sql:
+            sql: ALTER TABLE github_repos DROP CONSTRAINT IF EXISTS github_repos_default_acl_check;
+        - dropColumn:
+            tableName: github_repos
+            columnName: default_acl

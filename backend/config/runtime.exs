@@ -22,7 +22,7 @@ if otel_endpoint = System.get_env("OTEL_EXPORTER_OTLP_ENDPOINT") do
     }
 end
 
-if config_env() == :prod do
+if config_env() == :prod or config_env() == :dev do
   database_url =
     System.get_env("DATABASE_URL") ||
       raise """
@@ -57,7 +57,19 @@ if config_env() == :prod do
     issuer: "noizu_prompt_lingua",
     secret_key: guardian_secret
 
-  config :noizu_prompt_lingua, :frontend_url, System.get_env("FRONTEND_URL")
+  # Where the SPA lives. After OIDC the backend 302s the browser here; if this
+  # is nil/empty the redirect becomes a relative path against the backend host,
+  # and the browser lands on Phoenix for frontend routes like
+  # /auth/sso-callback (→ NoRouteError). Default to the same host the backend
+  # is served from so single-host deployments work without extra config.
+  frontend_url =
+    case System.get_env("FRONTEND_URL") do
+      nil -> "https://#{host}"
+      "" -> "https://#{host}"
+      url -> url
+    end
+
+  config :noizu_prompt_lingua, :frontend_url, frontend_url
 
   if sendgrid_key = System.get_env("SENDGRID_API_KEY") do
     config :noizu_sendgrid, api_key: sendgrid_key
@@ -90,15 +102,16 @@ if config_env() == :prod do
 
   # ── SSO: OIDC ──────────────────────────────────────────────────
   if oidc_client_id = System.get_env("OIDC_CLIENT_ID") do
-    config :openid_connect, :providers,
-      default: [
-        discovery_document_uri: System.get_env("OIDC_ISSUER") <> "/.well-known/openid-configuration",
-        client_id: oidc_client_id,
-        client_secret: System.get_env("OIDC_CLIENT_SECRET"),
-        redirect_uri: System.get_env("OIDC_REDIRECT_URI") || "https://#{host}/auth/oidc/callback",
-        response_type: "code",
-        scope: "openid email profile"
-      ]
+    # openid_connect 1.0 takes an explicit config map (atom keys) at each call
+    # site rather than a named provider registered in app env.
+    config :noizu_prompt_lingua, :oidc_provider, %{
+      discovery_document_uri: System.get_env("OIDC_ISSUER") <> "/.well-known/openid-configuration",
+      client_id: oidc_client_id,
+      client_secret: System.get_env("OIDC_CLIENT_SECRET"),
+      redirect_uri: System.get_env("OIDC_REDIRECT_URI") || "https://#{host}/auth/oidc/callback",
+      response_type: "code",
+      scope: "openid email profile"
+    }
     config :noizu_prompt_lingua, :oidc_enabled, true
   end
 

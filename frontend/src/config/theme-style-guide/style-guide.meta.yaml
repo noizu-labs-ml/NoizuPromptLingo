@@ -1,24 +1,8 @@
-# ═══════════════════════════════════════════════════════════════
-# THEME IDENTITY — style-guide.meta.yaml
-# ═══════════════════════════════════════════════════════════════
-#
-# Identifies this theme to the styleguide engine.
-#
-# FIELDS:
-#   name        — human-readable theme name (shown in theme switcher)
-#   slug        — URL-safe ID, also the data-design-theme attribute value
-#   title       — full display title for the style guide page
-#   description — one-line philosophy or tagline
-#
-# HOW TO MODIFY:
-#   - Change `slug` only if you also update every selector in
-#     css-snippets.yaml and scoped-vars.yaml that references it
-#   - `name` and `title` are display-only — safe to change freely
-#
-# RELATED: branding.yaml (logo, tone, audience, intro section)
-# ═══════════════════════════════════════════════════════════════
-
-name: "Base Theme"
-slug: "style-guide"
-title: "Style Guide — Base Theme"
-description: "The default design system. Override this in your project's theme-{slug}/ directory."
+# Identity from the canonical editorial theme (design/theme/theme-npl-editorial).
+# slug stays "style-guide" — it is the data-design-theme value the app renders
+# (see frontend/src/app/layout.tsx) and keeps the generated per-theme CSS path
+# (public/themes/style-guide.css) stable.
+name: "NPL — Editorial"
+slug: style-guide
+title: "NoizuPromptLingo"
+description: "The language as a published spec: warm paper, serif type, claret ink, generous margins. Read it like a standard."

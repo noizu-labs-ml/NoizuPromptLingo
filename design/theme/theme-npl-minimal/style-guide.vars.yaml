@@ -1,0 +1,22 @@
+vars:
+  groups:
+    - name: "Seed Colors"
+      vars:
+        white: "#ffffff"
+        black: "#0a0a0b"
+        red: "#0284c7"      # primary accent — calm sky/blue
+        blue: "#4f46e5"     # secondary accent — indigo
+        yellow: "#0d9488"   # tertiary accent — teal
+    - name: "Semantic Colors"
+      vars:
+        success: "#16a34a"
+        warning: "#d97706"
+        error: "#dc2626"
+        info: "#0284c7"
+    - name: "Typography"
+      vars:
+        font-sans: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
+        font-mono: "'JetBrains Mono', 'Menlo', monospace"
+    - name: "Shape"
+      vars:
+        radius: "6px"

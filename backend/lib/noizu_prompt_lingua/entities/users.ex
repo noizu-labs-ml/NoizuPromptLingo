@@ -20,80 +20,6 @@ defmodule NoizuPromptLingua.Users do
 
   def get_user(id, context, options \\ []), do: get(id, context, options)
 
-  def register(details, auth, context, options \\ [])
-
-  def register(details, {:login, {email, password}} = auth, context, options) do
-    middle = details.name[:middle] && Enum.map(details.name.middle, &String.trim/1)
-
-    name = %{
-      first: details.name.first && String.trim(details.name.first),
-      middle: middle,
-      last: details.name.last && String.trim(details.name.last)
-    }
-
-    user_name = String.trim(details.user_name)
-
-    handle =
-      cond do
-        details[:handle] ->
-          details[:handle]
-
-        :else ->
-          {:ok, x} = generate_handle({name.first, name.last}, context, options)
-          x
-      end
-
-    email = NoizuPromptLingua.Users.Credentials.standardize_email(email)
-    password = String.trim(password)
-
-    with :valid <- valid_user_name?(details.user_name),
-         :valid <- valid_name?(name.first, name.middle, name.last),
-         :valid <- valid_login?(email, password),
-         :valid <- user_name_available?(user_name, context, options),
-         :valid <- login_available?(email, context, options) do
-      with {:ok, name_entity} <-
-             %NoizuPromptLingua.Versioned.Names.Name{
-               first: name.first,
-               middle: name.middle,
-               last: name.last,
-               time_stamp: Noizu.Entity.TimeStamp.now()
-             }
-             |> NoizuPromptLingua.EntityRepo.create(context),
-           {:ok, name_ref} <- Noizu.EntityReference.Protocol.ref(name_entity),
-           {:ok, description} <-
-             %NoizuPromptLingua.Versioned.Descriptions.Description{
-               title: "Description",
-               body: details[:description] || "",
-               time_stamp: Noizu.Entity.TimeStamp.now()
-             }
-             |> NoizuPromptLingua.EntityRepo.create(context),
-           {:ok, description_ref} <- Noizu.EntityReference.Protocol.ref(description),
-           {:ok, user} <-
-             %NoizuPromptLingua.Users.User{
-               user_name: user_name,
-               handle: handle,
-               name: name_ref,
-               description: description_ref,
-               status: :active,
-               verified: false,
-               flagged: false,
-               time_stamp: Noizu.Entity.TimeStamp.now()
-             }
-             |> NoizuPromptLingua.EntityRepo.create(context),
-           {:ok, user_ref} <- Noizu.EntityReference.Protocol.ref(user),
-           {:ok, credential} <-
-             NoizuPromptLingua.Users.Credentials.register(user_ref, auth, context, options) do
-        {:ok, {user, credential}}
-      end
-    end
-  end
-
-  def authenticate(auth = {:login, {_email, _password}}, context, options \\ nil) do
-    with {:ok, session} <- NoizuPromptLingua.Users.Credentials.authenticate(auth, context, options) do
-      {:ok, session}
-    end
-  end
-
   def by_handle(handle, context, options \\ []) do
     with record = %Schema{} <- NoizuPromptLingua.Repo.get_by(Schema, %{handle: handle}) do
       settings = Noizu.Entity.Meta.persistence(Entity) |> hd
@@ -240,14 +166,6 @@ defmodule NoizuPromptLingua.Users do
       :else ->
         {:error, {:name, {:middle, :invalid}}}
     end
-  end
-
-  def valid_login?(email, password) do
-    NoizuPromptLingua.Users.Credentials.valid_login?(email, password)
-  end
-
-  def login_available?(email, context, options \\ nil) do
-    NoizuPromptLingua.Users.Credentials.login_available?(email, context, options)
   end
 
   def generate_handle({first, last}, context, options \\ nil) do

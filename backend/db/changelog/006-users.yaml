@@ -12,7 +12,6 @@ databaseChangeLog:
                 name_id uuid REFERENCES versioned_names(id),
                 description_id uuid REFERENCES versioned_descriptions(id),
                 email citext UNIQUE,
-                hashed_password varchar(255),
                 role user_role_enum NOT NULL DEFAULT 'user',
                 bio text,
                 status user_status_enum NOT NULL DEFAULT 'active',

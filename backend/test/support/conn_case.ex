@@ -17,54 +17,27 @@ defmodule NoizuPromptLinguaWeb.ConnCase do
   end
 
   @doc """
-  Creates a test user with login credential and returns access/refresh tokens.
+  Creates a test user + active session and returns access/refresh tokens.
 
   Inserts directly via Ecto schemas (bypasses Noizu entity layer) for speed and
-  simplicity. The auth_providers seed must have run (login provider must exist).
+  simplicity. Auth in production is SSO/Authentik-only (no password login), so
+  this helper mints tokens directly from a session — no credential plumbing.
   """
   def setup_user_and_token(_context \\ %{}) do
-    login_provider_id = UUID.uuid5(:oid, "NoizuPromptLingua.Schema.Auth.Providers.Provider@Login")
-
-    # Ensure the login auth provider exists (idempotent)
-    NoizuPromptLingua.Repo.insert!(
-      %NoizuPromptLingua.Schema.Auth.Providers.Provider{
-        id: login_provider_id,
-        title: "Login",
-        description: "Email and password authentication"
-      },
-      on_conflict: :nothing,
-      conflict_target: :id
-    )
-
     uniq = System.unique_integer([:positive])
     email = "test-#{uniq}@example.com"
-    password = "password123"
-    hashed = Bcrypt.hash_pwd_salt(password)
 
     user = %NoizuPromptLingua.Schema.Users.User{
       id: Ecto.UUID.generate(),
       email: email,
       user_name: "testuser#{uniq}",
       handle: "test#{uniq}",
-      hashed_password: hashed,
       status: :active,
       verified: false,
       flagged: false
     }
 
     {:ok, user} = NoizuPromptLingua.Repo.insert(user)
-
-    credential = %NoizuPromptLingua.Schema.Users.Credentials.UserCredential{
-      id: Ecto.UUID.generate(),
-      user_id: user.id,
-      auth_provider_id: login_provider_id,
-      status: :active,
-      settings: %{"email" => email, "password" => hashed},
-      state: %{},
-      fingerprint: "#{email}:#{hashed}"
-    }
-
-    {:ok, _credential} = NoizuPromptLingua.Repo.insert(credential)
 
     session = %NoizuPromptLingua.Schema.Users.Sessions.UserSession{
       id: Ecto.UUID.generate(),
@@ -93,7 +66,6 @@ defmodule NoizuPromptLinguaWeb.ConnCase do
 
     %{
       user: user,
-      password: password,
       access_token: access_token,
       refresh_token: refresh_token,
       session: session

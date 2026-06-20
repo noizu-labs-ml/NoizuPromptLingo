@@ -1,6 +1,7 @@
 defmodule NoizuPromptLingua.Auth.SSO do
   alias NoizuPromptLingua.Schema.Users.User, as: UserSchema
   alias NoizuPromptLingua.Schema.Users.Credentials.UserCredential, as: CredentialSchema
+  alias NoizuPromptLingua.Schema.Users.Sessions.UserSession, as: SessionSchema
   alias NoizuPromptLingua.Schema.Versioned.Names.Name
   import Ecto.Query, only: [from: 2]
 
@@ -10,10 +11,9 @@ defmodule NoizuPromptLingua.Auth.SSO do
   }
 
   def authenticate_sso(:authentik = provider_type, attrs) do
-    context = Noizu.Context.system()
     email = normalize_email(attrs[:email])
-    provider_ref = @provider_map[provider_type].()
-    {:ok, provider_id} = NoizuPromptLingua.Auth.Providers.Provider.id(provider_ref)
+    provider_ref = unwrap_ref(@provider_map[provider_type].())
+    provider_id = provider_ref_id(provider_ref)
     fingerprint = sso_fingerprint(provider_type, attrs)
 
     # Identity is resolved by the linked credential (provider + external subject)
@@ -26,20 +26,29 @@ defmodule NoizuPromptLingua.Auth.SSO do
 
     case located do
       {:ok, user} ->
-        ensure_sso_credential(user, provider_ref, provider_id, provider_type, attrs, context)
-        create_sso_session(user, provider_type, context)
+        ensure_sso_credential(user, provider_id, provider_type, attrs)
+        create_sso_session(user, provider_type)
 
       :not_found ->
-        if Application.get_env(:noizu_prompt_lingua, :sso_require_invite, false) do
-          {:error, :user_not_provisioned}
-        else
-          auto_provision_user(email, attrs, provider_ref, provider_id, provider_type, context)
-        end
+        # No account yet. The SPA collects name/role/bio on a register form and
+        # calls register_user/2 with this verified identity.
+        {:registration_required,
+         %{provider: to_string(provider_type), sub: sso_subject(attrs), email: email}}
     end
   end
 
   # No alternatives to Authentik.
   def authenticate_sso(_provider_type, _attrs), do: {:error, :unsupported_provider}
+
+  # Auth.Providers.*/0 return Entity.ref/1 results, which may be wrapped as
+  # {:ok, {:ref, module, uuid}}. Normalize to the bare {:ref, module, uuid}.
+  defp unwrap_ref({:ok, ref}), do: ref
+  defp unwrap_ref(ref), do: ref
+
+  # provider_ref is a Noizu entity ref ({:ref, module, uuid}); extract the UUID.
+  # Provider.id/1 returns :unsupported for a bare ref, so unwrap it directly.
+  defp provider_ref_id({:ref, _module, id}), do: id
+  defp provider_ref_id(id) when is_binary(id), do: id
 
   defp normalize_email(nil), do: nil
   defp normalize_email(email) when is_binary(email) do
@@ -76,86 +85,122 @@ defmodule NoizuPromptLingua.Auth.SSO do
     end
   end
 
-  defp ensure_sso_credential(user, provider_ref, provider_id, provider_type, attrs, context) do
+  # Raw-insert the SSO credential if the user doesn't already have an active one
+  # for this provider. (The entity layer's create/3 expects attrs, not a struct.)
+  defp ensure_sso_credential(user, provider_id, provider_type, attrs) do
     fingerprint = sso_fingerprint(provider_type, attrs)
 
-    q =
-      from c in CredentialSchema,
+    exists =
+      from(c in CredentialSchema,
         where: c.user_id == ^user.id,
         where: c.auth_provider_id == ^provider_id,
         where: c.status == :active,
         limit: 1
+      )
+      |> NoizuPromptLingua.Repo.one()
 
-    case NoizuPromptLingua.Repo.one(q) do
-      nil ->
-        %NoizuPromptLingua.Users.Credentials.UserCredential{
-          user: NoizuPromptLingua.Users.User.ref(user.id),
-          auth_provider: provider_ref,
-          status: :active,
-          settings: sso_settings(provider_type, attrs),
-          state: %{},
-          fingerprint: fingerprint,
-          time_stamp: Noizu.Entity.TimeStamp.now()
-        }
-        |> NoizuPromptLingua.EntityRepo.create(context)
+    if is_nil(exists) do
+      NoizuPromptLingua.Repo.insert!(%CredentialSchema{
+        user_id: user.id,
+        auth_provider_id: provider_id,
+        status: :active,
+        settings: sso_settings(provider_type, attrs),
+        state: %{},
+        fingerprint: fingerprint
+      })
+    end
 
-      _existing ->
-        :ok
+    :ok
+  end
+
+  # Returns {:ok, session}. The session carries a one-time claim_code that the
+  # controller puts in the redirect; the SPA exchanges it via claim_session/1.
+  defp create_sso_session(user, provider_type) do
+    claim_code = :crypto.strong_rand_bytes(32) |> Base.url_encode64(padding: false)
+    expires = DateTime.utc_now() |> DateTime.add(60, :second)
+
+    NoizuPromptLingua.Repo.insert(%SessionSchema{
+      user_id: user.id,
+      status: :active,
+      details: %{auth_method: to_string(provider_type)},
+      claim_code: claim_code,
+      claim_code_expires_at: expires
+    })
+  end
+
+  @doc """
+  Atomically claim a session by its one-time code (single-use). The UPDATE
+  matches on claim_code and clears it in the same statement, so concurrent
+  (e.g. StrictMode-doubled) calls can't both succeed.
+  """
+  def claim_session(claim_code) when is_binary(claim_code) do
+    now = DateTime.utc_now()
+
+    {count, rows} =
+      from(s in SessionSchema,
+        where: s.claim_code == ^claim_code,
+        where: s.status == :active,
+        where: s.claim_code_expires_at > ^now,
+        select: s
+      )
+      |> NoizuPromptLingua.Repo.update_all(set: [claim_code: nil])
+
+    case {count, rows} do
+      {1, [session]} -> {:ok, session}
+      _ -> {:error, :invalid_code}
     end
   end
 
-  defp create_sso_session(user, provider_type, context) do
-    user_ref = NoizuPromptLingua.Users.User.ref(user.id)
+  def claim_session(_), do: {:error, :invalid_code}
 
-    %NoizuPromptLingua.Users.Sessions.UserSession{
-      user: user_ref,
-      status: :active,
-      details: %{auth_method: to_string(provider_type)},
-      time_stamp: Noizu.Entity.TimeStamp.now()
-    }
-    |> NoizuPromptLingua.EntityRepo.create(context)
-  end
+  @doc """
+  Create an account from a verified SSO identity plus the register form's
+  name/role/bio, link the SSO credential, and start a session.
+  `identity` is the (string-keyed) map produced by authenticate_sso/registration token.
+  """
+  def register_user(%{provider: provider, sub: sub} = identity, attrs)
+      when provider in ["authentik"] do
+    provider_type = String.to_existing_atom(provider)
+    provider_ref = unwrap_ref(@provider_map[provider_type].())
+    provider_id = provider_ref_id(provider_ref)
+    email = normalize_email(identity[:email])
+    handle = derive_handle(email, %{sub: sub})
+    sso_attrs = %{sub: sub, email: email}
 
-  defp auto_provision_user(email, attrs, provider_ref, provider_id, provider_type, context) do
-    name_attrs = attrs[:name] || %{}
-    first = name_attrs[:first] || ""
-    last = name_attrs[:last] || ""
-    handle = derive_handle(email, attrs)
+    name =
+      NoizuPromptLingua.Repo.insert!(%Name{
+        first: attrs[:first] || "",
+        last: attrs[:last] || "",
+        middle: attrs[:middle] || []
+      })
 
-    {:ok, name} =
-      NoizuPromptLingua.EntityRepo.create(
-        %NoizuPromptLingua.Versioned.Names.Name{first: first, last: last, time_stamp: Noizu.Entity.TimeStamp.now()},
-        context
+    {:ok, user} =
+      NoizuPromptLingua.Repo.insert(
+        %UserSchema{
+          user_name: handle,
+          handle: handle,
+          name_id: name.id,
+          email: email,
+          role: normalize_role(attrs[:role]),
+          bio: attrs[:bio],
+          status: :active,
+          verified: true,
+          flagged: false
+        },
+        on_conflict: :nothing,
+        conflict_target: :email
       )
 
-    {:ok, name_ref} = Noizu.EntityReference.Protocol.ref(name)
-
-    user_schema = %UserSchema{
-      id: UUID.uuid4(),
-      user_name: handle,
-      handle: handle,
-      name_id: name.id,
-      email: email,
-      status: :active,
-      verified: true,
-      flagged: false
-    }
-
-    {:ok, user} = NoizuPromptLingua.Repo.insert(user_schema, on_conflict: :nothing, conflict_target: :email)
-
-    %NoizuPromptLingua.Users.Credentials.UserCredential{
-      user: NoizuPromptLingua.Users.User.ref(user.id),
-      auth_provider: provider_ref,
-      status: :active,
-      settings: sso_settings(provider_type, attrs),
-      state: %{},
-      fingerprint: sso_fingerprint(provider_type, attrs),
-      time_stamp: Noizu.Entity.TimeStamp.now()
-    }
-    |> NoizuPromptLingua.EntityRepo.create(context)
-
-    create_sso_session(user, provider_type, context)
+    ensure_sso_credential(user, provider_id, provider_type, sso_attrs)
+    create_sso_session(user, provider_type)
   end
+
+  def register_user(_identity, _attrs), do: {:error, :unsupported_provider}
+
+  @roles ~w(user moderator admin owner service other)
+  defp normalize_role(role) when is_atom(role), do: normalize_role(Atom.to_string(role))
+  defp normalize_role(role) when role in @roles, do: String.to_existing_atom(role)
+  defp normalize_role(_), do: :user
 
   defp sso_settings(:saml, attrs), do: %{email: attrs[:email], name_id: attrs[:name_id]}
   defp sso_settings(_provider_type, attrs), do: %{email: attrs[:email], sub: attrs[:sub] || attrs[:uid]}

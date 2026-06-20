@@ -1,0 +1,22 @@
+vars:
+  groups:
+    - name: "Seed Colors"
+      vars:
+        white: "#ffffff"
+        black: "#000000"
+        red: "#ff2d00"      # primary accent — electric vermilion
+        blue: "#1500ff"     # secondary accent — pure ultramarine
+        yellow: "#ffe600"   # tertiary accent — hazard yellow
+    - name: "Semantic Colors"
+      vars:
+        success: "#00c853"
+        warning: "#ffe600"
+        error: "#ff2d00"
+        info: "#1500ff"
+    - name: "Typography"
+      vars:
+        font-sans: "'Space Grotesk', 'Arial Narrow', sans-serif"
+        font-mono: "'Space Mono', 'Courier New', monospace"
+    - name: "Shape"
+      vars:
+        radius: "0px"

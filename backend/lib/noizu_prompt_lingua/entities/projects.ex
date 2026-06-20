@@ -20,12 +20,40 @@ defmodule NoizuPromptLingua.Projects do
 
   def list_for_user(user_id, organization_id \\ nil) do
     sql = "SELECT * FROM list_user_accessible_projects($1::uuid, $2::uuid)"
-    params = [user_id, organization_id]
+    params = [uuid_to_bin(user_id), uuid_to_bin(organization_id)]
 
     case Ecto.Adapters.SQL.query(NoizuPromptLingua.Repo, sql, params) do
       {:ok, %{rows: rows, columns: cols}} ->
-        Enum.map(rows, fn row -> Enum.zip(cols, row) |> Map.new() end)
+        Enum.map(rows, fn row ->
+          Enum.zip(cols, row)
+          |> Enum.map(fn {col, val} -> {col, decode_uuid(col, val)} end)
+          |> Map.new()
+        end)
       _ -> []
+    end
+  end
+
+  # Raw SQL results bypass Ecto's type module, so uuid columns come back as
+  # 16-byte binaries that Jason cannot encode. Decode them back to strings for
+  # the columns the stored procedure returns as uuid.
+  @uuid_columns ~w(id organization_id)
+  defp decode_uuid(col, val) when col in @uuid_columns, do: decode_value(val)
+  defp decode_uuid(_col, val), do: val
+
+  defp decode_value(nil), do: nil
+  defp decode_value(<<_::binary-16>> = bin) do
+    case Ecto.UUID.load(bin) do
+      {:ok, uuid} -> uuid
+      :error -> bin
+    end
+  end
+  defp decode_value(val), do: val
+
+  defp uuid_to_bin(nil), do: nil
+  defp uuid_to_bin(uuid) when is_binary(uuid) do
+    case Ecto.UUID.dump(uuid) do
+      {:ok, bin} -> bin
+      :error -> uuid
     end
   end
 

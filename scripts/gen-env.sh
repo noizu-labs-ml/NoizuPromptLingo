@@ -14,6 +14,9 @@ PROJECT_DIR="$4"
 REGISTRY="${5:-ops.noizu.com}"
 HOST_PORT="${6:-8080}"
 
+# Docker image repos / compose project names must be lowercase.
+IMAGE_NS=$(echo "$PROJECT_DIR" | tr '[:upper:]' '[:lower:]')
+
 SECRET_KEY=$(openssl rand -base64 48)
 GUARDIAN_KEY=$(openssl rand -base64 48)
 TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
@@ -33,7 +36,8 @@ cat > .env <<ENVEOF
 # ── Project identity ─────────────────────────────────────────────
 PROJECT_DIR=${PROJECT_DIR}
 PROJECT_SLUG=${SLUG}
-COMPOSE_PROJECT_NAME=${PROJECT_DIR//\./-}
+IMAGE_NS=${IMAGE_NS}
+COMPOSE_PROJECT_NAME=${IMAGE_NS//\./-}
 REGISTRY=${REGISTRY}
 TAG=latest
 

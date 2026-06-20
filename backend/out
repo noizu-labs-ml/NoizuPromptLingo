@@ -1,0 +1,2840 @@
+    [33mwarning:[0m incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/versioned/descriptions/description.ex:16
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Versioned.Descriptions.Description{})
+        # from: lib/noizu_prompt_lingua/entities/versioned/descriptions/description.ex:16
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/versioned/descriptions/description.ex:16
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/versioned/descriptions/description.ex:16
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 16 │   jason_encoder()
+    │   [33m~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/versioned/descriptions/description.ex:16: Jason.Encoder.NoizuPromptLingua.Versioned.Descriptions.Description.encode/2
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/versioned/descriptions/description.ex:16
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Versioned.Descriptions.Description{})
+        # from: lib/noizu_prompt_lingua/entities/versioned/descriptions/description.ex:16
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/versioned/descriptions/description.ex:16
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/versioned/descriptions/description.ex:16
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 16 │   jason_encoder()
+    │   [33m~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/versioned/descriptions/description.ex:16: Jason.Encoder.NoizuPromptLingua.Versioned.Descriptions.Description.encode/2
+
+    [33mwarning:[0m function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Descriptions.Description)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/versioned/descriptions/description.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Descriptions.Description (module)
+
+    [33mwarning:[0m function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Descriptions.Description)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/versioned/descriptions/description.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Descriptions.Description (module)
+
+    [33mwarning:[0m function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Descriptions.Description)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/versioned/descriptions/description.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Descriptions.Description (module)
+
+    [33mwarning:[0m function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Descriptions.Description)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/versioned/descriptions/description.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Descriptions.Description (module)
+
+    [33mwarning:[0m function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Credentials.UserCredential)
+    │
+  8 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/credentials/user_credential.ex:8: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Credentials.UserCredential (module)
+
+    [33mwarning:[0m function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Credentials.UserCredential)
+    │
+  8 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/credentials/user_credential.ex:8: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Credentials.UserCredential (module)
+
+    [33mwarning:[0m function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Credentials.UserCredential)
+    │
+  8 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/credentials/user_credential.ex:8: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Credentials.UserCredential (module)
+
+    [33mwarning:[0m function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Credentials.UserCredential)
+    │
+  8 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/credentials/user_credential.ex:8: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Credentials.UserCredential (module)
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/users/credentials/user_credential.ex:27
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Users.Credentials.UserCredential{})
+        # from: lib/noizu_prompt_lingua/entities/users/credentials/user_credential.ex:27
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/users/credentials/user_credential.ex:27
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/users/credentials/user_credential.ex:27
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 27 │   jason_encoder()
+    │   [33m~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/credentials/user_credential.ex:27: Jason.Encoder.NoizuPromptLingua.Users.Credentials.UserCredential.encode/2
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/users/credentials/user_credential.ex:27
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Users.Credentials.UserCredential{})
+        # from: lib/noizu_prompt_lingua/entities/users/credentials/user_credential.ex:27
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/users/credentials/user_credential.ex:27
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/users/credentials/user_credential.ex:27
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 27 │   jason_encoder()
+    │   [33m~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/credentials/user_credential.ex:27: Jason.Encoder.NoizuPromptLingua.Users.Credentials.UserCredential.encode/2
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/organizations/invite_token.ex:27
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Organizations.InviteToken{})
+        # from: lib/noizu_prompt_lingua/entities/organizations/invite_token.ex:27
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/organizations/invite_token.ex:27
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/organizations/invite_token.ex:27
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 27 │   jason_encoder()
+    │   [33m~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/organizations/invite_token.ex:27: Jason.Encoder.NoizuPromptLingua.Organizations.InviteToken.encode/2
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/organizations/invite_token.ex:27
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Organizations.InviteToken{})
+        # from: lib/noizu_prompt_lingua/entities/organizations/invite_token.ex:27
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/organizations/invite_token.ex:27
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/organizations/invite_token.ex:27
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 27 │   jason_encoder()
+    │   [33m~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/organizations/invite_token.ex:27: Jason.Encoder.NoizuPromptLingua.Organizations.InviteToken.encode/2
+
+    [33mwarning:[0m function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.InviteToken)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/organizations/invite_token.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.InviteToken (module)
+
+    [33mwarning:[0m function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.InviteToken)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/organizations/invite_token.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.InviteToken (module)
+
+    [33mwarning:[0m function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.InviteToken)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/organizations/invite_token.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.InviteToken (module)
+
+    [33mwarning:[0m function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.InviteToken)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/organizations/invite_token.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.InviteToken (module)
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/organizations/organization.ex:17
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Organizations.Organization{})
+        # from: lib/noizu_prompt_lingua/entities/organizations/organization.ex:17
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/organizations/organization.ex:17
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/organizations/organization.ex:17
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 17 │   jason_encoder()
+    │   [33m~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/organizations/organization.ex:17: Jason.Encoder.NoizuPromptLingua.Organizations.Organization.encode/2
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/organizations/organization.ex:17
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Organizations.Organization{})
+        # from: lib/noizu_prompt_lingua/entities/organizations/organization.ex:17
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/organizations/organization.ex:17
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/organizations/organization.ex:17
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 17 │   jason_encoder()
+    │   [33m~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/organizations/organization.ex:17: Jason.Encoder.NoizuPromptLingua.Organizations.Organization.encode/2
+
+    [33mwarning:[0m function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.Organization)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/organizations/organization.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.Organization (module)
+
+    [33mwarning:[0m function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.Organization)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/organizations/organization.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.Organization (module)
+
+    [33mwarning:[0m function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.Organization)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/organizations/organization.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.Organization (module)
+
+    [33mwarning:[0m function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.Organization)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/organizations/organization.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.Organization (module)
+
+    [33mwarning:[0m the following clause cannot match because the previous clauses already matched all possible values:
+
+        _ ->
+
+    it attempts to match on the result of:
+
+        cast(v)
+
+    which has the already matched type:
+
+        dynamic({:ok, term()})
+
+    type warning found at:
+    │
+ 26 │       _ -> raise ArgumentError, "Unsupported: #{inspect(v)}"
+    │ [33m        ~[0m
+    │
+    └─ lib/supports/ecto/serialized_term.ex:26:9: NoizuPromptLingua.Ecto.SerializedTerm.cast!/1
+
+    [33mwarning:[0m the following clause cannot match because the previous clauses already matched all possible values:
+
+        _ ->
+
+    it attempts to match on the result of:
+
+        cast(v)
+
+    which has the already matched type:
+
+        dynamic({:ok, term()})
+
+    type warning found at:
+    │
+ 26 │       _ -> raise ArgumentError, "Unsupported: #{inspect(v)}"
+    │ [33m        ~[0m
+    │
+    └─ lib/supports/ecto/serialized_term.ex:26:9: NoizuPromptLingua.Ecto.SerializedTerm.cast!/1
+
+    [33mwarning:[0m the following clause will never match:
+
+        :error ->
+
+    because it attempts to match on the result of:
+
+        load(value)
+
+    which has type:
+
+        dynamic({:error, :not_valid_base64} or {:ok, term()})
+
+    type warning found at:
+    │
+ 57 │       :error ->
+    │       [33m~~~~~~~~~[0m
+    │
+    └─ lib/supports/ecto/serialized_term.ex:57: NoizuPromptLingua.Ecto.SerializedTerm.load!/1
+
+    [33mwarning:[0m the following clause will never match:
+
+        :error ->
+
+    because it attempts to match on the result of:
+
+        load(value)
+
+    which has type:
+
+        dynamic({:error, :not_valid_base64} or {:ok, term()})
+
+    type warning found at:
+    │
+ 57 │       :error ->
+    │       [33m~~~~~~~~~[0m
+    │
+    └─ lib/supports/ecto/serialized_term.ex:57: NoizuPromptLingua.Ecto.SerializedTerm.load!/1
+
+    [33mwarning:[0m NoizuPromptLingua.Versioned.Names.change_versioned_name/2 is undefined or private. Did you mean:
+
+        * get_versioned_name/2
+        * get_versioned_name/3
+
+    │
+ 55 │                   NoizuPromptLingua.Versioned.Names.change_versioned_name(user.name.data, value)
+    │ [33m                                                    ~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/users.ex:55:53: NoizuPromptLingua.Users.change_user/2
+
+    [33mwarning:[0m NoizuPromptLingua.Versioned.Names.change_versioned_name/2 is undefined or private. Did you mean:
+
+        * get_versioned_name/2
+        * get_versioned_name/3
+
+    │
+ 55 │                   NoizuPromptLingua.Versioned.Names.change_versioned_name(user.name.data, value)
+    │ [33m                                                    ~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/users.ex:55:53: NoizuPromptLingua.Users.change_user/2
+
+    [33mwarning:[0m NoizuPromptLingua.Versioned.Names.change_versioned_name/2 is undefined or private. Did you mean:
+
+        * get_versioned_name/2
+        * get_versioned_name/3
+
+    │
+ 61 │                   NoizuPromptLingua.Versioned.Names.change_versioned_name(
+    │ [33m                                                    ~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/users.ex:61:53: NoizuPromptLingua.Users.change_user/2
+
+    [33mwarning:[0m NoizuPromptLingua.Versioned.Names.change_versioned_name/2 is undefined or private. Did you mean:
+
+        * get_versioned_name/2
+        * get_versioned_name/3
+
+    │
+ 61 │                   NoizuPromptLingua.Versioned.Names.change_versioned_name(
+    │ [33m                                                    ~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/users.ex:61:53: NoizuPromptLingua.Users.change_user/2
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/organizations/membership.ex:21
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Organizations.Membership{})
+        # from: lib/noizu_prompt_lingua/entities/organizations/membership.ex:21
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/organizations/membership.ex:21
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/organizations/membership.ex:21
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 21 │   jason_encoder()
+    │   [33m~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/organizations/membership.ex:21: Jason.Encoder.NoizuPromptLingua.Organizations.Membership.encode/2
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/organizations/membership.ex:21
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Organizations.Membership{})
+        # from: lib/noizu_prompt_lingua/entities/organizations/membership.ex:21
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/organizations/membership.ex:21
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/organizations/membership.ex:21
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 21 │   jason_encoder()
+    │   [33m~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/organizations/membership.ex:21: Jason.Encoder.NoizuPromptLingua.Organizations.Membership.encode/2
+
+    [33mwarning:[0m function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.Membership)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/organizations/membership.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.Membership (module)
+
+    [33mwarning:[0m function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.Membership)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/organizations/membership.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.Membership (module)
+
+    [33mwarning:[0m function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.Membership)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/organizations/membership.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.Membership (module)
+
+    [33mwarning:[0m function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.Membership)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/organizations/membership.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.Membership (module)
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/authz/scoped_memberships/scoped_membership.ex:25
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Authz.ScopedMemberships.ScopedMembership{})
+        # from: lib/noizu_prompt_lingua/entities/authz/scoped_memberships/scoped_membership.ex:25
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/authz/scoped_memberships/scoped_membership.ex:25
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/authz/scoped_memberships/scoped_membership.ex:25
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 25 │   jason_encoder()
+    │   [33m~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/authz/scoped_memberships/scoped_membership.ex:25: Jason.Encoder.NoizuPromptLingua.Authz.ScopedMemberships.ScopedMembership.encode/2
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/authz/scoped_memberships/scoped_membership.ex:25
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Authz.ScopedMemberships.ScopedMembership{})
+        # from: lib/noizu_prompt_lingua/entities/authz/scoped_memberships/scoped_membership.ex:25
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/authz/scoped_memberships/scoped_membership.ex:25
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/authz/scoped_memberships/scoped_membership.ex:25
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 25 │   jason_encoder()
+    │   [33m~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/authz/scoped_memberships/scoped_membership.ex:25: Jason.Encoder.NoizuPromptLingua.Authz.ScopedMemberships.ScopedMembership.encode/2
+
+    [33mwarning:[0m function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.ScopedMemberships.ScopedMembership)
+    │
+ 10 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/authz/scoped_memberships/scoped_membership.ex:10: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.ScopedMemberships.ScopedMembership (module)
+
+    [33mwarning:[0m function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.ScopedMemberships.ScopedMembership)
+    │
+ 10 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/authz/scoped_memberships/scoped_membership.ex:10: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.ScopedMemberships.ScopedMembership (module)
+
+    [33mwarning:[0m function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.ScopedMemberships.ScopedMembership)
+    │
+ 10 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/authz/scoped_memberships/scoped_membership.ex:10: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.ScopedMemberships.ScopedMembership (module)
+
+    [33mwarning:[0m function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.ScopedMemberships.ScopedMembership)
+    │
+ 10 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/authz/scoped_memberships/scoped_membership.ex:10: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.ScopedMemberships.ScopedMembership (module)
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/authz/policies/policy.ex:20
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Authz.Policies.Policy{})
+        # from: lib/noizu_prompt_lingua/entities/authz/policies/policy.ex:20
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/authz/policies/policy.ex:20
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/authz/policies/policy.ex:20
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 20 │   jason_encoder()
+    │   [33m~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/authz/policies/policy.ex:20: Jason.Encoder.NoizuPromptLingua.Authz.Policies.Policy.encode/2
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/authz/policies/policy.ex:20
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Authz.Policies.Policy{})
+        # from: lib/noizu_prompt_lingua/entities/authz/policies/policy.ex:20
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/authz/policies/policy.ex:20
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/authz/policies/policy.ex:20
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 20 │   jason_encoder()
+    │   [33m~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/authz/policies/policy.ex:20: Jason.Encoder.NoizuPromptLingua.Authz.Policies.Policy.encode/2
+
+    [33mwarning:[0m function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.Policies.Policy)
+    │
+ 10 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/authz/policies/policy.ex:10: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.Policies.Policy (module)
+
+    [33mwarning:[0m function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.Policies.Policy)
+    │
+ 10 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/authz/policies/policy.ex:10: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.Policies.Policy (module)
+
+    [33mwarning:[0m function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.Policies.Policy)
+    │
+ 10 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/authz/policies/policy.ex:10: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.Policies.Policy (module)
+
+    [33mwarning:[0m function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.Policies.Policy)
+    │
+ 10 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/authz/policies/policy.ex:10: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.Policies.Policy (module)
+
+    [33mwarning:[0m variable "json_format" is unused (if the variable is not meant to be used, prefix it with an underscore)
+    │
+  6 │     json_format = user_settings[:json_format] || :default
+    │ [33m    ~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/protocols/erp.ex:6:5: Jason.Encoder.Tuple.encode/2
+
+    [33mwarning:[0m variable "json_format" is unused (if the variable is not meant to be used, prefix it with an underscore)
+    │
+  6 │     json_format = user_settings[:json_format] || :default
+    │ [33m    ~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/protocols/erp.ex:6:5: Jason.Encoder.Tuple.encode/2
+
+    [33mwarning:[0m variable "json_format" is unused (if the variable is not meant to be used, prefix it with an underscore)
+    │
+ 25 │     json_format = user_settings[:json_format] || :default
+    │ [33m    ~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/protocols/erp.ex:25:5: Jason.Encoder.Tuple.encode/2
+
+    [33mwarning:[0m variable "json_format" is unused (if the variable is not meant to be used, prefix it with an underscore)
+    │
+ 25 │     json_format = user_settings[:json_format] || :default
+    │ [33m    ~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/protocols/erp.ex:25:5: Jason.Encoder.Tuple.encode/2
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.string/2:
+
+        Jason.Encode.string(
+          sref,
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        term(), {(none() -> term()), term()}
+
+    where "opts" was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/protocols/erp.ex:5:54
+        {_, _, user_settings} = opts
+
+    where "sref" was given the type:
+
+        # type: dynamic()
+        # from: lib/noizu_prompt_lingua/protocols/erp.ex:7:22
+        {:ok, sref} <- Noizu.EntityReference.Protocol.sref(s)
+
+    type warning found at:
+    │
+  9 │       |> Jason.Encode.string(opts)
+    │ [33m                      ~[0m
+    │
+    └─ lib/noizu_prompt_lingua/protocols/erp.ex:9:23: Jason.Encoder.Tuple.encode/2
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.string/2:
+
+        Jason.Encode.string(
+          sref,
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        term(), {(none() -> term()), term()}
+
+    where "opts" was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/protocols/erp.ex:5:54
+        {_, _, user_settings} = opts
+
+    where "sref" was given the type:
+
+        # type: dynamic()
+        # from: lib/noizu_prompt_lingua/protocols/erp.ex:7:22
+        {:ok, sref} <- Noizu.EntityReference.Protocol.sref(s)
+
+    type warning found at:
+    │
+  9 │       |> Jason.Encode.string(opts)
+    │ [33m                      ~[0m
+    │
+    └─ lib/noizu_prompt_lingua/protocols/erp.ex:9:23: Jason.Encoder.Tuple.encode/2
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.string/2:
+
+        Jason.Encode.string(
+          sref,
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        term(), {(none() -> term()), term()}
+
+    where "opts" was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/protocols/erp.ex:24:54
+        {_, _, user_settings} = opts
+
+    where "sref" was given the type:
+
+        # type: dynamic()
+        # from: lib/noizu_prompt_lingua/protocols/erp.ex:26:22
+        {:ok, sref} <- Noizu.EntityReference.Protocol.sref(s)
+
+    type warning found at:
+    │
+ 28 │       |> Jason.Encode.string(opts)
+    │ [33m                      ~[0m
+    │
+    └─ lib/noizu_prompt_lingua/protocols/erp.ex:28:23: Jason.Encoder.Tuple.encode/2
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.string/2:
+
+        Jason.Encode.string(
+          sref,
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        term(), {(none() -> term()), term()}
+
+    where "opts" was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/protocols/erp.ex:24:54
+        {_, _, user_settings} = opts
+
+    where "sref" was given the type:
+
+        # type: dynamic()
+        # from: lib/noizu_prompt_lingua/protocols/erp.ex:26:22
+        {:ok, sref} <- Noizu.EntityReference.Protocol.sref(s)
+
+    type warning found at:
+    │
+ 28 │       |> Jason.Encode.string(opts)
+    │ [33m                      ~[0m
+    │
+    └─ lib/noizu_prompt_lingua/protocols/erp.ex:28:23: Jason.Encoder.Tuple.encode/2
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.string/2:
+
+        Jason.Encode.string(
+          <<inspect(s)::binary>>,
+          opts
+        )
+
+    given types:
+
+        binary(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        term(), {(none() -> term()), term()}
+
+    where "opts" was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/protocols/erp.ex:34:27
+        {_, _, _} = opts
+
+    where "s" was given the type:
+
+        # type: dynamic({...} and not {:ref, term(), term()})
+        # from: lib/noizu_prompt_lingua/protocols/erp.ex:34:14
+        s
+
+    type warning found at:
+    │
+ 36 │     |> Jason.Encode.string(opts)
+    │ [33m                    ~[0m
+    │
+    └─ lib/noizu_prompt_lingua/protocols/erp.ex:36:21: Jason.Encoder.Tuple.encode/2
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.string/2:
+
+        Jason.Encode.string(
+          <<inspect(s)::binary>>,
+          opts
+        )
+
+    given types:
+
+        binary(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        term(), {(none() -> term()), term()}
+
+    where "opts" was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/protocols/erp.ex:34:27
+        {_, _, _} = opts
+
+    where "s" was given the type:
+
+        # type: dynamic({...} and not {:ref, term(), term()})
+        # from: lib/noizu_prompt_lingua/protocols/erp.ex:34:14
+        s
+
+    type warning found at:
+    │
+ 36 │     |> Jason.Encode.string(opts)
+    │ [33m                    ~[0m
+    │
+    └─ lib/noizu_prompt_lingua/protocols/erp.ex:36:21: Jason.Encoder.Tuple.encode/2
+
+    [33mwarning:[0m the following clause is redundant:
+
+        def encode({:ref, _, _} = s, {_, _, user_settings} = opts)
+
+    it has type:
+
+        dynamic({:ref, term(), term()}), dynamic({term(), term(), term()})
+
+    previous clauses have already matched on the following types:
+
+        {:ref, term(), term()}, {term(), term(), term()}
+        {:ref, term(), term()}, {term(), term()}
+
+    │
+ 24 │   def encode({:ref, _, _} = s, {_, _, user_settings} = opts) do
+    │ [33m      ~[0m
+    │
+    └─ lib/noizu_prompt_lingua/protocols/erp.ex:24:7: Jason.Encoder.Tuple.encode/2
+
+    [33mwarning:[0m the following clause is redundant:
+
+        def encode({:ref, _, _} = s, {_, _, user_settings} = opts)
+
+    it has type:
+
+        dynamic({:ref, term(), term()}), dynamic({term(), term(), term()})
+
+    previous clauses have already matched on the following types:
+
+        {:ref, term(), term()}, {term(), term(), term()}
+        {:ref, term(), term()}, {term(), term()}
+
+    │
+ 24 │   def encode({:ref, _, _} = s, {_, _, user_settings} = opts) do
+    │ [33m      ~[0m
+    │
+    └─ lib/noizu_prompt_lingua/protocols/erp.ex:24:7: Jason.Encoder.Tuple.encode/2
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/authz/groups/group.ex:19
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Authz.Groups.Group{})
+        # from: lib/noizu_prompt_lingua/entities/authz/groups/group.ex:19
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/authz/groups/group.ex:19
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/authz/groups/group.ex:19
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 19 │   jason_encoder()
+    │   [33m~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/authz/groups/group.ex:19: Jason.Encoder.NoizuPromptLingua.Authz.Groups.Group.encode/2
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/authz/groups/group.ex:19
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Authz.Groups.Group{})
+        # from: lib/noizu_prompt_lingua/entities/authz/groups/group.ex:19
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/authz/groups/group.ex:19
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/authz/groups/group.ex:19
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 19 │   jason_encoder()
+    │   [33m~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/authz/groups/group.ex:19: Jason.Encoder.NoizuPromptLingua.Authz.Groups.Group.encode/2
+
+    [33mwarning:[0m function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.Groups.Group)
+    │
+ 10 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/authz/groups/group.ex:10: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.Groups.Group (module)
+
+    [33mwarning:[0m function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.Groups.Group)
+    │
+ 10 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/authz/groups/group.ex:10: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.Groups.Group (module)
+
+    [33mwarning:[0m function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.Groups.Group)
+    │
+ 10 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/authz/groups/group.ex:10: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.Groups.Group (module)
+
+    [33mwarning:[0m function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.Groups.Group)
+    │
+ 10 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/authz/groups/group.ex:10: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.Groups.Group (module)
+
+     [33mwarning:[0m variable "name_ref" is unused (if the variable is not meant to be used, prefix it with an underscore)
+     │
+ 131 │     {:ok, name_ref} = Noizu.EntityReference.Protocol.ref(name)
+     │ [33m          ~~~~~~~~[0m
+     │
+     └─ lib/noizu_prompt_lingua/auth/sso.ex:131:11: NoizuPromptLingua.Auth.SSO.auto_provision_user/6
+
+     [33mwarning:[0m variable "name_ref" is unused (if the variable is not meant to be used, prefix it with an underscore)
+     │
+ 131 │     {:ok, name_ref} = Noizu.EntityReference.Protocol.ref(name)
+     │ [33m          ~~~~~~~~[0m
+     │
+     └─ lib/noizu_prompt_lingua/auth/sso.ex:131:11: NoizuPromptLingua.Auth.SSO.auto_provision_user/6
+
+     [33mwarning:[0m variable "provider_id" is unused (if the variable is not meant to be used, prefix it with an underscore)
+     │
+ 119 │   defp auto_provision_user(email, attrs, provider_ref, provider_id, provider_type, context) do
+     │ [33m                                                       ~~~~~~~~~~~[0m
+     │
+     └─ lib/noizu_prompt_lingua/auth/sso.ex:119:56: NoizuPromptLingua.Auth.SSO.auto_provision_user/6
+
+     [33mwarning:[0m variable "provider_id" is unused (if the variable is not meant to be used, prefix it with an underscore)
+     │
+ 119 │   defp auto_provision_user(email, attrs, provider_ref, provider_id, provider_type, context) do
+     │ [33m                                                       ~~~~~~~~~~~[0m
+     │
+     └─ lib/noizu_prompt_lingua/auth/sso.ex:119:56: NoizuPromptLingua.Auth.SSO.auto_provision_user/6
+
+    [33mwarning:[0m unused alias Name
+    │
+  4 │   alias NoizuPromptLingua.Schema.Versioned.Names.Name
+    │ [33m  ~[0m
+    │
+    └─ lib/noizu_prompt_lingua/auth/sso.ex:4:3
+
+    [33mwarning:[0m unused alias Name
+    │
+  4 │   alias NoizuPromptLingua.Schema.Versioned.Names.Name
+    │ [33m  ~[0m
+    │
+    └─ lib/noizu_prompt_lingua/auth/sso.ex:4:3
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/projects/project.ex:26
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Projects.Project{})
+        # from: lib/noizu_prompt_lingua/entities/projects/project.ex:26
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/projects/project.ex:26
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/projects/project.ex:26
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 26 │   jason_encoder()
+    │   [33m~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/projects/project.ex:26: Jason.Encoder.NoizuPromptLingua.Projects.Project.encode/2
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/projects/project.ex:26
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Projects.Project{})
+        # from: lib/noizu_prompt_lingua/entities/projects/project.ex:26
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/projects/project.ex:26
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/projects/project.ex:26
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 26 │   jason_encoder()
+    │   [33m~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/projects/project.ex:26: Jason.Encoder.NoizuPromptLingua.Projects.Project.encode/2
+
+    [33mwarning:[0m function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Projects.Project)
+    │
+ 10 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/projects/project.ex:10: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Projects.Project (module)
+
+    [33mwarning:[0m function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Projects.Project)
+    │
+ 10 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/projects/project.ex:10: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Projects.Project (module)
+
+    [33mwarning:[0m function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Projects.Project)
+    │
+ 10 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/projects/project.ex:10: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Projects.Project (module)
+
+    [33mwarning:[0m function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Projects.Project)
+    │
+ 10 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/projects/project.ex:10: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Projects.Project (module)
+
+    [33mwarning:[0m unused import Plug.Conn
+    │
+  3 │   import Plug.Conn
+    │ [33m  ~[0m
+    │
+    └─ lib/noizu_prompt_lingua_web/plugs/otel_logger_metadata.ex:3:3
+
+    [33mwarning:[0m unused import Plug.Conn
+    │
+  3 │   import Plug.Conn
+    │ [33m  ~[0m
+    │
+    └─ lib/noizu_prompt_lingua_web/plugs/otel_logger_metadata.ex:3:3
+
+    [33mwarning:[0m unused require Logger
+    │
+  4 │   require Logger
+    │ [33m  ~[0m
+    │
+    └─ lib/noizu_prompt_lingua_web/plugs/otel_logger_metadata.ex:4:3
+
+    [33mwarning:[0m unused require Logger
+    │
+  4 │   require Logger
+    │ [33m  ~[0m
+    │
+    └─ lib/noizu_prompt_lingua_web/plugs/otel_logger_metadata.ex:4:3
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/auth/providers/provider.ex:17
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Auth.Providers.Provider{})
+        # from: lib/noizu_prompt_lingua/entities/auth/providers/provider.ex:17
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/auth/providers/provider.ex:17
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/auth/providers/provider.ex:17
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 17 │   jason_encoder()
+    │   [33m~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/auth/providers/provider.ex:17: Jason.Encoder.NoizuPromptLingua.Auth.Providers.Provider.encode/2
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/auth/providers/provider.ex:17
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Auth.Providers.Provider{})
+        # from: lib/noizu_prompt_lingua/entities/auth/providers/provider.ex:17
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/auth/providers/provider.ex:17
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/auth/providers/provider.ex:17
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 17 │   jason_encoder()
+    │   [33m~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/auth/providers/provider.ex:17: Jason.Encoder.NoizuPromptLingua.Auth.Providers.Provider.encode/2
+
+    [33mwarning:[0m function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Auth.Providers.Provider)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/auth/providers/provider.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Auth.Providers.Provider (module)
+
+    [33mwarning:[0m function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Auth.Providers.Provider)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/auth/providers/provider.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Auth.Providers.Provider (module)
+
+    [33mwarning:[0m function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Auth.Providers.Provider)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/auth/providers/provider.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Auth.Providers.Provider (module)
+
+    [33mwarning:[0m function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Auth.Providers.Provider)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/auth/providers/provider.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Auth.Providers.Provider (module)
+
+    [33mwarning:[0m function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Names.Name)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/versioned/names/name.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Names.Name (module)
+
+    [33mwarning:[0m function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Names.Name)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/versioned/names/name.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Names.Name (module)
+
+    [33mwarning:[0m function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Names.Name)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/versioned/names/name.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Names.Name (module)
+
+    [33mwarning:[0m function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Names.Name)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/versioned/names/name.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Names.Name (module)
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/versioned/names/name.ex:17
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Versioned.Names.Name{})
+        # from: lib/noizu_prompt_lingua/entities/versioned/names/name.ex:17
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/versioned/names/name.ex:17
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/versioned/names/name.ex:17
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 17 │   jason_encoder()
+    │   [33m~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/versioned/names/name.ex:17: Jason.Encoder.NoizuPromptLingua.Versioned.Names.Name.encode/2
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/versioned/names/name.ex:17
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Versioned.Names.Name{})
+        # from: lib/noizu_prompt_lingua/entities/versioned/names/name.ex:17
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/versioned/names/name.ex:17
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/versioned/names/name.ex:17
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 17 │   jason_encoder()
+    │   [33m~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/versioned/names/name.ex:17: Jason.Encoder.NoizuPromptLingua.Versioned.Names.Name.encode/2
+
+    [33mwarning:[0m function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Media.Asset)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/media/asset.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Media.Asset (module)
+
+    [33mwarning:[0m function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Media.Asset)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/media/asset.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Media.Asset (module)
+
+    [33mwarning:[0m function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Media.Asset)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/media/asset.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Media.Asset (module)
+
+    [33mwarning:[0m function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Media.Asset)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/media/asset.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Media.Asset (module)
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/media/asset.ex:23
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Media.Asset{})
+        # from: lib/noizu_prompt_lingua/entities/media/asset.ex:23
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/media/asset.ex:23
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/media/asset.ex:23
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 23 │   jason_encoder()
+    │   [33m~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/media/asset.ex:23: Jason.Encoder.NoizuPromptLingua.Media.Asset.encode/2
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/media/asset.ex:23
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Media.Asset{})
+        # from: lib/noizu_prompt_lingua/entities/media/asset.ex:23
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/media/asset.ex:23
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/media/asset.ex:23
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 23 │   jason_encoder()
+    │   [33m~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/media/asset.ex:23: Jason.Encoder.NoizuPromptLingua.Media.Asset.encode/2
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/versioned/strings/string.ex:15
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Versioned.Strings.String{})
+        # from: lib/noizu_prompt_lingua/entities/versioned/strings/string.ex:15
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/versioned/strings/string.ex:15
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/versioned/strings/string.ex:15
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 15 │   jason_encoder()
+    │   [33m~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/versioned/strings/string.ex:15: Jason.Encoder.NoizuPromptLingua.Versioned.Strings.String.encode/2
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/versioned/strings/string.ex:15
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Versioned.Strings.String{})
+        # from: lib/noizu_prompt_lingua/entities/versioned/strings/string.ex:15
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/versioned/strings/string.ex:15
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/versioned/strings/string.ex:15
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 15 │   jason_encoder()
+    │   [33m~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/versioned/strings/string.ex:15: Jason.Encoder.NoizuPromptLingua.Versioned.Strings.String.encode/2
+
+    [33mwarning:[0m function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Strings.String)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/versioned/strings/string.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Strings.String (module)
+
+    [33mwarning:[0m function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Strings.String)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/versioned/strings/string.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Strings.String (module)
+
+    [33mwarning:[0m function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Strings.String)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/versioned/strings/string.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Strings.String (module)
+
+    [33mwarning:[0m function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Strings.String)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/versioned/strings/string.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Strings.String (module)
+
+    [33mwarning:[0m the following clause will never match:
+
+        {:error, changeset}
+            when is_map(changeset) and (is_atom(Ecto.Changeset) or :fail) and
+                   is_map_key(changeset, :__struct__) and
+                   :erlang.map_get(:__struct__, changeset) == Ecto.Changeset ->
+
+    it is expected to match on type:
+
+        none()
+
+    where "changeset" was given the types:
+
+        # type: map()
+        # from: lib/noizu_prompt_lingua_web/controllers/user_controller.ex:26
+        is_map(changeset)
+
+        # type: %{..., __struct__: term()}
+        # from: lib/noizu_prompt_lingua_web/controllers/user_controller.ex:26
+        is_map_key(changeset, :__struct__)
+
+        # type: %{..., __struct__: Ecto.Changeset}
+        # from: lib/noizu_prompt_lingua_web/controllers/user_controller.ex:26
+        :erlang.map_get(:__struct__, changeset)
+
+    type warning found at:
+    │
+ 26 │       {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
+    │       [33m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua_web/controllers/user_controller.ex:26: NoizuPromptLinguaWeb.UserController.update/2
+
+    [33mwarning:[0m the following clause will never match:
+
+        {:error, changeset}
+            when is_map(changeset) and (is_atom(Ecto.Changeset) or :fail) and
+                   is_map_key(changeset, :__struct__) and
+                   :erlang.map_get(:__struct__, changeset) == Ecto.Changeset ->
+
+    it is expected to match on type:
+
+        none()
+
+    where "changeset" was given the types:
+
+        # type: map()
+        # from: lib/noizu_prompt_lingua_web/controllers/user_controller.ex:26
+        is_map(changeset)
+
+        # type: %{..., __struct__: term()}
+        # from: lib/noizu_prompt_lingua_web/controllers/user_controller.ex:26
+        is_map_key(changeset, :__struct__)
+
+        # type: %{..., __struct__: Ecto.Changeset}
+        # from: lib/noizu_prompt_lingua_web/controllers/user_controller.ex:26
+        :erlang.map_get(:__struct__, changeset)
+
+    type warning found at:
+    │
+ 26 │       {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
+    │       [33m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua_web/controllers/user_controller.ex:26: NoizuPromptLinguaWeb.UserController.update/2
+
+    [33mwarning:[0m the following clause will never match:
+
+        {:error, reason} ->
+
+    it is expected to match on type:
+
+        none()
+
+    type warning found at:
+    │
+ 29 │       {:error, reason} ->
+    │       [33m~~~~~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua_web/controllers/user_controller.ex:29: NoizuPromptLinguaWeb.UserController.update/2
+
+    [33mwarning:[0m the following clause will never match:
+
+        {:error, reason} ->
+
+    it is expected to match on type:
+
+        none()
+
+    type warning found at:
+    │
+ 29 │       {:error, reason} ->
+    │       [33m~~~~~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua_web/controllers/user_controller.ex:29: NoizuPromptLinguaWeb.UserController.update/2
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/users/user.ex:31
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Users.User{})
+        # from: lib/noizu_prompt_lingua/entities/users/user.ex:31
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/users/user.ex:31
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/users/user.ex:31
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 31 │   jason_encoder()
+    │   [33m~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/user.ex:31: Jason.Encoder.NoizuPromptLingua.Users.User.encode/2
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/users/user.ex:31
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Users.User{})
+        # from: lib/noizu_prompt_lingua/entities/users/user.ex:31
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/users/user.ex:31
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/users/user.ex:31
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 31 │   jason_encoder()
+    │   [33m~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/user.ex:31: Jason.Encoder.NoizuPromptLingua.Users.User.encode/2
+
+    [33mwarning:[0m function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.User)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/user.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.User (module)
+
+    [33mwarning:[0m function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.User)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/user.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.User (module)
+
+    [33mwarning:[0m function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.User)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/user.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.User (module)
+
+    [33mwarning:[0m function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.User)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/user.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.User (module)
+
+    [33mwarning:[0m OpenIDConnect.authorization_uri/1 is undefined or private. Did you mean:
+
+        * authorization_uri/2
+        * authorization_uri/3
+
+    │
+ 18 │     {:ok, uri} = OpenIDConnect.authorization_uri(:default)
+    │ [33m                               ~[0m
+    │
+    └─ lib/noizu_prompt_lingua_web/controllers/sso_controller.ex:18:32: NoizuPromptLinguaWeb.SSOController.oidc_init/2
+
+    [33mwarning:[0m OpenIDConnect.authorization_uri/1 is undefined or private. Did you mean:
+
+        * authorization_uri/2
+        * authorization_uri/3
+
+    │
+ 18 │     {:ok, uri} = OpenIDConnect.authorization_uri(:default)
+    │ [33m                               ~[0m
+    │
+    └─ lib/noizu_prompt_lingua_web/controllers/sso_controller.ex:18:32: NoizuPromptLinguaWeb.SSOController.oidc_init/2
+
+    [33mwarning:[0m incompatible types given to OpenIDConnect.fetch_tokens/2:
+
+        OpenIDConnect.fetch_tokens(:default, code)
+
+    given types:
+
+        -:default-, dynamic()
+
+    but expected one of:
+
+        %{..., client_id: term(), client_secret: term(), discovery_document_uri: term()}, term()
+
+    where "code" was given the type:
+
+        # type: dynamic()
+        # from: lib/noizu_prompt_lingua_web/controllers/sso_controller.ex:22:27
+        %{"code" => code}
+
+    type warning found at:
+    │
+ 23 │     with {:ok, tokens} <- OpenIDConnect.fetch_tokens(:default, code),
+    │ [33m                                        ~[0m
+    │
+    └─ lib/noizu_prompt_lingua_web/controllers/sso_controller.ex:23:41: NoizuPromptLinguaWeb.SSOController.oidc_callback/2
+
+    [33mwarning:[0m incompatible types given to OpenIDConnect.fetch_tokens/2:
+
+        OpenIDConnect.fetch_tokens(:default, code)
+
+    given types:
+
+        -:default-, dynamic()
+
+    but expected one of:
+
+        %{..., client_id: term(), client_secret: term(), discovery_document_uri: term()}, term()
+
+    where "code" was given the type:
+
+        # type: dynamic()
+        # from: lib/noizu_prompt_lingua_web/controllers/sso_controller.ex:22:27
+        %{"code" => code}
+
+    type warning found at:
+    │
+ 23 │     with {:ok, tokens} <- OpenIDConnect.fetch_tokens(:default, code),
+    │ [33m                                        ~[0m
+    │
+    └─ lib/noizu_prompt_lingua_web/controllers/sso_controller.ex:23:41: NoizuPromptLinguaWeb.SSOController.oidc_callback/2
+
+    [33mwarning:[0m NoizuPromptLingua.Users.Sessions.get/2 is undefined or private. Did you mean:
+
+        * get/3
+
+    │
+ 44 │          {:ok, session} <- NoizuPromptLingua.Users.Sessions.get(session_id, Noizu.Context.system()),
+    │ [33m                                                            ~[0m
+    │
+    └─ lib/noizu_prompt_lingua_web/controllers/sso_controller.ex:44:61: NoizuPromptLinguaWeb.SSOController.exchange/2
+
+    [33mwarning:[0m NoizuPromptLingua.Users.Sessions.get/2 is undefined or private. Did you mean:
+
+        * get/3
+
+    │
+ 44 │          {:ok, session} <- NoizuPromptLingua.Users.Sessions.get(session_id, Noizu.Context.system()),
+    │ [33m                                                            ~[0m
+    │
+    └─ lib/noizu_prompt_lingua_web/controllers/sso_controller.ex:44:61: NoizuPromptLinguaWeb.SSOController.exchange/2
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/users/sessions/user_session.ex:23
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Users.Sessions.UserSession{})
+        # from: lib/noizu_prompt_lingua/entities/users/sessions/user_session.ex:23
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/users/sessions/user_session.ex:23
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/users/sessions/user_session.ex:23
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 23 │   jason_encoder()
+    │   [33m~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/sessions/user_session.ex:23: Jason.Encoder.NoizuPromptLingua.Users.Sessions.UserSession.encode/2
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/users/sessions/user_session.ex:23
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Users.Sessions.UserSession{})
+        # from: lib/noizu_prompt_lingua/entities/users/sessions/user_session.ex:23
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/users/sessions/user_session.ex:23
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/users/sessions/user_session.ex:23
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 23 │   jason_encoder()
+    │   [33m~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/sessions/user_session.ex:23: Jason.Encoder.NoizuPromptLingua.Users.Sessions.UserSession.encode/2
+
+    [33mwarning:[0m function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Sessions.UserSession)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/sessions/user_session.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Sessions.UserSession (module)
+
+    [33mwarning:[0m function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Sessions.UserSession)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/sessions/user_session.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Sessions.UserSession (module)
+
+    [33mwarning:[0m function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Sessions.UserSession)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/sessions/user_session.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Sessions.UserSession (module)
+
+    [33mwarning:[0m function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Sessions.UserSession)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/sessions/user_session.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Sessions.UserSession (module)
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/users/media/asset.ex:26
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Users.Media.Asset{})
+        # from: lib/noizu_prompt_lingua/entities/users/media/asset.ex:26
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/users/media/asset.ex:26
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/users/media/asset.ex:26
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 26 │   jason_encoder()
+    │   [33m~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/media/asset.ex:26: Jason.Encoder.NoizuPromptLingua.Users.Media.Asset.encode/2
+
+    [33mwarning:[0m incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/users/media/asset.ex:26
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Users.Media.Asset{})
+        # from: lib/noizu_prompt_lingua/entities/users/media/asset.ex:26
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/users/media/asset.ex:26
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/users/media/asset.ex:26
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 26 │   jason_encoder()
+    │   [33m~~~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/media/asset.ex:26: Jason.Encoder.NoizuPromptLingua.Users.Media.Asset.encode/2
+
+    [33mwarning:[0m function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Media.Asset)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/media/asset.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Media.Asset (module)
+
+    [33mwarning:[0m function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Media.Asset)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/media/asset.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Media.Asset (module)
+
+    [33mwarning:[0m function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Media.Asset)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/media/asset.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Media.Asset (module)
+
+    [33mwarning:[0m function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Media.Asset)
+    │
+  9 │   def_entity do
+    │   [33m~~~~~~~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/media/asset.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Media.Asset (module)
+
+    [33mwarning:[0m variable "context" is unused (if the variable is not meant to be used, prefix it with an underscore)
+    │
+ 10 │   def create_with_owner(attrs, user_id, context \\ Noizu.Context.system()) do
+    │ [33m                                        ~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/projects.ex:10:41: NoizuPromptLingua.Projects.create_with_owner/3
+
+    [33mwarning:[0m variable "context" is unused (if the variable is not meant to be used, prefix it with an underscore)
+    │
+ 10 │   def create_with_owner(attrs, user_id, context \\ Noizu.Context.system()) do
+    │ [33m                                        ~~~~~~~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/projects.ex:10:41: NoizuPromptLingua.Projects.create_with_owner/3
+
+    [33mwarning:[0m unused import Ecto.Query
+    │
+  8 │   import Ecto.Query
+    │ [33m  ~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/projects.ex:8:3
+
+    [33mwarning:[0m unused import Ecto.Query
+    │
+  8 │   import Ecto.Query
+    │ [33m  ~[0m
+    │
+    └─ lib/noizu_prompt_lingua/entities/projects.ex:8:3
+
+[31m[1mYou have configured application :junit_formatter in your configuration file,
+but the application is not available.
+
+This usually means one of:
+
+  1. You have not added the application as a dependency in a mix.exs file.
+
+  2. You are configuring an application that does not really exist.
+
+Please ensure :junit_formatter exists or remove the configuration.
+[0m
+[31m[1mYou have configured application :junit_formatter in your configuration file,
+but the application is not available.
+
+This usually means one of:
+
+  1. You have not added the application as a dependency in a mix.exs file.
+
+  2. You are configuring an application that does not really exist.
+
+Please ensure :junit_formatter exists or remove the configuration.
+[0m
+    [31merror:[0m undefined function seed/2 (there is no such import)
+    │
+  5 │ seed "auth-provider:authentik" do
+    │ [31m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+    │
+    └─ priv/repo/seeds/auth_providers/002-sso-providers.exs:5
+
+    [31merror:[0m undefined function seed/2 (there is no such import)
+    │
+  5 │ seed "auth-provider:authentik" do
+    │ [31m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+    │
+    └─ priv/repo/seeds/auth_providers/002-sso-providers.exs:5
+
+** (CompileError) priv/repo/seeds/auth_providers/002-sso-providers.exs: cannot compile file (errors have been logged)
+    (elixir 1.20.1) lib/code.ex:649: Code.validated_eval_string/4
+    priv/repo/seeds/prod-seeds.exs:2: (file)
+    (elixir 1.20.1) lib/code.ex:1639: Code.require_file/2
+    (mix 1.20.1) lib/mix/tasks/run.ex:167: Mix.Tasks.Run.run/5
+    (mix 1.20.1) lib/mix/tasks/run.ex:106: Mix.Tasks.Run.run/1
+    (mix 1.20.1) lib/mix/task.ex:502: anonymous fn/3 in Mix.Task.run_task/5
+    (mix 1.20.1) lib/mix/cli.ex:129: Mix.CLI.run_task/2
+    /Users/keithbrings/.config/asdf/installs/elixir/1.20.1-otp-29/bin/mix:7: (file)
+** (CompileError) priv/repo/seeds/auth_providers/002-sso-providers.exs: cannot compile file (errors have been logged)
+    (elixir 1.20.1) lib/code.ex:649: Code.validated_eval_string/4
+    priv/repo/seeds/prod-seeds.exs:2: (file)
+    (elixir 1.20.1) lib/code.ex:1639: Code.require_file/2
+    (mix 1.20.1) lib/mix/tasks/run.ex:167: Mix.Tasks.Run.run/5
+    (mix 1.20.1) lib/mix/tasks/run.ex:106: Mix.Tasks.Run.run/1
+    (mix 1.20.1) lib/mix/task.ex:502: anonymous fn/3 in Mix.Task.run_task/5
+    (mix 1.20.1) lib/mix/cli.ex:129: Mix.CLI.run_task/2
+    /Users/keithbrings/.config/asdf/installs/elixir/1.20.1-otp-29/bin/mix:7: (file)

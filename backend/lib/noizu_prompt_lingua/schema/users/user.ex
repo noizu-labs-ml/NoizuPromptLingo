@@ -9,7 +9,6 @@ defmodule NoizuPromptLingua.Schema.Users.User do
     belongs_to :name, NoizuPromptLingua.Schema.Versioned.Names.Name, type: Ecto.UUID
     belongs_to :description, NoizuPromptLingua.Schema.Versioned.Descriptions.Description, type: Ecto.UUID
     field :email, :string
-    field :hashed_password, :string
     field :role, Ecto.Enum,
       values: [:user, :moderator, :admin, :owner, :service, :other],
       default: :user
@@ -26,7 +25,7 @@ defmodule NoizuPromptLingua.Schema.Users.User do
   def changeset(user, attrs) do
     user
     |> cast(attrs, [:user_name, :handle, :name_id, :description_id, :email,
-                    :hashed_password, :role, :bio, :status, :verified, :flagged])
+                    :role, :bio, :status, :verified, :flagged])
     |> unique_constraint(:email)
     |> unique_constraint(:user_name)
     |> unique_constraint(:handle)

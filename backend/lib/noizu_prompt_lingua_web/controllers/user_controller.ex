@@ -2,7 +2,7 @@ defmodule NoizuPromptLinguaWeb.UserController do
   use NoizuPromptLinguaWeb, :controller
 
   alias NoizuPromptLingua.Guardian
-  alias NoizuPromptLingua.Users
+  alias NoizuPromptLingua.Repo
   alias NoizuPromptLingua.Schema.Users.User, as: UserSchema
   import Ecto.Query, only: [from: 2]
 
@@ -16,17 +16,12 @@ defmodule NoizuPromptLinguaWeb.UserController do
 
   def update(conn, %{"user" => user_params}) do
     user = get_current_user(conn)
-    context = Noizu.Context.system()
 
-    with :ok <- validate_update_params(user, user_params),
-         {:ok, updated_user} <- apply_updates(user, user_params, context) do
+    with {:ok, updated_user} <- apply_updates(user, user_params) do
       conn
       |> put_status(:ok)
       |> json(%{user: serialize_user(updated_user)})
     else
-      {:error, :invalid_current_password} ->
-        conn |> put_status(:unauthorized) |> json(%{error: "Current password is incorrect"})
-
       {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
         conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
 
@@ -39,48 +34,38 @@ defmodule NoizuPromptLinguaWeb.UserController do
     conn |> put_status(:bad_request) |> json(%{error: "user params required"})
   end
 
+  # Resolve the signed-in user as an Ecto schema record (read straight from
+  # the DB columns) so bio/role/etc. always reflect persisted state. The
+  # versioned entity loader does not map every column, which previously made
+  # bio appear "not persisted" after a save.
   defp get_current_user(conn) do
-    session = Guardian.Plug.current_resource(conn)
+    Repo.get(UserSchema, current_user_id(conn))
+  end
 
-    case session.user do
-      {:ref, _, id} ->
-        {:ok, user} = Users.get_user(id, Noizu.Context.system())
-        user
-
-      %NoizuPromptLingua.Users.User{} = user ->
-        user
+  defp current_user_id(conn) do
+    case Guardian.Plug.current_resource(conn).user do
+      {:ref, _, id} -> id
+      %NoizuPromptLingua.Users.User{} = user -> user.id
     end
   end
 
-  defp validate_update_params(user, params) do
-    if params["new_password"] && params["current_password"] do
-      {:ok, auth_provider} = NoizuPromptLingua.Auth.Providers.login()
-      {:ok, auth_provider_id} = NoizuPromptLingua.Auth.Providers.Provider.id(auth_provider)
+  # Roles a user may assign to themselves on their own profile. Privileged
+  # roles (moderator, admin, owner, service) must be granted by an admin and
+  # are rejected here to prevent self-escalation via PATCH /users/me.
+  @self_assignable_roles ~w(user other)a
 
-      q =
-        from c in NoizuPromptLingua.Schema.Users.Credentials.UserCredential,
-          where: c.user_id == ^user.id,
-          where: c.auth_provider_id == ^auth_provider_id,
-          where: c.status == :active,
-          limit: 1
-
-      case NoizuPromptLingua.Repo.one(q) do
-        nil ->
-          {:error, :invalid_current_password}
-
-        credential ->
-          if Bcrypt.verify_pass(params["current_password"], credential.settings["password"]) do
-            :ok
-          else
-            {:error, :invalid_current_password}
-          end
+  defp apply_updates(user, params) do
+    with {:ok, updates} <- build_updates(params) do
+      if map_size(updates) > 0 do
+        from(u in UserSchema, where: u.id == ^user.id)
+        |> Repo.update_all(set: Enum.to_list(updates))
       end
-    else
-      :ok
+
+      {:ok, Repo.get(UserSchema, user.id)}
     end
   end
 
-  defp apply_updates(user, params, _context) do
+  defp build_updates(params) do
     updates = %{}
 
     updates =
@@ -88,17 +73,28 @@ defmodule NoizuPromptLinguaWeb.UserController do
 
     updates = if params["email"], do: Map.put(updates, :email, params["email"]), else: updates
 
-    if map_size(updates) > 0 do
-      from(u in UserSchema, where: u.id == ^user.id)
-      |> NoizuPromptLingua.Repo.update_all(set: Enum.to_list(updates))
-    end
+    updates = if is_binary(params["bio"]), do: Map.put(updates, :bio, params["bio"]), else: updates
 
-    if params["new_password"] do
-      NoizuPromptLingua.Users.Credentials.update_password(user, params["new_password"], Noizu.Context.system())
-    end
+    case params["role"] do
+      nil ->
+        {:ok, updates}
 
-    {:ok, user} = Users.get_user(user.id, Noizu.Context.system())
-    {:ok, user}
+      role when is_binary(role) ->
+        case parse_self_role(role) do
+          {:ok, role_atom} -> {:ok, Map.put(updates, :role, role_atom)}
+          :error -> {:error, "role cannot be set to '#{role}' from your profile"}
+        end
+
+      _ ->
+        {:ok, updates}
+    end
+  end
+
+  defp parse_self_role(role) do
+    atom = String.to_existing_atom(role)
+    if atom in @self_assignable_roles, do: {:ok, atom}, else: :error
+  rescue
+    ArgumentError -> :error
   end
 
   defp serialize_user(user) do
@@ -107,6 +103,8 @@ defmodule NoizuPromptLinguaWeb.UserController do
       email: user.email,
       user_name: user.user_name,
       handle: user.handle,
+      role: user.role,
+      bio: user.bio,
       status: user.status,
       verified: user.verified
     }

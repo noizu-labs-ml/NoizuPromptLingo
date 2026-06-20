@@ -50,39 +50,7 @@ defmodule NoizuPromptLingua.Auth.Providers do
     )
   end
 
-  def login() do
-    Entity.ref(UUID.uuid5(:oid, "NoizuPromptLingua.Schema.Auth.Providers.Provider@Login"))
-  end
-
-  def smart_token() do
-    Entity.ref(UUID.uuid5(:oid, "NoizuPromptLingua.Schema.Auth.Providers.Provider@SmartToken"))
-  end
-
-  def oidc() do
-    Entity.ref(UUID.uuid5(:oid, "NoizuPromptLingua.Schema.Auth.Providers.Provider@OIDC"))
-  end
-
   def authentik() do
     Entity.ref(UUID.uuid5(:oid, "NoizuPromptLingua.Schema.Auth.Providers.Provider@Authentik"))
-  end
-
-  def saml() do
-    Entity.ref(UUID.uuid5(:oid, "NoizuPromptLingua.Schema.Auth.Providers.Provider@SAML"))
-  end
-
-  def google() do
-    Entity.ref(UUID.uuid5(:oid, "NoizuPromptLingua.Schema.Auth.Providers.Provider@Google"))
-  end
-
-  def facebook() do
-    Entity.ref(UUID.uuid5(:oid, "NoizuPromptLingua.Schema.Auth.Providers.Provider@Facebook"))
-  end
-
-  def github() do
-    Entity.ref(UUID.uuid5(:oid, "NoizuPromptLingua.Schema.Auth.Providers.Provider@GitHub"))
-  end
-
-  def linkedin() do
-    Entity.ref(UUID.uuid5(:oid, "NoizuPromptLingua.Schema.Auth.Providers.Provider@LinkedIn"))
   end
 end

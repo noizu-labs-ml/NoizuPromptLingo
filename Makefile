@@ -8,13 +8,15 @@ else
   PROJECT_DIR := $(_CURNAME)
 endif
 COMPOSE_NAME := $(shell echo '$(subst .,-,$(PROJECT_DIR))' | tr '[:upper:]' '[:lower:]')
+# Docker image repos must be lowercase.
+IMAGE_NS := $(shell echo '$(PROJECT_DIR)' | tr '[:upper:]' '[:lower:]')
 REGISTRY     ?= ops.noizu.com
 TAG          ?= latest
 PLATFORMS    ?= linux/amd64,linux/arm64
 
-IMAGE_BACKEND  = $(REGISTRY)/$(PROJECT_DIR)/backend:$(TAG)
-IMAGE_FRONTEND = $(REGISTRY)/$(PROJECT_DIR)/frontend:$(TAG)
-IMAGE_NGINX    = $(REGISTRY)/$(PROJECT_DIR)/nginx:$(TAG)
+IMAGE_BACKEND  = $(REGISTRY)/$(IMAGE_NS)/backend:$(TAG)
+IMAGE_FRONTEND = $(REGISTRY)/$(IMAGE_NS)/frontend:$(TAG)
+IMAGE_NGINX    = $(REGISTRY)/$(IMAGE_NS)/nginx:$(TAG)
 
 # ── Host port assignment (nginx → host) ────────────────────────
 # Source of truth: docker/ports.yaml
@@ -82,14 +84,14 @@ DB_NAME      = $(subst .,_,$(subst -,_,$(PROJECT_DIR)))_dev
 # ── Shared build fragments ──────────────────────────────────────
 FRONTEND_BUILD_ARGS = \
 	--build-arg NEXT_PUBLIC_API_URL=$$(grep NEXT_PUBLIC_API_URL .env 2>/dev/null | cut -d= -f2- || echo "") \
-	--secret id=github_token,env=GITHUB_TOKEN
+	--secret id=npmrc,src=./frontend/.npmrc
 
 # ══════════════════════════════════════════════════════════════════
 
 # ── Dev compose shorthand ──────────────────────────────────────
 DEV_COMPOSE = docker compose -p $(COMPOSE_NAME) -f docker-compose.yaml -f docker-compose.dev.yaml
 
-IMAGE_MIGRATIONS = $(PROJECT_DIR)/migrations:$(TAG)
+IMAGE_MIGRATIONS = $(IMAGE_NS)/migrations:$(TAG)
 
 HELM_CHART_DIR    = helm/start-app
 HELM_OCI_REGISTRY = oci://ghcr.io/the-robot-lives/charts
@@ -228,7 +230,7 @@ dev-clean: ## Remove dev containers and dependency volumes
 
 # ── Live sandbox ───────────────────────────────────────────────
 
-IMAGE_SANDBOX  = $(REGISTRY)/$(PROJECT_DIR)/sandbox:$(TAG)
+IMAGE_SANDBOX  = $(REGISTRY)/$(IMAGE_NS)/sandbox:$(TAG)
 SANDBOX_COMPOSE = docker compose -p $(COMPOSE_NAME) -f docker-compose.yaml -f docker-compose.sandbox.yaml
 
 sandbox: .env ## Build sandbox image (combined frontend+backend+samba)

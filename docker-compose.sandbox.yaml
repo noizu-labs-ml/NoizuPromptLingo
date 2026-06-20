@@ -10,7 +10,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.sandbox
-    image: ${PROJECT_DIR:-start-app}/sandbox:dev
+    image: ${IMAGE_NS:-start-app}/sandbox:dev
     depends_on:
       migrations:
         condition: service_completed_successfully

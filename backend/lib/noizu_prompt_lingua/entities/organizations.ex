@@ -23,6 +23,106 @@ defmodule NoizuPromptLingua.Organizations do
 
   def get_organization(id, context, options \\ []), do: get(id, context, options)
 
+  @doc """
+  Resolves an org identifier from a URL — accepts either a UUID (passed
+  through) or a slug (looked up via the Redis-backed slug cache). Used so the
+  API can accept slugs in URLs while keeping the UUID-keyed data layer intact.
+  Returns `{:ok, uuid}` or `{:error, :not_found}`.
+  """
+  def resolve_org_id(slug_or_uuid) do
+    cond do
+      is_nil(slug_or_uuid) ->
+        {:error, :not_found}
+
+      uuid?(slug_or_uuid) ->
+        {:ok, slug_or_uuid}
+
+      is_binary(slug_or_uuid) ->
+        NoizuPromptLingua.Cache.fetch(
+          NoizuPromptLingua.Cache.slug_key(slug_or_uuid),
+          fn ->
+            case get_id_by_slug(slug_or_uuid) do
+              nil -> {:error, :not_found}
+              id -> {:ok, to_string(id)}
+            end
+          end
+        )
+
+      true ->
+        {:error, :not_found}
+    end
+  end
+
+  @doc "Looks up an org UUID by slug. `slug` is citext (case-insensitive)."
+  def get_id_by_slug(slug) do
+    from(o in Schema, where: o.slug == ^slug, select: o.id)
+    |> NoizuPromptLingua.Repo.one()
+  end
+
+  defp uuid?(value) when is_binary(value) do
+    match?({:ok, _}, Ecto.UUID.cast(value))
+  end
+
+  defp uuid?(_), do: false
+
+  def update_organization(id, attrs) do
+    case NoizuPromptLingua.Repo.get(Schema, id) do
+      nil ->
+        {:error, :not_found}
+
+      org ->
+        old_slug = org.slug
+        result = org |> Schema.changeset(attrs) |> NoizuPromptLingua.Repo.update()
+
+        # Slug may have changed — drop the cached entry for the previous slug
+        # so stale slug → UUID lookups don't survive a rename.
+        with {:ok, _} <- result,
+             new_slug when new_slug != old_slug <- attrs["slug"] || attrs[:slug] do
+          NoizuPromptLingua.Cache.invalidate(NoizuPromptLingua.Cache.slug_key(old_slug))
+        end
+
+        result
+    end
+  end
+
+  @doc """
+  Hard-deletes an organization along with the dependent rows that do not
+  cascade at the database level (scoped memberships for the org and its
+  projects, and invite tokens). Projects and custom roles are removed via
+  `ON DELETE CASCADE`.
+  """
+  def delete_organization(id) do
+    case NoizuPromptLingua.Repo.get(Schema, id) do
+      nil ->
+        {:error, :not_found}
+
+      org ->
+        NoizuPromptLingua.Repo.transaction(fn ->
+          project_ids =
+            from(p in NoizuPromptLingua.Schema.Projects.Project,
+              where: p.organization_id == ^id,
+              select: p.id
+            )
+            |> NoizuPromptLingua.Repo.all()
+
+          from(sm in ScopedMembershipSchema,
+            where:
+              (sm.resource_type == "organization" and sm.resource_id == ^id) or
+                (sm.resource_type == "project" and sm.resource_id in ^project_ids)
+          )
+          |> NoizuPromptLingua.Repo.delete_all()
+
+          from(t in InviteTokenSchema, where: t.organization_id == ^id)
+          |> NoizuPromptLingua.Repo.delete_all()
+
+          case NoizuPromptLingua.Repo.delete(org) do
+            {:ok, deleted} -> deleted
+            {:error, reason} -> NoizuPromptLingua.Repo.rollback(reason)
+          end
+        end)
+    end
+  end
+
   def create_organization_with_owner(attrs, user_id) do
     NoizuPromptLingua.Repo.transaction(fn ->
       with {:ok, org} <- %Schema{} |> Schema.changeset(attrs) |> NoizuPromptLingua.Repo.insert(),
@@ -38,9 +138,22 @@ defmodule NoizuPromptLingua.Organizations do
     from(sm in ScopedMembershipSchema,
       join: o in Schema, on: o.id == sm.resource_id,
       join: g in NoizuPromptLingua.Schema.Authz.Group, on: g.id == sm.group_id,
+      left_join: og in NoizuPromptLingua.Schema.Authz.Group, on: og.name == "owner",
+      left_join: osm in ScopedMembershipSchema,
+        on:
+          osm.resource_id == o.id and osm.resource_type == "organization" and
+            osm.member_type == "user" and osm.group_id == og.id,
+      left_join: ou in NoizuPromptLingua.Schema.Users.User, on: ou.id == osm.member_id,
       where: sm.member_type == "user" and sm.member_id == ^user_id and sm.resource_type == "organization",
       where: is_nil(sm.expires_at) or sm.expires_at > ^DateTime.utc_now(),
-      select: %{id: o.id, slug: o.slug, name: o.name, role: g.name}
+      group_by: [o.id, o.slug, o.name, g.name],
+      select: %{
+        id: o.id,
+        slug: o.slug,
+        name: o.name,
+        role: g.name,
+        owner: fragment("max(coalesce(?, ?, ?))", ou.user_name, ou.handle, ou.email)
+      }
     )
     |> NoizuPromptLingua.Repo.all()
   end

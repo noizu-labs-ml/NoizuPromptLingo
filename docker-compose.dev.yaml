@@ -10,11 +10,12 @@ services:
     build:
       context: ./backend/db
       dockerfile: Dockerfile
+    # Use root .env only — it points DB/Redis at the cluster via host.docker.internal
+    # (backend/.env uses localhost, which is wrong inside a container).
     env_file:
       - .env
-      - backend/.env
-    environment:
-      DB_HOST: db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - infra
     restart: "no"
@@ -23,7 +24,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile.dev
-    image: ${PROJECT_DIR:-start-app}/backend:dev
+    image: ${IMAGE_NS:-start-app}/backend:dev
     depends_on:
       migrations:
         condition: service_completed_successfully
@@ -34,15 +35,16 @@ services:
       - ./backend:/app
       - backend_build:/app/_build
       - backend_deps:/app/deps
+    # Use root .env only (host.docker.internal → cluster via port-forward).
     env_file:
       - .env
-      - backend/.env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       MIX_ENV: dev
       PHX_SERVER: "true"
       PHX_IP: "0.0.0.0"
       PORT: "4000"
-      DB_HOST: db
     expose:
       - "4000"
     networks:
@@ -54,7 +56,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
-    image: ${PROJECT_DIR:-start-app}/frontend:dev
+    image: ${IMAGE_NS:-start-app}/frontend:dev
     command: >
       sh -c "
         if [ -f .npmrc.template ]; then
@@ -73,6 +75,8 @@ services:
       PORT: "3000"
       HOSTNAME: "0.0.0.0"
       GITHUB_TOKEN: "${GITHUB_TOKEN}"
+      # .npmrc.template authenticates to npm.noizu.com with NPM_TOKEN.
+      NPM_TOKEN: "${NPM_TOKEN}"
     expose:
       - "3000"
     networks:

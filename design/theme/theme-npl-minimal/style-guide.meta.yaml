@@ -1,0 +1,5 @@
+name: "NPL — Minimal"
+slug: "npl-minimal"
+title: "NoizuPromptLingo — Minimal Tech"
+description: "Barely-there console UI: monochrome canvas, one cool accent, precise tokens. The competent default."
+base-theme: "theme-style-guide"

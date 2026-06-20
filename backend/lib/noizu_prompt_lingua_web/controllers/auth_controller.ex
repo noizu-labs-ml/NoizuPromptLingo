@@ -3,235 +3,9 @@ defmodule NoizuPromptLinguaWeb.AuthController do
 
   alias NoizuPromptLingua.Guardian
   alias NoizuPromptLingua.Organizations
-
-  def register(conn, %{"invite_token" => raw_token, "user" => user_params}) do
-    with {:ok, invite} <- Organizations.find_active_invite_by_raw_token(raw_token),
-         {:ok, {user, _credential}} <-
-           NoizuPromptLingua.Users.register(
-             %{
-               user_name: user_params["user_name"] || user_params["email"],
-               name: %{
-                 first: user_params["first_name"] || "",
-                 last: user_params["last_name"] || ""
-               },
-               email: user_params["email"],
-               password: user_params["password"]
-             },
-             Noizu.Context.system(),
-             []
-           ),
-         {:ok, session} <- create_session_for_user(user),
-         {:ok, access_token, _} <-
-           Guardian.encode_and_sign(session, %{}, token_type: "access", ttl: {1, :hour}),
-         {:ok, refresh_token, %{"jti" => refresh_jti}} <-
-           Guardian.encode_and_sign(session, %{}, token_type: "refresh", ttl: {7, :day}) do
-      if invite.organization_id do
-        NoizuPromptLingua.Authz.ScopedMemberships.add_member(
-          "organization", invite.organization_id, user.id, "viewer"
-        )
-      end
-
-      Organizations.increment_invite_uses(invite)
-      NoizuPromptLingua.Auth.TokenStore.store_refresh_jti(refresh_jti)
-      NoizuPromptLingua.Events.dispatch(:user_registered, %{user_id: user.id, email: user.email})
-
-      orgs = Organizations.list_user_organizations(user.id)
-
-      conn
-      |> put_status(:created)
-      |> json(%{
-        user: serialize_user(user),
-        organizations: orgs,
-        access_token: access_token,
-        refresh_token: refresh_token
-      })
-    else
-      {:error, :invalid_token} ->
-        conn |> put_status(:unauthorized) |> json(%{error: "Invalid or expired invite token"})
-
-      {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
-        conn |> put_status(:unprocessable_entity) |> json(%{errors: format_changeset_errors(changeset)})
-
-      {:error, reason} ->
-        conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
-    end
-  end
-
-  def register(conn, _params) do
-    conn |> put_status(:bad_request) |> json(%{error: "invite_token is required"})
-  end
-
-  def login(conn, %{"email" => email, "password" => password}) do
-    case NoizuPromptLingua.Users.Credentials.authenticate({:login, {email, password}}, Noizu.Context.system(), []) do
-      {:ok, session} ->
-        {:ok, access_token, _} =
-          Guardian.encode_and_sign(session, %{}, token_type: "access", ttl: {1, :hour})
-
-        {:ok, refresh_token, %{"jti" => refresh_jti}} =
-          Guardian.encode_and_sign(session, %{}, token_type: "refresh", ttl: {7, :day})
-
-        NoizuPromptLingua.Auth.TokenStore.store_refresh_jti(refresh_jti)
-        user = resolve_user_from_session(session)
-        orgs = Organizations.list_user_organizations(user.id)
-
-        conn
-        |> put_status(:ok)
-        |> json(%{
-          user: serialize_user(user),
-          organizations: orgs,
-          access_token: access_token,
-          refresh_token: refresh_token
-        })
-
-      {:error, :invalid_credentials} ->
-        conn |> put_status(:unauthorized) |> json(%{error: "Invalid email or password"})
-
-      {:error, {:login, :invalid_credentials}} ->
-        conn |> put_status(:unauthorized) |> json(%{error: "Invalid email or password"})
-
-      {:error, :invalid_email} ->
-        conn |> put_status(:unprocessable_entity) |> json(%{error: "Invalid email format"})
-
-      {:error, :invalid_password} ->
-        conn |> put_status(:unprocessable_entity) |> json(%{error: "Password too short"})
-    end
-  end
-
-  def request_magic_link(conn, %{"email" => email}) do
-    frontend_url = Application.get_env(:noizu_prompt_lingua, :frontend_url, "http://localhost:3000")
-
-    case NoizuPromptLingua.Auth.SmartTokenAuth.request_magic_link(email) do
-      {:ok, %{encoded_key: encoded_key, user: _user}} ->
-        magic_link = "#{frontend_url}/auth/verify?token=#{encoded_key}"
-        NoizuPromptLingua.Auth.SmartTokenEmail.send_magic_link(email, magic_link)
-
-        response = %{message: "If an account exists with that email, a magic link has been sent."}
-
-        response =
-          if Application.get_env(:noizu_prompt_lingua, :dev_routes) do
-            Map.put(response, :dev_link, magic_link)
-          else
-            response
-          end
-
-        conn |> put_status(:ok) |> json(response)
-
-      {:error, :not_found} ->
-        conn
-        |> put_status(:ok)
-        |> json(%{message: "If an account exists with that email, a magic link has been sent."})
-    end
-  end
-
-  def verify_magic_link(conn, %{"token" => token_key}) do
-    case NoizuPromptLingua.Auth.SmartTokenAuth.verify_magic_link(token_key, conn) do
-      {:ok, session} ->
-        {:ok, access_token, _} =
-          Guardian.encode_and_sign(session, %{}, token_type: "access", ttl: {1, :hour})
-
-        {:ok, refresh_token, %{"jti" => refresh_jti}} =
-          Guardian.encode_and_sign(session, %{}, token_type: "refresh", ttl: {7, :day})
-
-        NoizuPromptLingua.Auth.TokenStore.store_refresh_jti(refresh_jti)
-        user = resolve_user_from_session(session)
-        orgs = Organizations.list_user_organizations(user.id)
-
-        conn
-        |> put_status(:ok)
-        |> json(%{
-          user: serialize_user(user),
-          organizations: orgs,
-          access_token: access_token,
-          refresh_token: refresh_token
-        })
-
-      {:error, _reason} ->
-        conn |> put_status(:unauthorized) |> json(%{error: "Invalid or expired magic link"})
-    end
-  end
-
-  def request_otp_login(conn, %{"email" => email}) do
-    case NoizuPromptLingua.Auth.SmartTokenAuth.request_otp_login(email) do
-      {:ok, %{otp_code: otp_code, user: _user}} ->
-        NoizuPromptLingua.Auth.SmartTokenEmail.send_otp_login(email, otp_code)
-
-        response = %{message: "If an account exists with that email, a login code has been sent."}
-
-        response =
-          if Application.get_env(:noizu_prompt_lingua, :dev_routes) do
-            Map.put(response, :dev_code, otp_code)
-          else
-            response
-          end
-
-        conn |> put_status(:ok) |> json(response)
-
-      {:error, :not_found} ->
-        conn
-        |> put_status(:ok)
-        |> json(%{message: "If an account exists with that email, a login code has been sent."})
-    end
-  end
-
-  def verify_otp_login(conn, %{"email" => email, "code" => code}) do
-    case NoizuPromptLingua.Auth.SmartTokenAuth.verify_otp_login(email, code, conn) do
-      {:ok, session} ->
-        {:ok, access_token, _} =
-          Guardian.encode_and_sign(session, %{}, token_type: "access", ttl: {1, :hour})
-
-        {:ok, refresh_token, %{"jti" => refresh_jti}} =
-          Guardian.encode_and_sign(session, %{}, token_type: "refresh", ttl: {7, :day})
-
-        NoizuPromptLingua.Auth.TokenStore.store_refresh_jti(refresh_jti)
-        user = resolve_user_from_session(session)
-        orgs = Organizations.list_user_organizations(user.id)
-
-        conn
-        |> put_status(:ok)
-        |> json(%{
-          user: serialize_user(user),
-          organizations: orgs,
-          access_token: access_token,
-          refresh_token: refresh_token
-        })
-
-      {:error, _reason} ->
-        conn |> put_status(:unauthorized) |> json(%{error: "Invalid or expired code"})
-    end
-  end
-
-  def request_password_reset(conn, %{"email" => email}) do
-    case NoizuPromptLingua.Auth.SmartTokenAuth.request_password_reset(email) do
-      {:ok, %{otp_code: otp_code, user: _user}} ->
-        NoizuPromptLingua.Auth.SmartTokenEmail.send_password_reset(email, otp_code)
-
-        response = %{message: "If an account exists with that email, a reset code has been sent."}
-
-        response =
-          if Application.get_env(:noizu_prompt_lingua, :dev_routes) do
-            Map.put(response, :dev_code, otp_code)
-          else
-            response
-          end
-
-        conn |> put_status(:ok) |> json(response)
-
-      {:error, :not_found} ->
-        conn
-        |> put_status(:ok)
-        |> json(%{message: "If an account exists with that email, a reset code has been sent."})
-    end
-  end
-
-  def verify_password_reset(conn, %{"email" => email, "code" => code, "new_password" => new_password}) do
-    case NoizuPromptLingua.Auth.SmartTokenAuth.verify_password_reset(email, code, new_password, conn) do
-      {:ok, _credential} ->
-        conn |> put_status(:ok) |> json(%{message: "Password has been reset. You can now log in."})
-
-      {:error, _reason} ->
-        conn |> put_status(:unauthorized) |> json(%{error: "Invalid or expired code"})
-    end
-  end
+  alias NoizuPromptLingua.Repo
+  alias NoizuPromptLingua.Schema.Users.User, as: UserSchema
+  alias NoizuPromptLingua.MCPApiKeys
 
   def refresh(conn, %{"refresh_token" => refresh_token}) do
     alias NoizuPromptLingua.Auth.TokenStore
@@ -279,53 +53,6 @@ defmodule NoizuPromptLinguaWeb.AuthController do
     |> json(%{user: serialize_user(user), organizations: orgs})
   end
 
-  def send_verification(conn, _params) do
-    session = Guardian.Plug.current_resource(conn)
-    user = resolve_user_from_session(session)
-    frontend_url = Application.get_env(:noizu_prompt_lingua, :frontend_url, "http://localhost:3000")
-
-    case NoizuPromptLingua.Auth.SmartTokenAuth.request_email_verification(user.email) do
-      {:ok, %{encoded_key: encoded_key}} ->
-        verification_link = "#{frontend_url}/auth/verify-email?token=#{encoded_key}"
-        NoizuPromptLingua.Auth.SmartTokenEmail.send_verification_email(user.email, verification_link)
-
-        response = %{message: "Verification email sent."}
-
-        response =
-          if Application.get_env(:noizu_prompt_lingua, :dev_routes) do
-            Map.put(response, :dev_link, verification_link)
-          else
-            response
-          end
-
-        conn |> put_status(:ok) |> json(response)
-
-      {:error, _} ->
-        conn |> put_status(:ok) |> json(%{message: "Verification email sent."})
-    end
-  end
-
-  def verify_email(conn, %{"token" => token_key}) do
-    case NoizuPromptLingua.Auth.SmartTokenAuth.verify_email_token(token_key) do
-      {:ok, user} ->
-        NoizuPromptLingua.Events.dispatch(:user_verified, %{user_id: user.id})
-        conn |> put_status(:ok) |> json(%{message: "Email verified successfully."})
-
-      {:error, _} ->
-        conn |> put_status(:unauthorized) |> json(%{error: "Invalid or expired verification link"})
-    end
-  end
-
-  defp create_session_for_user(user) do
-    user_ref = NoizuPromptLingua.Users.User.ref(user.id)
-    session_entity = %NoizuPromptLingua.Users.Sessions.UserSession{
-      user: user_ref,
-      status: :active,
-      details: %{}
-    }
-    NoizuPromptLingua.Users.Sessions.create(session_entity, Noizu.Context.system())
-  end
-
   defp resolve_user_from_session(%NoizuPromptLingua.Users.Sessions.UserSession{} = session) do
     case session.user do
       {:ref, _, id} ->
@@ -335,21 +62,149 @@ defmodule NoizuPromptLinguaWeb.AuthController do
     end
   end
 
+  # Serialize from the Ecto schema (DB columns) so role/bio are always
+  # present — the versioned entity loader does not map every column, which
+  # left role and bio missing from GET /auth/me (the api.me() call).
   defp serialize_user(user) do
+    u = Repo.get(UserSchema, user.id) || user
+
     %{
-      id: user.id,
-      email: user.email,
-      user_name: user.user_name,
-      handle: user.handle,
-      status: user.status,
-      verified: user.verified
+      id: u.id,
+      email: u.email,
+      user_name: u.user_name,
+      handle: u.handle,
+      role: u.role,
+      bio: u.bio,
+      status: u.status,
+      verified: u.verified
     }
   end
 
-  defp format_changeset_errors(changeset) do
+  # ── User-scoped MCP API keys ──────────────────────────────────────────────────
+
+  def mcp_config(conn, _params) do
+    # Frontend host may differ from the backend host (separate deployments),
+    # so prefer the configured frontend URL when deriving MCP connection URLs.
+    host =
+      Application.get_env(:noizu_prompt_lingua, :frontend_url)
+      |> derive_host() ||
+        derive_host(conn) ||
+        "localhost"
+
+    conn |> put_status(:ok) |> json(%{host: host, servers: NoizuPromptLingua.MCPServers.for_host(host)})
+  end
+
+  defp derive_host(nil), do: nil
+  defp derive_host(url) when is_binary(url) do
+    case URI.parse(url) do
+      %URI{host: host} when is_binary(host) and host != "" -> host
+      _ -> nil
+    end
+  end
+  defp derive_host(conn) do
+    case conn.host do
+      host when is_binary(host) and host != "" -> host
+      _ -> nil
+    end
+  end
+
+  @doc """
+  Mints an MCP JWT from a pasted raw API key, scoped to the logged-in user.
+
+  Unlike the unauthenticated bootstrap (`POST /api/mcp/token`), this requires a
+  valid session and refuses to mint for a key whose owner is not the caller.
+  This lets a logged-in user recover setup access for a key whose raw value
+  they still hold, without recreating it.
+  """
+  def mint_mcp_token(conn, %{"key" => raw_key}) when is_binary(raw_key) and raw_key != "" do
+    session = Guardian.Plug.current_resource(conn)
+    user = resolve_user_from_session(session)
+
+    case MCPApiKeys.verify_api_key(raw_key) do
+      nil ->
+        conn |> put_status(:unauthorized) |> json(%{error: "invalid or expired API key"})
+
+      api_key ->
+        if api_key.user_id == user.id do
+          mcp_user = %{id: user.id, email: user.email, name: user.user_name}
+          {:ok, token, expires_at} = NoizuPromptLingua.Token.mint(mcp_user, api_key)
+          conn |> put_status(:ok) |> json(%{token: token, expires_at: DateTime.to_iso8601(expires_at)})
+        else
+          # Key exists but belongs to a different user — never reveal that.
+          conn |> put_status(:unauthorized) |> json(%{error: "invalid or expired API key"})
+        end
+    end
+  end
+
+  def mint_mcp_token(conn, _params) do
+    conn |> put_status(:bad_request) |> json(%{error: "key required"})
+  end
+
+  def list_mcp_keys(conn, _params) do
+    session = Guardian.Plug.current_resource(conn)
+    user = resolve_user_from_session(session)
+
+    keys =
+      MCPApiKeys.list_for_user(user.id)
+      |> Enum.map(&mcp_key_json/1)
+
+    conn |> put_status(:ok) |> json(%{keys: keys})
+  end
+
+  def create_mcp_key(conn, %{"key" => key_params}) do
+    session = Guardian.Plug.current_resource(conn)
+    user = resolve_user_from_session(session)
+    label = Map.get(key_params, "label", "default")
+
+    case MCPApiKeys.generate_api_key(user.id, label) do
+      {:ok, key, raw_key} ->
+        conn
+        |> put_status(:created)
+        |> json(%{key: mcp_key_json(key), raw_key: raw_key})
+
+      {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
+        conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+
+      {:error, reason} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
+    end
+  end
+
+  def revoke_mcp_key(conn, %{"id" => id}) do
+    session = Guardian.Plug.current_resource(conn)
+    user = resolve_user_from_session(session)
+
+    case MCPApiKeys.list_for_user(user.id) |> Enum.find(fn k -> k.id == id end) do
+      nil ->
+        conn |> put_status(:not_found) |> json(%{error: "Key not found"})
+
+      key ->
+        case MCPApiKeys.revoke(id) do
+          {:ok, key} ->
+            conn |> put_status(:ok) |> json(%{key: mcp_key_json(key)})
+
+          {:error, reason} ->
+            conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
+        end
+    end
+  end
+
+  defp mcp_key_json(key) do
+    %{
+      id: key.id,
+      label: key.label,
+      key_prefix: key.key_prefix,
+      status: key.status,
+      last_used_at: key.last_used_at,
+      expires_at: key.expires_at,
+      inserted_at: key.inserted_at
+    }
+  end
+
+  defp format_errors(changeset) do
     Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
-      Regex.replace(~r"%{(\w+)}", msg, fn _, key ->
-        opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
+      Enum.reduce(opts, msg, fn {key, value}, acc ->
+        String.replace(acc, "%{#{key}}", to_string(value))
       end)
     end)
   end

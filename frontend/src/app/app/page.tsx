@@ -20,7 +20,7 @@ export default function AppPage() {
   if (!user) return null;
 
   if (organizations.length === 1) {
-    router.push(`/app/${organizations[0].id}`);
+    router.push(`/app/${organizations[0].slug}`);
     return null;
   }
 
@@ -34,7 +34,7 @@ export default function AppPage() {
           {organizations.map((org) => (
             <li key={org.id} style={{ marginBottom: '1rem' }}>
               <a
-                href={`/app/${org.id}`}
+                href={`/app/${org.slug}`}
                 style={{ display: 'block', padding: '1rem', border: '1px solid #ccc', borderRadius: '8px', textDecoration: 'none' }}
               >
                 <strong>{org.name}</strong>

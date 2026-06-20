@@ -1,0 +1,22 @@
+vars:
+  groups:
+    - name: "Seed Colors"
+      vars:
+        white: "#e6edf3"
+        black: "#010409"
+        red: "#3fb950"      # primary accent — phosphor green signal
+        blue: "#58a6ff"     # secondary accent — link cyan
+        yellow: "#d29922"   # tertiary accent — amber warning glow
+    - name: "Semantic Colors"
+      vars:
+        success: "#3fb950"
+        warning: "#d29922"
+        error: "#f85149"
+        info: "#58a6ff"
+    - name: "Typography"
+      vars:
+        font-sans: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
+        font-mono: "'JetBrains Mono', 'Fira Code', 'Menlo', monospace"
+    - name: "Shape"
+      vars:
+        radius: "4px"

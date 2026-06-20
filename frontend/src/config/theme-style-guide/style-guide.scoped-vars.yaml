@@ -1,33 +1,3 @@
-# ═══════════════════════════════════════════════════════════════
-# SCOPED VARIABLES — style-guide.scoped-vars.yaml
-# ═══════════════════════════════════════════════════════════════
-#
-# Defines CSS custom properties scoped to specific selectors, with
-# per-mode (light/dark) values and layout container presets.
-#
-# HOW IT WORKS:
-#   - `sections` declares named scopes (standard, dark, layout), each
-#     with a CSS selector and variable prefix
-#   - `vars[]` entries produce --{prefix}-{name} properties under
-#     their respective selectors
-#   - Vars with `selector` + `selector-body` also emit a CSS rule
-#     applying the property to that selector (e.g. .content max-width)
-#   - Multi-section vars generate overrides per mode (light → standard,
-#     dark → dark selector)
-#
-# HOW TO MODIFY:
-#   - Add a scoped var: append a `- name:` entry to the `vars` list
-#   - Add a layout preset: add a `- name:` entry with section: layout,
-#     a `selector`, and a `selector-body` string
-#   - The `values:` map under a section expands to multiple prefixed vars
-#     (e.g. `max-width: "1200px"` → --layout-{name}-max-width: 1200px)
-#   - Run `npm run regen` after changes
-#
-# RELATED: style-guide.color-modes.yaml (simpler light/dark definitions)
-#          style-guide.vars.yaml (global tokens these reference)
-#          style-guide.page-layouts.yaml (layout presets for the viewer)
-# ═══════════════════════════════════════════════════════════════
-
 scoped-vars:
   prefix: "theme"
 
@@ -43,36 +13,44 @@ scoped-vars:
       prefix: "layout"
 
   vars:
+    # ═══════════════════════════════════════
+    # Content container
+    # ═══════════════════════════════════════
     - name: content-container-type
       value: "inline-size"
       selector: ".content"
-      selector-body: "container-type: var(--theme-content-container-type)"
+      selector-body: "container-type: var(--content-container-type)"
 
     - name: content-position
       value:
         - section: standard
           value: "relative"
+        - section: dark
+          value: "relative"
       selector: ".content"
-      selector-body: "position: var(--theme-content-position)"
+      selector-body: "position: var(--content-position)"
 
+    # ═══════════════════════════════════════
+    # Color modes: surfaces, text, borders
+    # ═══════════════════════════════════════
     - name: surface
       value:
         - section: standard
           value: "var(--white)"
         - section: dark
-          value: "#1a1a1a"
+          value: "var(--slate-800)"
 
     - name: surface-alt
       value:
         - section: standard
-          value: "var(--gray-50)"
+          value: "var(--slate-50)"
         - section: dark
-          value: "#252525"
+          value: "var(--slate-700)"
 
     - name: surface-inverse
       value:
         - section: standard
-          value: "var(--black)"
+          value: "var(--slate-900)"
         - section: dark
           value: "var(--gray-200)"
 
@@ -81,21 +59,21 @@ scoped-vars:
         - section: standard
           value: "var(--black)"
         - section: dark
-          value: "#e8e8e8"
+          value: "var(--gray-100)"
 
     - name: text-secondary
       value:
         - section: standard
-          value: "var(--gray-700)"
+          value: "var(--gray-600)"
         - section: dark
-          value: "var(--gray-400)"
+          value: "var(--gray-200)"
 
     - name: text-muted
       value:
         - section: standard
-          value: "var(--gray-500)"
+          value: "var(--gray-400)"
         - section: dark
-          value: "var(--gray-500)"
+          value: "var(--gray-300)"
 
     - name: text-inverse
       value:
@@ -107,97 +85,315 @@ scoped-vars:
     - name: border
       value:
         - section: standard
-          value: "var(--gray-200)"
+          value: "var(--slate-200)"
         - section: dark
-          value: "#333333"
+          value: "var(--gray-700)"
 
     - name: border-strong
       value:
         - section: standard
-          value: "var(--gray-300)"
+          value: "var(--slate-300)"
         - section: dark
           value: "var(--gray-600)"
 
     - name: shadow-color
       value:
         - section: standard
-          value: "rgba(0,0,0,0.08)"
+          value: "rgba(0,0,0,0.1)"
         - section: dark
-          value: "rgba(0,0,0,0.3)"
+          value: "rgba(0,0,0,0.4)"
 
-    - name: surface-accent
+    # ═══════════════════════════════════════
+    # Light mode: tint opacity override (was 12% engine default → 70%)
+    # The styleguide engine derives -light / -tint tokens at 12% against the
+    # surface. These standard-section overrides bump them to 70% so tinted
+    # surfaces read as solid accent washes instead of faint hints.
+    # ═══════════════════════════════════════
+    - name: brand-red-light
       value:
         - section: standard
-          value: "var(--blue-light)"
+          value: "color-mix(in srgb, var(--brand-red) 70%, var(--surface))"
+    - name: brand-blue-light
+      value:
+        - section: standard
+          value: "color-mix(in srgb, var(--brand-blue) 70%, var(--surface))"
+    - name: brand-yellow-light
+      value:
+        - section: standard
+          value: "color-mix(in srgb, var(--brand-yellow) 70%, var(--surface))"
+    - name: rose-light
+      value:
+        - section: standard
+          value: "color-mix(in srgb, var(--rose) 70%, var(--surface))"
+    - name: orange-light
+      value:
+        - section: standard
+          value: "color-mix(in srgb, var(--orange) 70%, var(--surface))"
+    - name: amber-light
+      value:
+        - section: standard
+          value: "color-mix(in srgb, var(--amber) 70%, var(--surface))"
+    - name: lime-light
+      value:
+        - section: standard
+          value: "color-mix(in srgb, var(--lime) 70%, var(--surface))"
+    - name: emerald-light
+      value:
+        - section: standard
+          value: "color-mix(in srgb, var(--emerald) 70%, var(--surface))"
+    - name: teal-light
+      value:
+        - section: standard
+          value: "color-mix(in srgb, var(--teal) 70%, var(--surface))"
+    - name: cyan-light
+      value:
+        - section: standard
+          value: "color-mix(in srgb, var(--cyan) 70%, var(--surface))"
+    - name: sky-light
+      value:
+        - section: standard
+          value: "color-mix(in srgb, var(--sky) 70%, var(--surface))"
+    - name: indigo-light
+      value:
+        - section: standard
+          value: "color-mix(in srgb, var(--indigo) 70%, var(--surface))"
+    - name: violet-light
+      value:
+        - section: standard
+          value: "color-mix(in srgb, var(--violet) 70%, var(--surface))"
+    - name: purple-light
+      value:
+        - section: standard
+          value: "color-mix(in srgb, var(--purple) 70%, var(--surface))"
+    - name: fuchsia-light
+      value:
+        - section: standard
+          value: "color-mix(in srgb, var(--fuchsia) 70%, var(--surface))"
+    - name: pink-light
+      value:
+        - section: standard
+          value: "color-mix(in srgb, var(--pink) 70%, var(--surface))"
+    - name: success-tint
+      value:
+        - section: standard
+          value: "color-mix(in srgb, var(--success) 70%, var(--surface))"
+    - name: warning-tint
+      value:
+        - section: standard
+          value: "color-mix(in srgb, var(--warning) 70%, var(--surface))"
+    - name: error-tint
+      value:
+        - section: standard
+          value: "color-mix(in srgb, var(--error) 70%, var(--surface))"
+    - name: info-tint
+      value:
+        - section: standard
+          value: "color-mix(in srgb, var(--info) 70%, var(--surface))"
+
+    # ═══════════════════════════════════════
+    # Dark mode: brand color brightening
+    # ═══════════════════════════════════════
+    - name: brand-red
+      value:
         - section: dark
-          value: "rgba(0,71,171,0.18)"
-
-    - name: surface-warning
+          value: "color-mix(in srgb, #e20613 75%, white)"
+    - name: brand-red-light
       value:
-        - section: standard
-          value: "var(--yellow-light)"
         - section: dark
-          value: "rgba(245,197,24,0.15)"
-
-    - name: surface-danger
+          value: "color-mix(in srgb, #e20613 18%, var(--surface))"
+    - name: brand-red-mid
       value:
-        - section: standard
-          value: "var(--red-light)"
         - section: dark
-          value: "rgba(226,6,19,0.15)"
+          value: "color-mix(in srgb, #e20613 30%, var(--surface))"
 
-    - name: text-link
+    - name: brand-blue
       value:
-        - section: standard
-          value: "var(--blue)"
         - section: dark
-          value: "#7eb8ff"
-
-    - name: border-accent
+          value: "color-mix(in srgb, #0047ab 75%, white)"
+    - name: brand-blue-light
       value:
-        - section: standard
-          value: "var(--black)"
         - section: dark
-          value: "#cccccc"
-
-    - name: focus-ring
+          value: "color-mix(in srgb, #0047ab 18%, var(--surface))"
+    - name: brand-blue-mid
       value:
-        - section: standard
-          value: "rgba(0,71,171,0.3)"
         - section: dark
-          value: "rgba(126,184,255,0.35)"
+          value: "color-mix(in srgb, #0047ab 30%, var(--surface))"
 
-    - name: bg
+    - name: brand-yellow
       value:
-        - section: standard
-          value: "var(--white)"
         - section: dark
-          value: "#1a1a1a"
-
-    - name: card-border-color
+          value: "color-mix(in srgb, #f5c518 75%, white)"
+    - name: brand-yellow-light
       value:
-        - section: standard
-          value: "var(--black)"
         - section: dark
-          value: "#444444"
-
-    - name: card-bg
+          value: "color-mix(in srgb, #f5c518 18%, var(--surface))"
+    - name: brand-yellow-mid
       value:
-        - section: standard
-          value: "var(--white)"
         - section: dark
-          value: "#1e1e1e"
+          value: "color-mix(in srgb, #f5c518 30%, var(--surface))"
 
-    - name: radius-none
+    # ═══════════════════════════════════════
+    # Dark mode: palette color brightening
+    # ═══════════════════════════════════════
+    - name: rose
       value:
-        - section: standard
-          value: "0"
-
-    - name: radius-sm
+        - section: dark
+          value: "color-mix(in srgb, #e11d48 75%, white)"
+    - name: rose-light
       value:
-        - section: standard
-          value: "2px"
+        - section: dark
+          value: "color-mix(in srgb, #e11d48 18%, var(--surface))"
 
+    - name: orange
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #ea580c 75%, white)"
+    - name: orange-light
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #ea580c 18%, var(--surface))"
+
+    - name: amber
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #d97706 75%, white)"
+    - name: amber-light
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #d97706 18%, var(--surface))"
+
+    - name: lime
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #65a30d 75%, white)"
+    - name: lime-light
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #65a30d 18%, var(--surface))"
+
+    - name: emerald
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #059669 75%, white)"
+    - name: emerald-light
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #059669 18%, var(--surface))"
+
+    - name: teal
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #0d9488 75%, white)"
+    - name: teal-light
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #0d9488 18%, var(--surface))"
+
+    - name: cyan
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #0891b2 75%, white)"
+    - name: cyan-light
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #0891b2 18%, var(--surface))"
+
+    - name: sky
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #0284c7 75%, white)"
+    - name: sky-light
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #0284c7 18%, var(--surface))"
+
+    - name: indigo
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #4f46e5 75%, white)"
+    - name: indigo-light
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #4f46e5 18%, var(--surface))"
+
+    - name: violet
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #7c3aed 75%, white)"
+    - name: violet-light
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #7c3aed 18%, var(--surface))"
+
+    - name: purple
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #9333ea 75%, white)"
+    - name: purple-light
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #9333ea 18%, var(--surface))"
+
+    - name: fuchsia
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #c026d3 75%, white)"
+    - name: fuchsia-light
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #c026d3 18%, var(--surface))"
+
+    - name: pink
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #db2777 75%, white)"
+    - name: pink-light
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #db2777 18%, var(--surface))"
+
+    # ═══════════════════════════════════════
+    # Dark mode: semantic state brightening
+    # ═══════════════════════════════════════
+    - name: success
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #1a8a3f 75%, white)"
+    - name: success-tint
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #1a8a3f 18%, var(--surface))"
+
+    - name: warning
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #c27a00 75%, white)"
+    - name: warning-tint
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #c27a00 18%, var(--surface))"
+
+    - name: error
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #c41a1a 75%, white)"
+    - name: error-tint
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #c41a1a 18%, var(--surface))"
+
+    - name: info
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #0047ab 75%, white)"
+    - name: info-tint
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #0047ab 18%, var(--surface))"
+
+    # ═══════════════════════════════════════
+    # Layout presets
+    # ═══════════════════════════════════════
     - name: standard
       value:
         - section: layout
@@ -205,7 +401,7 @@ scoped-vars:
             max-width: "1200px"
             padding: "var(--space-6)"
             margin: "0 auto"
-            content-bg: "transparent"
+            content-bg: "var(--surface-alt)"
       selector: ".content"
       selector-body: "max-width: var(--layout-standard-max-width); padding: var(--layout-standard-padding); margin: var(--layout-standard-margin); background: var(--layout-standard-content-bg)"
 
@@ -213,10 +409,10 @@ scoped-vars:
       value:
         - section: layout
           values:
-            max-width: "1200px"
+            max-width: "80vw"
             padding: "var(--space-6)"
             margin: "0 auto"
-            content-bg: "transparent"
+            content-bg: "var(--surface-alt)"
       selector: ".content.wide"
       selector-body: "max-width: var(--layout-wide-max-width); padding: var(--layout-wide-padding); margin: var(--layout-wide-margin); background: var(--layout-wide-content-bg)"
 
@@ -227,7 +423,7 @@ scoped-vars:
             max-width: "100%"
             padding: "var(--space-4)"
             margin: "0"
-            content-bg: "transparent"
+            content-bg: "var(--surface)"
       selector: ".content.full"
       selector-body: "max-width: var(--layout-full-max-width); padding: var(--layout-full-padding); margin: var(--layout-full-margin); background: var(--layout-full-content-bg)"
 
@@ -235,10 +431,10 @@ scoped-vars:
       value:
         - section: layout
           values:
-            max-width: "600px"
+            max-width: "var(--space-90)"
             padding: "var(--space-6)"
             margin: "0 auto"
-            content-bg: "transparent"
+            content-bg: "var(--surface-alt)"
       selector: ".content.narrow"
       selector-body: "max-width: var(--layout-narrow-max-width); padding: var(--layout-narrow-padding); margin: var(--layout-narrow-margin); background: var(--layout-narrow-content-bg)"
 
@@ -246,9 +442,9 @@ scoped-vars:
       value:
         - section: layout
           values:
-            max-width: "720px"
+            max-width: "860px"
             padding: "var(--space-6)"
             margin: "0 auto"
-            content-bg: "transparent"
+            content-bg: "var(--surface-alt)"
       selector: ".content.article"
       selector-body: "max-width: var(--layout-article-max-width); padding: var(--layout-article-padding); margin: var(--layout-article-margin); background: var(--layout-article-content-bg)"

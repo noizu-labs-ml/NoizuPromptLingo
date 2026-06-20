@@ -1,0 +1,221 @@
+databaseChangeLog:
+  # Wiki domain. Spaces are bound to an organization (required) with an optional
+  # project. Pages live in a space and may nest (parent_id). Comments,
+  # attachments, and reactions hang off pages; reactions are polymorphic over
+  # pages and comments (target_type + target_id, no FK).
+
+  - changeSet:
+      id: create-table-wiki-spaces
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE wiki_spaces (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+                project_id uuid REFERENCES projects(id) ON DELETE SET NULL,
+                slug varchar(255) NOT NULL,
+                name varchar(255) NOT NULL,
+                description text,
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: wiki_spaces
+
+  - changeSet:
+      id: create-indexes-wiki-spaces
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_wiki_spaces_org_slug
+            tableName: wiki_spaces
+            unique: true
+            columns:
+              - column:
+                  name: organization_id
+              - column:
+                  name: slug
+        - createIndex:
+            indexName: idx_wiki_spaces_project_id
+            tableName: wiki_spaces
+            columns:
+              - column:
+                  name: project_id
+      rollback:
+        - dropIndex:
+            indexName: idx_wiki_spaces_org_slug
+        - dropIndex:
+            indexName: idx_wiki_spaces_project_id
+
+  - changeSet:
+      id: create-table-wiki-pages
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE wiki_pages (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                space_id uuid NOT NULL REFERENCES wiki_spaces(id) ON DELETE CASCADE,
+                parent_id uuid REFERENCES wiki_pages(id) ON DELETE SET NULL,
+                slug varchar(255) NOT NULL,
+                title varchar(255) NOT NULL,
+                content text,
+                position integer NOT NULL DEFAULT 0,
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: wiki_pages
+
+  - changeSet:
+      id: create-indexes-wiki-pages
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_wiki_pages_space_slug
+            tableName: wiki_pages
+            unique: true
+            columns:
+              - column:
+                  name: space_id
+              - column:
+                  name: slug
+        - createIndex:
+            indexName: idx_wiki_pages_parent_id
+            tableName: wiki_pages
+            columns:
+              - column:
+                  name: parent_id
+      rollback:
+        - dropIndex:
+            indexName: idx_wiki_pages_space_slug
+        - dropIndex:
+            indexName: idx_wiki_pages_parent_id
+
+  - changeSet:
+      id: create-table-wiki-comments
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE wiki_comments (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                page_id uuid NOT NULL REFERENCES wiki_pages(id) ON DELETE CASCADE,
+                parent_id uuid REFERENCES wiki_comments(id) ON DELETE CASCADE,
+                author varchar(255),
+                body text NOT NULL,
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: wiki_comments
+
+  - changeSet:
+      id: create-indexes-wiki-comments
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_wiki_comments_page_id
+            tableName: wiki_comments
+            columns:
+              - column:
+                  name: page_id
+        - createIndex:
+            indexName: idx_wiki_comments_parent_id
+            tableName: wiki_comments
+            columns:
+              - column:
+                  name: parent_id
+      rollback:
+        - dropIndex:
+            indexName: idx_wiki_comments_page_id
+        - dropIndex:
+            indexName: idx_wiki_comments_parent_id
+
+  - changeSet:
+      id: create-table-wiki-attachments
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE wiki_attachments (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                page_id uuid NOT NULL REFERENCES wiki_pages(id) ON DELETE CASCADE,
+                filename varchar(255) NOT NULL,
+                mime_type varchar(255),
+                url varchar(2048),
+                byte_size bigint,
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: wiki_attachments
+
+  - changeSet:
+      id: create-indexes-wiki-attachments
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_wiki_attachments_page_id
+            tableName: wiki_attachments
+            columns:
+              - column:
+                  name: page_id
+      rollback:
+        - dropIndex:
+            indexName: idx_wiki_attachments_page_id
+
+  - changeSet:
+      id: create-table-wiki-reactions
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE wiki_reactions (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                target_type varchar(255) NOT NULL,
+                target_id uuid NOT NULL,
+                emoji varchar(255) NOT NULL,
+                actor varchar(255) NOT NULL,
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: wiki_reactions
+
+  - changeSet:
+      id: create-indexes-wiki-reactions
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_wiki_reactions_target
+            tableName: wiki_reactions
+            columns:
+              - column:
+                  name: target_type
+              - column:
+                  name: target_id
+        - createIndex:
+            indexName: idx_wiki_reactions_unique
+            tableName: wiki_reactions
+            unique: true
+            columns:
+              - column:
+                  name: target_type
+              - column:
+                  name: target_id
+              - column:
+                  name: emoji
+              - column:
+                  name: actor
+      rollback:
+        - dropIndex:
+            indexName: idx_wiki_reactions_target
+        - dropIndex:
+            indexName: idx_wiki_reactions_unique
