@@ -66,6 +66,26 @@ defmodule NoizuPromptLingua.Github do
     |> NoizuPromptLingua.Repo.all()
   end
 
+  @doc """
+  Get a single repo by UUID or repo_full_name within an organization.
+  Preloads the mapped token. Returns nil if not found.
+  """
+  def get_repo(organization_id, repo_id_or_full_name) do
+    case Ecto.UUID.cast(repo_id_or_full_name) do
+      {:ok, uuid} ->
+        RepoSchema
+        |> where([r], r.organization_id == ^organization_id and r.id == ^uuid)
+        |> preload([:token])
+        |> NoizuPromptLingua.Repo.one()
+
+      :error ->
+        RepoSchema
+        |> where([r], r.organization_id == ^organization_id and r.repo_full_name == ^repo_id_or_full_name)
+        |> preload([:token])
+        |> NoizuPromptLingua.Repo.one()
+    end
+  end
+
   def create_repo(attrs) do
     %RepoSchema{}
     |> RepoSchema.changeset(attrs)

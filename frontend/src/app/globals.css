@@ -1045,6 +1045,15 @@ pre.mermaid { background: var(--surface-alt); border: 1px solid var(--border); b
   box-shadow: 0 20px 60px var(--shadow-color, rgba(16,22,30,0.25));
 }
 .modal-card--sm { max-width: 24rem; }
+.modal-card--lg { max-width: 48rem; }
+
+/* ─── Asset outputs list ─── */
+.asset-outputs { list-style: none; margin: var(--space-2, 12px) 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2, 10px); }
+.asset-outputs__row { border: 1px solid var(--border); border-radius: 10px; padding: var(--space-2, 10px); }
+.asset-outputs__main { display: flex; align-items: center; gap: var(--space-2, 10px); }
+.asset-outputs__variant { font-family: var(--font-mono); font-weight: 600; }
+.asset-outputs__actions { display: flex; flex-wrap: wrap; gap: var(--space-1, 6px); margin-top: var(--space-1, 6px); }
+.asset-outputs__content { margin-top: var(--space-2, 10px); max-height: 16rem; overflow: auto; background: var(--slate-100); padding: var(--space-2, 10px); border-radius: 8px; font-size: var(--font-size-xs, 0.75rem); white-space: pre-wrap; }
 .modal-title { font-size: var(--font-size-lg, 1.125rem); font-weight: 700; margin: 0 0 var(--space-4, 1rem); color: var(--text); }
 .modal-body { font-size: var(--font-size-sm, 0.875rem); color: var(--text-secondary); margin: 0 0 var(--space-4, 1rem); line-height: 1.5; }
 .modal-actions { display: flex; justify-content: flex-end; gap: var(--space-2, 0.5rem); margin-top: var(--space-2); }

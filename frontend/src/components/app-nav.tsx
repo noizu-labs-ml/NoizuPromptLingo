@@ -7,6 +7,7 @@ import {
   Squares2X2Icon,
   ClockIcon,
   CubeIcon,
+  PhotoIcon,
   CheckBadgeIcon,
   ChatBubbleLeftRightIcon,
   TicketIcon,
@@ -16,6 +17,8 @@ import {
   BookOpenIcon,
   KeyIcon,
   DocumentTextIcon,
+  BeakerIcon,
+  CodeBracketIcon,
 } from '@heroicons/react/24/outline';
 import { useOrg } from '@/context/org';
 
@@ -40,14 +43,17 @@ const NAV: NavDef[] = [
   { href: '/projects', Icon: Squares2X2Icon, label: 'Projects', orgScoped: true },
   { href: '/sessions', Icon: ClockIcon, label: 'Sessions', orgScoped: true },
   { href: '/artifacts', Icon: CubeIcon, label: 'Artifacts', orgScoped: true },
+  { href: '/assets', Icon: PhotoIcon, label: 'Assets', orgScoped: true },
   { href: '/reviews', Icon: CheckBadgeIcon, label: 'Reviews', orgScoped: true },
   { href: '/chat', Icon: ChatBubbleLeftRightIcon, label: 'Chatrooms', orgScoped: true },
   { href: '/wiki', Icon: DocumentTextIcon, label: 'Wiki', orgScoped: true },
+  { href: '/github', Icon: CodeBracketIcon, label: 'GitHub', orgScoped: true },
   { href: '/tickets', Icon: TicketIcon, label: 'Tickets', orgScoped: true },
   { href: '/boards', Icon: ViewColumnsIcon, label: 'Boards', orgScoped: true },
   { href: '/ticket-types', Icon: TagIcon, label: 'Ticket Types', orgScoped: true },
   { href: '/ticket-fields', Icon: AdjustmentsHorizontalIcon, label: 'Ticket Fields', orgScoped: true },
   { href: '/npl-conventions', Icon: BookOpenIcon, label: 'NPL Conventions', orgScoped: true },
+  { href: '/mock-mcp', Icon: BeakerIcon, label: 'Mock MCP', orgScoped: true },
   { href: '/app/admin/authz', Icon: KeyIcon, label: 'Authz' },
 ];
 

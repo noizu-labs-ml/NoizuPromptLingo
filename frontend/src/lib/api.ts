@@ -76,6 +76,58 @@ export interface GithubRepoGrant {
   display_name?: string | null;
 }
 
+// ── GitHub API operations (live data proxied through the backend) ──────────
+export interface GithubRepoSummary {
+  id: string;
+  repo_full_name: string;
+  default_acl: "private" | "org_read" | "org_write";
+  token_preview: string | null;
+  inserted_at: string;
+}
+
+export interface GithubUserRef {
+  login: string;
+}
+
+export interface GithubPullRequest {
+  id: number;
+  number: number;
+  title: string;
+  state: "open" | "closed";
+  user?: GithubUserRef | null;
+  head?: { ref: string; sha: string };
+  base?: { ref: string };
+  body?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface GithubIssue {
+  id: number;
+  number: number;
+  title: string;
+  state: "open" | "closed";
+  user?: GithubUserRef | null;
+  assignees?: GithubUserRef[];
+  labels?: Array<{ name: string }>;
+  body?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface GithubComment {
+  id: number;
+  user?: GithubUserRef | null;
+  body: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface GithubBranch {
+  name: string;
+  commit?: { sha: string };
+}
+
 // MCP API keys: long-lived credentials used to mint short-lived MCP JWTs.
 // The raw key is returned ONCE at creation (raw_key field); reads only expose
 // the prefix for recognition.
@@ -299,6 +351,75 @@ export interface IterationInput {
   goal?: string | null;
   starts_on?: string | null;
   ends_on?: string | null;
+}
+
+// ── Assets: media-prompt entries + generated outputs ──
+// Org-scoped (required), optional project. An entry stores a `.media.prompt`
+// (YAML); generating produces outputs backed by artifacts.
+export const ASSET_TYPES = [
+  "image",
+  "video",
+  "music",
+  "voice",
+  "component",
+  "html",
+  "diagram",
+  "document",
+  "svg",
+  "style_guide",
+] as const;
+export type AssetType = (typeof ASSET_TYPES)[number];
+export const ASSET_STATUSES = ["draft", "generating", "review", "published", "archived"] as const;
+export type AssetStatus = (typeof ASSET_STATUSES)[number];
+
+export interface AssetEntry {
+  id: string;
+  organization_id: string;
+  project_id?: string | null;
+  slug: string;
+  title: string;
+  asset_type: AssetType | string;
+  status: AssetStatus | string;
+  quality?: string | null;
+  prompt_yaml: string;
+  tags?: string[];
+  product_targets?: string[];
+  active_output_id?: string | null;
+  inserted_at?: string;
+  updated_at?: string;
+}
+
+export interface AssetEntryInput {
+  slug?: string;
+  title?: string;
+  asset_type?: AssetType | string;
+  status?: AssetStatus | string;
+  quality?: string | null;
+  prompt_yaml?: string;
+  tags?: string[];
+  product_targets?: string[];
+  project_id?: string | null;
+}
+
+export interface AssetOutput {
+  id: string;
+  entry_id: string;
+  artifact_id?: string | null;
+  provider?: string | null;
+  model?: string | null;
+  variant_number: number;
+  eval_score?: number | null;
+  eval_status: string;
+  status: string;
+  inserted_at?: string;
+}
+
+export interface AssetHistory {
+  id: string;
+  action: string;
+  actor?: string | null;
+  details?: Record<string, unknown> | null;
+  inserted_at?: string;
 }
 
 // ── Ticket field & type definitions ──
@@ -638,6 +759,142 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return res.json();
 }
 
+// ── Mock MCP: LLM-driven pseudo MCP servers (org-scoped) ──
+export type MockMCPStatus = "draft" | "active" | "archived";
+
+export interface MockMCPToolDef {
+  name: string;
+  description?: string;
+  inputSchema?: Record<string, unknown>;
+  // Private response/format spec — owner-facing only, stripped from the MCP
+  // gateway before clients see it.
+  handler?: string;
+}
+
+export interface MockMCPResourceDef {
+  uri: string;
+  name?: string;
+  description?: string;
+  mimeType?: string;
+  handler?: string;
+}
+
+export interface MockMCPPromptArg {
+  name: string;
+  description?: string;
+  required?: boolean;
+}
+
+export interface MockMCPPromptDef {
+  name: string;
+  description?: string;
+  arguments?: MockMCPPromptArg[];
+  handler?: string;
+}
+
+// An org-scoped, reusable LLM connection. The api key is never returned —
+// `api_key_set` reports whether one is stored.
+export interface MockMCPLLM {
+  id: string;
+  label: string;
+  provider: string;
+  model: string;
+  endpoint?: string | null;
+  api_key_set?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface MockMCPLLMInput {
+  label: string;
+  provider: string;
+  model: string;
+  endpoint?: string;
+  api_key?: string;
+}
+
+export interface MockMCPDefinition {
+  id: string;
+  slug: string;
+  title: string;
+  prompt: string;
+  status: MockMCPStatus | string;
+  tools_json: MockMCPToolDef[];
+  resources_json?: MockMCPResourceDef[];
+  prompts_json?: MockMCPPromptDef[];
+  schema_sql?: string | null;
+  active_llm_id?: string | null;
+  active_llm?: MockMCPLLM | null;
+  organization_id?: string;
+  db_name?: string | null;
+  db_provisioned?: boolean;
+  created_by?: string | null;
+  project_id?: string | null;
+  tool_count?: number;
+  resource_count?: number;
+  prompt_count?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface MockMCPInput {
+  slug: string;
+  title: string;
+  prompt: string;
+  active_llm_id?: string | null;
+  project_id?: string | null;
+  auto_generate_tools?: boolean;
+}
+
+// Curated provider/model quick-pick for the "new LLM connection" form.
+export interface MockMCPModel {
+  id: string;
+  label: string;
+  provider: string;
+  model: string;
+}
+
+export interface MockMCPCallLog {
+  id: string;
+  method: string;
+  tool_name?: string | null;
+  arguments?: Record<string, unknown> | null;
+  response?: Record<string, unknown> | null;
+  latency_ms?: number | null;
+  error?: string | null;
+  at?: string;
+}
+
+// One internal data-op the agent ran while fulfilling a request.
+export interface MockMCPTraceEntry {
+  op: string;
+  args?: Record<string, unknown>;
+  result?: unknown;
+  error?: string;
+}
+
+export interface MockMCPContentBlock {
+  type: string;
+  text?: string;
+  [k: string]: unknown;
+}
+
+export interface MockMCPInvokeResult {
+  content: MockMCPContentBlock[];
+  trace: MockMCPTraceEntry[];
+  latency_ms: number;
+}
+
+export interface MockMCPDbResult {
+  columns: string[];
+  rows: unknown[][];
+}
+
+export interface MockMCPRedisEntry {
+  key: string;
+  value: string | null;
+}
+
 export const api = {
   requestMagicLink(email: string) {
     return request<MagicLinkResponse>("/api/v1/auth/magic-link", {
@@ -870,6 +1127,128 @@ export const api = {
     return request<{ message: string }>(`/api/v1/admin/organizations/${orgId}/github/repos/${repoId}/grants/${grantId}`, {
       method: "DELETE",
     });
+  },
+
+  // ── GitHub operations (org-scoped, ACL-checked, proxied to GitHub API) ───
+  listGithubRepos(orgId: string) {
+    return request<{ repos: GithubRepoSummary[]; count: number }>(
+      `/api/v1/organizations/${orgId}/github`,
+    );
+  },
+
+  listGithubPulls(
+    orgId: string,
+    repoId: string,
+    opts?: { state?: "open" | "closed" | "all"; page?: number; per_page?: number },
+  ) {
+    const qs = new URLSearchParams(
+      Object.entries(opts ?? {}).filter(([, v]) => v != null).map(([k, v]) => [k, String(v)]),
+    );
+    const suffix = qs.toString() ? `?${qs.toString()}` : "";
+    return request<{ items: GithubPullRequest[]; links?: Record<string, string> } | GithubPullRequest[]>(
+      `/api/v1/organizations/${orgId}/github/repos/${repoId}/pulls${suffix}`,
+    );
+  },
+
+  getGithubPull(orgId: string, repoId: string, pullNumber: number) {
+    return request<GithubPullRequest>(
+      `/api/v1/organizations/${orgId}/github/repos/${repoId}/pulls/${pullNumber}`,
+    );
+  },
+
+  createGithubPull(
+    orgId: string,
+    repoId: string,
+    data: { title: string; head: string; base: string; body?: string },
+  ) {
+    return request<GithubPullRequest>(
+      `/api/v1/organizations/${orgId}/github/repos/${repoId}/pulls`,
+      { method: "POST", body: JSON.stringify({ pull: data }) },
+    );
+  },
+
+  mergeGithubPull(
+    orgId: string,
+    repoId: string,
+    pullNumber: number,
+    data?: { commit_title?: string; commit_message?: string; merge_method?: "merge" | "squash" | "rebase" },
+  ) {
+    return request<{ sha?: string | null; merged: boolean; message: string }>(
+      `/api/v1/organizations/${orgId}/github/repos/${repoId}/pulls/${pullNumber}/merge`,
+      { method: "PUT", body: JSON.stringify({ pull: data ?? {} }) },
+    );
+  },
+
+  listGithubPullComments(orgId: string, repoId: string, pullNumber: number, opts?: { page?: number }) {
+    const qs = new URLSearchParams(
+      Object.entries(opts ?? {}).filter(([, v]) => v != null).map(([k, v]) => [k, String(v)]),
+    );
+    const suffix = qs.toString() ? `?${qs.toString()}` : "";
+    return request<{ items: GithubComment[]; links?: Record<string, string> } | GithubComment[]>(
+      `/api/v1/organizations/${orgId}/github/repos/${repoId}/pulls/${pullNumber}/comments${suffix}`,
+    );
+  },
+
+  createGithubPullComment(orgId: string, repoId: string, pullNumber: number, body: string) {
+    return request<GithubComment>(
+      `/api/v1/organizations/${orgId}/github/repos/${repoId}/pulls/${pullNumber}/comments`,
+      { method: "POST", body: JSON.stringify({ comment: { body } }) },
+    );
+  },
+
+  listGithubIssues(
+    orgId: string,
+    repoId: string,
+    opts?: { state?: "open" | "closed" | "all"; page?: number; per_page?: number },
+  ) {
+    const qs = new URLSearchParams(
+      Object.entries(opts ?? {}).filter(([, v]) => v != null).map(([k, v]) => [k, String(v)]),
+    );
+    const suffix = qs.toString() ? `?${qs.toString()}` : "";
+    return request<{ items: GithubIssue[]; links?: Record<string, string> } | GithubIssue[]>(
+      `/api/v1/organizations/${orgId}/github/repos/${repoId}/issues${suffix}`,
+    );
+  },
+
+  getGithubIssue(orgId: string, repoId: string, issueNumber: number) {
+    return request<GithubIssue>(
+      `/api/v1/organizations/${orgId}/github/repos/${repoId}/issues/${issueNumber}`,
+    );
+  },
+
+  createGithubIssue(
+    orgId: string,
+    repoId: string,
+    data: { title: string; body?: string; labels?: string[]; assignees?: string[] },
+  ) {
+    return request<GithubIssue>(
+      `/api/v1/organizations/${orgId}/github/repos/${repoId}/issues`,
+      { method: "POST", body: JSON.stringify({ issue: data }) },
+    );
+  },
+
+  createGithubIssueComment(orgId: string, repoId: string, issueNumber: number, body: string) {
+    return request<GithubComment>(
+      `/api/v1/organizations/${orgId}/github/repos/${repoId}/issues/${issueNumber}/comments`,
+      { method: "POST", body: JSON.stringify({ comment: { body } }) },
+    );
+  },
+
+  listGithubBranches(orgId: string, repoId: string, opts?: { page?: number }) {
+    const qs = new URLSearchParams(
+      Object.entries(opts ?? {}).filter(([, v]) => v != null).map(([k, v]) => [k, String(v)]),
+    );
+    const suffix = qs.toString() ? `?${qs.toString()}` : "";
+    return request<{ items: GithubBranch[] } | GithubBranch[]>(
+      `/api/v1/organizations/${orgId}/github/repos/${repoId}/branches${suffix}`,
+    );
+  },
+
+  createGithubBranch(orgId: string, repoId: string, name: string, fromSha: string) {
+    return request<{ ref: string; node_id?: string; object?: { sha: string; url?: string } }>(
+      `/api/v1/organizations/${orgId}/github/repos/${repoId}/branches`,
+      { method: "POST", body: JSON.stringify({ branch: { name, from_sha: fromSha } }) },
+    );
   },
 
   // Groups for grant UI (PBAC groups list)
@@ -1144,6 +1523,67 @@ export const api = {
     });
   },
 
+  // ── Assets (media-prompt entries + generated outputs) ──
+  listAssets(orgId: string, opts?: { projectId?: string; assetType?: string; status?: string; tag?: string }) {
+    const qs = new URLSearchParams();
+    if (opts?.projectId) qs.set("project_id", opts.projectId);
+    if (opts?.assetType) qs.set("asset_type", opts.assetType);
+    if (opts?.status) qs.set("status", opts.status);
+    if (opts?.tag) qs.set("tag", opts.tag);
+    const suffix = qs.toString() ? `?${qs.toString()}` : "";
+    return request<{ assets: AssetEntry[]; asset_types: string[]; statuses: string[] }>(
+      `/api/v1/organizations/${orgId}/assets${suffix}`,
+    );
+  },
+  getAsset(orgId: string, id: string) {
+    return request<{ asset: AssetEntry; outputs: AssetOutput[] }>(`/api/v1/organizations/${orgId}/assets/${id}`);
+  },
+  createAsset(orgId: string, asset: AssetEntryInput) {
+    return request<{ asset: AssetEntry }>(`/api/v1/organizations/${orgId}/assets`, {
+      method: "POST",
+      body: JSON.stringify({ asset }),
+    });
+  },
+  updateAsset(orgId: string, id: string, asset: Partial<AssetEntryInput>) {
+    return request<{ asset: AssetEntry }>(`/api/v1/organizations/${orgId}/assets/${id}`, {
+      method: "PUT",
+      body: JSON.stringify({ asset }),
+    });
+  },
+  deleteAsset(orgId: string, id: string) {
+    return request<{ message: string }>(`/api/v1/organizations/${orgId}/assets/${id}`, { method: "DELETE" });
+  },
+  listAssetOutputs(orgId: string, assetId: string) {
+    return request<{ outputs: AssetOutput[] }>(`/api/v1/organizations/${orgId}/assets/${assetId}/outputs`);
+  },
+  generateAsset(orgId: string, assetId: string, body?: { provider?: string; model?: string; content?: string }) {
+    return request<{ output: AssetOutput }>(`/api/v1/organizations/${orgId}/assets/${assetId}/generate`, {
+      method: "POST",
+      body: JSON.stringify(body ?? {}),
+    });
+  },
+  listAssetHistory(orgId: string, assetId: string) {
+    return request<{ history: AssetHistory[] }>(`/api/v1/organizations/${orgId}/assets/${assetId}/history`);
+  },
+  acceptAssetOutput(orgId: string, assetId: string, outputId: string) {
+    return request<{ output: AssetOutput }>(
+      `/api/v1/organizations/${orgId}/assets/${assetId}/outputs/${outputId}/accept`,
+      { method: "POST" },
+    );
+  },
+  rejectAssetOutput(orgId: string, assetId: string, outputId: string) {
+    return request<{ output: AssetOutput }>(
+      `/api/v1/organizations/${orgId}/assets/${assetId}/outputs/${outputId}/reject`,
+      { method: "POST" },
+    );
+  },
+  setActiveAssetOutput(orgId: string, assetId: string, outputId: string) {
+    return request<{ asset: AssetEntry }>(`/api/v1/organizations/${orgId}/assets/${assetId}/active`, {
+      method: "POST",
+      body: JSON.stringify({ output_id: outputId }),
+    });
+  },
+
   // ── Ticket field definitions (tri-scoped; managed by id) ──
   listFieldDefinitions(orgId: string, opts?: { projectId?: string }) {
     const suffix = opts?.projectId ? `?project_id=${opts.projectId}` : "";
@@ -1407,6 +1847,115 @@ export const api = {
     return request<{ spec: string; length: number }>("/api/v1/npl/spec", {
       method: "POST",
       body: JSON.stringify(input),
+    });
+  },
+
+  // ── Mock MCP (org-scoped) ──
+  listMockMcp(orgId: string, opts?: { status?: string; projectId?: string }) {
+    const qs = new URLSearchParams();
+    if (opts?.status) qs.set("status", opts.status);
+    if (opts?.projectId) qs.set("project_id", opts.projectId);
+    const suffix = qs.toString() ? `?${qs.toString()}` : "";
+    return request<{ definitions: MockMCPDefinition[] }>(
+      `/api/v1/organizations/${orgId}/mock-mcp${suffix}`,
+    );
+  },
+  getMockMcp(orgId: string, slug: string) {
+    return request<{ definition: MockMCPDefinition }>(
+      `/api/v1/organizations/${orgId}/mock-mcp/${slug}`,
+    );
+  },
+  createMockMcp(orgId: string, definition: MockMCPInput) {
+    return request<{ definition: MockMCPDefinition }>(
+      `/api/v1/organizations/${orgId}/mock-mcp`,
+      { method: "POST", body: JSON.stringify(definition) },
+    );
+  },
+  updateMockMcp(orgId: string, slug: string, patch: Partial<MockMCPInput> & { status?: string }) {
+    return request<{ definition: MockMCPDefinition }>(
+      `/api/v1/organizations/${orgId}/mock-mcp/${slug}`,
+      { method: "PUT", body: JSON.stringify(patch) },
+    );
+  },
+  deleteMockMcp(orgId: string, slug: string) {
+    return request<{ deleted: boolean }>(
+      `/api/v1/organizations/${orgId}/mock-mcp/${slug}`,
+      { method: "DELETE" },
+    );
+  },
+  activateMockMcp(orgId: string, slug: string) {
+    return request<{ definition: MockMCPDefinition }>(
+      `/api/v1/organizations/${orgId}/mock-mcp/${slug}/activate`,
+      { method: "POST" },
+    );
+  },
+  generateMockMcpTools(orgId: string, slug: string) {
+    return request<{ tools: MockMCPToolDef[] }>(
+      `/api/v1/organizations/${orgId}/mock-mcp/${slug}/generate-tools`,
+      { method: "POST" },
+    );
+  },
+  provisionMockMcpDb(orgId: string, slug: string) {
+    return request<{ db_name: string; provisioned: boolean }>(
+      `/api/v1/organizations/${orgId}/mock-mcp/${slug}/provision-db`,
+      { method: "POST" },
+    );
+  },
+  listMockMcpCalls(orgId: string, slug: string) {
+    return request<{ calls: MockMCPCallLog[] }>(
+      `/api/v1/organizations/${orgId}/mock-mcp/${slug}/calls`,
+    );
+  },
+  listMockMcpModels(orgId: string) {
+    return request<{ models: MockMCPModel[]; default: string }>(
+      `/api/v1/organizations/${orgId}/mock-mcp-models`,
+    );
+  },
+
+  // ── Mock MCP: playground + private-datastore state browser ──
+  invokeMockMcpTool(orgId: string, slug: string, tool: string, args: Record<string, unknown>) {
+    return request<MockMCPInvokeResult>(
+      `/api/v1/organizations/${orgId}/mock-mcp/${slug}/invoke`,
+      { method: "POST", body: JSON.stringify({ tool, arguments: args }) },
+    );
+  },
+  mockMcpDbTables(orgId: string, slug: string) {
+    return request<{ tables: string[] }>(
+      `/api/v1/organizations/${orgId}/mock-mcp/${slug}/state/db/tables`,
+    );
+  },
+  mockMcpDbQuery(orgId: string, slug: string, sql: string) {
+    return request<MockMCPDbResult>(
+      `/api/v1/organizations/${orgId}/mock-mcp/${slug}/state/db/query`,
+      { method: "POST", body: JSON.stringify({ sql }) },
+    );
+  },
+  mockMcpRedisState(orgId: string, slug: string, pattern = "*") {
+    const qs = pattern && pattern !== "*" ? `?pattern=${encodeURIComponent(pattern)}` : "";
+    return request<{ entries: MockMCPRedisEntry[] }>(
+      `/api/v1/organizations/${orgId}/mock-mcp/${slug}/state/redis${qs}`,
+    );
+  },
+
+  // ── Mock MCP: org-scoped LLM connection pool ──
+  listMockMcpLlms(orgId: string) {
+    return request<{ llms: MockMCPLLM[] }>(`/api/v1/organizations/${orgId}/mock-mcp-llms`);
+  },
+  createMockMcpLlm(orgId: string, llm: MockMCPLLMInput) {
+    return request<{ llm: MockMCPLLM }>(`/api/v1/organizations/${orgId}/mock-mcp-llms`, {
+      method: "POST",
+      body: JSON.stringify(llm),
+    });
+  },
+  updateMockMcpLlm(orgId: string, id: string, patch: Partial<MockMCPLLMInput>) {
+    return request<{ llm: MockMCPLLM }>(`/api/v1/organizations/${orgId}/mock-mcp-llms/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(patch),
+    });
+  },
+  deleteMockMcpLlm(orgId: string, id: string) {
+    return request<{ deleted: boolean }>(`/api/v1/organizations/${orgId}/mock-mcp-llms/${id}`, {
+      method: "DELETE",
     });
   },
 };

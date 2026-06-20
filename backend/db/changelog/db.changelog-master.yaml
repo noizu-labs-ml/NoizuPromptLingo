@@ -115,3 +115,9 @@ databaseChangeLog:
   - include:
       file: 038-boards.yaml
       relativeToChangelogFile: true
+  - include:
+      file: 039-mock-mcp.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 040-assets.yaml
+      relativeToChangelogFile: true

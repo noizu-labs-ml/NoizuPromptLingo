@@ -91,6 +91,7 @@ defmodule NoizuPromptLingua.MixProject do
 
       # Carried over from prior NoizuPromptLingo mix.exs
       {:noizu_mcp, "~> 0.1.3"},
+      {:noizu_github, "~> 0.5.0"},
       {:jose, "~> 1.11"},
       {:yaml_elixir, "~> 2.11"},
 

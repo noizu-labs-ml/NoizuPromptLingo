@@ -26,6 +26,12 @@ config :noizu_prompt_lingua, NoizuPromptLinguaWeb.Endpoint,
 config :noizu_sendgrid,
   api_key: System.get_env("SENDGRID_API_KEY") || "SG.dev-placeholder"
 
+# GitHub API client — token passed per-call via options[:token]
+config :noizu_github, NoizuLabs.Github.Config,
+  api_key: nil,  # Placeholder; we always pass options[:token] from mapped repo tokens
+  owner: nil,
+  repo: nil
+
 config :noizu_prompt_lingua, :mail_from,
   {"NoizuPromptLingua", "noreply@starter.local"}
 

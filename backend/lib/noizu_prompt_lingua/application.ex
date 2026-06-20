@@ -37,6 +37,7 @@ defmodule NoizuPromptLingua.Application do
       NoizuPromptLingua.Domains.Chat.MCP,
       NoizuPromptLingua.Domains.Review.MCP,
       NoizuPromptLingua.Domains.Wiki.MCP,
+      NoizuPromptLingua.Domains.Github.MCP,
       NoizuPromptLinguaWeb.Endpoint
     ]
 

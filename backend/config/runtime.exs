@@ -8,6 +8,22 @@ config :noizu_prompt_lingua, :redis,
   uri: System.get_env("REDIS_URL") || "redis://localhost:6379/0",
   key_prefix: System.get_env("REDIS_KEY_PREFIX", "starter:")
 
+# ── GenAI providers (Mock MCP inference) ─────────────────────────
+# Keys flow through the dc/Infisical pipeline; only wire env names here.
+if openai_key = System.get_env("OPENAI_API_KEY") do
+  config :genai, :openai,
+    api_key: openai_key,
+    api_org: System.get_env("OPENAI_API_ORG")
+end
+
+if anthropic_key = System.get_env("ANTHROPIC_API_KEY") do
+  config :genai, :anthropic, api_key: anthropic_key
+end
+
+config :noizu_prompt_lingua, :mock_mcp,
+  default_provider: System.get_env("MOCK_MCP_DEFAULT_PROVIDER", "openai"),
+  default_model: System.get_env("MOCK_MCP_DEFAULT_MODEL", "gpt-4o-mini")
+
 # ── OpenTelemetry ────────────────────────────────────────────────
 if otel_endpoint = System.get_env("OTEL_EXPORTER_OTLP_ENDPOINT") do
   config :opentelemetry_exporter,
@@ -23,23 +39,38 @@ if otel_endpoint = System.get_env("OTEL_EXPORTER_OTLP_ENDPOINT") do
 end
 
 if config_env() == :prod or config_env() == :dev do
-  database_url =
-    System.get_env("DATABASE_URL") ||
+  # DATABASE_URL: required in prod; in dev, only override dev.exs defaults when
+  # the env var is actually set (so `mix phx.server` uses the dev.exs connection
+  # — tobor_locker@localhost:5432 — without needing DATABASE_URL).
+  if database_url = System.get_env("DATABASE_URL") do
+    config :noizu_prompt_lingua, NoizuPromptLingua.Repo,
+      url: database_url,
+      pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10")
+  else
+    if config_env() == :prod do
       raise """
       environment variable DATABASE_URL is missing.
       For example: ecto://user:pass@host/database
       """
-
-  config :noizu_prompt_lingua, NoizuPromptLingua.Repo,
-    url: database_url,
-    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10")
+    end
+  end
 
   secret_key_base =
-    System.get_env("SECRET_KEY_BASE") ||
-      raise """
-      environment variable SECRET_KEY_BASE is missing.
-      You can generate one by calling: mix phx.gen.secret
-      """
+    cond do
+      env = System.get_env("SECRET_KEY_BASE") ->
+        env
+
+      config_env() == :prod ->
+        raise """
+        environment variable SECRET_KEY_BASE is missing.
+        You can generate one by calling: mix phx.gen.secret
+        """
+
+      # Dev: fall back to a stable local key so `mix phx.server` boots without
+      # env vars. SECRET_KEY_BASE above still wins when provided (e.g. Docker dev).
+      true ->
+        "dev-secret-key-base-not-for-production-must-be-at-least-64-bytes-long!!!"
+    end
 
   host = System.get_env("PHX_HOST") || "example.com"
   port = String.to_integer(System.get_env("PORT") || "4000")
@@ -47,11 +78,21 @@ if config_env() == :prod or config_env() == :dev do
   config :noizu_prompt_lingua, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
   guardian_secret =
-    System.get_env("GUARDIAN_SECRET_KEY") ||
-      raise """
-      environment variable GUARDIAN_SECRET_KEY is missing.
-      You can generate one by calling: mix guardian.gen.secret
-      """
+    cond do
+      env = System.get_env("GUARDIAN_SECRET_KEY") ->
+        env
+
+      config_env() == :prod ->
+        raise """
+        environment variable GUARDIAN_SECRET_KEY is missing.
+        You can generate one by calling: mix guardian.gen.secret
+        """
+
+      # Dev: fall back to a stable local secret so `mix phx.server` boots
+      # without env vars. GUARDIAN_SECRET_KEY above still wins when provided.
+      true ->
+        "dev-guardian-secret-key-not-for-production-min-64-bytes-long-padding!!!"
+    end
 
   config :noizu_prompt_lingua, NoizuPromptLingua.Guardian,
     issuer: "noizu_prompt_lingua",

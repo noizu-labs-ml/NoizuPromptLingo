@@ -99,14 +99,32 @@ defmodule NoizuPromptLinguaWeb.Router do
       NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Tickets.MCP)
   end
 
+  scope "/", host: "assets." do
+    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
+      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Assets.MCP)
+  end
+
   scope "/", host: "wiki." do
     forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
       NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Wiki.MCP)
   end
 
+  scope "/", host: "github." do
+    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
+      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Github.MCP)
+  end
+
   scope "/mcp" do
     forward "/", Noizu.MCP.Transport.StreamableHTTP.Plug,
       NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.MCP)
+  end
+
+  # Dynamic mock-MCP gateway. Each mock MCP (defined + activated via the
+  # org-scoped management API) is served live at mockmcp.<host>/mcp/<slug>/mcp.
+  # This is a per-slug JSON-RPC proxy to an LLM — distinct from the static
+  # Noizu.MCP.Server domains above, so it is NOT listed in MCPServers.
+  scope "/", NoizuPromptLinguaWeb, host: "mockmcp." do
+    match :*, "/mcp/:slug/mcp", MockMCPGatewayController, :handle
   end
 
   # Authentik (OIDC) is the ONLY supported auth method — no alternatives.
@@ -265,6 +283,31 @@ defmodule NoizuPromptLinguaWeb.Router do
 
     post "/reviews/:review_id/complete", ReviewController, :complete
 
+    # Mock MCP: LLM-inference-driven pseudo MCP servers (org-scoped management).
+    # Slug is the natural key; the live JSON-RPC endpoint lives at the
+    # mockmcp.<host> subdomain (see gateway scope below).
+    get "/mock-mcp-models", MockMCPController, :models
+
+    # Org-scoped reusable LLM connection pool (provider/model/endpoint/key).
+    get "/mock-mcp-llms", MockMCPController, :list_llms
+    post "/mock-mcp-llms", MockMCPController, :create_llm
+    put "/mock-mcp-llms/:id", MockMCPController, :update_llm
+    delete "/mock-mcp-llms/:id", MockMCPController, :delete_llm
+
+    resources "/mock-mcp", MockMCPController,
+      only: [:index, :create, :show, :update, :delete], param: "slug"
+
+    post "/mock-mcp/:slug/activate", MockMCPController, :activate
+    post "/mock-mcp/:slug/generate-tools", MockMCPController, :generate_tools
+    post "/mock-mcp/:slug/provision-db", MockMCPController, :provision_db
+    get "/mock-mcp/:slug/calls", MockMCPController, :calls
+
+    # Portal: state browser over the agent's private datastore + playground.
+    get "/mock-mcp/:slug/state/db/tables", MockMCPController, :state_db_tables
+    post "/mock-mcp/:slug/state/db/query", MockMCPController, :state_db_query
+    get "/mock-mcp/:slug/state/redis", MockMCPController, :state_redis
+    post "/mock-mcp/:slug/invoke", MockMCPController, :invoke
+
     # Ticket field & type definitions (tri-scoped config; managed by id).
     get "/ticket-field-definitions", FieldDefinitionController, :index
     post "/ticket-field-definitions", FieldDefinitionController, :create
@@ -288,6 +331,18 @@ defmodule NoizuPromptLinguaWeb.Router do
       post "/iterations", BoardController, :add_iteration
       put "/iterations/:iteration_id", BoardController, :update_iteration
       delete "/iterations/:iteration_id", BoardController, :delete_iteration
+    end
+
+    # Assets: media-prompt entries + generated outputs (org-scoped, optional project).
+    resources "/assets", AssetController, only: [:index, :create, :show, :update, :delete]
+
+    scope "/assets/:asset_id" do
+      get "/outputs", AssetController, :outputs
+      post "/generate", AssetController, :generate
+      get "/history", AssetController, :history
+      post "/active", AssetController, :set_active
+      post "/outputs/:output_id/accept", AssetController, :accept_output
+      post "/outputs/:output_id/reject", AssetController, :reject_output
     end
   end
 
@@ -323,7 +378,37 @@ defmodule NoizuPromptLinguaWeb.Router do
 
     get "/comments/:comment_id/reactions", WikiController, :index_comment_reactions
     post "/comments/:comment_id/reactions", WikiController, :add_comment_reaction
-    delete "/comments/:comment_id/reactions", WikiController, :remove_comment_reaction
+    delete "/comments/:comment_id/reactions", WikiController, :remove_comment_reactions
+  end
+
+  # GitHub: org-scoped read/write operations (authenticated, org-member).
+  # Repo access is verified per-request against the repo ACL (can_access?/3)
+  # using the mapped GitHub token.
+  scope "/api/v1/organizations/:org_id/github", NoizuPromptLinguaWeb do
+    pipe_through [:api, :authenticated]
+
+    # Repos (read from our DB, ACL-filtered)
+    get "/", GithubController, :index
+
+    scope "/repos/:repo_id" do
+      # Pull Requests
+      get "/pulls", GithubController, :list_pulls
+      get "/pulls/:pull_number", GithubController, :get_pull
+      post "/pulls", GithubController, :create_pull
+      put "/pulls/:pull_number/merge", GithubController, :merge_pull
+      get "/pulls/:pull_number/comments", GithubController, :list_pull_comments
+      post "/pulls/:pull_number/comments", GithubController, :create_pull_comment
+
+      # Issues
+      get "/issues", GithubController, :list_issues
+      get "/issues/:issue_number", GithubController, :get_issue
+      post "/issues", GithubController, :create_issue
+      post "/issues/:issue_number/comments", GithubController, :create_issue_comment
+
+      # Branches
+      get "/branches", GithubController, :list_branches
+      post "/branches", GithubController, :create_branch
+    end
   end
 
   # PBAC v2: Custom Roles (authenticated, permission-checked per action)

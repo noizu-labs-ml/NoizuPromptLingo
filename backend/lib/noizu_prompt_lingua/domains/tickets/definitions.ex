@@ -65,7 +65,11 @@ defmodule NoizuPromptLingua.Domains.Tickets.Definitions do
   end
 
   def upsert_field(attrs) do
-    case Repo.get_by(TicketFieldDefinition, scope_keys(attrs)) do
+    org_id = attrs[:organization_id] || attrs["organization_id"]
+    project_id = attrs[:project_id] || attrs["project_id"]
+    slug = attrs[:slug] || attrs["slug"]
+
+    case get_field_in_scope(org_id, project_id, slug) do
       nil -> create_field(attrs)
       existing -> existing |> TicketFieldDefinition.changeset(attrs) |> Repo.update()
     end
@@ -73,7 +77,10 @@ defmodule NoizuPromptLingua.Domains.Tickets.Definitions do
 
   @doc "The field defined at exactly this scope (not inherited), or nil."
   def get_field_in_scope(org_id, project_id, slug) do
-    Repo.get_by(TicketFieldDefinition, organization_id: org_id, project_id: project_id, slug: slug)
+    TicketFieldDefinition
+    |> where(^scope_match(org_id, project_id))
+    |> where([d], d.slug == ^slug)
+    |> Repo.one()
   end
 
   # ── Type Definitions ──────────────────────────────────────────
@@ -124,7 +131,11 @@ defmodule NoizuPromptLingua.Domains.Tickets.Definitions do
   end
 
   def upsert_type(attrs) do
-    case Repo.get_by(TicketTypeDefinition, Keyword.put(scope_keys(attrs), :deleted_at, nil)) do
+    org_id = attrs[:organization_id] || attrs["organization_id"]
+    project_id = attrs[:project_id] || attrs["project_id"]
+    slug = attrs[:slug] || attrs["slug"]
+
+    case get_type_in_scope(org_id, project_id, slug) do
       nil -> create_type(attrs)
       existing -> existing |> TicketTypeDefinition.changeset(attrs) |> Repo.update()
     end
@@ -132,12 +143,10 @@ defmodule NoizuPromptLingua.Domains.Tickets.Definitions do
 
   @doc "The type defined at exactly this scope (not inherited), or nil."
   def get_type_in_scope(org_id, project_id, slug) do
-    Repo.get_by(TicketTypeDefinition,
-      organization_id: org_id,
-      project_id: project_id,
-      slug: slug,
-      deleted_at: nil
-    )
+    TicketTypeDefinition
+    |> where(^scope_match(org_id, project_id))
+    |> where([d], d.slug == ^slug and is_nil(d.deleted_at))
+    |> Repo.one()
   end
 
   # ── Type-Field Associations (by id) ───────────────────────────
@@ -230,11 +239,8 @@ defmodule NoizuPromptLingua.Domains.Tickets.Definitions do
     |> Enum.sort_by(& &1.slug)
   end
 
-  defp scope_keys(attrs) do
-    [
-      organization_id: attrs[:organization_id] || attrs["organization_id"],
-      project_id: attrs[:project_id] || attrs["project_id"],
-      slug: attrs[:slug] || attrs["slug"]
-    ]
-  end
+  # Exact-scope match (not inherited), with nil owners handled via is_nil.
+  defp scope_match(nil, _project_id), do: dynamic([d], is_nil(d.organization_id) and is_nil(d.project_id))
+  defp scope_match(org_id, nil), do: dynamic([d], d.organization_id == ^org_id and is_nil(d.project_id))
+  defp scope_match(org_id, project_id), do: dynamic([d], d.organization_id == ^org_id and d.project_id == ^project_id)
 end

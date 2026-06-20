@@ -18,7 +18,8 @@ defmodule NoizuPromptLingua.MCPServers do
     %{id: "artifacts", label: "Artifacts", required: false, desc: "Versioned content storage"},
     %{id: "chat", label: "Chat", required: false, desc: "Chat rooms & messages"},
     %{id: "review", label: "Review", required: false, desc: "Artifact review & overlays"},
-    %{id: "wiki", label: "Wiki", required: false, desc: "Wiki spaces, pages & comments"}
+    %{id: "wiki", label: "Wiki", required: false, desc: "Wiki spaces, pages & comments"},
+    %{id: "github", label: "GitHub", required: false, desc: "GitHub integration — repos, branches, PRs, issues"}
   ]
 
   @doc "All configured MCP servers."
