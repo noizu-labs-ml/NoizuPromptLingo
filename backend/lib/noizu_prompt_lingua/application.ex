@@ -38,6 +38,8 @@ defmodule NoizuPromptLingua.Application do
       NoizuPromptLingua.Domains.Review.MCP,
       NoizuPromptLingua.Domains.Wiki.MCP,
       NoizuPromptLingua.Domains.Github.MCP,
+      NoizuPromptLingua.Domains.Markdown.MCP,
+      NoizuPromptLingua.Domains.Pipes.MCP,
       NoizuPromptLingua.Domains.Browser.MCP,
       # Browser relay: correlates Browser.* tool calls with the local controller.
       NoizuPromptLingua.Domains.Browser.Relay,
