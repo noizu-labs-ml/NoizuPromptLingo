@@ -422,6 +422,105 @@ export interface AssetHistory {
   inserted_at?: string;
 }
 
+// ── Personas: org-scoped (required), optional project. A persona has a journal
+// (work logs, reflections, decisions, notes) and a knowledge base of articles. ──
+export interface Persona {
+  id: string;
+  organization_id: string;
+  project_id?: string | null;
+  slug: string;
+  name: string;
+  role?: string | null;
+  bio?: string | null;
+  avatar?: string | null;
+  tags?: string[];
+  status: string;
+  inserted_at?: string;
+  updated_at?: string;
+}
+
+export interface PersonaInput {
+  slug?: string;
+  name?: string;
+  role?: string | null;
+  bio?: string | null;
+  avatar?: string | null;
+  tags?: string[];
+  status?: string;
+  project_id?: string | null;
+}
+
+export interface PersonaJournalEntry {
+  id: string;
+  category: string;
+  title?: string | null;
+  body: string;
+  actor?: string | null;
+  tags?: string[];
+  inserted_at?: string;
+}
+
+export interface PersonaKnowledgeEntry {
+  id: string;
+  slug: string;
+  title: string;
+  body: string;
+  tags?: string[];
+  source?: string | null;
+  inserted_at?: string;
+  updated_at?: string;
+}
+
+// ── Instructions: org-scoped (required), optional project. Versioned prompt
+// templates with declared parameters; render fills params into the body. ──
+export interface InstructionParam {
+  name: string;
+  description?: string;
+  required?: boolean;
+  default?: string;
+}
+
+export interface Instruction {
+  id: string;
+  organization_id: string;
+  project_id?: string | null;
+  slug: string;
+  title: string;
+  description?: string | null;
+  tags?: string[];
+  parameters?: InstructionParam[];
+  status: string;
+  active_version?: number;
+  inserted_at?: string;
+  updated_at?: string;
+}
+
+export interface InstructionInput {
+  slug?: string;
+  title?: string;
+  description?: string | null;
+  body?: string;
+  tags?: string[];
+  parameters?: InstructionParam[];
+  project_id?: string | null;
+}
+
+export interface InstructionVersionMeta {
+  version: number;
+  change_note?: string;
+  inserted_at: string;
+  active: boolean;
+}
+
+export interface RenderedInstruction {
+  id: string;
+  slug: string;
+  title: string;
+  version: number;
+  params: Record<string, string>;
+  body: string;
+}
+
 // ── Ticket field & type definitions ──
 // Tri-scoped: "global" (system), "org", or "project". Resolution precedence is
 // project > org > global; a more-specific scope can override or `disabled`
@@ -1957,5 +2056,147 @@ export const api = {
     return request<{ deleted: boolean }>(`/api/v1/organizations/${orgId}/mock-mcp-llms/${id}`, {
       method: "DELETE",
     });
+  },
+
+  // ── Personas ──
+  listPersonas(orgId: string, opts?: { projectId?: string; status?: string; tag?: string }) {
+    const qs = new URLSearchParams();
+    if (opts?.projectId) qs.set("project_id", opts.projectId);
+    if (opts?.status) qs.set("status", opts.status);
+    if (opts?.tag) qs.set("tag", opts.tag);
+    const suffix = qs.toString() ? `?${qs.toString()}` : "";
+    return request<{ personas: Persona[]; statuses: string[] }>(
+      `/api/v1/organizations/${orgId}/personas${suffix}`,
+    );
+  },
+  getPersona(orgId: string, id: string) {
+    return request<{ persona: Persona; journal: PersonaJournalEntry[]; knowledge_base: PersonaKnowledgeEntry[] }>(
+      `/api/v1/organizations/${orgId}/personas/${id}`,
+    );
+  },
+  createPersona(orgId: string, persona: PersonaInput) {
+    return request<{ persona: Persona }>(`/api/v1/organizations/${orgId}/personas`, {
+      method: "POST",
+      body: JSON.stringify({ persona }),
+    });
+  },
+  updatePersona(orgId: string, id: string, persona: Partial<PersonaInput>) {
+    return request<{ persona: Persona }>(`/api/v1/organizations/${orgId}/personas/${id}`, {
+      method: "PUT",
+      body: JSON.stringify({ persona }),
+    });
+  },
+  deletePersona(orgId: string, id: string) {
+    return request<{ message: string }>(`/api/v1/organizations/${orgId}/personas/${id}`, { method: "DELETE" });
+  },
+  listPersonaJournal(orgId: string, personaId: string, opts?: { category?: string }) {
+    const suffix = opts?.category ? `?category=${encodeURIComponent(opts.category)}` : "";
+    return request<{ journal: PersonaJournalEntry[] }>(
+      `/api/v1/organizations/${orgId}/personas/${personaId}/journal${suffix}`,
+    );
+  },
+  addPersonaJournal(
+    orgId: string,
+    personaId: string,
+    entry: { category?: string; title?: string; body: string; tags?: string[] },
+  ) {
+    return request<{ entry: PersonaJournalEntry }>(
+      `/api/v1/organizations/${orgId}/personas/${personaId}/journal`,
+      { method: "POST", body: JSON.stringify({ entry }) },
+    );
+  },
+  deletePersonaJournal(orgId: string, personaId: string, entryId: string) {
+    return request<{ message: string }>(
+      `/api/v1/organizations/${orgId}/personas/${personaId}/journal/${entryId}`,
+      { method: "DELETE" },
+    );
+  },
+  listPersonaKnowledge(orgId: string, personaId: string, opts?: { tag?: string }) {
+    const suffix = opts?.tag ? `?tag=${encodeURIComponent(opts.tag)}` : "";
+    return request<{ knowledge_base: PersonaKnowledgeEntry[] }>(
+      `/api/v1/organizations/${orgId}/personas/${personaId}/knowledge${suffix}`,
+    );
+  },
+  addPersonaKnowledge(
+    orgId: string,
+    personaId: string,
+    entry: { slug: string; title: string; body: string; tags?: string[]; source?: string },
+  ) {
+    return request<{ entry: PersonaKnowledgeEntry }>(
+      `/api/v1/organizations/${orgId}/personas/${personaId}/knowledge`,
+      { method: "POST", body: JSON.stringify({ entry }) },
+    );
+  },
+  updatePersonaKnowledge(
+    orgId: string,
+    personaId: string,
+    entryId: string,
+    entry: Partial<{ slug: string; title: string; body: string; tags: string[]; source: string }>,
+  ) {
+    return request<{ entry: PersonaKnowledgeEntry }>(
+      `/api/v1/organizations/${orgId}/personas/${personaId}/knowledge/${entryId}`,
+      { method: "PUT", body: JSON.stringify({ entry }) },
+    );
+  },
+  deletePersonaKnowledge(orgId: string, personaId: string, entryId: string) {
+    return request<{ message: string }>(
+      `/api/v1/organizations/${orgId}/personas/${personaId}/knowledge/${entryId}`,
+      { method: "DELETE" },
+    );
+  },
+
+  // ── Instructions ──
+  listInstructions(orgId: string, opts?: { projectId?: string; status?: string; tag?: string; query?: string }) {
+    const qs = new URLSearchParams();
+    if (opts?.projectId) qs.set("project_id", opts.projectId);
+    if (opts?.status) qs.set("status", opts.status);
+    if (opts?.tag) qs.set("tag", opts.tag);
+    if (opts?.query) qs.set("query", opts.query);
+    const suffix = qs.toString() ? `?${qs.toString()}` : "";
+    return request<{ instructions: Instruction[] }>(
+      `/api/v1/organizations/${orgId}/instructions${suffix}`,
+    );
+  },
+  getInstruction(orgId: string, id: string, opts?: { version?: number }) {
+    const suffix = opts?.version != null ? `?version=${opts.version}` : "";
+    return request<{ instruction: Instruction; version: number; body: string; versions: InstructionVersionMeta[] }>(
+      `/api/v1/organizations/${orgId}/instructions/${id}${suffix}`,
+    );
+  },
+  createInstruction(orgId: string, instruction: InstructionInput) {
+    return request<{ instruction: Instruction }>(`/api/v1/organizations/${orgId}/instructions`, {
+      method: "POST",
+      body: JSON.stringify({ instruction }),
+    });
+  },
+  updateInstruction(
+    orgId: string,
+    id: string,
+    instruction: Partial<InstructionInput> & { change_note?: string },
+  ) {
+    return request<{ instruction: Instruction }>(`/api/v1/organizations/${orgId}/instructions/${id}`, {
+      method: "PUT",
+      body: JSON.stringify({ instruction }),
+    });
+  },
+  deleteInstruction(orgId: string, id: string) {
+    return request<{ message: string }>(`/api/v1/organizations/${orgId}/instructions/${id}`, { method: "DELETE" });
+  },
+  listInstructionVersions(orgId: string, instructionId: string) {
+    return request<{ versions: InstructionVersionMeta[] }>(
+      `/api/v1/organizations/${orgId}/instructions/${instructionId}/versions`,
+    );
+  },
+  setInstructionActiveVersion(orgId: string, instructionId: string, version: number) {
+    return request<{ instruction: Instruction }>(
+      `/api/v1/organizations/${orgId}/instructions/${instructionId}/active-version`,
+      { method: "POST", body: JSON.stringify({ version }) },
+    );
+  },
+  renderInstruction(orgId: string, instructionId: string, params: Record<string, string>, version?: number) {
+    return request<{ rendered: RenderedInstruction }>(
+      `/api/v1/organizations/${orgId}/instructions/${instructionId}/render`,
+      { method: "POST", body: JSON.stringify(version != null ? { params, version } : { params }) },
+    );
   },
 };

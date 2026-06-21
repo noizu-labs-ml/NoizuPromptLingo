@@ -274,9 +274,22 @@ sandbox-mount: ## Mount sandbox workspace via SMB (macOS)
 
 # ── Liquibase migrations ───────────────────────────────────────
 
+# Host CLI reads connection from .env via Liquibase's native LIQUIBASE_COMMAND_*
+# env vars (these override the ${DB_*} placeholders in liquibase.properties, which
+# only the Docker entrypoint's envsubst expands). host.docker.internal → localhost
+# so the host can reach the DB port-forward.
+define LIQUIBASE_HOST_ENV
+set -a; . ./.env; set +a; \
+host=$$(printf '%s' "$$DB_HOST" | sed 's/host.docker.internal/localhost/'); \
+export LIQUIBASE_COMMAND_URL="jdbc:postgresql://$$host:$$DB_PORT/$$DB_NAME"; \
+export LIQUIBASE_COMMAND_USERNAME="$$DB_USER"; \
+export LIQUIBASE_COMMAND_PASSWORD="$$DB_PASSWORD";
+endef
+
 migrate: .env ## Run Liquibase migrations (docker sidecar or host CLI)
 	@if command -v liquibase >/dev/null 2>&1; then \
 		echo "Running Liquibase via host CLI..."; \
+		$(LIQUIBASE_HOST_ENV) \
 		cd backend/db && liquibase update; \
 	else \
 		echo "Running Liquibase via Docker..."; \
@@ -286,6 +299,7 @@ migrate: .env ## Run Liquibase migrations (docker sidecar or host CLI)
 
 migrate-status: .env ## Show pending Liquibase changesets
 	@if command -v liquibase >/dev/null 2>&1; then \
+		$(LIQUIBASE_HOST_ENV) \
 		cd backend/db && liquibase status; \
 	else \
 		docker buildx build --load -t $(IMAGE_MIGRATIONS) ./backend/db && \
@@ -294,14 +308,16 @@ migrate-status: .env ## Show pending Liquibase changesets
 
 migrate-rollback: .env ## Roll back last Liquibase changeset
 	@if command -v liquibase >/dev/null 2>&1; then \
+		$(LIQUIBASE_HOST_ENV) \
 		cd backend/db && liquibase rollback-count 1; \
 	else \
 		docker buildx build --load -t $(IMAGE_MIGRATIONS) ./backend/db && \
 		docker run --rm --env-file .env --network lets-go_default $(IMAGE_MIGRATIONS) liquibase rollback-count 1; \
 	fi
 
-migrate-validate: ## Validate Liquibase changelog YAML
+migrate-validate: .env ## Validate Liquibase changelog YAML
 	@if command -v liquibase >/dev/null 2>&1; then \
+		$(LIQUIBASE_HOST_ENV) \
 		cd backend/db && liquibase validate; \
 	else \
 		docker buildx build --load -t $(IMAGE_MIGRATIONS) ./backend/db && \

@@ -1,0 +1,35 @@
+{
+  "name": "@noizu/local-mcp",
+  "version": "0.1.0",
+  "description": "Standalone local-filesystem MCP server: git-aware file search, grep, tree, and dump tools over stdio.",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "noizu-local-mcp": "dist/index.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js"
+  },
+  "keywords": [
+    "mcp",
+    "filesystem",
+    "git",
+    "noizu"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.24.0",
+    "fast-glob": "^3.3.2",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

@@ -19,6 +19,8 @@ import {
   DocumentTextIcon,
   BeakerIcon,
   CodeBracketIcon,
+  UserCircleIcon,
+  ClipboardDocumentListIcon,
 } from '@heroicons/react/24/outline';
 import { useOrg } from '@/context/org';
 
@@ -42,6 +44,8 @@ const NAV: NavDef[] = [
   { href: '/app/organizations', Icon: BuildingOffice2Icon, label: 'Organizations' },
   { href: '/projects', Icon: Squares2X2Icon, label: 'Projects', orgScoped: true },
   { href: '/sessions', Icon: ClockIcon, label: 'Sessions', orgScoped: true },
+  { href: '/personas', Icon: UserCircleIcon, label: 'Personas', orgScoped: true },
+  { href: '/instructions', Icon: ClipboardDocumentListIcon, label: 'Instructions', orgScoped: true },
   { href: '/artifacts', Icon: CubeIcon, label: 'Artifacts', orgScoped: true },
   { href: '/assets', Icon: PhotoIcon, label: 'Assets', orgScoped: true },
   { href: '/reviews', Icon: CheckBadgeIcon, label: 'Reviews', orgScoped: true },

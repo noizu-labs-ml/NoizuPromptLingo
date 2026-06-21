@@ -21,7 +21,9 @@ defmodule NoizuPromptLingua.MCPServers do
     %{id: "wiki", label: "Wiki", required: false, desc: "Wiki spaces, pages & comments"},
     %{id: "github", label: "GitHub", required: false, desc: "GitHub integration — repos, branches, PRs, issues"},
     %{id: "personas", label: "Personas", required: false, desc: "Personas — bio, work log/journal & knowledge base"},
-    %{id: "instructions", label: "Instructions", required: false, desc: "Reusable versioned prompts rendered with params for sub-agents"}
+    %{id: "instructions", label: "Instructions", required: false, desc: "Reusable versioned prompts rendered with params for sub-agents"},
+    %{id: "markdown", label: "Markdown", required: false, desc: "URL/HTML→Markdown conversion & heading filter/collapse"},
+    %{id: "pipes", label: "Agent Pipes", required: false, desc: "Agent-to-agent YAML message bus (input/output pipes)"}
   ]
 
   @doc "All configured MCP servers."

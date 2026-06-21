@@ -33,6 +33,7 @@ defmodule NoizuPromptLingua.MixProject do
       {:phoenix_live_dashboard, "~> 0.8.3"},
       {:noizu_sendgrid, "~> 2.1.0"},
       {:req, "~> 0.5"},
+      {:floki, "~> 0.36"},
       {:telemetry_metrics, "~> 1.0"},
       {:telemetry_poller, "~> 1.0"},
       {:gettext, "~> 0.26"},

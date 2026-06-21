@@ -124,6 +124,16 @@ defmodule NoizuPromptLinguaWeb.Router do
       NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Instructions.MCP)
   end
 
+  scope "/", host: "markdown." do
+    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
+      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Markdown.MCP)
+  end
+
+  scope "/", host: "pipes." do
+    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
+      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Pipes.MCP)
+  end
+
   scope "/mcp" do
     forward "/", Noizu.MCP.Transport.StreamableHTTP.Plug,
       NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.MCP)
