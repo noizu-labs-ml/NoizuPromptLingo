@@ -1784,6 +1784,12 @@ export const api = {
     return request<McpConfigResponse>("/api/v1/auth/mcp/config");
   },
 
+  // ── Local Tools MCP download (public, no auth). Absolute URL so a plain
+  // anchor triggers a browser download of the tarball. ──
+  localMcpDownloadUrl() {
+    return `${API_URL}/api/v1/config/local-mcp/download`;
+  },
+
   // ── Wiki ──
   listWikiSpaces(orgId: string, opts?: { projectId?: string; search?: string }) {
     const qs = new URLSearchParams();

@@ -300,7 +300,7 @@ defmodule NoizuPromptLingua.Domains.Markdown do
   end
 
   defp heading_match(line) do
-    case Regex.run(~r/^(#{1,6})\s+(.*)$/, line) do
+    case Regex.run(~r/^(\#{1,6})\s+(.*)$/, line) do
       [_, hashes, text] -> {String.length(hashes), String.trim(text)}
       _ -> nil
     end

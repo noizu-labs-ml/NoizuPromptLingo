@@ -131,3 +131,25 @@ Columns:
 
 ### Net assessment
 The rewrite **meets or exceeds parity** on the core collaboration product (artifacts, review, chat, sessions, projects, tasks→tickets) and the **NPL engine** (npl_load/npl_spec/corpus). It **adds** Assets, Wiki, GitHub, Organizations, Mock-MCP, and a full web app. The real losses are the **agent-coordination / dev-utility layer** (instructions store, agent pipes, orchestration, skill validation) and the **local-FS / browser utilities** — the latter being intentionally non-cloud.
+
+---
+
+## Resolution status — 2026-06-21 (gap-closing pass)
+
+The audit above slightly under-counted: `instructions` and `personas` were already built
+(12 MCP domains, not 9). This pass closed most remaining feasible gaps:
+
+| Gap | Status | Where |
+|---|---|---|
+| HTML/web → Markdown + Markdown viewer/filter (PRD-017) | ✅ **Done** | new `markdown` MCP domain (`Markdown.Convert`/`View`/`Overview`) — Req fetch + Floki, optional Jina; `markdown.<host>/mcp` |
+| Agent pipes (PRD-012) | ✅ **Done** | new `pipes` MCP domain (`Pipe.Output`/`Input`/`Overview`), DB changelog `043-agent-pipes.yaml`; `pipes.<host>/mcp` |
+| Instructions store | ✅ Already built | `instructions` domain (pre-existing) |
+| PM accessors (get_story/get_prd/get_persona, PRD-018) | ✅ **Folded into tickets** | `user_story` + `prd` global ticket types seeded via `mix tickets.seed`; personas via `personas` domain |
+| Local-FS utilities (file search, grep, git_tree, git_dump, dump_files, file_read) | ✅ **Done** | standalone **`local-mcp/`** Node MCP, downloadable as a tarball from the mcp-keys page (`GET /api/v1/config/local-mcp/download`, `make local-mcp-package`) |
+| Browser / screenshot / interactive (PRD-006) | 🟡 **In progress** | cloud-relayed: new `browser` cloud domain + local Playwright `browser-controller/` bridged over a Phoenix channel (not intentionally-out anymore — the cloud drives a browser on the user's machine) |
+| Skill validator/evaluator (PRD-016) | ⏸ Deferred | skipped this pass per decision |
+| Multi-agent orchestration (PRD-012), NPL syntax parser (PRD-013) | ⏸ Out | subsumed by Claude Code Agent/Workflow; parser never built |
+
+Net: the only intentionally-dropped local utilities now have a home (the local MCP), the
+markdown/pipes cloud gaps are closed, PM lives in tickets, and browser control is being made
+cloud-addressable via a local controller bridge.

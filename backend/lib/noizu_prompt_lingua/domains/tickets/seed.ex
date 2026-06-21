@@ -79,7 +79,30 @@ defmodule NoizuPromptLingua.Domains.Tickets.Seed do
           %{"value" => "developer", "label" => "Developer"},
           %{"value" => "end_user", "label" => "End User"}
         ]}},
-      %{slug: "prd_link", label: "PRD Link", field_type: "url"}
+      %{slug: "prd_link", label: "PRD Link", field_type: "url"},
+      # ── Product-management (user story / PRD) fields ──
+      %{slug: "persona", label: "Persona", field_type: "persona"},
+      %{slug: "user_story_status", label: "Status", field_type: "select",
+        options: %{"values" => [
+          %{"value" => "draft", "label" => "Draft"},
+          %{"value" => "in_progress", "label" => "In Progress"},
+          %{"value" => "documented", "label" => "Documented"},
+          %{"value" => "implemented", "label" => "Implemented"},
+          %{"value" => "tested", "label" => "Tested"}
+        ]}},
+      %{slug: "prd_refs", label: "PRD References", field_type: "text"},
+      %{slug: "related_stories", label: "Related Stories", field_type: "text"},
+      %{slug: "prd_status", label: "Status", field_type: "select",
+        options: %{"values" => [
+          %{"value" => "draft", "label" => "Draft"},
+          %{"value" => "review", "label" => "Review"},
+          %{"value" => "approved", "label" => "Approved"},
+          %{"value" => "done", "label" => "Done"},
+          %{"value" => "closed", "label" => "Closed"}
+        ]}},
+      %{slug: "version", label: "Version", field_type: "text"},
+      %{slug: "functional_requirements", label: "Functional Requirements", field_type: "markdown"},
+      %{slug: "acceptance_tests", label: "Acceptance Tests", field_type: "markdown"}
     ]
   end
 
@@ -106,8 +129,9 @@ defmodule NoizuPromptLingua.Domains.Tickets.Seed do
              "in_progress" => ["in_review", "closed"],
              "in_review" => ["done", "in_progress"],
              "done" => ["closed", "open"]})},
-       [{"priority", true}, {"story_points", false}, {"acceptance_criteria", true},
-        {"labels", false}, {"estimate", false}]},
+       [{"persona", false}, {"priority", true}, {"user_story_status", false},
+        {"acceptance_criteria", true}, {"prd_refs", false}, {"related_stories", false},
+        {"story_points", false}, {"labels", false}, {"estimate", false}]},
 
       {%{slug: "prd", name: "PRD",
          description: "Product Requirements Document",
@@ -117,8 +141,9 @@ defmodule NoizuPromptLingua.Domains.Tickets.Seed do
              "review" => ["approved", "draft"],
              "approved" => ["done", "closed"],
              "done" => ["closed"]})},
-       [{"priority", true}, {"prd_link", false}, {"target_audience", false},
-        {"acceptance_criteria", false}]},
+       [{"priority", true}, {"prd_status", false}, {"version", false},
+        {"functional_requirements", false}, {"acceptance_tests", false},
+        {"prd_link", false}, {"target_audience", false}, {"acceptance_criteria", false}]},
 
       {%{slug: "bug", name: "Bug",
          description: "A defect or unexpected behavior",

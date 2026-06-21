@@ -134,6 +134,11 @@ defmodule NoizuPromptLinguaWeb.Router do
       NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Pipes.MCP)
   end
 
+  scope "/", host: "browser." do
+    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
+      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Browser.MCP)
+  end
+
   scope "/mcp" do
     forward "/", Noizu.MCP.Transport.StreamableHTTP.Plug,
       NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.MCP)
@@ -160,6 +165,8 @@ defmodule NoizuPromptLinguaWeb.Router do
     get "/auth/sso/registration", SSOController, :registration
     post "/auth/sso/register", SSOController, :register
     get "/config/features", ConfigController, :features
+    # Download the standalone local-filesystem MCP server (dev tooling) as a tarball.
+    get "/config/local-mcp/download", ConfigController, :local_mcp_download
   end
 
   scope "/api/v1", NoizuPromptLinguaWeb do

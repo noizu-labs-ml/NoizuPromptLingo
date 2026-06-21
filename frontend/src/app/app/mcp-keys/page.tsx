@@ -5,6 +5,10 @@ import { toast } from 'sonner';
 import { api, type McpApiKey, type McpTokenResponse, type McpServerConfig } from '@/lib/api';
 import McpSetupPanel from '@/components/mcp-setup-panel';
 
+// Install snippet for the optional Local Tools MCP (filesystem/git tools).
+const LOCAL_MCP_INSTALL = `tar xzf noizu-local-mcp.tar.gz && cd local-mcp && npm i && npm run build
+claude mcp add noizu-local -- node "$PWD/dist/index.js"`;
+
 export default function McpKeysPage() {
   const [keys, setKeys] = useState<McpApiKey[]>([]);
   // Tokens keyed by api key id (not prefix) — stable across renders.
@@ -134,6 +138,46 @@ export default function McpKeysPage() {
           Create and manage your API keys for MCP server access. Use the setup panel to get
           the <span className="font-mono"> claude mcp add</span> commands to connect to all MCP servers.
         </p>
+
+        {/* Local Tools MCP — an optional, self-hosted MCP for filesystem/git
+            tools that can't run in the cloud. Download + install instructions. */}
+        <section className="dash-panel" style={{ marginTop: 'var(--space-4)' }}>
+          <div className="dash-panel__head">
+            <h2 className="dash-panel__title">Local Tools MCP</h2>
+            <span className="dash-badge">optional</span>
+          </div>
+          <p className="sg-page-intro" style={{ marginBottom: 12 }}>
+            An optional MCP server you run on your own machine for filesystem and git tools
+            that can&apos;t run in the cloud. Download it, build it, and connect it to Claude Code.
+            It provides:{" "}
+            <span className="font-mono">file_search</span>,{" "}
+            <span className="font-mono">grep</span>,{" "}
+            <span className="font-mono">git_tree</span>,{" "}
+            <span className="font-mono">git_dump</span>,{" "}
+            <span className="font-mono">dump_files</span>, and{" "}
+            <span className="font-mono">file_read</span>.
+          </p>
+
+          <a
+            className="sg-btn sg-btn--black sg-btn--sm"
+            href={api.localMcpDownloadUrl()}
+            download
+          >
+            Download noizu-local-mcp.tar.gz
+          </a>
+
+          <div className="authz-reveal" style={{ marginTop: 16 }}>
+            <div className="authz-reveal__label">Install &amp; connect:</div>
+            <div className="authz-reveal__row">
+              <code className="authz-reveal__key font-mono" style={{ whiteSpace: 'pre-wrap' }}>{LOCAL_MCP_INSTALL}</code>
+              <button
+                className="sg-btn sg-btn--outline sg-btn--sm"
+                onClick={() => copyText(LOCAL_MCP_INSTALL, "local-mcp-install")}>
+                {copied === "local-mcp-install" ? "Copied!" : "Copy"}
+              </button>
+            </div>
+          </div>
+        </section>
 
         {/* Paste an existing key to mint a token (non-destructive). */}
         <section className="dash-panel" style={{ marginTop: 'var(--space-4)' }}>

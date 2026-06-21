@@ -23,7 +23,8 @@ defmodule NoizuPromptLingua.MCPServers do
     %{id: "personas", label: "Personas", required: false, desc: "Personas — bio, work log/journal & knowledge base"},
     %{id: "instructions", label: "Instructions", required: false, desc: "Reusable versioned prompts rendered with params for sub-agents"},
     %{id: "markdown", label: "Markdown", required: false, desc: "URL/HTML→Markdown conversion & heading filter/collapse"},
-    %{id: "pipes", label: "Agent Pipes", required: false, desc: "Agent-to-agent YAML message bus (input/output pipes)"}
+    %{id: "pipes", label: "Agent Pipes", required: false, desc: "Agent-to-agent YAML message bus (input/output pipes)"},
+    %{id: "browser", label: "Browser", required: false, desc: "Drive a Playwright browser on the user's machine via a local controller"}
   ]
 
   @doc "All configured MCP servers."

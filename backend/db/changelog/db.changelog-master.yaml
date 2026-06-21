@@ -127,3 +127,6 @@ databaseChangeLog:
   - include:
       file: 042-instructions.yaml
       relativeToChangelogFile: true
+  - include:
+      file: 043-agent-pipes.yaml
+      relativeToChangelogFile: true

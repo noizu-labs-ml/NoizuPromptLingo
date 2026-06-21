@@ -1,0 +1,39 @@
+{
+  "name": "@noizu/browser-controller",
+  "version": "0.1.0",
+  "description": "Local browser controller: connects to the NoizuPromptLingo cloud over a Phoenix channel and drives a Playwright browser on behalf of the cloud Browser.* MCP tools.",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "noizu-browser-controller": "dist/index.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "postinstall": "playwright install chromium"
+  },
+  "keywords": [
+    "mcp",
+    "browser",
+    "playwright",
+    "phoenix",
+    "noizu"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "phoenix": "^1.7.14",
+    "playwright": "^1.48.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/phoenix": "^1.6.5",
+    "@types/ws": "^8.5.12",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

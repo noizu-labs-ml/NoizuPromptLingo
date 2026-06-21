@@ -109,7 +109,8 @@ HELM_OCI_REGISTRY = oci://ghcr.io/the-robot-lives/charts
 	stop-sandbox logs-sandbox sandbox-shell sandbox-clean sandbox-mount \
 	migrate migrate-status migrate-rollback migrate-validate \
 	helm-package helm-publish helm-lint \
-	helm-bump-patch helm-bump-minor helm-bump-major
+	helm-bump-patch helm-bump-minor helm-bump-major \
+	local-mcp-package
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z/_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -117,6 +118,13 @@ help: ## Show this help
 
 regen: ## Regenerate design system CSS from theme YAML configs
 	cd frontend && npm run regen
+
+local-mcp-package: ## Package the standalone local-filesystem MCP into backend/priv/static/downloads
+	@mkdir -p backend/priv/static/downloads
+	tar -czf backend/priv/static/downloads/noizu-local-mcp.tar.gz \
+		--exclude='node_modules' --exclude='dist' --exclude='.git' \
+		-C . local-mcp
+	@echo "Packaged backend/priv/static/downloads/noizu-local-mcp.tar.gz"
 
 init: ## Generate .env + backend/.env + frontend/.env with secrets
 	@echo "Initializing: $(PROJECT_DIR) (slug=$(PROJECT_SLUG), db=$(DB_NAME), redis_db=$(REDIS_DB), port=$(HOST_PORT))"

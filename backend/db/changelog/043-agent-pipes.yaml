@@ -1,0 +1,71 @@
+databaseChangeLog:
+  # Agent pipes — a lightweight agent-to-agent YAML message bus (ports the
+  # deprecated pipes feature). Entries are scoped to an organization. Each entry
+  # is the latest payload a sender published under a given message_name to a
+  # target (a specific agent handle, a group, or broadcast when both are blank).
+  # target_agent_handle / target_group are NOT NULL DEFAULT '' so the upsert
+  # unique key behaves (Postgres treats NULLs as distinct).
+
+  - changeSet:
+      id: create-table-agent-pipe-entries
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE npl_agent_pipe_entries (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+                sender_handle varchar(255) NOT NULL,
+                message_name varchar(255) NOT NULL,
+                target_agent_handle varchar(255) NOT NULL DEFAULT '',
+                target_group varchar(255) NOT NULL DEFAULT '',
+                body text NOT NULL,
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: npl_agent_pipe_entries
+
+  - changeSet:
+      id: create-indexes-agent-pipe-entries
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_agent_pipe_entries_upsert
+            tableName: npl_agent_pipe_entries
+            unique: true
+            columns:
+              - column:
+                  name: organization_id
+              - column:
+                  name: sender_handle
+              - column:
+                  name: message_name
+              - column:
+                  name: target_agent_handle
+              - column:
+                  name: target_group
+        - createIndex:
+            indexName: idx_agent_pipe_entries_target_agent
+            tableName: npl_agent_pipe_entries
+            columns:
+              - column:
+                  name: organization_id
+              - column:
+                  name: target_agent_handle
+        - createIndex:
+            indexName: idx_agent_pipe_entries_target_group
+            tableName: npl_agent_pipe_entries
+            columns:
+              - column:
+                  name: organization_id
+              - column:
+                  name: target_group
+      rollback:
+        - dropIndex:
+            indexName: idx_agent_pipe_entries_upsert
+        - dropIndex:
+            indexName: idx_agent_pipe_entries_target_agent
+        - dropIndex:
+            indexName: idx_agent_pipe_entries_target_group
