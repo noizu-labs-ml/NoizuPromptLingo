@@ -1,0 +1,40 @@
+{{- if .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "remote-access.fullname" . }}
+  labels:
+    {{- include "remote-access.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "remote-access.selectorLabels" . | nindent 6 }}
+  policyTypes:
+  - Egress
+  egress:
+  # DNS resolution.
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  # npl-mcp auth callback.
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: {{ .Values.networkPolicy.nplMcp.namespace }}
+    ports:
+    - protocol: TCP
+      port: {{ .Values.networkPolicy.nplMcp.port }}
+  # Established tunnel traffic flows back over the frpc control connection
+  # (ingress side), so no broad egress allow is required for tunneled data.
+  # Allow egress to any non-cluster destination is intentionally NOT granted;
+  # add explicit rules here if a use case requires it.
+{{- if .Values.networkPolicy.dataNsCidr }}
+  # Best-effort deny of egress to data-ns: not expressible as a deny rule in a
+  # plain NetworkPolicy (allow-only model). data-ns is simply absent from the
+  # allow-list above, so traffic to it is dropped by default. The CIDR value is
+  # documented here for operators reviewing the policy: {{ .Values.networkPolicy.dataNsCidr }}
+{{- end }}
+{{- end }}

@@ -21,6 +21,7 @@ import {
   CodeBracketIcon,
   UserCircleIcon,
   ClipboardDocumentListIcon,
+  WindowIcon,
 } from '@heroicons/react/24/outline';
 import { useOrg } from '@/context/org';
 
@@ -48,6 +49,7 @@ const NAV: NavDef[] = [
   { href: '/instructions', Icon: ClipboardDocumentListIcon, label: 'Instructions', orgScoped: true },
   { href: '/artifacts', Icon: CubeIcon, label: 'Artifacts', orgScoped: true },
   { href: '/assets', Icon: PhotoIcon, label: 'Assets', orgScoped: true },
+  { href: '/browser', Icon: WindowIcon, label: 'Browser', orgScoped: true },
   { href: '/reviews', Icon: CheckBadgeIcon, label: 'Reviews', orgScoped: true },
   { href: '/chat', Icon: ChatBubbleLeftRightIcon, label: 'Chatrooms', orgScoped: true },
   { href: '/wiki', Icon: DocumentTextIcon, label: 'Wiki', orgScoped: true },

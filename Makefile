@@ -110,7 +110,7 @@ HELM_OCI_REGISTRY = oci://ghcr.io/the-robot-lives/charts
 	migrate migrate-status migrate-rollback migrate-validate \
 	helm-package helm-publish helm-lint \
 	helm-bump-patch helm-bump-minor helm-bump-major \
-	local-mcp-package
+	local-mcp-package browser-controller-package remote-access-client-package downloads-package
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z/_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -125,6 +125,22 @@ local-mcp-package: ## Package the standalone local-filesystem MCP into backend/p
 		--exclude='node_modules' --exclude='dist' --exclude='.git' \
 		-C . local-mcp
 	@echo "Packaged backend/priv/static/downloads/noizu-local-mcp.tar.gz"
+
+browser-controller-package: ## Package the local browser controller into backend/priv/static/downloads
+	@mkdir -p backend/priv/static/downloads
+	tar -czf backend/priv/static/downloads/noizu-browser-controller.tar.gz \
+		--exclude='node_modules' --exclude='dist' --exclude='.git' \
+		-C . browser-controller
+	@echo "Packaged backend/priv/static/downloads/noizu-browser-controller.tar.gz"
+
+remote-access-client-package: ## Package the remote-access tunnel client (frpc wrapper) into backend/priv/static/downloads
+	@mkdir -p backend/priv/static/downloads
+	tar -czf backend/priv/static/downloads/noizu-remote-access-client.tar.gz \
+		--exclude='node_modules' --exclude='dist' --exclude='.git' --exclude='bin' \
+		-C . remote-access-client
+	@echo "Packaged backend/priv/static/downloads/noizu-remote-access-client.tar.gz"
+
+downloads-package: local-mcp-package browser-controller-package remote-access-client-package ## Package all downloadable agents
 
 init: ## Generate .env + backend/.env + frontend/.env with secrets
 	@echo "Initializing: $(PROJECT_DIR) (slug=$(PROJECT_SLUG), db=$(DB_NAME), redis_db=$(REDIS_DB), port=$(HOST_PORT))"

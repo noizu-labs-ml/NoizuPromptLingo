@@ -12,6 +12,8 @@ defmodule NoizuPromptLingua.Domains.Browser.MCP do
   tool NoizuPromptLingua.Domains.Browser.Tools.Click, category: "Browser"
   tool NoizuPromptLingua.Domains.Browser.Tools.Fill, category: "Browser"
   tool NoizuPromptLingua.Domains.Browser.Tools.GetState, category: "Browser"
+  tool NoizuPromptLingua.Domains.Browser.Tools.RecordStart, category: "Browser"
+  tool NoizuPromptLingua.Domains.Browser.Tools.RecordStop, category: "Browser"
 
   tool NoizuPromptLingua.Tools.ToolSummary, category: "Discovery"
   tool NoizuPromptLingua.Tools.ToolSearch, category: "Discovery"

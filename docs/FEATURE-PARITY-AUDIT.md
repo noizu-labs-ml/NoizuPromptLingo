@@ -146,7 +146,7 @@ The audit above slightly under-counted: `instructions` and `personas` were alrea
 | Instructions store | ✅ Already built | `instructions` domain (pre-existing) |
 | PM accessors (get_story/get_prd/get_persona, PRD-018) | ✅ **Folded into tickets** | `user_story` + `prd` global ticket types seeded via `mix tickets.seed`; personas via `personas` domain |
 | Local-FS utilities (file search, grep, git_tree, git_dump, dump_files, file_read) | ✅ **Done** | standalone **`local-mcp/`** Node MCP, downloadable as a tarball from the mcp-keys page (`GET /api/v1/config/local-mcp/download`, `make local-mcp-package`) |
-| Browser / screenshot / interactive (PRD-006) | 🟡 **In progress** | cloud-relayed: new `browser` cloud domain + local Playwright `browser-controller/` bridged over a Phoenix channel (not intentionally-out anymore — the cloud drives a browser on the user's machine) |
+| Browser / screenshot / interactive + **video** (PRD-006) | ✅ **Done** | cloud-relayed: `browser` domain (Navigate/Screenshot/Click/Fill/GetState/RecordStart/RecordStop) + local Playwright `browser-controller/` over a Phoenix channel. Screenshots/videos upload to MinIO via cloud-minted presigned URLs → `media` assets → viewable in a `/app/[orgId]/browser` gallery. Controller is downloadable (tar + personalized `install.sh`) and containerized (`Dockerfile`) for a headless server pod. *(Inbound reverse-tunnel `*.remote-access.noizu.com` — separate design, see `REMOTE-ACCESS-TUNNEL-DESIGN.md`.)* |
 | Skill validator/evaluator (PRD-016) | ⏸ Deferred | skipped this pass per decision |
 | Multi-agent orchestration (PRD-012), NPL syntax parser (PRD-013) | ⏸ Out | subsumed by Claude Code Agent/Workflow; parser never built |
 

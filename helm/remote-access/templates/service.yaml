@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "remote-access.fullname" . }}
+  labels:
+    {{- include "remote-access.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+  - name: vhost-http
+    port: {{ .Values.frps.vhostHTTPPort }}
+    targetPort: vhost-http
+    protocol: TCP
+  - name: control
+    port: {{ .Values.frps.bindPort }}
+    targetPort: control
+    protocol: TCP
+  selector:
+    {{- include "remote-access.selectorLabels" . | nindent 4 }}
+{{- if .Values.controlPort.nodePort.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "remote-access.fullname" . }}-control
+  labels:
+    {{- include "remote-access.labels" . | nindent 4 }}
+spec:
+  type: NodePort
+  ports:
+  - name: control
+    port: {{ .Values.frps.bindPort }}
+    targetPort: control
+    nodePort: {{ .Values.controlPort.nodePort.port }}
+    protocol: TCP
+  selector:
+    {{- include "remote-access.selectorLabels" . | nindent 4 }}
+{{- end }}

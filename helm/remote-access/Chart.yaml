@@ -1,0 +1,18 @@
+apiVersion: v2
+name: remote-access
+description: "Remote-Access — frps reverse-tunnel server (cloud side of the frp tunnel)"
+version: 0.1.0
+appVersion: "0.61.1"
+type: application
+keywords:
+  - remote-access
+  - frps
+  - frp
+  - reverse-tunnel
+  - tunnel
+maintainers:
+  - name: Keith Brings
+    email: keith.brings@noizu.com
+sources:
+  - https://github.com/the-robot-lives/incubator
+  - https://github.com/fatedier/frp

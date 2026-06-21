@@ -1,0 +1,61 @@
+databaseChangeLog:
+  # Remote-access reverse tunnels. Each row is a claimed subdomain
+  # (<name>.remote-access.noizu.com) owned by a user within an organization. The
+  # frpc client presents a per-claim tunnel_token (stored hashed); the frps
+  # server validates it through the /api/v1/remote-access/frp-auth callback.
+  # status: active | revoked (revoked rows are tombstones — name stays reserved
+  # to its owner until explicitly freed).
+
+  - changeSet:
+      id: create-table-remote-access-tunnels
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE remote_access_tunnels (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+                user_id uuid NOT NULL,
+                name varchar(63) NOT NULL,
+                tunnel_token_hash varchar(128) NOT NULL,
+                proxy_type varchar(16) NOT NULL DEFAULT 'http',
+                status varchar(16) NOT NULL DEFAULT 'active',
+                last_connected_at timestamptz,
+                expires_at timestamptz,
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: remote_access_tunnels
+
+  - changeSet:
+      id: create-indexes-remote-access-tunnels
+      author: tobor-locker
+      changes:
+        # A name is globally unique among ACTIVE claims (it maps to a DNS label).
+        - sql:
+            sql: |
+              CREATE UNIQUE INDEX idx_remote_access_tunnels_active_name
+                ON remote_access_tunnels (name) WHERE status = 'active';
+        - createIndex:
+            indexName: idx_remote_access_tunnels_token
+            tableName: remote_access_tunnels
+            columns:
+              - column:
+                  name: tunnel_token_hash
+        - createIndex:
+            indexName: idx_remote_access_tunnels_org
+            tableName: remote_access_tunnels
+            columns:
+              - column:
+                  name: organization_id
+      rollback:
+        - sql:
+            sql: DROP INDEX IF EXISTS idx_remote_access_tunnels_active_name;
+        - dropIndex:
+            indexName: idx_remote_access_tunnels_token
+            tableName: remote_access_tunnels
+        - dropIndex:
+            indexName: idx_remote_access_tunnels_org
+            tableName: remote_access_tunnels

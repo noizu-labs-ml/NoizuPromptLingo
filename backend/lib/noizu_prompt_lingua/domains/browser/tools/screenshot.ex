@@ -2,7 +2,7 @@ defmodule NoizuPromptLingua.Domains.Browser.Tools.Screenshot do
   use Noizu.MCP.Server.Tool,
     name: "Browser.Screenshot",
     description:
-      "Capture a screenshot of the local browser as a base64-encoded PNG. Optionally capture the full scrollable page or a single element by selector.",
+      "Capture a screenshot of the connected browser. The image is uploaded to object storage and returned as a viewable media URL (short_id), so it shows up in the org's browser gallery. Optionally capture the full scrollable page or a single element by selector.",
     annotations: [read_only_hint: true],
     category: "Browser"
 
@@ -22,7 +22,7 @@ defmodule NoizuPromptLingua.Domains.Browser.Tools.Screenshot do
       |> maybe_put(:full_page, Args.get(args, :full_page))
       |> maybe_put(:selector, Args.get(args, :selector))
 
-    Browser.run(Args.get(args, :organization), "screenshot", params)
+    Browser.capture_screenshot(Args.get(args, :organization), params)
   end
 
   defp maybe_put(map, _key, nil), do: map

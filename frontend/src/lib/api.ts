@@ -141,6 +141,16 @@ export interface McpApiKey {
   inserted_at: string;
 }
 
+// A capture produced by a connected browser controller. `url` is a relative
+// `/media/<short_id>` path; build absolute media URLs as `${API_URL}${url}`.
+export interface BrowserCapture {
+  id: string;
+  short_id: string;
+  url: string;
+  media_type: "image" | "video";
+  inserted_at: string;
+}
+
 export interface Session {
   id: string;
   organization_id: string;
@@ -1788,6 +1798,23 @@ export const api = {
   // anchor triggers a browser download of the tarball. ──
   localMcpDownloadUrl() {
     return `${API_URL}/api/v1/config/local-mcp/download`;
+  },
+
+  // ── Browser controller (org-scoped headless browser agent) ──
+  // Absolute URL so a plain anchor triggers a browser download of the tarball.
+  browserControllerDownloadUrl() {
+    return `${API_URL}/api/v1/config/browser-controller/download`;
+  },
+
+  // Whether a controller is currently connected for this org.
+  browserStatus(orgId: string) {
+    return request<{ connected: boolean }>(`/api/v1/organizations/${orgId}/browser/status`);
+  },
+
+  // Recent captures (screenshots / recordings). `url` is a relative `/media/<short_id>`
+  // path — build absolute media URLs in the page as `${API_URL}${capture.url}`.
+  browserCaptures(orgId: string) {
+    return request<{ captures: BrowserCapture[] }>(`/api/v1/organizations/${orgId}/browser/captures`);
   },
 
   // ── Wiki ──

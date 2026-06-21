@@ -167,6 +167,21 @@ defmodule NoizuPromptLinguaWeb.Router do
     get "/config/features", ConfigController, :features
     # Download the standalone local-filesystem MCP server (dev tooling) as a tarball.
     get "/config/local-mcp/download", ConfigController, :local_mcp_download
+    # Download the local browser controller (Node + Playwright) as a tarball.
+    get "/config/browser-controller/download", ConfigController, :browser_controller_download
+    # Download the remote-access tunnel client (frpc wrapper) as a tarball.
+    get "/config/remote-access-client/download", ConfigController, :remote_access_client_download
+  end
+
+  # Remote-access reverse tunnels. CRUD is authenticated with an MCP JWT verified
+  # inside the controller (not the Guardian session pipeline); `frp-auth` is the
+  # frps server-plugin callback, secured by the per-claim tunnel token.
+  scope "/api/v1/remote-access", NoizuPromptLinguaWeb do
+    pipe_through [:api, :rate_limited_auth]
+    post "/tunnels", RemoteAccessController, :create
+    get "/tunnels", RemoteAccessController, :index
+    delete "/tunnels/:name", RemoteAccessController, :delete
+    post "/frp-auth", RemoteAccessController, :frp_auth
   end
 
   scope "/api/v1", NoizuPromptLinguaWeb do
@@ -193,6 +208,13 @@ defmodule NoizuPromptLinguaWeb.Router do
   scope "/api/v1/organizations/:org_id", NoizuPromptLinguaWeb do
     pipe_through [:api, :authenticated, :org_admin]
     resources "/members", MembershipController, only: [:index, :create, :update, :delete]
+  end
+
+  # Browser feature: controller-connected status + captured screenshots/videos.
+  scope "/api/v1/organizations/:org_id", NoizuPromptLinguaWeb do
+    pipe_through [:api, :authenticated, :org_viewer]
+    get "/browser/status", BrowserController, :status
+    get "/browser/captures", BrowserController, :captures
   end
 
   scope "/api/v1/admin", NoizuPromptLinguaWeb do

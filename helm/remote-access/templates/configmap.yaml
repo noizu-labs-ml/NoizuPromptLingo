@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "remote-access.fullname" . }}-config
+  labels:
+    {{- include "remote-access.labels" . | nindent 4 }}
+data:
+  frps.toml: |
+    bindPort = {{ .Values.frps.bindPort }}
+    vhostHTTPPort = {{ .Values.frps.vhostHTTPPort }}
+    subdomainHost = "{{ .Values.frps.subdomainHost }}"
+    transport.tls.force = {{ .Values.frps.tlsForce }}
+
+    [[httpPlugins]]
+    name = "{{ .Values.frps.auth.pluginName }}"
+    addr = "{{ .Values.frps.auth.addr }}"
+    path = "{{ .Values.frps.auth.path }}"
+    ops = [{{ range $i, $op := .Values.frps.auth.ops }}{{ if $i }}, {{ end }}"{{ $op }}"{{ end }}]
+    {{- with .Values.frps.extraConfig }}
+
+    {{ . | nindent 4 | trim }}
+    {{- end }}
