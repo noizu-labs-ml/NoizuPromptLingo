@@ -19,7 +19,9 @@ defmodule NoizuPromptLingua.MCPServers do
     %{id: "chat", label: "Chat", required: false, desc: "Chat rooms & messages"},
     %{id: "review", label: "Review", required: false, desc: "Artifact review & overlays"},
     %{id: "wiki", label: "Wiki", required: false, desc: "Wiki spaces, pages & comments"},
-    %{id: "github", label: "GitHub", required: false, desc: "GitHub integration — repos, branches, PRs, issues"}
+    %{id: "github", label: "GitHub", required: false, desc: "GitHub integration — repos, branches, PRs, issues"},
+    %{id: "personas", label: "Personas", required: false, desc: "Personas — bio, work log/journal & knowledge base"},
+    %{id: "instructions", label: "Instructions", required: false, desc: "Reusable versioned prompts rendered with params for sub-agents"}
   ]
 
   @doc "All configured MCP servers."

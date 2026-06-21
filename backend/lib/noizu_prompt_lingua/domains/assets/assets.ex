@@ -153,9 +153,20 @@ defmodule NoizuPromptLingua.Domains.Assets do
     end
   end
 
-  # Placeholder generation — materialize the prompt as content. Replace with a
-  # real content generator (LLM / media tool) to render the asset.
-  defp generate_content(entry, _opts), do: entry.prompt_yaml
+  # Generate content from the prompt YAML via the LLM-backed ContentGenerator
+  # (loads format-specific FIM references from priv/skills/content-generator).
+  # Falls back to materializing the prompt itself if generation is disabled or
+  # the call fails. Pass `llm_generate: false` for a pure placeholder.
+  defp generate_content(entry, opts) do
+    if opts[:llm_generate] == false do
+      entry.prompt_yaml
+    else
+      case NoizuPromptLingua.Domains.Assets.ContentGenerator.generate(entry.prompt_yaml, opts) do
+        {:ok, generated} -> generated
+        {:error, _reason} -> entry.prompt_yaml
+      end
+    end
+  end
 
   def list_outputs(entry_id) do
     AssetOutput

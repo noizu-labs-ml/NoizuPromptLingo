@@ -74,7 +74,14 @@ defmodule NoizuPromptLinguaWeb.AssetController do
   # POST /api/v1/organizations/:org_id/assets/:asset_id/generate
   def generate(conn, %{"org_id" => org_id, "asset_id" => id} = params) do
     with_owned_entry(conn, org_id, id, "member", fn _entry ->
-      opts = [actor: actor(conn), provider: params["provider"], model: params["model"], content: params["content"]]
+      opts = [
+        actor: actor(conn),
+        provider: params["provider"],
+        model: params["model"],
+        endpoint: params["endpoint"],
+        content: params["content"],
+        llm_generate: params["llm_generate"] != false
+      ]
 
       case Assets.generate(id, opts) do
         {:ok, output} -> conn |> put_status(:created) |> json(%{output: output_json(output)})

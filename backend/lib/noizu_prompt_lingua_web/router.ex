@@ -114,6 +114,16 @@ defmodule NoizuPromptLinguaWeb.Router do
       NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Github.MCP)
   end
 
+  scope "/", host: "personas." do
+    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
+      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Personas.MCP)
+  end
+
+  scope "/", host: "instructions." do
+    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
+      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Instructions.MCP)
+  end
+
   scope "/mcp" do
     forward "/", Noizu.MCP.Transport.StreamableHTTP.Plug,
       NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.MCP)
@@ -343,6 +353,30 @@ defmodule NoizuPromptLinguaWeb.Router do
       post "/active", AssetController, :set_active
       post "/outputs/:output_id/accept", AssetController, :accept_output
       post "/outputs/:output_id/reject", AssetController, :reject_output
+    end
+
+    # Personas: named identities with bio, work log/journal, and personal
+    # knowledge base (org-scoped, optional project).
+    resources "/personas", PersonaController, only: [:index, :create, :show, :update, :delete]
+
+    scope "/personas/:persona_id" do
+      get "/journal", PersonaController, :journal
+      post "/journal", PersonaController, :add_journal
+      delete "/journal/:entry_id", PersonaController, :delete_journal
+      get "/knowledge", PersonaController, :knowledge
+      post "/knowledge", PersonaController, :add_knowledge
+      put "/knowledge/:entry_id", PersonaController, :update_knowledge
+      delete "/knowledge/:entry_id", PersonaController, :delete_knowledge
+    end
+
+    # Instructions: reusable, versioned prompts referenced by slug handle and
+    # rendered with per-task params to spawn sub-agents (org-scoped, optional project).
+    resources "/instructions", InstructionController, only: [:index, :create, :show, :update, :delete]
+
+    scope "/instructions/:instruction_id" do
+      get "/versions", InstructionController, :versions
+      post "/active-version", InstructionController, :set_active_version
+      post "/render", InstructionController, :render_instruction
     end
   end
 

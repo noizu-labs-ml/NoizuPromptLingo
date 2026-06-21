@@ -1,0 +1,144 @@
+databaseChangeLog:
+  # Personas: named identities with a bio, a work log/journal (append-only
+  # entries), and a personal knowledge base. Org-scoped (required) with an
+  # optional project. Slug is unique within an organization.
+
+  - changeSet:
+      id: create-table-personas
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE personas (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+                project_id uuid REFERENCES projects(id) ON DELETE SET NULL,
+                slug varchar(255) NOT NULL,
+                name varchar(255) NOT NULL,
+                role varchar(255),
+                bio text,
+                avatar varchar(1024),
+                tags text[] DEFAULT '{}',
+                metadata jsonb DEFAULT '{}'::jsonb,
+                status varchar(255) NOT NULL DEFAULT 'active',
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: personas
+
+  - changeSet:
+      id: create-indexes-personas
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_personas_org_slug
+            tableName: personas
+            unique: true
+            columns:
+              - column:
+                  name: organization_id
+              - column:
+                  name: slug
+        - createIndex:
+            indexName: idx_personas_project_id
+            tableName: personas
+            columns:
+              - column:
+                  name: project_id
+        - createIndex:
+            indexName: idx_personas_status
+            tableName: personas
+            columns:
+              - column:
+                  name: status
+        - sql:
+            sql: CREATE INDEX idx_personas_tags ON personas USING gin (tags);
+      rollback:
+        - dropIndex:
+            indexName: idx_personas_org_slug
+        - dropIndex:
+            indexName: idx_personas_project_id
+        - dropIndex:
+            indexName: idx_personas_status
+        - sql:
+            sql: DROP INDEX IF EXISTS idx_personas_tags;
+
+  - changeSet:
+      id: create-table-persona-journal-entries
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE persona_journal_entries (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                persona_id uuid NOT NULL REFERENCES personas(id) ON DELETE CASCADE,
+                category varchar(255) NOT NULL DEFAULT 'work_log',
+                title varchar(512),
+                body text NOT NULL,
+                tags text[] DEFAULT '{}',
+                metadata jsonb DEFAULT '{}'::jsonb,
+                actor varchar(255),
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: persona_journal_entries
+
+  - changeSet:
+      id: create-index-persona-journal-entries
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_persona_journal_persona_id
+            tableName: persona_journal_entries
+            columns:
+              - column:
+                  name: persona_id
+      rollback:
+        - dropIndex:
+            indexName: idx_persona_journal_persona_id
+
+  - changeSet:
+      id: create-table-persona-knowledge-entries
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE persona_knowledge_entries (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                persona_id uuid NOT NULL REFERENCES personas(id) ON DELETE CASCADE,
+                slug varchar(255) NOT NULL,
+                title varchar(512) NOT NULL,
+                body text NOT NULL,
+                tags text[] DEFAULT '{}',
+                source varchar(1024),
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: persona_knowledge_entries
+
+  - changeSet:
+      id: create-indexes-persona-knowledge-entries
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_persona_kb_persona_slug
+            tableName: persona_knowledge_entries
+            unique: true
+            columns:
+              - column:
+                  name: persona_id
+              - column:
+                  name: slug
+        - sql:
+            sql: CREATE INDEX idx_persona_kb_tags ON persona_knowledge_entries USING gin (tags);
+      rollback:
+        - dropIndex:
+            indexName: idx_persona_kb_persona_slug
+        - sql:
+            sql: DROP INDEX IF EXISTS idx_persona_kb_tags;

@@ -121,3 +121,9 @@ databaseChangeLog:
   - include:
       file: 040-assets.yaml
       relativeToChangelogFile: true
+  - include:
+      file: 041-personas.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 042-instructions.yaml
+      relativeToChangelogFile: true

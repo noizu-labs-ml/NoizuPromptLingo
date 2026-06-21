@@ -1,0 +1,109 @@
+databaseChangeLog:
+  # Instructions: reusable, versioned prompt documents referenced by an org-scoped
+  # slug handle and rendered with per-task params to spawn sub-agents. Org-scoped
+  # (required) with an optional project. Bodies are versioned; active_version
+  # selects the served one.
+
+  - changeSet:
+      id: create-table-instructions
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE instructions (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+                project_id uuid REFERENCES projects(id) ON DELETE SET NULL,
+                slug varchar(255) NOT NULL,
+                title varchar(512) NOT NULL,
+                description text,
+                tags text[] DEFAULT '{}',
+                parameters jsonb NOT NULL DEFAULT '[]'::jsonb,
+                active_version integer NOT NULL DEFAULT 1,
+                status varchar(255) NOT NULL DEFAULT 'active',
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: instructions
+
+  - changeSet:
+      id: create-indexes-instructions
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_instructions_org_slug
+            tableName: instructions
+            unique: true
+            columns:
+              - column:
+                  name: organization_id
+              - column:
+                  name: slug
+        - createIndex:
+            indexName: idx_instructions_project_id
+            tableName: instructions
+            columns:
+              - column:
+                  name: project_id
+        - createIndex:
+            indexName: idx_instructions_status
+            tableName: instructions
+            columns:
+              - column:
+                  name: status
+        - sql:
+            sql: CREATE INDEX idx_instructions_tags ON instructions USING gin (tags);
+      rollback:
+        - dropIndex:
+            indexName: idx_instructions_org_slug
+        - dropIndex:
+            indexName: idx_instructions_project_id
+        - dropIndex:
+            indexName: idx_instructions_status
+        - sql:
+            sql: DROP INDEX IF EXISTS idx_instructions_tags;
+
+  - changeSet:
+      id: create-table-instruction-versions
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE instruction_versions (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                instruction_id uuid NOT NULL REFERENCES instructions(id) ON DELETE CASCADE,
+                version integer NOT NULL,
+                body text NOT NULL,
+                change_note text,
+                inserted_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: instruction_versions
+
+  - changeSet:
+      id: create-indexes-instruction-versions
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_instruction_versions_unique
+            tableName: instruction_versions
+            unique: true
+            columns:
+              - column:
+                  name: instruction_id
+              - column:
+                  name: version
+        - createIndex:
+            indexName: idx_instruction_versions_instruction_id
+            tableName: instruction_versions
+            columns:
+              - column:
+                  name: instruction_id
+      rollback:
+        - dropIndex:
+            indexName: idx_instruction_versions_unique
+        - dropIndex:
+            indexName: idx_instruction_versions_instruction_id
