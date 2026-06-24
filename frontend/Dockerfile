@@ -30,6 +30,10 @@ RUN addgroup --system --gid 1001 nodejs && \
 COPY --from=build --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=build --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=build --chown=nextjs:nodejs /app/public ./public
+# /styleguide reads src/config/theme-style-guide/*.yaml at runtime via
+# process.cwd() (see src/app/styleguide/page.tsx). Next.js "standalone" output
+# does not trace these fs reads, so copy them into the image explicitly.
+COPY --from=build --chown=nextjs:nodejs /app/src/config/theme-style-guide ./src/config/theme-style-guide
 COPY --chown=nextjs:nodejs docker-entrypoint.sh ./
 
 USER nextjs

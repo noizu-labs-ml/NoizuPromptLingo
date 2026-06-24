@@ -1,0 +1,98 @@
+replicas: 1
+domain: tobor.locker
+
+npl-mcp:
+  image:
+    repository: ops.noizu.com/npl-mcp/server
+    tag: "v1.0.3"
+
+backend:
+  image:
+    repository: ops.noizu.com/npl-mcp/server
+    tag: "v1.0.3"
+    pullPolicy: IfNotPresent
+  port: 4040
+  # Authentik OIDC redirect flow (SSOController). issuer must NOT have a trailing
+  # slash — runtime.exs appends "/.well-known/openid-configuration". client id/
+  # secret are sourced from the npl-mcp-secrets AUTHENTIK_* keys.
+  oidc:
+    issuer: "https://auth.derobot.is/application/o/tobor-locker"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  probes:
+    liveness:
+      path: /health
+      initialDelaySeconds: 10
+      periodSeconds: 15
+      failureThreshold: 3
+    readiness:
+      path: /health
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      failureThreshold: 3
+  env:
+    secretName: npl-mcp-secrets
+
+frontend:
+  image:
+    repository: ops.noizu.com/npl-mcp/frontend
+    tag: "v1.0.6"
+    pullPolicy: IfNotPresent
+  port: 3000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 192Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  probes:
+    liveness:
+      path: /
+      initialDelaySeconds: 10
+      periodSeconds: 15
+      failureThreshold: 3
+    readiness:
+      path: /
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      failureThreshold: 3
+
+ingress:
+  enabled: true
+  className: nginx
+  cloudflareWhitelist: true
+  annotations:
+    # Carried over from the retired platform/tobor-locker TF module — larger
+    # proxy buffer for auth headers/cookies on tobor.locker.
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+
+tls:
+  enabled: true
+  secretName: toborlocker-tls
+  infisical:
+    enabled: true
+    hostAPI: https://infisical.noizu.io/api
+    credentialsNamespace: infra
+    secretName: universal-auth-credentials
+    secretNamespace: infra
+    projectSlug: incubator-apps
+    envSlug: prod
+    secretsPath: /apps/tls/toborlocker
+    crtKey: TOBORLOCKER_TLS_CRT
+    keyKey: TOBORLOCKER_TLS_KEY
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
