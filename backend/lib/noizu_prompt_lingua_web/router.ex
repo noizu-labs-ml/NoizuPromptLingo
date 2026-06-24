@@ -50,6 +50,9 @@ defmodule NoizuPromptLinguaWeb.Router do
   scope "/", NoizuPromptLinguaWeb do
     pipe_through :api
     get "/health", HealthController, :index
+    # `curl -fsSL https://<host>/browser-sessions | bash` — self-installing
+    # launcher for the local browser controller (host baked into the script).
+    get "/browser-sessions", BrowserSessionController, :install
   end
 
   # Mint a short-lived MCP JWT from an active MCP API key. This is the bootstrap
@@ -57,6 +60,8 @@ defmodule NoizuPromptLinguaWeb.Router do
   scope "/api/mcp", NoizuPromptLinguaWeb do
     pipe_through [:api, :rate_limited_auth]
     post "/token", TokenController, :create
+    # Browser controller boot exchange: raw API key → {token, org_id, url}.
+    post "/browser-bootstrap", BrowserSessionController, :bootstrap
   end
 
   # MCP servers (Streamable HTTP), routed by subdomain — each domain is served
@@ -122,6 +127,11 @@ defmodule NoizuPromptLinguaWeb.Router do
   scope "/", host: "instructions." do
     forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
       NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Instructions.MCP)
+  end
+
+  scope "/", host: "memory." do
+    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
+      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Memory.MCP)
   end
 
   scope "/", host: "markdown." do
@@ -215,6 +225,17 @@ defmodule NoizuPromptLinguaWeb.Router do
     pipe_through [:api, :authenticated, :org_viewer]
     get "/browser/status", BrowserController, :status
     get "/browser/captures", BrowserController, :captures
+  end
+
+  # Agent-memory browser (read-only). Org-scoped by slug/uuid in the path (org_viewer role);
+  # memory is addressed per agent slug (call sign or persona slug; "weego" = the org weego).
+  scope "/api/organization/:org_id", NoizuPromptLinguaWeb do
+    pipe_through [:api, :authenticated, :org_viewer]
+    get "/agents", MemoryController, :agents
+    get "/agent/:agent_slug/memory", MemoryController, :list
+    post "/agent/:agent_slug/memory/recall", MemoryController, :recall
+    post "/agent/:agent_slug/memory/recall_by_emotion", MemoryController, :recall_by_emotion
+    get "/agent/:agent_slug/memory/:id/associations", MemoryController, :associations
   end
 
   scope "/api/v1/admin", NoizuPromptLinguaWeb do

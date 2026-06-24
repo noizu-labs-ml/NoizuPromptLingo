@@ -8,9 +8,10 @@
  * `command_result` keyed by the command's request_id.
  */
 
+import { createInterface } from "node:readline/promises";
 import { Socket } from "phoenix";
 import WebSocket from "ws";
-import { loadConfig } from "./config.js";
+import { loadConfig, type Config } from "./config.js";
 import { BrowserDriver } from "./browser.js";
 
 interface IncomingCommand {
@@ -19,8 +20,52 @@ interface IncomingCommand {
   params?: unknown;
 }
 
+/**
+ * When a token + org weren't supplied via flags/env, prompt for an MCP API key
+ * (copy/paste from the web UI) and exchange it for a short-lived JWT + the
+ * caller's org id via <api>/api/mcp/browser-bootstrap.
+ */
+async function ensureCredentials(config: Config): Promise<Config> {
+  if (config.token && config.orgId) return config;
+
+  const rl = createInterface({ input: process.stdin, output: process.stderr });
+  let key: string;
+  try {
+    key = (await rl.question("Paste your Noizu MCP API key: ")).trim();
+  } finally {
+    rl.close();
+  }
+  if (!key) throw new Error("an MCP API key is required to connect");
+
+  const endpoint = `${config.apiBase}/api/mcp/browser-bootstrap`;
+  log(`exchanging API key at ${endpoint}`);
+  const resp = await fetch(endpoint, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ key }),
+  });
+  if (!resp.ok) {
+    const body = await resp.text().catch(() => "");
+    throw new Error(`bootstrap failed (HTTP ${resp.status}): ${body || resp.statusText}`);
+  }
+  const data = (await resp.json()) as {
+    token: string;
+    org_id: string;
+    url?: string;
+  };
+  if (!data.token || !data.org_id) {
+    throw new Error("bootstrap response missing token or org_id");
+  }
+  return {
+    ...config,
+    token: data.token,
+    orgId: data.org_id,
+    url: data.url || config.url,
+  };
+}
+
 async function main(): Promise<void> {
-  const config = loadConfig();
+  const config = await ensureCredentials(loadConfig());
   const driver = new BrowserDriver(config.headless);
 
   log(`launching chromium (headless=${config.headless})`);

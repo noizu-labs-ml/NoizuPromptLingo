@@ -1,13 +1,18 @@
 /**
  * Controller configuration, resolved from CLI flags then environment variables.
  *
+ *   --api / BROWSER_CONTROLLER_API     cloud API base (https://tobor.locker)
  *   --url / BROWSER_CONTROLLER_URL     cloud socket URL (wss://tobor.locker/socket)
  *   --token / BROWSER_CONTROLLER_TOKEN MCP JWT (minted from an MCP API key)
  *   --org / BROWSER_CONTROLLER_ORG     organization id (UUID)
  *   --headed / BROWSER_CONTROLLER_HEADED  launch a visible browser (default headless)
+ *
+ * token + org are optional: when absent the controller prompts for an MCP API
+ * key on boot and exchanges it via <api>/api/mcp/browser-bootstrap.
  */
 
 export interface Config {
+  apiBase: string;
   url: string;
   token: string;
   orgId: string;
@@ -34,6 +39,11 @@ function parseArgs(argv: string[]): Record<string, string | boolean> {
 export function loadConfig(argv: string[] = process.argv.slice(2)): Config {
   const args = parseArgs(argv);
 
+  const apiBase = (
+    (args.api as string) ||
+    process.env.BROWSER_CONTROLLER_API ||
+    "https://tobor.locker"
+  ).replace(/\/+$/, "");
   const url =
     (args.url as string) ||
     process.env.BROWSER_CONTROLLER_URL ||
@@ -48,15 +58,6 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): Config {
     process.env.BROWSER_CONTROLLER_HEADED === "1" ||
     process.env.BROWSER_CONTROLLER_HEADED === "true";
 
-  const missing: string[] = [];
-  if (!token) missing.push("--token / BROWSER_CONTROLLER_TOKEN");
-  if (!orgId) missing.push("--org / BROWSER_CONTROLLER_ORG");
-  if (missing.length > 0) {
-    throw new Error(
-      `Missing required configuration: ${missing.join(", ")}.\n` +
-        `Usage: noizu-browser-controller --url <wss://host/socket> --token <mcp-jwt> --org <org-id> [--headed]`,
-    );
-  }
-
-  return { url, token, orgId, headless: !headedFlag };
+  // token + org are resolved at boot via the API-key prompt when not supplied.
+  return { apiBase, url, token, orgId, headless: !headedFlag };
 }
