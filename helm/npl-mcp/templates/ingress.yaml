@@ -45,6 +45,16 @@ spec:
                 name: {{ include "npl-mcp.fullname" . }}
                 port:
                   name: mcp
+          # Phoenix UserSocket (WebSocket) — the local browser-controller and
+          # org channels connect to wss://<host>/socket. Must hit the backend,
+          # not the SPA catch-all (which fails the WS upgrade / 404s).
+          - path: /socket
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: mcp
           - path: /health
             pathType: Prefix
             backend:
