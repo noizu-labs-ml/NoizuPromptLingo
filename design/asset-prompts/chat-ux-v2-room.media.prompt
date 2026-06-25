@@ -1,0 +1,110 @@
+schema: "0.4"
+id: chat-ux-v2-room
+type: image
+quality: high
+
+# Chat UX v2 redesigned room view (ticket d8a6e4ef).
+# Consumes Yuki's v2 redesign flow + inspectable-identity refinement, Lena's
+# reserved UI channel + sg- design tokens, and the console pattern's shared
+# language (7e269bff). This is also Theo's hero-demo frame (persona peek).
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a
+    PREMIUM team-chat surface inside a developer console — calm, dense, modern,
+    dark-themed (think Linear / Height, not a consumer messenger, not a game).
+    Clean humanist sans-serif throughout (NO serif body). Restrained chrome,
+    generous information density, excellent small-size legibility.
+
+    IDENTITY IS THE HERO: this chat is between named AI PERSONAS, and their
+    authored identity must be legible and inspectable — each speaker has a stable
+    color-dot avatar + name + role, and one persona's "peek" popover is open
+    showing their authored bio + an accruing journal. That inspectable identity is
+    the whole point of the shot.
+
+    COLOR DISCIPLINE: UI chrome is achromatic (graphite/slate surfaces, white/muted
+    text). The only saturated color comes from (a) per-persona avatar dots drawn
+    from a distinct, evenly-spaced hue set reserved for identity, and (b) reaction
+    chips. Selection/focus uses a single reserved accent (cool teal/cyan), never a
+    rainbow. Status/role chips use muted tints, never loud brand hues.
+  text: |
+    A 16:9 mockup of a redesigned team-chat room in a dark developer console.
+
+    OVERALL LAYOUT (three bands):
+    - LEFT: a slim app nav rail (icons, achromatic) — secondary, just for context.
+    - CENTER (dominant): the message THREAD, full readable width.
+    - RIGHT (~280px): a collapsible INFO PANEL with a collapse chevron in the header.
+
+    ROOM HEADER BAND (top of center+right):
+    - Room name "work-group" in medium-weight sans.
+    - A copyable MONO SLUG CHIP "#work-group" (subtle graphite pill, mono font).
+    - Topic line (muted): "Standing open work group — coordination".
+    - A small stacked MEMBER-AVATAR CLUSTER (4–5 overlapping color dots + "+6").
+    - An info-panel toggle (chevron) at the right edge.
+
+    THE THREAD (center) — sender-GROUPED, lighter rows, NOT boxed cards:
+    - Messages grouped by sender into blocks. Each block: a COLOR-DOT AVATAR
+      (a filled circle with the speaker's initial, each persona a distinct
+      reserved hue) + persona NAME + a small muted ROLE CHIP (e.g. "UX",
+      "Architect", "QA") + a muted right-aligned timestamp — rendered ONCE at the
+      top of the run; the following 1–2 lines from the same persona are tight body
+      text indented under the identity, no repeated avatar.
+    - Show ~4 grouped blocks from different personas (distinct dot hues): e.g.
+      "Yuki · UX", "Dmitri · Architect", "Sofia · QA", "Marcus · Backend".
+    - A subtle DATE DIVIDER ("Today") separates an earlier run.
+    - Rows are light: no heavy borders/card backgrounds; one row shows a faint
+      hover background with a small right-aligned ACTION CLUSTER revealed
+      (a react "+" and a kebab) — the affordance appears on hover, it is NOT an
+      always-on dashed circle under every message.
+    - Under two messages: compact REACTION COUNT CHIPS (e.g. "👍 3", "🎉 1"),
+      one chip in a "mine" selected state (subtle teal fill + readable count).
+
+    THE HERO MOMENT — a PERSONA PEEK popover, open over Yuki's avatar:
+    - A small dark rounded popover anchored to the clicked avatar, showing:
+      the color-dot + "Yuki Tanaka" + a "UX Designer" role chip; a 1–2 line BIO
+      ("Research-led UX designer; thinks in journeys, states, and the quiet moments
+       where users get confused"); a tiny "Journal" section with 2 recent entries
+      (short timestamped lines, visibly accruing); a "Knowledge base · 8" count;
+      and a muted "view persona →" link.
+    - This popover is the focal point — it makes the persona's AUTHORED, inspectable
+      identity literally readable. Give it a soft focus ring (reserved teal).
+
+    RIGHT INFO PANEL:
+    - "Topic" (room description) + the copyable mono slug chip.
+    - "Present" — a vertical list of persona rows (color dot + name + role).
+    - "Pinned" — 1–2 linked-artifact rows (doc icon + title), muted.
+
+    COMPOSER (bottom of center): a clean single-row input width-aligned to the
+    thread + a primary Send button; placeholder "Write a message…".
+
+    MOOD: premium, dense, calm, dark. Sans-serif everywhere. Color only on persona
+    dots + reaction chips + the one teal focus accent. This should look like a tool
+    a team actually lives in — and the persona peek should make you believe these
+    teammates have real, authored identities.
+  provider_options:
+    aspect_ratio: "16:9"
+    style: "natural"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    identity_legibility: {weight: 3, description: "Sender-grouped blocks each with a color-dot avatar + name + role chip + muted timestamp rendered once per run; distinct reserved hues per persona; an OPEN persona-peek popover showing bio + accruing journal + KB count + view-persona link (the hero moment)"}
+    density_and_rows: {weight: 3, description: "Light grouped rows (not boxed cards), tighter vertical rhythm, a date divider, hover-revealed action cluster on one row (NOT an always-on dashed + circle), compact reaction count chips with one 'mine' state"}
+    color_discipline: {weight: 2, description: "Achromatic graphite chrome + sans-serif; saturated color only on persona dots + reaction chips; a single reserved teal focus/selection accent; muted role/status chips — no rainbow chrome, no serif body"}
+    layout: {weight: 2, description: "Full-width thread + collapsible right info panel (topic/slug chip/present-personas/pinned); a real room header band with name + mono copyable slug chip + topic + member-avatar cluster; width-aligned composer"}
+  reject_if:
+    - "always-on dashed + reaction circle under every message (the v1 antipattern)"
+    - "heavy boxed message cards with large whitespace / low density"
+    - "serif body font or consumer-messenger/game aesthetic"
+    - "rainbow UI chrome or no visible persona-peek popover"
+    - "dead empty grey right column instead of a populated info panel"
+
+tags: [chat, ux-v2, mockup, ui, persona-identity, npl-frontend, hero-demo]

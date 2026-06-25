@@ -1390,7 +1390,11 @@ button.chat-room-header__slug:focus-visible { outline: 2px solid var(--field-foc
 .reaction-chip:hover { background: color-mix(in srgb, var(--brand-blue, #1d4e5f) 8%, var(--surface, #fff)); border-color: color-mix(in srgb, var(--brand-blue, #1d4e5f) 30%, var(--border)); }
 .reaction-chip:focus-visible { outline: 2px solid var(--brand-blue, #1d4e5f); outline-offset: 1px; }
 .reaction-chip--mine { background: color-mix(in srgb, var(--brand-blue, #1d4e5f) 16%, transparent); border-color: color-mix(in srgb, var(--brand-blue, #1d4e5f) 45%, var(--border)); }
-.reaction-chip__count { font-variant-numeric: tabular-nums; color: var(--text-secondary, #555); }
+/* Layout guard (priya seq365): clamp a pathological/oversized server `emoji` so it
+   truncates gracefully instead of blowing out the chip row. Protects LAYOUT only —
+   the emoji length cap itself is the BE's job (reaction.ex, v1.0.10). */
+.reaction-chip__emoji { display: inline-block; max-width: 12ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.reaction-chip__count { font-variant-numeric: tabular-nums; color: var(--text-secondary, #555); flex-shrink: 0; }
 
 .reaction-picker { position: relative; display: inline-flex; }
 .reaction-add {

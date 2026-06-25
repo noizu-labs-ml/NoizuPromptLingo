@@ -152,9 +152,14 @@ export default function BoardDetailPage() {
   }, [orgId, boardId]);
 
   const fetchTickets = useCallback(async () => {
-    if (!orgId) return;
+    if (!orgId || !board) return;
     try {
-      const opts: { queueId: string; iterationId?: string } = { queueId: boardId };
+      // d4a8fd52 (c): a board surfaces its PROJECT's tickets as cards (per marcus —
+      // "board view queries cards by board.project_id"). An org-level board (no
+      // project) falls back to its own queue. Tickets with no stage land in the
+      // "Unassigned" column.
+      const opts: { projectId?: string; queueId?: string; iterationId?: string } =
+        board.project_id ? { projectId: board.project_id } : { queueId: boardId };
       if (isScrum && iteration !== BACKLOG) opts.iterationId = iteration;
       const { tickets } = await api.listTickets(orgId, opts);
       // For scrum backlog view, show only tickets with no iteration.
@@ -165,7 +170,7 @@ export default function BoardDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [orgId, boardId, isScrum, iteration]);
+  }, [orgId, boardId, board, isScrum, iteration]);
 
   useEffect(() => {
     if (orgId) fetchBoard();

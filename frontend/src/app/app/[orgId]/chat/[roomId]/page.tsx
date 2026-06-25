@@ -494,7 +494,7 @@ export default function ChatRoomDetailPage() {
                             aria-pressed={r.me}
                             aria-label={`${r.emoji} reaction, ${r.count}`}
                           >
-                            <span aria-hidden>{r.emoji}</span>
+                            <span className="reaction-chip__emoji" aria-hidden>{r.emoji}</span>
                             <span className="reaction-chip__count">{r.count}</span>
                           </button>
                         ))}
