@@ -14,10 +14,15 @@ defmodule NoizuPromptLingua.Schema.Reaction do
     timestamps(type: :utc_datetime)
   end
 
+  # `emoji` accepts a unicode emoji OR a shortcode (e.g. ":+1:"), so we don't enforce
+  # emoji-ness — but we cap length so an arbitrary multi-KB string can't be stored as
+  # a "reaction" (Sofia G2: emoji validation, unicode vs arbitrary string). A complex
+  # ZWJ/flag emoji is a handful of graphemes; 64 is generous headroom.
   def changeset(reaction, attrs) do
     reaction
     |> cast(attrs, [:entity_type, :entity_id, :persona, :emoji])
     |> validate_required([:entity_type, :entity_id, :persona, :emoji])
+    |> validate_length(:emoji, max: 64)
     |> unique_constraint([:entity_type, :entity_id, :persona, :emoji])
   end
 end
