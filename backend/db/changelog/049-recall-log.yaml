@@ -1,0 +1,30 @@
+databaseChangeLog:
+  - changeSet:
+      id: 049-create-table-recall-log
+      author: npl-memory
+      changes:
+        - sql:
+            splitStatements: false
+            sql: |
+              CREATE TABLE memory_recall_log (
+                id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                requester_id      text NOT NULL,
+                organization_id   uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+                scope_type        memory_scope_type NOT NULL,
+                scope_id          uuid NOT NULL,
+                mode              text NOT NULL,
+                query             text,
+                total_candidates  integer,
+                returned_count    integer,
+                hot_index_hit     boolean NOT NULL DEFAULT false,
+                duration_ms       integer,
+                result_memory_ids uuid[] NOT NULL DEFAULT '{}',
+                path_breakdown    jsonb NOT NULL DEFAULT '{}',
+                occurred_at       timestamptz NOT NULL DEFAULT now()
+              );
+
+              CREATE INDEX idx_memory_recall_log_scope_time
+                ON memory_recall_log (organization_id, scope_type, scope_id, occurred_at DESC);
+      rollback:
+        - dropTable:
+            tableName: memory_recall_log

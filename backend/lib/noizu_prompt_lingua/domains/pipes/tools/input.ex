@@ -2,7 +2,7 @@ defmodule NoizuPromptLingua.Domains.Pipes.Tools.Input do
   use Noizu.MCP.Server.Tool,
     name: "Pipe.Input",
     description:
-      "Pull messages addressed to an agent handle within an organization. Returns the latest payload per (sender, message_name), including group-targeted and broadcast messages. Optionally filter by groups, a since timestamp (ISO-8601), and specific message names.",
+      "Pull messages addressed to an agent handle within an organization, including direct, group-targeted, broadcast, and bridged chat traffic. Cursor-based: pass the `next_cursor` returned by the previous call (start at 0) to receive only newer entries; returns an updated `next_cursor`. Optionally filter by groups and specific message names.",
     hidden: true,
     category: "Pipes",
     annotations: [read_only_hint: true]
@@ -10,8 +10,13 @@ defmodule NoizuPromptLingua.Domains.Pipes.Tools.Input do
   input do
     field :organization, :string, required: true, description: "Organization slug or UUID"
     field :agent, :string, required: true, description: "Agent handle to receive messages for"
+    field :cursor, :integer,
+      default: 0,
+      description:
+        "Opaque cursor; only entries newer than this are returned. Pass the prior call's next_cursor (start at 0)."
+
     field :groups, {:array, :string}, description: "Group names this agent belongs to"
-    field :since, :string, description: "Only messages updated at/after this ISO-8601 timestamp"
+    field :since, :string, description: "Only messages updated at/after this ISO-8601 timestamp (legacy)"
     field :message_names, {:array, :string}, description: "Filter to these message names"
 
     field :include_broadcast, :boolean,
@@ -26,19 +31,24 @@ defmodule NoizuPromptLingua.Domains.Pipes.Tools.Input do
   def call(args, _ctx) do
     org_ref = Args.get(args, :organization)
 
+    cursor = Args.get(args, :cursor) || 0
+
     with {:org, org_id} when not is_nil(org_id) <- {:org, Resolve.organization_id(org_ref)},
          {:ok, since} <- parse_since(Args.get(args, :since)) do
       opts = [
+        cursor: cursor,
         groups: Args.get(args, :groups) || [],
         since: since,
         message_names: Args.get(args, :message_names),
         include_broadcast: Args.get(args, :include_broadcast) != false
       ]
 
+      entries = Pipes.pull(org_id, Args.get(args, :agent), opts)
+
       messages =
-        Pipes.pull(org_id, Args.get(args, :agent), opts)
-        |> Enum.map(fn e ->
+        Enum.map(entries, fn e ->
           %{
+            seq: e.seq,
             sender: e.sender_handle,
             message_name: e.message_name,
             target_agent: blank_to_nil(e.target_agent_handle),
@@ -48,7 +58,21 @@ defmodule NoizuPromptLingua.Domains.Pipes.Tools.Input do
           }
         end)
 
-      {:ok, %{agent: Args.get(args, :agent), count: length(messages), messages: messages}}
+      # Entries come back seq ASC; the last one is the new high-water mark.
+      # Echo the input cursor when nothing newer arrived.
+      next_cursor =
+        case entries do
+          [] -> cursor
+          _ -> List.last(entries).seq
+        end
+
+      {:ok,
+       %{
+         agent: Args.get(args, :agent),
+         count: length(messages),
+         next_cursor: next_cursor,
+         messages: messages
+       }}
     else
       {:org, nil} -> {:error, "Organization '#{org_ref}' not found"}
       {:error, :bad_since} -> {:error, "Invalid 'since' timestamp; expected ISO-8601"}

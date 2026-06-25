@@ -2,8 +2,13 @@ defmodule NoizuPromptLingua.Domains.Personas do
   @moduledoc """
   Persona management. A persona has a name, bio/role, a work log/journal
   (append-only `PersonaJournalEntry` rows), and a personal knowledge base
-  (`PersonaKnowledgeEntry` rows). Personas are org-scoped (required) with an
-  optional project.
+  (`PersonaKnowledgeEntry` rows). Personas are keyed to an organization
+  (required) or to an org.project (optional `project_id`).
+
+  The *effective* list for a project is the union of that project's personas
+  and the org-level personas (those with no `project_id`). Pass
+  `project_id:` together with `include_org_level: true` to `list/1` to get it.
+  Slugs are unique within an organization, so the two scopes never collide.
   """
   import Ecto.Query, except: [update: 2]
   alias NoizuPromptLingua.Repo
@@ -55,7 +60,7 @@ defmodule NoizuPromptLingua.Domains.Personas do
   def list(opts \\ []) do
     Persona
     |> maybe_filter(:organization_id, opts[:organization_id])
-    |> maybe_filter(:project_id, opts[:project_id])
+    |> scope_project(opts[:project_id], opts[:include_org_level])
     |> maybe_filter(:status, opts[:status])
     |> maybe_filter_tag(opts[:tag])
     |> order_by([p], asc: p.name)
@@ -63,6 +68,18 @@ defmodule NoizuPromptLingua.Domains.Personas do
     |> offset(^(opts[:offset] || 0))
     |> Repo.all()
   end
+
+  # Project scoping. By default `project_id:` matches that project exactly.
+  # With `include_org_level: true` the result is the *effective* list for the
+  # project: its own personas plus org-level (no-project) personas. With no
+  # `project_id` the org-level + every-project listing is returned unchanged.
+  defp scope_project(q, nil, _), do: q
+
+  defp scope_project(q, project_id, true),
+    do: where(q, [r], r.project_id == ^project_id or is_nil(r.project_id))
+
+  defp scope_project(q, project_id, _),
+    do: where(q, [r], r.project_id == ^project_id)
 
   def count(org_id) do
     Persona |> where([p], p.organization_id == ^org_id) |> Repo.aggregate(:count, :id)
@@ -137,7 +154,6 @@ defmodule NoizuPromptLingua.Domains.Personas do
 
   defp maybe_filter(q, _field, nil), do: q
   defp maybe_filter(q, :organization_id, v), do: where(q, [r], r.organization_id == ^v)
-  defp maybe_filter(q, :project_id, v), do: where(q, [r], r.project_id == ^v)
   defp maybe_filter(q, :status, v), do: where(q, [r], r.status == ^v)
   defp maybe_filter(q, :category, v), do: where(q, [r], r.category == ^v)
 

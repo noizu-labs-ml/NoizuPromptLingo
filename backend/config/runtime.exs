@@ -24,6 +24,20 @@ config :noizu_prompt_lingua, :mock_mcp,
   default_provider: System.get_env("MOCK_MCP_DEFAULT_PROVIDER", "openai"),
   default_model: System.get_env("MOCK_MCP_DEFAULT_MODEL", "gpt-4o-mini")
 
+# ── Memory engine: embeddings + Weaviate (all envs) ──────────────
+# Keyword lists deep-merge with the config.exs defaults; these only override env-sourced values.
+config :noizu_prompt_lingua, :embeddings,
+  api_key: System.get_env("OPENAI_API_KEY"),
+  api_base: System.get_env("OPENAI_API_BASE", "https://api.openai.com/v1"),
+  model: System.get_env("EMBEDDING_MODEL", "text-embedding-3-small")
+
+# noizu_weaviate api key (runtime). The endpoint is compile-time (see config.exs).
+config :noizu_weaviate, weaviate_api_key: System.get_env("WEAVIATE_API_KEY")
+
+config :noizu_prompt_lingua, :memory_weaviate,
+  enabled: System.get_env("WEAVIATE_ENABLED") == "true",
+  class: System.get_env("WEAVIATE_CLASS", "NplMemory")
+
 # ── OpenTelemetry ────────────────────────────────────────────────
 if otel_endpoint = System.get_env("OTEL_EXPORTER_OTLP_ENDPOINT") do
   config :opentelemetry_exporter,

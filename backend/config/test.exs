@@ -7,7 +7,11 @@ config :noizu_prompt_lingua, NoizuPromptLingua.Repo,
   database: "#{System.get_env("DB_NAME", "noizu_prompt_lingua")}_test#{System.get_env("MIX_TEST_PARTITION")}",
   port: String.to_integer(System.get_env("DB_PORT") || "5432"),
   pool: Ecto.Adapters.SQL.Sandbox,
-  pool_size: System.schedulers_online() * 2
+  pool_size: System.schedulers_online() * 2,
+  # Shared-mode (async: false) memory tests hold one connection for the whole test; the heavy
+  # suites can run >15s, tripping the default 15s ownership/checkout timeout. Give them headroom.
+  ownership_timeout: 120_000,
+  timeout: 120_000
 
 config :noizu_prompt_lingua, NoizuPromptLinguaWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4002],
@@ -22,3 +26,8 @@ config :logger, level: :warning
 config :phoenix, :plug_init_mode, :runtime
 
 config :noizu_prompt_lingua, Oban, testing: :inline
+
+# Run memory side-effect workers synchronously in the test process (see
+# NoizuPromptLingua.Domains.Memory.Jobs). Bypasses Oban's executor, which corrupts the shared
+# Ecto Sandbox connection under load.
+config :noizu_prompt_lingua, :jobs_mode, :sync

@@ -7,9 +7,11 @@ defmodule NoizuPromptLinguaWeb.PersonaController do
   # GET /api/v1/organizations/:org_id/personas
   def index(conn, %{"org_id" => org_id} = params) do
     with_org(conn, org_id, "viewer", fn resolved_org_id ->
+      # With a project, return the effective list: project personas + org-level.
       opts =
         [organization_id: resolved_org_id]
         |> maybe_opt(:project_id, params["project_id"])
+        |> maybe_effective(params["project_id"])
         |> maybe_opt(:status, params["status"])
         |> maybe_opt(:tag, params["tag"])
 
@@ -196,6 +198,10 @@ defmodule NoizuPromptLinguaWeb.PersonaController do
   defp maybe_opt(opts, _key, nil), do: opts
   defp maybe_opt(opts, _key, ""), do: opts
   defp maybe_opt(opts, key, val), do: Keyword.put(opts, key, val)
+
+  # Fold org-level personas into a project-scoped listing (effective list).
+  defp maybe_effective(opts, project_id) when project_id in [nil, ""], do: opts
+  defp maybe_effective(opts, _project_id), do: Keyword.put(opts, :include_org_level, true)
 
   defp with_org(conn, org_id, role, fun) do
     user_id = get_user_id(conn)

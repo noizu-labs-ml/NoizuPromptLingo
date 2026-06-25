@@ -4,12 +4,12 @@ domain: tobor.locker
 npl-mcp:
   image:
     repository: ops.noizu.com/npl-mcp/server
-    tag: "v1.0.5"
+    tag: "v1.0.8"
 
 backend:
   image:
     repository: ops.noizu.com/npl-mcp/server
-    tag: "v1.0.5"
+    tag: "v1.0.8"
     pullPolicy: IfNotPresent
   port: 4040
   # Authentik OIDC redirect flow (SSOController). issuer must NOT have a trailing
@@ -19,11 +19,11 @@ backend:
     issuer: "https://auth.derobot.is/application/o/tobor-locker"
   resources:
     requests:
-      cpu: 100m
-      memory: 256Mi
-    limits:
-      cpu: 500m
+      cpu: "1"
       memory: 1Gi
+    limits:
+      cpu: "6"
+      memory: 8Gi
   probes:
     liveness:
       path: /health

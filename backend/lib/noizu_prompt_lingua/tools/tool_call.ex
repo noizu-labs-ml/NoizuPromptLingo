@@ -30,7 +30,7 @@ defmodule NoizuPromptLingua.Tools.ToolCall do
     arguments = args["arguments"] || %{}
     server = (ctx && ctx.server) || NoizuPromptLingua.MCP
 
-    case Catalog.call_hidden_tool(tool_name, arguments, server) do
+    case Catalog.call_hidden_tool(tool_name, arguments, server, ctx) do
       {:ok, result} -> {:ok, result}
       {:mcp, message} -> {:ok, %{status: "mcp", message: message}}
       {:error, reason} -> {:error, to_string(reason)}

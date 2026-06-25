@@ -41,6 +41,12 @@ defmodule NoizuPromptLingua.Application do
       NoizuPromptLingua.Domains.Markdown.MCP,
       NoizuPromptLingua.Domains.Pipes.MCP,
       NoizuPromptLingua.Domains.Browser.MCP,
+      NoizuPromptLingua.Domains.Memory.MCP,
+      # MCP servers whose SSE Registry was not being started (endpoints dead until now)
+      NoizuPromptLingua.Domains.Personas.MCP,
+      NoizuPromptLingua.Domains.Instructions.MCP,
+      NoizuPromptLingua.Domains.Tickets.MCP,
+      NoizuPromptLingua.Domains.Assets.MCP,
       # Browser relay: correlates Browser.* tool calls with the local controller.
       NoizuPromptLingua.Domains.Browser.Relay,
       NoizuPromptLinguaWeb.Endpoint

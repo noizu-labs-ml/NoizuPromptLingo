@@ -1,0 +1,84 @@
+databaseChangeLog:
+  # Cursor support for the agent pipe bus. Pull becomes cursor-based instead of
+  # timestamp-based: each entry carries a monotonic `seq` drawn from a dedicated
+  # sequence. An agent polls with an opaque integer cursor and receives entries
+  # with seq > cursor, ordered seq ASC, and gets back the max seq as its next
+  # cursor. On upsert-conflict we bump seq to a fresh nextval so an updated entry
+  # resurfaces in the feed (it floats back to the head of the cursor stream).
+  #
+  # This backs the chat→pipe fan-out: a single member inbox (their Pipe.Input)
+  # that interleaves direct, group, broadcast, and bridged chat traffic with a
+  # stable, gap-free polling cursor.
+
+  - changeSet:
+      id: create-sequence-agent-pipe-entries-seq
+      author: marcus-dev
+      changes:
+        - sql:
+            sql: |
+              CREATE SEQUENCE npl_agent_pipe_entries_seq;
+      rollback:
+        - sql:
+            sql: |
+              DROP SEQUENCE IF EXISTS npl_agent_pipe_entries_seq;
+
+  - changeSet:
+      id: add-seq-column-agent-pipe-entries
+      author: marcus-dev
+      changes:
+        - sql:
+            sql: |
+              ALTER TABLE npl_agent_pipe_entries
+                ADD COLUMN seq bigint NOT NULL DEFAULT nextval('npl_agent_pipe_entries_seq');
+      rollback:
+        - sql:
+            sql: |
+              ALTER TABLE npl_agent_pipe_entries DROP COLUMN seq;
+
+  - changeSet:
+      id: backfill-seq-agent-pipe-entries
+      author: marcus-dev
+      changes:
+        # Existing rows all received the same DEFAULT nextval at ALTER time only
+        # if they were rewritten; ADD COLUMN ... DEFAULT does a fast rewrite in
+        # PG 11+ so each existing row already got a distinct nextval. Re-assign
+        # in updated_at order anyway to guarantee a sane monotonic ordering that
+        # matches arrival, independent of PG version behavior.
+        - sql:
+            sql: |
+              WITH ordered AS (
+                SELECT id, row_number() OVER (ORDER BY updated_at ASC, inserted_at ASC) AS rn
+                FROM npl_agent_pipe_entries
+              )
+              UPDATE npl_agent_pipe_entries e
+                 SET seq = o.rn
+                FROM ordered o
+               WHERE e.id = o.id;
+        - sql:
+            sql: |
+              SELECT setval(
+                'npl_agent_pipe_entries_seq',
+                GREATEST((SELECT COALESCE(max(seq), 0) FROM npl_agent_pipe_entries), 1)
+              );
+      rollback:
+        - sql:
+            sql: |
+              -- no-op; column drop in the prior changeset removes the data
+
+  - changeSet:
+      id: create-index-agent-pipe-entries-seq
+      author: marcus-dev
+      changes:
+        # Pull filters by organization_id and seq > cursor, ordered by seq ASC.
+        - createIndex:
+            indexName: idx_agent_pipe_entries_org_seq
+            tableName: npl_agent_pipe_entries
+            unique: true
+            columns:
+              - column:
+                  name: organization_id
+              - column:
+                  name: seq
+      rollback:
+        - dropIndex:
+            indexName: idx_agent_pipe_entries_org_seq

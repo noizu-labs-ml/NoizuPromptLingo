@@ -7,6 +7,20 @@ defmodule NoizuPromptLingua.MCP.Resolve do
   alias NoizuPromptLingua.Schema.Organizations.Organization, as: OrgSchema
   alias NoizuPromptLingua.Schema.Projects.Project, as: ProjectSchema
 
+  @doc """
+  Extract the authenticated caller's user UUID from a tool `ctx`.
+
+  The MCP transport verifies the bearer token and stows the JWT claims at
+  `ctx.assigns[:auth_claims]`; the `"sub"` claim holds the user UUID. Returns
+  the UUID string, or nil when there are no claims (e.g. unauthenticated calls).
+  """
+  def current_user_id(ctx) do
+    case ctx do
+      %{assigns: %{auth_claims: %{"sub" => sub}}} when is_binary(sub) and sub != "" -> sub
+      _ -> nil
+    end
+  end
+
   @doc "Resolve an organization ref (slug or UUID) to its UUID, or nil."
   def organization_id(nil), do: nil
   def organization_id(ref) do

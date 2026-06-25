@@ -62,7 +62,7 @@ defmodule NoizuPromptLingua.Tools.Catalog do
     |> Enum.sort_by(& &1.name)
   end
 
-  def call_hidden_tool(name, arguments, server \\ NoizuPromptLingua.MCP) do
+  def call_hidden_tool(name, arguments, server \\ NoizuPromptLingua.MCP, ctx \\ nil) do
     name = resolve_alias(name)
     specs = server.__mcp__(:tools) |> Noizu.MCP.Server.Features.Tools.expand()
 
@@ -74,11 +74,17 @@ defmodule NoizuPromptLingua.Tools.Catalog do
         {:mcp, "Tool '#{name}' is MCP-visible — call it directly via MCP protocol"}
 
       spec ->
-        ctx = %Noizu.MCP.Ctx{server: server}
+        # Forward the caller's ctx so the dispatched tool keeps the auth context
+        # (assigns.auth_claims, etc.). Only fabricate a bare ctx when invoked
+        # without one (e.g. internal/non-request callers).
+        ctx = dispatch_ctx(ctx, server)
         args = cast_arguments(spec, arguments || %{})
         spec.module.call(args, ctx)
     end
   end
+
+  defp dispatch_ctx(%Noizu.MCP.Ctx{} = ctx, server), do: %{ctx | server: ctx.server || server}
+  defp dispatch_ctx(_none, server), do: %Noizu.MCP.Ctx{server: server}
 
   defp cast_arguments(_, args), do: args
 

@@ -1,0 +1,36 @@
+databaseChangeLog:
+  - changeSet:
+      id: 047-create-table-association-edges
+      author: npl-memory
+      changes:
+        - sql:
+            splitStatements: false
+            sql: |
+              CREATE TABLE association_edges (
+                id                   uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                source_memory_id     uuid NOT NULL REFERENCES memories(id) ON DELETE CASCADE,
+                target_memory_id     uuid NOT NULL REFERENCES memories(id) ON DELETE CASCADE,
+                weight               real NOT NULL DEFAULT 0.5 CHECK (weight >= 0.0 AND weight <= 1.0),
+                edge_type            memory_edge_type NOT NULL,
+                created_by           text NOT NULL DEFAULT 'weaver',
+                reinforcement_count  integer NOT NULL DEFAULT 0,
+                denforcement_count   integer NOT NULL DEFAULT 0,
+                reason               text,
+                emotional_similarity real,
+                temporal_proximity   real,
+                last_reinforced_at   timestamptz NOT NULL DEFAULT now(),
+                inserted_at          timestamptz NOT NULL DEFAULT now(),
+                updated_at           timestamptz NOT NULL DEFAULT now(),
+                CONSTRAINT uq_edge UNIQUE (source_memory_id, target_memory_id, edge_type),
+                CONSTRAINT no_self_edge CHECK (source_memory_id <> target_memory_id)
+              );
+
+              -- Forward + reverse traversal frontiers (recall walks both directions)
+              CREATE INDEX idx_edges_source_w ON association_edges (source_memory_id, weight DESC)
+                WHERE weight >= 0.2;
+              CREATE INDEX idx_edges_target_w ON association_edges (target_memory_id, weight DESC)
+                WHERE weight >= 0.2;
+              CREATE INDEX idx_edges_decay ON association_edges (last_reinforced_at);
+      rollback:
+        - dropTable:
+            tableName: association_edges

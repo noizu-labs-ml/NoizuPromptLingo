@@ -133,3 +133,24 @@ databaseChangeLog:
   - include:
       file: 044-remote-access-tunnels.yaml
       relativeToChangelogFile: true
+  - include:
+      file: 045-memory-enums.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 046-memories.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 047-association-edges.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 048-memory-aux.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 049-recall-log.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 050-agent-call-signs.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 051-agent-pipe-cursor.yaml
+      relativeToChangelogFile: true

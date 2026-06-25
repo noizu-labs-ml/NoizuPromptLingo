@@ -12,6 +12,10 @@ defmodule NoizuPromptLingua.Schema.Pipes.AgentPipeEntry do
     field :target_agent_handle, :string, default: ""
     field :target_group, :string, default: ""
     field :body, :string
+    # Monotonic cursor, assigned by npl_agent_pipe_entries_seq (DB default on
+    # insert, bumped to a fresh nextval on upsert-conflict). Never cast from
+    # user input — it is the read side's opaque ordering key.
+    field :seq, :integer, read_after_writes: true
 
     timestamps(type: :utc_datetime)
   end

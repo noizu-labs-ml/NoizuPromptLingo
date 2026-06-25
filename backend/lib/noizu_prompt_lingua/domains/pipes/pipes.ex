@@ -5,8 +5,9 @@ defmodule NoizuPromptLingua.Domains.Pipes do
   An agent publishes a payload under a `message_name` to a target — a specific
   agent handle, a named group, or a broadcast (both blank) — via `push/1`. The
   latest payload for a (sender, message_name, target) tuple is retained (upsert).
-  An agent pulls everything addressed to it via `pull/2`, optionally filtered by
-  time and message name. All entries are scoped to an organization.
+  An agent pulls everything addressed to it via `pull/3` using an opaque,
+  monotonically-increasing `seq` cursor. All entries are scoped to an
+  organization.
   """
 
   import Ecto.Query
@@ -27,14 +28,27 @@ defmodule NoizuPromptLingua.Domains.Pipes do
     %AgentPipeEntry{}
     |> AgentPipeEntry.changeset(attrs)
     |> Repo.insert(
-      on_conflict: {:replace, [:body, :updated_at]},
+      # On conflict, replace the payload AND draw a fresh seq so an updated
+      # entry resurfaces past every reader's cursor (floats to the head of the
+      # feed). Fresh inserts get seq from the column DEFAULT nextval(...).
+      on_conflict:
+        from(e in AgentPipeEntry,
+          update: [
+            set: [
+              body: fragment("EXCLUDED.body"),
+              updated_at: fragment("EXCLUDED.updated_at"),
+              seq: fragment("nextval('npl_agent_pipe_entries_seq')")
+            ]
+          ]
+        ),
       conflict_target: [
         :organization_id,
         :sender_handle,
         :message_name,
         :target_agent_handle,
         :target_group
-      ]
+      ],
+      returning: [:seq]
     )
   end
 
@@ -42,19 +56,24 @@ defmodule NoizuPromptLingua.Domains.Pipes do
   Pull entries addressed to `agent_handle` within `organization_id`.
 
   Options:
+    * `:cursor` — integer; only entries with `seq > cursor`. Default 0 (all).
     * `:groups` — list of group names the agent belongs to (matches target_group).
-    * `:since` — `DateTime`; only entries updated at or after this time.
+    * `:since` — `DateTime`; only entries updated at or after this time (legacy filter).
     * `:message_names` — list of message names to keep.
     * `:include_broadcast` — default true; include entries with no target.
+
+  Entries are returned in `seq ASC` order so the caller can take the last
+  `seq` as its next cursor.
   """
   def pull(organization_id, agent_handle, opts \\ []) do
     groups = opts[:groups] || []
     include_broadcast = Keyword.get(opts, :include_broadcast, true)
+    cursor = opts[:cursor] || 0
 
     query =
       from(e in AgentPipeEntry,
-        where: e.organization_id == ^organization_id,
-        order_by: [desc: e.updated_at]
+        where: e.organization_id == ^organization_id and e.seq > ^cursor,
+        order_by: [asc: e.seq]
       )
 
     query =

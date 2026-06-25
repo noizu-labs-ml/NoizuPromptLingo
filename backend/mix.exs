@@ -62,6 +62,7 @@ defmodule NoizuPromptLingua.MixProject do
       {:semaphore, "~> 1.0"},
       {:seed_helper, "~> 0.1.1"},
       {:smart_token, "~> 0.1.3"},
+      {:noizu_weaviate, "~> 0.2.0"},
 
       # GenAI
       {:genai, "~> 0.3.0"},

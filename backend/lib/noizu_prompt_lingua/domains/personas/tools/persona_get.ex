@@ -25,7 +25,7 @@ defmodule NoizuPromptLingua.Domains.Personas.Tools.PersonaGet do
         kb = Personas.list_knowledge(p.id)
         {:ok, %{
           id: p.id, slug: p.slug, name: p.name, role: p.role, bio: p.bio,
-          avatar: p.avatar, tags: p.tags, status: p.status,
+          avatar: p.avatar, tags: p.tags, status: p.status, metadata: p.metadata,
           organization_id: p.organization_id, project_id: p.project_id,
           journal: Enum.map(journal, fn j ->
             %{id: j.id, category: j.category, title: j.title, body: j.body, at: j.inserted_at}

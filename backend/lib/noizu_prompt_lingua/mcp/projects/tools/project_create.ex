@@ -12,33 +12,34 @@ defmodule NoizuPromptLingua.MCP.Projects.Tools.ProjectCreate do
     field :name, :string, required: true, description: "Project name"
     field :slug, :string, required: true, description: "Unique URL slug (within the org)"
     field :description, :string, description: "Project description"
-    field :owner_id, :string, required: true, description: "Owner user UUID"
+    field :owner_id, :string, description: "Owner user UUID (defaults to the authenticated caller)"
   end
 
   @impl true
-  def call(args, _ctx) do
-    owner_id = Args.get(args, :owner_id)
+  def call(args, ctx) do
+    org_ref = Args.get(args, :organization)
+    owner_id = Args.get(args, :owner_id) || Resolve.current_user_id(ctx)
 
-    case Resolve.organization_id(Args.get(args, :organization)) do
-      nil ->
-        {:error, "Organization '#{Args.get(args, :organization)}' not found"}
+    with {:owner, owner_id} when is_binary(owner_id) <- {:owner, owner_id},
+         {:org, org_id} when not is_nil(org_id) <- {:org, Resolve.organization_id(org_ref)} do
+      attrs =
+        args
+        |> Args.take([:name, :slug, :description])
+        |> Map.put(:organization_id, org_id)
 
-      org_id ->
-        attrs =
-          args
-          |> Args.take([:name, :slug, :description])
-          |> Map.put(:organization_id, org_id)
+      case NoizuPromptLingua.Projects.create_with_owner(attrs, owner_id) do
+        {:ok, project} ->
+          {:ok, %{id: project.id, name: project.name, slug: project.slug, status: project.status, organization_id: project.organization_id}}
 
-        case NoizuPromptLingua.Projects.create_with_owner(attrs, owner_id) do
-          {:ok, project} ->
-            {:ok, %{id: project.id, name: project.name, slug: project.slug, status: project.status, organization_id: project.organization_id}}
+        {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
+          {:error, "Failed: #{inspect(changeset.errors)}"}
 
-          {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
-            {:error, "Failed: #{inspect(changeset.errors)}"}
-
-          {:error, reason} ->
-            {:error, "Failed: #{inspect(reason)}"}
-        end
+        {:error, reason} ->
+          {:error, "Failed: #{inspect(reason)}"}
+      end
+    else
+      {:owner, _} -> {:error, "owner_id is required and could not be derived from the auth token"}
+      {:org, _} -> {:error, "Organization '#{org_ref}' not found"}
     end
   end
 end

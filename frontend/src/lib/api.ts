@@ -765,6 +765,75 @@ export interface NplSpecInput {
   xml?: boolean;
 }
 
+// ── Agent memory (read-only browser) ──
+// The memory engine is scoped to an "agent" within an organization. An agent is
+// one of: a persona, the org-level "weego" overseer, or a team member addressed
+// by call sign. Memories carry four facets (content/context/reflection/tangent),
+// an emotional state (VAD = valence/arousal/dominance), neurotransmitter levels,
+// and recall-tuning signals (salience/decay/recall_count).
+export type MemoryScopeType = "persona" | "weego" | "team_member";
+
+export interface MemoryAgent {
+  scope_type: MemoryScopeType;
+  scope_id: string;
+  // The agent's URL slug — used to address it in the memory API path.
+  slug: string;
+  label: string;
+  call_sign?: string;
+}
+
+// A mood point in valence-arousal-dominance space (each roughly -1..1).
+export interface MemoryMood {
+  valence: number;
+  arousal: number;
+  dominance: number;
+}
+
+export interface Memory {
+  id: string;
+  content: string;
+  context?: string | null;
+  reflection?: string | null;
+  tangent?: string | null;
+  summary?: string | null;
+  domain?: string | null;
+  topic?: string | null;
+  content_type?: string | null;
+  occurred_at?: string | null;
+  // Emotional state (VAD).
+  valence: number;
+  arousal: number;
+  dominance: number;
+  // Neurotransmitter levels.
+  cortisol: number;
+  dopamine: number;
+  oxytocin: number;
+  serotonin: number;
+  // Recall-tuning signals.
+  salience: number;
+  decay_weight: number;
+  recall_count: number;
+  // Present on recall responses — how strongly the memory matched the query.
+  resonance?: number | null;
+}
+
+export type MemoryEdgeType =
+  | "association"
+  | "causal"
+  | "contradiction"
+  | "elaboration"
+  | "temporal"
+  | string;
+
+export interface MemoryEdge {
+  id: string;
+  source_memory_id: string;
+  target_memory_id: string;
+  edge_type: MemoryEdgeType;
+  weight: number;
+  reason?: string | null;
+}
+
 interface AuthResponse {
   user: User;
   access_token: string;
@@ -1118,8 +1187,11 @@ export const api = {
     });
   },
 
+  // Viewer-accessible member list (any org member, viewer+). The
+  // `/organizations/:id/members` resource is admin-only, so listing uses the
+  // PBAC memberships read endpoint instead.
   listMembers(orgId: string) {
-    return request<{ members: Array<{ id: string; user_id: string; email: string; user_name: string; role: string; joined_at: string }> }>(`/api/v1/organizations/${orgId}/members`);
+    return request<{ members: Array<{ id: string; user_id: string; email: string; user_name: string; role: string; joined_at: string }> }>(`/api/v1/memberships/organizations/${orgId}`);
   },
 
   addMember(orgId: string, email: string, role: string) {
@@ -2230,6 +2302,48 @@ export const api = {
     return request<{ rendered: RenderedInstruction }>(
       `/api/v1/organizations/${orgId}/instructions/${instructionId}/render`,
       { method: "POST", body: JSON.stringify(version != null ? { params, version } : { params }) },
+    );
+  },
+
+  // ── Agent memory (read-only). Org is carried in the path (slug or uuid;
+  // resolved by the backend), and the agent is addressed by slug. All calls go
+  // through `request` so the bearer token + refresh handling apply. ──
+  listMemoryAgents(orgId: string) {
+    return request<{ agents: MemoryAgent[] }>(
+      `/api/organization/${encodeURIComponent(orgId)}/agents`,
+    );
+  },
+
+  // Default "show all" list for an agent (no query).
+  listAgentMemories(orgId: string, agentSlug: string, limit = 50) {
+    return request<{ results: Memory[] }>(
+      `/api/organization/${encodeURIComponent(orgId)}/agent/${encodeURIComponent(agentSlug)}/memory?limit=${limit}`,
+    );
+  },
+
+  recallMemories(orgId: string, agentSlug: string, query: string, limit = 20) {
+    return request<{ results: Memory[] }>(
+      `/api/organization/${encodeURIComponent(orgId)}/agent/${encodeURIComponent(agentSlug)}/memory/recall`,
+      {
+        method: "POST",
+        body: JSON.stringify({ query, limit }),
+      },
+    );
+  },
+
+  recallMemoriesByEmotion(orgId: string, agentSlug: string, mood: MemoryMood, limit = 20) {
+    return request<{ results: Memory[] }>(
+      `/api/organization/${encodeURIComponent(orgId)}/agent/${encodeURIComponent(agentSlug)}/memory/recall_by_emotion`,
+      {
+        method: "POST",
+        body: JSON.stringify({ mood, limit }),
+      },
+    );
+  },
+
+  getMemoryAssociations(orgId: string, agentSlug: string, memoryId: string) {
+    return request<{ edges: MemoryEdge[] }>(
+      `/api/organization/${encodeURIComponent(orgId)}/agent/${encodeURIComponent(agentSlug)}/memory/${encodeURIComponent(memoryId)}/associations`,
     );
   },
 };
