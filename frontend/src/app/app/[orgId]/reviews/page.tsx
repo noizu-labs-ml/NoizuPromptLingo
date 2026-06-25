@@ -121,13 +121,108 @@ function ReviewModal({
   );
 }
 
+// A review's terminal verdicts (matches the edit-form verdict set). Completing a
+// review records its final verdict + summary and freezes it (status → completed).
+const VERDICTS = [
+  { value: 'approved', label: 'Approved' },
+  { value: 'changes_requested', label: 'Changes requested' },
+  { value: 'rejected', label: 'Rejected' },
+];
+
+function CompleteReviewModal({
+  orgId,
+  review,
+  onClose,
+  onSaved,
+}: {
+  orgId: string;
+  review: Review;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [verdict, setVerdict] = useState(review.verdict || 'approved');
+  const [summary, setSummary] = useState(review.summary || '');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+    try {
+      await api.completeReview(orgId, review.id, { verdict, summary: summary.trim() || undefined });
+      toast.success('Review completed');
+      onSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Request failed');
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+        <h2 className="modal-title">Complete review</h2>
+        <p className="modal-body">
+          Record the final verdict for <strong>{review.title || `the review by ${review.reviewer_persona}`}</strong>.
+          This freezes the review — its status becomes <strong>completed</strong>.
+        </p>
+        <form onSubmit={handleSubmit}>
+          <div className="sg-field">
+            <label htmlFor="complete-verdict">Verdict</label>
+            <select id="complete-verdict" value={verdict} onChange={(e) => setVerdict(e.target.value)} autoFocus>
+              {VERDICTS.map((v) => (
+                <option key={v.value} value={v.value}>
+                  {v.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="sg-field">
+            <label htmlFor="complete-summary">Summary</label>
+            <textarea
+              id="complete-summary"
+              value={summary}
+              onChange={(e) => setSummary(e.target.value)}
+              placeholder="Optional closing summary"
+              rows={4}
+            />
+          </div>
+          {error && <div className="sg-error">{error}</div>}
+          <div className="modal-actions">
+            <button type="button" className="sg-btn sg-btn--outline" onClick={onClose}>
+              Cancel
+            </button>
+            <button type="submit" className="sg-btn sg-btn--black" disabled={saving}>
+              {saving ? 'Completing…' : 'Complete review'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function ReviewsPage() {
   const { orgId, slug, loading: orgLoading } = useOrgId();
   const { currentProject, switchProject } = useOrg();
   const router = useRouter();
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const [showModal, setShowModal] = useState(false);
+  const [completeTarget, setCompleteTarget] = useState<Review | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+
+  // 'complete' row action (descriptor bare key). Terminal reviews can't be
+  // re-completed — guard defensively (the action is offered on every row; the
+  // server is the deny-closed boundary on who-may-complete).
+  function handleAction(key: string, row: Review) {
+    if (key !== 'complete') return;
+    if (row.status === 'completed') {
+      toast.info('This review is already completed.');
+      return;
+    }
+    setCompleteTarget(row);
+  }
 
   const scopeProjectId = currentProject?.id;
   const scope = currentProject ? { projectId: currentProject.id } : undefined;
@@ -181,9 +276,23 @@ export default function ReviewsPage() {
             scope={scope}
             refreshKey={reloadKey}
             onOpenRow={(r) => router.push(`/app/${slug}/reviews/${r.id}`)}
+            onEditRow={(r) => router.push(`/app/${slug}/reviews/${r.id}?edit=1`)}
+            onAction={handleAction}
           />
         )}
       </main>
+
+      {completeTarget && orgId && (
+        <CompleteReviewModal
+          orgId={orgId}
+          review={completeTarget}
+          onClose={() => setCompleteTarget(null)}
+          onSaved={() => {
+            setCompleteTarget(null);
+            setReloadKey((k) => k + 1);
+          }}
+        />
+      )}
 
       {showModal && orgId && (
         <ReviewModal

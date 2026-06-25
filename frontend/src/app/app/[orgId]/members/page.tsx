@@ -53,7 +53,7 @@ function RolePickerModal({
       <div className="modal-card modal-card--sm" onClick={(e) => e.stopPropagation()}>
         <h2 className="modal-title">Assign role</h2>
         <p className="modal-body">
-          Set the role for <strong>{member.user_name || member.email}</strong>.
+          Set the role for <strong>{member.display_name || member.user_name || member.email}</strong>.
         </p>
         <div className="sg-field">
           <label htmlFor="role-pick">Role</label>
@@ -110,7 +110,7 @@ export default function MembersPage() {
   }
 
   async function handleRemove(member: OrgMember) {
-    if (!orgId || !confirm(`Remove ${member.user_name || member.email}?`)) return;
+    if (!orgId || !confirm(`Remove ${member.display_name || member.user_name || member.email}?`)) return;
     try {
       await api.removeMember(orgId, member.id);
       toast.success("Member removed");

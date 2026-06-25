@@ -30,7 +30,7 @@ function RelativeDate({ value }: { value: unknown }) {
 }
 
 /** Deterministic hue from a string so an identity's dot is stable across renders. */
-function hueFor(s: string): number {
+export function hueFor(s: string): number {
   let h = 0;
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360;
   return h;

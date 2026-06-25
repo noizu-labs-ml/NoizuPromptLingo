@@ -1509,6 +1509,10 @@ button.chat-room-header__slug:focus-visible { outline: 2px solid var(--field-foc
 .console-chip--status { text-transform: capitalize; background: var(--surface-alt, #f1f5f9); color: var(--text, #222); border-color: var(--border); }
 .console-identity { display: inline-flex; align-items: center; gap: 6px; }
 .console-identity__dot { width: 8px; height: 8px; border-radius: 999px; flex-shrink: 0; }
+/* Persona/agent member rows (ccaf5684): avatar fallback + agent badge. Structure only —
+   COLOR of the agent badge is lena's via the data-member-type hook. */
+.console-identity__avatar { width: 18px; height: 18px; border-radius: 999px; object-fit: cover; flex-shrink: 0; }
+.console-chip--member-type { text-transform: uppercase; font-size: 0.7em; letter-spacing: 0.03em; background: var(--surface-alt, #f1f5f9); color: var(--text-secondary, #555); }
 
 /* Row kebab menu-button — same focus contract as the reaction popover. */
 .console-rowmenu { position: relative; display: inline-flex; }

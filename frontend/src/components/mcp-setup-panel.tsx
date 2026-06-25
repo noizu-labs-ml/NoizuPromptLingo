@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import type { McpServerConfig } from '@/lib/api';
 
+type McpClient = 'claude' | 'codex';
+
 interface McpSetupPanelProps {
   token: string; // The MCP JWT token
   keyLabel: string; // Label of the API key
@@ -12,16 +14,19 @@ interface McpSetupPanelProps {
 }
 
 /**
- * Generates `claude mcp add` commands for the given MCP servers.
+ * Generates MCP add commands for the given MCP servers.
  *
- * Commands are generated in the format:
- *   AUTH_TOKEN=...
- *   claude mcp add --transport streamable-http tobor-{id} {url} --header "Authorization: Bearer $AUTH_TOKEN"
+ * Claude Code:
+ *   claude mcp add --transport http tobor-{id} {url} --header "Authorization: Bearer $AUTH_TOKEN"
+ *
+ * Codex:
+ *   codex mcp add tobor-{id} --url {url} --bearer-token-env-var AUTH_TOKEN
  *
  * Server URLs come from the backend config endpoint (host-derived), so this
  * component never hardcodes a host.
  */
 export default function McpSetupPanel({ token, keyLabel, servers, onClose }: McpSetupPanelProps) {
+  const [client, setClient] = useState<McpClient>('claude');
   const [enabled, setEnabled] = useState<Record<string, boolean>>(() => {
     const state: Record<string, boolean> = {};
     servers.forEach((s) => { state[s.id] = true; });
@@ -36,11 +41,19 @@ export default function McpSetupPanel({ token, keyLabel, servers, onClose }: Mcp
   }
 
   function getCommandLine(server: McpServerConfig) {
-    return `claude mcp add --transport streamable-http tobor-${server.id} ${server.url} --header "Authorization: Bearer $AUTH_TOKEN"`;
+    const name = `tobor-${server.id}`;
+    if (client === 'codex') {
+      return `codex mcp add ${name} --url ${server.url} --bearer-token-env-var AUTH_TOKEN`;
+    }
+
+    return `claude mcp add --transport http ${name} ${server.url} --header "Authorization: Bearer $AUTH_TOKEN"`;
   }
 
   function buildScript() {
-    const lines = [`AUTH_TOKEN=${token}`, ""];
+    const lines = [
+      `export AUTH_TOKEN=${token}`,
+      "",
+    ];
     servers.filter((s) => enabled[s.id]).forEach((s) => {
       lines.push(getCommandLine(s));
     });
@@ -77,6 +90,40 @@ export default function McpSetupPanel({ token, keyLabel, servers, onClose }: Mcp
         <span style={{ fontSize: 13, fontWeight: 600 }}>MCP Setup — {keyLabel}</span>
         <div style={{ display: "flex", gap: 8 }}>
           <button onClick={onClose} style={btnSm}>Close</button>
+        </div>
+      </div>
+
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        marginBottom: 12
+      }}>
+        <span style={{ fontSize: 11, fontWeight: 600, color: "var(--text-2)" }}>
+          Client
+        </span>
+        <div style={{
+          display: "inline-flex",
+          border: "1px solid var(--border)",
+          borderRadius: 6,
+          overflow: "hidden",
+          background: "var(--bg-3)"
+        }}>
+          {(['claude', 'codex'] as const).map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => setClient(option)}
+              style={{
+                ...clientToggleBtn,
+                ...(client === option
+                  ? { background: "var(--accent)", color: "white" }
+                  : { background: "transparent", color: "var(--text-1)" })
+              }}
+            >
+              {option === 'claude' ? 'Claude Code' : 'Codex'}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -170,6 +217,14 @@ const btnSm = {
   border: "1px solid var(--border)",
   background: "var(--bg-2)",
   color: "var(--text-1)",
+  cursor: "pointer",
+  fontFamily: "var(--font)"
+};
+
+const clientToggleBtn = {
+  padding: "5px 10px",
+  fontSize: 11,
+  border: 0,
   cursor: "pointer",
   fontFamily: "var(--font)"
 };

@@ -31,10 +31,22 @@ export interface Organization {
 // "persona"/"agent" rows appear later (ccaf5684) with zero FE change.
 export interface OrgMember {
   id: string;
-  user_id: string;
-  email: string;
-  user_name: string;
+  /** member_type: "user" | "persona". Branch on this for an agent badge/link (ccaf5684). */
   member_type: string;
+  /**
+   * Unified display name across user + persona rows (aniket seq740). Use this for the
+   * primary cell — persona rows have nil user_id/email, so user_name||email would blank.
+   */
+  display_name?: string;
+  /** Optional avatar (persona avatar; nil for users — fall back to the dot/initial). */
+  avatar?: string | null;
+  // ── user rows ── (nil on persona rows)
+  user_id?: string;
+  email?: string;
+  user_name?: string;
+  // ── persona rows ── (nil on user rows; ccaf5684 / ADR-017)
+  persona_id?: string;
+  persona_slug?: string;
   /** The target member's canonical role: owner | admin | lead | member | viewer. */
   role: string;
   /** Membership scope. */
@@ -1261,14 +1273,16 @@ export const api = {
   // PBAC members list (ticket 4a9aa9d9): rows carry member_type, target role, scope
   // (resource_type/id), and the caller's effective_role (16dc3df2). Optional role
   // facet -> ?role[]=admin&role[]=lead (ANY). agents appear here later (ccaf5684).
+  // READ via the viewer-gated /memberships path (aniket seq713); WRITES (add/update/
+  // remove below) use the admin /organizations/:org/members path.
   listMembers(orgId: string, opts?: { role?: string | string[] }) {
     return request<{ members: OrgMember[] }>(
-      `/api/v1/organizations/${orgId}/members${buildQuery({ role: opts?.role })}`,
+      `/api/v1/memberships/organizations/${orgId}${buildQuery({ role: opts?.role })}`,
     );
   },
 
   getMember(orgId: string, id: string) {
-    return request<{ member: OrgMember }>(`/api/v1/organizations/${orgId}/members/${id}`);
+    return request<{ member: OrgMember }>(`/api/v1/memberships/organizations/${orgId}/members/${id}`);
   },
 
   addMember(orgId: string, email: string, role: string) {
@@ -1724,6 +1738,19 @@ export const api = {
   createReview(orgId: string, review: ReviewInput) {
     return request<{ review: Review }>(`/api/v1/organizations/${orgId}/reviews`, {
       method: "POST",
+      body: JSON.stringify({ review }),
+    });
+  },
+  // Edit a non-completed review (soren f73f4cd2). Immutable fields (artifact/revision/
+  // org/project) are ignored; status only open|in_progress here (complete via the
+  // dedicated endpoint); verdict ∈ approved|changes_requested|rejected|null.
+  updateReview(
+    orgId: string,
+    id: string,
+    review: { title?: string; reviewer_persona?: string; summary?: string; verdict?: string | null; status?: string },
+  ) {
+    return request<{ review: Review }>(`/api/v1/organizations/${orgId}/reviews/${id}`, {
+      method: "PUT",
       body: JSON.stringify({ review }),
     });
   },
