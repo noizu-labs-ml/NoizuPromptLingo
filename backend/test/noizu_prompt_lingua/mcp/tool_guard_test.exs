@@ -111,6 +111,16 @@ defmodule NoizuPromptLingua.MCP.ToolGuardTest do
       assert {:error, %{reason: :insufficient_role}} = ToolGuard.before_call(s, %{organization: org.id}, ctx(member.id))
     end
 
+    test "resource :project with NO project arg falls back to org-scope (R-a (b))", %{owner: owner, org: org} do
+      enforce()
+      s = spec(%{required_role: :member, resource: :project})
+      # no project arg -> authorize at org; owner of the org passes
+      assert ToolGuard.before_call(s, %{organization: org.id}, ctx(owner.id)) == :ok
+      # and a non-member is still denied at org scope (fallback is deny-closed, not allow-all)
+      stranger = mk_user()
+      assert {:error, %{reason: :not_a_member}} = ToolGuard.before_call(s, %{organization: org.id}, ctx(stranger.id))
+    end
+
     test "unresolvable resource -> deny", %{owner: owner} do
       enforce()
       s = spec(%{required_role: :member, resource: :organization})

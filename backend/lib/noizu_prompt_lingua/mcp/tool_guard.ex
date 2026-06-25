@@ -104,11 +104,21 @@ defmodule NoizuPromptLingua.MCP.ToolGuard do
       :project ->
         proj_ref = first_arg(args, @project_arg_keys)
 
-        with org_id when is_binary(org_id) <- Resolve.organization_id(org_ref),
-             {:ok, project_id} when is_binary(project_id) <- Resolve.project_in_org(proj_ref, org_id) do
-          {:ok, "project", project_id}
-        else
-          _ -> {:error, :resource_unresolved}
+        case Resolve.organization_id(org_ref) do
+          nil ->
+            {:error, :resource_unresolved}
+
+          org_id ->
+            case Resolve.project_in_org(proj_ref, org_id) do
+              # No project supplied -> authorize at ORG scope (ADR-013 / R-a (b)): a
+              # :project tool that omits the project acts org-level, so the caller's
+              # org membership governs. Still deny-closed (a real resource, never allow);
+              # a tool that truly requires a project rejects the missing arg in-tool.
+              {:ok, nil} -> {:ok, "organization", org_id}
+              {:ok, project_id} -> {:ok, "project", project_id}
+              # project supplied but not in this org -> deny.
+              _ -> {:error, :resource_unresolved}
+            end
         end
 
       _organization ->
