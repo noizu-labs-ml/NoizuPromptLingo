@@ -11,6 +11,8 @@ import {
   type Project,
 } from '@/lib/api';
 import { useOrg, useOrgId } from '@/context/org';
+import { DataTable } from '@/components/console/DataTable';
+import { personasDescriptor } from '@/lib/console/descriptors/personas';
 
 const JOURNAL_CATEGORIES = ['work_log', 'reflection', 'decision', 'note'];
 
@@ -387,35 +389,15 @@ type ModalState =
   | null;
 
 export default function PersonasPage() {
-  const { orgId, loading: orgLoading } = useOrgId();
-  const { currentProject, switchProject } = useOrg();
-  const [personas, setPersonas] = useState<Persona[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { orgId, slug, loading: orgLoading } = useOrgId();
+  const { currentProject, switchProject, projects } = useOrg();
   const [modal, setModal] = useState<ModalState>(null);
+  // DataTable owns its fetch; bump to refetch in place after a mutation.
+  const [reloadKey, setReloadKey] = useState(0);
+  const reload = () => setReloadKey((k) => k + 1);
 
-  const scopeProjectId = currentProject?.id;
-
-  const fetchData = useCallback(async () => {
-    if (!orgId) return;
-    try {
-      const [personaData, projectData] = await Promise.all([
-        api.listPersonas(orgId, scopeProjectId ? { projectId: scopeProjectId } : undefined),
-        api.listProjects(orgId),
-      ]);
-      setPersonas(personaData.personas ?? []);
-      setProjects(projectData.projects ?? []);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to load personas');
-    } finally {
-      setLoading(false);
-    }
-  }, [orgId, scopeProjectId]);
-
-  useEffect(() => {
-    if (orgId) fetchData();
-    else if (!orgLoading) setLoading(false);
-  }, [fetchData, orgId, orgLoading]);
+  // Personas are scoped to the active project (or org + global when none).
+  const scope = currentProject ? { projectId: currentProject.id } : undefined;
 
   async function handleDelete(persona: Persona) {
     if (!orgId) return;
@@ -423,13 +405,11 @@ export default function PersonasPage() {
     try {
       await api.deletePersona(orgId, persona.id);
       toast.success('Persona deleted');
-      fetchData();
+      reload();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to delete');
     }
   }
-
-  const projectName = (id?: string | null) => (id ? projects.find((p) => p.id === id)?.name ?? '—' : null);
 
   return (
     <div className="content">
@@ -447,55 +427,20 @@ export default function PersonasPage() {
         </div>
         <p className="sg-page-intro">Personas — character profiles with a journal and knowledge base.</p>
 
-        {loading ? (
-          <p className="sg-page-intro">Loading…</p>
-        ) : personas.length === 0 ? (
-          <div className="projects-empty">
-            <p className="projects-empty__text">No personas yet. Create one to get started.</p>
-            <button className="sg-btn sg-btn--black" onClick={() => setModal({ kind: 'create' })}>
-              New Persona
-            </button>
-          </div>
+        {!orgId ? (
+          <p className="sg-page-intro">{orgLoading ? 'Loading…' : 'Select an organization to view its personas.'}</p>
         ) : (
-          <div className="projects-grid">
-            {personas.map((p) => (
-              <div key={p.id} className="project-card">
-                <div className="project-card__header">
-                  {projectName(p.project_id) && <div className="project-card__org">{projectName(p.project_id)}</div>}
-                  <div className="project-card__name">{p.name}</div>
-                </div>
-                <div className="project-card__body">
-                  <dl className="project-card__fields">
-                    {p.role && (
-                      <div className="project-card__field">
-                        <dt>Role:</dt>
-                        <dd>{p.role}</dd>
-                      </div>
-                    )}
-                    <div className="project-card__field">
-                      <dt>Slug:</dt>
-                      <dd className="font-mono">{p.slug}</dd>
-                    </div>
-                  </dl>
-                  <div className="project-card__meta">
-                    <span className="project-card__status">{p.status}</span>
-                    <span className="project-card__time">{timeAgo(p.inserted_at)}</span>
-                  </div>
-                  <div className="project-card__actions">
-                    <button className="sg-btn sg-btn--primary sg-btn--sm" onClick={() => setModal({ kind: 'details', persona: p })}>
-                      Details
-                    </button>
-                    <button className="sg-btn sg-btn--outline sg-btn--sm" onClick={() => setModal({ kind: 'edit', persona: p })}>
-                      Edit
-                    </button>
-                    <button className="sg-btn sg-btn--danger sg-btn--sm" onClick={() => handleDelete(p)}>
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          // A persona's rich detail (bio + journal + knowledge base) opens as the
+          // existing DetailsModal on row-open — not a generic ConsoleDetailPage.
+          <DataTable
+            descriptor={personasDescriptor}
+            ctx={{ orgId, orgSlug: slug }}
+            scope={scope}
+            refreshKey={reloadKey}
+            onOpenRow={(p) => setModal({ kind: 'details', persona: p })}
+            onEditRow={(p) => setModal({ kind: 'edit', persona: p })}
+            onDeleteRow={handleDelete}
+          />
         )}
       </main>
 
@@ -506,17 +451,17 @@ export default function PersonasPage() {
         <PersonaModal
           orgId={orgId}
           projects={projects}
-          defaultProjectId={scopeProjectId}
+          defaultProjectId={currentProject?.id}
           persona={modal.kind === 'edit' ? modal.persona : null}
           onClose={() => setModal(null)}
           onSaved={() => {
             setModal(null);
-            fetchData();
+            reload();
           }}
         />
       )}
 
-      {!loading && personas.length > 0 && (
+      {orgId && (
         <button className="fab" onClick={() => setModal({ kind: 'create' })} aria-label="New persona" title="New persona">
           <PlusIcon />
         </button>

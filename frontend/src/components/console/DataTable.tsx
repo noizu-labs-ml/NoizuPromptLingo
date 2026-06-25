@@ -17,6 +17,7 @@ import type {
   ColumnDef,
   ActionDef,
   BuiltinRowAction,
+  FacetOption,
 } from '@/lib/console/types';
 import { renderField } from '@/lib/console/render-hints';
 
@@ -524,6 +525,90 @@ function RowMenu<T, TInput>({
             {it.label}
           </button>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// Multi-select facet (ticket 3c2d6bbe): a keyboard-accessible checklist popover —
+// pick several values, OR-within-facet, passed to api.list as an array. Same focus
+// contract as the kebab (aria-haspopup/expanded, Esc-restores-focus, outside-click).
+function FacetMultiSelect({
+  label,
+  options,
+  selected,
+  onChange,
+}: {
+  label: string;
+  options: FacetOption[];
+  selected: string[];
+  onChange: (values: string[]) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDown(e: PointerEvent) {
+      const t = e.target as Node;
+      if (!menuRef.current?.contains(t) && !triggerRef.current?.contains(t)) setOpen(false);
+    }
+    document.addEventListener('pointerdown', onDown);
+    return () => document.removeEventListener('pointerdown', onDown);
+  }, [open]);
+
+  function toggle(value: string, checked: boolean) {
+    onChange(checked ? [...selected, value] : selected.filter((v) => v !== value));
+  }
+
+  const summary = selected.length === 0 ? `${label}: all` : `${label}: ${selected.length}`;
+
+  return (
+    <div className="console-filters__facet console-multifacet">
+      <button
+        ref={triggerRef}
+        type="button"
+        className="console-multifacet__trigger"
+        aria-haspopup="true"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+      >
+        {summary}
+        <span aria-hidden className="console-multifacet__caret">▾</span>
+      </button>
+      <div
+        ref={menuRef}
+        className={`console-multifacet__menu${open ? ' is-open' : ''}`}
+        role="group"
+        aria-label={label}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            setOpen(false);
+            triggerRef.current?.focus();
+          }
+        }}
+      >
+        {options.length === 0 ? (
+          <p className="console-muted console-multifacet__empty">No options</p>
+        ) : (
+          options.map((o) => (
+            <label key={o.value} className="console-multifacet__option">
+              <input
+                type="checkbox"
+                checked={selected.includes(o.value)}
+                onChange={(e) => toggle(o.value, e.target.checked)}
+              />
+              {o.label}
+            </label>
+          ))
+        )}
+        {selected.length > 0 && (
+          <button type="button" className="console-multifacet__clear" onClick={() => onChange([])}>
+            Clear
+          </button>
+        )}
       </div>
     </div>
   );

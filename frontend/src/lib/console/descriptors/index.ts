@@ -8,5 +8,6 @@ export { sessionsDescriptor } from './sessions';
 export { projectsDescriptor } from './projects';
 export { organizationsDescriptor } from './organizations';
 export { boardsDescriptor } from './boards';
+export { personasDescriptor } from './personas';
 // diego-frontend lane:
 export { artifactsDescriptor } from './artifacts';
