@@ -5,11 +5,19 @@ defmodule NoizuPromptLingua.Domains.Artifacts.Tools.ArtifactAddRevision do
     hidden: true,
     category: "Artifacts"
 
-  input do
-    field :artifact_id, :string, required: true, description: "Artifact UUID"
-    field :content, :string, required: true, description: "New content"
-    field :note, :string, description: "Revision note describing changes"
-  end
+  # Use a raw input_schema (mirroring Artifact.Create) rather than the typed `input do`
+  # DSL: the typed-string path chokes on large content payloads (~10KB+ -> opaque "Tool
+  # execution failed"), while Create's input_schema handles the same payload fine
+  # (a2f06808). The deeper typed-input-DSL large-string bug is flagged to mcp-tooling.
+  input_schema %{
+    "type" => "object",
+    "properties" => %{
+      "artifact_id" => %{"type" => "string", "description" => "Artifact UUID"},
+      "content" => %{"type" => "string", "description" => "New content (text or base64 for binary)"},
+      "note" => %{"type" => "string", "description" => "Revision note describing changes"}
+    },
+    "required" => ["artifact_id", "content"]
+  }
 
   alias NoizuPromptLingua.Domains.Artifacts
 
