@@ -36,7 +36,21 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.ListRooms do
           )
 
         rooms = Chat.list_rooms(opts)
-        {:ok, %{rooms: Enum.map(rooms, &%{id: &1.id, name: &1.name, created_at: &1.inserted_at}), count: length(rooms)}}
+        {:ok,
+         %{
+           rooms:
+             Enum.map(rooms, fn r ->
+               %{
+                 id: r.id,
+                 name: r.name,
+                 slug: r.slug,
+                 organization_id: r.organization_id,
+                 project_id: r.project_id,
+                 created_at: r.inserted_at
+               }
+             end),
+           count: length(rooms)
+         }}
     end
   end
 end

@@ -32,7 +32,7 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.CreateRoom do
 
       case Chat.create_room(attrs) do
         {:ok, room} ->
-          {:ok, %{id: room.id, name: room.name, organization_id: room.organization_id, project_id: room.project_id, created_at: room.inserted_at}}
+          {:ok, %{id: room.id, name: room.name, slug: room.slug, organization_id: room.organization_id, project_id: room.project_id, created_at: room.inserted_at}}
         {:error, cs} -> {:error, "Failed: #{inspect(cs.errors)}"}
       end
     else
