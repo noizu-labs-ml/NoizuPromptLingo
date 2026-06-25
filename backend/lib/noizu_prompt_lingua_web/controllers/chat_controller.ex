@@ -63,6 +63,21 @@ defmodule NoizuPromptLinguaWeb.ChatController do
     end
   end
 
+  # PUT /api/v1/organizations/:org_id/chat/rooms/:id  body {room: {name, description}}
+  # Editable = name + description ONLY; slug is immutable (ADR-013), enforced by
+  # ChatRoom.update_changeset (slug/org/project not cast), so a rename never re-slugs
+  # and the (org, project) bucket can't move. Returns the full room incl slug.
+  def update(conn, %{"org_id" => org_id, "id" => id, "room" => room_params}) do
+    with_room(conn, org_id, id, "member", fn room ->
+      case Chat.update_room(room, %{name: room_params["name"], description: room_params["description"]}) do
+        {:ok, room} -> json(conn, %{room: room_to_json(room)})
+        {:error, changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+      end
+    end)
+  end
+
+  def update(conn, _params), do: missing_field(conn, "room")
+
   # GET /api/v1/organizations/:org_id/chat/rooms/:room_id/messages
   def index_messages(conn, %{"org_id" => org_id, "room_id" => room_id} = params) do
     with_room(conn, org_id, room_id, "viewer", fn _room ->

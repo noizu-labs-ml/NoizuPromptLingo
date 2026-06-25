@@ -94,6 +94,39 @@ defmodule NoizuPromptLinguaWeb.ArtifactController do
     end
   end
 
+  # POST /api/v1/organizations/:org_id/artifacts/:artifact_id/revisions  body {content, note?}
+  #
+  # Edit = APPEND a new revision (history-preserving), not a destructive PUT-in-place
+  # (priya seq443 + the revisions viewer). `Artifacts.add_revision/3` auto-increments the
+  # revision number; we return the artifact with its new current revision so the editor
+  # reconciles in one round-trip. member role; org-scoped + artifact-belongs-to-org guard.
+  def create_revision(conn, %{"org_id" => org_id, "artifact_id" => artifact_id} = params) do
+    user_id = get_user_id(conn)
+
+    with {:ok, resolved_org_id} <- NoizuPromptLingua.Organizations.resolve_org_id(org_id),
+         {:ok, _} <- Authz.authorize(user_id, "organization", resolved_org_id, "member"),
+         {artifact, _revision} when not is_nil(artifact) <- Artifacts.get(artifact_id) || :missing,
+         true <- artifact.organization_id == resolved_org_id do
+      case Artifacts.add_revision(artifact.id, params["content"], params["note"]) do
+        {:ok, rev} ->
+          body =
+            artifact_to_json(artifact)
+            |> Map.put(:content, rev.content)
+            |> Map.put(:revision_id, rev.id)
+            |> Map.put(:revision_number, rev.revision_number)
+
+          conn |> put_status(:created) |> json(%{artifact: body})
+
+        {:error, changeset} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+      end
+    else
+      :missing -> conn |> put_status(:not_found) |> json(%{error: "Artifact not found"})
+      false -> conn |> put_status(:not_found) |> json(%{error: "Artifact not found"})
+      err -> handle_error(conn, err)
+    end
+  end
+
   defp artifact_to_json(artifact) do
     %{
       id: artifact.id,

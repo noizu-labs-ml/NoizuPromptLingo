@@ -21,6 +21,12 @@ defmodule NoizuPromptLingua.Domains.Chat do
     Repo.get(ChatRoom, room_id)
   end
 
+  # Edit a room's name/description only (0c93ddd4). slug stays immutable — see
+  # ChatRoom.update_changeset/2 (no slug re-derivation on rename).
+  def update_room(%ChatRoom{} = room, attrs) do
+    room |> ChatRoom.update_changeset(attrs) |> Repo.update()
+  end
+
   # Resolve a room by slug within its uniqueness bucket. The predicate MUST match
   # the partial-index predicate (ADR-013 A3): project rooms vs the NULL-project
   # (org-level) bucket are distinct namespaces.

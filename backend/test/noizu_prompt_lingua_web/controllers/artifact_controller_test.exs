@@ -55,6 +55,31 @@ defmodule NoizuPromptLinguaWeb.ArtifactControllerTest do
     end
   end
 
+  describe "POST revision (edit = append, history-preserving)" do
+    test "appends a new revision and returns it as the current", %{conn: conn, org_id: org_id, artifact: a} do
+      body = json_response(post(conn, "/api/v1/organizations/#{org_id}/artifacts/#{a.id}/revisions", %{content: "v3 body", note: "third"}), 201)["artifact"]
+      assert body["content"] == "v3 body"
+      assert body["revision_number"] == 3
+
+      # history preserved — list now has 3, newest-first
+      revs = json_response(get(conn, "/api/v1/organizations/#{org_id}/artifacts/#{a.id}/revisions"), 200)["revisions"]
+      assert Enum.map(revs, & &1["revision_number"]) == [3, 2, 1]
+    end
+
+    test "blank content -> 422", %{conn: conn, org_id: org_id, artifact: a} do
+      assert json_response(post(conn, "/api/v1/organizations/#{org_id}/artifacts/#{a.id}/revisions", %{content: ""}), 422)["errors"]
+    end
+
+    test "404 for an artifact in another org", %{conn: conn, org_id: org_id} do
+      other_slug = "artifact-org3-#{System.unique_integer([:positive])}"
+      other_created = post(conn, "/api/v1/organizations", %{organization: %{slug: other_slug, name: "Other Org"}})
+      other_org_id = json_response(other_created, 201)["organization"]["id"]
+      {:ok, other} = Artifacts.create(%{organization_id: other_org_id, kind: "document", title: "Other", mime_type: "text/markdown", content: "x"})
+
+      assert json_response(post(conn, "/api/v1/organizations/#{org_id}/artifacts/#{other.id}/revisions", %{content: "y"}), 404)
+    end
+  end
+
   describe "GET show (detail view contract)" do
     test "returns the latest revision's content + number by default", %{conn: conn, org_id: org_id, artifact: a} do
       body = json_response(get(conn, "/api/v1/organizations/#{org_id}/artifacts/#{a.id}"), 200)["artifact"]

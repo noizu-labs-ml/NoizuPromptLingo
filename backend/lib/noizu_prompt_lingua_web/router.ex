@@ -346,7 +346,7 @@ defmodule NoizuPromptLinguaWeb.Router do
   scope "/api/v1/organizations/:org_id", NoizuPromptLinguaWeb do
     pipe_through [:api, :authenticated]
 
-    resources "/chat/rooms", ChatController, only: [:index, :create, :show]
+    resources "/chat/rooms", ChatController, only: [:index, :create, :show, :update]
     get "/chat/rooms/:room_id/messages", ChatController, :index_messages
     post "/chat/rooms/:room_id/messages", ChatController, :create_message
     get "/chat/rooms/:room_id/messages/:message_id/reactions", ChatController, :index_message_reactions
@@ -354,6 +354,7 @@ defmodule NoizuPromptLinguaWeb.Router do
     delete "/chat/rooms/:room_id/messages/:message_id/reactions", ChatController, :remove_message_reaction
     resources "/artifacts", ArtifactController, only: [:index, :create, :show]
     get "/artifacts/:artifact_id/revisions", ArtifactController, :index_revisions
+    post "/artifacts/:artifact_id/revisions", ArtifactController, :create_revision
     resources "/reviews", ReviewController, only: [:index, :create, :show]
     resources "/tickets", TicketController, only: [:index, :create, :show, :update]
 

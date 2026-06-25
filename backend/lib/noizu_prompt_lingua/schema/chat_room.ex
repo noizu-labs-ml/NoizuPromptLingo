@@ -27,4 +27,14 @@ defmodule NoizuPromptLingua.Schema.ChatRoom do
     |> unique_constraint(:slug, name: :idx_chat_rooms_slug_proj)
     |> unique_constraint(:slug, name: :idx_chat_rooms_slug_noproj)
   end
+
+  # Update path (0c93ddd4): only name + description are mutable. `slug` is an immutable
+  # resolution alias (ADR-013) — a rename must NOT re-slug — and org/project/session are
+  # not re-keyable post-create, so none of them are cast here. That makes slug/bucket
+  # immutability a property of the changeset, not of caller discipline.
+  def update_changeset(room, attrs) do
+    room
+    |> cast(attrs, [:name, :description])
+    |> validate_required([:name])
+  end
 end
