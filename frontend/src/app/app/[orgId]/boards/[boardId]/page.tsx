@@ -11,6 +11,10 @@ const TICKET_TYPES = ['task', 'bug', 'user_story', 'epic', 'prd', 'documentation
 const NO_STAGE = '__none__';
 const BACKLOG = '__backlog__';
 
+// A board's *type* is its methodology; its *scope* (org vs project) is separate —
+// keep them distinct so a board isn't mislabeled as a "project".
+const titleCase = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+
 function NewTicketModal({
   orgId,
   board,
@@ -41,6 +45,10 @@ function NewTicketModal({
     try {
       await api.createTicket(orgId, {
         title: title.trim(),
+        // Send an explicit status: the BE overrides its schema default with an
+        // explicit nil if status is absent -> NOT NULL violation -> 500 (mei
+        // seq369, same gap as the tickets-page modal).
+        status: 'open',
         ticket_type: ticketType,
         priority: priority || null,
         project_id: board.project_id ?? null,
@@ -214,7 +222,7 @@ export default function BoardDetailPage() {
           <h1 className="sg-page-title">{board?.name ?? 'Board'}</h1>
           {board && (
             <span className="scope-chip">
-              {board.scope} · {board.methodology}
+              {titleCase(String(board.methodology))} board · {board.scope === 'project' ? 'Project' : 'Org-level'}
             </span>
           )}
         </div>

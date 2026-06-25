@@ -4,12 +4,17 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { PlusIcon } from '@heroicons/react/24/outline';
-import { api, type Board, METHODOLOGIES, type Methodology } from '@/lib/api';
+import { api, type Board, type Project, METHODOLOGIES, type Methodology } from '@/lib/api';
 import { useOrg, useOrgId } from '@/context/org';
 
 function toSlug(s: string) {
   return s.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/^-+|-+$/g, '');
 }
+
+// A board's *type* is its methodology (Kanban/Scrum/…). Its *scope* (org vs a
+// specific project) is a separate axis — keep them distinct in the UI so a board
+// is never mislabeled as a "project".
+const titleCase = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 
 const METHODOLOGY_BLURB: Record<string, string> = {
   kanban: 'Continuous flow across columns.',
@@ -20,14 +25,14 @@ const METHODOLOGY_BLURB: Record<string, string> = {
 
 function BoardModal({
   orgId,
-  scope,
-  projectId,
+  projects,
+  defaultProjectId,
   onClose,
   onSaved,
 }: {
   orgId: string;
-  scope: 'org' | 'project';
-  projectId?: string;
+  projects: Project[];
+  defaultProjectId?: string;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -36,6 +41,8 @@ function BoardModal({
   const [slugTouched, setSlugTouched] = useState(false);
   const [methodology, setMethodology] = useState<Methodology>('kanban');
   const [description, setDescription] = useState('');
+  // Default the board's project to the active project; '' = org-level (no project).
+  const [projectId, setProjectId] = useState(defaultProjectId ?? '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,8 +57,8 @@ function BoardModal({
         slug: slug.trim(),
         methodology,
         description: description.trim() || undefined,
-        scope,
-        project_id: scope === 'project' ? projectId : null,
+        scope: projectId ? 'project' : 'org',
+        project_id: projectId || null,
       });
       toast.success('Board created');
       onSaved();
@@ -65,8 +72,20 @@ function BoardModal({
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-        <h2 className="modal-title">New Board ({scope})</h2>
+        <h2 className="modal-title">New Board</h2>
         <form onSubmit={handleSubmit}>
+          <div className="sg-field">
+            <label htmlFor="b-project">Project</label>
+            <select id="b-project" value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+              <option value="">Org-level (no project)</option>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+            <span className="sg-field__hint">Defaults to your active project. The board shows that project’s tickets as cards.</span>
+          </div>
           <div className="sg-field">
             <label htmlFor="b-name">Name</label>
             <input
@@ -116,13 +135,13 @@ function BoardModal({
 
 export default function BoardsPage() {
   const { orgId, slug, loading: orgLoading } = useOrgId();
-  const { currentProject, switchProject } = useOrg();
+  const { currentProject, switchProject, projects } = useOrg();
+  const projectName = (id?: string | null) => projects.find((p) => p.id === id)?.name;
   const router = useRouter();
   const [boards, setBoards] = useState<Board[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
 
-  const scope: 'org' | 'project' = currentProject ? 'project' : 'org';
   const projectId = currentProject?.id;
 
   const fetchData = useCallback(async () => {
@@ -173,12 +192,16 @@ export default function BoardsPage() {
               <div key={b.id} className="project-card" style={{ cursor: 'pointer' }} onClick={() => router.push(`/app/${slug}/boards/${b.id}`)}>
                 <div className="project-card__header">
                   <div className="project-card__org">
-                    {b.scope} · {b.methodology}
+                    {titleCase(String(b.methodology))} board
                   </div>
                   <div className="project-card__name">{b.name}</div>
                 </div>
                 <div className="project-card__body">
                   <dl className="project-card__fields">
+                    <div className="project-card__field">
+                      <dt>Scope:</dt>
+                      <dd>{b.scope === 'project' ? `Project${projectName(b.project_id) ? ` · ${projectName(b.project_id)}` : ''}` : 'Org-level'}</dd>
+                    </div>
                     <div className="project-card__field">
                       <dt>Slug:</dt>
                       <dd className="font-mono">{b.slug}</dd>
@@ -204,8 +227,8 @@ export default function BoardsPage() {
       {showModal && orgId && (
         <BoardModal
           orgId={orgId}
-          scope={scope}
-          projectId={projectId}
+          projects={projects}
+          defaultProjectId={currentProject?.id}
           onClose={() => setShowModal(false)}
           onSaved={() => {
             setShowModal(false);

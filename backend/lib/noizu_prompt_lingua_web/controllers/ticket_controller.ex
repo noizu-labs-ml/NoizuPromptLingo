@@ -42,7 +42,7 @@ defmodule NoizuPromptLinguaWeb.TicketController do
         title: ticket_params["title"],
         description: ticket_params["description"],
         ticket_type: ticket_params["ticket_type"] || "task",
-        status: ticket_params["status"],
+        status: ticket_params["status"] || "open",
         priority: ticket_params["priority"],
         assignee: ticket_params["assignee"],
         reporter: ticket_params["reporter"],
