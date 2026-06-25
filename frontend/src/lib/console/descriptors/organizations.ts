@@ -17,7 +17,7 @@ export const organizationsDescriptor: ConsoleDescriptor<Organization, Organizati
   route: '/app/organizations',
   columns: [
     { key: 'name', label: 'Name', primary: true, sortable: true },
-    { key: 'slug', label: 'Slug' },
+    { key: 'slug', label: 'Slug', render: 'slugChip' },
     { key: 'role', label: 'Your role', sortable: true, render: (o) => o.role ?? '—' },
     { key: 'owner', label: 'Owner', render: (o) => o.owner ?? '—' },
   ],

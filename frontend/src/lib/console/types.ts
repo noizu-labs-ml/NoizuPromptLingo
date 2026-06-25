@@ -28,8 +28,14 @@ export type CellRenderer<T> = CellRenderHint | ((row: T) => ReactNode);
 
 /** Advisory context handed to the primitives + action gates. */
 export interface ConsoleContext {
-  /** Canonical org slug for route + api calls. */
+  /** Identifier the `api.*` methods expect (the org UUID — api is UUID-keyed). */
   orgId: string;
+  /**
+   * Canonical org SLUG for building app routes (/app/<slug>/…). Distinct from
+   * orgId (mei seq493): api calls use orgId, route/link building uses orgSlug.
+   * Falls back to orgId when absent.
+   */
+  orgSlug?: string;
   /**
    * The viewer's effective role for the current resource (advisory only, per
    * ADR-015 — role is per-resource, NOT a JWT claim). Used to gate affordance

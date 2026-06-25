@@ -62,7 +62,9 @@ export const sessionsDescriptor: ConsoleDescriptor<Session, SessionInput> = {
       },
     ],
   },
-  actions: { rowActions: ['view', 'edit'] },
+  // 'archive' is a bare custom key dispatched via the page's onAction (soft-delete);
+  // view/edit are builtins wired from onOpenRow/onEditRow.
+  actions: { rowActions: ['view', 'edit', 'archive'] },
   api: {
     list: (orgId, opts) => api.listSessions(orgId, opts as Parameters<typeof api.listSessions>[1]).then((r) => r.sessions),
     get: (orgId, id) => api.getSession(orgId, id).then((r) => r.session),

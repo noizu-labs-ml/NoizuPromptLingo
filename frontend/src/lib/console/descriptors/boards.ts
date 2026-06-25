@@ -21,7 +21,7 @@ export const boardsDescriptor: ConsoleDescriptor<Board, BoardInput> = {
     { key: 'name', label: 'Name', primary: true, sortable: true, width: '30%' },
     { key: 'methodology', label: 'Type', sortable: true, render: boardType },
     { key: 'scope', label: 'Scope', sortable: true, render: scopeLabel },
-    { key: 'slug', label: 'Slug' },
+    { key: 'slug', label: 'Slug', render: 'slugChip' },
   ],
   filters: [
     { key: 'search', label: 'Search', type: 'search' },

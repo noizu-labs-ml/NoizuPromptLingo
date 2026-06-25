@@ -18,7 +18,7 @@ import type {
   ActionDef,
   BuiltinRowAction,
 } from '@/lib/console/types';
-import { CELL_RENDERERS, isRenderHint } from '@/lib/console/render-hints';
+import { renderField } from '@/lib/console/render-hints';
 
 type Row = Record<string, unknown>;
 
@@ -31,6 +31,19 @@ export interface DataTableProps<T, TInput> {
   onDeleteRow?: (row: T) => void;
   /** Handler for bare custom row-action keys (e.g. 'archive'). */
   onAction?: (key: string, row: T) => void;
+  /**
+   * G1 (priya seq495): bump this to refetch IN PLACE after a create/edit/delete —
+   * preserves sort/filter/page state (vs a key-remount, which loses it).
+   */
+  refreshKey?: number;
+  /** G2 (priya seq495): per-row class hook — e.g. mark the active scope / unread / selected. */
+  rowClassName?: (row: T, ctx: ConsoleContext) => string | undefined;
+  /**
+   * Mei #2 (seq493): resolved options for `dynamic` facets, keyed by filter key.
+   * DataTable doesn't fetch domain options itself (it can't know how); the page
+   * resolves them (e.g. api.listProjects) and injects them here.
+   */
+  facetOptions?: Record<string, { value: string; label: string }[]>;
   /** Embedded related mini-table: drops the filter/pagination chrome, fixed scope. */
   embedded?: boolean;
   /** Extra api.list opts (related-table scope query, or a parent facet). */
@@ -50,6 +63,9 @@ export function DataTable<T, TInput>({
   onEditRow,
   onDeleteRow,
   onAction,
+  refreshKey = 0,
+  rowClassName,
+  facetOptions,
   embedded = false,
   scope,
   density = 'comfortable',
@@ -83,8 +99,6 @@ export function DataTable<T, TInput>({
       .then((data) => {
         if (!live) return;
         setRows(data);
-        setPage(0);
-        setActiveRow(0);
       })
       .catch((e: unknown) => {
         if (!live) return;
@@ -95,7 +109,15 @@ export function DataTable<T, TInput>({
     return () => {
       live = false;
     };
-  }, [descriptor.api, ctx.orgId, facets, scope, labels.plural]);
+    // refreshKey forces a refetch in place (G1) — page/sort/filter state is NOT reset
+    // here; only a genuine scope change (below) resets paging.
+  }, [descriptor.api, ctx.orgId, facets, scope, refreshKey, labels.plural]);
+
+  // Reset paging/active row only when the dataset SCOPE changes — not on a refresh-in-place.
+  useEffect(() => {
+    setPage(0);
+    setActiveRow(0);
+  }, [ctx.orgId, facets, scope]);
 
   const searched = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -161,10 +183,7 @@ export function DataTable<T, TInput>({
   const bulkEnabled = !embedded && (actions?.bulkActions?.length ?? 0) > 0;
 
   function renderCell(col: ColumnDef<T>, row: T): ReactNode {
-    if (typeof col.render === 'function') return col.render(row);
-    if (isRenderHint(col.render)) return CELL_RENDERERS[col.render](cell(row as Row, col.key), row as Row);
-    const v = cell(row as Row, col.key);
-    return v == null || v === '' ? <span className="console-muted">—</span> : String(v);
+    return renderField(col.render, col.key, row);
   }
 
   if (loading) return <p className="console-state" role="status">Loading {labels.plural.toLowerCase()}…</p>;
@@ -202,7 +221,8 @@ export function DataTable<T, TInput>({
                   aria-label={f.label}
                 >
                   <option value="">{f.label}: all</option>
-                  {(f.options ?? []).map((o) => (
+                  {/* dynamic facets take their options from the page-injected facetOptions (Mei #2). */}
+                  {(f.dynamic ? facetOptions?.[f.key] : f.options)?.map((o) => (
                     <option key={o.value} value={o.value}>
                       {o.label}
                     </option>
@@ -253,7 +273,9 @@ export function DataTable<T, TInput>({
               return (
                 <tr
                   key={id}
-                  className={`console-table__row${i === activeRow ? ' is-active' : ''}`}
+                  className={`console-table__row${i === activeRow ? ' is-active' : ''}${
+                    rowClassName?.(row, ctx) ? ` ${rowClassName(row, ctx)}` : ''
+                  }`}
                   tabIndex={i === activeRow ? 0 : -1}
                   aria-selected={selected.has(id) || undefined}
                   onFocus={() => setActiveRow(i)}

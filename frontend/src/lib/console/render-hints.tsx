@@ -7,7 +7,7 @@
 // tooltips). COLOR is lena-graphic's reserved channel — statusChip emits a
 // `data-status` hook so her CSS maps each status to a palette; we never hardcode hue.
 import type { ReactNode } from 'react';
-import type { CellRenderHint } from './types';
+import type { CellRenderHint, CellRenderer } from './types';
 
 /** Human-relative time with the absolute timestamp as a title (a11y + hover). */
 function RelativeDate({ value }: { value: unknown }) {
@@ -101,4 +101,17 @@ export const CELL_RENDERERS: Record<
 /** True when a `render` value is a registry hint (vs a function renderer). */
 export function isRenderHint(r: unknown): r is CellRenderHint {
   return typeof r === 'string' && r in CELL_RENDERERS;
+}
+
+/**
+ * Resolve a column/detail-field `render` to a ReactNode — shared by DataTable +
+ * DetailView so cells look identical in the list and the detail. A function runs
+ * against the row; a hint resolves through the registry; absent falls back to the
+ * raw value (em-dash for empty).
+ */
+export function renderField<T>(render: CellRenderer<T> | undefined, key: string, row: T): ReactNode {
+  if (typeof render === 'function') return render(row);
+  if (isRenderHint(render)) return CELL_RENDERERS[render]((row as Record<string, unknown>)[key], row as Record<string, unknown>);
+  const v = (row as Record<string, unknown>)[key];
+  return v == null || v === '' ? <span className="console-muted">—</span> : <>{String(v)}</>;
 }

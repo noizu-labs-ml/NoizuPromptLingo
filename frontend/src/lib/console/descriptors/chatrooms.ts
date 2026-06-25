@@ -63,9 +63,11 @@ export const chatroomsDescriptor: ConsoleDescriptor<ChatRoom, ChatRoomInput> = {
   actions: {
     rowActions: [
       {
+        // Route by orgSlug (ConsoleContext.orgSlug, diego seq506) — NOT orgId/UUID
+        // (the uuid-in-slug bug class, ava 74f5eaeb). api uses orgId; routes use orgSlug.
         key: 'open',
         label: 'Open room',
-        run: (room, ctx) => window.location.assign(`/app/${ctx.orgId}/chat/${room.id}`),
+        run: (room, ctx) => window.location.assign(`/app/${ctx.orgSlug}/chat/${room.id}`),
       },
       'view',
       'edit',

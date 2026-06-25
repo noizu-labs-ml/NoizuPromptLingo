@@ -11,10 +11,10 @@ export const projectsDescriptor: ConsoleDescriptor<Project, ProjectInput> = {
   route: '/app/:org/projects',
   columns: [
     { key: 'name', label: 'Name', primary: true, sortable: true, width: '30%' },
-    { key: 'slug', label: 'Slug' },
+    { key: 'slug', label: 'Slug', render: 'slugChip' },
     { key: 'status', label: 'Status', sortable: true, render: (p) => p.status ?? 'active' },
     { key: 'description', label: 'Description', render: (p) => p.description ?? '—' },
-    { key: 'updated_at', label: 'Updated', sortable: true, align: 'right' },
+    { key: 'updated_at', label: 'Updated', sortable: true, align: 'right', render: 'relativeDate' },
   ],
   filters: [
     { key: 'search', label: 'Search', type: 'search' },
@@ -75,10 +75,10 @@ export const projectsDescriptor: ConsoleDescriptor<Project, ProjectInput> = {
       },
     ],
   },
-  // 'archive' is a named custom action (status mutation, not a field edit — ava
-  // seq446); the page supplies its handler via DataTable's onAction. RBAC-gated
-  // actions would instead use the ActionDef form with visibleWhen.
-  actions: { rowActions: ['view', 'edit', 'archive', 'delete'] },
+  // Projects open by primary-click (select active scope, page-wired) and soft-delete
+  // via 'archive' (a named custom action -> DataTable onAction; not hard-delete). No
+  // 'view'/'delete' builtins: no detail route yet, and archive is the delete-equivalent.
+  actions: { rowActions: ['edit', 'archive'] },
   api: {
     list: (orgId) => api.listProjects(orgId).then((r) => r.projects),
     get: (orgId, id) => api.getProject(orgId, id).then((r) => r.project),

@@ -1,20 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { api, type Session, type Project } from '@/lib/api';
 import { useOrg, useOrgId } from '@/context/org';
-
-function timeAgo(dt?: string) {
-  if (!dt) return '';
-  const diff = Date.now() - new Date(dt).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
-}
+import { DataTable } from '@/components/console/DataTable';
+import { sessionsDescriptor } from '@/lib/console/descriptors/sessions';
 
 function SessionModal({
   orgId,
@@ -123,42 +115,45 @@ function SessionModal({
 type ModalState = { type: 'create' } | { type: 'edit'; session: Session } | null;
 
 export default function SessionsPage() {
-  const { orgId, loading: orgLoading } = useOrgId();
+  // orgId (UUID) for api; orgSlug for route building (ConsoleContext, diego seq506).
+  const { orgId, slug: orgSlug, loading: orgLoading } = useOrgId();
   const { currentProject, switchProject } = useOrg();
-  const [sessions, setSessions] = useState<Session[]>([]);
+  const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState<ModalState>(null);
+  // Bumped on create/edit/archive to refetch <DataTable> in place (G1 refreshKey).
+  const [reloadKey, setReloadKey] = useState(0);
 
   const scopeProjectId = currentProject?.id;
 
-  const fetchData = useCallback(async () => {
+  // Projects power the dynamic projectId facet options + the create/edit modal.
+  const fetchProjects = useCallback(async () => {
     if (!orgId) return;
     try {
-      const [sessionData, projectData] = await Promise.all([
-        api.listSessions(orgId, scopeProjectId ? { projectId: scopeProjectId } : undefined),
-        api.listProjects(orgId),
-      ]);
-      setSessions(sessionData.sessions ?? []);
-      setProjects(projectData.projects ?? []);
+      const { projects } = await api.listProjects(orgId);
+      setProjects(projects ?? []);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to load sessions');
-    } finally {
-      setLoading(false);
+      toast.error(err instanceof Error ? err.message : 'Failed to load projects');
     }
-  }, [orgId, scopeProjectId]);
+  }, [orgId]);
 
   useEffect(() => {
-    if (orgId) {
-      fetchData();
-    } else if (!orgLoading) {
-      setLoading(false);
-    }
-  }, [fetchData, orgId, orgLoading]);
+    if (orgId) fetchProjects();
+  }, [fetchProjects, orgId]);
 
-  async function handleSaved() {
+  const facetOptions = useMemo(
+    () => ({ projectId: projects.map((p) => ({ value: p.id, label: p.name })) }),
+    [projects],
+  );
+  const ctx = useMemo(() => ({ orgId: orgId ?? '', orgSlug: orgSlug ?? '' }), [orgId, orgSlug]);
+  const scope = useMemo(
+    () => (scopeProjectId ? { projectId: scopeProjectId } : undefined),
+    [scopeProjectId],
+  );
+
+  function handleSaved() {
     setModal(null);
-    await fetchData();
+    setReloadKey((k) => k + 1);
   }
 
   async function handleArchive(session: Session) {
@@ -166,14 +161,11 @@ export default function SessionsPage() {
     try {
       await api.archiveSession(orgId, session.id);
       toast.success('Session archived');
+      setReloadKey((k) => k + 1);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to archive session');
     }
-    await fetchData();
   }
-
-  const projectName = (id?: string | null) =>
-    id ? projects.find((p) => p.id === id)?.name ?? '—' : '—';
 
   return (
     <div className="content">
@@ -194,6 +186,9 @@ export default function SessionsPage() {
               </button>
             </span>
           )}
+          <button className="sg-btn sg-btn--black" onClick={() => setModal({ type: 'create' })}>
+            New Session
+          </button>
         </div>
         <p className="sg-page-intro">
           {currentProject
@@ -201,50 +196,21 @@ export default function SessionsPage() {
             : 'Work sessions grouping rooms, artifacts, and tickets.'}
         </p>
 
-        {loading ? (
+        {orgLoading || !orgId ? (
           <p className="sg-page-intro">Loading…</p>
-        ) : sessions.length === 0 ? (
-          <div className="projects-empty">
-            <p className="projects-empty__text">No sessions yet. Create one to get started.</p>
-            <button className="sg-btn sg-btn--black" onClick={() => setModal({ type: 'create' })}>
-              Create Session
-            </button>
-          </div>
         ) : (
-          <div className="projects-grid">
-            {sessions.map((s) => (
-              <div key={s.id} className="project-card">
-                <div className="project-card__header">
-                  <div className="project-card__org">{projectName(s.project_id)}</div>
-                  <div className="project-card__name">{s.title}</div>
-                </div>
-                <div className="project-card__body">
-                <dl className="project-card__fields">
-                  <div className="project-card__field">
-                    <dt>Description:</dt>
-                    <dd>{s.description || '—'}</dd>
-                  </div>
-                </dl>
-                <div className="project-card__meta">
-                  <span className={`project-card__status project-card__status--${s.status ?? 'active'}`}>
-                    {s.status ?? 'active'}
-                  </span>
-                  <span className="project-card__time">{timeAgo(s.inserted_at)}</span>
-                </div>
-                <div className="project-card__actions">
-                  <button className="sg-btn sg-btn--outline sg-btn--sm" onClick={() => setModal({ type: 'edit', session: s })}>
-                    Edit
-                  </button>
-                  {s.status !== 'archived' && (
-                    <button className="sg-btn sg-btn--danger sg-btn--sm" onClick={() => handleArchive(s)}>
-                      Archive
-                    </button>
-                  )}
-                </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <DataTable
+            descriptor={sessionsDescriptor}
+            ctx={ctx}
+            scope={scope}
+            facetOptions={facetOptions}
+            refreshKey={reloadKey}
+            onOpenRow={(s) => router.push(`/app/${orgSlug}/sessions/${s.id}`)}
+            onEditRow={(s) => setModal({ type: 'edit', session: s })}
+            onAction={(key, s) => {
+              if (key === 'archive') void handleArchive(s);
+            }}
+          />
         )}
       </main>
 
