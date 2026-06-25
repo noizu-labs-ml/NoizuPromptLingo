@@ -1451,3 +1451,62 @@ button.chat-room-header__slug:focus-visible { outline: 2px solid var(--field-foc
 .chat-composer__input:disabled { opacity: 0.6; cursor: not-allowed; }
 /* Error state on send failure (aria-invalid set by the composer). */
 .chat-composer__input[aria-invalid='true'] { border-color: var(--error, #c0392b); outline-color: var(--error, #c0392b); }
+
+/* ── Console table primitives (epic 8920d294 / ticket 0f8453f5) ──
+   Structure + a11y owned here (diego-frontend); status/identity COLOR is lena's
+   reserved channel via the data-status hook. Reserved focus channel throughout. */
+.console-state { padding: var(--space-4, 1.25rem) 0; color: var(--text-secondary, #777); font-size: var(--font-size-sm, 0.875rem); }
+.console-state--error { display: flex; align-items: center; gap: var(--space-3, 0.75rem); color: var(--error, #c0392b); }
+.console-state--empty { font-style: italic; }
+.console-muted { color: var(--text-secondary, #999); }
+
+.console-filters { display: flex; flex-wrap: wrap; gap: var(--space-3, 0.75rem); margin-bottom: var(--space-3, 0.75rem); }
+.console-filters__search { flex: 1 1 14rem; min-width: 10rem; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; font: inherit; background: var(--surface, #fff); color: var(--color-text); }
+.console-filters__search:focus-visible,
+.console-filters__facet select:focus-visible { outline: 2px solid var(--field-focus-border, var(--brand-blue, #1d4e5f)); outline-offset: 1px; }
+.console-filters__facet select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; font: inherit; background: var(--surface, #fff); color: var(--color-text); }
+
+.console-table__grid { width: 100%; border-collapse: collapse; font-size: var(--font-size-sm, 0.875rem); }
+.console-table__grid th, .console-table__grid td { text-align: left; padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem); border-bottom: 1px solid var(--border); }
+.console-table--compact .console-table__grid th, .console-table--compact .console-table__grid td { padding: 3px var(--space-2, 0.5rem); }
+.console-table__grid th { font-weight: 600; color: var(--text-secondary, #555); white-space: nowrap; }
+.console-table__grid td.is-right, .console-table__grid th.is-right { text-align: right; }
+.console-table__grid td.is-center, .console-table__grid th.is-center { text-align: center; }
+.console-table__sort { display: inline-flex; align-items: center; gap: 4px; background: none; border: 0; font: inherit; font-weight: 600; color: inherit; cursor: pointer; padding: 0; }
+.console-table__sort:focus-visible { outline: 2px solid var(--field-focus-border, var(--brand-blue, #1d4e5f)); outline-offset: 2px; border-radius: 3px; }
+.console-table__sort-ind { font-size: 0.7em; color: var(--brand-blue, #1d4e5f); }
+.console-table__row { transition: background 0.08s ease; }
+.console-table__row:hover { background: var(--surface-alt, #f6f6f8); }
+.console-table__row.is-active { background: color-mix(in srgb, var(--brand-blue, #1d4e5f) 7%, var(--surface, #fff)); }
+.console-table__row:focus-visible { outline: 2px solid var(--field-focus-border, var(--brand-blue, #1d4e5f)); outline-offset: -2px; }
+.console-table__open { background: none; border: 0; font: inherit; color: var(--brand-blue, #1d4e5f); cursor: pointer; padding: 0; text-align: left; }
+.console-table__open:hover { text-decoration: underline; }
+.console-table__open:focus-visible { outline: 2px solid var(--field-focus-border, var(--brand-blue, #1d4e5f)); outline-offset: 1px; border-radius: 3px; }
+.console-table__check, .console-table__actions-col { width: 1%; white-space: nowrap; }
+
+/* Reusable cell chips (render-hint registry). */
+.console-chip { display: inline-block; max-width: 22ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; border-radius: 6px; padding: 1px 6px; font-size: 0.85em; border: 1px solid var(--border); }
+.console-chip--slug, .console-chip--id { font-family: var(--font-mono); background: var(--surface-alt, #f1f5f9); color: var(--text-secondary, #555); user-select: all; }
+.console-chip--status { text-transform: capitalize; background: var(--surface-alt, #f1f5f9); color: var(--text, #222); border-color: var(--border); }
+.console-identity { display: inline-flex; align-items: center; gap: 6px; }
+.console-identity__dot { width: 8px; height: 8px; border-radius: 999px; flex-shrink: 0; }
+
+/* Row kebab menu-button — same focus contract as the reaction popover. */
+.console-rowmenu { position: relative; display: inline-flex; }
+.console-rowmenu__trigger { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; border: 1px solid transparent; background: none; color: var(--text-secondary, #777); cursor: pointer; line-height: 1; font-size: 18px; }
+.console-rowmenu__trigger:hover { background: var(--surface-alt, #eee); }
+.console-rowmenu__trigger:focus-visible,
+.console-rowmenu__trigger[aria-expanded='true'] { outline: 2px solid var(--field-focus-border, var(--brand-blue, #1d4e5f)); outline-offset: 1px; }
+.console-rowmenu__menu { position: absolute; right: 0; top: calc(100% + 4px); z-index: 5; display: none; flex-direction: column; min-width: 9rem; padding: 4px; border-radius: var(--radius-lg, 12px); border: 1px solid var(--border); background: var(--surface, #fff); box-shadow: var(--shadow-floating, 0 6px 20px color-mix(in srgb, var(--shadow-color, #000) 22%, transparent)); }
+.console-rowmenu__menu.is-open { display: flex; animation: reaction-pop 120ms ease-out; transform-origin: top right; }
+.console-rowmenu__item { text-align: left; background: none; border: 0; font: inherit; padding: 6px 10px; border-radius: 6px; color: var(--color-text); cursor: pointer; }
+.console-rowmenu__item:hover { background: var(--surface-alt, #eee); }
+.console-rowmenu__item:focus-visible { outline: 2px solid var(--field-focus-border, var(--brand-blue, #1d4e5f)); outline-offset: -1px; }
+.console-rowmenu__item--danger { color: var(--error, #c0392b); }
+
+.console-pager { display: flex; align-items: center; justify-content: center; gap: var(--space-3, 0.75rem); margin-top: var(--space-3, 0.75rem); }
+.console-pager__status { font-size: var(--font-size-sm, 0.875rem); color: var(--text-secondary, #777); }
+
+@media (prefers-reduced-motion: reduce) {
+  .console-rowmenu__menu.is-open { animation: reaction-fade 90ms ease-out; }
+}

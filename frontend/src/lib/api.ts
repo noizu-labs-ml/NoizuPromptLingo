@@ -1582,6 +1582,14 @@ export const api = {
       body: JSON.stringify({ room }),
     });
   },
+  // Edit name/description only — slug is an immutable alias (ADR-013); the BE
+  // update_changeset casts name+description only, ignoring any other field (aniket 0c93ddd4).
+  updateChatRoom(orgId: string, id: string, room: { name?: string; description?: string }) {
+    return request<{ room: ChatRoom }>(`/api/v1/organizations/${orgId}/chat/rooms/${id}`, {
+      method: "PUT",
+      body: JSON.stringify({ room }),
+    });
+  },
 
   // ── Chat messages + reactions (epic ffc795c5) ──
   // Built to marcus-dev's FINAL BE contract (seq124/144): messages carry
