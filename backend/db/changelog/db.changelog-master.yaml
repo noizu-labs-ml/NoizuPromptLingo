@@ -161,5 +161,8 @@ databaseChangeLog:
       file: 053-rbac-lead-role.yaml
       relativeToChangelogFile: true
   - include:
-      file: 054-chat-message-parent.yaml
+      file: 054-chat-message-threads.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 055-ticket-human-key.yaml
       relativeToChangelogFile: true

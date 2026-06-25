@@ -20,7 +20,7 @@ defmodule NoizuPromptLinguaWeb.ChatMessageControllerTest do
 
     {:ok, room} = Chat.create_room(%{organization_id: org_id, name: "Messages #{System.unique_integer([:positive])}"})
     base = "/api/v1/organizations/#{org_id}/chat/rooms/#{room.id}/messages"
-    {:ok, conn: auth_conn, base: base, user: user}
+    {:ok, conn: auth_conn, base: base, user: user, org_id: org_id, room: room}
   end
 
   describe "POST message — happy path" do
@@ -74,47 +74,61 @@ defmodule NoizuPromptLinguaWeb.ChatMessageControllerTest do
       {:ok, parent_id: parent["id"]}
     end
 
-    test "POST a reply sets parent_message_id", %{conn: conn, base: base, parent_id: pid} do
-      reply = json_response(post(conn, "#{base}/#{pid}/replies", %{message: %{content: "re"}}), 201)["message"]
+    # a reply is a message with parent_message_id (reuse POST .../messages, no /replies POST).
+    test "POST a message with parent_message_id creates a reply", %{conn: conn, base: base, parent_id: pid} do
+      reply = json_response(post(conn, base, %{message: %{content: "re", parent_message_id: pid}}), 201)["message"]
       assert reply["parent_message_id"] == pid
       assert reply["content"] == "re"
     end
 
-    test "GET thread returns the parent + replies oldest-first with reactions", %{conn: conn, base: base, parent_id: pid} do
-      post(conn, "#{base}/#{pid}/replies", %{message: %{content: "r1"}})
-      post(conn, "#{base}/#{pid}/replies", %{message: %{content: "r2"}})
+    test "GET .../messages/:id/replies returns replies chronologically with reactions", %{conn: conn, base: base, parent_id: pid} do
+      post(conn, base, %{message: %{content: "r1", parent_message_id: pid}})
+      post(conn, base, %{message: %{content: "r2", parent_message_id: pid}})
 
-      thread = json_response(get(conn, "#{base}/#{pid}/thread"), 200)
-      assert thread["message"]["id"] == pid
-      assert Enum.map(thread["replies"], & &1["content"]) == ["r1", "r2"]
-      assert Enum.all?(thread["replies"], &is_list(&1["reactions"]))
+      replies = json_response(get(conn, "#{base}/#{pid}/replies"), 200)["messages"]
+      assert Enum.map(replies, & &1["content"]) == ["r1", "r2"]
+      assert Enum.all?(replies, &is_list(&1["reactions"]))
     end
 
-    test "channel list is top-level only by default; ?include_replies=true is flat", %{conn: conn, base: base, parent_id: pid} do
-      post(conn, "#{base}/#{pid}/replies", %{message: %{content: "buried"}})
+    test "channel list is top-level only + embeds reply_count/last_reply_at; ?include_replies=true is flat", %{conn: conn, base: base, parent_id: pid} do
+      post(conn, base, %{message: %{content: "buried", parent_message_id: pid}})
 
       default = json_response(get(conn, base), 200)["messages"]
       assert Enum.map(default, & &1["content"]) == ["root"]
+      root = Enum.find(default, &(&1["id"] == pid))
+      assert root["reply_count"] == 1
+      assert root["last_reply_at"]
 
       flat = json_response(get(conn, "#{base}?include_replies=true"), 200)["messages"]
       assert "buried" in Enum.map(flat, & &1["content"])
     end
 
-    test "reply to a message not in the room -> 404", %{conn: conn, base: base} do
-      assert json_response(post(conn, "#{base}/#{Ecto.UUID.generate()}/replies", %{message: %{content: "x"}}), 404)
+    test "reply-to-a-reply is rejected (one-level threads) -> 422", %{conn: conn, base: base, parent_id: pid} do
+      reply = json_response(post(conn, base, %{message: %{content: "r", parent_message_id: pid}}), 201)["message"]
+      resp = json_response(post(conn, base, %{message: %{content: "deep", parent_message_id: reply["id"]}}), 422)
+      assert resp["error"] =~ "one level"
     end
 
-    test "reply missing body -> 422, not 500", %{conn: conn, base: base, parent_id: pid} do
-      assert json_response(post(conn, "#{base}/#{pid}/replies", %{}), 422)["errors"]["message"]
+    test "parent in another room is rejected -> 422", %{conn: conn, base: base, org_id: org_id} do
+      {:ok, other_room} = Chat.create_room(%{organization_id: org_id, name: "Other #{System.unique_integer([:positive])}"})
+      {:ok, foreign} = Chat.send_message(%{room_id: other_room.id, content: "elsewhere", sender: "x"})
+
+      resp = json_response(post(conn, base, %{message: %{content: "r", parent_message_id: foreign.id}}), 422)
+      assert resp["error"] =~ "another room"
     end
 
-    test "deleting the parent cascades its replies (self-FK ON DELETE CASCADE)", %{conn: conn, base: base, parent_id: pid} do
-      reply = json_response(post(conn, "#{base}/#{pid}/replies", %{message: %{content: "r"}}), 201)["message"]
+    test "unknown parent -> 422", %{conn: conn, base: base} do
+      assert json_response(post(conn, base, %{message: %{content: "r", parent_message_id: Ecto.UUID.generate()}}), 422)["error"]
+    end
+
+    test "deleting the parent DETACHES replies to root (ON DELETE SET NULL), never deletes them", %{conn: conn, base: base, parent_id: pid} do
+      reply = json_response(post(conn, base, %{message: %{content: "survivor", parent_message_id: pid}}), 201)["message"]
 
       Repo.delete!(Chat.get_message(pid))
 
-      assert Chat.get_message(reply["id"]) == nil
-      assert Chat.list_replies(pid) == []
+      detached = Chat.get_message(reply["id"])
+      assert detached != nil
+      assert detached.parent_message_id == nil
     end
   end
 end

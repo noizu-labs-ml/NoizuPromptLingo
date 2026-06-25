@@ -221,6 +221,20 @@ defmodule NoizuPromptLingua.Domains.Chat do
     |> Repo.all()
   end
 
+  @doc """
+  Reply count + last-reply timestamp per root message id, batched (no N+1) for the
+  channel list's thread affordances (marcus seq587). Returns
+  `%{root_id => %{reply_count, last_reply_at}}`; roots with no replies are absent.
+  """
+  def thread_summaries(root_ids) when is_list(root_ids) do
+    ChatMessage
+    |> where([m], m.parent_message_id in ^root_ids)
+    |> group_by([m], m.parent_message_id)
+    |> select([m], {m.parent_message_id, count(m.id), max(m.inserted_at)})
+    |> Repo.all()
+    |> Map.new(fn {pid, cnt, last} -> {pid, %{reply_count: cnt, last_reply_at: last}} end)
+  end
+
   # ── Events ────────────────────────────────────────────────────
 
   def create_event(attrs) do

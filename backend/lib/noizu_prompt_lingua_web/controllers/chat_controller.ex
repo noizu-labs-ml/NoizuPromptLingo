@@ -94,34 +94,49 @@ defmodule NoizuPromptLinguaWeb.ChatController do
 
   # GET /api/v1/organizations/:org_id/chat/rooms/:room_id/messages
   def index_messages(conn, %{"org_id" => org_id, "room_id" => room_id} = params) do
-    with_room(conn, org_id, room_id, "viewer", fn _room ->
-      # Slack-style channel view: top-level only; replies are fetched via the thread
-      # endpoint (ffa2d2f6). `?include_replies=true` opts back into the flat (all
-      # messages) view for any caller that still wants it.
+    with_room(conn, org_id, room_id, "viewer", fn room ->
+      # Slack-style channel view: top-level only; replies are fetched via the per-message
+      # replies endpoint (ffa2d2f6). `?include_replies=true` opts back to the flat list.
       opts =
         [top_level: params["include_replies"] not in [true, "true"]]
         |> maybe_opt(:before, params["before"])
         |> maybe_opt(:after, params["after"])
         |> maybe_opt(:limit, parse_limit(params["limit"]))
 
-      messages = room_id |> Chat.list_messages(opts) |> Enum.reverse()
-      summaries = Chat.message_reaction_summaries(Enum.map(messages, & &1.id), actor(conn))
-      json(conn, %{messages: Enum.map(messages, fn m -> message_to_json(m, Map.get(summaries, m.id, [])) end)})
+      messages = room.id |> Chat.list_messages(opts) |> Enum.reverse()
+      ids = Enum.map(messages, & &1.id)
+      reactions = Chat.message_reaction_summaries(ids, actor(conn))
+      # reply_count + last_reply_at per root so the FE renders thread affordances w/o N+1.
+      threads = Chat.thread_summaries(ids)
+
+      json(conn, %{
+        messages: Enum.map(messages, fn m -> message_to_json(m, Map.get(reactions, m.id, []), Map.get(threads, m.id)) end)
+      })
     end)
   end
 
   # POST /api/v1/organizations/:org_id/chat/rooms/:room_id/messages
+  # A reply is just a message with a `parent_message_id` (ffa2d2f6) — one endpoint, no
+  # FE branching. The parent (when present) must be in THIS room and be a ROOT (threads
+  # are one level); a reply-to-reply or cross-room parent is a 422.
   def create_message(conn, %{"org_id" => org_id, "room_id" => room_id, "message" => msg_params}) do
-    with_room(conn, org_id, room_id, "member", fn _room ->
-      attrs = %{
-        room_id: room_id,
-        content: msg_params["content"],
-        sender: msg_params["sender"] || actor(conn)
-      }
+    with_room(conn, org_id, room_id, "member", fn room ->
+      case reply_parent(room.id, msg_params["parent_message_id"]) do
+        {:error, reason} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{error: reason})
 
-      case Chat.send_message(attrs) do
-        {:ok, msg} -> conn |> put_status(:created) |> json(%{message: message_to_json(msg, [])})
-        {:error, changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+        {:ok, parent_id} ->
+          attrs = %{
+            room_id: room.id,
+            content: msg_params["content"],
+            sender: msg_params["sender"] || actor(conn),
+            parent_message_id: parent_id
+          }
+
+          case Chat.send_message(attrs) do
+            {:ok, msg} -> conn |> put_status(:created) |> json(%{message: message_to_json(msg, [])})
+            {:error, changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+          end
       end
     end)
   end
@@ -129,37 +144,28 @@ defmodule NoizuPromptLinguaWeb.ChatController do
   # Missing `message` body -> 422 rather than a FunctionClauseError 500.
   def create_message(conn, _params), do: missing_field(conn, "message")
 
-  # POST /api/v1/organizations/:org_id/chat/rooms/:room_id/messages/:message_id/replies
-  # Post a threaded reply to an existing message in the room (ffa2d2f6).
-  def reply_to_message(conn, %{"org_id" => org_id, "room_id" => room_id, "message_id" => message_id, "message" => msg_params}) do
-    with_message(conn, org_id, room_id, message_id, "member", fn parent ->
-      attrs = %{
-        room_id: parent.room_id,
-        content: msg_params["content"],
-        sender: msg_params["sender"] || actor(conn),
-        parent_message_id: parent.id
-      }
+  # Validate a reply's parent (ffa2d2f6): nil/"" -> top-level message; else the parent
+  # must exist, be in THIS room, and be a ROOT (one-level threads). app-guarded because
+  # the self-FK only guarantees existence, not same-room or depth.
+  defp reply_parent(_room_id, nil), do: {:ok, nil}
+  defp reply_parent(_room_id, ""), do: {:ok, nil}
 
-      case Chat.send_message(attrs) do
-        {:ok, msg} -> conn |> put_status(:created) |> json(%{message: message_to_json(msg, [])})
-        {:error, changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
-      end
-    end)
+  defp reply_parent(room_id, parent_id) do
+    case Chat.get_message(parent_id) do
+      nil -> {:error, "Parent message not found"}
+      %{room_id: ^room_id, parent_message_id: nil} = parent -> {:ok, parent.id}
+      %{room_id: ^room_id} -> {:error, "Cannot reply to a reply (threads are one level)"}
+      _ -> {:error, "Parent message is in another room"}
+    end
   end
 
-  def reply_to_message(conn, _params), do: missing_field(conn, "message")
-
-  # GET /api/v1/organizations/:org_id/chat/rooms/:room_id/messages/:message_id/thread
-  # The parent message + its replies (oldest-first), each with embedded reaction summaries.
-  def message_thread(conn, %{"org_id" => org_id, "room_id" => room_id, "message_id" => message_id}) do
+  # GET /api/v1/organizations/:org_id/chat/rooms/:room_id/messages/:message_id/replies
+  # Replies to a message, chronological, each with embedded reaction summaries.
+  def index_replies(conn, %{"org_id" => org_id, "room_id" => room_id, "message_id" => message_id}) do
     with_message(conn, org_id, room_id, message_id, "viewer", fn parent ->
       replies = Chat.list_replies(parent.id)
-      summaries = Chat.message_reaction_summaries([parent.id | Enum.map(replies, & &1.id)], actor(conn))
-
-      json(conn, %{
-        message: message_to_json(parent, Map.get(summaries, parent.id, [])),
-        replies: Enum.map(replies, fn r -> message_to_json(r, Map.get(summaries, r.id, [])) end)
-      })
+      reactions = Chat.message_reaction_summaries(Enum.map(replies, & &1.id), actor(conn))
+      json(conn, %{messages: Enum.map(replies, fn r -> message_to_json(r, Map.get(reactions, r.id, [])) end)})
     end)
   end
 
@@ -242,7 +248,7 @@ defmodule NoizuPromptLinguaWeb.ChatController do
     }
   end
 
-  defp message_to_json(m, reactions) do
+  defp message_to_json(m, reactions, thread \\ nil) do
     %{
       id: m.id,
       room_id: m.room_id,
@@ -250,7 +256,10 @@ defmodule NoizuPromptLinguaWeb.ChatController do
       sender: m.sender,
       parent_message_id: m.parent_message_id,
       inserted_at: m.inserted_at,
-      reactions: reactions
+      reactions: reactions,
+      # thread affordances on a root message (nil/absent => 0 replies).
+      reply_count: (thread && thread.reply_count) || 0,
+      last_reply_at: thread && thread.last_reply_at
     }
   end
 
