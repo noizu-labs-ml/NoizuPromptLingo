@@ -36,14 +36,16 @@ defmodule NoizuPromptLinguaWeb.ProjectController do
           name: project_params["name"],
           slug: project_params["slug"],
           description: project_params["description"],
-          settings: project_params["settings"] || %{}
+          settings: project_params["settings"] || %{},
+          # User-entered ticket-key prefix (f8bc7fab); blank -> auto-derived on first ticket.
+          key_prefix: project_params["key_prefix"]
         }
 
         case Projects.create_with_owner(attrs, user_id) do
           {:ok, project} ->
             conn
             |> put_status(:created)
-            |> json(%{project: %{id: project.id, name: project.name, slug: project.slug, organization_id: project.organization_id}})
+            |> json(%{project: project_to_json(project)})
 
           {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
             conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
@@ -217,6 +219,7 @@ defmodule NoizuPromptLinguaWeb.ProjectController do
       organization_id: project.organization_id,
       name: project.name,
       slug: project.slug,
+      key_prefix: project.key_prefix,
       description: project.description,
       settings: project.settings,
       status: project.status,
