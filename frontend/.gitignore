@@ -10,3 +10,8 @@ npm-debug.log*
 *.tsbuildinfo
 next-env.d.ts
 src/app/design-system.generated.css
+
+# Playwright E2E (QF4)
+/e2e/.auth/
+/playwright-report/
+/test-results/
