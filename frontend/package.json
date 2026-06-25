@@ -7,7 +7,9 @@
     "generate-css": "tsx src/scripts/generate-css.ts",
     "build": "npm run generate-css && next build",
     "start": "next start",
-    "regen": "rm -rf .cache && npm run generate-css"
+    "regen": "rm -rf .cache && npm run generate-css",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install chromium"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.0",
@@ -38,6 +40,7 @@
     "tailwindcss": "^4.2.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.49.0",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
