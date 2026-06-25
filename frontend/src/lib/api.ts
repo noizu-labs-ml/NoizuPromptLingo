@@ -1099,6 +1099,26 @@ export interface MockMCPRedisEntry {
   value: string | null;
 }
 
+// Shared list-query serializer (ticket 3c2d6bbe). Scalars -> `key=v`; arrays ->
+// repeated BRACKET params `key[]=v1&key[]=v2` (Phoenix/Plug parses to a list ->
+// WHERE col = ANY(...), OR-within-facet), matching the locked BE shape (marcus
+// seq578 / aniket seq575). Empty strings, empty arrays, and null/undefined are
+// omitted. Centralized so every list method serializes multi-select facets the
+// same way (no per-method drift).
+function buildQuery(params: Record<string, string | string[] | number | undefined | null>): string {
+  const qs = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value == null) continue;
+    if (Array.isArray(value)) {
+      for (const v of value) if (v != null && v !== '') qs.append(`${key}[]`, String(v));
+    } else if (value !== '') {
+      qs.set(key, String(value));
+    }
+  }
+  const s = qs.toString();
+  return s ? `?${s}` : '';
+}
+
 export const api = {
   requestMagicLink(email: string) {
     return request<MagicLinkResponse>("/api/v1/auth/magic-link", {
@@ -1521,11 +1541,8 @@ export const api = {
     });
   },
 
-  listSessions(orgId: string, opts?: { status?: string; projectId?: string }) {
-    const qs = new URLSearchParams();
-    if (opts?.status) qs.set("status", opts.status);
-    if (opts?.projectId) qs.set("project_id", opts.projectId);
-    const suffix = qs.toString() ? `?${qs.toString()}` : "";
+  listSessions(orgId: string, opts?: { status?: string | string[]; projectId?: string }) {
+    const suffix = buildQuery({ status: opts?.status, project_id: opts?.projectId });
     return request<{ sessions: Session[] }>(`/api/v1/organizations/${orgId}/sessions${suffix}`);
   },
 
@@ -1567,10 +1584,7 @@ export const api = {
 
   // ── Chat rooms (org-scoped, optional project) ──
   listChatRooms(orgId: string, opts?: { projectId?: string; sessionId?: string }) {
-    const qs = new URLSearchParams();
-    if (opts?.projectId) qs.set("project_id", opts.projectId);
-    if (opts?.sessionId) qs.set("session_id", opts.sessionId);
-    const suffix = qs.toString() ? `?${qs.toString()}` : "";
+    const suffix = buildQuery({ project_id: opts?.projectId, session_id: opts?.sessionId });
     return request<{ rooms: ChatRoom[] }>(`/api/v1/organizations/${orgId}/chat/rooms${suffix}`);
   },
   getChatRoom(orgId: string, id: string) {
@@ -1639,12 +1653,8 @@ export const api = {
   },
 
   // ── Artifacts (org-scoped, optional project) ──
-  listArtifacts(orgId: string, opts?: { projectId?: string; kind?: string; search?: string }) {
-    const qs = new URLSearchParams();
-    if (opts?.projectId) qs.set("project_id", opts.projectId);
-    if (opts?.kind) qs.set("kind", opts.kind);
-    if (opts?.search) qs.set("search", opts.search);
-    const suffix = qs.toString() ? `?${qs.toString()}` : "";
+  listArtifacts(orgId: string, opts?: { projectId?: string; kind?: string | string[]; search?: string }) {
+    const suffix = buildQuery({ project_id: opts?.projectId, kind: opts?.kind, search: opts?.search });
     return request<{ artifacts: Artifact[] }>(`/api/v1/organizations/${orgId}/artifacts${suffix}`);
   },
   getArtifact(orgId: string, id: string, revisionId?: string) {
@@ -1667,12 +1677,8 @@ export const api = {
   },
 
   // ── Reviews (org-scoped, optional project) ──
-  listReviews(orgId: string, opts?: { projectId?: string; artifactId?: string; status?: string }) {
-    const qs = new URLSearchParams();
-    if (opts?.projectId) qs.set("project_id", opts.projectId);
-    if (opts?.artifactId) qs.set("artifact_id", opts.artifactId);
-    if (opts?.status) qs.set("status", opts.status);
-    const suffix = qs.toString() ? `?${qs.toString()}` : "";
+  listReviews(orgId: string, opts?: { projectId?: string; artifactId?: string; status?: string | string[] }) {
+    const suffix = buildQuery({ project_id: opts?.projectId, artifact_id: opts?.artifactId, status: opts?.status });
     return request<{ reviews: Review[] }>(`/api/v1/organizations/${orgId}/reviews${suffix}`);
   },
   getReview(orgId: string, id: string) {
@@ -1698,27 +1704,28 @@ export const api = {
     orgId: string,
     opts?: {
       projectId?: string;
-      status?: string;
-      ticketType?: string;
-      priority?: string;
-      assignee?: string;
+      // Facetable filters accept a single value OR an array (multi-select -> ANY, 3c2d6bbe).
+      status?: string | string[];
+      ticketType?: string | string[];
+      priority?: string | string[];
+      assignee?: string | string[];
       queueId?: string;
       parentId?: string;
       stageId?: string;
       iterationId?: string;
     },
   ) {
-    const qs = new URLSearchParams();
-    if (opts?.projectId) qs.set("project_id", opts.projectId);
-    if (opts?.parentId) qs.set("parent_id", opts.parentId);
-    if (opts?.status) qs.set("status", opts.status);
-    if (opts?.ticketType) qs.set("ticket_type", opts.ticketType);
-    if (opts?.priority) qs.set("priority", opts.priority);
-    if (opts?.assignee) qs.set("assignee", opts.assignee);
-    if (opts?.queueId) qs.set("queue_id", opts.queueId);
-    if (opts?.stageId) qs.set("stage_id", opts.stageId);
-    if (opts?.iterationId) qs.set("iteration_id", opts.iterationId);
-    const suffix = qs.toString() ? `?${qs.toString()}` : "";
+    const suffix = buildQuery({
+      project_id: opts?.projectId,
+      parent_id: opts?.parentId,
+      status: opts?.status,
+      ticket_type: opts?.ticketType,
+      priority: opts?.priority,
+      assignee: opts?.assignee,
+      queue_id: opts?.queueId,
+      stage_id: opts?.stageId,
+      iteration_id: opts?.iterationId,
+    });
     return request<{ tickets: Ticket[] }>(`/api/v1/organizations/${orgId}/tickets${suffix}`);
   },
   getTicket(orgId: string, id: string) {
@@ -1796,13 +1803,8 @@ export const api = {
   },
 
   // ── Assets (media-prompt entries + generated outputs) ──
-  listAssets(orgId: string, opts?: { projectId?: string; assetType?: string; status?: string; tag?: string }) {
-    const qs = new URLSearchParams();
-    if (opts?.projectId) qs.set("project_id", opts.projectId);
-    if (opts?.assetType) qs.set("asset_type", opts.assetType);
-    if (opts?.status) qs.set("status", opts.status);
-    if (opts?.tag) qs.set("tag", opts.tag);
-    const suffix = qs.toString() ? `?${qs.toString()}` : "";
+  listAssets(orgId: string, opts?: { projectId?: string; assetType?: string | string[]; status?: string | string[]; tag?: string | string[] }) {
+    const suffix = buildQuery({ project_id: opts?.projectId, asset_type: opts?.assetType, status: opts?.status, tag: opts?.tag });
     return request<{ assets: AssetEntry[]; asset_types: string[]; statuses: string[] }>(
       `/api/v1/organizations/${orgId}/assets${suffix}`,
     );
@@ -1982,10 +1984,7 @@ export const api = {
 
   // ── Wiki ──
   listWikiSpaces(orgId: string, opts?: { projectId?: string; search?: string }) {
-    const qs = new URLSearchParams();
-    if (opts?.projectId) qs.set("project_id", opts.projectId);
-    if (opts?.search) qs.set("search", opts.search);
-    const suffix = qs.toString() ? `?${qs.toString()}` : "";
+    const suffix = buildQuery({ project_id: opts?.projectId, search: opts?.search });
     return request<{ spaces: WikiSpace[] }>(`/api/v1/organizations/${orgId}/wiki/spaces${suffix}`);
   },
 

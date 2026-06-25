@@ -13,6 +13,8 @@ import {
   boardsDescriptor,
   personasDescriptor,
   reviewsDescriptor,
+  instructionsDescriptor,
+  membersDescriptor,
   artifactsDescriptor,
 } from './descriptors';
 
@@ -27,6 +29,8 @@ export const DESCRIPTORS: Record<string, AnyDescriptor> = {
   boards: boardsDescriptor,
   personas: personasDescriptor,
   reviews: reviewsDescriptor,
+  instructions: instructionsDescriptor,
+  members: membersDescriptor,
   artifacts: artifactsDescriptor,
 };
 

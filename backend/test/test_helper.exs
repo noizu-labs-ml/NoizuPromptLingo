@@ -20,6 +20,10 @@ NoizuPromptLingua.AssetTestSchema.ensure!()
 # value + group row) so the authz role-rank sync guard matches. Idempotent.
 NoizuPromptLingua.AuthzTestSchema.ensure!()
 
+# Ensure the Liquibase 055 human-key schema (key_prefix cols, tickets number/key, the
+# ticket_number_counters table + partial uniques) exists on the test DB. Idempotent.
+NoizuPromptLingua.TicketTestSchema.ensure!()
+
 # Memory tests are Weaviate-primary: use the deterministic (feature-hash) embedder for reproducible
 # vectors with no OpenAI, and an ephemeral, isolated class on the cluster Weaviate. Inter-test
 # isolation comes from each test's randomly-generated organization_id (scope filter).

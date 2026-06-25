@@ -1,0 +1,146 @@
+databaseChangeLog:
+  # Human-readable ticket keys (f8bc7fab / NOZINF-023). Per-scope sequential number +
+  # a scope prefix, IMMUTABLE, assigned race-safe on insert. Two scopes: per-PROJECT
+  # (project tickets) and per-ORG (project_id NULL / org-level tickets). Numbering is
+  # gap-free via a counter table with an ATOMIC UPSERT in the ticket's txn (devon-locked
+  # over seq / max+1-retry). The NULL-project (org) bucket is handled with the same
+  # two-partial-unique pattern as the chat-room slug (052), version-independent — no
+  # NULLS-NOT-DISTINCT / generated-sentinel needed.
+
+  # 055a — prefix columns (metadata-only; auto-derived from slug + overridable).
+  - changeSet:
+      id: 055a-add-key-prefix-columns
+      author: lucia-backend
+      changes:
+        - sql:
+            sql: |
+              ALTER TABLE projects ADD COLUMN key_prefix varchar(16);
+              ALTER TABLE organizations ADD COLUMN key_prefix varchar(16);
+      rollback:
+        - sql:
+            sql: |
+              ALTER TABLE projects DROP COLUMN key_prefix;
+              ALTER TABLE organizations DROP COLUMN key_prefix;
+
+  # 055b — ticket number + immutable key columns (nullable; set on insert, backfilled).
+  - changeSet:
+      id: 055b-add-ticket-number-key
+      author: lucia-backend
+      changes:
+        - sql:
+            sql: |
+              ALTER TABLE tickets ADD COLUMN number integer;
+              ALTER TABLE tickets ADD COLUMN key varchar(64);
+      rollback:
+        - sql:
+            sql: |
+              ALTER TABLE tickets DROP COLUMN number;
+              ALTER TABLE tickets DROP COLUMN key;
+
+  # 055c — per-scope counter table. No PK on (org, project) because project_id is
+  # nullable (org bucket); the two partial unique indexes below are the ON CONFLICT
+  # targets and collapse the NULL-project bucket to ONE org counter.
+  - changeSet:
+      id: 055c-ticket-number-counters
+      author: lucia-backend
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE ticket_number_counters (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+                project_id uuid REFERENCES projects(id) ON DELETE CASCADE,
+                last_number integer NOT NULL DEFAULT 0,
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+              CREATE UNIQUE INDEX idx_tnc_proj   ON ticket_number_counters (organization_id, project_id) WHERE project_id IS NOT NULL;
+              CREATE UNIQUE INDEX idx_tnc_org    ON ticket_number_counters (organization_id)             WHERE project_id IS NULL;
+      rollback:
+        - dropTable:
+            tableName: ticket_number_counters
+
+  # 055d — ticket number uniqueness, per scope. Partial (number set only once assigned;
+  # org bucket vs project bucket distinct). tickets is a hot table -> CONCURRENTLY.
+  - changeSet:
+      id: 055d-unique-ticket-number-proj
+      author: lucia-backend
+      runInTransaction: false
+      changes:
+        - sql:
+            splitStatements: true
+            sql: |
+              DROP INDEX IF EXISTS idx_tickets_proj_number;
+              CREATE UNIQUE INDEX CONCURRENTLY idx_tickets_proj_number
+              ON tickets (organization_id, project_id, number)
+              WHERE project_id IS NOT NULL AND number IS NOT NULL;
+      rollback:
+        - sql:
+            sql: DROP INDEX CONCURRENTLY IF EXISTS idx_tickets_proj_number;
+
+  - changeSet:
+      id: 055d-unique-ticket-number-org
+      author: lucia-backend
+      runInTransaction: false
+      changes:
+        - sql:
+            splitStatements: true
+            sql: |
+              DROP INDEX IF EXISTS idx_tickets_org_number;
+              CREATE UNIQUE INDEX CONCURRENTLY idx_tickets_org_number
+              ON tickets (organization_id, number)
+              WHERE project_id IS NULL AND number IS NOT NULL;
+      rollback:
+        - sql:
+            sql: DROP INDEX CONCURRENTLY IF EXISTS idx_tickets_org_number;
+
+  # 055e — the real cross-scope key guard: a key string is unique within an org.
+  - changeSet:
+      id: 055e-unique-ticket-key
+      author: lucia-backend
+      runInTransaction: false
+      changes:
+        - sql:
+            splitStatements: true
+            sql: |
+              DROP INDEX IF EXISTS idx_tickets_org_key;
+              CREATE UNIQUE INDEX CONCURRENTLY idx_tickets_org_key
+              ON tickets (organization_id, key)
+              WHERE key IS NOT NULL;
+      rollback:
+        - sql:
+            sql: DROP INDEX CONCURRENTLY IF EXISTS idx_tickets_org_key;
+
+  # 055f — prefix uniqueness. Project prefix unique per org; org prefix unique globally
+  # (org keys are globally unambiguous). Both partial (NULL prefix allowed).
+  - changeSet:
+      id: 055f-unique-project-key-prefix
+      author: lucia-backend
+      runInTransaction: false
+      changes:
+        - sql:
+            splitStatements: true
+            sql: |
+              DROP INDEX IF EXISTS idx_projects_org_key_prefix;
+              CREATE UNIQUE INDEX CONCURRENTLY idx_projects_org_key_prefix
+              ON projects (organization_id, key_prefix)
+              WHERE key_prefix IS NOT NULL;
+      rollback:
+        - sql:
+            sql: DROP INDEX CONCURRENTLY IF EXISTS idx_projects_org_key_prefix;
+
+  - changeSet:
+      id: 055f-unique-org-key-prefix
+      author: lucia-backend
+      runInTransaction: false
+      changes:
+        - sql:
+            splitStatements: true
+            sql: |
+              DROP INDEX IF EXISTS idx_organizations_key_prefix;
+              CREATE UNIQUE INDEX CONCURRENTLY idx_organizations_key_prefix
+              ON organizations (key_prefix)
+              WHERE key_prefix IS NOT NULL;
+      rollback:
+        - sql:
+            sql: DROP INDEX CONCURRENTLY IF EXISTS idx_organizations_key_prefix;

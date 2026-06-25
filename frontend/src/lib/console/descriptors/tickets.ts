@@ -28,9 +28,11 @@ export const ticketsDescriptor: ConsoleDescriptor<Ticket, TicketInput> = {
   filters: [
     { key: 'search', label: 'Search', type: 'search' },
     // facet keys mirror api.listTickets opts so the primitive can pass them straight through.
-    { key: 'status', label: 'Status', type: 'facet', dynamic: true },
+    // status + type are MULTI-select (3c2d6bbe): FacetMultiSelect -> status[]/ticket_type[]
+    // -> aniket's `= ANY` OR-within-facet (seq575). project stays single (it's the scope).
+    { key: 'status', label: 'Status', type: 'facet', dynamic: true, multi: true },
     { key: 'priority', label: 'Priority', type: 'facet', options: PRIORITIES },
-    { key: 'ticketType', label: 'Type', type: 'facet', dynamic: true },
+    { key: 'ticketType', label: 'Type', type: 'facet', dynamic: true, multi: true },
     { key: 'projectId', label: 'Project', type: 'facet', dynamic: true },
   ],
   detail: {

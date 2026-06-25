@@ -11,6 +11,8 @@ import {
   type Project,
 } from '@/lib/api';
 import { useOrg, useOrgId } from '@/context/org';
+import { DataTable } from '@/components/console/DataTable';
+import { instructionsDescriptor } from '@/lib/console/descriptors/instructions';
 
 const BODY_TEMPLATE = `You are a helpful assistant.
 
@@ -358,35 +360,14 @@ type ModalState =
   | null;
 
 export default function InstructionsPage() {
-  const { orgId, loading: orgLoading } = useOrgId();
-  const { currentProject, switchProject } = useOrg();
-  const [instructions, setInstructions] = useState<Instruction[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { orgId, slug, loading: orgLoading } = useOrgId();
+  const { currentProject, switchProject, projects } = useOrg();
   const [modal, setModal] = useState<ModalState>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const reload = () => setReloadKey((k) => k + 1);
 
   const scopeProjectId = currentProject?.id;
-
-  const fetchData = useCallback(async () => {
-    if (!orgId) return;
-    try {
-      const [instructionData, projectData] = await Promise.all([
-        api.listInstructions(orgId, scopeProjectId ? { projectId: scopeProjectId } : undefined),
-        api.listProjects(orgId),
-      ]);
-      setInstructions(instructionData.instructions ?? []);
-      setProjects(projectData.projects ?? []);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to load instructions');
-    } finally {
-      setLoading(false);
-    }
-  }, [orgId, scopeProjectId]);
-
-  useEffect(() => {
-    if (orgId) fetchData();
-    else if (!orgLoading) setLoading(false);
-  }, [fetchData, orgId, orgLoading]);
+  const scope = currentProject ? { projectId: currentProject.id } : undefined;
 
   async function handleDelete(instruction: Instruction) {
     if (!orgId) return;
@@ -394,13 +375,11 @@ export default function InstructionsPage() {
     try {
       await api.deleteInstruction(orgId, instruction.id);
       toast.success('Instruction deleted');
-      fetchData();
+      reload();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to delete');
     }
   }
-
-  const projectName = (id?: string | null) => (id ? projects.find((p) => p.id === id)?.name ?? '—' : null);
 
   return (
     <div className="content">
@@ -418,63 +397,22 @@ export default function InstructionsPage() {
         </div>
         <p className="sg-page-intro">Instructions — versioned, parameterized prompt templates.</p>
 
-        {loading ? (
-          <p className="sg-page-intro">Loading…</p>
-        ) : instructions.length === 0 ? (
-          <div className="projects-empty">
-            <p className="projects-empty__text">No instructions yet. Create one to get started.</p>
-            <button className="sg-btn sg-btn--black" onClick={() => setModal({ kind: 'create' })}>
-              New Instruction
-            </button>
-          </div>
+        {!orgId ? (
+          <p className="sg-page-intro">{orgLoading ? 'Loading…' : 'Select an organization to view its instructions.'}</p>
         ) : (
-          <div className="projects-grid">
-            {instructions.map((i) => (
-              <div key={i.id} className="project-card">
-                <div className="project-card__header">
-                  {projectName(i.project_id) && <div className="project-card__org">{projectName(i.project_id)}</div>}
-                  <div className="project-card__name">{i.title}</div>
-                </div>
-                <div className="project-card__body">
-                  <dl className="project-card__fields">
-                    <div className="project-card__field">
-                      <dt>Slug:</dt>
-                      <dd className="font-mono">{i.slug}</dd>
-                    </div>
-                    {i.description && (
-                      <div className="project-card__field">
-                        <dt>Desc:</dt>
-                        <dd>{i.description}</dd>
-                      </div>
-                    )}
-                    <div className="project-card__field">
-                      <dt>Version:</dt>
-                      <dd>v{i.active_version ?? 1}</dd>
-                    </div>
-                    <div className="project-card__field">
-                      <dt>Params:</dt>
-                      <dd>{(i.parameters ?? []).length}</dd>
-                    </div>
-                  </dl>
-                  <div className="project-card__meta">
-                    <span className="project-card__status">{i.status}</span>
-                    <span className="project-card__time">{timeAgo(i.inserted_at)}</span>
-                  </div>
-                  <div className="project-card__actions">
-                    <button className="sg-btn sg-btn--primary sg-btn--sm" onClick={() => setModal({ kind: 'render', instruction: i })}>
-                      Render
-                    </button>
-                    <button className="sg-btn sg-btn--outline sg-btn--sm" onClick={() => setModal({ kind: 'edit', instruction: i })}>
-                      Edit
-                    </button>
-                    <button className="sg-btn sg-btn--danger sg-btn--sm" onClick={() => handleDelete(i)}>
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          // Row-open opens the rich InstructionModal (versioned body + parameters);
+          // 'render' opens RenderModal. Both stay bespoke — DataTable drives the list only.
+          <DataTable
+            descriptor={instructionsDescriptor}
+            ctx={{ orgId, orgSlug: slug }}
+            scope={scope}
+            refreshKey={reloadKey}
+            onOpenRow={(i) => setModal({ kind: 'edit', instruction: i })}
+            onDeleteRow={handleDelete}
+            onAction={(action, i) => {
+              if (action === 'render') setModal({ kind: 'render', instruction: i });
+            }}
+          />
         )}
       </main>
 
@@ -490,12 +428,12 @@ export default function InstructionsPage() {
           onClose={() => setModal(null)}
           onSaved={() => {
             setModal(null);
-            fetchData();
+            reload();
           }}
         />
       )}
 
-      {!loading && instructions.length > 0 && (
+      {orgId && (
         <button className="fab" onClick={() => setModal({ kind: 'create' })} aria-label="New instruction" title="New instruction">
           <PlusIcon />
         </button>

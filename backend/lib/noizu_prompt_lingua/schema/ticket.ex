@@ -18,6 +18,10 @@ defmodule NoizuPromptLingua.Schema.Ticket do
     field :reporter, :string
     field :custom_fields, :map, default: %{}
 
+    # Human key (f8bc7fab): immutable, assigned on insert by the domain (NOT cast).
+    field :number, :integer
+    field :key, :string
+
     belongs_to :project, NoizuPromptLingua.Schema.Projects.Project
     belongs_to :queue, NoizuPromptLingua.Schema.TicketQueue
     belongs_to :parent, NoizuPromptLingua.Schema.Ticket
@@ -40,6 +44,12 @@ defmodule NoizuPromptLingua.Schema.Ticket do
     |> foreign_key_constraint(:parent_id)
     |> foreign_key_constraint(:stage_id)
     |> foreign_key_constraint(:iteration_id)
+    # Human-key uniqueness (f8bc7fab): the domain put_changes :number/:key; a 23505
+    # from any of the three partial indexes maps back to a changeset error so the
+    # key-gen txn rolls back cleanly instead of raising.
+    |> unique_constraint(:number, name: :idx_tickets_proj_number)
+    |> unique_constraint(:number, name: :idx_tickets_org_number)
+    |> unique_constraint(:key, name: :idx_tickets_org_key)
   end
 
   def update_changeset(ticket, attrs) do

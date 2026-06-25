@@ -1,56 +1,102 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { api } from "@/lib/api";
-import { useAuth } from "@/context/auth";
 import { useOrg, useOrgId } from "@/context/org";
 import { toast } from "sonner";
+import { DataTable } from "@/components/console/DataTable";
+import { membersDescriptor, type OrgMember } from "@/lib/console/descriptors/members";
 
-interface Member {
-  id: string;
-  user_id: string;
-  email: string;
-  user_name: string;
-  role: string;
-  joined_at: string;
+// Members table (epic 8920d294 / ticket 7bddfd70). The LIST renders via the console
+// DataTable primitive; the RBAC-gated row actions (assign-role @ admin, remove @ lead)
+// are diego's descriptor gates (members.ts) + the action UI below (ava's data-UI lane).
+//
+// effectiveRole: for the members of ONE org, the caller's effective role is uniform =
+// myRole (from the org list) — so this view does NOT need marcus's per-row echo
+// (16dc3df2); that echo is for lists where the caller's role VARIES per row (orgs).
+// The descriptor's canEdit/canDelete gate visibility off ctx.effectiveRole; the server
+// guard is the sole deny-closed boundary (gating here is advisory).
+
+const ASSIGNABLE_ROLES = ["viewer", "editor", "admin"];
+
+function RolePickerModal({
+  orgId,
+  member,
+  onClose,
+  onSaved,
+}: {
+  orgId: string;
+  member: OrgMember;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [role, setRole] = useState(member.role);
+  const [saving, setSaving] = useState(false);
+
+  async function save() {
+    setSaving(true);
+    try {
+      await api.updateMemberRole(orgId, member.id, role);
+      toast.success("Role updated");
+      onSaved();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update role");
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-card modal-card--sm" onClick={(e) => e.stopPropagation()}>
+        <h2 className="modal-title">Assign role</h2>
+        <p className="modal-body">
+          Set the role for <strong>{member.user_name || member.email}</strong>.
+        </p>
+        <div className="sg-field">
+          <label htmlFor="role-pick">Role</label>
+          <select id="role-pick" value={role} onChange={(e) => setRole(e.target.value)}>
+            {ASSIGNABLE_ROLES.map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="modal-actions">
+          <button type="button" className="sg-btn sg-btn--outline" onClick={onClose}>
+            Cancel
+          </button>
+          <button type="button" className="sg-btn sg-btn--black" onClick={save} disabled={saving || role === member.role}>
+            {saving ? "Saving…" : "Save"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
-const ROLES = ["viewer", "editor", "admin", "owner"];
-const ASSIGNABLE_ROLES = ROLES.filter((r) => r !== "owner");
-
 export default function MembersPage() {
-  const { orgId, loading: orgLoading } = useOrgId();
-  const { user } = useAuth();
+  const { orgId, slug, loading: orgLoading } = useOrgId();
   const { organizations } = useOrg();
-  const [members, setMembers] = useState<Member[]>([]);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("viewer");
   const [inviting, setInviting] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [roleTarget, setRoleTarget] = useState<OrgMember | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const reload = () => setReloadKey((k) => k + 1);
 
-  // The caller's role in this org gates all management actions. The backend
-  // enforces org_admin on every mutation; this just keeps the UI honest.
+  // The caller's effective role in this org (advisory gate for the invite + row actions).
   const myRole = organizations.find((o) => o.id === orgId)?.role;
   const isAdmin = myRole === "admin" || myRole === "owner";
-
-  useEffect(() => {
-    if (orgId) {
-      api.listMembers(orgId)
-        .then((res) => { setMembers(res.members); setLoading(false); })
-        .catch(() => setLoading(false));
-    } else if (!orgLoading) {
-      setLoading(false);
-    }
-  }, [orgId, orgLoading]);
 
   async function handleInvite(e: React.FormEvent) {
     e.preventDefault();
     if (!inviteEmail || !orgId) return;
     setInviting(true);
     try {
-      const res = await api.addMember(orgId, inviteEmail, inviteRole);
-      setMembers(res.members);
+      await api.addMember(orgId, inviteEmail, inviteRole);
       setInviteEmail("");
+      reload();
       toast.success("Member added");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to add member");
@@ -59,29 +105,16 @@ export default function MembersPage() {
     }
   }
 
-  async function handleRoleChange(memberId: string, newRole: string) {
-    if (!orgId) return;
+  async function handleRemove(member: OrgMember) {
+    if (!orgId || !confirm(`Remove ${member.user_name || member.email}?`)) return;
     try {
-      const res = await api.updateMemberRole(orgId, memberId, newRole);
-      setMembers(res.members);
-      toast.success("Role updated");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to update role");
-    }
-  }
-
-  async function handleRemove(memberId: string) {
-    if (!confirm("Remove this member?") || !orgId) return;
-    try {
-      await api.removeMember(orgId, memberId);
-      setMembers((prev) => prev.filter((m) => m.id !== memberId));
+      await api.removeMember(orgId, member.id);
       toast.success("Member removed");
+      reload();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to remove member");
     }
   }
-
-  if (loading) return <div className="content"><main><p className="sg-page-intro">Loading…</p></main></div>;
 
   return (
     <div className="content">
@@ -107,7 +140,11 @@ export default function MembersPage() {
             <div className="sg-field">
               <label htmlFor="invite-role">Role</label>
               <select id="invite-role" value={inviteRole} onChange={(e) => setInviteRole(e.target.value)}>
-                {ASSIGNABLE_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+                {ASSIGNABLE_ROLES.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
               </select>
             </div>
             <button type="submit" className="sg-btn sg-btn--black sg-btn--sm" disabled={inviting}>
@@ -116,63 +153,30 @@ export default function MembersPage() {
           </form>
         )}
 
-        <div className="admin-table-wrap">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>User</th>
-                <th>Email</th>
-                <th>Role</th>
-                {isAdmin && <th />}
-              </tr>
-            </thead>
-            <tbody>
-              {members.map((m) => {
-                const isOwner = m.role === "owner";
-                const isSelf = m.user_id === user?.id;
-                return (
-                  <tr key={m.id}>
-                    <td>{m.user_name || "—"}</td>
-                    <td>{m.email}</td>
-                    <td>
-                      {isAdmin && !isOwner ? (
-                        <select
-                          className="admin-role-select"
-                          value={m.role}
-                          onChange={(e) => handleRoleChange(m.id, e.target.value)}
-                        >
-                          {ASSIGNABLE_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
-                        </select>
-                      ) : (
-                        <span>{m.role}</span>
-                      )}
-                    </td>
-                    {isAdmin && (
-                      <td>
-                        {!isOwner && !isSelf && (
-                          <button
-                            className="sg-btn sg-btn--danger sg-btn--sm"
-                            onClick={() => handleRemove(m.id)}
-                          >
-                            Remove
-                          </button>
-                        )}
-                      </td>
-                    )}
-                  </tr>
-                );
-              })}
-              {members.length === 0 && (
-                <tr>
-                  <td colSpan={isAdmin ? 4 : 3} style={{ textAlign: "center", padding: 24 }}>
-                    No members yet.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        {!orgId ? (
+          <p className="sg-page-intro">{orgLoading ? "Loading…" : "Select an organization to view its members."}</p>
+        ) : (
+          <DataTable
+            descriptor={membersDescriptor}
+            ctx={{ orgId, orgSlug: slug, effectiveRole: myRole }}
+            refreshKey={reloadKey}
+            onEditRow={(m) => setRoleTarget(m)}
+            onDeleteRow={handleRemove}
+          />
+        )}
       </main>
+
+      {roleTarget && orgId && (
+        <RolePickerModal
+          orgId={orgId}
+          member={roleTarget}
+          onClose={() => setRoleTarget(null)}
+          onSaved={() => {
+            setRoleTarget(null);
+            reload();
+          }}
+        />
+      )}
     </div>
   );
 }

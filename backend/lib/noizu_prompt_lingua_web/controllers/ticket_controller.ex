@@ -65,7 +65,8 @@ defmodule NoizuPromptLinguaWeb.TicketController do
   # GET /api/v1/organizations/:org_id/tickets/:id
   def show(conn, %{"org_id" => org_id, "id" => id}) do
     with_org_ticket(conn, org_id, id, "viewer", fn ticket ->
-      links = Tickets.get_links(id)
+      # `id` may be a human key; links resolve off the ticket's UUID.
+      links = Tickets.get_links(ticket.id)
       json(conn, %{ticket: ticket_to_json(ticket), links: links_to_json(links)})
     end)
   end
@@ -89,7 +90,7 @@ defmodule NoizuPromptLinguaWeb.TicketController do
 
     with {:ok, resolved_org_id} <- NoizuPromptLingua.Organizations.resolve_org_id(org_id),
          {:ok, _} <- Authz.authorize(user_id, "organization", resolved_org_id, role),
-         ticket when not is_nil(ticket) <- Tickets.get(id),
+         ticket when not is_nil(ticket) <- fetch_ticket(resolved_org_id, id),
          true <- ticket.organization_id == resolved_org_id do
       fun.(ticket)
     else
@@ -99,9 +100,19 @@ defmodule NoizuPromptLinguaWeb.TicketController do
     end
   end
 
+  # :id may be a ticket UUID or a human key (NOZINF-023). Key resolution is org-scoped.
+  defp fetch_ticket(org_id, id_or_key) do
+    case Ecto.UUID.cast(id_or_key) do
+      {:ok, uuid} -> Tickets.get(uuid)
+      :error -> Tickets.get_by_key(org_id, id_or_key)
+    end
+  end
+
   defp ticket_to_json(t) do
     %{
       id: t.id,
+      key: t.key,
+      number: t.number,
       organization_id: t.organization_id,
       project_id: t.project_id,
       title: t.title,
