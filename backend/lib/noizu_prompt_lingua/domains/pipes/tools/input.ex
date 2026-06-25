@@ -27,6 +27,16 @@ defmodule NoizuPromptLingua.Domains.Pipes.Tools.Input do
       default: "all",
       description:
         "Addressing scope: 'all' (default — direct + group + broadcast union), 'direct' (only messages addressed to this agent), 'group' (only this agent's group traffic), or 'broadcast' (only untargeted messages). Use 'direct' to isolate DMs from group/broadcast noise."
+
+    field :wait, :boolean,
+      default: false,
+      description:
+        "Long-poll. When true, if no messages are newer than `cursor`, the call BLOCKS until a matching message arrives (returning it instantly) or `wait_ms` elapses, instead of returning empty immediately — eliminating the poll→sleep→poll loop. Default false preserves the immediate-return behavior for existing callers."
+
+    field :wait_ms, :integer,
+      default: 180_000,
+      description:
+        "Max time to hold a long-poll, in ms (only applies when `wait` is true). Default 180000 (3 min); capped at 290000 to stay under the transport's request timeout. On timeout, returns empty with the cursor unchanged."
   end
 
   alias NoizuPromptLingua.Domains.Pipes
@@ -49,7 +59,12 @@ defmodule NoizuPromptLingua.Domains.Pipes.Tools.Input do
         scope: Args.get(args, :scope)
       ]
 
-      entries = Pipes.pull(org_id, Args.get(args, :agent), opts)
+      entries =
+        if Args.get(args, :wait) == true do
+          Pipes.pull_wait(org_id, Args.get(args, :agent), Keyword.put(opts, :wait_ms, Args.get(args, :wait_ms) || 180_000))
+        else
+          Pipes.pull(org_id, Args.get(args, :agent), opts)
+        end
 
       messages =
         Enum.map(entries, fn e ->

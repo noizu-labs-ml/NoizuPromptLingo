@@ -74,6 +74,26 @@ defmodule NoizuPromptLinguaWeb.ArtifactController do
     end
   end
 
+  # GET /api/v1/organizations/:org_id/artifacts/:artifact_id/revisions
+  #
+  # Revision/lineage history for the artifact viewer (newest first). Metadata only —
+  # `content` is NOT included here (the viewer fetches a chosen revision's body via
+  # `show` with `?revision_id=`); keeps the history list cheap on large artifacts.
+  def index_revisions(conn, %{"org_id" => org_id, "artifact_id" => artifact_id}) do
+    user_id = get_user_id(conn)
+
+    with {:ok, resolved_org_id} <- NoizuPromptLingua.Organizations.resolve_org_id(org_id),
+         {:ok, _} <- Authz.authorize(user_id, "organization", resolved_org_id, "viewer"),
+         {artifact, _revision} when not is_nil(artifact) <- Artifacts.get(artifact_id) || :missing,
+         true <- artifact.organization_id == resolved_org_id do
+      json(conn, %{revisions: Artifacts.list_revisions(artifact.id)})
+    else
+      :missing -> conn |> put_status(:not_found) |> json(%{error: "Artifact not found"})
+      false -> conn |> put_status(:not_found) |> json(%{error: "Artifact not found"})
+      err -> handle_error(conn, err)
+    end
+  end
+
   defp artifact_to_json(artifact) do
     %{
       id: artifact.id,

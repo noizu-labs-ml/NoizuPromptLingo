@@ -353,6 +353,7 @@ defmodule NoizuPromptLinguaWeb.Router do
     post "/chat/rooms/:room_id/messages/:message_id/reactions", ChatController, :add_message_reaction
     delete "/chat/rooms/:room_id/messages/:message_id/reactions", ChatController, :remove_message_reaction
     resources "/artifacts", ArtifactController, only: [:index, :create, :show]
+    get "/artifacts/:artifact_id/revisions", ArtifactController, :index_revisions
     resources "/reviews", ReviewController, only: [:index, :create, :show]
     resources "/tickets", TicketController, only: [:index, :create, :show, :update]
 

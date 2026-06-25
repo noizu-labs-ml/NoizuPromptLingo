@@ -56,6 +56,10 @@ function TicketModal({
         title: title.trim(),
         description: description.trim(),
         ticket_type: ticketType,
+        // Send an explicit default status: the BE controller passes status through
+        // verbatim, so omitting it sends NULL and overrides the schema default
+        // ("open") -> NOT NULL violation -> 500 (ticket e995503e).
+        status: 'open',
         priority: priority || null,
         assignee: assignee.trim() || undefined,
         project_id: projectId || null,

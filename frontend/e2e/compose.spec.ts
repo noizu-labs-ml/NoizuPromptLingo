@@ -44,7 +44,7 @@ test.describe("compose", () => {
     await input.fill("line one");
     await input.press("Shift+Enter");
     await input.type("line two");
-    await expect(input).toHaveValue(/line one\n.*line two/s); // still in the box
+    await expect(input).toHaveValue(/line one\n[\s\S]*line two/); // still in the box
   });
 
   test("E1d: empty / whitespace-only content cannot be sent", async ({ page }) => {
