@@ -95,15 +95,12 @@ defmodule NoizuPromptLingua.Domains.Tickets do
     %{outgoing: outgoing, incoming: incoming}
   end
 
+  # Scalar OR list value per field (3c2d6bbe multi-select). A list filters with `in`
+  # (= ANY, OR-within-facet); a scalar keeps the original `==`. nil/[] are no-ops, so a
+  # bracket array param (?status[]=a&status[]=b -> ["a","b"]) and a scalar (?status=a)
+  # both work through the same `field(t, ^field)` path.
   defp maybe_filter(query, _field, nil), do: query
-  defp maybe_filter(query, :organization_id, val), do: where(query, [t], t.organization_id == ^val)
-  defp maybe_filter(query, :status, val), do: where(query, [t], t.status == ^val)
-  defp maybe_filter(query, :ticket_type, val), do: where(query, [t], t.ticket_type == ^val)
-  defp maybe_filter(query, :priority, val), do: where(query, [t], t.priority == ^val)
-  defp maybe_filter(query, :assignee, val), do: where(query, [t], t.assignee == ^val)
-  defp maybe_filter(query, :queue_id, val), do: where(query, [t], t.queue_id == ^val)
-  defp maybe_filter(query, :parent_id, val), do: where(query, [t], t.parent_id == ^val)
-  defp maybe_filter(query, :project_id, val), do: where(query, [t], t.project_id == ^val)
-  defp maybe_filter(query, :stage_id, val), do: where(query, [t], t.stage_id == ^val)
-  defp maybe_filter(query, :iteration_id, val), do: where(query, [t], t.iteration_id == ^val)
+  defp maybe_filter(query, _field, []), do: query
+  defp maybe_filter(query, field, vals) when is_list(vals), do: where(query, [t], field(t, ^field) in ^vals)
+  defp maybe_filter(query, field, val), do: where(query, [t], field(t, ^field) == ^val)
 end
