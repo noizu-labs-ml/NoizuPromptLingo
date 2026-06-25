@@ -7,19 +7,7 @@ import { api, type Project, TICKET_PRIORITIES } from '@/lib/api';
 import { useOrg, useOrgId } from '@/context/org';
 import { DataTable } from '@/components/console/DataTable';
 import { ticketsDescriptor } from '@/lib/console/descriptors/tickets';
-
-const TICKET_TYPES = ['task', 'bug', 'user_story', 'epic', 'prd', 'documentation', 'research', 'subtask'];
-
-// Provisional global status set for the list facet. NOTE: ticket status is really
-// per-type (type-def status_workflow); a true resolver is a follow-on (flagged to diego).
-const STATUS_OPTIONS = [
-  { value: 'open', label: 'Open' },
-  { value: 'in_progress', label: 'In progress' },
-  { value: 'blocked', label: 'Blocked' },
-  { value: 'in_review', label: 'In review' },
-  { value: 'done', label: 'Done' },
-  { value: 'closed', label: 'Closed' },
-];
+import { TICKET_TYPES, TICKET_TYPE_OPTIONS, TICKET_STATUS_OPTIONS } from '@/lib/console/options';
 
 function TicketModal({
   orgId,
@@ -184,8 +172,8 @@ export default function TicketsPage() {
   const facetOptions = useMemo(
     () => ({
       projectId: projects.map((p) => ({ value: p.id, label: p.name })),
-      ticketType: TICKET_TYPES.map((t) => ({ value: t, label: t })),
-      status: STATUS_OPTIONS,
+      ticketType: TICKET_TYPE_OPTIONS,
+      status: TICKET_STATUS_OPTIONS,
     }),
     [projects],
   );
@@ -236,6 +224,7 @@ export default function TicketsPage() {
             facetOptions={facetOptions}
             refreshKey={reloadKey}
             onOpenRow={(t) => router.push(`/app/${orgSlug}/tickets/${t.id}`)}
+            onEditRow={(t) => router.push(`/app/${orgSlug}/tickets/${t.id}?edit=1`)}
           />
         )}
       </main>

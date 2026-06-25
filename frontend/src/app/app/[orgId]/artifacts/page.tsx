@@ -1,23 +1,20 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { api, type Artifact, type Project, type ArtifactKind } from '@/lib/api';
 import { useOrg, useOrgId } from '@/context/org';
+import { DataTable } from '@/components/console/DataTable';
+import { artifactsDescriptor } from '@/lib/console/descriptors/artifacts';
+
+// Artifacts viewer (ticket c0f97e6b). List renders through the config-driven DataTable
+// (artifactsDescriptor); detail/edit live on the /artifacts/:id route via
+// ConsoleDetailPage (safe-markdown render + edit=append-revision). Create keeps the
+// richer modal here (kind/title/content/mime/project) since append-revision is content-only.
 
 const KINDS: ArtifactKind[] = ['code', 'document', 'image', 'wiki', 'config', 'binary'];
-
-function timeAgo(dt?: string) {
-  if (!dt) return '';
-  const diff = Date.now() - new Date(dt).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
-}
 
 function ArtifactModal({
   orgId,
@@ -138,61 +135,42 @@ function ArtifactModal({
 }
 
 export default function ArtifactsPage() {
-  const { orgId, loading: orgLoading } = useOrgId();
-  const { currentProject, switchProject } = useOrg();
-  const [artifacts, setArtifacts] = useState<Artifact[]>([]);
+  const router = useRouter();
+  const { orgId, slug, loading: orgLoading } = useOrgId();
+  const { currentProject } = useOrg();
   const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
-  const scopeProjectId = currentProject?.id;
-
-  const fetchData = useCallback(async () => {
-    if (!orgId) return;
-    try {
-      const [artifactData, projectData] = await Promise.all([
-        api.listArtifacts(orgId, scopeProjectId ? { projectId: scopeProjectId } : undefined),
-        api.listProjects(orgId),
-      ]);
-      setArtifacts(artifactData.artifacts ?? []);
-      setProjects(projectData.projects ?? []);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to load artifacts');
-    } finally {
-      setLoading(false);
-    }
-  }, [orgId, scopeProjectId]);
-
+  // Projects power the dynamic project facet + the create modal's project picker.
   useEffect(() => {
-    if (orgId) {
-      fetchData();
-    } else if (!orgLoading) {
-      setLoading(false);
-    }
-  }, [fetchData, orgId, orgLoading]);
+    if (!orgId) return;
+    api.listProjects(orgId).then((r) => setProjects(r.projects ?? [])).catch(() => {});
+  }, [orgId]);
 
-  const projectName = (id?: string | null) =>
-    id ? projects.find((p) => p.id === id)?.name ?? '—' : null;
+  const facetOptions = useMemo(
+    () => ({ projectId: projects.map((p) => ({ value: p.id, label: p.name })) }),
+    [projects],
+  );
+
+  if (orgLoading || !orgId) {
+    return (
+      <div className="content">
+        <main>
+          <p className="sg-page-intro">Loading…</p>
+        </main>
+      </div>
+    );
+  }
+
+  const ctx = { orgId, orgSlug: slug };
+  const detailHref = (a: Artifact) => `/app/${slug}/artifacts/${a.id}`;
 
   return (
     <div className="content">
       <main>
         <div className="projects-header">
           <h1 className="sg-page-title">Artifacts</h1>
-          {currentProject && (
-            <span className="scope-chip">
-              Project: <strong>{currentProject.name}</strong>
-              <button
-                type="button"
-                className="scope-chip__clear"
-                onClick={() => switchProject(null)}
-                aria-label="Clear project scope"
-                title="Show all projects"
-              >
-                ×
-              </button>
-            </span>
-          )}
         </div>
         <p className="sg-page-intro">
           {currentProject
@@ -200,66 +178,32 @@ export default function ArtifactsPage() {
             : 'Typed, versioned content objects for this organization.'}
         </p>
 
-        {loading ? (
-          <p className="sg-page-intro">Loading…</p>
-        ) : artifacts.length === 0 ? (
-          <div className="projects-empty">
-            <p className="projects-empty__text">No artifacts yet. Create one to get started.</p>
-            <button className="sg-btn sg-btn--black" onClick={() => setShowModal(true)}>
-              Create Artifact
-            </button>
-          </div>
-        ) : (
-          <div className="projects-grid">
-            {artifacts.map((a) => (
-              <div key={a.id} className="project-card">
-                <div className="project-card__header">
-                  {projectName(a.project_id) && (
-                    <div className="project-card__org">{projectName(a.project_id)}</div>
-                  )}
-                  <div className="project-card__name">{a.title}</div>
-                </div>
-                <div className="project-card__body">
-                  <dl className="project-card__fields">
-                    <div className="project-card__field">
-                      <dt>Kind:</dt>
-                      <dd>{a.kind}</dd>
-                    </div>
-                    {a.mime_type && (
-                      <div className="project-card__field">
-                        <dt>Type:</dt>
-                        <dd className="font-mono">{a.mime_type}</dd>
-                      </div>
-                    )}
-                  </dl>
-                  <div className="project-card__meta">
-                    <span className="project-card__status">{a.kind}</span>
-                    <span className="project-card__time">{timeAgo(a.inserted_at)}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </main>
-
-      {showModal && orgId && (
-        <ArtifactModal
-          orgId={orgId}
-          projects={projects}
-          defaultProjectId={scopeProjectId}
-          onClose={() => setShowModal(false)}
-          onSaved={() => {
-            setShowModal(false);
-            fetchData();
-          }}
+        <DataTable
+          descriptor={artifactsDescriptor}
+          ctx={ctx}
+          refreshKey={reloadKey}
+          scope={currentProject?.id ? { projectId: currentProject.id } : undefined}
+          facetOptions={facetOptions}
+          onOpenRow={(a) => router.push(detailHref(a))}
+          onEditRow={(a) => router.push(`${detailHref(a)}?edit=1`)}
         />
-      )}
 
-      {!loading && artifacts.length > 0 && (
         <button className="fab" onClick={() => setShowModal(true)} aria-label="New artifact" title="New artifact">
           <PlusIcon />
         </button>
+      </main>
+
+      {showModal && (
+        <ArtifactModal
+          orgId={orgId}
+          projects={projects}
+          defaultProjectId={currentProject?.id}
+          onClose={() => setShowModal(false)}
+          onSaved={() => {
+            setShowModal(false);
+            setReloadKey((k) => k + 1);
+          }}
+        />
       )}
     </div>
   );

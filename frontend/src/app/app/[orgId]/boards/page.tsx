@@ -1,20 +1,17 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { PlusIcon } from '@heroicons/react/24/outline';
-import { api, type Board, type Project, METHODOLOGIES, type Methodology } from '@/lib/api';
+import { api, type Project, METHODOLOGIES, type Methodology } from '@/lib/api';
 import { useOrg, useOrgId } from '@/context/org';
+import { DataTable } from '@/components/console/DataTable';
+import { boardsDescriptor } from '@/lib/console/descriptors/boards';
 
 function toSlug(s: string) {
   return s.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/^-+|-+$/g, '');
 }
-
-// A board's *type* is its methodology (Kanban/Scrum/…). Its *scope* (org vs a
-// specific project) is a separate axis — keep them distinct in the UI so a board
-// is never mislabeled as a "project".
-const titleCase = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 
 const METHODOLOGY_BLURB: Record<string, string> = {
   kanban: 'Continuous flow across columns.',
@@ -136,30 +133,13 @@ function BoardModal({
 export default function BoardsPage() {
   const { orgId, slug, loading: orgLoading } = useOrgId();
   const { currentProject, switchProject, projects } = useOrg();
-  const projectName = (id?: string | null) => projects.find((p) => p.id === id)?.name;
   const router = useRouter();
-  const [boards, setBoards] = useState<Board[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  // DataTable owns its fetch; bump to refetch in place after a create.
+  const [reloadKey, setReloadKey] = useState(0);
 
-  const projectId = currentProject?.id;
-
-  const fetchData = useCallback(async () => {
-    if (!orgId) return;
-    try {
-      const data = await api.listBoards(orgId, projectId ? { projectId } : undefined);
-      setBoards(data.boards ?? []);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to load boards');
-    } finally {
-      setLoading(false);
-    }
-  }, [orgId, projectId]);
-
-  useEffect(() => {
-    if (orgId) fetchData();
-    else if (!orgLoading) setLoading(false);
-  }, [fetchData, orgId, orgLoading]);
+  // Board cards are scoped to the active project (or org + global when none).
+  const scope = currentProject ? { projectId: currentProject.id } : undefined;
 
   return (
     <div className="content">
@@ -177,50 +157,16 @@ export default function BoardsPage() {
         </div>
         <p className="sg-page-intro">Kanban, Scrum, Waterfall, and Spiral boards for planning and tracking tickets.</p>
 
-        {loading ? (
-          <p className="sg-page-intro">Loading…</p>
-        ) : boards.length === 0 ? (
-          <div className="projects-empty">
-            <p className="projects-empty__text">No boards yet. Create one to start planning.</p>
-            <button className="sg-btn sg-btn--black" onClick={() => setShowModal(true)}>
-              New Board
-            </button>
-          </div>
+        {!orgId ? (
+          <p className="sg-page-intro">{orgLoading ? 'Loading…' : 'Select an organization to view its boards.'}</p>
         ) : (
-          <div className="projects-grid">
-            {boards.map((b) => (
-              <div key={b.id} className="project-card" style={{ cursor: 'pointer' }} onClick={() => router.push(`/app/${slug}/boards/${b.id}`)}>
-                <div className="project-card__header">
-                  <div className="project-card__org">
-                    {titleCase(String(b.methodology))} board
-                  </div>
-                  <div className="project-card__name">{b.name}</div>
-                </div>
-                <div className="project-card__body">
-                  <dl className="project-card__fields">
-                    <div className="project-card__field">
-                      <dt>Scope:</dt>
-                      <dd>{b.scope === 'project' ? `Project${projectName(b.project_id) ? ` · ${projectName(b.project_id)}` : ''}` : 'Org-level'}</dd>
-                    </div>
-                    <div className="project-card__field">
-                      <dt>Slug:</dt>
-                      <dd className="font-mono">{b.slug}</dd>
-                    </div>
-                    {b.description && (
-                      <div className="project-card__field">
-                        <dt>About:</dt>
-                        <dd>{b.description}</dd>
-                      </div>
-                    )}
-                  </dl>
-                  <div className="project-card__meta">
-                    <span className="project-card__status">{b.methodology}</span>
-                    <span className="project-card__time">Open board →</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <DataTable
+            descriptor={boardsDescriptor}
+            ctx={{ orgId, orgSlug: slug }}
+            scope={scope}
+            refreshKey={reloadKey}
+            onOpenRow={(b) => router.push(`/app/${slug}/boards/${b.id}`)}
+          />
         )}
       </main>
 
@@ -232,12 +178,12 @@ export default function BoardsPage() {
           onClose={() => setShowModal(false)}
           onSaved={() => {
             setShowModal(false);
-            fetchData();
+            setReloadKey((k) => k + 1);
           }}
         />
       )}
 
-      {!loading && boards.length > 0 && (
+      {orgId && (
         <button className="fab" onClick={() => setShowModal(true)} aria-label="New board" title="New board">
           <PlusIcon />
         </button>

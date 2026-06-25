@@ -1545,3 +1545,6 @@ button.chat-room-header__slug:focus-visible { outline: 2px solid var(--field-foc
 .console-field__hint { margin: 0; font-size: var(--font-size-xs, 0.75rem); color: var(--text-secondary, #888); }
 .console-field__err { margin: 0; font-size: var(--font-size-xs, 0.75rem); color: var(--error, #c0392b); }
 .console-form__actions { display: flex; justify-content: flex-end; gap: var(--space-3, 0.75rem); }
+
+/* Artifacts viewer (c0f97e6b): code/config content as a scrollable monospace block. */
+.console-artifact__code { margin: 0; padding: var(--space-3, 0.75rem); border: 1px solid var(--border); border-radius: 8px; background: var(--surface-alt, #f6f6f8); font-family: var(--font-mono); font-size: var(--font-size-sm, 0.875rem); white-space: pre-wrap; word-break: break-word; overflow-x: auto; }

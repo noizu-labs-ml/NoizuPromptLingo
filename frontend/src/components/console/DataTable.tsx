@@ -318,6 +318,8 @@ export function DataTable<T, TInput>({
                       onEditRow={onEditRow}
                       onDeleteRow={onDeleteRow}
                       onAction={onAction}
+                      canEdit={actions?.canEdit}
+                      canDelete={actions?.canDelete}
                       label={labels.singular}
                     />
                   </td>
@@ -363,6 +365,8 @@ function RowMenu<T, TInput>({
   onEditRow,
   onDeleteRow,
   onAction,
+  canEdit,
+  canDelete,
   label,
 }: {
   row: T;
@@ -373,6 +377,8 @@ function RowMenu<T, TInput>({
   onEditRow?: (row: T) => void;
   onDeleteRow?: (row: T) => void;
   onAction?: (key: string, row: T) => void;
+  canEdit?: (row: T, ctx: ConsoleContext) => boolean;
+  canDelete?: (row: T, ctx: ConsoleContext) => boolean;
   label: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -387,11 +393,12 @@ function RowMenu<T, TInput>({
   const list: (BuiltinRowAction | (string & {}) | ActionDef<T>)[] = actions ?? ['view', 'edit', 'delete'];
   for (const a of list) {
     if (a === 'view' && onOpenRow) items.push({ key: 'view', label: 'View', run: () => onOpenRow(row) });
-    else if (a === 'edit' && api.update && onEditRow) items.push({ key: 'edit', label: 'Edit', run: () => onEditRow(row) });
-    else if (a === 'delete' && api.remove && onDeleteRow)
+    else if (a === 'edit' && api.update && onEditRow && (canEdit?.(row, ctx) ?? true))
+      items.push({ key: 'edit', label: 'Edit', run: () => onEditRow(row) });
+    else if (a === 'delete' && api.remove && onDeleteRow && (canDelete?.(row, ctx) ?? true))
       items.push({ key: 'delete', label: 'Delete', run: () => onDeleteRow(row), danger: true });
     else if (typeof a === 'object') {
-      if (a.visibleWhen && !a.visibleWhen(ctx)) continue; // RBAC visibility gate
+      if (a.visibleWhen && !a.visibleWhen(row, ctx)) continue; // RBAC per-row visibility gate
       items.push({ key: a.key, label: a.label, run: () => a.run(row, ctx), danger: a.danger });
     } else if (typeof a === 'string' && onAction) {
       // Bare custom key (e.g. 'archive') — render only when the page supplies a handler.

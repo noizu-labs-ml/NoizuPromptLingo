@@ -1657,6 +1657,14 @@ export const api = {
       body: JSON.stringify({ artifact }),
     });
   },
+  // Edit = append a new revision (aniket c0f97e6b/693842f9): history-preserving, not a
+  // destructive PUT. Returns the new current revision as the artifact.
+  addArtifactRevision(orgId: string, id: string, body: { content: string; note?: string }) {
+    return request<{ artifact: Artifact }>(`/api/v1/organizations/${orgId}/artifacts/${id}/revisions`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
 
   // ── Reviews (org-scoped, optional project) ──
   listReviews(orgId: string, opts?: { projectId?: string; artifactId?: string; status?: string }) {
@@ -1695,12 +1703,14 @@ export const api = {
       priority?: string;
       assignee?: string;
       queueId?: string;
+      parentId?: string;
       stageId?: string;
       iterationId?: string;
     },
   ) {
     const qs = new URLSearchParams();
     if (opts?.projectId) qs.set("project_id", opts.projectId);
+    if (opts?.parentId) qs.set("parent_id", opts.parentId);
     if (opts?.status) qs.set("status", opts.status);
     if (opts?.ticketType) qs.set("ticket_type", opts.ticketType);
     if (opts?.priority) qs.set("priority", opts.priority);

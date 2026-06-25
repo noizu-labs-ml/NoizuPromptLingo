@@ -101,7 +101,13 @@ export interface RelatedCollection {
   title: string;
   /** Domain key of the embedded read-only mini-DataTable. */
   domain: string;
-  /** Build the scope/query for the related list from the parent row. */
+  /**
+   * Build the scope/query for the related list from the parent row. CONTRACT: every
+   * key returned here MUST be an opt the TARGET descriptor's `api.list` actually
+   * consumes — api.list ignores unknown keys silently, so a wrong key (e.g.
+   * `{parentId}` when api.list only reads `parent_id`) yields ALL rows, not the
+   * scoped subset. Map the key to a real api.list filter before relying on it.
+   */
   query: (row: Record<string, unknown>) => Record<string, unknown>;
 }
 
@@ -140,8 +146,13 @@ export interface ActionDef<T> {
   key: string;
   label: string;
   run: (row: T, ctx: ConsoleContext) => void | Promise<void>;
-  /** Advisory visibility gate (RBAC). Omit = always visible. */
-  visibleWhen?: (ctx: ConsoleContext) => boolean;
+  /**
+   * Advisory PER-ROW visibility gate (RBAC). Omit = always visible. Receives the
+   * ROW because in a list each row is a distinct resource with its own effective
+   * role (an org-list = N orgs, N roles) — gate on `row`, not just `ctx`. Per-row
+   * role data comes from the list serializer echoing effective_role per row.
+   */
+  visibleWhen?: (row: T, ctx: ConsoleContext) => boolean;
   /** Destructive styling + confirm (e.g. delete/moderate). */
   danger?: boolean;
 }
@@ -158,6 +169,14 @@ export interface DescriptorActions<T> {
   rowActions?: (BuiltinRowAction | (string & {}) | ActionDef<T>)[];
   /** Bulk-select actions; omit/empty to disable bulk select (default off). */
   bulkActions?: (string | ActionDef<T>)[];
+  /**
+   * PER-ROW gates for the BUILT-IN edit/delete actions (orgs etc., where the viewer's
+   * role varies per row). Omit = visible. INVARIANT: gate affordance VISIBILITY /
+   * keyboard-reachability ONLY — never enforcement. The server guard stays the sole
+   * deny-closed boundary; a forged client that un-hides edit still 403s.
+   */
+  canEdit?: (row: T, ctx: ConsoleContext) => boolean;
+  canDelete?: (row: T, ctx: ConsoleContext) => boolean;
 }
 
 /**

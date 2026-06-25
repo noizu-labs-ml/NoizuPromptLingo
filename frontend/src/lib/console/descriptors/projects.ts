@@ -75,10 +75,12 @@ export const projectsDescriptor: ConsoleDescriptor<Project, ProjectInput> = {
       },
     ],
   },
-  // Projects open by primary-click (select active scope, page-wired) and soft-delete
-  // via 'archive' (a named custom action -> DataTable onAction; not hard-delete). No
-  // 'view'/'delete' builtins: no detail route yet, and archive is the delete-equivalent.
-  actions: { rowActions: ['edit', 'archive'] },
+  // EARNED (B) EXCEPTION (priya seq523): projects' primary-click stays select-active-
+  // scope (the app's highest-frequency nav) — NOT detail. So the detail view is a
+  // named row action ('details' -> DataTable onAction -> /projects/:id). 'edit' opens
+  // the detail-edit route (EditForm). 'archive' is the soft-delete (no hard 'delete').
+  // All 13 other domains use primary-click -> detail; projects is the one exception.
+  actions: { rowActions: ['details', 'edit', 'archive'] },
   api: {
     list: (orgId) => api.listProjects(orgId).then((r) => r.projects),
     get: (orgId, id) => api.getProject(orgId, id).then((r) => r.project),

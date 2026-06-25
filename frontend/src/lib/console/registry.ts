@@ -11,6 +11,7 @@ import {
   projectsDescriptor,
   organizationsDescriptor,
   boardsDescriptor,
+  artifactsDescriptor,
 } from './descriptors';
 
 export type AnyDescriptor = ConsoleDescriptor<any, any>;
@@ -22,6 +23,7 @@ export const DESCRIPTORS: Record<string, AnyDescriptor> = {
   projects: projectsDescriptor,
   organizations: organizationsDescriptor,
   boards: boardsDescriptor,
+  artifacts: artifactsDescriptor,
 };
 
 /** Look up a descriptor by domain key; undefined if no descriptor is registered yet. */

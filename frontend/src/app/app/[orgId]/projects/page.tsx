@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { api, type Project } from '@/lib/api';
@@ -158,11 +159,12 @@ function ArchiveConfirm({
   );
 }
 
-type ModalState = { type: 'create' } | { type: 'edit'; project: Project } | null;
+type ModalState = { type: 'create' } | null;
 
 export default function ProjectsPage() {
   const { orgId, slug, loading: orgLoading } = useOrgId();
   const { currentProject, switchProject, switchOrg, refreshProjects } = useOrg();
+  const router = useRouter();
   const [modal, setModal] = useState<ModalState>(null);
   const [archiveTarget, setArchiveTarget] = useState<Project | null>(null);
   // DataTable owns its fetch; bump this to force a refetch after a mutation.
@@ -214,9 +216,10 @@ export default function ProjectsPage() {
             refreshKey={reloadKey}
             rowClassName={(p) => (currentProject?.id === p.id ? 'is-current-scope' : undefined)}
             onOpenRow={selectProject}
-            onEditRow={(p) => setModal({ type: 'edit', project: p })}
+            onEditRow={(p) => router.push(`/app/${slug}/projects/${p.id}?edit=1`)}
             onAction={(action, p) => {
-              if (action === 'archive') setArchiveTarget(p);
+              if (action === 'details') router.push(`/app/${slug}/projects/${p.id}`);
+              else if (action === 'archive') setArchiveTarget(p);
             }}
           />
         )}
@@ -224,9 +227,6 @@ export default function ProjectsPage() {
 
       {modal?.type === 'create' && orgId && (
         <ProjectModal orgId={orgId} onClose={() => setModal(null)} onSaved={handleSaved} />
-      )}
-      {modal?.type === 'edit' && orgId && (
-        <ProjectModal orgId={orgId} project={modal.project} onClose={() => setModal(null)} onSaved={handleSaved} />
       )}
       {archiveTarget && (
         <ArchiveConfirm
