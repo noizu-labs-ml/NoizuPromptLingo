@@ -86,7 +86,14 @@ defmodule NoizuPromptLinguaWeb.AssetController do
       case Assets.generate(id, opts) do
         {:ok, output} -> conn |> put_status(:created) |> json(%{output: output_json(output)})
         {:error, :not_found} -> not_found(conn)
-        {:error, reason} -> conn |> put_status(:unprocessable_entity) |> json(%{error: inspect(reason)})
+
+        {:error, :generation_unavailable} ->
+          conn
+          |> put_status(:service_unavailable)
+          |> json(%{error: "Asset generation is not available yet (no LLM/media provider configured). Pass content or llm_generate:false for a placeholder, or configure a provider + API key."})
+
+        {:error, reason} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{error: inspect(reason)})
       end
     end)
   end

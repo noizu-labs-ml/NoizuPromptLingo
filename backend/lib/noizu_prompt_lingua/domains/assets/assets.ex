@@ -10,6 +10,7 @@ defmodule NoizuPromptLingua.Domains.Assets do
   through a content generator before inserting the artifact.
   """
   import Ecto.Query, except: [update: 2]
+  require Logger
   alias NoizuPromptLingua.Repo
   alias NoizuPromptLingua.Schema.{AssetEntry, AssetOutput, AssetEntryHistory}
   alias NoizuPromptLingua.Domains.Artifacts
@@ -118,54 +119,73 @@ defmodule NoizuPromptLingua.Domains.Assets do
         {:error, :not_found}
 
       entry ->
-        content = opts[:content] || generate_content(entry, opts)
-        mime = opts[:mime_type] || type_to_mime(entry.asset_type)
+        with {:ok, content} <- resolve_content(entry, opts) do
+          mime = opts[:mime_type] || type_to_mime(entry.asset_type)
+          persist_generation(entry, entry_id, content, mime, opts)
+        end
+    end
+  end
 
-        Repo.transaction(fn ->
-          {:ok, artifact} =
-            Artifacts.create(%{
-              organization_id: entry.organization_id,
-              project_id: entry.project_id,
-              kind: type_to_artifact_kind(entry.asset_type),
-              title: "#{entry.title} (generated)",
-              content: content,
-              mime_type: mime
-            })
+  # Persist the generated artifact + output in one transaction. No hard {:ok,_}=
+  # matches: a changeset/insert error rolls the txn back to a clean {:error, _}
+  # instead of raising a MatchError -> 500 (ticket 2989d130).
+  defp persist_generation(entry, entry_id, content, mime, opts) do
+    Repo.transaction(fn ->
+      with {:ok, artifact} <-
+             Artifacts.create(%{
+               organization_id: entry.organization_id,
+               project_id: entry.project_id,
+               kind: type_to_artifact_kind(entry.asset_type),
+               title: "#{entry.title} (generated)",
+               content: content,
+               mime_type: mime
+             }),
+           next_variant = next_variant_number(entry_id),
+           {:ok, output} <-
+             %AssetOutput{}
+             |> AssetOutput.changeset(%{
+               entry_id: entry_id,
+               artifact_id: artifact.id,
+               provider: opts[:provider],
+               model: opts[:model],
+               variant_number: next_variant
+             })
+             |> Repo.insert() do
+        entry |> AssetEntry.changeset(%{status: "generating"}) |> Repo.update()
+        log_history(entry_id, "generated", opts[:actor], %{output_id: output.id, variant: next_variant})
+        output
+      else
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
+  end
 
-          next_variant = next_variant_number(entry_id)
-
-          {:ok, output} =
-            %AssetOutput{}
-            |> AssetOutput.changeset(%{
-              entry_id: entry_id,
-              artifact_id: artifact.id,
-              provider: opts[:provider],
-              model: opts[:model],
-              variant_number: next_variant
-            })
-            |> Repo.insert()
-
-          entry |> AssetEntry.changeset(%{status: "generating"}) |> Repo.update()
-          log_history(entry_id, "generated", opts[:actor], %{output_id: output.id, variant: next_variant})
-
-          output
-        end)
+  # Resolve the content to materialize: an explicit override, the prompt itself
+  # (explicit placeholder via llm_generate: false), or an LLM generation. Returns
+  # {:ok, content} | {:error, :generation_unavailable}.
+  defp resolve_content(entry, opts) do
+    cond do
+      is_binary(opts[:content]) -> {:ok, opts[:content]}
+      opts[:llm_generate] == false -> {:ok, entry.prompt_yaml}
+      true -> generate_content(entry, opts)
     end
   end
 
   # Generate content from the prompt YAML via the LLM-backed ContentGenerator
   # (loads format-specific FIM references from priv/skills/content-generator).
-  # Falls back to materializing the prompt itself if generation is disabled or
-  # the call fails. Pass `llm_generate: false` for a pure placeholder.
+  # A failed/raising generation (no provider key, network error, bad response)
+  # surfaces as {:error, :generation_unavailable} — a clean 503/422 upstream,
+  # never a 500 and never a silent prompt-as-content artifact. For a deliberate
+  # placeholder use llm_generate: false (handled in resolve_content/2).
   defp generate_content(entry, opts) do
-    if opts[:llm_generate] == false do
-      entry.prompt_yaml
-    else
-      case NoizuPromptLingua.Domains.Assets.ContentGenerator.generate(entry.prompt_yaml, opts) do
-        {:ok, generated} -> generated
-        {:error, _reason} -> entry.prompt_yaml
-      end
+    case NoizuPromptLingua.Domains.Assets.ContentGenerator.generate(entry.prompt_yaml, opts) do
+      {:ok, generated} -> {:ok, generated}
+      {:error, _reason} -> {:error, :generation_unavailable}
     end
+  rescue
+    e ->
+      Logger.warning("asset generation failed: #{Exception.message(e)}")
+      {:error, :generation_unavailable}
   end
 
   def list_outputs(entry_id) do

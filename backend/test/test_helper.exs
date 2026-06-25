@@ -12,6 +12,10 @@ NoizuPromptLingua.ChatTestSchema.ensure!()
 # DB so the boards/queues suite is self-contained (the shared instance lagged 038). Idempotent.
 NoizuPromptLingua.BoardTestSchema.ensure!()
 
+# Ensure the 040-assets tables (asset_entries / asset_outputs / asset_entry_history) exist on the
+# test DB so the assets suite is self-contained (the shared instance lagged 040). Idempotent.
+NoizuPromptLingua.AssetTestSchema.ensure!()
+
 # Memory tests are Weaviate-primary: use the deterministic (feature-hash) embedder for reproducible
 # vectors with no OpenAI, and an ephemeral, isolated class on the cluster Weaviate. Inter-test
 # isolation comes from each test's randomly-generated organization_id (scope filter).

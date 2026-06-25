@@ -171,7 +171,12 @@ defmodule NoizuPromptLingua.Domains.Assets.ContentGenerator do
   end
 
   defp call_llm(messages, provider, model, endpoint, temperature, max_tokens) do
-    {url, headers, resolved_model} = resolve_provider(provider, model, endpoint)
+    with {url, headers, resolved_model} <- resolve_provider(provider, model, endpoint) do
+      do_call_llm(messages, url, headers, resolved_model, temperature, max_tokens)
+    end
+  end
+
+  defp do_call_llm(messages, url, headers, resolved_model, temperature, max_tokens) do
     body = Jason.encode!(%{
       model: resolved_model,
       messages: messages,
@@ -202,34 +207,49 @@ defmodule NoizuPromptLingua.Domains.Assets.ContentGenerator do
   end
 
   defp resolve_provider("openai" <> _, model, endpoint) do
-    url = endpoint || "https://api.openai.com/v1/chat/completions"
-    key = System.get_env("OPENAI_API_KEY", "")
-    {url, [{~c"Authorization", String.to_charlist("Bearer #{key}")}], model || "gpt-4o-mini"}
+    with {:ok, key} <- require_key("OPENAI_API_KEY") do
+      url = endpoint || "https://api.openai.com/v1/chat/completions"
+      {url, [{~c"Authorization", String.to_charlist("Bearer #{key}")}], model || "gpt-4o-mini"}
+    end
   end
 
   defp resolve_provider("gemini" <> _, model, endpoint) do
-    url = endpoint || "https://api.openai.com/v1/chat/completions"
-    key = System.get_env("OPENAI_API_KEY", "")
-    {url, [{~c"Authorization", String.to_charlist("Bearer #{key}")}], model || "gpt-4o-mini"}
+    with {:ok, key} <- require_key("OPENAI_API_KEY") do
+      url = endpoint || "https://api.openai.com/v1/chat/completions"
+      {url, [{~c"Authorization", String.to_charlist("Bearer #{key}")}], model || "gpt-4o-mini"}
+    end
   end
 
   defp resolve_provider("anthropic" <> _, model, endpoint) do
-    url = endpoint || "https://api.anthropic.com/v1/messages"
-    key = System.get_env("ANTHROPIC_API_KEY", "")
-    {url, [
-      {~c"x-api-key", String.to_charlist(key)},
-      {~c"anthropic-version", ~c"2023-06-01"}
-    ], model || "claude-sonnet-4-20250514"}
+    with {:ok, key} <- require_key("ANTHROPIC_API_KEY") do
+      url = endpoint || "https://api.anthropic.com/v1/messages"
+      {url, [
+        {~c"x-api-key", String.to_charlist(key)},
+        {~c"anthropic-version", ~c"2023-06-01"}
+      ], model || "claude-sonnet-4-20250514"}
+    end
   end
 
   defp resolve_provider("z.ai" <> _, model, endpoint) do
-    url = endpoint || "https://api.x.ai/v1/chat/completions"
-    key = System.get_env("XAI_API_KEY", "")
-    {url, [{~c"Authorization", String.to_charlist("Bearer #{key}")}], model || "grok-3"}
+    with {:ok, key} <- require_key("XAI_API_KEY") do
+      url = endpoint || "https://api.x.ai/v1/chat/completions"
+      {url, [{~c"Authorization", String.to_charlist("Bearer #{key}")}], model || "grok-3"}
+    end
   end
 
+  # No-key fallthrough = a local/self-hosted OpenAI-compatible endpoint (no auth).
   defp resolve_provider(_, model, endpoint) do
     url = endpoint || "http://localhost:1234/v1/chat/completions"
     {url, [], model || "default"}
+  end
+
+  # A configured provider with no API key set fails fast (clean {:error}) instead of
+  # firing a doomed request that 401s — so "no provider configured" is a graceful
+  # {:error, :generation_unavailable} upstream, never a crash (ticket 2989d130).
+  defp require_key(env) do
+    case System.get_env(env, "") do
+      "" -> {:error, :missing_api_key}
+      key -> {:ok, key}
+    end
   end
 end
