@@ -2,7 +2,7 @@ defmodule NoizuPromptLingua.Domains.Pipes.Tools.Input do
   use Noizu.MCP.Server.Tool,
     name: "Pipe.Input",
     description:
-      "Pull messages addressed to an agent handle within an organization, including direct, group-targeted, broadcast, and bridged chat traffic. Cursor-based: pass the `next_cursor` returned by the previous call (start at 0) to receive only newer entries; returns an updated `next_cursor`. Optionally filter by groups and specific message names.",
+      "Pull messages addressed to an agent handle within an organization, including direct, group-targeted, broadcast, and bridged chat traffic. Cursor-based: pass the `next_cursor` returned by the previous call (start at 0) to receive only newer entries; returns an updated `next_cursor`. Optionally filter by groups, specific message names, and addressing scope. Each returned message carries a `scope` (`direct`/`group`/`broadcast`) so direct messages can be distinguished from group/broadcast noise; pass `scope` to fetch only one kind.",
     hidden: true,
     category: "Pipes",
     annotations: [read_only_hint: true]
@@ -21,7 +21,12 @@ defmodule NoizuPromptLingua.Domains.Pipes.Tools.Input do
 
     field :include_broadcast, :boolean,
       default: true,
-      description: "Include broadcast messages (no specific target)"
+      description: "Include broadcast messages (no specific target). Ignored unless scope is 'all'."
+
+    field :scope, :string,
+      default: "all",
+      description:
+        "Addressing scope: 'all' (default — direct + group + broadcast union), 'direct' (only messages addressed to this agent), 'group' (only this agent's group traffic), or 'broadcast' (only untargeted messages). Use 'direct' to isolate DMs from group/broadcast noise."
   end
 
   alias NoizuPromptLingua.Domains.Pipes
@@ -40,7 +45,8 @@ defmodule NoizuPromptLingua.Domains.Pipes.Tools.Input do
         groups: Args.get(args, :groups) || [],
         since: since,
         message_names: Args.get(args, :message_names),
-        include_broadcast: Args.get(args, :include_broadcast) != false
+        include_broadcast: Args.get(args, :include_broadcast) != false,
+        scope: Args.get(args, :scope)
       ]
 
       entries = Pipes.pull(org_id, Args.get(args, :agent), opts)
@@ -53,6 +59,7 @@ defmodule NoizuPromptLingua.Domains.Pipes.Tools.Input do
             message_name: e.message_name,
             target_agent: blank_to_nil(e.target_agent_handle),
             target_group: blank_to_nil(e.target_group),
+            scope: Pipes.scope_of(e),
             data: e.body,
             updated_at: e.updated_at
           }

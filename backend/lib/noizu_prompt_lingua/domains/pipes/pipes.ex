@@ -61,6 +61,12 @@ defmodule NoizuPromptLingua.Domains.Pipes do
     * `:since` — `DateTime`; only entries updated at or after this time (legacy filter).
     * `:message_names` — list of message names to keep.
     * `:include_broadcast` — default true; include entries with no target.
+    * `:scope` — `:all` (default) | `:direct` | `:group` | `:broadcast`. Restrict
+      to a single addressing scope. `:all` keeps the legacy inclusive union
+      (direct OR group OR broadcast, honoring `:groups`/`:include_broadcast`);
+      `:direct` returns ONLY messages addressed to this agent handle, `:group`
+      only group traffic (requires `:groups`), `:broadcast` only untargeted
+      entries. Lets a caller isolate direct messages from group/broadcast noise.
 
   Entries are returned in `seq ASC` order so the caller can take the last
   `seq` as its next cursor.
@@ -69,6 +75,7 @@ defmodule NoizuPromptLingua.Domains.Pipes do
     groups = opts[:groups] || []
     include_broadcast = Keyword.get(opts, :include_broadcast, true)
     cursor = opts[:cursor] || 0
+    scope = normalize_scope(opts[:scope])
 
     query =
       from(e in AgentPipeEntry,
@@ -78,14 +85,39 @@ defmodule NoizuPromptLingua.Domains.Pipes do
 
     query =
       query
-      |> filter_addressed(agent_handle, groups, include_broadcast)
+      |> filter_addressed(agent_handle, groups, include_broadcast, scope)
       |> maybe_since(opts[:since])
       |> maybe_messages(opts[:message_names])
 
     Repo.all(query)
   end
 
-  defp filter_addressed(query, agent_handle, groups, include_broadcast) do
+  @doc """
+  Classify an entry's addressing scope for callers/UI. A specific
+  `target_agent_handle` wins over a `target_group` (a message can carry both);
+  with neither it is a broadcast.
+  """
+  def scope_of(%AgentPipeEntry{target_agent_handle: a, target_group: g}), do: scope_of(a, g)
+  def scope_of(%{target_agent_handle: a, target_group: g}), do: scope_of(a, g)
+  defp scope_of(agent, _group) when agent not in [nil, ""], do: :direct
+  defp scope_of(_agent, group) when group not in [nil, ""], do: :group
+  defp scope_of(_agent, _group), do: :broadcast
+
+  defp normalize_scope(nil), do: :all
+  defp normalize_scope(s) when s in [:all, :direct, :group, :broadcast], do: s
+  defp normalize_scope(s) when is_binary(s) do
+    case String.downcase(s) do
+      "direct" -> :direct
+      "group" -> :group
+      "broadcast" -> :broadcast
+      _ -> :all
+    end
+  end
+
+  defp normalize_scope(_), do: :all
+
+  # :all — legacy inclusive union (direct OR group[if groups] OR broadcast[if requested]).
+  defp filter_addressed(query, agent_handle, groups, include_broadcast, :all) do
     base =
       dynamic([e], e.target_agent_handle == ^agent_handle)
 
@@ -105,6 +137,21 @@ defmodule NoizuPromptLingua.Domains.Pipes do
 
     where(query, ^base)
   end
+
+  # :direct — only messages addressed to this agent handle.
+  defp filter_addressed(query, agent_handle, _groups, _include_broadcast, :direct),
+    do: where(query, [e], e.target_agent_handle == ^agent_handle)
+
+  # :group — only group traffic for the agent's groups. No groups → nothing.
+  defp filter_addressed(query, _agent_handle, [], _include_broadcast, :group),
+    do: where(query, [e], false)
+
+  defp filter_addressed(query, _agent_handle, groups, _include_broadcast, :group),
+    do: where(query, [e], e.target_group != "" and e.target_group in ^groups)
+
+  # :broadcast — only untargeted entries.
+  defp filter_addressed(query, _agent_handle, _groups, _include_broadcast, :broadcast),
+    do: where(query, [e], e.target_agent_handle == "" and e.target_group == "")
 
   defp maybe_since(query, nil), do: query
   defp maybe_since(query, %DateTime{} = since), do: where(query, [e], e.updated_at >= ^since)
