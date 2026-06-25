@@ -112,7 +112,8 @@ function SessionModal({
   );
 }
 
-type ModalState = { type: 'create' } | { type: 'edit'; session: Session } | null;
+// Edit moved to the detail route (?edit=1); the modal is CREATE-only now.
+type ModalState = { type: 'create' } | null;
 
 export default function SessionsPage() {
   // orgId (UUID) for api; orgSlug for route building (ConsoleContext, diego seq506).
@@ -206,7 +207,7 @@ export default function SessionsPage() {
             facetOptions={facetOptions}
             refreshKey={reloadKey}
             onOpenRow={(s) => router.push(`/app/${orgSlug}/sessions/${s.id}`)}
-            onEditRow={(s) => setModal({ type: 'edit', session: s })}
+            onEditRow={(s) => router.push(`/app/${orgSlug}/sessions/${s.id}?edit=1`)}
             onAction={(key, s) => {
               if (key === 'archive') void handleArchive(s);
             }}
@@ -214,11 +215,10 @@ export default function SessionsPage() {
         )}
       </main>
 
+      {/* Edit now lives on the detail route (?edit=1) via ConsoleDetailPage's EditForm;
+          the modal handles CREATE only. */}
       {modal?.type === 'create' && orgId && (
         <SessionModal orgId={orgId} projects={projects} defaultProjectId={scopeProjectId} onClose={() => setModal(null)} onSaved={handleSaved} />
-      )}
-      {modal?.type === 'edit' && orgId && (
-        <SessionModal orgId={orgId} projects={projects} session={modal.session} onClose={() => setModal(null)} onSaved={handleSaved} />
       )}
     </div>
   );

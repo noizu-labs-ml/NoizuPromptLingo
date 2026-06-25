@@ -77,7 +77,8 @@ export function DataTable<T, TInput>({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
-  const [facets, setFacets] = useState<Record<string, string>>({});
+  // Facet value is a string (single-select) or string[] (multi-select).
+  const [facets, setFacets] = useState<Record<string, string | string[]>>({});
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [page, setPage] = useState(0);
@@ -93,7 +94,10 @@ export function DataTable<T, TInput>({
     setLoading(true);
     setError(null);
     const opts: Record<string, unknown> = { ...scope };
-    for (const [k, v] of Object.entries(facets)) if (v) opts[k] = v;
+    // Single facet -> string; multi facet -> non-empty array (BE accepts array params).
+    for (const [k, v] of Object.entries(facets)) {
+      if (Array.isArray(v) ? v.length > 0 : v) opts[k] = v;
+    }
     descriptor.api
       .list(ctx.orgId, opts)
       .then((data) => {
@@ -201,36 +205,53 @@ export function DataTable<T, TInput>({
     <div className={`console-table console-table--${density}`}>
       {!embedded && (filters?.length ?? 0) > 0 && (
         <div className="console-filters" role="search">
-          {filters!.map((f) =>
-            f.type === 'search' ? (
-              <input
-                key={f.key}
-                type="search"
-                className="console-filters__search"
-                placeholder={`${f.label}…`}
-                aria-label={f.label}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
-            ) : (
+          {filters!.map((f) => {
+            if (f.type === 'search') {
+              return (
+                <input
+                  key={f.key}
+                  type="search"
+                  className="console-filters__search"
+                  placeholder={`${f.label}…`}
+                  aria-label={f.label}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+              );
+            }
+            // dynamic facets take their options from the page-injected facetOptions (Mei #2).
+            const opts = (f.dynamic ? facetOptions?.[f.key] : f.options) ?? [];
+            if (f.multi) {
+              const sel = Array.isArray(facets[f.key]) ? (facets[f.key] as string[]) : [];
+              return (
+                <FacetMultiSelect
+                  key={f.key}
+                  label={f.label}
+                  options={opts}
+                  selected={sel}
+                  onChange={(vals) => setFacets((prev) => ({ ...prev, [f.key]: vals }))}
+                />
+              );
+            }
+            const single = typeof facets[f.key] === 'string' ? (facets[f.key] as string) : '';
+            return (
               <label key={f.key} className="console-filters__facet">
                 <span className="sr-only">{f.label}</span>
                 <select
-                  value={facets[f.key] ?? ''}
+                  value={single}
                   onChange={(e) => setFacets((prev) => ({ ...prev, [f.key]: e.target.value }))}
                   aria-label={f.label}
                 >
                   <option value="">{f.label}: all</option>
-                  {/* dynamic facets take their options from the page-injected facetOptions (Mei #2). */}
-                  {(f.dynamic ? facetOptions?.[f.key] : f.options)?.map((o) => (
+                  {opts.map((o) => (
                     <option key={o.value} value={o.value}>
                       {o.label}
                     </option>
                   ))}
                 </select>
               </label>
-            ),
-          )}
+            );
+          })}
         </div>
       )}
 

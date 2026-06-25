@@ -70,6 +70,12 @@ export interface FilterDef {
   options?: FacetOption[];
   /** Marks a facet whose options the primitive must resolve at runtime (e.g. projects). */
   dynamic?: boolean;
+  /**
+   * Multi-select facet: the user picks several values (OR-within-facet); the selected
+   * values pass to api.list as an ARRAY under `key`. Default false (single <select>).
+   * BE must accept the array param for the key.
+   */
+  multi?: boolean;
 }
 
 export type FieldType =
