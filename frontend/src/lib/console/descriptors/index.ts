@@ -9,5 +9,6 @@ export { projectsDescriptor } from './projects';
 export { organizationsDescriptor } from './organizations';
 export { boardsDescriptor } from './boards';
 export { personasDescriptor } from './personas';
+export { reviewsDescriptor } from './reviews';
 // diego-frontend lane:
 export { artifactsDescriptor } from './artifacts';

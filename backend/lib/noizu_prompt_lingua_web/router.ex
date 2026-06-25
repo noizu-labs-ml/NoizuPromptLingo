@@ -349,6 +349,8 @@ defmodule NoizuPromptLinguaWeb.Router do
     resources "/chat/rooms", ChatController, only: [:index, :create, :show, :update, :delete]
     get "/chat/rooms/:room_id/messages", ChatController, :index_messages
     post "/chat/rooms/:room_id/messages", ChatController, :create_message
+    get "/chat/rooms/:room_id/messages/:message_id/thread", ChatController, :message_thread
+    post "/chat/rooms/:room_id/messages/:message_id/replies", ChatController, :reply_to_message
     get "/chat/rooms/:room_id/messages/:message_id/reactions", ChatController, :index_message_reactions
     post "/chat/rooms/:room_id/messages/:message_id/reactions", ChatController, :add_message_reaction
     delete "/chat/rooms/:room_id/messages/:message_id/reactions", ChatController, :remove_message_reaction

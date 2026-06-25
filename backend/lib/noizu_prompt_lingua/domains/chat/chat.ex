@@ -196,6 +196,7 @@ defmodule NoizuPromptLingua.Domains.Chat do
   def list_messages(room_id, opts \\ []) do
     ChatMessage
     |> where([m], m.room_id == ^room_id)
+    |> maybe_top_level(opts[:top_level])
     |> maybe_before(opts[:before])
     |> maybe_after(opts[:after])
     |> order_by([m], desc: m.inserted_at)
@@ -203,8 +204,21 @@ defmodule NoizuPromptLingua.Domains.Chat do
     |> Repo.all()
   end
 
+  # Slack-style channel view (ffa2d2f6): top-level messages only; replies live under
+  # their parent in the thread view (list_replies/1), not inline in the channel.
+  defp maybe_top_level(query, true), do: where(query, [m], is_nil(m.parent_message_id))
+  defp maybe_top_level(query, _), do: query
+
   def get_message(message_id) do
     Repo.get(ChatMessage, message_id)
+  end
+
+  # Replies to a message (threaded), oldest-first (read order within a thread).
+  def list_replies(message_id) do
+    ChatMessage
+    |> where([m], m.parent_message_id == ^message_id)
+    |> order_by([m], asc: m.inserted_at)
+    |> Repo.all()
   end
 
   # ── Events ────────────────────────────────────────────────────

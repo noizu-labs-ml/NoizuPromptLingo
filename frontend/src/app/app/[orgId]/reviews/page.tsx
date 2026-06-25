@@ -3,8 +3,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { PlusIcon } from '@heroicons/react/24/outline';
+import { useRouter } from 'next/navigation';
 import { api, type Review, type Artifact, type Project } from '@/lib/api';
 import { useOrg, useOrgId } from '@/context/org';
+import { DataTable } from '@/components/console/DataTable';
+import { reviewsDescriptor } from '@/lib/console/descriptors/reviews';
 
 function timeAgo(dt?: string) {
   if (!dt) return '';
@@ -119,40 +122,29 @@ function ReviewModal({
 }
 
 export default function ReviewsPage() {
-  const { orgId, loading: orgLoading } = useOrgId();
+  const { orgId, slug, loading: orgLoading } = useOrgId();
   const { currentProject, switchProject } = useOrg();
-  const [reviews, setReviews] = useState<Review[]>([]);
+  const router = useRouter();
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const scopeProjectId = currentProject?.id;
+  const scope = currentProject ? { projectId: currentProject.id } : undefined;
 
-  const fetchData = useCallback(async () => {
-    if (!orgId) return;
-    try {
-      const [reviewData, artifactData] = await Promise.all([
-        api.listReviews(orgId, scopeProjectId ? { projectId: scopeProjectId } : undefined),
-        api.listArtifacts(orgId, scopeProjectId ? { projectId: scopeProjectId } : undefined),
-      ]);
-      setReviews(reviewData.reviews ?? []);
-      setArtifacts(artifactData.artifacts ?? []);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to load reviews');
-    } finally {
-      setLoading(false);
-    }
-  }, [orgId, scopeProjectId]);
-
+  // Reviews load via DataTable; artifacts are fetched here only to power the
+  // create-review picker (a review targets an artifact + revision).
   useEffect(() => {
-    if (orgId) {
-      fetchData();
-    } else if (!orgLoading) {
-      setLoading(false);
-    }
-  }, [fetchData, orgId, orgLoading]);
-
-  const artifactTitle = (id?: string) => artifacts.find((a) => a.id === id)?.title ?? '—';
+    if (!orgId) return;
+    let live = true;
+    api
+      .listArtifacts(orgId, scopeProjectId ? { projectId: scopeProjectId } : undefined)
+      .then((d) => live && setArtifacts(d.artifacts ?? []))
+      .catch(() => live && setArtifacts([]));
+    return () => {
+      live = false;
+    };
+  }, [orgId, scopeProjectId]);
 
   return (
     <div className="content">
@@ -180,50 +172,16 @@ export default function ReviewsPage() {
             : 'Code reviews, comments, and compiled feedback for this organization.'}
         </p>
 
-        {loading ? (
-          <p className="sg-page-intro">Loading…</p>
-        ) : reviews.length === 0 ? (
-          <div className="projects-empty">
-            <p className="projects-empty__text">
-              {artifacts.length === 0
-                ? 'No artifacts to review yet. Create an artifact first.'
-                : 'No reviews yet. Start one to get going.'}
-            </p>
-            {artifacts.length > 0 && (
-              <button className="sg-btn sg-btn--black" onClick={() => setShowModal(true)}>
-                Start Review
-              </button>
-            )}
-          </div>
+        {!orgId ? (
+          <p className="sg-page-intro">{orgLoading ? 'Loading…' : 'Select an organization to view its reviews.'}</p>
         ) : (
-          <div className="projects-grid">
-            {reviews.map((r) => (
-              <div key={r.id} className="project-card">
-                <div className="project-card__header">
-                  <div className="project-card__org">{artifactTitle(r.artifact_id)}</div>
-                  <div className="project-card__name">{r.title || `Review by ${r.reviewer_persona}`}</div>
-                </div>
-                <div className="project-card__body">
-                  <dl className="project-card__fields">
-                    <div className="project-card__field">
-                      <dt>Reviewer:</dt>
-                      <dd>{r.reviewer_persona}</dd>
-                    </div>
-                    {r.verdict && (
-                      <div className="project-card__field">
-                        <dt>Verdict:</dt>
-                        <dd>{r.verdict}</dd>
-                      </div>
-                    )}
-                  </dl>
-                  <div className="project-card__meta">
-                    <span className={`project-card__status ${statusClass(r.status)}`}>{r.status}</span>
-                    <span className="project-card__time">{timeAgo(r.inserted_at)}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <DataTable
+            descriptor={reviewsDescriptor}
+            ctx={{ orgId, orgSlug: slug }}
+            scope={scope}
+            refreshKey={reloadKey}
+            onOpenRow={(r) => router.push(`/app/${slug}/reviews/${r.id}`)}
+          />
         )}
       </main>
 
@@ -235,12 +193,13 @@ export default function ReviewsPage() {
           onClose={() => setShowModal(false)}
           onSaved={() => {
             setShowModal(false);
-            fetchData();
+            setReloadKey((k) => k + 1);
           }}
         />
       )}
 
-      {!loading && reviews.length > 0 && (
+      {/* A review targets an artifact — only offer create when one exists. */}
+      {orgId && artifacts.length > 0 && (
         <button className="fab" onClick={() => setShowModal(true)} aria-label="New review" title="New review">
           <PlusIcon />
         </button>

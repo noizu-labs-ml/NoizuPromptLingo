@@ -95,8 +95,11 @@ defmodule NoizuPromptLinguaWeb.ChatController do
   # GET /api/v1/organizations/:org_id/chat/rooms/:room_id/messages
   def index_messages(conn, %{"org_id" => org_id, "room_id" => room_id} = params) do
     with_room(conn, org_id, room_id, "viewer", fn _room ->
+      # Slack-style channel view: top-level only; replies are fetched via the thread
+      # endpoint (ffa2d2f6). `?include_replies=true` opts back into the flat (all
+      # messages) view for any caller that still wants it.
       opts =
-        []
+        [top_level: params["include_replies"] not in [true, "true"]]
         |> maybe_opt(:before, params["before"])
         |> maybe_opt(:after, params["after"])
         |> maybe_opt(:limit, parse_limit(params["limit"]))
@@ -125,6 +128,40 @@ defmodule NoizuPromptLinguaWeb.ChatController do
 
   # Missing `message` body -> 422 rather than a FunctionClauseError 500.
   def create_message(conn, _params), do: missing_field(conn, "message")
+
+  # POST /api/v1/organizations/:org_id/chat/rooms/:room_id/messages/:message_id/replies
+  # Post a threaded reply to an existing message in the room (ffa2d2f6).
+  def reply_to_message(conn, %{"org_id" => org_id, "room_id" => room_id, "message_id" => message_id, "message" => msg_params}) do
+    with_message(conn, org_id, room_id, message_id, "member", fn parent ->
+      attrs = %{
+        room_id: parent.room_id,
+        content: msg_params["content"],
+        sender: msg_params["sender"] || actor(conn),
+        parent_message_id: parent.id
+      }
+
+      case Chat.send_message(attrs) do
+        {:ok, msg} -> conn |> put_status(:created) |> json(%{message: message_to_json(msg, [])})
+        {:error, changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+      end
+    end)
+  end
+
+  def reply_to_message(conn, _params), do: missing_field(conn, "message")
+
+  # GET /api/v1/organizations/:org_id/chat/rooms/:room_id/messages/:message_id/thread
+  # The parent message + its replies (oldest-first), each with embedded reaction summaries.
+  def message_thread(conn, %{"org_id" => org_id, "room_id" => room_id, "message_id" => message_id}) do
+    with_message(conn, org_id, room_id, message_id, "viewer", fn parent ->
+      replies = Chat.list_replies(parent.id)
+      summaries = Chat.message_reaction_summaries([parent.id | Enum.map(replies, & &1.id)], actor(conn))
+
+      json(conn, %{
+        message: message_to_json(parent, Map.get(summaries, parent.id, [])),
+        replies: Enum.map(replies, fn r -> message_to_json(r, Map.get(summaries, r.id, [])) end)
+      })
+    end)
+  end
 
   # All three reaction endpoints return the FE `ChatReactionSummary[]` shape
   # (`%{reactions: [%{emoji, count, me}]}`) — identical to what the message list
@@ -211,6 +248,7 @@ defmodule NoizuPromptLinguaWeb.ChatController do
       room_id: m.room_id,
       content: m.content,
       sender: m.sender,
+      parent_message_id: m.parent_message_id,
       inserted_at: m.inserted_at,
       reactions: reactions
     }

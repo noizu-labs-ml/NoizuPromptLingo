@@ -19,6 +19,8 @@ defmodule NoizuPromptLingua.ChatTestSchema do
     # the per-bucket uniqueness tests. IF NOT EXISTS on the create won't remove it.
     "DROP INDEX IF EXISTS idx_chat_rooms_org_slug",
     "ALTER TABLE chat_rooms ADD COLUMN IF NOT EXISTS slug text",
+    # Threaded replies (054 / ffa2d2f6): nullable self-FK, ON DELETE CASCADE.
+    "ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS parent_message_id uuid REFERENCES chat_messages(id) ON DELETE CASCADE",
     """
     CREATE UNIQUE INDEX IF NOT EXISTS idx_chat_rooms_slug_proj
     ON chat_rooms (organization_id, project_id, slug)

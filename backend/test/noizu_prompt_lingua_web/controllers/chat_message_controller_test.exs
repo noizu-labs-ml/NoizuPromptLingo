@@ -8,6 +8,7 @@ defmodule NoizuPromptLinguaWeb.ChatMessageControllerTest do
   use NoizuPromptLinguaWeb.ConnCase
 
   alias NoizuPromptLingua.Domains.Chat
+  alias NoizuPromptLingua.Repo
 
   setup %{conn: conn} do
     %{access_token: token, user: user} = setup_user_and_token()
@@ -64,6 +65,56 @@ defmodule NoizuPromptLinguaWeb.ChatMessageControllerTest do
       messages = json_response(get(conn, base), 200)["messages"]
       assert Enum.map(messages, & &1["content"]) == ["first", "second"]
       assert Enum.all?(messages, &is_list(&1["reactions"]))
+    end
+  end
+
+  describe "threaded replies (ffa2d2f6)" do
+    setup %{conn: conn, base: base} do
+      parent = json_response(post(conn, base, %{message: %{content: "root"}}), 201)["message"]
+      {:ok, parent_id: parent["id"]}
+    end
+
+    test "POST a reply sets parent_message_id", %{conn: conn, base: base, parent_id: pid} do
+      reply = json_response(post(conn, "#{base}/#{pid}/replies", %{message: %{content: "re"}}), 201)["message"]
+      assert reply["parent_message_id"] == pid
+      assert reply["content"] == "re"
+    end
+
+    test "GET thread returns the parent + replies oldest-first with reactions", %{conn: conn, base: base, parent_id: pid} do
+      post(conn, "#{base}/#{pid}/replies", %{message: %{content: "r1"}})
+      post(conn, "#{base}/#{pid}/replies", %{message: %{content: "r2"}})
+
+      thread = json_response(get(conn, "#{base}/#{pid}/thread"), 200)
+      assert thread["message"]["id"] == pid
+      assert Enum.map(thread["replies"], & &1["content"]) == ["r1", "r2"]
+      assert Enum.all?(thread["replies"], &is_list(&1["reactions"]))
+    end
+
+    test "channel list is top-level only by default; ?include_replies=true is flat", %{conn: conn, base: base, parent_id: pid} do
+      post(conn, "#{base}/#{pid}/replies", %{message: %{content: "buried"}})
+
+      default = json_response(get(conn, base), 200)["messages"]
+      assert Enum.map(default, & &1["content"]) == ["root"]
+
+      flat = json_response(get(conn, "#{base}?include_replies=true"), 200)["messages"]
+      assert "buried" in Enum.map(flat, & &1["content"])
+    end
+
+    test "reply to a message not in the room -> 404", %{conn: conn, base: base} do
+      assert json_response(post(conn, "#{base}/#{Ecto.UUID.generate()}/replies", %{message: %{content: "x"}}), 404)
+    end
+
+    test "reply missing body -> 422, not 500", %{conn: conn, base: base, parent_id: pid} do
+      assert json_response(post(conn, "#{base}/#{pid}/replies", %{}), 422)["errors"]["message"]
+    end
+
+    test "deleting the parent cascades its replies (self-FK ON DELETE CASCADE)", %{conn: conn, base: base, parent_id: pid} do
+      reply = json_response(post(conn, "#{base}/#{pid}/replies", %{message: %{content: "r"}}), 201)["message"]
+
+      Repo.delete!(Chat.get_message(pid))
+
+      assert Chat.get_message(reply["id"]) == nil
+      assert Chat.list_replies(pid) == []
     end
   end
 end

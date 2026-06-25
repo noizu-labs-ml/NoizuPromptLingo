@@ -160,3 +160,6 @@ databaseChangeLog:
   - include:
       file: 053-rbac-lead-role.yaml
       relativeToChangelogFile: true
+  - include:
+      file: 054-chat-message-parent.yaml
+      relativeToChangelogFile: true
