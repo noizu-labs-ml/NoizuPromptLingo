@@ -156,4 +156,7 @@ for pod use. When the cloud sends a `screenshot` with an `upload_url` (or a
   the most recent registration receives commands.
 - **Screenshot size.** Full-page PNGs of large pages can be multi-MB once
   base64-encoded; prefer a `selector` or viewport capture when possible.
-- The controller runs headless by default; pass `--headed` to watch it work.
+- The **container** runs headless by default; the local **`install.sh` launches headed**
+  (so SSO/OIDC logins — e.g. authentik on tobor.locker — can be completed in a visible
+  window). Override with `BROWSER_CONTROLLER_HEADED=false`, or pass `--headed` on any
+  direct `node dist/index.js` run.

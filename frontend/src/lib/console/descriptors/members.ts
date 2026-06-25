@@ -20,7 +20,10 @@ export interface OrgMember {
   user_id: string;
   email: string;
   user_name: string;
+  /** The target member's role. */
   role: string;
+  /** The CALLER's role in this org, echoed per row (16dc3df2) — drives the gates. */
+  effective_role?: string;
   joined_at: string;
 }
 
@@ -62,8 +65,11 @@ export const membersDescriptor: ConsoleDescriptor<OrgMember, Partial<OrgMember>>
   // is VISIBILITY only; the server guard is the sole deny-closed boundary.
   actions: {
     rowActions: ['edit', 'delete'],
-    canEdit: (_m, ctx) => atLeast(ctx.effectiveRole, 'admin'),
-    canDelete: (m, ctx) => atLeast(ctx.effectiveRole, 'lead') && outranks(ctx.effectiveRole, m.role),
+    builtinLabels: { edit: 'Assign role', delete: 'Remove' },
+    // Gate on the CALLER's per-row effective_role (16dc3df2, now live) vs the target's
+    // role. Until populated, atLeast(undefined,..)=false -> hidden (deny-closed advisory).
+    canEdit: (m) => atLeast(m.effective_role, 'admin'),
+    canDelete: (m) => atLeast(m.effective_role, 'lead') && outranks(m.effective_role, m.role),
   },
   api: {
     list: (orgId) => api.listMembers(orgId).then((r) => r.members),

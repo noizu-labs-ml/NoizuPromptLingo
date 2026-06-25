@@ -21,6 +21,9 @@ export interface Organization {
   slug: string;
   name: string;
   role?: string;
+  /** The caller's effective role in this org, echoed per-row by the list serializer
+   *  (ticket 16dc3df2) for advisory affordance gating; equals `role` today. */
+  effective_role?: string;
   owner?: string | null;
 }
 
@@ -32,6 +35,8 @@ export interface Project {
   description?: string | null;
   settings?: Record<string, unknown>;
   status?: string;
+  /** Prefix for human ticket keys (e.g. "ABC" -> ABC-001); lucia 055. */
+  key_prefix?: string | null;
   // Present on detail/create/update responses
   archived_at?: string | null;
   inserted_at?: string;
@@ -47,6 +52,7 @@ export interface ProjectInput {
   slug: string;
   description?: string;
   settings?: Record<string, unknown>;
+  key_prefix?: string;
 }
 
 // Admin GitHub config. Token values are always masked by the backend.
@@ -1615,12 +1621,16 @@ export const api = {
   listChatMessages(
     orgId: string,
     roomId: string,
-    opts?: { before?: string; after?: string; limit?: number },
+    // include_replies=true returns the FLAT list (all messages incl. thread replies).
+    // Default (omitted) the BE returns top-level only (Slack channel view) once 054
+    // threading ships — the flat room view passes true so replies don't vanish (aniket seq629).
+    opts?: { before?: string; after?: string; limit?: number; include_replies?: boolean },
   ) {
     const qs = new URLSearchParams();
     if (opts?.before) qs.set("before", opts.before);
     if (opts?.after) qs.set("after", opts.after);
     if (opts?.limit) qs.set("limit", String(opts.limit));
+    if (opts?.include_replies) qs.set("include_replies", "true");
     const suffix = qs.toString() ? `?${qs.toString()}` : "";
     return request<{ messages: ChatMessage[] }>(
       `/api/v1/organizations/${orgId}/chat/rooms/${roomId}/messages${suffix}`,

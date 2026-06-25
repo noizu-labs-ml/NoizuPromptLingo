@@ -342,6 +342,7 @@ export function DataTable<T, TInput>({
                       onAction={onAction}
                       canEdit={actions?.canEdit}
                       canDelete={actions?.canDelete}
+                      builtinLabels={actions?.builtinLabels}
                       label={labels.singular}
                     />
                   </td>
@@ -389,6 +390,7 @@ function RowMenu<T, TInput>({
   onAction,
   canEdit,
   canDelete,
+  builtinLabels,
   label,
 }: {
   row: T;
@@ -401,6 +403,7 @@ function RowMenu<T, TInput>({
   onAction?: (key: string, row: T) => void;
   canEdit?: (row: T, ctx: ConsoleContext) => boolean;
   canDelete?: (row: T, ctx: ConsoleContext) => boolean;
+  builtinLabels?: { view?: string; edit?: string; delete?: string };
   label: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -414,11 +417,12 @@ function RowMenu<T, TInput>({
   const titleCase = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
   const list: (BuiltinRowAction | (string & {}) | ActionDef<T>)[] = actions ?? ['view', 'edit', 'delete'];
   for (const a of list) {
-    if (a === 'view' && onOpenRow) items.push({ key: 'view', label: 'View', run: () => onOpenRow(row) });
+    if (a === 'view' && onOpenRow)
+      items.push({ key: 'view', label: builtinLabels?.view ?? 'View', run: () => onOpenRow(row) });
     else if (a === 'edit' && api.update && onEditRow && (canEdit?.(row, ctx) ?? true))
-      items.push({ key: 'edit', label: 'Edit', run: () => onEditRow(row) });
+      items.push({ key: 'edit', label: builtinLabels?.edit ?? 'Edit', run: () => onEditRow(row) });
     else if (a === 'delete' && api.remove && onDeleteRow && (canDelete?.(row, ctx) ?? true))
-      items.push({ key: 'delete', label: 'Delete', run: () => onDeleteRow(row), danger: true });
+      items.push({ key: 'delete', label: builtinLabels?.delete ?? 'Delete', run: () => onDeleteRow(row), danger: true });
     else if (typeof a === 'object') {
       if (a.visibleWhen && !a.visibleWhen(row, ctx)) continue; // RBAC per-row visibility gate
       items.push({ key: a.key, label: a.label, run: () => a.run(row, ctx), danger: a.danger });

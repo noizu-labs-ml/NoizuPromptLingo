@@ -304,7 +304,10 @@ export default function ChatRoomDetailPage() {
     if (!orgId || !roomId) return;
     try {
       // Reactions arrive embedded per message (marcus seq144) — no separate fetch.
-      const { messages } = await api.listChatMessages(orgId, roomId);
+      // include_replies: this flat room view shows ALL messages; once 054 threading
+      // ships, the default list is top-level-only, so opt into the flat list (aniket seq629)
+      // until the Slack top-level+thread view lands (ffa2d2f6).
+      const { messages } = await api.listChatMessages(orgId, roomId, { include_replies: true });
       setMessages(messages ?? []);
       setMessagesPending(false);
     } catch {

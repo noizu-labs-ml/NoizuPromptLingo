@@ -183,6 +183,11 @@ export interface DescriptorActions<T> {
    */
   canEdit?: (row: T, ctx: ConsoleContext) => boolean;
   canDelete?: (row: T, ctx: ConsoleContext) => boolean;
+  /**
+   * Override the kebab labels for the built-in actions (e.g. members reads
+   * 'Assign role' / 'Remove' rather than 'Edit' / 'Delete'). Omit = defaults.
+   */
+  builtinLabels?: { view?: string; edit?: string; delete?: string };
 }
 
 /**

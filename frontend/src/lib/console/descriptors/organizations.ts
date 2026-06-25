@@ -3,6 +3,10 @@
 // REST gate: list/get/create/update/delete all exist -> fully wirable now.
 import { api, type Organization } from '@/lib/api';
 import type { ConsoleDescriptor } from '../types';
+import { atLeast } from '../roles';
+
+// The caller's effective role in each org (per-row, ticket 16dc3df2; = role today).
+const orgRole = (o: Organization) => o.effective_role ?? o.role;
 
 // createOrganization(slug, name) / updateOrganization(id, {name?, slug?}) — the
 // editable surface is name + slug only.
@@ -56,7 +60,14 @@ export const organizationsDescriptor: ConsoleDescriptor<Organization, Organizati
       },
     ],
   },
-  actions: { rowActions: ['view', 'edit', 'delete'] },
+  // Primary-click opens the org (page-wired: switchOrg + navigate). RBAC-gated kebab:
+  // 'edit' @ admin+, 'delete' @ owner — advisory visibility off the per-row effective
+  // role (16dc3df2); the server guard is the sole deny-closed boundary.
+  actions: {
+    rowActions: ['edit', 'delete'],
+    canEdit: (o) => atLeast(orgRole(o), 'admin'),
+    canDelete: (o) => atLeast(orgRole(o), 'owner'),
+  },
   api: {
     // Top-level: orgId arg is ignored (organizations are not org-scoped).
     list: () => api.listOrganizations().then((r) => r.organizations),

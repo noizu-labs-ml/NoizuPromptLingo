@@ -22,5 +22,10 @@ echo "Installing dependencies (this also downloads Chromium via Playwright)…"
 npm install
 echo "Building…"
 npm run build
-echo "Starting browser controller → ${BROWSER_CONTROLLER_URL} (org ${BROWSER_CONTROLLER_ORG})"
+# Headed by default for the local interactive install, so OIDC/SSO logins
+# (e.g. authentik on tobor.locker) can be completed in a visible window. The
+# Docker/CI image stays headless (it builds from the image, not this script).
+# Override for unattended local runs with: BROWSER_CONTROLLER_HEADED=false
+export BROWSER_CONTROLLER_HEADED="${BROWSER_CONTROLLER_HEADED:-true}"
+echo "Starting browser controller → ${BROWSER_CONTROLLER_URL} (org ${BROWSER_CONTROLLER_ORG}, headed=${BROWSER_CONTROLLER_HEADED})"
 exec node dist/index.js

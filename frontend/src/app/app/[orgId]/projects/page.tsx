@@ -38,13 +38,20 @@ function ProjectModal({
   const [name, setName] = useState(project?.name ?? '');
   const [slug, setSlug] = useState(project?.slug ?? '');
   const [description, setDescription] = useState(project?.description ?? '');
+  const [keyPrefix, setKeyPrefix] = useState(project?.key_prefix ?? '');
   const [slugTouched, setSlugTouched] = useState(isEdit);
+  const [prefixTouched, setPrefixTouched] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Suggested ticket-key prefix: uppercase alnum of the name, capped (mirrors the BE
+  // auto-derive). A pre-filled SUGGESTION only — the user can edit or clear it.
+  const toPrefix = (v: string) => v.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
 
   function handleNameChange(v: string) {
     setName(v);
     if (!slugTouched) setSlug(toSlug(v));
+    if (!prefixTouched) setKeyPrefix(toPrefix(v));
   }
 
   function handleSlugChange(v: string) {
@@ -58,7 +65,7 @@ function ProjectModal({
     setSaving(true);
     setError(null);
     try {
-      const payload = { name: name.trim(), slug: slug.trim(), description: description.trim() };
+      const payload = { name: name.trim(), slug: slug.trim(), description: description.trim(), key_prefix: keyPrefix.trim() || undefined };
       if (isEdit && project) {
         await api.updateProject(orgId, project.id, payload);
       } else {
@@ -97,6 +104,19 @@ function ProjectModal({
               placeholder="my-project"
             />
             <span className="sg-field__hint">Lowercase letters, numbers, and hyphens.</span>
+          </div>
+          <div className="sg-field">
+            <label htmlFor="project-key-prefix">Ticket key prefix</label>
+            <input
+              id="project-key-prefix"
+              value={keyPrefix}
+              onChange={(e) => {
+                setPrefixTouched(true);
+                setKeyPrefix(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 12));
+              }}
+              placeholder="ABC"
+            />
+            <span className="sg-field__hint">Uppercase letters and digits — used for ticket keys like ABC-001. Optional.</span>
           </div>
           <div className="sg-field">
             <label htmlFor="project-description">Description</label>

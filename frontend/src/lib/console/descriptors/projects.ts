@@ -70,6 +70,7 @@ export const projectsDescriptor: ConsoleDescriptor<Project, ProjectInput> = {
         fields: [
           { key: 'name', label: 'Name', type: 'text', required: true },
           { key: 'slug', label: 'Slug', type: 'slug', derivesFrom: 'name', required: true },
+          { key: 'key_prefix', label: 'Ticket key prefix', type: 'text', hint: 'Uppercase letters/digits — used for ticket keys like ABC-001.' },
           { key: 'description', label: 'Description', type: 'textarea' },
         ],
       },

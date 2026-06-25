@@ -17,7 +17,9 @@ import { membersDescriptor, type OrgMember } from "@/lib/console/descriptors/mem
 // The descriptor's canEdit/canDelete gate visibility off ctx.effectiveRole; the server
 // guard is the sole deny-closed boundary (gating here is advisory).
 
-const ASSIGNABLE_ROLES = ["viewer", "editor", "admin"];
+// RBAC role set for assignment (owner is not assignable; legacy 'editor' maps to
+// 'member' on display via roles.ts). priya seq641.
+const ASSIGNABLE_ROLES = ["viewer", "member", "lead", "admin"];
 
 function RolePickerModal({
   orgId,

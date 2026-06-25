@@ -6,14 +6,24 @@ import { PlusIcon } from '@heroicons/react/24/outline';
 import { useOrg } from '@/context/org';
 import { OrgFormModal, OrgDeleteConfirm } from '@/components/org-dialogs';
 import type { Organization } from '@/lib/api';
+import { DataTable } from '@/components/console/DataTable';
+import { organizationsDescriptor } from '@/lib/console/descriptors/organizations';
+
+// Organizations console list (epic 8920d294). A top-level list (NOT org-scoped) —
+// api.listOrganizations ignores ctx.orgId. Primary-click opens the org (switchOrg +
+// navigate); the RBAC-gated kebab (edit @ admin, delete @ owner) reads each row's
+// effective_role (16dc3df2) via the descriptor's canEdit/canDelete. create/edit/delete
+// keep the existing OrgFormModal / OrgDeleteConfirm dialogs.
 
 type ModalState = { type: 'create' } | { type: 'edit'; org: Organization } | null;
 
 export default function OrganizationsPage() {
-  const { organizations, currentOrg, switchOrg, refresh, loading } = useOrg();
+  const { currentOrg, switchOrg, refresh } = useOrg();
   const router = useRouter();
   const [modal, setModal] = useState<ModalState>(null);
   const [deleteTarget, setDeleteTarget] = useState<Organization | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const reload = () => setReloadKey((k) => k + 1);
 
   return (
     <div className="content">
@@ -22,71 +32,17 @@ export default function OrganizationsPage() {
           <h1 className="sg-page-title">Organizations</h1>
         </div>
 
-        {loading ? (
-          <p className="sg-page-intro">Loading…</p>
-        ) : organizations.length === 0 ? (
-          <div className="projects-empty">You don’t belong to any organization yet. Create one to get started.</div>
-        ) : (
-          <div className="projects-grid">
-            {organizations.map((org) => {
-              const isOwner = org.role === 'owner';
-              const canEdit = org.role === 'owner' || org.role === 'admin';
-              return (
-                <div key={org.id} className="project-card">
-                  <div className="project-card__header">
-                    <div className="project-card__name">{org.name}</div>
-                    <div className="project-card__slug">{org.slug}</div>
-                  </div>
-                  <div className="project-card__body">
-                  <dl className="project-card__fields">
-                    <div className="project-card__field">
-                      <dt>Slug:</dt>
-                      <dd className="project-card__slug">{org.slug}</dd>
-                    </div>
-                    {org.owner && (
-                      <div className="project-card__field">
-                        <dt>Owner:</dt>
-                        <dd>{org.owner}</dd>
-                      </div>
-                    )}
-                    {org.role && (
-                      <div className="project-card__field">
-                        <dt>Role:</dt>
-                        <dd>{org.role}</dd>
-                      </div>
-                    )}
-                  </dl>
-                  <div className="project-card__meta">
-                    {org.role && <span className="project-card__status">{org.role}</span>}
-                    {org.id === currentOrg?.id && <span className="project-card__status project-card__status--active">current</span>}
-                  </div>
-                  <div className="project-card__actions">
-                    <button
-                      className="sg-btn sg-btn--primary sg-btn--sm"
-                      onClick={() => {
-                        switchOrg(org.id);
-                        router.push(`/app/${org.slug}`);
-                      }}
-                    >
-                      Open
-                    </button>
-                    {canEdit && (
-                      <button className="sg-btn sg-btn--secondary sg-btn--sm" onClick={() => setModal({ type: 'edit', org })}>
-                        Edit
-                      </button>
-                    )}
-                    {isOwner && (
-                      <button className="sg-btn sg-btn--danger sg-btn--sm" onClick={() => setDeleteTarget(org)}>
-                        Delete
-                      </button>
-                    )}
-                  </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+        <DataTable
+          descriptor={organizationsDescriptor}
+          ctx={{ orgId: currentOrg?.id ?? '', orgSlug: currentOrg?.slug }}
+          refreshKey={reloadKey}
+          onOpenRow={(o) => {
+            switchOrg(o.id);
+            router.push(`/app/${o.slug}`);
+          }}
+          onEditRow={(o) => setModal({ type: 'edit', org: o })}
+          onDeleteRow={(o) => setDeleteTarget(o)}
+        />
       </main>
 
       {modal?.type === 'create' && (
@@ -94,6 +50,7 @@ export default function OrganizationsPage() {
           onClose={() => setModal(null)}
           onSaved={async (org) => {
             setModal(null);
+            reload();
             await refresh(org.id);
             router.push(`/app/${org.slug}`);
           }}
@@ -105,6 +62,7 @@ export default function OrganizationsPage() {
           onClose={() => setModal(null)}
           onSaved={async (org) => {
             setModal(null);
+            reload();
             await refresh(org.id);
           }}
         />
@@ -115,6 +73,7 @@ export default function OrganizationsPage() {
           onClose={() => setDeleteTarget(null)}
           onDeleted={async () => {
             setDeleteTarget(null);
+            reload();
             await refresh();
           }}
         />
