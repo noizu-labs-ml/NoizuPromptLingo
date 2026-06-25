@@ -39,3 +39,7 @@ config :phoenix, :plug_init_mode, :runtime
 
 config :noizu_sendgrid,
   sandbox_enable: true
+
+# Mock MCP: in dev, also write generated tool modules to disk (inspection/VCS).
+# The DB (modules_json) remains the source of truth.
+config :noizu_prompt_lingua, :mock_mcp, modules_dir: "priv/mock_mcp_modules"

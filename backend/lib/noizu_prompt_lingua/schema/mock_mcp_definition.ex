@@ -17,6 +17,10 @@ defmodule NoizuPromptLingua.Schema.MockMCPDefinition do
     field :resources_json, {:array, :map}, default: []
     field :prompts_json, {:array, :map}, default: []
     field :schema_sql, :string
+    # Agent-designed backing schema: %{"postgres" => [ddl, ...], "weaviate" => [class_def, ...]}.
+    field :schema_json, :map
+    # Generated module implementations: [%{"tool", "module", "function", "source"}].
+    field :modules_json, {:array, :map}, default: []
     field :active_llm_id, :binary_id
     field :db_name, :string
     field :db_provisioned, :boolean, default: false
@@ -29,8 +33,8 @@ defmodule NoizuPromptLingua.Schema.MockMCPDefinition do
   def changeset(definition, attrs) do
     definition
     |> cast(attrs, [:organization_id, :slug, :title, :prompt, :status, :tools_json,
-                     :resources_json, :prompts_json, :schema_sql, :active_llm_id,
-                     :db_name, :db_provisioned, :created_by, :project_id])
+                     :resources_json, :prompts_json, :schema_sql, :schema_json, :modules_json,
+                     :active_llm_id, :db_name, :db_provisioned, :created_by, :project_id])
     |> validate_required([:organization_id, :slug, :title, :prompt])
     |> validate_inclusion(:status, @statuses)
     |> validate_format(:slug, ~r/^[a-z0-9][a-z0-9-]*[a-z0-9]$/)

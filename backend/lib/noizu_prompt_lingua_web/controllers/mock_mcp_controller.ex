@@ -2,7 +2,7 @@ defmodule NoizuPromptLinguaWeb.MockMCPController do
   use NoizuPromptLinguaWeb, :controller
 
   alias NoizuPromptLingua.Domains.MockMCP
-  alias NoizuPromptLingua.Domains.MockMCP.{Agent, Models, DataStore}
+  alias NoizuPromptLingua.Domains.MockMCP.{Agent, Models, DataStore, ModuleForge}
   alias NoizuPromptLingua.Authz
 
   # GET /api/v1/organizations/:org_id/mock-mcp
@@ -115,7 +115,8 @@ defmodule NoizuPromptLinguaWeb.MockMCPController do
           json(conn, %{
             tools: updated.tools_json,
             resources: updated.resources_json,
-            prompts: updated.prompts_json
+            prompts: updated.prompts_json,
+            schema: updated.schema_json
           })
         {:error, :invalid_surface_json, raw} ->
           conn |> put_status(:unprocessable_entity) |> json(%{error: "LLM returned invalid surface JSON", raw: raw})
@@ -133,6 +134,77 @@ defmodule NoizuPromptLinguaWeb.MockMCPController do
         {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "not_found"})
         {:error, reason} -> conn |> put_status(:internal_server_error) |> json(%{error: inspect(reason)})
       end
+    end)
+  end
+
+  # POST /api/v1/organizations/:org_id/mock-mcp/:slug/generate-modules
+  # Generate + compile + test runtime module implementations for the definition's
+  # `impl: "module"` tools (repairing via the LLM on failure). Persists modules_json.
+  def generate_modules(conn, %{"org_id" => org_id, "slug" => slug}) do
+    with_org_definition(conn, org_id, slug, "member", fn def_ ->
+      opts = MockMCP.active_llm_opts(def_)
+
+      case ModuleForge.forge(def_, opts) do
+        {:ok, summary} -> json(conn, summary)
+        {:error, :modules_disabled} ->
+          conn |> put_status(:forbidden) |> json(%{error: "module execution is disabled (mock_mcp.allow_modules=false)"})
+      end
+    end)
+  end
+
+  # GET /api/v1/organizations/:org_id/mock-mcp/:slug/modules
+  # List generated module entries (source + status) for review/editing.
+  def list_modules(conn, %{"org_id" => org_id, "slug" => slug}) do
+    with_org_definition(conn, org_id, slug, "viewer", fn def_ ->
+      json(conn, %{modules: def_.modules_json || []})
+    end)
+  end
+
+  # PUT /api/v1/organizations/:org_id/mock-mcp/:slug/modules/:tool  {source}
+  # Owner edits a generated module's source; we AST-guard + compile and persist
+  # it as a draft (or store the error so edits aren't lost).
+  def update_module(conn, %{"org_id" => org_id, "slug" => slug, "tool" => tool, "source" => source})
+      when is_binary(source) do
+    with_org_definition(conn, org_id, slug, "member", fn def_ ->
+      case ModuleForge.update_source(def_, tool, source) do
+        {:ok, entry} -> json(conn, %{module: entry})
+        {:error, error, entry} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{error: error, module: entry})
+      end
+    end)
+  end
+
+  def update_module(conn, _), do: conn |> put_status(:bad_request) |> json(%{error: "missing 'source'"})
+
+  # POST /api/v1/organizations/:org_id/mock-mcp/:slug/modules/:tool/approve
+  def approve_module(conn, %{"org_id" => org_id, "slug" => slug, "tool" => tool}) do
+    with_org_definition(conn, org_id, slug, "member", fn def_ ->
+      case ModuleForge.approve(def_, tool) do
+        {:ok, entry} -> json(conn, %{module: entry})
+        {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "no module for tool '#{tool}'"})
+        {:error, error} -> conn |> put_status(:unprocessable_entity) |> json(%{error: error})
+      end
+    end)
+  end
+
+  # POST /api/v1/organizations/:org_id/mock-mcp/:slug/modules/:tool/test
+  def test_module(conn, %{"org_id" => org_id, "slug" => slug, "tool" => tool}) do
+    with_org_definition(conn, org_id, slug, "member", fn def_ ->
+      opts = MockMCP.active_llm_opts(def_)
+
+      case ModuleForge.test_module(def_, tool, opts) do
+        {:ok, results} -> json(conn, %{results: results})
+        {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "no module for tool '#{tool}'"})
+        {:error, error} -> conn |> put_status(:unprocessable_entity) |> json(%{error: inspect(error)})
+      end
+    end)
+  end
+
+  # DELETE /api/v1/organizations/:org_id/mock-mcp/:slug/modules/:tool
+  def delete_module(conn, %{"org_id" => org_id, "slug" => slug, "tool" => tool}) do
+    with_org_definition(conn, org_id, slug, "member", fn def_ ->
+      {:ok, _} = MockMCP.delete_module(def_.id, tool)
+      json(conn, %{ok: true})
     end)
   end
 
@@ -337,7 +409,8 @@ defmodule NoizuPromptLinguaWeb.MockMCPController do
     # management API); the MCP gateway strips handlers before clients see them.
     %{id: d.id, slug: d.slug, title: d.title, prompt: d.prompt,
       status: d.status, tools_json: d.tools_json, resources_json: d.resources_json,
-      prompts_json: d.prompts_json, schema_sql: d.schema_sql,
+      prompts_json: d.prompts_json, schema_sql: d.schema_sql, schema_json: d.schema_json,
+      modules_json: d.modules_json,
       active_llm_id: d.active_llm_id,
       active_llm: d.active_llm_id && llm_json(MockMCP.get_llm(d.active_llm_id)),
       organization_id: d.organization_id, db_name: d.db_name, db_provisioned: d.db_provisioned,

@@ -10,6 +10,7 @@ defmodule NoizuPromptLingua.Domains.MockMCP do
   import Ecto.Query, except: [update: 2]
   alias NoizuPromptLingua.Repo
   alias NoizuPromptLingua.Schema.{MockMCPDefinition, MockMCPCallLog, MockMCPLLM}
+  alias NoizuPromptLingua.Domains.MockMCP.WeaviateStore
 
   # ── Definition CRUD ──────────────────────────────────────────
 
@@ -77,13 +78,55 @@ defmodule NoizuPromptLingua.Domains.MockMCP do
     update(slug_or_id, %{tools_json: tools_json})
   end
 
-  @doc "Store a generated surface (tools + resources + prompts) on a definition."
+  @doc """
+  Store a generated surface (tools + resources + prompts) on a definition. When
+  the agent also designed a backing schema (`"schema"` → postgres DDL + weaviate
+  classes), it is persisted to `schema_json` for the provisioner to apply.
+  """
   def set_surface(slug_or_id, %{} = surface) do
-    update(slug_or_id, %{
+    base = %{
       tools_json: Map.get(surface, "tools", []),
       resources_json: Map.get(surface, "resources", []),
       prompts_json: Map.get(surface, "prompts", [])
-    })
+    }
+
+    attrs =
+      case Map.get(surface, "schema") do
+        %{} = schema -> Map.put(base, :schema_json, schema)
+        _ -> base
+      end
+
+    update(slug_or_id, attrs)
+  end
+
+  @doc "Persist generated module implementations ([%{tool, module, function, source, status}])."
+  def set_modules(slug_or_id, modules) when is_list(modules) do
+    update(slug_or_id, %{modules_json: modules})
+  end
+
+  @doc "Find a single module entry by tool name."
+  def get_module(def_, tool_name) do
+    Enum.find(def_.modules_json || [], fn m -> (m["tool"] || m[:tool]) == tool_name end)
+  end
+
+  @doc "Insert or replace (by tool name) one module entry, preserving the rest."
+  def put_module(slug_or_id, %{"tool" => tool} = entry) do
+    case get(slug_or_id) do
+      nil -> {:error, :not_found}
+      def_ ->
+        kept = Enum.reject(def_.modules_json || [], fn m -> (m["tool"] || m[:tool]) == tool end)
+        set_modules(def_.id, kept ++ [entry])
+    end
+  end
+
+  @doc "Remove a module entry (reverts the tool to LLM serving)."
+  def delete_module(slug_or_id, tool_name) do
+    case get(slug_or_id) do
+      nil -> {:error, :not_found}
+      def_ ->
+        kept = Enum.reject(def_.modules_json || [], fn m -> (m["tool"] || m[:tool]) == tool_name end)
+        set_modules(def_.id, kept)
+    end
   end
 
   def get_tools(slug) do
@@ -156,34 +199,76 @@ defmodule NoizuPromptLingua.Domains.MockMCP do
 
   # ── DB Provisioning ─────────────────────────────────────────
 
+  # Per-mock isolation is a dedicated Postgres SCHEMA (`mockmcp_<slug>`) in the
+  # app's own database — NOT a separate database. This needs no CREATEDB/
+  # CREATEROLE privilege (a role can create schemas in a DB it can connect to),
+  # so it works on managed/cloud Postgres. `DataStore` scopes every mock query
+  # to this schema via `SET LOCAL search_path`. The schema name is persisted in
+  # the (historically named) `db_name` field.
   def provision_db(slug_or_id) do
     case get(slug_or_id) do
       nil -> {:error, :not_found}
       %{db_provisioned: true} = def_ -> {:ok, def_}
       def_ ->
-        db_name = "mockmcp_#{String.replace(def_.slug, "-", "_")}"
-        case create_database(db_name) do
-          :ok ->
-            def_
-            |> MockMCPDefinition.changeset(%{db_name: db_name, db_provisioned: true})
-            |> Repo.update()
+        schema = schema_name(def_.slug)
+
+        with :ok <- create_schema(schema),
+             :ok <- apply_postgres_design(schema, def_),
+             {:ok, _classes} <- WeaviateStore.ensure_classes(def_, weaviate_design(def_)) do
+          def_
+          |> MockMCPDefinition.changeset(%{db_name: schema, db_provisioned: true})
+          |> Repo.update()
+        else
           {:error, reason} -> {:error, reason}
         end
     end
   end
 
-  defp create_database(db_name) do
-    safe_name = String.replace(db_name, ~r/[^a-z0-9_]/, "")
+  defp postgres_design(%{schema_json: %{"postgres" => ddl}}) when is_list(ddl), do: ddl
+  defp postgres_design(_), do: []
+
+  defp weaviate_design(%{schema_json: %{"weaviate" => classes}}) when is_list(classes), do: classes
+  defp weaviate_design(_), do: []
+
+  # Run the agent-designed DDL (plus any free-text schema_sql) inside the mock's
+  # schema via a transaction-local search_path, so unqualified tables land there.
+  defp apply_postgres_design(schema, def_) do
+    statements = postgres_design(def_) ++ List.wrap(blank_to_nil(def_.schema_sql))
+
+    case statements do
+      [] ->
+        :ok
+
+      stmts ->
+        safe = String.replace(schema, ~r/[^a-z0-9_]/, "")
+
+        Repo.transaction(fn ->
+          Ecto.Adapters.SQL.query!(Repo, ~s(SET LOCAL search_path TO "#{safe}"), [])
+          Enum.each(stmts, fn sql -> Ecto.Adapters.SQL.query!(Repo, sql, []) end)
+        end)
+        |> case do
+          {:ok, _} -> :ok
+          {:error, e} -> {:error, "schema DDL failed: #{inspect(e)}"}
+        end
+    end
+  end
+
+  defp blank_to_nil(nil), do: nil
+  defp blank_to_nil(""), do: nil
+  defp blank_to_nil(v), do: v
+
+  @doc "Schema name backing a mock slug (also used by DataStore for search_path)."
+  def schema_name(slug) do
+    cleaned = slug |> to_string() |> String.downcase() |> String.replace(~r/[^a-z0-9]+/, "_")
+    "mockmcp_#{cleaned}"
+  end
+
+  defp create_schema(schema) do
+    safe = String.replace(schema, ~r/[^a-z0-9_]/, "")
     try do
-      Ecto.Adapters.SQL.query!(Repo, "CREATE DATABASE #{safe_name}", [])
-      user = "mockmcp_#{safe_name}"
-      password = Base.encode64(:crypto.strong_rand_bytes(24))
-      Ecto.Adapters.SQL.query!(Repo, "CREATE USER #{user} WITH PASSWORD '#{password}'", [])
-      Ecto.Adapters.SQL.query!(Repo, "GRANT ALL PRIVILEGES ON DATABASE #{safe_name} TO #{user}", [])
+      Ecto.Adapters.SQL.query!(Repo, ~s(CREATE SCHEMA IF NOT EXISTS "#{safe}"), [])
       :ok
     rescue
-      e in Postgrex.Error ->
-        if e.postgres.code == :duplicate_database, do: :ok, else: {:error, inspect(e)}
       e -> {:error, inspect(e)}
     end
   end

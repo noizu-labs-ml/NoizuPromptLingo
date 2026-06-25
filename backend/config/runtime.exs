@@ -20,9 +20,41 @@ if anthropic_key = System.get_env("ANTHROPIC_API_KEY") do
   config :genai, :anthropic, api_key: anthropic_key
 end
 
+# Additional chat providers (Mock MCP + asset-generation text models). Each genai
+# provider reads its key from `config :genai, :<config_key>, api_key:` — the bare
+# env vars are published to the pod via Infisical (/apps/npl-mcp, includeAllSecrets).
+# Media/image providers (openai_image, gemini_image, suno, litellm media) instead
+# read OPENAI_API_KEY / GEMINI_API_KEY / SUNO_API_KEY / LITELLM_API_KEY directly
+# from env, so they need no config block here.
+for {config_key, env} <- [
+      deepseek: "DEEPSEEK_API_KEY",
+      zai: "ZAI_API_KEY",
+      cerebras: "CEREBRAS_API_KEY",
+      xai: "XAI_API_KEY",
+      groq: "GROQ_API_KEY",
+      gemini: "GEMINI_API_KEY",
+      mistral: "MISTRAL_API_KEY"
+    ] do
+  if key = System.get_env(env) do
+    config :genai, config_key, api_key: key
+  end
+end
+
+# LiteLLM proxy: deployment-specific base_url + master key (both from env/Infisical).
+if litellm_key = System.get_env("LITELLM_API_KEY") do
+  config :genai, :litellm,
+    api_key: litellm_key,
+    base_url: System.get_env("LITELLM_BASE_URL", "http://localhost:4000")
+end
+
 config :noizu_prompt_lingua, :mock_mcp,
   default_provider: System.get_env("MOCK_MCP_DEFAULT_PROVIDER", "openai"),
-  default_model: System.get_env("MOCK_MCP_DEFAULT_MODEL", "gpt-4o-mini")
+  default_model: System.get_env("MOCK_MCP_DEFAULT_MODEL", "gpt-4o-mini"),
+  # Runtime-compiled tool modules (LLM-authored Elixir). Gated; AST-guarded +
+  # timeout-bounded at execution (see MockMCP.ModuleRuntime). Disable with
+  # MOCK_MCP_ALLOW_MODULES=false.
+  allow_modules: System.get_env("MOCK_MCP_ALLOW_MODULES", "true") == "true",
+  module_timeout_ms: String.to_integer(System.get_env("MOCK_MCP_MODULE_TIMEOUT_MS") || "10000")
 
 # ── Memory engine: embeddings + Weaviate (all envs) ──────────────
 # Keyword lists deep-merge with the config.exs defaults; these only override env-sourced values.

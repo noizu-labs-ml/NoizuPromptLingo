@@ -15,6 +15,8 @@ defmodule NoizuPromptLinguaWeb.Plugs.MockMCPGateway do
 
   alias NoizuPromptLingua.Domains.MockMCP
   alias NoizuPromptLingua.Domains.MockMCP.Agent
+  alias NoizuPromptLingua.Domains.MockMCP.ModuleRuntime
+  alias NoizuPromptLingua.Domains.MockMCP.Dispatch
 
   @behaviour Plug
 
@@ -134,20 +136,37 @@ defmodule NoizuPromptLinguaWeb.Plugs.MockMCPGateway do
     do: json_error(conn, id, -32602, "Missing 'name' parameter")
 
   defp run_generated_tool(conn, id, def_, tool, arguments) do
-    opts = MockMCP.active_llm_opts(def_)
-
-    case Agent.handle_tool_call(def_, tool["name"], arguments, tool["handler"], opts) do
-      {:ok, content, latency, trace} ->
+    case Dispatch.route(def_, tool) do
+      # Module-implemented tool, not yet live: fail loudly rather than silently
+      # serving via the LLM, so it's obvious the implementation isn't approved.
+      {:pending, reason} ->
         MockMCP.log_call(def_.id, %{method: "tools/call", tool_name: tool["name"],
-          arguments: arguments, response: %{content: content, trace: trace}, latency_ms: latency})
-        json_result(conn, id, %{content: content})
+          arguments: arguments, error: reason, response: %{}, latency_ms: 0})
+        json_error(conn, id, -32000, reason)
 
-      {:error, reason, latency, trace} ->
-        MockMCP.log_call(def_.id, %{method: "tools/call", tool_name: tool["name"],
-          arguments: arguments, error: inspect(reason), response: %{trace: trace}, latency_ms: latency})
-        json_error(conn, id, -32000, "Tool call failed: #{inspect(reason)}")
+      route ->
+        opts = MockMCP.active_llm_opts(def_)
+
+        result =
+          case route do
+            :module -> ModuleRuntime.invoke(def_, tool, arguments)
+            :llm -> Agent.handle_tool_call(def_, tool["name"], arguments, tool["handler"], opts)
+          end
+
+        case result do
+          {:ok, content, latency, trace} ->
+            MockMCP.log_call(def_.id, %{method: "tools/call", tool_name: tool["name"],
+              arguments: arguments, response: %{content: content, trace: trace}, latency_ms: latency})
+            json_result(conn, id, %{content: content})
+
+          {:error, reason, latency, trace} ->
+            MockMCP.log_call(def_.id, %{method: "tools/call", tool_name: tool["name"],
+              arguments: arguments, error: inspect(reason), response: %{trace: trace}, latency_ms: latency})
+            json_error(conn, id, -32000, "Tool call failed: #{inspect(reason)}")
+        end
     end
   end
+
 
   # ── resources ────────────────────────────────────────────────
 

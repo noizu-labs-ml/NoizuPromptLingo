@@ -22,14 +22,22 @@ defmodule NoizuPromptLingua.Domains.MockMCP.Agent do
 
   @surface_gen_system_prompt """
   You are an MCP server architect. Given a description of what an MCP server should do,
-  generate a JSON object with three arrays: "tools", "resources", and "prompts".
+  generate a JSON object with arrays "tools", "resources", "prompts", and a "schema"
+  object describing the server's stateful backing store.
 
   Each TOOL: {
     "name": snake_case string,
     "description": string (client-facing),
     "inputSchema": JSON Schema object with "type":"object","properties","required",
-    "handler": string
+    "handler": string,
+    "impl": "module" | "llm"
   }
+
+  Set "impl" to "module" when the tool's behavior is DETERMINISTIC and can be
+  implemented as real code (math, string/data transforms, CRUD over the backing
+  store, lookups). Set it to "llm" when the result needs open-ended generation,
+  judgement, or natural-language synthesis. Default to "llm" if unsure. The
+  "handler" instructions still apply to "module" tools (they guide the code).
   Each RESOURCE: {
     "uri": string (e.g. "mock://orders/recent"),
     "name": string,
@@ -47,6 +55,21 @@ defmodule NoizuPromptLingua.Domains.MockMCP.Agent do
   The "handler" field is PRIVATE server-side instructions that are NEVER shown to
   clients. Write it as explicit guidance to yourself on exactly how to respond to
   this item and how to format the result (shape, fields, tone, invariants).
+
+  The "schema" object designs the server's PRIVATE, REAL backing store so responses
+  stay stateful and consistent across calls. Design only what the handlers actually
+  need. {
+    "postgres": [ SQL DDL strings — each a single statement, e.g.
+                  "CREATE TABLE orders (id serial primary key, status text, total numeric)".
+                  Use UNQUALIFIED table names (they are created inside the mock's own
+                  private schema). Omit or use [] if no relational state is needed. ],
+    "weaviate": [ { "name": "PascalCase collection name (e.g. \\"Facts\\")",
+                    "description": string,
+                    "properties": [ {"name": snake_case string, "dataType": "text"|"int"|"number"|"boolean"} ]
+                  } — semantic/vector collections for similarity search. Each object you
+                  store is embedded from its text automatically. Omit or use [] if no
+                  vector search is needed. ]
+  }
 
   Return ONLY the JSON object, no markdown fences or explanation.
   """
@@ -127,7 +150,8 @@ defmodule NoizuPromptLingua.Domains.MockMCP.Agent do
              %{
                "tools" => list_field(obj, "tools"),
                "resources" => list_field(obj, "resources"),
-               "prompts" => list_field(obj, "prompts")
+               "prompts" => list_field(obj, "prompts"),
+               "schema" => schema_field(obj)
              }}
           # tolerate a bare tools array
           {:ok, tools} when is_list(tools) ->
@@ -143,6 +167,14 @@ defmodule NoizuPromptLingua.Domains.MockMCP.Agent do
     case obj[key] do
       l when is_list(l) -> l
       _ -> []
+    end
+  end
+
+  # Normalize the backing-schema design into %{"postgres" => [..], "weaviate" => [..]}.
+  defp schema_field(obj) do
+    case obj["schema"] do
+      %{} = s -> %{"postgres" => list_field(s, "postgres"), "weaviate" => list_field(s, "weaviate")}
+      _ -> %{"postgres" => [], "weaviate" => []}
     end
   end
 
@@ -284,7 +316,7 @@ defmodule NoizuPromptLingua.Domains.MockMCP.Agent do
             end
 
           {:op, op, args} ->
-            {res, entry} = exec_op(def_, op, args)
+            {res, entry} = exec_op(def_, op, args, opts)
 
             next =
               messages ++
@@ -312,8 +344,8 @@ defmodule NoizuPromptLingua.Domains.MockMCP.Agent do
     end
   end
 
-  defp exec_op(def_, op, args) do
-    case InternalOps.exec(def_, op, args) do
+  defp exec_op(def_, op, args, opts) do
+    case InternalOps.exec(def_, op, args, opts) do
       {:ok, res} -> {res, %{"op" => op, "args" => args, "result" => res}}
       {:error, msg} -> {%{"error" => msg}, %{"op" => op, "args" => args, "error" => msg}}
     end
@@ -335,6 +367,97 @@ defmodule NoizuPromptLingua.Domains.MockMCP.Agent do
   end
 
   defp fill(template, token, value), do: String.replace(template, token, value || "")
+
+  # ── Module generation (deterministic tool implementations) ───
+
+  @module_contract """
+  Write a single Elixir module that implements the tool as REAL code.
+
+  Hard requirements:
+    * Module name MUST be exactly: %MODULE%
+    * Public entrypoint: `def call(args, ctx)` where
+        - `args` is the decoded arguments map with STRING keys (per the tool's inputSchema),
+        - `ctx` is a map of helper closures for stateful backing store access:
+            ctx.db_query.(sql)                -> {:ok, %{columns, rows, ...}} | {:error, msg}
+            ctx.db_execute.(sql)              -> {:ok, ...} | {:error, msg}
+            ctx.redis_get.(key) / ctx.redis_set.(key, value) / ctx.redis_del.(key)
+            ctx.weaviate_add.(collection, text) / ctx.weaviate_query.(collection, query)
+            ctx.call_tool.(tool_name, args)   -> {:ok, content} | {:error, msg}  (invoke another tool)
+    * Return `{:ok, result}` (result is a JSON-encodable map or string) or `{:error, message}`.
+    * You MAY use only pure Elixir/stdlib (Enum, Map, String, Integer, Float, Jason, etc.)
+      and the `ctx` helpers. You MUST NOT use System, File, Code, Module, Process, Task,
+      Node, Port, Application, Repo/Ecto, raw OS/file/network/:erlang, or `apply`/`spawn` —
+      such code is rejected before compilation. Reach the backing store ONLY via `ctx`.
+
+  Return ONLY the Elixir source — no markdown fences, no commentary.
+  """
+
+  @doc "Generate the Elixir source implementing `tool`. Returns {:ok, source} | {:error, _}."
+  def generate_module(prompt, tool, module_name, opts \\ []) do
+    system =
+      "You are an expert Elixir engineer implementing one tool of a mock MCP server.\n\n" <>
+        "Server purpose:\n---\n#{prompt}\n---\n\n" <>
+        "Tool: #{tool["name"]}\nDescription: #{tool["description"]}\n" <>
+        "inputSchema: #{Jason.encode!(tool["inputSchema"] || %{})}\n" <>
+        "Private handler guidance: #{tool["handler"]}\n\n" <>
+        fill(@module_contract, "%MODULE%", inspect(module_name))
+
+    case run([GenAI.Message.system(system), GenAI.Message.user("Implement the tool now.")], opts) do
+      {:ok, text} -> {:ok, strip_code_fences(text)}
+      error -> error
+    end
+  end
+
+  @doc "Repair module `source` given a compile/test `error`. Returns {:ok, source} | {:error, _}."
+  def repair_module(source, error, module_name, opts \\ []) do
+    system =
+      "You are fixing an Elixir module for a mock MCP tool. The module must be named " <>
+        "exactly #{inspect(module_name)} and keep `def call(args, ctx)`. " <>
+        "Reach state ONLY via ctx closures; do not use System/File/Code/Process/Repo/etc. " <>
+        "Return ONLY the corrected Elixir source, no fences."
+
+    user = "Current source:\n#{source}\n\nError:\n#{error}\n\nReturn the corrected full module source."
+
+    case run([GenAI.Message.system(system), GenAI.Message.user(user)], opts) do
+      {:ok, text} -> {:ok, strip_code_fences(text)}
+      error -> error
+    end
+  end
+
+  @doc """
+  Produce sample argument sets to exercise the tool's `call/2`. Returns
+  `{:ok, [%{...args...}]}` or `{:error, _}`.
+  """
+  def module_tests(tool, opts \\ []) do
+    system =
+      "Generate up to 3 representative argument objects to test an MCP tool, matching its " <>
+        "inputSchema. Return ONLY a JSON array of argument objects (string keys), no commentary."
+
+    user =
+      "Tool: #{tool["name"]}\nDescription: #{tool["description"]}\n" <>
+        "inputSchema: #{Jason.encode!(tool["inputSchema"] || %{})}"
+
+    case run([GenAI.Message.system(system), GenAI.Message.user(user)], opts) do
+      {:ok, text} ->
+        case decode_json(text) do
+          {:ok, list} when is_list(list) -> {:ok, list}
+          {:ok, %{} = one} -> {:ok, [one]}
+          _ -> {:ok, [%{}]}
+        end
+
+      error ->
+        error
+    end
+  end
+
+  defp strip_code_fences(str) do
+    str = String.trim(str)
+
+    case Regex.run(~r/^```[a-zA-Z]*\s*\n(.*)\n```$/s, str) do
+      [_, inner] -> String.trim(inner)
+      _ -> str
+    end
+  end
 
   # ── Inference plumbing (genai or direct HTTP for custom endpoints) ──
 

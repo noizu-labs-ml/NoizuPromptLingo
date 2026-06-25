@@ -149,17 +149,22 @@ defmodule NoizuPromptLinguaWeb.Router do
       NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Browser.MCP)
   end
 
-  scope "/mcp" do
-    forward "/", Noizu.MCP.Transport.StreamableHTTP.Plug,
-      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.MCP)
-  end
-
   # Dynamic mock-MCP gateway. Each mock MCP (defined + activated via the
   # org-scoped management API) is served live at mockmcp.<host>/mcp/<slug>/mcp.
   # This is a per-slug JSON-RPC proxy to an LLM — distinct from the static
   # Noizu.MCP.Server domains above, so it is NOT listed in MCPServers.
+  #
+  # MUST be declared before the host-less root `/mcp` aggregator below: that
+  # scope uses `forward "/"`, which matches every path under `/mcp` on ANY host
+  # (no host constraint). Declared first, it would shadow this gateway and 404
+  # every `mockmcp.<host>/mcp/<slug>/mcp` request.
   scope "/", NoizuPromptLinguaWeb, host: "mockmcp." do
     match :*, "/mcp/:slug/mcp", MockMCPGatewayController, :handle
+  end
+
+  scope "/mcp" do
+    forward "/", Noizu.MCP.Transport.StreamableHTTP.Plug,
+      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.MCP)
   end
 
   # Authentik (OIDC) is the ONLY supported auth method — no alternatives.
@@ -378,6 +383,13 @@ defmodule NoizuPromptLinguaWeb.Router do
 
     post "/mock-mcp/:slug/activate", MockMCPController, :activate
     post "/mock-mcp/:slug/generate-tools", MockMCPController, :generate_tools
+    post "/mock-mcp/:slug/generate-modules", MockMCPController, :generate_modules
+    # Review / edit / approve generated module source before it serves live.
+    get "/mock-mcp/:slug/modules", MockMCPController, :list_modules
+    put "/mock-mcp/:slug/modules/:tool", MockMCPController, :update_module
+    post "/mock-mcp/:slug/modules/:tool/approve", MockMCPController, :approve_module
+    post "/mock-mcp/:slug/modules/:tool/test", MockMCPController, :test_module
+    delete "/mock-mcp/:slug/modules/:tool", MockMCPController, :delete_module
     post "/mock-mcp/:slug/provision-db", MockMCPController, :provision_db
     get "/mock-mcp/:slug/calls", MockMCPController, :calls
 
