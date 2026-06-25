@@ -17,6 +17,13 @@ defmodule NoizuPromptLingua.AuthzTestSchema do
       []
     )
 
+    # ccaf5684 / 056: persona member_type (persona-as-member, ADR-017).
+    Ecto.Adapters.SQL.query!(
+      Repo,
+      "ALTER TYPE member_type_enum ADD VALUE IF NOT EXISTS 'persona'",
+      []
+    )
+
     Ecto.Adapters.SQL.query!(
       Repo,
       "INSERT INTO groups (name, display_name, description, is_system) " <>

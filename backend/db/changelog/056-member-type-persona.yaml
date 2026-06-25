@@ -1,0 +1,24 @@
+databaseChangeLog:
+  # Persona-as-member (ccaf5684 / ADR-017): a persona can be a resource member.
+  # scoped_memberships is already polymorphic (member_type, member_id) — this just adds
+  # the new member_type value. member_id then references personas.id for persona rows.
+  # No other schema: the UNIQUE(resource_type, resource_id, member_type, member_id) and
+  # the indexes already cover it; the user-scoped sole-owner trigger + counts stay
+  # user-only by design (ADR-017 D3 — persona-as-authz-actor is deferred).
+  #
+  # 053-pattern: ALTER TYPE ADD VALUE can't run in a txn (runInTransaction:false) and the
+  # value can't be used in the adding txn; IF NOT EXISTS makes it re-runnable. Rollback is
+  # a documented no-op — PG cannot drop an enum value, and an unused value is inert.
+
+  - changeSet:
+      id: 056a-member-type-enum-add-persona
+      author: aniket-backend
+      runInTransaction: false
+      changes:
+        - sql:
+            sql: |
+              ALTER TYPE member_type_enum ADD VALUE IF NOT EXISTS 'persona';
+      rollback:
+        - sql:
+            sql: |
+              SELECT 1;

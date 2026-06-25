@@ -166,3 +166,6 @@ databaseChangeLog:
   - include:
       file: 055-ticket-human-key.yaml
       relativeToChangelogFile: true
+  - include:
+      file: 056-member-type-persona.yaml
+      relativeToChangelogFile: true
