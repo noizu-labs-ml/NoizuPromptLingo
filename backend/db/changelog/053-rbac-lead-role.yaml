@@ -1,0 +1,43 @@
+databaseChangeLog:
+  # Adds the 'lead' role tier between admin and member (ADR-015): a new ORDINAL rank
+  # owner > admin > lead > member > viewer. Roles are name-based (role_name_enum +
+  # groups + scoped_memberships) and ranked app-side via NoizuPromptLingua.Authz
+  # @role_ranks, so this is a clean insert — NO data migration, NO stored-proc rewrite,
+  # NO membership backfill (existing rows' role NAMES are unchanged; only the Elixir
+  # rank integers for member/viewer shift). Enforcement is the ordinal ladder (tools
+  # tag required_role: :lead), so NO policy-table rows are seeded here.
+
+  # 053a — extend the enum. ALTER TYPE ... ADD VALUE cannot run inside a transaction,
+  # and the new value can't be used in the same txn it's added -> runInTransaction:false
+  # and the group insert is a SEPARATE changeset (053b). Idempotent via IF NOT EXISTS.
+  - changeSet:
+      id: 053a-role-name-enum-add-lead
+      author: lucia-backend
+      runInTransaction: false
+      changes:
+        - sql:
+            sql: |
+              ALTER TYPE role_name_enum ADD VALUE IF NOT EXISTS 'lead' BEFORE 'member';
+      rollback:
+        - sql:
+            sql: |
+              -- PostgreSQL cannot drop an enum value; 'lead' is inert when unused.
+              -- Reversal would require recreating the type + recasting every column,
+              -- which is unsafe on a live DB. Documented no-op (ADR-015).
+              SELECT 1;
+
+  # 053b — the assignable 'lead' group (one group per role tier, mirroring
+  # owner/admin/member/viewer). Idempotent; runs after 053a commits.
+  - changeSet:
+      id: 053b-insert-lead-group
+      author: lucia-backend
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO groups (name, display_name, description, is_system)
+              VALUES ('lead', 'Lead', 'member + management/moderation (ADR-015)', true)
+              ON CONFLICT (name) DO NOTHING;
+      rollback:
+        - sql:
+            sql: |
+              DELETE FROM groups WHERE name = 'lead';

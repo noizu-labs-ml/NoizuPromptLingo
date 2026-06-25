@@ -1,5 +1,11 @@
 defmodule NoizuPromptLingua.Authz do
-  @role_ranks %{"owner" => 0, "admin" => 1, "member" => 2, "viewer" => 3}
+  # Ordinal role ladder (lower = higher privilege). 'lead' sits between admin and
+  # member (ADR-015). MUST stay in sync with the role_name_enum DB values — see
+  # role_ranks/0 + the authz_role_ranks_test sync guard.
+  @role_ranks %{"owner" => 0, "admin" => 1, "lead" => 2, "member" => 3, "viewer" => 4}
+
+  @doc "The ordinal role ladder map (role name => rank; lower = higher privilege)."
+  def role_ranks, do: @role_ranks
 
   def check_permission(user_id, resource_type, resource_id, action) do
     sql = "SELECT check_user_permission($1::uuid, $2, $3::uuid, $4)"

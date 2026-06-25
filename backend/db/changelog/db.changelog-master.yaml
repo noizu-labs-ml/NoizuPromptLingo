@@ -157,3 +157,6 @@ databaseChangeLog:
   - include:
       file: 052-chat-room-slug.yaml
       relativeToChangelogFile: true
+  - include:
+      file: 053-rbac-lead-role.yaml
+      relativeToChangelogFile: true

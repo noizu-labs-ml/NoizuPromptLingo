@@ -16,6 +16,10 @@ NoizuPromptLingua.BoardTestSchema.ensure!()
 # test DB so the assets suite is self-contained (the shared instance lagged 040). Idempotent.
 NoizuPromptLingua.AssetTestSchema.ensure!()
 
+# Ensure the ADR-015 / Liquibase 053 'lead' role tier exists on the test DB (role_name_enum
+# value + group row) so the authz role-rank sync guard matches. Idempotent.
+NoizuPromptLingua.AuthzTestSchema.ensure!()
+
 # Memory tests are Weaviate-primary: use the deterministic (feature-hash) embedder for reproducible
 # vectors with no OpenAI, and an ephemeral, isolated class on the cluster Weaviate. Inter-test
 # isolation comes from each test's randomly-generated organization_id (scope filter).
