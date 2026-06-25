@@ -78,6 +78,18 @@ defmodule NoizuPromptLinguaWeb.ChatController do
 
   def update(conn, _params), do: missing_field(conn, "room")
 
+  # DELETE /api/v1/organizations/:org_id/chat/rooms/:id
+  # Hard delete (cascade) — see Chat.delete_room/1. member role for now; this is a
+  # moderation action that should get a lead+ RBAC tag (ADR-015) at tool-tagging time.
+  def delete(conn, %{"org_id" => org_id, "id" => id}) do
+    with_room(conn, org_id, id, "member", fn room ->
+      case Chat.delete_room(room) do
+        {:ok, _deleted} -> json(conn, %{deleted: true, id: room.id})
+        {:error, _reason} -> conn |> put_status(:unprocessable_entity) |> json(%{error: "Could not delete room"})
+      end
+    end)
+  end
+
   # GET /api/v1/organizations/:org_id/chat/rooms/:room_id/messages
   def index_messages(conn, %{"org_id" => org_id, "room_id" => room_id} = params) do
     with_room(conn, org_id, room_id, "viewer", fn _room ->

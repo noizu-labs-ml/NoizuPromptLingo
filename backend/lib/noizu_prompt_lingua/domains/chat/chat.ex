@@ -27,6 +27,41 @@ defmodule NoizuPromptLingua.Domains.Chat do
     room |> ChatRoom.update_changeset(attrs) |> Repo.update()
   end
 
+  # Delete a room and everything under it (76338b44). chat_messages/events/members/
+  # notifications cascade via ON DELETE CASCADE (032-chat). npl_reactions is polymorphic
+  # (no FK), so we sweep reactions on this room's messages + events FIRST, before the
+  # cascade removes the rows they reference — otherwise they'd orphan. Hard delete (the
+  # console-delete + smoke-room-cleanup use cases need actual removal); no soft-archive
+  # column today. Returns {:ok, room} | {:error, :not_found} | {:error, changeset}.
+  def delete_room(room_id) when is_binary(room_id) do
+    case get_room(room_id) do
+      nil -> {:error, :not_found}
+      room -> delete_room(room)
+    end
+  end
+
+  def delete_room(%ChatRoom{} = room) do
+    Repo.transaction(fn ->
+      msg_ids = ChatMessage |> where([m], m.room_id == ^room.id) |> select([m], m.id) |> Repo.all()
+      event_ids = ChatEvent |> where([e], e.room_id == ^room.id) |> select([e], e.id) |> Repo.all()
+      sweep_reactions("chat_message", msg_ids)
+      sweep_reactions("chat_event", event_ids)
+
+      case Repo.delete(room) do
+        {:ok, deleted} -> deleted
+        {:error, changeset} -> Repo.rollback(changeset)
+      end
+    end)
+  end
+
+  defp sweep_reactions(_entity_type, []), do: :ok
+
+  defp sweep_reactions(entity_type, ids) do
+    Reaction
+    |> where([r], r.entity_type == ^entity_type and r.entity_id in ^ids)
+    |> Repo.delete_all()
+  end
+
   # Resolve a room by slug within its uniqueness bucket. The predicate MUST match
   # the partial-index predicate (ADR-013 A3): project rooms vs the NULL-project
   # (org-level) bucket are distinct namespaces.

@@ -56,4 +56,32 @@ defmodule NoizuPromptLinguaWeb.ChatRoomControllerTest do
       assert json_response(put(conn, "/api/v1/organizations/#{org_id}/chat/rooms/#{other_room.id}", %{room: %{name: "x"}}), 404)
     end
   end
+
+  describe "DELETE room (76338b44)" do
+    test "deletes the room; cascades messages + sweeps reactions", %{conn: conn, org_id: org_id, room: room} do
+      {:ok, msg} = Chat.send_message(%{room_id: room.id, content: "bye", sender: "alice"})
+      {:ok, _} = Chat.add_reaction(%{entity_type: "chat_message", entity_id: msg.id, persona: "alice", emoji: "👍"})
+
+      assert json_response(delete(conn, "/api/v1/organizations/#{org_id}/chat/rooms/#{room.id}"), 200) == %{"deleted" => true, "id" => room.id}
+
+      # room gone, message cascaded, polymorphic reaction swept (no orphan)
+      assert Chat.get_room(room.id) == nil
+      assert Chat.get_message(msg.id) == nil
+      assert Chat.list_reactions("chat_message", msg.id) == []
+    end
+
+    test "404 when the room does not exist", %{conn: conn, org_id: org_id} do
+      assert json_response(delete(conn, "/api/v1/organizations/#{org_id}/chat/rooms/#{Ecto.UUID.generate()}"), 404)
+    end
+
+    test "404 for a room in another org (no cross-org delete)", %{conn: conn, org_id: org_id} do
+      other_slug = "room-del-org2-#{System.unique_integer([:positive])}"
+      other = post(conn, "/api/v1/organizations", %{organization: %{slug: other_slug, name: "Other"}})
+      other_org_id = json_response(other, 201)["organization"]["id"]
+      {:ok, other_room} = Chat.create_room(%{organization_id: other_org_id, name: "Theirs"})
+
+      assert json_response(delete(conn, "/api/v1/organizations/#{org_id}/chat/rooms/#{other_room.id}"), 404)
+      assert Chat.get_room(other_room.id)
+    end
+  end
 end

@@ -7,6 +7,7 @@ defmodule NoizuPromptLingua.Domains.Chat.MCP do
   tool NoizuPromptLingua.Domains.Chat.Tools.Overview, category: "Chat"
   tool NoizuPromptLingua.Domains.Chat.Tools.CreateRoom, category: "Chat"
   tool NoizuPromptLingua.Domains.Chat.Tools.GetRoom, category: "Chat"
+  tool NoizuPromptLingua.Domains.Chat.Tools.DeleteRoom, category: "Chat"
   tool NoizuPromptLingua.Domains.Chat.Tools.ListRooms, category: "Chat"
   tool NoizuPromptLingua.Domains.Chat.Tools.SendMessage, category: "Chat"
   tool NoizuPromptLingua.Domains.Chat.Tools.ListMessages, category: "Chat"
