@@ -79,10 +79,12 @@ defmodule NoizuPromptLinguaWeb.ChatController do
   def update(conn, _params), do: missing_field(conn, "room")
 
   # DELETE /api/v1/organizations/:org_id/chat/rooms/:id
-  # Hard delete (cascade) — see Chat.delete_room/1. member role for now; this is a
-  # moderation action that should get a lead+ RBAC tag (ADR-015) at tool-tagging time.
+  # Hard delete (cascade) — see Chat.delete_room/1. Destructive (wipes all history) +
+  # LIVE-enforced, so the bar is `lead`, NOT `member` (marcus seq540). This matches the
+  # eventual ADR-013/015 chat:moderate tag (required_role: :lead), so the live REST bar
+  # and the RBAC tool tag are the same — no later reconciliation.
   def delete(conn, %{"org_id" => org_id, "id" => id}) do
-    with_room(conn, org_id, id, "member", fn room ->
+    with_room(conn, org_id, id, "lead", fn room ->
       case Chat.delete_room(room) do
         {:ok, _deleted} -> json(conn, %{deleted: true, id: room.id})
         {:error, _reason} -> conn |> put_status(:unprocessable_entity) |> json(%{error: "Could not delete room"})

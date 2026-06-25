@@ -7,6 +7,7 @@ defmodule NoizuPromptLinguaWeb.ChatRoomControllerTest do
   use NoizuPromptLinguaWeb.ConnCase
 
   alias NoizuPromptLingua.Domains.Chat
+  alias NoizuPromptLingua.Authz.ScopedMemberships
 
   setup %{conn: conn} do
     %{access_token: token} = setup_user_and_token()
@@ -72,6 +73,16 @@ defmodule NoizuPromptLinguaWeb.ChatRoomControllerTest do
 
     test "404 when the room does not exist", %{conn: conn, org_id: org_id} do
       assert json_response(delete(conn, "/api/v1/organizations/#{org_id}/chat/rooms/#{Ecto.UUID.generate()}"), 404)
+    end
+
+    test "a plain member (below the lead bar) cannot delete -> 403, room survives", %{conn: base_conn, org_id: org_id, room: room} do
+      # destructive + live-enforced -> requires lead+; a member is denied (marcus seq540)
+      %{access_token: token, user: member} = setup_user_and_token()
+      {:ok, _} = ScopedMemberships.add_member("organization", org_id, member.id, "member")
+      member_conn = authenticated_conn(base_conn, token)
+
+      assert json_response(delete(member_conn, "/api/v1/organizations/#{org_id}/chat/rooms/#{room.id}"), 403)
+      assert Chat.get_room(room.id)
     end
 
     test "404 for a room in another org (no cross-org delete)", %{conn: conn, org_id: org_id} do
