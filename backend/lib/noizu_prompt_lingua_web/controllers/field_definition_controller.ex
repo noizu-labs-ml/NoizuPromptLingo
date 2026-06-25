@@ -17,6 +17,21 @@ defmodule NoizuPromptLinguaWeb.FieldDefinitionController do
     end)
   end
 
+  # GET /api/v1/organizations/:org_id/ticket-field-definitions/:id
+  # Fetch a single field definition visible in this org context: a global
+  # (system) field or one owned by this org (org- or project-scoped under it).
+  # A field belonging to another org returns 404 (no cross-org existence leak).
+  def show(conn, %{"org_id" => org_id, "id" => id}) do
+    with_org(conn, org_id, "viewer", fn resolved_org_id ->
+      case Definitions.get_field(id) do
+        nil -> conn |> put_status(:not_found) |> json(%{error: "Field not found"})
+        %{organization_id: nil} = field -> json(conn, %{field_definition: field_to_json(field)})
+        %{organization_id: ^resolved_org_id} = field -> json(conn, %{field_definition: field_to_json(field)})
+        _ -> conn |> put_status(:not_found) |> json(%{error: "Field not found"})
+      end
+    end)
+  end
+
   # POST /api/v1/organizations/:org_id/ticket-field-definitions
   def create(conn, %{"org_id" => org_id, "field_definition" => params}) do
     with_org(conn, org_id, "member", fn resolved_org_id ->

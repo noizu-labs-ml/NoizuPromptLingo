@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useOrg, useOrgId } from "@/context/org";
 import { toast } from "sonner";
@@ -80,6 +81,7 @@ function RolePickerModal({
 export default function MembersPage() {
   const { orgId, slug, loading: orgLoading } = useOrgId();
   const { organizations } = useOrg();
+  const router = useRouter();
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("viewer");
   const [inviting, setInviting] = useState(false);
@@ -162,6 +164,7 @@ export default function MembersPage() {
             descriptor={membersDescriptor}
             ctx={{ orgId, orgSlug: slug, effectiveRole: myRole }}
             refreshKey={reloadKey}
+            onOpenRow={(m) => router.push(`/app/${slug}/members/${m.id}`)}
             onEditRow={(m) => setRoleTarget(m)}
             onDeleteRow={handleRemove}
           />

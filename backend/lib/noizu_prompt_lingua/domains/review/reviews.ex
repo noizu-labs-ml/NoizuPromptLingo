@@ -27,6 +27,44 @@ defmodule NoizuPromptLingua.Domains.Reviews do
     end
   end
 
+  # Fields a review owner may edit in place. Identity/lineage
+  # (organization_id, project_id, artifact_id, revision_id) are immutable — a
+  # review's subject is fixed at create — so they are NOT updatable here.
+  @updatable_fields ~w(title reviewer_persona summary verdict status)
+
+  @doc """
+  Update a review's mutable metadata. A completed review is FROZEN (immutable);
+  finalization (status -> "completed") goes through `complete/2`, not here.
+
+  Returns `{:error, :not_found}` if absent, `{:error, :completed}` if the review
+  is already completed, `{:error, :use_complete}` if the caller tries to set
+  status to "completed" via update, or the changeset result otherwise.
+  """
+  def update(review_id, attrs) do
+    case Repo.get(Review, review_id) do
+      nil ->
+        {:error, :not_found}
+
+      %Review{status: "completed"} ->
+        {:error, :completed}
+
+      review ->
+        attrs = sanitize_update_attrs(attrs)
+
+        if Map.get(attrs, "status") == "completed" do
+          {:error, :use_complete}
+        else
+          review |> Review.changeset(attrs) |> Repo.update()
+        end
+    end
+  end
+
+  defp sanitize_update_attrs(attrs) do
+    attrs
+    |> Map.new(fn {k, v} -> {to_string(k), v} end)
+    |> Map.take(@updatable_fields)
+  end
+
   def add_overlay(attrs) do
     %ReviewOverlay{} |> ReviewOverlay.changeset(attrs) |> Repo.insert()
   end

@@ -69,6 +69,31 @@ defmodule NoizuPromptLinguaWeb.ReviewController do
     end
   end
 
+  # PUT /api/v1/organizations/:org_id/reviews/:id
+  # Update a review's mutable metadata (title/reviewer_persona/summary/verdict
+  # and open<->in_progress status). Identity/lineage is immutable; a completed
+  # review is frozen (409); finalize via the /complete endpoint.
+  def update(conn, %{"org_id" => org_id, "id" => id, "review" => review_params}) do
+    user_id = get_user_id(conn)
+
+    with {:ok, resolved_org_id} <- NoizuPromptLingua.Organizations.resolve_org_id(org_id),
+         {:ok, _} <- Authz.authorize(user_id, "organization", resolved_org_id, "member"),
+         {review, _comments, _overlays} when not is_nil(review) <- Reviews.get(id) || :missing,
+         true <- review.organization_id == resolved_org_id do
+      case Reviews.update(id, review_params) do
+        {:ok, review} -> json(conn, %{review: review_to_json(review)})
+        {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Review not found"})
+        {:error, :completed} -> conn |> put_status(:conflict) |> json(%{error: "Review is completed and immutable"})
+        {:error, :use_complete} -> conn |> put_status(:unprocessable_entity) |> json(%{error: "Use the complete endpoint to finalize a review"})
+        {:error, changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+      end
+    else
+      :missing -> conn |> put_status(:not_found) |> json(%{error: "Review not found"})
+      false -> conn |> put_status(:not_found) |> json(%{error: "Review not found"})
+      err -> handle_error(conn, err)
+    end
+  end
+
   # POST /api/v1/organizations/:org_id/reviews/:review_id/complete
   def complete(conn, %{"org_id" => org_id, "review_id" => id} = params) do
     user_id = get_user_id(conn)

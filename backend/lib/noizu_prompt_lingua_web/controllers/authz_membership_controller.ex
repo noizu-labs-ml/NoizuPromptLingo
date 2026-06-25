@@ -9,12 +9,22 @@ defmodule NoizuPromptLinguaWeb.AuthzMembershipController do
     json(conn, %{memberships: memberships})
   end
 
-  def org_members(conn, %{"org_id" => org_id}) do
+  # Canonical members READ (viewer-gated PBAC path the FE consolidates onto — marcus
+  # seq637). Rows carry scope + member_type + canonical role (list_for_resource, 4a9aa9d9)
+  # + an optional role facet (?role[]=) + the caller's effective_role per row (16dc3df2,
+  # one lookup — no N+1) for the FE's advisory per-row gates.
+  def org_members(conn, %{"org_id" => org_id} = params) do
     user_id = get_user_id(conn)
 
     case NoizuPromptLingua.Authz.authorize(user_id, "organization", org_id, "viewer") do
       {:ok, _} ->
-        members = ScopedMemberships.list_for_resource("organization", org_id)
+        caller_role = NoizuPromptLingua.Authz.get_user_role(user_id, "organization", org_id)
+
+        members =
+          "organization"
+          |> ScopedMemberships.list_for_resource(org_id, role: params["role"])
+          |> Enum.map(&Map.put(&1, :effective_role, caller_role))
+
         json(conn, %{members: members})
 
       {:error, :not_a_member} ->
@@ -25,11 +35,37 @@ defmodule NoizuPromptLinguaWeb.AuthzMembershipController do
     end
   end
 
-  def project_members(conn, %{"project_id" => project_id}) do
+  # getMember (4a9aa9d9): a single org membership by id, same shape + effective_role.
+  def org_member(conn, %{"org_id" => org_id, "id" => id}) do
+    user_id = get_user_id(conn)
+
+    case NoizuPromptLingua.Authz.authorize(user_id, "organization", org_id, "viewer") do
+      {:ok, _} ->
+        case ScopedMemberships.get_membership(id) do
+          %{resource_type: "organization", resource_id: ^org_id} = member ->
+            caller_role = NoizuPromptLingua.Authz.get_user_role(user_id, "organization", org_id)
+            json(conn, %{member: Map.put(member, :effective_role, caller_role)})
+
+          _ ->
+            conn |> put_status(:not_found) |> json(%{error: "Member not found"})
+        end
+
+      _ ->
+        conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
+    end
+  end
+
+  def project_members(conn, %{"project_id" => project_id} = params) do
     user_id = get_user_id(conn)
 
     if NoizuPromptLingua.Authz.check_permission(user_id, "project", project_id, "project:view") do
-      members = ScopedMemberships.list_for_resource("project", project_id)
+      caller_role = NoizuPromptLingua.Authz.get_user_role(user_id, "project", project_id)
+
+      members =
+        "project"
+        |> ScopedMemberships.list_for_resource(project_id, role: params["role"])
+        |> Enum.map(&Map.put(&1, :effective_role, caller_role))
+
       json(conn, %{members: members})
     else
       conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})

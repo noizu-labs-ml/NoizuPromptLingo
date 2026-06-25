@@ -27,6 +27,25 @@ export interface Organization {
   owner?: string | null;
 }
 
+// A resource membership (PBAC, ticket 4a9aa9d9). member_type-agnostic: "user" today;
+// "persona"/"agent" rows appear later (ccaf5684) with zero FE change.
+export interface OrgMember {
+  id: string;
+  user_id: string;
+  email: string;
+  user_name: string;
+  member_type: string;
+  /** The target member's canonical role: owner | admin | lead | member | viewer. */
+  role: string;
+  /** Membership scope. */
+  resource_type: string;
+  resource_id?: string;
+  /** The CALLER's role in this resource, echoed per row (16dc3df2) — drives the gates. */
+  effective_role?: string;
+  joined_at: string;
+  expires_at?: string | null;
+}
+
 export interface Project {
   id: string;
   organization_id?: string;
@@ -1239,22 +1258,28 @@ export const api = {
     });
   },
 
-  // Viewer-accessible member list (any org member, viewer+). The
-  // `/organizations/:id/members` resource is admin-only, so listing uses the
-  // PBAC memberships read endpoint instead.
-  listMembers(orgId: string) {
-    return request<{ members: Array<{ id: string; user_id: string; email: string; user_name: string; role: string; joined_at: string }> }>(`/api/v1/memberships/organizations/${orgId}`);
+  // PBAC members list (ticket 4a9aa9d9): rows carry member_type, target role, scope
+  // (resource_type/id), and the caller's effective_role (16dc3df2). Optional role
+  // facet -> ?role[]=admin&role[]=lead (ANY). agents appear here later (ccaf5684).
+  listMembers(orgId: string, opts?: { role?: string | string[] }) {
+    return request<{ members: OrgMember[] }>(
+      `/api/v1/organizations/${orgId}/members${buildQuery({ role: opts?.role })}`,
+    );
+  },
+
+  getMember(orgId: string, id: string) {
+    return request<{ member: OrgMember }>(`/api/v1/organizations/${orgId}/members/${id}`);
   },
 
   addMember(orgId: string, email: string, role: string) {
-    return request<{ members: Array<{ id: string; user_id: string; email: string; user_name: string; role: string; joined_at: string }> }>(`/api/v1/organizations/${orgId}/members`, {
+    return request<{ members: OrgMember[] }>(`/api/v1/organizations/${orgId}/members`, {
       method: "POST",
       body: JSON.stringify({ email, role }),
     });
   },
 
   updateMemberRole(orgId: string, memberId: string, role: string) {
-    return request<{ members: Array<{ id: string; user_id: string; email: string; user_name: string; role: string; joined_at: string }> }>(`/api/v1/organizations/${orgId}/members/${memberId}`, {
+    return request<{ members: OrgMember[] }>(`/api/v1/organizations/${orgId}/members/${memberId}`, {
       method: "PATCH",
       body: JSON.stringify({ role }),
     });

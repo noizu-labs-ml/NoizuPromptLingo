@@ -1,31 +1,25 @@
 // Members console descriptor (epic 8920d294 / ticket 7bddfd70). The members/agents +
-// roles table. yuki §6 (7e269bff). ava-frontend lane (TABLE/data-UI); the RBAC-gated
-// role-management ROW ACTIONS (assign-role @ admin, remove @ lead) are diego's lane,
-// wired on marcus's per-row effective_role echo (16dc3df2). The LIST RENDER below is
-// independent of that echo (priya seq611), so the shell ships now.
+// roles table, now on aniket's PBAC members list (4a9aa9d9): each row carries
+// member_type, the target's canonical role, scope (resource_type/id), and the caller's
+// effective_role (16dc3df2) for the per-row RBAC gates. member_type-agnostic — persona/
+// agent rows appear automatically when ccaf5684 lands (zero FE change).
 //
-// DATA NOTES (flagged for the gated-actions phase):
-//  - api.listMembers returns ORG user-members only ({id,user_id,email,user_name,role,
-//    joined_at}); there is no scope/project field, so the Scope column is constant
-//    "Organization". A members/agents view WITH project scope + persona/agent
-//    memberships needs an extended BE list (scoped_memberships) — BE follow-up.
-//  - no getMember endpoint -> no generic detail route; api.get is a stub (unused).
-//  - listMembers takes no filter opts -> role can't be a server facet; search only.
-import { api } from '@/lib/api';
+// RBAC-gated role-management row actions (diego): edit = assign role, delete = remove.
+import { api, type OrgMember } from '@/lib/api';
 import type { ConsoleDescriptor } from '../types';
 import { atLeast, outranks } from '../roles';
 
-export interface OrgMember {
-  id: string;
-  user_id: string;
-  email: string;
-  user_name: string;
-  /** The target member's role. */
-  role: string;
-  /** The CALLER's role in this org, echoed per row (16dc3df2) — drives the gates. */
-  effective_role?: string;
-  joined_at: string;
-}
+export type { OrgMember };
+
+const scopeLabel = (m: OrgMember) => (m.resource_type === 'project' ? 'Project' : 'Organization');
+
+const ROLE_OPTIONS = [
+  { value: 'owner', label: 'Owner' },
+  { value: 'admin', label: 'Admin' },
+  { value: 'lead', label: 'Lead' },
+  { value: 'member', label: 'Member' },
+  { value: 'viewer', label: 'Viewer' },
+];
 
 export const membersDescriptor: ConsoleDescriptor<OrgMember, Partial<OrgMember>> = {
   domain: 'members',
@@ -35,48 +29,51 @@ export const membersDescriptor: ConsoleDescriptor<OrgMember, Partial<OrgMember>>
     { key: 'user_name', label: 'Member', primary: true, sortable: true, render: (m) => m.user_name || m.email },
     { key: 'email', label: 'Email' },
     { key: 'role', label: 'Role', sortable: true, render: 'statusChip' },
-    { key: 'scope', label: 'Scope', render: () => 'Organization' },
+    { key: 'scope', label: 'Scope', render: scopeLabel },
     { key: 'joined_at', label: 'Joined', sortable: true, align: 'right', render: 'relativeDate' },
   ],
-  filters: [{ key: 'search', label: 'Search', type: 'search' }],
+  filters: [
+    { key: 'search', label: 'Search', type: 'search' },
+    // Multi-select -> ?role[]=admin&role[]=lead (ANY, OR-within) via diego's FacetMultiSelect + buildQuery.
+    { key: 'role', label: 'Role', type: 'facet', multi: true, options: ROLE_OPTIONS },
+  ],
   detail: {
     sections: [
       {
         title: 'Member',
         fields: [
-          { key: 'user_name', label: 'Name' },
+          { key: 'user_name', label: 'Name', render: (m) => m.user_name || m.email },
           { key: 'email', label: 'Email' },
+          { key: 'member_type', label: 'Type' },
           { key: 'role', label: 'Role', render: 'statusChip' },
           { key: 'id', label: 'ID', render: 'idChip' },
         ],
       },
+      {
+        title: 'Membership',
+        fields: [
+          { key: 'scope', label: 'Scope', render: scopeLabel },
+          { key: 'joined_at', label: 'Joined', render: 'relativeDate' },
+          { key: 'expires_at', label: 'Expires', render: (m) => m.expires_at ?? '—' },
+        ],
+      },
     ],
   },
-  edit: { sections: [] }, // role-management is the gated row actions below, not a generic edit
-  // RBAC-gated role-management row actions (diego, ticket 7bddfd70). The built-in
-  // 'edit' = assign role (the page wires onEditRow -> a role picker); 'delete' = remove
-  // member (page wires onDeleteRow -> confirm). The GATES use the caller's
-  // ctx.effectiveRole (per-row echo, 16dc3df2) vs the target's row.role:
-  //   - roles:assign @ admin  -> canEdit   (caller >= admin)
-  //   - members:manage remove @ lead, can't remove an admin/lead (target-rank rule)
-  //     -> canDelete (caller >= lead AND caller outranks the target member)
-  // Until the echo populates ctx.effectiveRole, atLeast(undefined,...) is false, so the
-  // actions stay HIDDEN (deny-closed advisory) — safe interim, no 403 buttons. Gating
-  // is VISIBILITY only; the server guard is the sole deny-closed boundary.
+  // The only editable field is the role (assign-role). Drives the detail route's edit
+  // (EditForm -> api.update = updateMemberRole); the list also offers a quick role picker.
+  edit: { sections: [{ title: 'Role', fields: [{ key: 'role', label: 'Role', type: 'select', options: ROLE_OPTIONS }] }] },
+  // Gate on the CALLER's per-row effective_role (16dc3df2, live) vs the target's role.
+  // VISIBILITY only — the server guard is the sole deny-closed boundary; a forged client
+  // that un-hides an action still 403s.
   actions: {
     rowActions: ['edit', 'delete'],
     builtinLabels: { edit: 'Assign role', delete: 'Remove' },
-    // Gate on the CALLER's per-row effective_role (16dc3df2, now live) vs the target's
-    // role. Until populated, atLeast(undefined,..)=false -> hidden (deny-closed advisory).
     canEdit: (m) => atLeast(m.effective_role, 'admin'),
     canDelete: (m) => atLeast(m.effective_role, 'lead') && outranks(m.effective_role, m.role),
   },
   api: {
-    list: (orgId) => api.listMembers(orgId).then((r) => r.members),
-    // No getMember endpoint; members has no generic detail route.
-    get: () => Promise.reject(new Error('Member detail is not available')),
-    // Present so the gated 'edit'/'delete' row actions render; the page drives the
-    // actual role-picker / remove-confirm UI (ava's data-UI lane).
+    list: (orgId, opts) => api.listMembers(orgId, opts as Parameters<typeof api.listMembers>[1]).then((r) => r.members),
+    get: (orgId, id) => api.getMember(orgId, id).then((r) => r.member),
     update: (orgId, id, input) =>
       api
         .updateMemberRole(orgId, id, String((input as Partial<OrgMember>).role ?? ''))

@@ -304,6 +304,7 @@ defmodule NoizuPromptLinguaWeb.Router do
 
     get "/memberships/me", AuthzMembershipController, :my_memberships
     get "/memberships/organizations/:org_id", AuthzMembershipController, :org_members
+    get "/memberships/organizations/:org_id/members/:id", AuthzMembershipController, :org_member
     get "/memberships/projects/:project_id", AuthzMembershipController, :project_members
 
     get "/policies/me", PolicyController, :my_policies
@@ -356,7 +357,7 @@ defmodule NoizuPromptLinguaWeb.Router do
     resources "/artifacts", ArtifactController, only: [:index, :create, :show]
     get "/artifacts/:artifact_id/revisions", ArtifactController, :index_revisions
     post "/artifacts/:artifact_id/revisions", ArtifactController, :create_revision
-    resources "/reviews", ReviewController, only: [:index, :create, :show]
+    resources "/reviews", ReviewController, only: [:index, :create, :show, :update]
     resources "/tickets", TicketController, only: [:index, :create, :show, :update]
 
     post "/reviews/:review_id/complete", ReviewController, :complete
@@ -388,6 +389,7 @@ defmodule NoizuPromptLinguaWeb.Router do
 
     # Ticket field & type definitions (tri-scoped config; managed by id).
     get "/ticket-field-definitions", FieldDefinitionController, :index
+    get "/ticket-field-definitions/:id", FieldDefinitionController, :show
     post "/ticket-field-definitions", FieldDefinitionController, :create
     put "/ticket-field-definitions/:id", FieldDefinitionController, :update
     delete "/ticket-field-definitions/:id", FieldDefinitionController, :delete

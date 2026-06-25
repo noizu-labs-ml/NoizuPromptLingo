@@ -66,4 +66,32 @@ defmodule NoizuPromptLinguaWeb.EffectiveRoleEchoTest do
       assert json_response(get(conn, "/api/v1/organizations/#{org_id}/members/#{Ecto.UUID.generate()}"), 404)
     end
   end
+
+  # The viewer-gated PBAC path the FE consolidates onto (marcus seq637 / ava seq699):
+  # must carry the SAME extended shape (scope + member_type + role + effective_role +
+  # facet + getMember) so a non-admin member can read the roster with working gates.
+  describe "members PBAC viewer path (/memberships, 4a9aa9d9 + 16dc3df2)" do
+    test "list carries effective_role + scope + member_type + role", %{conn: conn, org_id: org_id} do
+      [m | _] = json_response(get(conn, "/api/v1/memberships/organizations/#{org_id}"), 200)["members"]
+      assert m["effective_role"] == "owner"
+      assert m["resource_type"] == "organization"
+      assert m["member_type"] == "user"
+      assert m["role"] in ["owner", "admin", "lead", "member", "viewer"]
+    end
+
+    test "role facet filters", %{conn: conn, org_id: org_id} do
+      owners = json_response(get(conn, "/api/v1/memberships/organizations/#{org_id}?role[]=owner"), 200)["members"]
+      assert owners != [] and Enum.all?(owners, &(&1["role"] == "owner"))
+      assert json_response(get(conn, "/api/v1/memberships/organizations/#{org_id}?role[]=viewer"), 200)["members"] == []
+    end
+
+    test "getMember returns the membership + effective_role; 404 unknown", %{conn: conn, org_id: org_id} do
+      [m | _] = json_response(get(conn, "/api/v1/memberships/organizations/#{org_id}"), 200)["members"]
+      member = json_response(get(conn, "/api/v1/memberships/organizations/#{org_id}/members/#{m["id"]}"), 200)["member"]
+      assert member["id"] == m["id"]
+      assert member["effective_role"] == "owner"
+
+      assert json_response(get(conn, "/api/v1/memberships/organizations/#{org_id}/members/#{Ecto.UUID.generate()}"), 404)
+    end
+  end
 end
