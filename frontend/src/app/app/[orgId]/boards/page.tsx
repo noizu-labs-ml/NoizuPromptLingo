@@ -115,7 +115,7 @@ function BoardModal({
 }
 
 export default function BoardsPage() {
-  const { orgId, loading: orgLoading } = useOrgId();
+  const { orgId, slug, loading: orgLoading } = useOrgId();
   const { currentProject, switchProject } = useOrg();
   const router = useRouter();
   const [boards, setBoards] = useState<Board[]>([]);
@@ -170,7 +170,7 @@ export default function BoardsPage() {
         ) : (
           <div className="projects-grid">
             {boards.map((b) => (
-              <div key={b.id} className="project-card" style={{ cursor: 'pointer' }} onClick={() => router.push(`/app/${orgId}/boards/${b.id}`)}>
+              <div key={b.id} className="project-card" style={{ cursor: 'pointer' }} onClick={() => router.push(`/app/${slug}/boards/${b.id}`)}>
                 <div className="project-card__header">
                   <div className="project-card__org">
                     {b.scope} · {b.methodology}

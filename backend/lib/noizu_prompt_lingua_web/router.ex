@@ -347,6 +347,11 @@ defmodule NoizuPromptLinguaWeb.Router do
     pipe_through [:api, :authenticated]
 
     resources "/chat/rooms", ChatController, only: [:index, :create, :show]
+    get "/chat/rooms/:room_id/messages", ChatController, :index_messages
+    post "/chat/rooms/:room_id/messages", ChatController, :create_message
+    get "/chat/rooms/:room_id/messages/:message_id/reactions", ChatController, :index_message_reactions
+    post "/chat/rooms/:room_id/messages/:message_id/reactions", ChatController, :add_message_reaction
+    delete "/chat/rooms/:room_id/messages/:message_id/reactions", ChatController, :remove_message_reaction
     resources "/artifacts", ArtifactController, only: [:index, :create, :show]
     resources "/reviews", ReviewController, only: [:index, :create, :show]
     resources "/tickets", TicketController, only: [:index, :create, :show, :update]

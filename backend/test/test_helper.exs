@@ -4,6 +4,10 @@ ExUnit.start()
 # self-contained.
 NoizuPromptLingua.MemoryTestSchema.ensure!()
 
+# Ensure the chat-room slug column + unique index (Liquibase 052) exist on the test DB so the
+# chat suite is self-contained. Idempotent.
+NoizuPromptLingua.ChatTestSchema.ensure!()
+
 # Memory tests are Weaviate-primary: use the deterministic (feature-hash) embedder for reproducible
 # vectors with no OpenAI, and an ephemeral, isolated class on the cluster Weaviate. Inter-test
 # isolation comes from each test's randomly-generated organization_id (scope filter).

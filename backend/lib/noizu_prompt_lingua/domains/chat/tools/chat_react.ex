@@ -14,13 +14,12 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.ChatReact do
     persona = args[:persona] || args["persona"]
     emoji = args[:emoji] || args["emoji"]
 
-    reaction = %{entity_type: "chat_event", entity_id: event_id, persona: persona, emoji: emoji}
-
-    case NoizuPromptLingua.Repo.insert(
-      %NoizuPromptLingua.Schema.Reaction{}
-      |> NoizuPromptLingua.Schema.Reaction.changeset(reaction),
-      on_conflict: :nothing
-    ) do
+    case NoizuPromptLingua.Domains.Chat.add_reaction(%{
+           entity_type: "chat_event",
+           entity_id: event_id,
+           persona: persona,
+           emoji: emoji
+         }) do
       {:ok, r} -> {:ok, %{id: r.id, event_id: event_id, persona: persona, emoji: emoji}}
       {:error, cs} -> {:error, "Failed: #{inspect(cs.errors)}"}
     end

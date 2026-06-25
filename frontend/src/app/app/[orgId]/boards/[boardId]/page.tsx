@@ -113,13 +113,14 @@ function NewTicketModal({
 }
 
 export default function BoardDetailPage() {
-  const { orgId, loading: orgLoading } = useOrgId();
+  const { orgId, slug, loading: orgLoading } = useOrgId();
   const params = useParams();
   const boardId = params.boardId as string;
 
   const [board, setBoard] = useState<Board | null>(null);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [iteration, setIteration] = useState<string>(BACKLOG); // selected sprint/cycle for scrum
   const [showNew, setShowNew] = useState(false);
 
@@ -130,8 +131,15 @@ export default function BoardDetailPage() {
     try {
       const { board } = await api.getBoard(orgId, boardId);
       setBoard(board);
+      setError(null);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to load board');
+      const msg = err instanceof Error ? err.message : 'Failed to load board';
+      // Surface a clean error state instead of an indefinite "Loading…": when the
+      // board fetch throws, fetchTickets never runs (it needs a board), so nothing
+      // else would clear `loading`.
+      setError(msg);
+      setLoading(false);
+      toast.error(msg);
     }
   }, [orgId, boardId]);
 
@@ -211,7 +219,7 @@ export default function BoardDetailPage() {
           )}
         </div>
         <p className="sg-page-intro">
-          <Link href={`/app/${orgId}/boards`} className="sg-link">
+          <Link href={`/app/${slug}/boards`} className="sg-link">
             ← All boards
           </Link>
         </p>
@@ -233,7 +241,14 @@ export default function BoardDetailPage() {
           </div>
         )}
 
-        {loading || !board ? (
+        {error ? (
+          <div className="projects-empty">
+            <p className="projects-empty__text">Couldn’t load this board: {error}</p>
+            <button className="sg-btn sg-btn--outline" onClick={() => { setError(null); setLoading(true); fetchBoard(); }}>
+              Retry
+            </button>
+          </div>
+        ) : loading || !board ? (
           <p className="sg-page-intro">Loading…</p>
         ) : (
           <div className="board">

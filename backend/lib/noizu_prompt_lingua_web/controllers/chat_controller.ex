@@ -47,12 +47,13 @@ defmodule NoizuPromptLinguaWeb.ChatController do
   end
 
   # GET /api/v1/organizations/:org_id/chat/rooms/:id
-  def show(conn, %{"org_id" => org_id, "id" => id}) do
+  # :id may be a room UUID or a slug.
+  def show(conn, %{"org_id" => org_id, "id" => id} = params) do
     user_id = get_user_id(conn)
 
     with {:ok, resolved_org_id} <- NoizuPromptLingua.Organizations.resolve_org_id(org_id),
          {:ok, _} <- Authz.authorize(user_id, "organization", resolved_org_id, "viewer"),
-         room when not is_nil(room) <- Chat.get_room(id),
+         room when not is_nil(room) <- fetch_room(resolved_org_id, id, params["project_id"]),
          true <- room.organization_id == resolved_org_id do
       json(conn, %{room: room_to_json(room)})
     else
@@ -62,6 +63,105 @@ defmodule NoizuPromptLinguaWeb.ChatController do
     end
   end
 
+  # GET /api/v1/organizations/:org_id/chat/rooms/:room_id/messages
+  def index_messages(conn, %{"org_id" => org_id, "room_id" => room_id} = params) do
+    with_room(conn, org_id, room_id, "viewer", fn _room ->
+      opts =
+        []
+        |> maybe_opt(:before, params["before"])
+        |> maybe_opt(:after, params["after"])
+        |> maybe_opt(:limit, parse_limit(params["limit"]))
+
+      messages = room_id |> Chat.list_messages(opts) |> Enum.reverse()
+      summaries = Chat.message_reaction_summaries(Enum.map(messages, & &1.id), actor(conn))
+      json(conn, %{messages: Enum.map(messages, fn m -> message_to_json(m, Map.get(summaries, m.id, [])) end)})
+    end)
+  end
+
+  # POST /api/v1/organizations/:org_id/chat/rooms/:room_id/messages
+  def create_message(conn, %{"org_id" => org_id, "room_id" => room_id, "message" => msg_params}) do
+    with_room(conn, org_id, room_id, "member", fn _room ->
+      attrs = %{
+        room_id: room_id,
+        content: msg_params["content"],
+        sender: msg_params["sender"] || actor(conn)
+      }
+
+      case Chat.send_message(attrs) do
+        {:ok, msg} -> conn |> put_status(:created) |> json(%{message: message_to_json(msg, [])})
+        {:error, changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+      end
+    end)
+  end
+
+  # Missing `message` body -> 422 rather than a FunctionClauseError 500.
+  def create_message(conn, _params), do: missing_field(conn, "message")
+
+  # All three reaction endpoints return the FE `ChatReactionSummary[]` shape
+  # (`%{reactions: [%{emoji, count, me}]}`) — identical to what the message list
+  # embeds — so the client renders pills from one contract. POST/DELETE return the
+  # *regrouped* summary so the FE reconciles an optimistic update to server truth in
+  # one round-trip. `me` is the caller's-persona reaction state (ADR-013 R2: the
+  # npl_reactions unique key is `persona`, and REST keys persona = the authed actor),
+  # computed identically to the embedded message-list summaries.
+
+  # GET /api/v1/organizations/:org_id/chat/rooms/:room_id/messages/:message_id/reactions
+  def index_message_reactions(conn, %{"org_id" => org_id, "room_id" => room_id, "message_id" => message_id}) do
+    with_message(conn, org_id, room_id, message_id, "viewer", fn msg ->
+      json(conn, %{reactions: Chat.message_reaction_summary(msg.id, actor(conn))})
+    end)
+  end
+
+  # POST /api/v1/organizations/:org_id/chat/rooms/:room_id/messages/:message_id/reactions  body: {emoji}
+  #
+  # persona = the authed actor, ALWAYS. We deliberately ignore any client-supplied
+  # `persona` so the REST write axis == the read axis (`me`) == the npl_reactions
+  # UNIQUE key (ADR-013 R2 / dmitri seq195: one identity axis end-to-end). Letting a
+  # caller name an arbitrary persona would (a) let them spoof a reaction as someone
+  # else and (b) split the write/read axes -> ambiguous `me` + duplicate rows. The
+  # on-behalf-of path (an agent reacting as a persona) is the MCP `Chat.React` tool,
+  # which calls the domain directly with a trusted persona.
+  def add_message_reaction(conn, %{"org_id" => org_id, "room_id" => room_id, "message_id" => message_id, "emoji" => emoji}) do
+    with_message(conn, org_id, room_id, message_id, "member", fn msg ->
+      persona = actor(conn)
+
+      case Chat.add_reaction(%{entity_type: "chat_message", entity_id: msg.id, persona: persona, emoji: emoji}) do
+        {:ok, _reaction} ->
+          conn |> put_status(:created) |> json(%{reactions: Chat.message_reaction_summary(msg.id, actor(conn))})
+
+        {:error, changeset} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+      end
+    end)
+  end
+
+  # Missing-`emoji` fallback: without it a body-less request fails to match the head
+  # above (FunctionClauseError -> 500). A missing required field is a client error
+  # -> 422 (Sofia G2: missing emoji -> 422 not 500).
+  def add_message_reaction(conn, _params), do: missing_field(conn, "emoji")
+
+  # DELETE /api/v1/organizations/:org_id/chat/rooms/:room_id/messages/:message_id/reactions  body/query: {emoji}
+  #
+  # persona = the authed actor, ALWAYS (same one-axis rule as POST). This also closes
+  # an authz gap: a client-supplied persona would let any member delete ANOTHER
+  # persona's reaction (pass persona=victim). You can only remove your own.
+  def remove_message_reaction(conn, %{"org_id" => org_id, "room_id" => room_id, "message_id" => message_id, "emoji" => emoji}) do
+    with_message(conn, org_id, room_id, message_id, "member", fn msg ->
+      persona = actor(conn)
+
+      case Chat.remove_reaction("chat_message", msg.id, persona, emoji) do
+        :ok -> json(conn, %{reactions: Chat.message_reaction_summary(msg.id, actor(conn))})
+        {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Reaction not found"})
+      end
+    end)
+  end
+
+  def remove_message_reaction(conn, _params), do: missing_field(conn, "emoji")
+
+  defp missing_field(conn, field) do
+    conn |> put_status(:unprocessable_entity) |> json(%{errors: %{field => ["can't be blank"]}})
+  end
+
   defp room_to_json(room) do
     %{
       id: room.id,
@@ -69,10 +169,73 @@ defmodule NoizuPromptLinguaWeb.ChatController do
       project_id: room.project_id,
       session_id: room.session_id,
       name: room.name,
+      slug: room.slug,
       description: room.description,
       inserted_at: room.inserted_at,
       updated_at: room.updated_at
     }
+  end
+
+  defp message_to_json(m, reactions) do
+    %{
+      id: m.id,
+      room_id: m.room_id,
+      content: m.content,
+      sender: m.sender,
+      inserted_at: m.inserted_at,
+      reactions: reactions
+    }
+  end
+
+  # Resolve a room by UUID or slug. Slug resolution is bucket-scoped (ADR-013 A3):
+  # a slug is unique per (org, project), so a `project_id` (when supplied) selects
+  # the project bucket; its absence resolves the NULL-project (org-level) bucket.
+  defp fetch_room(org_id, id_or_slug, project_id \\ nil) do
+    case Ecto.UUID.cast(id_or_slug) do
+      {:ok, uuid} -> Chat.get_room(uuid)
+      :error -> Chat.get_room_by_slug(org_id, project_id, id_or_slug)
+    end
+  end
+
+  # Load + authorize a room (org-scoped) before running fun.(room).
+  defp with_room(conn, org_id, room_id, role, fun) do
+    user_id = get_user_id(conn)
+
+    with {:ok, resolved_org_id} <- NoizuPromptLingua.Organizations.resolve_org_id(org_id),
+         {:ok, _} <- Authz.authorize(user_id, "organization", resolved_org_id, role),
+         room when not is_nil(room) <- fetch_room(resolved_org_id, room_id),
+         true <- room.organization_id == resolved_org_id do
+      fun.(room)
+    else
+      nil -> conn |> put_status(:not_found) |> json(%{error: "Room not found"})
+      false -> conn |> put_status(:not_found) |> json(%{error: "Room not found"})
+      err -> handle_error(conn, err)
+    end
+  end
+
+  # Load a message and verify it belongs to the (authorized) room.
+  defp with_message(conn, org_id, room_id, message_id, role, fun) do
+    with_room(conn, org_id, room_id, role, fn room ->
+      case Chat.get_message(message_id) do
+        nil -> conn |> put_status(:not_found) |> json(%{error: "Message not found"})
+        msg ->
+          if msg.room_id == room.id,
+            do: fun.(msg),
+            else: conn |> put_status(:not_found) |> json(%{error: "Message not found"})
+      end
+    end)
+  end
+
+  defp actor(conn), do: get_user_id(conn) || "anonymous"
+
+  defp parse_limit(nil), do: nil
+  defp parse_limit(""), do: nil
+  defp parse_limit(v) when is_integer(v), do: v
+  defp parse_limit(v) when is_binary(v) do
+    case Integer.parse(v) do
+      {n, _} -> n
+      :error -> nil
+    end
   end
 
   defp validate_project(nil, _org_id), do: {:ok, nil}

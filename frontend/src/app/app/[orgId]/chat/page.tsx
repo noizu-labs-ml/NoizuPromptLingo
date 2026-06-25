@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { toast } from 'sonner';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { api, type ChatRoom, type Project } from '@/lib/api';
@@ -108,7 +109,8 @@ function RoomModal({
 }
 
 export default function ChatroomsPage() {
-  const { orgId, loading: orgLoading } = useOrgId();
+  // orgId = resolved UUID for API calls; slug = canonical org slug for building URLs.
+  const { orgId, slug: orgSlug, loading: orgLoading } = useOrgId();
   const { currentProject, switchProject } = useOrg();
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -182,12 +184,19 @@ export default function ChatroomsPage() {
         ) : (
           <div className="projects-grid">
             {rooms.map((r) => (
-              <div key={r.id} className="project-card">
+              <Link
+                key={r.id}
+                href={`/app/${orgSlug}/chat/${r.id}`}
+                className="project-card project-card--link"
+              >
                 <div className="project-card__header">
                   {projectName(r.project_id) && (
                     <div className="project-card__org">{projectName(r.project_id)}</div>
                   )}
-                  <div className="project-card__name">{r.name}</div>
+                  <div className="project-card__name">
+                    {r.name}
+                    {r.slug && <span className="project-card__slug"> #{r.slug}</span>}
+                  </div>
                 </div>
                 <div className="project-card__body">
                   <dl className="project-card__fields">
@@ -202,7 +211,7 @@ export default function ChatroomsPage() {
                     <span className="project-card__time">{timeAgo(r.inserted_at)}</span>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}

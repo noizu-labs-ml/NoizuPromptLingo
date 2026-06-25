@@ -26,6 +26,7 @@ import {
   SparklesIcon,
 } from '@heroicons/react/24/outline';
 import { useOrg } from '@/context/org';
+import { resolveOrg } from '@/lib/org-resolve';
 
 export type HeroIcon = ComponentType<SVGProps<SVGSVGElement>>;
 
@@ -70,10 +71,15 @@ const NAV: NavDef[] = [
 export function useAppNav(): ResolvedNavItem[] {
   const pathname = usePathname();
   const params = useParams();
-  const { currentOrg } = useOrg();
+  const { currentOrg, organizations } = useOrg();
 
-  const orgId = (params?.orgId as string | undefined) || currentOrg?.slug;
-  const orgBase = orgId ? `/app/${orgId}` : '/app';
+  // Only trust the route's org segment if it resolves to a known org (by slug or,
+  // defensively, by id). A stray/unknown param must never propagate into every
+  // nav link — fall back to the already-active org's slug so the sidebar can't be
+  // left pointing at a non-org segment.
+  const routeOrg = resolveOrg(organizations, params?.orgId as string | undefined);
+  const orgSlug = routeOrg?.slug ?? currentOrg?.slug;
+  const orgBase = orgSlug ? `/app/${orgSlug}` : '/app';
 
   return NAV.map((item) => {
     const href = item.orgScoped ? `${orgBase}${item.href}` : item.href;

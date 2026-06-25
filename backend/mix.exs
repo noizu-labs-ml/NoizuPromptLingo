@@ -31,6 +31,7 @@ defmodule NoizuPromptLingua.MixProject do
       {:ecto_sql, "~> 3.13"},
       {:postgrex, ">= 0.0.0"},
       {:phoenix_live_dashboard, "~> 0.8.3"},
+      {:stream_data, "~> 1.0", only: [:test, :dev]},
       {:noizu_sendgrid, "~> 2.1.0"},
       {:req, "~> 0.5"},
       {:floki, "~> 0.36"},

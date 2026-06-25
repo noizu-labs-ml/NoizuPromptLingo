@@ -1,0 +1,92 @@
+databaseChangeLog:
+  # Stable, human-addressable slug for chat rooms (epic ffc795c5 / 0b2b1b46; ADR-013).
+  #
+  # Lock-safe, reversible, DDL ONLY. Slug VALUES are produced by the ONE canonical
+  # Elixir slugify/1 (on-insert path + idempotent backfill task) — never in SQL:
+  # NFKD != unaccent, so a SQL slugify would diverge from the app and manufacture
+  # false / missed collisions (devon seq78).
+  #
+  # Uniqueness scope == resolution scope == (organization_id, project_id, slug), via
+  # TWO PARTIAL unique indexes (ADR-013 A3 / dmitri I3 / devon seq56), because
+  # project_id is nullable: a single 3-col unique index leaves NULL-project rooms
+  # un-deduped (PG treats NULLs as distinct). The WHERE project_id IS NULL partial
+  # keys on (org, slug) only, so org-level rooms DO dedupe.
+  #
+  # Column = TEXT, length capped in slugify/1 (devon option a) — no varchar(n) (avoids
+  # a future resize/relock); no CHECK for v1 since slugify is the sole writer.
+  #
+  # Deploy order (A1): ship slug-on-insert app code -> 052a -> 052c (both) ->
+  # run `mix chat.backfill_slugs` (pre-deploy NULLs) -> verify 0 nulls -> 052d.
+
+  # 052a — add nullable column. Metadata-only in PG11+, no table rewrite, safe on hot table.
+  - changeSet:
+      id: 052a-add-column-chat-rooms-slug
+      author: lucia-backend
+      changes:
+        - sql:
+            sql: |
+              ALTER TABLE chat_rooms ADD COLUMN slug text;
+      rollback:
+        - sql:
+            sql: |
+              ALTER TABLE chat_rooms DROP COLUMN slug;
+
+  # 052c-proj — partial unique index for project-scoped rooms. CONCURRENTLY, OUTSIDE a
+  # txn. The DROP IF EXISTS first makes it re-runnable: a CONCURRENTLY build that fails
+  # mid-flight leaves an INVALID index behind, and IF NOT EXISTS would then skip the
+  # rebuild and wedge the retry — so drop any prior (possibly invalid) copy first (D1).
+  - changeSet:
+      id: 052c-unique-index-chat-rooms-slug-proj
+      author: lucia-backend
+      runInTransaction: false
+      changes:
+        - sql:
+            splitStatements: true
+            sql: |
+              DROP INDEX IF EXISTS idx_chat_rooms_slug_proj;
+              CREATE UNIQUE INDEX CONCURRENTLY idx_chat_rooms_slug_proj
+              ON chat_rooms (organization_id, project_id, slug)
+              WHERE project_id IS NOT NULL;
+      rollback:
+        - sql:
+            sql: |
+              DROP INDEX CONCURRENTLY IF EXISTS idx_chat_rooms_slug_proj;
+
+  # 052c-noproj — partial unique index for org-level (NULL project) rooms. Keys on
+  # (org, slug) so NULL-project rooms dedupe correctly. CONCURRENTLY, OUTSIDE a txn.
+  # DROP-before-CREATE per D1 (re-runnable on a failed/invalid prior build).
+  - changeSet:
+      id: 052c-unique-index-chat-rooms-slug-noproj
+      author: lucia-backend
+      runInTransaction: false
+      changes:
+        - sql:
+            splitStatements: true
+            sql: |
+              DROP INDEX IF EXISTS idx_chat_rooms_slug_noproj;
+              CREATE UNIQUE INDEX CONCURRENTLY idx_chat_rooms_slug_noproj
+              ON chat_rooms (organization_id, slug)
+              WHERE project_id IS NULL;
+      rollback:
+        - sql:
+            sql: |
+              DROP INDEX CONCURRENTLY IF EXISTS idx_chat_rooms_slug_noproj;
+
+  # 052d — flip NOT NULL. RUN LAST, gated on a zero-null precondition so it cannot
+  # fire before the backfill has filled every pre-deploy row.
+  - changeSet:
+      id: 052d-chat-rooms-slug-not-null
+      author: lucia-backend
+      preConditions:
+        - onFail: HALT
+        - sqlCheck:
+            expectedResult: 0
+            sql: SELECT count(*) FROM chat_rooms WHERE slug IS NULL
+      changes:
+        - sql:
+            sql: |
+              ALTER TABLE chat_rooms ALTER COLUMN slug SET NOT NULL;
+      rollback:
+        - sql:
+            sql: |
+              ALTER TABLE chat_rooms ALTER COLUMN slug DROP NOT NULL;

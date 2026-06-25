@@ -198,6 +198,9 @@ export interface ChatRoom {
   project_id?: string | null;
   session_id?: string | null;
   name: string;
+  // slug: stable per-org/project handle, generated from name (BE ticket 0b2b1b46).
+  // Optional until that lands; falls back to id/name in the UI.
+  slug?: string | null;
   description?: string | null;
   inserted_at?: string;
   updated_at?: string;
@@ -208,6 +211,29 @@ export interface ChatRoomInput {
   description?: string;
   project_id?: string | null;
   session_id?: string | null;
+}
+
+// Chat messages + reactions (epic ffc795c5).
+// Matches marcus-dev's FINAL contract (seq124/144): message uses content/sender and
+// embeds batched per-message reaction summaries {emoji,count,me} (no N+1, server `me`).
+export interface ChatMessage {
+  id: string;
+  room_id: string;
+  sender?: string | null;
+  content: string;
+  inserted_at?: string;
+  // Embedded grouped summaries; server-computed `me` (persona-scoped, per ADR-013 R2).
+  reactions?: ChatReactionSummary[];
+}
+
+// Grouped reaction summary the room view renders directly. The BE supplies this
+// shape both embedded per message and from the reaction endpoints (aniket seq171),
+// with a server-computed `me` (viewer's own reaction state, persona-scoped per
+// ADR-013 R2) — no client-side grouping/`me` synthesis needed.
+export interface ChatReactionSummary {
+  emoji: string;
+  count: number;
+  me: boolean;
 }
 
 export type ArtifactKind = "code" | "document" | "image" | "wiki" | "config" | "binary";
@@ -1555,6 +1581,53 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ room }),
     });
+  },
+
+  // ── Chat messages + reactions (epic ffc795c5) ──
+  // Built to marcus-dev's FINAL BE contract (seq124/144): messages carry
+  // content/sender and EMBED grouped reaction summaries [{emoji,count,me}] with a
+  // server-computed `me` — so the list renders pills with no N+1. All three reaction
+  // endpoints (GET/POST/DELETE) return the same regrouped {reactions:[…]} shape, so
+  // a write reconciles the optimistic UI to server truth in one round-trip.
+  // Messages list (ascending/chrono); before/after are ISO-8601 cursors.
+  listChatMessages(
+    orgId: string,
+    roomId: string,
+    opts?: { before?: string; after?: string; limit?: number },
+  ) {
+    const qs = new URLSearchParams();
+    if (opts?.before) qs.set("before", opts.before);
+    if (opts?.after) qs.set("after", opts.after);
+    if (opts?.limit) qs.set("limit", String(opts.limit));
+    const suffix = qs.toString() ? `?${qs.toString()}` : "";
+    return request<{ messages: ChatMessage[] }>(
+      `/api/v1/organizations/${orgId}/chat/rooms/${roomId}/messages${suffix}`,
+    );
+  },
+  createChatMessage(orgId: string, roomId: string, message: { content: string; sender?: string }) {
+    return request<{ message: ChatMessage }>(
+      `/api/v1/organizations/${orgId}/chat/rooms/${roomId}/messages`,
+      { method: "POST", body: JSON.stringify({ message }) },
+    );
+  },
+  // All three return the regrouped per-message summary [{emoji,count,me}] (marcus
+  // seq144). Callers can apply the returned `reactions` directly as server truth.
+  listMessageReactions(orgId: string, roomId: string, messageId: string) {
+    return request<{ reactions: ChatReactionSummary[] }>(
+      `/api/v1/organizations/${orgId}/chat/rooms/${roomId}/messages/${messageId}/reactions`,
+    );
+  },
+  addMessageReaction(orgId: string, roomId: string, messageId: string, emoji: string) {
+    return request<{ reactions: ChatReactionSummary[] }>(
+      `/api/v1/organizations/${orgId}/chat/rooms/${roomId}/messages/${messageId}/reactions`,
+      { method: "POST", body: JSON.stringify({ emoji }) },
+    );
+  },
+  removeMessageReaction(orgId: string, roomId: string, messageId: string, emoji: string) {
+    return request<{ reactions: ChatReactionSummary[] }>(
+      `/api/v1/organizations/${orgId}/chat/rooms/${roomId}/messages/${messageId}/reactions`,
+      { method: "DELETE", body: JSON.stringify({ emoji }) },
+    );
   },
 
   // ── Artifacts (org-scoped, optional project) ──

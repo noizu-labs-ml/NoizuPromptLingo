@@ -154,3 +154,6 @@ databaseChangeLog:
   - include:
       file: 051-agent-pipe-cursor.yaml
       relativeToChangelogFile: true
+  - include:
+      file: 052-chat-room-slug.yaml
+      relativeToChangelogFile: true

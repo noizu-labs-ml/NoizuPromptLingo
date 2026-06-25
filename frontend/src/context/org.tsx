@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 import { useParams } from 'next/navigation';
 import { useAuth } from './auth';
 import { api, type Organization, type Project } from '@/lib/api';
+import { resolveOrg } from '@/lib/org-resolve';
 
 interface OrgContextType {
   currentOrg: Organization | null;
@@ -70,7 +71,12 @@ export function OrgProvider({ children }: { children: ReactNode }) {
     }
   }, [user, authOrgs]);
 
+  // Select an org by id. Guard: a falsy/undefined orgId (e.g. one leaked from a
+  // route param) is a NO-OP — it must never unset an already-active org. Only an
+  // explicit user action (refresh with no orgs, or removing the last org) clears
+  // the active org; a missing value is never treated as "clear".
   const switchOrg = (orgId: string) => {
+    if (!orgId) return;
     const org = organizations.find(o => o.id === orgId);
     if (org) {
       setCurrentOrg(org);
@@ -169,7 +175,11 @@ export function useOrg() {
 export function useOrgId() {
   const params = useParams<{ orgId: string }>();
   const { organizations, loading } = useOrg();
-  const slug = params?.orgId;
-  const org = slug ? organizations.find((o) => o.slug === slug) ?? null : null;
-  return { slug, orgId: org?.id ?? null, loading };
+  const param = params?.orgId;
+  // Resolve the route segment by slug OR id (see resolveOrg) so a stray non-slug
+  // param can't blank the org and cascade null-org states across the app. `slug`
+  // is normalized back to the canonical slug when resolvable, so callers building
+  // URLs from it self-heal.
+  const org = resolveOrg(organizations, param);
+  return { slug: org?.slug ?? param, orgId: org?.id ?? null, loading };
 }
