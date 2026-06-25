@@ -43,7 +43,11 @@ defmodule NoizuPromptLingua.Authz.ScopedMemberships do
     end
   end
 
-  def list_for_resource(resource_type, resource_id) do
+  # 4a9aa9d9 v1: PBAC members over scoped_memberships with org/project SCOPE
+  # (resource_type/id), member_type, canonical role_name_enum role, and an optional role
+  # facet (scalar or list). users only for v1 — persona/agent member_type is deferred
+  # (ccaf5684); the shape is member_type-agnostic so agent rows appear with no FE change.
+  def list_for_resource(resource_type, resource_id, opts \\ []) do
     from(sm in Schema,
       join: g in NoizuPromptLingua.Schema.Authz.Group, on: g.id == sm.group_id,
       join: u in NoizuPromptLingua.Schema.Users.User, on: u.id == sm.member_id,
@@ -54,13 +58,45 @@ defmodule NoizuPromptLingua.Authz.ScopedMemberships do
         user_id: u.id,
         email: u.email,
         user_name: u.user_name,
+        member_type: sm.member_type,
         role: g.name,
+        resource_type: sm.resource_type,
+        resource_id: sm.resource_id,
         joined_at: sm.created_at,
         expires_at: sm.expires_at
       }
     )
+    |> maybe_role_filter(opts[:role])
     |> NoizuPromptLingua.Repo.all()
   end
+
+  # Single membership by id (getMember), same shape as a list row. nil if absent.
+  def get_membership(id) do
+    from(sm in Schema,
+      join: g in NoizuPromptLingua.Schema.Authz.Group, on: g.id == sm.group_id,
+      join: u in NoizuPromptLingua.Schema.Users.User, on: u.id == sm.member_id,
+      where: sm.id == ^id and sm.member_type == "user",
+      select: %{
+        id: sm.id,
+        user_id: u.id,
+        email: u.email,
+        user_name: u.user_name,
+        member_type: sm.member_type,
+        role: g.name,
+        resource_type: sm.resource_type,
+        resource_id: sm.resource_id,
+        joined_at: sm.created_at,
+        expires_at: sm.expires_at
+      }
+    )
+    |> NoizuPromptLingua.Repo.one()
+  end
+
+  # role facet: scalar -> ==, list -> in (= ANY); nil/[] no-op (3c2d6bbe convention).
+  defp maybe_role_filter(query, nil), do: query
+  defp maybe_role_filter(query, []), do: query
+  defp maybe_role_filter(query, roles) when is_list(roles), do: where(query, [sm, g, u], g.name in ^roles)
+  defp maybe_role_filter(query, role), do: where(query, [sm, g, u], g.name == ^role)
 
   def list_for_user(user_id) do
     from(sm in Schema,

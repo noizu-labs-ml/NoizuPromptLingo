@@ -35,4 +35,35 @@ defmodule NoizuPromptLinguaWeb.EffectiveRoleEchoTest do
     assert Enum.all?(members, &(&1["effective_role"] == "owner"))
     assert Enum.all?(members, &Map.has_key?(&1, "role"))
   end
+
+  describe "members PBAC v1 (4a9aa9d9)" do
+    test "rows carry scope (resource_type/id) + member_type + canonical role", %{conn: conn, org_id: org_id} do
+      [m | _] = json_response(get(conn, "/api/v1/organizations/#{org_id}/members"), 200)["members"]
+      assert m["resource_type"] == "organization"
+      assert m["resource_id"] == org_id
+      assert m["member_type"] == "user"
+      assert m["role"] in ["owner", "admin", "lead", "member", "viewer"]
+    end
+
+    test "role facet filters (?role[]=owner)", %{conn: conn, org_id: org_id} do
+      owners = json_response(get(conn, "/api/v1/organizations/#{org_id}/members?role[]=owner"), 200)["members"]
+      assert owners != []
+      assert Enum.all?(owners, &(&1["role"] == "owner"))
+
+      none = json_response(get(conn, "/api/v1/organizations/#{org_id}/members?role[]=viewer"), 200)["members"]
+      assert none == []
+    end
+
+    test "getMember by id returns the membership + effective_role", %{conn: conn, org_id: org_id} do
+      [m | _] = json_response(get(conn, "/api/v1/organizations/#{org_id}/members"), 200)["members"]
+      member = json_response(get(conn, "/api/v1/organizations/#{org_id}/members/#{m["id"]}"), 200)["member"]
+      assert member["id"] == m["id"]
+      assert member["effective_role"] == "owner"
+      assert member["resource_type"] == "organization"
+    end
+
+    test "getMember 404 for unknown id", %{conn: conn, org_id: org_id} do
+      assert json_response(get(conn, "/api/v1/organizations/#{org_id}/members/#{Ecto.UUID.generate()}"), 404)
+    end
+  end
 end

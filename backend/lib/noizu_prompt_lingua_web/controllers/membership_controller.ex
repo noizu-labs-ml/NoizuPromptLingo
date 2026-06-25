@@ -3,19 +3,32 @@ defmodule NoizuPromptLinguaWeb.MembershipController do
 
   alias NoizuPromptLingua.Authz.ScopedMemberships
 
-  def index(conn, %{"org_id" => org_id}) do
+  def index(conn, %{"org_id" => org_id} = params) do
     # ADR-015 affordance echo (16dc3df2): each member row also carries the CALLER's
     # effective_role in this org (constant per org, one lookup — no N+1), so the FE can
     # gate per-row actions (lead/admin moderation) against caller-rank vs the row's
     # target role. Advisory only; the RBAC guard stays the deny-closed boundary.
+    # Row shape is PBAC scoped_memberships (4a9aa9d9): scope + member_type + canonical role.
     caller_role = NoizuPromptLingua.Authz.get_user_role(get_user_id(conn), "organization", org_id)
 
     members =
       "organization"
-      |> ScopedMemberships.list_for_resource(org_id)
+      |> ScopedMemberships.list_for_resource(org_id, role: params["role"])
       |> Enum.map(&Map.put(&1, :effective_role, caller_role))
 
     conn |> put_status(:ok) |> json(%{members: members})
+  end
+
+  # GET /api/v1/organizations/:org_id/members/:id — single membership (getMember, 4a9aa9d9).
+  def show(conn, %{"org_id" => org_id, "id" => id}) do
+    case ScopedMemberships.get_membership(id) do
+      %{resource_type: "organization", resource_id: ^org_id} = member ->
+        caller_role = NoizuPromptLingua.Authz.get_user_role(get_user_id(conn), "organization", org_id)
+        conn |> put_status(:ok) |> json(%{member: Map.put(member, :effective_role, caller_role)})
+
+      _ ->
+        conn |> put_status(:not_found) |> json(%{error: "Member not found"})
+    end
   end
 
   def create(conn, %{"org_id" => org_id, "email" => email} = params) do

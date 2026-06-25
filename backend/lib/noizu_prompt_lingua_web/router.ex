@@ -217,7 +217,7 @@ defmodule NoizuPromptLinguaWeb.Router do
 
   scope "/api/v1/organizations/:org_id", NoizuPromptLinguaWeb do
     pipe_through [:api, :authenticated, :org_admin]
-    resources "/members", MembershipController, only: [:index, :create, :update, :delete]
+    resources "/members", MembershipController, only: [:index, :show, :create, :update, :delete]
   end
 
   # Browser feature: controller-connected status + captured screenshots/videos.
