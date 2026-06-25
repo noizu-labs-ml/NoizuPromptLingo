@@ -8,6 +8,10 @@ NoizuPromptLingua.MemoryTestSchema.ensure!()
 # chat suite is self-contained. Idempotent.
 NoizuPromptLingua.ChatTestSchema.ensure!()
 
+# Ensure ticket_queues carries the 038-boards columns + partial unique slug indexes on the test
+# DB so the boards/queues suite is self-contained (the shared instance lagged 038). Idempotent.
+NoizuPromptLingua.BoardTestSchema.ensure!()
+
 # Memory tests are Weaviate-primary: use the deterministic (feature-hash) embedder for reproducible
 # vectors with no OpenAI, and an ephemeral, isolated class on the cluster Weaviate. Inter-test
 # isolation comes from each test's randomly-generated organization_id (scope filter).

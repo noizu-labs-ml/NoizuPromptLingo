@@ -207,15 +207,28 @@ defmodule NoizuPromptLinguaWeb.BoardController do
   defp visible?(%{organization_id: nil}, _org_id), do: true
   defp visible?(%{organization_id: oid}, org_id), do: oid == org_id
 
-  defp scope_project("project", project_id, org_id) do
+  # Resolve a board's project scope (d4a8fd52). A supplied project_id => PROJECT
+  # board (validated ∈ org), whether or not scope was sent — this closes the
+  # silent-org-default footgun where a client (MCP/curl, or an FE regression) sends
+  # project_id WITHOUT scope:"project" and the board silently became org-level. No
+  # project_id => org board. Explicit "global" is system-managed; explicit "project"
+  # with no project_id is a client error (deny-safe, never a silent org fallback).
+  defp scope_project("global", _project_id, _org_id), do: {:error, :global_forbidden}
+
+  defp scope_project(scope, project_id, org_id) do
+    case blank_to_nil(project_id) do
+      nil when scope == "project" -> {:error, :project_not_in_org}
+      nil -> {:ok, nil}
+      pid -> validate_project_in_org(pid, org_id)
+    end
+  end
+
+  defp validate_project_in_org(project_id, org_id) do
     case NoizuPromptLingua.Projects.get_project(project_id) do
       %{organization_id: ^org_id} -> {:ok, project_id}
       _ -> {:error, :project_not_in_org}
     end
   end
-
-  defp scope_project("global", _project_id, _org_id), do: {:error, :global_forbidden}
-  defp scope_project(_org_scope, _project_id, _org_id), do: {:ok, nil}
 
   defp blank_to_nil(nil), do: nil
   defp blank_to_nil(""), do: nil
