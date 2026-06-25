@@ -15,6 +15,8 @@ defmodule NoizuPromptLingua.Domains.Assets.Tools.AssetPublish do
     case Assets.publish(key, actor: args[:actor] || args["actor"]) do
       {:ok, e} -> {:ok, %{id: e.id, slug: e.slug, status: "published"}}
       {:error, :not_found} -> {:error, "Asset not found"}
+      {:error, %Ecto.Changeset{} = cs} -> {:error, "Publish failed: #{inspect(cs.errors)}"}
+      {:error, reason} -> {:error, "Publish failed: #{inspect(reason)}"}
     end
   end
 end

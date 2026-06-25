@@ -1479,6 +1479,11 @@ button.chat-room-header__slug:focus-visible { outline: 2px solid var(--field-foc
 .console-table__row:hover { background: var(--surface-alt, #f6f6f8); }
 .console-table__row.is-active { background: color-mix(in srgb, var(--brand-blue, #1d4e5f) 7%, var(--surface, #fff)); }
 .console-table__row:focus-visible { outline: 2px solid var(--field-focus-border, var(--brand-blue, #1d4e5f)); outline-offset: -2px; }
+/* Active-scope row (e.g. the current project) — distinct from the keyboard-active
+   tint above: a left accent + faint wash. Generic via rowClassName='is-current-scope'.
+   @lena-graphic: refine the accent/wash to your reserved channel. */
+.console-table__row.is-current-scope { background: color-mix(in srgb, var(--brand-blue, #1d4e5f) 4%, var(--surface, #fff)); }
+.console-table__row.is-current-scope td:first-child { box-shadow: inset 3px 0 0 var(--brand-blue, #1d4e5f); }
 .console-table__open { background: none; border: 0; font: inherit; color: var(--brand-blue, #1d4e5f); cursor: pointer; padding: 0; text-align: left; }
 .console-table__open:hover { text-decoration: underline; }
 .console-table__open:focus-visible { outline: 2px solid var(--field-focus-border, var(--brand-blue, #1d4e5f)); outline-offset: 1px; border-radius: 3px; }

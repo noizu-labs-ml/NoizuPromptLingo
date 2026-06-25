@@ -28,7 +28,17 @@ defmodule NoizuPromptLingua.Domains.Assets do
     end
   end
 
-  def get(id), do: Repo.get(AssetEntry, id)
+  # Fetch by UUID OR slug (c3c88d01). The MCP tools advertise "Slug or UUID" but used
+  # to call Repo.get directly, which raises Ecto.Query.CastError on a non-UUID slug ->
+  # opaque "Tool execution failed". Now a non-UUID key falls back to a slug lookup.
+  # Slug is unique per (org, slug); without an org here we take the first match (limit 1)
+  # rather than raise. Prefer `resolve/2` when an org is in hand (org-scoped, exact).
+  def get(id_or_slug) do
+    case Ecto.UUID.cast(id_or_slug) do
+      {:ok, uuid} -> Repo.get(AssetEntry, uuid)
+      :error -> AssetEntry |> where([e], e.slug == ^id_or_slug) |> limit(1) |> Repo.one()
+    end
+  end
 
   # Resolve an id or (org-scoped) slug to an entry.
   def resolve(org_id, id_or_slug) do
