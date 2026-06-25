@@ -129,8 +129,7 @@ defmodule NoizuPromptLingua.Domains.Assets do
         {:error, :not_found}
 
       entry ->
-        with {:ok, content} <- resolve_content(entry, opts) do
-          mime = opts[:mime_type] || type_to_mime(entry.asset_type)
+        with {:ok, content, mime} <- resolve_content(entry, opts) do
           persist_generation(entry, entry_id, content, mime, opts)
         end
     end
@@ -170,32 +169,59 @@ defmodule NoizuPromptLingua.Domains.Assets do
     end)
   end
 
-  # Resolve the content to materialize: an explicit override, the prompt itself
-  # (explicit placeholder via llm_generate: false), or an LLM generation. Returns
-  # {:ok, content} | {:error, :generation_unavailable}.
+  # Resolve the content + mime to materialize: an explicit override, the prompt itself
+  # (placeholder via llm_generate: false), or REAL generation via the media-tool binary.
+  # Returns {:ok, content, mime} | {:error, :generation_unavailable}.
   defp resolve_content(entry, opts) do
     cond do
-      is_binary(opts[:content]) -> {:ok, opts[:content]}
-      opts[:llm_generate] == false -> {:ok, entry.prompt_yaml}
-      true -> generate_content(entry, opts)
+      is_binary(opts[:content]) ->
+        {:ok, opts[:content], opts[:mime_type] || type_to_mime(entry.asset_type)}
+
+      opts[:llm_generate] == false ->
+        {:ok, entry.prompt_yaml, opts[:mime_type] || type_to_mime(entry.asset_type)}
+
+      true ->
+        generate_via_media_tool(entry, opts)
     end
   end
 
-  # Generate content from the prompt YAML via the LLM-backed ContentGenerator
-  # (loads format-specific FIM references from priv/skills/content-generator).
-  # A failed/raising generation (no provider key, network error, bad response)
-  # surfaces as {:error, :generation_unavailable} — a clean 503/422 upstream,
-  # never a 500 and never a silent prompt-as-content artifact. For a deliberate
-  # placeholder use llm_generate: false (handled in resolve_content/2).
-  defp generate_content(entry, opts) do
-    case NoizuPromptLingua.Domains.Assets.ContentGenerator.generate(entry.prompt_yaml, opts) do
-      {:ok, generated} -> {:ok, generated}
-      {:error, _reason} -> {:error, :generation_unavailable}
+  # Interim real generation (e146ff64): write the entry's .media.prompt to a temp dir,
+  # shell out to the media-tool binary (renders via the provider APIs using pod-env keys),
+  # read the produced asset, and return {:ok, content, mime}. Binary media (image/audio/
+  # video) is Base64-encoded into the artifact content; text/markup (svg/html) stays raw.
+  # Any failure (binary missing, non-zero exit, no output) -> {:error, :generation_unavailable}
+  # (a clean 503/422 upstream, never a 500). The eventual genai-core path (ede43647) replaces
+  # this; the contract is identical so the swap is invisible to callers.
+  defp generate_via_media_tool(entry, opts) do
+    tmp = Path.join(System.tmp_dir!(), "npl-asset-#{Ecto.UUID.generate()}")
+    File.mkdir_p!(tmp)
+    prompt_path = Path.join(tmp, "#{entry.slug || "asset"}.media.prompt")
+    File.write!(prompt_path, entry.prompt_yaml || "")
+
+    try do
+      case NoizuPromptLingua.Domains.Assets.MediaToolRunner.run(prompt_path, tmp, opts) do
+        {:ok, %{output_path: path, mime: mime}} ->
+          case File.read(path) do
+            {:ok, bytes} -> {:ok, encode_content(mime, bytes), mime}
+            {:error, _} -> {:error, :generation_unavailable}
+          end
+
+        {:error, reason} ->
+          Logger.warning("media-tool generation failed: #{inspect(reason)}")
+          {:error, :generation_unavailable}
+      end
+    after
+      File.rm_rf(tmp)
     end
-  rescue
-    e ->
-      Logger.warning("asset generation failed: #{Exception.message(e)}")
-      {:error, :generation_unavailable}
+  end
+
+  # Binary media -> base64 in the artifact content; text/markup (svg, html, text) -> raw.
+  defp encode_content(mime, bytes) do
+    if text_mime?(mime), do: bytes, else: Base.encode64(bytes)
+  end
+
+  defp text_mime?(mime) do
+    String.starts_with?(mime, "text/") or mime in ["image/svg+xml", "application/json"]
   end
 
   def list_outputs(entry_id) do
