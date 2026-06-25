@@ -83,6 +83,19 @@ config :noizu_prompt_lingua, Oban,
 # :oban (durable, queue-processed) in prod/dev, overridden to :sync in test.
 config :noizu_prompt_lingua, :jobs_mode, :oban
 
+# genai media-generation provider registry (ADR-016). Hex deps don't ship the lib's own
+# config, so the consumer declares which providers GenAI.Media.Router may route to. Used by
+# the Assets domain to generate image/voice/music/video via GenAI.generate_media. Providers
+# read their API keys from the pod env (OPENAI_API_KEY / GEMINI_API_KEY / SUNO_API_KEY / ...).
+config :genai, :media_providers, [
+  GenAI.Provider.OpenAI.Image,
+  GenAI.Provider.Gemini.Image,
+  GenAI.Provider.OpenAI.Speech,
+  GenAI.Provider.OpenAI.Transcription,
+  GenAI.Provider.Suno,
+  GenAI.Provider.LiteLLM.Media
+]
+
 # Text → vector embeddings (OpenAI text-embedding-3-small, 1536-d). api_key is set at runtime.
 config :noizu_prompt_lingua, :embeddings,
   provider: :openai,

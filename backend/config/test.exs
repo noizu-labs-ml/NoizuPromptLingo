@@ -31,3 +31,7 @@ config :noizu_prompt_lingua, Oban, testing: :inline
 # NoizuPromptLingua.Domains.Memory.Jobs). Bypasses Oban's executor, which corrupts the shared
 # Ecto Sandbox connection under load.
 config :noizu_prompt_lingua, :jobs_mode, :sync
+
+# Keep asset generation off the genai/network path by default in tests (no real provider
+# calls). Tests opt in explicitly via `generator: :genai` (+ a stub generator).
+config :noizu_prompt_lingua, :assets_genai_media, false

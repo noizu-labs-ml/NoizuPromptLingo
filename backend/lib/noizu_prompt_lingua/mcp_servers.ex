@@ -15,6 +15,8 @@ defmodule NoizuPromptLingua.MCPServers do
     %{id: "sessions", label: "Sessions", required: true, desc: "Session management"},
     %{id: "organizations", label: "Organizations", required: true, desc: "Organization management"},
     %{id: "projects", label: "Projects", required: false, desc: "Project management"},
+    %{id: "tickets", label: "Tickets", required: false, desc: "Task & ticket tracking"},
+    %{id: "assets", label: "Assets", required: false, desc: "Media asset lifecycle"},
     %{id: "artifacts", label: "Artifacts", required: false, desc: "Versioned content storage"},
     %{id: "chat", label: "Chat", required: false, desc: "Chat rooms & messages"},
     %{id: "review", label: "Review", required: false, desc: "Artifact review & overlays"},
@@ -22,6 +24,7 @@ defmodule NoizuPromptLingua.MCPServers do
     %{id: "github", label: "GitHub", required: false, desc: "GitHub integration — repos, branches, PRs, issues"},
     %{id: "personas", label: "Personas", required: false, desc: "Personas — bio, work log/journal & knowledge base"},
     %{id: "instructions", label: "Instructions", required: false, desc: "Reusable versioned prompts rendered with params for sub-agents"},
+    %{id: "memory", label: "Memory", required: false, desc: "Knowledge memory and associations"},
     %{id: "markdown", label: "Markdown", required: false, desc: "URL/HTML→Markdown conversion & heading filter/collapse"},
     %{id: "pipes", label: "Agent Pipes", required: false, desc: "Agent-to-agent YAML message bus (input/output pipes)"},
     %{id: "browser", label: "Browser", required: false, desc: "Drive a Playwright browser on the user's machine via a local controller"}

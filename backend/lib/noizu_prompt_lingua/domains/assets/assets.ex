@@ -169,9 +169,12 @@ defmodule NoizuPromptLingua.Domains.Assets do
     end)
   end
 
+  alias NoizuPromptLingua.Domains.Assets.GenAIGenerator
+
   # Resolve the content + mime to materialize: an explicit override, the prompt itself
-  # (placeholder via llm_generate: false), or REAL generation via the media-tool binary.
-  # Returns {:ok, content, mime} | {:error, :generation_unavailable}.
+  # (placeholder via llm_generate: false), REAL generation via the genai media framework
+  # (GenAI.generate_media — ede43647, preferred for binary-media types), else the media-tool
+  # binary (e146ff64 fallback). Returns {:ok, content, mime} | {:error, :generation_unavailable}.
   defp resolve_content(entry, opts) do
     cond do
       is_binary(opts[:content]) ->
@@ -180,7 +183,40 @@ defmodule NoizuPromptLingua.Domains.Assets do
       opts[:llm_generate] == false ->
         {:ok, entry.prompt_yaml, opts[:mime_type] || type_to_mime(entry.asset_type)}
 
+      use_genai?(opts) and GenAIGenerator.media_type?(entry.asset_type) ->
+        generate_via_genai(entry, opts)
+
       true ->
+        generate_via_media_tool(entry, opts)
+    end
+  end
+
+  # Whether to take the genai media path. `opts[:generator]` forces it (:genai / :media_tool);
+  # otherwise the `:assets_genai_media` flag decides (default on; test sets it off so the
+  # suite stays hermetic — no real provider calls unless a test opts in).
+  defp use_genai?(opts) do
+    case opts[:generator] do
+      :media_tool -> false
+      :genai -> true
+      _ -> Application.get_env(:noizu_prompt_lingua, :assets_genai_media, true)
+    end
+  end
+
+  # Real media generation via the genai framework (GenAI.generate_media). Sync providers
+  # (OpenAI image / Gemini Imagen / OpenAI speech) return inline bytes -> encode + use.
+  # Async providers (Suno music, no inline bytes yet) and any error fall back to the
+  # media-tool binary so generation stays best-effort (clean {:error,...} -> 503/422 upstream).
+  defp generate_via_genai(entry, opts) do
+    case GenAIGenerator.generate(entry, opts) do
+      {:ok, bytes, mime} when is_binary(bytes) ->
+        {:ok, encode_content(mime, bytes), mime}
+
+      {:ok, {:job, job}} ->
+        Logger.info("genai async media job #{inspect(Map.get(job, :id))} for entry #{entry.id}; falling back to media-tool for inline content")
+        generate_via_media_tool(entry, opts)
+
+      {:error, reason} ->
+        Logger.warning("genai media generation failed (#{inspect(reason)}); falling back to media-tool")
         generate_via_media_tool(entry, opts)
     end
   end

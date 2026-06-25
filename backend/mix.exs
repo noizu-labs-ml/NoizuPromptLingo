@@ -66,7 +66,7 @@ defmodule NoizuPromptLingua.MixProject do
       {:noizu_weaviate, "~> 0.2.0"},
 
       # GenAI
-      {:genai, "~> 0.3.0"},
+      {:genai, "~> 0.3.2"},
       #{:ex_llama, "~> 0.2.0"},
 
       # Routing
