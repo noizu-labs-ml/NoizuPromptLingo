@@ -152,6 +152,11 @@ defmodule NoizuPromptLingua.Organizations do
         slug: o.slug,
         name: o.name,
         role: g.name,
+        # ADR-015 affordance echo (16dc3df2): the caller's effective role in THIS org,
+        # per row, so the FE gates row actions (advisory only — the RBAC guard is the
+        # deny-closed boundary). Same value as `role` (this query already joins the
+        # caller's membership); exposed under the contract field name the FE consumes.
+        effective_role: g.name,
         owner: fragment("max(coalesce(?, ?, ?))", ou.user_name, ou.handle, ou.email)
       }
     )

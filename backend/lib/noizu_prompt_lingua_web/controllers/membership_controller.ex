@@ -4,7 +4,17 @@ defmodule NoizuPromptLinguaWeb.MembershipController do
   alias NoizuPromptLingua.Authz.ScopedMemberships
 
   def index(conn, %{"org_id" => org_id}) do
-    members = ScopedMemberships.list_for_resource("organization", org_id)
+    # ADR-015 affordance echo (16dc3df2): each member row also carries the CALLER's
+    # effective_role in this org (constant per org, one lookup — no N+1), so the FE can
+    # gate per-row actions (lead/admin moderation) against caller-rank vs the row's
+    # target role. Advisory only; the RBAC guard stays the deny-closed boundary.
+    caller_role = NoizuPromptLingua.Authz.get_user_role(get_user_id(conn), "organization", org_id)
+
+    members =
+      "organization"
+      |> ScopedMemberships.list_for_resource(org_id)
+      |> Enum.map(&Map.put(&1, :effective_role, caller_role))
+
     conn |> put_status(:ok) |> json(%{members: members})
   end
 
