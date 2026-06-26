@@ -21,7 +21,7 @@ function VerifyMagicLink() {
     }
 
     loginWithMagicLink(token)
-      .then(() => router.push("/"))
+      .then(() => router.push("/app"))
       .catch(() => {
         setError("Invalid or expired magic link");
         setVerifying(false);

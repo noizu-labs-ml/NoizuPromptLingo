@@ -7,6 +7,12 @@ const engineSrc = path.resolve(pkgRoot, "dist", "engine-src");
 const nextConfig: NextConfig = {
   output: "standalone",
   transpilePackages: ["@noizu/styleguide"],
+  turbopack: {
+    resolveAlias: {
+      "@styleguide-engine": engineSrc,
+      "@/": "./src/",
+    },
+  },
   webpack: (config) => {
     config.resolve.alias["@styleguide-engine"] = engineSrc;
     // Ensure @/ alias resolves from styleguide package's transpiled source too

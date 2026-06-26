@@ -53,6 +53,13 @@ function ModelModal({
   const envFallbacks = useMemo(() => getProviderEnvFallbacks(provider), [provider]);
   const defaultModel = useMemo(() => getDefaultModel(provider), [provider]);
   const defaultBaseUrl = useMemo(() => getDefaultBaseUrl(provider), [provider]);
+  const testResultClassName = useMemo(() => {
+    if (!testResult) return 'guided-setup__result';
+    return [
+      'guided-setup__result',
+      testResult.startsWith('✓') ? 'guided-setup__result--success' : 'guided-setup__result--error',
+    ].join(' ');
+  }, [testResult]);
 
   // Handle provider change with autofill
   function handleProviderChange(newProvider: string) {
@@ -296,7 +303,7 @@ function ModelModal({
               {testingConfig ? 'Testing…' : <><BeakerIcon className="icon-sm" /> Test Configuration</>}
             </button>
             {testResult && (
-              <span className="guided-setup__result">{testResult}</span>
+              <span className={testResultClassName}>{testResult}</span>
             )}
           </div>
 

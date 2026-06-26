@@ -4,7 +4,7 @@ import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { FetchInstrumentation } from "@opentelemetry/instrumentation-fetch";
 import { DocumentLoadInstrumentation } from "@opentelemetry/instrumentation-document-load";
 import { ZoneContextManager } from "@opentelemetry/context-zone";
-import { Resource } from "@opentelemetry/resources";
+import { resourceFromAttributes } from "@opentelemetry/resources";
 import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from "@opentelemetry/semantic-conventions";
 import { registerInstrumentations } from "@opentelemetry/instrumentation";
 import { getRuntimeConfig } from "./runtime-config";
@@ -20,7 +20,7 @@ export function initOtel() {
   if (!collectorUrl) return;
 
   const provider = new WebTracerProvider({
-    resource: new Resource({
+    resource: resourceFromAttributes({
       [ATTR_SERVICE_NAME]: "starter-frontend",
       [ATTR_SERVICE_VERSION]: "0.1.0",
     }),

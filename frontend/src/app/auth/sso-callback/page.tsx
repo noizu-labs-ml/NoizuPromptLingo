@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/context/auth";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 const ERROR_MESSAGES: Record<string, string> = {
   not_provisioned: "No account exists for this email. Please contact your administrator.",
@@ -20,9 +21,8 @@ function SSOCallback() {
   const searchParams = useSearchParams();
   const [error, setError] = useState("");
   const [verifying, setVerifying] = useState(true);
-  // The SSO code is single-use (GETDEL). React StrictMode double-invokes effects
-  // in dev, so guard to exchange exactly once — otherwise the second call 401s
-  // and the api client redirects to login even though the first call logged in.
+  // The SSO code is single-use. React StrictMode can invoke effects twice in
+  // development, so exchange exactly once to avoid consuming an already-used code.
   const ran = useRef(false);
 
   useEffect(() => {
@@ -60,7 +60,7 @@ function SSOCallback() {
         {error && (
           <>
             <p className="sg-error">{error}</p>
-            <p><a href="/auth/oidc">Back to sign in</a></p>
+            <p><Link href="/login">Back to login</Link></p>
           </>
         )}
       </main>
