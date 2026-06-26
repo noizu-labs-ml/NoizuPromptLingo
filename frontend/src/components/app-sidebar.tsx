@@ -11,17 +11,26 @@ export function AppSidebar() {
   return (
     <nav className={`app-sidebar${collapsed ? ' is-collapsed' : ''}`} aria-label="Primary">
       <div className="app-sidebar__list">
-        {items.map((item) => (
-          <Link
-            key={item.label}
-            href={item.href}
-            className={`app-sidebar__item${item.active ? ' is-active' : ''}`}
-            title={collapsed ? item.label : undefined}
-          >
-            <item.Icon className="app-sidebar__glyph" />
-            <span className="app-sidebar__label">{item.label}</span>
-          </Link>
-        ))}
+        {items.map((item, i) => {
+          const firstAdmin = item.admin && !items[i - 1]?.admin;
+          return (
+            <div key={item.label} style={{ display: 'contents' }}>
+              {firstAdmin && (
+                <div className="app-sidebar__section" aria-hidden={collapsed}>
+                  <span className="app-sidebar__section-label">Admin</span>
+                </div>
+              )}
+              <Link
+                href={item.href}
+                className={`app-sidebar__item${item.active ? ' is-active' : ''}`}
+                title={collapsed ? item.label : undefined}
+              >
+                <item.Icon className="app-sidebar__glyph" />
+                <span className="app-sidebar__label">{item.label}</span>
+              </Link>
+            </div>
+          );
+        })}
       </div>
     </nav>
   );

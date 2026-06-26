@@ -175,3 +175,18 @@ databaseChangeLog:
   - include:
       file: 058-mock-mcp-modules.yaml
       relativeToChangelogFile: true
+  - include:
+      file: 059-customers.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 060-market.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 061-campaigns.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 062-llm-models.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 063-media-provider-configs.yaml
+      relativeToChangelogFile: true

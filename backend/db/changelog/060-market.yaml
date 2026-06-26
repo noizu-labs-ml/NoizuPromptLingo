@@ -1,0 +1,197 @@
+databaseChangeLog:
+  # Market domain (tobor-market): competitors, keyword research, and market /
+  # competitor analysis reports. Org-scoped (required) with an optional project.
+  # Report bodies are LLM-generated and stored as artifacts (artifact_id).
+
+  - changeSet:
+      id: 060a-create-table-competitors
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE competitors (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+                project_id uuid REFERENCES projects(id) ON DELETE SET NULL,
+                slug varchar(255) NOT NULL,
+                name varchar(255) NOT NULL,
+                website varchar(1024),
+                description text,
+                tier varchar(64),
+                strengths text[] DEFAULT '{}',
+                weaknesses text[] DEFAULT '{}',
+                metadata jsonb DEFAULT '{}'::jsonb,
+                tags text[] DEFAULT '{}',
+                status varchar(255) NOT NULL DEFAULT 'active',
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: competitors
+
+  - changeSet:
+      id: 060b-create-indexes-competitors
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_competitors_org_slug
+            tableName: competitors
+            unique: true
+            columns:
+              - column:
+                  name: organization_id
+              - column:
+                  name: slug
+        - createIndex:
+            indexName: idx_competitors_project_id
+            tableName: competitors
+            columns:
+              - column:
+                  name: project_id
+        - sql:
+            sql: CREATE INDEX idx_competitors_tags ON competitors USING gin (tags);
+      rollback:
+        - dropIndex:
+            indexName: idx_competitors_org_slug
+        - dropIndex:
+            indexName: idx_competitors_project_id
+        - sql:
+            sql: DROP INDEX IF EXISTS idx_competitors_tags;
+
+  - changeSet:
+      id: 060c-create-table-keywords
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE keywords (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+                project_id uuid REFERENCES projects(id) ON DELETE SET NULL,
+                competitor_id uuid REFERENCES competitors(id) ON DELETE SET NULL,
+                slug varchar(255) NOT NULL,
+                term varchar(512) NOT NULL,
+                intent varchar(64),
+                volume integer,
+                difficulty integer,
+                cpc numeric(10,2),
+                competition numeric(5,2),
+                source varchar(255),
+                metadata jsonb DEFAULT '{}'::jsonb,
+                tags text[] DEFAULT '{}',
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: keywords
+
+  - changeSet:
+      id: 060d-create-indexes-keywords
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_keywords_org_slug
+            tableName: keywords
+            unique: true
+            columns:
+              - column:
+                  name: organization_id
+              - column:
+                  name: slug
+        - createIndex:
+            indexName: idx_keywords_project_id
+            tableName: keywords
+            columns:
+              - column:
+                  name: project_id
+        - createIndex:
+            indexName: idx_keywords_intent
+            tableName: keywords
+            columns:
+              - column:
+                  name: intent
+        # Same term not double-tracked within a scope (two-partial-unique pattern;
+        # mirrors the chat-room slug / ticket human-key NULL-project bucket handling).
+        - sql:
+            sql: |
+              CREATE UNIQUE INDEX idx_keywords_proj_term ON keywords (organization_id, project_id, term) WHERE project_id IS NOT NULL;
+              CREATE UNIQUE INDEX idx_keywords_org_term  ON keywords (organization_id, term)             WHERE project_id IS NULL;
+              CREATE INDEX idx_keywords_tags ON keywords USING gin (tags);
+      rollback:
+        - dropIndex:
+            indexName: idx_keywords_org_slug
+        - dropIndex:
+            indexName: idx_keywords_project_id
+        - dropIndex:
+            indexName: idx_keywords_intent
+        - sql:
+            sql: |
+              DROP INDEX IF EXISTS idx_keywords_proj_term;
+              DROP INDEX IF EXISTS idx_keywords_org_term;
+              DROP INDEX IF EXISTS idx_keywords_tags;
+
+  - changeSet:
+      id: 060e-create-table-market-reports
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE market_reports (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+                project_id uuid REFERENCES projects(id) ON DELETE SET NULL,
+                competitor_id uuid REFERENCES competitors(id) ON DELETE SET NULL,
+                segment_id uuid,
+                slug varchar(255) NOT NULL,
+                title varchar(512) NOT NULL,
+                report_type varchar(64) NOT NULL DEFAULT 'market_analysis',
+                summary text,
+                artifact_id uuid REFERENCES artifacts(id) ON DELETE SET NULL,
+                parameters jsonb DEFAULT '{}'::jsonb,
+                tags text[] DEFAULT '{}',
+                status varchar(255) NOT NULL DEFAULT 'draft',
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: market_reports
+
+  - changeSet:
+      id: 060f-create-indexes-market-reports
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_market_reports_org_slug
+            tableName: market_reports
+            unique: true
+            columns:
+              - column:
+                  name: organization_id
+              - column:
+                  name: slug
+        - createIndex:
+            indexName: idx_market_reports_project_id
+            tableName: market_reports
+            columns:
+              - column:
+                  name: project_id
+        - createIndex:
+            indexName: idx_market_reports_type
+            tableName: market_reports
+            columns:
+              - column:
+                  name: report_type
+        - sql:
+            sql: CREATE INDEX idx_market_reports_tags ON market_reports USING gin (tags);
+      rollback:
+        - dropIndex:
+            indexName: idx_market_reports_org_slug
+        - dropIndex:
+            indexName: idx_market_reports_project_id
+        - dropIndex:
+            indexName: idx_market_reports_type
+        - sql:
+            sql: DROP INDEX IF EXISTS idx_market_reports_tags;

@@ -24,6 +24,11 @@ NoizuPromptLingua.AuthzTestSchema.ensure!()
 # ticket_number_counters table + partial uniques) exists on the test DB. Idempotent.
 NoizuPromptLingua.TicketTestSchema.ensure!()
 
+# Ensure the Liquibase 059-061 marketing tables (customer personas/segments, ticket_entity_links,
+# competitors/keywords/market_reports, campaigns/ad_groups/ad_copies/domain_names/landing_pages)
+# exist on the test DB so the customers/market/campaigns suites are self-contained. Idempotent.
+NoizuPromptLingua.MarketingTestSchema.ensure!()
+
 # Memory tests are Weaviate-primary: use the deterministic (feature-hash) embedder for reproducible
 # vectors with no OpenAI, and an ephemeral, isolated class on the cluster Weaviate. Inter-test
 # isolation comes from each test's randomly-generated organization_id (scope filter).

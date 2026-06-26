@@ -20,6 +20,8 @@ defmodule NoizuPromptLingua.Domains.Tickets.MCP do
   # Links
   tool NoizuPromptLingua.Domains.Tickets.Tools.TicketLink, category: "Tickets"
   tool NoizuPromptLingua.Domains.Tickets.Tools.TicketUnlink, category: "Tickets"
+  tool NoizuPromptLingua.Domains.Tickets.Tools.TicketLinkEntity, category: "Tickets"
+  tool NoizuPromptLingua.Domains.Tickets.Tools.TicketUnlinkEntity, category: "Tickets"
 
   # Queues
   tool NoizuPromptLingua.Domains.Tickets.Tools.QueueCreate, category: "Tickets.Queues"

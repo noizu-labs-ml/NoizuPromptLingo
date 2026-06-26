@@ -27,7 +27,10 @@ defmodule NoizuPromptLingua.MCPServers do
     %{id: "memory", label: "Memory", required: false, desc: "Knowledge memory and associations"},
     %{id: "markdown", label: "Markdown", required: false, desc: "URL/HTML→Markdown conversion & heading filter/collapse"},
     %{id: "pipes", label: "Agent Pipes", required: false, desc: "Agent-to-agent YAML message bus (input/output pipes)"},
-    %{id: "browser", label: "Browser", required: false, desc: "Drive a Playwright browser on the user's machine via a local controller"}
+    %{id: "browser", label: "Browser", required: false, desc: "Drive a Playwright browser on the user's machine via a local controller"},
+    %{id: "customers", label: "Customers", required: false, desc: "Customer/user personas (ICPs) & segments, linkable to tickets"},
+    %{id: "market", label: "Market", required: false, desc: "Competitors, keyword research & market/competitor reports"},
+    %{id: "campaigns", label: "Campaigns", required: false, desc: "Marketing/SEO/PPC campaigns, ad copy, landing pages & domain names"}
   ]
 
   @doc "All configured MCP servers."

@@ -974,6 +974,18 @@ pre.mermaid { background: var(--surface-alt); border: 1px solid var(--border); b
 .app-sidebar__glyph { flex: 0 0 20px; width: 20px; height: 20px; opacity: 0.9; }
 .app-sidebar__item.is-active .app-sidebar__glyph { opacity: 1; }
 
+/* Section divider (e.g. Admin) */
+.app-sidebar__section {
+  margin-top: var(--space-3, 0.75rem); padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem) 0.25rem;
+  border-top: 1px solid color-mix(in srgb, #fff 12%, transparent);
+}
+.app-sidebar__section-label {
+  font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: color-mix(in srgb, currentColor 55%, transparent);
+}
+.app-sidebar.is-collapsed .app-sidebar__section { padding-inline: 0; text-align: center; }
+.app-sidebar.is-collapsed .app-sidebar__section-label { display: none; }
+
 /* Collapsed: icons only */
 .app-sidebar.is-collapsed .app-sidebar__label { display: none; }
 .app-sidebar.is-collapsed .app-sidebar__item { justify-content: center; padding-inline: 0; gap: 0; }
@@ -1566,3 +1578,19 @@ button.chat-room-header__slug:focus-visible { outline: 2px solid var(--field-foc
 
 /* Artifacts viewer (c0f97e6b): code/config content as a scrollable monospace block. */
 .console-artifact__code { margin: 0; padding: var(--space-3, 0.75rem); border: 1px solid var(--border); border-radius: 8px; background: var(--surface-alt, #f6f6f8); font-family: var(--font-mono); font-size: var(--font-size-sm, 0.875rem); white-space: pre-wrap; word-break: break-word; overflow-x: auto; }
+
+/* Guided LLM setup styles */
+.guided-setup { display: flex; flex-direction: column; gap: var(--space-3, 0.75rem); max-width: 640px; }
+.guided-setup__actions { display: flex; flex-direction: column; gap: var(--space-2, 0.5rem); padding: var(--space-2, 0.5rem) 0; }
+.guided-setup__result { font-size: var(--font-size-sm, 0.875rem); color: var(--text-secondary, #555); padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem); background: var(--surface-alt, #f6f6f8); border-radius: 6px; border: 1px solid var(--border); }
+.guided-setup__result:has-text("✓") { color: var(--success, #2e7d32); background: color-mix(in srgb, var(--success, #2e7d32) 8%, transparent); border-color: var(--success, #2e7d32); }
+.guided-setup__result:has-text("✗") { color: var(--error, #c0392b); background: color-mix(in srgb, var(--error, #c0392b) 8%, transparent); border-color: var(--error, #c0392b); }
+
+.sg-field--with-action { display: flex; align-items: flex-start; gap: var(--space-2, 0.5rem); }
+.sg-field--with-action .sg-field__main { flex: 1; display: flex; flex-direction: column; }
+.sg-input--select { padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface, #fff); color: var(--color-text); font: inherit; min-width: 200px; }
+.sg-input--select:focus-visible { outline: 2px solid var(--field-focus-border, var(--brand-blue, #1d4e5f)); outline-offset: 1px; }
+
+.icon-sm { width: 14px; height: 14px; flex-shrink: 0; }
+
+.sg-error--block { margin: var(--space-3, 0.75rem) 0; padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem); border: 1px solid var(--error, #c0392b); border-radius: 8px; background: color-mix(in srgb, var(--error, #c0392b) 8%, transparent); color: var(--error, #c0392b); font-size: var(--font-size-sm, 0.875rem); }

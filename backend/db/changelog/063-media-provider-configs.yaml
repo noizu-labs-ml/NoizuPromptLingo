@@ -1,0 +1,30 @@
+databaseChangeLog:
+  # Per-org media-generation provider config (ADR-016). The genai media Router
+  # picks a registered provider by modality; this table lets an org override the
+  # provider's per-request api_key / model / settings (and toggle it on/off) for
+  # asset generation. `provider` is a registry slug (see Domains.Assets.MediaProviders).
+  # api_key is stored verbatim (masked on output), matching mock_mcp_llms / github_tokens.
+  - changeSet:
+      id: create-table-media-provider-configs
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE media_provider_configs (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+                provider varchar(255) NOT NULL,
+                modality varchar(64) NOT NULL,
+                enabled boolean NOT NULL DEFAULT true,
+                api_key text,
+                endpoint varchar(1024),
+                default_model varchar(255),
+                settings jsonb NOT NULL DEFAULT '{}',
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now(),
+                CONSTRAINT uq_media_provider_configs_org_provider UNIQUE (organization_id, provider)
+              );
+              CREATE INDEX idx_media_provider_configs_org ON media_provider_configs (organization_id);
+      rollback:
+        - dropTable:
+            tableName: media_provider_configs

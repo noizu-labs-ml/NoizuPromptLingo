@@ -73,12 +73,18 @@ defmodule NoizuPromptLinguaWeb.AssetController do
 
   # POST /api/v1/organizations/:org_id/assets/:asset_id/generate
   def generate(conn, %{"org_id" => org_id, "asset_id" => id} = params) do
-    with_owned_entry(conn, org_id, id, "member", fn _entry ->
+    with_owned_entry(conn, org_id, id, "member", fn entry ->
+      # Per-org media provider config (provider module / api_key / model / settings)
+      # for this asset's modality. Explicit request params still take precedence.
+      media_cfg = NoizuPromptLingua.Domains.Assets.MediaProviders.generate_opts(org_id, entry.asset_type)
+
       opts = [
         actor: actor(conn),
-        provider: params["provider"],
-        model: params["model"],
-        endpoint: params["endpoint"],
+        provider: params["provider"] || media_cfg[:provider],
+        model: params["model"] || media_cfg[:model],
+        endpoint: params["endpoint"] || media_cfg[:endpoint],
+        api_key: media_cfg[:api_key],
+        settings: media_cfg[:settings] || %{},
         content: params["content"],
         llm_generate: params["llm_generate"] != false
       ]

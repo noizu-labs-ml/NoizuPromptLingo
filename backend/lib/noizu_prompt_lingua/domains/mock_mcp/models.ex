@@ -2,14 +2,20 @@ defmodule NoizuPromptLingua.Domains.MockMCP.Models do
   @moduledoc """
   Registry of selectable LLM models for Mock MCP generation/inference.
 
-  Single source of truth for the model picker exposed to the frontend and the
+  Source of truth for the model picker exposed to the frontend and the
   per-definition `llm_provider`/`llm_model` fields. `resolve/1,3` maps a selection
   to a `GenAI.Model` struct understood by the `genai` library.
-  """
 
-  # Curated list surfaced in the UI. `id` is what the frontend stores; it maps
-  # 1:1 onto a (provider, model) pair.
-  @models [
+  The selectable catalog is editable at runtime via the `llm_models` table
+  (admin CRUD); `@seed_models` below is the compile-time fallback used when the
+  table is empty or unavailable (it is also seeded into the table by changelog
+  062). `id` is what the frontend stores; it maps 1:1 onto a (provider, model) pair.
+  """
+  import Ecto.Query
+  alias NoizuPromptLingua.Repo
+  alias NoizuPromptLingua.Schema.LLMModel
+
+  @seed_models [
     %{id: "openai:gpt-4o", label: "OpenAI · GPT-4o", provider: "openai", model: "gpt-4o"},
     %{id: "openai:gpt-4o-mini", label: "OpenAI · GPT-4o mini", provider: "openai", model: "gpt-4o-mini"},
     %{id: "openai:gpt-4.1", label: "OpenAI · GPT-4.1", provider: "openai", model: "gpt-4.1"},
@@ -29,8 +35,54 @@ defmodule NoizuPromptLingua.Domains.MockMCP.Models do
     %{id: "litellm:default", label: "LiteLLM · proxy default", provider: "litellm", model: "default"}
   ]
 
-  @doc "All selectable models (for the frontend picker / MCP ListModels)."
-  def all, do: @models
+  @doc """
+  All selectable models (for the frontend picker / MCP ListModels), as
+  `%{id, label, provider, model}` maps. Reads the editable `llm_models` catalog
+  (enabled rows), falling back to the compile-time `@seed_models` when the table
+  is empty or the query fails (e.g. before migration).
+  """
+  def all do
+    catalog()
+    |> Enum.filter(& &1.enabled)
+    |> Enum.map(fn m -> %{id: "#{m.provider}:#{m.model}", label: m.label, provider: m.provider, model: m.model} end)
+    |> case do
+      [] -> @seed_models
+      models -> models
+    end
+  rescue
+    _ -> @seed_models
+  end
+
+  # ── Editable catalog (llm_models table) — admin CRUD ─────────
+
+  @doc "All catalog rows (incl. disabled), ordered for the admin table."
+  def catalog do
+    LLMModel
+    |> order_by([m], asc: m.sort_order, asc: m.label)
+    |> Repo.all()
+  end
+
+  def get_catalog_entry(id), do: Repo.get(LLMModel, id)
+
+  def create_catalog_entry(attrs) do
+    %LLMModel{}
+    |> LLMModel.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  def update_catalog_entry(id, attrs) do
+    case get_catalog_entry(id) do
+      nil -> {:error, :not_found}
+      entry -> entry |> LLMModel.changeset(attrs) |> Repo.update()
+    end
+  end
+
+  def delete_catalog_entry(id) do
+    case get_catalog_entry(id) do
+      nil -> {:error, :not_found}
+      entry -> Repo.delete(entry)
+    end
+  end
 
   @doc "The default model id, configurable via `:noizu_prompt_lingua, :mock_mcp`."
   def default_id do

@@ -149,6 +149,21 @@ defmodule NoizuPromptLinguaWeb.Router do
       NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Browser.MCP)
   end
 
+  scope "/", host: "customers." do
+    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
+      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Customers.MCP)
+  end
+
+  scope "/", host: "market." do
+    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
+      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Market.MCP)
+  end
+
+  scope "/", host: "campaigns." do
+    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
+      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Campaigns.MCP)
+  end
+
   # Dynamic mock-MCP gateway. Each mock MCP (defined + activated via the
   # org-scoped management API) is served live at mockmcp.<host>/mcp/<slug>/mcp.
   # This is a per-slug JSON-RPC proxy to an LLM — distinct from the static
@@ -256,6 +271,26 @@ defmodule NoizuPromptLinguaWeb.Router do
     get "/users/:user_id/mcp-keys", AdminController, :list_mcp_keys
     post "/users/:user_id/mcp-keys", AdminController, :create_mcp_key
     delete "/users/:user_id/mcp-keys/:id", AdminController, :revoke_mcp_key
+
+    # LLM model catalog (global) — editable provider/model pairs for the Mock MCP
+    # picker / MCP ListModels (drives mock MCPs + asset LLM selection).
+    get "/llm-models", AdminController, :list_llm_models
+    post "/llm-models", AdminController, :create_llm_model
+    patch "/llm-models/:id", AdminController, :update_llm_model
+    delete "/llm-models/:id", AdminController, :delete_llm_model
+
+    # LLM provider introspection — fetch available models from provider APIs
+    get "/llm-providers/:provider/models", AdminController, :fetch_provider_models
+    post "/llm-providers/:provider/test", AdminController, :test_llm_configuration
+
+    # Media provider config (org-scoped) — per-org api_key/model/settings overrides
+    # for the registered genai media providers used by asset generation.
+    scope "/organizations/:org_id/media-providers" do
+      get "/", AdminController, :list_media_providers
+      post "/", AdminController, :create_media_provider
+      patch "/:id", AdminController, :update_media_provider
+      delete "/:id", AdminController, :delete_media_provider
+    end
 
     # GitHub integration (tokens + repos) — org-scoped
     scope "/organizations/:org_id/github" do

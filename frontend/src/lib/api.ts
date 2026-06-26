@@ -1095,6 +1095,60 @@ export interface MockMCPModel {
   model: string;
 }
 
+// ── Admin: editable LLM model catalog (global) ──
+export interface LlmModel {
+  id: string;
+  provider: string;
+  model: string;
+  label: string;
+  endpoint?: string | null;
+  enabled: boolean;
+  sort_order: number;
+  notes?: string | null;
+  inserted_at?: string;
+}
+
+export interface LlmModelInput {
+  provider: string;
+  model: string;
+  label: string;
+  endpoint?: string | null;
+  enabled?: boolean;
+  sort_order?: number;
+  notes?: string | null;
+}
+
+// ── Admin: per-org media provider config ──
+export interface MediaProviderRegistryEntry {
+  slug: string;
+  label: string;
+  modality: string;
+  env_var: string;
+  env_key_set: boolean;
+}
+
+export interface MediaProviderConfig {
+  id: string;
+  provider: string;
+  modality: string;
+  enabled: boolean;
+  api_key_set: boolean;
+  endpoint?: string | null;
+  default_model?: string | null;
+  settings?: Record<string, unknown>;
+  inserted_at?: string;
+}
+
+export interface MediaProviderConfigInput {
+  provider: string;
+  modality?: string;
+  enabled?: boolean;
+  api_key?: string;
+  endpoint?: string | null;
+  default_model?: string | null;
+  settings?: Record<string, unknown>;
+}
+
 export interface MockMCPCallLog {
   id: string;
   method: string;
@@ -1397,6 +1451,70 @@ export const api = {
 
   adminRevokeGithubRepoAccess(orgId: string, repoId: string, grantId: string) {
     return request<{ message: string }>(`/api/v1/admin/organizations/${orgId}/github/repos/${repoId}/grants/${grantId}`, {
+      method: "DELETE",
+    });
+  },
+
+  // ── LLM model catalog (admin, global). Drives the Mock MCP picker / ListModels. ──
+  adminListLlmModels() {
+    return request<{ models: LlmModel[] }>(`/api/v1/admin/llm-models`);
+  },
+
+  adminCreateLlmModel(model: LlmModelInput) {
+    return request<{ model: LlmModel }>(`/api/v1/admin/llm-models`, {
+      method: "POST",
+      body: JSON.stringify({ model }),
+    });
+  },
+
+  adminUpdateLlmModel(id: string, patch: Partial<LlmModelInput>) {
+    return request<{ model: LlmModel }>(`/api/v1/admin/llm-models/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ model: patch }),
+    });
+  },
+
+  adminDeleteLlmModel(id: string) {
+    return request<{ message: string }>(`/api/v1/admin/llm-models/${id}`, {
+      method: "DELETE",
+    });
+  },
+
+  // ── LLM provider introspection (admin). Fetch models and test configuration. ───
+  adminFetchProviderModels(provider: string) {
+    return request<{ models: string[]; provider: string }>(`/api/v1/admin/llm-providers/${provider}/models`);
+  },
+
+  adminTestLlmConfiguration(provider: string, model: string, endpoint?: string) {
+    return request<{ valid: boolean; result?: any; error?: string }>(`/api/v1/admin/llm-providers/${provider}/test`, {
+      method: "POST",
+      body: JSON.stringify({ model, endpoint }),
+    });
+  },
+
+  // ── Media provider config (admin, org-scoped). api_key returned masked only. ──
+  adminListMediaProviders(orgId: string) {
+    return request<{ registry: MediaProviderRegistryEntry[]; configs: MediaProviderConfig[] }>(
+      `/api/v1/admin/organizations/${orgId}/media-providers`,
+    );
+  },
+
+  adminCreateMediaProvider(orgId: string, config: MediaProviderConfigInput) {
+    return request<{ config: MediaProviderConfig }>(`/api/v1/admin/organizations/${orgId}/media-providers`, {
+      method: "POST",
+      body: JSON.stringify({ config }),
+    });
+  },
+
+  adminUpdateMediaProvider(orgId: string, id: string, patch: Partial<MediaProviderConfigInput>) {
+    return request<{ config: MediaProviderConfig }>(`/api/v1/admin/organizations/${orgId}/media-providers/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ config: patch }),
+    });
+  },
+
+  adminDeleteMediaProvider(orgId: string, id: string) {
+    return request<{ message: string }>(`/api/v1/admin/organizations/${orgId}/media-providers/${id}`, {
       method: "DELETE",
     });
   },

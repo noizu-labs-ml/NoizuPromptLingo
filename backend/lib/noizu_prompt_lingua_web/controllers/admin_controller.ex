@@ -339,6 +339,477 @@ defmodule NoizuPromptLinguaWeb.AdminController do
     end
   end
 
+  # ── LLM model catalog (global) ────────────────────────────────────────────
+  # Editable catalog of selectable provider/model pairs surfaced in the Mock MCP
+  # picker / MCP ListModels (Domains.MockMCP.Models reads this table).
+
+  alias NoizuPromptLingua.Domains.MockMCP.Models
+  alias NoizuPromptLingua.Domains.Assets.MediaProviders
+
+  def list_llm_models(conn, _params) do
+    models = Models.catalog() |> Enum.map(&llm_model_json/1)
+    conn |> put_status(:ok) |> json(%{models: models})
+  end
+
+  def create_llm_model(conn, %{"model" => attrs}) do
+    case Models.create_catalog_entry(model_attrs(attrs)) do
+      {:ok, entry} -> conn |> put_status(:created) |> json(%{model: llm_model_json(entry)})
+      {:error, %Ecto.Changeset{} = cs} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+      {:error, reason} -> conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
+    end
+  end
+
+  def update_llm_model(conn, %{"id" => id, "model" => attrs}) do
+    case Models.update_catalog_entry(id, model_attrs(attrs)) do
+      {:ok, entry} -> conn |> put_status(:ok) |> json(%{model: llm_model_json(entry)})
+      {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Model not found"})
+      {:error, %Ecto.Changeset{} = cs} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+      {:error, reason} -> conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
+    end
+  end
+
+  def delete_llm_model(conn, %{"id" => id}) do
+    case Models.delete_catalog_entry(id) do
+      {:ok, _} -> conn |> put_status(:ok) |> json(%{message: "Model removed"})
+      {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Model not found"})
+      {:error, reason} -> conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
+    end
+  end
+
+  defp model_attrs(attrs) do
+    Map.take(attrs, ["provider", "model", "label", "endpoint", "enabled", "sort_order", "notes"])
+  end
+
+  defp llm_model_json(m) do
+    %{
+      id: m.id,
+      provider: m.provider,
+      model: m.model,
+      label: m.label,
+      endpoint: m.endpoint,
+      enabled: m.enabled,
+      sort_order: m.sort_order,
+      notes: m.notes,
+      inserted_at: m.inserted_at
+    }
+  end
+
+  # ── LLM provider introspection ───────────────────────────────────────────────
+  # Fetch available models from provider APIs and test LLM configuration.
+
+  def fetch_provider_models(conn, %{"provider" => provider}) do
+    case fetch_models_from_provider(provider) do
+      {:ok, models} ->
+        conn |> put_status(:ok) |> json(%{models: models, provider: provider})
+      {:error, reason} ->
+        conn |> put_status(422) |> json(%{error: to_string(reason), provider: provider})
+    end
+  end
+
+  def test_llm_configuration(conn, %{"provider" => provider} = params) do
+    model = Map.get(params, "model")
+    endpoint = Map.get(params, "endpoint")
+
+    case test_provider_connection(provider, model, endpoint) do
+      {:ok, result} ->
+        conn |> put_status(:ok) |> json(%{valid: true, result: result})
+      {:error, reason} ->
+        conn |> put_status(422) |> json(%{valid: false, error: to_string(reason)})
+    end
+  end
+
+  # Provider-specific model fetching
+  defp fetch_models_from_provider(provider) do
+    case String.downcase(provider) do
+      "openai" -> fetch_openai_models()
+      "anthropic" -> fetch_anthropic_models()
+      "groq" -> fetch_groq_models()
+      "cerebras" -> fetch_cerebras_models()
+      "deepseek" -> fetch_deepseek_models()
+      _ -> {:error, "Provider not supported for model fetching"}
+    end
+  end
+
+  # Connection testing
+  defp test_provider_connection(provider, model, endpoint) do
+    cond do
+      is_nil(model) or model == "" ->
+        {:error, "Model name is required for testing"}
+
+      String.downcase(provider) in ["ollama", "custom"] and (is_nil(endpoint) or endpoint == "") ->
+        {:error, "Custom endpoint URL is required for this provider"}
+
+      true ->
+        case String.downcase(provider) do
+          "openai" -> test_openai_connection(model, endpoint)
+          "anthropic" -> test_anthropic_connection(model, endpoint)
+          "groq" -> test_groq_connection(model, endpoint)
+          "cerebras" -> test_cerebras_connection(model, endpoint)
+          "deepseek" -> test_deepseek_connection(model, endpoint)
+          "ollama" -> test_ollama_connection(model, endpoint)
+          _ -> {:ok, "Configuration validated (provider doesn't support live testing)"}
+        end
+    end
+  end
+
+  # ── OpenAI integration ─────────────────────────────────────────────────────
+  defp fetch_openai_models do
+    case get_openai_api_key() do
+      nil -> {:error, "OPENAI_API_KEY not configured"}
+      api_key ->
+        case make_openai_request(api_key, "https://api.openai.com/v1/models") do
+          {:ok, %{"data" => models}} ->
+            model_names = Enum.map(models, & &1["id"])
+            {:ok, model_names}
+          {:error, reason} -> {:error, reason}
+        end
+    end
+  end
+
+  defp test_openai_connection(model, custom_endpoint) do
+    case get_openai_api_key() do
+      nil -> {:error, "OPENAI_API_KEY not configured"}
+      api_key ->
+        endpoint = normalize_endpoint(custom_endpoint, "https://api.openai.com/v1")
+        test_openai_inference(api_key, endpoint, model)
+    end
+  end
+
+  defp test_openai_inference(api_key, endpoint, model) do
+    # Perform a minimal chat completion test
+    payload = %{
+      "model" => model,
+      "messages" => [%{"role" => "user", "content" => "ok"}],
+      "max_tokens" => 5
+    }
+
+    case make_openai_request(api_key, "#{endpoint}/chat/completions", payload) do
+      {:ok, response} ->
+        case response do
+          %{"choices" => choices} when is_list(choices) and length(choices) > 0 ->
+            {:ok, %{"model" => model, "provider" => "openai", "status" => "connected"}}
+          %{"error" => error} ->
+            {:error, error["message"] || "Unknown API error"}
+          _ -> {:ok, %{"model" => model, "provider" => "openai", "status" => "connected"}}
+        end
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp make_openai_request(api_key, url, body \\ nil) do
+    headers = [
+      {"Authorization", "Bearer #{api_key}"},
+      {"Content-Type", "application/json"}
+    ]
+
+    opts = [timeout: 10_000, recv_timeout: 10_000]
+
+    request = if body do
+      HTTPoison.post(url, Jason.encode!(body), headers, opts)
+    else
+      HTTPoison.get(url, headers, opts)
+    end
+
+    case request do
+      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+        case Jason.decode(body) do
+          {:ok, json} -> {:ok, json}
+          {:error, _} -> {:error, "Invalid JSON response"}
+        end
+      {:ok, %HTTPoison.Response{status_code: 401}} ->
+        {:error, "Invalid API key"}
+      {:ok, %HTTPoison.Response{status_code: code, body: body}} ->
+        try do
+          {:ok, json} = Jason.decode(body)
+          {:error, json["error"]["message"] || "HTTP #{code}"}
+        rescue
+          _ -> {:error, "HTTP #{code}"}
+        end
+      {:error, %HTTPoison.Error{reason: reason}} ->
+        {:error, "Request failed: #{inspect(reason)}"}
+    end
+  end
+
+  # ── Anthropic integration ─────────────────────────────────────────────────
+  defp fetch_anthropic_models do
+    case get_anthropic_api_key() do
+      nil -> {:error, "ANTHROPIC_API_KEY not configured"}
+      api_key ->
+        case make_anthropic_request(api_key, "https://api.anthropic.com/v1/models") do
+          {:ok, %{"data" => models}} ->
+            model_names = Enum.map(models, & &1["id"])
+            {:ok, model_names}
+          {:error, reason} -> {:error, reason}
+        end
+    end
+  end
+
+  defp test_anthropic_connection(model, custom_endpoint) do
+    case get_anthropic_api_key() do
+      nil -> {:error, "ANTHROPIC_API_KEY not configured"}
+      api_key ->
+        endpoint = normalize_endpoint(custom_endpoint, "https://api.anthropic.com/v1")
+        test_anthropic_inference(api_key, endpoint, model)
+    end
+  end
+
+  defp test_anthropic_inference(api_key, endpoint, model) do
+    # Anthropic uses version header
+    headers = [
+      {"x-api-key", api_key},
+      {"anthropic-version", "2023-06-01"},
+      {"Content-Type", "application/json"}
+    ]
+
+    payload = %{
+      "model" => model,
+      "max_tokens" => 5,
+      "messages" => [%{"role" => "user", "content" => "ok"}]
+    }
+
+    case HTTPoison.post(
+      "#{endpoint}/messages",
+      Jason.encode!(payload),
+      headers,
+      timeout: 10_000,
+      recv_timeout: 10_000
+    ) do
+      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+        case Jason.decode(body) do
+          {:ok, _json} ->
+            {:ok, %{"model" => model, "provider" => "anthropic", "status" => "connected"}}
+          {:error, _} -> {:error, "Invalid JSON response"}
+        end
+      {:ok, %HTTPoison.Response{status_code: 401}} ->
+        {:error, "Invalid API key"}
+      {:ok, %HTTPoison.Response{status_code: code, body: body}} ->
+        try do
+          {:ok, json} = Jason.decode(body)
+          {:error, json["error"]["message"] || "HTTP #{code}"}
+        rescue
+          _ -> {:error, "HTTP #{code}"}
+        end
+      {:error, %HTTPoison.Error{reason: reason}} ->
+        {:error, "Request failed: #{inspect(reason)}"}
+    end
+  end
+
+  defp make_anthropic_request(api_key, url) do
+    headers = [
+      {"x-api-key", api_key},
+      {"anthropic-version", "2023-06-01"},
+      {"Content-Type", "application/json"}
+    ]
+
+    case HTTPoison.get(url, headers, timeout: 10_000, recv_timeout: 10_000) do
+      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+        case Jason.decode(body) do
+          {:ok, json} -> {:ok, json}
+          {:error, _} -> {:error, "Invalid JSON response"}
+        end
+      {:ok, %HTTPoison.Response{status_code: 401}} ->
+        {:error, "Invalid API key"}
+      {:ok, %HTTPoison.Response{status_code: code, body: body}} ->
+        try do
+          {:ok, json} = Jason.decode(body)
+          {:error, json["error"]["message"] || "HTTP #{code}"}
+        rescue
+          _ -> {:error, "HTTP #{code}"}
+        end
+      {:error, %HTTPoison.Error{reason: reason}} ->
+        {:error, "Request failed: #{inspect(reason)}"}
+    end
+  end
+
+  # ── Groq integration ───────────────────────────────────────────────────────
+  defp fetch_groq_models do
+    case get_groq_api_key() do
+      nil -> {:error, "GROQ_API_KEY not configured"}
+      api_key ->
+        headers = [
+          {"Authorization", "Bearer #{api_key}"},
+          {"Content-Type", "application/json"}
+        ]
+
+        case HTTPoison.get(
+          "https://api.groq.com/openai/v1/models",
+          headers,
+          timeout: 10_000,
+          recv_timeout: 10_000
+        ) do
+          {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+            case Jason.decode(body) do
+              {:ok, %{"data" => models}} ->
+                model_names = Enum.map(models, & &1["id"])
+                {:ok, model_names}
+              {:error, _} -> {:error, "Invalid JSON response"}
+            end
+          {:ok, %HTTPoison.Response{status_code: 401}} ->
+            {:error, "Invalid API key"}
+          {:error, _} -> {:error, "Request failed"}
+        end
+    end
+  end
+
+  defp test_groq_connection(model, _custom_endpoint) do
+    case get_groq_api_key() do
+      nil -> {:error, "GROQ_API_KEY not configured"}
+      _ -> {:ok, %{"model" => model, "provider" => "groq", "status" => "configured"}}
+    end
+  end
+
+  # ── Cerebras integration ───────────────────────────────────────────────────
+  defp fetch_cerebras_models do
+    case get_cerebras_api_key() do
+      nil -> {:error, "CEREBRAS_API_KEY not configured"}
+      _ -> {:ok, ["llama-3.3-70b", "llama-3.1-70b"]} # Cerebras uses standard models
+    end
+  end
+
+  defp test_cerebras_connection(_model, _custom_endpoint) do
+    case get_cerebras_api_key() do
+      nil -> {:error, "CEREBRAS_API_KEY not configured"}
+      _ -> {:ok, %{"provider" => "cerebras", "status" => "configured"}}
+    end
+  end
+
+  # ── DeepSeek integration ───────────────────────────────────────────────────
+  defp fetch_deepseek_models do
+    case get_deepseek_api_key() do
+      nil -> {:error, "DEEPSEEK_API_KEY not configured"}
+      _ -> {:ok, ["deepseek-chat", "deepseek-coder"]} # DeepSeek standard models
+    end
+  end
+
+  defp test_deepseek_connection(_model, _custom_endpoint) do
+    case get_deepseek_api_key() do
+      nil -> {:error, "DEEPSEEK_API_KEY not configured"}
+      _ -> {:ok, %{"provider" => "deepseek", "status" => "configured"}}
+    end
+  end
+
+  # ── Ollama integration (local) ─────────────────────────────────────────────
+  defp test_ollama_connection(model, custom_endpoint) do
+    endpoint = custom_endpoint || "http://localhost:11434"
+
+    case HTTPoison.get(
+      "#{endpoint}/api/tags",
+      timeout: 5_000,
+      recv_timeout: 5_000
+    ) do
+      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+        case Jason.decode(body) do
+          {:ok, %{"models" => models}} ->
+            model_names = Enum.map(models, & &1["name"])
+            effective_model = if model in model_names, do: model, else: nil
+            {:ok, %{"provider" => "ollama", "model" => effective_model, "status" => "connected", "available_models" => model_names}}
+          {:error, _} -> {:error, "Invalid response from Ollama"}
+        end
+      {:error, %HTTPoison.Error{reason: :econnrefused}} ->
+        {:error, "Ollama not running at #{endpoint}"}
+      {:error, _} ->
+        {:error, "Failed to connect to Ollama at #{endpoint}"}
+    end
+  end
+
+  # ── Helper functions ───────────────────────────────────────────────────────
+  defp normalize_endpoint(custom_endpoint, default) do
+    case custom_endpoint do
+      nil -> default
+      "" -> default
+      url -> String.trim(url)
+    end
+  end
+
+  defp get_openai_api_key do
+    System.get_env("OPENAI_API_KEY") || Application.get_env(:genai, :openai, [])[:api_key]
+  end
+
+  defp get_anthropic_api_key do
+    System.get_env("ANTHROPIC_API_KEY") || Application.get_env(:genai, :anthropic, [])[:api_key]
+  end
+
+  defp get_groq_api_key do
+    System.get_env("GROQ_API_KEY") || Application.get_env(:genai, :groq, [])[:api_key]
+  end
+
+  defp get_cerebras_api_key do
+    System.get_env("CEREBRAS_API_KEY") || Application.get_env(:genai, :cerebras, [])[:api_key]
+  end
+
+  defp get_deepseek_api_key do
+    System.get_env("DEEPSEEK_API_KEY") || Application.get_env(:genai, :deepseek, [])[:api_key]
+  end
+
+  # ── Media provider config (org-scoped) ────────────────────────────────────
+  # Per-org overrides (api_key / model / settings + on/off) for the registered
+  # genai media providers used by asset generation. api_key is masked on output.
+
+  def list_media_providers(conn, %{"org_id" => org_id}) do
+    registry =
+      MediaProviders.registry()
+      |> Enum.map(fn p ->
+        %{slug: p.slug, label: p.label, modality: p.modality, env_var: p.env_var, env_key_set: MediaProviders.env_key_set?(p)}
+      end)
+
+    configs = MediaProviders.list_configs(org_id) |> Enum.map(&media_config_json/1)
+
+    conn |> put_status(:ok) |> json(%{registry: registry, configs: configs})
+  end
+
+  def create_media_provider(conn, %{"org_id" => org_id, "config" => attrs}) do
+    case MediaProviders.create_config(media_attrs(attrs, org_id)) do
+      {:ok, cfg} -> conn |> put_status(:created) |> json(%{config: media_config_json(cfg)})
+      {:error, %Ecto.Changeset{} = cs} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+      {:error, reason} -> conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
+    end
+  end
+
+  def update_media_provider(conn, %{"org_id" => _org_id, "id" => id, "config" => attrs}) do
+    case MediaProviders.update_config(id, media_attrs(attrs, nil)) do
+      {:ok, cfg} -> conn |> put_status(:ok) |> json(%{config: media_config_json(cfg)})
+      {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Config not found"})
+      {:error, %Ecto.Changeset{} = cs} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+      {:error, reason} -> conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
+    end
+  end
+
+  def delete_media_provider(conn, %{"org_id" => _org_id, "id" => id}) do
+    case MediaProviders.delete_config(id) do
+      {:ok, _} -> conn |> put_status(:ok) |> json(%{message: "Config removed"})
+      {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Config not found"})
+      {:error, reason} -> conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
+    end
+  end
+
+  # Build config attrs. A blank api_key on update means "leave unchanged" (drop it);
+  # on create it is simply absent. org_id is set only on create.
+  defp media_attrs(attrs, org_id) do
+    base = Map.take(attrs, ["provider", "modality", "enabled", "endpoint", "default_model", "settings"])
+
+    base =
+      case Map.get(attrs, "api_key") do
+        key when is_binary(key) and key != "" -> Map.put(base, "api_key", key)
+        _ -> base
+      end
+
+    if org_id, do: Map.put(base, "organization_id", org_id), else: base
+  end
+
+  defp media_config_json(c) do
+    %{
+      id: c.id,
+      provider: c.provider,
+      modality: c.modality,
+      enabled: c.enabled,
+      api_key_set: c.api_key not in [nil, ""],
+      endpoint: c.endpoint,
+      default_model: c.default_model,
+      settings: c.settings,
+      inserted_at: c.inserted_at
+    }
+  end
+
   defp mcp_key_json(key) do
     %{
       id: key.id,

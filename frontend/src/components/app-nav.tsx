@@ -24,8 +24,13 @@ import {
   ClipboardDocumentListIcon,
   WindowIcon,
   SparklesIcon,
+  ShieldCheckIcon,
+  CpuChipIcon,
+  FilmIcon,
+  BuildingOfficeIcon,
 } from '@heroicons/react/24/outline';
 import { useOrg } from '@/context/org';
+import { useAuth } from '@/context/auth';
 import { resolveOrg } from '@/lib/org-resolve';
 
 export type HeroIcon = ComponentType<SVGProps<SVGSVGElement>>;
@@ -35,6 +40,8 @@ interface NavDef {
   Icon: HeroIcon;
   label: string;
   orgScoped?: boolean;
+  /** Admin-only item, grouped under the Admin section and gated by role. */
+  admin?: boolean;
 }
 
 export interface ResolvedNavItem {
@@ -42,6 +49,7 @@ export interface ResolvedNavItem {
   label: string;
   Icon: HeroIcon;
   active: boolean;
+  admin?: boolean;
 }
 
 const NAV: NavDef[] = [
@@ -65,13 +73,23 @@ const NAV: NavDef[] = [
   { href: '/ticket-fields', Icon: AdjustmentsHorizontalIcon, label: 'Ticket Fields', orgScoped: true },
   { href: '/npl-conventions', Icon: BookOpenIcon, label: 'NPL Conventions', orgScoped: true },
   { href: '/mock-mcp', Icon: BeakerIcon, label: 'Mock MCP', orgScoped: true },
-  { href: '/app/admin/authz', Icon: KeyIcon, label: 'Authz' },
+
+  // Admin section (role-gated): consolidated config surface.
+  { href: '/app/admin', Icon: ShieldCheckIcon, label: 'Admin', admin: true },
+  { href: '/app/admin/users', Icon: UsersIcon, label: 'Users', admin: true },
+  { href: '/app/admin/orgs', Icon: BuildingOfficeIcon, label: 'Organizations', admin: true },
+  { href: '/app/admin/github', Icon: CodeBracketIcon, label: 'GitHub Config', admin: true },
+  { href: '/app/admin/llm-models', Icon: CpuChipIcon, label: 'LLM Catalog', admin: true },
+  { href: '/app/admin/media-providers', Icon: FilmIcon, label: 'Media Providers', admin: true },
+  { href: '/app/admin/authz', Icon: KeyIcon, label: 'API Keys', admin: true },
 ];
 
 export function useAppNav(): ResolvedNavItem[] {
   const pathname = usePathname();
   const params = useParams();
   const { currentOrg, organizations } = useOrg();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin' || user?.role === 'owner';
 
   // Only trust the route's org segment if it resolves to a known org (by slug or,
   // defensively, by id). A stray/unknown param must never propagate into every
@@ -81,9 +99,11 @@ export function useAppNav(): ResolvedNavItem[] {
   const orgSlug = routeOrg?.slug ?? currentOrg?.slug;
   const orgBase = orgSlug ? `/app/${orgSlug}` : '/app';
 
-  return NAV.map((item) => {
+  return NAV.filter((item) => !item.admin || isAdmin).map((item) => {
     const href = item.orgScoped ? `${orgBase}${item.href}` : item.href;
-    const active = pathname === href || pathname.startsWith(`${href}/`);
-    return { href, label: item.label, Icon: item.Icon, active };
+    // The admin landing page would match every /app/admin/* path via startsWith,
+    // so only mark it active on an exact match.
+    const active = item.href === '/app/admin' ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+    return { href, label: item.label, Icon: item.Icon, active, admin: item.admin };
   });
 }

@@ -47,6 +47,10 @@ defmodule NoizuPromptLingua.Application do
       NoizuPromptLingua.Domains.Instructions.MCP,
       NoizuPromptLingua.Domains.Tickets.MCP,
       NoizuPromptLingua.Domains.Assets.MCP,
+      # Marketing/go-to-market domains: customer personas, market intel, campaigns.
+      NoizuPromptLingua.Domains.Customers.MCP,
+      NoizuPromptLingua.Domains.Market.MCP,
+      NoizuPromptLingua.Domains.Campaigns.MCP,
       # Browser relay: correlates Browser.* tool calls with the local controller.
       NoizuPromptLingua.Domains.Browser.Relay,
       NoizuPromptLinguaWeb.Endpoint

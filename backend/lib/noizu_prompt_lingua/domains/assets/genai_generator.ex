@@ -55,10 +55,17 @@ defmodule NoizuPromptLingua.Domains.Assets.GenAIGenerator do
       end
 
     prompt = get_in(config, ["prompt", "text"]) || entry.title || ""
-    settings = (get_in(config, ["prompt", "provider_options"]) || %{}) |> atomize()
+
+    # Provider settings: prompt YAML provider_options, overlaid with any per-org
+    # config settings (opts[:settings], string-keyed from JSONB) — explicit opts win.
+    settings =
+      (get_in(config, ["prompt", "provider_options"]) || %{})
+      |> Map.merge(opts[:settings] || %{})
+      |> atomize()
 
     # `service` in the prompt selects a chat LLM; for media the modality + registry decide,
     # so only an explicit module/atom provider override is honored (else the Router picks).
+    # The per-org MediaProviders config supplies that module (and an api_key).
     provider = if is_atom(opts[:provider]), do: opts[:provider], else: nil
 
     struct(GenAI.Media.Request,
@@ -66,9 +73,13 @@ defmodule NoizuPromptLingua.Domains.Assets.GenAIGenerator do
       prompt: prompt,
       provider: provider,
       model: opts[:model] || config["model"],
-      settings: settings
+      settings: settings,
+      api_key: blank_to_nil(opts[:api_key])
     )
   end
+
+  defp blank_to_nil(v) when v in [nil, ""], do: nil
+  defp blank_to_nil(v), do: v
 
   # Prompt YAML keys are strings; provider settings (voice/size/format/...) want atom keys.
   defp atomize(map) when is_map(map) do
