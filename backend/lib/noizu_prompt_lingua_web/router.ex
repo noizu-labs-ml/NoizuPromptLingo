@@ -16,6 +16,7 @@ defmodule NoizuPromptLinguaWeb.Router do
       signing_salt: "sso_session_salt",
       same_site: "Lax",
       max_age: 300
+
     plug :fetch_session
   end
 
@@ -70,103 +71,123 @@ defmodule NoizuPromptLinguaWeb.Router do
   # The root aggregator (all domains + Discovery) is served at the bare host
   # under `/mcp`. Requests must present a Bearer MCP JWT (see MCPConfig).
   scope "/", host: "organizations." do
-    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
-      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.MCP.Organizations)
+    forward "/mcp",
+            Noizu.MCP.Transport.StreamableHTTP.Plug,
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.MCP.Organizations)
   end
 
   scope "/", host: "projects." do
-    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
-      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.MCP.Projects)
+    forward "/mcp",
+            Noizu.MCP.Transport.StreamableHTTP.Plug,
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.MCP.Projects)
   end
 
   scope "/", host: "sessions." do
-    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
-      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.MCP.Sessions)
+    forward "/mcp",
+            Noizu.MCP.Transport.StreamableHTTP.Plug,
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.MCP.Sessions)
   end
 
   scope "/", host: "artifacts." do
-    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
-      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Artifacts.MCP)
+    forward "/mcp",
+            Noizu.MCP.Transport.StreamableHTTP.Plug,
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Artifacts.MCP)
   end
 
   scope "/", host: "chat." do
-    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
-      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Chat.MCP)
+    forward "/mcp",
+            Noizu.MCP.Transport.StreamableHTTP.Plug,
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Chat.MCP)
   end
 
   scope "/", host: "review." do
-    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
-      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Review.MCP)
+    forward "/mcp",
+            Noizu.MCP.Transport.StreamableHTTP.Plug,
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Review.MCP)
   end
 
   scope "/", host: "tickets." do
-    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
-      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Tickets.MCP)
+    forward "/mcp",
+            Noizu.MCP.Transport.StreamableHTTP.Plug,
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Tickets.MCP)
   end
 
   scope "/", host: "assets." do
-    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
-      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Assets.MCP)
+    forward "/mcp",
+            Noizu.MCP.Transport.StreamableHTTP.Plug,
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Assets.MCP)
   end
 
   scope "/", host: "wiki." do
-    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
-      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Wiki.MCP)
+    forward "/mcp",
+            Noizu.MCP.Transport.StreamableHTTP.Plug,
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Wiki.MCP)
   end
 
   scope "/", host: "github." do
-    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
-      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Github.MCP)
+    forward "/mcp",
+            Noizu.MCP.Transport.StreamableHTTP.Plug,
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Github.MCP)
   end
 
   scope "/", host: "personas." do
-    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
-      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Personas.MCP)
+    forward "/mcp",
+            Noizu.MCP.Transport.StreamableHTTP.Plug,
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Personas.MCP)
   end
 
   scope "/", host: "instructions." do
-    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
-      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Instructions.MCP)
+    forward "/mcp",
+            Noizu.MCP.Transport.StreamableHTTP.Plug,
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Instructions.MCP)
   end
 
   scope "/", host: "memory." do
-    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
-      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Memory.MCP)
+    forward "/mcp",
+            Noizu.MCP.Transport.StreamableHTTP.Plug,
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Memory.MCP)
   end
 
   scope "/", host: "markdown." do
-    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
-      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Markdown.MCP)
+    forward "/mcp",
+            Noizu.MCP.Transport.StreamableHTTP.Plug,
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Markdown.MCP)
   end
 
   scope "/", host: "notifications." do
-    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
-      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Notifications.MCP)
+    forward "/mcp",
+            Noizu.MCP.Transport.StreamableHTTP.Plug,
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Notifications.MCP)
   end
 
   scope "/", host: "pubsub." do
-    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
-      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.PubSub.MCP)
+    forward "/mcp",
+            Noizu.MCP.Transport.StreamableHTTP.Plug,
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.PubSub.MCP)
   end
 
   scope "/", host: "browser." do
-    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
-      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Browser.MCP)
+    forward "/mcp",
+            Noizu.MCP.Transport.StreamableHTTP.Plug,
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Browser.MCP)
   end
 
   scope "/", host: "customers." do
-    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
-      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Customers.MCP)
+    forward "/mcp",
+            Noizu.MCP.Transport.StreamableHTTP.Plug,
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Customers.MCP)
   end
 
   scope "/", host: "market." do
-    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
-      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Market.MCP)
+    forward "/mcp",
+            Noizu.MCP.Transport.StreamableHTTP.Plug,
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Market.MCP)
   end
 
   scope "/", host: "campaigns." do
-    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
-      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Campaigns.MCP)
+    forward "/mcp",
+            Noizu.MCP.Transport.StreamableHTTP.Plug,
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Campaigns.MCP)
   end
 
   # Dynamic mock-MCP gateway. Each mock MCP (defined + activated via the
@@ -190,8 +211,9 @@ defmodule NoizuPromptLinguaWeb.Router do
   end
 
   scope "/mcp" do
-    forward "/", Noizu.MCP.Transport.StreamableHTTP.Plug,
-      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.MCP)
+    forward "/",
+            Noizu.MCP.Transport.StreamableHTTP.Plug,
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.MCP)
   end
 
   # Authentik (OIDC) is the ONLY supported auth method — no alternatives.
@@ -231,7 +253,10 @@ defmodule NoizuPromptLinguaWeb.Router do
     get "/auth/me", AuthController, :me
     get "/users/me", UserController, :show
     patch "/users/me", UserController, :update
-    resources "/organizations", OrganizationController, only: [:index, :create, :show, :update, :delete]
+
+    resources "/organizations", OrganizationController,
+      only: [:index, :create, :show, :update, :delete]
+
     post "/media/presign", MediaController, :presign
     post "/media/download", MediaController, :download
     post "/media/register", MediaController, :register
@@ -353,7 +378,6 @@ defmodule NoizuPromptLinguaWeb.Router do
   # Social OAuth disabled — Authentik is the only identity provider.
   # (Authentik is reached via the OIDC redirect flow above.)
 
-
   # PBAC v2: Groups & Memberships (authenticated, read-only)
   scope "/api/v1", NoizuPromptLinguaWeb do
     pipe_through [:api, :authenticated]
@@ -411,9 +435,19 @@ defmodule NoizuPromptLinguaWeb.Router do
     get "/chat/rooms/:room_id/messages", ChatController, :index_messages
     post "/chat/rooms/:room_id/messages", ChatController, :create_message
     get "/chat/rooms/:room_id/messages/:message_id/replies", ChatController, :index_replies
-    get "/chat/rooms/:room_id/messages/:message_id/reactions", ChatController, :index_message_reactions
-    post "/chat/rooms/:room_id/messages/:message_id/reactions", ChatController, :add_message_reaction
-    delete "/chat/rooms/:room_id/messages/:message_id/reactions", ChatController, :remove_message_reaction
+
+    get "/chat/rooms/:room_id/messages/:message_id/reactions",
+        ChatController,
+        :index_message_reactions
+
+    post "/chat/rooms/:room_id/messages/:message_id/reactions",
+         ChatController,
+         :add_message_reaction
+
+    delete "/chat/rooms/:room_id/messages/:message_id/reactions",
+           ChatController,
+           :remove_message_reaction
+
     resources "/artifacts", ArtifactController, only: [:index, :create, :show]
     get "/artifacts/:artifact_id/revisions", ArtifactController, :index_revisions
     post "/artifacts/:artifact_id/revisions", ArtifactController, :create_revision
@@ -434,7 +468,8 @@ defmodule NoizuPromptLinguaWeb.Router do
     delete "/mock-mcp-llms/:id", MockMCPController, :delete_llm
 
     resources "/mock-mcp", MockMCPController,
-      only: [:index, :create, :show, :update, :delete], param: "slug"
+      only: [:index, :create, :show, :update, :delete],
+      param: "slug"
 
     post "/mock-mcp/:slug/activate", MockMCPController, :activate
     post "/mock-mcp/:slug/generate-tools", MockMCPController, :generate_tools
@@ -508,7 +543,8 @@ defmodule NoizuPromptLinguaWeb.Router do
 
     # Instructions: reusable, versioned prompts referenced by slug handle and
     # rendered with per-task params to spawn sub-agents (org-scoped, optional project).
-    resources "/instructions", InstructionController, only: [:index, :create, :show, :update, :delete]
+    resources "/instructions", InstructionController,
+      only: [:index, :create, :show, :update, :delete]
 
     scope "/instructions/:instruction_id" do
       get "/versions", InstructionController, :versions

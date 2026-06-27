@@ -43,16 +43,20 @@ defmodule NoizuPromptLinguaWeb.AdminController do
         conn |> put_status(:not_found) |> json(%{error: "User not found"})
 
       user ->
-        conn |> put_status(:ok) |> json(%{user: %{
-          id: user.id,
-          email: user.email,
-          user_name: user.user_name,
-          handle: user.handle,
-          status: user.status,
-          verified: user.verified,
-          role: user.role,
-          created_at: user.inserted_at
-        }})
+        conn
+        |> put_status(:ok)
+        |> json(%{
+          user: %{
+            id: user.id,
+            email: user.email,
+            user_name: user.user_name,
+            handle: user.handle,
+            status: user.status,
+            verified: user.verified,
+            role: user.role,
+            created_at: user.inserted_at
+          }
+        })
     end
   end
 
@@ -80,16 +84,18 @@ defmodule NoizuPromptLinguaWeb.AdminController do
 
                 conn
                 |> put_status(:ok)
-                |> json(%{user: %{
-                  id: updated.id,
-                  email: updated.email,
-                  user_name: updated.user_name,
-                  handle: updated.handle,
-                  status: updated.status,
-                  verified: updated.verified,
-                  role: updated.role,
-                  created_at: updated.inserted_at
-                }})
+                |> json(%{
+                  user: %{
+                    id: updated.id,
+                    email: updated.email,
+                    user_name: updated.user_name,
+                    handle: updated.handle,
+                    status: updated.status,
+                    verified: updated.verified,
+                    role: updated.role,
+                    created_at: updated.inserted_at
+                  }
+                })
             end
 
           :error ->
@@ -132,7 +138,9 @@ defmodule NoizuPromptLinguaWeb.AdminController do
 
     total = NoizuPromptLingua.Repo.aggregate(OrgSchema, :count, :id)
 
-    conn |> put_status(:ok) |> json(%{organizations: orgs, total: total, page: page, per_page: per_page})
+    conn
+    |> put_status(:ok)
+    |> json(%{organizations: orgs, total: total, page: page, per_page: per_page})
   end
 
   def show_organization(conn, %{"id" => id}) do
@@ -142,12 +150,18 @@ defmodule NoizuPromptLinguaWeb.AdminController do
 
       org ->
         members = NoizuPromptLingua.Organizations.list_members(org.id)
-        conn |> put_status(:ok) |> json(%{organization: %{
-          id: org.id,
-          slug: org.slug,
-          name: org.name,
-          created_at: org.inserted_at
-        }, members: members})
+
+        conn
+        |> put_status(:ok)
+        |> json(%{
+          organization: %{
+            id: org.id,
+            slug: org.slug,
+            name: org.name,
+            created_at: org.inserted_at
+          },
+          members: members
+        })
     end
   end
 
@@ -213,7 +227,9 @@ defmodule NoizuPromptLinguaWeb.AdminController do
 
     case NoizuPromptLingua.Github.create_repo(attrs) do
       {:ok, repo} ->
-        conn |> put_status(:created) |> json(%{repo: repo_json(NoizuPromptLingua.Repo.preload(repo, :token))})
+        conn
+        |> put_status(:created)
+        |> json(%{repo: repo_json(NoizuPromptLingua.Repo.preload(repo, :token))})
 
       {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
         conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
@@ -228,7 +244,9 @@ defmodule NoizuPromptLinguaWeb.AdminController do
 
     case NoizuPromptLingua.Github.update_repo(repo_id, attrs) do
       {:ok, repo} ->
-        conn |> put_status(:ok) |> json(%{repo: repo_json(NoizuPromptLingua.Repo.preload(repo, :token))})
+        conn
+        |> put_status(:ok)
+        |> json(%{repo: repo_json(NoizuPromptLingua.Repo.preload(repo, :token))})
 
       {:error, :not_found} ->
         conn |> put_status(:not_found) |> json(%{error: "Repo not found"})
@@ -246,7 +264,12 @@ defmodule NoizuPromptLinguaWeb.AdminController do
     conn |> put_status(:ok) |> json(%{grants: grants})
   end
 
-  def grant_github_repo_access(conn, %{"org_id" => _org_id, "repo_id" => repo_id, "group_id" => group_id, "level" => level}) do
+  def grant_github_repo_access(conn, %{
+        "org_id" => _org_id,
+        "repo_id" => repo_id,
+        "group_id" => group_id,
+        "level" => level
+      }) do
     case normalize_level(level) do
       {:ok, lvl} ->
         case NoizuPromptLingua.Github.grant_repo_access(repo_id, group_id, lvl) do
@@ -266,7 +289,11 @@ defmodule NoizuPromptLinguaWeb.AdminController do
     end
   end
 
-  def revoke_github_repo_access(conn, %{"org_id" => _org_id, "repo_id" => _repo_id, "id" => grant_id}) do
+  def revoke_github_repo_access(conn, %{
+        "org_id" => _org_id,
+        "repo_id" => _repo_id,
+        "id" => grant_id
+      }) do
     case NoizuPromptLingua.Github.revoke_repo_grant(grant_id) do
       {:ok, _} ->
         conn |> put_status(:ok) |> json(%{message: "Grant revoked"})
@@ -354,26 +381,43 @@ defmodule NoizuPromptLinguaWeb.AdminController do
 
   def create_llm_model(conn, %{"model" => attrs}) do
     case Models.create_catalog_entry(model_attrs(attrs)) do
-      {:ok, entry} -> conn |> put_status(:created) |> json(%{model: llm_model_json(entry)})
-      {:error, %Ecto.Changeset{} = cs} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
-      {:error, reason} -> conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
+      {:ok, entry} ->
+        conn |> put_status(:created) |> json(%{model: llm_model_json(entry)})
+
+      {:error, %Ecto.Changeset{} = cs} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+
+      {:error, reason} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
     end
   end
 
   def update_llm_model(conn, %{"id" => id, "model" => attrs}) do
     case Models.update_catalog_entry(id, model_attrs(attrs)) do
-      {:ok, entry} -> conn |> put_status(:ok) |> json(%{model: llm_model_json(entry)})
-      {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Model not found"})
-      {:error, %Ecto.Changeset{} = cs} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
-      {:error, reason} -> conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
+      {:ok, entry} ->
+        conn |> put_status(:ok) |> json(%{model: llm_model_json(entry)})
+
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Model not found"})
+
+      {:error, %Ecto.Changeset{} = cs} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+
+      {:error, reason} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
     end
   end
 
   def delete_llm_model(conn, %{"id" => id}) do
     case Models.delete_catalog_entry(id) do
-      {:ok, _} -> conn |> put_status(:ok) |> json(%{message: "Model removed"})
-      {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Model not found"})
-      {:error, reason} -> conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
+      {:ok, _} ->
+        conn |> put_status(:ok) |> json(%{message: "Model removed"})
+
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Model not found"})
+
+      {:error, reason} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
     end
   end
 
@@ -402,6 +446,7 @@ defmodule NoizuPromptLinguaWeb.AdminController do
     case fetch_models_from_provider(provider) do
       {:ok, models} ->
         conn |> put_status(:ok) |> json(%{models: models, provider: provider})
+
       {:error, reason} ->
         conn |> put_status(422) |> json(%{error: to_string(reason), provider: provider})
     end
@@ -414,6 +459,7 @@ defmodule NoizuPromptLinguaWeb.AdminController do
     case test_provider_connection(provider, model, endpoint) do
       {:ok, result} ->
         conn |> put_status(:ok) |> json(%{valid: true, result: result})
+
       {:error, reason} ->
         conn |> put_status(422) |> json(%{valid: false, error: to_string(reason)})
     end
@@ -456,20 +502,26 @@ defmodule NoizuPromptLinguaWeb.AdminController do
   # ── OpenAI integration ─────────────────────────────────────────────────────
   defp fetch_openai_models do
     case get_openai_api_key() do
-      nil -> {:error, "OPENAI_API_KEY not configured"}
+      nil ->
+        {:error, "OPENAI_API_KEY not configured"}
+
       api_key ->
         case make_openai_request(api_key, "https://api.openai.com/v1/models") do
           {:ok, %{"data" => models}} ->
             model_names = Enum.map(models, & &1["id"])
             {:ok, model_names}
-          {:error, reason} -> {:error, reason}
+
+          {:error, reason} ->
+            {:error, reason}
         end
     end
   end
 
   defp test_openai_connection(model, custom_endpoint) do
     case get_openai_api_key() do
-      nil -> {:error, "OPENAI_API_KEY not configured"}
+      nil ->
+        {:error, "OPENAI_API_KEY not configured"}
+
       api_key ->
         endpoint = normalize_endpoint(custom_endpoint, "https://api.openai.com/v1")
         test_openai_inference(api_key, endpoint, model)
@@ -489,11 +541,16 @@ defmodule NoizuPromptLinguaWeb.AdminController do
         case response do
           %{"choices" => choices} when is_list(choices) and length(choices) > 0 ->
             {:ok, %{"model" => model, "provider" => "openai", "status" => "connected"}}
+
           %{"error" => error} ->
             {:error, error["message"] || "Unknown API error"}
-          _ -> {:ok, %{"model" => model, "provider" => "openai", "status" => "connected"}}
+
+          _ ->
+            {:ok, %{"model" => model, "provider" => "openai", "status" => "connected"}}
         end
-      {:error, reason} -> {:error, reason}
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
@@ -503,51 +560,33 @@ defmodule NoizuPromptLinguaWeb.AdminController do
       {"Content-Type", "application/json"}
     ]
 
-    opts = [timeout: 10_000, recv_timeout: 10_000]
-
-    request = if body do
-      HTTPoison.post(url, Jason.encode!(body), headers, opts)
-    else
-      HTTPoison.get(url, headers, opts)
-    end
-
-    case request do
-      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
-        case Jason.decode(body) do
-          {:ok, json} -> {:ok, json}
-          {:error, _} -> {:error, "Invalid JSON response"}
-        end
-      {:ok, %HTTPoison.Response{status_code: 401}} ->
-        {:error, "Invalid API key"}
-      {:ok, %HTTPoison.Response{status_code: code, body: body}} ->
-        try do
-          {:ok, json} = Jason.decode(body)
-          {:error, json["error"]["message"] || "HTTP #{code}"}
-        rescue
-          _ -> {:error, "HTTP #{code}"}
-        end
-      {:error, %HTTPoison.Error{reason: reason}} ->
-        {:error, "Request failed: #{inspect(reason)}"}
-    end
+    method = if body, do: :post, else: :get
+    request_json(method, url, headers, body)
   end
 
   # ── Anthropic integration ─────────────────────────────────────────────────
   defp fetch_anthropic_models do
     case get_anthropic_api_key() do
-      nil -> {:error, "ANTHROPIC_API_KEY not configured"}
+      nil ->
+        {:error, "ANTHROPIC_API_KEY not configured"}
+
       api_key ->
         case make_anthropic_request(api_key, "https://api.anthropic.com/v1/models") do
           {:ok, %{"data" => models}} ->
             model_names = Enum.map(models, & &1["id"])
             {:ok, model_names}
-          {:error, reason} -> {:error, reason}
+
+          {:error, reason} ->
+            {:error, reason}
         end
     end
   end
 
   defp test_anthropic_connection(model, custom_endpoint) do
     case get_anthropic_api_key() do
-      nil -> {:error, "ANTHROPIC_API_KEY not configured"}
+      nil ->
+        {:error, "ANTHROPIC_API_KEY not configured"}
+
       api_key ->
         endpoint = normalize_endpoint(custom_endpoint, "https://api.anthropic.com/v1")
         test_anthropic_inference(api_key, endpoint, model)
@@ -568,30 +607,12 @@ defmodule NoizuPromptLinguaWeb.AdminController do
       "messages" => [%{"role" => "user", "content" => "ok"}]
     }
 
-    case HTTPoison.post(
-      "#{endpoint}/messages",
-      Jason.encode!(payload),
-      headers,
-      timeout: 10_000,
-      recv_timeout: 10_000
-    ) do
-      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
-        case Jason.decode(body) do
-          {:ok, _json} ->
-            {:ok, %{"model" => model, "provider" => "anthropic", "status" => "connected"}}
-          {:error, _} -> {:error, "Invalid JSON response"}
-        end
-      {:ok, %HTTPoison.Response{status_code: 401}} ->
-        {:error, "Invalid API key"}
-      {:ok, %HTTPoison.Response{status_code: code, body: body}} ->
-        try do
-          {:ok, json} = Jason.decode(body)
-          {:error, json["error"]["message"] || "HTTP #{code}"}
-        rescue
-          _ -> {:error, "HTTP #{code}"}
-        end
-      {:error, %HTTPoison.Error{reason: reason}} ->
-        {:error, "Request failed: #{inspect(reason)}"}
+    case request_json(:post, "#{endpoint}/messages", headers, payload) do
+      {:ok, _json} ->
+        {:ok, %{"model" => model, "provider" => "anthropic", "status" => "connected"}}
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
@@ -602,52 +623,31 @@ defmodule NoizuPromptLinguaWeb.AdminController do
       {"Content-Type", "application/json"}
     ]
 
-    case HTTPoison.get(url, headers, timeout: 10_000, recv_timeout: 10_000) do
-      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
-        case Jason.decode(body) do
-          {:ok, json} -> {:ok, json}
-          {:error, _} -> {:error, "Invalid JSON response"}
-        end
-      {:ok, %HTTPoison.Response{status_code: 401}} ->
-        {:error, "Invalid API key"}
-      {:ok, %HTTPoison.Response{status_code: code, body: body}} ->
-        try do
-          {:ok, json} = Jason.decode(body)
-          {:error, json["error"]["message"] || "HTTP #{code}"}
-        rescue
-          _ -> {:error, "HTTP #{code}"}
-        end
-      {:error, %HTTPoison.Error{reason: reason}} ->
-        {:error, "Request failed: #{inspect(reason)}"}
-    end
+    request_json(:get, url, headers)
   end
 
   # ── Groq integration ───────────────────────────────────────────────────────
   defp fetch_groq_models do
     case get_groq_api_key() do
-      nil -> {:error, "GROQ_API_KEY not configured"}
+      nil ->
+        {:error, "GROQ_API_KEY not configured"}
+
       api_key ->
         headers = [
           {"Authorization", "Bearer #{api_key}"},
           {"Content-Type", "application/json"}
         ]
 
-        case HTTPoison.get(
-          "https://api.groq.com/openai/v1/models",
-          headers,
-          timeout: 10_000,
-          recv_timeout: 10_000
-        ) do
-          {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
-            case Jason.decode(body) do
-              {:ok, %{"data" => models}} ->
-                model_names = Enum.map(models, & &1["id"])
-                {:ok, model_names}
-              {:error, _} -> {:error, "Invalid JSON response"}
-            end
-          {:ok, %HTTPoison.Response{status_code: 401}} ->
-            {:error, "Invalid API key"}
-          {:error, _} -> {:error, "Request failed"}
+        case request_json(:get, "https://api.groq.com/openai/v1/models", headers) do
+          {:ok, %{"data" => models}} ->
+            model_names = Enum.map(models, & &1["id"])
+            {:ok, model_names}
+
+          {:ok, _} ->
+            {:error, "Invalid JSON response"}
+
+          {:error, reason} ->
+            {:error, reason}
         end
     end
   end
@@ -663,7 +663,8 @@ defmodule NoizuPromptLinguaWeb.AdminController do
   defp fetch_cerebras_models do
     case get_cerebras_api_key() do
       nil -> {:error, "CEREBRAS_API_KEY not configured"}
-      _ -> {:ok, ["llama-3.3-70b", "llama-3.1-70b"]} # Cerebras uses standard models
+      # Cerebras uses standard models
+      _ -> {:ok, ["llama-3.3-70b", "llama-3.1-70b"]}
     end
   end
 
@@ -678,7 +679,8 @@ defmodule NoizuPromptLinguaWeb.AdminController do
   defp fetch_deepseek_models do
     case get_deepseek_api_key() do
       nil -> {:error, "DEEPSEEK_API_KEY not configured"}
-      _ -> {:ok, ["deepseek-chat", "deepseek-coder"]} # DeepSeek standard models
+      # DeepSeek standard models
+      _ -> {:ok, ["deepseek-chat", "deepseek-coder"]}
     end
   end
 
@@ -693,27 +695,82 @@ defmodule NoizuPromptLinguaWeb.AdminController do
   defp test_ollama_connection(model, custom_endpoint) do
     endpoint = custom_endpoint || "http://localhost:11434"
 
-    case HTTPoison.get(
-      "#{endpoint}/api/tags",
-      timeout: 5_000,
-      recv_timeout: 5_000
-    ) do
-      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
-        case Jason.decode(body) do
-          {:ok, %{"models" => models}} ->
-            model_names = Enum.map(models, & &1["name"])
-            effective_model = if model in model_names, do: model, else: nil
-            {:ok, %{"provider" => "ollama", "model" => effective_model, "status" => "connected", "available_models" => model_names}}
-          {:error, _} -> {:error, "Invalid response from Ollama"}
+    case request_json(:get, "#{endpoint}/api/tags", [], nil, 5_000) do
+      {:ok, %{"models" => models}} ->
+        model_names = Enum.map(models, & &1["name"])
+        effective_model = if model in model_names, do: model, else: nil
+
+        {:ok,
+         %{
+           "provider" => "ollama",
+           "model" => effective_model,
+           "status" => "connected",
+           "available_models" => model_names
+         }}
+
+      {:ok, _} ->
+        {:error, "Invalid response from Ollama"}
+
+      {:error, reason} ->
+        if String.contains?(reason, "econnrefused") do
+          {:error, "Ollama not running at #{endpoint}"}
+        else
+          {:error, "Failed to connect to Ollama at #{endpoint}"}
         end
-      {:error, %HTTPoison.Error{reason: :econnrefused}} ->
-        {:error, "Ollama not running at #{endpoint}"}
-      {:error, _} ->
-        {:error, "Failed to connect to Ollama at #{endpoint}"}
     end
   end
 
   # ── Helper functions ───────────────────────────────────────────────────────
+  defp request_json(method, url, headers, body \\ nil, timeout \\ 10_000) do
+    opts =
+      [
+        method: method,
+        url: url,
+        headers: headers,
+        receive_timeout: timeout
+      ]
+      |> then(fn opts -> if body, do: Keyword.put(opts, :json, body), else: opts end)
+
+    case Req.request(opts) do
+      {:ok, %Req.Response{status: 200, body: body}} ->
+        decode_response_body(body)
+
+      {:ok, %Req.Response{status: 401}} ->
+        {:error, "Invalid API key"}
+
+      {:ok, %Req.Response{status: code, body: body}} ->
+        {:error, response_error(body, code)}
+
+      {:error, reason} ->
+        {:error, "Request failed: #{inspect(reason)}"}
+    end
+  end
+
+  defp decode_response_body(body) when is_map(body) or is_list(body), do: {:ok, body}
+
+  defp decode_response_body(body) when is_binary(body) do
+    case Jason.decode(body) do
+      {:ok, json} -> {:ok, json}
+      {:error, _} -> {:error, "Invalid JSON response"}
+    end
+  end
+
+  defp decode_response_body(_), do: {:error, "Invalid JSON response"}
+
+  defp response_error(%{"error" => %{"message" => message}}, _code) when is_binary(message),
+    do: message
+
+  defp response_error(%{"message" => message}, _code) when is_binary(message), do: message
+
+  defp response_error(body, code) when is_binary(body) do
+    case Jason.decode(body) do
+      {:ok, decoded} -> response_error(decoded, code)
+      {:error, _} -> "HTTP #{code}"
+    end
+  end
+
+  defp response_error(_body, code), do: "HTTP #{code}"
+
   defp normalize_endpoint(custom_endpoint, default) do
     case custom_endpoint do
       nil -> default
@@ -750,7 +807,13 @@ defmodule NoizuPromptLinguaWeb.AdminController do
     registry =
       MediaProviders.registry()
       |> Enum.map(fn p ->
-        %{slug: p.slug, label: p.label, modality: p.modality, env_var: p.env_var, env_key_set: MediaProviders.env_key_set?(p)}
+        %{
+          slug: p.slug,
+          label: p.label,
+          modality: p.modality,
+          env_var: p.env_var,
+          env_key_set: MediaProviders.env_key_set?(p)
+        }
       end)
 
     configs = MediaProviders.list_configs(org_id) |> Enum.map(&media_config_json/1)
@@ -760,33 +823,117 @@ defmodule NoizuPromptLinguaWeb.AdminController do
 
   def create_media_provider(conn, %{"org_id" => org_id, "config" => attrs}) do
     case MediaProviders.create_config(media_attrs(attrs, org_id)) do
-      {:ok, cfg} -> conn |> put_status(:created) |> json(%{config: media_config_json(cfg)})
-      {:error, %Ecto.Changeset{} = cs} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
-      {:error, reason} -> conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
+      {:ok, cfg} ->
+        conn |> put_status(:created) |> json(%{config: media_config_json(cfg)})
+
+      {:error, %Ecto.Changeset{} = cs} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+
+      {:error, reason} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
     end
   end
 
   def update_media_provider(conn, %{"org_id" => _org_id, "id" => id, "config" => attrs}) do
     case MediaProviders.update_config(id, media_attrs(attrs, nil)) do
-      {:ok, cfg} -> conn |> put_status(:ok) |> json(%{config: media_config_json(cfg)})
-      {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Config not found"})
-      {:error, %Ecto.Changeset{} = cs} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
-      {:error, reason} -> conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
+      {:ok, cfg} ->
+        conn |> put_status(:ok) |> json(%{config: media_config_json(cfg)})
+
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Config not found"})
+
+      {:error, %Ecto.Changeset{} = cs} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+
+      {:error, reason} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
     end
   end
 
   def delete_media_provider(conn, %{"org_id" => _org_id, "id" => id}) do
     case MediaProviders.delete_config(id) do
-      {:ok, _} -> conn |> put_status(:ok) |> json(%{message: "Config removed"})
-      {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Config not found"})
-      {:error, reason} -> conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
+      {:ok, _} ->
+        conn |> put_status(:ok) |> json(%{message: "Config removed"})
+
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Config not found"})
+
+      {:error, reason} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
+    end
+  end
+
+  # ── Custom MCP include scopes (global admin presets) ──────────────────────
+
+  def mcp_custom_scope_catalog(conn, _params) do
+    conn |> put_status(:ok) |> json(%{groups: MCPCustomScopes.catalog()})
+  end
+
+  def list_mcp_custom_scopes(conn, _params) do
+    host = mcp_host(conn)
+    scopes = MCPCustomScopes.list() |> Enum.map(&MCPCustomScopes.scope_json(&1, host))
+    conn |> put_status(:ok) |> json(%{scopes: scopes})
+  end
+
+  def show_mcp_custom_scope(conn, %{"slug" => slug}) do
+    case MCPCustomScopes.get_by_slug(slug) do
+      nil ->
+        conn |> put_status(:not_found) |> json(%{error: "Scope not found"})
+
+      scope ->
+        conn
+        |> put_status(:ok)
+        |> json(%{scope: MCPCustomScopes.scope_json(scope, mcp_host(conn))})
+    end
+  end
+
+  def create_mcp_custom_scope(conn, %{"scope" => attrs}) do
+    case MCPCustomScopes.create(attrs) do
+      {:ok, scope} ->
+        conn
+        |> put_status(:created)
+        |> json(%{scope: MCPCustomScopes.scope_json(scope, mcp_host(conn))})
+
+      {:error, %Ecto.Changeset{} = cs} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+    end
+  end
+
+  def create_mcp_custom_scope(conn, _params) do
+    conn |> put_status(:bad_request) |> json(%{error: "scope required"})
+  end
+
+  def update_mcp_custom_scope(conn, %{"slug" => slug, "scope" => attrs}) do
+    case MCPCustomScopes.update(slug, attrs) do
+      {:ok, scope} ->
+        conn
+        |> put_status(:ok)
+        |> json(%{scope: MCPCustomScopes.scope_json(scope, mcp_host(conn))})
+
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Scope not found"})
+
+      {:error, %Ecto.Changeset{} = cs} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+    end
+  end
+
+  def update_mcp_custom_scope(conn, _params) do
+    conn |> put_status(:bad_request) |> json(%{error: "scope required"})
+  end
+
+  def delete_mcp_custom_scope(conn, %{"slug" => slug}) do
+    case MCPCustomScopes.delete(slug) do
+      {:ok, _} -> conn |> put_status(:ok) |> json(%{message: "Scope deleted"})
+      {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Scope not found"})
     end
   end
 
   # Build config attrs. A blank api_key on update means "leave unchanged" (drop it);
   # on create it is simply absent. org_id is set only on create.
   defp media_attrs(attrs, org_id) do
-    base = Map.take(attrs, ["provider", "modality", "enabled", "endpoint", "default_model", "settings"])
+    base =
+      Map.take(attrs, ["provider", "modality", "enabled", "endpoint", "default_model", "settings"])
 
     base =
       case Map.get(attrs, "api_key") do
@@ -809,6 +956,29 @@ defmodule NoizuPromptLinguaWeb.AdminController do
       settings: c.settings,
       inserted_at: c.inserted_at
     }
+  end
+
+  defp mcp_host(conn) do
+    Application.get_env(:noizu_prompt_lingua, :frontend_url)
+    |> derive_host() ||
+      derive_host(conn) ||
+      "localhost"
+  end
+
+  defp derive_host(nil), do: nil
+
+  defp derive_host(url) when is_binary(url) do
+    case URI.parse(url) do
+      %URI{host: host} when is_binary(host) and host != "" -> host
+      _ -> nil
+    end
+  end
+
+  defp derive_host(conn) do
+    case conn.host do
+      host when is_binary(host) and host != "" -> host
+      _ -> nil
+    end
   end
 
   defp mcp_key_json(key) do
@@ -846,9 +1016,13 @@ defmodule NoizuPromptLinguaWeb.AdminController do
 
   defp mask(nil), do: nil
   defp mask(""), do: ""
+
   defp mask(token) when is_binary(token) do
     len = byte_size(token)
-    if len <= 4, do: String.duplicate("•", len), else: String.slice(token, 0, 4) <> String.duplicate("•", max(len - 4, 4))
+
+    if len <= 4,
+      do: String.duplicate("•", len),
+      else: String.slice(token, 0, 4) <> String.duplicate("•", max(len - 4, 4))
   end
 
   defp format_errors(changeset) do

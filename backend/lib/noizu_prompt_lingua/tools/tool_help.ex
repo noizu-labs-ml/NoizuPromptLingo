@@ -35,7 +35,8 @@ defmodule NoizuPromptLingua.Tools.ToolHelp do
   defp tool_specific_help(tool_name, task, server, ctx) do
     case Catalog.get_tool(tool_name, server, ctx) do
       nil ->
-        {:ok, %{tool: tool_name, status: "error", message: "Tool '#{tool_name}' not found in catalog."}}
+        {:ok,
+         %{tool: tool_name, status: "error", message: "Tool '#{tool_name}' not found in catalog."}}
 
       entry ->
         params_text =
@@ -61,12 +62,13 @@ defmodule NoizuPromptLingua.Tools.ToolHelp do
         Use `ToolDefinition(tool="#{entry.name}")` for the full parameter schema.
         """
 
-        {:ok, %{
-          tool: entry.name,
-          category: entry.category,
-          task: task,
-          instructions: String.trim(instructions)
-        }}
+        {:ok,
+         %{
+           tool: entry.name,
+           category: entry.category,
+           task: task,
+           instructions: String.trim(instructions)
+         }}
     end
   end
 
@@ -95,9 +97,10 @@ defmodule NoizuPromptLingua.Tools.ToolHelp do
         "These tools may help:\n\n#{tool_lines}\n\nUse `ToolDefinition` to see their full parameter schemas."
       end
 
-    {:ok, %{
-      task: task,
-      instructions: recommendations
-    }}
+    {:ok,
+     %{
+       task: task,
+       instructions: recommendations
+     }}
   end
 end

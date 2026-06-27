@@ -109,6 +109,7 @@ defmodule NoizuPromptLingua.Tools.Catalog do
   }
 
   defp schema_to_params(nil), do: []
+
   defp schema_to_params(%{"type" => "object"} = schema) do
     properties = Map.get(schema, "properties", %{})
     required = MapSet.new(Map.get(schema, "required", []))
@@ -120,7 +121,9 @@ defmodule NoizuPromptLingua.Tools.Catalog do
         case json_type do
           types when is_list(types) ->
             Enum.find(types, "string", &(&1 != "null"))
-          t -> t
+
+          t ->
+            t
         end
 
       %{

@@ -219,6 +219,54 @@ export interface McpConfigResponse {
   servers: McpServerConfig[];
 }
 
+export interface McpCustomToolParam {
+  name: string;
+  type: string;
+  required: boolean;
+  description: string;
+}
+
+export interface McpCustomTool {
+  name: string;
+  category: string;
+  description: string;
+  parameters: McpCustomToolParam[];
+  hidden: boolean;
+}
+
+export interface McpCustomGroup {
+  id: string;
+  label: string;
+  desc: string;
+  tools: McpCustomTool[];
+}
+
+export interface McpCustomScopeConfig {
+  groups: Record<string, {
+    disabled?: boolean;
+    hidden?: boolean;
+    tools?: Record<string, { disabled?: boolean; hidden?: boolean }>;
+  }>;
+}
+
+export interface McpCustomScope {
+  id: string;
+  slug: string;
+  name: string;
+  description?: string | null;
+  config: McpCustomScopeConfig;
+  url?: string | null;
+  inserted_at: string;
+  updated_at?: string;
+}
+
+export interface McpCustomScopeInput {
+  slug?: string;
+  name: string;
+  description?: string;
+  config: McpCustomScopeConfig;
+}
+
 export interface SessionInput {
   title: string;
   description?: string;
@@ -1660,6 +1708,39 @@ export const api = {
 
   adminRevokeMcpKey(userId: string, id: string) {
     return request<{ key: McpApiKey }>(`/api/v1/admin/users/${userId}/mcp-keys/${id}`, {
+      method: "DELETE",
+    });
+  },
+
+  // ── Custom MCP include scopes (admin, global). ──
+  adminMcpCustomScopeCatalog() {
+    return request<{ groups: McpCustomGroup[] }>("/api/v1/admin/mcp-custom-scopes/catalog");
+  },
+
+  adminListMcpCustomScopes() {
+    return request<{ scopes: McpCustomScope[] }>("/api/v1/admin/mcp-custom-scopes");
+  },
+
+  adminGetMcpCustomScope(slug: string) {
+    return request<{ scope: McpCustomScope }>(`/api/v1/admin/mcp-custom-scopes/${slug}`);
+  },
+
+  adminCreateMcpCustomScope(scope: McpCustomScopeInput) {
+    return request<{ scope: McpCustomScope }>("/api/v1/admin/mcp-custom-scopes", {
+      method: "POST",
+      body: JSON.stringify({ scope }),
+    });
+  },
+
+  adminUpdateMcpCustomScope(slug: string, patch: Partial<McpCustomScopeInput>) {
+    return request<{ scope: McpCustomScope }>(`/api/v1/admin/mcp-custom-scopes/${slug}`, {
+      method: "PATCH",
+      body: JSON.stringify({ scope: patch }),
+    });
+  },
+
+  adminDeleteMcpCustomScope(slug: string) {
+    return request<{ message: string }>(`/api/v1/admin/mcp-custom-scopes/${slug}`, {
       method: "DELETE",
     });
   },

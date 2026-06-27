@@ -69,7 +69,8 @@ defmodule NoizuPromptLingua.Tools.ToolSummary do
     %{
       total_tools: length(tools),
       categories: by_cat,
-      hint: "Use ToolSummary(filter='CategoryName') to explore, or ToolDefinition for full parameter info."
+      hint:
+        "Use ToolSummary(filter='CategoryName') to explore, or ToolDefinition for full parameter info."
     }
   end
 
@@ -112,7 +113,11 @@ defmodule NoizuPromptLingua.Tools.ToolSummary do
 
       result =
         if direct != [] do
-          Map.put(result, :tools, Enum.map(direct, &%{name: &1.name, description: &1.description}))
+          Map.put(
+            result,
+            :tools,
+            Enum.map(direct, &%{name: &1.name, description: &1.description})
+          )
         else
           result
         end

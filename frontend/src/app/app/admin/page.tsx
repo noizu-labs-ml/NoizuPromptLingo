@@ -9,6 +9,7 @@ import {
   FilmIcon,
   KeyIcon,
   LinkIcon,
+  WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
 import type { ComponentType, SVGProps } from 'react';
 import { useOrg } from '@/context/org';
@@ -28,6 +29,7 @@ export default function AdminHomePage() {
 
   const cards: Card[] = [
     { href: '/app/admin/llm-models', Icon: CpuChipIcon, label: 'LLM Catalog', desc: 'Edit the provider/model pairs available in the Mock MCP picker and ListModels.' },
+    { href: '/app/admin/mcp-custom-scopes', Icon: WrenchScrewdriverIcon, label: 'Custom MCP Scopes', desc: 'Compose selected domain tools into one admin-managed MCP endpoint.' },
     { href: '/app/admin/media-providers', Icon: FilmIcon, label: 'Media Providers', desc: 'Per-org API keys, models, and toggles for image/voice/music asset generation.' },
     { href: '/app/admin/github', Icon: CodeBracketIcon, label: 'GitHub Config', desc: 'Org-scoped GitHub tokens, repos, and per-group repo access grants.' },
     ...(orgSlug

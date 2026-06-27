@@ -29,13 +29,18 @@ NoizuPromptLingua.TicketTestSchema.ensure!()
 # exist on the test DB so the customers/market/campaigns suites are self-contained. Idempotent.
 NoizuPromptLingua.MarketingTestSchema.ensure!()
 
+# Ensure the custom MCP include scope table exists for custom gateway/catalog tests.
+NoizuPromptLingua.MCPCustomScopeTestSchema.ensure!()
+
 # Memory tests are Weaviate-primary: use the deterministic (feature-hash) embedder for reproducible
 # vectors with no OpenAI, and an ephemeral, isolated class on the cluster Weaviate. Inter-test
 # isolation comes from each test's randomly-generated organization_id (scope filter).
 Application.put_env(
   :noizu_prompt_lingua,
   :embeddings,
-  Keyword.merge(Application.get_env(:noizu_prompt_lingua, :embeddings, []), provider: :deterministic)
+  Keyword.merge(Application.get_env(:noizu_prompt_lingua, :embeddings, []),
+    provider: :deterministic
+  )
 )
 
 Application.put_env(

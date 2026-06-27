@@ -15,7 +15,8 @@ defmodule NoizuPromptLingua.Tools.ToolSearch do
     field :mode, :enum,
       values: [:text, :intent],
       default: :text,
-      description: "\"text\" for substring matching (default), \"intent\" for LLM-powered semantic search"
+      description:
+        "\"text\" for substring matching (default), \"intent\" for LLM-powered semantic search"
 
     field :limit, :integer,
       default: 10,
