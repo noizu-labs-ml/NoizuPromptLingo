@@ -12,14 +12,18 @@ defmodule NoizuPromptLingua.Schema.ChatRoom do
     field :slug, :string
     field :description, :string
     field :session_id, :binary_id
+    field :kind, :string, default: "channel"
 
     timestamps(type: :utc_datetime)
   end
 
+  @kinds ~w(channel dm)
+
   def changeset(room, attrs) do
     room
-    |> cast(attrs, [:organization_id, :project_id, :name, :slug, :description, :session_id])
+    |> cast(attrs, [:organization_id, :project_id, :name, :slug, :description, :session_id, :kind])
     |> validate_required([:organization_id, :name, :slug])
+    |> validate_inclusion(:kind, @kinds)
     |> foreign_key_constraint(:organization_id)
     |> foreign_key_constraint(:project_id)
     # Two partial unique indexes per (org, project) bucket (ADR-013 A3): a 23505
@@ -37,4 +41,6 @@ defmodule NoizuPromptLingua.Schema.ChatRoom do
     |> cast(attrs, [:name, :description])
     |> validate_required([:name])
   end
+
+  def kinds, do: @kinds
 end

@@ -20,6 +20,6 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.ListMessages do
       if val, do: [{k, val} | acc], else: acc
     end)
     msgs = Chat.list_messages(room_id, opts)
-    {:ok, %{messages: Enum.map(msgs, &%{id: &1.id, content: &1.content, sender: &1.sender, created_at: &1.inserted_at}), count: length(msgs)}}
+    {:ok, %{messages: Enum.map(msgs, &NoizuPromptLingua.Domains.Chat.Serialize.message/1), count: length(msgs)}}
   end
 end

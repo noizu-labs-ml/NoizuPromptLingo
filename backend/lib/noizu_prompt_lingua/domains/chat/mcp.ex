@@ -20,6 +20,17 @@ defmodule NoizuPromptLingua.Domains.Chat.MCP do
   tool NoizuPromptLingua.Domains.Chat.Tools.Notifications, category: "Chat"
   tool NoizuPromptLingua.Domains.Chat.Tools.NotificationClear, category: "Chat"
 
+  # Stream D — DMs, membership, pins/highlights, scheduling, threading
+  tool NoizuPromptLingua.Domains.Chat.Tools.DM, category: "Chat"
+  tool NoizuPromptLingua.Domains.Chat.Tools.MuteRoom, category: "Chat"
+  tool NoizuPromptLingua.Domains.Chat.Tools.LeaveRoom, category: "Chat"
+  tool NoizuPromptLingua.Domains.Chat.Tools.JoinRoom, category: "Chat"
+  tool NoizuPromptLingua.Domains.Chat.Tools.AttachWiki, category: "Chat"
+  tool NoizuPromptLingua.Domains.Chat.Tools.PinMessage, category: "Chat"
+  tool NoizuPromptLingua.Domains.Chat.Tools.HighlightMessage, category: "Chat"
+  tool NoizuPromptLingua.Domains.Chat.Tools.ScheduleMessage, category: "Chat"
+  tool NoizuPromptLingua.Domains.Chat.Tools.ForwardReplies, category: "Chat"
+
   tool NoizuPromptLingua.Tools.ToolSummary, category: "Discovery"
   tool NoizuPromptLingua.Tools.ToolSearch, category: "Discovery"
   tool NoizuPromptLingua.Tools.ToolDefinition, category: "Discovery"

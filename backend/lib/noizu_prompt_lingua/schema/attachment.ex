@@ -5,7 +5,7 @@ defmodule NoizuPromptLingua.Schema.Attachment do
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
 
-  @artifact_types ~w(artifact url git_branch file)
+  @artifact_types ~w(artifact url git_branch file wiki)
 
   schema "npl_attachments" do
     field :entity_type, :string

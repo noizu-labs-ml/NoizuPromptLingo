@@ -9,13 +9,16 @@ defmodule NoizuPromptLingua.Schema.ChatMember do
     belongs_to :room, NoizuPromptLingua.Schema.ChatRoom
     field :persona, :string
     field :role, :string, default: "member"
+    field :muted, :boolean, default: false
+    field :mute_unless_mentioned, :boolean, default: false
+    field :left_at, :utc_datetime
 
     timestamps(type: :utc_datetime)
   end
 
   def changeset(member, attrs) do
     member
-    |> cast(attrs, [:room_id, :persona, :role])
+    |> cast(attrs, [:room_id, :persona, :role, :muted, :mute_unless_mentioned, :left_at])
     |> validate_required([:room_id, :persona])
     |> validate_inclusion(:role, ~w(member admin))
     |> unique_constraint([:room_id, :persona])

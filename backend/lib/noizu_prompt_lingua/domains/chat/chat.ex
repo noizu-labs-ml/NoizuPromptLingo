@@ -3,7 +3,10 @@ defmodule NoizuPromptLingua.Domains.Chat do
   require Logger
   alias NoizuPromptLingua.Repo
   alias NoizuPromptLingua.Schema.{ChatRoom, ChatMessage, ChatEvent, ChatMember, ChatNotification, Reaction}
-  alias NoizuPromptLingua.Domains.Pipes
+
+  # Notifications dispatch (Stream B). Resolved at runtime via apply/3 so the
+  # chat domain never hard-fails or fails to compile if Dispatch is absent.
+  @dispatch NoizuPromptLingua.Domains.Notifications.Dispatch
 
   # ── Rooms ─────────────────────────────────────────────────────
 
@@ -170,6 +173,7 @@ defmodule NoizuPromptLingua.Domains.Chat do
     |> maybe_filter_organization(opts[:organization_id])
     |> maybe_filter_project(opts[:project_id])
     |> maybe_filter_session(opts[:session_id])
+    |> maybe_filter_kind(opts[:kind])
     |> order_by([r], desc: r.updated_at)
     |> limit(^(opts[:limit] || 50))
     |> offset(^(opts[:offset] || 0))
@@ -180,16 +184,68 @@ defmodule NoizuPromptLingua.Domains.Chat do
     Repo.aggregate(ChatRoom, :count)
   end
 
+  # ── DMs ───────────────────────────────────────────────────────
+
+  @doc """
+  Create (or reuse) a direct-message room. A DM is a `kind: "dm"` room with
+  2+ members; a multi-user DM simply has N members. When an existing DM in the
+  same org/project already has exactly the same member set it is reused.
+
+  `members` is a list of persona slugs.
+  """
+  def create_dm(org_id, project_id, members) when is_list(members) do
+    members = members |> Enum.map(&to_string/1) |> Enum.uniq()
+
+    case find_existing_dm(org_id, project_id, members) do
+      %ChatRoom{} = room ->
+        {:ok, room}
+
+      nil ->
+        attrs = %{
+          organization_id: org_id,
+          project_id: project_id,
+          kind: "dm",
+          name: dm_name(members)
+        }
+
+        with {:ok, room} <- create_room(attrs) do
+          Enum.each(members, fn persona ->
+            add_member(%{room_id: room.id, persona: persona})
+          end)
+
+          {:ok, room}
+        end
+    end
+  end
+
+  defp dm_name(members) do
+    "DM: " <> (members |> Enum.sort() |> Enum.join(", ")) |> String.slice(0, 255)
+  end
+
+  defp find_existing_dm(org_id, project_id, members) do
+    target = MapSet.new(members)
+
+    ChatRoom
+    |> where([r], r.organization_id == ^org_id and r.kind == "dm")
+    |> maybe_filter_project(project_id)
+    |> Repo.all()
+    |> Enum.find(fn room ->
+      room_members =
+        room.id
+        |> list_members()
+        |> Enum.map(& &1.persona)
+        |> MapSet.new()
+
+      MapSet.equal?(room_members, target)
+    end)
+  end
+
   # ── Messages ──────────────────────────────────────────────────
 
   def send_message(attrs) do
-    case %ChatMessage{} |> ChatMessage.changeset(attrs) |> Repo.insert() do
-      {:ok, msg} = ok ->
-        bridge_to_pipes(:message, msg)
-        ok
-
-      error ->
-        error
+    with {:ok, msg} <- %ChatMessage{} |> ChatMessage.changeset(attrs) |> Repo.insert() do
+      dispatch_chat_message(msg)
+      {:ok, msg}
     end
   end
 
@@ -197,6 +253,7 @@ defmodule NoizuPromptLingua.Domains.Chat do
     ChatMessage
     |> where([m], m.room_id == ^room_id)
     |> maybe_top_level(opts[:top_level])
+    |> exclude_pending_scheduled()
     |> maybe_before(opts[:before])
     |> maybe_after(opts[:after])
     |> order_by([m], desc: m.inserted_at)
@@ -209,14 +266,25 @@ defmodule NoizuPromptLingua.Domains.Chat do
   defp maybe_top_level(query, true), do: where(query, [m], is_nil(m.parent_message_id))
   defp maybe_top_level(query, _), do: query
 
-  def get_message(message_id) do
-    Repo.get(ChatMessage, message_id)
+  def get_message(message_id), do: Repo.get(ChatMessage, message_id)
+
+  @doc "Recent messages only — the join backlog. Defaults to the last 5 minutes."
+  def recent_messages(room_id, minutes \\ 5, opts \\ []) do
+    cutoff = DateTime.utc_now() |> DateTime.add(-minutes * 60, :second) |> DateTime.truncate(:second)
+
+    ChatMessage
+    |> where([m], m.room_id == ^room_id and m.inserted_at >= ^cutoff)
+    |> exclude_pending_scheduled()
+    |> order_by([m], asc: m.inserted_at)
+    |> limit(^(opts[:limit] || 50))
+    |> Repo.all()
   end
 
   # Replies to a message (threaded), oldest-first (read order within a thread).
   def list_replies(message_id) do
     ChatMessage
     |> where([m], m.parent_message_id == ^message_id)
+    |> exclude_pending_scheduled()
     |> order_by([m], asc: m.inserted_at)
     |> Repo.all()
   end
@@ -235,16 +303,74 @@ defmodule NoizuPromptLingua.Domains.Chat do
     |> Map.new(fn {pid, cnt, last} -> {pid, %{reply_count: cnt, last_reply_at: last}} end)
   end
 
+  @doc "Toggle (or set) the pinned flag on a message."
+  def pin_message(message_id, pinned \\ nil) do
+    update_message_flag(message_id, :pinned, pinned)
+  end
+
+  @doc "Toggle (or set) the highlighted flag on a message."
+  def highlight_message(message_id, highlighted \\ nil) do
+    update_message_flag(message_id, :highlighted, highlighted)
+  end
+
+  defp update_message_flag(message_id, field, value) do
+    case Repo.get(ChatMessage, message_id) do
+      nil ->
+        {:error, :not_found}
+
+      msg ->
+        new_value = if is_boolean(value), do: value, else: !Map.get(msg, field)
+        msg |> Ecto.Changeset.change(%{field => new_value}) |> Repo.update()
+    end
+  end
+
+  # ── Scheduled messages ────────────────────────────────────────
+
+  @doc """
+  Store a message to be posted at a future instant. The row lands in
+  `chat_messages` with `scheduled_for` set; `list_messages`/`recent_messages`
+  exclude rows whose `scheduled_for` is still in the future, and no dispatch
+  fires until `release_due_scheduled/0` flips it live.
+  """
+  def schedule_message(attrs) do
+    %ChatMessage{} |> ChatMessage.changeset(attrs) |> Repo.insert()
+  end
+
+  @doc """
+  Release every scheduled message whose time has arrived: clear `scheduled_for`
+  and dispatch each live. Returns `{:ok, count}`. Intended to be driven by a
+  ticker, or called on demand by the integrator.
+  """
+  def release_due_scheduled do
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+    due =
+      ChatMessage
+      |> where([m], not is_nil(m.scheduled_for) and m.scheduled_for <= ^now)
+      |> Repo.all()
+
+    released =
+      Enum.map(due, fn msg ->
+        case msg |> Ecto.Changeset.change(scheduled_for: nil) |> Repo.update() do
+          {:ok, live} ->
+            dispatch_chat_message(live)
+            live
+
+          _ ->
+            nil
+        end
+      end)
+      |> Enum.reject(&is_nil/1)
+
+    {:ok, length(released)}
+  end
+
   # ── Events ────────────────────────────────────────────────────
 
   def create_event(attrs) do
-    case %ChatEvent{} |> ChatEvent.changeset(attrs) |> Repo.insert() do
-      {:ok, event} = ok ->
-        bridge_to_pipes(:event, event)
-        ok
-
-      error ->
-        error
+    with {:ok, event} <- %ChatEvent{} |> ChatEvent.changeset(attrs) |> Repo.insert() do
+      dispatch_chat_message(event)
+      {:ok, event}
     end
   end
 
@@ -380,6 +506,58 @@ defmodule NoizuPromptLingua.Domains.Chat do
     |> Repo.all()
   end
 
+  def get_member(room_id, persona) do
+    Repo.get_by(ChatMember, room_id: room_id, persona: persona)
+  end
+
+  @doc """
+  Update a member's mute preferences. `settings` may set `:muted` and/or
+  `:mute_unless_mentioned`. Creates the membership if absent.
+  """
+  def mute_room(room_id, persona, settings \\ []) do
+    settings = Map.new(settings)
+
+    changes =
+      %{}
+      |> maybe_put(:muted, Map.get(settings, :muted))
+      |> maybe_put(:mute_unless_mentioned, Map.get(settings, :mute_unless_mentioned))
+
+    upsert_member(room_id, persona, changes)
+  end
+
+  @doc "Mark a member as having left the room (sets `left_at`)."
+  def leave_room(room_id, persona) do
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+    case get_member(room_id, persona) do
+      nil -> {:error, :not_found}
+      member -> member |> Ecto.Changeset.change(left_at: now) |> Repo.update()
+    end
+  end
+
+  @doc "Join (or rejoin) a room — inserts the membership and clears `left_at`."
+  def join_room(room_id, persona) do
+    upsert_member(room_id, persona, %{left_at: nil})
+  end
+
+  defp upsert_member(room_id, persona, changes) do
+    case get_member(room_id, persona) do
+      nil ->
+        attrs = Map.merge(%{room_id: room_id, persona: persona}, changes)
+        %ChatMember{} |> ChatMember.changeset(attrs) |> Repo.insert()
+
+      member ->
+        member |> Ecto.Changeset.change(changes) |> Repo.update()
+    end
+  end
+
+  # ── Attachments ───────────────────────────────────────────────
+
+  @doc "Attachments recorded against a room (wiki/space/url references)."
+  def room_attachments(room_id) do
+    NoizuPromptLingua.Services.Attach.list("chat_room", room_id)
+  end
+
   # ── Notifications ─────────────────────────────────────────────
 
   def list_notifications(persona, opts \\ []) do
@@ -407,82 +585,31 @@ defmodule NoizuPromptLingua.Domains.Chat do
     {:ok, count}
   end
 
-  # ── Pipe bridge ───────────────────────────────────────────────
-  #
-  # Fan a chat message/event out into each room member's agent pipe so a member
-  # can poll ONE inbox (Pipe.Input) for everything addressed to them. One pipe
-  # entry per member where member.persona != sender. The message_name embeds the
-  # row id so it is unique per event — pipe upsert never collapses chat history.
-  #
-  # Chat rows don't carry organization_id; we read it (and the room name) from
-  # the room. The whole fan-out is best-effort: a failure here must never roll
-  # back or fail the chat write.
-
-  defp bridge_to_pipes(kind, row) do
-    case get_room(row.room_id) do
-      %ChatRoom{} = room ->
-        members = list_members(row.room_id)
-        body = bridge_body(kind, row, room)
-        message_name = bridge_message_name(kind, row.id)
-
-        for %ChatMember{persona: persona} <- members, persona != row.sender, persona not in [nil, ""] do
-          push_pipe(room.organization_id, row.sender, persona, message_name, body)
-        end
-
-      _ ->
-        Logger.warning("chat→pipe bridge: room #{inspect(row.room_id)} not found; skipping fan-out")
-        :ok
-    end
-  rescue
-    e ->
-      Logger.error("chat→pipe bridge failed: #{Exception.message(e)}")
-      :ok
-  end
-
-  defp push_pipe(org_id, sender, persona, message_name, body) do
-    case Pipes.push(%{
-           organization_id: org_id,
-           sender_handle: sender,
-           message_name: message_name,
-           target_agent_handle: persona,
-           body: body
-         }) do
-      {:ok, _} -> :ok
-      {:error, reason} ->
-        Logger.error("chat→pipe push to #{persona} failed: #{inspect(reason)}")
-        :ok
-    end
-  end
-
-  defp bridge_message_name(:message, id), do: "chat.message:" <> to_string(id)
-  defp bridge_message_name(:event, id), do: "chat.event:" <> to_string(id)
-
-  defp bridge_body(:message, msg, room) do
-    Jason.encode!(%{
-      type: "chat.message",
-      room_id: msg.room_id,
-      room_name: room.name,
-      message_id: msg.id,
-      sender: msg.sender,
-      content: msg.content,
-      ts: msg.inserted_at
-    })
-  end
-
-  defp bridge_body(:event, event, room) do
-    Jason.encode!(%{
-      type: "chat.event",
-      room_id: event.room_id,
-      room_name: room.name,
-      event_id: event.id,
-      sender: event.sender,
-      content: event.content,
-      event_type: event.event_type,
-      ts: event.inserted_at
-    })
-  end
-
   # ── Private ───────────────────────────────────────────────────
+
+  # Best-effort hand-off to the notifications Dispatch. Never raises into the
+  # chat write path; if Dispatch is unavailable the message is simply persisted.
+  defp dispatch_chat_message(record) do
+    room = get_room(record.room_id)
+
+    try do
+      apply(@dispatch, :chat_message, [record, room])
+    rescue
+      _ -> :ok
+    catch
+      _, _ -> :ok
+    end
+
+    :ok
+  end
+
+  defp maybe_put(map, _key, nil), do: map
+  defp maybe_put(map, key, value), do: Map.put(map, key, value)
+
+  defp exclude_pending_scheduled(q) do
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+    where(q, [m], is_nil(m.scheduled_for) or m.scheduled_for <= ^now)
+  end
 
   defp maybe_filter_organization(q, nil), do: q
   defp maybe_filter_organization(q, org_id), do: where(q, [r], r.organization_id == ^org_id)
@@ -492,6 +619,9 @@ defmodule NoizuPromptLingua.Domains.Chat do
 
   defp maybe_filter_session(q, nil), do: q
   defp maybe_filter_session(q, sid), do: where(q, [r], r.session_id == ^sid)
+
+  defp maybe_filter_kind(q, nil), do: q
+  defp maybe_filter_kind(q, kind), do: where(q, [r], r.kind == ^kind)
 
   defp maybe_filter_event_type(q, nil), do: q
   defp maybe_filter_event_type(q, t), do: where(q, [e], e.event_type == ^t)

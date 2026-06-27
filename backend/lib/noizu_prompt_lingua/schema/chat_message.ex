@@ -12,6 +12,11 @@ defmodule NoizuPromptLingua.Schema.ChatMessage do
     # Threaded replies (ffa2d2f6): nil = top-level; set = a reply to another message
     # in the same room. Nullable self-FK (054), ON DELETE CASCADE.
     field :parent_message_id, :binary_id
+    # Pins/highlights (068): highlighted surfaces `important: true` in the payload.
+    field :pinned, :boolean, default: false
+    field :highlighted, :boolean, default: false
+    # Scheduled send (068): future rows are hidden from list_messages until due.
+    field :scheduled_for, :utc_datetime
 
     # Microsecond precision (the column is already timestamptz(6)): `:utc_datetime`
     # truncates writes to whole seconds, making same-second messages tie under the
@@ -25,7 +30,7 @@ defmodule NoizuPromptLingua.Schema.ChatMessage do
 
   def changeset(msg, attrs) do
     msg
-    |> cast(attrs, [:room_id, :content, :sender, :parent_message_id])
+    |> cast(attrs, [:room_id, :content, :sender, :parent_message_id, :pinned, :highlighted, :scheduled_for])
     |> validate_required([:room_id, :content, :sender])
     |> validate_length(:content, max: @content_max)
     |> validate_not_blank(:content)
