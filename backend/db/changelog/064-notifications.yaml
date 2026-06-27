@@ -1,0 +1,114 @@
+databaseChangeLog:
+  # Notifications inbox — the per-recipient feed that replaces the agent pipe bus
+  # (Pipe.Output/Pipe.Input). Every row is addressed to exactly ONE concrete
+  # recipient (a persona handle); group/list sends fan out to one row per member
+  # at notify time, so read/seen/ack state is genuinely per-recipient.
+  #
+  # Cursor model is lifted from the pipe bus (043/051): each row carries a
+  # monotonic `seq` from a dedicated sequence; a Monitor polls with an opaque
+  # integer cursor and receives rows with seq > cursor, ordered seq ASC.
+  #
+  # `dedup_key` collapses repeated items (a chat-channel digest, a pubsub
+  # availability pointer) into a single still-unread row that resurfaces (fresh
+  # seq) instead of piling up. `deliver_after` hides follow-ups / digests /
+  # scheduled items until due.
+
+  - changeSet:
+      id: create-table-notifications
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE npl_notifications (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+                project_id uuid REFERENCES projects(id) ON DELETE SET NULL,
+                recipient varchar(255) NOT NULL,
+                sender varchar(255),
+                kind varchar(64) NOT NULL,
+                subject_type varchar(64),
+                subject_id varchar(255),
+                body text,
+                payload jsonb NOT NULL DEFAULT '{}'::jsonb,
+                seen boolean NOT NULL DEFAULT false,
+                seen_at timestamptz,
+                read boolean NOT NULL DEFAULT false,
+                read_at timestamptz,
+                acked boolean NOT NULL DEFAULT false,
+                acked_at timestamptz,
+                deliver_after timestamptz,
+                dedup_key varchar(255),
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: npl_notifications
+
+  - changeSet:
+      id: create-sequence-notifications-seq
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE SEQUENCE npl_notifications_seq;
+      rollback:
+        - sql:
+            sql: |
+              DROP SEQUENCE IF EXISTS npl_notifications_seq;
+
+  - changeSet:
+      id: add-seq-column-notifications
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              ALTER TABLE npl_notifications
+                ADD COLUMN seq bigint NOT NULL DEFAULT nextval('npl_notifications_seq');
+      rollback:
+        - sql:
+            sql: |
+              ALTER TABLE npl_notifications DROP COLUMN seq;
+
+  - changeSet:
+      id: create-indexes-notifications
+      author: tobor-locker
+      changes:
+        # Cursor pulls: org + recipient + seq > cursor, ordered seq ASC.
+        - createIndex:
+            indexName: idx_notifications_recipient_seq
+            tableName: npl_notifications
+            columns:
+              - column:
+                  name: organization_id
+              - column:
+                  name: recipient
+              - column:
+                  name: seq
+        # Unread filtering / counts.
+        - createIndex:
+            indexName: idx_notifications_recipient_read
+            tableName: npl_notifications
+            columns:
+              - column:
+                  name: organization_id
+              - column:
+                  name: recipient
+              - column:
+                  name: read
+        # Coalescing: at most one still-unread row per (recipient, dedup_key).
+        # Partial so only keyed, unread rows participate; the notify upsert infers
+        # this index with a matching predicate.
+        - sql:
+            sql: |
+              CREATE UNIQUE INDEX idx_notifications_dedup
+                ON npl_notifications (organization_id, recipient, dedup_key)
+                WHERE read = false AND dedup_key IS NOT NULL;
+      rollback:
+        - dropIndex:
+            indexName: idx_notifications_recipient_seq
+        - dropIndex:
+            indexName: idx_notifications_recipient_read
+        - sql:
+            sql: |
+              DROP INDEX IF EXISTS idx_notifications_dedup;

@@ -190,3 +190,6 @@ databaseChangeLog:
   - include:
       file: 063-media-provider-configs.yaml
       relativeToChangelogFile: true
+  - include:
+      file: 064-notifications.yaml
+      relativeToChangelogFile: true

@@ -40,6 +40,7 @@ defmodule NoizuPromptLingua.Application do
       NoizuPromptLingua.Domains.Github.MCP,
       NoizuPromptLingua.Domains.Markdown.MCP,
       NoizuPromptLingua.Domains.Pipes.MCP,
+      NoizuPromptLingua.Domains.Notifications.MCP,
       NoizuPromptLingua.Domains.Browser.MCP,
       NoizuPromptLingua.Domains.Memory.MCP,
       # MCP servers whose SSE Registry was not being started (endpoints dead until now)
