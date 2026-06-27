@@ -21,14 +21,12 @@ defmodule NoizuPromptLingua.Tools.Catalog do
           hidden: boolean()
         }
 
-  @aliases %{}
-
   def resolve_alias(name) do
-    Map.get(@aliases, name, name)
+    name
   end
 
-  def build(server \\ NoizuPromptLingua.MCP) do
-    specs = server.__mcp__(:tools) |> Noizu.MCP.Server.Features.Tools.expand()
+  def build(server \\ NoizuPromptLingua.MCP, ctx \\ nil) do
+    specs = specs(server, ctx)
 
     Enum.map(specs, fn spec ->
       defn = spec.definition
@@ -44,17 +42,30 @@ defmodule NoizuPromptLingua.Tools.Catalog do
     end)
   end
 
-  def get_tool(name) do
+  def specs(server \\ NoizuPromptLingua.MCP, ctx \\ nil) do
+    cond do
+      is_atom(server) and function_exported?(server, :catalog_specs, 1) ->
+        apply(server, :catalog_specs, [ctx])
+
+      is_atom(server) and function_exported?(server, :__mcp__, 1) ->
+        server.__mcp__(:tools) |> Noizu.MCP.Server.Features.Tools.expand()
+
+      true ->
+        []
+    end
+  end
+
+  def get_tool(name, server \\ NoizuPromptLingua.MCP, ctx \\ nil) do
     name = resolve_alias(name)
-    Enum.find(build(), &(&1.name == name))
+    Enum.find(build(server, ctx), &(&1.name == name))
   end
 
-  def get_tools_by_category(category) do
-    Enum.filter(build(), &(&1.category == category))
+  def get_tools_by_category(category, server \\ NoizuPromptLingua.MCP, ctx \\ nil) do
+    Enum.filter(build(server, ctx), &(&1.category == category))
   end
 
-  def categories do
-    build()
+  def categories(server \\ NoizuPromptLingua.MCP, ctx \\ nil) do
+    build(server, ctx)
     |> Enum.group_by(& &1.category)
     |> Enum.map(fn {name, tools} ->
       %{name: name, tool_count: length(tools)}
@@ -64,7 +75,7 @@ defmodule NoizuPromptLingua.Tools.Catalog do
 
   def call_hidden_tool(name, arguments, server \\ NoizuPromptLingua.MCP, ctx \\ nil) do
     name = resolve_alias(name)
-    specs = server.__mcp__(:tools) |> Noizu.MCP.Server.Features.Tools.expand()
+    specs = specs(server, ctx)
 
     case Enum.find(specs, &(&1.definition.name == name)) do
       nil ->

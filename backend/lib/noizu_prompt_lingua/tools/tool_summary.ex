@@ -22,12 +22,12 @@ defmodule NoizuPromptLingua.Tools.ToolSummary do
   def call(args, ctx) do
     filter = Map.get(args, :filter) || Map.get(args, "filter")
     server = (ctx && ctx.server) || NoizuPromptLingua.MCP
-    {:ok, summary(filter, server)}
+    {:ok, summary(filter, server, ctx)}
   end
 
-  defp summary(nil, server), do: all_tools(server)
+  defp summary(nil, server, ctx), do: all_tools(server, ctx)
 
-  defp summary(filter, server) do
+  defp summary(filter, server, ctx) do
     parts =
       filter
       |> String.split(",")
@@ -35,21 +35,21 @@ defmodule NoizuPromptLingua.Tools.ToolSummary do
       |> Enum.reject(&(&1 == ""))
 
     case parts do
-      [single] -> resolve_single(single, server)
-      multiple -> %{results: Enum.map(multiple, &resolve_single(&1, server))}
+      [single] -> resolve_single(single, server, ctx)
+      multiple -> %{results: Enum.map(multiple, &resolve_single(&1, server, ctx))}
     end
   end
 
-  defp resolve_single(value, server) do
+  defp resolve_single(value, server, ctx) do
     if String.contains?(value, "#") do
-      get_tool(value, server)
+      get_tool(value, server, ctx)
     else
-      expand_category(value, server)
+      expand_category(value, server, ctx)
     end
   end
 
-  defp all_tools(server) do
-    catalog = Catalog.build(server)
+  defp all_tools(server, ctx) do
+    catalog = Catalog.build(server, ctx)
     tools = Enum.reject(catalog, &(&1.category == "Discovery"))
 
     by_cat =
@@ -73,9 +73,9 @@ defmodule NoizuPromptLingua.Tools.ToolSummary do
     }
   end
 
-  defp get_tool(path, server) do
+  defp get_tool(path, server, ctx) do
     [cat_path, tool_name] = String.split(path, "#", parts: 2)
-    catalog = Catalog.build(server)
+    catalog = Catalog.build(server, ctx)
 
     entry =
       Enum.find(catalog, fn t -> t.name == tool_name and t.category == cat_path end) ||
@@ -95,8 +95,8 @@ defmodule NoizuPromptLingua.Tools.ToolSummary do
     end
   end
 
-  defp expand_category(category, server) do
-    catalog = Catalog.build(server)
+  defp expand_category(category, server, ctx) do
+    catalog = Catalog.build(server, ctx)
     prefix = category <> "."
 
     direct = Enum.filter(catalog, &(&1.category == category))

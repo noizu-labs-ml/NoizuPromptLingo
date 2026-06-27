@@ -33,15 +33,15 @@ defmodule NoizuPromptLingua.Tools.ToolSearch do
 
     result =
       case mode do
-        :intent -> intent_search(query, limit, server)
-        _ -> text_search(query, limit, server)
+        :intent -> intent_search(query, limit, server, ctx)
+        _ -> text_search(query, limit, server, ctx)
       end
 
     {:ok, result}
   end
 
-  defp text_search(query, limit, server) do
-    catalog = Catalog.build(server)
+  defp text_search(query, limit, server, ctx) do
+    catalog = Catalog.build(server, ctx)
     q = String.downcase(query)
 
     {exact, name_match, desc_match} =
@@ -71,8 +71,8 @@ defmodule NoizuPromptLingua.Tools.ToolSearch do
     }
   end
 
-  defp intent_search(query, limit, server) do
-    case text_search(query, limit, server) do
+  defp intent_search(query, limit, server, ctx) do
+    case text_search(query, limit, server, ctx) do
       result ->
         Map.merge(result, %{
           mode: "intent",

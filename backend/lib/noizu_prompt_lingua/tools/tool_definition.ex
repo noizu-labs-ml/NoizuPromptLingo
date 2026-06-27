@@ -20,7 +20,7 @@ defmodule NoizuPromptLingua.Tools.ToolDefinition do
     tool_input = args.tool
     names = tool_input |> String.split(",") |> Enum.map(&String.trim/1)
     server = (ctx && ctx.server) || NoizuPromptLingua.MCP
-    catalog = Catalog.build(server)
+    catalog = Catalog.build(server, ctx)
     by_name = Map.new(catalog, &{&1.name, &1})
 
     {definitions, not_found} =

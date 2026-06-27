@@ -26,14 +26,14 @@ defmodule NoizuPromptLingua.Tools.ToolHelp do
     server = (ctx && ctx.server) || NoizuPromptLingua.MCP
 
     if tool_name do
-      tool_specific_help(tool_name, task, server)
+      tool_specific_help(tool_name, task, server, ctx)
     else
-      task_recommendation(task, server)
+      task_recommendation(task, server, ctx)
     end
   end
 
-  defp tool_specific_help(tool_name, task, _server) do
-    case Catalog.get_tool(tool_name) do
+  defp tool_specific_help(tool_name, task, server, ctx) do
+    case Catalog.get_tool(tool_name, server, ctx) do
       nil ->
         {:ok, %{tool: tool_name, status: "error", message: "Tool '#{tool_name}' not found in catalog."}}
 
@@ -70,8 +70,8 @@ defmodule NoizuPromptLingua.Tools.ToolHelp do
     end
   end
 
-  defp task_recommendation(task, server) do
-    catalog = Catalog.build(server)
+  defp task_recommendation(task, server, ctx) do
+    catalog = Catalog.build(server, ctx)
     q = String.downcase(task)
 
     matches =

@@ -3,6 +3,7 @@ defmodule NoizuPromptLinguaWeb.AdminController do
 
   alias NoizuPromptLingua.Schema.Users.User, as: UserSchema
   alias NoizuPromptLingua.Schema.Organizations.Organization, as: OrgSchema
+  alias NoizuPromptLingua.MCPCustomScopes
   import Ecto.Query
 
   # Full set of assignable roles. Admins may grant any of these. The elevated

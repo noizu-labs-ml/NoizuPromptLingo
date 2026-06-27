@@ -182,6 +182,13 @@ defmodule NoizuPromptLinguaWeb.Router do
     match :*, "/mcp/:slug/mcp", MockMCPGatewayController, :handle
   end
 
+  # Dynamic include-scope MCP gateway. Each admin-managed preset combines
+  # selected existing domain MCP tools into one endpoint at
+  # <host>/custom/<slug>/mcp.
+  scope "/", NoizuPromptLinguaWeb do
+    match :*, "/custom/:slug/mcp", CustomMCPGatewayController, :handle
+  end
+
   scope "/mcp" do
     forward "/", Noizu.MCP.Transport.StreamableHTTP.Plug,
       NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.MCP)
@@ -276,6 +283,14 @@ defmodule NoizuPromptLinguaWeb.Router do
     get "/users/:user_id/mcp-keys", AdminController, :list_mcp_keys
     post "/users/:user_id/mcp-keys", AdminController, :create_mcp_key
     delete "/users/:user_id/mcp-keys/:id", AdminController, :revoke_mcp_key
+
+    # Custom MCP include scopes (global admin-managed presets).
+    get "/mcp-custom-scopes/catalog", AdminController, :mcp_custom_scope_catalog
+    get "/mcp-custom-scopes", AdminController, :list_mcp_custom_scopes
+    post "/mcp-custom-scopes", AdminController, :create_mcp_custom_scope
+    get "/mcp-custom-scopes/:slug", AdminController, :show_mcp_custom_scope
+    patch "/mcp-custom-scopes/:slug", AdminController, :update_mcp_custom_scope
+    delete "/mcp-custom-scopes/:slug", AdminController, :delete_mcp_custom_scope
 
     # LLM model catalog (global) — editable provider/model pairs for the Mock MCP
     # picker / MCP ListModels (drives mock MCPs + asset LLM selection).

@@ -34,8 +34,40 @@ defmodule NoizuPromptLingua.MCPServers do
     %{id: "campaigns", label: "Campaigns", required: false, desc: "Marketing/SEO/PPC campaigns, ad copy, landing pages & domain names"}
   ]
 
+  @server_modules %{
+    "organizations" => NoizuPromptLingua.MCP.Organizations,
+    "projects" => NoizuPromptLingua.MCP.Projects,
+    "sessions" => NoizuPromptLingua.MCP.Sessions,
+    "artifacts" => NoizuPromptLingua.Domains.Artifacts.MCP,
+    "chat" => NoizuPromptLingua.Domains.Chat.MCP,
+    "review" => NoizuPromptLingua.Domains.Review.MCP,
+    "tickets" => NoizuPromptLingua.Domains.Tickets.MCP,
+    "assets" => NoizuPromptLingua.Domains.Assets.MCP,
+    "wiki" => NoizuPromptLingua.Domains.Wiki.MCP,
+    "github" => NoizuPromptLingua.Domains.Github.MCP,
+    "personas" => NoizuPromptLingua.Domains.Personas.MCP,
+    "instructions" => NoizuPromptLingua.Domains.Instructions.MCP,
+    "memory" => NoizuPromptLingua.Domains.Memory.MCP,
+    "markdown" => NoizuPromptLingua.Domains.Markdown.MCP,
+    "notifications" => NoizuPromptLingua.Domains.Notifications.MCP,
+    "pubsub" => NoizuPromptLingua.Domains.PubSub.MCP,
+    "browser" => NoizuPromptLingua.Domains.Browser.MCP,
+    "customers" => NoizuPromptLingua.Domains.Customers.MCP,
+    "market" => NoizuPromptLingua.Domains.Market.MCP,
+    "campaigns" => NoizuPromptLingua.Domains.Campaigns.MCP
+  }
+
   @doc "All configured MCP servers."
   def all, do: @servers
+
+  @doc "MCP servers that can be included in custom scopes."
+  def customizable do
+    Enum.reject(@servers, &(&1.id == "root"))
+  end
+
+  @doc "Resolve a public server id to its MCP server module."
+  def server_module(id) when is_binary(id), do: Map.get(@server_modules, id)
+  def server_module(_), do: nil
 
   @doc """
   Returns the MCP servers with full connection URLs, derived from the configured
@@ -44,11 +76,29 @@ defmodule NoizuPromptLingua.MCPServers do
   def for_host(nil), do: for_host(default_host())
 
   def for_host(host) when is_binary(host) do
-    Enum.map(@servers, fn %{id: id} = s ->
-      subdomain = if id == "root", do: host, else: "#{id}.#{host}"
-      Map.put(s, :url, "https://#{subdomain}/mcp")
-    end)
+    static =
+      Enum.map(@servers, fn %{id: id} = s ->
+        subdomain = if id == "root", do: host, else: "#{id}.#{host}"
+        Map.put(s, :url, "https://#{subdomain}/mcp")
+      end)
+
+    custom =
+      NoizuPromptLingua.MCPCustomScopes.list()
+      |> Enum.map(fn scope ->
+        %{
+          id: "custom:#{scope.slug}",
+          label: "Custom: #{scope.name}",
+          required: false,
+          desc: scope.description || "Custom MCP include scope",
+          url: custom_url(scope.slug, host)
+        }
+      end)
+
+    static ++ custom
   end
+
+  def custom_url(slug, nil), do: custom_url(slug, default_host())
+  def custom_url(slug, host), do: "https://#{host}/custom/#{slug}/mcp"
 
   defp default_host do
     Application.get_env(:noizu_prompt_lingua, NoizuPromptLinguaWeb.Endpoint)
