@@ -205,8 +205,29 @@ defmodule NoizuPromptLingua.Domains.Tickets do
         ticket
         |> Ticket.update_changeset(Map.put(attrs, :custom_fields, merged_custom))
         |> Repo.update()
+        |> dispatch_update(ticket.assignee)
     end
   end
+
+  # Best-effort notification fan-out after a successful update. A change to the
+  # assignee fires `ticket_assigned`; any other update fires `ticket_update`.
+  # Must never raise into the caller's write path.
+  defp dispatch_update({:ok, updated} = ok, prev_assignee) do
+    dispatch =
+      if updated.assignee not in [nil, "", prev_assignee],
+        do: :ticket_assigned,
+        else: :ticket_update
+
+    try do
+      apply(NoizuPromptLingua.Domains.Notifications.Dispatch, dispatch, [updated])
+    rescue
+      _ -> :ok
+    end
+
+    ok
+  end
+
+  defp dispatch_update(other, _prev_assignee), do: other
 
   def list(opts \\ []) do
     Ticket

@@ -7,6 +7,21 @@ defmodule NoizuPromptLingua.Services.Comment do
     %Comment{}
     |> Comment.changeset(Map.merge(attrs, %{entity_type: entity_type, entity_id: entity_id}))
     |> Repo.insert()
+    |> case do
+      {:ok, comment} = ok ->
+        # Best-effort notification fan-out (reviews/wiki/tickets comments). Must
+        # never raise into the caller's write path.
+        try do
+          NoizuPromptLingua.Domains.Notifications.Dispatch.comment(comment)
+        rescue
+          _ -> :ok
+        end
+
+        ok
+
+      other ->
+        other
+    end
   end
 
   def list(entity_type, entity_id, opts \\ []) do

@@ -7,6 +7,7 @@ defmodule NoizuPromptLingua.Domains.Tickets.MCP do
   # Core CRUD
   tool NoizuPromptLingua.Domains.Tickets.Tools.Overview, category: "Tickets"
   tool NoizuPromptLingua.Domains.Tickets.Tools.TicketCreate, category: "Tickets"
+  tool NoizuPromptLingua.Domains.Tickets.Tools.TicketFromEntity, category: "Tickets"
   tool NoizuPromptLingua.Domains.Tickets.Tools.TicketGet, category: "Tickets"
   tool NoizuPromptLingua.Domains.Tickets.Tools.TicketUpdate, category: "Tickets"
   tool NoizuPromptLingua.Domains.Tickets.Tools.TicketList, category: "Tickets"

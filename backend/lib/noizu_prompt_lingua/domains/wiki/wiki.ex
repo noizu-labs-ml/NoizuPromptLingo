@@ -102,7 +102,21 @@ defmodule NoizuPromptLingua.Domains.Wiki do
     %Comment{}
     |> Comment.changeset(attrs)
     |> Repo.insert()
+    |> tap(&dispatch_comment/1)
   end
+
+  # Best-effort notification fan-out for a wiki comment (wiki keeps its own
+  # comment table rather than the shared Services.Comment). Never raises into the
+  # caller's write path.
+  defp dispatch_comment({:ok, %Comment{} = comment}) do
+    try do
+      NoizuPromptLingua.Domains.Notifications.Dispatch.comment(comment)
+    rescue
+      _ -> :ok
+    end
+  end
+
+  defp dispatch_comment(_), do: :ok
 
   def delete_comment(id) do
     case get_comment(id) do
@@ -164,7 +178,20 @@ defmodule NoizuPromptLingua.Domains.Wiki do
       other ->
         other
     end
+    |> tap(&dispatch_reaction/1)
   end
+
+  # Best-effort notification fan-out for a wiki reaction. Never raises into the
+  # caller's write path.
+  defp dispatch_reaction({:ok, %Reaction{} = reaction}) do
+    try do
+      NoizuPromptLingua.Domains.Notifications.Dispatch.reaction(reaction)
+    rescue
+      _ -> :ok
+    end
+  end
+
+  defp dispatch_reaction(_), do: :ok
 
   def remove_reaction(target_type, target_id, emoji, actor) do
     {count, _} =
