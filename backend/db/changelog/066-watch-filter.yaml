@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-filter-to-npl-watches
+      author: notifications-stream-b
+      changes:
+        - addColumn:
+            tableName: npl_watches
+            columns:
+              - column:
+                  name: filter
+                  type: jsonb
+      rollback:
+        - dropColumn:
+            tableName: npl_watches
+            columnName: filter
