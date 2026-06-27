@@ -193,3 +193,18 @@ databaseChangeLog:
   - include:
       file: 064-notifications.yaml
       relativeToChangelogFile: true
+  - include:
+      file: 065-pubsub.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 066-watch-filter.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 067-chat-dm-and-membership.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 068-chat-pins-highlights.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 069-drop-pipes.yaml
+      relativeToChangelogFile: true

@@ -13,6 +13,9 @@ defmodule NoizuPromptLingua.Domains.Notifications.MCP do
   tool NoizuPromptLingua.Domains.Notifications.Tools.MarkSeen, category: "Notifications"
   tool NoizuPromptLingua.Domains.Notifications.Tools.Ack, category: "Notifications"
   tool NoizuPromptLingua.Domains.Notifications.Tools.Clear, category: "Notifications"
+  tool NoizuPromptLingua.Domains.Notifications.Tools.Watch, category: "Notifications"
+  tool NoizuPromptLingua.Domains.Notifications.Tools.FollowUp, category: "Notifications"
+  tool NoizuPromptLingua.Domains.Notifications.Tools.Share, category: "Notifications"
 
   tool NoizuPromptLingua.Tools.ToolSummary, category: "Discovery"
   tool NoizuPromptLingua.Tools.ToolSearch, category: "Discovery"

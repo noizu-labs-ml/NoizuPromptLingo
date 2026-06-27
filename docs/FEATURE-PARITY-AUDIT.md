@@ -142,7 +142,7 @@ The audit above slightly under-counted: `instructions` and `personas` were alrea
 | Gap | Status | Where |
 |---|---|---|
 | HTML/web → Markdown + Markdown viewer/filter (PRD-017) | ✅ **Done** | new `markdown` MCP domain (`Markdown.Convert`/`View`/`Overview`) — Req fetch + Floki, optional Jina; `markdown.<host>/mcp` |
-| Agent pipes (PRD-012) | ✅ **Done** | new `pipes` MCP domain (`Pipe.Output`/`Input`/`Overview`), DB changelog `043-agent-pipes.yaml`; `pipes.<host>/mcp` |
+| Agent pipes (PRD-012) | ♻️ **Superseded (2026-06-27)** | the `pipes` MCP domain was retired and replaced by the **Notify/Notifications** inbox (`notifications.<host>/mcp`) + **PubSub** channels (`pubsub.<host>/mcp`): per-recipient DMs, a Monitor `Notifications.Poll`, watches, follow-ups, dispatch-driven mentions/reactions/digests. Changelogs `064`–`069` (`069` drops `npl_agent_pipe_entries`). |
 | Instructions store | ✅ Already built | `instructions` domain (pre-existing) |
 | PM accessors (get_story/get_prd/get_persona, PRD-018) | ✅ **Folded into tickets** | `user_story` + `prd` global ticket types seeded via `mix tickets.seed`; personas via `personas` domain |
 | Local-FS utilities (file search, grep, git_tree, git_dump, dump_files, file_read) | ✅ **Done** | standalone **`local-mcp/`** Node MCP, downloadable as a tarball from the mcp-keys page (`GET /api/v1/config/local-mcp/download`, `make local-mcp-package`) |

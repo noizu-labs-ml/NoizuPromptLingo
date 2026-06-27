@@ -1,0 +1,18 @@
+databaseChangeLog:
+  # Retire the agent pipe bus. The Notify/Notifications inbox (064) + dispatch
+  # engine fully replace it; the chat→pipe bridge now routes through
+  # Notifications.Dispatch. Drop the table and its sequence.
+
+  - changeSet:
+      id: drop-table-agent-pipe-entries
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              DROP TABLE IF EXISTS npl_agent_pipe_entries;
+              DROP SEQUENCE IF EXISTS npl_agent_pipe_entries_seq;
+      rollback:
+        - sql:
+            sql: |
+              -- irreversible: the pipe bus is retired. Re-add via changelogs
+              -- 043/051 if a rollback is ever required.

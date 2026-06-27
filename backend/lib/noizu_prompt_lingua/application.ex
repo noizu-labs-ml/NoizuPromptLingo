@@ -23,6 +23,8 @@ defmodule NoizuPromptLingua.Application do
       {DNSCluster, query: Application.get_env(:noizu_prompt_lingua, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: NoizuPromptLingua.PubSub},
       NoizuPromptLingua.Redis,
+      # Presence tracker for the notifications domain (Redis-backed online/offline).
+      NoizuPromptLingua.Domains.Notifications.Presence,
       Noizu.LiveViewEventServer,
       {Oban, Application.fetch_env!(:noizu_prompt_lingua, Oban)}
     ] ++ samly_children ++ [
@@ -39,8 +41,8 @@ defmodule NoizuPromptLingua.Application do
       NoizuPromptLingua.Domains.Wiki.MCP,
       NoizuPromptLingua.Domains.Github.MCP,
       NoizuPromptLingua.Domains.Markdown.MCP,
-      NoizuPromptLingua.Domains.Pipes.MCP,
       NoizuPromptLingua.Domains.Notifications.MCP,
+      NoizuPromptLingua.Domains.PubSub.MCP,
       NoizuPromptLingua.Domains.Browser.MCP,
       NoizuPromptLingua.Domains.Memory.MCP,
       # MCP servers whose SSE Registry was not being started (endpoints dead until now)

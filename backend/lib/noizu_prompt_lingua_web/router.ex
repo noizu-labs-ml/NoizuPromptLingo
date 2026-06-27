@@ -139,9 +139,14 @@ defmodule NoizuPromptLinguaWeb.Router do
       NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Markdown.MCP)
   end
 
-  scope "/", host: "pipes." do
+  scope "/", host: "notifications." do
     forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
-      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Pipes.MCP)
+      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.Notifications.MCP)
+  end
+
+  scope "/", host: "pubsub." do
+    forward "/mcp", Noizu.MCP.Transport.StreamableHTTP.Plug,
+      NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.Domains.PubSub.MCP)
   end
 
   scope "/", host: "browser." do

@@ -33,9 +33,15 @@ defmodule NoizuPromptLingua.Domains.Notifications do
   # PubSub wake is missed; also how a newly-due `deliver_after` row or an expired
   # rate-limit window gets surfaced within a held poll.
   @backstop_ms 5_000
-  # Get rate-limit: at most one non-empty delivery per recipient per window.
-  # Hardcoded for now (configurable later; urgent/mention bypass is a future flag).
-  @rate_limit_ms 300_000
+  # Get rate-limit, expressed as a (count, span) window: at most @rate_limit_count
+  # non-empty deliveries per recipient per @rate_limit_span_ms. Hardcoded to 1 per
+  # 5 min for now; this is the same (count, span) shape the future websocket push
+  # will accept to queue events exceeding `count` within `now - span` (see plan
+  # tnote). count=1 collapses to the single-key PTTL check below; raising count
+  # later means swapping that for a windowed counter.
+  @rate_limit_count 1
+  @rate_limit_span_ms 300_000
+  @rate_limit_ms @rate_limit_span_ms
 
   # ── Publish ───────────────────────────────────────────────────
 
@@ -236,6 +242,9 @@ defmodule NoizuPromptLingua.Domains.Notifications do
 
   # Rate-limited delivery shared by get/poll. Returns {:ok, rows} | {:throttled, ms}.
   defp deliver(org_id, recipient, opts) do
+    # An agent calling get/poll is "online" — refresh its presence (best-effort).
+    touch_presence(org_id, recipient)
+
     case rate_limit_remaining(org_id, recipient) do
       ms when ms > 0 ->
         {:throttled, ms}
@@ -298,6 +307,45 @@ defmodule NoizuPromptLingua.Domains.Notifications do
 
   @doc "Clear (mark read) rows for a recipient. `ids` is a list of ids, or `:all`."
   def clear(org_id, recipient, ids \\ :all), do: mark_read(org_id, recipient, ids)
+
+  @doc """
+  Ack every still-unread row matching a `dedup_key` for a recipient — used by the
+  PubSub domain to clear an availability pointer once the follower is caught up
+  (it doesn't hold the notification id). Returns `{:ok, count}`.
+  """
+  @doc "Notification ids of still-unread rows matching a dedup_key for a recipient."
+  def ids_for_dedup(org_id, recipient, dedup_key) do
+    from(n in Notification,
+      where:
+        n.organization_id == ^org_id and n.recipient == ^recipient and
+          n.dedup_key == ^dedup_key and n.acked == false,
+      select: n.id
+    )
+    |> Repo.all()
+  end
+
+  def ack_dedup(org_id, recipient, dedup_key) do
+    {count, _} =
+      from(n in Notification,
+        where:
+          n.organization_id == ^org_id and n.recipient == ^recipient and
+            n.dedup_key == ^dedup_key and n.acked == false
+      )
+      |> Repo.update_all(set: [acked: true, acked_at: now()])
+
+    {:ok, count}
+  end
+
+  @doc """
+  Note a recipient as active (best-effort). Delegates to the Presence tracker,
+  which is a no-op if it isn't running. Called from `deliver/3` so any get/poll
+  refreshes the caller's presence.
+  """
+  def touch_presence(org_id, recipient) do
+    NoizuPromptLingua.Domains.Notifications.Presence.touch(org_id, recipient)
+  rescue
+    _ -> :ok
+  end
 
   defp set_flags(org_id, recipient, ids, sets) do
     base =
@@ -364,4 +412,7 @@ defmodule NoizuPromptLingua.Domains.Notifications do
 
   @doc "Rate-limit window in ms (exposed for tooling/tests)."
   def rate_limit_ms, do: @rate_limit_ms
+
+  @doc "Rate-limit as a {count, span_ms} window (exposed for tooling/tests)."
+  def rate_limit, do: {@rate_limit_count, @rate_limit_span_ms}
 end
