@@ -77,11 +77,11 @@ tls:
   secretName: toborlocker-tls
   infisical:
     enabled: true
-    hostAPI: https://infisical.noizu.io/api
+    hostAPI: https://infisical.noizu.com/api
     credentialsNamespace: infra
     secretName: universal-auth-credentials
     secretNamespace: infra
-    projectSlug: incubator-apps
+    projectSlug: k8-infra
     envSlug: prod
     secretsPath: /apps/tls/toborlocker
     crtKey: TOBORLOCKER_TLS_CRT
