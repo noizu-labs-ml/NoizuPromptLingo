@@ -15,6 +15,10 @@ export function generateMetadata(): Metadata {
   return {
     title: config.title ?? "Project Name",
     description: config.description ?? "Built with start-app",
+    icons: {
+      icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+      shortcut: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+    },
   };
 }
 

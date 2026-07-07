@@ -4,12 +4,12 @@ domain: tobor.locker
 npl-mcp:
   image:
     repository: ops.noizu.com/npl-mcp/server
-    tag: "v1.0.23"
+    tag: "v1.0.24"
 
 backend:
   image:
     repository: ops.noizu.com/npl-mcp/server
-    tag: "v1.0.23"
+    tag: "v1.0.24"
     pullPolicy: IfNotPresent
   port: 4040
   # Authentik OIDC redirect flow (SSOController). issuer must NOT have a trailing
@@ -41,7 +41,7 @@ backend:
 frontend:
   image:
     repository: ops.noizu.com/npl-mcp/frontend
-    tag: "v1.0.21"
+    tag: "v1.0.23"
     pullPolicy: IfNotPresent
   port: 3000
   resources:
