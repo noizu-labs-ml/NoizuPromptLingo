@@ -86,6 +86,12 @@ defmodule NoizuPromptLingua.MCPServers do
       label: "Campaigns",
       required: false,
       desc: "Marketing/SEO/PPC campaigns, ad copy, landing pages & domain names"
+    },
+    %{
+      id: "unicode",
+      label: "Unicode Codex",
+      required: false,
+      desc: "Layered Unicode glyph/control-code browser and NPL special usages"
     }
   ]
 
@@ -109,7 +115,8 @@ defmodule NoizuPromptLingua.MCPServers do
     "browser" => NoizuPromptLingua.Domains.Browser.MCP,
     "customers" => NoizuPromptLingua.Domains.Customers.MCP,
     "market" => NoizuPromptLingua.Domains.Market.MCP,
-    "campaigns" => NoizuPromptLingua.Domains.Campaigns.MCP
+    "campaigns" => NoizuPromptLingua.Domains.Campaigns.MCP,
+    "unicode" => NoizuPromptLingua.Domains.UnicodeCodex.MCP
   }
 
   @doc "All configured MCP servers."

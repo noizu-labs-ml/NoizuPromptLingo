@@ -32,6 +32,9 @@ NoizuPromptLingua.MarketingTestSchema.ensure!()
 # Ensure the custom MCP include scope table exists for custom gateway/catalog tests.
 NoizuPromptLingua.MCPCustomScopeTestSchema.ensure!()
 
+# Ensure the Unicode Codex reference tables exist for Unicode domain/controller/MCP tests.
+NoizuPromptLingua.UnicodeCodexTestSchema.ensure!()
+
 # Memory tests are Weaviate-primary: use the deterministic (feature-hash) embedder for reproducible
 # vectors with no OpenAI, and an ephemeral, isolated class on the cluster Weaviate. Inter-test
 # isolation comes from each test's randomly-generated organization_id (scope filter).

@@ -54,6 +54,7 @@ defmodule NoizuPromptLingua.Application do
       NoizuPromptLingua.Domains.Customers.MCP,
       NoizuPromptLingua.Domains.Market.MCP,
       NoizuPromptLingua.Domains.Campaigns.MCP,
+      NoizuPromptLingua.Domains.UnicodeCodex.MCP,
       # Browser relay: correlates Browser.* tool calls with the local controller.
       NoizuPromptLingua.Domains.Browser.Relay,
       NoizuPromptLinguaWeb.Endpoint

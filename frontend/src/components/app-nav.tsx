@@ -15,6 +15,7 @@ import {
   TagIcon,
   AdjustmentsHorizontalIcon,
   BookOpenIcon,
+  LanguageIcon,
   KeyIcon,
   DocumentTextIcon,
   BeakerIcon,
@@ -107,6 +108,7 @@ const NAV_SECTIONS: NavSectionDef[] = [
       { href: '/artifacts', Icon: CubeIcon, label: 'Artifacts', orgScoped: true },
       { href: '/assets', Icon: PhotoIcon, label: 'Assets', orgScoped: true },
       { href: '/npl-conventions', Icon: BookOpenIcon, label: 'NPL Conventions', orgScoped: true },
+      { href: '/unicode-codex', Icon: LanguageIcon, label: 'Unicode Codex', orgScoped: true },
     ],
   },
   {

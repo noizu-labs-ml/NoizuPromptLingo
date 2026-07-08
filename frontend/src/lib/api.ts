@@ -876,6 +876,104 @@ export interface NplSpecInput {
   xml?: boolean;
 }
 
+// ── Unicode Codex ──
+export interface UnicodeLayerRef {
+  id: string;
+  slug: string;
+  scope: 'global' | 'organization' | 'project';
+  organization_id: string | null;
+  project_id: string | null;
+}
+
+export interface UnicodeSpecialUsageRef {
+  slug: string;
+  title: string;
+  scope: string;
+}
+
+export interface UnicodeEscapeForms {
+  codepoint?: string;
+  unicode?: string[];
+  hex?: string[];
+  html?: string[];
+}
+
+export interface UnicodeElement {
+  id: string;
+  scope: 'global' | 'organization' | 'project';
+  organization_id: string | null;
+  project_id: string | null;
+  slug: string;
+  codepoint: string | null;
+  codepoint_int: number | null;
+  char: string | null;
+  name: string;
+  title: string;
+  description: string | null;
+  meaning: string | null;
+  printable: boolean;
+  visibility: string;
+  unicode: Record<string, unknown>;
+  flags: string[];
+  topics: string[];
+  sentiments: string[];
+  aliases: string[];
+  search_terms: string[];
+  display: string;
+  copy_value: string | null;
+  escape_forms: UnicodeEscapeForms;
+  warnings: string[];
+  special_usages: UnicodeSpecialUsageRef[];
+  special_usage_count: number;
+  overrides: UnicodeLayerRef[];
+  shadowed_by: UnicodeLayerRef | null;
+  relations?: UnicodeRelation[];
+}
+
+export interface UnicodeSpecialUsage {
+  id: string;
+  scope: 'global' | 'organization' | 'project';
+  organization_id: string | null;
+  project_id: string | null;
+  slug: string;
+  name: string;
+  title: string;
+  description: string | null;
+  references: { type?: string; ref?: string; [key: string]: unknown }[];
+  flags: string[];
+  topics: string[];
+  overrides: UnicodeLayerRef[];
+  shadowed_by: UnicodeLayerRef | null;
+}
+
+export interface UnicodeRelation {
+  id?: string;
+  relation_type: string;
+  description: string | null;
+  metadata: Record<string, unknown>;
+  target: UnicodeElement;
+}
+
+export interface UnicodeElementListParams {
+  projectId?: string | null;
+  q?: string;
+  topic?: string;
+  flag?: string;
+  usage?: string;
+  printable?: boolean | null;
+  includeShadowed?: boolean;
+  limit?: number;
+  offset?: number;
+}
+
+export interface UnicodeSpecialUsageListParams {
+  projectId?: string | null;
+  q?: string;
+  topic?: string;
+  flag?: string;
+  includeShadowed?: boolean;
+}
+
 // ── Agent memory (read-only browser) ──
 // The memory engine is scoped to an "agent" within an organization. An agent is
 // one of: a persona, the org-level "weego" overseer, or a team member addressed
@@ -2403,6 +2501,55 @@ export const api = {
       method: "POST",
       body: JSON.stringify(input),
     });
+  },
+
+  // ── Unicode Codex reference data (layered global/org/project) ──
+  listUnicodeElements(orgId: string, opts: UnicodeElementListParams = {}) {
+    const qs = new URLSearchParams();
+    if (opts.projectId) qs.set("project_id", opts.projectId);
+    if (opts.q) qs.set("q", opts.q);
+    if (opts.topic) qs.set("topic", opts.topic);
+    if (opts.flag) qs.set("flag", opts.flag);
+    if (opts.usage) qs.set("usage", opts.usage);
+    if (opts.printable !== undefined && opts.printable !== null) qs.set("printable", String(opts.printable));
+    if (opts.includeShadowed) qs.set("include_shadowed", "true");
+    if (opts.limit) qs.set("limit", String(opts.limit));
+    if (opts.offset) qs.set("offset", String(opts.offset));
+    const suffix = qs.toString() ? `?${qs.toString()}` : "";
+    return request<{ elements: UnicodeElement[]; count: number }>(
+      `/api/v1/organizations/${orgId}/unicode/elements${suffix}`,
+    );
+  },
+
+  getUnicodeElement(orgId: string, slug: string, opts: { projectId?: string | null } = {}) {
+    const qs = new URLSearchParams();
+    if (opts.projectId) qs.set("project_id", opts.projectId);
+    const suffix = qs.toString() ? `?${qs.toString()}` : "";
+    return request<{ element: UnicodeElement; layers: UnicodeElement[] }>(
+      `/api/v1/organizations/${orgId}/unicode/elements/${encodeURIComponent(slug)}${suffix}`,
+    );
+  },
+
+  listUnicodeSpecialUsages(orgId: string, opts: UnicodeSpecialUsageListParams = {}) {
+    const qs = new URLSearchParams();
+    if (opts.projectId) qs.set("project_id", opts.projectId);
+    if (opts.q) qs.set("q", opts.q);
+    if (opts.topic) qs.set("topic", opts.topic);
+    if (opts.flag) qs.set("flag", opts.flag);
+    if (opts.includeShadowed) qs.set("include_shadowed", "true");
+    const suffix = qs.toString() ? `?${qs.toString()}` : "";
+    return request<{ special_usages: UnicodeSpecialUsage[]; count: number }>(
+      `/api/v1/organizations/${orgId}/unicode/special-usages${suffix}`,
+    );
+  },
+
+  getUnicodeSpecialUsage(orgId: string, slug: string, opts: { projectId?: string | null } = {}) {
+    const qs = new URLSearchParams();
+    if (opts.projectId) qs.set("project_id", opts.projectId);
+    const suffix = qs.toString() ? `?${qs.toString()}` : "";
+    return request<{ special_usage: UnicodeSpecialUsage; layers: UnicodeSpecialUsage[] }>(
+      `/api/v1/organizations/${orgId}/unicode/special-usages/${encodeURIComponent(slug)}${suffix}`,
+    );
   },
 
   // ── Mock MCP (org-scoped) ──

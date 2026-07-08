@@ -208,3 +208,6 @@ databaseChangeLog:
   - include:
       file: 069-drop-pipes.yaml
       relativeToChangelogFile: true
+  - include:
+      file: 070-unicode-codex.yaml
+      relativeToChangelogFile: true
