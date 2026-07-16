@@ -1,8 +1,8 @@
 ---
 slug: npl-blueprint
 base_theme: theme-style-guide
-status: sketch
-revision: 1
+status: full
+revision: 2
 ---
 
 # Theme Treatise — NPL Blueprint
@@ -165,8 +165,10 @@ Theme: `theme-npl-blueprint/` · Base: `theme-style-guide` · Status: sketch
 - **Contrast minimums:** 4.5:1 body / 3:1 large-UI. Ink `#14263f` on sheet
   `#f5f8fc` ≈ 13:1 (safe); blueprint-blue `#245ea8` on sheet ≈ 5.6:1 (safe as
   text). **Near-the-line pairs to verify:** cyan `#0e9bd6` on sheet ≈ **3.0:1 →
-  rules/large-UI only, never body text**; redline `#c05a3e` on sheet ≈ **4.6:1** —
-  just clears body, so don't lighten it. On the cyanotype dark, text `#dbe7f5` on
+  rules/large-UI only, never body text**; redline `#c05a3e` on sheet ≈ **4.1:1**
+  (measured — corrects the earlier 4.6:1 estimate) → **below the 4.5 body floor**:
+  use redline for margin-rules, tints, and large-UI / attention markup only (ink
+  carries the note), never small redline-colored body text. On the cyanotype dark, text `#dbe7f5` on
   navy `#0a1a2f` ≈ 13:1; grid lines must stay ≤10% alpha so they never fight text.
 - **Focus visibility:** 2px solid outline — blueprint-blue on light, cyan on the
   cyanotype dark — 2px offset; both clear 3:1 against their canvas. Never removed.

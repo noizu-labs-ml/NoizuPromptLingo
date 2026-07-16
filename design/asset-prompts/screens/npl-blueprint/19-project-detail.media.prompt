@@ -1,0 +1,96 @@
+schema: "0.4"
+id: npl-blueprint-19-project-detail
+type: image
+quality: high
+
+# NoizuPromptLingo (structured prompt-definition language + MCP agent toolchain) — Project Detail screen.
+# Theme tenets: cool drafting sheet, faint grid texture, thin cyan rules + monospace annotations, near-square 2px corners, one warm redline for markup.
+# Palette: sheet #f5f8fc, navy ink #14263f, blueprint-blue #245ea8, drafting cyan #0e9bd6, redline #c05a3e.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a
+    project-workspace surface for NoizuPromptLingo — a structured
+    prompt-definition language and MCP agent toolchain. The register is a
+    technical drafting sheet: cool, exacting, calm — "drawn by someone who
+    measures twice." Structure is the aesthetic — a faint background grid, thin
+    cyan rules, dimension lines, and monospace callout labels do the work.
+    Engineered IBM Plex Sans for UI, IBM Plex Mono for every precise value.
+    Near-square corners, nearly flat surfaces, no gradients or glow. The only
+    warm color is a single red-oxide redline reserved for markup and attention.
+  text: |
+    A 16:9 high-fidelity UI mockup of the Project Detail screen of NoizuPromptLingo
+    — a single-project workspace showing project metadata, the applied MCP custom
+    scope, and the sessions and tickets scoped to it.
+
+    OVERALL LAYOUT (two bands over a faint blueprint grid): a slim LEFT NAV RAIL
+    that reads like a sheet index (thin cyan active left-rule, small mono labels),
+    and a dominant CENTER work area of stacked title-block cards. A monospace
+    breadcrumb path "org / project" runs along the top with the project name in
+    medium-weight sans.
+
+    PROJECT HEADER CARD (top, title-block header carrying the project name): the
+    project name, a one-line description in ink, and a status chip ("active")
+    drawn as a small teal-green dimension chip paired with a glyph. A monospace
+    project key/identifier sits at the right like a drawing's title block.
+
+    APPLIED MCP SCOPE SELECTOR (primary card, title-block header "Applied MCP
+    scope"): a cyan-ruled selector control showing the currently applied global
+    custom-scope preset by name, with a small "change preset" affordance. Beneath
+    it a PREVIEW of that preset's scope as a compact SCOPE TREE — nested rows
+    connected by thin cyan structural rules, each node a monospace tool/permission
+    identifier (server.tool.action), a couple of groups collapsed. This monospace
+    scope preview with cyan connectors is the focal point.
+
+    SCOPED SESSIONS / TICKETS SUMMARY (a row of dimension-boxed count tiles): two
+    or three near-square tiles separated by thin cyan rules — "Sessions" with a
+    large monospace count, "Tickets" with a large monospace count, each tile a
+    small linked shortcut ("view all") in blueprint blue. Tiles rest on a rule and
+    a faint tone step, no shadow.
+
+    A subtle redline margin-note at the edge of the scope card ("scope changes
+    apply to all sessions") drawn as a left redline rule + faint tint with the
+    note set in ink — the red pencil on a blue drawing.
+
+    PALETTE & TYPE: a pale cool drafting-sheet canvas carrying dark navy drafting
+    ink. Structure is blueprint blue; thin rules, tree connectors, and highlights
+    are a drafting cyan; a single warm red-oxide redline is reserved for margin
+    notes and attention. Status reads as a calm teal-green paired with a glyph.
+    Neutrals are cool-tinted toward blue, never warm, never pure gray. Engineered
+    IBM Plex Sans for UI and body; IBM Plex Mono carries every precise value —
+    the project key, scope identifiers, counts, and the callout labels above
+    controls.
+
+    SHAPE & SURFACE: near-square corners — drawn, not soft, not stamped. Borders
+    are the drawing: thin single-pixel cyan and blueprint-blue rules form every
+    card edge, tree connector, tile divider, and dimension line; surfaces are the
+    paper between them. Nearly flat — every card and tile rests on a rule and a
+    faint tone step, never a drop shadow. The faint blueprint grid sits under the
+    whole canvas, static and low-contrast.
+
+    MOOD: precise, technical, trustworthy within five seconds. Cool, exacting,
+    calm — a workspace drawn on an engineer's drafting table where correctness and
+    legibility of structure matter more than warmth.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches Project Detail — a project header card, an applied MCP scope selector with a scope-tree preview, and a scoped sessions/tickets summary of count tiles"}
+    theme_fidelity: {weight: 3, description: "Cool drafting sheet, faint blueprint grid, thin cyan tree connectors + rules, monospace values, near-square corners, single warm redline for margin notes — not generic UI defaults"}
+    composition: {weight: 2, description: "Clear visual hierarchy, plausible real-product workspace layout; the monospace scope preview reads as the focal point"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+
+tags: [npl-blueprint, NoizuPromptLingo, screen-mockup]

@@ -1,0 +1,70 @@
+# NPL — Blueprint · scoped-var deltas (ACCUMULATE onto the base).
+#
+# DARK SEED-TRAP: the base style-guide.scoped-vars.yaml brightens the dark brand
+# tints from LITERAL Bauhaus hex (#e20613 / #0047ab / #f5c518) rather than
+# var(--brand-*), so in dark mode every non-Bauhaus theme silently reverts its
+# accents to Bauhaus red/navy/gold. (Base-cascade defect; escalated in
+# conformance-npl-blueprint.md §7 — do NOT fix the base from a Stage C run.)
+#
+# Blueprint uses ALL THREE accent families on working chrome, so all three are
+# re-pointed here to their own values, brightened for the cyanotype dark:
+#   brand-red    = blueprint blue #245ea8  (primary — buttons, active rules, focus)
+#   brand-blue   = drafting cyan  #0e9bd6  (thin structural rules everywhere + grid)
+#   brand-yellow = redline        #c05a3e  (markup margin-rule + tint)
+# In the cyanotype these brighten toward light cyan/white lines on deep navy —
+# exactly the blueprint-negative behavior the treatise §3 mode strategy calls for.
+#
+# A scoped-vars file needs its OWN `sections` block (it does not inherit the base
+# file's). prefix "theme" makes these emit as --theme-brand-*, which the base
+# cascade's `--brand-*: var(--theme-brand-*)` dark alias then resolves.
+scoped-vars:
+  prefix: "theme"
+  sections:
+    standard:
+      selector: 'html[data-design-theme="npl-blueprint"]'
+      prefix: "theme"
+    dark:
+      selector: 'html[data-design-theme="npl-blueprint"].dark'
+      prefix: "theme"
+  vars:
+    # ── brand-red = blueprint blue (PRIMARY) ──
+    - name: brand-red
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #245ea8 75%, white)"
+    - name: brand-red-light
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #245ea8 18%, var(--surface))"
+    - name: brand-red-mid
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #245ea8 30%, var(--surface))"
+
+    # ── brand-blue = drafting cyan (SECONDARY — rules + grid) ──
+    - name: brand-blue
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #0e9bd6 75%, white)"
+    - name: brand-blue-light
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #0e9bd6 18%, var(--surface))"
+    - name: brand-blue-mid
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #0e9bd6 30%, var(--surface))"
+
+    # ── brand-yellow = redline (TERTIARY — markup only) ──
+    - name: brand-yellow
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #c05a3e 75%, white)"
+    - name: brand-yellow-light
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #c05a3e 18%, var(--surface))"
+    - name: brand-yellow-mid
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #c05a3e 30%, var(--surface))"

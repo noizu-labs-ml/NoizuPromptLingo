@@ -1,0 +1,5 @@
+name: "NPL — Blueprint"
+slug: "npl-blueprint"
+title: "NoizuPromptLingo — Blueprint"
+description: "The schematic theme: a cool drafting sheet with a faint grid, thin cyan rules, and monospace annotations — structure as the aesthetic."
+base-theme: "theme-style-guide"
