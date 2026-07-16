@@ -1,0 +1,121 @@
+# NPL — Minimal component inflections (treatise §6/§7/§8). This facet ACCUMULATES
+# onto the base (unlike vars/color-modes/typography, which replace), so it is the
+# safe home for Minimal's project-specific sample elements without clobbering the
+# base's design-sections.
+#
+# SELF-SCOPED: every selector is nested under html[data-design-theme="npl-minimal"]
+# (the same attribute the engine scopes vars under, and that the styleguide harness
+# sets when previewing this theme) so these snippets NEVER bleed onto sibling themes
+# in a combined stylesheet. The shipped pre-v3 siblings (e.g. theme-npl-prism) use
+# bare selectors and are exactly the global-bleed debt tracked for remediation;
+# this theme follows the v2 template's self-scope rule instead.
+# Discipline: restraint is the brand — only the few inflections the treatise pins.
+# --brand-red resolves to sky (#0284c7) in this theme after the seed-trap fix.
+css-snippets:
+  - name: Minimal Focus Ring & Motion
+    slug: npl-minimal-focus-motion
+    title: "Sky focus ring + motion tokens (§7/§9)"
+    description: "A 2px sky focus ring at 2px offset on every focusable element — never removed (treatise §9); clears 3:1 on white (~4.1:1) and on gray-50 (~3.8:1). Pins the two motion durations the treatise names (§7): micro-feedback 120ms, panel 180ms. Self-scoped so it does not override sibling-theme focus."
+    target-section: interaction
+    body: |
+      html[data-design-theme="npl-minimal"] {
+        --motion-micro: 120ms;
+        --motion-panel: 180ms;
+      }
+      html[data-design-theme="npl-minimal"] :focus-visible {
+        outline: 2px solid var(--brand-red);
+        outline-offset: 2px;
+      }
+
+  - name: Minimal Primary Button
+    slug: npl-minimal-btn-primary
+    title: "Sky primary button (§8)"
+    description: "The only saturated fill on a routine screen (treatise §8). The fill is sky darkened one step to #0369a1 so the white label clears WCAG AA (white-on-#0369a1 ≈ 5.9:1); the seed accent --brand-red (#0284c7) is only ~4.1:1 on white and stays the theme voice for borders / links / focus (large-text / UI only, ≥3:1). Mirrors the darkened-fill approach used in theme-npl-prism. Secondary/destructive buttons never use this fill."
+    target-section: buttons
+    body: |
+      html[data-design-theme="npl-minimal"] .btn-primary,
+      html[data-design-theme="npl-minimal"] .btn.primary {
+        background: #0369a1;
+        color: #ffffff;
+        border: none;
+        border-radius: var(--radius);
+        transition: background var(--motion-micro, 120ms) ease-out;
+      }
+      html[data-design-theme="npl-minimal"] .btn-primary:hover,
+      html[data-design-theme="npl-minimal"] .btn.primary:hover {
+        background: #075985;
+      }
+      html[data-design-theme="npl-minimal"] .btn-primary:focus-visible,
+      html[data-design-theme="npl-minimal"] .btn.primary:focus-visible {
+        outline: 2px solid var(--brand-red);
+        outline-offset: 2px;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html[data-design-theme="npl-minimal"] .btn-primary,
+        html[data-design-theme="npl-minimal"] .btn.primary { transition: none; }
+      }
+
+  - name: Minimal Hairline Card
+    slug: npl-minimal-card
+    title: "Hairline card, no resting shadow (§6/§8)"
+    description: "The workhorse surface (treatise §8): white on a quiet gray hairline, 6px radius, and NO drop shadow at rest — cards rest on hairline + tone (§6). Selected/active adds a 1px sky border, never a fill."
+    target-section: cards
+    body: |
+      html[data-design-theme="npl-minimal"] .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: none;
+      }
+      html[data-design-theme="npl-minimal"] .card.selected,
+      html[data-design-theme="npl-minimal"] .card[aria-selected="true"] {
+        border: 1px solid var(--brand-red);
+      }
+
+  - name: NPL Token Chip
+    slug: npl-minimal-token
+    title: "Monospace NPL token / ID chip (§4/§8)"
+    description: "NPL's distinctive literal-content pattern (treatise §4: JetBrains Mono for NPL tokens, values, and IDs). A quiet gray tonal pill on a hairline, 4px radius (small-chip size) — used for ticket IDs (NPL-142), org key-prefixes, and NPL glyph tokens. Mono is strictly for literal/technical content, never headings or nav."
+    target-section: typography
+    body: |
+      html[data-design-theme="npl-minimal"] .npl-token {
+        font-family: var(--font-mono);
+        font-size: 0.85em;
+        padding: 0.1em 0.45em;
+        border-radius: 4px;
+        background: var(--surface-alt);
+        border: 1px solid var(--border);
+        color: var(--text-secondary);
+        white-space: nowrap;
+      }
+
+  - name: Minimal Admin Table
+    slug: npl-minimal-admin-table
+    title: "Quiet admin data table (§5/§8)"
+    description: "The density reference (treatise §5: the Users / Organizations admin table). Quiet gray hairline row separators, a faint gray-50 header with 500-weight labels, protected comfortable-efficient row height, and a faint sky row-hover tone (§7: hover tints with sky at low alpha). Borderless tonal separation, never full-strength rules."
+    target-section: tables
+    body: |
+      html[data-design-theme="npl-minimal"] .data-table,
+      html[data-design-theme="npl-minimal"] .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: var(--font-size-sm, 0.875rem);
+      }
+      html[data-design-theme="npl-minimal"] .data-table thead th,
+      html[data-design-theme="npl-minimal"] .admin-table thead th {
+        font-weight: 500;
+        color: var(--text-secondary);
+        background: var(--surface-alt);
+        text-align: left;
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--border-strong);
+      }
+      html[data-design-theme="npl-minimal"] .data-table tbody td,
+      html[data-design-theme="npl-minimal"] .admin-table tbody td {
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border);
+      }
+      html[data-design-theme="npl-minimal"] .data-table tbody tr:hover,
+      html[data-design-theme="npl-minimal"] .admin-table tbody tr:hover {
+        background: color-mix(in srgb, var(--brand-red) 6%, var(--surface));
+      }

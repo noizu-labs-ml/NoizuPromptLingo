@@ -1,8 +1,8 @@
 ---
 slug: npl-minimal
 base_theme: theme-style-guide
-status: sketch
-revision: 1
+status: full
+revision: 2
 ---
 
 # Theme Treatise — NPL Minimal
@@ -79,6 +79,18 @@ Theme: `theme-npl-minimal/` · Base: `theme-style-guide` · Status: sketch
   `#e8eaed`, borders `#262a33` — recognizably the same theme at night, not a
   redesign. No high-contrast mode in v1; light clears AA comfortably and
   `forced-colors` falls back to system.
+- **Render calibration (rev 2):** High-fidelity image renders of these screens
+  drift hard toward a generic indigo/violet SaaS accent — and, on richer screens,
+  decorative gradient-mesh backdrops — *even when the prompt names sky blue and
+  forbids gradients/indigo/violet explicitly.* Two durable lessons. (1) The sky
+  accent is **cyan-leaning (~200°)** and must be defended in prose as "clear-sky
+  cerulean, never indigo/violet," or it reads as indigo `#4f46e5`. (2) Renderers are
+  **not** a faithful preview of this theme's accent — the engine YAML is the source
+  of truth, and the accent only actually resolves to sky once the `brand-red`
+  **seed slot** is overridden (overriding a bare `red` key is a silent no-op; see
+  `conformance-npl-minimal.md`). This is Minimal's thesis proven from the outside
+  in: left unpinned, the surface reverts to the indigo-gradient default the theme
+  exists to suppress.
 
 ## 4. Typographic Voice
 
@@ -117,7 +129,10 @@ Theme: `theme-npl-minimal/` · Base: `theme-style-guide` · Status: sketch
   overlays (dropdowns, dialogs, popovers) — small blur, low alpha, neutral. No
   resting-card drop shadows; cards rest on hairline + tone.
 - **Texture & gradient policy:** None. No gradients, no texture, no glow — flat
-  neutral fills only. (Restraint is the brand.)
+  neutral fills only. (Restraint is the brand.) *Render calibration (rev 2): image
+  models add gradient mesh / glass by default; the theme forbids them — any render
+  prompt must carry an explicit no-gradient / no-mesh negative, and the engine ships
+  **no** gradient facets.*
 
 ## 7. Motion & Feedback
 

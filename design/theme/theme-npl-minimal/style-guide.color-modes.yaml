@@ -1,17 +1,34 @@
+# NPL — Minimal color modes (treatise §3 Mode strategy).
+# Light is primary and the design target: pure white on pure gray, one sky accent.
+# Dark is a faithful translation into cool slate — recognizably the same theme at
+# night, not a redesign. shadow-color is a neutral low-alpha (§6: one soft overlay
+# shadow only — no resting-card shadows).
+#
+# VERIFICATION NOTE: literal light/dark maps are only fully verified via
+# `npx @noizu/styleguide serve`. The legacy generate-css fallback resolves modes
+# from the white/black seed cascade and does NOT emit these maps, so dark-mode
+# values below are reasoned, not serve-verified (see conformance-npl-minimal.md).
 color-modes:
   light:
     surface: "var(--white)"
     surface-alt: "var(--gray-50)"
+    surface-inverse: "#0f1115"
     text: "var(--black)"
     text-secondary: "var(--gray-700)"
-    text-muted: "var(--gray-500)"
+    text-muted: "var(--gray-500)"       # #757575 on white ≈ 4.6:1 (clears body)
+    text-inverse: "var(--white)"
     border: "var(--gray-200)"
     border-strong: "var(--gray-300)"
+    shadow-color: "rgba(15, 17, 21, 0.10)"   # neutral soft overlay shadow
   dark:
     surface: "#0f1115"
     surface-alt: "#171a21"
+    surface-inverse: "var(--white)"
     text: "#e8eaed"
-    text-secondary: "var(--gray-400)"
-    text-muted: "var(--gray-500)"
+    text-secondary: "var(--gray-400)"   # #9e9e9e on #0f1115 ≈ 7:1
+    text-muted: "#8b9099"               # cool mid-gray ≈ 5.5:1 on #0f1115 (gray-500
+                                        # would be ~4.1:1 — below the body floor)
+    text-inverse: "#0f1115"
     border: "#262a33"
     border-strong: "var(--gray-600)"
+    shadow-color: "rgba(0, 0, 0, 0.5)"

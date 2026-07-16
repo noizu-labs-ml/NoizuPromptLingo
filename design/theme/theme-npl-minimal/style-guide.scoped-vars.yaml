@@ -1,0 +1,38 @@
+# NPL — Minimal · scoped-var deltas (ACCUMULATE onto the base).
+#
+# DARK SEED-TRAP (rev 2): the base style-guide.scoped-vars.yaml brightens the dark
+# brand tints from a LITERAL #e20613 (Bauhaus red) rather than var(--brand-red), so
+# in dark mode the base re-points --brand-red → var(--theme-brand-red) and the sky
+# accent silently reverts to Bauhaus red. (This base-cascade defect affects every
+# non-Bauhaus theme; escalated in conformance-npl-minimal.md §7.) These entries
+# re-declare the brand-red family's dark values on the sky accent (brightened for
+# dark legibility) so the accent stays sky (#0284c7) at night. brand-blue/-yellow
+# are reserved/off-chrome (treatise §3) and are left on the base dark cascade — a
+# documented low-impact caveat, not used on working chrome.
+#
+# A scoped-vars file needs its own `sections` (they do not inherit from the base
+# file); the generator substitutes the active theme slug into these selectors.
+# prefix "theme" makes these emit as --theme-brand-red*, which the cascade's
+# --brand-red: var(--theme-brand-red) dark alias then resolves to sky.
+scoped-vars:
+  prefix: "theme"
+  sections:
+    standard:
+      selector: 'html[data-design-theme="npl-minimal"]'
+      prefix: "theme"
+    dark:
+      selector: 'html[data-design-theme="npl-minimal"].dark'
+      prefix: "theme"
+  vars:
+    - name: brand-red
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #0284c7 75%, white)"
+    - name: brand-red-light
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #0284c7 18%, var(--surface))"
+    - name: brand-red-mid
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #0284c7 30%, var(--surface))"

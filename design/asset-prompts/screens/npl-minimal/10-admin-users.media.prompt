@@ -1,0 +1,83 @@
+schema: "0.4"
+id: npl-minimal-10-admin-users
+type: image
+quality: high
+
+# NoizuPromptLingo — a structured prompt-definition language + MCP toolchain for building reliable AI agents — platform Admin Users screen.
+# Theme tenets: near-monochrome gray canvas, single cool sky-blue accent, pure-gray neutrals (no tint), 6px soft radius, gray hairline borders (never hard rules), one soft shadow only on overlays.
+# Palette: canvas #ffffff, ink #0a0a0b, sky accent #0284c7, hairline #e0e0e0/#bdbdbd, alt #f5f5f5, warning #d97706, error #dc2626.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a
+    barely-there, precise console UI — calm, quietly authoritative, near-monochrome,
+    in the restrained register of Linear / Vercel dashboards (NOT colorful, NOT
+    playful, NOT a marketing page). Humanist sans-serif (Inter) throughout, NO serif.
+    A single cool sky-blue accent carries interactivity; everything else is pure gray.
+    Type and quiet gray hairlines do the hierarchy — no drop shadows at rest, no
+    gradients, no glow. Structure is felt, not shouted.
+  text: |
+    A 16:9 high-fidelity UI mockup of the platform Admin Users screen of
+    NoizuPromptLingo, a prompt-engineering and MCP agent-building platform.
+
+    OVERALL LAYOUT (two bands): a slim achromatic LEFT ADMIN NAV RAIL of monochrome
+    line icons (Users active), and a dominant CENTER content area on a pure-white
+    canvas.
+
+    HEADER BAND: a page title "Users" in a 600-weight sans with a muted total count
+    "1,284 users", a search input on the right (white field, quiet gray hairline, 6px
+    radius, a small magnifier glyph, placeholder "Search users…"), and a gray-hairline
+    ghost "Filters" control.
+
+    USER SEARCH TABLE (primary, the workhorse): a dense but comfortable table of about
+    sixteen rows with quiet gray hairline separators and a very faint grayer alternate
+    tone — NOT boxed cards. Columns: USER (a small flat neutral avatar dot + name +
+    muted email beneath), GLOBAL ROLE (a compact selector showing "Admin", "Member",
+    or "Viewer"), STATUS (a small pill — "Active" in quiet gray, one "Suspended" in
+    muted red paired with a small dot glyph), LAST ACTIVE (muted relative time), and a
+    right-aligned kebab actions control. One column header shows a 500-weight label
+    with a small sort caret. One row carries a SUSPEND ACCOUNT TOGGLE (a small switch)
+    mid-flip.
+
+    SELF-LOCKOUT WARNING MODAL (open, centered over a faint neutral scrim): a small
+    white dialog with softly rounded 6px corners and one soft low shadow (the only
+    elevation on the screen). It shows a small amber warning glyph, a heading "Remove
+    your own admin access?", a short muted explanation, and two buttons — a
+    gray-hairline ghost "Cancel" and a red-outlined destructive "Remove access" that
+    reads as filling on hover.
+
+    PALETTE & TYPE: near-monochrome — pure white canvas, whisper-cool near-black ink,
+    mid and light pure grays for secondary text and hairlines; one calm cool sky-blue
+    as the only accent (active nav, focus, links); status color only where it means
+    something (muted red suspended, amber warning), always paired with a glyph, never
+    color alone. Humanist sans-serif (Inter) throughout, no serif.
+
+    SHAPE & SURFACE: 6px soft corners; quiet gray hairlines separate rows and frame
+    the search field; flat tonal surfaces, no resting shadows except the single soft
+    shadow under the modal.
+
+    MOOD: precise, calm, administrative — a rigorous control surface that gets out of
+    your way; density without crowding.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches the screen's actual layout and key components as specified"}
+    theme_fidelity: {weight: 3, description: "Palette, typography, radius/shape language match the treatise, not generic UI defaults"}
+    composition: {weight: 2, description: "Clear visual hierarchy, plausible real-product layout"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+
+tags: [npl-minimal, NoizuPromptLingo, screen-mockup]

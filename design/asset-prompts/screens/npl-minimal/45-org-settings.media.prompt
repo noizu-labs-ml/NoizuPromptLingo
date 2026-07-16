@@ -1,0 +1,88 @@
+schema: "0.4"
+id: npl-minimal-45-org-settings
+type: image
+quality: high
+
+# NoizuPromptLingo — a structured prompt-definition language + MCP toolchain for building reliable AI agents — Organization Settings screen.
+# Theme tenets: near-monochrome gray canvas, single cool sky-blue accent, pure-gray neutrals (no tint), 6px soft radius, gray hairline borders (never hard rules), red reserved for the danger zone only.
+# Palette: canvas #ffffff, ink #0a0a0b, sky accent #0284c7, hairline #e0e0e0/#bdbdbd, alt #f5f5f5, error #dc2626.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a
+    barely-there, precise console UI — calm, quietly authoritative, near-monochrome,
+    in the restrained register of Linear / Vercel dashboards (NOT colorful, NOT
+    playful, NOT a marketing page). Humanist sans-serif (Inter) throughout, NO serif.
+    A single cool sky-blue accent carries interactivity; everything else is pure gray.
+    Type and quiet gray hairlines do the hierarchy — no drop shadows at rest, no
+    gradients, no glow. Structure is felt, not shouted.
+  text: |
+    A 16:9 high-fidelity UI mockup of the Organization Settings screen of
+    NoizuPromptLingo, a prompt-engineering and MCP agent-building platform.
+
+    OVERALL LAYOUT (three bands): a slim achromatic LEFT NAV RAIL of monochrome line
+    icons; a SETTINGS SUB-NAV column of text links ("General" active, "Roles", "Media",
+    "Danger zone"); and a dominant CENTER content column of stacked settings cards on a
+    pure-white canvas.
+
+    HEADER: a breadcrumb "Organization / Settings" muted, and a page title "Settings"
+    in a 600-weight sans.
+
+    ORG IDENTITY FORM (first card): a white hairline card with softly rounded 6px
+    corners, a card title "General", and two fields — "Organization name" and "Key
+    prefix" (the key-prefix field shows a small monospace example chip in JetBrains
+    Mono, e.g. "ACME-"). 500-weight gray labels above each field; a solid sky-blue
+    "Save" button at the card's foot.
+
+    CUSTOM ROLE EDITOR (second card): a card titled "Roles" holding a compact
+    permissions grid — role rows ("Owner", "Admin", "Member", and one custom
+    "Reviewer") down the side, permission columns across the top, with quiet checkmark
+    toggles at the intersections; a gray-hairline ghost "Add role" control beneath.
+
+    MEDIA PROVIDER KEY FORM (third card): a card titled "Media provider" with a masked
+    API-key field in monospace (dots with the last few characters visible) and small
+    reveal and copy glyph buttons, plus a muted helper line.
+
+    DANGER ZONE PANEL (last card): a distinct card framed by a quiet muted-red hairline,
+    a small warning glyph, a heading "Delete organization", a muted explanation, and a
+    red-outlined destructive "Delete organization" button that reads as filling red on
+    hover — the only place red appears.
+
+    PALETTE & TYPE: near-monochrome — pure white cards on a faintly grayer field,
+    whisper-cool near-black ink, mid and light pure grays for labels and hairlines; one
+    calm cool cyan-leaning sky blue — a clear-sky cerulean, never indigo or violet —
+    as the only accent (Save, active sub-nav, focus); muted red reserved strictly for
+    the danger zone, paired with a glyph. Monospace (JetBrains Mono) only for the key
+    prefix and the API key; humanist sans-serif (Inter) everywhere else, no serif.
+
+    SHAPE & SURFACE: 6px soft corners on cards, fields, and buttons; quiet gray
+    hairlines frame every card instead of shadows; flat tonal surfaces over a single
+    flat pure-white / faint-gray background — no gradient, no colored mesh, no glass —
+    and no resting elevation.
+
+    MOOD: precise, calm, governed — an unhurried configuration surface where nothing
+    shouts; restraint is the brand, and destructive actions are quiet until you reach
+    for them.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, gradient background, colored mesh or blobs, glassmorphism, violet or indigo or purple accent, drop shadow under resting cards"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches the screen's actual layout and key components as specified"}
+    theme_fidelity: {weight: 3, description: "Palette, typography, radius/shape language match the treatise, not generic UI defaults"}
+    composition: {weight: 2, description: "Clear visual hierarchy, plausible real-product layout"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+
+tags: [npl-minimal, NoizuPromptLingo, screen-mockup]
