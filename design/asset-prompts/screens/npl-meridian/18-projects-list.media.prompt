@@ -1,0 +1,81 @@
+schema: "0.4"
+id: npl-meridian-18-projects-list
+type: image
+quality: high
+
+# NoizuPromptLingo — a structured prompt-definition language + MCP agent toolchain — Projects List screen.
+# Theme tenets: warm espresso-dark surface, single matte-brass accent, verdigris-teal secondary, display-serif titles over Inter body, refined 6px radius, "well-lit study at night".
+# Palette: espresso #1a1613 canvas, panel #241f1a, parchment #f2ebe0 text, brass #c9a15e accent, verdigris #3f857e secondary.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a
+    PREMIUM, warm-dark projects listing — the org-scoped index of projects a delivery
+    lead browses. The register is refined, calm, considered, with quiet gravitas: a
+    well-lit study at night, not a build monitor. Warm low light, matte brass
+    detailing, unhurried. Card titles and any large numbers are a warm high-contrast
+    DISPLAY SERIF; body and UI labels are a neutral sans; ids are monospace. The
+    accent is a single matte, desaturated brass used as a thin line or small fill —
+    never a gradient, glow, or gold bling.
+  text: |
+    A 16:9 high-fidelity UI mockup of the Projects List screen of NoizuPromptLingo,
+    rendered in a warm espresso-dark mode.
+
+    OVERALL LAYOUT (two regions): a slim LEFT NAV RAIL; a wide MAIN COLUMN with a
+    header/toolbar and a grid of project cards.
+
+    LEFT NAV RAIL: warm-charcoal sidebar, "NPL" wordmark in the display serif, a short
+    destination list; the active "Projects" item marked by a thin brass left-rail and
+    a heavier label, not a filled pill.
+
+    HEADER & TOOLBAR: "Projects" in a large display-serif heading with a muted count
+    beneath ("9 active"), and a toolbar row: a PROJECT SEARCH/FILTER FIELD (recessed
+    input with a small glyph), an ARCHIVED toggle (a small switch labeled "Show
+    archived"), and a solid BRASS "New Project" BUTTON with dark espresso label text
+    at the right — the one metallic control on the screen.
+
+    PROJECT CARD GRID: a responsive grid of 6-9 raised warm-charcoal PROJECT CARDS at
+    6px radius with generous padding. Each card: the project name as a display-serif
+    title, a small status chip ("Active" olive / "Archived" muted), a one-line muted
+    description, a thin row of activity summary stats (sessions, tickets, updated) with
+    small sans labels and monospace counts, and a small member avatar cluster at the
+    foot. One featured card carries a thin brass hairline.
+
+    PALETTE & TYPE: every neutral is a warm charcoal (espresso canvas, warmer raised
+    cards), never cool slate; text is a soft warm parchment, never pure white. The
+    accent is a matte brass/champagne — the primary button fill, card hairlines, and
+    the focus ring; muted verdigris teal only on links and the search glyph. Card
+    titles in the warm display serif; labels and body in a neutral sans; counts/ids in
+    monospace.
+
+    SHAPE & SURFACE: refined 6px radius on cards, inputs, and the button; 4px on small
+    status chips; warm tonal elevation with a soft warm shadow under raised cards — no
+    glow. A barely perceptible warm radial vignette over the shell, like a single
+    study lamp. Brass is a pinstripe, never a heavy frame.
+
+    MOOD: refined, premium, calm — a considered index of projects with room to breathe,
+    each card feeling deliberate. Reading-and-choosing, not operating-a-machine.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, cool blue slate tones, neon glow, gold gradient bling, terminal/console green"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches Projects List: left nav rail, header with a search/filter field + archived toggle + a create-project button, and a grid of project cards each showing status and an activity summary"}
+    theme_fidelity: {weight: 3, description: "Warm espresso-dark neutrals (not cool slate), single matte-brass accent (brass primary button, hairlines) + verdigris links, display-serif card titles over sans body, 6px radius"}
+    composition: {weight: 2, description: "Clear card grid with a considered, breathing rhythm; plausible real product listing"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+    - "cool/blue terminal darkness or phosphor-green accent (that is the Nocturne sibling, not Meridian)"
+
+tags: [npl-meridian, NoizuPromptLingo, screen-mockup]

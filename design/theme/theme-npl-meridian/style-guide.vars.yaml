@@ -1,0 +1,67 @@
+# ═══════════════════════════════════════════════════════════════
+# NPL — Meridian · seed deltas over theme-style-guide (treatise §3/§4/§6).
+# Only the seeds this theme pins; everything else rides the base cascade.
+#
+# SEED-TRAP FIX: the cascade's accent slots are named brand-red / brand-blue /
+# brand-yellow — NOT bare red / blue / yellow (those are silent no-ops). Their
+# VALUES here are Meridian's warm palette (matte brass / verdigris teal), not
+# their names. The base pins each -light sibling to a tint of the OLD literal
+# Bauhaus hex, so each -light is re-pointed to read var(--brand-*) and track the
+# override.
+#   • brand-red  = matte brass/champagne  (PRIMARY accent — the theme's voice)
+#   • brand-blue = verdigris teal         (SECONDARY — links / cool data)
+#   • brand-yellow is intentionally NOT overridden: the treatise pins "no third
+#     brand hue". Its only base chrome use is ::selection, which the css-snippets
+#     file re-scopes to a brass tint, leaving brand-yellow genuinely off-chrome
+#     (documented standing caution in conformance-npl-meridian.md §7 — left on the
+#     base dark cascade as low-impact, not re-pointed).
+#
+# Warm neutrals: white = warm parchment (never pure), black = warm espresso. These
+# tint the whole gray ramp warm. Dark-mode surfaces/text and the dark brand/semantic
+# re-points live in style-guide.scoped-vars.yaml (the base's dark cascade otherwise
+# forces COOL SLATE surfaces + reverts accents — see that file).
+# ═══════════════════════════════════════════════════════════════
+
+vars:
+  groups:
+    # ── Surfaces ── §3 neutrals: warm parchment (lightest value), warm espresso ink
+    - name: Surfaces
+      vars:
+        white: "#f2ebe0"   # warm parchment — the lightest value, never pure white (§3)
+        black: "#1a1613"   # warm espresso — the dark canvas; tints the gray ramp warm
+
+    # ── Primaries ── §3 accents: matte brass primary + verdigris-teal secondary.
+    # No third brand hue (brand-yellow left on base, off-chrome — see header).
+    - name: Primaries - Brass + Verdigris
+      vars:
+        brand-red: "#c9a15e"     # PRIMARY accent — matte brass/champagne (~40°, desaturated)
+        brand-red-light: "color-mix(in srgb, var(--brand-red) 70%, var(--surface))"
+        brand-blue: "#3f857e"    # SECONDARY accent — verdigris teal (~175°): links, cool data
+        brand-blue-light: "color-mix(in srgb, var(--brand-blue) 70%, var(--surface))"
+
+    # ── Semantic ── §3/§9: harmonized warm. Warning amber sits hue-near brass, so
+    # warning is ALWAYS icon-paired and brass is reserved for accent/structure,
+    # never status (keep that split). Dark-mode legibility re-points live in
+    # scoped-vars (the base reverts these to its own semantics in dark).
+    - name: Semantic
+      vars:
+        success: "#7fa650"   # olive — warm-harmonized green
+        warning: "#d98a2b"   # amber — always icon-paired; kept distinct from brass
+        error: "#c85248"     # terracotta-red — destructive
+        info: "#5a8fb0"      # muted slate-blue — informational
+
+    # ── Typography ── §4: Inter body/UI (neutral workhorse), Fraunces DISPLAY serif
+    # for headings + KPI numerals (identity face — the base has no font-display seed,
+    # so css-snippets wires --font-display onto headings/KPIs), JetBrains Mono for
+    # IDs/values/data cells. font-sans must match branding.yaml font-url.
+    - name: Typography
+      vars:
+        font-sans: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
+        font-mono: "'JetBrains Mono', 'Menlo', monospace"
+        font-display: "'Fraunces', Georgia, 'Times New Roman', serif"
+
+    # ── Shape ── §6: refined-moderate 6px base (4px chips, 8px feature panels via
+    # css-snippets). Tailored, even radius — not soft, not sharp.
+    - name: Shape
+      vars:
+        radius: "6px"

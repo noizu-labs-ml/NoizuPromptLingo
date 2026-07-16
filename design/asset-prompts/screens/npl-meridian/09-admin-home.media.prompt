@@ -1,0 +1,89 @@
+schema: "0.4"
+id: npl-meridian-09-admin-home
+type: image
+quality: high
+
+# NoizuPromptLingo — a structured prompt-definition language + MCP agent toolchain — Platform Admin Home dashboard.
+# Theme tenets: warm espresso-dark surface, single matte-brass accent, verdigris-teal secondary, display-serif KPIs over Inter body, refined 6px radius, "well-lit study at night".
+# Palette: espresso #1a1613 canvas, panel #241f1a, parchment #f2ebe0 text, brass #c9a15e accent, verdigris #3f857e secondary.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a
+    PREMIUM, warm-dark platform-admin dashboard — the home a platform administrator
+    opens to read cross-org health and see what needs attention. The register is
+    refined, calm, composed, with quiet authority: a well-lit study at night, not a
+    build monitor. Warm low light, matte brass detailing, unhurried. Headings and
+    large numbers are a warm high-contrast DISPLAY SERIF; body and UI labels are a
+    neutral sans; ids/counts are monospace. The accent is a single matte, desaturated
+    brass used as a thin line or a small fill — never a gradient, glow, or gold bling.
+  text: |
+    A 16:9 high-fidelity UI mockup of the Platform Admin Home of NoizuPromptLingo,
+    rendered in a warm espresso-dark mode.
+
+    OVERALL LAYOUT (three regions): a LEFT ADMIN NAV SIDEBAR; a wide MAIN COLUMN of
+    health cards, a review queue, and an audit feed; the main column is the focus.
+
+    LEFT ADMIN NAV SIDEBAR: warm-charcoal rail, "NPL Admin" wordmark at top in the
+    display serif, then a grouped list of admin destinations — Users, Organizations,
+    Authz, GitHub Integration, LLM Models, Custom Scopes, Media Providers. The active
+    item is marked by a thin brass left-rail and a heavier label, not a filled pill.
+
+    ADMIN HEADER BAND: "Platform Admin" in a large display-serif heading with a muted
+    subtitle ("Cross-org health & review"), a global search field at center, and a
+    small admin avatar at right.
+
+    PLATFORM HEALTH SUMMARY CARDS: a row of 4 raised warm-charcoal STAT PANELS at 6px
+    radius with generous padding — "Organizations", "Users", "Active Sessions",
+    "System Status" — each a small uppercase sans label above a LARGE display-serif
+    NUMERAL, with a small status dot (olive = healthy) and a muted delta. One panel
+    carries a thin brass hairline as the featured metric.
+
+    MCP OVERVIEW QUEUE WIDGET: a prominent panel titled "MCP Review Queue" listing
+    pending items needing admin review — each row a title, an org chip, a monospace
+    id, a small amber "pending" pill (icon-paired, not brass), and a brass-outlined
+    "Review" ghost button. This queue is the call-to-action of the screen.
+
+    RECENT ADMIN ACTIVITY FEED: a calm audit trail beneath — each row an actor, a
+    short action ("granted scope", "rotated key", "linked repo"), a monospace target
+    id, and a muted timestamp. Quiet hairline separators.
+
+    PALETTE & TYPE: every neutral is a warm charcoal (espresso canvas, warmer raised
+    panels), never cool slate; text is a soft warm parchment, never pure white. The
+    accent is a matte brass/champagne on hairlines, the active nav rail, ghost-button
+    outlines, and the focus ring; muted verdigris teal only on links. Semantic status
+    uses olive (healthy), amber (pending, always icon-paired), terracotta (error) —
+    kept clearly distinct from brass. Headings and numerals in the warm display serif;
+    labels and body in a neutral sans; ids in monospace.
+
+    SHAPE & SURFACE: refined 6px radius on panels and inputs, 4px on small chips; warm
+    tonal elevation with a soft warm shadow under raised cards — no glow. A barely
+    perceptible warm radial vignette over the shell, like a single study lamp. Brass
+    is a pinstripe, never a heavy frame.
+
+    MOOD: refined, composed, quietly authoritative — a considered admin surface for
+    reading the state of the platform, not a noisy ops console.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, cool blue slate tones, neon glow, gold gradient bling, terminal/console green"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches Admin Home: left admin nav sidebar (Users/Orgs/Authz/GitHub/LLM/Scopes/Media), platform health summary cards, an MCP review-queue widget with pending items, and a recent-admin-activity audit feed"}
+    theme_fidelity: {weight: 3, description: "Warm espresso-dark neutrals (not cool slate), single matte-brass accent + verdigris links, display-serif headings/numerals over sans body, amber 'pending' pills kept distinct from brass, 6px radius"}
+    composition: {weight: 2, description: "Clear hierarchy; the MCP review queue reads as the actionable focus; plausible real admin dashboard"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+    - "cool/blue terminal darkness or phosphor-green accent (that is the Nocturne sibling, not Meridian)"
+
+tags: [npl-meridian, NoizuPromptLingo, screen-mockup]

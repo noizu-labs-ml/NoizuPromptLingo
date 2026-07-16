@@ -1,7 +1,7 @@
 ---
 slug: npl-meridian
 base_theme: theme-style-guide
-status: sketch
+status: full
 revision: 1
 ---
 

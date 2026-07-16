@@ -1,0 +1,297 @@
+# NPL — Meridian component inflections (treatise §6/§7/§8) + project-specific sample
+# elements. This facet ACCUMULATES onto the base (unlike vars/color-modes/typography,
+# which replace wholesale), so it is the safe home for Meridian's inflections and its
+# executive-dashboard sample surfaces without clobbering the base design-sections.
+#
+# SELF-SCOPED (REQUIRED): the engine emits css-snippets VERBATIM and does NOT prefix the
+# theme selector for you (css-cache.ts SELF_SCOPED set). EVERY selector below — including
+# ones inside @media and compound/descendant selectors — is hand-scoped under
+# html[data-design-theme="npl-meridian"] so nothing bleeds into sibling themes.
+#
+# Discipline: one matte-brass accent (never a gradient/glow), verdigris only on links,
+# Fraunces for display, warm-charcoal surfaces, 6px radius, warm tonal elevation with a
+# soft warm shadow (no glow). var() fallbacks mirror dark-home values so snippets still
+# resolve on the legacy generate-css path.
+css-snippets:
+  - name: Meridian Mode Accents & Motion
+    slug: npl-meridian-mode-accents
+    title: "Light-mode brass/verdigris darkening + motion tokens (§3/§7/§9)"
+    description: "The base only aliases --brand-* → var(--theme-brand-*) in DARK, so light-mode accent contrast is set here by overriding the bare --brand-red/--brand-blue on the light (:not(.dark)) selector: brass darkens to #a67c34 (≈4.6:1 on ivory, treatise §3/§9) and verdigris darkens to #35706a for AA links. Also pins the two composed motion durations (§7): micro 140ms, panel 220ms."
+    target-section: interaction
+    body: |
+      html[data-design-theme="npl-meridian"] {
+        --motion-micro: 140ms;
+        --motion-panel: 220ms;
+      }
+      html[data-design-theme="npl-meridian"]:not(.dark) {
+        --brand-red: #a67c34;
+        --brand-red-light: color-mix(in srgb, #a67c34 70%, var(--surface));
+        --brand-blue: #35706a;
+        --brand-blue-light: color-mix(in srgb, #35706a 70%, var(--surface));
+      }
+
+  - name: Meridian Display Serif
+    slug: npl-meridian-display-serif
+    title: "Fraunces display on headings + KPI numerals (§4)"
+    description: "The identity move: the base has no font-display seed and points every heading class at --font-sans, so headings would render in Inter. This re-points headings and the project's KPI/stat numerals to var(--font-display) = Fraunces (annual-report gravitas), tightened line-height, optical sizing on. Body/UI stay Inter — the serif is jewelry, display-only, never body or UI labels (§4)."
+    target-section: typography
+    body: |
+      html[data-design-theme="npl-meridian"] h1,
+      html[data-design-theme="npl-meridian"] h2,
+      html[data-design-theme="npl-meridian"] h3,
+      html[data-design-theme="npl-meridian"] .typography-display,
+      html[data-design-theme="npl-meridian"] .typography-h1,
+      html[data-design-theme="npl-meridian"] .typography-h2,
+      html[data-design-theme="npl-meridian"] .typography-h3,
+      html[data-design-theme="npl-meridian"] .sg-section-title,
+      html[data-design-theme="npl-meridian"] .kpi-value,
+      html[data-design-theme="npl-meridian"] .stat-value {
+        font-family: var(--font-display, 'Fraunces', Georgia, serif);
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        line-height: 1.15;
+        font-optical-sizing: auto;
+      }
+
+  - name: Meridian Focus Ring & Selection
+    slug: npl-meridian-focus-selection
+    title: "Brass focus ring + brass-tint selection (§7/§9)"
+    description: "A 2px brass focus outline at 2px offset on every focusable element, never removed (treatise §9). --brand-red resolves to bright brass in dark (≈7:1 on espresso) and darkened brass #a67c34 in light (clears 3:1 on ivory) via the mode-accents snippet. Also re-scopes ::selection off the base's global gold (var(--brand-yellow)) to a subtle brass tint — this is the only chrome use of brand-yellow, so re-scoping it leaves brand-yellow genuinely off-chrome."
+    target-section: interaction
+    body: |
+      html[data-design-theme="npl-meridian"] :focus-visible {
+        outline: 2px solid var(--brand-red, #c9a15e);
+        outline-offset: 2px;
+      }
+      html[data-design-theme="npl-meridian"] ::selection {
+        background: color-mix(in srgb, var(--brand-red, #c9a15e) 35%, var(--surface, #1a1613));
+        color: var(--text, #f2ebe0);
+      }
+
+  - name: Meridian Primary Button
+    slug: npl-meridian-btn-primary
+    title: "Solid brass primary button, dark label (§8)"
+    description: "The one metallic control (treatise §8): a solid brass fill with espresso label text (dark-on-brass — brass is too light for white), 6px radius, title-case Inter label, flat (no glow). Espresso #1a1613 on brass clears AA in both modes (brass darkens to #a67c34 in light, where espresso-on-#a67c34 ≈ 4.8:1). Hover deepens the metal; focus swaps to the brass outline."
+    target-section: buttons
+    body: |
+      html[data-design-theme="npl-meridian"] .btn.primary,
+      html[data-design-theme="npl-meridian"] .btn-primary {
+        background: var(--brand-red, #c9a15e);
+        color: #1a1613;
+        border: none;
+        border-radius: var(--radius, 6px);
+        padding: 0.5rem 1rem;
+        font-family: var(--font-sans);
+        font-weight: 600;
+        text-transform: none;
+        box-shadow: none;
+        transition: background var(--motion-micro, 140ms) ease-out;
+      }
+      html[data-design-theme="npl-meridian"] .btn.primary:hover,
+      html[data-design-theme="npl-meridian"] .btn-primary:hover {
+        background: color-mix(in srgb, var(--brand-red, #c9a15e) 86%, black);
+      }
+      html[data-design-theme="npl-meridian"] .btn.primary:focus-visible,
+      html[data-design-theme="npl-meridian"] .btn-primary:focus-visible {
+        outline: 2px solid var(--brand-red, #c9a15e);
+        outline-offset: 2px;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html[data-design-theme="npl-meridian"] .btn.primary,
+        html[data-design-theme="npl-meridian"] .btn-primary { transition: none; }
+      }
+
+  - name: Meridian Secondary & Destructive Buttons
+    slug: npl-meridian-btn-secondary
+    title: "Brass-hairline secondary + terracotta ghost destructive (§8)"
+    description: "Secondary is a warm-charcoal panel button with a 1px brass hairline and parchment text — a quiet counterpart to the metallic primary. Destructive is a terracotta (error-hue) ghost that FILLS on hover, separating destructive intent by fill + label, never brass. Both flat, 6px radius, Inter title-case labels."
+    target-section: buttons
+    body: |
+      html[data-design-theme="npl-meridian"] .btn.secondary,
+      html[data-design-theme="npl-meridian"] .btn-secondary {
+        background: var(--surface-alt, #241f1a);
+        color: var(--text, #f2ebe0);
+        border: 1px solid color-mix(in srgb, var(--brand-red, #c9a15e) 55%, var(--surface, #1a1613));
+        border-radius: var(--radius, 6px);
+        padding: 0.5rem 1rem;
+        font-family: var(--font-sans);
+        font-weight: 600;
+        box-shadow: none;
+      }
+      html[data-design-theme="npl-meridian"] .btn.secondary:hover,
+      html[data-design-theme="npl-meridian"] .btn-secondary:hover {
+        background: color-mix(in srgb, var(--brand-red, #c9a15e) 10%, var(--surface, #1a1613));
+      }
+      html[data-design-theme="npl-meridian"] .btn.destructive,
+      html[data-design-theme="npl-meridian"] .btn-danger {
+        background: transparent;
+        color: var(--error, #c85248);
+        border: 1px solid color-mix(in srgb, var(--error, #c85248) 55%, var(--surface, #1a1613));
+        border-radius: var(--radius, 6px);
+        padding: 0.5rem 1rem;
+        font-family: var(--font-sans);
+        font-weight: 600;
+        transition: background var(--motion-micro, 140ms) ease-out, color var(--motion-micro, 140ms) ease-out;
+      }
+      html[data-design-theme="npl-meridian"] .btn.destructive:hover,
+      html[data-design-theme="npl-meridian"] .btn-danger:hover {
+        background: var(--error, #c85248);
+        color: #f2ebe0;
+      }
+      html[data-design-theme="npl-meridian"] .btn.secondary:focus-visible,
+      html[data-design-theme="npl-meridian"] .btn-secondary:focus-visible,
+      html[data-design-theme="npl-meridian"] .btn.destructive:focus-visible,
+      html[data-design-theme="npl-meridian"] .btn-danger:focus-visible {
+        outline: 2px solid var(--brand-red, #c9a15e);
+        outline-offset: 2px;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html[data-design-theme="npl-meridian"] .btn.destructive,
+        html[data-design-theme="npl-meridian"] .btn-danger { transition: none; }
+      }
+
+  - name: Meridian Nav Rail
+    slug: npl-meridian-nav-rail
+    title: "Brass left-rail active navigation (§8)"
+    description: "The sidebar idiom (treatise §8): the active nav item is marked by a thin brass LEFT-RAIL + 600 Inter weight, not a filled pill. Inactive items are muted; hover lifts to full text color. A quiet, considered rail rather than a loud selection block."
+    target-section: navigation
+    body: |
+      html[data-design-theme="npl-meridian"] .nav-rail a,
+      html[data-design-theme="npl-meridian"] .nav-item {
+        display: block;
+        padding: 8px 14px;
+        border-left: 2px solid transparent;
+        color: var(--text-secondary, #d8cec0);
+        font-family: var(--font-sans);
+        text-decoration: none;
+      }
+      html[data-design-theme="npl-meridian"] .nav-rail a:hover,
+      html[data-design-theme="npl-meridian"] .nav-item:hover {
+        color: var(--text, #f2ebe0);
+      }
+      html[data-design-theme="npl-meridian"] .nav-rail a.active,
+      html[data-design-theme="npl-meridian"] .nav-item.active {
+        border-left-color: var(--brand-red, #c9a15e);
+        color: var(--text, #f2ebe0);
+        font-weight: 600;
+      }
+
+  - name: Meridian Recessed Input & Links
+    slug: npl-meridian-input-links
+    title: "Recessed inputs + verdigris links (§8)"
+    description: "Inputs sit recessed one warm step below the panel (a darker warm step in both modes), low warm border, 6px radius; focus swaps to the brass outline. Links use the verdigris secondary (never brass) — brass is reserved for accent/structure, verdigris for links/cool data (treatise §3/§8)."
+    target-section: interaction
+    body: |
+      html[data-design-theme="npl-meridian"] .input,
+      html[data-design-theme="npl-meridian"] input[type="text"],
+      html[data-design-theme="npl-meridian"] input[type="search"],
+      html[data-design-theme="npl-meridian"] input[type="email"],
+      html[data-design-theme="npl-meridian"] textarea {
+        background: color-mix(in srgb, var(--surface, #1a1613) 92%, black);
+        border: 1px solid var(--border, #332c25);
+        border-radius: var(--radius, 6px);
+        color: var(--text, #f2ebe0);
+        font-family: var(--font-sans);
+        padding: 0.45rem 0.6rem;
+      }
+      html[data-design-theme="npl-meridian"] .input:focus-visible,
+      html[data-design-theme="npl-meridian"] input[type="text"]:focus-visible,
+      html[data-design-theme="npl-meridian"] input[type="search"]:focus-visible,
+      html[data-design-theme="npl-meridian"] input[type="email"]:focus-visible,
+      html[data-design-theme="npl-meridian"] textarea:focus-visible {
+        outline: 2px solid var(--brand-red, #c9a15e);
+        outline-offset: 2px;
+      }
+      html[data-design-theme="npl-meridian"] a {
+        color: var(--brand-blue, #3f857e);
+        text-underline-offset: 2px;
+      }
+      html[data-design-theme="npl-meridian"] a:hover {
+        text-decoration: underline;
+      }
+      html[data-design-theme="npl-meridian"] a:focus-visible {
+        outline: 2px solid var(--brand-red, #c9a15e);
+        outline-offset: 2px;
+      }
+
+  - name: Meridian Stat / KPI Panel
+    slug: npl-meridian-stat-panel
+    title: "Executive KPI stat panel — the signature surface (project-specific §5/§8)"
+    description: "Meridian's reference surface (treatise §5/§8): the org-dashboard / admin-home KPI panel. A raised warm-charcoal panel, 8px feature-radius, generous padding, a soft warm shadow (no glow); the KPI numeral is LARGE Fraunces, its label a small uppercase Inter beneath. A '.featured' panel gains a thin brass hairline (a pinstripe, not a frame). This is the at-a-glance executive read the theme is built around."
+    target-section: cards
+    body: |
+      html[data-design-theme="npl-meridian"] .stat-panel,
+      html[data-design-theme="npl-meridian"] .kpi-panel {
+        background: var(--surface-alt, #241f1a);
+        border: 1px solid var(--border, #332c25);
+        border-radius: 8px;
+        padding: 20px 24px;
+        box-shadow: 0 1px 3px var(--shadow-color, rgba(15, 10, 6, 0.5));
+      }
+      html[data-design-theme="npl-meridian"] .stat-panel.featured,
+      html[data-design-theme="npl-meridian"] .kpi-panel.featured {
+        border-color: color-mix(in srgb, var(--brand-red, #c9a15e) 55%, var(--border, #332c25));
+      }
+      html[data-design-theme="npl-meridian"] .stat-panel .kpi-value,
+      html[data-design-theme="npl-meridian"] .kpi-panel .kpi-value,
+      html[data-design-theme="npl-meridian"] .stat-panel .stat-value,
+      html[data-design-theme="npl-meridian"] .kpi-panel .stat-value {
+        font-family: var(--font-display, 'Fraunces', Georgia, serif);
+        font-size: var(--font-size-3xl, 40px);
+        font-weight: 600;
+        line-height: 1.1;
+        color: var(--text, #f2ebe0);
+      }
+      html[data-design-theme="npl-meridian"] .stat-panel .kpi-label,
+      html[data-design-theme="npl-meridian"] .kpi-panel .kpi-label {
+        font-family: var(--font-sans);
+        font-size: var(--font-size-xs, 12px);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-muted, #a99d8b);
+      }
+
+  - name: Meridian App Shell Vignette
+    slug: npl-meridian-app-shell
+    title: "Warm radial vignette — the lamp-lit room (project-specific §6)"
+    description: "The single sanctioned atmospheric touch (treatise §6): a barely-perceptible warm radial vignette (≤6% brass) over the app shell, evoking a study lit by one lamp. No noise, no metallic gradient on chrome or text — this is the ONLY gradient in the theme and it lives only on the shell background."
+    target-section: colors
+    body: |
+      html[data-design-theme="npl-meridian"] .app-shell,
+      html[data-design-theme="npl-meridian"] .app-canvas {
+        background-color: var(--surface, #1a1613);
+        background-image: radial-gradient(120% 85% at 50% 0%,
+          color-mix(in srgb, var(--brand-red, #c9a15e) 6%, transparent),
+          transparent 60%);
+      }
+
+  - name: Meridian NPL Token Chip
+    slug: npl-meridian-npl-token
+    title: "Monospace NPL token / ID chip (project-specific §4/§8)"
+    description: "NPL's literal-content pattern (treatise §4: JetBrains Mono for NPL tokens, values, IDs). A quiet warm tonal pill on a low warm border, 4px small-chip radius — used for ticket IDs (NPL-142), room slugs, and NPL glyph tokens. Mono is strictly for literal/technical content, never headings or nav."
+    target-section: typography
+    body: |
+      html[data-design-theme="npl-meridian"] .npl-token,
+      html[data-design-theme="npl-meridian"] code.token {
+        font-family: var(--font-mono, 'JetBrains Mono', monospace);
+        font-size: 0.85em;
+        padding: 0.1em 0.45em;
+        border-radius: 4px;
+        background: color-mix(in srgb, var(--surface, #1a1613) 90%, black);
+        border: 1px solid var(--border, #332c25);
+        color: var(--text-secondary, #d8cec0);
+        white-space: nowrap;
+      }
+
+  - name: Meridian Reduced Motion
+    slug: npl-meridian-reduced-motion
+    title: "Reduced-motion guard (§7)"
+    description: "Treatise §7: prefers-reduced-motion turns the composed transitions into near-instant swaps; hover elevation survives as an immediate step change. Scoped to this theme so it never affects siblings."
+    target-section: interaction
+    body: |
+      @media (prefers-reduced-motion: reduce) {
+        html[data-design-theme="npl-meridian"] * {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }

@@ -1,0 +1,92 @@
+schema: "0.4"
+id: npl-meridian-17-org-dashboard
+type: image
+quality: high
+
+# NoizuPromptLingo — a structured prompt-definition language + MCP agent toolchain — Org Dashboard screen (identity-defining hero).
+# Theme tenets: warm espresso-dark surface, single matte-brass accent, verdigris-teal secondary, display-serif KPIs over Inter body, refined 6px radius, "well-lit study at night".
+# Palette: espresso #1a1613 canvas, panel #241f1a, parchment #f2ebe0 text, brass #c9a15e accent, verdigris #3f857e secondary.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a
+    PREMIUM, warm-dark executive dashboard — the org-overview home an org owner or
+    delivery lead opens to read the state of everything at a glance. The register is
+    refined, calm, considered, with quiet gravitas: a well-lit study at night, not a
+    build monitor or a terminal. Warm low light, matte brass detailing, unhurried.
+    Headings and big numbers are a warm high-contrast DISPLAY SERIF (annual-report
+    gravitas); body and UI labels are a neutral sans; data/IDs are monospace. The
+    accent is a single matte, desaturated brass used as a thin line or a small fill —
+    never a shiny gradient, glow, or gold bling.
+  text: |
+    A 16:9 high-fidelity UI mockup of the Org Dashboard screen of NoizuPromptLingo,
+    rendered in a warm espresso-dark mode.
+
+    OVERALL LAYOUT (three regions): a slim LEFT NAV RAIL on warm charcoal; a wide
+    MAIN COLUMN of stat panels and a timeline; a narrow RIGHT QUICK-LINKS PANEL.
+
+    LEFT NAV RAIL: warm-charcoal sidebar with the wordmark "NPL" at top set in the
+    display serif, then a short vertical list of destinations (Dashboard, Projects,
+    Sessions, Tickets, Chat, Settings). The active item "Dashboard" is marked by a
+    thin brass left-rail and a slightly heavier label — not a filled pill.
+
+    ORG HEADER BAND (top of main): the organization name in a large display-serif
+    heading, a muted one-line context beneath ("Organization overview"), an org
+    switcher chip at left and a small avatar cluster at right. A quiet "updated just
+    now" status pill sits at the far right (a calm live-region cue, not an alarm).
+
+    ORG ACTIVITY SUMMARY CARDS: a row of 4-5 raised warm-charcoal STAT PANELS, each
+    6px-radius with generous padding and one featured panel carrying a thin brass
+    hairline. Each panel shows a small uppercase label in sans ("Active Sessions",
+    "Open Tickets", "Chat Rooms", "Projects") above a LARGE display-serif NUMERAL
+    (e.g. 12, 47, 6, 9) with a small muted delta beneath. The big serif numerals are
+    the visual event of the screen.
+
+    RECENT ACTIVITY TIMELINE: below the cards, a calm cross-entity feed — each row a
+    small entity dot, an actor name, a short action ("moved ticket", "opened
+    session", "pinned a message"), a monospace id chip, and a muted right-aligned
+    timestamp. Quiet hairline separators, no heavy rules.
+
+    RIGHT QUICK-LINKS PANEL: a titled "Quick Links" list routing into Projects,
+    Sessions, Tickets, and Chat — each a row with a small glyph and a brass chevron;
+    one linked card carries the brass hairline to read as featured.
+
+    PALETTE & TYPE: every neutral is a warm charcoal (espresso canvas, a warmer
+    raised panel), never cool slate; text is a soft warm parchment, never pure white.
+    The one accent is a matte brass/champagne — thin hairlines, the active nav rail,
+    small chevrons, and the focus outline; a muted verdigris teal appears only on
+    links and cool data. Headings and KPI numerals in the warm display serif; labels
+    and body in a neutral sans; ids/counts in monospace.
+
+    SHAPE & SURFACE: refined 6px radius on panels and inputs; warm tonal elevation
+    (espresso to a lighter warm charcoal for raised panels) with a soft warm shadow
+    under raised cards — no glow. A barely-perceptible warm radial vignette across
+    the whole shell, like a single lamp lighting a study. Brass is a pinstripe, never
+    a frame.
+
+    MOOD: refined, premium, calm with gravitas — "this is where decisions get made."
+    Warm, low-lit, brass-detailed, unhurried. Reading-the-state, not operating-a-machine.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, cool blue slate tones, neon glow, gold gradient bling, terminal/console green"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches the Org Dashboard: left nav rail, org header with live-updated cue, a row of activity summary stat panels, a recent-activity timeline, and a quick-links panel"}
+    theme_fidelity: {weight: 3, description: "Warm espresso-dark neutrals (not cool slate), single matte-brass accent + verdigris links, display-serif headings/KPI numerals over sans body, 6px radius, warm vignette — not generic dark-UI defaults"}
+    composition: {weight: 2, description: "Clear visual hierarchy with big serif KPI numerals as the focal event; plausible real executive dashboard"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+    - "cool/blue terminal darkness or phosphor-green accent (that is the Nocturne sibling, not Meridian)"
+
+tags: [npl-meridian, NoizuPromptLingo, screen-mockup, hero]
