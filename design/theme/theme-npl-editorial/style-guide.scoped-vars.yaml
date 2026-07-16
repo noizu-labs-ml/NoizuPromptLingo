@@ -1,0 +1,61 @@
+# NPL — Editorial · scoped-var deltas (ACCUMULATE onto the base; pre-v3 remediation).
+#
+# DARK BASE-CASCADE LEAK: theme-style-guide/style-guide.scoped-vars.yaml brightens
+# the dark brand-red/-blue/-yellow tints from LITERAL hex values (#e20613 / #0047ab
+# / #f5c518 — Bauhaus red/navy/gold) rather than var(--brand-*), so in dark mode the
+# base silently reverts every non-Bauhaus theme's accents back to those literals
+# (this base-cascade defect is escalated in conformance-npl-minimal.md §7; the
+# durable fix belongs in the base file, pending review — do not edit the base
+# from here).
+#
+# Editorial uses TWO of the three accent slots on visible chrome — brand-red
+# (claret, PRIMARY) drives the primary button fill, featured-card top-rule, active
+# nav-toc rule, and spec-pullquote top-rule; brand-blue (petrol, SECONDARY) drives
+# every link, the ghost/secondary button, and every focus ring (treatise §7/§8).
+# Both are re-pointed here, each mirroring the base's own red/-light/-mid shape, at
+# editorial's own print-pigment hexes (claret #9a2c3f / petrol #1d4e5f). brand-yellow
+# (burnt ochre) is TERTIARY — a sparing highlight wired only to the `warning`
+# semantic seed, never referenced by any css-snippet or working chrome element
+# (treatise §3: "ochre is a warm highlight used sparingly") — so it is left on the
+# base dark cascade as a documented low-impact standing caution, the same call
+# theme-npl-minimal makes for its own reserved brand-blue/brand-yellow slots.
+#
+# A scoped-vars file needs its own `sections` (they do not inherit from the base
+# file); the generator substitutes the active theme slug into these selectors.
+# prefix "theme" makes these emit as --theme-brand-*, which the cascade's
+# --brand-*: var(--theme-brand-*) dark alias then resolves to editorial's own
+# claret/petrol instead of Bauhaus red/navy.
+scoped-vars:
+  prefix: "theme"
+  sections:
+    standard:
+      selector: 'html[data-design-theme="npl-editorial"]'
+      prefix: "theme"
+    dark:
+      selector: 'html[data-design-theme="npl-editorial"].dark'
+      prefix: "theme"
+  vars:
+    - name: brand-red
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #9a2c3f 75%, white)"
+    - name: brand-red-light
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #9a2c3f 18%, var(--surface))"
+    - name: brand-red-mid
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #9a2c3f 30%, var(--surface))"
+    - name: brand-blue
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #1d4e5f 75%, white)"
+    - name: brand-blue-light
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #1d4e5f 18%, var(--surface))"
+    - name: brand-blue-mid
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #1d4e5f 30%, var(--surface))"
