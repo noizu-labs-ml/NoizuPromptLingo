@@ -1,0 +1,115 @@
+# Stage B screen allocation for NoizuPromptLingo → Stage C render targets.
+# 8 themes; unique-set = 40 (clamp(inventory=47, 30, 40)); overlap = 2 comparison
+# pairs. Per-theme totals: brutalist/nocturne/prism/meridian = 6, the rest = 5.
+# Total image slots = 40 + (2×2) = 44 (within the ~35–45 aim).
+# Screens are matched to theme mood; 5 lower-weight screens are intentionally left
+# unallocated (03-sso-callback, 16-admin-media-providers, 33-agent-personas-management,
+# 37-github-repos-list, 38-github-repo-detail-prs) to keep the unique set at 40.
+version: 1
+inventory_total: 47
+
+unique:
+  # npl-brutalist — raw NPL machinery, structural tooling, loud reference surfaces
+  - screen: "42-unicode-npl-glyph-codex"
+    theme: "npl-brutalist"
+  - screen: "43-npl-conventions-browser"
+    theme: "npl-brutalist"
+  - screen: "08-mcp-api-keys-setup"
+    theme: "npl-brutalist"
+  - screen: "40-mock-mcp-builder"
+    theme: "npl-brutalist"
+  - screen: "27-ticket-field-type-admin"
+    theme: "npl-brutalist"
+
+  # npl-editorial — spec/craft reading surfaces (wiki, prompts, artifacts, long detail)
+  - screen: "28-wiki-browser"
+    theme: "npl-editorial"
+  - screen: "35-instructions-prompt-templates"
+    theme: "npl-editorial"
+  - screen: "32-artifact-detail"
+    theme: "npl-editorial"
+  - screen: "31-artifacts-list"
+    theme: "npl-editorial"
+  - screen: "26-ticket-detail"
+    theme: "npl-editorial"
+
+  # npl-minimal — the competent-default workhorse: admin tables, settings, profile
+  - screen: "10-admin-users"
+    theme: "npl-minimal"
+  - screen: "11-admin-organizations"
+    theme: "npl-minimal"
+  - screen: "45-org-settings"
+    theme: "npl-minimal"
+  - screen: "07-user-profile"
+    theme: "npl-minimal"
+  - screen: "25-tickets-list"
+    theme: "npl-minimal"
+
+  # npl-nocturne — dark-native agent instrumentation & live sessions
+  - screen: "36-agent-memory-browser"
+    theme: "npl-nocturne"
+  - screen: "39-browser-relay-gallery"
+    theme: "npl-nocturne"
+  - screen: "41-mock-mcp-llm-pool"
+    theme: "npl-nocturne"
+  - screen: "21-session-detail"
+    theme: "npl-nocturne"
+  - screen: "20-sessions-list"
+    theme: "npl-nocturne"
+
+  # npl-aurora — warm, welcoming onboarding & membership funnel
+  - screen: "04-registration-invite"
+    theme: "npl-aurora"
+  - screen: "05-email-account-verify"
+    theme: "npl-aurora"
+  - screen: "06-organization-picker"
+    theme: "npl-aurora"
+  - screen: "02-login"
+    theme: "npl-aurora"
+  - screen: "44-org-members"
+    theme: "npl-aurora"
+
+  # npl-blueprint — schematic/structural config: authz, scopes, topology, catalogs
+  - screen: "12-admin-authz"
+    theme: "npl-blueprint"
+  - screen: "15-admin-mcp-custom-scopes"
+    theme: "npl-blueprint"
+  - screen: "19-project-detail"
+    theme: "npl-blueprint"
+  - screen: "13-admin-github-integration"
+    theme: "npl-blueprint"
+  - screen: "14-admin-llm-model-catalog"
+    theme: "npl-blueprint"
+
+  # npl-prism — vibrant/premium creative suite & review presentation
+  - screen: "34-creative-assets-pipeline"
+    theme: "npl-prism"
+  - screen: "46-campaigns-ad-groups"
+    theme: "npl-prism"
+  - screen: "47-market-competitor-research"
+    theme: "npl-prism"
+  - screen: "29-reviews-list"
+    theme: "npl-prism"
+  - screen: "30-review-detail"
+    theme: "npl-prism"
+
+  # npl-meridian — warm-dark executive dashboards, rollups, board & chat overviews
+  - screen: "09-admin-home"
+    theme: "npl-meridian"
+  - screen: "18-projects-list"
+    theme: "npl-meridian"
+  - screen: "24-ticket-board"
+    theme: "npl-meridian"
+  - screen: "22-chat-room-list"
+    theme: "npl-meridian"
+  - screen: "23-chat-room-view"
+    theme: "npl-meridian"
+
+overlap:
+  # Identity-defining screens rendered by two contrasting themes for a side-by-side.
+  # Landing page: loud/raw structure vs luminous/premium glass — the widest brand gap.
+  - screen: "01-landing-page"
+    themes: ["npl-brutalist", "npl-prism"]
+  # Org dashboard: cool terminal dark vs warm luxe dark — a direct dark-vs-dark study.
+  - screen: "17-org-dashboard"
+    themes: ["npl-nocturne", "npl-meridian"]
