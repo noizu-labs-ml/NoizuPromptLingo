@@ -1,0 +1,25 @@
+roadmap:
+  - id: RM-00
+    title: Roadmap Overview
+    file: 00-overview.md
+  - id: RM-01
+    title: "M0 — Foundation: Identity, Auth & Session Scoping"
+    file: 01-M0-foundation.md
+  - id: RM-02
+    title: "M1 — Collaboration Core: Tickets & Rooms"
+    file: 02-M1-collaboration-core.md
+  - id: RM-03
+    title: "M2 — Knowledge, Memory & Review"
+    file: 03-M2-knowledge-memory-review.md
+  - id: RM-04
+    title: "M3 — Platform Governance, Roles & Providers"
+    file: 04-M3-governance-roles-providers.md
+  - id: RM-05
+    title: "M4 — Growth Studio & Discovery"
+    file: 05-M4-growth-studio-discovery.md
+  - id: RM-06
+    title: "M5 — Hardening & Reach: Resilience, Access, Scale & Integrations"
+    file: 06-M5-hardening-reach.md
+  - id: RM-07
+    title: Story Coverage & Traceability Matrix
+    file: story-coverage.md
