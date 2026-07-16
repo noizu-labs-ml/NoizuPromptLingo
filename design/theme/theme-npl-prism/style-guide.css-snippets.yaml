@@ -2,6 +2,14 @@
 # onto the base (unlike vars/color-modes/typography which replace), so it is the
 # safe home for prism's project-specific surface treatments without clobbering the
 # base's design-sections. Prism is the only NPL theme permitted gradients + glass.
+#
+# SELF-SCOPED (pre-v3 remediation): the engine treats css-snippets as SELF_SCOPED
+# (css-cache.ts) — it emits each body VERBATIM and does NOT prefix the theme
+# selector for you (unlike buttons/cards/etc.). This file previously shipped with
+# bare selectors (.btn.gradient, .glass, .prism-mesh, ...) that bled globally into
+# every other theme's compiled CSS; every selector below is now scoped under
+# html[data-design-theme="npl-prism"] so it cannot bleed into sibling themes.
+#
 # Discipline: one consistent violet→cyan axis; gradient on hero / CTA / glass-edge /
 # display-text ONLY, never behind body text; semantics stay flat/opaque; reduced-
 # transparency + reduced-motion degrade fully without any loss of meaning (§9).
@@ -12,8 +20,8 @@ css-snippets:
     description: "The signature control — violet→cyan gradient fill, white label, soft glow. The cyan terminal is darkened to #0e7490 so white text clears WCAG AA (≥4.5:1) across the whole sweep — the theme's single most important contrast check (treatise §9). Destructive/secondary buttons never use this gradient."
     target-section: buttons
     body: |
-      .btn.gradient,
-      .btn-gradient {
+      html[data-design-theme="npl-prism"] .btn.gradient,
+      html[data-design-theme="npl-prism"] .btn-gradient {
         background: linear-gradient(135deg, var(--brand-red) 0%, #0e7490 100%);
         color: #ffffff;
         border: none;
@@ -21,19 +29,19 @@ css-snippets:
         box-shadow: 0 6px 20px color-mix(in srgb, var(--brand-red) 35%, transparent);
         transition: box-shadow 160ms ease-out, transform 140ms ease-out;
       }
-      .btn.gradient:hover,
-      .btn-gradient:hover {
+      html[data-design-theme="npl-prism"] .btn.gradient:hover,
+      html[data-design-theme="npl-prism"] .btn-gradient:hover {
         box-shadow: 0 10px 28px color-mix(in srgb, var(--brand-red) 50%, transparent);
         transform: translateY(-1px);
       }
-      .btn.gradient:focus-visible,
-      .btn-gradient:focus-visible {
+      html[data-design-theme="npl-prism"] .btn.gradient:focus-visible,
+      html[data-design-theme="npl-prism"] .btn-gradient:focus-visible {
         outline: 2px solid var(--brand-red);
         outline-offset: 2px;
       }
       @media (prefers-reduced-motion: reduce) {
-        .btn.gradient, .btn-gradient { transition: none; }
-        .btn.gradient:hover, .btn-gradient:hover { transform: none; }
+        html[data-design-theme="npl-prism"] .btn.gradient, html[data-design-theme="npl-prism"] .btn-gradient { transition: none; }
+        html[data-design-theme="npl-prism"] .btn.gradient:hover, html[data-design-theme="npl-prism"] .btn-gradient:hover { transform: none; }
       }
 
   - name: Prism Glass Surface
@@ -42,8 +50,8 @@ css-snippets:
     description: "Translucent frosted surface: backdrop-blur, a 1px gradient-sheen edge, and a violet-tinted soft shadow — the theme's signature material, the mesh glows through it. Surface fill stays ≥70% opaque so body text clears 4.5:1 over the busiest mesh (§9). prefers-reduced-transparency falls back to a solid tinted surface with no loss of meaning. Data grids deliberately DO NOT use this class — they stay solid for legibility (§8)."
     target-section: cards
     body: |
-      .card.glass,
-      .glass {
+      html[data-design-theme="npl-prism"] .card.glass,
+      html[data-design-theme="npl-prism"] .glass {
         background: color-mix(in srgb, var(--surface) 78%, transparent);
         backdrop-filter: blur(20px) saturate(1.4);
         -webkit-backdrop-filter: blur(20px) saturate(1.4);
@@ -51,13 +59,13 @@ css-snippets:
         border-radius: var(--radius);
         box-shadow: 0 8px 32px var(--shadow-color, rgba(90, 60, 200, 0.18));
       }
-      .card.glass.featured,
-      .glass.featured {
+      html[data-design-theme="npl-prism"] .card.glass.featured,
+      html[data-design-theme="npl-prism"] .glass.featured {
         border: 1px solid transparent;
         border-image: linear-gradient(135deg, var(--brand-red), var(--brand-blue)) 1;
       }
       @media (prefers-reduced-transparency: reduce) {
-        .card.glass, .glass {
+        html[data-design-theme="npl-prism"] .card.glass, html[data-design-theme="npl-prism"] .glass {
           background: var(--surface-alt, var(--surface));
           backdrop-filter: none;
           -webkit-backdrop-filter: none;
@@ -70,7 +78,7 @@ css-snippets:
     description: "Violet→fuchsia gradient clip for LARGE display headings only (≥28px, ~3:1 large-text contrast — treatise §4/§9). Never on body, labels, or UI text. Falls back to solid brand-red where background-clip is unsupported."
     target-section: typography
     body: |
-      .text-gradient {
+      html[data-design-theme="npl-prism"] .text-gradient {
         color: var(--brand-red);
         background: linear-gradient(135deg, var(--brand-red) 0%, var(--brand-yellow) 100%);
         -webkit-background-clip: text;
@@ -85,7 +93,7 @@ css-snippets:
     description: "Soft, blurred violet / cyan / fuchsia light-blobs on the canvas — the luminous field the glass floats over. One consistent spectrum, low alpha, never behind body text directly (glass mediates). The signature that makes Prism read as luminous rather than flat."
     target-section: colors
     body: |
-      .prism-mesh {
+      html[data-design-theme="npl-prism"] .prism-mesh {
         position: relative;
         background-color: var(--surface);
         background-image:
@@ -100,8 +108,8 @@ css-snippets:
     description: "2px solid violet focus ring, 2px offset — always visible, never removed. Interactive elements on glass/mesh guarantee a solid backing under the ring so it clears 3:1 regardless of the mesh behind them."
     target-section: interaction
     body: |
-      .glass :focus-visible,
-      .prism-mesh :focus-visible {
+      html[data-design-theme="npl-prism"] .glass :focus-visible,
+      html[data-design-theme="npl-prism"] .prism-mesh :focus-visible {
         outline: 2px solid var(--brand-red);
         outline-offset: 2px;
       }
