@@ -1,0 +1,41 @@
+personas:
+  - id: P-001
+    name: "Jordan Vance"
+    archetype: "The Harness Operator"
+    segment: "primary"
+    file: P-001-harness-operator.md
+  - id: P-002
+    name: "Sable"
+    archetype: "The Autonomous Coding Agent"
+    segment: "primary"
+    file: P-002-autonomous-coding-agent.md
+  - id: P-003
+    name: "Priya Anand"
+    archetype: "The Delivery Lead"
+    segment: "primary"
+    file: P-003-delivery-lead.md
+  - id: P-004
+    name: "Marcus Chen"
+    archetype: "The Org Owner"
+    segment: "secondary"
+    file: P-004-org-owner.md
+  - id: P-005
+    name: "Renee Okafor"
+    archetype: "The Growth Operator"
+    segment: "secondary"
+    file: P-005-growth-operator.md
+  - id: P-006
+    name: "Ilya Petrov"
+    archetype: "The Platform Administrator"
+    segment: "tertiary"
+    file: P-006-platform-administrator.md
+  - id: P-007
+    name: "Sofia Reyes"
+    archetype: "The Design & Code Reviewer"
+    segment: "tertiary"
+    file: P-007-design-and-code-reviewer.md
+  - id: P-008
+    name: "Tomás Lindqvist"
+    archetype: "The Evaluating Newcomer"
+    segment: "edge-case"
+    file: P-008-evaluating-newcomer.md

@@ -1,0 +1,982 @@
+epics:
+  - name: Work Sessions
+    stories:
+      - US-001
+      - US-002
+      - US-003
+      - US-004
+      - US-005
+  - name: Tickets & Boards
+    stories:
+      - US-006
+      - US-007
+      - US-008
+      - US-009
+      - US-010
+      - US-011
+      - US-012
+      - US-013
+      - US-014
+  - name: Chat & Collaboration Rooms
+    stories:
+      - US-015
+      - US-016
+      - US-017
+      - US-018
+      - US-019
+      - US-020
+      - US-021
+  - name: Agent Personas & Memory
+    stories:
+      - US-022
+      - US-023
+      - US-024
+      - US-025
+      - US-026
+      - US-027
+      - US-028
+  - name: Creative Assets & Campaigns
+    stories:
+      - US-029
+      - US-030
+      - US-031
+      - US-032
+      - US-033
+      - US-034
+      - US-035
+      - US-036
+  - name: Onboarding & Auth
+    stories:
+      - US-037
+      - US-038
+      - US-039
+      - US-040
+      - US-041
+      - US-042
+      - US-043
+      - US-044
+      - US-045
+      - US-046
+  - name: Settings & Preferences
+    stories:
+      - US-047
+      - US-048
+      - US-049
+      - US-050
+      - US-051
+      - US-052
+      - US-053
+  - name: Admin & Platform Operations
+    stories:
+      - US-054
+      - US-055
+      - US-056
+      - US-057
+      - US-058
+      - US-059
+      - US-060
+      - US-061
+      - US-062
+      - US-063
+      - US-064
+  - name: Search & Discovery
+    stories:
+      - US-065
+      - US-066
+      - US-067
+      - US-068
+      - US-069
+      - US-070
+      - US-071
+      - US-072
+  - name: Social & Collaboration
+    stories:
+      - US-073
+      - US-074
+      - US-075
+      - US-076
+      - US-077
+      - US-078
+      - US-079
+      - US-080
+      - US-081
+      - US-082
+  - name: Edge Cases & Error States
+    stories:
+      - US-083
+      - US-084
+      - US-085
+      - US-086
+      - US-087
+      - US-088
+      - US-089
+      - US-090
+  - name: Accessibility & Internationalization
+    stories:
+      - US-091
+      - US-092
+      - US-093
+      - US-094
+      - US-095
+  - name: Performance & Scale
+    stories:
+      - US-096
+      - US-097
+      - US-098
+      - US-099
+  - name: Integration & External APIs
+    stories:
+      - US-100
+      - US-101
+      - US-102
+      - US-103
+      - US-104
+stories:
+  - id: US-001
+    title: Create a new work session scoped to an org/project
+    personas:
+      - P-001
+      - P-002
+    epic: Work Sessions
+    priority: must-have
+    complexity: S
+    file: US-001-create-work-session-scoped-to-org-project.md
+  - id: US-002
+    title: Resume an existing session and see its rooms/tickets/artifacts
+    personas:
+      - P-001
+      - P-002
+    epic: Work Sessions
+    priority: must-have
+    complexity: S
+    file: US-002-resume-session-with-rooms-tickets-artifacts.md
+  - id: US-003
+    title: Update a session's status/title/description as work evolves
+    personas:
+      - P-001
+    epic: Work Sessions
+    priority: should-have
+    complexity: S
+    file: US-003-update-session-status-title-description.md
+  - id: US-004
+    title: List all sessions for a project, filtered by status
+    personas:
+      - P-003
+    epic: Work Sessions
+    priority: should-have
+    complexity: S
+    file: US-004-list-project-sessions-filtered-by-status.md
+  - id: US-005
+    title: Tailor a session's tool descriptions to the target model/runner
+    personas:
+      - P-002
+    epic: Work Sessions
+    priority: could-have
+    complexity: M
+    file: US-005-tailor-session-tool-descriptions-to-model-runner.md
+  - id: US-006
+    title: Create a ticket with a custom type and custom fields
+    personas:
+      - P-003
+    epic: Tickets & Boards
+    priority: must-have
+    complexity: M
+    file: US-006-create-ticket-with-custom-type-and-fields.md
+  - id: US-007
+    title: Move a ticket across kanban board stages
+    personas:
+      - P-003
+    epic: Tickets & Boards
+    priority: must-have
+    complexity: S
+    file: US-007-move-ticket-across-board-stages.md
+  - id: US-008
+    title: Assign a sprint/iteration to a ticket
+    personas:
+      - P-003
+    epic: Tickets & Boards
+    priority: must-have
+    complexity: S
+    file: US-008-assign-sprint-iteration-to-ticket.md
+  - id: US-009
+    title: Link two tickets together (blocks/relates-to)
+    personas:
+      - P-003
+      - P-002
+    epic: Tickets & Boards
+    priority: should-have
+    complexity: S
+    file: US-009-link-two-tickets-blocks-relates-to.md
+  - id: US-010
+    title: Link a ticket to a non-ticket entity (polymorphic link)
+    personas:
+      - P-002
+    epic: Tickets & Boards
+    priority: should-have
+    complexity: M
+    file: US-010-link-ticket-to-non-ticket-entity.md
+  - id: US-011
+    title: Define a custom ticket field scoped to a project
+    personas:
+      - P-003
+    epic: Tickets & Boards
+    priority: should-have
+    complexity: M
+    file: US-011-define-custom-ticket-field-scoped-to-project.md
+  - id: US-012
+    title: Define a custom ticket type scoped to an org
+    personas:
+      - P-004
+    epic: Tickets & Boards
+    priority: could-have
+    complexity: M
+    file: US-012-define-custom-ticket-type-scoped-to-org.md
+  - id: US-013
+    title: View a ticket queue's feed of recent activity
+    personas:
+      - P-003
+    epic: Tickets & Boards
+    priority: should-have
+    complexity: S
+    file: US-013-view-ticket-queue-activity-feed.md
+  - id: US-014
+    title: Create a PRD ticket and link multiple user_story tickets to it
+    personas:
+      - P-003
+    epic: Tickets & Boards
+    priority: must-have
+    complexity: M
+    file: US-014-create-prd-ticket-link-user-stories.md
+  - id: US-015
+    title: Create a chat room scoped to a session or project
+    personas:
+      - P-001
+    epic: Chat & Collaboration Rooms
+    priority: must-have
+    complexity: S
+    file: US-015-create-chat-room-scoped-to-session-or-project.md
+  - id: US-016
+    title: Send a message with a threaded reply
+    personas:
+      - P-001
+      - P-002
+    epic: Chat & Collaboration Rooms
+    priority: must-have
+    complexity: S
+    file: US-016-send-message-with-threaded-reply.md
+  - id: US-017
+    title: Pin an important message in a room
+    personas:
+      - P-003
+    epic: Chat & Collaboration Rooms
+    priority: should-have
+    complexity: S
+    file: US-017-pin-important-message-in-room.md
+  - id: US-018
+    title: Schedule a message to send later
+    personas:
+      - P-001
+    epic: Chat & Collaboration Rooms
+    priority: could-have
+    complexity: M
+    file: US-018-schedule-message-to-send-later.md
+  - id: US-019
+    title: Mute a room or mute unless mentioned
+    personas:
+      - P-001
+    epic: Chat & Collaboration Rooms
+    priority: should-have
+    complexity: S
+    file: US-019-mute-room-or-mute-unless-mentioned.md
+  - id: US-020
+    title: React to and highlight a message
+    personas:
+      - P-007
+    epic: Chat & Collaboration Rooms
+    priority: could-have
+    complexity: S
+    file: US-020-react-to-and-highlight-a-message.md
+  - id: US-021
+    title: Receive a room notification and clear it
+    personas:
+      - P-001
+      - P-002
+    epic: Chat & Collaboration Rooms
+    priority: must-have
+    complexity: S
+    file: US-021-receive-room-notification-and-clear-it.md
+  - id: US-022
+    title: Register a new Agent Persona with a bio
+    personas:
+      - P-002
+    epic: Agent Personas & Memory
+    priority: must-have
+    complexity: S
+    file: US-022-register-new-agent-persona-with-bio.md
+  - id: US-023
+    title: Add a journal entry documenting completed work
+    personas:
+      - P-002
+    epic: Agent Personas & Memory
+    priority: must-have
+    complexity: S
+    file: US-023-add-journal-entry-documenting-completed-work.md
+  - id: US-024
+    title: Add a knowledge-base entry to a persona's private KB
+    personas:
+      - P-002
+    epic: Agent Personas & Memory
+    priority: should-have
+    complexity: S
+    file: US-024-add-knowledge-base-entry-to-private-kb.md
+  - id: US-025
+    title: Recall a memory by semantic similarity
+    personas:
+      - P-002
+    epic: Agent Personas & Memory
+    priority: must-have
+    complexity: M
+    file: US-025-recall-memory-by-semantic-similarity.md
+  - id: US-026
+    title: Recall memories by emotional valence or signature
+    personas:
+      - P-002
+    epic: Agent Personas & Memory
+    priority: could-have
+    complexity: M
+    file: US-026-recall-memories-by-emotional-valence-or-signature.md
+  - id: US-027
+    title: Reinforce or de-emphasize a memory association
+    personas:
+      - P-002
+    epic: Agent Personas & Memory
+    priority: should-have
+    complexity: M
+    file: US-027-reinforce-or-deemphasize-a-memory-association.md
+  - id: US-028
+    title: Register an agent call sign and track agent state
+    personas:
+      - P-002
+      - P-006
+    epic: Agent Personas & Memory
+    priority: should-have
+    complexity: S
+    file: US-028-register-agent-call-sign-and-track-agent-state.md
+  - id: US-029
+    title: Create a Campaign with an Ad Group
+    personas:
+      - P-005
+    epic: Creative Assets & Campaigns
+    priority: must-have
+    complexity: S
+    file: US-029-create-campaign-with-ad-group.md
+  - id: US-030
+    title: Generate Ad Copy Variants for an Ad Group
+    personas:
+      - P-005
+    epic: Creative Assets & Campaigns
+    priority: must-have
+    complexity: M
+    file: US-030-generate-ad-copy-variants-for-ad-group.md
+  - id: US-031
+    title: Approve or Reject a Generated Ad Copy Variant
+    personas:
+      - P-005
+    epic: Creative Assets & Campaigns
+    priority: must-have
+    complexity: S
+    file: US-031-approve-reject-ad-copy-variant.md
+  - id: US-032
+    title: Generate a Landing Page Draft
+    personas:
+      - P-005
+    epic: Creative Assets & Campaigns
+    priority: should-have
+    complexity: M
+    file: US-032-generate-landing-page-draft.md
+  - id: US-033
+    title: Track a Domain Name Against a Campaign
+    personas:
+      - P-005
+    epic: Creative Assets & Campaigns
+    priority: could-have
+    complexity: S
+    file: US-033-track-domain-name-for-campaign.md
+  - id: US-034
+    title: Research Competitors for a Market Segment
+    personas:
+      - P-005
+    epic: Creative Assets & Campaigns
+    priority: should-have
+    complexity: M
+    file: US-034-research-competitors-for-market-segment.md
+  - id: US-035
+    title: Research and Track Keywords
+    personas:
+      - P-005
+    epic: Creative Assets & Campaigns
+    priority: should-have
+    complexity: S
+    file: US-035-research-and-track-keywords.md
+  - id: US-036
+    title: Generate a Creative Asset and Publish Its Active Output
+    personas:
+      - P-005
+    epic: Creative Assets & Campaigns
+    priority: must-have
+    complexity: M
+    file: US-036-generate-and-publish-creative-asset.md
+  - id: US-037
+    title: Register a New Organization
+    personas:
+      - P-004
+    epic: Onboarding & Auth
+    priority: must-have
+    complexity: S
+    file: US-037-register-new-organization.md
+  - id: US-038
+    title: Send an Invite Token with Expiry and Use Cap
+    personas:
+      - P-004
+    epic: Onboarding & Auth
+    priority: must-have
+    complexity: S
+    file: US-038-send-invite-token-with-expiry-and-cap.md
+  - id: US-039
+    title: Accept an Invite and Complete OIDC Login
+    personas:
+      - P-008
+    epic: Onboarding & Auth
+    priority: must-have
+    complexity: M
+    file: US-039-accept-invite-and-complete-oidc-login.md
+  - id: US-040
+    title: Complete a First-Time SSO Callback Flow
+    personas:
+      - P-008
+    epic: Onboarding & Auth
+    priority: must-have
+    complexity: S
+    file: US-040-complete-first-time-sso-callback.md
+  - id: US-041
+    title: Self-Mint an MCP API Key
+    personas:
+      - P-001
+    epic: Onboarding & Auth
+    priority: must-have
+    complexity: S
+    file: US-041-self-mint-mcp-api-key.md
+  - id: US-042
+    title: Copy a Generated `claude mcp add` Setup Command
+    personas:
+      - P-001
+    epic: Onboarding & Auth
+    priority: must-have
+    complexity: S
+    file: US-042-copy-claude-mcp-add-setup-command.md
+  - id: US-043
+    title: Mint an MCP JWT from a Raw API Key
+    personas:
+      - P-001
+      - P-002
+    epic: Onboarding & Auth
+    priority: must-have
+    complexity: S
+    file: US-043-mint-mcp-jwt-from-api-key.md
+  - id: US-044
+    title: Refresh an Expiring Guardian JWT Pair
+    personas:
+      - P-001
+    epic: Onboarding & Auth
+    priority: should-have
+    complexity: S
+    file: US-044-refresh-expiring-guardian-jwt-pair.md
+  - id: US-045
+    title: Revoke a Lost or Leaked MCP API Key
+    personas:
+      - P-001
+    epic: Onboarding & Auth
+    priority: must-have
+    complexity: S
+    file: US-045-revoke-lost-or-leaked-mcp-api-key.md
+  - id: US-046
+    title: View My Organizations After Login
+    personas:
+      - P-008
+    epic: Onboarding & Auth
+    priority: should-have
+    complexity: S
+    file: US-046-view-my-organizations-after-login.md
+  - id: US-047
+    title: Update Organization Name and Key Prefix
+    personas:
+      - P-004
+    epic: Settings & Preferences
+    priority: should-have
+    complexity: S
+    file: US-047-update-org-name-and-key-prefix.md
+  - id: US-048
+    title: Define a Custom Role with Named Permissions
+    personas:
+      - P-004
+    epic: Settings & Preferences
+    priority: should-have
+    complexity: M
+    file: US-048-define-a-custom-role-with-permissions.md
+  - id: US-049
+    title: Assign a Custom Role to a Member
+    personas:
+      - P-004
+    epic: Settings & Preferences
+    priority: should-have
+    complexity: S
+    file: US-049-assign-a-custom-role-to-a-member.md
+  - id: US-050
+    title: Apply an MCP Custom Scope to a Project
+    personas:
+      - P-004
+    epic: Settings & Preferences
+    priority: must-have
+    complexity: M
+    file: US-050-apply-an-mcp-custom-scope-to-a-project.md
+  - id: US-051
+    title: Configure Notification Preferences for a Room
+    personas:
+      - P-001
+    epic: Settings & Preferences
+    priority: could-have
+    complexity: S
+    file: US-051-configure-room-notification-preferences.md
+  - id: US-052
+    title: Update User Profile Details
+    personas:
+      - P-001
+    epic: Settings & Preferences
+    priority: could-have
+    complexity: S
+    file: US-052-update-user-profile-details.md
+  - id: US-053
+    title: Configure a Media-Provider API Key for an Org
+    personas:
+      - P-005
+      - P-004
+    epic: Settings & Preferences
+    priority: should-have
+    complexity: S
+    file: US-053-configure-org-media-provider-api-key.md
+  - id: US-054
+    title: Suspend a User Account
+    personas:
+      - P-006
+    epic: Admin & Platform Operations
+    priority: must-have
+    complexity: S
+    file: US-054-suspend-a-user-account.md
+  - id: US-055
+    title: Change a User's Global Role with Self-Lockout Guard
+    personas:
+      - P-006
+    epic: Admin & Platform Operations
+    priority: must-have
+    complexity: M
+    file: US-055-change-a-users-global-role-with-self-lockout-guard.md
+  - id: US-056
+    title: List and Search All Organizations
+    personas:
+      - P-006
+    epic: Admin & Platform Operations
+    priority: should-have
+    complexity: S
+    file: US-056-search-and-list-all-organizations.md
+  - id: US-057
+    title: Add and Live-Test an LLM Model Provider
+    personas:
+      - P-006
+    epic: Admin & Platform Operations
+    priority: must-have
+    complexity: M
+    file: US-057-add-and-live-test-an-llm-model-provider.md
+  - id: US-058
+    title: Create and Curate a Global MCP Custom-Scope Preset
+    personas:
+      - P-006
+    epic: Admin & Platform Operations
+    priority: should-have
+    complexity: M
+    file: US-058-create-a-global-mcp-custom-scope-preset.md
+  - id: US-059
+    title: Review an MCP Overview Queue Item
+    personas:
+      - P-006
+    epic: Admin & Platform Operations
+    priority: should-have
+    complexity: S
+    file: US-059-review-mcp-overview-queue-item.md
+  - id: US-060
+    title: Grant GitHub Token/Repo Access at the Org Level
+    personas:
+      - P-006
+      - P-004
+    epic: Admin & Platform Operations
+    priority: should-have
+    complexity: M
+    file: US-060-grant-org-level-github-access.md
+  - id: US-061
+    title: Configure an Org-Level Media-Provider Config as Admin
+    personas:
+      - P-006
+    epic: Admin & Platform Operations
+    priority: could-have
+    complexity: S
+    file: US-061-configure-org-level-media-provider-as-admin.md
+  - id: US-062
+    title: Check a PBAC Policy Decision with the Simulator
+    personas:
+      - P-006
+    epic: Admin & Platform Operations
+    priority: should-have
+    complexity: M
+    file: US-062-run-pbac-policy-simulator-check.md
+  - id: US-063
+    title: Explain a PBAC Policy Denial
+    personas:
+      - P-006
+    epic: Admin & Platform Operations
+    priority: should-have
+    complexity: S
+    file: US-063-explain-a-pbac-policy-denial.md
+  - id: US-064
+    title: Audit MCP API Key Usage Across Organizations
+    personas:
+      - P-006
+    epic: Admin & Platform Operations
+    priority: could-have
+    complexity: M
+    file: US-064-audit-mcp-api-key-usage-across-orgs.md
+  - id: US-065
+    title: List All Tools on an MCP Server
+    personas:
+      - P-002
+    epic: Search & Discovery
+    priority: must-have
+    complexity: S
+    file: US-065-list-all-tools-on-an-mcp-server.md
+  - id: US-066
+    title: Search Tools by Keyword
+    personas:
+      - P-001
+      - P-002
+    epic: Search & Discovery
+    priority: must-have
+    complexity: S
+    file: US-066-search-tools-by-keyword.md
+  - id: US-067
+    title: Search Tools by Semantic Intent
+    personas:
+      - P-002
+    epic: Search & Discovery
+    priority: must-have
+    complexity: M
+    file: US-067-search-tools-by-semantic-intent.md
+  - id: US-068
+    title: Get a Tool's Full Definition
+    personas:
+      - P-002
+    epic: Search & Discovery
+    priority: should-have
+    complexity: S
+    file: US-068-get-a-tools-full-definition.md
+  - id: US-069
+    title: Get Contextual Help for a Tool
+    personas:
+      - P-002
+      - P-008
+    epic: Search & Discovery
+    priority: could-have
+    complexity: S
+    file: US-069-get-contextual-help-for-a-tool.md
+  - id: US-070
+    title: Search the NPL Glyph Codex
+    personas:
+      - P-002
+    epic: Search & Discovery
+    priority: should-have
+    complexity: S
+    file: US-070-search-the-npl-glyph-codex.md
+  - id: US-071
+    title: Search the Wiki by Keyword
+    personas:
+      - P-001
+    epic: Search & Discovery
+    priority: should-have
+    complexity: S
+    file: US-071-search-the-wiki-by-keyword.md
+  - id: US-072
+    title: Filter Tickets by Custom Field Values
+    personas:
+      - P-003
+    epic: Search & Discovery
+    priority: should-have
+    complexity: M
+    file: US-072-filter-tickets-by-custom-field-values.md
+  - id: US-073
+    title: Create a Wiki Space and Page
+    personas:
+      - P-003
+    epic: Social & Collaboration
+    priority: must-have
+    complexity: S
+    file: US-073-create-a-wiki-space-and-page.md
+  - id: US-074
+    title: Comment on a Wiki Page
+    personas:
+      - P-001
+    epic: Social & Collaboration
+    priority: should-have
+    complexity: S
+    file: US-074-comment-on-a-wiki-page.md
+  - id: US-075
+    title: Attach a File to a Wiki Page
+    personas:
+      - P-001
+    epic: Social & Collaboration
+    priority: could-have
+    complexity: S
+    file: US-075-attach-a-file-to-a-wiki-page.md
+  - id: US-076
+    title: React to a Wiki Page or Comment
+    personas:
+      - P-001
+    epic: Social & Collaboration
+    priority: could-have
+    complexity: S
+    file: US-076-react-to-a-wiki-page-or-comment.md
+  - id: US-077
+    title: Create a Code Review with Overlay Comments
+    personas:
+      - P-007
+    epic: Social & Collaboration
+    priority: must-have
+    complexity: M
+    file: US-077-create-a-code-review-with-overlay-comments.md
+  - id: US-078
+    title: Compile a Review into a Final Verdict
+    personas:
+      - P-007
+    epic: Social & Collaboration
+    priority: must-have
+    complexity: S
+    file: US-078-compile-a-review-into-a-final-verdict.md
+  - id: US-079
+    title: List GitHub Pull Requests for a Linked Repo
+    personas:
+      - P-007
+    epic: Social & Collaboration
+    priority: should-have
+    complexity: S
+    file: US-079-list-github-pull-requests-for-a-linked-repo.md
+  - id: US-080
+    title: Comment on a GitHub Pull Request
+    personas:
+      - P-007
+    epic: Social & Collaboration
+    priority: should-have
+    complexity: S
+    file: US-080-comment-on-a-github-pull-request.md
+  - id: US-081
+    title: Follow a Pub/Sub Channel for Updates
+    personas:
+      - P-002
+    epic: Social & Collaboration
+    priority: could-have
+    complexity: S
+    file: US-081-follow-a-pub-sub-channel-for-updates.md
+  - id: US-082
+    title: Watch an Entity for Change Notifications
+    personas:
+      - P-001
+      - P-003
+    epic: Social & Collaboration
+    priority: should-have
+    complexity: S
+    file: US-082-watch-an-entity-for-change-notifications.md
+  - id: US-083
+    title: Reject MCP Calls with an Expired JWT
+    personas:
+      - P-002
+    epic: Edge Cases & Error States
+    priority: must-have
+    complexity: S
+    file: US-083-mcp-call-with-expired-jwt.md
+  - id: US-084
+    title: Reject MCP Calls Using a Revoked API Key
+    personas:
+      - P-002
+      - P-006
+    epic: Edge Cases & Error States
+    priority: must-have
+    complexity: S
+    file: US-084-mcp-call-with-revoked-api-key.md
+  - id: US-085
+    title: Block Registration on Expired or Exhausted Invite Tokens
+    personas:
+      - P-008
+    epic: Edge Cases & Error States
+    priority: must-have
+    complexity: S
+    file: US-085-register-with-expired-invite-token.md
+  - id: US-086
+    title: Log tool_guard Identity Mismatches in Shadow Mode
+    personas:
+      - P-006
+    epic: Edge Cases & Error States
+    priority: should-have
+    complexity: M
+    file: US-086-tool-guard-identity-mismatch-shadow-mode.md
+  - id: US-087
+    title: Rate-Limit the Unauthenticated Token-Mint Endpoint
+    personas:
+      - P-006
+    epic: Edge Cases & Error States
+    priority: should-have
+    complexity: S
+    file: US-087-rate-limit-unauthenticated-token-mint.md
+  - id: US-088
+    title: Fall Back to Read-Only When Operating on an Archived Project
+    personas:
+      - P-003
+    epic: Edge Cases & Error States
+    priority: should-have
+    complexity: S
+    file: US-088-archived-project-read-only-fallback.md
+  - id: US-089
+    title: Handle Orphaned Polymorphic Ticket Links Gracefully
+    personas:
+      - P-003
+    epic: Edge Cases & Error States
+    priority: could-have
+    complexity: S
+    file: US-089-orphaned-ticket-link-after-deletion.md
+  - id: US-090
+    title: Quarantine Flagged Content at Memory Ingest
+    personas:
+      - P-002
+      - P-006
+    epic: Edge Cases & Error States
+    priority: should-have
+    complexity: M
+    file: US-090-memory-flagged-quarantine-at-ingest.md
+  - id: US-091
+    title: Full Keyboard Navigation of the Ticket Board
+    personas:
+      - P-003
+    epic: Accessibility & Internationalization
+    priority: must-have
+    complexity: M
+    file: US-091-keyboard-navigation-ticket-board.md
+  - id: US-092
+    title: Announce Dashboard State Changes to Screen Readers
+    personas:
+      - P-001
+    epic: Accessibility & Internationalization
+    priority: must-have
+    complexity: M
+    file: US-092-screen-reader-dashboard-state-changes.md
+  - id: US-093
+    title: Render Non-English Content Correctly in Wiki and Tickets
+    personas:
+      - P-008
+    epic: Accessibility & Internationalization
+    priority: should-have
+    complexity: S
+    file: US-093-non-english-content-rendering-wiki-tickets.md
+  - id: US-094
+    title: Switch to the High-Contrast Nocturne Theme
+    personas:
+      - P-008
+      - P-001
+    epic: Accessibility & Internationalization
+    priority: should-have
+    complexity: S
+    file: US-094-high-contrast-dark-theme-switch.md
+  - id: US-095
+    title: Respect prefers-reduced-motion in Chat and Board Animations
+    personas:
+      - P-008
+    epic: Accessibility & Internationalization
+    priority: could-have
+    complexity: S
+    file: US-095-respect-reduced-motion-chat-board.md
+  - id: US-096
+    title: Paginate Large Ticket Boards Without a Full Reload
+    personas:
+      - P-003
+    epic: Performance & Scale
+    priority: must-have
+    complexity: M
+    file: US-096-paginate-large-ticket-board.md
+  - id: US-097
+    title: Virtualize Chat Rooms with Thousands of Messages
+    personas:
+      - P-001
+    epic: Performance & Scale
+    priority: should-have
+    complexity: M
+    file: US-097-virtualize-chat-room-many-messages.md
+  - id: US-098
+    title: Bound Memory-Recall Latency as a Persona's Memory Store Grows
+    personas:
+      - P-002
+    epic: Performance & Scale
+    priority: should-have
+    complexity: L
+    file: US-098-bound-memory-recall-latency-at-scale.md
+  - id: US-099
+    title: Queue and Rate-Limit Bulk Creative-Asset Generation
+    personas:
+      - P-005
+    epic: Performance & Scale
+    priority: could-have
+    complexity: M
+    file: US-099-queue-rate-limit-bulk-creative-asset-generation.md
+  - id: US-100
+    title: Connect a GitHub Repository and Set Its Default ACL
+    personas:
+      - P-004
+    epic: Integration & External APIs
+    priority: must-have
+    complexity: S
+    file: US-100-connect-github-repo-default-acl.md
+  - id: US-101
+    title: Create a Pull Request from Within the Platform
+    personas:
+      - P-007
+    epic: Integration & External APIs
+    priority: should-have
+    complexity: M
+    file: US-101-create-pull-request-from-platform.md
+  - id: US-102
+    title: Open a Remote-Access Tunnel to a Local Dev Server
+    personas:
+      - P-001
+    epic: Integration & External APIs
+    priority: should-have
+    complexity: M
+    file: US-102-remote-access-tunnel-local-dev-server.md
+  - id: US-103
+    title: Build a Mock MCP Server from a Prose Description
+    personas:
+      - P-002
+      - P-001
+    epic: Integration & External APIs
+    priority: could-have
+    complexity: L
+    file: US-103-mock-mcp-server-from-prose-description.md
+  - id: US-104
+    title: Receive an Outbound Webhook on Ticket State Change
+    personas:
+      - P-003
+    epic: Integration & External APIs
+    priority: could-have
+    complexity: M
+    file: US-104-outbound-webhook-ticket-state-change.md
