@@ -1,16 +1,34 @@
 ---
 slug: npl-editorial
 base_theme: theme-style-guide
-status: sketch
-revision: 1
+status: full
+revision: 2
 ---
 
 # Theme Treatise — NPL Editorial
 
-Theme: `theme-npl-editorial/` · Base: `theme-style-guide` · Status: sketch
+Theme: `theme-npl-editorial/` · Base: `theme-style-guide` · Status: full
 
 > Reverse-engineered from the shipped `theme-npl-editorial/` YAML — intent read
 > back out of the implemented values.
+
+> **Render-fidelity note (rev 2, Stage C pilot 2026-07-17).** Six image renders
+> across five screens (wiki-browser ×2, instructions, artifact-detail,
+> artifacts-list, ticket-detail) confirm the treatise is internally coherent but
+> expose a hard limit of the current image model. It reliably honors the
+> **warm-paper neutrals** (all six renders read warm; visible paper grain on
+> artifact-detail, airy hairline-ruled tables on artifacts-list) yet does **not**
+> honor the theme's three defining hard signals no matter how forcefully prompted:
+> (1) the **serif body/UI** rendered as sans-serif in every frame — including a
+> re-render whose prompt front-loaded "serif book face, no sans anywhere"; (2) the
+> **muted-claret accent** was swapped for a familiar SaaS hue (violet on
+> wiki-browser, cobalt on instructions, green-ghost on artifacts-list, orange-coral
+> on ticket-detail; only artifact-detail stayed neutral-warm); (3) the **2px
+> cut-paper radius** rendered as friendly 6–12px rounding throughout. These are
+> render-model limitations, not treatise defects — the **engine YAML is the
+> enforcing source of truth** for serif, claret, and 2px, and downstream reviewers
+> should judge those three from the compiled theme, not the mockups. No treatise
+> value changed; this note only records the gap.
 
 ## 1. Identity
 

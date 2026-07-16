@@ -1,0 +1,79 @@
+schema: "0.4"
+id: npl-editorial-31-artifacts-list
+type: image
+quality: high
+
+# NoizuPromptLingo — an org-scoped index of artifacts produced by work sessions — Artifacts List screen.
+# Theme tenets: warm paper stock, serif body (Source Serif 4), single muted-claret ink accent, near-square 2px radius, warm beige hairline rules, airy catalog density.
+# Palette: paper #fbf8f1, warm ink #1c1917, claret #9a2c3f, petrol #1d4e5f, beige hairline #e3d9c6.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a
+    catalog/index page that reads like the contents pages of a printed reference —
+    calm, literate, unhurried. The body face is a SERIF; the canvas is warm off-white
+    paper; margins are generous and rows breathe. This is NOT a dense cool-white SaaS
+    grid and NOT a dark console. A table here separates rows with warm beige hairline
+    rules only — no vertical grid lines, no zebra fill, no boxed cards or drop
+    shadows.
+  text: |
+    A 16:9 high-fidelity UI mockup of the Artifacts List screen of NoizuPromptLingo,
+    an organization-scoped index of artifacts produced by work sessions. It reads
+    like a catalog page in a printed reference, not a dense SaaS grid.
+
+    OVERALL LAYOUT (a single dominant CENTER column on a warm off-white paper canvas
+    with wide margins, plus an optional slim LEFT nav rail): bands separated by warm
+    beige hairline rules and generous whitespace.
+
+    TOP HEADER BAND: serif wordmark "NPL" at left; a page title "Artifacts" as a serif
+    H1; a "Create Artifact" typeset label-button filled muted claret at right.
+
+    FILTER ROW (below the title, above the table): a SESSION FILTER CHIP shown as a
+    small warm-paper pill on a beige hairline with near-square corners and a monospace
+    session slug (for example "#session-4f2a"), plus a subtle "clear" affordance; a
+    warm-gray result count in serif to its right ("18 artifacts").
+
+    CENTER ARTIFACT TABLE (dominant): a calm, airy table with generous row height and
+    warm beige hairline row rules only — no vertical grid lines, no zebra fill, no
+    boxed card. Columns: an ARTIFACT TYPE ICON (a small line glyph — document, code,
+    spec), NAME in serif, TYPE as a small serif small-caps label, OWNING SESSION as a
+    monospace slug, and LAST REVISED as a warm-gray monospace timestamp right-aligned.
+    Show about eight rows of plausible artifact names. The header row is serif
+    small-caps with a slightly heavier beige rule beneath it. One row shows a faint
+    warm hover tone with the name underlined in petrol.
+
+    PALETTE & TYPE: warm off-white paper, warm near-black serif ink, one muted claret
+    accent (the Create button), deep petrol teal for the hovered/linked name,
+    warm-gray for meta text. Warm beige hairlines throughout, never cool gray. Serif
+    (Source Serif 4) for names, titles, and labels; monospace only for session slugs
+    and timestamps. No geometric sans.
+
+    SHAPE & SURFACE: near-square 2px corners on the button and chip, flat and tonal,
+    separation by hairline rules and margin rather than shadow or fill; a faint paper
+    grain on the canvas.
+
+    MOOD: considered, literate, unhurried — an index you read, like the contents pages
+    of a well-set standard.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Shows an artifact table (type icon, name, type, owning session, last-revised), a session filter chip, and a create-artifact action"}
+    theme_fidelity: {weight: 3, description: "Warm paper canvas, serif type, single muted-claret accent, petrol links, hairline-only table rules, near-square 2px radius — not a dense cool-white grid"}
+    composition: {weight: 2, description: "Clear visual hierarchy, airy catalog density, plausible list layout"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+
+tags: [npl-editorial, NoizuPromptLingo, screen-mockup]

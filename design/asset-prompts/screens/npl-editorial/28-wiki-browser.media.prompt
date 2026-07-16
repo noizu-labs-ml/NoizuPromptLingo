@@ -1,0 +1,102 @@
+schema: "0.4"
+id: npl-editorial-28-wiki-browser
+type: image
+quality: high
+
+# NoizuPromptLingo — an org knowledge wiki for prompt specifications — Wiki Browser screen.
+# Theme tenets: warm paper stock, serif body (Source Serif 4), single muted-claret ink accent, near-square 2px radius, warm beige hairline rules, protected reading measure.
+# Palette: paper #fbf8f1, warm ink #1c1917, claret #9a2c3f, petrol #1d4e5f, beige hairline #e3d9c6.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a
+    knowledge-wiki reading surface that behaves like a well-set printed technical
+    standard — calm, literate, considered, print-like. THREE non-negotiable style
+    rules override everything else: (1) ALL text — headings, navigation, body,
+    labels, buttons — is set in a SERIF book face with visible bracketed serifs,
+    like Georgia or a Times-style typeface; there is absolutely NO sans-serif
+    anywhere. (2) The single accent color is a muted CLARET — a dark brick/wine/
+    oxblood red; it is NEVER blue, violet, purple, or orange. (3) All corners are
+    nearly square, a crisp 2px cut-paper edge; NO rounded pills and NO soft rounded
+    cards. The canvas is warm off-white paper; margins are generous; structure comes
+    from type hierarchy and warm beige hairline rules, never heavy borders or drop
+    shadows. NOT a cold pure-white SaaS dashboard and NOT a dark developer console.
+  text: |
+    A 16:9 high-fidelity UI mockup of the Wiki Browser screen of NoizuPromptLingo,
+    an organization knowledge wiki for prompt specifications. It must read like a
+    well-set printed standard, not a SaaS app.
+
+    NON-NEGOTIABLE STYLE: every piece of text (headings, navigation, body, labels,
+    buttons) is a SERIF book face with visible serifs — no sans-serif anywhere. The
+    single accent is a muted claret (a dark brick-wine red) — never blue, violet,
+    purple, or orange. All corners are nearly square (a 2px cut-paper edge) — no
+    rounded pills or soft cards. Warm off-white paper canvas; warm beige hairline
+    rules; flat and tonal, no drop shadows.
+
+    OVERALL LAYOUT (three bands over a warm off-white paper canvas): a LEFT
+    space-and-page tree rail, a dominant CENTER reading column, and a RIGHT margin
+    rail. Bands are separated by warm beige hairline rules and generous whitespace,
+    never by heavy borders or shadows.
+
+    TOP HEADER BAND: a serif wordmark "NPL" at left; a centered WIKI SEARCH BAR (a
+    warm-paper field on a thin beige hairline, near-square corners, a small
+    magnifier glyph, placeholder "Search this space"); a modest "New Page" typeset
+    label-button in muted claret at right.
+
+    LEFT SPACE/PAGE TREE NAV (about 240px): a table-of-contents-style hierarchy of
+    wiki spaces and nested pages, set in the serif face. The active page is marked
+    by a claret left-rule and heavier weight, NOT a filled pill. Section eyebrows
+    above groups are in small monospace small-caps. Rows breathe with comfortable
+    height.
+
+    CENTER PAGE CONTENT RENDERER (dominant, a protected reading measure about 68
+    characters wide with wide gutters): a long-form wiki article titled "Prompt
+    Convention: Directive Blocks". A serif H1, then serif body paragraphs at
+    generous line-height, one inline literal token shown in monospace, a numbered
+    list, and a footnote reference. A slightly deeper warm-paper pull-quote sits
+    inset with a claret top-rule. Include one short line of non-Latin text (a
+    Japanese phrase) rendered cleanly to show correct Unicode. The column feels like
+    a printed page.
+
+    RIGHT MARGIN RAIL (about 280px): a COMMENT THREAD PANEL of two or three short
+    comments (small serif name, warm-gray timestamp, body), each a borderless block
+    separated by a beige hairline; below it a FILE ATTACHMENT LIST of two rows
+    (small doc glyph, filename in monospace, size); at the bottom a REACTION BAR of
+    a few small outline reaction chips with low counts.
+
+    PALETTE & TYPE: warm off-white paper canvas, warm near-black ink for body, one
+    muted claret red as the single saturated accent (active rule, primary label),
+    deep petrol teal reserved for links and info, an occasional burnt-ochre
+    highlight. Neutrals are warm, never cool gray; every border is a warm beige
+    hairline. Body and headings are a serif (Source Serif 4); monospace appears only
+    for literal tokens and filenames. No geometric sans anywhere.
+
+    SHAPE & SURFACE: near-square 2px corners on fields and cards (a cut-paper edge,
+    no pills); flat and tonal, surfaces separated by paper tone steps and margin
+    rather than drop shadows; a barely-perceptible paper grain on the canvas.
+
+    MOOD: considered, premium, durable — the authority of a printed standard you
+    would read top to bottom and quote later. Calm, literate, exact.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Shows the wiki's space/page tree nav, a search bar, a long-form page content renderer with correct non-Latin text, a comment thread, a file attachment list, and a reaction bar"}
+    theme_fidelity: {weight: 3, description: "Warm paper canvas, serif body/headings, single muted-claret accent, petrol links, warm beige hairlines, near-square 2px radius — not generic UI defaults or cool-white SaaS"}
+    composition: {weight: 2, description: "Clear visual hierarchy, protected reading measure, plausible real-product wiki layout"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+
+tags: [npl-editorial, NoizuPromptLingo, screen-mockup]

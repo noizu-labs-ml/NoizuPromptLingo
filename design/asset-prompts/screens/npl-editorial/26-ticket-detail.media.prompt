@@ -1,0 +1,89 @@
+schema: "0.4"
+id: npl-editorial-26-ticket-detail
+type: image
+quality: high
+
+# NoizuPromptLingo — a single work ticket with cross-references to other tickets and entities — Ticket Detail screen.
+# Theme tenets: warm paper stock, serif body (Source Serif 4), single muted-claret ink accent, near-square 2px radius, warm beige hairline rules, footnote/citation sensibility.
+# Palette: paper #fbf8f1, warm ink #1c1917, claret #9a2c3f, petrol #1d4e5f, ochre #b45309, beige hairline #e3d9c6.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a
+    cross-referenced entry in a printed standard — calm, literate, exact, print-like.
+    The body face is a SERIF; the canvas is warm off-white paper; margins are
+    generous and one reading measure is protected. Cross-references and footnotes are
+    idiomatic here, not clutter. NOT a cool-white SaaS ticket tracker and NOT a dark
+    console. Structure comes from type hierarchy and warm hairline rules, never heavy
+    borders or drop shadows.
+  text: |
+    A 16:9 high-fidelity UI mockup of the Ticket Detail screen of NoizuPromptLingo, a
+    single work ticket with cross-references to other tickets and entities. It reads
+    like a cross-referenced entry in a printed standard, footnotes and citations
+    idiomatic.
+
+    OVERALL LAYOUT (two bands on a warm off-white paper canvas, separated by a warm
+    beige hairline and generous margin): a dominant CENTER ticket column and a RIGHT
+    references rail.
+
+    TOP HEADER BAND: serif wordmark "NPL" at left; breadcrumb "Tickets / PRD-114" in
+    serif; a monospace ticket-id chip on a warm-paper pill with near-square corners; a
+    WATCH TOGGLE shown as a small typeset labelled switch ("Watching") with a petrol
+    focus outline; a status label in small serif small-caps.
+
+    CENTER TICKET COLUMN (dominant, protected reading measure): a serif H1 ticket
+    title, a metadata line (author, date, priority) in warm-gray serif, then a
+    LOCALIZED CONTENT RENDERER — a serif description at generous line-height that
+    includes a short paragraph of non-Latin text (a French sentence with accents and
+    one line of Arabic) rendered cleanly to show correct localization; one inline
+    literal token in monospace; and a footnote reference at the foot of the column.
+    Restrained and print-like.
+
+    RIGHT REFERENCES RAIL (about 300px), a stack of small titled panels each headed by
+    a monospace small-caps eyebrow and separated by beige hairlines:
+    - TICKET LINK PANEL: two "blocks" / "relates to" rows, each a serif ticket title
+      with a monospace id and a small relation label.
+    - POLYMORPHIC LINK PANEL: two rows linking non-ticket entities (a wiki page, an
+      artifact) with small type glyphs; one row is an ORPHANED-LINK PLACEHOLDER shown
+      muted and italic ("linked item no longer exists") with a faint dashed beige rule
+      — gracefully degraded, not an error.
+    - LINKED USER STORIES LIST: three rolled-up story rows (monospace "US-014" tags +
+      short serif titles), marked as under this PRD.
+
+    Links and relation labels take deep petrol teal; the active/watched affordances
+    take muted claret; nothing shouts.
+
+    PALETTE & TYPE: warm off-white paper, warm near-black serif ink, one muted claret
+    accent, deep petrol teal for links and cross-references, warm-gray meta,
+    burnt-ochre used sparingly. Warm beige hairlines, never cool gray. Serif (Source
+    Serif 4) for all prose; monospace only for ticket/story ids and literal tokens. No
+    geometric sans.
+
+    SHAPE & SURFACE: near-square 2px corners, flat and tonal, separation by hairline
+    and margin rather than shadow; a faint paper grain on the canvas.
+
+    MOOD: considered, exact, literate — a cross-referenced spec entry you cite, warm
+    and durable as printed paper.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Shows the ticket body with correctly-rendered non-Latin content, a ticket link panel, a polymorphic link panel with an orphaned-link placeholder, a linked user stories list, and a watch toggle"}
+    theme_fidelity: {weight: 3, description: "Warm paper canvas, serif body/headings, single muted-claret accent, petrol cross-reference links, warm beige hairlines, near-square 2px radius — not a generic SaaS tracker"}
+    composition: {weight: 2, description: "Clear visual hierarchy, protected reading measure, plausible ticket-detail layout"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+
+tags: [npl-editorial, NoizuPromptLingo, screen-mockup]
