@@ -37,6 +37,7 @@ The five-file delta faithfully realizes the prism treatise: the controlled viole
 | css-snippets : prism-mesh | violet/cyan/fuchsia radial mesh | §3 + §6 | conformant | the luminous field |
 | css-snippets : prism-focus | 2px violet ring | §7 + §9 | conformant | on solid backing |
 | branding.yaml : intent/perception/audience/tone/keywords/font-url | verbatim §1 | §1 | conformant | mirrors treatise §1 |
+| scoped-vars : brand-red/-blue/-yellow (dark) | `color-mix(#7c3aed/#06b6d4/#d946ef …)` | §3 dark = same theme, brighter spectrum | conformant | added post-audit (commit 21187727) — closes the cross-theme base-cascade leak (base brightens dark brand tints from literal `#e20613`/`#0047ab`/`#f5c518`, see conformance-npl-minimal.md §7 item 2); re-points all three families to prism's own spectrum |
 
 ## 2. Claim Coverage (treatise → YAML)
 
@@ -123,3 +124,4 @@ The five-file delta faithfully realizes the prism treatise: the controlled viole
 | Date | Workflow | Summary | Verdict after |
 |------|----------|---------|---------------|
 | 2026-07-17 | extract-seeds + tune-facets (Stage C pilot 1) | Authored 5-file delta from treatise rev2; rendered 6/6 screens (7 API calls); amended treatise to rev2/full from render+contrast evidence; verified via generate-css (exit 0) + WCAG matrix | CONFORMANT (with 4 standing cautions) |
+| 2026-07-17 | dark-leak remediation (pre-v3 remediation pass, commit 21187727) | Added `style-guide.scoped-vars.yaml`, re-pointing dark-mode brand-red/-blue/-yellow from the base's literal `#e20613`/`#0047ab`/`#f5c518` to prism's own violet/cyan/fuchsia — this doc had not yet recorded the leak or its fix (authored before the remediation pass); see §1 Value Trace and conformance-npl-minimal.md §7 item 2 for the underlying cross-theme base-cascade defect. Verified 0×`#e20613` in npl-prism scope via generate-css. | CONFORMANT (dark-leak resolved) |
