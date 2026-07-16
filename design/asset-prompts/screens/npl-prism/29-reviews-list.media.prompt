@@ -1,0 +1,78 @@
+schema: "0.4"
+id: npl-prism-29-reviews-list
+type: image
+quality: high
+
+# NoizuPromptLingo collaboration — Reviews List: org-scoped listing of overlay-
+# annotated screenshot reviews; entry point to start a new review.
+# Theme tenets: luminous frosted glass, cool violet→cyan spectrum gradient, Sora
+# geometric type, 16px radius; the review table stays on a solid legible surface.
+# Palette: violet #7c3aed, cyan #06b6d4, fuchsia #d946ef, canvas #f7f8ff, ink #1a1730.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a
+    PREMIUM review-management list inside a modern AI product. Polished and composed.
+    A frosted-glass page chrome floats over a pale spectrum mesh; the primary "Create
+    review" action carries the signature violet→cyan gradient; the review table itself
+    sits on a solid, legible surface. Clean geometric sans-serif (Sora), no serif.
+  text: |
+    A 16:9 high-fidelity UI mockup of the REVIEWS LIST screen of NoizuPromptLingo
+    (route /app/[orgId]/reviews).
+
+    OVERALL LAYOUT (two bands): a slim LEFT app nav rail (achromatic glass) and a
+    dominant CENTER content column — over a pale near-white canvas (#f7f8ff) with a soft
+    blurred violet/cyan spectrum mesh glowing behind a frosted page header.
+
+    HEADER BAND (frosted glass): "Reviews" title in Sora 700 with an org breadcrumb; a
+    REVIEW STATUS FILTER as a row of pill chips ("All", "Open", "Compiled") with the
+    active chip carrying a soft violet fill; and a primary CREATE REVIEW BUTTON
+    (violet→cyan gradient, soft glow, "＋ New review") at the right that starts a review
+    by uploading/selecting a screenshot.
+
+    REVIEW TABLE (center, the focus): a card with a frosted glass frame but a SOLID
+    opaque table body for legibility. Columns: Review (title) / Status / Reviewer /
+    Target / Updated. Each row shows a small TARGET SCREENSHOT THUMBNAIL (a rounded
+    mini-image of a UI screen) at left, a title, a STATUS chip — "Open" (flat cyan/blue)
+    or "Compiled" (flat emerald #10b981), opaque never gradient — a reviewer avatar dot
+    + name, and a muted timestamp. Show ~6 rows, quiet hairline rules, one row with a
+    faint hover highlight and a small right-aligned kebab action revealed.
+
+    An empty-state hint is NOT needed — the list is populated.
+
+    PALETTE & TYPE: cool near-white canvas + soft spectrum mesh behind the frosted
+    header; ink #1a1730 text; the violet(#7c3aed)→cyan(#06b6d4) gradient only on the
+    Create Review button and the active filter/edge accents; status chips flat opaque.
+    Sora everywhere, no serif.
+
+    SHAPE & SURFACE: 16px radius on the header/card, pill filter chips, translucent
+    frosted chrome with gradient-sheen edges — but the table body is a solid opaque
+    surface. Violet-tinted soft shadow under the card; luminous, premium.
+
+    MOOD: premium, organized, calm. A review queue that looks modern and inviting while
+    keeping its data rows crisply legible.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, gradient body text, gradient status chips, rainbow tie-dye buttons, a data table rendered as unreadable translucent glass, neon-on-black cyberpunk"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches key components — Review Table with status/reviewer/target screenshot thumbnail, Create Review Button, Review Status Filter chips"}
+    theme_fidelity: {weight: 3, description: "Prism frosted glass chrome over a spectrum mesh, violet→cyan gradient on primary action/active-filter only, flat opaque status chips, Sora type, 16px radius; table body on a solid legible surface"}
+    composition: {weight: 2, description: "Clear list hierarchy, scannable rows with thumbnails, plausible real-product layout"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, legible table text, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+    - "the review data table rendered as low-legibility translucent glass"
+    - "gradient status chips, gradient body text, or rainbow chrome"
+
+tags: [npl-prism, NoizuPromptLingo, screen-mockup, collaboration]

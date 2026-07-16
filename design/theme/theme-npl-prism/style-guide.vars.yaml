@@ -1,0 +1,47 @@
+# ═══════════════════════════════════════════════════════════════
+# NPL — Prism · seed deltas over theme-style-guide (treatise §3/§4/§6).
+# Only the seeds this theme pins; everything else rides the base cascade.
+# NOTE: keys brand-red/blue/yellow are the cascade's PRIMARY/SECONDARY/
+# TERTIARY accent slots — their VALUES here are the prism spectrum, not
+# their names. -light variants re-point to var(--brand-*) so they track
+# the seed (the base pins them to the old literal Bauhaus hexes).
+# ═══════════════════════════════════════════════════════════════
+
+vars:
+  groups:
+    # ── Surfaces ── §3 neutrals: cool near-white canvas, indigo-charcoal ink
+    - name: Surfaces
+      vars:
+        white: "#f7f8ff"   # cool near-white, faint violet tint (canvas)
+        black: "#1a1730"   # deep indigo-charcoal (ink)
+
+    # ── Primaries ── §3 accents: controlled violet→cyan→fuchsia spectrum
+    - name: Primaries - Prism Spectrum
+      vars:
+        brand-red: "#7c3aed"     # PRIMARY accent — spectrum violet (~270°)
+        brand-red-light: "color-mix(in srgb, var(--brand-red) 70%, var(--surface))"
+        brand-blue: "#06b6d4"    # SECONDARY accent — spectrum cyan (~190°)
+        brand-blue-light: "color-mix(in srgb, var(--brand-blue) 70%, var(--surface))"
+        brand-yellow: "#d946ef"  # TERTIARY accent — spectrum fuchsia (~292°)
+        brand-yellow-light: "color-mix(in srgb, var(--brand-yellow) 70%, var(--surface))"
+
+    # ── Semantic ── §3: PINNED literal (rev2) so the violet primary can't
+    # swallow status into monochrome. Flat, opaque — never gradient. Tints
+    # still derive via color-mix against surface in the base cascade.
+    - name: Semantic
+      vars:
+        success: "#10b981"   # emerald
+        warning: "#f59e0b"   # amber — the one deliberate warm break
+        error: "#f43f5e"     # rose (~350°, distinct from violet primary)
+        info: "#3b82f6"      # blue — pinned distinct from brand-blue cyan
+
+    # ── Typography ── §4: Sora geometric display/UI, JetBrains Mono for code
+    - name: Typography
+      vars:
+        font-sans: "'Sora', -apple-system, BlinkMacSystemFont, sans-serif"
+        font-mono: "'JetBrains Mono', 'Menlo', monospace"
+
+    # ── Shape ── §6: generous, premium
+    - name: Shape
+      vars:
+        radius: "16px"

@@ -1,0 +1,84 @@
+schema: "0.4"
+id: npl-prism-47-market-competitor-research
+type: image
+quality: high
+
+# NoizuPromptLingo creative suite — Market & Competitor Research: track competitors
+# within a market segment and research/track keywords to inform campaign strategy.
+# Theme tenets: luminous frosted glass, cool violet→cyan spectrum gradient, Sora
+# geometric type, 16px radius; research data tables stay on a solid surface.
+# Palette: violet #7c3aed, cyan #06b6d4, fuchsia #d946ef, canvas #f7f8ff, ink #1a1730.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a
+    PREMIUM market-research workspace inside a modern AI product. Polished, analytical,
+    composed. Frosted-glass framing panels float over a pale spectrum mesh, but the
+    dense research tables sit on solid, legible surfaces. The signature violet→cyan
+    gradient appears only on the primary action and glass edges. Clean geometric
+    sans-serif (Sora), no serif.
+  text: |
+    A 16:9 high-fidelity UI mockup of the MARKET & COMPETITOR RESEARCH screen of
+    NoizuPromptLingo's creative suite.
+
+    OVERALL LAYOUT (three bands): a slim LEFT app nav rail (achromatic glass), a
+    dominant CENTER research area split into two stacked sections, and a RIGHT ~320px
+    KEYWORD panel — over a pale near-white canvas (#f7f8ff) with a soft blurred
+    violet/cyan spectrum mesh glowing through the glass framing.
+
+    HEADER BAND: "Market Research" title in Sora 700, and a MARKET SEGMENT SELECTOR — a
+    prominent glass dropdown pill showing the active segment (e.g. "SaaS / DevTools")
+    with a small chevron; a "Track competitor" primary button (violet→cyan gradient,
+    soft glow) at the right.
+
+    CENTER TOP — COMPETITOR TRACKING TABLE: a card whose glass FRAME is frosted but whose
+    TABLE BODY is a solid opaque white surface for legibility. Columns: Competitor /
+    Segment / Traffic / Last seen. A few rows of real-looking competitor names with small
+    favicons, a traffic trend sparkline per row (thin cyan line), and a quiet status dot.
+    Header row carries a thin gradient underline accent only.
+
+    CENTER LOWER / RIGHT — KEYWORD RESEARCH PANEL: a glass panel with a search field
+    (glass, opaque inner backing) and a results list of keyword rows — each showing the
+    keyword, a volume number, a difficulty meter (small horizontal bar), and a "＋ track"
+    glass button. One row is already tracked (flat violet "tracked" chip).
+
+    RIGHT LOWER — TRACKED KEYWORD LIST: a compact glass panel titled "Tracked" listing
+    saved keywords as pill chips with a small remove ✕, each pill a soft spectrum-tinted
+    translucent fill.
+
+    PALETTE & TYPE: cool near-white canvas + soft spectrum mesh; ink #1a1730 text; the
+    violet(#7c3aed)→cyan(#06b6d4) gradient only on the primary "Track competitor" button,
+    glass edges, and the single cyan sparkline/meter accent; status chips flat opaque.
+    Sora everywhere, no serif; small numeric data may use JetBrains Mono for alignment.
+
+    SHAPE & SURFACE: 16px radius on cards/panels, pill chips, translucent frosted glass
+    with backdrop blur and gradient-sheen edges for framing — but the competitor table
+    body is a solid opaque surface. Violet-tinted soft shadows; luminous, premium.
+
+    MOOD: premium, analytical, organized. A research cockpit that presents in glass and
+    color but tabulates in solid, legible rows.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, gradient body text, gradient status chips, rainbow tie-dye buttons, a data table rendered as unreadable translucent glass, neon-on-black cyberpunk"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches key components — Competitor Tracking Table, Market Segment Selector, Keyword Research Panel, Tracked Keyword List"}
+    theme_fidelity: {weight: 3, description: "Prism frosted-glass framing over a spectrum mesh, violet→cyan gradient on primary action/edges/single accent only, Sora type, 16px radius; the research table body correctly on a solid surface"}
+    composition: {weight: 2, description: "Clear split between competitor table and keyword research, plausible real-product analytical layout"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, legible table/numeric text, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+    - "the research data table rendered as low-legibility translucent glass"
+    - "gradient status chips, gradient body text, or rainbow chrome"
+
+tags: [npl-prism, NoizuPromptLingo, screen-mockup, creative-suite]

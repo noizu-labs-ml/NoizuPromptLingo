@@ -1,0 +1,88 @@
+schema: "0.4"
+id: npl-prism-01-landing-page
+type: image
+quality: high
+
+# NoizuPromptLingo — a prompt-definition language & MCP toolchain for agentic work
+# sessions, tickets, chat, and personas — public marketing Landing Page.
+# Theme tenets: luminous frosted glass, cool violet→cyan spectrum gradient, Sora
+# geometric type, generous 16px radius, translucent surfaces over a soft gradient mesh.
+# Palette: violet #7c3aed, cyan #06b6d4, fuchsia #d946ef, canvas #f7f8ff, ink #1a1730.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of the
+    public marketing landing page of a modern AI developer product. The register is
+    premium, energetic, and current — "these people ship modern software" — vibrant
+    but composed, never a rave. Think Linear's gradient-hero era, Vercel ship pages,
+    Framer premium templates: spectrum-gradient accents, frosted glass cards, soft
+    light, generous whitespace. Clean geometric sans-serif (Sora) throughout, no serif.
+    Light mode primary: frosted glass floating over a pale spectrum mesh.
+  text: |
+    A 16:9 high-fidelity UI mockup of the LANDING / MARKETING PAGE of NoizuPromptLingo,
+    a platform for agentic work sessions, tickets, chat, and AI personas.
+
+    OVERALL LAYOUT (top→bottom over one luminous canvas): a floating glass NAV BAR, a
+    large HERO BANNER, a FEATURE HIGHLIGHT GRID of four cards, and a slim FOOTER — all
+    sitting on a pale near-white canvas (#f7f8ff) carrying a soft, blurred spectrum
+    MESH (low-alpha violet, cyan, and rose light-blobs) that glows through the glass.
+
+    PUBLIC NAV BAR (top, floating glass): a translucent frosted bar with a subtle
+    gradient-sheen lower edge — left: the "NPL" wordmark in Sora 700; center: muted
+    text links (Product, Docs, Protocol, Pricing); right: a ghost "Log In" link and a
+    filled primary "Get Started" button with a violet→cyan gradient fill and soft glow.
+
+    HERO BANNER (dominant, centered): a large confident headline in Sora 800, up to
+    ~3× body size, with ONE clause set in violet→cyan GRADIENT TEXT (display size only)
+    — e.g. "Author prompts. Orchestrate agents." A muted 1–2 line sub-headline below in
+    plain ink (#1a1730), never gradient. A PRIMARY CTA BUTTON GROUP: a gradient
+    "Get Started" button (violet→cyan, violet-weighted so the white label stays crisp,
+    soft colored glow) beside a glass secondary "Log In" button (translucent, gradient-
+    sheen border, ink text). Optional small trust row of muted logos beneath.
+
+    FEATURE HIGHLIGHT GRID (below hero): FOUR frosted-glass CARDS in a row, 16px radius,
+    each a translucent panel with a 1px gradient-sheen edge and a violet-tinted soft
+    shadow, the canvas mesh visibly glowing through. One card each for SESSIONS, TICKETS,
+    CHAT, and PERSONAS: a small spectrum-tinted glyph, a Sora-600 card title, and two
+    muted body lines. Cards float with generous gap; not a dense grid — room to breathe.
+
+    FOOTER (bottom): a quiet band of grouped muted nav links (Docs, Protocol/Governance,
+    Contact, Status) and a small "NPL" mark; flat, calm, no gradient.
+
+    PALETTE & TYPE: cool near-white canvas with a soft violet/cyan/fuchsia mesh; ink
+    #1a1730 body; the ONLY gradients are the hero display clause, the primary CTA, and
+    glass-card edges — the signature violet(#7c3aed)→cyan(#06b6d4) axis. Sora everywhere,
+    no serif, no mono in chrome.
+
+    SHAPE & SURFACE: generous 16px radii (24px on the hero glass), frosted translucent
+    surfaces with backdrop blur, 1px gradient-sheen borders instead of hard rules, soft
+    violet-tinted shadows. Airy, premium, luminous.
+
+    MOOD: premium, energetic, luminous, contemporary. Color lives in gradient and glass,
+    not flat paint — light passing through a prism. This must feel like a modern AI
+    product you'd trust on sight.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, gradient body text, rainbow tie-dye buttons, neon-on-black cyberpunk, scanlines"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches the landing page's actual layout — floating glass nav, hero banner with CTA group, four-card feature grid (Sessions/Tickets/Chat/Personas), footer"}
+    theme_fidelity: {weight: 3, description: "Prism palette (violet→cyan spectrum), frosted-glass translucent surfaces over a soft mesh, Sora geometric type, 16px+ radius, gradient only on hero display text / primary CTA / glass edges — not generic UI defaults"}
+    composition: {weight: 2, description: "Clear visual hierarchy, marketing-airy whitespace, plausible real premium SaaS landing layout"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, legible text, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+    - "gradient behind body text, or rainbow/tie-dye uncontrolled gradients"
+    - "flat monochrome gray console with no color or glass (Prism must present)"
+
+tags: [npl-prism, NoizuPromptLingo, screen-mockup, landing-page, hero]

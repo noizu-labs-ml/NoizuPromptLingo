@@ -1,0 +1,107 @@
+# NPL — Prism component inflections (treatise §6/§7/§8). This facet ACCUMULATES
+# onto the base (unlike vars/color-modes/typography which replace), so it is the
+# safe home for prism's project-specific surface treatments without clobbering the
+# base's design-sections. Prism is the only NPL theme permitted gradients + glass.
+# Discipline: one consistent violet→cyan axis; gradient on hero / CTA / glass-edge /
+# display-text ONLY, never behind body text; semantics stay flat/opaque; reduced-
+# transparency + reduced-motion degrade fully without any loss of meaning (§9).
+css-snippets:
+  - name: Prism Gradient Button
+    slug: prism-btn-gradient
+    title: "Gradient primary button (§8)"
+    description: "The signature control — violet→cyan gradient fill, white label, soft glow. The cyan terminal is darkened to #0e7490 so white text clears WCAG AA (≥4.5:1) across the whole sweep — the theme's single most important contrast check (treatise §9). Destructive/secondary buttons never use this gradient."
+    target-section: buttons
+    body: |
+      .btn.gradient,
+      .btn-gradient {
+        background: linear-gradient(135deg, var(--brand-red) 0%, #0e7490 100%);
+        color: #ffffff;
+        border: none;
+        border-radius: var(--radius);
+        box-shadow: 0 6px 20px color-mix(in srgb, var(--brand-red) 35%, transparent);
+        transition: box-shadow 160ms ease-out, transform 140ms ease-out;
+      }
+      .btn.gradient:hover,
+      .btn-gradient:hover {
+        box-shadow: 0 10px 28px color-mix(in srgb, var(--brand-red) 50%, transparent);
+        transform: translateY(-1px);
+      }
+      .btn.gradient:focus-visible,
+      .btn-gradient:focus-visible {
+        outline: 2px solid var(--brand-red);
+        outline-offset: 2px;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .btn.gradient, .btn-gradient { transition: none; }
+        .btn.gradient:hover, .btn-gradient:hover { transform: none; }
+      }
+
+  - name: Prism Glass Surface
+    slug: prism-glass
+    title: "Frosted glass card / panel (§6)"
+    description: "Translucent frosted surface: backdrop-blur, a 1px gradient-sheen edge, and a violet-tinted soft shadow — the theme's signature material, the mesh glows through it. Surface fill stays ≥70% opaque so body text clears 4.5:1 over the busiest mesh (§9). prefers-reduced-transparency falls back to a solid tinted surface with no loss of meaning. Data grids deliberately DO NOT use this class — they stay solid for legibility (§8)."
+    target-section: cards
+    body: |
+      .card.glass,
+      .glass {
+        background: color-mix(in srgb, var(--surface) 78%, transparent);
+        backdrop-filter: blur(20px) saturate(1.4);
+        -webkit-backdrop-filter: blur(20px) saturate(1.4);
+        border: 1px solid color-mix(in srgb, var(--brand-red) 28%, transparent);
+        border-radius: var(--radius);
+        box-shadow: 0 8px 32px var(--shadow-color, rgba(90, 60, 200, 0.18));
+      }
+      .card.glass.featured,
+      .glass.featured {
+        border: 1px solid transparent;
+        border-image: linear-gradient(135deg, var(--brand-red), var(--brand-blue)) 1;
+      }
+      @media (prefers-reduced-transparency: reduce) {
+        .card.glass, .glass {
+          background: var(--surface-alt, var(--surface));
+          backdrop-filter: none;
+          -webkit-backdrop-filter: none;
+        }
+      }
+
+  - name: Prism Gradient Display Text
+    slug: prism-text-gradient
+    title: "Spectrum gradient display text (§4/§8)"
+    description: "Violet→fuchsia gradient clip for LARGE display headings only (≥28px, ~3:1 large-text contrast — treatise §4/§9). Never on body, labels, or UI text. Falls back to solid brand-red where background-clip is unsupported."
+    target-section: typography
+    body: |
+      .text-gradient {
+        color: var(--brand-red);
+        background: linear-gradient(135deg, var(--brand-red) 0%, var(--brand-yellow) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 800;
+      }
+
+  - name: Prism Spectrum Mesh
+    slug: prism-mesh
+    title: "Canvas spectrum mesh backdrop (§3/§6)"
+    description: "Soft, blurred violet / cyan / fuchsia light-blobs on the canvas — the luminous field the glass floats over. One consistent spectrum, low alpha, never behind body text directly (glass mediates). The signature that makes Prism read as luminous rather than flat."
+    target-section: colors
+    body: |
+      .prism-mesh {
+        position: relative;
+        background-color: var(--surface);
+        background-image:
+          radial-gradient(40% 55% at 18% 12%, color-mix(in srgb, var(--brand-red) 22%, transparent) 0%, transparent 60%),
+          radial-gradient(38% 50% at 82% 22%, color-mix(in srgb, var(--brand-blue) 20%, transparent) 0%, transparent 60%),
+          radial-gradient(45% 55% at 68% 88%, color-mix(in srgb, var(--brand-yellow) 16%, transparent) 0%, transparent 62%);
+      }
+
+  - name: Prism Focus Ring
+    slug: prism-focus
+    title: "Violet focus ring on solid backing (§7/§9)"
+    description: "2px solid violet focus ring, 2px offset — always visible, never removed. Interactive elements on glass/mesh guarantee a solid backing under the ring so it clears 3:1 regardless of the mesh behind them."
+    target-section: interaction
+    body: |
+      .glass :focus-visible,
+      .prism-mesh :focus-visible {
+        outline: 2px solid var(--brand-red);
+        outline-offset: 2px;
+      }

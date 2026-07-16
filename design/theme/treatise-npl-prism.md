@@ -1,13 +1,13 @@
 ---
 slug: npl-prism
 base_theme: theme-style-guide
-status: sketch
-revision: 1
+status: full
+revision: 2
 ---
 
 # Theme Treatise — NPL Prism
 
-Theme: `theme-npl-prism/` · Base: `theme-style-guide` · Status: sketch
+Theme: `theme-npl-prism/` · Base: `theme-style-guide` · Status: full (rev 2, render-validated)
 
 > New direction (authored forward). Prism is the *expressive* theme — the only
 > NPL theme that embraces gradients and translucent glass. It exists for the
@@ -72,7 +72,11 @@ Theme: `theme-npl-prism/` · Base: `theme-style-guide` · Status: sketch
   `#f43f5e`, `info` blue `#3b82f6`. `error` rose (~350°) is distinct from the
   violet primary (~270°); `warning` amber is the one warm break, deliberately
   kept for contrast against the cool field. Semantics are **flat, opaque** chips —
-  never gradient — so meaning never depends on a gradient stop.
+  never gradient — so meaning never depends on a gradient stop. **(rev 2,
+  render-validated):** the Stage-C renders confirmed the violet primary tends to
+  swallow accents toward monochrome, so the engine must **pin
+  `success`/`warning`/`error`/`info` explicitly** (not trust the base cascade), or
+  status collapses into all-violet.
 - **Contrast stance:** High-but-luminous. Ink on light glass clears ~14:1; but the
   defining rule is **glass legibility** — text over a frosted surface requires the
   surface to be opaque *enough* (≥70% fill behind text) that body always clears
@@ -153,7 +157,10 @@ Theme: `theme-npl-prism/` · Base: `theme-style-guide` · Status: sketch
   violet ring. Labels are Sora 600 above.
 - **Cards:** The signature surface — frosted glass, 16px radius, gradient-sheen
   edge, violet-tinted soft shadow; the canvas mesh glows through. Featured cards
-  get a stronger gradient edge, not a solid accent bar.
+  get a stronger gradient edge, not a solid accent bar. **(rev 2, render-validated):**
+  on pure *marketing* surfaces (the landing feature grid) fuller spectrum-gradient
+  card *fills* read well and are permitted; *in-app* cards keep the glass +
+  gradient-edge discipline (never a flat gradient fill) so data stays legible.
 - **Navigation:** A glass top bar floating over the mesh; active item is a
   gradient-underline or a gradient-text label (large enough to pass contrast). No
   solid pill.
@@ -173,7 +180,15 @@ Theme: `theme-npl-prism/` · Base: `theme-style-guide` · Status: sketch
   frosted surface requires ≥70% surface opacity behind it so body always clears
   4.5:1 over the busiest mesh. Gradient text is display-size (≥28px, ~3:1) only.
   `error` rose `#f43f5e` and `info` blue `#3b82f6` on light ≈ 3.5–4:1 → large/UI,
-  pair with icons.
+  pair with icons. **(rev 2, render+contrast-validated):** semantic **chips carry
+  ink `#1a1730` text on the flat fill** (measured AA: ink-on-fill 4.7–8.1:1; white
+  text *fails* on these bright fills at 2.2–3.7:1), and status never signals by
+  color alone — an icon + label always accompanies, so the sub-3:1 fill-vs-canvas
+  edge of the brightest fills (`success` 2.4:1, `warning` 2.0:1) is never the sole
+  indicator. **Borders** are decorative glass-edges (§6), not meaningful boundaries;
+  a compliant ≥3:1 hairline (~`#8f8caf` on light) is reserved for a form-field
+  rest-state token only — general separation is carried by surface-fill + the
+  violet-tinted shadow + the focus ring.
 - **Focus visibility:** 2px solid violet ring, 2px offset, always on a guaranteed
   solid (non-translucent) backing so it clears 3:1 regardless of the mesh. Never
   removed.
