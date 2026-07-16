@@ -1,0 +1,86 @@
+schema: "0.4"
+id: npl-nocturne-17-org-dashboard
+type: image
+quality: high
+
+# NoizuPromptLingo (a prompt-definition language + MCP toolchain for agent engineers) — Org Dashboard (identity-defining hero; dark-vs-dark study vs the warm-luxe Meridian theme).
+# Theme tenets: dark-native near-black canvas, single phosphor-green "live" signal, mono-first, 4px radius, flat surface-step elevation (no glow/gradient).
+# Palette: canvas #010409, panel #0d1117, raised #161b22, text #e6edf3, secondary #909dab, signal green #3fb950, link cyan #58a6ff, amber #d29922.
+
+prompt:
+  system: |
+    You are a senior product designer rendering the HERO high-fidelity UI mockup
+    of a dark-native agent-engineering instrument — the organization dashboard an
+    agent engineer opens first and watches all day. This shot defines the theme:
+    cool TERMINAL dark, an instrument not an app. The ONLY saturated color is a
+    single phosphor-green "live" signal (one slow-breathing status accent).
+    Monospace is a co-equal voice — counts, timestamps, IDs all render mono. Flat
+    surfaces separated purely by lightness steps; absolutely no drop shadows, no
+    glow, no gradient. Restrained chrome, high information density, superb
+    small-size legibility. Think GitHub-dark / a good terminal, never neon sci-fi.
+  text: |
+    A 16:9 high-fidelity UI mockup of the Org Dashboard of NoizuPromptLingo, the
+    landing screen for an organization — a dense, calm, dark instrument panel.
+
+    OVERALL LAYOUT (rack + instrument, three regions): a slim LEFT NAV RAIL on the
+    darkest near-black canvas ("the rack") with icon+label items, the active
+    "Dashboard" item marked ONLY by a 2px phosphor-green left rail and brighter
+    text (no filled highlight); a dominant CENTER column and a narrower RIGHT
+    panel, both on a one-step-lighter dark panel tone.
+
+    TOP — ORG ACTIVITY SUMMARY CARDS: a row of four stat cards on a raised dark
+    tone, 4px radius, low dark border, no shadow. Each card: a small mono uppercase
+    label ("SESSIONS", "TICKETS", "CHAT ROOMS", "ARTIFACTS") and a large mono
+    NUMERAL count in soft off-white, with a tiny muted delta beneath. The
+    "SESSIONS" card is the LIVE one — it carries a 2px phosphor-green left edge and
+    a small lit phosphor-green status dot (the single breathing "live" accent).
+
+    CENTER — RECENT ACTIVITY TIMELINE: a titled panel "Recent activity", a dense
+    vertical cross-entity feed. Each row: a mono TIMESTAMP at the left, a small
+    type glyph, an entity name (ticket / session / room / artifact) with a
+    link-cyan reference, and a short muted change description ("status → active",
+    "artifact linked", "room created"). ~7 rows, quiet dark hairline separators.
+    One top row is fresh, marked with a lit phosphor-green dot.
+
+    RIGHT — QUICK LINKS PANEL: a compact stacked list titled "Quick links" with
+    rows into Projects, Sessions, Tickets, Chat — each a small glyph + a link-cyan
+    label + a mono count chip. Below it a tiny muted "screen-reader announcements
+    on" note (the live-region announcer), understated.
+
+    PALETTE & TYPE: cool near-black canvas and stepped darker/lighter panels; soft
+    off-white primary text, cool grey secondary; phosphor-green spent ONLY on the
+    live sessions card edge + status dots and the fresh timeline marker; link-cyan
+    only on entity/quick-link labels. Inter for headings and UI; JetBrains Mono for
+    every count, timestamp, and id — mono is a co-equal voice here, prominent.
+
+    SHAPE & SURFACE: 4px radius on cards; flat fills with elevation read from
+    surface-lightness steps, never shadow; low-contrast dark borders; a green edge
+    appears only on the live element. No gradients, no glow, no scanlines.
+
+    MOOD: focused, immersive, expert within a second — the lights are off and the
+    work is on. One green signal means live; everything else is quiet.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, neon glow, bloom, CRT scanlines, gradient background, pure-black OLED background, pure-white surfaces, warm amber/gold dominant palette"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches Org Dashboard: nav rail, a row of org activity summary stat cards, a recent-activity cross-entity timeline, and a quick-links panel"}
+    theme_fidelity: {weight: 3, description: "Dark-native cool terminal canvas, a SINGLE phosphor-green live signal spent only on the live card/dots, mono counts/timestamps/ids, cyan only on links, 4px radius, flat surface-step elevation — no glow, no gradient, not warm/gold (distinct from the Meridian dark)"}
+    composition: {weight: 2, description: "Rack+instrument hierarchy, dense multi-panel dashboard read at a glance, superb small-size legibility"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+    - "neon glow, bloom, or gradient wash (breaks the flat dark instrument register)"
+    - "warm amber/gold-dominant palette (that is the Meridian theme, not Nocturne)"
+
+tags: [npl-nocturne, NoizuPromptLingo, screen-mockup, hero]

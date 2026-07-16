@@ -1,0 +1,80 @@
+schema: "0.4"
+id: npl-nocturne-21-session-detail
+type: image
+quality: high
+
+# NoizuPromptLingo (a prompt-definition language + MCP toolchain for agent engineers) — Session Detail screen.
+# Theme tenets: dark-native near-black canvas, single phosphor-green "live" signal, mono-first, 4px radius, flat surface-step elevation (no glow/gradient).
+# Palette: canvas #010409, panel #0d1117, raised #161b22, text #e6edf3, secondary #909dab, signal green #3fb950, link cyan #58a6ff, amber #d29922.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a
+    dark-native agent-engineering instrument — calm, dense, expert, a tool you
+    live in inside a terminal. Cool terminal dark throughout; the ONLY saturated
+    color is a single phosphor-green "live" signal. Monospace is a co-equal voice
+    (IDs, tool-call text, timestamps render mono). Flat surfaces separated by
+    lightness steps, never drop shadows or glow.
+  text: |
+    A 16:9 high-fidelity UI mockup of the Session Detail workspace of
+    NoizuPromptLingo, a prompt-definition language and MCP toolchain.
+
+    OVERALL LAYOUT (three regions): a slim LEFT NAV RAIL on the darkest near-black
+    canvas ("the rack", one active item marked by a 2px phosphor-green left rail),
+    a dominant CENTER column, and a narrower RIGHT panel — both on a one-step
+    lighter dark panel tone.
+
+    SESSION HEADER CARD (top of center): a panel card, 4px radius, low dark border,
+    carrying a 2px phosphor-green LEFT edge to signal the session is live/active.
+    Inside: an editable session TITLE in off-white sans with a small inline-edit
+    pencil affordance, a muted one-line description, and a STATUS SELECTOR pill
+    reading "Active" with a lit phosphor-green dot (the alternatives paused /
+    completed implied in a dropdown chevron).
+
+    TOOL DESCRIPTION TAILOR PANEL (center, below the header): the distinctive
+    surface — a two-column editor. Left: a target MODEL / RUNNER selector list
+    (mono model names as tonal pills, one selected with a green outline). Right: a
+    recessed mono CODE PREVIEW pane (cut one surface step darker than its panel)
+    showing a tailored tool-description as monospace text with syntax-tinted keys;
+    a small "preview" label. This is where per-model tool descriptions are tuned.
+
+    RIGHT LINKED-ENTITIES PANEL: a compact stacked summary titled "Linked", with
+    three short labeled groups — "Rooms", "Tickets", "Artifacts" — each a couple of
+    rows: a small type glyph, a link-cyan entity name, and a mono ID chip
+    (e.g. a ticket id, an artifact id). Cyan marks the navigable links.
+
+    PALETTE & TYPE: cool near-black canvas, lighter dark panels, soft off-white
+    text, cool grey secondary; phosphor-green reserved for the live edge, the
+    active status dot, and the selected model outline; link-cyan only on the linked
+    entity names. Inter for UI; JetBrains Mono for the code preview, model names,
+    and IDs — mono is prominent.
+
+    SHAPE & SURFACE: 4px radius; flat fills, elevation by surface-lightness steps,
+    low dark borders; the code preview visibly recessed. No gradients, no glow.
+
+    MOOD: focused, immersive, instrument-like — quiet chrome, one live green
+    signal, the work on.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, neon glow, bloom, CRT scanlines, gradient background, pure-black OLED background, pure-white surfaces"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches Session Detail: nav rail, session header card with inline-edit title + status selector, a tool-description tailor panel with model/runner selector + mono preview, and a linked rooms/tickets/artifacts panel"}
+    theme_fidelity: {weight: 3, description: "Dark-native canvas, single phosphor-green signal (live edge/status dot) used sparingly, cyan only on links, mono code preview and IDs, 4px radius, flat surface-step elevation, no glow/gradient"}
+    composition: {weight: 2, description: "Clear three-region hierarchy, plausible real workspace, comfortable density"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+    - "neon glow, bloom, or gradient wash (breaks the flat dark instrument register)"
+
+tags: [npl-nocturne, NoizuPromptLingo, screen-mockup]

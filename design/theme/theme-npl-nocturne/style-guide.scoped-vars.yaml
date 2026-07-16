@@ -1,0 +1,81 @@
+# NPL — Nocturne · scoped-var deltas (ACCUMULATE onto the base).
+#
+# DARK BRAND-TINT LEAK: the base style-guide.scoped-vars.yaml brightens the
+# dark brand tints from LITERAL hexes (#e20613 Bauhaus red, #0047ab navy,
+# #f5c518 gold) rather than var(--brand-*), and re-aliases --brand-*:
+# var(--theme-brand-*) in dark mode. So even with a fully-correct vars.yaml,
+# Nocturne renders its green/cyan in LIGHT (dimmed-slate) mode but silently
+# REVERTS to Bauhaus red + navy in DARK mode — and Nocturne is DARK-NATIVE, so
+# dark is the primary mode, not an afterthought. (Base-cascade defect; escalated
+# in conformance-npl-nocturne.md §7 — do not patch the base from a Stage C run.)
+#
+# These entries re-declare the dark values of the two brand families Nocturne
+# actually renders on working chrome — brand-red (green signal) and brand-blue
+# (link cyan) — plus the two semantics pinned to them (success ≡ green, info ≡
+# cyan). Unlike the base (and Minimal's sky), the green/cyan are ALREADY tuned
+# for a dark canvas (green ≈ 8:1, cyan ≈ 7:1 on #010409), so they are kept at
+# their exact treatise hexes, NOT brightened with `75%, white` — brightening
+# would wash the phosphor quality and drift off the §7/§8 committed #3fb950.
+# brand-yellow / warning / error are LEFT on the base dark cascade (amber is
+# rare and flows through the `warning` semantic; base lands them on gold/amber/
+# red — none collide with the green identity) — documented standing caution.
+#
+# A scoped-vars file needs its OWN `sections` (it does not inherit the base
+# file's). prefix "theme" emits these as --theme-brand-red* etc., which the
+# base's dark `--brand-red: var(--theme-brand-red)` alias then resolves.
+scoped-vars:
+  prefix: "theme"
+  sections:
+    standard:
+      selector: 'html[data-design-theme="npl-nocturne"]'
+      prefix: "theme"
+    dark:
+      selector: 'html[data-design-theme="npl-nocturne"].dark'
+      prefix: "theme"
+  vars:
+    # ── Signal green (brand-red family) — the theme's voice ──
+    - name: brand-red
+      value:
+        - section: dark
+          value: "#3fb950"
+    - name: brand-red-light
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #3fb950 18%, var(--surface))"
+    - name: brand-red-mid
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #3fb950 30%, var(--surface))"
+
+    # ── Link cyan (brand-blue family) — navigational, on chrome ──
+    - name: brand-blue
+      value:
+        - section: dark
+          value: "#58a6ff"
+    - name: brand-blue-light
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #58a6ff 18%, var(--surface))"
+    - name: brand-blue-mid
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #58a6ff 30%, var(--surface))"
+
+    # ── Semantics pinned to the two on-chrome brands (§3: success ≡ green,
+    #    info ≡ cyan) — keep them matched to the signal in dark too ──
+    - name: success
+      value:
+        - section: dark
+          value: "#3fb950"
+    - name: success-tint
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #3fb950 18%, var(--surface))"
+    - name: info
+      value:
+        - section: dark
+          value: "#58a6ff"
+    - name: info-tint
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #58a6ff 18%, var(--surface))"

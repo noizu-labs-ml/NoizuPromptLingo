@@ -1,22 +1,65 @@
+# ═══════════════════════════════════════════════════════════════
+# NPL — Nocturne · seed deltas over theme-style-guide (treatise §3/§4/§6).
+# Only the seeds this theme pins; everything else rides the base cascade.
+#
+# SEED-TRAP FIX: the cascade's accent slots are named
+# brand-red / brand-blue / brand-yellow — NOT bare red / blue / yellow.
+# The previous file set red/blue/yellow, which the base does not wire as
+# accent-driving keys, so the phosphor-green signal was a SILENT NO-OP and
+# every accent fell back to the base's Bauhaus red. Their VALUES here are
+# Nocturne's dark-native palette, not their names:
+#   brand-red    = phosphor-green "live" signal  (the theme's voice)
+#   brand-blue   = link / navigation cyan
+#   brand-yellow = amber warning glow (rare)
+# Each -light sibling re-points to var(--brand-*) because the base pins them
+# to a color-mix() with the old literal Bauhaus hex hard-coded inside.
+# (Dark-mode brand tints leak separately — fixed in style-guide.scoped-vars.yaml.)
+# ═══════════════════════════════════════════════════════════════
+
 vars:
   groups:
-    - name: "Seed Colors"
+    # ── Surfaces ── §3 neutrals: near-black canvas, soft off-white ink.
+    # white is a SOFT off-white (never pure #fff — full white vibrates on a
+    # near-black canvas over long sessions); black is a near-black with a
+    # trace of cool, never pure #000 (§2 anti-reference: no OLED pitch-black).
+    - name: Surfaces
       vars:
-        white: "#e6edf3"
-        black: "#010409"
-        red: "#3fb950"      # primary accent — phosphor green signal
-        blue: "#58a6ff"     # secondary accent — link cyan
-        yellow: "#d29922"   # tertiary accent — amber warning glow
-    - name: "Semantic Colors"
+        white: "#e6edf3"   # soft off-white ink — never pure #fff
+        black: "#010409"   # near-black canvas — a trace of cool, never #000
+
+    # ── Primaries ── §3: dark monochrome + ONE phosphor-green signal.
+    # Green is the working voice (live/go/primary); cyan is navigational
+    # (links); amber is rare (warning glow). success ≡ the green signal by
+    # design (§3) — "live" and "ok" mean the same thing here.
+    - name: Primaries - Signal Green + Link Cyan + Amber
       vars:
-        success: "#3fb950"
-        warning: "#d29922"
-        error: "#f85149"
-        info: "#58a6ff"
-    - name: "Typography"
+        brand-red: "#3fb950"     # PRIMARY accent — phosphor-green "live" signal (~135°)
+        brand-red-light: "color-mix(in srgb, var(--brand-red) 70%, var(--surface))"
+        brand-blue: "#58a6ff"    # SECONDARY accent — link / navigation cyan (~215°)
+        brand-blue-light: "color-mix(in srgb, var(--brand-blue) 70%, var(--surface))"
+        brand-yellow: "#d29922"  # TERTIARY accent — amber warning glow (~40°, rare)
+        brand-yellow-light: "color-mix(in srgb, var(--brand-yellow) 70%, var(--surface))"
+
+    # ── Semantic ── §3/§9: GitHub-dark conventions. success is the SAME green
+    # as the brand signal (intentional, not a collision); error red stays
+    # cleanly distinct from the green. Pinned literal so the green primary
+    # can't swallow status into monochrome.
+    - name: Semantic
+      vars:
+        success: "#3fb950"   # ≡ phosphor-green signal (live == ok, §3)
+        warning: "#d29922"   # amber ≈ 7:1 on canvas
+        error: "#f85149"     # coral red — distinct from the green signal
+        info: "#58a6ff"      # link cyan — ≡ brand-blue
+
+    # ── Typography ── §4: Inter for UI, JetBrains Mono as a CO-EQUAL, mono-first
+    # voice (code, tool-call streams, IDs, timestamps, and many labels).
+    - name: Typography
       vars:
         font-sans: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
         font-mono: "'JetBrains Mono', 'Fira Code', 'Menlo', monospace"
-    - name: "Shape"
+
+    # ── Shape ── §6: soft-technical 4px — sharper than Minimal (4 vs 6) to read
+    # as "instrument", not "app". No pills.
+    - name: Shape
       vars:
         radius: "4px"

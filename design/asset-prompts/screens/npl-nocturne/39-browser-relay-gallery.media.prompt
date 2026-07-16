@@ -1,0 +1,78 @@
+schema: "0.4"
+id: npl-nocturne-39-browser-relay-gallery
+type: image
+quality: high
+
+# NoizuPromptLingo (a prompt-definition language + MCP toolchain for agent engineers) — Browser Relay Gallery screen.
+# Theme tenets: dark-native near-black canvas, single phosphor-green "live" signal, mono-first, 4px radius, flat surface-step elevation (no glow/gradient).
+# Palette: canvas #010409, panel #0d1117, raised #161b22, text #e6edf3, secondary #909dab, signal green #3fb950, link cyan #58a6ff, amber #d29922.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a
+    dark-native agent-engineering instrument — a gallery of captures from automated
+    browser sessions. Cool terminal dark throughout; the ONLY saturated color is a
+    single phosphor-green "live" signal. Monospace is a co-equal voice (timestamps,
+    URLs, session IDs render mono). Flat surfaces separated by lightness steps,
+    never drop shadows or glow.
+  text: |
+    A 16:9 high-fidelity UI mockup of the Browser Relay Gallery screen of
+    NoizuPromptLingo — screenshots and recordings captured during automated agent
+    browser (Playwright) sessions.
+
+    OVERALL LAYOUT (two bands + side panel): a slim LEFT NAV RAIL on the darkest
+    near-black canvas ("the rack"), a CONTENT AREA on a lighter dark panel holding
+    a capture grid, and a narrow RIGHT metadata panel.
+
+    SESSION FILTER BAR (top of content): a header row with the title "Browser
+    Relay", a SESSION FILTER dropdown (a tonal pill with a mono session id and a
+    chevron) to narrow captures to one session, and a small live indicator — a lit
+    phosphor-green dot with a mono "live" label — showing an active capture session.
+
+    CAPTURE GRID (dominant): a responsive grid of ~8-10 CAPTURE THUMBNAILS as dark
+    cards, 4px radius, low dark border, no shadow. Each card: a screenshot preview
+    area (rendered as a muted dark placeholder image of a web page), a thin caption
+    strip beneath with a mono timestamp and a truncated mono target URL. Two cards
+    are RECORDING tiles — marked by a small centered play triangle and a tiny mono
+    duration badge ("00:42"); one recording card is the active/selected one, framed
+    with a quiet green outline.
+
+    RIGHT CAPTURE METADATA PANEL: a compact stacked detail for the selected capture
+    titled "Capture", with labeled mono rows — "captured" (timestamp), "session"
+    (a link-cyan session name + mono id), and "target" (a mono URL, wrapped). Cyan
+    marks the navigable originating-session link.
+
+    PALETTE & TYPE: cool near-black canvas, lighter dark panels, soft off-white
+    text, cool grey secondary; phosphor-green reserved only for the live session
+    dot and the selected recording outline; link-cyan only on the session link.
+    Inter for UI; JetBrains Mono for timestamps, URLs, durations, and IDs.
+
+    SHAPE & SURFACE: 4px radius on cards; flat fills, elevation by surface-lightness
+    steps; low dark borders. No gradients, no glow, no scanlines.
+
+    MOOD: focused, archival, instrument-like — a quiet dark grid of evidence with
+    one live green signal.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, neon glow, bloom, CRT scanlines, gradient background, pure-black OLED background, pure-white surfaces"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches Browser Relay Gallery: nav rail, session filter bar, a thumbnail capture grid (with recording tiles + play controls), and a right capture-metadata panel with timestamp/session/URL"}
+    theme_fidelity: {weight: 3, description: "Dark-native canvas, single phosphor-green signal used sparingly, cyan only on links, mono timestamps/URLs/IDs, 4px radius, flat surface-step elevation, no glow/gradient"}
+    composition: {weight: 2, description: "Clear grid + metadata hierarchy, plausible gallery layout, comfortable density"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+    - "neon glow, bloom, or gradient wash (breaks the flat dark instrument register)"
+
+tags: [npl-nocturne, NoizuPromptLingo, screen-mockup]
