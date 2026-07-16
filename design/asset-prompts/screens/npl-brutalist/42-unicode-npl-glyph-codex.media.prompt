@@ -1,0 +1,90 @@
+schema: "0.4"
+id: npl-brutalist-42-unicode-npl-glyph-codex
+type: image
+quality: high
+
+# NoizuPromptLingo — Unicode / NPL Glyph Codex: a searchable reference cataloging the
+# Unicode and NPL-specific glyphs used across the platform's prompt syntax. The densest
+# surface in the product.
+# Theme tenets: hard grid packed edge-to-edge, 1px black rules, zero radius, flat
+# electric accents, hard-offset block shadow as the only depth.
+# Palette: vermilion #ff2d00, ultramarine #1500ff, white #ffffff, black #000000,
+# surface-alt #f2f2f2.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a DENSE
+    reference catalog inside a developer tool, in a NEO-BRUTALIST register: the densest
+    screen in the system, a hard grid packed edge-to-edge, structure shown as machinery.
+    Flat fills only — no gradient, glow, blur, or soft shadow; the only depth cue is a
+    hard-offset SOLID block shadow with zero blur. Geometric grotesk (Space Grotesk) in
+    UPPERCASE 700 for headings; Space Mono for glyphs, codepoints, IDs, and labels. No
+    serif. Zero corner radius. Borders are load-bearing, always drawn at full strength.
+  text: |
+    A 16:9 high-fidelity UI mockup of the UNICODE / NPL GLYPH CODEX screen of
+    NoizuPromptLingo — a searchable reference cataloging the Unicode and NPL-specific
+    glyphs used across the platform's prompt syntax. This is the densest surface in the
+    product.
+
+    OVERALL LAYOUT (three bands on a pure white canvas, separated by 2px solid black
+    rules, all aligned to a hard grid): a slim left CATEGORY FILTER SIDEBAR, a dominant
+    central GLYPH GRID, and a right GLYPH DETAIL CARD, with a search bar spanning the top.
+
+    TOP BAR: a full-width GLYPH SEARCH BAR — a rectangular 2px-bordered input, zero
+    radius, no inner shadow, with an uppercase mono field label "SEARCH CODEX" sitting
+    above it (not floating inside) and a mono placeholder. A row of small bordered filter
+    chips beside it (uppercase mono), one chip inverted (solid black fill, white text) to
+    mark the active facet.
+
+    LEFT CATEGORY FILTER SIDEBAR (bordered blocks, no soft pills): a vertical list of
+    glyph categories in uppercase mono — SYNTAX, DIRECTIVES, OPERATORS, DELIMITERS,
+    ANNOTATIONS, EMOJI — the active item a full inverted block (solid black, white text)
+    with a thick vermilion accent bar on its left edge.
+
+    CENTRAL GLYPH GRID (dominant, dense): a tight matrix of roughly 30-48 hard-bordered
+    square cells butted together, separated by 1px black rules, zero radius, about 6-8
+    columns. Each cell shows a large glyph character centered with a tiny uppercase mono
+    codepoint label beneath it (like "U+2234"). One cell is selected — a solid vermilion
+    fill with the glyph in black, lifted on a hard-offset black block shadow with zero blur.
+
+    RIGHT GLYPH DETAIL CARD (hard-bordered rectangle on a light-gray surface, header
+    separated by a full-weight rule rather than padding): the selected glyph shown huge at
+    top, then labeled mono rows — CODEPOINT, NAME, NPL USAGE (a one-line meaning), and
+    EXAMPLE (a short mono code snippet in a bordered block). A bordered "COPY" button with
+    a hard-offset shadow.
+
+    PALETTE & TYPE: pure white canvas, pure black ink and full-strength borders (never
+    faint), electric vermilion as the single selection accent used flat and whole at
+    maximum saturation, pure ultramarine reserved for focus. Space Grotesk uppercase for
+    headings, Space Mono for glyphs, codepoints, labels, and code. No serif.
+
+    SHAPE & SURFACE: zero radius everywhere; 1-2px solid black borders on every cell,
+    input, and card; the only depth is a hard-offset solid block shadow (zero blur) on the
+    selected cell and the copy button. No gradient, glow, blur, or soft shadow.
+
+    MOOD: dense, raw, structural, high-voltage — a schematic packed to the edges, loud but
+    disciplined by the grid.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, rounded corners, drop-shadow blur, soft shadow, gradient, neon glow, pastel colors, frosted glass"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches the codex layout — top glyph search bar, left category filter sidebar, dense central glyph grid of codepoint cells, right glyph detail card (codepoint/name/NPL usage/example)"}
+    theme_fidelity: {weight: 3, description: "Brutalist language — zero radius, full-strength solid black borders and 1px grid rules, edge-to-edge density, flat vermilion selection + ultramarine focus, hard-offset block shadow (zero blur) as only depth, Space Grotesk uppercase + Space Mono, no serif, no gradient/glow/soft shadow"}
+    composition: {weight: 2, description: "Extreme legible density on a hard grid, clear selection state, plausible real reference tool"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, legible glyphs and mono labels, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+    - "rounded corners, soft/blurred drop shadow, gradient, glow, or frosted glass present"
+
+tags: [npl-brutalist, NoizuPromptLingo, screen-mockup, glyph-codex, reference]

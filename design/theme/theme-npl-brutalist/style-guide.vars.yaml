@@ -1,22 +1,49 @@
+# ═══════════════════════════════════════════════════════════════
+# NPL — Brutalist · seed overrides (treatise §3/§4/§6). Deltas only;
+# everything else inherits base-theme: theme-style-guide.
+#
+# SEED-TRAP FIX (Stage C render+reflect pass): the base drives its accents off
+# brand-red / brand-blue / brand-yellow — NOT bare red/blue/yellow — and pins each
+# `-light` sibling to a color-mix() with the OLD base hex hard-coded inside it
+# (e.g. `color-mix(in srgb, #e20613 70%, var(--surface))`). The prior theme set only
+# bare red/blue/yellow, which the base never wires as accent-driving keys, so it was a
+# silent no-op: the UI kept painting the base Bauhaus palette (#e20613/#0047ab/#f5c518),
+# not the electric triad. Fix = override the brand-* keys with the electric triad AND
+# re-point each `-light` sibling at var(--brand-*) so the tint tracks the override.
+# ═══════════════════════════════════════════════════════════════
 vars:
   groups:
     - name: "Seed Colors"
       vars:
         white: "#ffffff"
         black: "#000000"
-        red: "#ff2d00"      # primary accent — electric vermilion
-        blue: "#1500ff"     # secondary accent — pure ultramarine
-        yellow: "#ffe600"   # tertiary accent — hazard yellow
+        # Electric RYB triad at full chroma (treatise §3), on the base's accent keys.
+        brand-red: "#ff2d00"      # electric vermilion — primary accent
+        brand-red-light: "color-mix(in srgb, var(--brand-red) 70%, var(--surface))"
+        brand-blue: "#1500ff"     # pure ultramarine — secondary accent / focus
+        brand-blue-light: "color-mix(in srgb, var(--brand-blue) 70%, var(--surface))"
+        brand-yellow: "#ffe600"   # hazard yellow — tertiary accent
+        brand-yellow-light: "color-mix(in srgb, var(--brand-yellow) 70%, var(--surface))"
+        # Bare aliases (treatise §10 appendix names the accents red/blue/yellow) → raw
+        # electric handles for css-snippets; point at the brand-* keys, never a stray hex.
+        red: "var(--brand-red)"
+        blue: "var(--brand-blue)"
+        yellow: "var(--brand-yellow)"
     - name: "Semantic Colors"
       vars:
+        # Deliberately IS the primary palette (treatise §3 collision flag): error ≡ the red
+        # seed, warning ≡ yellow, info ≡ blue; success is the only hue outside the triad.
+        # Do NOT desaturate error — destructive intent is carried by label + hard border.
         success: "#00c853"
         warning: "#ffe600"
         error: "#ff2d00"
         info: "#1500ff"
     - name: "Typography"
       vars:
+        # Must match branding.yaml font-url (Space Grotesk + Space Mono). No serif, ever.
         font-sans: "'Space Grotesk', 'Arial Narrow', sans-serif"
         font-mono: "'Space Mono', 'Courier New', monospace"
+        font-size-base: "var(--size-md)"   # re-assert base default so the type scale doesn't fall back
     - name: "Shape"
       vars:
-        radius: "0px"
+        radius: "0px"   # treatise §6 — 0 everywhere; a pill or rounded card is a thesis break

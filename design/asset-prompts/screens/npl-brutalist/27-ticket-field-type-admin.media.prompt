@@ -1,0 +1,90 @@
+schema: "0.4"
+id: npl-brutalist-27-ticket-field-type-admin
+type: image
+quality: high
+
+# NoizuPromptLingo — Ticket Field/Type Admin: define project-scoped custom fields,
+# org-scoped custom ticket types, and outbound webhooks fired on ticket state changes.
+# Theme tenets: hard-grid admin config, zero radius, full-strength borders + 1px grid,
+# square zero-radius checkboxes, flat electric accents, hard-offset block shadow.
+# Palette: vermilion #ff2d00, ultramarine #1500ff, hazard-yellow #ffe600,
+# white #ffffff, black #000000, surface-alt #f2f2f2.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of an admin
+    configuration console inside a developer product, in a NEO-BRUTALIST register: raw
+    structure shown as machinery, hard grid, seams exposed. Flat fills only — no gradient,
+    glow, blur, or soft shadow; the only depth cue is a hard-offset SOLID block shadow with
+    zero blur. Geometric grotesk (Space Grotesk) UPPERCASE 700 headings and type names;
+    Space Mono for table data, chips, inputs, and labels. No serif. Zero corner radius,
+    including square checkboxes. Borders and grid lines are load-bearing, at full strength.
+  text: |
+    A 16:9 high-fidelity UI mockup of the TICKET FIELD / TYPE ADMIN screen of
+    NoizuPromptLingo — a configuration surface for defining project-scoped custom fields,
+    org-scoped custom ticket types, and outbound webhooks fired on ticket state changes —
+    rendered as raw, structural machinery.
+
+    OVERALL LAYOUT (on a pure white canvas, a hard grid, regions separated by 2px solid
+    black rules): a top tab band, a left CUSTOM FIELD EDITOR, a center CUSTOM TICKET TYPE
+    EDITOR, and a bottom-right WEBHOOK CONFIGURATION PANEL.
+
+    TAB BAND (top): three hard-bordered tabs in uppercase mono — CUSTOM FIELDS, TICKET
+    TYPES, WEBHOOKS — the active tab a full inverted block (solid black, white text) with a
+    thick vermilion underline bar; no soft pill highlight.
+
+    CUSTOM FIELD EDITOR (left): a hard-bordered panel, header separated by a full-weight
+    rule, listing project-scoped fields as rows in a 1px-grid table — columns NAME, TYPE,
+    VALIDATION, USAGE. Each row's FIELD/TYPE USAGE INDICATOR is a small bordered mono count
+    tag (like "USED IN 42"). A "NEW FIELD" form block below: bordered mono inputs (zero
+    radius) for field name, a bordered TYPE select, and a VALIDATION input, each with an
+    uppercase mono label above it, plus a solid vermilion "ADD FIELD" button carrying a
+    hard-offset black block shadow.
+
+    CENTER CUSTOM TICKET TYPE EDITOR: a hard-bordered panel listing org-scoped ticket
+    types, each a bordered block with an uppercase grotesk type name and a row of small
+    hard-bordered mono chips for its ALLOWED FIELD SET. The selected type is a full inverted
+    block (solid black, white text). A "NEW TYPE" bordered button with a hard-offset shadow.
+
+    WEBHOOK CONFIGURATION PANEL (bottom-right): a hard-bordered block with an uppercase mono
+    label "OUTBOUND WEBHOOK", a bordered mono URL input (zero radius), and a column of
+    hard-bordered square checkboxes for STATE-CHANGE TRIGGERS (OPENED, IN PROGRESS,
+    RESOLVED, CLOSED) — square, zero radius, the checked ones filled solid black. A solid
+    ultramarine "SAVE WEBHOOK" button. A hazard-yellow "FIRES ON 4 EVENTS" note tag (solid
+    yellow, black text, black border).
+
+    PALETTE & TYPE: pure white canvas, pure black ink and full-strength borders and grid
+    lines, electric vermilion for primary add buttons, pure ultramarine for the save action
+    and focus, one hazard-yellow note tag — each flat and whole at maximum saturation. Space
+    Grotesk uppercase headings and type names, Space Mono for table data, chips, inputs, and
+    labels. No serif.
+
+    SHAPE & SURFACE: zero radius on every input, checkbox, chip, tab, and panel; 1-2px solid
+    black borders and 1px table grid at full strength; the only depth is a hard-offset solid
+    block shadow (zero blur) on primary buttons. No gradient, glow, blur, or soft shadow.
+
+    MOOD: raw, structural, declarative — an admin console shown as hard machinery.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, rounded corners, drop-shadow blur, soft shadow, gradient, neon glow, pastel colors, frosted glass"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches the admin screen — tab band (Custom Fields/Ticket Types/Webhooks), left custom field editor with usage indicators + new-field form, center ticket type editor with allowed-field-set chips, bottom-right webhook config panel with trigger checkboxes"}
+    theme_fidelity: {weight: 3, description: "Brutalist language — zero radius including square checkboxes, full-strength solid black borders and 1px table grid, flat vermilion add + ultramarine save/focus + one hazard-yellow note, hard-offset block shadow (zero blur), Space Grotesk uppercase + Space Mono, no serif, no gradient/glow/soft shadow"}
+    composition: {weight: 2, description: "Legible admin-config hierarchy on a hard grid, clear active tab + selected type, plausible real settings console"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, legible mono data and labels, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+    - "rounded corners, soft/blurred drop shadow, gradient, glow, or frosted glass present"
+
+tags: [npl-brutalist, NoizuPromptLingo, screen-mockup, ticket-admin, settings]

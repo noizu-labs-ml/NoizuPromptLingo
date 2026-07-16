@@ -1,8 +1,8 @@
 ---
 slug: npl-brutalist
 base_theme: theme-style-guide
-status: sketch
-revision: 1
+status: full
+revision: 2
 ---
 
 # Theme Treatise — NPL Brutalist
@@ -12,6 +12,17 @@ Theme: `theme-npl-brutalist/` · Base: `theme-style-guide` · Status: sketch
 > Reverse-engineered from the shipped `theme-npl-brutalist/` YAML. Where a value
 > looks arbitrary rather than intentional, this treatise says so instead of
 > inventing a rationale.
+
+> **Stage C render+reflect (rev 2):** six screens were rendered and read back
+> multimodally. No treatise value proved wrong — the design commitments hold — but the
+> raster model under-delivers two of them, and because they are the theme's load-bearing
+> signals they are flagged here for downstream implementers: **§6 zero-radius + the
+> hard-offset block shadow** (the model consistently rounds corners and substitutes a
+> soft blurred elevation) and **§3 the full-voltage triad** (renders tend toward a single
+> accent — hazard yellow rarely survives and some screens drift to near-grayscale). The
+> engine YAML, not the renders, is the source of truth for these; full analysis in
+> `conformance-npl-brutalist.md`. §4's UPPERCASE grotesk + mono voice rendered reliably
+> and is the strongest brutalist tell.
 
 ## 1. Identity
 

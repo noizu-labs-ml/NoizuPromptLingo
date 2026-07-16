@@ -1,17 +1,30 @@
+# NPL — Brutalist · color modes (treatise §3). Light AND dark are both first-class and
+# both hard — mirror images (white-canvas/black-ink <-> black-canvas/white-ink), not a
+# primary plus a dimmed afterthought. Neutrals carry ZERO hue: any warmth reads as a bug
+# against the electric accents. `shadow-color` is a SOLID full-strength value, not a soft
+# rgba — the only sanctioned depth is a hard-offset block shadow with zero blur (§6), so
+# the block reads at full contrast against the canvas. `*-inverse` keys back the hover-
+# inversion + inverted-fill nav/active states (§7/§8).
 color-modes:
   light:
     surface: "var(--white)"
     surface-alt: "#f2f2f2"
+    surface-inverse: "#000000"
     text: "var(--black)"
     text-secondary: "#1a1a1a"
     text-muted: "#4d4d4d"
+    text-inverse: "#ffffff"
     border: "#000000"
     border-strong: "#000000"
+    shadow-color: "#000000"
   dark:
     surface: "#000000"
     surface-alt: "#0d0d0d"
+    surface-inverse: "#ffffff"
     text: "#ffffff"
     text-secondary: "#e6e6e6"
     text-muted: "#b3b3b3"
+    text-inverse: "#000000"
     border: "#ffffff"
     border-strong: "#ffffff"
+    shadow-color: "#ffffff"

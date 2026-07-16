@@ -1,0 +1,45 @@
+# NPL — Brutalist · dark-mode brand fix (treatise §3). Companion to the light-scope
+# seed-trap fix in style-guide.vars.yaml.
+#
+# The engine pre-computes its dark-mode brand tints (--theme-brand-*) from the OLD base
+# hex (#e20613 / #0047ab / #f5c518) — NOT from a theme's overridden seed — and, in dark
+# mode, re-points --brand-* at those tints (`--brand-red: var(--theme-brand-red)`). So a
+# light-scope seed override alone leaves DARK mode painting a *lightened old-Bauhaus*
+# accent (`color-mix(#e20613 75%, white)`), a washed-out pink — exactly the muting the
+# treatise forbids. §3 commits dark to a hard MIRROR at full chroma, so we re-assert the
+# electric triad on the dark-scoped `--theme-brand-*` intermediates the base reads (the
+# `theme` prefix turns each `name` into `--theme-<name>`). Verified in the generated CSS.
+scoped-vars:
+  prefix: "theme"
+  sections:
+    standard:
+      selector: 'html[data-design-theme="npl-brutalist"]'
+      prefix: "theme"
+    dark:
+      selector: 'html[data-design-theme="npl-brutalist"].dark'
+      prefix: "theme"
+  vars:
+    - name: brand-red
+      value:
+        - section: dark
+          value: "#ff2d00"
+    - name: brand-red-light
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #ff2d00 70%, var(--surface))"
+    - name: brand-blue
+      value:
+        - section: dark
+          value: "#1500ff"
+    - name: brand-blue-light
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #1500ff 70%, var(--surface))"
+    - name: brand-yellow
+      value:
+        - section: dark
+          value: "#ffe600"
+    - name: brand-yellow-light
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #ffe600 70%, var(--surface))"

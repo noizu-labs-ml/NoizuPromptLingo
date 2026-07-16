@@ -1,0 +1,89 @@
+schema: "0.4"
+id: npl-brutalist-40-mock-mcp-builder
+type: image
+quality: high
+
+# NoizuPromptLingo — Mock MCP Builder: generates a mock MCP server from a prose
+# description for testing agent integrations without hitting production tools.
+# Theme tenets: three-band builder, zero radius, load-bearing hard borders, flat
+# electric accents, hard-offset block shadow as the only depth.
+# Palette: vermilion #ff2d00, ultramarine #1500ff, hazard-yellow #ffe600,
+# white #ffffff, black #000000, surface-alt #f2f2f2.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a builder /
+    tooling surface inside a developer console, in a NEO-BRUTALIST register: raw structure
+    shown as the machinery it assembles. Flat fills only — no gradient, glow, blur, or
+    soft shadow; the only depth cue is a hard-offset SOLID block shadow with zero blur.
+    Geometric grotesk (Space Grotesk) UPPERCASE 700 for titles and tool names; Space Mono
+    for descriptors, schema, and inputs. No serif. Zero corner radius. Borders are
+    load-bearing, always at full strength.
+  text: |
+    A 16:9 high-fidelity UI mockup of the MOCK MCP BUILDER screen of NoizuPromptLingo — a
+    builder that generates a mock MCP server from a prose description, for testing agent
+    integrations without hitting production tools — rendered as raw, structural machinery.
+
+    OVERALL LAYOUT (three bands on a pure white canvas, separated by 2px solid black rules,
+    aligned to a hard grid): a left PROSE DESCRIPTION INPUT, a center GENERATED TOOL LIST,
+    and a right TOOL DEFINITION EDITOR, with a header bar on top.
+
+    HEADER BAR: an uppercase grotesk 700 title "MOCK MCP BUILDER", a mono breadcrumb slug
+    (like "/mock-mcp/shipping-api"), and a solid vermilion "PUBLISH MOCK SERVER" button —
+    rectangular, 2px black border, black uppercase mono label, hard-offset black block
+    shadow with zero blur.
+
+    LEFT PROSE DESCRIPTION INPUT: a large hard-bordered textarea, zero radius, no inner
+    shadow, an uppercase mono label "DESCRIBE THE SERVER" above it, filled with a few lines
+    of plain-language description (e.g. "A shipping API with tools to create shipments,
+    track parcels, and fetch rates"). A bordered "GENERATE TOOLS" button beneath it with a
+    hard-offset shadow.
+
+    CENTER GENERATED TOOL LIST PREVIEW: a vertical stack of hard-bordered rectangular tool
+    rows butted together, separated by 1px black rules, zero radius — each row an uppercase
+    grotesk tool name (e.g. CREATE_SHIPMENT, TRACK_PARCEL, FETCH_RATES) with a one-line mono
+    descriptor and a small mono parameter count. The selected row is a full inverted block
+    (solid black, white text) with a thick vermilion accent bar on its left edge.
+
+    RIGHT TOOL DEFINITION EDITOR: a hard-bordered panel, header separated by a full-weight
+    rule, showing the selected tool's schema as an editable mono block on a light-gray
+    surface — field rows (NAME, TYPE, REQUIRED, DESCRIPTION) with bordered mono inputs, zero
+    radius. A pure-ultramarine focus outline sits on the currently-edited field. A
+    hazard-yellow "UNSAVED" tag (solid yellow, black text, black border) in the header.
+
+    PALETTE & TYPE: pure white canvas, pure black ink and full-strength borders, electric
+    vermilion for the publish button and the selected accent bar, hazard yellow for the
+    unsaved tag, pure ultramarine for focus — flat and whole at maximum saturation. Space
+    Grotesk uppercase for titles and tool names, Space Mono for descriptors, schema, and
+    inputs. No serif.
+
+    SHAPE & SURFACE: zero radius on every input, row, and panel; 1-2px solid black borders
+    at full strength; the only depth is a hard-offset solid block shadow (zero blur) on the
+    publish and generate buttons and the schema block. No gradient, glow, blur, or soft
+    shadow.
+
+    MOOD: raw, structural, high-voltage — a builder that shows the machinery it assembles.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, rounded corners, drop-shadow blur, soft shadow, gradient, neon glow, pastel colors, frosted glass"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches the builder — header with Publish, left prose description textarea + Generate Tools, center generated tool list preview, right tool definition schema editor"}
+    theme_fidelity: {weight: 3, description: "Brutalist language — zero radius, full-strength solid black borders, flat vermilion accent + hazard-yellow unsaved tag + ultramarine focus, hard-offset block shadow (zero blur) as only depth, Space Grotesk uppercase tool names + Space Mono schema, no serif, no gradient/glow/soft shadow"}
+    composition: {weight: 2, description: "Clear three-band builder flow (prose -> tools -> schema) on a hard grid, clear selection, plausible real tooling UI"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, legible mono schema, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+    - "rounded corners, soft/blurred drop shadow, gradient, glow, or frosted glass present"
+
+tags: [npl-brutalist, NoizuPromptLingo, screen-mockup, mock-mcp, builder]
