@@ -1,0 +1,77 @@
+schema: "0.4"
+id: npl-aurora-44-org-members
+type: image
+quality: high
+
+# NoizuPromptLingo (NPL) — a workspace for teams who build, run, and supervise AI agents — Org Members management screen.
+# Aurora softens a denser surface: the member table inherits base density, warmed and rounded (treatise §8), not a hard grid.
+# Theme tenets: warm cream canvas, single grape-violet accent, 14px radius + pill chips, resting soft shadows.
+# Palette: cream #fff9f4, warm plum-ink #37303a, grape violet #6b4de6, soft coral #f4776b, warm gold #f2b054.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a warm
+    team-MEMBERSHIP settings page inside a signed-in workspace. This screen carries
+    a little more data than the onboarding screens, so it is calmer and denser — but
+    still unmistakably the warm, soft, rounded theme: soft resting shadows, warm
+    cream surfaces, pill chips, no hard borders. Rounded humanist sans-serif (NO
+    serif); a small monospace only for literal invite tokens.
+  text: |
+    A 16:9 high-fidelity UI mockup of the Org Members screen of NoizuPromptLingo
+    (NPL), a workspace where teams build, run, and supervise AI agents. An admin
+    manages who belongs to the organization and generates invite links — a warmer,
+    softer take on a settings/table surface.
+
+    OVERALL LAYOUT (a signed-in app shell — three regions):
+    - LEFT: a soft rounded NAV RAIL floating on a subtle shadow (achromatic warm),
+      with the "Members" item shown as an active filled grape-violet-tint pill.
+    - CENTER (dominant): the MEMBERS content — a page header "Members" with a muted
+      count "12 people", and a soft rounded MEMBER TABLE card resting on a warm
+      drop-shadow. Rows carry a small round color-dot avatar + name + email, a muted
+      pill ROLE CHIP ("Owner" / "Admin" / "Member"), a soft status dot ("Active" /
+      "Invited"), and a quiet kebab. Rows are comfortable, warm-zebra-toned, with no
+      hard rules — separated by faint tonal steps only. One row shows a soft hover
+      highlight with a ROLE ASSIGNMENT SELECTOR (a rounded pill dropdown) revealed.
+    - RIGHT (~320px): an INVITE PANEL as a soft rounded card — an INVITE TOKEN
+      GENERATOR with two friendly rounded fields "Expires in" and "Max uses", a
+      pill grape-violet "Create invite link" button, then an INVITE TOKEN LIST of
+      2–3 rows: a short monospace token chip, a soft status pill ("Active" mint /
+      "Expired" muted / "Used up" muted), and a quiet "Revoke" text link.
+
+    PALETTE & TYPE: warm cream canvas and warm-tinted panels, deep warm plum-ink
+    text, one grape-violet accent on the active nav pill and primary button; role
+    and status chips use muted warm tints (mint only for a live "Active" token),
+    never loud. Rounded humanist sans-serif for all UI and body; a small monospace
+    ONLY on the literal invite-token chips.
+
+    SHAPE & SURFACE: soft even when denser. Rounded table container, rounded panel,
+    pill chips and pill dropdowns, no hard borders — separation is warm resting
+    drop-shadow plus faint tonal zebra steps. The table is comfortable, not a hard
+    spreadsheet grid.
+
+    MOOD: calm, competent, still warm — "managing your team is pleasant here." Airy
+    for a settings screen, adult, never a cold admin console or terminal.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, hard black borders and gridlines, sharp square corners, dark terminal theme"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches Org Members: a member table with role chips and status, an invite-token generator (expiry + max-uses), and an invite-token list with revoke; a role-assignment selector on a row"}
+    theme_fidelity: {weight: 3, description: "Warm cream surfaces, grape-violet accent on active nav/primary, pill chips, soft rounded table/panel on resting shadows, no hard gridlines, rounded humanist sans (mono only on token chips)"}
+    composition: {weight: 2, description: "Readable app-shell hierarchy (nav / table / invite panel), comfortable warmed density, plausible real product"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+    - "hard-edged spreadsheet gridlines or dark-terminal aesthetic instead of a warm soft settings surface"
+
+tags: [npl-aurora, NoizuPromptLingo, screen-mockup]

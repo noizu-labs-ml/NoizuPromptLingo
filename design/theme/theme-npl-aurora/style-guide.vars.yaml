@@ -1,0 +1,51 @@
+# ═══════════════════════════════════════════════════════════════
+# NPL — Aurora · seed deltas over theme-style-guide (treatise §3/§4/§6).
+# Only the seeds this theme pins; everything else rides the base cascade.
+# NOTE: keys brand-red/blue/yellow are the cascade's PRIMARY/SECONDARY/
+# TERTIARY accent slots — their VALUES here are Aurora's violet (interactive)
+# + coral/gold (decorative), not their key names. -light variants re-point to
+# var(--brand-*) so they track the seed (the base pins them to the old literal
+# Bauhaus hexes). Dark-mode brand tints are re-pointed in style-guide.scoped-vars.yaml.
+# ═══════════════════════════════════════════════════════════════
+
+vars:
+  groups:
+    # ── Surfaces ── §3 neutrals: warm cream canvas, warm plum-charcoal ink.
+    # The warm tint is what separates Aurora from Minimal's pure gray — never neutralize it.
+    - name: Surfaces
+      vars:
+        white: "#fff9f4"   # warm cream canvas (~30° at very low saturation)
+        black: "#37303a"   # warm plum-charcoal ink (never pure #000)
+
+    # ── Primaries ── §3 accents: one grape-violet interactive primary, plus warm
+    # decorative coral + gold used only as soft fills / illustration / the aurora wash.
+    - name: Primaries - Aurora
+      vars:
+        brand-red: "#6b4de6"     # PRIMARY (interactive) — grape violet (~255°)
+        brand-red-light: "color-mix(in srgb, var(--brand-red) 70%, var(--surface))"
+        brand-blue: "#f4776b"    # SECONDARY (decorative) — soft coral (~7°); fill/illustration only, never status
+        brand-blue-light: "color-mix(in srgb, var(--brand-blue) 70%, var(--surface))"
+        brand-yellow: "#f2b054"  # TERTIARY (decorative) — warm gold (~38°); fill/illustration only
+        brand-yellow-light: "color-mix(in srgb, var(--brand-yellow) 70%, var(--surface))"
+
+    # ── Semantic ── §3/§9: soft but unambiguous. error is kept DEEPER + more
+    # saturated than the decorative coral and is always icon-paired (watch-pair, §3).
+    # Coral is never used for status. Semantics are large-UI / icon + glyph, not body text.
+    - name: Semantic
+      vars:
+        success: "#2fa980"   # mint-green
+        warning: "#e8952f"   # amber
+        error: "#e23d51"     # rose-crimson (deeper/saturated vs decorative coral #f4776b)
+        info: "#5b8def"      # periwinkle
+
+    # ── Typography ── §4: Nunito rounded humanist for ALL UI/body/display;
+    # JetBrains Mono only for literal tokens (API keys, NPL glyphs, IDs). No serif.
+    - name: Typography
+      vars:
+        font-sans: "'Nunito', -apple-system, 'Segoe UI', sans-serif"
+        font-mono: "'JetBrains Mono', 'Menlo', monospace"
+
+    # ── Shape ── §6: the softest radius in the set (pills handled per-component in css-snippets)
+    - name: Shape
+      vars:
+        radius: "14px"

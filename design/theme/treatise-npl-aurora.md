@@ -1,13 +1,13 @@
 ---
 slug: npl-aurora
 base_theme: theme-style-guide
-status: sketch
-revision: 1
+status: full
+revision: 2
 ---
 
 # Theme Treatise — NPL Aurora
 
-Theme: `theme-npl-aurora/` · Base: `theme-style-guide` · Status: sketch
+Theme: `theme-npl-aurora/` · Base: `theme-style-guide` · Status: full
 
 > New direction (authored forward: intent first, values follow). Aurora is the
 > *soft-elevation* theme — the only one in the NPL set that uses rounded shapes,
@@ -185,3 +185,35 @@ Theme: `theme-npl-aurora/` · Base: `theme-style-guide` · Status: sketch
 | §7 motion | `style-guide.css-snippets.yaml` / `style-guide.scoped-vars.yaml` | `--motion-micro: 140ms`, `--motion-card: 240ms` soft-ease; ≤4% overshoot on confirm; reduced-motion guard |
 | §8 components | `style-guide.css-snippets.yaml` + `style-guide.semantic-classes.yaml` | pill violet primary, soft-fill secondary, shadow cards; leave data grids at base |
 | §9 a11y | verification across facets | recheck white-on-violet (≈5:1); enforce coral/gold as fill-only; verify glass-free (no text on wash) |
+
+## 11. Render Calibration (Stage C, rev 2)
+
+Stage C authored render prompts for all five allocated screens (02 login, 04
+registration-invite, 05 email/account-verify, 06 organization-picker, 44
+org-members) and generated **3 of 5** mockups; **06 and 44 are render-deferred** —
+the image API returned a sustained HTTP 429 under concurrent-fleet load, so their
+prompts are authored and valid but the images await a later low-traffic re-run. The
+three completed renders (login, registration, verify) exercise every Aurora
+signature.
+
+**Confirmed by render (soft signals — where the image model is reliable):**
+- Resting **soft-shadow elevation** reads exactly as intended — cards and the nav
+  bar visibly float on warm shadow. This is the theme's whole thesis and it lands.
+- Warm, rounded, welcoming register within a glance; **rounded humanist type**, no
+  serif, no terminal density.
+- **Mint success emblem** (verify), the **violet pill primary**, and the
+  **coral→gold→violet aurora wash** family are all present and correct.
+
+**Render-vs-intent gaps that are IMAGE-MODEL limitations, not YAML changes** (hard
+signals are judged from the compiled CSS, the source of truth — §9):
+- The aurora wash rendered at **much higher intensity** than the treatise's "≤12%
+  alpha, corners only, never behind text." The treatise is correct; compiled
+  `.aurora-wash` enforces ≤12% alpha and usage stays off body text. No change.
+- The canvas skewed **warmer / more golden** than the pale cream `#fff9f4`. The
+  seed is correct in CSS; render saturation drift only.
+- The login primary button rendered **blue rather than grape-violet**; compiled
+  `--brand-red: #6b4de6` is correct. Accent hue is a hard signal, not render-judged.
+
+No substantive design change was warranted — the treatise held up under render
+review. Flipped `status: sketch → full` and bumped `revision → 2` to record this
+calibration pass.

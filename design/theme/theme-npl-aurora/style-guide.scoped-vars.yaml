@@ -1,0 +1,69 @@
+# NPL — Aurora · scoped-var deltas (ACCUMULATE onto the base).
+#
+# DARK BASE-CASCADE LEAK: theme-style-guide/style-guide.scoped-vars.yaml brightens
+# the dark brand-red/-blue/-yellow tints from LITERAL hex values (#e20613 / #0047ab
+# / #f5c518 — Bauhaus red/navy/gold) rather than var(--brand-*), so in dark mode the
+# base silently reverts every non-Bauhaus theme's accents back to those literals
+# (base-cascade defect escalated in conformance-npl-minimal.md §7 / conformance-npl-prism.md;
+# the durable fix belongs in the base file, pending review — do not edit the base from here).
+#
+# Aurora uses ALL THREE accent slots on visible chrome: brand-red (violet) drives
+# buttons / focus / active-nav / tints, and brand-blue (coral) + brand-yellow (gold)
+# both render in the aurora-wash backdrop (style-guide.css-snippets.yaml) — so all
+# three families are re-pointed here to Aurora's own hexes, each mirroring the base's
+# red/-light/-mid shape. The dark brand-red value color-mix(#6b4de6 75%, white)
+# lands on ≈#9079ec — the treatise §3 "violet lightened to #8f78f2 for dark contrast"
+# (≈4.8:1 as accent-text/icon on the #221d29 canvas). White-on-that-fill is only
+# ~3.4:1, so the primary pill button swaps to a plum-ink label in dark (handled in
+# css-snippets); see conformance §Standing-Cautions.
+#
+# A scoped-vars file needs its own `sections` (they do not inherit from the base
+# file); the generator substitutes the active theme slug into these selectors.
+# prefix "theme" makes these emit as --theme-brand-*, which the cascade's
+# --brand-*: var(--theme-brand-*) dark alias then resolves to Aurora's own accents.
+scoped-vars:
+  prefix: "theme"
+  sections:
+    standard:
+      selector: 'html[data-design-theme="npl-aurora"]'
+      prefix: "theme"
+    dark:
+      selector: 'html[data-design-theme="npl-aurora"].dark'
+      prefix: "theme"
+  vars:
+    - name: brand-red
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #6b4de6 75%, white)"
+    - name: brand-red-light
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #6b4de6 18%, var(--surface))"
+    - name: brand-red-mid
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #6b4de6 30%, var(--surface))"
+    - name: brand-blue
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #f4776b 75%, white)"
+    - name: brand-blue-light
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #f4776b 18%, var(--surface))"
+    - name: brand-blue-mid
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #f4776b 30%, var(--surface))"
+    - name: brand-yellow
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #f2b054 75%, white)"
+    - name: brand-yellow-light
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #f2b054 18%, var(--surface))"
+    - name: brand-yellow-mid
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #f2b054 30%, var(--surface))"

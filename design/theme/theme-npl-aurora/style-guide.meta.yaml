@@ -1,0 +1,5 @@
+name: "NPL — Aurora"
+slug: "npl-aurora"
+title: "NoizuPromptLingo — Aurora"
+description: "A warm, soft, rounded welcome mat for NPL — onboarding, invitations, and first-run for the people who supervise agents instead of living in a terminal."
+base-theme: "theme-style-guide"

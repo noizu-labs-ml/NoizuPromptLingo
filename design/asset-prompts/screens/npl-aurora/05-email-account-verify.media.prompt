@@ -1,0 +1,79 @@
+schema: "0.4"
+id: npl-aurora-05-email-account-verify
+type: image
+quality: high
+
+# NoizuPromptLingo (NPL) — a workspace for teams who build, run, and supervise AI agents — Email/Account Verify screen.
+# Theme tenets: warm cream canvas, single grape-violet accent, 14px radius + pill buttons, resting soft shadows.
+# Palette: cream #fff9f4, warm plum-ink #37303a, grape violet #6b4de6, soft coral #f4776b, warm gold #f2b054, mint #2fa980.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a
+    brief, WARM confirmation screen — the reassuring "you're all set" moment
+    between registering and entering the app. Calm, soft, generous whitespace, one
+    focused message. Rounded humanist sans-serif (NO serif). Gentle depth from soft
+    resting shadows, no hard borders.
+  text: |
+    A 16:9 high-fidelity UI mockup of the Email/Account Verify screen of
+    NoizuPromptLingo (NPL), a workspace where teams build, run, and supervise AI
+    agents. This is a short, calm bridge screen confirming the account is verified
+    before the user continues into the product.
+
+    OVERALL LAYOUT (single centered column over a full-bleed warm canvas):
+    - A slim floating PUBLIC NAV BAR at top on a soft shadow: rounded "NPL"
+      wordmark at left, minimal links at right.
+    - A single, generously centered VERIFICATION STATUS CARD, alone in the
+      viewport with abundant breathing room, resting on a soft warm drop-shadow.
+    - Warm cream canvas with a soft low-intensity aurora wash (coral-to-gold-to-
+      violet, barely there) pooled behind the card in the corners — never behind
+      text. This is a sanctioned empty/celebration surface, so the wash may read
+      slightly warmer here than on the other screens (still gentle).
+
+    THE VERIFICATION STATUS CARD (centered, generously rounded, floating):
+    - A large, friendly SUCCESS EMBLEM: a soft rounded mint-green circle with a
+      simple white check — warm, not clinical.
+    - A HEADING "You're verified" in a heavier rounded weight.
+    - One line of warm helper text: "Your account is ready. Let's get you into
+      your workspace."
+    - A prominent PILL-SHAPED PRIMARY BUTTON, solid grape-violet with white label
+      "Continue to NPL" — the one saturated control, clearly enabled.
+    - A small muted secondary row: "Didn't get the email?" with a quiet
+      pill-outline "Resend verification" link-button beside it.
+
+    PALETTE & TYPE: warm cream canvas, deep warm plum-ink text, one grape-violet
+    accent on the primary pill, soft mint-green only on the success emblem. Aurora
+    wash in soft coral, warm gold and violet at low intensity behind the card.
+    Rounded humanist sans-serif everywhere (high x-height, soft terminals) — no
+    serif, no monospace.
+
+    SHAPE & SURFACE: soft. Generously rounded card, a fully pill primary button and
+    a soft pill-outline secondary, no hard borders — separation is a warm resting
+    drop-shadow and a faint cream-to-warmer-cream tonal step.
+
+    MOOD: reassuring, calm, quietly celebratory — "handled, you're in." Airy, warm,
+    adult; premium soft-light onboarding, never a terminal.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, hard black borders, sharp square corners, dark terminal theme"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches Email/Account Verify: a verified success status card with emblem, a continue-to-app pill button, and a resend-verification affordance"}
+    theme_fidelity: {weight: 3, description: "Warm cream canvas, grape-violet pill accent, mint only on the success emblem, generously rounded/pill shapes, resting soft shadows, rounded humanist sans"}
+    composition: {weight: 2, description: "One focused message, abundant whitespace, clear centered hierarchy, plausible real product"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+    - "hard-edged or dark-terminal aesthetic instead of warm soft onboarding"
+
+tags: [npl-aurora, NoizuPromptLingo, screen-mockup]

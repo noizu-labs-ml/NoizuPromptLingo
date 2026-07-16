@@ -1,0 +1,79 @@
+schema: "0.4"
+id: npl-aurora-02-login
+type: image
+quality: high
+
+# NoizuPromptLingo (NPL) — a workspace for teams who build, run, and supervise AI agents — Login screen.
+# Theme tenets: warm cream canvas, single grape-violet accent, 14px radius + pill buttons, resting soft shadows.
+# Palette: cream #fff9f4, warm plum-ink #37303a, grape violet #6b4de6, soft coral #f4776b, warm gold #f2b054.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a
+    WARM, WELCOMING sign-in screen — calm, soft, and unintimidating within five
+    seconds, the opposite of a dense hacker tool. Rounded humanist sans-serif
+    throughout (NO serif). One focused task, generous whitespace, gentle depth
+    from soft resting shadows rather than hard borders.
+  text: |
+    A 16:9 high-fidelity UI mockup of the Login screen of NoizuPromptLingo (NPL),
+    a workspace where teams build, run, and supervise AI agents. This is the calm
+    front door — a returning user signs in with one click.
+
+    OVERALL LAYOUT (a single centered column over a full-bleed warm canvas):
+    - A slim PUBLIC NAV BAR floating at the top on a soft shadow (no hard rule): a
+      small rounded "NPL" wordmark at left, quiet "Product / Docs / Sign in" text
+      links at right.
+    - A generously centered SIGN-IN CARD, alone in the viewport with lots of room
+      to breathe around it — a rounded card resting on a soft, warm drop-shadow.
+    - The rest of the canvas is warm cream with a very soft, low-intensity aurora
+      wash (coral-to-gold-to-violet light, barely there) pooled only in the far
+      corners behind the card — never behind any text.
+
+    THE SIGN-IN CARD (centered, generously rounded, floating on soft shadow):
+    - A friendly HEADING "Welcome back" in a heavier rounded weight.
+    - One line of warm, plain-spoken helper text: "Sign in to your workspace."
+    - A prominent PILL-SHAPED PRIMARY BUTTON, solid grape-violet with a white
+      label "Continue with SSO" and a small provider glyph — the one saturated
+      element on the screen.
+    - Beneath it a muted "Use a different account?" quiet text link.
+    - A soft, dismissible LOGIN ERROR BANNER resting above the button in a gentle
+      rose tint with a small alert icon: "That session expired — please sign in
+      again." Reassuring, not alarming.
+
+    PALETTE & TYPE: warm cream canvas, deep warm plum-ink body text, one grape
+    violet accent on the primary pill; the aurora wash in soft coral, warm gold
+    and violet at very low intensity in the corners only. Rounded humanist
+    sans-serif (high x-height, soft rounded terminals) everywhere — no serif, no
+    monospace.
+
+    SHAPE & SURFACE: soft. Generously rounded card, fully pill button, no visible
+    borders — separation comes from a warm resting drop-shadow and a faint tonal
+    step from cream to a slightly deeper warm cream. Nothing sharp anywhere.
+
+    MOOD: friendly, calm, reassuring — "this is going to be okay." Airy, warm, and
+    adult (never childish or candy-bright). Premium soft-light onboarding, not a
+    terminal.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, hard black borders, sharp square corners, dark terminal theme"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches the Login screen: floating public nav bar, one centered sign-in card with a single SSO pill button, a soft login-error banner"}
+    theme_fidelity: {weight: 3, description: "Warm cream canvas, single grape-violet pill accent, generously rounded/pill shapes, resting soft shadows, rounded humanist sans — not generic UI defaults or a dark tool"}
+    composition: {weight: 2, description: "One focused task, generous whitespace, clear centered hierarchy, plausible real product"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+    - "hard-edged or dark-terminal aesthetic instead of warm soft onboarding"
+
+tags: [npl-aurora, NoizuPromptLingo, screen-mockup]

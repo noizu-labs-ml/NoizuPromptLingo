@@ -1,0 +1,218 @@
+# NPL — Aurora component inflections (treatise §6/§7/§8). This facet ACCUMULATES
+# onto the base (unlike vars/color-modes/typography which replace), so it is the
+# safe home for Aurora's signature surface treatments — resting soft shadows, pills,
+# and the aurora wash — without clobbering the base's design-sections.
+#
+# SELF-SCOPED: the engine treats css-snippets as SELF_SCOPED (css-cache.ts:88,95) —
+# it emits each body VERBATIM and does NOT prefix the theme selector for you (unlike
+# buttons/cards/etc.). EVERY selector below is scoped under
+# html[data-design-theme="npl-aurora"] (and .dark for dark overrides, and inside
+# @media blocks) so nothing bleeds into sibling themes.
+#
+# Discipline (treatise §6/§9): resting soft shadows are the elevation model (no hard
+# borders); pills are the norm on buttons/chips/nav; the single sanctioned decorative
+# gradient (aurora wash, coral→gold→violet, ≤12% alpha) is for empty states / welcome
+# hero / illustration backdrops ONLY — never behind body text, never on a control.
+# Coral/gold are fill/illustration only, never status. Focus is a 2px violet ring at
+# 3px offset, never removed. Reduced-motion drops entrance/lift to instant.
+css-snippets:
+  - name: Aurora Soft-Shadow Card
+    slug: aurora-card
+    title: "Resting soft-shadow card (§6/§8 signature)"
+    description: "The signature surface — 14px radius, no border, a three-step warm resting drop-shadow so cards gently float (Aurora is the only NPL theme with true elevation on non-overlay surfaces). Hover lifts one shadow step; .featured reaches the 20px hero radius. Dark mode swaps to a raised plum surface + a deeper shadow so the float still reads on the #221d29 canvas. Reduced-motion removes the lift. Data grids deliberately stay at base density (§8)."
+    target-section: cards
+    body: |
+      html[data-design-theme="npl-aurora"] .card {
+        background: var(--surface);
+        border: none;
+        border-radius: var(--radius);
+        padding: 24px;
+        box-shadow:
+          0 1px 2px rgba(120, 80, 90, 0.06),
+          0 4px 12px var(--shadow-color, rgba(120, 80, 90, 0.10)),
+          0 12px 24px rgba(120, 80, 90, 0.06);
+        transition: box-shadow 240ms cubic-bezier(.22,.61,.36,1),
+                    transform 240ms cubic-bezier(.22,.61,.36,1);
+      }
+      html[data-design-theme="npl-aurora"] .card:hover {
+        box-shadow:
+          0 2px 4px rgba(120, 80, 90, 0.08),
+          0 8px 20px rgba(120, 80, 90, 0.14),
+          0 18px 36px rgba(120, 80, 90, 0.08);
+        transform: translateY(-2px);
+      }
+      html[data-design-theme="npl-aurora"] .card.featured {
+        border-radius: 20px;
+      }
+      html[data-design-theme="npl-aurora"].dark .card {
+        background: var(--surface-alt, var(--surface));
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.40), 0 12px 28px rgba(0, 0, 0, 0.45);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html[data-design-theme="npl-aurora"] .card { transition: box-shadow 1ms linear; }
+        html[data-design-theme="npl-aurora"] .card:hover { transform: none; }
+      }
+
+  - name: Aurora Pill Buttons
+    slug: aurora-btn
+    title: "Pill buttons — violet primary, soft secondary, coral decorative (§8)"
+    description: "Buttons are pills (the Aurora norm). Primary is a solid grape-violet fill with a white label and a soft violet shadow — the one saturated control; white-on-violet ≈5.5:1 (AA). In DARK the fill resolves to the lightened violet (≈#9079ec, which only carries white at ~3.4:1) so the label swaps to plum-ink (≈4.8:1, AA). Secondary is a low-alpha violet-tint fill with violet text. The decorative coral .accent button is marketing-only and always uses a plum-ink label (ink-on-coral ≈4.7:1; coral never carries white and is never a status color). Focus is a 2px violet ring at 3px offset. Reduced-motion drops the hover lift."
+    target-section: buttons
+    body: |
+      html[data-design-theme="npl-aurora"] .btn,
+      html[data-design-theme="npl-aurora"] .btn-pill {
+        border-radius: 999px;
+        font-weight: 600;
+        padding: 10px 22px;
+        border: none;
+        transition: box-shadow 140ms ease-out, transform 140ms ease-out,
+                    background-color 140ms ease-out;
+      }
+      html[data-design-theme="npl-aurora"] .btn.primary,
+      html[data-design-theme="npl-aurora"] .btn-pill.primary {
+        background: var(--brand-red);
+        color: #ffffff;
+        box-shadow: 0 4px 14px color-mix(in srgb, var(--brand-red) 30%, transparent);
+      }
+      html[data-design-theme="npl-aurora"] .btn.primary:hover,
+      html[data-design-theme="npl-aurora"] .btn-pill.primary:hover {
+        box-shadow: 0 8px 20px color-mix(in srgb, var(--brand-red) 42%, transparent);
+        transform: translateY(-1px);
+      }
+      html[data-design-theme="npl-aurora"] .btn.primary:active,
+      html[data-design-theme="npl-aurora"] .btn-pill.primary:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 8px color-mix(in srgb, var(--brand-red) 30%, transparent);
+      }
+      html[data-design-theme="npl-aurora"].dark .btn.primary,
+      html[data-design-theme="npl-aurora"].dark .btn-pill.primary {
+        color: #221d29;
+      }
+      html[data-design-theme="npl-aurora"] .btn.secondary,
+      html[data-design-theme="npl-aurora"] .btn-pill.secondary {
+        background: color-mix(in srgb, var(--brand-red) 12%, var(--surface));
+        color: var(--brand-red);
+        box-shadow: none;
+      }
+      html[data-design-theme="npl-aurora"] .btn.accent,
+      html[data-design-theme="npl-aurora"] .btn-pill.accent {
+        background: var(--brand-blue);
+        color: #37303a;
+        box-shadow: none;
+      }
+      html[data-design-theme="npl-aurora"] .btn:focus-visible,
+      html[data-design-theme="npl-aurora"] .btn-pill:focus-visible {
+        outline: 2px solid var(--brand-red);
+        outline-offset: 3px;
+      }
+      html[data-design-theme="npl-aurora"] .btn:disabled,
+      html[data-design-theme="npl-aurora"] .btn-pill:disabled {
+        opacity: 0.5;
+        box-shadow: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html[data-design-theme="npl-aurora"] .btn,
+        html[data-design-theme="npl-aurora"] .btn-pill { transition: background-color 140ms ease-out; }
+        html[data-design-theme="npl-aurora"] .btn.primary:hover,
+        html[data-design-theme="npl-aurora"] .btn-pill.primary:hover { transform: none; }
+      }
+
+  - name: Aurora Wash
+    slug: aurora-wash
+    title: "Sanctioned decorative aurora wash (§6)"
+    description: "The one permitted decorative gradient — a soft coral→gold→violet light wash at ≤12% alpha for empty states, the welcome hero, and illustration backdrops. Never behind body text, never on a control. Uses the decorative coral (brand-blue) + gold (brand-yellow) + violet (brand-red) accents; in dark these resolve to the re-pointed dark tints (scoped-vars) so the wash stays coral/gold/violet instead of reverting to Bauhaus navy/gold."
+    target-section: colors
+    body: |
+      html[data-design-theme="npl-aurora"] .aurora-wash {
+        position: relative;
+        background-color: var(--surface);
+        background-image:
+          radial-gradient(50% 60% at 15% 12%, color-mix(in srgb, var(--brand-blue) 12%, transparent) 0%, transparent 60%),
+          radial-gradient(46% 56% at 85% 18%, color-mix(in srgb, var(--brand-yellow) 12%, transparent) 0%, transparent 60%),
+          radial-gradient(52% 60% at 72% 90%, color-mix(in srgb, var(--brand-red) 12%, transparent) 0%, transparent 62%);
+      }
+
+  - name: Aurora Input
+    slug: aurora-input
+    title: "Soft input — warm hairline at rest, violet focus (§8)"
+    description: "14px radius, generous 12–16px padding, a 1px warm hairline at rest (the one place Aurora shows a border). Focus swaps to the 2px violet ring at 3px offset plus a faint violet-tinted fill — state pairs ring + fill, never hue alone. Reduced-motion removes the transition."
+    target-section: forms
+    body: |
+      html[data-design-theme="npl-aurora"] .input,
+      html[data-design-theme="npl-aurora"] .field,
+      html[data-design-theme="npl-aurora"] input[type="text"],
+      html[data-design-theme="npl-aurora"] input[type="email"],
+      html[data-design-theme="npl-aurora"] input[type="password"],
+      html[data-design-theme="npl-aurora"] input[type="search"] {
+        border-radius: var(--radius);
+        border: 1px solid var(--border, #f0e2d6);
+        background: var(--surface);
+        padding: 12px 16px;
+        transition: border-color 140ms ease-out, box-shadow 140ms ease-out,
+                    background-color 140ms ease-out;
+      }
+      html[data-design-theme="npl-aurora"] .input:focus-visible,
+      html[data-design-theme="npl-aurora"] .field:focus-visible,
+      html[data-design-theme="npl-aurora"] input[type="text"]:focus-visible,
+      html[data-design-theme="npl-aurora"] input[type="email"]:focus-visible,
+      html[data-design-theme="npl-aurora"] input[type="password"]:focus-visible,
+      html[data-design-theme="npl-aurora"] input[type="search"]:focus-visible {
+        outline: 2px solid var(--brand-red);
+        outline-offset: 3px;
+        border-color: var(--brand-red);
+        background: color-mix(in srgb, var(--brand-red) 6%, var(--surface));
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html[data-design-theme="npl-aurora"] .input,
+        html[data-design-theme="npl-aurora"] .field,
+        html[data-design-theme="npl-aurora"] input[type="text"],
+        html[data-design-theme="npl-aurora"] input[type="email"],
+        html[data-design-theme="npl-aurora"] input[type="password"],
+        html[data-design-theme="npl-aurora"] input[type="search"] { transition: none; }
+      }
+
+  - name: Aurora Pill Nav
+    slug: aurora-nav
+    title: "Soft pill nav + floating top bar (§8)"
+    description: "Nav items are soft pills; the active item is a filled violet-tint pill with violet 600-weight text (violet-on-cream-tint ≈5.2:1, AA). The top bar floats on a subtle warm shadow rather than a hard border. Hover warms the pill; reduced-motion keeps the color swap instant."
+    target-section: navigation
+    body: |
+      html[data-design-theme="npl-aurora"] .nav-item,
+      html[data-design-theme="npl-aurora"] .nav-link {
+        border-radius: 999px;
+        padding: 8px 16px;
+        font-weight: 600;
+        color: var(--text-secondary, #4f4757);
+        transition: background-color 140ms ease-out, color 140ms ease-out;
+      }
+      html[data-design-theme="npl-aurora"] .nav-item:hover,
+      html[data-design-theme="npl-aurora"] .nav-link:hover {
+        background: color-mix(in srgb, var(--brand-red) 8%, var(--surface));
+      }
+      html[data-design-theme="npl-aurora"] .nav-item.active,
+      html[data-design-theme="npl-aurora"] .nav-link.active,
+      html[data-design-theme="npl-aurora"] .nav-link[aria-current="page"] {
+        background: color-mix(in srgb, var(--brand-red) 14%, var(--surface));
+        color: var(--brand-red);
+      }
+      html[data-design-theme="npl-aurora"] .navbar,
+      html[data-design-theme="npl-aurora"] .topbar {
+        border: none;
+        box-shadow: 0 2px 12px var(--shadow-color, rgba(120, 80, 90, 0.10));
+        border-radius: 999px;
+      }
+
+  - name: Aurora Focus Ring
+    slug: aurora-focus
+    title: "Baseline violet focus ring (§7/§9)"
+    description: "The theme-wide focus fallback — a 2px solid violet ring at 3px offset, rounded to the control, for any interactive element not already covered by the button/input rules. Clears 3:1 on cream and on the warm tone step; never removed."
+    target-section: interaction
+    body: |
+      html[data-design-theme="npl-aurora"] a:focus-visible,
+      html[data-design-theme="npl-aurora"] [tabindex]:focus-visible,
+      html[data-design-theme="npl-aurora"] .chip:focus-visible,
+      html[data-design-theme="npl-aurora"] .pill:focus-visible {
+        outline: 2px solid var(--brand-red);
+        outline-offset: 3px;
+        border-radius: 8px;
+      }
