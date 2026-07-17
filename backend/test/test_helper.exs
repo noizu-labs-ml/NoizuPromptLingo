@@ -35,6 +35,23 @@ NoizuPromptLingua.MCPCustomScopeTestSchema.ensure!()
 # Ensure the Unicode Codex reference tables exist for Unicode domain/controller/MCP tests.
 NoizuPromptLingua.UnicodeCodexTestSchema.ensure!()
 
+# Ensure the sessions model/runner columns (Liquibase 072) exist for the sessions suite.
+NoizuPromptLingua.SessionTestSchema.ensure!()
+
+# Ensure the mcp_overview (Liquibase 073) pgvector tables exist for the overview suite.
+NoizuPromptLingua.McpOverviewTestSchema.ensure!()
+
+# Overview generation uses the deterministic (network-free) adapter in tests; the real
+# LLM adapter (Generator.LLM) is the runtime default. Embeddings already run deterministic
+# (set below), so the whole mcp_overview flow is offline in the suite.
+Application.put_env(
+  :noizu_prompt_lingua,
+  :mcp_overview,
+  Keyword.merge(Application.get_env(:noizu_prompt_lingua, :mcp_overview, []),
+    generator: NoizuPromptLingua.Domains.MCPOverview.Generator.Stub
+  )
+)
+
 # Memory tests are Weaviate-primary: use the deterministic (feature-hash) embedder for reproducible
 # vectors with no OpenAI, and an ephemeral, isolated class on the cluster Weaviate. Inter-test
 # isolation comes from each test's randomly-generated organization_id (scope filter).

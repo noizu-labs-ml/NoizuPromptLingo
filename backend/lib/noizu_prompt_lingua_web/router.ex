@@ -323,6 +323,13 @@ defmodule NoizuPromptLinguaWeb.Router do
     patch "/mcp-custom-scopes/:slug", AdminController, :update_mcp_custom_scope
     delete "/mcp-custom-scopes/:slug", AdminController, :delete_mcp_custom_scope
 
+    # mcp_overview review flow — list generated overviews, approve/reject/edit
+    # (editing the Markdown implies approval). UI is a follow-up.
+    get "/mcp-overviews", McpOverviewController, :index
+    patch "/mcp-overviews/:id/approve", McpOverviewController, :approve
+    patch "/mcp-overviews/:id/reject", McpOverviewController, :reject
+    patch "/mcp-overviews/:id", McpOverviewController, :update
+
     # LLM model catalog (global) — editable provider/model pairs for the Mock MCP
     # picker / MCP ListModels (drives mock MCPs + asset LLM selection).
     get "/llm-models", AdminController, :list_llm_models

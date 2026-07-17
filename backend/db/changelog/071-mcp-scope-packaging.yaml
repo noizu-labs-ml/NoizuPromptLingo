@@ -1,0 +1,74 @@
+databaseChangeLog:
+  # MCP scope packaging (design spec §1): give mcp_custom_scopes a `kind`
+  # (custom | all_in_one | core_variant) and optional org/project attachment so a
+  # scope can be a global preset OR a self-service org/project package.
+  #
+  # NOTE — cross-tool ordering: `mcp_custom_scopes` is created by an ECTO migration
+  # (priv/repo/migrations/20260627002000_create_mcp_custom_scopes.exs), not by an
+  # earlier Liquibase changelog. This is the first Liquibase changeset to touch that
+  # table, so it is guarded by a tableExists precondition: on any provisioned
+  # environment the table already exists (it has since 2026-06-27); on a fresh DB the
+  # Ecto migration MUST run before `liquibase update`, and the guard fails loudly with
+  # guidance rather than emitting a cryptic "relation does not exist".
+  #
+  # FK/index style copied from 034-domain-org-binding.yaml (org = ON DELETE CASCADE,
+  # project = ON DELETE SET NULL). The `kind` CHECK mirrors projects.status (017).
+
+  - changeSet:
+      id: 071a-mcp-custom-scopes-add-kind-and-org-project
+      author: tobor-locker
+      preConditions:
+        - onFail: HALT
+        - onFailMessage: >-
+            mcp_custom_scopes is missing — run the Ecto migration
+            20260627002000_create_mcp_custom_scopes (Release.migrate) before
+            `liquibase update`.
+        - tableExists:
+            tableName: mcp_custom_scopes
+      changes:
+        - sql:
+            sql: |
+              ALTER TABLE mcp_custom_scopes
+                ADD COLUMN kind varchar(20) NOT NULL DEFAULT 'custom'
+                  CHECK (kind IN ('custom', 'all_in_one', 'core_variant')),
+                ADD COLUMN organization_id uuid
+                  REFERENCES organizations(id) ON DELETE CASCADE,
+                ADD COLUMN project_id uuid
+                  REFERENCES projects(id) ON DELETE SET NULL;
+      rollback:
+        - sql:
+            sql: |
+              ALTER TABLE mcp_custom_scopes
+                DROP COLUMN kind,
+                DROP COLUMN organization_id,
+                DROP COLUMN project_id;
+
+  - changeSet:
+      id: 071b-mcp-custom-scopes-indexes
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_mcp_custom_scopes_kind
+            tableName: mcp_custom_scopes
+            columns:
+              - column:
+                  name: kind
+        - createIndex:
+            indexName: idx_mcp_custom_scopes_organization_id
+            tableName: mcp_custom_scopes
+            columns:
+              - column:
+                  name: organization_id
+        - createIndex:
+            indexName: idx_mcp_custom_scopes_project_id
+            tableName: mcp_custom_scopes
+            columns:
+              - column:
+                  name: project_id
+      rollback:
+        - dropIndex:
+            indexName: idx_mcp_custom_scopes_kind
+        - dropIndex:
+            indexName: idx_mcp_custom_scopes_organization_id
+        - dropIndex:
+            indexName: idx_mcp_custom_scopes_project_id

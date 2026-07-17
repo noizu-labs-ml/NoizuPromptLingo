@@ -2,8 +2,10 @@ defmodule NoizuPromptLingua.MCP.Sessions.Tools.SessionUpdate do
   use Noizu.MCP.Server.Tool,
     name: "Session.Update",
     description:
-      "Update a session's title, description, status, or project association. " <>
-        "Pass `project` to (re)associate with a project, or an empty string to clear it.",
+      "Update a session's title, description, status, project association, or the " <>
+        "model/runner it targets. Pass `project` to (re)associate with a project, or an " <>
+        "empty string to clear it. `model` and `runner` may change mid-session as the " <>
+        "harness or model switches.",
     hidden: true,
     category: "Sessions"
 
@@ -15,6 +17,8 @@ defmodule NoizuPromptLingua.MCP.Sessions.Tools.SessionUpdate do
     field :description, :string, description: "New description"
     field :status, :string, description: "New status (active|archived|completed)"
     field :project, :string, description: "Project slug or UUID to associate (\"\" to clear)"
+    field :model, :string, description: "Model this session targets (e.g. \"5.4\"); tailors tool descriptions"
+    field :runner, :string, description: "Harness/runner this session targets (e.g. \"codex\"); tailors tool descriptions"
   end
 
   @impl true
@@ -29,14 +33,15 @@ defmodule NoizuPromptLingua.MCP.Sessions.Tools.SessionUpdate do
         with {:ok, project_attrs} <- project_attrs(args, session.organization_id) do
           attrs =
             args
-            |> Args.take([:title, :description, :status])
+            |> Args.take([:title, :description, :status, :model, :runner])
             |> Map.merge(project_attrs)
 
           case NoizuPromptLingua.Sessions.update_session(id, attrs) do
             {:ok, updated} ->
               {:ok, %{
                 id: updated.id, title: updated.title, status: updated.status,
-                organization_id: updated.organization_id, project_id: updated.project_id
+                organization_id: updated.organization_id, project_id: updated.project_id,
+                model: updated.model, runner: updated.runner
               }}
 
             {:error, :not_found} -> {:error, "Session '#{id}' not found"}

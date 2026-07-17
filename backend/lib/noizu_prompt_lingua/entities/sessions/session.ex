@@ -21,6 +21,8 @@ defmodule NoizuPromptLingua.Sessions.Session do
     field :title, nil, :string
     field :description, nil, :string
     field :status, "active", :string
+    field :model, nil, :string
+    field :runner, nil, :string
     field :archived_at, nil, :utc_datetime_usec
     field :time_stamp, nil, Noizu.Entity.TimeStamp
   end

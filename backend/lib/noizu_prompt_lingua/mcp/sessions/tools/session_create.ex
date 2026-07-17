@@ -16,6 +16,8 @@ defmodule NoizuPromptLingua.MCP.Sessions.Tools.SessionCreate do
     field :description, :string, description: "Optional longer description of the session's purpose"
     field :status, :string, description: "Initial status (default \"active\")"
     field :project, :string, description: "Optional project slug or UUID to associate this session with"
+    field :model, :string, description: "Optional model this session targets (e.g. \"5.4\"); tailors tool descriptions"
+    field :runner, :string, description: "Optional harness/runner this session targets (e.g. \"codex\"); tailors tool descriptions"
     field :owner_id, :string, description: "Optional creating user UUID"
   end
 
@@ -31,7 +33,9 @@ defmodule NoizuPromptLingua.MCP.Sessions.Tools.SessionCreate do
         project_id: project_id,
         title: Args.get(args, :title),
         description: Args.get(args, :description),
-        status: Args.get(args, :status) || "active"
+        status: Args.get(args, :status) || "active",
+        model: Args.get(args, :model),
+        runner: Args.get(args, :runner)
       }
 
       case NoizuPromptLingua.Sessions.create(attrs, Args.get(args, :owner_id)) do
@@ -42,6 +46,8 @@ defmodule NoizuPromptLingua.MCP.Sessions.Tools.SessionCreate do
             status: session.status,
             organization_id: session.organization_id,
             project_id: session.project_id,
+            model: session.model,
+            runner: session.runner,
             created_at: session.inserted_at
           }}
 

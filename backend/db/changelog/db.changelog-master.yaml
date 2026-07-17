@@ -211,3 +211,12 @@ databaseChangeLog:
   - include:
       file: 070-unicode-codex.yaml
       relativeToChangelogFile: true
+  - include:
+      file: 071-mcp-scope-packaging.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 072-session-runner-model.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 073-mcp-overviews.yaml
+      relativeToChangelogFile: true

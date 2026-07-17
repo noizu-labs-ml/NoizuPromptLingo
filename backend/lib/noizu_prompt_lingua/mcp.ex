@@ -39,6 +39,8 @@ defmodule NoizuPromptLingua.MCP do
   tool NoizuPromptLingua.Tools.ToolDefinition
   tool NoizuPromptLingua.Tools.ToolCall
   tool NoizuPromptLingua.Tools.ToolHelp
+  # Hidden: task-proximity tailored overview of this endpoint's tools (pgvector).
+  tool NoizuPromptLingua.Tools.McpOverview
 
   # NPL — Noizu Prompt Lingua convention loading & spec generation (read-only)
   tool NoizuPromptLingua.Tools.NPLLoad, category: "NPL"

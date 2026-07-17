@@ -24,6 +24,8 @@ defmodule NoizuPromptLingua.Tools.ToolSearch do
   end
 
   alias NoizuPromptLingua.Tools.Catalog
+  alias NoizuPromptLingua.Domains.Memory.Embeddings
+  alias NoizuPromptLingua.Domains.MCPOverview.{Store, Indexer}
 
   @impl true
   def call(args, ctx) do
@@ -72,14 +74,54 @@ defmodule NoizuPromptLingua.Tools.ToolSearch do
     }
   end
 
+  # Embedding-proximity intent search over `mcp_tool_vectors` for the current scope.
+  # Falls back (tagged) to substring search when embeddings are not configured.
   defp intent_search(query, limit, server, ctx) do
-    case text_search(query, limit, server, ctx) do
-      result ->
-        Map.merge(result, %{
-          mode: "intent",
-          fallback: true,
-          fallback_reason: "LLM intent search not yet configured — using text search"
-        })
+    if Embeddings.configured?() do
+      embedding_search(query, limit, server, ctx)
+    else
+      text_fallback(query, limit, server, ctx)
     end
   end
+
+  defp embedding_search(query, limit, server, ctx) do
+    catalog = Catalog.build(server, ctx)
+    specs = Enum.reject(catalog, &(&1.category == "Discovery"))
+    scope = scope_slug(ctx)
+
+    # Best-effort: ensure this scope's tool vectors exist / are current before ranking.
+    Indexer.refresh(scope, specs)
+
+    with {:ok, vec} <- Embeddings.embed_one(query),
+         ranked when ranked != [] <- Store.nearest_tool_vectors(scope, vec, limit: limit) do
+      by_name = Map.new(catalog, &{&1.name, &1})
+
+      matches =
+        ranked
+        |> Enum.map(fn r -> {Map.get(by_name, r.tool_name), r.distance} end)
+        |> Enum.reject(fn {tool, _} -> is_nil(tool) end)
+        |> Enum.map(fn {t, dist} ->
+          %{name: t.name, category: t.category, description: t.description, distance: dist}
+        end)
+
+      %{mode: "intent", query: query, total_matches: length(matches), matches: matches}
+    else
+      # No vectors yet (scope unindexed / embed failed) → tagged text fallback.
+      _ -> text_fallback(query, limit, server, ctx)
+    end
+  end
+
+  defp text_fallback(query, limit, server, ctx) do
+    Map.merge(text_search(query, limit, server, ctx), %{
+      mode: "intent",
+      fallback: true,
+      fallback_reason: "embedding intent search unavailable — using text search"
+    })
+  end
+
+  defp scope_slug(%Noizu.MCP.Ctx{assigns: assigns}) do
+    assigns[:custom_scope_slug] || assigns["custom_scope_slug"] || "root"
+  end
+
+  defp scope_slug(_), do: "root"
 end

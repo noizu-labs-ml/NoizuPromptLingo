@@ -27,6 +27,20 @@ defmodule NoizuPromptLingua.MCPCustomScopeTestSchema do
       []
     )
 
+    # Liquibase 071 columns (packaging). Added without FK constraints here — the
+    # suite exercises the app-level rules, not FK enforcement — but idempotent so
+    # a DB already carrying 071 is untouched.
+    Ecto.Adapters.SQL.query!(
+      Repo,
+      """
+      ALTER TABLE mcp_custom_scopes
+        ADD COLUMN IF NOT EXISTS kind varchar(20) NOT NULL DEFAULT 'custom',
+        ADD COLUMN IF NOT EXISTS organization_id uuid,
+        ADD COLUMN IF NOT EXISTS project_id uuid
+      """,
+      []
+    )
+
     :ok
   end
 end

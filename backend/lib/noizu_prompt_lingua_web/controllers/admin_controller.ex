@@ -903,8 +903,13 @@ defmodule NoizuPromptLinguaWeb.AdminController do
     conn |> put_status(:bad_request) |> json(%{error: "scope required"})
   end
 
-  def update_mcp_custom_scope(conn, %{"slug" => slug, "scope" => attrs}) do
-    case MCPCustomScopes.update(slug, attrs) do
+  def update_mcp_custom_scope(conn, %{"slug" => slug, "scope" => attrs} = params) do
+    # `confirm` may arrive at the top level or inside the scope map; thread the
+    # acting admin so a confirmed disable records who authorized it.
+    attrs = maybe_merge_confirm(attrs, params)
+    actor_id = conn.assigns[:admin_user] && conn.assigns[:admin_user].id
+
+    case MCPCustomScopes.update(slug, attrs, actor_id: actor_id) do
       {:ok, scope} ->
         conn
         |> put_status(:ok)
@@ -912,6 +917,15 @@ defmodule NoizuPromptLinguaWeb.AdminController do
 
       {:error, :not_found} ->
         conn |> put_status(:not_found) |> json(%{error: "Scope not found"})
+
+      {:error, :confirmation_required, groups} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{
+          error: "confirmation required to disable required core group(s)",
+          required_groups: groups,
+          confirm_required: true
+        })
 
       {:error, %Ecto.Changeset{} = cs} ->
         conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
@@ -956,6 +970,15 @@ defmodule NoizuPromptLinguaWeb.AdminController do
       settings: c.settings,
       inserted_at: c.inserted_at
     }
+  end
+
+  # Accept the typed-confirm phrase at the top level of the request too, folding it
+  # into the scope attrs the context reads.
+  defp maybe_merge_confirm(attrs, params) do
+    case Map.get(params, "confirm") do
+      nil -> attrs
+      confirm -> Map.put(attrs, "confirm", confirm)
+    end
   end
 
   defp mcp_host(conn) do

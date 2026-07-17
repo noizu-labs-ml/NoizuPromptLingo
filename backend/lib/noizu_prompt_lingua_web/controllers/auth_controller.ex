@@ -82,7 +82,7 @@ defmodule NoizuPromptLinguaWeb.AuthController do
 
   # ── User-scoped MCP API keys ──────────────────────────────────────────────────
 
-  def mcp_config(conn, _params) do
+  def mcp_config(conn, params) do
     # Frontend host may differ from the backend host (separate deployments),
     # so prefer the configured frontend URL when deriving MCP connection URLs.
     host =
@@ -91,8 +91,34 @@ defmodule NoizuPromptLinguaWeb.AuthController do
         derive_host(conn) ||
         "localhost"
 
-    conn |> put_status(:ok) |> json(%{host: host, servers: NoizuPromptLingua.MCPServers.for_host(host)})
+    # `packaging` selects the endpoint set. Missing param → :default, whose output
+    # is byte-identical to the pre-packaging behavior.
+    case parse_packaging(Map.get(params, "packaging")) do
+      {:ok, packaging} ->
+        servers = NoizuPromptLingua.MCPServers.for_host(host, packaging, packaging_opts(params))
+        conn |> put_status(:ok) |> json(%{host: host, servers: servers})
+
+      :error ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{error: "invalid packaging; expected 'core+custom' or 'all-in-one'"})
+    end
   end
+
+  defp parse_packaging(nil), do: {:ok, :default}
+  defp parse_packaging("core+custom"), do: {:ok, :core_custom}
+  defp parse_packaging("all-in-one"), do: {:ok, :all_in_one}
+  defp parse_packaging(_), do: :error
+
+  defp packaging_opts(params) do
+    []
+    |> maybe_opt(:organization_id, Map.get(params, "organization_id"))
+    |> maybe_opt(:project_id, Map.get(params, "project_id"))
+  end
+
+  defp maybe_opt(opts, _key, nil), do: opts
+  defp maybe_opt(opts, _key, ""), do: opts
+  defp maybe_opt(opts, key, value), do: Keyword.put(opts, key, value)
 
   defp derive_host(nil), do: nil
   defp derive_host(url) when is_binary(url) do

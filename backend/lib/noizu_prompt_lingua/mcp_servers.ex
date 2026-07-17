@@ -127,6 +127,17 @@ defmodule NoizuPromptLingua.MCPServers do
     Enum.reject(@servers, &(&1.id == "root"))
   end
 
+  @doc """
+  Ids of the required core groups that participate in custom/all_in_one scopes.
+
+  Derived from the `required` flag on the catalog, excluding `root` (root is the
+  bare-host endpoint and is never a selectable group). These are the groups an
+  `all_in_one` scope auto-includes and protects behind the typed-confirm flow.
+  """
+  def required_ids do
+    customizable() |> Enum.filter(& &1.required) |> Enum.map(& &1.id)
+  end
+
   @doc "Resolve a public server id to its MCP server module."
   def server_module(id) when is_binary(id), do: Map.get(@server_modules, id)
   def server_module(_), do: nil
@@ -134,10 +145,26 @@ defmodule NoizuPromptLingua.MCPServers do
   @doc """
   Returns the MCP servers with full connection URLs, derived from the configured
   `PHX_HOST`. Suitable for JSON serialization to clients building setup commands.
-  """
-  def for_host(nil), do: for_host(default_host())
 
-  def for_host(host) when is_binary(host) do
+  `packaging` selects the endpoint set (design spec §1):
+
+    * `:default` — full static server list + all custom scopes (unchanged output).
+    * `:core_custom` — core-variant endpoint(s) + custom-scope endpoint(s).
+    * `:all_in_one` — the all_in_one endpoint(s) + any task-segmented one-offs
+      (scopes whose config carries `segment: true`).
+
+  `opts` (`:organization_id`, `:project_id`) scope the non-default packaging sets
+  to global presets plus rows matching the given org/project.
+  """
+  def for_host(host, packaging \\ :default, opts \\ [])
+
+  def for_host(nil, packaging, opts), do: for_host(default_host(), packaging, opts)
+
+  def for_host(host, packaging, opts) when is_binary(host) do
+    packaging_servers(host, packaging, opts)
+  end
+
+  defp packaging_servers(host, :default, _opts) do
     static =
       Enum.map(@servers, fn %{id: id} = s ->
         subdomain = if id == "root", do: host, else: "#{id}.#{host}"
@@ -158,6 +185,44 @@ defmodule NoizuPromptLingua.MCPServers do
 
     static ++ custom
   end
+
+  defp packaging_servers(host, :core_custom, opts) do
+    NoizuPromptLingua.MCPCustomScopes.scopes_for(["core_variant", "custom"], opts)
+    |> Enum.map(&scope_entry(&1, host))
+  end
+
+  defp packaging_servers(host, :all_in_one, opts) do
+    scoped =
+      NoizuPromptLingua.MCPCustomScopes.scopes_for(["all_in_one", "custom", "core_variant"], opts)
+
+    all = Enum.filter(scoped, &(&1.kind == "all_in_one"))
+    segments = Enum.filter(scoped, &segment_scope?/1)
+
+    (all ++ segments)
+    |> Enum.uniq_by(& &1.id)
+    |> Enum.map(&scope_entry(&1, host))
+  end
+
+  defp scope_entry(scope, host) do
+    %{
+      id: "custom:#{scope.slug}",
+      label: scope_label(scope),
+      required: false,
+      kind: scope.kind,
+      desc: scope.description || "Custom MCP include scope",
+      url: custom_url(scope.slug, host)
+    }
+  end
+
+  defp scope_label(%{kind: "core_variant", name: name}), do: "Core: #{name}"
+  defp scope_label(%{kind: "all_in_one", name: name}), do: "All-in-One: #{name}"
+  defp scope_label(%{name: name}), do: "Custom: #{name}"
+
+  defp segment_scope?(%{config: config}) when is_map(config) do
+    Map.get(config, "segment") == true or Map.get(config, :segment) == true
+  end
+
+  defp segment_scope?(_), do: false
 
   def custom_url(slug, nil), do: custom_url(slug, default_host())
   def custom_url(slug, host), do: "https://#{host}/custom/#{slug}/mcp"

@@ -42,14 +42,20 @@ defmodule NoizuPromptLingua.MCP.Custom do
   end
 
   def catalog_specs(ctx) do
-    custom_specs(ctx) ++ discovery_specs()
+    custom_specs(ctx) ++ discovery_specs() ++ overview_specs()
+  end
+
+  # Hidden overview tool (auto-registered like the discovery block). Its scope is
+  # taken from ctx assigns (`custom_scope_slug`) at call time.
+  defp overview_specs do
+    Tools.expand([{NoizuPromptLingua.Tools.McpOverview, [category: "Discovery"]}])
   end
 
   def custom_specs(ctx) do
     with slug when is_binary(slug) <- scope_slug(ctx),
          scope when not is_nil(scope) <- MCPCustomScopes.get_by_slug(slug) do
       scope.config
-      |> MCPCustomScopes.normalize_config()
+      |> MCPCustomScopes.normalize_config(scope.kind)
       |> Map.fetch!("groups")
       |> Enum.flat_map(fn {group_id, group_config} ->
         group_specs(group_id, group_config)

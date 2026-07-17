@@ -28,6 +28,8 @@ defmodule NoizuPromptLingua.MCP.Sessions.Tools.SessionGet do
           status: session.status,
           organization_id: session.organization_id,
           project_id: session.project_id,
+          model: session.model,
+          runner: session.runner,
           created_at: session.inserted_at
         }}
     end
