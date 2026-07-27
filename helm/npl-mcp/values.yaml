@@ -41,7 +41,7 @@ backend:
 frontend:
   image:
     repository: ops.noizu.com/npl-mcp/frontend
-    tag: "v1.0.24"
+    tag: "v1.0.25"
     pullPolicy: IfNotPresent
   port: 3000
   resources:
