@@ -18,16 +18,65 @@ defmodule NoizuPromptLinguaWeb.SSOController do
 
   def oidc_init(conn, _params) do
     config = oidc_config()
-    {:ok, uri} = OpenIDConnect.authorization_uri(config, config.redirect_uri)
-    redirect(conn, external: uri)
+
+    # `state` guards against login-CSRF - an attacker completing a flow so the
+    # victim is silently signed in as the attacker - and `nonce` against
+    # id_token replay. Neither was previously sent. Ueberauth already does this
+    # for the social providers; the raw OIDC path was the gap.
+    state = random_token()
+    nonce = random_token()
+
+    {:ok, uri} =
+      OpenIDConnect.authorization_uri(config, config.redirect_uri, %{
+        state: state,
+        nonce: nonce
+      })
+
+    conn
+    |> put_session(:sso_state, state)
+    |> put_session(:sso_nonce, nonce)
+    |> redirect(external: uri)
   end
 
-  def oidc_callback(conn, %{"code" => code}) do
-    config = oidc_config()
+  defp verify_state(nil, _received), do: {:error, :state_mismatch}
+  defp verify_state(_expected, nil), do: {:error, :state_mismatch}
 
-    with {:ok, tokens} <-
+  defp verify_state(expected, received) do
+    if Plug.Crypto.secure_compare(expected, received),
+      do: :ok,
+      else: {:error, :state_mismatch}
+  end
+
+  # A provider that omits the nonce it was given is not proof of replay, but one
+  # that returns a DIFFERENT nonce is.
+  defp verify_nonce(_expected, nil), do: :ok
+  defp verify_nonce(nil, _received), do: :ok
+
+  defp verify_nonce(expected, received) do
+    if Plug.Crypto.secure_compare(expected, received), do: :ok, else: {:error, :nonce_mismatch}
+  end
+
+  defp random_token, do: :crypto.strong_rand_bytes(32) |> Base.url_encode64(padding: false)
+
+  def oidc_callback(conn, %{"code" => code} = params) do
+    expected_state = get_session(conn, :sso_state)
+    expected_nonce = get_session(conn, :sso_nonce)
+
+    # One-time use: cleared before the exchange, so a replayed callback cannot
+    # reuse a state value that already succeeded.
+    conn =
+      conn
+      |> delete_session(:sso_state)
+      |> delete_session(:sso_nonce)
+
+    # State is checked FIRST, before the provider config is even read: a forged
+    # callback then costs no discovery fetch and no token request.
+    with :ok <- verify_state(expected_state, params["state"]),
+         config <- oidc_config(),
+         {:ok, tokens} <-
            OpenIDConnect.fetch_tokens(config, %{code: code, redirect_uri: config.redirect_uri}),
-         {:ok, claims} <- OpenIDConnect.verify(config, tokens["id_token"]) do
+         {:ok, claims} <- OpenIDConnect.verify(config, tokens["id_token"]),
+         :ok <- verify_nonce(expected_nonce, claims["nonce"]) do
       # The OIDC :default flow is the Authentik IdP — the only supported provider.
       handle_sso_callback(conn, :authentik, %{
         email: claims["email"],
@@ -35,6 +84,7 @@ defmodule NoizuPromptLinguaWeb.SSOController do
         sub: claims["sub"]
       })
     else
+      {:error, :state_mismatch} -> redirect_with_error(conn, "state_mismatch")
       _ -> redirect_with_error(conn, "oidc_failed")
     end
   end

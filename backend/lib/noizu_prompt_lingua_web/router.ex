@@ -15,7 +15,12 @@ defmodule NoizuPromptLinguaWeb.Router do
       key: "_starter_sso",
       signing_salt: "sso_session_salt",
       same_site: "Lax",
-      max_age: 300
+      # 15 minutes, raised from 5. This cookie now carries the OIDC flow's
+      # `state` and `nonce`, so it must outlive the user's round trip through
+      # the identity provider - five minutes does not cover a password plus a
+      # 2FA prompt, and expiring mid-flow would surface as `state_mismatch` on a
+      # login that previously succeeded. It holds flow state, never credentials.
+      max_age: 900
 
     plug :fetch_session
   end
