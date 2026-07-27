@@ -26,6 +26,29 @@ const PLATFORM = [
 
 const STACK = ["Elixir 1.19", "Phoenix 1.8", "Next.js 15", "React 19", "PostgreSQL · pgvector", "Redis", "Tailwind v4", "Helm"];
 
+const BOARD_PREVIEW = [
+  {
+    stage: "Backlog",
+    tickets: [
+      { title: "Draft agent onboarding runbook", type: "documentation", priority: "medium" },
+      { title: "Map MCP tool coverage gaps", type: "research", priority: "high" },
+    ],
+  },
+  {
+    stage: "In Progress",
+    tickets: [
+      { title: "Wire board cards to project scope", type: "task", priority: "high" },
+      { title: "Review session artifact lifecycle", type: "prd", priority: "medium" },
+    ],
+  },
+  {
+    stage: "Review",
+    tickets: [
+      { title: "Validate SSO callback routing", type: "bug", priority: "critical" },
+    ],
+  },
+];
+
 function Landing() {
   return (
     <div className="tl-landing">
@@ -42,6 +65,37 @@ function Landing() {
         <div className="tl-cta-row">
           <a href="/auth/oidc"><StyleGuideBtn variant="black" label="Sign in to your locker" /></a>
           <Link href="/styleguide"><StyleGuideBtn variant="outline" label="View the design system" /></Link>
+        </div>
+      </section>
+
+      <section className="tl-section tl-board-preview" aria-labelledby="board-preview-title">
+        <div>
+          <h2 id="board-preview-title" className="tl-section__title">Work cards, before the shell</h2>
+          <p className="tl-section__lede">
+            The same ticket-card language used inside the logged-in workspace is visible here as
+            a public preview of how Tobor Locker organizes agent work.
+          </p>
+        </div>
+        <div className="tl-board-preview__board" aria-label="Example project board">
+          {BOARD_PREVIEW.map((column) => (
+            <div key={column.stage} className="tl-board-preview__col">
+              <div className="tl-board-preview__head">
+                <span>{column.stage}</span>
+                <span>{column.tickets.length}</span>
+              </div>
+              <div className="tl-board-preview__cards">
+                {column.tickets.map((ticket) => (
+                  <article key={ticket.title} className="tl-board-preview__card">
+                    <h3>{ticket.title}</h3>
+                    <div className="tl-board-preview__meta">
+                      <span>{ticket.type}</span>
+                      <span>{ticket.priority}</span>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
