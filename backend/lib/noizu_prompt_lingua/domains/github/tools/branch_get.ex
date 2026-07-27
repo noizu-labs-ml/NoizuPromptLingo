@@ -27,7 +27,7 @@ defmodule NoizuPromptLingua.Domains.Github.Tools.BranchGet do
 			{{:ok, user_uuid}, {:ok, org}} -> Client.get_branch(user_uuid, org, repo_ref, branch_name)
 			{{:ok, _}, {:error, :org_not_found}} -> {:error, :organization_not_found}
 			{{:ok, _}, {:error, reason}} -> {:error, reason}
-			{{:error, _}, _} -> {:error, :invalid_uuid}
+			{:error, _} -> {:error, :invalid_uuid}
 		end
 	end
 

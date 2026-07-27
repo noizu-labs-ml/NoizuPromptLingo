@@ -31,7 +31,7 @@ defmodule NoizuPromptLingua.Domains.Github.Tools.PullList do
 			{{:ok, user_uuid}, {:ok, org}} -> Client.list_pulls(user_uuid, org, repo_ref, opts)
 			{{:ok, _}, {:error, :org_not_found}} -> {:error, :organization_not_found}
 			{{:ok, _}, {:error, reason}} -> {:error, reason}
-			{{:error, _}, _} -> {:error, :invalid_uuid}
+			{:error, _} -> {:error, :invalid_uuid}
 		end
 	end
 

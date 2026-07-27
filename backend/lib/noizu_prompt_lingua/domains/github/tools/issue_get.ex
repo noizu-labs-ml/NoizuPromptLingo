@@ -27,7 +27,7 @@ defmodule NoizuPromptLingua.Domains.Github.Tools.IssueGet do
 			{{:ok, user_uuid}, {:ok, org}} -> Client.get_issue(user_uuid, org, repo_ref, issue_number)
 			{{:ok, _}, {:error, :org_not_found}} -> {:error, :organization_not_found}
 			{{:ok, _}, {:error, reason}} -> {:error, reason}
-			{{:error, _}, _} -> {:error, :invalid_uuid}
+			{:error, _} -> {:error, :invalid_uuid}
 		end
 	end
 
