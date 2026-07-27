@@ -13,9 +13,3 @@ npm-debug.log
 /assets/node_modules/
 *.db
 *.db-*
-
-# db/liquibase.properties is safe, required template source (${DB_*}
-# envsubst placeholders only, no secrets) that the db Dockerfile COPYs at
-# build time. Root .gitignore's bare `liquibase.properties` basename rule
-# would otherwise silently exclude it from every commit.
-!db/liquibase.properties
