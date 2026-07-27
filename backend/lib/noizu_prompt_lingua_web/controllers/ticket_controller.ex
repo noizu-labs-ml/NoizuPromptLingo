@@ -102,7 +102,7 @@ defmodule NoizuPromptLinguaWeb.TicketController do
 
   # :id may be a ticket UUID or a human key (NOZINF-023). Key resolution is org-scoped.
   defp fetch_ticket(org_id, id_or_key) do
-    case Ecto.UUID.cast(id_or_key) do
+    case NoizuPromptLingua.UUID.cast(id_or_key) do
       {:ok, uuid} -> Tickets.get(uuid)
       :error -> Tickets.get_by_key(org_id, id_or_key)
     end

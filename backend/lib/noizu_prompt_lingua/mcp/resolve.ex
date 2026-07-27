@@ -42,7 +42,7 @@ defmodule NoizuPromptLingua.MCP.Resolve do
   @doc "Resolve a project ref (slug or UUID) to its schema record, or nil."
   def project(nil), do: nil
   def project(ref) do
-    case Ecto.UUID.cast(ref) do
+    case NoizuPromptLingua.UUID.cast(ref) do
       {:ok, uuid} ->
         NoizuPromptLingua.Repo.get(ProjectSchema, uuid) ||
           NoizuPromptLingua.Repo.get_by(ProjectSchema, slug: ref)

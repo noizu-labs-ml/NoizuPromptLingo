@@ -21,7 +21,7 @@ defmodule NoizuPromptLingua.Domains.MockMCP do
   end
 
   def get(slug_or_id) do
-    case Ecto.UUID.cast(slug_or_id) do
+    case NoizuPromptLingua.UUID.cast(slug_or_id) do
       {:ok, _} ->
         MockMCPDefinition
         |> where([d], d.id == ^slug_or_id or d.slug == ^slug_or_id)

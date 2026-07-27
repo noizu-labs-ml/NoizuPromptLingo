@@ -267,7 +267,7 @@ defmodule NoizuPromptLinguaWeb.ChatController do
   # a slug is unique per (org, project), so a `project_id` (when supplied) selects
   # the project bucket; its absence resolves the NULL-project (org-level) bucket.
   defp fetch_room(org_id, id_or_slug, project_id \\ nil) do
-    case Ecto.UUID.cast(id_or_slug) do
+    case NoizuPromptLingua.UUID.cast(id_or_slug) do
       {:ok, uuid} -> Chat.get_room(uuid)
       :error -> Chat.get_room_by_slug(org_id, project_id, id_or_slug)
     end

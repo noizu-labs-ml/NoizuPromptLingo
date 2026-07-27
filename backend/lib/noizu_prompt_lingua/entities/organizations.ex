@@ -28,13 +28,20 @@ defmodule NoizuPromptLingua.Organizations do
   through) or a slug (looked up via the Redis-backed slug cache). Used so the
   API can accept slugs in URLs while keeping the UUID-keyed data layer intact.
   Returns `{:ok, uuid}` or `{:error, :not_found}`.
+
+  The UUID branch passes its input through *as the org id*, so a wrong
+  classification here is not a failed lookup — it forwards a slug into every
+  downstream `organization_id ==` filter and locks the tenant out of the whole
+  API. Hence `NoizuPromptLingua.UUID.uuid?/1` rather than `Ecto.UUID.cast/1`,
+  which also accepts a raw 16-byte binary and so claimed every 16-character
+  slug. See that module.
   """
   def resolve_org_id(slug_or_uuid) do
     cond do
       is_nil(slug_or_uuid) ->
         {:error, :not_found}
 
-      uuid?(slug_or_uuid) ->
+      NoizuPromptLingua.UUID.uuid?(slug_or_uuid) ->
         {:ok, slug_or_uuid}
 
       is_binary(slug_or_uuid) ->
@@ -58,12 +65,6 @@ defmodule NoizuPromptLingua.Organizations do
     from(o in Schema, where: o.slug == ^slug, select: o.id)
     |> NoizuPromptLingua.Repo.one()
   end
-
-  defp uuid?(value) when is_binary(value) do
-    match?({:ok, _}, Ecto.UUID.cast(value))
-  end
-
-  defp uuid?(_), do: false
 
   def update_organization(id, attrs) do
     case NoizuPromptLingua.Repo.get(Schema, id) do

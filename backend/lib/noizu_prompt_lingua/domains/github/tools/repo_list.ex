@@ -34,7 +34,7 @@ defmodule NoizuPromptLingua.Domains.Github.Tools.RepoList do
 	end
 
 	defp parse_uuid(str) do
-		case Ecto.UUID.cast(str) do
+		case NoizuPromptLingua.UUID.cast(str) do
 			{:ok, uuid} -> {:ok, uuid}
 			:error -> :error
 		end

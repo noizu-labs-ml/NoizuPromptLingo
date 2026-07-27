@@ -24,7 +24,7 @@ defmodule NoizuPromptLingua.Domains.Personas do
 
   @doc "Resolve an id or (org-scoped) slug to a persona."
   def resolve(org_id, id_or_slug) do
-    case Ecto.UUID.cast(id_or_slug) do
+    case NoizuPromptLingua.UUID.cast(id_or_slug) do
       {:ok, uuid} ->
         Repo.get(Persona, uuid) || Repo.get_by(Persona, organization_id: org_id, slug: id_or_slug)
 
@@ -124,7 +124,7 @@ defmodule NoizuPromptLingua.Domains.Personas do
   end
 
   def get_knowledge(persona_id, id_or_slug) do
-    case Ecto.UUID.cast(id_or_slug) do
+    case NoizuPromptLingua.UUID.cast(id_or_slug) do
       {:ok, uuid} ->
         Repo.get(PersonaKnowledgeEntry, uuid) ||
           Repo.get_by(PersonaKnowledgeEntry, persona_id: persona_id, slug: id_or_slug)

@@ -9,7 +9,7 @@ defmodule NoizuPromptLinguaWeb.GroupController do
   end
 
   def show(conn, %{"id" => id}) do
-    group = if uuid?(id), do: NoizuPromptLingua.Repo.get(NoizuPromptLingua.Schema.Authz.Group, id), else: Groups.get_by_name(id)
+    group = if NoizuPromptLingua.UUID.uuid?(id), do: NoizuPromptLingua.Repo.get(NoizuPromptLingua.Schema.Authz.Group, id), else: Groups.get_by_name(id)
 
     case group do
       nil -> conn |> put_status(:not_found) |> json(%{error: "Group not found"})
@@ -18,7 +18,7 @@ defmodule NoizuPromptLinguaWeb.GroupController do
   end
 
   def policies(conn, %{"id" => id}) do
-    group = if uuid?(id), do: NoizuPromptLingua.Repo.get(NoizuPromptLingua.Schema.Authz.Group, id), else: Groups.get_by_name(id)
+    group = if NoizuPromptLingua.UUID.uuid?(id), do: NoizuPromptLingua.Repo.get(NoizuPromptLingua.Schema.Authz.Group, id), else: Groups.get_by_name(id)
 
     case group do
       nil -> conn |> put_status(:not_found) |> json(%{error: "Group not found"})
@@ -36,12 +36,5 @@ defmodule NoizuPromptLinguaWeb.GroupController do
       description: group.description,
       is_system: group.is_system
     }
-  end
-
-  defp uuid?(str) do
-    case Ecto.UUID.cast(str) do
-      {:ok, _} -> true
-      :error -> false
-    end
   end
 end

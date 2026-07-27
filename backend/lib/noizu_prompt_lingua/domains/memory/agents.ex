@@ -39,7 +39,7 @@ defmodule NoizuPromptLingua.Domains.Memory.Agents do
 
   @doc "Resolve a UUID or (org-scoped) call sign to an `AgentCallSign`."
   def resolve(org_id, id_or_call_sign) do
-    case Ecto.UUID.cast(id_or_call_sign) do
+    case NoizuPromptLingua.UUID.cast(id_or_call_sign) do
       {:ok, uuid} ->
         Repo.get(AgentCallSign, uuid) ||
           Repo.get_by(AgentCallSign, organization_id: org_id, call_sign: to_string(id_or_call_sign))

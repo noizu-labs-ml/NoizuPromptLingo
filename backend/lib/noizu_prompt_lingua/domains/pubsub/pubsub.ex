@@ -38,7 +38,7 @@ defmodule NoizuPromptLingua.Domains.PubSub do
 
   @doc "Fetch a channel within an org by slug or UUID. Returns the record or nil."
   def get_channel(organization_id, ref) do
-    case Ecto.UUID.cast(ref) do
+    case NoizuPromptLingua.UUID.cast(ref) do
       {:ok, uuid} ->
         Repo.get_by(PubSubChannel, id: uuid, organization_id: organization_id) ||
           Repo.get_by(PubSubChannel, slug: ref, organization_id: organization_id)

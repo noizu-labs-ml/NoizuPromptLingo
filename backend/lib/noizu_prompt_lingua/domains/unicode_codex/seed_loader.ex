@@ -92,7 +92,7 @@ defmodule NoizuPromptLingua.Domains.UnicodeCodex.SeedLoader do
     do: raise("Unicode Codex seed #{path} has invalid scope #{inspect(scope)}")
 
   defp resolve_project(org_id, ref) do
-    case Ecto.UUID.cast(ref) do
+    case NoizuPromptLingua.UUID.cast(ref) do
       {:ok, uuid} -> Repo.get_by(Project, id: uuid, organization_id: org_id)
       :error -> Repo.get_by(Project, slug: ref, organization_id: org_id)
     end

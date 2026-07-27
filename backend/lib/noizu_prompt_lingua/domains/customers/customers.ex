@@ -24,7 +24,7 @@ defmodule NoizuPromptLingua.Domains.Customers do
   def get_persona(id), do: Repo.get(CustomerPersona, id)
 
   def resolve_persona(org_id, id_or_slug) do
-    case Ecto.UUID.cast(id_or_slug) do
+    case NoizuPromptLingua.UUID.cast(id_or_slug) do
       {:ok, uuid} ->
         Repo.get(CustomerPersona, uuid) || Repo.get_by(CustomerPersona, organization_id: org_id, slug: id_or_slug)
 
@@ -98,7 +98,7 @@ defmodule NoizuPromptLingua.Domains.Customers do
   def get_segment(id), do: Repo.get(CustomerSegment, id)
 
   def resolve_segment(org_id, id_or_slug) do
-    case Ecto.UUID.cast(id_or_slug) do
+    case NoizuPromptLingua.UUID.cast(id_or_slug) do
       {:ok, uuid} ->
         Repo.get(CustomerSegment, uuid) || Repo.get_by(CustomerSegment, organization_id: org_id, slug: id_or_slug)
 

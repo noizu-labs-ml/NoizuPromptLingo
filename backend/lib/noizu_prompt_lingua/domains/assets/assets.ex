@@ -34,7 +34,7 @@ defmodule NoizuPromptLingua.Domains.Assets do
   # Slug is unique per (org, slug); without an org here we take the first match (limit 1)
   # rather than raise. Prefer `resolve/2` when an org is in hand (org-scoped, exact).
   def get(id_or_slug) do
-    case Ecto.UUID.cast(id_or_slug) do
+    case NoizuPromptLingua.UUID.cast(id_or_slug) do
       {:ok, uuid} -> Repo.get(AssetEntry, uuid)
       :error -> AssetEntry |> where([e], e.slug == ^id_or_slug) |> limit(1) |> Repo.one()
     end
@@ -42,7 +42,7 @@ defmodule NoizuPromptLingua.Domains.Assets do
 
   # Resolve an id or (org-scoped) slug to an entry.
   def resolve(org_id, id_or_slug) do
-    case Ecto.UUID.cast(id_or_slug) do
+    case NoizuPromptLingua.UUID.cast(id_or_slug) do
       {:ok, uuid} ->
         Repo.get(AssetEntry, uuid) || Repo.get_by(AssetEntry, organization_id: org_id, slug: id_or_slug)
 

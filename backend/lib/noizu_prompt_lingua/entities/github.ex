@@ -71,7 +71,7 @@ defmodule NoizuPromptLingua.Github do
   Preloads the mapped token. Returns nil if not found.
   """
   def get_repo(organization_id, repo_id_or_full_name) do
-    case Ecto.UUID.cast(repo_id_or_full_name) do
+    case NoizuPromptLingua.UUID.cast(repo_id_or_full_name) do
       {:ok, uuid} ->
         RepoSchema
         |> where([r], r.organization_id == ^organization_id and r.id == ^uuid)

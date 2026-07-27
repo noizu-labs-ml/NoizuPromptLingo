@@ -35,7 +35,7 @@ defmodule NoizuPromptLingua.Domains.Github.Tools.PullList do
 		end
 	end
 
-	defp parse_uuid(str) do case Ecto.UUID.cast(str) do; {:ok, uuid} -> {:ok, uuid}; :error -> :error; end end
+	defp parse_uuid(str) do case NoizuPromptLingua.UUID.cast(str) do; {:ok, uuid} -> {:ok, uuid}; :error -> :error; end end
 	defp ensure_org(nil), do: {:error, :org_not_found}
 	defp ensure_org(org_id), do: {:ok, org_id}
 end

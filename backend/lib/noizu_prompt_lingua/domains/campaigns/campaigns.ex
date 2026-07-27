@@ -173,7 +173,7 @@ defmodule NoizuPromptLingua.Domains.Campaigns do
   # ── Private ───────────────────────────────────────────────────
 
   defp resolve(schema, org_id, id_or_slug) do
-    case Ecto.UUID.cast(id_or_slug) do
+    case NoizuPromptLingua.UUID.cast(id_or_slug) do
       {:ok, uuid} ->
         Repo.get(schema, uuid) || Repo.get_by(schema, organization_id: org_id, slug: id_or_slug)
 

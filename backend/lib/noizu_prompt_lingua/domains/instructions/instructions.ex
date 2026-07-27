@@ -40,7 +40,7 @@ defmodule NoizuPromptLingua.Domains.Instructions do
 
   @doc "Resolve an id or (org-scoped) slug handle to an instruction."
   def resolve(org_id, id_or_slug) do
-    case Ecto.UUID.cast(id_or_slug) do
+    case NoizuPromptLingua.UUID.cast(id_or_slug) do
       {:ok, uuid} ->
         Repo.get(Instruction, uuid) || Repo.get_by(Instruction, organization_id: org_id, slug: id_or_slug)
 
