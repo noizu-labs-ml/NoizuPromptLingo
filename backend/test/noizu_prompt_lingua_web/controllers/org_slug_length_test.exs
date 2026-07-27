@@ -26,15 +26,27 @@ defmodule NoizuPromptLinguaWeb.OrgSlugLengthTest do
   use NoizuPromptLinguaWeb.ConnCase
 
   # Slugs must be unique *across runs*, not just within one: the org slug ->
-  # UUID map is cached in Redis, which the Ecto sandbox does not roll back. A
-  # reused slug would resolve to an org id that the rollback already destroyed.
+  # UUID map is cached in Redis with an hour TTL, and the Ecto sandbox does not
+  # roll Redis back. A slug reused by a later run resolves, from cache, to the
+  # org id of the earlier run — which the rollback already destroyed — and the
+  # request 403s on a membership check against a row that no longer exists.
+  #
+  # This must NOT come from `:rand` (Enum.random, :rand.uniform). ExUnit seeds
+  # `:rand` per test, so under a fixed `--seed` two runs generate the *same*
+  # slugs and the second run reads the first run's stale cache entries. That is
+  # not hypothetical: it is what an earlier version of this file did, and it
+  # made the 15- and 17-character controls fail while the 16-character case
+  # passed — the exact inverse of the bug under test, which is a very
+  # convincing way to be wrong. `:crypto.strong_rand_bytes/1` ignores the
+  # ExUnit seed, so slugs are unique per run by construction.
   defp slug_of_length(n) do
     prefix = "o#{n}-"
+    want = n - byte_size(prefix)
 
     random =
-      for _ <- 1..(n - byte_size(prefix)),
-          into: "",
-          do: <<Enum.random(~c"abcdefghijklmnopqrstuvwxyz0123456789")>>
+      :crypto.strong_rand_bytes(want)
+      |> Base.encode32(case: :lower, padding: false)
+      |> binary_part(0, want)
 
     slug = prefix <> random
     # The point of the whole file. If this ever drifts the test is meaningless.
