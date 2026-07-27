@@ -14,11 +14,22 @@ defmodule NoizuPromptLingua.Schema.Authz.Group do
     timestamps(type: :utc_datetime_usec, inserted_at: :created_at, updated_at: :updated_at)
   end
 
+  # `groups.name` is the Postgres enum `role_name_enum` (Liquibase 014, plus
+  # 'lead' from 053), NOT free text. Comparing that column against a string
+  # outside the enum does not return zero rows — Postgres *raises*
+  # `invalid input value for enum role_name_enum`. So every read path has to
+  # screen the value before it reaches a query. See `Groups.get_by_name/1`.
+  @role_names ~w(owner admin lead member viewer)
+
+  @doc "The `role_name_enum` values, in rank order. The only legal `name`s."
+  @spec role_names() :: [String.t()]
+  def role_names, do: @role_names
+
   def changeset(group, attrs) do
     group
     |> cast(attrs, [:name, :display_name, :description, :is_system])
     |> validate_required([:name, :display_name])
-    |> validate_inclusion(:name, ["owner", "admin", "lead", "member", "viewer"])
+    |> validate_inclusion(:name, @role_names)
     |> unique_constraint(:name)
   end
 end

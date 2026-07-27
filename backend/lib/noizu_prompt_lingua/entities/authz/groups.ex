@@ -13,8 +13,21 @@ defmodule NoizuPromptLingua.Authz.Groups do
     NoizuPromptLingua.Repo.all(from g in Schema, order_by: g.name)
   end
 
+  @doc """
+  Look up a group by role name. `nil` when there is no such group.
+
+  `groups.name` is the Postgres enum `role_name_enum`, so an unrecognised name
+  cannot simply miss: `where: g.name == ^"nonexistent"` **raises**
+  `invalid input value for enum role_name_enum`, which surfaces as a 500 on
+  what is really a not-found. Screening against `Schema.role_names/0` keeps the
+  contract this function's callers already assume — a group or `nil`.
+  """
   def get_by_name(name) when is_binary(name) do
-    NoizuPromptLingua.Repo.one(from g in Schema, where: g.name == ^name)
+    if name in Schema.role_names() do
+      NoizuPromptLingua.Repo.one(from g in Schema, where: g.name == ^name)
+    else
+      nil
+    end
   end
 
   def list_policies(group_id) do
