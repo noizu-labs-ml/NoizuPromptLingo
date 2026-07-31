@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { PlusIcon } from '@heroicons/react/24/outline';
+import { MiniRealtimeVoiceWidget } from '@/components/mini-realtime-voice-widget';
 import { api, type Project } from '@/lib/api';
 import { useOrg, useOrgId } from '@/context/org';
 import { DataTable } from '@/components/console/DataTable';
@@ -223,6 +224,14 @@ export default function ProjectsPage() {
   return (
     <div className="content">
       <main>
+        {orgId && (
+          <MiniRealtimeVoiceWidget
+            orgId={orgId}
+            projectId={currentProject?.id}
+            className="voice-widget--spaced"
+          />
+        )}
+
         <div className="projects-header">
           <h1 className="sg-page-title">Projects</h1>
         </div>

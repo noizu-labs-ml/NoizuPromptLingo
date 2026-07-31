@@ -2,7 +2,8 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.PinMessage do
   use Noizu.MCP.Server.Tool,
     name: "Chat.PinMessage",
     description: "Toggle (or set) the pinned flag on a message.",
-    hidden: true, category: "Chat"
+    hidden: true,
+    category: "Chat"
 
   input do
     field :message_id, :string, required: true, description: "Message UUID"

@@ -1,6 +1,9 @@
 defmodule NoizuPromptLingua.Domains.Review.Tools.ReviewOverlay do
   use Noizu.MCP.Server.Tool,
-    name: "Review.Overlay", description: "Add coordinate-based image annotation.", hidden: true, category: "Review"
+    name: "Review.Overlay",
+    description: "Add coordinate-based image annotation.",
+    hidden: true,
+    category: "Review"
 
   input do
     field :review_id, :string, required: true, description: "Review UUID"
@@ -18,12 +21,14 @@ defmodule NoizuPromptLingua.Domains.Review.Tools.ReviewOverlay do
   def call(args, _ctx) do
     attrs = %{
       review_id: args[:review_id] || args["review_id"],
-      x: args[:x] || args["x"], y: args[:y] || args["y"],
+      x: args[:x] || args["x"],
+      y: args[:y] || args["y"],
       comment: args[:comment] || args["comment"],
       persona: args[:persona] || args["persona"],
       width: args[:width] || args["width"],
       height: args[:height] || args["height"]
     }
+
     case Reviews.add_overlay(attrs) do
       {:ok, o} -> {:ok, %{id: o.id, x: o.x, y: o.y, comment: o.comment}}
       {:error, cs} -> {:error, "Failed: #{inspect(cs.errors)}"}

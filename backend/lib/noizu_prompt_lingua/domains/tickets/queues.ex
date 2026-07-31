@@ -11,7 +11,11 @@ defmodule NoizuPromptLingua.Domains.Tickets.Queues do
 
   # ── Default stage sets per methodology ────────────────────────
   @default_stages %{
-    "kanban" => [{"todo", "To Do", "todo"}, {"in_progress", "In Progress", "in_progress"}, {"done", "Done", "done"}],
+    "kanban" => [
+      {"todo", "To Do", "todo"},
+      {"in_progress", "In Progress", "in_progress"},
+      {"done", "Done", "done"}
+    ],
     "scrum" => [
       {"todo", "To Do", "todo"},
       {"in_progress", "In Progress", "in_progress"},
@@ -33,7 +37,8 @@ defmodule NoizuPromptLingua.Domains.Tickets.Queues do
     ]
   }
 
-  def default_stages(methodology), do: Map.get(@default_stages, methodology, @default_stages["kanban"])
+  def default_stages(methodology),
+    do: Map.get(@default_stages, methodology, @default_stages["kanban"])
 
   # ── Boards ────────────────────────────────────────────────────
 
@@ -45,7 +50,13 @@ defmodule NoizuPromptLingua.Domains.Tickets.Queues do
         |> Enum.with_index()
         |> Enum.each(fn {{slug, name, kind}, idx} ->
           %BoardStage{}
-          |> BoardStage.changeset(%{queue_id: board.id, slug: slug, name: name, kind: kind, position: idx})
+          |> BoardStage.changeset(%{
+            queue_id: board.id,
+            slug: slug,
+            name: name,
+            kind: kind,
+            position: idx
+          })
           |> Repo.insert!()
         end)
 
@@ -58,7 +69,10 @@ defmodule NoizuPromptLingua.Domains.Tickets.Queues do
 
   def get_board(id) do
     TicketQueue
-    |> preload(stages: ^from(s in BoardStage, order_by: s.position), iterations: ^from(i in BoardIteration, order_by: i.sequence))
+    |> preload(
+      stages: ^from(s in BoardStage, order_by: s.position),
+      iterations: ^from(i in BoardIteration, order_by: i.sequence)
+    )
     |> Repo.get(id)
   end
 
@@ -67,7 +81,10 @@ defmodule NoizuPromptLingua.Domains.Tickets.Queues do
     TicketQueue
     |> where([q], q.slug == ^slug)
     |> where(^visible_scope(org_id, project_id))
-    |> preload(stages: ^from(s in BoardStage, order_by: s.position), iterations: ^from(i in BoardIteration, order_by: i.sequence))
+    |> preload(
+      stages: ^from(s in BoardStage, order_by: s.position),
+      iterations: ^from(i in BoardIteration, order_by: i.sequence)
+    )
     |> Repo.all()
     |> List.first()
   end
@@ -83,9 +100,14 @@ defmodule NoizuPromptLingua.Domains.Tickets.Queues do
 
   def update_board(id, attrs) do
     case Repo.get(TicketQueue, id) do
-      nil -> {:error, :not_found}
+      nil ->
+        {:error, :not_found}
+
       # methodology is immutable after creation (stages depend on it).
-      board -> board |> TicketQueue.changeset(Map.drop(attrs, [:methodology, "methodology"])) |> Repo.update()
+      board ->
+        board
+        |> TicketQueue.changeset(Map.drop(attrs, [:methodology, "methodology"]))
+        |> Repo.update()
     end
   end
 
@@ -124,12 +146,16 @@ defmodule NoizuPromptLingua.Domains.Tickets.Queues do
   end
 
   def list_stages(queue_id) do
-    BoardStage |> where([s], s.queue_id == ^queue_id) |> order_by([s], asc: s.position) |> Repo.all()
+    BoardStage
+    |> where([s], s.queue_id == ^queue_id)
+    |> order_by([s], asc: s.position)
+    |> Repo.all()
   end
 
   # ── Iterations (sprints / cycles) ─────────────────────────────
 
-  def add_iteration(attrs), do: %BoardIteration{} |> BoardIteration.changeset(attrs) |> Repo.insert()
+  def add_iteration(attrs),
+    do: %BoardIteration{} |> BoardIteration.changeset(attrs) |> Repo.insert()
 
   def update_iteration(id, attrs) do
     case Repo.get(BoardIteration, id) do
@@ -146,15 +172,23 @@ defmodule NoizuPromptLingua.Domains.Tickets.Queues do
   end
 
   def list_iterations(queue_id) do
-    BoardIteration |> where([i], i.queue_id == ^queue_id) |> order_by([i], asc: i.sequence) |> Repo.all()
+    BoardIteration
+    |> where([i], i.queue_id == ^queue_id)
+    |> order_by([i], asc: i.sequence)
+    |> Repo.all()
   end
 
   # ── Internals ─────────────────────────────────────────────────
 
-  defp visible_scope(nil, _project_id), do: dynamic([q], is_nil(q.organization_id) and is_nil(q.project_id))
+  defp visible_scope(nil, _project_id),
+    do: dynamic([q], is_nil(q.organization_id) and is_nil(q.project_id))
 
   defp visible_scope(org_id, nil) do
-    dynamic([q], (is_nil(q.organization_id) and is_nil(q.project_id)) or (q.organization_id == ^org_id and is_nil(q.project_id)))
+    dynamic(
+      [q],
+      (is_nil(q.organization_id) and is_nil(q.project_id)) or
+        (q.organization_id == ^org_id and is_nil(q.project_id))
+    )
   end
 
   defp visible_scope(org_id, project_id) do

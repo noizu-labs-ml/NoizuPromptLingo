@@ -1,7 +1,8 @@
 defmodule NoizuPromptLingua.Domains.Customers.Tools.PersonaLinkTicket do
   use Noizu.MCP.Server.Tool,
     name: "CustomerPersona.LinkTicket",
-    description: "Link a customer persona to a ticket — ties product/engineering work to the audience it serves.",
+    description:
+      "Link a customer persona to a ticket — ties product/engineering work to the audience it serves.",
     hidden: true,
     category: "Customers.Links"
 
@@ -22,9 +23,12 @@ defmodule NoizuPromptLingua.Domains.Customers.Tools.PersonaLinkTicket do
 
     case Customers.link_ticket(persona_id, ticket_id, opts) do
       {:ok, link} ->
-        {:ok, %{id: link.id, persona_id: persona_id, ticket_id: ticket_id, link_type: link.link_type}}
+        {:ok,
+         %{id: link.id, persona_id: persona_id, ticket_id: ticket_id, link_type: link.link_type}}
+
       {:error, :ticket_not_found} ->
         {:error, "Ticket '#{ticket_id}' not found"}
+
       {:error, changeset} ->
         {:error, "Failed: #{inspect(changeset.errors)}"}
     end

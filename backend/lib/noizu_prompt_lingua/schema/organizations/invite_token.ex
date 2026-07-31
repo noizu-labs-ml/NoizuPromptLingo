@@ -18,8 +18,17 @@ defmodule NoizuPromptLingua.Schema.Organizations.InviteToken do
 
   def changeset(token, attrs) do
     token
-    |> cast(attrs, [:organization_id, :created_by_user_id, :token_hash, :key_prefix,
-                    :email, :max_uses, :uses, :expires_at, :revoked])
+    |> cast(attrs, [
+      :organization_id,
+      :created_by_user_id,
+      :token_hash,
+      :key_prefix,
+      :email,
+      :max_uses,
+      :uses,
+      :expires_at,
+      :revoked
+    ])
     |> validate_required([:token_hash, :key_prefix])
     |> unique_constraint(:token_hash)
   end

@@ -92,7 +92,11 @@ defmodule NoizuPromptLingua.Domains.Browser do
     with_org(org_ref, fn org_id ->
       key = "browser/#{org_id}/#{Ecto.UUID.generate()}.webm"
       put_url = Storage.presigned_upload_url(key, "video/webm")
-      cmd = %{action: "record_stop", params: %{upload_url: put_url, key: key, content_type: "video/webm"}}
+
+      cmd = %{
+        action: "record_stop",
+        params: %{upload_url: put_url, key: key, content_type: "video/webm"}
+      }
 
       case Relay.dispatch(org_id, cmd, 60_000) do
         {:ok, %{"key" => ^key} = data} ->
@@ -114,7 +118,9 @@ defmodule NoizuPromptLingua.Domains.Browser do
   def list_captures(org_id, limit \\ 100) do
     Repo.all(
       from a in Asset,
-        where: a.owner_type in [@screenshot_owner, @video_owner] and a.owner_id == ^org_id and is_nil(a.deleted_at),
+        where:
+          a.owner_type in [@screenshot_owner, @video_owner] and a.owner_id == ^org_id and
+            is_nil(a.deleted_at),
         order_by: [desc: a.inserted_at],
         limit: ^limit
     )
@@ -149,7 +155,13 @@ defmodule NoizuPromptLingua.Domains.Browser do
            settings: settings
          }) do
       {:ok, asset} ->
-        {:ok, %{media_id: asset.id, short_id: asset.short_id, url: "/media/#{asset.short_id}", stored: true}}
+        {:ok,
+         %{
+           media_id: asset.id,
+           short_id: asset.short_id,
+           url: "/media/#{asset.short_id}",
+           stored: true
+         }}
 
       {:error, changeset} ->
         {:error, "failed to register media: #{inspect(changeset.errors)}"}

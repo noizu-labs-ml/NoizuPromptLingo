@@ -1,7 +1,9 @@
 defmodule NoizuPromptLingua.Domains.Personas.Tools.KnowledgeUpdate do
-  use Noizu.MCP.Server.Tool, name: "Persona.Knowledge.Update",
+  use Noizu.MCP.Server.Tool,
+    name: "Persona.Knowledge.Update",
     description: "Update a persona knowledge-base article by its id.",
-    hidden: true, category: "Personas.Knowledge"
+    hidden: true,
+    category: "Personas.Knowledge"
 
   input do
     field :id, :string, required: true, description: "Knowledge entry UUID"

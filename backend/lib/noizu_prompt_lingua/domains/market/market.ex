@@ -68,7 +68,9 @@ defmodule NoizuPromptLingua.Domains.Market do
       results =
         items
         |> Enum.with_index(1)
-        |> Enum.map(fn {item, idx} -> insert_researched_keyword(org_id, project_id, topic, item, idx) end)
+        |> Enum.map(fn {item, idx} ->
+          insert_researched_keyword(org_id, project_id, topic, item, idx)
+        end)
         |> Enum.filter(&match?({:ok, _}, &1))
         |> Enum.map(fn {:ok, kw} -> kw end)
 
@@ -106,13 +108,24 @@ defmodule NoizuPromptLingua.Domains.Market do
         prompt = opts[:prompt] || default_report_prompt(report)
 
         result =
-          MarketingContent.generate_artifact(prompt,
-            %{organization_id: report.organization_id, project_id: report.project_id,
-              kind: "document", title: report.title}, opts)
+          MarketingContent.generate_artifact(
+            prompt,
+            %{
+              organization_id: report.organization_id,
+              project_id: report.project_id,
+              kind: "document",
+              title: report.title
+            },
+            opts
+          )
 
         case result do
           {:ok, %{artifact_id: artifact_id, content: content}} ->
-            do_update(MarketReport, id, %{artifact_id: artifact_id, summary: String.slice(content, 0, 500), status: "ready"})
+            do_update(MarketReport, id, %{
+              artifact_id: artifact_id,
+              summary: String.slice(content, 0, 500),
+              status: "ready"
+            })
 
           {:error, reason} ->
             {:error, reason}
@@ -188,6 +201,7 @@ defmodule NoizuPromptLingua.Domains.Market do
   defp to_int(nil), do: nil
   defp to_int(v) when is_integer(v), do: v
   defp to_int(v) when is_float(v), do: trunc(v)
+
   defp to_int(v) when is_binary(v) do
     case Integer.parse(v) do
       {n, _} -> n

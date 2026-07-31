@@ -9,8 +9,17 @@ defmodule NoizuPromptLingua.Projects do
 
   def create_with_owner(attrs, user_id, context \\ Noizu.Context.system()) do
     NoizuPromptLingua.Repo.transaction(fn ->
-      with {:ok, project} <- %Schema{} |> Schema.changeset(Map.put(attrs, :created_by, user_id)) |> NoizuPromptLingua.Repo.insert(),
-           {:ok, _membership} <- NoizuPromptLingua.Authz.ScopedMemberships.add_member("project", project.id, user_id, "owner") do
+      with {:ok, project} <-
+             %Schema{}
+             |> Schema.changeset(Map.put(attrs, :created_by, user_id))
+             |> NoizuPromptLingua.Repo.insert(),
+           {:ok, _membership} <-
+             NoizuPromptLingua.Authz.ScopedMemberships.add_member(
+               "project",
+               project.id,
+               user_id,
+               "owner"
+             ) do
         project
       else
         {:error, reason} -> NoizuPromptLingua.Repo.rollback(reason)
@@ -29,7 +38,9 @@ defmodule NoizuPromptLingua.Projects do
           |> Enum.map(fn {col, val} -> {col, decode_uuid(col, val)} end)
           |> Map.new()
         end)
-      _ -> []
+
+      _ ->
+        []
     end
   end
 
@@ -41,15 +52,18 @@ defmodule NoizuPromptLingua.Projects do
   defp decode_uuid(_col, val), do: val
 
   defp decode_value(nil), do: nil
+
   defp decode_value(<<_::binary-16>> = bin) do
     case Ecto.UUID.load(bin) do
       {:ok, uuid} -> uuid
       :error -> bin
     end
   end
+
   defp decode_value(val), do: val
 
   defp uuid_to_bin(nil), do: nil
+
   defp uuid_to_bin(uuid) when is_binary(uuid) do
     case Ecto.UUID.dump(uuid) do
       {:ok, bin} -> bin
@@ -70,7 +84,9 @@ defmodule NoizuPromptLingua.Projects do
 
   def archive(id) do
     case NoizuPromptLingua.Repo.get(Schema, id) do
-      nil -> {:error, :not_found}
+      nil ->
+        {:error, :not_found}
+
       project ->
         project
         |> Schema.changeset(%{status: "archived", archived_at: DateTime.utc_now()})
@@ -80,7 +96,9 @@ defmodule NoizuPromptLingua.Projects do
 
   def unarchive(id) do
     case NoizuPromptLingua.Repo.get(Schema, id) do
-      nil -> {:error, :not_found}
+      nil ->
+        {:error, :not_found}
+
       project ->
         project
         |> Schema.changeset(%{status: "active", archived_at: nil})
@@ -90,7 +108,9 @@ defmodule NoizuPromptLingua.Projects do
 
   def delete_project(id) do
     case NoizuPromptLingua.Repo.get(Schema, id) do
-      nil -> {:error, :not_found}
+      nil ->
+        {:error, :not_found}
+
       project ->
         project
         |> Schema.changeset(%{status: "deleted"})

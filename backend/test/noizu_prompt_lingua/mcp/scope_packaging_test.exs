@@ -11,7 +11,8 @@ defmodule NoizuPromptLingua.MCP.ScopePackagingTest do
 
   describe "normalize_config/2 required-core enforcement" do
     test "all_in_one auto-includes required core groups, enabled" do
-      groups = MCPCustomScopes.normalize_config(%{"groups" => %{}}, "all_in_one") |> Map.fetch!("groups")
+      groups =
+        MCPCustomScopes.normalize_config(%{"groups" => %{}}, "all_in_one") |> Map.fetch!("groups")
 
       required = MCPServers.required_ids()
       assert required != []
@@ -51,7 +52,10 @@ defmodule NoizuPromptLingua.MCP.ScopePackagingTest do
       assert {:error, :confirmation_required, _} = MCPCustomScopes.update(scope, attrs)
     end
 
-    test "accepts with the exact phrase and stamps confirmation (no actor)", %{scope: scope, required: req} do
+    test "accepts with the exact phrase and stamps confirmation (no actor)", %{
+      scope: scope,
+      required: req
+    } do
       attrs = %{
         "confirm" => @phrase,
         "config" => %{"groups" => %{req => %{"disabled" => true}}}
@@ -76,7 +80,10 @@ defmodule NoizuPromptLingua.MCP.ScopePackagingTest do
       assert gc["disabled_confirmed_by"] == "user-123"
     end
 
-    test "a confirmed disable survives a later unrelated edit (no re-confirm needed)", %{scope: scope, required: req} do
+    test "a confirmed disable survives a later unrelated edit (no re-confirm needed)", %{
+      scope: scope,
+      required: req
+    } do
       {:ok, disabled} =
         MCPCustomScopes.update(scope, %{
           "confirm" => @phrase,
@@ -162,7 +169,9 @@ defmodule NoizuPromptLingua.MCP.ScopePackagingTest do
     end
 
     test "non-default packaging entries carry a kind" do
-      entry = MCPServers.for_host("tobor.locker", :core_custom) |> Enum.find(&(&1.id == "custom:core"))
+      entry =
+        MCPServers.for_host("tobor.locker", :core_custom) |> Enum.find(&(&1.id == "custom:core"))
+
       assert entry.kind == "core_variant"
     end
   end

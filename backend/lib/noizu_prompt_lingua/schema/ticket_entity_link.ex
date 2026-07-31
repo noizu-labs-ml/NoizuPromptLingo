@@ -34,7 +34,8 @@ defmodule NoizuPromptLingua.Schema.TicketEntityLink do
     |> validate_inclusion(:link_type, @link_types)
     |> foreign_key_constraint(:ticket_id)
     |> unique_constraint([:ticket_id, :entity_type, :entity_id, :link_type],
-      name: :idx_ticket_entity_links_uniq)
+      name: :idx_ticket_entity_links_uniq
+    )
   end
 
   def entity_types, do: @entity_types

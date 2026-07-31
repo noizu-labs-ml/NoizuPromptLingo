@@ -5,7 +5,7 @@ defmodule NoizuPromptLingua.Domains.Campaigns.Tools.LandingPageUpdate do
     hidden: true,
     category: "Campaigns.LandingPages"
 
-  input_schema %{
+  input_schema(%{
     "type" => "object",
     "properties" => %{
       "id" => %{"type" => "string", "description" => "Landing page UUID"},
@@ -19,7 +19,7 @@ defmodule NoizuPromptLingua.Domains.Campaigns.Tools.LandingPageUpdate do
       "tags" => %{"type" => "array", "items" => %{"type" => "string"}, "description" => "Tags"}
     },
     "required" => ["id"]
-  }
+  })
 
   alias NoizuPromptLingua.Domains.Campaigns
   alias NoizuPromptLingua.MCP.Args

@@ -13,11 +13,19 @@ defmodule NoizuPromptLingua.Authz.ScopedMemberships do
 
   def add_member(resource_type, resource_id, user_id, role_name, added_by \\ nil) do
     sql = "SELECT * FROM add_scoped_member($1, $2::uuid, $3::uuid, $4, $5::uuid)"
-    params = [resource_type, uuid_to_bin(resource_id), uuid_to_bin(user_id), role_name, uuid_to_bin(added_by)]
+
+    params = [
+      resource_type,
+      uuid_to_bin(resource_id),
+      uuid_to_bin(user_id),
+      role_name,
+      uuid_to_bin(added_by)
+    ]
 
     case Ecto.Adapters.SQL.query(NoizuPromptLingua.Repo, sql, params) do
       {:ok, %{rows: [row], columns: cols}} ->
         {:ok, Enum.zip(cols, row) |> Map.new()}
+
       {:error, %Postgrex.Error{postgres: %{code: :raise_exception, message: msg}}} ->
         {:error, parse_error(msg)}
     end
@@ -30,6 +38,7 @@ defmodule NoizuPromptLingua.Authz.ScopedMemberships do
     case Ecto.Adapters.SQL.query(NoizuPromptLingua.Repo, sql, params) do
       {:ok, %{rows: [row], columns: cols}} ->
         {:ok, Enum.zip(cols, row) |> Map.new()}
+
       {:error, %Postgrex.Error{postgres: %{code: :raise_exception, message: msg}}} ->
         {:error, parse_error(msg)}
     end
@@ -42,6 +51,7 @@ defmodule NoizuPromptLingua.Authz.ScopedMemberships do
     case Ecto.Adapters.SQL.query(NoizuPromptLingua.Repo, sql, params) do
       {:ok, %{rows: [row], columns: cols}} ->
         {:ok, Enum.zip(cols, row) |> Map.new()}
+
       {:error, %Postgrex.Error{postgres: %{code: :raise_exception, message: msg}}} ->
         {:error, parse_error(msg)}
     end
@@ -54,9 +64,12 @@ defmodule NoizuPromptLingua.Authz.ScopedMemberships do
   # are nil for users and vice-versa. member_type-agnostic for the FE.
   def list_for_resource(resource_type, resource_id, opts \\ []) do
     from(sm in Schema,
-      join: g in NoizuPromptLingua.Schema.Authz.Group, on: g.id == sm.group_id,
-      left_join: u in NoizuPromptLingua.Schema.Users.User, on: sm.member_type == "user" and u.id == sm.member_id,
-      left_join: p in NoizuPromptLingua.Schema.Persona, on: sm.member_type == "persona" and p.id == sm.member_id,
+      join: g in NoizuPromptLingua.Schema.Authz.Group,
+      on: g.id == sm.group_id,
+      left_join: u in NoizuPromptLingua.Schema.Users.User,
+      on: sm.member_type == "user" and u.id == sm.member_id,
+      left_join: p in NoizuPromptLingua.Schema.Persona,
+      on: sm.member_type == "persona" and p.id == sm.member_id,
       where: sm.resource_type == ^resource_type and sm.resource_id == ^resource_id,
       where: sm.member_type in ["user", "persona"],
       where: is_nil(sm.expires_at) or sm.expires_at > ^DateTime.utc_now(),
@@ -85,9 +98,12 @@ defmodule NoizuPromptLingua.Authz.ScopedMemberships do
   # Single membership by id (getMember), same shape as a list row. nil if absent.
   def get_membership(id) do
     from(sm in Schema,
-      join: g in NoizuPromptLingua.Schema.Authz.Group, on: g.id == sm.group_id,
-      left_join: u in NoizuPromptLingua.Schema.Users.User, on: sm.member_type == "user" and u.id == sm.member_id,
-      left_join: p in NoizuPromptLingua.Schema.Persona, on: sm.member_type == "persona" and p.id == sm.member_id,
+      join: g in NoizuPromptLingua.Schema.Authz.Group,
+      on: g.id == sm.group_id,
+      left_join: u in NoizuPromptLingua.Schema.Users.User,
+      on: sm.member_type == "user" and u.id == sm.member_id,
+      left_join: p in NoizuPromptLingua.Schema.Persona,
+      on: sm.member_type == "persona" and p.id == sm.member_id,
       where: sm.id == ^id and sm.member_type in ["user", "persona"],
       select: %{
         id: sm.id,
@@ -118,7 +134,8 @@ defmodule NoizuPromptLingua.Authz.ScopedMemberships do
   def add_persona_member(resource_type, resource_id, persona_id, role_name, added_by \\ nil) do
     # Guard the role against the enum BEFORE the group lookup: a non-enum value can't be
     # cast to role_name_enum and would raise on the WHERE rather than return nil.
-    case role_name in @member_roles && NoizuPromptLingua.Repo.get_by(NoizuPromptLingua.Schema.Authz.Group, name: role_name) do
+    case role_name in @member_roles &&
+           NoizuPromptLingua.Repo.get_by(NoizuPromptLingua.Schema.Authz.Group, name: role_name) do
       g when g in [false, nil] ->
         {:error, :invalid_role}
 
@@ -154,7 +171,8 @@ defmodule NoizuPromptLingua.Authz.ScopedMemberships do
 
   # Reassign a persona member's role (ccaf5684). User assign-role stays on the stored proc.
   def update_persona_role(resource_type, resource_id, persona_id, role_name) do
-    case role_name in @member_roles && NoizuPromptLingua.Repo.get_by(NoizuPromptLingua.Schema.Authz.Group, name: role_name) do
+    case role_name in @member_roles &&
+           NoizuPromptLingua.Repo.get_by(NoizuPromptLingua.Schema.Authz.Group, name: role_name) do
       g when g in [false, nil] ->
         {:error, :invalid_role}
 
@@ -165,8 +183,13 @@ defmodule NoizuPromptLingua.Authz.ScopedMemberships do
                member_type: "persona",
                member_id: persona_id
              ) do
-          nil -> {:error, :not_found}
-          membership -> membership |> Ecto.Changeset.change(%{group_id: group.id}) |> NoizuPromptLingua.Repo.update()
+          nil ->
+            {:error, :not_found}
+
+          membership ->
+            membership
+            |> Ecto.Changeset.change(%{group_id: group.id})
+            |> NoizuPromptLingua.Repo.update()
         end
     end
   end
@@ -174,12 +197,16 @@ defmodule NoizuPromptLingua.Authz.ScopedMemberships do
   # role facet: scalar -> ==, list -> in (= ANY); nil/[] no-op (3c2d6bbe convention).
   defp maybe_role_filter(query, nil), do: query
   defp maybe_role_filter(query, []), do: query
-  defp maybe_role_filter(query, roles) when is_list(roles), do: where(query, [sm, g, u], g.name in ^roles)
+
+  defp maybe_role_filter(query, roles) when is_list(roles),
+    do: where(query, [sm, g, u], g.name in ^roles)
+
   defp maybe_role_filter(query, role), do: where(query, [sm, g, u], g.name == ^role)
 
   def list_for_user(user_id) do
     from(sm in Schema,
-      join: g in NoizuPromptLingua.Schema.Authz.Group, on: g.id == sm.group_id,
+      join: g in NoizuPromptLingua.Schema.Authz.Group,
+      on: g.id == sm.group_id,
       where: sm.member_type == "user" and sm.member_id == ^user_id,
       where: is_nil(sm.expires_at) or sm.expires_at > ^DateTime.utc_now(),
       select: %{
@@ -205,6 +232,7 @@ defmodule NoizuPromptLingua.Authz.ScopedMemberships do
   end
 
   defp uuid_to_bin(nil), do: nil
+
   defp uuid_to_bin(uuid) when is_binary(uuid) do
     case Ecto.UUID.dump(uuid) do
       {:ok, bin} -> bin

@@ -63,7 +63,7 @@ defmodule NoizuPromptLingua.Domains.Chat.SlugTest do
 
   describe "Chat.slugify/1 — property invariants" do
     property "matches the slug grammar, non-empty, no edge/double dashes, <= 80 bytes" do
-      check all name <- string(:printable, max_length: 60), max_runs: 500 do
+      check all(name <- string(:printable, max_length: 60), max_runs: 500) do
         slug = Slug.slugify(name)
         assert slug != ""
         assert Regex.match?(@slug_re, slug), "bad slug #{inspect(slug)} from #{inspect(name)}"
@@ -75,20 +75,20 @@ defmodule NoizuPromptLingua.Domains.Chat.SlugTest do
     end
 
     property "idempotent: slugify(slugify(x)) == slugify(x)" do
-      check all name <- string(:printable, max_length: 60), max_runs: 500 do
+      check all(name <- string(:printable, max_length: 60), max_runs: 500) do
         slug = Slug.slugify(name)
         assert Slug.slugify(slug) == slug
       end
     end
 
     property "multibyte unicode never blows the byte cap" do
-      check all name <- string(:utf8, max_length: 120), max_runs: 500 do
+      check all(name <- string(:utf8, max_length: 120), max_runs: 500) do
         assert byte_size(Slug.slugify(name)) <= @slug_max
       end
     end
 
     property "a base slug from any long input is capped to <= 80 (H1 base)" do
-      check all n <- integer(80..400), max_runs: 50 do
+      check all(n <- integer(80..400), max_runs: 50) do
         assert byte_size(Slug.slugify(String.duplicate("a", n))) <= @slug_max
       end
     end
@@ -135,7 +135,11 @@ defmodule NoizuPromptLingua.Domains.Chat.SlugTest do
 
     test "the same slug COEXISTS across project=NULL and project=X buckets (A3)", ctx do
       {:ok, with_proj} =
-        Chat.create_room(%{organization_id: ctx.org_id, project_id: ctx.project_id, name: "General"})
+        Chat.create_room(%{
+          organization_id: ctx.org_id,
+          project_id: ctx.project_id,
+          name: "General"
+        })
 
       {:ok, no_proj} =
         Chat.create_room(%{organization_id: ctx.org_id, project_id: nil, name: "General"})
@@ -146,7 +150,11 @@ defmodule NoizuPromptLingua.Domains.Chat.SlugTest do
 
     test "by-slug lookup is bucket-scoped (predicate == partial-index predicate, A3)", ctx do
       {:ok, room} =
-        Chat.create_room(%{organization_id: ctx.org_id, project_id: ctx.project_id, name: "Retro"})
+        Chat.create_room(%{
+          organization_id: ctx.org_id,
+          project_id: ctx.project_id,
+          name: "Retro"
+        })
 
       assert Chat.get_room_by_slug(ctx.org_id, ctx.project_id, "retro").id == room.id
       # wrong bucket / wrong org must NOT resolve it
@@ -161,7 +169,8 @@ defmodule NoizuPromptLingua.Domains.Chat.SlugTest do
       assert b.slug == "town-hall"
     end
 
-    test "concurrent create of same-name rooms never 500s; all slugs unique + <= 80 (A2/H1)", ctx do
+    test "concurrent create of same-name rooms never 500s; all slugs unique + <= 80 (A2/H1)",
+         ctx do
       attrs = %{organization_id: ctx.org_id, project_id: ctx.project_id, name: "Race"}
 
       results =
@@ -200,7 +209,11 @@ defmodule NoizuPromptLingua.Domains.Chat.SlugTest do
       Repo.query!(
         "INSERT INTO projects (id, organization_id, slug, name, inserted_at, updated_at) " <>
           "VALUES (gen_random_uuid(), $1, $2, $3, now(), now()) RETURNING id",
-        [Ecto.UUID.dump!(org_id), "slugproj-#{System.unique_integer([:positive])}", "Slug Test Project"]
+        [
+          Ecto.UUID.dump!(org_id),
+          "slugproj-#{System.unique_integer([:positive])}",
+          "Slug Test Project"
+        ]
       )
 
     Ecto.UUID.load!(raw)

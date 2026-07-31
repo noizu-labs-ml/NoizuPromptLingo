@@ -84,6 +84,12 @@ defmodule NoizuPromptLingua.Domains.MCPOverview.Service do
   end
 
   defp cached_result(hit) do
-    %{overview_md: hit.overview_md, generated: false, cached: true, status: hit.status, id: hit.id}
+    %{
+      overview_md: hit.overview_md,
+      generated: false,
+      cached: true,
+      status: hit.status,
+      id: hit.id
+    }
   end
 end

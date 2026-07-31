@@ -1,7 +1,8 @@
 defmodule NoizuPromptLingua.Domains.Customers.Tools.PersonaList do
   use Noizu.MCP.Server.Tool,
     name: "CustomerPersona.List",
-    description: "List customer personas for an organization, optionally filtered by project, segment, status, or tag.",
+    description:
+      "List customer personas for an organization, optionally filtered by project, segment, status, or tag.",
     annotations: [read_only_hint: true],
     hidden: true,
     category: "Customers"
@@ -37,7 +38,22 @@ defmodule NoizuPromptLingua.Domains.Customers.Tools.PersonaList do
             limit: Args.get(args, :limit) || 100
           )
 
-        {:ok, %{count: length(personas), personas: Enum.map(personas, &%{id: &1.id, slug: &1.slug, name: &1.name, archetype: &1.archetype, segment_id: &1.segment_id, status: &1.status})}}
+        {:ok,
+         %{
+           count: length(personas),
+           personas:
+             Enum.map(
+               personas,
+               &%{
+                 id: &1.id,
+                 slug: &1.slug,
+                 name: &1.name,
+                 archetype: &1.archetype,
+                 segment_id: &1.segment_id,
+                 status: &1.status
+               }
+             )
+         }}
     end
   end
 end

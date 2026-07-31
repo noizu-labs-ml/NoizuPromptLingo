@@ -25,7 +25,11 @@ defmodule NoizuPromptLingua.Domains.Memory.Weaver do
   defp emo_k, do: config()[:emotional_k] || 8
   defp temporal_window_s, do: config()[:temporal_window_s] || 3600
   defp max_per_dim, do: config()[:max_edges_per_dim] || 8
-  defp w, do: config()[:weights] || %{emotional: 0.5, temporal: 0.4, contextual: 0.4, tangent: 0.6, semantic: 0.6}
+
+  defp w,
+    do:
+      config()[:weights] ||
+        %{emotional: 0.5, temporal: 0.4, contextual: 0.4, tangent: 0.6, semantic: 0.6}
 
   @doc "Create association edges for a memory id. Returns the count created/attempted."
   def link(memory_id) when is_binary(memory_id) do
@@ -52,12 +56,21 @@ defmodule NoizuPromptLingua.Domains.Memory.Weaver do
     with true <- VectorStore.enabled?(),
          {mood, hormones} <- Emotion.from_row(mem),
          qvec = Emotion.build_vector(mood, hormones),
-         {:ok, hits} <- VectorStore.search("emotional", qvec, limit: emo_k(), filters: mem_filters(mem)) do
+         {:ok, hits} <-
+           VectorStore.search("emotional", qvec, limit: emo_k(), filters: mem_filters(mem)) do
       hits
       |> Enum.reject(&(&1.memory_id == mem.id))
       |> Enum.filter(&(&1.score >= emo_min()))
       |> Enum.reduce(0, fn h, acc ->
-        acc + create_edge(mem.id, h.memory_id, :emotional, h.score, "emotional resonance #{Float.round(h.score, 2)}", %{emotional_similarity: h.score})
+        acc +
+          create_edge(
+            mem.id,
+            h.memory_id,
+            :emotional,
+            h.score,
+            "emotional resonance #{Float.round(h.score, 2)}",
+            %{emotional_similarity: h.score}
+          )
       end)
     else
       _ -> 0
@@ -72,7 +85,10 @@ defmodule NoizuPromptLingua.Domains.Memory.Weaver do
 
     candidates =
       base(mem)
-      |> where([m], fragment("abs(extract(epoch from (? - ?)))", m.occurred_at, ^mem.occurred_at) <= ^window)
+      |> where(
+        [m],
+        fragment("abs(extract(epoch from (? - ?)))", m.occurred_at, ^mem.occurred_at) <= ^window
+      )
       |> limit(^max_per_dim())
       |> select([m], %{id: m.id, occurred_at: m.occurred_at})
       |> Repo.all()
@@ -80,7 +96,11 @@ defmodule NoizuPromptLingua.Domains.Memory.Weaver do
     for c <- candidates, reduce: 0 do
       acc ->
         prox = temporal_proximity(mem.occurred_at, c.occurred_at, window)
-        acc + create_edge(mem.id, c.id, :temporal, w()[:temporal] * prox, "temporal proximity", %{temporal_proximity: prox})
+
+        acc +
+          create_edge(mem.id, c.id, :temporal, w()[:temporal] * prox, "temporal proximity", %{
+            temporal_proximity: prox
+          })
     end
   end
 
@@ -102,7 +122,8 @@ defmodule NoizuPromptLingua.Domains.Memory.Weaver do
       |> Repo.all()
 
     Enum.reduce(candidates, 0, fn id, acc ->
-      acc + create_edge(mem.id, id, :contextual, w()[:contextual], "shared domain #{mem.domain}", %{})
+      acc +
+        create_edge(mem.id, id, :contextual, w()[:contextual], "shared domain #{mem.domain}", %{})
     end)
   end
 
@@ -125,7 +146,15 @@ defmodule NoizuPromptLingua.Domains.Memory.Weaver do
       |> Enum.uniq()
       |> Enum.take(2)
       |> Enum.reduce(0, fn id, acc ->
-        acc + create_edge(mem.id, id, :tangent, w()[:tangent], "tangent: #{String.slice(mem.tangent, 0, 80)}", %{})
+        acc +
+          create_edge(
+            mem.id,
+            id,
+            :tangent,
+            w()[:tangent],
+            "tangent: #{String.slice(mem.tangent, 0, 80)}",
+            %{}
+          )
       end)
     else
       _ -> 0
@@ -138,7 +167,8 @@ defmodule NoizuPromptLingua.Domains.Memory.Weaver do
   defp semantic_edges(mem) do
     with true <- VectorStore.enabled?() and Embeddings.configured?(),
          {:ok, cvec} <- Embeddings.embed_one(mem.content),
-         {:ok, hits} <- VectorStore.search("content", cvec, limit: emo_k(), filters: mem_filters(mem)) do
+         {:ok, hits} <-
+           VectorStore.search("content", cvec, limit: emo_k(), filters: mem_filters(mem)) do
       hits
       |> Enum.map(& &1.memory_id)
       |> Enum.reject(&(&1 == mem.id))
@@ -172,7 +202,10 @@ defmodule NoizuPromptLingua.Domains.Memory.Weaver do
 
     case %AssociationEdge{}
          |> AssociationEdge.changeset(attrs)
-         |> Repo.insert(on_conflict: :nothing, conflict_target: [:source_memory_id, :target_memory_id, :edge_type]) do
+         |> Repo.insert(
+           on_conflict: :nothing,
+           conflict_target: [:source_memory_id, :target_memory_id, :edge_type]
+         ) do
       {:ok, _} -> 1
       _ -> 0
     end

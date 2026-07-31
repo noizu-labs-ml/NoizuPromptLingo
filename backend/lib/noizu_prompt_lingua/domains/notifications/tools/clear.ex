@@ -1,7 +1,8 @@
 defmodule NoizuPromptLingua.Domains.Notifications.Tools.Clear do
   use Noizu.MCP.Server.Tool,
     name: "Notifications.Clear",
-    description: "Clear (mark read) notifications for a recipient. Pass specific `ids`, or omit to clear all.",
+    description:
+      "Clear (mark read) notifications for a recipient. Pass specific `ids`, or omit to clear all.",
     hidden: true,
     category: "Notifications"
 

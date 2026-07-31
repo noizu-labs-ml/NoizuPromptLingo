@@ -24,12 +24,20 @@ defmodule NoizuPromptLingua.Domains.Wiki.Tools.AttachmentList do
       page ->
         attachments = Wiki.list_attachments(page.id)
 
-        {:ok, %{
-          attachments: Enum.map(attachments, fn a ->
-            %{id: a.id, filename: a.filename, mime_type: a.mime_type, url: a.url, byte_size: a.byte_size}
-          end),
-          count: length(attachments)
-        }}
+        {:ok,
+         %{
+           attachments:
+             Enum.map(attachments, fn a ->
+               %{
+                 id: a.id,
+                 filename: a.filename,
+                 mime_type: a.mime_type,
+                 url: a.url,
+                 byte_size: a.byte_size
+               }
+             end),
+           count: length(attachments)
+         }}
     end
   end
 end

@@ -27,7 +27,10 @@ defmodule NoizuPromptLingua.Schema.Memory.Memory do
     field :reflection, :string
     field :tangent, :string
     field :summary, :string
-    field :content_type, Ecto.Enum, values: [:episodic, :semantic, :procedural], default: :episodic
+
+    field :content_type, Ecto.Enum,
+      values: [:episodic, :semantic, :procedural],
+      default: :episodic
 
     # Raw emotional components (the 7-d emotional vector itself lives in Weaviate)
     field :valence, :float

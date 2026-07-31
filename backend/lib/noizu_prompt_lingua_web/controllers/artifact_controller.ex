@@ -42,7 +42,10 @@ defmodule NoizuPromptLinguaWeb.ArtifactController do
       case Artifacts.create(attrs) do
         {:ok, artifact} ->
           rev = List.first(artifact.revisions)
-          conn |> put_status(:created) |> json(%{artifact: Map.put(artifact_to_json(artifact), :revision_id, rev && rev.id)})
+
+          conn
+          |> put_status(:created)
+          |> json(%{artifact: Map.put(artifact_to_json(artifact), :revision_id, rev && rev.id)})
 
         {:error, changeset} ->
           conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
@@ -58,7 +61,8 @@ defmodule NoizuPromptLinguaWeb.ArtifactController do
 
     with {:ok, resolved_org_id} <- NoizuPromptLingua.Organizations.resolve_org_id(org_id),
          {:ok, _} <- Authz.authorize(user_id, "organization", resolved_org_id, "viewer"),
-         {artifact, revision} when not is_nil(artifact) <- Artifacts.get(id, params["revision_id"]) || :missing,
+         {artifact, revision} when not is_nil(artifact) <-
+           Artifacts.get(id, params["revision_id"]) || :missing,
          true <- artifact.organization_id == resolved_org_id do
       body =
         artifact_to_json(artifact)
@@ -142,6 +146,7 @@ defmodule NoizuPromptLinguaWeb.ArtifactController do
 
   defp validate_project(nil, _org_id), do: {:ok, nil}
   defp validate_project("", _org_id), do: {:ok, nil}
+
   defp validate_project(project_id, org_id) do
     case NoizuPromptLingua.Projects.get_project(project_id) do
       nil -> {:error, :project_not_in_org}
@@ -152,10 +157,19 @@ defmodule NoizuPromptLinguaWeb.ArtifactController do
 
   defp handle_error(conn, err) do
     case err do
-      {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Organization not found"})
-      {:error, :not_a_member} -> conn |> put_status(:forbidden) |> json(%{error: "Not a member of this organization"})
-      {:error, :project_not_in_org} -> conn |> put_status(:unprocessable_entity) |> json(%{error: "Project does not belong to this organization"})
-      _ -> conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Organization not found"})
+
+      {:error, :not_a_member} ->
+        conn |> put_status(:forbidden) |> json(%{error: "Not a member of this organization"})
+
+      {:error, :project_not_in_org} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{error: "Project does not belong to this organization"})
+
+      _ ->
+        conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
     end
   end
 

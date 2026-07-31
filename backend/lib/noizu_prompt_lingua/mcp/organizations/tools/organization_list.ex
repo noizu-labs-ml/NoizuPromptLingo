@@ -27,9 +27,10 @@ defmodule NoizuPromptLingua.MCP.Organizations.Tools.OrganizationList do
       |> offset(^offset)
       |> NoizuPromptLingua.Repo.all()
 
-    {:ok, %{
-      organizations: Enum.map(orgs, &%{id: &1.id, name: &1.name, slug: &1.slug}),
-      count: length(orgs)
-    }}
+    {:ok,
+     %{
+       organizations: Enum.map(orgs, &%{id: &1.id, name: &1.name, slug: &1.slug}),
+       count: length(orgs)
+     }}
   end
 end

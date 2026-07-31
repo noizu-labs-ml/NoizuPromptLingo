@@ -19,14 +19,22 @@ defmodule NoizuPromptLingua.Domains.Chat.Slug do
   # Latin-extended letters with no NFKD decomposition that would otherwise mangle
   # ('Straße' -> 'stra-e', 'Łódź' -> 'od'). Applied BEFORE NFKD, both cases (ADR-013 H2).
   @translit %{
-    "ß" => "ss", "ẞ" => "ss",
-    "ø" => "o", "Ø" => "o",
-    "æ" => "ae", "Æ" => "ae",
-    "œ" => "oe", "Œ" => "oe",
-    "ł" => "l", "Ł" => "l",
-    "đ" => "d", "Đ" => "d",
-    "ð" => "d", "Ð" => "d",
-    "þ" => "th", "Þ" => "th"
+    "ß" => "ss",
+    "ẞ" => "ss",
+    "ø" => "o",
+    "Ø" => "o",
+    "æ" => "ae",
+    "Æ" => "ae",
+    "œ" => "oe",
+    "Œ" => "oe",
+    "ł" => "l",
+    "Ł" => "l",
+    "đ" => "d",
+    "Đ" => "d",
+    "ð" => "d",
+    "Ð" => "d",
+    "þ" => "th",
+    "Þ" => "th"
   }
 
   @doc """

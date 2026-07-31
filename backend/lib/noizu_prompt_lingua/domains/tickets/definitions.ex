@@ -26,7 +26,8 @@ defmodule NoizuPromptLingua.Domains.Tickets.Definitions do
 
   # ── Field Definitions ─────────────────────────────────────────
 
-  def create_field(attrs), do: %TicketFieldDefinition{} |> TicketFieldDefinition.changeset(attrs) |> Repo.insert()
+  def create_field(attrs),
+    do: %TicketFieldDefinition{} |> TicketFieldDefinition.changeset(attrs) |> Repo.insert()
 
   def get_field(id), do: Repo.get(TicketFieldDefinition, id)
 
@@ -85,7 +86,8 @@ defmodule NoizuPromptLingua.Domains.Tickets.Definitions do
 
   # ── Type Definitions ──────────────────────────────────────────
 
-  def create_type(attrs), do: %TicketTypeDefinition{} |> TicketTypeDefinition.changeset(attrs) |> Repo.insert()
+  def create_type(attrs),
+    do: %TicketTypeDefinition{} |> TicketTypeDefinition.changeset(attrs) |> Repo.insert()
 
   def get_type(id) do
     TicketTypeDefinition
@@ -103,8 +105,13 @@ defmodule NoizuPromptLingua.Domains.Tickets.Definitions do
 
   def delete_type(id) do
     case get_type(id) do
-      nil -> {:error, :not_found}
-      type_def -> type_def |> TicketTypeDefinition.changeset(%{deleted_at: DateTime.utc_now()}) |> Repo.update()
+      nil ->
+        {:error, :not_found}
+
+      type_def ->
+        type_def
+        |> TicketTypeDefinition.changeset(%{deleted_at: DateTime.utc_now()})
+        |> Repo.update()
     end
   end
 
@@ -165,7 +172,10 @@ defmodule NoizuPromptLingua.Domains.Tickets.Definitions do
   def remove_field_from_type(type_id, field_id) do
     {count, _} =
       TicketTypeField
-      |> where([tf], tf.ticket_type_definition_id == ^type_id and tf.ticket_field_definition_id == ^field_id)
+      |> where(
+        [tf],
+        tf.ticket_type_definition_id == ^type_id and tf.ticket_field_definition_id == ^field_id
+      )
       |> Repo.delete_all()
 
     {:ok, count}
@@ -177,6 +187,7 @@ defmodule NoizuPromptLingua.Domains.Tickets.Definitions do
     |> Enum.sort_by(& &1.position)
     |> Enum.map(fn tf ->
       field = tf.ticket_field_definition
+
       %{
         id: field.id,
         slug: field.slug,
@@ -225,6 +236,7 @@ defmodule NoizuPromptLingua.Domains.Tickets.Definitions do
 
   # Most-specific row; returns nil when the winner is a disabled tombstone.
   defp pick_winner([]), do: nil
+
   defp pick_winner(rows) do
     winner = Enum.max_by(rows, &rank(scope_of(&1)))
     if winner.disabled, do: nil, else: winner
@@ -240,7 +252,12 @@ defmodule NoizuPromptLingua.Domains.Tickets.Definitions do
   end
 
   # Exact-scope match (not inherited), with nil owners handled via is_nil.
-  defp scope_match(nil, _project_id), do: dynamic([d], is_nil(d.organization_id) and is_nil(d.project_id))
-  defp scope_match(org_id, nil), do: dynamic([d], d.organization_id == ^org_id and is_nil(d.project_id))
-  defp scope_match(org_id, project_id), do: dynamic([d], d.organization_id == ^org_id and d.project_id == ^project_id)
+  defp scope_match(nil, _project_id),
+    do: dynamic([d], is_nil(d.organization_id) and is_nil(d.project_id))
+
+  defp scope_match(org_id, nil),
+    do: dynamic([d], d.organization_id == ^org_id and is_nil(d.project_id))
+
+  defp scope_match(org_id, project_id),
+    do: dynamic([d], d.organization_id == ^org_id and d.project_id == ^project_id)
 end

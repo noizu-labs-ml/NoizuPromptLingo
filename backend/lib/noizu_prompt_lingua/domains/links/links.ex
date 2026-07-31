@@ -43,7 +43,8 @@ defmodule NoizuPromptLingua.Domains.Links do
            ticket_id: ticket_id,
            entity_type: to_string(entity_type),
            entity_id: entity_id,
-           link_type: link_type) do
+           link_type: link_type
+         ) do
       nil -> {:error, :not_found}
       link -> Repo.delete(link)
     end

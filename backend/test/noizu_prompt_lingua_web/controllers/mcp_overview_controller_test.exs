@@ -66,7 +66,9 @@ defmodule NoizuPromptLinguaWeb.McpOverviewControllerTest do
   end
 
   test "approve on a missing id returns 404", %{conn: conn} do
-    resp = McpOverviewController.approve(conn, %{"id" => Ecto.UUID.generate()}) |> json_response(404)
+    resp =
+      McpOverviewController.approve(conn, %{"id" => Ecto.UUID.generate()}) |> json_response(404)
+
     assert resp["error"] =~ "not found"
   end
 end

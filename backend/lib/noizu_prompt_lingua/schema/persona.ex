@@ -29,7 +29,18 @@ defmodule NoizuPromptLingua.Schema.Persona do
 
   def changeset(persona, attrs) do
     persona
-    |> cast(attrs, [:organization_id, :project_id, :slug, :name, :role, :bio, :avatar, :tags, :metadata, :status])
+    |> cast(attrs, [
+      :organization_id,
+      :project_id,
+      :slug,
+      :name,
+      :role,
+      :bio,
+      :avatar,
+      :tags,
+      :metadata,
+      :status
+    ])
     |> validate_required([:organization_id, :slug, :name])
     |> validate_inclusion(:status, @statuses)
     |> foreign_key_constraint(:organization_id)

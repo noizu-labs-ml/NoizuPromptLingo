@@ -5,7 +5,7 @@ defmodule NoizuPromptLingua.Domains.Customers.Tools.PersonaUpdate do
     hidden: true,
     category: "Customers"
 
-  input_schema %{
+  input_schema(%{
     "type" => "object",
     "properties" => %{
       "id" => %{"type" => "string", "description" => "Persona UUID"},
@@ -14,8 +14,16 @@ defmodule NoizuPromptLingua.Domains.Customers.Tools.PersonaUpdate do
       "segment_id" => %{"type" => "string", "description" => "Customer segment UUID"},
       "demographics" => %{"type" => "object", "description" => "Demographics"},
       "goals" => %{"type" => "array", "items" => %{"type" => "string"}, "description" => "Goals"},
-      "pains" => %{"type" => "array", "items" => %{"type" => "string"}, "description" => "Pain points"},
-      "channels" => %{"type" => "array", "items" => %{"type" => "string"}, "description" => "Channels"},
+      "pains" => %{
+        "type" => "array",
+        "items" => %{"type" => "string"},
+        "description" => "Pain points"
+      },
+      "channels" => %{
+        "type" => "array",
+        "items" => %{"type" => "string"},
+        "description" => "Channels"
+      },
       "motivations" => %{"type" => "string", "description" => "Motivations"},
       "objections" => %{"type" => "string", "description" => "Objections"},
       "summary" => %{"type" => "string", "description" => "Summary"},
@@ -23,7 +31,7 @@ defmodule NoizuPromptLingua.Domains.Customers.Tools.PersonaUpdate do
       "status" => %{"type" => "string", "description" => "active or archived"}
     },
     "required" => ["id"]
-  }
+  })
 
   alias NoizuPromptLingua.Domains.Customers
   alias NoizuPromptLingua.MCP.Args

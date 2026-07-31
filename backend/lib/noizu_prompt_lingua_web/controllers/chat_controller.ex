@@ -38,8 +38,11 @@ defmodule NoizuPromptLinguaWeb.ChatController do
       }
 
       case Chat.create_room(attrs) do
-        {:ok, room} -> conn |> put_status(:created) |> json(%{room: room_to_json(room)})
-        {:error, changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+        {:ok, room} ->
+          conn |> put_status(:created) |> json(%{room: room_to_json(room)})
+
+        {:error, changeset} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
       end
     else
       err -> handle_error(conn, err)
@@ -69,9 +72,15 @@ defmodule NoizuPromptLinguaWeb.ChatController do
   # and the (org, project) bucket can't move. Returns the full room incl slug.
   def update(conn, %{"org_id" => org_id, "id" => id, "room" => room_params}) do
     with_room(conn, org_id, id, "member", fn room ->
-      case Chat.update_room(room, %{name: room_params["name"], description: room_params["description"]}) do
-        {:ok, room} -> json(conn, %{room: room_to_json(room)})
-        {:error, changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+      case Chat.update_room(room, %{
+             name: room_params["name"],
+             description: room_params["description"]
+           }) do
+        {:ok, room} ->
+          json(conn, %{room: room_to_json(room)})
+
+        {:error, changeset} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
       end
     end)
   end
@@ -86,8 +95,11 @@ defmodule NoizuPromptLinguaWeb.ChatController do
   def delete(conn, %{"org_id" => org_id, "id" => id}) do
     with_room(conn, org_id, id, "lead", fn room ->
       case Chat.delete_room(room) do
-        {:ok, _deleted} -> json(conn, %{deleted: true, id: room.id})
-        {:error, _reason} -> conn |> put_status(:unprocessable_entity) |> json(%{error: "Could not delete room"})
+        {:ok, _deleted} ->
+          json(conn, %{deleted: true, id: room.id})
+
+        {:error, _reason} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{error: "Could not delete room"})
       end
     end)
   end
@@ -110,7 +122,10 @@ defmodule NoizuPromptLinguaWeb.ChatController do
       threads = Chat.thread_summaries(ids)
 
       json(conn, %{
-        messages: Enum.map(messages, fn m -> message_to_json(m, Map.get(reactions, m.id, []), Map.get(threads, m.id)) end)
+        messages:
+          Enum.map(messages, fn m ->
+            message_to_json(m, Map.get(reactions, m.id, []), Map.get(threads, m.id))
+          end)
       })
     end)
   end
@@ -134,8 +149,13 @@ defmodule NoizuPromptLinguaWeb.ChatController do
           }
 
           case Chat.send_message(attrs) do
-            {:ok, msg} -> conn |> put_status(:created) |> json(%{message: message_to_json(msg, [])})
-            {:error, changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+            {:ok, msg} ->
+              conn |> put_status(:created) |> json(%{message: message_to_json(msg, [])})
+
+            {:error, changeset} ->
+              conn
+              |> put_status(:unprocessable_entity)
+              |> json(%{errors: format_errors(changeset)})
           end
       end
     end)
@@ -165,7 +185,10 @@ defmodule NoizuPromptLinguaWeb.ChatController do
     with_message(conn, org_id, room_id, message_id, "viewer", fn parent ->
       replies = Chat.list_replies(parent.id)
       reactions = Chat.message_reaction_summaries(Enum.map(replies, & &1.id), actor(conn))
-      json(conn, %{messages: Enum.map(replies, fn r -> message_to_json(r, Map.get(reactions, r.id, [])) end)})
+
+      json(conn, %{
+        messages: Enum.map(replies, fn r -> message_to_json(r, Map.get(reactions, r.id, [])) end)
+      })
     end)
   end
 
@@ -178,7 +201,11 @@ defmodule NoizuPromptLinguaWeb.ChatController do
   # computed identically to the embedded message-list summaries.
 
   # GET /api/v1/organizations/:org_id/chat/rooms/:room_id/messages/:message_id/reactions
-  def index_message_reactions(conn, %{"org_id" => org_id, "room_id" => room_id, "message_id" => message_id}) do
+  def index_message_reactions(conn, %{
+        "org_id" => org_id,
+        "room_id" => room_id,
+        "message_id" => message_id
+      }) do
     with_message(conn, org_id, room_id, message_id, "viewer", fn msg ->
       json(conn, %{reactions: Chat.message_reaction_summary(msg.id, actor(conn))})
     end)
@@ -193,13 +220,25 @@ defmodule NoizuPromptLinguaWeb.ChatController do
   # else and (b) split the write/read axes -> ambiguous `me` + duplicate rows. The
   # on-behalf-of path (an agent reacting as a persona) is the MCP `Chat.React` tool,
   # which calls the domain directly with a trusted persona.
-  def add_message_reaction(conn, %{"org_id" => org_id, "room_id" => room_id, "message_id" => message_id, "emoji" => emoji}) do
+  def add_message_reaction(conn, %{
+        "org_id" => org_id,
+        "room_id" => room_id,
+        "message_id" => message_id,
+        "emoji" => emoji
+      }) do
     with_message(conn, org_id, room_id, message_id, "member", fn msg ->
       persona = actor(conn)
 
-      case Chat.add_reaction(%{entity_type: "chat_message", entity_id: msg.id, persona: persona, emoji: emoji}) do
+      case Chat.add_reaction(%{
+             entity_type: "chat_message",
+             entity_id: msg.id,
+             persona: persona,
+             emoji: emoji
+           }) do
         {:ok, _reaction} ->
-          conn |> put_status(:created) |> json(%{reactions: Chat.message_reaction_summary(msg.id, actor(conn))})
+          conn
+          |> put_status(:created)
+          |> json(%{reactions: Chat.message_reaction_summary(msg.id, actor(conn))})
 
         {:error, changeset} ->
           conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
@@ -217,13 +256,21 @@ defmodule NoizuPromptLinguaWeb.ChatController do
   # persona = the authed actor, ALWAYS (same one-axis rule as POST). This also closes
   # an authz gap: a client-supplied persona would let any member delete ANOTHER
   # persona's reaction (pass persona=victim). You can only remove your own.
-  def remove_message_reaction(conn, %{"org_id" => org_id, "room_id" => room_id, "message_id" => message_id, "emoji" => emoji}) do
+  def remove_message_reaction(conn, %{
+        "org_id" => org_id,
+        "room_id" => room_id,
+        "message_id" => message_id,
+        "emoji" => emoji
+      }) do
     with_message(conn, org_id, room_id, message_id, "member", fn msg ->
       persona = actor(conn)
 
       case Chat.remove_reaction("chat_message", msg.id, persona, emoji) do
-        :ok -> json(conn, %{reactions: Chat.message_reaction_summary(msg.id, actor(conn))})
-        {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Reaction not found"})
+        :ok ->
+          json(conn, %{reactions: Chat.message_reaction_summary(msg.id, actor(conn))})
+
+        {:error, :not_found} ->
+          conn |> put_status(:not_found) |> json(%{error: "Reaction not found"})
       end
     end)
   end
@@ -293,7 +340,9 @@ defmodule NoizuPromptLinguaWeb.ChatController do
   defp with_message(conn, org_id, room_id, message_id, role, fun) do
     with_room(conn, org_id, room_id, role, fn room ->
       case Chat.get_message(message_id) do
-        nil -> conn |> put_status(:not_found) |> json(%{error: "Message not found"})
+        nil ->
+          conn |> put_status(:not_found) |> json(%{error: "Message not found"})
+
         msg ->
           if msg.room_id == room.id,
             do: fun.(msg),
@@ -307,6 +356,7 @@ defmodule NoizuPromptLinguaWeb.ChatController do
   defp parse_limit(nil), do: nil
   defp parse_limit(""), do: nil
   defp parse_limit(v) when is_integer(v), do: v
+
   defp parse_limit(v) when is_binary(v) do
     case Integer.parse(v) do
       {n, _} -> n
@@ -316,6 +366,7 @@ defmodule NoizuPromptLinguaWeb.ChatController do
 
   defp validate_project(nil, _org_id), do: {:ok, nil}
   defp validate_project("", _org_id), do: {:ok, nil}
+
   defp validate_project(project_id, org_id) do
     case NoizuPromptLingua.Projects.get_project(project_id) do
       nil -> {:error, :project_not_in_org}
@@ -326,10 +377,19 @@ defmodule NoizuPromptLinguaWeb.ChatController do
 
   defp handle_error(conn, err) do
     case err do
-      {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Organization not found"})
-      {:error, :not_a_member} -> conn |> put_status(:forbidden) |> json(%{error: "Not a member of this organization"})
-      {:error, :project_not_in_org} -> conn |> put_status(:unprocessable_entity) |> json(%{error: "Project does not belong to this organization"})
-      _ -> conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Organization not found"})
+
+      {:error, :not_a_member} ->
+        conn |> put_status(:forbidden) |> json(%{error: "Not a member of this organization"})
+
+      {:error, :project_not_in_org} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{error: "Project does not belong to this organization"})
+
+      _ ->
+        conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
     end
   end
 

@@ -3,7 +3,15 @@ defmodule NoizuPromptLingua.NPL.Definition do
 
   alias NoizuPromptLingua.NPL.ConventionFormatter
 
-  defstruct [:conventions_dir, :version, :description, :concepts, :section_order, :dep_graph, :convention_components]
+  defstruct [
+    :conventions_dir,
+    :version,
+    :description,
+    :concepts,
+    :section_order,
+    :dep_graph,
+    :convention_components
+  ]
 
   @type t :: %__MODULE__{}
 
@@ -85,7 +93,8 @@ defmodule NoizuPromptLingua.NPL.Definition do
           "**#{name}**\n: #{desc}\n\n"
         end)
 
-    conventions_to_render = build_render_list(defn, conv_map, component_priority, example_priority)
+    conventions_to_render =
+      build_render_list(defn, conv_map, component_priority, example_priority)
 
     result =
       Enum.reduce(conventions_to_render, result, fn {conv_name, conv_components, cp, ep}, acc ->
@@ -98,7 +107,8 @@ defmodule NoizuPromptLingua.NPL.Definition do
           end)
           |> MapSet.new()
 
-        rendered_set = if MapSet.size(conv_rendered) > 0, do: MapSet.to_list(conv_rendered), else: nil
+        rendered_set =
+          if MapSet.size(conv_rendered) > 0, do: MapSet.to_list(conv_rendered), else: nil
 
         section =
           ConventionFormatter.format_convention(conv_name,
@@ -160,7 +170,12 @@ defmodule NoizuPromptLingua.NPL.Definition do
             if comp_str == "*" do
               {conv, nil}
             else
-              comps = comp_str |> String.split(",") |> Enum.map(&String.trim/1) |> Enum.filter(&(&1 != ""))
+              comps =
+                comp_str
+                |> String.split(",")
+                |> Enum.map(&String.trim/1)
+                |> Enum.filter(&(&1 != ""))
+
               {conv, comps}
             end
           else
@@ -206,7 +221,11 @@ defmodule NoizuPromptLingua.NPL.Definition do
     end)
   end
 
-  defp extract_spec(%{spec: spec, component_priority: cp, example_priority: ep}, _default_cp, _default_ep) do
+  defp extract_spec(
+         %{spec: spec, component_priority: cp, example_priority: ep},
+         _default_cp,
+         _default_ep
+       ) do
     {spec, cp, ep}
   end
 
@@ -258,15 +277,19 @@ defmodule NoizuPromptLingua.NPL.Definition do
 
           new_pri =
             case Map.fetch(inner_pri, key) do
-              {:ok, {old_cp, old_ep}} -> Map.put(inner_pri, key, {max(old_cp, cp), max(old_ep, ep)})
-              :error -> Map.put(inner_pri, key, {cp, ep})
+              {:ok, {old_cp, old_ep}} ->
+                Map.put(inner_pri, key, {max(old_cp, cp), max(old_ep, ep)})
+
+              :error ->
+                Map.put(inner_pri, key, {cp, ep})
             end
 
           {MapSet.put(inner_inc, key), new_pri}
         end)
       end)
 
-    {included, priorities} = walk_dependencies(defn.dep_graph, included, priorities, rendered_keys)
+    {included, priorities} =
+      walk_dependencies(defn.dep_graph, included, priorities, rendered_keys)
 
     Enum.reduce(included, %{}, fn key, acc ->
       [conv, comp] = String.split(key, ".", parts: 2)
@@ -274,7 +297,11 @@ defmodule NoizuPromptLingua.NPL.Definition do
 
       case Map.fetch(acc, conv) do
         {:ok, {existing_comps, existing_cp, existing_ep}} ->
-          Map.put(acc, conv, {[comp | existing_comps], max(existing_cp, cp), max(existing_ep, ep)})
+          Map.put(
+            acc,
+            conv,
+            {[comp | existing_comps], max(existing_cp, cp), max(existing_ep, ep)}
+          )
 
         :error ->
           Map.put(acc, conv, {[comp], cp, ep})
@@ -287,7 +314,9 @@ defmodule NoizuPromptLingua.NPL.Definition do
     new_priorities = priorities
 
     {changed, new_included, new_priorities} =
-      Enum.reduce(MapSet.to_list(included), {false, new_included, new_priorities}, fn key, {ch, inc, pri} ->
+      Enum.reduce(MapSet.to_list(included), {false, new_included, new_priorities}, fn key,
+                                                                                      {ch, inc,
+                                                                                       pri} ->
         reqs = Map.get(dep_graph, key, [])
         {cp, ep} = Map.get(pri, key, {0, 0})
 

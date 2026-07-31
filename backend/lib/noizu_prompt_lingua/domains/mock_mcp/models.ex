@@ -17,22 +17,82 @@ defmodule NoizuPromptLingua.Domains.MockMCP.Models do
 
   @seed_models [
     %{id: "openai:gpt-4o", label: "OpenAI · GPT-4o", provider: "openai", model: "gpt-4o"},
-    %{id: "openai:gpt-4o-mini", label: "OpenAI · GPT-4o mini", provider: "openai", model: "gpt-4o-mini"},
+    %{
+      id: "openai:gpt-4o-mini",
+      label: "OpenAI · GPT-4o mini",
+      provider: "openai",
+      model: "gpt-4o-mini"
+    },
     %{id: "openai:gpt-4.1", label: "OpenAI · GPT-4.1", provider: "openai", model: "gpt-4.1"},
-    %{id: "anthropic:claude-sonnet-4-6", label: "Anthropic · Claude Sonnet 4.6", provider: "anthropic", model: "claude-sonnet-4-6"},
-    %{id: "anthropic:claude-opus-4-6", label: "Anthropic · Claude Opus 4.6", provider: "anthropic", model: "claude-opus-4-6"},
-    %{id: "anthropic:claude-haiku-4-5", label: "Anthropic · Claude Haiku 4.5", provider: "anthropic", model: "claude-haiku-4-5"},
-    %{id: "deepseek:deepseek-chat", label: "DeepSeek · Chat", provider: "deepseek", model: "deepseek-chat"},
-    %{id: "deepseek:deepseek-reasoner", label: "DeepSeek · Reasoner", provider: "deepseek", model: "deepseek-reasoner"},
+    %{
+      id: "anthropic:claude-sonnet-4-6",
+      label: "Anthropic · Claude Sonnet 4.6",
+      provider: "anthropic",
+      model: "claude-sonnet-4-6"
+    },
+    %{
+      id: "anthropic:claude-opus-4-6",
+      label: "Anthropic · Claude Opus 4.6",
+      provider: "anthropic",
+      model: "claude-opus-4-6"
+    },
+    %{
+      id: "anthropic:claude-haiku-4-5",
+      label: "Anthropic · Claude Haiku 4.5",
+      provider: "anthropic",
+      model: "claude-haiku-4-5"
+    },
+    %{
+      id: "deepseek:deepseek-chat",
+      label: "DeepSeek · Chat",
+      provider: "deepseek",
+      model: "deepseek-chat"
+    },
+    %{
+      id: "deepseek:deepseek-reasoner",
+      label: "DeepSeek · Reasoner",
+      provider: "deepseek",
+      model: "deepseek-reasoner"
+    },
     %{id: "zai:glm-5", label: "Z.ai · GLM-5", provider: "zai", model: "glm-5"},
     %{id: "zai:glm-4.6", label: "Z.ai · GLM-4.6", provider: "zai", model: "glm-4.6"},
-    %{id: "cerebras:gpt-oss-120b", label: "Cerebras · GPT-OSS 120B", provider: "cerebras", model: "gpt-oss-120b"},
-    %{id: "cerebras:zai-glm-4.7", label: "Cerebras · GLM-4.7", provider: "cerebras", model: "zai-glm-4.7"},
-    %{id: "gemini:gemini-2.5-pro", label: "Gemini · 2.5 Pro", provider: "gemini", model: "gemini-2.5-pro"},
-    %{id: "gemini:gemini-2.5-flash", label: "Gemini · 2.5 Flash", provider: "gemini", model: "gemini-2.5-flash"},
+    %{
+      id: "cerebras:gpt-oss-120b",
+      label: "Cerebras · GPT-OSS 120B",
+      provider: "cerebras",
+      model: "gpt-oss-120b"
+    },
+    %{
+      id: "cerebras:zai-glm-4.7",
+      label: "Cerebras · GLM-4.7",
+      provider: "cerebras",
+      model: "zai-glm-4.7"
+    },
+    %{
+      id: "gemini:gemini-2.5-pro",
+      label: "Gemini · 2.5 Pro",
+      provider: "gemini",
+      model: "gemini-2.5-pro"
+    },
+    %{
+      id: "gemini:gemini-2.5-flash",
+      label: "Gemini · 2.5 Flash",
+      provider: "gemini",
+      model: "gemini-2.5-flash"
+    },
     %{id: "xai:grok-4", label: "Grok · 4", provider: "xai", model: "grok-4"},
-    %{id: "xai:grok-4-fast-reasoning", label: "Grok · 4 Fast (reasoning)", provider: "xai", model: "grok-4-fast-reasoning"},
-    %{id: "litellm:default", label: "LiteLLM · proxy default", provider: "litellm", model: "default"}
+    %{
+      id: "xai:grok-4-fast-reasoning",
+      label: "Grok · 4 Fast (reasoning)",
+      provider: "xai",
+      model: "grok-4-fast-reasoning"
+    },
+    %{
+      id: "litellm:default",
+      label: "LiteLLM · proxy default",
+      provider: "litellm",
+      model: "default"
+    }
   ]
 
   @doc """
@@ -44,7 +104,9 @@ defmodule NoizuPromptLingua.Domains.MockMCP.Models do
   def all do
     catalog()
     |> Enum.filter(& &1.enabled)
-    |> Enum.map(fn m -> %{id: "#{m.provider}:#{m.model}", label: m.label, provider: m.provider, model: m.model} end)
+    |> Enum.map(fn m ->
+      %{id: "#{m.provider}:#{m.model}", label: m.label, provider: m.provider, model: m.model}
+    end)
     |> case do
       [] -> @seed_models
       models -> models

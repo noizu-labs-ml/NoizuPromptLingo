@@ -27,7 +27,12 @@ defmodule NoizuPromptLingua.Domains.PubSub.Tools.FetchChannel do
       opts = [limit: Args.get(args, :limit) || 50, since: Args.get(args, :since)]
       messages = PubSub.fetch_channel(channel.id, opts) |> Enum.map(&serialize/1)
 
-      {:ok, %{channel: %{id: channel.id, slug: channel.slug}, count: length(messages), messages: messages}}
+      {:ok,
+       %{
+         channel: %{id: channel.id, slug: channel.slug},
+         count: length(messages),
+         messages: messages
+       }}
     else
       {:org, nil} -> {:error, "Organization '#{org_ref}' not found"}
       {:chan, nil} -> {:error, "Channel '#{channel_ref}' not found"}
@@ -35,6 +40,13 @@ defmodule NoizuPromptLingua.Domains.PubSub.Tools.FetchChannel do
   end
 
   defp serialize(m) do
-    %{id: m.id, seq: m.seq, sender: m.sender, body: m.body, channel_id: m.channel_id, inserted_at: m.inserted_at}
+    %{
+      id: m.id,
+      seq: m.seq,
+      sender: m.sender,
+      body: m.body,
+      channel_id: m.channel_id,
+      inserted_at: m.inserted_at
+    }
   end
 end

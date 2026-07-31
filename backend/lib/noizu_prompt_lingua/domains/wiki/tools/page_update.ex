@@ -33,10 +33,20 @@ defmodule NoizuPromptLingua.Domains.Wiki.Tools.PageUpdate do
 
         case Wiki.update_page(id, attrs) do
           {:ok, updated} ->
-            {:ok, %{id: updated.id, slug: updated.slug, title: updated.title, parent_id: updated.parent_id, position: updated.position}}
+            {:ok,
+             %{
+               id: updated.id,
+               slug: updated.slug,
+               title: updated.title,
+               parent_id: updated.parent_id,
+               position: updated.position
+             }}
 
-          {:error, :not_found} -> {:error, "Page '#{id}' not found"}
-          {:error, changeset} -> {:error, "Failed: #{inspect(changeset.errors)}"}
+          {:error, :not_found} ->
+            {:error, "Page '#{id}' not found"}
+
+          {:error, changeset} ->
+            {:error, "Failed: #{inspect(changeset.errors)}"}
         end
     end
   end

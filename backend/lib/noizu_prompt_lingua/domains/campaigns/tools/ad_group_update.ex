@@ -5,19 +5,23 @@ defmodule NoizuPromptLingua.Domains.Campaigns.Tools.AdGroupUpdate do
     hidden: true,
     category: "Campaigns.AdGroups"
 
-  input_schema %{
+  input_schema(%{
     "type" => "object",
     "properties" => %{
       "id" => %{"type" => "string", "description" => "Ad group UUID"},
       "name" => %{"type" => "string", "description" => "Name"},
       "theme" => %{"type" => "string", "description" => "Theme"},
-      "keywords" => %{"type" => "array", "items" => %{"type" => "string"}, "description" => "Keyword terms"},
+      "keywords" => %{
+        "type" => "array",
+        "items" => %{"type" => "string"},
+        "description" => "Keyword terms"
+      },
       "bid_cents" => %{"type" => "integer", "description" => "Default bid in cents"},
       "status" => %{"type" => "string", "description" => "active, paused, archived"},
       "metadata" => %{"type" => "object", "description" => "Metadata"}
     },
     "required" => ["id"]
-  }
+  })
 
   alias NoizuPromptLingua.Domains.Campaigns
   alias NoizuPromptLingua.MCP.Args

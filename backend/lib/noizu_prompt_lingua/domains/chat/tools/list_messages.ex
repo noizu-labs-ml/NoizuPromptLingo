@@ -1,6 +1,9 @@
 defmodule NoizuPromptLingua.Domains.Chat.Tools.ListMessages do
   use Noizu.MCP.Server.Tool,
-    name: "Chat.ListMessages", description: "List messages in a room.", hidden: true, category: "Chat",
+    name: "Chat.ListMessages",
+    description: "List messages in a room.",
+    hidden: true,
+    category: "Chat",
     annotations: [read_only_hint: true]
 
   input do
@@ -15,11 +18,19 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.ListMessages do
   @impl true
   def call(args, _ctx) do
     room_id = args[:room_id] || args["room_id"]
-    opts = Enum.reduce([:limit, :before, :after], [], fn k, acc ->
-      val = args[k] || args[Atom.to_string(k)]
-      if val, do: [{k, val} | acc], else: acc
-    end)
+
+    opts =
+      Enum.reduce([:limit, :before, :after], [], fn k, acc ->
+        val = args[k] || args[Atom.to_string(k)]
+        if val, do: [{k, val} | acc], else: acc
+      end)
+
     msgs = Chat.list_messages(room_id, opts)
-    {:ok, %{messages: Enum.map(msgs, &NoizuPromptLingua.Domains.Chat.Serialize.message/1), count: length(msgs)}}
+
+    {:ok,
+     %{
+       messages: Enum.map(msgs, &NoizuPromptLingua.Domains.Chat.Serialize.message/1),
+       count: length(msgs)
+     }}
   end
 end

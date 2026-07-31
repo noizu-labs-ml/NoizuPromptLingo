@@ -10,7 +10,10 @@ defmodule NoizuPromptLingua.Domains.PubSub.Tools.Follow do
   input do
     field :organization, :string, required: true, description: "Organization slug or UUID"
     field :channel, :string, required: true, description: "Channel slug or UUID"
-    field :persona, :string, required: true, description: "Persona / agent handle that will follow"
+
+    field :persona, :string,
+      required: true,
+      description: "Persona / agent handle that will follow"
   end
 
   alias NoizuPromptLingua.Domains.PubSub

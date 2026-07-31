@@ -23,7 +23,9 @@ defmodule NoizuPromptLinguaWeb.MembershipController do
   def show(conn, %{"org_id" => org_id, "id" => id}) do
     case ScopedMemberships.get_membership(id) do
       %{resource_type: "organization", resource_id: ^org_id} = member ->
-        caller_role = NoizuPromptLingua.Authz.get_user_role(get_user_id(conn), "organization", org_id)
+        caller_role =
+          NoizuPromptLingua.Authz.get_user_role(get_user_id(conn), "organization", org_id)
+
         conn |> put_status(:ok) |> json(%{member: Map.put(member, :effective_role, caller_role)})
 
       _ ->
@@ -102,5 +104,4 @@ defmodule NoizuPromptLinguaWeb.MembershipController do
       id -> id
     end
   end
-
 end

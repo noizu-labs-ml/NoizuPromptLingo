@@ -1,7 +1,8 @@
 defmodule NoizuPromptLingua.Domains.Campaigns.Tools.AdCopyList do
   use Noizu.MCP.Server.Tool,
     name: "AdCopy.List",
-    description: "List ad-copy variants for a campaign, optionally filtered by ad group or status.",
+    description:
+      "List ad-copy variants for a campaign, optionally filtered by ad group or status.",
     annotations: [read_only_hint: true],
     hidden: true,
     category: "Campaigns.AdCopy"
@@ -25,6 +26,20 @@ defmodule NoizuPromptLingua.Domains.Campaigns.Tools.AdCopyList do
         limit: Args.get(args, :limit) || 100
       )
 
-    {:ok, %{count: length(copies), ad_copies: Enum.map(copies, &%{id: &1.id, variant_number: &1.variant_number, headline: &1.headline, status: &1.status, llm_generated: &1.llm_generated})}}
+    {:ok,
+     %{
+       count: length(copies),
+       ad_copies:
+         Enum.map(
+           copies,
+           &%{
+             id: &1.id,
+             variant_number: &1.variant_number,
+             headline: &1.headline,
+             status: &1.status,
+             llm_generated: &1.llm_generated
+           }
+         )
+     }}
   end
 end

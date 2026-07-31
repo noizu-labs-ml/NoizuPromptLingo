@@ -4,7 +4,10 @@ defmodule NoizuPromptLingua.Organizations.InviteToken do
   @vsn 1.0
   @repo NoizuPromptLingua.Organizations.InviteTokens
   @sref "invite-token"
-  @persistence ecto_store(NoizuPromptLingua.Schema.Organizations.InviteToken, NoizuPromptLingua.Repo)
+  @persistence ecto_store(
+                 NoizuPromptLingua.Schema.Organizations.InviteToken,
+                 NoizuPromptLingua.Repo
+               )
   @derive Noizu.Entity.Store.Ecto.EntityProtocol
   def_entity do
     id(:uuid)

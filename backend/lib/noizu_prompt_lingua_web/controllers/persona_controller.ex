@@ -16,7 +16,11 @@ defmodule NoizuPromptLinguaWeb.PersonaController do
         |> maybe_opt(:tag, params["tag"])
 
       personas = Personas.list(opts)
-      json(conn, %{personas: Enum.map(personas, &persona_json/1), statuses: NoizuPromptLingua.Schema.Persona.statuses()})
+
+      json(conn, %{
+        personas: Enum.map(personas, &persona_json/1),
+        statuses: NoizuPromptLingua.Schema.Persona.statuses()
+      })
     end)
   end
 
@@ -24,14 +28,22 @@ defmodule NoizuPromptLinguaWeb.PersonaController do
   def create(conn, %{"org_id" => org_id, "persona" => params}) do
     with_org(conn, org_id, "member", fn resolved_org_id ->
       with {:ok, project_id} <- validate_project(params["project_id"], resolved_org_id) do
-        attrs = take_attrs(params) |> Map.merge(%{organization_id: resolved_org_id, project_id: project_id})
+        attrs =
+          take_attrs(params)
+          |> Map.merge(%{organization_id: resolved_org_id, project_id: project_id})
 
         case Personas.create(attrs) do
-          {:ok, p} -> conn |> put_status(:created) |> json(%{persona: persona_json(p)})
-          {:error, cs} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+          {:ok, p} ->
+            conn |> put_status(:created) |> json(%{persona: persona_json(p)})
+
+          {:error, cs} ->
+            conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
         end
       else
-        {:error, :project_not_in_org} -> conn |> put_status(:unprocessable_entity) |> json(%{error: "Project does not belong to this organization"})
+        {:error, :project_not_in_org} ->
+          conn
+          |> put_status(:unprocessable_entity)
+          |> json(%{error: "Project does not belong to this organization"})
       end
     end)
   end
@@ -51,9 +63,14 @@ defmodule NoizuPromptLinguaWeb.PersonaController do
   def update(conn, %{"org_id" => org_id, "id" => id, "persona" => params}) do
     with_owned(conn, org_id, id, "member", fn _p ->
       case Personas.update(id, take_attrs(params)) do
-        {:ok, p} -> json(conn, %{persona: persona_json(p)})
-        {:error, :not_found} -> not_found(conn)
-        {:error, cs} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+        {:ok, p} ->
+          json(conn, %{persona: persona_json(p)})
+
+        {:error, :not_found} ->
+          not_found(conn)
+
+        {:error, cs} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
       end
     end)
   end
@@ -82,9 +99,13 @@ defmodule NoizuPromptLinguaWeb.PersonaController do
   def add_journal(conn, %{"org_id" => org_id, "persona_id" => id, "entry" => params}) do
     with_owned(conn, org_id, id, "member", fn _p ->
       attrs = Map.merge(take_journal(params), %{actor: actor(conn)})
+
       case Personas.add_journal_entry(id, attrs) do
-        {:ok, j} -> conn |> put_status(:created) |> json(%{entry: journal_json(j)})
-        {:error, cs} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+        {:ok, j} ->
+          conn |> put_status(:created) |> json(%{entry: journal_json(j)})
+
+        {:error, cs} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
       end
     end)
   end
@@ -113,19 +134,32 @@ defmodule NoizuPromptLinguaWeb.PersonaController do
   def add_knowledge(conn, %{"org_id" => org_id, "persona_id" => id, "entry" => params}) do
     with_owned(conn, org_id, id, "member", fn _p ->
       case Personas.add_knowledge(id, take_kb(params)) do
-        {:ok, k} -> conn |> put_status(:created) |> json(%{entry: kb_full_json(k)})
-        {:error, cs} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+        {:ok, k} ->
+          conn |> put_status(:created) |> json(%{entry: kb_full_json(k)})
+
+        {:error, cs} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
       end
     end)
   end
 
   # PUT /api/v1/organizations/:org_id/personas/:persona_id/knowledge/:entry_id
-  def update_knowledge(conn, %{"org_id" => org_id, "persona_id" => id, "entry_id" => entry_id, "entry" => params}) do
+  def update_knowledge(conn, %{
+        "org_id" => org_id,
+        "persona_id" => id,
+        "entry_id" => entry_id,
+        "entry" => params
+      }) do
     with_owned(conn, org_id, id, "member", fn _p ->
       case Personas.update_knowledge(entry_id, take_kb(params)) do
-        {:ok, k} -> json(conn, %{entry: kb_full_json(k)})
-        {:error, :not_found} -> not_found(conn)
-        {:error, cs} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+        {:ok, k} ->
+          json(conn, %{entry: kb_full_json(k)})
+
+        {:error, :not_found} ->
+          not_found(conn)
+
+        {:error, cs} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
       end
     end)
   end
@@ -143,21 +177,47 @@ defmodule NoizuPromptLinguaWeb.PersonaController do
   # ── JSON ──────────────────────────────────────────────────────
 
   defp persona_json(p) do
-    %{id: p.id, organization_id: p.organization_id, project_id: p.project_id,
-      slug: p.slug, name: p.name, role: p.role, bio: p.bio, avatar: p.avatar,
-      tags: p.tags, status: p.status, inserted_at: p.inserted_at, updated_at: p.updated_at}
+    %{
+      id: p.id,
+      organization_id: p.organization_id,
+      project_id: p.project_id,
+      slug: p.slug,
+      name: p.name,
+      role: p.role,
+      bio: p.bio,
+      avatar: p.avatar,
+      tags: p.tags,
+      status: p.status,
+      inserted_at: p.inserted_at,
+      updated_at: p.updated_at
+    }
   end
 
   defp journal_json(j) do
-    %{id: j.id, category: j.category, title: j.title, body: j.body,
-      actor: j.actor, tags: j.tags, inserted_at: j.inserted_at}
+    %{
+      id: j.id,
+      category: j.category,
+      title: j.title,
+      body: j.body,
+      actor: j.actor,
+      tags: j.tags,
+      inserted_at: j.inserted_at
+    }
   end
 
   defp kb_json(k), do: %{id: k.id, slug: k.slug, title: k.title, tags: k.tags, source: k.source}
 
   defp kb_full_json(k) do
-    %{id: k.id, slug: k.slug, title: k.title, body: k.body, tags: k.tags,
-      source: k.source, inserted_at: k.inserted_at, updated_at: k.updated_at}
+    %{
+      id: k.id,
+      slug: k.slug,
+      title: k.title,
+      body: k.body,
+      tags: k.tags,
+      source: k.source,
+      inserted_at: k.inserted_at,
+      updated_at: k.updated_at
+    }
   end
 
   defp take_attrs(params) do
@@ -176,6 +236,7 @@ defmodule NoizuPromptLinguaWeb.PersonaController do
 
   defp validate_project(nil, _org_id), do: {:ok, nil}
   defp validate_project("", _org_id), do: {:ok, nil}
+
   defp validate_project(project_id, org_id) do
     case NoizuPromptLingua.Projects.get_project(project_id) do
       %{organization_id: ^org_id} -> {:ok, project_id}
@@ -210,9 +271,14 @@ defmodule NoizuPromptLinguaWeb.PersonaController do
          {:ok, _} <- Authz.authorize(user_id, "organization", resolved_org_id, role) do
       fun.(resolved_org_id)
     else
-      {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Organization not found"})
-      {:error, :not_a_member} -> conn |> put_status(:forbidden) |> json(%{error: "Not a member of this organization"})
-      {:error, _} -> conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Organization not found"})
+
+      {:error, :not_a_member} ->
+        conn |> put_status(:forbidden) |> json(%{error: "Not a member of this organization"})
+
+      {:error, _} ->
+        conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
     end
   end
 

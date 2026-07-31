@@ -62,7 +62,9 @@ defmodule NoizuPromptLinguaWeb.SessionController do
         conn |> put_status(:forbidden) |> json(%{error: "Not a member of this organization"})
 
       {:error, :project_not_in_org} ->
-        conn |> put_status(:unprocessable_entity) |> json(%{error: "Project does not belong to this organization"})
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{error: "Project does not belong to this organization"})
 
       {:error, _} ->
         conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
@@ -91,16 +93,32 @@ defmodule NoizuPromptLinguaWeb.SessionController do
         |> maybe_put("project_id", Map.has_key?(attrs, "project_id"), project_id)
 
       case Sessions.update_session(id, attrs) do
-        {:ok, session} -> json(conn, %{session: session_to_json(session)})
-        {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Session not found"})
-        {:error, changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+        {:ok, session} ->
+          json(conn, %{session: session_to_json(session)})
+
+        {:error, :not_found} ->
+          conn |> put_status(:not_found) |> json(%{error: "Session not found"})
+
+        {:error, changeset} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
       end
     else
-      nil -> conn |> put_status(:not_found) |> json(%{error: "Session not found"})
-      :wrong_org -> conn |> put_status(:not_found) |> json(%{error: "Session not found"})
-      {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Organization not found"})
-      {:error, :project_not_in_org} -> conn |> put_status(:unprocessable_entity) |> json(%{error: "Project does not belong to this organization"})
-      {:error, _} -> conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
+      nil ->
+        conn |> put_status(:not_found) |> json(%{error: "Session not found"})
+
+      :wrong_org ->
+        conn |> put_status(:not_found) |> json(%{error: "Session not found"})
+
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Organization not found"})
+
+      {:error, :project_not_in_org} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{error: "Project does not belong to this organization"})
+
+      {:error, _} ->
+        conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
     end
   end
 
@@ -108,8 +126,11 @@ defmodule NoizuPromptLinguaWeb.SessionController do
   def archive(conn, %{"org_id" => org_id, "session_id" => id}) do
     with_org_session(conn, org_id, id, "member", fn _session ->
       case Sessions.archive(id) do
-        {:ok, session} -> json(conn, %{session: session_to_json(session)})
-        {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Session not found"})
+        {:ok, session} ->
+          json(conn, %{session: session_to_json(session)})
+
+        {:error, :not_found} ->
+          conn |> put_status(:not_found) |> json(%{error: "Session not found"})
       end
     end)
   end
@@ -118,8 +139,11 @@ defmodule NoizuPromptLinguaWeb.SessionController do
   def unarchive(conn, %{"org_id" => org_id, "session_id" => id}) do
     with_org_session(conn, org_id, id, "member", fn _session ->
       case Sessions.unarchive(id) do
-        {:ok, session} -> json(conn, %{session: session_to_json(session)})
-        {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Session not found"})
+        {:ok, session} ->
+          json(conn, %{session: session_to_json(session)})
+
+        {:error, :not_found} ->
+          conn |> put_status(:not_found) |> json(%{error: "Session not found"})
       end
     end)
   end
@@ -128,8 +152,11 @@ defmodule NoizuPromptLinguaWeb.SessionController do
   def delete(conn, %{"org_id" => org_id, "id" => id}) do
     with_org_session(conn, org_id, id, "member", fn _session ->
       case Sessions.delete_session(id) do
-        {:ok, _} -> json(conn, %{message: "Session deleted"})
-        {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Session not found"})
+        {:ok, _} ->
+          json(conn, %{message: "Session deleted"})
+
+        {:error, :not_found} ->
+          conn |> put_status(:not_found) |> json(%{error: "Session not found"})
       end
     end)
   end
@@ -145,17 +172,27 @@ defmodule NoizuPromptLinguaWeb.SessionController do
          true <- session.organization_id == resolved_org_id do
       fun.(session)
     else
-      nil -> conn |> put_status(:not_found) |> json(%{error: "Session not found"})
-      false -> conn |> put_status(:not_found) |> json(%{error: "Session not found"})
-      {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Organization not found"})
-      {:error, :not_a_member} -> conn |> put_status(:forbidden) |> json(%{error: "Not a member of this organization"})
-      {:error, _} -> conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
+      nil ->
+        conn |> put_status(:not_found) |> json(%{error: "Session not found"})
+
+      false ->
+        conn |> put_status(:not_found) |> json(%{error: "Session not found"})
+
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Organization not found"})
+
+      {:error, :not_a_member} ->
+        conn |> put_status(:forbidden) |> json(%{error: "Not a member of this organization"})
+
+      {:error, _} ->
+        conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
     end
   end
 
   # A session's project (when set) must live in the same organization.
   defp validate_project(nil, _org_id), do: {:ok, nil}
   defp validate_project("", _org_id), do: {:ok, nil}
+
   defp validate_project(project_id, org_id) do
     case NoizuPromptLingua.Projects.get_project(project_id) do
       nil -> {:error, :project_not_in_org}

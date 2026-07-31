@@ -7,7 +7,9 @@ defmodule NoizuPromptLingua.Domains.Customers.Tools.PersonaGet do
     category: "Customers"
 
   input do
-    field :organization, :string, description: "Organization slug or UUID (required for slug lookup)"
+    field :organization, :string,
+      description: "Organization slug or UUID (required for slug lookup)"
+
     field :id, :string, required: true, description: "Persona UUID or slug"
   end
 
@@ -26,10 +28,24 @@ defmodule NoizuPromptLingua.Domains.Customers.Tools.PersonaGet do
   end
 
   defp persona_view(p) do
-    %{id: p.id, slug: p.slug, name: p.name, archetype: p.archetype, segment_id: p.segment_id,
-      demographics: p.demographics, goals: p.goals, pains: p.pains, channels: p.channels,
-      motivations: p.motivations, objections: p.objections, summary: p.summary,
-      artifact_id: p.artifact_id, tags: p.tags, status: p.status,
-      organization_id: p.organization_id, project_id: p.project_id}
+    %{
+      id: p.id,
+      slug: p.slug,
+      name: p.name,
+      archetype: p.archetype,
+      segment_id: p.segment_id,
+      demographics: p.demographics,
+      goals: p.goals,
+      pains: p.pains,
+      channels: p.channels,
+      motivations: p.motivations,
+      objections: p.objections,
+      summary: p.summary,
+      artifact_id: p.artifact_id,
+      tags: p.tags,
+      status: p.status,
+      organization_id: p.organization_id,
+      project_id: p.project_id
+    }
   end
 end

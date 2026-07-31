@@ -79,7 +79,17 @@ defmodule NoizuPromptLingua.Domains.Notifications do
   defp insert_for(attrs, recipient, org_id) do
     base =
       attrs
-      |> Map.take([:project_id, :sender, :kind, :subject_type, :subject_id, :body, :payload, :deliver_after, :dedup_key])
+      |> Map.take([
+        :project_id,
+        :sender,
+        :kind,
+        :subject_type,
+        :subject_id,
+        :body,
+        :payload,
+        :deliver_after,
+        :dedup_key
+      ])
       |> Map.put(:organization_id, org_id)
       |> Map.put(:recipient, recipient)
 
@@ -122,7 +132,8 @@ defmodule NoizuPromptLingua.Domains.Notifications do
           ]
         ),
       conflict_target:
-        {:unsafe_fragment, ~s|("organization_id", "recipient", "dedup_key") WHERE read = false AND dedup_key IS NOT NULL|},
+        {:unsafe_fragment,
+         ~s|("organization_id", "recipient", "dedup_key") WHERE read = false AND dedup_key IS NOT NULL|},
       returning: true
     )
   end
@@ -385,7 +396,10 @@ defmodule NoizuPromptLingua.Domains.Notifications do
   # ── Rate-limit (Redis) ────────────────────────────────────────
 
   defp rate_limit_remaining(org_id, recipient) do
-    case NoizuPromptLingua.Redis.command(["PTTL", NoizuPromptLingua.Redis.prefix(rl_key(org_id, recipient))]) do
+    case NoizuPromptLingua.Redis.command([
+           "PTTL",
+           NoizuPromptLingua.Redis.prefix(rl_key(org_id, recipient))
+         ]) do
       {:ok, ms} when is_integer(ms) and ms > 0 -> ms
       _ -> 0
     end

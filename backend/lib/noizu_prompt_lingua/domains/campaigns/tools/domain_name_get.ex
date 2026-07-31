@@ -7,7 +7,9 @@ defmodule NoizuPromptLingua.Domains.Campaigns.Tools.DomainNameGet do
     category: "Campaigns.Domains"
 
   input do
-    field :organization, :string, description: "Organization slug or UUID (required for slug lookup)"
+    field :organization, :string,
+      description: "Organization slug or UUID (required for slug lookup)"
+
     field :id, :string, required: true, description: "Domain name UUID or slug"
   end
 
@@ -20,8 +22,24 @@ defmodule NoizuPromptLingua.Domains.Campaigns.Tools.DomainNameGet do
     org_id = Resolve.organization_id(Args.get(args, :organization))
 
     case Campaigns.resolve_domain_name(org_id, id) do
-      nil -> {:error, "Domain name '#{id}' not found"}
-      d -> {:ok, %{id: d.id, slug: d.slug, name: d.name, status: d.status, registrar: d.registrar, registered_at: d.registered_at, expires_at: d.expires_at, campaign_id: d.campaign_id, tags: d.tags, organization_id: d.organization_id, project_id: d.project_id}}
+      nil ->
+        {:error, "Domain name '#{id}' not found"}
+
+      d ->
+        {:ok,
+         %{
+           id: d.id,
+           slug: d.slug,
+           name: d.name,
+           status: d.status,
+           registrar: d.registrar,
+           registered_at: d.registered_at,
+           expires_at: d.expires_at,
+           campaign_id: d.campaign_id,
+           tags: d.tags,
+           organization_id: d.organization_id,
+           project_id: d.project_id
+         }}
     end
   end
 end

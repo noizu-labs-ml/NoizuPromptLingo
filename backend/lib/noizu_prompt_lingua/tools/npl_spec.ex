@@ -18,7 +18,8 @@ defmodule NoizuPromptLingua.Tools.NPLSpec do
           "component_priority (integer, default 0), example_priority (integer, default 0)." do
       field :spec, :string,
         required: true,
-        description: "Component spec string, e.g. \"syntax:*\" or \"pumps:npl-intent,chain-of-thought\""
+        description:
+          "Component spec string, e.g. \"syntax:*\" or \"pumps:npl-intent,chain-of-thought\""
 
       field :component_priority, :integer,
         default: 0,

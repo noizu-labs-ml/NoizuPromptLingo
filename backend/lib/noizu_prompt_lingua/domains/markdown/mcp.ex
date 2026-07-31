@@ -5,13 +5,13 @@ defmodule NoizuPromptLingua.Domains.Markdown.MCP do
     instructions:
       "Markdown utilities — convert a URL, HTML, or raw content to Markdown, and filter/collapse a Markdown document by heading. Pure transforms; no organization context required."
 
-  tool NoizuPromptLingua.Domains.Markdown.Tools.Overview, category: "Markdown"
-  tool NoizuPromptLingua.Domains.Markdown.Tools.Convert, category: "Markdown"
-  tool NoizuPromptLingua.Domains.Markdown.Tools.View, category: "Markdown"
+  tool(NoizuPromptLingua.Domains.Markdown.Tools.Overview, category: "Markdown")
+  tool(NoizuPromptLingua.Domains.Markdown.Tools.Convert, category: "Markdown")
+  tool(NoizuPromptLingua.Domains.Markdown.Tools.View, category: "Markdown")
 
-  tool NoizuPromptLingua.Tools.ToolSummary, category: "Discovery"
-  tool NoizuPromptLingua.Tools.ToolSearch, category: "Discovery"
-  tool NoizuPromptLingua.Tools.ToolDefinition, category: "Discovery"
-  tool NoizuPromptLingua.Tools.ToolCall, category: "Discovery"
-  tool NoizuPromptLingua.Tools.ToolHelp, category: "Discovery"
+  tool(NoizuPromptLingua.Tools.ToolSummary, category: "Discovery")
+  tool(NoizuPromptLingua.Tools.ToolSearch, category: "Discovery")
+  tool(NoizuPromptLingua.Tools.ToolDefinition, category: "Discovery")
+  tool(NoizuPromptLingua.Tools.ToolCall, category: "Discovery")
+  tool(NoizuPromptLingua.Tools.ToolHelp, category: "Discovery")
 end

@@ -13,8 +13,20 @@ defmodule NoizuPromptLinguaWeb.Plugs.OtelLoggerMetadata do
         conn
 
       span_ctx ->
-        trace_id = span_ctx |> OpenTelemetry.Span.trace_id() |> Integer.to_string(16) |> String.downcase() |> String.pad_leading(32, "0")
-        span_id = span_ctx |> OpenTelemetry.Span.span_id() |> Integer.to_string(16) |> String.downcase() |> String.pad_leading(16, "0")
+        trace_id =
+          span_ctx
+          |> OpenTelemetry.Span.trace_id()
+          |> Integer.to_string(16)
+          |> String.downcase()
+          |> String.pad_leading(32, "0")
+
+        span_id =
+          span_ctx
+          |> OpenTelemetry.Span.span_id()
+          |> Integer.to_string(16)
+          |> String.downcase()
+          |> String.pad_leading(16, "0")
+
         Logger.metadata(trace_id: trace_id, span_id: span_id)
         conn
     end

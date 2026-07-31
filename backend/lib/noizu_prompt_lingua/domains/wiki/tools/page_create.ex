@@ -37,7 +37,14 @@ defmodule NoizuPromptLingua.Domains.Wiki.Tools.PageCreate do
 
         case Wiki.create_page(attrs) do
           {:ok, page} ->
-            {:ok, %{id: page.id, slug: page.slug, title: page.title, space_id: page.space_id, parent_id: page.parent_id}}
+            {:ok,
+             %{
+               id: page.id,
+               slug: page.slug,
+               title: page.title,
+               space_id: page.space_id,
+               parent_id: page.parent_id
+             }}
 
           {:error, changeset} ->
             {:error, "Failed: #{inspect(changeset.errors)}"}

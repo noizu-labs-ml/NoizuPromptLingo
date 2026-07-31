@@ -10,14 +10,22 @@ defmodule NoizuPromptLingua.Domains.Notifications.Tools.FollowUp do
     field :organization, :string, required: true, description: "Organization slug or UUID"
     field :project, :string, description: "Optional project slug or UUID"
     field :sender, :string, required: true, description: "Sender agent handle"
-    field :persona, :string, description: "Recipient agent handle (defaults to the sender — a note-to-self)"
+
+    field :persona, :string,
+      description: "Recipient agent handle (defaults to the sender — a note-to-self)"
+
     field :recipient, :string, description: "Alias for persona — recipient agent handle"
     field :body, :string, description: "Reminder text"
-    field :subject_type, :string, description: "Optional subject pointer type (e.g. ticket, chat_message, wiki_page)"
+
+    field :subject_type, :string,
+      description: "Optional subject pointer type (e.g. ticket, chat_message, wiki_page)"
+
     field :subject_id, :string, description: "Optional subject pointer id"
     field :in_minutes, :integer, description: "Surface this many minutes from now"
     field :in_hours, :integer, description: "Surface this many hours from now"
-    field :at, :string, description: "Absolute ISO-8601 instant to surface at (e.g. 2026-07-01T09:00:00Z)"
+
+    field :at, :string,
+      description: "Absolute ISO-8601 instant to surface at (e.g. 2026-07-01T09:00:00Z)"
   end
 
   alias NoizuPromptLingua.Domains.Notifications
@@ -61,11 +69,20 @@ defmodule NoizuPromptLingua.Domains.Notifications.Tools.FollowUp do
           {:error, "FollowUp failed: #{inspect(reason)}"}
       end
     else
-      {:scope, {:error, :org_not_found}} -> {:error, "Organization '#{org_ref}' not found"}
-      {:scope, {:error, :project_not_found}} -> {:error, "Project '#{project_ref}' not found"}
-      {:scope, {:error, :project_not_in_org}} -> {:error, "Project does not belong to this organization"}
-      {:when, {:error, :no_duration}} -> {:error, "Provide in_minutes, in_hours, or an ISO-8601 `at` instant"}
-      {:when, {:error, :bad_at}} -> {:error, "`at` is not a valid ISO-8601 instant"}
+      {:scope, {:error, :org_not_found}} ->
+        {:error, "Organization '#{org_ref}' not found"}
+
+      {:scope, {:error, :project_not_found}} ->
+        {:error, "Project '#{project_ref}' not found"}
+
+      {:scope, {:error, :project_not_in_org}} ->
+        {:error, "Project does not belong to this organization"}
+
+      {:when, {:error, :no_duration}} ->
+        {:error, "Provide in_minutes, in_hours, or an ISO-8601 `at` instant"}
+
+      {:when, {:error, :bad_at}} ->
+        {:error, "`at` is not a valid ISO-8601 instant"}
     end
   end
 
@@ -83,10 +100,12 @@ defmodule NoizuPromptLingua.Domains.Notifications.Tools.FollowUp do
         end
 
       is_integer(hours) and hours > 0 ->
-        {:ok, DateTime.add(DateTime.utc_now(), hours * 3600, :second) |> DateTime.truncate(:second)}
+        {:ok,
+         DateTime.add(DateTime.utc_now(), hours * 3600, :second) |> DateTime.truncate(:second)}
 
       is_integer(minutes) and minutes > 0 ->
-        {:ok, DateTime.add(DateTime.utc_now(), minutes * 60, :second) |> DateTime.truncate(:second)}
+        {:ok,
+         DateTime.add(DateTime.utc_now(), minutes * 60, :second) |> DateTime.truncate(:second)}
 
       true ->
         {:error, :no_duration}

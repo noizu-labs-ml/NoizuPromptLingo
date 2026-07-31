@@ -44,15 +44,20 @@ defmodule NoizuPromptLinguaWeb.Plugs.MockMCPGateway do
   end
 
   defp request_payload(%{body_params: %{"jsonrpc" => _} = params}), do: {:ok, params}
+
   defp request_payload(conn) do
     case Plug.Conn.read_body(conn) do
-      {:ok, "", _conn} -> {:ok, conn.body_params}
+      {:ok, "", _conn} ->
+        {:ok, conn.body_params}
+
       {:ok, body, _conn} ->
         case Jason.decode(body) do
           {:ok, decoded} -> {:ok, decoded}
           {:error, _} -> :parse_error
         end
-      _ -> :parse_error
+
+      _ ->
+        :parse_error
     end
   end
 
@@ -140,8 +145,15 @@ defmodule NoizuPromptLinguaWeb.Plugs.MockMCPGateway do
       # Module-implemented tool, not yet live: fail loudly rather than silently
       # serving via the LLM, so it's obvious the implementation isn't approved.
       {:pending, reason} ->
-        MockMCP.log_call(def_.id, %{method: "tools/call", tool_name: tool["name"],
-          arguments: arguments, error: reason, response: %{}, latency_ms: 0})
+        MockMCP.log_call(def_.id, %{
+          method: "tools/call",
+          tool_name: tool["name"],
+          arguments: arguments,
+          error: reason,
+          response: %{},
+          latency_ms: 0
+        })
+
         json_error(conn, id, -32000, reason)
 
       route ->
@@ -155,18 +167,30 @@ defmodule NoizuPromptLinguaWeb.Plugs.MockMCPGateway do
 
         case result do
           {:ok, content, latency, trace} ->
-            MockMCP.log_call(def_.id, %{method: "tools/call", tool_name: tool["name"],
-              arguments: arguments, response: %{content: content, trace: trace}, latency_ms: latency})
+            MockMCP.log_call(def_.id, %{
+              method: "tools/call",
+              tool_name: tool["name"],
+              arguments: arguments,
+              response: %{content: content, trace: trace},
+              latency_ms: latency
+            })
+
             json_result(conn, id, %{content: content})
 
           {:error, reason, latency, trace} ->
-            MockMCP.log_call(def_.id, %{method: "tools/call", tool_name: tool["name"],
-              arguments: arguments, error: inspect(reason), response: %{trace: trace}, latency_ms: latency})
+            MockMCP.log_call(def_.id, %{
+              method: "tools/call",
+              tool_name: tool["name"],
+              arguments: arguments,
+              error: inspect(reason),
+              response: %{trace: trace},
+              latency_ms: latency
+            })
+
             json_error(conn, id, -32000, "Tool call failed: #{inspect(reason)}")
         end
     end
   end
-
 
   # ── resources ────────────────────────────────────────────────
 
@@ -174,8 +198,12 @@ defmodule NoizuPromptLinguaWeb.Plugs.MockMCPGateway do
     with_active(conn, slug, id, fn def_ ->
       resources =
         Enum.map(def_.resources_json || [], fn r ->
-          %{uri: r["uri"], name: r["name"], description: r["description"],
-            mimeType: r["mimeType"] || "text/plain"}
+          %{
+            uri: r["uri"],
+            name: r["name"],
+            description: r["description"],
+            mimeType: r["mimeType"] || "text/plain"
+          }
         end)
 
       json_result(conn, id, %{resources: resources})
@@ -193,13 +221,24 @@ defmodule NoizuPromptLinguaWeb.Plugs.MockMCPGateway do
 
           case Agent.handle_resource_read(def_, resource, opts) do
             {:ok, contents, latency, trace} ->
-              MockMCP.log_call(def_.id, %{method: "resources/read", tool_name: uri,
-                response: %{contents: contents, trace: trace}, latency_ms: latency})
+              MockMCP.log_call(def_.id, %{
+                method: "resources/read",
+                tool_name: uri,
+                response: %{contents: contents, trace: trace},
+                latency_ms: latency
+              })
+
               json_result(conn, id, %{contents: contents})
 
             {:error, reason, latency, trace} ->
-              MockMCP.log_call(def_.id, %{method: "resources/read", tool_name: uri,
-                error: inspect(reason), response: %{trace: trace}, latency_ms: latency})
+              MockMCP.log_call(def_.id, %{
+                method: "resources/read",
+                tool_name: uri,
+                error: inspect(reason),
+                response: %{trace: trace},
+                latency_ms: latency
+              })
+
               json_error(conn, id, -32000, "Resource read failed: #{inspect(reason)}")
           end
       end
@@ -235,13 +274,26 @@ defmodule NoizuPromptLinguaWeb.Plugs.MockMCPGateway do
 
           case Agent.handle_prompt_get(def_, prompt_def, arguments, opts) do
             {:ok, messages, latency, trace} ->
-              MockMCP.log_call(def_.id, %{method: "prompts/get", tool_name: name,
-                arguments: arguments, response: %{messages: messages, trace: trace}, latency_ms: latency})
+              MockMCP.log_call(def_.id, %{
+                method: "prompts/get",
+                tool_name: name,
+                arguments: arguments,
+                response: %{messages: messages, trace: trace},
+                latency_ms: latency
+              })
+
               json_result(conn, id, %{description: prompt_def["description"], messages: messages})
 
             {:error, reason, latency, trace} ->
-              MockMCP.log_call(def_.id, %{method: "prompts/get", tool_name: name,
-                arguments: arguments, error: inspect(reason), response: %{trace: trace}, latency_ms: latency})
+              MockMCP.log_call(def_.id, %{
+                method: "prompts/get",
+                tool_name: name,
+                arguments: arguments,
+                error: inspect(reason),
+                response: %{trace: trace},
+                latency_ms: latency
+              })
+
               json_error(conn, id, -32000, "Prompt get failed: #{inspect(reason)}")
           end
       end
@@ -258,10 +310,15 @@ defmodule NoizuPromptLinguaWeb.Plugs.MockMCPGateway do
     case MockMCP.get_active(slug) do
       nil ->
         case MockMCP.get(slug) do
-          nil -> json_error(conn, id, -32000, "Mock MCP '#{slug}' not found")
-          %{status: status} -> json_error(conn, id, -32000, "Mock MCP '#{slug}' is #{status}, not active")
+          nil ->
+            json_error(conn, id, -32000, "Mock MCP '#{slug}' not found")
+
+          %{status: status} ->
+            json_error(conn, id, -32000, "Mock MCP '#{slug}' is #{status}, not active")
         end
-      def_ -> fun.(def_)
+
+      def_ ->
+        fun.(def_)
     end
   end
 

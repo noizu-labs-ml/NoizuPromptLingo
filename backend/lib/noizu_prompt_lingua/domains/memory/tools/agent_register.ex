@@ -4,14 +4,20 @@ defmodule NoizuPromptLingua.Domains.Memory.Tools.AgentRegister do
     name: "Memory.AgentRegister",
     description:
       "Register a memory-owning agent identity (the weego orchestrator or a team-member sub-agent). " <>
-      "`call_sign` is optional — a memorable one is generated if omitted. Personas are NOT registered " <>
-      "here (they own memory directly).",
+        "`call_sign` is optional — a memorable one is generated if omitted. Personas are NOT registered " <>
+        "here (they own memory directly).",
     category: "Memory.Agents"
 
   input do
-    field :organization, :string, required: true, description: "Organization slug or UUID (required)"
+    field :organization, :string,
+      required: true,
+      description: "Organization slug or UUID (required)"
+
     field :kind, :string, required: true, description: "weego | team_member"
-    field :call_sign, :string, description: "Desired call sign (unique per org); auto-generated if omitted"
+
+    field :call_sign, :string,
+      description: "Desired call sign (unique per org); auto-generated if omitted"
+
     field :display_name, :string, description: "Human-readable label"
     field :persona, :string, description: "Optional persona slug/uuid to link this agent to"
   end
@@ -47,7 +53,13 @@ defmodule NoizuPromptLingua.Domains.Memory.Tools.AgentRegister do
 
       case Agents.register(org_id, k, opts) do
         {:ok, cs} ->
-          {:ok, %{id: cs.id, call_sign: cs.call_sign, kind: to_string(cs.kind), organization_id: cs.organization_id}}
+          {:ok,
+           %{
+             id: cs.id,
+             call_sign: cs.call_sign,
+             kind: to_string(cs.kind),
+             organization_id: cs.organization_id
+           }}
 
         {:error, changeset} ->
           {:error, "register failed: #{inspect(changeset.errors)}"}

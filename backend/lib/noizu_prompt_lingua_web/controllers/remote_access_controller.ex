@@ -20,7 +20,9 @@ defmodule NoizuPromptLinguaWeb.RemoteAccessController do
 
   def create(conn, %{"name" => name, "organization" => org_ref} = params) do
     with_editor(conn, org_ref, fn user_id, org_id ->
-      case RemoteAccess.claim_tunnel(user_id, org_id, name, proxy_type: params["proxy_type"] || "http") do
+      case RemoteAccess.claim_tunnel(user_id, org_id, name,
+             proxy_type: params["proxy_type"] || "http"
+           ) do
         {:ok, tunnel, raw_token} ->
           conn
           |> put_status(:created)
@@ -67,10 +69,17 @@ defmodule NoizuPromptLinguaWeb.RemoteAccessController do
   def delete(conn, %{"name" => name}) do
     with_mcp_user(conn, fn user_id ->
       case RemoteAccess.revoke_tunnel(user_id, name) do
-        {:ok, _} -> json(conn, %{name: name, status: "revoked"})
-        {:error, :not_owner} -> forbidden(conn, "you do not own '#{name}'")
-        {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "no active claim for '#{name}'"})
-        {:error, changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{error: inspect(changeset.errors)})
+        {:ok, _} ->
+          json(conn, %{name: name, status: "revoked"})
+
+        {:error, :not_owner} ->
+          forbidden(conn, "you do not own '#{name}'")
+
+        {:error, :not_found} ->
+          conn |> put_status(:not_found) |> json(%{error: "no active claim for '#{name}'"})
+
+        {:error, changeset} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{error: inspect(changeset.errors)})
       end
     end)
   end
@@ -105,7 +114,9 @@ defmodule NoizuPromptLinguaWeb.RemoteAccessController do
   defp handle_frp_op(conn, _op, _content), do: allow(conn)
 
   defp decide(conn, :ok), do: allow(conn)
-  defp decide(conn, :deny), do: json(conn, %{reject: true, reject_reason: "tunnel token rejected"})
+
+  defp decide(conn, :deny),
+    do: json(conn, %{reject: true, reject_reason: "tunnel token rejected"})
 
   defp allow(conn), do: json(conn, %{reject: false, unchange: true})
 
@@ -113,12 +124,16 @@ defmodule NoizuPromptLinguaWeb.RemoteAccessController do
 
   defp frp_secret_ok?(conn) do
     case System.get_env("REMOTE_ACCESS_FRP_SECRET") do
-      nil -> true
-      "" -> true
+      nil ->
+        true
+
+      "" ->
+        true
+
       secret ->
         presented =
           conn.query_params["secret"] ||
-            (Plug.Conn.get_req_header(conn, "x-frp-secret") |> List.first())
+            Plug.Conn.get_req_header(conn, "x-frp-secret") |> List.first()
 
         Plug.Crypto.secure_compare(to_string(presented), secret)
     end

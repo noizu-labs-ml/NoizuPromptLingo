@@ -14,7 +14,15 @@ defmodule NoizuPromptLingua.Domains.Memory.Recall do
   alias NoizuPromptLingua.Repo
   alias NoizuPromptLingua.Schema.Memory.Memory
   alias NoizuPromptLingua.Schema.Memory.RecallLog
-  alias NoizuPromptLingua.Domains.Memory.{Emotion, Embeddings, VectorStore, Reinforcement, Monitor, Sentinel}
+
+  alias NoizuPromptLingua.Domains.Memory.{
+    Emotion,
+    Embeddings,
+    VectorStore,
+    Reinforcement,
+    Monitor,
+    Sentinel
+  }
 
   @active_states [:active, :consolidating]
   @graph_max_hops 3
@@ -24,7 +32,10 @@ defmodule NoizuPromptLingua.Domains.Memory.Recall do
   @graph_fanout 8
 
   def config, do: Application.get_env(:noizu_prompt_lingua, :memory_recall, [])
-  defp vector_weights, do: config()[:vector_weights] || %{content: 1.0, context: 0.8, tangent: 0.8, reflection: 0.7}
+
+  defp vector_weights,
+    do: config()[:vector_weights] || %{content: 1.0, context: 0.8, tangent: 0.8, reflection: 0.7}
+
   defp rrf_k, do: config()[:rrf_k] || 60
   defp cpp, do: config()[:candidates_per_path] || 50
   defp default_limit, do: config()[:default_limit] || 12
@@ -83,7 +94,8 @@ defmodule NoizuPromptLingua.Domains.Memory.Recall do
       |> Enum.take(limit)
 
     breakdown = %{
-      paths: Enum.map(rank_lists, fn {w, _, ids} -> %{weight: w, kind: :rank, count: length(ids)} end),
+      paths:
+        Enum.map(rank_lists, fn {w, _, ids} -> %{weight: w, kind: :rank, count: length(ids)} end),
       semantic: if(semantic_lists == [], do: "none", else: "weaviate_or_lexical"),
       graph: graph_list != []
     }
@@ -111,7 +123,10 @@ defmodule NoizuPromptLingua.Domains.Memory.Recall do
   # ── emotional Weaviate search ──────────────────────────────────
   defp emotional_hits(qvec, scope, limit) do
     if VectorStore.enabled?() do
-      case VectorStore.search("emotional", qvec, limit: limit, filters: Sentinel.weaviate_filters(scope)) do
+      case VectorStore.search("emotional", qvec,
+             limit: limit,
+             filters: Sentinel.weaviate_filters(scope)
+           ) do
         {:ok, hits} -> hits
         _ -> []
       end
@@ -146,7 +161,13 @@ defmodule NoizuPromptLingua.Domains.Memory.Recall do
     GROUP BY memory_id ORDER BY pw DESC, memory_id LIMIT $4
     """
 
-    case Ecto.Adapters.SQL.query(Repo, sql, [Enum.join(seed_ids, ","), @graph_min_weight, @graph_max_hops, cpp(), @graph_fanout]) do
+    case Ecto.Adapters.SQL.query(Repo, sql, [
+           Enum.join(seed_ids, ","),
+           @graph_min_weight,
+           @graph_max_hops,
+           cpp(),
+           @graph_fanout
+         ]) do
       {:ok, %{rows: rows}} ->
         case Enum.map(rows, fn [id, _pw] -> id end) do
           [] -> []
@@ -228,6 +249,7 @@ defmodule NoizuPromptLingua.Domains.Memory.Recall do
   end
 
   defp hydrate([], _scope), do: []
+
   defp hydrate(ids, scope) do
     base_scope(scope) |> where([m], m.id in ^ids) |> Repo.all()
   end
@@ -239,7 +261,10 @@ defmodule NoizuPromptLingua.Domains.Memory.Recall do
 
   defp split_state(%{mood: mood} = s, _scope), do: {mood, Map.get(s, :hormones, %{})}
   defp split_state(%{"mood" => mood} = s, _scope), do: {mood, Map.get(s, "hormones", %{})}
-  defp split_state(flat, scope) when is_map(flat) and map_size(flat) > 0, do: {flat, Monitor.current_hormones(scope)}
+
+  defp split_state(flat, scope) when is_map(flat) and map_size(flat) > 0,
+    do: {flat, Monitor.current_hormones(scope)}
+
   defp split_state(_, scope), do: {Emotion.neutral_mood(), Monitor.current_hormones(scope)}
 
   # ── context-injection formatting ───────────────────────────────
@@ -270,8 +295,12 @@ defmodule NoizuPromptLingua.Domains.Memory.Recall do
   defp fmt(_), do: 0.0
 
   defp escape(s) when is_binary(s) do
-    s |> String.replace("&", "&amp;") |> String.replace("<", "&lt;") |> String.replace(">", "&gt;")
+    s
+    |> String.replace("&", "&amp;")
+    |> String.replace("<", "&lt;")
+    |> String.replace(">", "&gt;")
   end
+
   defp escape(_), do: ""
 
   # ── recall_log (best-effort) ───────────────────────────────────

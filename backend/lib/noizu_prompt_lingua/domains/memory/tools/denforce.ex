@@ -6,9 +6,15 @@ defmodule NoizuPromptLingua.Domains.Memory.Tools.Denforce do
     category: "Memory"
 
   input do
-    field :organization, :string, required: true, description: "Organization slug or UUID (required)"
+    field :organization, :string,
+      required: true,
+      description: "Organization slug or UUID (required)"
+
     field :scope_type, :string, required: true, description: "persona | weego | team_member"
-    field :agent, :string, description: "Persona slug/uuid or agent call sign (omit for the org weego)"
+
+    field :agent, :string,
+      description: "Persona slug/uuid or agent call sign (omit for the org weego)"
+
     field :memory_id, :string, required: true, description: "The memory UUID"
   end
 

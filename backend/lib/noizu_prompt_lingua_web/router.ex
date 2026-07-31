@@ -418,6 +418,8 @@ defmodule NoizuPromptLinguaWeb.Router do
   scope "/api/v1/organizations/:org_id", NoizuPromptLinguaWeb do
     pipe_through [:api, :authenticated]
 
+    post "/assistant/approval-script", VoiceAssistantController, :approval_script
+
     resources "/projects", ProjectController, only: [:index, :create, :show, :update, :delete]
 
     scope "/projects/:project_id" do

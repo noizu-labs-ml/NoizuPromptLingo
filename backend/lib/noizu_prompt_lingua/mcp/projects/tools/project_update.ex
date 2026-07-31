@@ -26,9 +26,15 @@ defmodule NoizuPromptLingua.MCP.Projects.Tools.ProjectUpdate do
 
       project ->
         case NoizuPromptLingua.Projects.update_project(project.id, attrs) do
-          {:ok, updated} -> {:ok, %{id: updated.id, name: updated.name, slug: updated.slug, status: updated.status}}
-          {:error, :not_found} -> {:error, "Project '#{ref}' not found"}
-          {:error, changeset} -> {:error, "Failed: #{inspect(changeset.errors)}"}
+          {:ok, updated} ->
+            {:ok,
+             %{id: updated.id, name: updated.name, slug: updated.slug, status: updated.status}}
+
+          {:error, :not_found} ->
+            {:error, "Project '#{ref}' not found"}
+
+          {:error, changeset} ->
+            {:error, "Failed: #{inspect(changeset.errors)}"}
         end
     end
   end

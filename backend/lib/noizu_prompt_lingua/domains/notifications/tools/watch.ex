@@ -10,10 +10,16 @@ defmodule NoizuPromptLingua.Domains.Notifications.Tools.Watch do
   input do
     field :organization, :string, description: "Organization slug or UUID (context)"
     field :persona, :string, required: true, description: "Persona slug doing the watching"
-    field :entity_type, :string, required: true, description: "Entity type, e.g. chat_room, ticket, artifact"
+
+    field :entity_type, :string,
+      required: true,
+      description: "Entity type, e.g. chat_room, ticket, artifact"
+
     field :entity_id, :string, required: true, description: "Entity UUID"
     field :action, :string, description: "watch (default) or unwatch"
-    field :filter, :string, description: "Optional substring, or a JSON object {\"type\":\"regex\",\"pattern\":...}"
+
+    field :filter, :string,
+      description: "Optional substring, or a JSON object {\"type\":\"regex\",\"pattern\":...}"
   end
 
   alias NoizuPromptLingua.Services.Watch
@@ -40,7 +46,13 @@ defmodule NoizuPromptLingua.Domains.Notifications.Tools.Watch do
       action == "unwatch" ->
         case Watch.unwatch(entity_type, entity_id, persona) do
           {:ok, _} ->
-            {:ok, %{action: "unwatch", entity_type: entity_type, entity_id: entity_id, persona: persona}}
+            {:ok,
+             %{
+               action: "unwatch",
+               entity_type: entity_type,
+               entity_id: entity_id,
+               persona: persona
+             }}
 
           {:error, :not_found} ->
             {:error, "Not currently watching that entity"}

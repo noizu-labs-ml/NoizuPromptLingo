@@ -1,6 +1,9 @@
 defmodule NoizuPromptLingua.Domains.Assets.Tools.AssetRegenerate do
-  use Noizu.MCP.Server.Tool, name: "Asset.Regenerate",
-    description: "Re-generate with current prompt (creates new output variant).", hidden: true, category: "Assets"
+  use Noizu.MCP.Server.Tool,
+    name: "Asset.Regenerate",
+    description: "Re-generate with current prompt (creates new output variant).",
+    hidden: true,
+    category: "Assets"
 
   input do
     field :entry_id, :string, required: true, description: "Asset entry UUID"
@@ -14,10 +17,20 @@ defmodule NoizuPromptLingua.Domains.Assets.Tools.AssetRegenerate do
   @impl true
   def call(args, _ctx) do
     entry_id = args[:entry_id] || args["entry_id"]
-    opts = [provider: args[:provider] || args["provider"], model: args[:model] || args["model"], actor: args[:actor] || args["actor"]]
+
+    opts = [
+      provider: args[:provider] || args["provider"],
+      model: args[:model] || args["model"],
+      actor: args[:actor] || args["actor"]
+    ]
+
     case Assets.generate(entry_id, opts) do
-      {:ok, output} -> {:ok, %{output_id: output.id, variant: output.variant_number, artifact_id: output.artifact_id}}
-      {:error, reason} -> {:error, "Failed: #{inspect(reason)}"}
+      {:ok, output} ->
+        {:ok,
+         %{output_id: output.id, variant: output.variant_number, artifact_id: output.artifact_id}}
+
+      {:error, reason} ->
+        {:error, "Failed: #{inspect(reason)}"}
     end
   end
 end

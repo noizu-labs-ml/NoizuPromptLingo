@@ -5,19 +5,34 @@ defmodule NoizuPromptLingua.Domains.Artifacts.Tools.ArtifactCreate do
     hidden: true,
     category: "Artifacts"
 
-  input_schema %{
+  input_schema(%{
     "type" => "object",
     "properties" => %{
-      "organization" => %{"type" => "string", "description" => "Organization slug or UUID (required)"},
-      "kind" => %{"type" => "string", "description" => "Artifact kind: code, document, image, wiki, config, binary"},
+      "organization" => %{
+        "type" => "string",
+        "description" => "Organization slug or UUID (required)"
+      },
+      "kind" => %{
+        "type" => "string",
+        "description" => "Artifact kind: code, document, image, wiki, config, binary"
+      },
       "title" => %{"type" => "string", "description" => "Artifact title"},
-      "content" => %{"type" => "string", "description" => "Initial content (text or base64 for binary)"},
-      "mime_type" => %{"type" => "string", "description" => "MIME type (e.g. text/markdown, image/png)"},
-      "project" => %{"type" => "string", "description" => "Optional project slug or UUID to scope this artifact to"},
+      "content" => %{
+        "type" => "string",
+        "description" => "Initial content (text or base64 for binary)"
+      },
+      "mime_type" => %{
+        "type" => "string",
+        "description" => "MIME type (e.g. text/markdown, image/png)"
+      },
+      "project" => %{
+        "type" => "string",
+        "description" => "Optional project slug or UUID to scope this artifact to"
+      },
       "metadata" => %{"type" => "object", "description" => "Additional metadata"}
     },
     "required" => ["organization", "kind", "title", "content"]
-  }
+  })
 
   alias NoizuPromptLingua.Domains.Artifacts
   alias NoizuPromptLingua.MCP.{Args, Resolve}
@@ -41,22 +56,30 @@ defmodule NoizuPromptLingua.Domains.Artifacts.Tools.ArtifactCreate do
       case Artifacts.create(attrs) do
         {:ok, artifact} ->
           rev = hd(artifact.revisions)
-          {:ok, %{
-            id: artifact.id,
-            revision_id: rev.id,
-            kind: artifact.kind,
-            title: artifact.title,
-            organization_id: artifact.organization_id,
-            project_id: artifact.project_id,
-            created_at: artifact.inserted_at
-          }}
+
+          {:ok,
+           %{
+             id: artifact.id,
+             revision_id: rev.id,
+             kind: artifact.kind,
+             title: artifact.title,
+             organization_id: artifact.organization_id,
+             project_id: artifact.project_id,
+             created_at: artifact.inserted_at
+           }}
+
         {:error, changeset} ->
           {:error, "Failed: #{inspect(changeset.errors)}"}
       end
     else
-      {:org, nil} -> {:error, "Organization '#{org_ref}' not found"}
-      {:error, :project_not_found} -> {:error, "Project '#{project_ref}' not found"}
-      {:error, :project_not_in_org} -> {:error, "Project '#{project_ref}' does not belong to this organization"}
+      {:org, nil} ->
+        {:error, "Organization '#{org_ref}' not found"}
+
+      {:error, :project_not_found} ->
+        {:error, "Project '#{project_ref}' not found"}
+
+      {:error, :project_not_in_org} ->
+        {:error, "Project '#{project_ref}' does not belong to this organization"}
     end
   end
 end

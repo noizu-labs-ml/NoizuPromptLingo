@@ -25,7 +25,12 @@ defmodule NoizuPromptLingua.Domains.PubSub.Tools.Ack do
     with {:org, org_id} when not is_nil(org_id) <- {:org, Resolve.organization_id(org_ref)},
          {:chan, %{} = channel} <- {:chan, PubSub.get_channel(org_id, channel_ref)},
          {:ok, result} <- PubSub.ack(org_id, channel.id, persona) do
-      {:ok, %{channel: %{id: channel.id, slug: channel.slug}, persona: persona, last_acked_seq: result.last_acked_seq}}
+      {:ok,
+       %{
+         channel: %{id: channel.id, slug: channel.slug},
+         persona: persona,
+         last_acked_seq: result.last_acked_seq
+       }}
     else
       {:org, nil} -> {:error, "Organization '#{org_ref}' not found"}
       {:chan, nil} -> {:error, "Channel '#{channel_ref}' not found"}

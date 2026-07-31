@@ -5,23 +5,37 @@ defmodule NoizuPromptLingua.Domains.Market.Tools.CompetitorCreate do
     hidden: true,
     category: "Market.Competitors"
 
-  input_schema %{
+  input_schema(%{
     "type" => "object",
     "properties" => %{
-      "organization" => %{"type" => "string", "description" => "Organization slug or UUID (required)"},
-      "slug" => %{"type" => "string", "description" => "Competitor slug (unique per organization)"},
+      "organization" => %{
+        "type" => "string",
+        "description" => "Organization slug or UUID (required)"
+      },
+      "slug" => %{
+        "type" => "string",
+        "description" => "Competitor slug (unique per organization)"
+      },
       "name" => %{"type" => "string", "description" => "Competitor name"},
       "project" => %{"type" => "string", "description" => "Optional project slug or UUID"},
       "website" => %{"type" => "string", "description" => "Website URL"},
       "description" => %{"type" => "string", "description" => "Description"},
       "tier" => %{"type" => "string", "description" => "direct, indirect, or aspirational"},
-      "strengths" => %{"type" => "array", "items" => %{"type" => "string"}, "description" => "Strengths"},
-      "weaknesses" => %{"type" => "array", "items" => %{"type" => "string"}, "description" => "Weaknesses"},
+      "strengths" => %{
+        "type" => "array",
+        "items" => %{"type" => "string"},
+        "description" => "Strengths"
+      },
+      "weaknesses" => %{
+        "type" => "array",
+        "items" => %{"type" => "string"},
+        "description" => "Weaknesses"
+      },
       "metadata" => %{"type" => "object", "description" => "Free-form metadata"},
       "tags" => %{"type" => "array", "items" => %{"type" => "string"}, "description" => "Tags"}
     },
     "required" => ["organization", "slug", "name"]
-  }
+  })
 
   alias NoizuPromptLingua.Domains.Market
   alias NoizuPromptLingua.MCP.{Args, Resolve}
@@ -45,9 +59,14 @@ defmodule NoizuPromptLingua.Domains.Market.Tools.CompetitorCreate do
         {:error, changeset} -> {:error, "Failed: #{inspect(changeset.errors)}"}
       end
     else
-      {:org, nil} -> {:error, "Organization '#{org_ref}' not found"}
-      {:error, :project_not_found} -> {:error, "Project '#{project_ref}' not found"}
-      {:error, :project_not_in_org} -> {:error, "Project '#{project_ref}' does not belong to this organization"}
+      {:org, nil} ->
+        {:error, "Organization '#{org_ref}' not found"}
+
+      {:error, :project_not_found} ->
+        {:error, "Project '#{project_ref}' not found"}
+
+      {:error, :project_not_in_org} ->
+        {:error, "Project '#{project_ref}' does not belong to this organization"}
     end
   end
 end

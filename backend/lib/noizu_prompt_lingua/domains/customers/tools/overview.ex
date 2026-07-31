@@ -1,7 +1,9 @@
 defmodule NoizuPromptLingua.Domains.Customers.Tools.Overview do
-  use Noizu.MCP.Server.Tool, name: "Customers.Overview",
+  use Noizu.MCP.Server.Tool,
+    name: "Customers.Overview",
     description: "List customer-domain tools and the customer-persona count for an organization.",
-    annotations: [read_only_hint: true], category: "Customers"
+    annotations: [read_only_hint: true],
+    category: "Customers"
 
   input do
     field :organization, :string, description: "Organization slug or UUID — scopes the count"
@@ -18,13 +20,18 @@ defmodule NoizuPromptLingua.Domains.Customers.Tools.Overview do
         org_id -> Customers.count_personas(org_id)
       end
 
-    {:ok, %{domain: "Customers", subdomain: "customers.tobor.locker",
-      customer_persona_count: count,
-      tools: %{
-        personas: ~w(CustomerPersona.Create CustomerPersona.Get CustomerPersona.Update
+    {:ok,
+     %{
+       domain: "Customers",
+       subdomain: "customers.tobor.locker",
+       customer_persona_count: count,
+       tools: %{
+         personas: ~w(CustomerPersona.Create CustomerPersona.Get CustomerPersona.Update
                      CustomerPersona.List CustomerPersona.Draft CustomerPersona.LinkTicket
                      CustomerPersona.UnlinkTicket),
-        segments: ~w(CustomerSegment.Create CustomerSegment.Get CustomerSegment.Update CustomerSegment.List)
-      }}}
+         segments:
+           ~w(CustomerSegment.Create CustomerSegment.Get CustomerSegment.Update CustomerSegment.List)
+       }
+     }}
   end
 end

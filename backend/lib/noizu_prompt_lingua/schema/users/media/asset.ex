@@ -6,7 +6,10 @@ defmodule NoizuPromptLingua.Schema.Users.Media.Asset do
   schema "user_media" do
     belongs_to :user, NoizuPromptLingua.Schema.Users.User, type: Ecto.UUID
     belongs_to :media, NoizuPromptLingua.Schema.Media.Asset, type: Ecto.UUID
-    belongs_to :description, NoizuPromptLingua.Schema.Versioned.Descriptions.Description, type: Ecto.UUID
+
+    belongs_to :description, NoizuPromptLingua.Schema.Versioned.Descriptions.Description,
+      type: Ecto.UUID
+
     field :media_type, Ecto.Enum, values: [:profile, :cover, :gallery, :other]
     field :settings, :map
     field :deleted_at, :utc_datetime_usec

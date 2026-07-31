@@ -1,15 +1,19 @@
 defmodule NoizuPromptLingua.Domains.Chat.Tools.DM do
   use Noizu.MCP.Server.Tool,
     name: "Chat.DM",
-    description: "Open (or reuse) a direct-message room between 2+ personas and optionally post to it.",
-    hidden: true, category: "Chat"
+    description:
+      "Open (or reuse) a direct-message room between 2+ personas and optionally post to it.",
+    hidden: true,
+    category: "Chat"
 
   input do
     field :organization, :string, required: true, description: "Organization slug or UUID"
     field :members, {:array, :string}, required: true, description: "Persona slugs in the DM (2+)"
     field :project, :string, description: "Optional project slug or UUID to scope the DM to"
     field :content, :string, description: "Optional message to post to the DM"
-    field :sender, :string, description: "Persona slug posting the message (required if content given)"
+
+    field :sender, :string,
+      description: "Persona slug posting the message (required if content given)"
   end
 
   alias NoizuPromptLingua.Domains.Chat
@@ -37,13 +41,23 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.DM do
           %{}
         end
 
-      {:ok, Map.merge(%{room_id: room.id, name: room.name, kind: room.kind, members: members}, posted)}
+      {:ok,
+       Map.merge(%{room_id: room.id, name: room.name, kind: room.kind, members: members}, posted)}
     else
-      {:org, nil} -> {:error, "Organization '#{org_ref}' not found"}
-      {:members, false} -> {:error, "A DM requires at least 2 members"}
-      {:error, :project_not_found} -> {:error, "Project '#{project_ref}' not found"}
-      {:error, :project_not_in_org} -> {:error, "Project '#{project_ref}' does not belong to this organization"}
-      {:error, cs} -> {:error, "Failed: #{inspect(cs)}"}
+      {:org, nil} ->
+        {:error, "Organization '#{org_ref}' not found"}
+
+      {:members, false} ->
+        {:error, "A DM requires at least 2 members"}
+
+      {:error, :project_not_found} ->
+        {:error, "Project '#{project_ref}' not found"}
+
+      {:error, :project_not_in_org} ->
+        {:error, "Project '#{project_ref}' does not belong to this organization"}
+
+      {:error, cs} ->
+        {:error, "Failed: #{inspect(cs)}"}
     end
   end
 end

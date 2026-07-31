@@ -23,12 +23,20 @@ defmodule NoizuPromptLingua.Domains.MockMCP.Dispatch do
         entry = Enum.find(def_.modules_json || [], fn m -> (m["tool"] || m[:tool]) == name end)
 
         case entry && (entry["status"] || entry[:status]) do
-          "approved" -> :module
-          nil -> {:pending, "Tool '#{name}' has no generated module yet — generate and approve one before calling it."}
-          status -> {:pending, "Tool '#{name}' module implementation is '#{status}', pending owner review/approval — not yet live."}
+          "approved" ->
+            :module
+
+          nil ->
+            {:pending,
+             "Tool '#{name}' has no generated module yet — generate and approve one before calling it."}
+
+          status ->
+            {:pending,
+             "Tool '#{name}' module implementation is '#{status}', pending owner review/approval — not yet live."}
         end
       else
-        {:pending, "Tool '#{tool["name"]}' is module-implemented but module execution is disabled on this server."}
+        {:pending,
+         "Tool '#{tool["name"]}' is module-implemented but module execution is disabled on this server."}
       end
     else
       :llm

@@ -10,7 +10,16 @@ defmodule NoizuPromptLingua.Schema.Memory.AssociationEdge do
     field :weight, :float, default: 0.5
 
     field :edge_type, Ecto.Enum,
-      values: [:semantic, :emotional, :temporal, :causal, :co_occurrence, :synthetic, :contextual, :tangent]
+      values: [
+        :semantic,
+        :emotional,
+        :temporal,
+        :causal,
+        :co_occurrence,
+        :synthetic,
+        :contextual,
+        :tangent
+      ]
 
     field :created_by, :string, default: "weaver"
     field :reinforcement_count, :integer, default: 0

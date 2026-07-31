@@ -153,13 +153,17 @@ defmodule NoizuPromptLingua.Domains.MockMCP.Agent do
                "prompts" => list_field(obj, "prompts"),
                "schema" => schema_field(obj)
              }}
+
           # tolerate a bare tools array
           {:ok, tools} when is_list(tools) ->
             {:ok, %{"tools" => tools, "resources" => [], "prompts" => []}}
+
           _ ->
             {:error, :invalid_surface_json, response}
         end
-      error -> error
+
+      error ->
+        error
     end
   end
 
@@ -173,8 +177,11 @@ defmodule NoizuPromptLingua.Domains.MockMCP.Agent do
   # Normalize the backing-schema design into %{"postgres" => [..], "weaviate" => [..]}.
   defp schema_field(obj) do
     case obj["schema"] do
-      %{} = s -> %{"postgres" => list_field(s, "postgres"), "weaviate" => list_field(s, "weaviate")}
-      _ -> %{"postgres" => [], "weaviate" => []}
+      %{} = s ->
+        %{"postgres" => list_field(s, "postgres"), "weaviate" => list_field(s, "weaviate")}
+
+      _ ->
+        %{"postgres" => [], "weaviate" => []}
     end
   end
 
@@ -202,10 +209,17 @@ defmodule NoizuPromptLingua.Domains.MockMCP.Agent do
 
   defp parse_tool_response(response) do
     case decode_json(response) do
-      {:ok, %{"type" => "text", "text" => text}} -> [%{"type" => "text", "text" => text}]
-      {:ok, %{"type" => "json", "data" => data}} -> [%{"type" => "text", "text" => Jason.encode!(data)}]
-      {:ok, data} when is_map(data) -> [%{"type" => "text", "text" => Jason.encode!(data)}]
-      _ -> [%{"type" => "text", "text" => response}]
+      {:ok, %{"type" => "text", "text" => text}} ->
+        [%{"type" => "text", "text" => text}]
+
+      {:ok, %{"type" => "json", "data" => data}} ->
+        [%{"type" => "text", "text" => Jason.encode!(data)}]
+
+      {:ok, data} when is_map(data) ->
+        [%{"type" => "text", "text" => Jason.encode!(data)}]
+
+      _ ->
+        [%{"type" => "text", "text" => response}]
     end
   end
 
@@ -257,8 +271,10 @@ defmodule NoizuPromptLingua.Domains.MockMCP.Agent do
     case decode_json(response) do
       {:ok, %{"messages" => msgs}} when is_list(msgs) ->
         Enum.map(msgs, &to_mcp_message/1)
+
       {:ok, msgs} when is_list(msgs) ->
         Enum.map(msgs, &to_mcp_message/1)
+
       _ ->
         [%{"role" => "user", "content" => %{"type" => "text", "text" => response}}]
     end
@@ -266,8 +282,10 @@ defmodule NoizuPromptLingua.Domains.MockMCP.Agent do
 
   defp to_mcp_message(%{"role" => role, "content" => content}) when is_binary(content),
     do: %{"role" => role, "content" => %{"type" => "text", "text" => content}}
+
   defp to_mcp_message(%{"role" => role, "content" => %{} = content}),
     do: %{"role" => role, "content" => content}
+
   defp to_mcp_message(other),
     do: %{"role" => "user", "content" => %{"type" => "text", "text" => to_string_safe(other)}}
 
@@ -307,7 +325,9 @@ defmodule NoizuPromptLingua.Domains.MockMCP.Agent do
               messages ++
                 [
                   GenAI.Message.assistant(text),
-                  GenAI.Message.user("Stop. Do not use any more ops. Return ONLY the final result now.")
+                  GenAI.Message.user(
+                    "Stop. Do not use any more ops. Return ONLY the final result now."
+                  )
                 ]
 
             case run(forced, opts) do
@@ -416,7 +436,8 @@ defmodule NoizuPromptLingua.Domains.MockMCP.Agent do
         "Reach state ONLY via ctx closures; do not use System/File/Code/Process/Repo/etc. " <>
         "Return ONLY the corrected Elixir source, no fences."
 
-    user = "Current source:\n#{source}\n\nError:\n#{error}\n\nReturn the corrected full module source."
+    user =
+      "Current source:\n#{source}\n\nError:\n#{error}\n\nReturn the corrected full module source."
 
     case run([GenAI.Message.system(system), GenAI.Message.user(user)], opts) do
       {:ok, text} -> {:ok, strip_code_fences(text)}
@@ -480,8 +501,12 @@ defmodule NoizuPromptLingua.Domains.MockMCP.Agent do
           nil -> {:error, {:unexpected_response, completion}}
           content -> {:ok, String.trim(content)}
         end
-      {:error, reason} -> {:error, reason}
-      other -> {:error, {:unexpected_response, other}}
+
+      {:error, reason} ->
+        {:error, reason}
+
+      other ->
+        {:error, {:unexpected_response, other}}
     end
   end
 
@@ -504,14 +529,19 @@ defmodule NoizuPromptLingua.Domains.MockMCP.Agent do
 
     case :httpc.request(
            :post,
-           {String.to_charlist(url),
-            [{~c"Content-Type", ~c"application/json"} | headers], ~c"application/json", body},
+           {String.to_charlist(url), [{~c"Content-Type", ~c"application/json"} | headers],
+            ~c"application/json", body},
            [{:timeout, 60_000}],
            []
          ) do
-      {:ok, {{_, 200, _}, _, resp_body}} -> parse_http_response(provider, to_string(resp_body))
-      {:ok, {{_, status, _}, _, resp_body}} -> {:error, {:http_error, status, to_string(resp_body)}}
-      {:error, reason} -> {:error, {:request_failed, reason}}
+      {:ok, {{_, 200, _}, _, resp_body}} ->
+        parse_http_response(provider, to_string(resp_body))
+
+      {:ok, {{_, status, _}, _, resp_body}} ->
+        {:error, {:http_error, status, to_string(resp_body)}}
+
+      {:error, reason} ->
+        {:error, {:request_failed, reason}}
     end
   end
 
@@ -523,7 +553,8 @@ defmodule NoizuPromptLingua.Domains.MockMCP.Agent do
         model: model,
         max_tokens: 4096,
         system: system,
-        messages: Enum.map(turns, &%{role: to_string(&1.role), content: content_string(&1.content)})
+        messages:
+          Enum.map(turns, &%{role: to_string(&1.role), content: content_string(&1.content)})
       })
 
     headers = [
@@ -539,7 +570,8 @@ defmodule NoizuPromptLingua.Domains.MockMCP.Agent do
       Jason.encode!(%{
         model: model,
         temperature: 0.7,
-        messages: Enum.map(messages, &%{role: to_string(&1.role), content: content_string(&1.content)})
+        messages:
+          Enum.map(messages, &%{role: to_string(&1.role), content: content_string(&1.content)})
       })
 
     headers = [{~c"Authorization", String.to_charlist("Bearer #{key}")}]
@@ -556,9 +588,14 @@ defmodule NoizuPromptLingua.Domains.MockMCP.Agent do
 
   defp parse_http_response(_provider, raw) do
     case Jason.decode(raw) do
-      {:ok, %{"choices" => [%{"message" => %{"content" => content}} | _]}} -> {:ok, String.trim(content)}
-      {:ok, other} -> {:error, {:unexpected_response, other}}
-      {:error, reason} -> {:error, {:invalid_json, reason}}
+      {:ok, %{"choices" => [%{"message" => %{"content" => content}} | _]}} ->
+        {:ok, String.trim(content)}
+
+      {:ok, other} ->
+        {:error, {:unexpected_response, other}}
+
+      {:error, reason} ->
+        {:error, {:invalid_json, reason}}
     end
   end
 
@@ -569,20 +606,25 @@ defmodule NoizuPromptLingua.Domains.MockMCP.Agent do
   end
 
   defp content_string(content) when is_binary(content), do: content
+
   defp content_string(content) when is_list(content) do
     content |> Enum.map(&block_text/1) |> Enum.reject(&is_nil/1) |> Enum.join("")
   end
+
   defp content_string(content), do: to_string(content)
 
   defp extract_content(%{choices: [choice | _]}) do
     choice |> Map.get(:message) |> message_text()
   end
+
   defp extract_content(_), do: nil
 
   defp message_text(%{content: content}) when is_binary(content), do: content
+
   defp message_text(%{content: content}) when is_list(content) do
     content |> Enum.map(&block_text/1) |> Enum.reject(&is_nil/1) |> Enum.join("")
   end
+
   defp message_text(_), do: nil
 
   defp block_text(text) when is_binary(text), do: text
@@ -595,6 +637,7 @@ defmodule NoizuPromptLingua.Domains.MockMCP.Agent do
 
   defp strip_fences(str) do
     str = String.trim(str)
+
     case Regex.run(~r/^```(?:json)?\s*\n(.*)\n```$/s, str) do
       [_, inner] -> String.trim(inner)
       _ -> str

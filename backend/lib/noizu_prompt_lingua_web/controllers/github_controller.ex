@@ -27,7 +27,9 @@ defmodule NoizuPromptLinguaWeb.GithubController do
         conn |> put_status(:not_found) |> json(%{error: "Repository not found"})
 
       {:error, :token_not_mapped} ->
-        conn |> put_status(:unprocessable_entity) |> json(%{error: "No token mapped to this repository"})
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{error: "No token mapped to this repository"})
 
       {:error, :forbidden} ->
         conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
@@ -120,11 +122,14 @@ defmodule NoizuPromptLinguaWeb.GithubController do
     end)
   end
 
-  def list_pull_comments(conn, %{
-        "org_id" => org_ref,
-        "repo_id" => repo_ref,
-        "pull_number" => pull_number
-      } = params) do
+  def list_pull_comments(
+        conn,
+        %{
+          "org_id" => org_ref,
+          "repo_id" => repo_ref,
+          "pull_number" => pull_number
+        } = params
+      ) do
     user_id = get_user_id(conn)
     org_id = resolve_org_id(org_ref)
 
@@ -173,7 +178,11 @@ defmodule NoizuPromptLinguaWeb.GithubController do
     end)
   end
 
-  def get_issue(conn, %{"org_id" => org_ref, "repo_id" => repo_ref, "issue_number" => issue_number}) do
+  def get_issue(conn, %{
+        "org_id" => org_ref,
+        "repo_id" => repo_ref,
+        "issue_number" => issue_number
+      }) do
     user_id = get_user_id(conn)
     org_id = resolve_org_id(org_ref)
 

@@ -7,7 +7,9 @@ defmodule NoizuPromptLingua.Domains.Campaigns.Tools.CampaignGet do
     category: "Campaigns"
 
   input do
-    field :organization, :string, description: "Organization slug or UUID (required for slug lookup)"
+    field :organization, :string,
+      description: "Organization slug or UUID (required for slug lookup)"
+
     field :id, :string, required: true, description: "Campaign UUID or slug"
   end
 
@@ -20,8 +22,28 @@ defmodule NoizuPromptLingua.Domains.Campaigns.Tools.CampaignGet do
     org_id = Resolve.organization_id(Args.get(args, :organization))
 
     case Campaigns.resolve_campaign(org_id, id) do
-      nil -> {:error, "Campaign '#{id}' not found"}
-      c -> {:ok, %{id: c.id, slug: c.slug, name: c.name, channel: c.channel, objective: c.objective, status: c.status, budget_cents: c.budget_cents, currency: c.currency, start_date: c.start_date, end_date: c.end_date, segment_id: c.segment_id, targeting: c.targeting, tags: c.tags, organization_id: c.organization_id, project_id: c.project_id}}
+      nil ->
+        {:error, "Campaign '#{id}' not found"}
+
+      c ->
+        {:ok,
+         %{
+           id: c.id,
+           slug: c.slug,
+           name: c.name,
+           channel: c.channel,
+           objective: c.objective,
+           status: c.status,
+           budget_cents: c.budget_cents,
+           currency: c.currency,
+           start_date: c.start_date,
+           end_date: c.end_date,
+           segment_id: c.segment_id,
+           targeting: c.targeting,
+           tags: c.tags,
+           organization_id: c.organization_id,
+           project_id: c.project_id
+         }}
     end
   end
 end

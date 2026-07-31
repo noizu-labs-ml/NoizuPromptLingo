@@ -5,14 +5,20 @@ defmodule NoizuPromptLingua.Domains.Campaigns.Tools.DomainNameCreate do
     hidden: true,
     category: "Campaigns.Domains"
 
-  input_schema %{
+  input_schema(%{
     "type" => "object",
     "properties" => %{
-      "organization" => %{"type" => "string", "description" => "Organization slug or UUID (required)"},
+      "organization" => %{
+        "type" => "string",
+        "description" => "Organization slug or UUID (required)"
+      },
       "slug" => %{"type" => "string", "description" => "Slug (unique per organization)"},
       "name" => %{"type" => "string", "description" => "The FQDN, e.g. example.com"},
       "project" => %{"type" => "string", "description" => "Optional project slug or UUID"},
-      "status" => %{"type" => "string", "description" => "candidate (default), available, registered, in_use, expired"},
+      "status" => %{
+        "type" => "string",
+        "description" => "candidate (default), available, registered, in_use, expired"
+      },
       "registrar" => %{"type" => "string", "description" => "Registrar"},
       "registered_at" => %{"type" => "string", "description" => "Registration date (YYYY-MM-DD)"},
       "expires_at" => %{"type" => "string", "description" => "Expiry date (YYYY-MM-DD)"},
@@ -21,7 +27,7 @@ defmodule NoizuPromptLingua.Domains.Campaigns.Tools.DomainNameCreate do
       "tags" => %{"type" => "array", "items" => %{"type" => "string"}, "description" => "Tags"}
     },
     "required" => ["organization", "slug", "name"]
-  }
+  })
 
   alias NoizuPromptLingua.Domains.Campaigns
   alias NoizuPromptLingua.MCP.{Args, Resolve}
@@ -45,9 +51,14 @@ defmodule NoizuPromptLingua.Domains.Campaigns.Tools.DomainNameCreate do
         {:error, changeset} -> {:error, "Failed: #{inspect(changeset.errors)}"}
       end
     else
-      {:org, nil} -> {:error, "Organization '#{org_ref}' not found"}
-      {:error, :project_not_found} -> {:error, "Project '#{project_ref}' not found"}
-      {:error, :project_not_in_org} -> {:error, "Project '#{project_ref}' does not belong to this organization"}
+      {:org, nil} ->
+        {:error, "Organization '#{org_ref}' not found"}
+
+      {:error, :project_not_found} ->
+        {:error, "Project '#{project_ref}' not found"}
+
+      {:error, :project_not_in_org} ->
+        {:error, "Project '#{project_ref}' does not belong to this organization"}
     end
   end
 end

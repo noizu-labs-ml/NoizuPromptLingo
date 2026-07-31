@@ -23,7 +23,9 @@ defmodule NoizuPromptLingua.Schema.Wiki.Reaction do
     |> cast(attrs, [:target_type, :target_id, :emoji, :actor])
     |> validate_required([:target_type, :target_id, :emoji, :actor])
     |> validate_inclusion(:target_type, @target_types)
-    |> unique_constraint([:target_type, :target_id, :emoji, :actor], name: :idx_wiki_reactions_unique)
+    |> unique_constraint([:target_type, :target_id, :emoji, :actor],
+      name: :idx_wiki_reactions_unique
+    )
   end
 
   def target_types, do: @target_types

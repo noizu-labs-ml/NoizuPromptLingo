@@ -1,7 +1,8 @@
 defmodule NoizuPromptLingua.Domains.Market.Tools.CompetitorList do
   use Noizu.MCP.Server.Tool,
     name: "Competitor.List",
-    description: "List competitors for an organization, optionally filtered by project, status, or tag.",
+    description:
+      "List competitors for an organization, optionally filtered by project, status, or tag.",
     annotations: [read_only_hint: true],
     hidden: true,
     category: "Market.Competitors"
@@ -35,7 +36,15 @@ defmodule NoizuPromptLingua.Domains.Market.Tools.CompetitorList do
             limit: Args.get(args, :limit) || 100
           )
 
-        {:ok, %{count: length(competitors), competitors: Enum.map(competitors, &%{id: &1.id, slug: &1.slug, name: &1.name, tier: &1.tier, status: &1.status})}}
+        {:ok,
+         %{
+           count: length(competitors),
+           competitors:
+             Enum.map(
+               competitors,
+               &%{id: &1.id, slug: &1.slug, name: &1.name, tier: &1.tier, status: &1.status}
+             )
+         }}
     end
   end
 end

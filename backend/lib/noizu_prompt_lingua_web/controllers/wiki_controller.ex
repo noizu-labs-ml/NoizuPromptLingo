@@ -43,7 +43,10 @@ defmodule NoizuPromptLinguaWeb.WikiController do
   # GET /api/v1/organizations/:org_id/wiki/spaces/:id
   def show_space(conn, %{"org_id" => org_id, "id" => id}) do
     with_org_space(conn, org_id, id, "viewer", fn space ->
-      json(conn, %{space: space_json(space), pages: Enum.map(Wiki.list_pages(space.id), &page_summary_json/1)})
+      json(conn, %{
+        space: space_json(space),
+        pages: Enum.map(Wiki.list_pages(space.id), &page_summary_json/1)
+      })
     end)
   end
 
@@ -52,7 +55,8 @@ defmodule NoizuPromptLinguaWeb.WikiController do
     attrs = params["space"] || %{}
 
     with_org_space(conn, org_id, id, "member", fn space ->
-      with {:ok, project_id} <- validate_project(Map.get(attrs, "project_id"), space.organization_id) do
+      with {:ok, project_id} <-
+             validate_project(Map.get(attrs, "project_id"), space.organization_id) do
         patch =
           attrs
           |> Map.take(["slug", "name", "description"])
@@ -129,7 +133,11 @@ defmodule NoizuPromptLinguaWeb.WikiController do
       patch =
         attrs
         |> Map.take(["slug", "title", "content", "position"])
-        |> maybe_put("parent_id", Map.has_key?(attrs, "parent_id"), blank_to_nil(attrs["parent_id"]))
+        |> maybe_put(
+          "parent_id",
+          Map.has_key?(attrs, "parent_id"),
+          blank_to_nil(attrs["parent_id"])
+        )
 
       case Wiki.update_page(id, patch) do
         {:ok, updated} -> json(conn, %{page: page_json(updated)})
@@ -211,8 +219,11 @@ defmodule NoizuPromptLinguaWeb.WikiController do
       }
 
       case Wiki.create_attachment(params) do
-        {:ok, attachment} -> conn |> put_status(:created) |> json(%{attachment: attachment_json(attachment)})
-        {:error, changeset} -> unprocessable(conn, changeset)
+        {:ok, attachment} ->
+          conn |> put_status(:created) |> json(%{attachment: attachment_json(attachment)})
+
+        {:error, changeset} ->
+          unprocessable(conn, changeset)
       end
     end)
   end
@@ -258,28 +269,46 @@ defmodule NoizuPromptLinguaWeb.WikiController do
   # GET .../wiki/comments/:comment_id/reactions
   def index_comment_reactions(conn, %{"org_id" => org_id, "comment_id" => comment_id}) do
     with_org_comment(conn, org_id, comment_id, "viewer", fn comment ->
-      json(conn, %{reactions: Enum.map(Wiki.list_reactions("comment", comment.id), &reaction_json/1)})
+      json(conn, %{
+        reactions: Enum.map(Wiki.list_reactions("comment", comment.id), &reaction_json/1)
+      })
     end)
   end
 
   # POST .../wiki/comments/:comment_id/reactions  body: {emoji}
-  def add_comment_reaction(conn, %{"org_id" => org_id, "comment_id" => comment_id, "emoji" => emoji}) do
+  def add_comment_reaction(conn, %{
+        "org_id" => org_id,
+        "comment_id" => comment_id,
+        "emoji" => emoji
+      }) do
     with_org_comment(conn, org_id, comment_id, "member", fn comment ->
       do_add_reaction(conn, "comment", comment.id, emoji)
     end)
   end
 
   # DELETE .../wiki/comments/:comment_id/reactions  body/query: {emoji}
-  def remove_comment_reaction(conn, %{"org_id" => org_id, "comment_id" => comment_id, "emoji" => emoji}) do
+  def remove_comment_reaction(conn, %{
+        "org_id" => org_id,
+        "comment_id" => comment_id,
+        "emoji" => emoji
+      }) do
     with_org_comment(conn, org_id, comment_id, "member", fn comment ->
       do_remove_reaction(conn, "comment", comment.id, emoji)
     end)
   end
 
   defp do_add_reaction(conn, target_type, target_id, emoji) do
-    case Wiki.add_reaction(%{target_type: target_type, target_id: target_id, emoji: emoji, actor: actor(conn)}) do
-      {:ok, reaction} -> conn |> put_status(:created) |> json(%{reaction: reaction_json(reaction)})
-      {:error, changeset} -> unprocessable(conn, changeset)
+    case Wiki.add_reaction(%{
+           target_type: target_type,
+           target_id: target_id,
+           emoji: emoji,
+           actor: actor(conn)
+         }) do
+      {:ok, reaction} ->
+        conn |> put_status(:created) |> json(%{reaction: reaction_json(reaction)})
+
+      {:error, changeset} ->
+        unprocessable(conn, changeset)
     end
   end
 
@@ -341,6 +370,7 @@ defmodule NoizuPromptLinguaWeb.WikiController do
 
   defp validate_project(nil, _org_id), do: {:ok, nil}
   defp validate_project("", _org_id), do: {:ok, nil}
+
   defp validate_project(project_id, org_id) do
     case NoizuPromptLingua.Projects.get_project(project_id) do
       nil -> {:error, :project_not_in_org}
@@ -365,7 +395,15 @@ defmodule NoizuPromptLinguaWeb.WikiController do
   end
 
   defp page_summary_json(p) do
-    %{id: p.id, space_id: p.space_id, parent_id: p.parent_id, slug: p.slug, title: p.title, position: p.position, updated_at: p.updated_at}
+    %{
+      id: p.id,
+      space_id: p.space_id,
+      parent_id: p.parent_id,
+      slug: p.slug,
+      title: p.title,
+      position: p.position,
+      updated_at: p.updated_at
+    }
   end
 
   defp page_json(p) do
@@ -383,30 +421,62 @@ defmodule NoizuPromptLinguaWeb.WikiController do
   end
 
   defp comment_json(c) do
-    %{id: c.id, page_id: c.page_id, parent_id: c.parent_id, author: c.author, body: c.body, inserted_at: c.inserted_at}
+    %{
+      id: c.id,
+      page_id: c.page_id,
+      parent_id: c.parent_id,
+      author: c.author,
+      body: c.body,
+      inserted_at: c.inserted_at
+    }
   end
 
   defp attachment_json(a) do
-    %{id: a.id, page_id: a.page_id, filename: a.filename, mime_type: a.mime_type, url: a.url, byte_size: a.byte_size, inserted_at: a.inserted_at}
+    %{
+      id: a.id,
+      page_id: a.page_id,
+      filename: a.filename,
+      mime_type: a.mime_type,
+      url: a.url,
+      byte_size: a.byte_size,
+      inserted_at: a.inserted_at
+    }
   end
 
   defp reaction_json(r) do
-    %{id: r.id, target_type: r.target_type, target_id: r.target_id, emoji: r.emoji, actor: r.actor, inserted_at: r.inserted_at}
+    %{
+      id: r.id,
+      target_type: r.target_type,
+      target_id: r.target_id,
+      emoji: r.emoji,
+      actor: r.actor,
+      inserted_at: r.inserted_at
+    }
   end
 
   # ── Misc ──────────────────────────────────────────────────────────────────
 
   defp not_found(conn, msg), do: conn |> put_status(:not_found) |> json(%{error: msg})
-  defp project_error(conn), do: conn |> put_status(:unprocessable_entity) |> json(%{error: "Project does not belong to this organization"})
+
+  defp project_error(conn),
+    do:
+      conn
+      |> put_status(:unprocessable_entity)
+      |> json(%{error: "Project does not belong to this organization"})
 
   defp unprocessable(conn, changeset),
     do: conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
 
   defp handle_error(conn, err) do
     case err do
-      {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Organization not found"})
-      {:error, :not_a_member} -> conn |> put_status(:forbidden) |> json(%{error: "Not a member of this organization"})
-      _ -> conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Organization not found"})
+
+      {:error, :not_a_member} ->
+        conn |> put_status(:forbidden) |> json(%{error: "Not a member of this organization"})
+
+      _ ->
+        conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
     end
   end
 

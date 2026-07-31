@@ -23,7 +23,11 @@ defmodule NoizuPromptLingua.Domains.RemoteAccess do
   def claim_tunnel(user_id, organization_id, name, opts \\ []) do
     name = normalize(name)
     {raw_token, hash} = generate_token()
-    expires_at = DateTime.utc_now() |> DateTime.add(ttl_days(opts) * 86_400, :second) |> DateTime.truncate(:second)
+
+    expires_at =
+      DateTime.utc_now()
+      |> DateTime.add(ttl_days(opts) * 86_400, :second)
+      |> DateTime.truncate(:second)
 
     attrs = %{
       organization_id: organization_id,
@@ -38,7 +42,11 @@ defmodule NoizuPromptLingua.Domains.RemoteAccess do
     case active_by_name(name) do
       %Tunnel{user_id: ^user_id} = existing ->
         existing
-        |> Tunnel.changeset(%{tunnel_token_hash: hash, expires_at: expires_at, proxy_type: attrs.proxy_type})
+        |> Tunnel.changeset(%{
+          tunnel_token_hash: hash,
+          expires_at: expires_at,
+          proxy_type: attrs.proxy_type
+        })
         |> Repo.update()
         |> with_token(raw_token)
 
@@ -50,7 +58,9 @@ defmodule NoizuPromptLingua.Domains.RemoteAccess do
         |> Tunnel.changeset(attrs)
         |> Repo.insert()
         |> case do
-          {:ok, t} -> {:ok, t, raw_token}
+          {:ok, t} ->
+            {:ok, t, raw_token}
+
           {:error, %{errors: errors}} = err ->
             if Keyword.has_key?(errors, :name), do: {:error, :name_taken}, else: err
         end
@@ -69,9 +79,14 @@ defmodule NoizuPromptLingua.Domains.RemoteAccess do
   @doc "Revoke (tombstone) a name owned by `user_id`. Frees the active-name slot."
   def revoke_tunnel(user_id, name) do
     case active_by_name(normalize(name)) do
-      %Tunnel{user_id: ^user_id} = t -> t |> Tunnel.changeset(%{status: "revoked"}) |> Repo.update()
-      %Tunnel{} -> {:error, :not_owner}
-      nil -> {:error, :not_found}
+      %Tunnel{user_id: ^user_id} = t ->
+        t |> Tunnel.changeset(%{status: "revoked"}) |> Repo.update()
+
+      %Tunnel{} ->
+        {:error, :not_owner}
+
+      nil ->
+        {:error, :not_found}
     end
   end
 

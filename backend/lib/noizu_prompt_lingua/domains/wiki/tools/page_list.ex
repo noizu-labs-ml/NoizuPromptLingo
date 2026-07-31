@@ -31,12 +31,20 @@ defmodule NoizuPromptLingua.Domains.Wiki.Tools.PageList do
 
         pages = Wiki.list_pages(space.id, opts)
 
-        {:ok, %{
-          pages: Enum.map(pages, fn p ->
-            %{id: p.id, slug: p.slug, title: p.title, parent_id: p.parent_id, position: p.position}
-          end),
-          count: length(pages)
-        }}
+        {:ok,
+         %{
+           pages:
+             Enum.map(pages, fn p ->
+               %{
+                 id: p.id,
+                 slug: p.slug,
+                 title: p.title,
+                 parent_id: p.parent_id,
+                 position: p.position
+               }
+             end),
+           count: length(pages)
+         }}
     end
   end
 

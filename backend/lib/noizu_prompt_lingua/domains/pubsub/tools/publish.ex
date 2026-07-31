@@ -11,8 +11,12 @@ defmodule NoizuPromptLingua.Domains.PubSub.Tools.Publish do
     field :channel, :string, required: true, description: "Channel slug or UUID"
     field :sender, :string, required: true, description: "Publishing agent handle"
     field :body, :string, required: true, description: "Message body"
-    field :name, :string, description: "Channel display name (used only when creating the channel)"
-    field :project, :string, description: "Project slug or UUID (used only when creating the channel)"
+
+    field :name, :string,
+      description: "Channel display name (used only when creating the channel)"
+
+    field :project, :string,
+      description: "Project slug or UUID (used only when creating the channel)"
   end
 
   alias NoizuPromptLingua.Domains.PubSub
@@ -35,7 +39,12 @@ defmodule NoizuPromptLingua.Domains.PubSub.Tools.Publish do
       {:ok,
        %{
          channel: %{id: channel.id, slug: channel.slug},
-         message: %{id: message.id, seq: message.seq, sender: message.sender, inserted_at: message.inserted_at}
+         message: %{
+           id: message.id,
+           seq: message.seq,
+           sender: message.sender,
+           inserted_at: message.inserted_at
+         }
        }}
     else
       {:org, nil} -> {:error, "Organization '#{org_ref}' not found"}

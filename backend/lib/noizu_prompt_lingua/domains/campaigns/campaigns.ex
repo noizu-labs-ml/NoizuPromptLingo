@@ -50,7 +50,11 @@ defmodule NoizuPromptLingua.Domains.Campaigns do
   # ── Ad copy ───────────────────────────────────────────────────
 
   def create_ad_copy(attrs) do
-    attrs = Map.put_new_lazy(attrs, :variant_number, fn -> next_variant(attrs[:campaign_id], attrs[:ad_group_id]) end)
+    attrs =
+      Map.put_new_lazy(attrs, :variant_number, fn ->
+        next_variant(attrs[:campaign_id], attrs[:ad_group_id])
+      end)
+
     %AdCopy{} |> AdCopy.changeset(attrs) |> Repo.insert()
   end
 
@@ -83,9 +87,16 @@ defmodule NoizuPromptLingua.Domains.Campaigns do
         count = opts[:count] || 3
         prompt = opts[:prompt] || default_ad_copy_prompt(campaign, count, opts[:ad_group_id])
 
-        case MarketingContent.generate_artifact(prompt,
-               %{organization_id: campaign.organization_id, project_id: campaign.project_id,
-                 kind: "document", title: "#{campaign.name} — ad copy"}, opts) do
+        case MarketingContent.generate_artifact(
+               prompt,
+               %{
+                 organization_id: campaign.organization_id,
+                 project_id: campaign.project_id,
+                 kind: "document",
+                 title: "#{campaign.name} — ad copy"
+               },
+               opts
+             ) do
           {:ok, %{artifact_id: artifact_id, content: content}} ->
             rows =
               for n <- 1..count do
@@ -115,7 +126,9 @@ defmodule NoizuPromptLingua.Domains.Campaigns do
 
   # ── Landing pages ─────────────────────────────────────────────
 
-  def create_landing_page(attrs), do: %LandingPage{} |> LandingPage.changeset(attrs) |> Repo.insert()
+  def create_landing_page(attrs),
+    do: %LandingPage{} |> LandingPage.changeset(attrs) |> Repo.insert()
+
   def get_landing_page(id), do: Repo.get(LandingPage, id)
   def resolve_landing_page(org_id, id_or_slug), do: resolve(LandingPage, org_id, id_or_slug)
   def update_landing_page(id, attrs), do: do_update(LandingPage, id, attrs)
@@ -142,9 +155,17 @@ defmodule NoizuPromptLingua.Domains.Campaigns do
       page ->
         prompt = opts[:prompt] || default_landing_prompt(page)
 
-        case MarketingContent.generate_artifact(prompt,
-               %{organization_id: page.organization_id, project_id: page.project_id,
-                 kind: "code", title: page.title, mime_type: "text/html"}, opts) do
+        case MarketingContent.generate_artifact(
+               prompt,
+               %{
+                 organization_id: page.organization_id,
+                 project_id: page.project_id,
+                 kind: "code",
+                 title: page.title,
+                 mime_type: "text/html"
+               },
+               opts
+             ) do
           {:ok, %{artifact_id: artifact_id}} ->
             do_update(LandingPage, id, %{artifact_id: artifact_id})
 

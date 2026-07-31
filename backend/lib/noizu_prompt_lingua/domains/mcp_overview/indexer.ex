@@ -70,9 +70,14 @@ defmodule NoizuPromptLingua.Domains.MCPOverview.Indexer do
           }
 
           case Store.put_tool_vector(attrs) do
-            {:ok, _} -> acc + 1
+            {:ok, _} ->
+              acc + 1
+
             {:error, reason} ->
-              Logger.warning("[MCPOverview.Indexer] store failed for #{spec.name}: #{inspect(reason)}")
+              Logger.warning(
+                "[MCPOverview.Indexer] store failed for #{spec.name}: #{inspect(reason)}"
+              )
+
               acc
           end
         end)

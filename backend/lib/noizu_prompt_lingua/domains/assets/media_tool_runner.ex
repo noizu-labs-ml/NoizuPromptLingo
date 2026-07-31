@@ -28,11 +28,23 @@ defmodule NoizuPromptLingua.Domains.Assets.MediaToolRunner.CLI do
   @default_bin "generate-media-prompt"
 
   @mime %{
-    "png" => "image/png", "jpg" => "image/jpeg", "jpeg" => "image/jpeg",
-    "webp" => "image/webp", "gif" => "image/gif", "svg" => "image/svg+xml",
-    "mp3" => "audio/mpeg", "wav" => "audio/wav", "ogg" => "audio/ogg", "flac" => "audio/flac",
-    "mp4" => "video/mp4", "webm" => "video/webm", "mov" => "video/quicktime",
-    "html" => "text/html", "txt" => "text/plain", "json" => "application/json", "mmd" => "text/plain"
+    "png" => "image/png",
+    "jpg" => "image/jpeg",
+    "jpeg" => "image/jpeg",
+    "webp" => "image/webp",
+    "gif" => "image/gif",
+    "svg" => "image/svg+xml",
+    "mp3" => "audio/mpeg",
+    "wav" => "audio/wav",
+    "ogg" => "audio/ogg",
+    "flac" => "audio/flac",
+    "mp4" => "video/mp4",
+    "webm" => "video/webm",
+    "mov" => "video/quicktime",
+    "html" => "text/html",
+    "txt" => "text/plain",
+    "json" => "application/json",
+    "mmd" => "text/plain"
   }
 
   @impl true

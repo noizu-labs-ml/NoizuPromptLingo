@@ -1,6 +1,9 @@
 defmodule NoizuPromptLingua.Domains.Review.Tools.ReviewComplete do
   use Noizu.MCP.Server.Tool,
-    name: "Review.Complete", description: "Mark review as completed.", hidden: true, category: "Review"
+    name: "Review.Complete",
+    description: "Mark review as completed.",
+    hidden: true,
+    category: "Review"
 
   input do
     field :review_id, :string, required: true, description: "Review UUID"

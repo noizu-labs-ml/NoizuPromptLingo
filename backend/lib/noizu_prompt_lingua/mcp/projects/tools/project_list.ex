@@ -33,13 +33,22 @@ defmodule NoizuPromptLingua.MCP.Projects.Tools.ProjectList do
       |> offset(^offset)
       |> NoizuPromptLingua.Repo.all()
 
-    {:ok, %{
-      projects: Enum.map(projects, &%{
-        id: &1.id, name: &1.name, slug: &1.slug, status: &1.status,
-        organization_id: &1.organization_id, created_at: &1.inserted_at
-      }),
-      count: length(projects)
-    }}
+    {:ok,
+     %{
+       projects:
+         Enum.map(
+           projects,
+           &%{
+             id: &1.id,
+             name: &1.name,
+             slug: &1.slug,
+             status: &1.status,
+             organization_id: &1.organization_id,
+             created_at: &1.inserted_at
+           }
+         ),
+       count: length(projects)
+     }}
   end
 
   defp maybe_org(query, nil), do: query

@@ -29,14 +29,26 @@ defmodule NoizuPromptLingua.Domains.Browser.Tools.Overview do
            organization_id: org_id,
            controller_connected: Browser.connected?(org_ref),
            tools: [
-             %{name: "Browser.Overview", description: "List tools + controller connection status"},
+             %{
+               name: "Browser.Overview",
+               description: "List tools + controller connection status"
+             },
              %{name: "Browser.Navigate", description: "Navigate the browser to a URL"},
-             %{name: "Browser.Screenshot", description: "Capture a screenshot → uploaded to media gallery"},
+             %{
+               name: "Browser.Screenshot",
+               description: "Capture a screenshot → uploaded to media gallery"
+             },
              %{name: "Browser.Click", description: "Click an element by selector"},
              %{name: "Browser.Fill", description: "Fill an input by selector"},
-             %{name: "Browser.GetState", description: "Get current url, title, and optional text"},
+             %{
+               name: "Browser.GetState",
+               description: "Get current url, title, and optional text"
+             },
              %{name: "Browser.RecordStart", description: "Begin recording a session video"},
-             %{name: "Browser.RecordStop", description: "Stop recording → uploaded to media gallery"}
+             %{
+               name: "Browser.RecordStop",
+               description: "Stop recording → uploaded to media gallery"
+             }
            ]
          }}
     end

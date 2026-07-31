@@ -76,7 +76,11 @@ defmodule NoizuPromptLingua.Domains.Tickets.QueuesTest do
       Repo.query!(
         "INSERT INTO projects (id, organization_id, slug, name, inserted_at, updated_at) " <>
           "VALUES (gen_random_uuid(), $1, $2, $3, now(), now()) RETURNING id",
-        [Ecto.UUID.dump!(org_id), "boardproj-#{System.unique_integer([:positive])}", "Board Test Project"]
+        [
+          Ecto.UUID.dump!(org_id),
+          "boardproj-#{System.unique_integer([:positive])}",
+          "Board Test Project"
+        ]
       )
 
     Ecto.UUID.load!(raw)

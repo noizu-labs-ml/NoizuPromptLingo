@@ -21,8 +21,17 @@ defmodule NoizuPromptLingua.Schema.AssetOutput do
 
   def changeset(output, attrs) do
     output
-    |> cast(attrs, [:entry_id, :artifact_id, :provider, :model, :variant_number,
-                     :eval_score, :eval_details, :eval_status, :status])
+    |> cast(attrs, [
+      :entry_id,
+      :artifact_id,
+      :provider,
+      :model,
+      :variant_number,
+      :eval_score,
+      :eval_details,
+      :eval_status,
+      :status
+    ])
     |> validate_required([:entry_id])
     |> validate_inclusion(:eval_status, ~w(pending passed failed skipped))
     |> validate_inclusion(:status, ~w(generated accepted rejected))

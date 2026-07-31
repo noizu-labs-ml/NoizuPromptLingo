@@ -24,12 +24,20 @@ defmodule NoizuPromptLingua.Domains.Wiki.Tools.CommentList do
       page ->
         comments = Wiki.list_comments(page.id)
 
-        {:ok, %{
-          comments: Enum.map(comments, fn c ->
-            %{id: c.id, author: c.author, body: c.body, parent_id: c.parent_id, created_at: c.inserted_at}
-          end),
-          count: length(comments)
-        }}
+        {:ok,
+         %{
+           comments:
+             Enum.map(comments, fn c ->
+               %{
+                 id: c.id,
+                 author: c.author,
+                 body: c.body,
+                 parent_id: c.parent_id,
+                 created_at: c.inserted_at
+               }
+             end),
+           count: length(comments)
+         }}
     end
   end
 end

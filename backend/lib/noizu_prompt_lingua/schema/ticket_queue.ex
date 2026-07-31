@@ -29,7 +29,15 @@ defmodule NoizuPromptLingua.Schema.TicketQueue do
 
   def changeset(board, attrs) do
     board
-    |> cast(attrs, [:organization_id, :project_id, :name, :slug, :description, :methodology, :config])
+    |> cast(attrs, [
+      :organization_id,
+      :project_id,
+      :name,
+      :slug,
+      :description,
+      :methodology,
+      :config
+    ])
     |> validate_required([:name, :slug, :methodology])
     |> validate_inclusion(:methodology, @methodologies)
     |> validate_scope()

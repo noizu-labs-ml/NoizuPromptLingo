@@ -5,10 +5,13 @@ defmodule NoizuPromptLingua.Domains.Campaigns.Tools.LandingPageCreate do
     hidden: true,
     category: "Campaigns.LandingPages"
 
-  input_schema %{
+  input_schema(%{
     "type" => "object",
     "properties" => %{
-      "organization" => %{"type" => "string", "description" => "Organization slug or UUID (required)"},
+      "organization" => %{
+        "type" => "string",
+        "description" => "Organization slug or UUID (required)"
+      },
       "slug" => %{"type" => "string", "description" => "Page slug (unique per organization)"},
       "title" => %{"type" => "string", "description" => "Page title"},
       "project" => %{"type" => "string", "description" => "Optional project slug or UUID"},
@@ -20,7 +23,7 @@ defmodule NoizuPromptLingua.Domains.Campaigns.Tools.LandingPageCreate do
       "tags" => %{"type" => "array", "items" => %{"type" => "string"}, "description" => "Tags"}
     },
     "required" => ["organization", "slug", "title"]
-  }
+  })
 
   alias NoizuPromptLingua.Domains.Campaigns
   alias NoizuPromptLingua.MCP.{Args, Resolve}
@@ -44,9 +47,14 @@ defmodule NoizuPromptLingua.Domains.Campaigns.Tools.LandingPageCreate do
         {:error, changeset} -> {:error, "Failed: #{inspect(changeset.errors)}"}
       end
     else
-      {:org, nil} -> {:error, "Organization '#{org_ref}' not found"}
-      {:error, :project_not_found} -> {:error, "Project '#{project_ref}' not found"}
-      {:error, :project_not_in_org} -> {:error, "Project '#{project_ref}' does not belong to this organization"}
+      {:org, nil} ->
+        {:error, "Organization '#{org_ref}' not found"}
+
+      {:error, :project_not_found} ->
+        {:error, "Project '#{project_ref}' not found"}
+
+      {:error, :project_not_in_org} ->
+        {:error, "Project '#{project_ref}' does not belong to this organization"}
     end
   end
 end

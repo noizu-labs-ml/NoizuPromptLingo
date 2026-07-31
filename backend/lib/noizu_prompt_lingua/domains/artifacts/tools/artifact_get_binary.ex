@@ -27,11 +27,13 @@ defmodule NoizuPromptLingua.Domains.Artifacts.Tools.ArtifactGetBinary do
 
       {artifact, revision} ->
         content_b64 = Base.encode64(revision.content || "")
-        {:ok, %{
-          content_base64: content_b64,
-          mime_type: artifact.mime_type,
-          size_bytes: byte_size(revision.content || "")
-        }}
+
+        {:ok,
+         %{
+           content_base64: content_b64,
+           mime_type: artifact.mime_type,
+           size_bytes: byte_size(revision.content || "")
+         }}
     end
   end
 end

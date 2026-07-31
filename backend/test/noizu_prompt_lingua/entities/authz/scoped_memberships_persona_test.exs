@@ -14,10 +14,17 @@ defmodule NoizuPromptLingua.Authz.ScopedMembershipsPersonaTest do
     {:ok, org_id: org_id, persona_id: insert_persona(org_id)}
   end
 
-  test "add_persona_member + list_for_resource shows the persona row", %{org_id: org, persona_id: pid} do
+  test "add_persona_member + list_for_resource shows the persona row", %{
+    org_id: org,
+    persona_id: pid
+  } do
     {:ok, _} = ScopedMemberships.add_persona_member("organization", org, pid, "member")
 
-    row = "organization" |> ScopedMemberships.list_for_resource(org) |> Enum.find(&(&1.member_type == "persona"))
+    row =
+      "organization"
+      |> ScopedMemberships.list_for_resource(org)
+      |> Enum.find(&(&1.member_type == "persona"))
+
     assert row
     assert row.member_id == pid
     assert row.persona_id == pid
@@ -36,7 +43,8 @@ defmodule NoizuPromptLingua.Authz.ScopedMembershipsPersonaTest do
   end
 
   test "add_persona_member rejects an unknown role", %{org_id: org, persona_id: pid} do
-    assert {:error, :invalid_role} = ScopedMemberships.add_persona_member("organization", org, pid, "wizard")
+    assert {:error, :invalid_role} =
+             ScopedMemberships.add_persona_member("organization", org, pid, "wizard")
   end
 
   test "get_membership returns the persona membership", %{org_id: org, persona_id: pid} do
@@ -51,12 +59,17 @@ defmodule NoizuPromptLingua.Authz.ScopedMembershipsPersonaTest do
     {:ok, _} = ScopedMemberships.add_persona_member("organization", org, pid, "member")
     {:ok, _} = ScopedMemberships.update_persona_role("organization", org, pid, "lead")
 
-    row = "organization" |> ScopedMemberships.list_for_resource(org) |> Enum.find(&(&1.member_type == "persona"))
+    row =
+      "organization"
+      |> ScopedMemberships.list_for_resource(org)
+      |> Enum.find(&(&1.member_type == "persona"))
+
     assert row.role == "lead"
   end
 
   test "update_persona_role 404 when the persona isn't a member", %{org_id: org, persona_id: pid} do
-    assert {:error, :not_found} = ScopedMemberships.update_persona_role("organization", org, pid, "lead")
+    assert {:error, :not_found} =
+             ScopedMemberships.update_persona_role("organization", org, pid, "lead")
   end
 
   defp insert_org do

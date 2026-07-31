@@ -1,10 +1,16 @@
 defmodule NoizuPromptLingua.Domains.Chat.Tools.ListRooms do
   use Noizu.MCP.Server.Tool,
-    name: "Chat.ListRooms", description: "List chat rooms.", hidden: true, category: "Chat",
+    name: "Chat.ListRooms",
+    description: "List chat rooms.",
+    hidden: true,
+    category: "Chat",
     annotations: [read_only_hint: true]
 
   input do
-    field :organization, :string, required: true, description: "Organization slug or UUID (required)"
+    field :organization, :string,
+      required: true,
+      description: "Organization slug or UUID (required)"
+
     field :project, :string, description: "Filter by project slug or UUID"
     field :session_id, :string, description: "Filter by session UUID"
     field :limit, :integer, description: "Max results (default 50)"
@@ -36,6 +42,7 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.ListRooms do
           )
 
         rooms = Chat.list_rooms(opts)
+
         {:ok,
          %{
            rooms:

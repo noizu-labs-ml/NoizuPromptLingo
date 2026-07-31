@@ -16,7 +16,12 @@ defmodule NoizuPromptLinguaWeb.AssetController do
         |> maybe_opt(:tag, params["tag"])
 
       entries = Assets.list(opts)
-      json(conn, %{assets: Enum.map(entries, &entry_json/1), asset_types: AssetEntry.asset_types(), statuses: AssetEntry.statuses()})
+
+      json(conn, %{
+        assets: Enum.map(entries, &entry_json/1),
+        asset_types: AssetEntry.asset_types(),
+        statuses: AssetEntry.statuses()
+      })
     end)
   end
 
@@ -24,14 +29,22 @@ defmodule NoizuPromptLinguaWeb.AssetController do
   def create(conn, %{"org_id" => org_id, "asset" => params}) do
     with_org(conn, org_id, "member", fn resolved_org_id ->
       with {:ok, project_id} <- validate_project(params["project_id"], resolved_org_id) do
-        attrs = take_attrs(params) |> Map.merge(%{organization_id: resolved_org_id, project_id: project_id})
+        attrs =
+          take_attrs(params)
+          |> Map.merge(%{organization_id: resolved_org_id, project_id: project_id})
 
         case Assets.create(attrs, actor: actor(conn)) do
-          {:ok, entry} -> conn |> put_status(:created) |> json(%{asset: entry_json(entry)})
-          {:error, changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+          {:ok, entry} ->
+            conn |> put_status(:created) |> json(%{asset: entry_json(entry)})
+
+          {:error, changeset} ->
+            conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
         end
       else
-        {:error, :project_not_in_org} -> conn |> put_status(:unprocessable_entity) |> json(%{error: "Project does not belong to this organization"})
+        {:error, :project_not_in_org} ->
+          conn
+          |> put_status(:unprocessable_entity)
+          |> json(%{error: "Project does not belong to this organization"})
       end
     end)
   end
@@ -39,7 +52,10 @@ defmodule NoizuPromptLinguaWeb.AssetController do
   # GET /api/v1/organizations/:org_id/assets/:id
   def show(conn, %{"org_id" => org_id, "id" => id}) do
     with_owned_entry(conn, org_id, id, "viewer", fn entry ->
-      json(conn, %{asset: entry_json(entry), outputs: Enum.map(Assets.list_outputs(id), &output_json/1)})
+      json(conn, %{
+        asset: entry_json(entry),
+        outputs: Enum.map(Assets.list_outputs(id), &output_json/1)
+      })
     end)
   end
 
@@ -47,9 +63,14 @@ defmodule NoizuPromptLinguaWeb.AssetController do
   def update(conn, %{"org_id" => org_id, "id" => id, "asset" => params}) do
     with_owned_entry(conn, org_id, id, "member", fn _entry ->
       case Assets.update(id, take_attrs(params), actor: actor(conn)) do
-        {:ok, entry} -> json(conn, %{asset: entry_json(entry)})
-        {:error, :not_found} -> not_found(conn)
-        {:error, changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+        {:ok, entry} ->
+          json(conn, %{asset: entry_json(entry)})
+
+        {:error, :not_found} ->
+          not_found(conn)
+
+        {:error, changeset} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
       end
     end)
   end
@@ -76,7 +97,8 @@ defmodule NoizuPromptLinguaWeb.AssetController do
     with_owned_entry(conn, org_id, id, "member", fn entry ->
       # Per-org media provider config (provider module / api_key / model / settings)
       # for this asset's modality. Explicit request params still take precedence.
-      media_cfg = NoizuPromptLingua.Domains.Assets.MediaProviders.generate_opts(org_id, entry.asset_type)
+      media_cfg =
+        NoizuPromptLingua.Domains.Assets.MediaProviders.generate_opts(org_id, entry.asset_type)
 
       opts = [
         actor: actor(conn),
@@ -90,13 +112,19 @@ defmodule NoizuPromptLinguaWeb.AssetController do
       ]
 
       case Assets.generate(id, opts) do
-        {:ok, output} -> conn |> put_status(:created) |> json(%{output: output_json(output)})
-        {:error, :not_found} -> not_found(conn)
+        {:ok, output} ->
+          conn |> put_status(:created) |> json(%{output: output_json(output)})
+
+        {:error, :not_found} ->
+          not_found(conn)
 
         {:error, :generation_unavailable} ->
           conn
           |> put_status(:service_unavailable)
-          |> json(%{error: "Asset generation is not available yet (no LLM/media provider configured). Pass content or llm_generate:false for a placeholder, or configure a provider + API key."})
+          |> json(%{
+            error:
+              "Asset generation is not available yet (no LLM/media provider configured). Pass content or llm_generate:false for a placeholder, or configure a provider + API key."
+          })
 
         {:error, reason} ->
           conn |> put_status(:unprocessable_entity) |> json(%{error: inspect(reason)})
@@ -115,9 +143,14 @@ defmodule NoizuPromptLinguaWeb.AssetController do
   def accept_output(conn, %{"org_id" => org_id, "asset_id" => id, "output_id" => oid}) do
     with_owned_entry(conn, org_id, id, "member", fn _entry ->
       case Assets.accept_output(oid) do
-        {:ok, output} -> json(conn, %{output: output_json(output)})
-        {:error, :not_found} -> not_found(conn)
-        {:error, cs} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+        {:ok, output} ->
+          json(conn, %{output: output_json(output)})
+
+        {:error, :not_found} ->
+          not_found(conn)
+
+        {:error, cs} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
       end
     end)
   end
@@ -126,9 +159,14 @@ defmodule NoizuPromptLinguaWeb.AssetController do
   def reject_output(conn, %{"org_id" => org_id, "asset_id" => id, "output_id" => oid}) do
     with_owned_entry(conn, org_id, id, "member", fn _entry ->
       case Assets.reject_output(oid) do
-        {:ok, output} -> json(conn, %{output: output_json(output)})
-        {:error, :not_found} -> not_found(conn)
-        {:error, cs} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+        {:ok, output} ->
+          json(conn, %{output: output_json(output)})
+
+        {:error, :not_found} ->
+          not_found(conn)
+
+        {:error, cs} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
       end
     end)
   end
@@ -137,9 +175,14 @@ defmodule NoizuPromptLinguaWeb.AssetController do
   def set_active(conn, %{"org_id" => org_id, "asset_id" => id, "output_id" => oid}) do
     with_owned_entry(conn, org_id, id, "member", fn _entry ->
       case Assets.set_active(id, oid, actor: actor(conn)) do
-        {:ok, entry} -> json(conn, %{asset: entry_json(entry)})
-        {:error, :not_found} -> not_found(conn)
-        {:error, cs} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+        {:ok, entry} ->
+          json(conn, %{asset: entry_json(entry)})
+
+        {:error, :not_found} ->
+          not_found(conn)
+
+        {:error, cs} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
       end
     end)
   end
@@ -181,7 +224,13 @@ defmodule NoizuPromptLinguaWeb.AssetController do
   end
 
   defp history_json(h),
-    do: %{id: h.id, action: h.action, actor: h.actor, details: h.details, inserted_at: h.inserted_at}
+    do: %{
+      id: h.id,
+      action: h.action,
+      actor: h.actor,
+      details: h.details,
+      inserted_at: h.inserted_at
+    }
 
   defp take_attrs(params) do
     params
@@ -191,6 +240,7 @@ defmodule NoizuPromptLinguaWeb.AssetController do
 
   defp validate_project(nil, _org_id), do: {:ok, nil}
   defp validate_project("", _org_id), do: {:ok, nil}
+
   defp validate_project(project_id, org_id) do
     case NoizuPromptLingua.Projects.get_project(project_id) do
       %{organization_id: ^org_id} -> {:ok, project_id}
@@ -221,9 +271,14 @@ defmodule NoizuPromptLinguaWeb.AssetController do
          {:ok, _} <- Authz.authorize(user_id, "organization", resolved_org_id, role) do
       fun.(resolved_org_id)
     else
-      {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Organization not found"})
-      {:error, :not_a_member} -> conn |> put_status(:forbidden) |> json(%{error: "Not a member of this organization"})
-      {:error, _} -> conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Organization not found"})
+
+      {:error, :not_a_member} ->
+        conn |> put_status(:forbidden) |> json(%{error: "Not a member of this organization"})
+
+      {:error, _} ->
+        conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
     end
   end
 

@@ -61,7 +61,10 @@ defmodule NoizuPromptLingua.Workers.Memory.ReinforcementWorker do
         reason: "co-recalled",
         last_reinforced_at: DateTime.utc_now()
       })
-      |> Repo.insert(on_conflict: :nothing, conflict_target: [:source_memory_id, :target_memory_id, :edge_type])
+      |> Repo.insert(
+        on_conflict: :nothing,
+        conflict_target: [:source_memory_id, :target_memory_id, :edge_type]
+      )
     end
 
     :ok

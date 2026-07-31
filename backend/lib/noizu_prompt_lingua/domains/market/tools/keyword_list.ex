@@ -1,7 +1,8 @@
 defmodule NoizuPromptLingua.Domains.Market.Tools.KeywordList do
   use Noizu.MCP.Server.Tool,
     name: "Keyword.List",
-    description: "List keywords for an organization, optionally filtered by project, intent, or tag (ordered by volume).",
+    description:
+      "List keywords for an organization, optionally filtered by project, intent, or tag (ordered by volume).",
     annotations: [read_only_hint: true],
     hidden: true,
     category: "Market.Keywords"
@@ -35,7 +36,22 @@ defmodule NoizuPromptLingua.Domains.Market.Tools.KeywordList do
             limit: Args.get(args, :limit) || 100
           )
 
-        {:ok, %{count: length(keywords), keywords: Enum.map(keywords, &%{id: &1.id, term: &1.term, intent: &1.intent, volume: &1.volume, difficulty: &1.difficulty, cpc: &1.cpc})}}
+        {:ok,
+         %{
+           count: length(keywords),
+           keywords:
+             Enum.map(
+               keywords,
+               &%{
+                 id: &1.id,
+                 term: &1.term,
+                 intent: &1.intent,
+                 volume: &1.volume,
+                 difficulty: &1.difficulty,
+                 cpc: &1.cpc
+               }
+             )
+         }}
     end
   end
 end

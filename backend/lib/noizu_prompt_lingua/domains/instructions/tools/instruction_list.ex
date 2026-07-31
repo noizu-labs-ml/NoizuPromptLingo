@@ -1,7 +1,10 @@
 defmodule NoizuPromptLingua.Domains.Instructions.Tools.InstructionList do
-  use Noizu.MCP.Server.Tool, name: "Instruction.List",
+  use Noizu.MCP.Server.Tool,
+    name: "Instruction.List",
     description: "List/search instructions in an organization (optional project/tag/query).",
-    hidden: true, category: "Instructions", annotations: [read_only_hint: true]
+    hidden: true,
+    category: "Instructions",
+    annotations: [read_only_hint: true]
 
   input do
     field :organization, :string, required: true, description: "Organization slug or UUID"
@@ -26,14 +29,30 @@ defmodule NoizuPromptLingua.Domains.Instructions.Tools.InstructionList do
           |> put_opt(:query, Args.get(args, :query))
 
         instructions = Instructions.list(opts)
-        {:ok, %{count: length(instructions), instructions: Enum.map(instructions, fn i ->
-          %{id: i.id, slug: i.slug, title: i.title, description: i.description,
-            tags: i.tags, status: i.status, active_version: i.active_version,
-            param_count: length(i.parameters || [])}
-        end)}}
 
-      {:error, :org_not_found} -> {:error, "Organization not found"}
-      {:error, _} -> {:error, "Invalid project"}
+        {:ok,
+         %{
+           count: length(instructions),
+           instructions:
+             Enum.map(instructions, fn i ->
+               %{
+                 id: i.id,
+                 slug: i.slug,
+                 title: i.title,
+                 description: i.description,
+                 tags: i.tags,
+                 status: i.status,
+                 active_version: i.active_version,
+                 param_count: length(i.parameters || [])
+               }
+             end)
+         }}
+
+      {:error, :org_not_found} ->
+        {:error, "Organization not found"}
+
+      {:error, _} ->
+        {:error, "Invalid project"}
     end
   end
 

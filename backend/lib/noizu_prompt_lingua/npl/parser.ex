@@ -43,14 +43,17 @@ defmodule NoizuPromptLingua.NPL.Parser do
 
   defp parse_terms([], additions, subtractions) do
     if additions == [] do
-      {:error, "Expression must include at least one section to load. Cannot only have subtractions."}
+      {:error,
+       "Expression must include at least one section to load. Cannot only have subtractions."}
     else
-      {:ok, %Expression{additions: Enum.reverse(additions), subtractions: Enum.reverse(subtractions)}}
+      {:ok,
+       %Expression{additions: Enum.reverse(additions), subtractions: Enum.reverse(subtractions)}}
     end
   end
 
   defp parse_terms(["-" <> "" | _rest], _additions, _subtractions) do
-    {:error, "Invalid subtraction: '-' must be followed by a section reference. Example: -syntax#literal"}
+    {:error,
+     "Invalid subtraction: '-' must be followed by a section reference. Example: -syntax#literal"}
   end
 
   defp parse_terms(["-" <> sub_term | rest], additions, subtractions) do
@@ -113,8 +116,12 @@ defmodule NoizuPromptLingua.NPL.Parser do
 
   defp parse_priority("+" <> rest) do
     case Integer.parse(rest) do
-      {n, ""} when n >= 0 -> {:ok, n}
-      _ -> {:error, "Invalid priority format: '+#{rest}'. Priority must be a non-negative number. Example: syntax#placeholder:+2"}
+      {n, ""} when n >= 0 ->
+        {:ok, n}
+
+      _ ->
+        {:error,
+         "Invalid priority format: '+#{rest}'. Priority must be a non-negative number. Example: syntax#placeholder:+2"}
     end
   end
 

@@ -28,12 +28,12 @@ config :noizu_sendgrid,
 
 # GitHub API client — token passed per-call via options[:token]
 config :noizu_github, NoizuLabs.Github.Config,
-  api_key: nil,  # Placeholder; we always pass options[:token] from mapped repo tokens
+  # Placeholder; we always pass options[:token] from mapped repo tokens
+  api_key: nil,
   owner: nil,
   repo: nil
 
-config :noizu_prompt_lingua, :mail_from,
-  {"NoizuPromptLingua", "noreply@starter.local"}
+config :noizu_prompt_lingua, :mail_from, {"NoizuPromptLingua", "noreply@starter.local"}
 
 config :logger, :default_formatter,
   format: "$time $metadata[$level] $message\n",
@@ -63,8 +63,7 @@ config :junit_formatter,
 
 # Rate limiting
 config :hammer,
-  backend: {Hammer.Backend.ETS,
-    [expiry_ms: 60_000 * 60, cleanup_interval_ms: 60_000 * 10]}
+  backend: {Hammer.Backend.ETS, [expiry_ms: 60_000 * 60, cleanup_interval_ms: 60_000 * 10]}
 
 # Background jobs
 config :noizu_prompt_lingua, Oban,
@@ -108,7 +107,8 @@ config :noizu_prompt_lingua, :embeddings,
 # Weaviate via noizu_weaviate. Holds the four named text vectors per memory (BYO/vectorizer:none).
 # NOTE: noizu_weaviate reads `endpoint` at COMPILE time, so set it per-environment here (dev) /
 # prod.exs; the api key is runtime (runtime.exs).
-config :noizu_weaviate, endpoint: System.get_env("WEAVIATE_ENDPOINT", "https://weaviate.noizu.com/")
+config :noizu_weaviate,
+  endpoint: System.get_env("WEAVIATE_ENDPOINT", "https://weaviate.noizu.com/")
 
 # Weaviate is the primary vector store for memory (enabled by default). The test env may override.
 config :noizu_prompt_lingua, :memory_weaviate,

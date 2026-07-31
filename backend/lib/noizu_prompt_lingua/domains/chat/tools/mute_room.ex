@@ -2,13 +2,16 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.MuteRoom do
   use Noizu.MCP.Server.Tool,
     name: "Chat.MuteRoom",
     description: "Set mute preferences for a persona in a room (muted / mute unless mentioned).",
-    hidden: true, category: "Chat"
+    hidden: true,
+    category: "Chat"
 
   input do
     field :room_id, :string, required: true, description: "Room UUID"
     field :persona, :string, required: true, description: "Persona slug"
     field :muted, :boolean, description: "Silence all notifications from this room"
-    field :mute_unless_mentioned, :boolean, description: "Only notify when this persona is mentioned"
+
+    field :mute_unless_mentioned, :boolean,
+      description: "Only notify when this persona is mentioned"
   end
 
   alias NoizuPromptLingua.Domains.Chat
@@ -26,8 +29,16 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.MuteRoom do
 
     case Chat.mute_room(room_id, persona, settings) do
       {:ok, m} ->
-        {:ok, %{room_id: m.room_id, persona: m.persona, muted: m.muted, mute_unless_mentioned: m.mute_unless_mentioned}}
-      {:error, cs} -> {:error, "Failed: #{inspect(cs)}"}
+        {:ok,
+         %{
+           room_id: m.room_id,
+           persona: m.persona,
+           muted: m.muted,
+           mute_unless_mentioned: m.mute_unless_mentioned
+         }}
+
+      {:error, cs} ->
+        {:error, "Failed: #{inspect(cs)}"}
     end
   end
 

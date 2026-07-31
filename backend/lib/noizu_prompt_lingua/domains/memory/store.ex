@@ -21,7 +21,8 @@ defmodule NoizuPromptLingua.Domains.Memory.Store do
         }
 
   @spec remember(map(), context()) ::
-          {:ok, %{id: Ecto.UUID.t() | nil, status: atom(), confidence: String.t()}} | {:error, term()}
+          {:ok, %{id: Ecto.UUID.t() | nil, status: atom(), confidence: String.t()}}
+          | {:error, term()}
   def remember(attrs, context \\ %{}) do
     attrs = normalize_keys(attrs)
 
@@ -42,7 +43,8 @@ defmodule NoizuPromptLingua.Domains.Memory.Store do
   end
 
   @doc "Archive a memory (drops out of recall; reachable later for restore/audit)."
-  def archive(memory_id, context \\ %{}), do: set_state(memory_id, context, :archived, prune: true)
+  def archive(memory_id, context \\ %{}),
+    do: set_state(memory_id, context, :archived, prune: true)
 
   @doc "Restore an archived memory to active."
   def restore(memory_id, context \\ %{}), do: set_state(memory_id, context, :active, prune: false)
@@ -54,7 +56,9 @@ defmodule NoizuPromptLingua.Domains.Memory.Store do
       from(m in Memory, where: m.id == ^memory_id)
       |> Sentinel.scope_filter(Sentinel.scope(context))
 
-    case Repo.update_all(query, set: [state: state, pruned_at: pruned_at, updated_at: DateTime.utc_now()]) do
+    case Repo.update_all(query,
+           set: [state: state, pruned_at: pruned_at, updated_at: DateTime.utc_now()]
+         ) do
       {n, _} when n > 0 -> :ok
       _ -> {:error, :not_found}
     end
@@ -128,9 +132,13 @@ defmodule NoizuPromptLingua.Domains.Memory.Store do
     Jobs.enqueue(EmbeddingWorker, %{memory_id: memory_id})
     :ok
   rescue
-    e -> Logger.warning("[Memory.Store] could not enqueue embedding: #{inspect(e)}"); :ok
+    e ->
+      Logger.warning("[Memory.Store] could not enqueue embedding: #{inspect(e)}")
+      :ok
   catch
-    :exit, reason -> Logger.warning("[Memory.Store] embedding enqueue exit: #{inspect(reason)}"); :ok
+    :exit, reason ->
+      Logger.warning("[Memory.Store] embedding enqueue exit: #{inspect(reason)}")
+      :ok
   end
 
   defp quarantine(scope, attrs, reason) do
@@ -164,12 +172,14 @@ defmodule NoizuPromptLingua.Domains.Memory.Store do
   end
 
   defp parse_dt(%DateTime{} = dt), do: dt
+
   defp parse_dt(s) when is_binary(s) do
     case DateTime.from_iso8601(s) do
       {:ok, dt, _} -> dt
       _ -> nil
     end
   end
+
   defp parse_dt(_), do: nil
 
   defp normalize_keys(attrs) when is_map(attrs) do

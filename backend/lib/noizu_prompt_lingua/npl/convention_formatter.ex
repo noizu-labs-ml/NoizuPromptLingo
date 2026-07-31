@@ -15,14 +15,32 @@ defmodule NoizuPromptLingua.NPL.ConventionFormatter do
 
     case YamlElixir.read_from_file(yaml_path) do
       {:ok, data} ->
-        do_format(data, convention, components, rendered_components, component_priority, example_priority, flags, heading_offset)
+        do_format(
+          data,
+          convention,
+          components,
+          rendered_components,
+          component_priority,
+          example_priority,
+          flags,
+          heading_offset
+        )
 
       {:error, _} ->
         "\nFORMAT CONVENTION #{convention}\n(Error: File not found at #{yaml_path})\n"
     end
   end
 
-  defp do_format(data, _convention, component_names_list, rendered_components, component_priority, example_priority, flags, heading_offset) do
+  defp do_format(
+         data,
+         _convention,
+         component_names_list,
+         rendered_components,
+         component_priority,
+         example_priority,
+         flags,
+         heading_offset
+       ) do
     component_names = if component_names_list, do: MapSet.new(component_names_list), else: nil
 
     title = Map.get(data, "title") || Map.get(data, "name", "")
@@ -64,7 +82,16 @@ defmodule NoizuPromptLingua.NPL.ConventionFormatter do
     categories_section =
       categories
       |> Enum.map(fn cat ->
-        format_category(cat, all_components, rendering_names, known_components, example_priority, use_concise, use_xml, h)
+        format_category(
+          cat,
+          all_components,
+          rendering_names,
+          known_components,
+          example_priority,
+          use_concise,
+          use_xml,
+          h
+        )
       end)
       |> Enum.reject(&(&1 == ""))
       |> Enum.join("")
@@ -75,14 +102,24 @@ defmodule NoizuPromptLingua.NPL.ConventionFormatter do
     "\n#{title_header} #{title}\n\n#{description}\n#{purpose_section}\n\n#{categories_section}\n"
   end
 
-  defp format_category(cat, all_components, rendering_names, known_components, example_priority, use_concise, use_xml, h) do
+  defp format_category(
+         cat,
+         all_components,
+         rendering_names,
+         known_components,
+         example_priority,
+         use_concise,
+         use_xml,
+         h
+       ) do
     cat_name = Map.get(cat, "name", "")
     cat_title = Map.get(cat, "title", cat_name)
     cat_desc = String.trim(Map.get(cat, "description", ""))
 
     cat_components =
       Enum.filter(all_components, fn c ->
-        Map.get(c, "category") == cat_name and MapSet.member?(rendering_names, Map.get(c, "name", ""))
+        Map.get(c, "category") == cat_name and
+          MapSet.member?(rendering_names, Map.get(c, "name", ""))
       end)
 
     if cat_components == [] do
@@ -91,7 +128,8 @@ defmodule NoizuPromptLingua.NPL.ConventionFormatter do
       cat_header = heading(3, h)
       comp_header = heading(4, h)
 
-      cat_examples = find_minimal_example_set(cat, cat_components, example_priority, known_components)
+      cat_examples =
+        find_minimal_example_set(cat, cat_components, example_priority, known_components)
 
       components_text =
         Enum.map(cat_components, fn comp ->
@@ -177,7 +215,9 @@ defmodule NoizuPromptLingua.NPL.ConventionFormatter do
       ex_description = String.trim(Map.get(ex, "description", ""))
       ex_purpose = String.trim(Map.get(ex, "purpose", ""))
 
-      header = "#{heading(6, h)} #{ex_title}\n\n#{ex_description}\n\n```purpose\n#{ex_purpose}\n```\n\n"
+      header =
+        "#{heading(6, h)} #{ex_title}\n\n#{ex_description}\n\n```purpose\n#{ex_purpose}\n```\n\n"
+
       snippet = if ex_example != "", do: format_snippet(ex_example, use_xml) <> "\n\n", else: ""
       thread = if ex_thread != [], do: format_thread(ex_thread, use_xml) <> "\n\n", else: ""
       header <> snippet <> thread
@@ -196,7 +236,12 @@ defmodule NoizuPromptLingua.NPL.ConventionFormatter do
         ex_example = Map.get(ex, "example", "")
 
         brief_text = if ex_brief != "", do: "**#{ex_brief}**\n\n", else: ""
-        snippet = if ex_example != "" and is_binary(ex_example), do: format_snippet(String.trim(ex_example), use_xml) <> "\n\n", else: ""
+
+        snippet =
+          if ex_example != "" and is_binary(ex_example),
+            do: format_snippet(String.trim(ex_example), use_xml) <> "\n\n",
+            else: ""
+
         thread = if ex_thread != [], do: format_thread(ex_thread, use_xml) <> "\n\n", else: ""
         brief_text <> snippet <> thread
       end)
@@ -261,7 +306,13 @@ defmodule NoizuPromptLingua.NPL.ConventionFormatter do
     cat_examples = Map.get(cat, "examples", [])
 
     if cat_examples != [] do
-      find_minimal_from(cat_examples, cat_components, cat_component_names, example_priority, known_components)
+      find_minimal_from(
+        cat_examples,
+        cat_components,
+        cat_component_names,
+        example_priority,
+        known_components
+      )
     else
       all_examples =
         Enum.flat_map(cat_components, fn comp ->
@@ -276,7 +327,13 @@ defmodule NoizuPromptLingua.NPL.ConventionFormatter do
     end
   end
 
-  defp find_minimal_from(cat_examples, cat_components, cat_component_names, example_priority, known_components) do
+  defp find_minimal_from(
+         cat_examples,
+         cat_components,
+         cat_component_names,
+         example_priority,
+         known_components
+       ) do
     example_coverage =
       cat_examples
       |> Enum.filter(fn ex -> Map.get(ex, "priority", 0) <= example_priority end)
@@ -309,7 +366,8 @@ defmodule NoizuPromptLingua.NPL.ConventionFormatter do
 
   defp greedy_set_cover(example_coverage, target_names) do
     {selected, _covered} =
-      Enum.reduce_while(example_coverage, {[], MapSet.new()}, fn {ex, covered}, {acc, covered_so_far} ->
+      Enum.reduce_while(example_coverage, {[], MapSet.new()}, fn {ex, covered},
+                                                                 {acc, covered_so_far} ->
         newly_covered = MapSet.difference(covered, covered_so_far)
 
         if MapSet.size(newly_covered) > 0 do

@@ -22,17 +22,25 @@ defmodule NoizuPromptLingua.Domains.Wiki.Tools.SpaceGet do
         {:error, "Space '#{id}' not found"}
 
       space ->
-        {:ok, %{
-          id: space.id,
-          slug: space.slug,
-          name: space.name,
-          description: space.description,
-          organization_id: space.organization_id,
-          project_id: space.project_id,
-          pages: Enum.map(Wiki.list_pages(space.id), fn p ->
-            %{id: p.id, slug: p.slug, title: p.title, parent_id: p.parent_id, position: p.position}
-          end)
-        }}
+        {:ok,
+         %{
+           id: space.id,
+           slug: space.slug,
+           name: space.name,
+           description: space.description,
+           organization_id: space.organization_id,
+           project_id: space.project_id,
+           pages:
+             Enum.map(Wiki.list_pages(space.id), fn p ->
+               %{
+                 id: p.id,
+                 slug: p.slug,
+                 title: p.title,
+                 parent_id: p.parent_id,
+                 position: p.position
+               }
+             end)
+         }}
     end
   end
 end

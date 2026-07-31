@@ -9,7 +9,11 @@ defmodule NoizuPromptLingua.Domains.PubSub.Tools.FetchAll do
 
   input do
     field :organization, :string, required: true, description: "Organization slug or UUID"
-    field :persona, :string, required: true, description: "Persona / agent handle whose follows to scan"
+
+    field :persona, :string,
+      required: true,
+      description: "Persona / agent handle whose follows to scan"
+
     field :limit, :integer, default: 50, description: "Max messages to return (default 50)"
   end
 
@@ -29,7 +33,14 @@ defmodule NoizuPromptLingua.Domains.PubSub.Tools.FetchAll do
         messages =
           PubSub.fetch_all(persona, limit: Args.get(args, :limit) || 50)
           |> Enum.map(fn m ->
-            %{id: m.id, seq: m.seq, sender: m.sender, body: m.body, channel_id: m.channel_id, inserted_at: m.inserted_at}
+            %{
+              id: m.id,
+              seq: m.seq,
+              sender: m.sender,
+              body: m.body,
+              channel_id: m.channel_id,
+              inserted_at: m.inserted_at
+            }
           end)
 
         {:ok, %{persona: persona, count: length(messages), messages: messages}}

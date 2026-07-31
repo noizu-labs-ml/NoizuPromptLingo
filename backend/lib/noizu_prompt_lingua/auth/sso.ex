@@ -51,6 +51,7 @@ defmodule NoizuPromptLingua.Auth.SSO do
   defp provider_ref_id(id) when is_binary(id), do: id
 
   defp normalize_email(nil), do: nil
+
   defp normalize_email(email) when is_binary(email) do
     case email |> String.trim() |> String.downcase() do
       "" -> nil
@@ -203,7 +204,9 @@ defmodule NoizuPromptLingua.Auth.SSO do
   defp normalize_role(_), do: :user
 
   defp sso_settings(:saml, attrs), do: %{email: attrs[:email], name_id: attrs[:name_id]}
-  defp sso_settings(_provider_type, attrs), do: %{email: attrs[:email], sub: attrs[:sub] || attrs[:uid]}
+
+  defp sso_settings(_provider_type, attrs),
+    do: %{email: attrs[:email], sub: attrs[:sub] || attrs[:uid]}
 
   defp sso_fingerprint(:saml, attrs), do: "saml:#{attrs[:name_id]}"
   defp sso_fingerprint(provider_type, attrs), do: "#{provider_type}:#{attrs[:sub] || attrs[:uid]}"
@@ -216,6 +219,12 @@ defmodule NoizuPromptLingua.Auth.SSO do
 
   defp derive_handle(_email, attrs) do
     sub = sso_subject(attrs) || UUID.uuid4()
-    "user_" <> (sub |> to_string() |> String.downcase() |> String.replace(~r/[^a-z0-9_]/, "_") |> String.slice(0, 24))
+
+    "user_" <>
+      (sub
+       |> to_string()
+       |> String.downcase()
+       |> String.replace(~r/[^a-z0-9_]/, "_")
+       |> String.slice(0, 24))
   end
 end

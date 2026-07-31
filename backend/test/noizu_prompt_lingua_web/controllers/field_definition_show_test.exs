@@ -11,12 +11,21 @@ defmodule NoizuPromptLinguaWeb.FieldDefinitionShowTest do
     %{access_token: token} = setup_user_and_token()
     auth = authenticated_conn(conn, token)
 
-    created = post(auth, "/api/v1/organizations", %{organization: %{slug: "fd-org-#{System.unique_integer([:positive])}", name: "FD Org"}})
+    created =
+      post(auth, "/api/v1/organizations", %{
+        organization: %{slug: "fd-org-#{System.unique_integer([:positive])}", name: "FD Org"}
+      })
+
     org_id = json_response(created, 201)["organization"]["id"]
 
     field =
       post(auth, "/api/v1/organizations/#{org_id}/ticket-field-definitions", %{
-        field_definition: %{scope: "org", slug: "severity-#{System.unique_integer([:positive])}", label: "Severity", field_type: "text"}
+        field_definition: %{
+          scope: "org",
+          slug: "severity-#{System.unique_integer([:positive])}",
+          label: "Severity",
+          field_type: "text"
+        }
       })
       |> json_response(201)
       |> Map.fetch!("field_definition")
@@ -28,7 +37,9 @@ defmodule NoizuPromptLinguaWeb.FieldDefinitionShowTest do
 
   describe "GET /ticket-field-definitions/:id" do
     test "returns the org-owned field by id", %{conn: conn, org_id: org_id, field: f} do
-      body = conn |> get(path(org_id, f["id"])) |> json_response(200) |> Map.fetch!("field_definition")
+      body =
+        conn |> get(path(org_id, f["id"])) |> json_response(200) |> Map.fetch!("field_definition")
+
       assert body["id"] == f["id"]
       assert body["slug"] == f["slug"]
       assert body["label"] == "Severity"
@@ -36,12 +47,21 @@ defmodule NoizuPromptLinguaWeb.FieldDefinitionShowTest do
     end
 
     test "404 for a field owned by another org (no cross-org leak)", %{conn: conn, org_id: org_id} do
-      other = post(conn, "/api/v1/organizations", %{organization: %{slug: "fd-org2-#{System.unique_integer([:positive])}", name: "Other"}})
+      other =
+        post(conn, "/api/v1/organizations", %{
+          organization: %{slug: "fd-org2-#{System.unique_integer([:positive])}", name: "Other"}
+        })
+
       other_org_id = json_response(other, 201)["organization"]["id"]
 
       other_field =
         post(conn, "/api/v1/organizations/#{other_org_id}/ticket-field-definitions", %{
-          field_definition: %{scope: "org", slug: "other-#{System.unique_integer([:positive])}", label: "Other", field_type: "text"}
+          field_definition: %{
+            scope: "org",
+            slug: "other-#{System.unique_integer([:positive])}",
+            label: "Other",
+            field_type: "text"
+          }
         })
         |> json_response(201)
         |> Map.fetch!("field_definition")

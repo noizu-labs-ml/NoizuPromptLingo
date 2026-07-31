@@ -42,7 +42,10 @@ defmodule NoizuPromptLingua.Domains.Memory.Agents do
     case NoizuPromptLingua.UUID.cast(id_or_call_sign) do
       {:ok, uuid} ->
         Repo.get(AgentCallSign, uuid) ||
-          Repo.get_by(AgentCallSign, organization_id: org_id, call_sign: to_string(id_or_call_sign))
+          Repo.get_by(AgentCallSign,
+            organization_id: org_id,
+            call_sign: to_string(id_or_call_sign)
+          )
 
       :error ->
         Repo.get_by(AgentCallSign, organization_id: org_id, call_sign: normalize(id_or_call_sign))
@@ -143,7 +146,9 @@ defmodule NoizuPromptLingua.Domains.Memory.Agents do
   end
 
   defp taken?(org_id, call_sign) do
-    Repo.exists?(from a in AgentCallSign, where: a.organization_id == ^org_id and a.call_sign == ^call_sign)
+    Repo.exists?(
+      from a in AgentCallSign, where: a.organization_id == ^org_id and a.call_sign == ^call_sign
+    )
   end
 
   defp normalize(nil), do: nil

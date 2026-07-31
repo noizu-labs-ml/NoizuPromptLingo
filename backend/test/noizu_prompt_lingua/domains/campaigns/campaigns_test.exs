@@ -6,7 +6,16 @@ defmodule NoizuPromptLingua.Domains.CampaignsTest do
 
   setup do
     org_id = insert_org()
-    {:ok, campaign} = Campaigns.create_campaign(%{organization_id: org_id, slug: "launch", name: "Launch", channel: "ppc", objective: "signups"})
+
+    {:ok, campaign} =
+      Campaigns.create_campaign(%{
+        organization_id: org_id,
+        slug: "launch",
+        name: "Launch",
+        channel: "ppc",
+        objective: "signups"
+      })
+
     {:ok, org_id: org_id, campaign: campaign}
   end
 
@@ -19,16 +28,50 @@ defmodule NoizuPromptLingua.Domains.CampaignsTest do
   end
 
   test "campaign requires a valid channel", %{org_id: org_id} do
-    assert {:error, cs} = Campaigns.create_campaign(%{organization_id: org_id, slug: "x", name: "X", channel: "telepathy"})
+    assert {:error, cs} =
+             Campaigns.create_campaign(%{
+               organization_id: org_id,
+               slug: "x",
+               name: "X",
+               channel: "telepathy"
+             })
+
     assert cs.errors[:channel]
   end
 
   test "ad group slug unique per campaign; ad copy variant auto-numbering", %{campaign: campaign} do
-    {:ok, group} = Campaigns.create_ad_group(%{organization_id: campaign.organization_id, campaign_id: campaign.id, slug: "g1", name: "Group 1"})
-    assert {:error, _} = Campaigns.create_ad_group(%{organization_id: campaign.organization_id, campaign_id: campaign.id, slug: "g1", name: "Dup"})
+    {:ok, group} =
+      Campaigns.create_ad_group(%{
+        organization_id: campaign.organization_id,
+        campaign_id: campaign.id,
+        slug: "g1",
+        name: "Group 1"
+      })
 
-    {:ok, a1} = Campaigns.create_ad_copy(%{organization_id: campaign.organization_id, campaign_id: campaign.id, ad_group_id: group.id, headline: "H1"})
-    {:ok, a2} = Campaigns.create_ad_copy(%{organization_id: campaign.organization_id, campaign_id: campaign.id, ad_group_id: group.id, headline: "H2"})
+    assert {:error, _} =
+             Campaigns.create_ad_group(%{
+               organization_id: campaign.organization_id,
+               campaign_id: campaign.id,
+               slug: "g1",
+               name: "Dup"
+             })
+
+    {:ok, a1} =
+      Campaigns.create_ad_copy(%{
+        organization_id: campaign.organization_id,
+        campaign_id: campaign.id,
+        ad_group_id: group.id,
+        headline: "H1"
+      })
+
+    {:ok, a2} =
+      Campaigns.create_ad_copy(%{
+        organization_id: campaign.organization_id,
+        campaign_id: campaign.id,
+        ad_group_id: group.id,
+        headline: "H2"
+      })
+
     assert a1.variant_number == 1
     assert a2.variant_number == 2
 
@@ -37,7 +80,9 @@ defmodule NoizuPromptLingua.Domains.CampaignsTest do
   end
 
   describe "ad copy generation (offline path)" do
-    test "generate_ad_copy with llm_generate: false stores artifact + inserts N variants", %{campaign: campaign} do
+    test "generate_ad_copy with llm_generate: false stores artifact + inserts N variants", %{
+      campaign: campaign
+    } do
       assert {:ok, rows} = Campaigns.generate_ad_copy(campaign.id, count: 3, llm_generate: false)
       assert length(rows) == 3
       assert Enum.all?(rows, & &1.artifact_id)
@@ -46,14 +91,28 @@ defmodule NoizuPromptLingua.Domains.CampaignsTest do
   end
 
   test "landing page generate (offline) sets artifact_id", %{org_id: org_id} do
-    {:ok, page} = Campaigns.create_landing_page(%{organization_id: org_id, slug: "lp", title: "Landing", headline: "Hi"})
+    {:ok, page} =
+      Campaigns.create_landing_page(%{
+        organization_id: org_id,
+        slug: "lp",
+        title: "Landing",
+        headline: "Hi"
+      })
+
     assert {:ok, updated} = Campaigns.generate_landing_page(page.id, llm_generate: false)
     assert updated.artifact_id
   end
 
   test "domain name FQDN unique per org", %{org_id: org_id} do
-    {:ok, _} = Campaigns.create_domain_name(%{organization_id: org_id, slug: "d1", name: "example.com"})
-    assert {:error, _} = Campaigns.create_domain_name(%{organization_id: org_id, slug: "d2", name: "example.com"})
+    {:ok, _} =
+      Campaigns.create_domain_name(%{organization_id: org_id, slug: "d1", name: "example.com"})
+
+    assert {:error, _} =
+             Campaigns.create_domain_name(%{
+               organization_id: org_id,
+               slug: "d2",
+               name: "example.com"
+             })
   end
 
   defp insert_org do

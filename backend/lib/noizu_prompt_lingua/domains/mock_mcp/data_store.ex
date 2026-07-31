@@ -28,9 +28,12 @@ defmodule NoizuPromptLingua.Domains.MockMCP.DataStore do
 
   @doc "List tables in the mock's schema (for the portal State browser)."
   def list_tables(%{db_provisioned: true, db_name: schema} = def_) when is_binary(schema) do
-    case db_query(def_,
+    case db_query(
+           def_,
            "SELECT table_name FROM information_schema.tables " <>
-             "WHERE table_schema = $1 ORDER BY table_name", [schema]) do
+             "WHERE table_schema = $1 ORDER BY table_name",
+           [schema]
+         ) do
       {:ok, %{rows: rows}} -> {:ok, Enum.map(rows, &List.first/1)}
       other -> other
     end
@@ -60,8 +63,10 @@ defmodule NoizuPromptLingua.Domains.MockMCP.DataStore do
     case txn do
       {:ok, %Postgrex.Result{columns: cols, rows: rows, num_rows: n, command: cmd}} ->
         {:ok, %{columns: cols || [], rows: rows || [], num_rows: n, command: cmd}}
+
       {:error, %Postgrex.Error{} = e} ->
         {:error, db_error_message(e)}
+
       {:error, e} ->
         {:error, inspect(e)}
     end
@@ -91,9 +96,11 @@ defmodule NoizuPromptLingua.Domains.MockMCP.DataStore do
     prefix = ns(def_, "")
     # account for the global key_prefix Redis.prefix/1 adds on top.
     global = Redis.prefix("")
+
     case Redis.command(["KEYS", Redis.prefix(full)]) do
       {:ok, keys} ->
         {:ok, Enum.map(keys, &strip_prefix(&1, global <> prefix))}
+
       other ->
         other
     end
@@ -105,10 +112,12 @@ defmodule NoizuPromptLingua.Domains.MockMCP.DataStore do
       {:ok, keys} ->
         entries =
           Enum.map(keys, fn k ->
-            value = case redis_get(def_, k) do
-              {:ok, v} -> v
-              _ -> nil
-            end
+            value =
+              case redis_get(def_, k) do
+                {:ok, v} -> v
+                _ -> nil
+              end
+
             %{key: k, value: value}
           end)
 

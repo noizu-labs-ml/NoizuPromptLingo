@@ -17,7 +17,10 @@ defmodule NoizuPromptLinguaWeb.BoardControllerTest do
     auth_conn = authenticated_conn(conn, token)
 
     slug = "board-org-#{System.unique_integer([:positive])}"
-    created = post(auth_conn, "/api/v1/organizations", %{organization: %{slug: slug, name: "Board Org"}})
+
+    created =
+      post(auth_conn, "/api/v1/organizations", %{organization: %{slug: slug, name: "Board Org"}})
+
     org_id = json_response(created, 201)["organization"]["id"]
 
     project_id = insert_project(org_id)
@@ -26,10 +29,16 @@ defmodule NoizuPromptLinguaWeb.BoardControllerTest do
   end
 
   describe "POST board scoping (d4a8fd52)" do
-    test "explicit scope:project + project_id -> project board", %{conn: conn, base: base, project_id: pid} do
+    test "explicit scope:project + project_id -> project board", %{
+      conn: conn,
+      base: base,
+      project_id: pid
+    } do
       board =
         conn
-        |> post(base, %{board: %{name: "Proj Board", slug: uslug("pb"), scope: "project", project_id: pid}})
+        |> post(base, %{
+          board: %{name: "Proj Board", slug: uslug("pb"), scope: "project", project_id: pid}
+        })
         |> json_response(201)
         |> Map.fetch!("board")
 
@@ -37,16 +46,24 @@ defmodule NoizuPromptLinguaWeb.BoardControllerTest do
       assert board["scope"] == "project"
     end
 
-    test "project_id WITHOUT scope (MCP/curl) -> project board, NOT a silent org board", %{conn: conn, base: base, project_id: pid} do
+    test "project_id WITHOUT scope (MCP/curl) -> project board, NOT a silent org board", %{
+      conn: conn,
+      base: base,
+      project_id: pid
+    } do
       # The footgun the ticket is about: a client sends project_id but omits scope.
       # Pre-fix this dropped to an org board (project_id lost); now it's inferred.
       board =
         conn
-        |> post(base, %{board: %{name: "Inferred Proj Board", slug: uslug("ipb"), project_id: pid}})
+        |> post(base, %{
+          board: %{name: "Inferred Proj Board", slug: uslug("ipb"), project_id: pid}
+        })
         |> json_response(201)
         |> Map.fetch!("board")
 
-      assert board["project_id"] == pid, "project_id must be persisted, not silently dropped to an org board"
+      assert board["project_id"] == pid,
+             "project_id must be persisted, not silently dropped to an org board"
+
       assert board["scope"] == "project"
     end
 
@@ -61,9 +78,17 @@ defmodule NoizuPromptLinguaWeb.BoardControllerTest do
       assert board["scope"] == "org"
     end
 
-    test "project_id from ANOTHER org -> 422, not a silent org board (deny-safe)", %{conn: conn, base: base} do
+    test "project_id from ANOTHER org -> 422, not a silent org board (deny-safe)", %{
+      conn: conn,
+      base: base
+    } do
       other_slug = "board-org2-#{System.unique_integer([:positive])}"
-      other = post(conn, "/api/v1/organizations", %{organization: %{slug: other_slug, name: "Other Org"}})
+
+      other =
+        post(conn, "/api/v1/organizations", %{
+          organization: %{slug: other_slug, name: "Other Org"}
+        })
+
       other_org_id = json_response(other, 201)["organization"]["id"]
       foreign_pid = insert_project(other_org_id)
 
@@ -89,7 +114,11 @@ defmodule NoizuPromptLinguaWeb.BoardControllerTest do
       Repo.query!(
         "INSERT INTO projects (id, organization_id, slug, name, inserted_at, updated_at) " <>
           "VALUES (gen_random_uuid(), $1, $2, $3, now(), now()) RETURNING id",
-        [Ecto.UUID.dump!(org_id), "boardproj-#{System.unique_integer([:positive])}", "Board Test Project"]
+        [
+          Ecto.UUID.dump!(org_id),
+          "boardproj-#{System.unique_integer([:positive])}",
+          "Board Test Project"
+        ]
       )
 
     Ecto.UUID.load!(raw)

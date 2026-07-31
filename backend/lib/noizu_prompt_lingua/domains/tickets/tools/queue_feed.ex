@@ -14,10 +14,12 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.QueueFeed do
   @impl true
   def call(args, _ctx) do
     slug = args[:slug] || args["slug"]
-    {:ok, %{
-      queue: slug,
-      events: [],
-      hint: "Activity feed not yet implemented."
-    }}
+
+    {:ok,
+     %{
+       queue: slug,
+       events: [],
+       hint: "Activity feed not yet implemented."
+     }}
   end
 end

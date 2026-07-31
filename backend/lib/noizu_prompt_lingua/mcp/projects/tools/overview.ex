@@ -18,12 +18,13 @@ defmodule NoizuPromptLingua.MCP.Projects.Tools.Overview do
         :count
       )
 
-    {:ok, %{
-      domain: "Projects",
-      active_projects: active,
-      tools: %{
-        crud: ["Project.List", "Project.Get", "Project.Create", "Project.Update"]
-      }
-    }}
+    {:ok,
+     %{
+       domain: "Projects",
+       active_projects: active,
+       tools: %{
+         crud: ["Project.List", "Project.Get", "Project.Create", "Project.Update"]
+       }
+     }}
   end
 end

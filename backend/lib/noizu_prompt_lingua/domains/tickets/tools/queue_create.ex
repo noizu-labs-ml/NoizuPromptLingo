@@ -11,9 +11,15 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.QueueCreate do
   input do
     field :name, :string, required: true, description: "Board name"
     field :slug, :string, required: true, description: "Slug, unique within the chosen scope"
-    field :methodology, :string, description: "kanban | scrum | waterfall | spiral (default kanban)"
+
+    field :methodology, :string,
+      description: "kanban | scrum | waterfall | spiral (default kanban)"
+
     field :description, :string, description: "Board description"
-    field :organization, :string, description: "Organization slug or UUID. Omit for a global board."
+
+    field :organization, :string,
+      description: "Organization slug or UUID. Omit for a global board."
+
     field :project, :string, description: "Project slug or UUID. Requires organization."
   end
 
@@ -35,16 +41,28 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.QueueCreate do
 
         case Queues.create(attrs) do
           {:ok, board} ->
-            {:ok, %{id: board.id, name: board.name, slug: board.slug, methodology: board.methodology,
-                    stages: Enum.map(board.stages, &%{slug: &1.slug, name: &1.name, position: &1.position})}}
+            {:ok,
+             %{
+               id: board.id,
+               name: board.name,
+               slug: board.slug,
+               methodology: board.methodology,
+               stages:
+                 Enum.map(board.stages, &%{slug: &1.slug, name: &1.name, position: &1.position})
+             }}
 
           {:error, changeset} ->
             {:error, "Failed: #{inspect(changeset.errors)}"}
         end
 
-      {:error, :org_not_found} -> {:error, "Organization not found"}
-      {:error, :project_not_found} -> {:error, "Project not found"}
-      {:error, :project_not_in_org} -> {:error, "Project does not belong to this organization"}
+      {:error, :org_not_found} ->
+        {:error, "Organization not found"}
+
+      {:error, :project_not_found} ->
+        {:error, "Project not found"}
+
+      {:error, :project_not_in_org} ->
+        {:error, "Project does not belong to this organization"}
     end
   end
 end

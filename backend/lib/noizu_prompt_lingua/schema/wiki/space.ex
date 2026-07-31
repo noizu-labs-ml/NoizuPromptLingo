@@ -21,7 +21,9 @@ defmodule NoizuPromptLingua.Schema.Wiki.Space do
     space
     |> cast(attrs, [:organization_id, :project_id, :slug, :name, :description])
     |> validate_required([:organization_id, :slug, :name])
-    |> validate_format(:slug, ~r/^[a-z0-9-]+$/, message: "must be lowercase letters, numbers, and hyphens")
+    |> validate_format(:slug, ~r/^[a-z0-9-]+$/,
+      message: "must be lowercase letters, numbers, and hyphens"
+    )
     |> unique_constraint([:organization_id, :slug], name: :idx_wiki_spaces_org_slug)
     |> foreign_key_constraint(:organization_id)
     |> foreign_key_constraint(:project_id)

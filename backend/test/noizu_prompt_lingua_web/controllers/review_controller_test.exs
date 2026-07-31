@@ -15,11 +15,20 @@ defmodule NoizuPromptLinguaWeb.ReviewControllerTest do
     auth = authenticated_conn(conn, token)
 
     slug = "rev-org-#{System.unique_integer([:positive])}"
-    created = post(auth, "/api/v1/organizations", %{organization: %{slug: slug, name: "Review Org"}})
+
+    created =
+      post(auth, "/api/v1/organizations", %{organization: %{slug: slug, name: "Review Org"}})
+
     org_id = json_response(created, 201)["organization"]["id"]
 
     {:ok, artifact} =
-      Artifacts.create(%{organization_id: org_id, kind: "document", title: "Doc", mime_type: "text/markdown", content: "body"})
+      Artifacts.create(%{
+        organization_id: org_id,
+        kind: "document",
+        title: "Doc",
+        mime_type: "text/markdown",
+        content: "body"
+      })
 
     rev = List.first(artifact.revisions)
 
@@ -38,10 +47,21 @@ defmodule NoizuPromptLinguaWeb.ReviewControllerTest do
   defp path(org_id, id), do: "/api/v1/organizations/#{org_id}/reviews/#{id}"
 
   describe "PUT /reviews/:id" do
-    test "updates mutable metadata and transitions open -> in_progress", %{conn: conn, org_id: org_id, review: r} do
+    test "updates mutable metadata and transitions open -> in_progress", %{
+      conn: conn,
+      org_id: org_id,
+      review: r
+    } do
       body =
         conn
-        |> put(path(org_id, r.id), %{review: %{title: "Renamed", summary: "looks good", verdict: "approved", status: "in_progress"}})
+        |> put(path(org_id, r.id), %{
+          review: %{
+            title: "Renamed",
+            summary: "looks good",
+            verdict: "approved",
+            status: "in_progress"
+          }
+        })
         |> json_response(200)
         |> Map.fetch!("review")
 
@@ -51,10 +71,21 @@ defmodule NoizuPromptLinguaWeb.ReviewControllerTest do
       assert body["status"] == "in_progress"
     end
 
-    test "identity/lineage is immutable — artifact_id/revision_id/org are ignored", %{conn: conn, org_id: org_id, review: r} do
+    test "identity/lineage is immutable — artifact_id/revision_id/org are ignored", %{
+      conn: conn,
+      org_id: org_id,
+      review: r
+    } do
       body =
         conn
-        |> put(path(org_id, r.id), %{review: %{title: "X", artifact_id: Ecto.UUID.generate(), revision_id: Ecto.UUID.generate(), organization_id: Ecto.UUID.generate()}})
+        |> put(path(org_id, r.id), %{
+          review: %{
+            title: "X",
+            artifact_id: Ecto.UUID.generate(),
+            revision_id: Ecto.UUID.generate(),
+            organization_id: Ecto.UUID.generate()
+          }
+        })
         |> json_response(200)
         |> Map.fetch!("review")
 
@@ -64,8 +95,15 @@ defmodule NoizuPromptLinguaWeb.ReviewControllerTest do
       assert body["organization_id"] == r.organization_id
     end
 
-    test "completing via update is rejected (422) — must use the /complete endpoint", %{conn: conn, org_id: org_id, review: r} do
-      assert conn |> put(path(org_id, r.id), %{review: %{status: "completed"}}) |> json_response(422)
+    test "completing via update is rejected (422) — must use the /complete endpoint", %{
+      conn: conn,
+      org_id: org_id,
+      review: r
+    } do
+      assert conn
+             |> put(path(org_id, r.id), %{review: %{status: "completed"}})
+             |> json_response(422)
+
       {reloaded, _, _} = Reviews.get(r.id)
       assert reloaded.status != "completed"
     end
@@ -80,19 +118,41 @@ defmodule NoizuPromptLinguaWeb.ReviewControllerTest do
     end
 
     test "404 for a review in another org (no cross-org IDOR)", %{conn: conn, org_id: org_id} do
-      other = post(conn, "/api/v1/organizations", %{organization: %{slug: "rev-org2-#{System.unique_integer([:positive])}", name: "Other"}})
+      other =
+        post(conn, "/api/v1/organizations", %{
+          organization: %{slug: "rev-org2-#{System.unique_integer([:positive])}", name: "Other"}
+        })
+
       other_org_id = json_response(other, 201)["organization"]["id"]
 
-      {:ok, a2} = Artifacts.create(%{organization_id: other_org_id, kind: "document", title: "D2", mime_type: "text/markdown", content: "b"})
+      {:ok, a2} =
+        Artifacts.create(%{
+          organization_id: other_org_id,
+          kind: "document",
+          title: "D2",
+          mime_type: "text/markdown",
+          content: "b"
+        })
+
       rev2 = List.first(a2.revisions)
-      {:ok, r2} = Reviews.create(%{organization_id: other_org_id, artifact_id: a2.id, revision_id: rev2.id, reviewer_persona: "x", title: "T"})
+
+      {:ok, r2} =
+        Reviews.create(%{
+          organization_id: other_org_id,
+          artifact_id: a2.id,
+          revision_id: rev2.id,
+          reviewer_persona: "x",
+          title: "T"
+        })
 
       # requested under org_id's path but the review belongs to other_org_id -> 404
       assert conn |> put(path(org_id, r2.id), %{review: %{title: "z"}}) |> json_response(404)
     end
 
     test "404 when the review does not exist", %{conn: conn, org_id: org_id} do
-      assert conn |> put(path(org_id, Ecto.UUID.generate()), %{review: %{title: "z"}}) |> json_response(404)
+      assert conn
+             |> put(path(org_id, Ecto.UUID.generate()), %{review: %{title: "z"}})
+             |> json_response(404)
     end
   end
 end

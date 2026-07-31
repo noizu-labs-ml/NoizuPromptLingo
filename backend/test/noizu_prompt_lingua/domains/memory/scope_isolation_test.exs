@@ -10,7 +10,10 @@ defmodule NoizuPromptLingua.Domains.Memory.ScopeIsolationTest do
     bob = persona_scope(org, insert_persona(org, "bob"))
 
     {:ok, %{id: aid}} =
-      Memory.remember(%{content: "ada's private rust note", valence: 0.0, arousal: 0.5, dominance: 0.5}, ada)
+      Memory.remember(
+        %{content: "ada's private rust note", valence: 0.0, arousal: 0.5, dominance: 0.5},
+        ada
+      )
 
     # Confirm ada CAN see her own (wait for Weaviate), then assert bob cannot.
     assert eventually(fn ->
@@ -31,7 +34,10 @@ defmodule NoizuPromptLingua.Domains.Memory.ScopeIsolationTest do
     weego = weego_scope(org)
 
     {:ok, %{id: tid}} =
-      Memory.remember(%{content: "nimbus cluster deploy log", valence: 0.2, arousal: 0.5, dominance: 0.6}, tm)
+      Memory.remember(
+        %{content: "nimbus cluster deploy log", valence: 0.2, arousal: 0.5, dominance: 0.6},
+        tm
+      )
 
     # weego (org-wide read) surfaces the team member's memory
     assert eventually(fn ->

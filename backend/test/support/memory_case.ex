@@ -56,18 +56,41 @@ defmodule NoizuPromptLingua.MemoryCase do
 
   @doc "A context map for a persona scope."
   def persona_scope(org_id, persona_id),
-    do: %{organization_id: org_id, scope_type: :persona, scope_id: persona_id, requester_id: persona_id, source_agent: "test"}
+    do: %{
+      organization_id: org_id,
+      scope_type: :persona,
+      scope_id: persona_id,
+      requester_id: persona_id,
+      source_agent: "test"
+    }
 
   @doc "Register a team_member call sign and return its scope context."
   def team_member_scope(org_id, call_sign \\ nil) do
-    {:ok, cs} = NoizuPromptLingua.Domains.Memory.Agents.register(org_id, :team_member, call_sign: call_sign)
-    %{organization_id: org_id, scope_type: :team_member, scope_id: cs.id, requester_id: cs.id, source_agent: "test", call_sign: cs.call_sign}
+    {:ok, cs} =
+      NoizuPromptLingua.Domains.Memory.Agents.register(org_id, :team_member, call_sign: call_sign)
+
+    %{
+      organization_id: org_id,
+      scope_type: :team_member,
+      scope_id: cs.id,
+      requester_id: cs.id,
+      source_agent: "test",
+      call_sign: cs.call_sign
+    }
   end
 
   @doc "Register a weego call sign and return its scope context."
   def weego_scope(org_id, call_sign \\ "weego") do
-    {:ok, cs} = NoizuPromptLingua.Domains.Memory.Agents.register(org_id, :weego, call_sign: call_sign)
-    %{organization_id: org_id, scope_type: :weego, scope_id: cs.id, requester_id: cs.id, source_agent: "test"}
+    {:ok, cs} =
+      NoizuPromptLingua.Domains.Memory.Agents.register(org_id, :weego, call_sign: call_sign)
+
+    %{
+      organization_id: org_id,
+      scope_type: :weego,
+      scope_id: cs.id,
+      requester_id: cs.id,
+      source_agent: "test"
+    }
   end
 
   @doc "Retry `fun` until it returns a truthy, non-empty value (Weaviate is eventually consistent)."

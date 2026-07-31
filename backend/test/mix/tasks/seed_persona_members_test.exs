@@ -80,7 +80,11 @@ defmodule Mix.Tasks.Npl.SeedPersonaMembersTest do
       Repo.query!(
         "INSERT INTO projects (id, organization_id, slug, name, inserted_at, updated_at) " <>
           "VALUES (gen_random_uuid(), $1::uuid, $2, $3, now(), now()) RETURNING id",
-        [Ecto.UUID.dump!(org_id), "seedproj-#{System.unique_integer([:positive])}", "Seed Project"]
+        [
+          Ecto.UUID.dump!(org_id),
+          "seedproj-#{System.unique_integer([:positive])}",
+          "Seed Project"
+        ]
       )
 
     Ecto.UUID.load!(raw)

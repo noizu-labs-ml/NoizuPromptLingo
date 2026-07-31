@@ -1,6 +1,9 @@
 defmodule NoizuPromptLingua.Domains.Chat.Tools.SendMessage do
   use Noizu.MCP.Server.Tool,
-    name: "Chat.SendMessage", description: "Post a message to a chat room.", hidden: true, category: "Chat"
+    name: "Chat.SendMessage",
+    description: "Post a message to a chat room.",
+    hidden: true,
+    category: "Chat"
 
   input do
     field :room_id, :string, required: true, description: "Room UUID"

@@ -2,7 +2,8 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.AttachWiki do
   use Noizu.MCP.Server.Tool,
     name: "Chat.AttachWiki",
     description: "Attach a wiki space/page or URL reference to a chat room.",
-    hidden: true, category: "Chat"
+    hidden: true,
+    category: "Chat"
 
   input do
     field :room_id, :string, required: true, description: "Room UUID"
@@ -36,8 +37,16 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.AttachWiki do
 
         case Attach.add("chat_room", room_id, attrs) do
           {:ok, att} ->
-            {:ok, %{attachment_id: att.id, room_id: room_id, artifact_type: att.artifact_type, url: att.url}}
-          {:error, cs} -> {:error, "Failed: #{inspect(cs.errors)}"}
+            {:ok,
+             %{
+               attachment_id: att.id,
+               room_id: room_id,
+               artifact_type: att.artifact_type,
+               url: att.url
+             }}
+
+          {:error, cs} ->
+            {:error, "Failed: #{inspect(cs.errors)}"}
         end
     end
   end

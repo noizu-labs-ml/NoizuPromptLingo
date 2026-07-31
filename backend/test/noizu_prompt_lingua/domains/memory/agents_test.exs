@@ -8,7 +8,9 @@ defmodule NoizuPromptLingua.Domains.Memory.AgentsTest do
     assert cs.call_sign == "viper"
     assert cs.kind == :team_member
 
-    assert {:ok, %{scope_type: :team_member, scope_id: id}} = Agents.resolve_scope(org, :team_member, "viper")
+    assert {:ok, %{scope_type: :team_member, scope_id: id}} =
+             Agents.resolve_scope(org, :team_member, "viper")
+
     assert id == cs.id
     assert Agents.resolve(org, cs.id).call_sign == "viper"
   end
@@ -37,6 +39,8 @@ defmodule NoizuPromptLingua.Domains.Memory.AgentsTest do
   test "persona scope resolves through the personas domain" do
     org = insert_org()
     pid = insert_persona(org, "ada")
-    assert {:ok, %{scope_type: :persona, scope_id: ^pid}} = Agents.resolve_scope(org, :persona, "ada")
+
+    assert {:ok, %{scope_type: :persona, scope_id: ^pid}} =
+             Agents.resolve_scope(org, :persona, "ada")
   end
 end

@@ -12,9 +12,24 @@ defmodule NoizuPromptLingua.Domains.TicketsListFilterTest do
   setup do
     org_id = insert_org()
 
-    {:ok, a} = Tickets.create(%{organization_id: org_id, title: "A", ticket_type: "bug", status: "open"})
-    {:ok, b} = Tickets.create(%{organization_id: org_id, title: "B", ticket_type: "bug", status: "in_progress"})
-    {:ok, c} = Tickets.create(%{organization_id: org_id, title: "C", ticket_type: "task", status: "closed"})
+    {:ok, a} =
+      Tickets.create(%{organization_id: org_id, title: "A", ticket_type: "bug", status: "open"})
+
+    {:ok, b} =
+      Tickets.create(%{
+        organization_id: org_id,
+        title: "B",
+        ticket_type: "bug",
+        status: "in_progress"
+      })
+
+    {:ok, c} =
+      Tickets.create(%{
+        organization_id: org_id,
+        title: "C",
+        ticket_type: "task",
+        status: "closed"
+      })
 
     {:ok, org_id: org_id, a: a, b: b, c: c}
   end
@@ -39,7 +54,10 @@ defmodule NoizuPromptLingua.Domains.TicketsListFilterTest do
 
   test "multiple array facets AND across facets, OR within each", %{org_id: org, c: c} do
     # status in (open, closed) AND ticket_type in (task) -> only C
-    got = Tickets.list(organization_id: org, status: ["open", "closed"], ticket_type: ["task"]) |> ids()
+    got =
+      Tickets.list(organization_id: org, status: ["open", "closed"], ticket_type: ["task"])
+      |> ids()
+
     assert got == MapSet.new([c.id])
   end
 

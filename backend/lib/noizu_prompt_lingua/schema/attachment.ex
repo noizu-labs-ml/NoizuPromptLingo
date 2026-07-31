@@ -21,7 +21,15 @@ defmodule NoizuPromptLingua.Schema.Attachment do
 
   def changeset(attachment, attrs) do
     attachment
-    |> cast(attrs, [:entity_type, :entity_id, :artifact_type, :url, :git_branch, :description, :created_by])
+    |> cast(attrs, [
+      :entity_type,
+      :entity_id,
+      :artifact_type,
+      :url,
+      :git_branch,
+      :description,
+      :created_by
+    ])
     |> validate_required([:entity_type, :entity_id, :artifact_type])
     |> validate_inclusion(:artifact_type, @artifact_types)
   end

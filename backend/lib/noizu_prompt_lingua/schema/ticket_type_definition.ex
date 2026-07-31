@@ -30,7 +30,17 @@ defmodule NoizuPromptLingua.Schema.TicketTypeDefinition do
 
   def changeset(type_def, attrs) do
     type_def
-    |> cast(attrs, [:organization_id, :project_id, :slug, :name, :description, :icon, :status_workflow, :disabled, :deleted_at])
+    |> cast(attrs, [
+      :organization_id,
+      :project_id,
+      :slug,
+      :name,
+      :description,
+      :icon,
+      :status_workflow,
+      :disabled,
+      :deleted_at
+    ])
     |> validate_required([:slug, :name])
     |> validate_scope()
     |> foreign_key_constraint(:organization_id)

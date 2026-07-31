@@ -224,7 +224,10 @@ defmodule NoizuPromptLingua.Domains.Markdown do
 
       [header | body] ->
         sep = Enum.map(header, fn _ -> "---" end)
-        [header, sep | body] |> Enum.map(&("| " <> Enum.join(&1, " | ") <> " |")) |> Enum.join("\n")
+
+        [header, sep | body]
+        |> Enum.map(&("| " <> Enum.join(&1, " | ") <> " |"))
+        |> Enum.join("\n")
     end
   end
 
@@ -330,7 +333,7 @@ defmodule NoizuPromptLingua.Domains.Markdown do
 
     cond do
       Regex.match?(~r/^h[1-6]$/i, filter) ->
-        section.level == (filter |> String.trim_leading("hH") |> String.to_integer())
+        section.level == filter |> String.trim_leading("hH") |> String.to_integer()
 
       String.contains?(filter, ">") ->
         target = filter |> String.split(">") |> List.last() |> String.trim()
@@ -399,5 +402,5 @@ defmodule NoizuPromptLingua.Domains.Markdown do
 
   defp to_int(nil), do: nil
   defp to_int(n) when is_integer(n), do: n
-  defp to_int(s) when is_binary(s), do: (Integer.parse(s) |> elem(0))
+  defp to_int(s) when is_binary(s), do: Integer.parse(s) |> elem(0)
 end

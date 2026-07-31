@@ -4,7 +4,10 @@ defmodule NoizuPromptLingua.Organizations.Organization do
   @vsn 1.0
   @repo NoizuPromptLingua.Organizations
   @sref "organization"
-  @persistence ecto_store(NoizuPromptLingua.Schema.Organizations.Organization, NoizuPromptLingua.Repo)
+  @persistence ecto_store(
+                 NoizuPromptLingua.Schema.Organizations.Organization,
+                 NoizuPromptLingua.Repo
+               )
   @derive Noizu.Entity.Store.Ecto.EntityProtocol
   def_entity do
     id(:uuid)

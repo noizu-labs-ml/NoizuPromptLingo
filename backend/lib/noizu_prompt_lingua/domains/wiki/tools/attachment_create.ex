@@ -35,7 +35,13 @@ defmodule NoizuPromptLingua.Domains.Wiki.Tools.AttachmentCreate do
 
         case Wiki.create_attachment(attrs) do
           {:ok, attachment} ->
-            {:ok, %{id: attachment.id, filename: attachment.filename, url: attachment.url, mime_type: attachment.mime_type}}
+            {:ok,
+             %{
+               id: attachment.id,
+               filename: attachment.filename,
+               url: attachment.url,
+               mime_type: attachment.mime_type
+             }}
 
           {:error, changeset} ->
             {:error, "Failed: #{inspect(changeset.errors)}"}

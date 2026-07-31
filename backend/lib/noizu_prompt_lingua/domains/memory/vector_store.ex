@@ -28,7 +28,9 @@ defmodule NoizuPromptLingua.Domains.Memory.VectorStore do
   def configured?, do: enabled?()
 
   defp base, do: Noizu.Weaviate.api_base()
-  defp call(method, path, body), do: Noizu.Weaviate.api_call(method, base() <> path, body, :json, %{})
+
+  defp call(method, path, body),
+    do: Noizu.Weaviate.api_call(method, base() <> path, body, :json, %{})
 
   @doc "Create the class with five named BYO vectors if absent. Idempotent."
   def ensure_class do
@@ -43,7 +45,10 @@ defmodule NoizuPromptLingua.Domains.Memory.VectorStore do
   end
 
   defp create_class do
-    vector_config = Map.new(@named_vectors, fn n -> {n, %{vectorizer: %{none: %{}}, vectorIndexType: "hnsw"}} end)
+    vector_config =
+      Map.new(@named_vectors, fn n ->
+        {n, %{vectorizer: %{none: %{}}, vectorIndexType: "hnsw"}}
+      end)
 
     body = %{
       class: class(),

@@ -36,7 +36,13 @@ defmodule NoizuPromptLingua.MCP.ToolGuardTest do
 
   defp mk_org(owner_id) do
     uniq = System.unique_integer([:positive])
-    {:ok, org} = NoizuPromptLingua.Organizations.create_organization_with_owner(%{slug: "guard-org-#{uniq}", name: "Guard Org"}, owner_id)
+
+    {:ok, org} =
+      NoizuPromptLingua.Organizations.create_organization_with_owner(
+        %{slug: "guard-org-#{uniq}", name: "Guard Org"},
+        owner_id
+      )
+
     org
   end
 
@@ -52,13 +58,25 @@ defmodule NoizuPromptLingua.MCP.ToolGuardTest do
     test "system principal is exempt even with no identity" do
       enforce()
       sys_ctx = %{assigns: %{system_principal: true}}
-      assert ToolGuard.before_call(spec(%{required_role: :owner, resource: :organization}), %{}, sys_ctx) == :ok
+
+      assert ToolGuard.before_call(
+               spec(%{required_role: :owner, resource: :organization}),
+               %{},
+               sys_ctx
+             ) == :ok
     end
 
     test "resource :global allows any authenticated caller, denies anonymous (enforce)" do
       enforce()
-      assert ToolGuard.before_call(spec(%{required_role: :member, resource: :global}), %{}, ctx("someone")) == :ok
-      assert {:error, %{reason: :no_identity}} = ToolGuard.before_call(spec(%{resource: :global}), %{}, %{assigns: %{}})
+
+      assert ToolGuard.before_call(
+               spec(%{required_role: :member, resource: :global}),
+               %{},
+               ctx("someone")
+             ) == :ok
+
+      assert {:error, %{reason: :no_identity}} =
+               ToolGuard.before_call(spec(%{resource: :global}), %{}, %{assigns: %{}})
     end
   end
 
@@ -67,10 +85,14 @@ defmodule NoizuPromptLingua.MCP.ToolGuardTest do
       s = spec(%{required_role: :member, resource: :organization})
 
       enforce()
-      assert {:error, %{reason: :no_identity}} = ToolGuard.before_call(s, %{organization: Ecto.UUID.generate()}, %{assigns: %{}})
+
+      assert {:error, %{reason: :no_identity}} =
+               ToolGuard.before_call(s, %{organization: Ecto.UUID.generate()}, %{assigns: %{}})
 
       shadow()
-      assert ToolGuard.before_call(s, %{organization: Ecto.UUID.generate()}, %{assigns: %{}}) == :ok
+
+      assert ToolGuard.before_call(s, %{organization: Ecto.UUID.generate()}, %{assigns: %{}}) ==
+               :ok
     end
   end
 
@@ -91,7 +113,9 @@ defmodule NoizuPromptLingua.MCP.ToolGuardTest do
       enforce()
       stranger = mk_user()
       s = spec(%{required_role: :member, resource: :organization})
-      assert {:error, %{reason: :not_a_member}} = ToolGuard.before_call(s, %{organization: org.id}, ctx(stranger.id))
+
+      assert {:error, %{reason: :not_a_member}} =
+               ToolGuard.before_call(s, %{organization: org.id}, ctx(stranger.id))
     end
 
     test "member acting where owner is required -> deny :insufficient_role", %{org: org} do
@@ -99,33 +123,45 @@ defmodule NoizuPromptLingua.MCP.ToolGuardTest do
       member = mk_user()
       {:ok, _} = ScopedMemberships.add_member("organization", org.id, member.id, "member")
       s = spec(%{required_role: :owner, resource: :organization})
-      assert {:error, %{reason: :insufficient_role}} = ToolGuard.before_call(s, %{organization: org.id}, ctx(member.id))
+
+      assert {:error, %{reason: :insufficient_role}} =
+               ToolGuard.before_call(s, %{organization: org.id}, ctx(member.id))
     end
 
-    test "missing required_role defaults to the owner bar (deny-closed) -> member denied", %{org: org} do
+    test "missing required_role defaults to the owner bar (deny-closed) -> member denied", %{
+      org: org
+    } do
       enforce()
       member = mk_user()
       {:ok, _} = ScopedMemberships.add_member("organization", org.id, member.id, "member")
       # no required_role in the blob -> defaults to "owner"; a member is below that.
       s = spec(%{resource: :organization})
-      assert {:error, %{reason: :insufficient_role}} = ToolGuard.before_call(s, %{organization: org.id}, ctx(member.id))
+
+      assert {:error, %{reason: :insufficient_role}} =
+               ToolGuard.before_call(s, %{organization: org.id}, ctx(member.id))
     end
 
-    test "resource :project with NO project arg falls back to org-scope (R-a (b))", %{owner: owner, org: org} do
+    test "resource :project with NO project arg falls back to org-scope (R-a (b))", %{
+      owner: owner,
+      org: org
+    } do
       enforce()
       s = spec(%{required_role: :member, resource: :project})
       # no project arg -> authorize at org; owner of the org passes
       assert ToolGuard.before_call(s, %{organization: org.id}, ctx(owner.id)) == :ok
       # and a non-member is still denied at org scope (fallback is deny-closed, not allow-all)
       stranger = mk_user()
-      assert {:error, %{reason: :not_a_member}} = ToolGuard.before_call(s, %{organization: org.id}, ctx(stranger.id))
+
+      assert {:error, %{reason: :not_a_member}} =
+               ToolGuard.before_call(s, %{organization: org.id}, ctx(stranger.id))
     end
 
     test "unresolvable resource -> deny", %{owner: owner} do
       enforce()
       s = spec(%{required_role: :member, resource: :organization})
       # no org arg at all
-      assert {:error, %{reason: :resource_unresolved}} = ToolGuard.before_call(s, %{}, ctx(owner.id))
+      assert {:error, %{reason: :resource_unresolved}} =
+               ToolGuard.before_call(s, %{}, ctx(owner.id))
     end
 
     test "shadow mode logs but never blocks a would-deny", %{org: org} do

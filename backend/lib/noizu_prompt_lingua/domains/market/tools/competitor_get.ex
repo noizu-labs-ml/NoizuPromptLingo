@@ -7,7 +7,9 @@ defmodule NoizuPromptLingua.Domains.Market.Tools.CompetitorGet do
     category: "Market.Competitors"
 
   input do
-    field :organization, :string, description: "Organization slug or UUID (required for slug lookup)"
+    field :organization, :string,
+      description: "Organization slug or UUID (required for slug lookup)"
+
     field :id, :string, required: true, description: "Competitor UUID or slug"
   end
 
@@ -20,8 +22,25 @@ defmodule NoizuPromptLingua.Domains.Market.Tools.CompetitorGet do
     org_id = Resolve.organization_id(Args.get(args, :organization))
 
     case Market.resolve_competitor(org_id, id) do
-      nil -> {:error, "Competitor '#{id}' not found"}
-      c -> {:ok, %{id: c.id, slug: c.slug, name: c.name, website: c.website, description: c.description, tier: c.tier, strengths: c.strengths, weaknesses: c.weaknesses, tags: c.tags, status: c.status, organization_id: c.organization_id, project_id: c.project_id}}
+      nil ->
+        {:error, "Competitor '#{id}' not found"}
+
+      c ->
+        {:ok,
+         %{
+           id: c.id,
+           slug: c.slug,
+           name: c.name,
+           website: c.website,
+           description: c.description,
+           tier: c.tier,
+           strengths: c.strengths,
+           weaknesses: c.weaknesses,
+           tags: c.tags,
+           status: c.status,
+           organization_id: c.organization_id,
+           project_id: c.project_id
+         }}
     end
   end
 end

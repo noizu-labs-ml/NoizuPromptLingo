@@ -1,7 +1,8 @@
 defmodule NoizuPromptLingua.Domains.Market.Tools.ReportList do
   use Noizu.MCP.Server.Tool,
     name: "MarketReport.List",
-    description: "List market reports for an organization, optionally filtered by project, report_type, status, or tag.",
+    description:
+      "List market reports for an organization, optionally filtered by project, report_type, status, or tag.",
     annotations: [read_only_hint: true],
     hidden: true,
     category: "Market.Reports"
@@ -37,7 +38,21 @@ defmodule NoizuPromptLingua.Domains.Market.Tools.ReportList do
             limit: Args.get(args, :limit) || 100
           )
 
-        {:ok, %{count: length(reports), reports: Enum.map(reports, &%{id: &1.id, slug: &1.slug, title: &1.title, report_type: &1.report_type, status: &1.status})}}
+        {:ok,
+         %{
+           count: length(reports),
+           reports:
+             Enum.map(
+               reports,
+               &%{
+                 id: &1.id,
+                 slug: &1.slug,
+                 title: &1.title,
+                 report_type: &1.report_type,
+                 status: &1.status
+               }
+             )
+         }}
     end
   end
 end

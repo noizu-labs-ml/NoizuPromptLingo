@@ -23,13 +23,21 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.TicketComment do
     case action do
       "list" ->
         comments = Comment.list("ticket", ticket_id)
-        {:ok, %{
-          ticket_id: ticket_id,
-          comments: Enum.map(comments, fn c ->
-            %{id: c.id, content: c.content, author: c.author,
-              reply_to_id: c.reply_to_id, created_at: c.inserted_at}
-          end)
-        }}
+
+        {:ok,
+         %{
+           ticket_id: ticket_id,
+           comments:
+             Enum.map(comments, fn c ->
+               %{
+                 id: c.id,
+                 content: c.content,
+                 author: c.author,
+                 reply_to_id: c.reply_to_id,
+                 created_at: c.inserted_at
+               }
+             end)
+         }}
 
       _ ->
         attrs = %{
@@ -41,6 +49,7 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.TicketComment do
         case Comment.add("ticket", ticket_id, attrs) do
           {:ok, comment} ->
             {:ok, %{id: comment.id, ticket_id: ticket_id, content: comment.content}}
+
           {:error, changeset} ->
             {:error, "Failed: #{inspect(changeset.errors)}"}
         end

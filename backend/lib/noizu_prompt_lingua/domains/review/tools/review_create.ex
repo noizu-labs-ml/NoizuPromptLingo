@@ -1,9 +1,15 @@
 defmodule NoizuPromptLingua.Domains.Review.Tools.ReviewCreate do
   use Noizu.MCP.Server.Tool,
-    name: "Review.Create", description: "Start a review for an artifact revision.", hidden: true, category: "Review"
+    name: "Review.Create",
+    description: "Start a review for an artifact revision.",
+    hidden: true,
+    category: "Review"
 
   input do
-    field :organization, :string, required: true, description: "Organization slug or UUID (required)"
+    field :organization, :string,
+      required: true,
+      description: "Organization slug or UUID (required)"
+
     field :artifact_id, :string, required: true, description: "Artifact UUID"
     field :revision_id, :string, required: true, description: "Revision UUID"
     field :reviewer_persona, :string, required: true, description: "Reviewer persona slug"
@@ -33,15 +39,36 @@ defmodule NoizuPromptLingua.Domains.Review.Tools.ReviewCreate do
       }
 
       case Reviews.create(attrs) do
-        {:ok, review} -> {:ok, %{id: review.id, artifact_id: review.artifact_id, revision_id: review.revision_id, organization_id: review.organization_id, project_id: review.project_id, status: review.status, created_at: review.inserted_at}}
-        {:error, cs} -> {:error, "Failed: #{inspect(cs.errors)}"}
+        {:ok, review} ->
+          {:ok,
+           %{
+             id: review.id,
+             artifact_id: review.artifact_id,
+             revision_id: review.revision_id,
+             organization_id: review.organization_id,
+             project_id: review.project_id,
+             status: review.status,
+             created_at: review.inserted_at
+           }}
+
+        {:error, cs} ->
+          {:error, "Failed: #{inspect(cs.errors)}"}
       end
     else
-      {:org, nil} -> {:error, "Organization '#{org_ref}' not found"}
-      {:error, :project_not_found} -> {:error, "Project '#{project_ref}' not found"}
-      {:error, :project_not_in_org} -> {:error, "Project '#{project_ref}' does not belong to this organization"}
-      {:error, :artifact_not_found} -> {:error, "Artifact '#{artifact_id}' not found"}
-      {:error, :artifact_not_in_org} -> {:error, "Artifact '#{artifact_id}' does not belong to this organization"}
+      {:org, nil} ->
+        {:error, "Organization '#{org_ref}' not found"}
+
+      {:error, :project_not_found} ->
+        {:error, "Project '#{project_ref}' not found"}
+
+      {:error, :project_not_in_org} ->
+        {:error, "Project '#{project_ref}' does not belong to this organization"}
+
+      {:error, :artifact_not_found} ->
+        {:error, "Artifact '#{artifact_id}' not found"}
+
+      {:error, :artifact_not_in_org} ->
+        {:error, "Artifact '#{artifact_id}' does not belong to this organization"}
     end
   end
 

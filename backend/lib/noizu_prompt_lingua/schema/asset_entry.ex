@@ -32,8 +32,19 @@ defmodule NoizuPromptLingua.Schema.AssetEntry do
 
   def changeset(entry, attrs) do
     entry
-    |> cast(attrs, [:organization_id, :project_id, :slug, :title, :asset_type, :status, :quality,
-                     :prompt_yaml, :tags, :product_targets, :active_output_id])
+    |> cast(attrs, [
+      :organization_id,
+      :project_id,
+      :slug,
+      :title,
+      :asset_type,
+      :status,
+      :quality,
+      :prompt_yaml,
+      :tags,
+      :product_targets,
+      :active_output_id
+    ])
     |> validate_required([:organization_id, :slug, :title, :asset_type, :prompt_yaml])
     |> validate_inclusion(:asset_type, @asset_types)
     |> validate_inclusion(:status, @statuses)

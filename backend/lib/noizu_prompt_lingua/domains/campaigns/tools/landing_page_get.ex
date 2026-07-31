@@ -7,7 +7,9 @@ defmodule NoizuPromptLingua.Domains.Campaigns.Tools.LandingPageGet do
     category: "Campaigns.LandingPages"
 
   input do
-    field :organization, :string, description: "Organization slug or UUID (required for slug lookup)"
+    field :organization, :string,
+      description: "Organization slug or UUID (required for slug lookup)"
+
     field :id, :string, required: true, description: "Landing page UUID or slug"
   end
 
@@ -20,8 +22,24 @@ defmodule NoizuPromptLingua.Domains.Campaigns.Tools.LandingPageGet do
     org_id = Resolve.organization_id(Args.get(args, :organization))
 
     case Campaigns.resolve_landing_page(org_id, id) do
-      nil -> {:error, "Landing page '#{id}' not found"}
-      p -> {:ok, %{id: p.id, slug: p.slug, title: p.title, path: p.path, headline: p.headline, campaign_id: p.campaign_id, domain_name_id: p.domain_name_id, artifact_id: p.artifact_id, status: p.status, organization_id: p.organization_id, project_id: p.project_id}}
+      nil ->
+        {:error, "Landing page '#{id}' not found"}
+
+      p ->
+        {:ok,
+         %{
+           id: p.id,
+           slug: p.slug,
+           title: p.title,
+           path: p.path,
+           headline: p.headline,
+           campaign_id: p.campaign_id,
+           domain_name_id: p.domain_name_id,
+           artifact_id: p.artifact_id,
+           status: p.status,
+           organization_id: p.organization_id,
+           project_id: p.project_id
+         }}
     end
   end
 end

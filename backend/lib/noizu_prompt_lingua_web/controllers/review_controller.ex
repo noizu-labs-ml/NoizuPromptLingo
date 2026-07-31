@@ -41,8 +41,11 @@ defmodule NoizuPromptLinguaWeb.ReviewController do
       }
 
       case Reviews.create(attrs) do
-        {:ok, review} -> conn |> put_status(:created) |> json(%{review: review_to_json(review)})
-        {:error, changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+        {:ok, review} ->
+          conn |> put_status(:created) |> json(%{review: review_to_json(review)})
+
+        {:error, changeset} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
       end
     else
       err -> handle_error(conn, err)
@@ -81,11 +84,22 @@ defmodule NoizuPromptLinguaWeb.ReviewController do
          {review, _comments, _overlays} when not is_nil(review) <- Reviews.get(id) || :missing,
          true <- review.organization_id == resolved_org_id do
       case Reviews.update(id, review_params) do
-        {:ok, review} -> json(conn, %{review: review_to_json(review)})
-        {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Review not found"})
-        {:error, :completed} -> conn |> put_status(:conflict) |> json(%{error: "Review is completed and immutable"})
-        {:error, :use_complete} -> conn |> put_status(:unprocessable_entity) |> json(%{error: "Use the complete endpoint to finalize a review"})
-        {:error, changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+        {:ok, review} ->
+          json(conn, %{review: review_to_json(review)})
+
+        {:error, :not_found} ->
+          conn |> put_status(:not_found) |> json(%{error: "Review not found"})
+
+        {:error, :completed} ->
+          conn |> put_status(:conflict) |> json(%{error: "Review is completed and immutable"})
+
+        {:error, :use_complete} ->
+          conn
+          |> put_status(:unprocessable_entity)
+          |> json(%{error: "Use the complete endpoint to finalize a review"})
+
+        {:error, changeset} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
       end
     else
       :missing -> conn |> put_status(:not_found) |> json(%{error: "Review not found"})
@@ -105,9 +119,14 @@ defmodule NoizuPromptLinguaWeb.ReviewController do
       attrs = Map.take(params, ["summary", "verdict"])
 
       case Reviews.complete(id, attrs) do
-        {:ok, review} -> json(conn, %{review: review_to_json(review)})
-        {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Review not found"})
-        {:error, changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+        {:ok, review} ->
+          json(conn, %{review: review_to_json(review)})
+
+        {:error, :not_found} ->
+          conn |> put_status(:not_found) |> json(%{error: "Review not found"})
+
+        {:error, changeset} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
       end
     else
       :missing -> conn |> put_status(:not_found) |> json(%{error: "Review not found"})
@@ -134,11 +153,20 @@ defmodule NoizuPromptLinguaWeb.ReviewController do
   end
 
   defp overlay_to_json(o) do
-    %{id: o.id, x: o.x, y: o.y, width: o.width, height: o.height, comment: o.comment, persona: o.persona}
+    %{
+      id: o.id,
+      x: o.x,
+      y: o.y,
+      width: o.width,
+      height: o.height,
+      comment: o.comment,
+      persona: o.persona
+    }
   end
 
   defp validate_project(nil, _org_id), do: {:ok, nil}
   defp validate_project("", _org_id), do: {:ok, nil}
+
   defp validate_project(project_id, org_id) do
     case NoizuPromptLingua.Projects.get_project(project_id) do
       nil -> {:error, :project_not_in_org}
@@ -158,11 +186,24 @@ defmodule NoizuPromptLinguaWeb.ReviewController do
 
   defp handle_error(conn, err) do
     case err do
-      {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Organization not found"})
-      {:error, :not_a_member} -> conn |> put_status(:forbidden) |> json(%{error: "Not a member of this organization"})
-      {:error, :project_not_in_org} -> conn |> put_status(:unprocessable_entity) |> json(%{error: "Project does not belong to this organization"})
-      {:error, :artifact_not_in_org} -> conn |> put_status(:unprocessable_entity) |> json(%{error: "Artifact does not belong to this organization"})
-      _ -> conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Organization not found"})
+
+      {:error, :not_a_member} ->
+        conn |> put_status(:forbidden) |> json(%{error: "Not a member of this organization"})
+
+      {:error, :project_not_in_org} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{error: "Project does not belong to this organization"})
+
+      {:error, :artifact_not_in_org} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{error: "Artifact does not belong to this organization"})
+
+      _ ->
+        conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
     end
   end
 

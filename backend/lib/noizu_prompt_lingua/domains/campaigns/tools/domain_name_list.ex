@@ -1,7 +1,8 @@
 defmodule NoizuPromptLingua.Domains.Campaigns.Tools.DomainNameList do
   use Noizu.MCP.Server.Tool,
     name: "DomainName.List",
-    description: "List domain names for an organization, optionally filtered by project, status, or tag.",
+    description:
+      "List domain names for an organization, optionally filtered by project, status, or tag.",
     annotations: [read_only_hint: true],
     hidden: true,
     category: "Campaigns.Domains"
@@ -35,7 +36,12 @@ defmodule NoizuPromptLingua.Domains.Campaigns.Tools.DomainNameList do
             limit: Args.get(args, :limit) || 100
           )
 
-        {:ok, %{count: length(domains), domain_names: Enum.map(domains, &%{id: &1.id, slug: &1.slug, name: &1.name, status: &1.status})}}
+        {:ok,
+         %{
+           count: length(domains),
+           domain_names:
+             Enum.map(domains, &%{id: &1.id, slug: &1.slug, name: &1.name, status: &1.status})
+         }}
     end
   end
 end

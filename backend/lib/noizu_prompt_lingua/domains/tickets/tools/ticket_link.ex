@@ -8,7 +8,10 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.TicketLink do
   input do
     field :source_ticket_id, :string, required: true, description: "Source ticket UUID"
     field :target_ticket_id, :string, required: true, description: "Target ticket UUID"
-    field :link_type, :string, required: true, description: "blocks, blocked_by, relates_to, duplicates, parent_of, child_of"
+
+    field :link_type, :string,
+      required: true,
+      description: "blocks, blocked_by, relates_to, duplicates, parent_of, child_of"
   end
 
   alias NoizuPromptLingua.Domains.Tickets
@@ -22,6 +25,7 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.TicketLink do
     case Tickets.link(source, target, link_type) do
       {:ok, link} ->
         {:ok, %{id: link.id, source: source, target: target, link_type: link_type}}
+
       {:error, changeset} ->
         {:error, "Failed: #{inspect(changeset.errors)}"}
     end

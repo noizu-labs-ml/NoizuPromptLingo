@@ -29,7 +29,8 @@ defmodule NoizuPromptLingua.Domains.Memory.Sentinel do
     do: where(query, [m], m.organization_id == ^org)
 
   def scope_filter(query, %{organization_id: org, scope_type: st, scope_id: sid}),
-    do: where(query, [m], m.organization_id == ^org and m.scope_type == ^st and m.scope_id == ^sid)
+    do:
+      where(query, [m], m.organization_id == ^org and m.scope_type == ^st and m.scope_id == ^sid)
 
   @doc "Weaviate `where` property filter mirroring the scope predicate."
   def weaviate_filters(nil), do: %{}
@@ -38,7 +39,11 @@ defmodule NoizuPromptLingua.Domains.Memory.Sentinel do
     do: %{"organization_id" => to_string(org)}
 
   def weaviate_filters(%{organization_id: org, scope_type: st, scope_id: sid}),
-    do: %{"organization_id" => to_string(org), "scope_type" => to_string(st), "scope_id" => to_string(sid)}
+    do: %{
+      "organization_id" => to_string(org),
+      "scope_type" => to_string(st),
+      "scope_id" => to_string(sid)
+    }
 
   @doc "Backstop filter applied to hydrated rows after fusion."
   def authorize(memories, context) when is_list(memories) do

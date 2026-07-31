@@ -32,7 +32,8 @@ defmodule NoizuPromptLingua.Authz.Groups do
 
   def list_policies(group_id) do
     from(gp in GroupPolicySchema,
-      join: p in PolicySchema, on: p.id == gp.policy_id,
+      join: p in PolicySchema,
+      on: p.id == gp.policy_id,
       where: gp.group_id == ^group_id,
       order_by: gp.priority,
       select: %{

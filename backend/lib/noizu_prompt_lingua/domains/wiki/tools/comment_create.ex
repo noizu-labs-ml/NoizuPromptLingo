@@ -33,7 +33,13 @@ defmodule NoizuPromptLingua.Domains.Wiki.Tools.CommentCreate do
 
         case Wiki.create_comment(attrs) do
           {:ok, comment} ->
-            {:ok, %{id: comment.id, page_id: comment.page_id, author: comment.author, body: comment.body}}
+            {:ok,
+             %{
+               id: comment.id,
+               page_id: comment.page_id,
+               author: comment.author,
+               body: comment.body
+             }}
 
           {:error, changeset} ->
             {:error, "Failed: #{inspect(changeset.errors)}"}

@@ -8,7 +8,10 @@ defmodule NoizuPromptLingua.Domains.Browser.Tools.GetState do
 
   input do
     field :organization, :string, required: true, description: "Organization slug or UUID"
-    field :include_text, :boolean, required: false, description: "Include the page's visible text content (default false)"
+
+    field :include_text, :boolean,
+      required: false,
+      description: "Include the page's visible text content (default false)"
   end
 
   alias NoizuPromptLingua.Domains.Browser

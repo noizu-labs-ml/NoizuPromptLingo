@@ -1,6 +1,9 @@
 defmodule NoizuPromptLingua.Domains.Chat.Tools.NotificationClear do
   use Noizu.MCP.Server.Tool,
-    name: "Chat.Notification.Clear", description: "Mark notifications as read.", hidden: true, category: "Chat"
+    name: "Chat.Notification.Clear",
+    description: "Mark notifications as read.",
+    hidden: true,
+    category: "Chat"
 
   input do
     field :persona, :string, required: true, description: "Persona slug"

@@ -16,8 +16,24 @@ defmodule NoizuPromptLingua.Domains.Campaigns.Tools.AdCopyGet do
   @impl true
   def call(args, _ctx) do
     case Campaigns.get_ad_copy(Args.get(args, :id)) do
-      nil -> {:error, "Ad copy not found"}
-      a -> {:ok, %{id: a.id, campaign_id: a.campaign_id, ad_group_id: a.ad_group_id, variant_number: a.variant_number, headline: a.headline, body: a.body, cta: a.cta, format: a.format, artifact_id: a.artifact_id, llm_generated: a.llm_generated, status: a.status}}
+      nil ->
+        {:error, "Ad copy not found"}
+
+      a ->
+        {:ok,
+         %{
+           id: a.id,
+           campaign_id: a.campaign_id,
+           ad_group_id: a.ad_group_id,
+           variant_number: a.variant_number,
+           headline: a.headline,
+           body: a.body,
+           cta: a.cta,
+           format: a.format,
+           artifact_id: a.artifact_id,
+           llm_generated: a.llm_generated,
+           status: a.status
+         }}
     end
   end
 end

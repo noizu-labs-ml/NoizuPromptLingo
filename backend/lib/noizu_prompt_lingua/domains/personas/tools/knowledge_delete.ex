@@ -1,7 +1,10 @@
 defmodule NoizuPromptLingua.Domains.Personas.Tools.KnowledgeDelete do
-  use Noizu.MCP.Server.Tool, name: "Persona.Knowledge.Delete",
+  use Noizu.MCP.Server.Tool,
+    name: "Persona.Knowledge.Delete",
     description: "Delete a persona knowledge-base article by its id.",
-    hidden: true, category: "Personas.Knowledge", annotations: [destructive_hint: true]
+    hidden: true,
+    category: "Personas.Knowledge",
+    annotations: [destructive_hint: true]
 
   input do
     field :id, :string, required: true, description: "Knowledge entry UUID"

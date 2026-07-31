@@ -18,13 +18,20 @@ defmodule NoizuPromptLingua.MCP.Sessions.Tools.Overview do
         :count
       )
 
-    {:ok, %{
-      domain: "Sessions",
-      active_sessions: active,
-      note: "Sessions require an organization; a project association is optional.",
-      tools: %{
-        crud: ["Session.List", "Session.Get", "Session.Create", "Session.Update", "Session.Archive"]
-      }
-    }}
+    {:ok,
+     %{
+       domain: "Sessions",
+       active_sessions: active,
+       note: "Sessions require an organization; a project association is optional.",
+       tools: %{
+         crud: [
+           "Session.List",
+           "Session.Get",
+           "Session.Create",
+           "Session.Update",
+           "Session.Archive"
+         ]
+       }
+     }}
   end
 end

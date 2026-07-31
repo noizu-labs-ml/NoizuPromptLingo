@@ -19,14 +19,16 @@ defmodule NoizuPromptLingua.Domains.Customers do
 
   # ── Personas ──────────────────────────────────────────────────
 
-  def create_persona(attrs), do: %CustomerPersona{} |> CustomerPersona.changeset(attrs) |> Repo.insert()
+  def create_persona(attrs),
+    do: %CustomerPersona{} |> CustomerPersona.changeset(attrs) |> Repo.insert()
 
   def get_persona(id), do: Repo.get(CustomerPersona, id)
 
   def resolve_persona(org_id, id_or_slug) do
     case NoizuPromptLingua.UUID.cast(id_or_slug) do
       {:ok, uuid} ->
-        Repo.get(CustomerPersona, uuid) || Repo.get_by(CustomerPersona, organization_id: org_id, slug: id_or_slug)
+        Repo.get(CustomerPersona, uuid) ||
+          Repo.get_by(CustomerPersona, organization_id: org_id, slug: id_or_slug)
 
       :error ->
         Repo.get_by(CustomerPersona, organization_id: org_id, slug: id_or_slug)
@@ -78,10 +80,16 @@ defmodule NoizuPromptLingua.Domains.Customers do
       persona ->
         prompt = opts[:prompt] || default_persona_prompt(persona)
 
-        case MarketingContent.generate_artifact(prompt,
-               %{organization_id: persona.organization_id, project_id: persona.project_id,
-                 kind: "document", title: "#{persona.name} — customer persona profile"},
-               opts) do
+        case MarketingContent.generate_artifact(
+               prompt,
+               %{
+                 organization_id: persona.organization_id,
+                 project_id: persona.project_id,
+                 kind: "document",
+                 title: "#{persona.name} — customer persona profile"
+               },
+               opts
+             ) do
           {:ok, %{artifact_id: artifact_id, content: content}} ->
             update_persona(id, %{artifact_id: artifact_id, summary: summarize(content)})
 
@@ -93,14 +101,16 @@ defmodule NoizuPromptLingua.Domains.Customers do
 
   # ── Segments ──────────────────────────────────────────────────
 
-  def create_segment(attrs), do: %CustomerSegment{} |> CustomerSegment.changeset(attrs) |> Repo.insert()
+  def create_segment(attrs),
+    do: %CustomerSegment{} |> CustomerSegment.changeset(attrs) |> Repo.insert()
 
   def get_segment(id), do: Repo.get(CustomerSegment, id)
 
   def resolve_segment(org_id, id_or_slug) do
     case NoizuPromptLingua.UUID.cast(id_or_slug) do
       {:ok, uuid} ->
-        Repo.get(CustomerSegment, uuid) || Repo.get_by(CustomerSegment, organization_id: org_id, slug: id_or_slug)
+        Repo.get(CustomerSegment, uuid) ||
+          Repo.get_by(CustomerSegment, organization_id: org_id, slug: id_or_slug)
 
       :error ->
         Repo.get_by(CustomerSegment, organization_id: org_id, slug: id_or_slug)

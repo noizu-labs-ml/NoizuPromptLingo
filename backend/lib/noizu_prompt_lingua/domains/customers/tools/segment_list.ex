@@ -1,7 +1,8 @@
 defmodule NoizuPromptLingua.Domains.Customers.Tools.SegmentList do
   use Noizu.MCP.Server.Tool,
     name: "CustomerSegment.List",
-    description: "List customer segments for an organization, optionally filtered by project, status, or tag.",
+    description:
+      "List customer segments for an organization, optionally filtered by project, status, or tag.",
     annotations: [read_only_hint: true],
     hidden: true,
     category: "Customers.Segments"
@@ -35,7 +36,12 @@ defmodule NoizuPromptLingua.Domains.Customers.Tools.SegmentList do
             limit: Args.get(args, :limit) || 100
           )
 
-        {:ok, %{count: length(segments), segments: Enum.map(segments, &%{id: &1.id, slug: &1.slug, name: &1.name, status: &1.status})}}
+        {:ok,
+         %{
+           count: length(segments),
+           segments:
+             Enum.map(segments, &%{id: &1.id, slug: &1.slug, name: &1.name, status: &1.status})
+         }}
     end
   end
 end

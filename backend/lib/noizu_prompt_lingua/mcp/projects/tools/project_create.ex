@@ -12,7 +12,9 @@ defmodule NoizuPromptLingua.MCP.Projects.Tools.ProjectCreate do
     field :name, :string, required: true, description: "Project name"
     field :slug, :string, required: true, description: "Unique URL slug (within the org)"
     field :description, :string, description: "Project description"
-    field :owner_id, :string, description: "Owner user UUID (defaults to the authenticated caller)"
+
+    field :owner_id, :string,
+      description: "Owner user UUID (defaults to the authenticated caller)"
   end
 
   @impl true
@@ -29,7 +31,14 @@ defmodule NoizuPromptLingua.MCP.Projects.Tools.ProjectCreate do
 
       case NoizuPromptLingua.Projects.create_with_owner(attrs, owner_id) do
         {:ok, project} ->
-          {:ok, %{id: project.id, name: project.name, slug: project.slug, status: project.status, organization_id: project.organization_id}}
+          {:ok,
+           %{
+             id: project.id,
+             name: project.name,
+             slug: project.slug,
+             status: project.status,
+             organization_id: project.organization_id
+           }}
 
         {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
           {:error, "Failed: #{inspect(changeset.errors)}"}

@@ -1,6 +1,9 @@
 defmodule NoizuPromptLingua.Domains.Chat.Tools.Notifications do
   use Noizu.MCP.Server.Tool,
-    name: "Chat.Notifications", description: "List unread notifications for a persona.", hidden: true, category: "Chat",
+    name: "Chat.Notifications",
+    description: "List unread notifications for a persona.",
+    hidden: true,
+    category: "Chat",
     annotations: [read_only_hint: true]
 
   input do
@@ -16,6 +19,15 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.Notifications do
     limit = args[:limit] || args["limit"]
     opts = if limit, do: [limit: limit], else: []
     notifs = Chat.list_notifications(persona, opts)
-    {:ok, %{notifications: Enum.map(notifs, &%{id: &1.id, room_id: &1.room_id, message: &1.message, created_at: &1.inserted_at}), count: length(notifs)}}
+
+    {:ok,
+     %{
+       notifications:
+         Enum.map(
+           notifs,
+           &%{id: &1.id, room_id: &1.room_id, message: &1.message, created_at: &1.inserted_at}
+         ),
+       count: length(notifs)
+     }}
   end
 end

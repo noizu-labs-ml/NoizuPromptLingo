@@ -35,6 +35,7 @@ defmodule NoizuPromptLingua.Redis do
       )
 
     build_channels()
+
     %{
       id: RedixSupervisor,
       type: :supervisor,
@@ -54,12 +55,14 @@ defmodule NoizuPromptLingua.Redis do
   end
 
   def set(key, value, options \\ []) do
-    args = Enum.flat_map(options, fn
-      {:ex, ttl} -> ["EX", to_string(ttl)]
-      {:px, ttl} -> ["PX", to_string(ttl)]
-      {:nx, true} -> ["NX"]
-      {:xx, true} -> ["XX"]
-    end)
+    args =
+      Enum.flat_map(options, fn
+        {:ex, ttl} -> ["EX", to_string(ttl)]
+        {:px, ttl} -> ["PX", to_string(ttl)]
+        {:nx, true} -> ["NX"]
+        {:xx, true} -> ["XX"]
+      end)
+
     command(["SET", prefix(key), value | args])
   end
 

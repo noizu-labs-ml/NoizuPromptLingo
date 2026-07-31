@@ -27,7 +27,8 @@ defmodule NoizuPromptLingua.Domains.MCPOverview.Generator do
   end
 
   defp focus_count do
-    Application.get_env(:noizu_prompt_lingua, :mcp_overview, [])[:focus_count] || @default_focus_count
+    Application.get_env(:noizu_prompt_lingua, :mcp_overview, [])[:focus_count] ||
+      @default_focus_count
   end
 
   @doc """

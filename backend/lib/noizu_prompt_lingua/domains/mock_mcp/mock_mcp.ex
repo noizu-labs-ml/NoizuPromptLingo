@@ -26,6 +26,7 @@ defmodule NoizuPromptLingua.Domains.MockMCP do
         MockMCPDefinition
         |> where([d], d.id == ^slug_or_id or d.slug == ^slug_or_id)
         |> Repo.one()
+
       :error ->
         Repo.get_by(MockMCPDefinition, slug: slug_or_id)
     end
@@ -39,7 +40,9 @@ defmodule NoizuPromptLingua.Domains.MockMCP do
 
   def update(slug_or_id, attrs) do
     case get(slug_or_id) do
-      nil -> {:error, :not_found}
+      nil ->
+        {:error, :not_found}
+
       definition ->
         definition
         |> MockMCPDefinition.changeset(attrs)
@@ -112,7 +115,9 @@ defmodule NoizuPromptLingua.Domains.MockMCP do
   @doc "Insert or replace (by tool name) one module entry, preserving the rest."
   def put_module(slug_or_id, %{"tool" => tool} = entry) do
     case get(slug_or_id) do
-      nil -> {:error, :not_found}
+      nil ->
+        {:error, :not_found}
+
       def_ ->
         kept = Enum.reject(def_.modules_json || [], fn m -> (m["tool"] || m[:tool]) == tool end)
         set_modules(def_.id, kept ++ [entry])
@@ -122,9 +127,13 @@ defmodule NoizuPromptLingua.Domains.MockMCP do
   @doc "Remove a module entry (reverts the tool to LLM serving)."
   def delete_module(slug_or_id, tool_name) do
     case get(slug_or_id) do
-      nil -> {:error, :not_found}
+      nil ->
+        {:error, :not_found}
+
       def_ ->
-        kept = Enum.reject(def_.modules_json || [], fn m -> (m["tool"] || m[:tool]) == tool_name end)
+        kept =
+          Enum.reject(def_.modules_json || [], fn m -> (m["tool"] || m[:tool]) == tool_name end)
+
         set_modules(def_.id, kept)
     end
   end
@@ -173,9 +182,12 @@ defmodule NoizuPromptLingua.Domains.MockMCP do
   set, so inference falls back to the app-configured provider/model.
   """
   def active_llm_opts(%MockMCPDefinition{active_llm_id: nil}), do: []
+
   def active_llm_opts(%MockMCPDefinition{active_llm_id: llm_id}) do
     case get_llm(llm_id) do
-      nil -> []
+      nil ->
+        []
+
       llm ->
         [provider: llm.provider, model: llm.model, endpoint: llm.endpoint, api_key: llm.api_key]
     end
@@ -207,8 +219,12 @@ defmodule NoizuPromptLingua.Domains.MockMCP do
   # the (historically named) `db_name` field.
   def provision_db(slug_or_id) do
     case get(slug_or_id) do
-      nil -> {:error, :not_found}
-      %{db_provisioned: true} = def_ -> {:ok, def_}
+      nil ->
+        {:error, :not_found}
+
+      %{db_provisioned: true} = def_ ->
+        {:ok, def_}
+
       def_ ->
         schema = schema_name(def_.slug)
 
@@ -227,7 +243,9 @@ defmodule NoizuPromptLingua.Domains.MockMCP do
   defp postgres_design(%{schema_json: %{"postgres" => ddl}}) when is_list(ddl), do: ddl
   defp postgres_design(_), do: []
 
-  defp weaviate_design(%{schema_json: %{"weaviate" => classes}}) when is_list(classes), do: classes
+  defp weaviate_design(%{schema_json: %{"weaviate" => classes}}) when is_list(classes),
+    do: classes
+
   defp weaviate_design(_), do: []
 
   # Run the agent-designed DDL (plus any free-text schema_sql) inside the mock's
@@ -265,6 +283,7 @@ defmodule NoizuPromptLingua.Domains.MockMCP do
 
   defp create_schema(schema) do
     safe = String.replace(schema, ~r/[^a-z0-9_]/, "")
+
     try do
       Ecto.Adapters.SQL.query!(Repo, ~s(CREATE SCHEMA IF NOT EXISTS "#{safe}"), [])
       :ok

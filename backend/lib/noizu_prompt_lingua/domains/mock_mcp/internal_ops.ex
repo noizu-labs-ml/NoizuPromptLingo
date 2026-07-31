@@ -63,7 +63,9 @@ defmodule NoizuPromptLingua.Domains.MockMCP.InternalOps do
 
     tools =
       case tool_names(def_) do
-        [] -> "(this mock has no other tools to call)"
+        [] ->
+          "(this mock has no other tools to call)"
+
         names ->
           """
           - call_tool {"tool": string, "arguments": object}   (invoke another of this mock's tools)

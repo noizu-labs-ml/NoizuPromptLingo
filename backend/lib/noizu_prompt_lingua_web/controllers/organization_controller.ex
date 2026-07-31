@@ -17,13 +17,19 @@ defmodule NoizuPromptLinguaWeb.OrganizationController do
     user = resolve_user(session)
 
     case Organizations.create_organization_with_owner(
-           %{slug: org_params["slug"], name: org_params["name"], key_prefix: org_params["key_prefix"]},
+           %{
+             slug: org_params["slug"],
+             name: org_params["name"],
+             key_prefix: org_params["key_prefix"]
+           },
            user.id
          ) do
       {:ok, org} ->
         conn
         |> put_status(:created)
-        |> json(%{organization: %{id: org.id, slug: org.slug, name: org.name, key_prefix: org.key_prefix}})
+        |> json(%{
+          organization: %{id: org.id, slug: org.slug, name: org.name, key_prefix: org.key_prefix}
+        })
 
       {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
         conn
@@ -42,9 +48,14 @@ defmodule NoizuPromptLinguaWeb.OrganizationController do
     user = resolve_user(session)
 
     with {:ok, org_id} <- Organizations.resolve_org_id(id),
-         {:ok, _membership} <- NoizuPromptLingua.Authz.authorize(user.id, "organization", org_id, "viewer"),
+         {:ok, _membership} <-
+           NoizuPromptLingua.Authz.authorize(user.id, "organization", org_id, "viewer"),
          {:ok, org} <- Organizations.get_organization(org_id, Noizu.Context.system()) do
-      conn |> put_status(:ok) |> json(%{organization: %{id: org.id, slug: org.slug, name: org.name, key_prefix: org.key_prefix}})
+      conn
+      |> put_status(:ok)
+      |> json(%{
+        organization: %{id: org.id, slug: org.slug, name: org.name, key_prefix: org.key_prefix}
+      })
     else
       {:error, :not_found} ->
         conn |> put_status(:not_found) |> json(%{error: "Organization not found"})
@@ -67,7 +78,16 @@ defmodule NoizuPromptLinguaWeb.OrganizationController do
 
       case Organizations.update_organization(org_id, attrs) do
         {:ok, org} ->
-          conn |> put_status(:ok) |> json(%{organization: %{id: org.id, slug: org.slug, name: org.name, key_prefix: org.key_prefix}})
+          conn
+          |> put_status(:ok)
+          |> json(%{
+            organization: %{
+              id: org.id,
+              slug: org.slug,
+              name: org.name,
+              key_prefix: org.key_prefix
+            }
+          })
 
         {:error, :not_found} ->
           conn |> put_status(:not_found) |> json(%{error: "Organization not found"})
@@ -123,7 +143,9 @@ defmodule NoizuPromptLinguaWeb.OrganizationController do
       {:ref, _, id} ->
         {:ok, user} = NoizuPromptLingua.Users.get_user(id, Noizu.Context.system())
         user
-      %NoizuPromptLingua.Users.User{} = user -> user
+
+      %NoizuPromptLingua.Users.User{} = user ->
+        user
     end
   end
 

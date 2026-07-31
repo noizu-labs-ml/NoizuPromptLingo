@@ -5,7 +5,7 @@ defmodule NoizuPromptLingua.Domains.Customers.Tools.SegmentUpdate do
     hidden: true,
     category: "Customers.Segments"
 
-  input_schema %{
+  input_schema(%{
     "type" => "object",
     "properties" => %{
       "id" => %{"type" => "string", "description" => "Segment UUID"},
@@ -16,7 +16,7 @@ defmodule NoizuPromptLingua.Domains.Customers.Tools.SegmentUpdate do
       "status" => %{"type" => "string", "description" => "active or archived"}
     },
     "required" => ["id"]
-  }
+  })
 
   alias NoizuPromptLingua.Domains.Customers
   alias NoizuPromptLingua.MCP.Args

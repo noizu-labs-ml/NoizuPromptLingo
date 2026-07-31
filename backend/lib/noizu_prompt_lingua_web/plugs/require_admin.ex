@@ -42,7 +42,8 @@ defmodule NoizuPromptLinguaWeb.Plugs.RequireAdmin do
           user -> {:ok, user}
         end
 
-      _ -> :error
+      _ ->
+        :error
     end
   end
 end

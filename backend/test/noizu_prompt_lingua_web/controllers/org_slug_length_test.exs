@@ -66,7 +66,9 @@ defmodule NoizuPromptLinguaWeb.OrgSlugLengthTest do
     slug = slug_of_length(length)
 
     created =
-      post(conn, "/api/v1/organizations", %{organization: %{slug: slug, name: "Len #{length} Org"}})
+      post(conn, "/api/v1/organizations", %{
+        organization: %{slug: slug, name: "Len #{length} Org"}
+      })
 
     org_id = json_response(created, 201)["organization"]["id"]
 

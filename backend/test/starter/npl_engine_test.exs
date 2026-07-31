@@ -22,7 +22,9 @@ defmodule NoizuPromptLingua.NPLEngineTest do
     test "parses section + component + priority and a subtraction" do
       assert {:ok, expr} = Parser.parse("syntax#placeholder:+2 directives -syntax#literal-string")
       assert length(expr.additions) == 2
-      assert [%Parser.Component{section: "syntax", component: "literal-string"}] = expr.subtractions
+
+      assert [%Parser.Component{section: "syntax", component: "literal-string"}] =
+               expr.subtractions
     end
 
     test "rejects subtraction-only expressions" do

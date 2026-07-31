@@ -127,7 +127,13 @@ defmodule NoizuPromptLingua.Organizations do
   def create_organization_with_owner(attrs, user_id) do
     NoizuPromptLingua.Repo.transaction(fn ->
       with {:ok, org} <- %Schema{} |> Schema.changeset(attrs) |> NoizuPromptLingua.Repo.insert(),
-           {:ok, _membership} <- NoizuPromptLingua.Authz.ScopedMemberships.add_member("organization", org.id, user_id, "owner") do
+           {:ok, _membership} <-
+             NoizuPromptLingua.Authz.ScopedMemberships.add_member(
+               "organization",
+               org.id,
+               user_id,
+               "owner"
+             ) do
         org
       else
         {:error, reason} -> NoizuPromptLingua.Repo.rollback(reason)
@@ -137,15 +143,21 @@ defmodule NoizuPromptLingua.Organizations do
 
   def list_user_organizations(user_id) do
     from(sm in ScopedMembershipSchema,
-      join: o in Schema, on: o.id == sm.resource_id,
-      join: g in NoizuPromptLingua.Schema.Authz.Group, on: g.id == sm.group_id,
-      left_join: og in NoizuPromptLingua.Schema.Authz.Group, on: og.name == "owner",
+      join: o in Schema,
+      on: o.id == sm.resource_id,
+      join: g in NoizuPromptLingua.Schema.Authz.Group,
+      on: g.id == sm.group_id,
+      left_join: og in NoizuPromptLingua.Schema.Authz.Group,
+      on: og.name == "owner",
       left_join: osm in ScopedMembershipSchema,
-        on:
-          osm.resource_id == o.id and osm.resource_type == "organization" and
-            osm.member_type == "user" and osm.group_id == og.id,
-      left_join: ou in NoizuPromptLingua.Schema.Users.User, on: ou.id == osm.member_id,
-      where: sm.member_type == "user" and sm.member_id == ^user_id and sm.resource_type == "organization",
+      on:
+        osm.resource_id == o.id and osm.resource_type == "organization" and
+          osm.member_type == "user" and osm.group_id == og.id,
+      left_join: ou in NoizuPromptLingua.Schema.Users.User,
+      on: ou.id == osm.member_id,
+      where:
+        sm.member_type == "user" and sm.member_id == ^user_id and
+          sm.resource_type == "organization",
       where: is_nil(sm.expires_at) or sm.expires_at > ^DateTime.utc_now(),
       group_by: [o.id, o.slug, o.name, g.name],
       select: %{
@@ -179,10 +191,12 @@ defmodule NoizuPromptLingua.Organizations do
 
     result =
       %InviteTokenSchema{}
-      |> InviteTokenSchema.changeset(Map.merge(attrs, %{
-        token_hash: token_hash,
-        key_prefix: key_prefix
-      }))
+      |> InviteTokenSchema.changeset(
+        Map.merge(attrs, %{
+          token_hash: token_hash,
+          key_prefix: key_prefix
+        })
+      )
       |> NoizuPromptLingua.Repo.insert()
 
     case result do

@@ -5,7 +5,7 @@ defmodule NoizuPromptLingua.Domains.Campaigns.Tools.AdCopyCreate do
     hidden: true,
     category: "Campaigns.AdCopy"
 
-  input_schema %{
+  input_schema(%{
     "type" => "object",
     "properties" => %{
       "campaign_id" => %{"type" => "string", "description" => "Parent campaign UUID (required)"},
@@ -17,7 +17,7 @@ defmodule NoizuPromptLingua.Domains.Campaigns.Tools.AdCopyCreate do
       "metadata" => %{"type" => "object", "description" => "Free-form metadata"}
     },
     "required" => ["campaign_id"]
-  }
+  })
 
   alias NoizuPromptLingua.Domains.Campaigns
   alias NoizuPromptLingua.MCP.Args
@@ -39,8 +39,12 @@ defmodule NoizuPromptLingua.Domains.Campaigns.Tools.AdCopyCreate do
           |> Map.put(:project_id, campaign.project_id)
 
         case Campaigns.create_ad_copy(attrs) do
-          {:ok, a} -> {:ok, %{id: a.id, variant_number: a.variant_number, headline: a.headline, status: a.status}}
-          {:error, changeset} -> {:error, "Failed: #{inspect(changeset.errors)}"}
+          {:ok, a} ->
+            {:ok,
+             %{id: a.id, variant_number: a.variant_number, headline: a.headline, status: a.status}}
+
+          {:error, changeset} ->
+            {:error, "Failed: #{inspect(changeset.errors)}"}
         end
     end
   end

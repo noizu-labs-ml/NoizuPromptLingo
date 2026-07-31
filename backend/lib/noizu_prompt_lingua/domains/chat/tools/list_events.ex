@@ -1,6 +1,9 @@
 defmodule NoizuPromptLingua.Domains.Chat.Tools.ListEvents do
   use Noizu.MCP.Server.Tool,
-    name: "Chat.ListEvents", description: "List structured events in a room.", hidden: true, category: "Chat",
+    name: "Chat.ListEvents",
+    description: "List structured events in a room.",
+    hidden: true,
+    category: "Chat",
     annotations: [read_only_hint: true]
 
   input do
@@ -15,11 +18,29 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.ListEvents do
   @impl true
   def call(args, _ctx) do
     room_id = args[:room_id] || args["room_id"]
-    opts = Enum.reduce([:event_type, :limit, :since], [], fn k, acc ->
-      val = args[k] || args[Atom.to_string(k)]
-      if val, do: [{k, val} | acc], else: acc
-    end)
+
+    opts =
+      Enum.reduce([:event_type, :limit, :since], [], fn k, acc ->
+        val = args[k] || args[Atom.to_string(k)]
+        if val, do: [{k, val} | acc], else: acc
+      end)
+
     events = Chat.list_events(room_id, opts)
-    {:ok, %{events: Enum.map(events, &%{id: &1.id, event_type: &1.event_type, content: &1.content, sender: &1.sender, created_at: &1.inserted_at}), count: length(events)}}
+
+    {:ok,
+     %{
+       events:
+         Enum.map(
+           events,
+           &%{
+             id: &1.id,
+             event_type: &1.event_type,
+             content: &1.content,
+             sender: &1.sender,
+             created_at: &1.inserted_at
+           }
+         ),
+       count: length(events)
+     }}
   end
 end

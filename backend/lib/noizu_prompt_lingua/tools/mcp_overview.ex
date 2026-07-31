@@ -23,14 +23,19 @@ defmodule NoizuPromptLingua.Tools.McpOverview do
     field :focus, :string,
       description: "Optional extra hint to bias the overview (a subsystem, goal, or constraint)."
 
-    field :verbosity, :integer,
-      description: "Optional detail level 0–9 (0 = tersest)."
+    field :verbosity, :integer, description: "Optional detail level 0–9 (0 = tersest)."
   end
 
   output do
     field :overview_md, :string, required: true, description: "The tailored Markdown overview."
-    field :generated, :boolean, required: true, description: "True if freshly generated (pending review)."
-    field :cached, :boolean, required: true, description: "True if served from a prior recalled overview."
+
+    field :generated, :boolean,
+      required: true,
+      description: "True if freshly generated (pending review)."
+
+    field :cached, :boolean,
+      required: true,
+      description: "True if served from a prior recalled overview."
   end
 
   alias NoizuPromptLingua.Tools.Catalog

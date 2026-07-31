@@ -10,14 +10,19 @@ defmodule NoizuPromptLinguaWeb.BoardController do
     with_org(conn, org_id, "viewer", fn resolved_org_id ->
       project_id = blank_to_nil(params["project_id"])
       boards = Queues.list(resolved_org_id, project_id)
-      json(conn, %{boards: Enum.map(boards, &board_summary/1), methodologies: TicketQueue.methodologies()})
+
+      json(conn, %{
+        boards: Enum.map(boards, &board_summary/1),
+        methodologies: TicketQueue.methodologies()
+      })
     end)
   end
 
   # POST /api/v1/organizations/:org_id/boards
   def create(conn, %{"org_id" => org_id, "board" => params}) do
     with_org(conn, org_id, "member", fn resolved_org_id ->
-      with {:ok, project_id} <- scope_project(params["scope"], params["project_id"], resolved_org_id) do
+      with {:ok, project_id} <-
+             scope_project(params["scope"], params["project_id"], resolved_org_id) do
         attrs = %{
           name: params["name"],
           slug: params["slug"],
@@ -28,12 +33,22 @@ defmodule NoizuPromptLinguaWeb.BoardController do
         }
 
         case Queues.create(attrs) do
-          {:ok, board} -> conn |> put_status(:created) |> json(%{board: board_detail(board)})
-          {:error, changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+          {:ok, board} ->
+            conn |> put_status(:created) |> json(%{board: board_detail(board)})
+
+          {:error, changeset} ->
+            conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
         end
       else
-        {:error, :project_not_in_org} -> conn |> put_status(:unprocessable_entity) |> json(%{error: "Project does not belong to this organization"})
-        {:error, :global_forbidden} -> conn |> put_status(:forbidden) |> json(%{error: "Global boards are system-managed and cannot be created here"})
+        {:error, :project_not_in_org} ->
+          conn
+          |> put_status(:unprocessable_entity)
+          |> json(%{error: "Project does not belong to this organization"})
+
+        {:error, :global_forbidden} ->
+          conn
+          |> put_status(:forbidden)
+          |> json(%{error: "Global boards are system-managed and cannot be created here"})
       end
     end)
   end
@@ -49,8 +64,11 @@ defmodule NoizuPromptLinguaWeb.BoardController do
       attrs = Map.take(params, ~w(name slug description config))
 
       case Queues.update_board(id, attrs) do
-        {:ok, _} -> json(conn, %{board: board_detail(Queues.get_board(id))})
-        {:error, changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+        {:ok, _} ->
+          json(conn, %{board: board_detail(Queues.get_board(id))})
+
+        {:error, changeset} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
       end
     end)
   end
@@ -72,18 +90,31 @@ defmodule NoizuPromptLinguaWeb.BoardController do
       attrs = stage_attrs(params) |> Map.put(:queue_id, board_id)
 
       case Queues.add_stage(attrs) do
-        {:ok, stage} -> conn |> put_status(:created) |> json(%{stage: stage_json(stage)})
-        {:error, changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+        {:ok, stage} ->
+          conn |> put_status(:created) |> json(%{stage: stage_json(stage)})
+
+        {:error, changeset} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
       end
     end)
   end
 
-  def update_stage(conn, %{"org_id" => org_id, "board_id" => board_id, "stage_id" => sid, "stage" => params}) do
+  def update_stage(conn, %{
+        "org_id" => org_id,
+        "board_id" => board_id,
+        "stage_id" => sid,
+        "stage" => params
+      }) do
     with_owned_board(conn, org_id, board_id, fn _board ->
       case Queues.update_stage(sid, stage_attrs(params)) do
-        {:ok, stage} -> json(conn, %{stage: stage_json(stage)})
-        {:error, :not_found} -> not_found(conn, "Stage")
-        {:error, changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+        {:ok, stage} ->
+          json(conn, %{stage: stage_json(stage)})
+
+        {:error, :not_found} ->
+          not_found(conn, "Stage")
+
+        {:error, changeset} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
       end
     end)
   end
@@ -104,18 +135,31 @@ defmodule NoizuPromptLinguaWeb.BoardController do
       attrs = iteration_attrs(params) |> Map.put(:queue_id, board_id)
 
       case Queues.add_iteration(attrs) do
-        {:ok, it} -> conn |> put_status(:created) |> json(%{iteration: iteration_json(it)})
-        {:error, changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+        {:ok, it} ->
+          conn |> put_status(:created) |> json(%{iteration: iteration_json(it)})
+
+        {:error, changeset} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
       end
     end)
   end
 
-  def update_iteration(conn, %{"org_id" => org_id, "board_id" => board_id, "iteration_id" => iid, "iteration" => params}) do
+  def update_iteration(conn, %{
+        "org_id" => org_id,
+        "board_id" => board_id,
+        "iteration_id" => iid,
+        "iteration" => params
+      }) do
     with_owned_board(conn, org_id, board_id, fn _board ->
       case Queues.update_iteration(iid, iteration_attrs(params)) do
-        {:ok, it} -> json(conn, %{iteration: iteration_json(it)})
-        {:error, :not_found} -> not_found(conn, "Iteration")
-        {:error, changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+        {:ok, it} ->
+          json(conn, %{iteration: iteration_json(it)})
+
+        {:error, :not_found} ->
+          not_found(conn, "Iteration")
+
+        {:error, changeset} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
       end
     end)
   end
@@ -154,7 +198,15 @@ defmodule NoizuPromptLinguaWeb.BoardController do
   end
 
   defp stage_json(s),
-    do: %{id: s.id, slug: s.slug, name: s.name, kind: s.kind, position: s.position, wip_limit: s.wip_limit, config: s.config}
+    do: %{
+      id: s.id,
+      slug: s.slug,
+      name: s.name,
+      kind: s.kind,
+      position: s.position,
+      wip_limit: s.wip_limit,
+      config: s.config
+    }
 
   defp iteration_json(i),
     do: %{
@@ -186,7 +238,9 @@ defmodule NoizuPromptLinguaWeb.BoardController do
   defp with_visible_board(conn, org_id, id, fun) do
     with_org(conn, org_id, "viewer", fn resolved_org_id ->
       case Queues.get_board(id) do
-        nil -> not_found(conn, "Board")
+        nil ->
+          not_found(conn, "Board")
+
         board ->
           if visible?(board, resolved_org_id), do: fun.(board), else: not_found(conn, "Board")
       end
@@ -196,9 +250,16 @@ defmodule NoizuPromptLinguaWeb.BoardController do
   defp with_owned_board(conn, org_id, id, fun) do
     with_org(conn, org_id, "member", fn resolved_org_id ->
       case Queues.get_board(id) do
-        nil -> not_found(conn, "Board")
-        %{organization_id: ^resolved_org_id} = board -> fun.(board)
-        _ -> conn |> put_status(:forbidden) |> json(%{error: "This board is not managed by your organization"})
+        nil ->
+          not_found(conn, "Board")
+
+        %{organization_id: ^resolved_org_id} = board ->
+          fun.(board)
+
+        _ ->
+          conn
+          |> put_status(:forbidden)
+          |> json(%{error: "This board is not managed by your organization"})
       end
     end)
   end
@@ -234,7 +295,8 @@ defmodule NoizuPromptLinguaWeb.BoardController do
   defp blank_to_nil(""), do: nil
   defp blank_to_nil(v), do: v
 
-  defp not_found(conn, what), do: conn |> put_status(:not_found) |> json(%{error: "#{what} not found"})
+  defp not_found(conn, what),
+    do: conn |> put_status(:not_found) |> json(%{error: "#{what} not found"})
 
   defp with_org(conn, org_id, role, fun) do
     user_id = get_user_id(conn)
@@ -243,9 +305,14 @@ defmodule NoizuPromptLinguaWeb.BoardController do
          {:ok, _} <- Authz.authorize(user_id, "organization", resolved_org_id, role) do
       fun.(resolved_org_id)
     else
-      {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Organization not found"})
-      {:error, :not_a_member} -> conn |> put_status(:forbidden) |> json(%{error: "Not a member of this organization"})
-      {:error, _} -> conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Organization not found"})
+
+      {:error, :not_a_member} ->
+        conn |> put_status(:forbidden) |> json(%{error: "Not a member of this organization"})
+
+      {:error, _} ->
+        conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
     end
   end
 

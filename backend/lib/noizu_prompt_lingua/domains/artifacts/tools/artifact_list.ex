@@ -7,8 +7,13 @@ defmodule NoizuPromptLingua.Domains.Artifacts.Tools.ArtifactList do
     annotations: [read_only_hint: true]
 
   input do
-    field :organization, :string, required: true, description: "Organization slug or UUID (required)"
-    field :kind, :string, description: "Filter by kind (code, document, image, wiki, config, binary)"
+    field :organization, :string,
+      required: true,
+      description: "Organization slug or UUID (required)"
+
+    field :kind, :string,
+      description: "Filter by kind (code, document, image, wiki, config, binary)"
+
     field :search, :string, description: "Search in title"
     field :project, :string, description: "Filter by project slug or UUID"
     field :limit, :integer, description: "Max results (default 50)"
@@ -39,12 +44,20 @@ defmodule NoizuPromptLingua.Domains.Artifacts.Tools.ArtifactList do
 
         artifacts = Artifacts.list(opts)
 
-        {:ok, %{
-          artifacts: Enum.map(artifacts, fn a ->
-            %{id: a.id, kind: a.kind, title: a.title, mime_type: a.mime_type, created_at: a.inserted_at}
-          end),
-          count: length(artifacts)
-        }}
+        {:ok,
+         %{
+           artifacts:
+             Enum.map(artifacts, fn a ->
+               %{
+                 id: a.id,
+                 kind: a.kind,
+                 title: a.title,
+                 mime_type: a.mime_type,
+                 created_at: a.inserted_at
+               }
+             end),
+           count: length(artifacts)
+         }}
     end
   end
 end

@@ -73,7 +73,8 @@ defmodule NoizuPromptLinguaWeb.UserController do
 
     updates = if params["email"], do: Map.put(updates, :email, params["email"]), else: updates
 
-    updates = if is_binary(params["bio"]), do: Map.put(updates, :bio, params["bio"]), else: updates
+    updates =
+      if is_binary(params["bio"]), do: Map.put(updates, :bio, params["bio"]), else: updates
 
     case params["role"] do
       nil ->

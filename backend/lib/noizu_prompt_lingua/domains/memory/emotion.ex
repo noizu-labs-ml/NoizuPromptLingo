@@ -13,7 +13,9 @@ defmodule NoizuPromptLingua.Domains.Memory.Emotion do
   def hormone_weight, do: config()[:hormone_weight] || 0.4
 
   def hormone_baseline,
-    do: config()[:hormone_baseline] || %{cortisol: 0.3, dopamine: 0.4, oxytocin: 0.4, serotonin: 0.5}
+    do:
+      config()[:hormone_baseline] ||
+        %{cortisol: 0.3, dopamine: 0.4, oxytocin: 0.4, serotonin: 0.5}
 
   @doc "Neutral default mood when the caller supplies none."
   def neutral_mood, do: %{valence: 0.0, arousal: 0.5, dominance: 0.5}
@@ -37,23 +39,54 @@ defmodule NoizuPromptLingua.Domains.Memory.Emotion do
     h = Map.merge(hormone_baseline(), atomize(hormones))
 
     %{
-      valence: m.valence, arousal: m.arousal, dominance: m.dominance,
-      cortisol: h.cortisol, dopamine: h.dopamine, oxytocin: h.oxytocin, serotonin: h.serotonin
+      valence: m.valence,
+      arousal: m.arousal,
+      dominance: m.dominance,
+      cortisol: h.cortisol,
+      dopamine: h.dopamine,
+      oxytocin: h.oxytocin,
+      serotonin: h.serotonin
     }
   end
 
   @doc "Reconstruct the mood + hormone maps from a persisted memory row's raw columns."
   def from_row(row) do
     mood = %{valence: row.valence, arousal: row.arousal, dominance: row.dominance}
-    hormones = %{cortisol: row.cortisol, dopamine: row.dopamine, oxytocin: row.oxytocin, serotonin: row.serotonin}
+
+    hormones = %{
+      cortisol: row.cortisol,
+      dopamine: row.dopamine,
+      oxytocin: row.oxytocin,
+      serotonin: row.serotonin
+    }
+
     {mood, hormones}
   end
 
   @doc "Coarse VAD-only bucket: 4 valence × 3 arousal × 3 dominance = 36 buckets."
   def bucket(valence, arousal, dominance) do
-    v = cond do valence < -0.5 -> 0; valence < 0.0 -> 1; valence < 0.5 -> 2; true -> 3 end
-    a = cond do arousal < 0.34 -> 0; arousal < 0.67 -> 1; true -> 2 end
-    d = cond do dominance < 0.34 -> 0; dominance < 0.67 -> 1; true -> 2 end
+    v =
+      cond do
+        valence < -0.5 -> 0
+        valence < 0.0 -> 1
+        valence < 0.5 -> 2
+        true -> 3
+      end
+
+    a =
+      cond do
+        arousal < 0.34 -> 0
+        arousal < 0.67 -> 1
+        true -> 2
+      end
+
+    d =
+      cond do
+        dominance < 0.34 -> 0
+        dominance < 0.67 -> 1
+        true -> 2
+      end
+
     "#{v}#{a}#{d}"
   end
 

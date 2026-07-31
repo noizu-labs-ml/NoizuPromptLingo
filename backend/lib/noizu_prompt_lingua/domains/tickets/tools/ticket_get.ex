@@ -25,36 +25,43 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.TicketGet do
         links = Tickets.get_links(ticket_id)
 
         type_fields =
-          case Definitions.resolve_type(ticket.organization_id, ticket.project_id, ticket.ticket_type) do
+          case Definitions.resolve_type(
+                 ticket.organization_id,
+                 ticket.project_id,
+                 ticket.ticket_type
+               ) do
             nil -> []
             type_def -> Definitions.type_field_list(type_def)
           end
 
-        {:ok, %{
-          id: ticket.id,
-          title: ticket.title,
-          description: ticket.description,
-          ticket_type: ticket.ticket_type,
-          status: ticket.status,
-          priority: ticket.priority,
-          assignee: ticket.assignee,
-          reporter: ticket.reporter,
-          project_id: ticket.project_id,
-          queue_id: ticket.queue_id,
-          parent_id: ticket.parent_id,
-          custom_fields: ticket.custom_fields,
-          type_fields: type_fields,
-          links: %{
-            outgoing: Enum.map(links.outgoing, fn l ->
-              %{ticket_id: l.target_ticket_id, link_type: l.link_type}
-            end),
-            incoming: Enum.map(links.incoming, fn l ->
-              %{ticket_id: l.source_ticket_id, link_type: l.link_type}
-            end)
-          },
-          created_at: ticket.inserted_at,
-          updated_at: ticket.updated_at
-        }}
+        {:ok,
+         %{
+           id: ticket.id,
+           title: ticket.title,
+           description: ticket.description,
+           ticket_type: ticket.ticket_type,
+           status: ticket.status,
+           priority: ticket.priority,
+           assignee: ticket.assignee,
+           reporter: ticket.reporter,
+           project_id: ticket.project_id,
+           queue_id: ticket.queue_id,
+           parent_id: ticket.parent_id,
+           custom_fields: ticket.custom_fields,
+           type_fields: type_fields,
+           links: %{
+             outgoing:
+               Enum.map(links.outgoing, fn l ->
+                 %{ticket_id: l.target_ticket_id, link_type: l.link_type}
+               end),
+             incoming:
+               Enum.map(links.incoming, fn l ->
+                 %{ticket_id: l.source_ticket_id, link_type: l.link_type}
+               end)
+           },
+           created_at: ticket.inserted_at,
+           updated_at: ticket.updated_at
+         }}
     end
   end
 end

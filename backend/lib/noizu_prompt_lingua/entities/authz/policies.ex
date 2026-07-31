@@ -33,7 +33,9 @@ defmodule NoizuPromptLingua.Authz.Policies do
 
   def update_policy(id, attrs) do
     case NoizuPromptLingua.Repo.get(Schema, id) do
-      nil -> {:error, :not_found}
+      nil ->
+        {:error, :not_found}
+
       policy ->
         if policy.is_system do
           {:error, :cannot_modify_system_policy}
@@ -45,7 +47,9 @@ defmodule NoizuPromptLingua.Authz.Policies do
 
   def delete_policy(id) do
     case NoizuPromptLingua.Repo.get(Schema, id) do
-      nil -> {:error, :not_found}
+      nil ->
+        {:error, :not_found}
+
       policy ->
         if policy.is_system do
           {:error, :cannot_delete_system_policy}
@@ -57,7 +61,8 @@ defmodule NoizuPromptLingua.Authz.Policies do
 
   def list_user_policies(user_id) do
     from(up in UserPolicySchema,
-      join: p in Schema, on: p.id == up.policy_id,
+      join: p in Schema,
+      on: p.id == up.policy_id,
       where: up.user_id == ^user_id,
       order_by: up.priority,
       select: %{
@@ -86,9 +91,9 @@ defmodule NoizuPromptLingua.Authz.Policies do
 
   def detach_from_user(user_id, policy_id) do
     case NoizuPromptLingua.Repo.one(
-      from up in UserPolicySchema,
-        where: up.user_id == ^user_id and up.policy_id == ^policy_id
-    ) do
+           from up in UserPolicySchema,
+             where: up.user_id == ^user_id and up.policy_id == ^policy_id
+         ) do
       nil -> {:error, :not_found}
       user_policy -> NoizuPromptLingua.Repo.delete(user_policy)
     end

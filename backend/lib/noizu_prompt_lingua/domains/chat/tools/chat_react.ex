@@ -1,6 +1,9 @@
 defmodule NoizuPromptLingua.Domains.Chat.Tools.ChatReact do
   use Noizu.MCP.Server.Tool,
-    name: "Chat.React", description: "Add emoji reaction to a chat event.", hidden: true, category: "Chat"
+    name: "Chat.React",
+    description: "Add emoji reaction to a chat event.",
+    hidden: true,
+    category: "Chat"
 
   input do
     field :event_id, :string, required: true, description: "Chat event UUID"

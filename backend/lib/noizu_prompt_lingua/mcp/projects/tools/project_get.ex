@@ -21,15 +21,16 @@ defmodule NoizuPromptLingua.MCP.Projects.Tools.ProjectGet do
         {:error, "Project '#{ref}' not found"}
 
       project ->
-        {:ok, %{
-          id: project.id,
-          organization_id: project.organization_id,
-          name: project.name,
-          slug: project.slug,
-          description: project.description,
-          status: project.status,
-          created_at: project.inserted_at
-        }}
+        {:ok,
+         %{
+           id: project.id,
+           organization_id: project.organization_id,
+           name: project.name,
+           slug: project.slug,
+           description: project.description,
+           status: project.status,
+           created_at: project.inserted_at
+         }}
     end
   end
 end

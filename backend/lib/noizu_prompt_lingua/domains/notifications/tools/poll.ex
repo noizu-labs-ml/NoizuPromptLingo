@@ -10,12 +10,23 @@ defmodule NoizuPromptLingua.Domains.Notifications.Tools.Poll do
   input do
     field :organization, :string, required: true, description: "Organization slug or UUID"
     field :recipient, :string, required: true, description: "Recipient agent handle"
-    field :cursor, :integer, default: 0, description: "Opaque cursor; only items newer than this are returned"
+
+    field :cursor, :integer,
+      default: 0,
+      description: "Opaque cursor; only items newer than this are returned"
+
     field :max, :integer, default: 50, description: "Max items to return this call"
     field :kinds, {:array, :string}, description: "Filter to these notification kinds"
-    field :include_future, :boolean, default: false, description: "Include not-yet-due (scheduled/digest) items"
+
+    field :include_future, :boolean,
+      default: false,
+      description: "Include not-yet-due (scheduled/digest) items"
+
     field :auto_read, :boolean, default: false, description: "Mark returned items read"
-    field :wait_ms, :integer, default: 180_000, description: "Max time to hold the Monitor, in ms (capped at 290000)"
+
+    field :wait_ms, :integer,
+      default: 180_000,
+      description: "Max time to hold the Monitor, in ms (capped at 290000)"
   end
 
   alias NoizuPromptLingua.MCP.Args

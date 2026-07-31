@@ -27,7 +27,16 @@ defmodule NoizuPromptLingua.Schema.CustomerSegment do
 
   def changeset(segment, attrs) do
     segment
-    |> cast(attrs, [:organization_id, :project_id, :slug, :name, :description, :criteria, :tags, :status])
+    |> cast(attrs, [
+      :organization_id,
+      :project_id,
+      :slug,
+      :name,
+      :description,
+      :criteria,
+      :tags,
+      :status
+    ])
     |> validate_required([:organization_id, :slug, :name])
     |> validate_inclusion(:status, @statuses)
     |> foreign_key_constraint(:organization_id)

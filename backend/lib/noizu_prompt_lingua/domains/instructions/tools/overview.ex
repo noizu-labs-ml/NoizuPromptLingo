@@ -1,7 +1,9 @@
 defmodule NoizuPromptLingua.Domains.Instructions.Tools.Overview do
-  use Noizu.MCP.Server.Tool, name: "Instruction.Overview",
+  use Noizu.MCP.Server.Tool,
+    name: "Instruction.Overview",
     description: "List instruction tools and instruction count for an organization.",
-    annotations: [read_only_hint: true], category: "Instructions"
+    annotations: [read_only_hint: true],
+    category: "Instructions"
 
   input do
     field :organization, :string, description: "Organization slug or UUID — scopes the count"
@@ -18,13 +20,19 @@ defmodule NoizuPromptLingua.Domains.Instructions.Tools.Overview do
         org_id -> Instructions.count(org_id)
       end
 
-    {:ok, %{domain: "Instructions", subdomain: "instructions.tobor.locker",
-      instruction_count: count,
-      usage: "Save a prompt once, then spawn sub-agents with Instruction.Render passing the slug handle + params.",
-      tools: %{
-        crud: ~w(Instruction.Create Instruction.Get Instruction.Update Instruction.List Instruction.Delete),
-        versions: ~w(Instruction.Versions Instruction.SetActiveVersion),
-        dispatch: ~w(Instruction.Render)
-      }}}
+    {:ok,
+     %{
+       domain: "Instructions",
+       subdomain: "instructions.tobor.locker",
+       instruction_count: count,
+       usage:
+         "Save a prompt once, then spawn sub-agents with Instruction.Render passing the slug handle + params.",
+       tools: %{
+         crud:
+           ~w(Instruction.Create Instruction.Get Instruction.Update Instruction.List Instruction.Delete),
+         versions: ~w(Instruction.Versions Instruction.SetActiveVersion),
+         dispatch: ~w(Instruction.Render)
+       }
+     }}
   end
 end

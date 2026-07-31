@@ -1,8 +1,10 @@
 defmodule NoizuPromptLingua.Domains.Chat.Tools.ScheduleMessage do
   use Noizu.MCP.Server.Tool,
     name: "Chat.ScheduleMessage",
-    description: "Schedule a message to be posted at a future instant or time-of-day rather than immediately. Released live by Chat.release_due_scheduled/0.",
-    hidden: true, category: "Chat"
+    description:
+      "Schedule a message to be posted at a future instant or time-of-day rather than immediately. Released live by Chat.release_due_scheduled/0.",
+    hidden: true,
+    category: "Chat"
 
   input do
     field :room_id, :string, required: true, description: "Room UUID"
@@ -17,7 +19,8 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.ScheduleMessage do
 
   @impl true
   def call(args, _ctx) do
-    with {:ok, when_dt} <- resolve_when(Args.get(args, :scheduled_for), Args.get(args, :time_of_day)) do
+    with {:ok, when_dt} <-
+           resolve_when(Args.get(args, :scheduled_for), Args.get(args, :time_of_day)) do
       attrs = %{
         room_id: Args.get(args, :room_id),
         content: Args.get(args, :content),
@@ -34,7 +37,8 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.ScheduleMessage do
     end
   end
 
-  defp resolve_when(nil, nil), do: {:error, "Provide scheduled_for (ISO8601) or time_of_day (HH:MM)"}
+  defp resolve_when(nil, nil),
+    do: {:error, "Provide scheduled_for (ISO8601) or time_of_day (HH:MM)"}
 
   defp resolve_when(iso, _) when is_binary(iso) and iso != "" do
     case DateTime.from_iso8601(iso) do

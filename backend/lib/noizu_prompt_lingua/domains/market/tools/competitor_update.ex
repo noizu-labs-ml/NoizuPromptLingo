@@ -5,7 +5,7 @@ defmodule NoizuPromptLingua.Domains.Market.Tools.CompetitorUpdate do
     hidden: true,
     category: "Market.Competitors"
 
-  input_schema %{
+  input_schema(%{
     "type" => "object",
     "properties" => %{
       "id" => %{"type" => "string", "description" => "Competitor UUID"},
@@ -13,14 +13,22 @@ defmodule NoizuPromptLingua.Domains.Market.Tools.CompetitorUpdate do
       "website" => %{"type" => "string", "description" => "Website"},
       "description" => %{"type" => "string", "description" => "Description"},
       "tier" => %{"type" => "string", "description" => "direct, indirect, or aspirational"},
-      "strengths" => %{"type" => "array", "items" => %{"type" => "string"}, "description" => "Strengths"},
-      "weaknesses" => %{"type" => "array", "items" => %{"type" => "string"}, "description" => "Weaknesses"},
+      "strengths" => %{
+        "type" => "array",
+        "items" => %{"type" => "string"},
+        "description" => "Strengths"
+      },
+      "weaknesses" => %{
+        "type" => "array",
+        "items" => %{"type" => "string"},
+        "description" => "Weaknesses"
+      },
       "metadata" => %{"type" => "object", "description" => "Metadata"},
       "tags" => %{"type" => "array", "items" => %{"type" => "string"}, "description" => "Tags"},
       "status" => %{"type" => "string", "description" => "active or archived"}
     },
     "required" => ["id"]
-  }
+  })
 
   alias NoizuPromptLingua.Domains.Market
   alias NoizuPromptLingua.MCP.Args

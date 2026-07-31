@@ -27,7 +27,16 @@ defmodule NoizuPromptLingua.Schema.MediaProviderConfig do
 
   def changeset(cfg, attrs) do
     cfg
-    |> cast(attrs, [:organization_id, :provider, :modality, :enabled, :api_key, :endpoint, :default_model, :settings])
+    |> cast(attrs, [
+      :organization_id,
+      :provider,
+      :modality,
+      :enabled,
+      :api_key,
+      :endpoint,
+      :default_model,
+      :settings
+    ])
     |> validate_required([:organization_id, :provider, :modality])
     |> unique_constraint(:provider, name: :uq_media_provider_configs_org_provider)
     |> foreign_key_constraint(:organization_id)

@@ -52,7 +52,9 @@ defmodule NoizuPromptLingua.Sessions do
 
   def archive(id) do
     case NoizuPromptLingua.Repo.get(Schema, id) do
-      nil -> {:error, :not_found}
+      nil ->
+        {:error, :not_found}
+
       session ->
         session
         |> Schema.changeset(%{status: "archived", archived_at: DateTime.utc_now()})
@@ -62,7 +64,9 @@ defmodule NoizuPromptLingua.Sessions do
 
   def unarchive(id) do
     case NoizuPromptLingua.Repo.get(Schema, id) do
-      nil -> {:error, :not_found}
+      nil ->
+        {:error, :not_found}
+
       session ->
         session
         |> Schema.changeset(%{status: "active", archived_at: nil})

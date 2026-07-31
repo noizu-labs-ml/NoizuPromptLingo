@@ -10,13 +10,20 @@ defmodule NoizuPromptLingua.Domains.Markdown.Tools.Overview do
 
   @impl true
   def call(_args, _ctx) do
-    {:ok, %{
-      domain: "Markdown",
-      subdomain: "markdown.tobor.locker",
-      tools: [
-        %{name: "Markdown.Convert", description: "Convert a URL, HTML, or raw content to Markdown"},
-        %{name: "Markdown.View", description: "Filter/collapse a Markdown document by heading selector"}
-      ]
-    }}
+    {:ok,
+     %{
+       domain: "Markdown",
+       subdomain: "markdown.tobor.locker",
+       tools: [
+         %{
+           name: "Markdown.Convert",
+           description: "Convert a URL, HTML, or raw content to Markdown"
+         },
+         %{
+           name: "Markdown.View",
+           description: "Filter/collapse a Markdown document by heading selector"
+         }
+       ]
+     }}
   end
 end

@@ -86,6 +86,20 @@ export interface ProjectInput {
   key_prefix?: string;
 }
 
+export interface VoiceApprovalScriptResponse {
+  approval_script: string;
+  execution_enabled: boolean;
+  preview: {
+    endpoint: string;
+    command: string;
+    organization: string;
+    project_id?: string | null;
+    title: string;
+    ticket_type: string;
+    description?: string;
+  };
+}
+
 // Admin GitHub config. Token values are always masked by the backend.
 export interface GithubToken {
   id: string;
@@ -1880,6 +1894,13 @@ export const api = {
   deleteProject(orgId: string, id: string) {
     return request<{ message: string }>(`/api/v1/organizations/${orgId}/projects/${id}`, {
       method: "DELETE",
+    });
+  },
+
+  prepareVoiceApprovalScript(orgId: string, input: { transcript: string; title?: string; ticket_type?: string; description?: string; project_id?: string }) {
+    return request<VoiceApprovalScriptResponse>(`/api/v1/organizations/${orgId}/assistant/approval-script`, {
+      method: "POST",
+      body: JSON.stringify(input),
     });
   },
 

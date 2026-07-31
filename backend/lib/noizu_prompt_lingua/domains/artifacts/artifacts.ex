@@ -19,7 +19,9 @@ defmodule NoizuPromptLingua.Domains.Artifacts do
 
   def get(artifact_id, revision_id \\ nil) do
     case Repo.get(Artifact, artifact_id) do
-      nil -> nil
+      nil ->
+        nil
+
       artifact ->
         revision =
           if revision_id do
@@ -98,7 +100,9 @@ defmodule NoizuPromptLingua.Domains.Artifacts do
   end
 
   defp maybe_filter_organization(query, nil), do: query
-  defp maybe_filter_organization(query, org_id), do: where(query, [a], a.organization_id == ^org_id)
+
+  defp maybe_filter_organization(query, org_id),
+    do: where(query, [a], a.organization_id == ^org_id)
 
   defp maybe_filter_kind(query, nil), do: query
   defp maybe_filter_kind(query, kind), do: where(query, [a], a.kind == ^kind)
@@ -107,6 +111,7 @@ defmodule NoizuPromptLingua.Domains.Artifacts do
   defp maybe_filter_project(query, project_id), do: where(query, [a], a.project_id == ^project_id)
 
   defp maybe_search(query, nil), do: query
+
   defp maybe_search(query, search) do
     pattern = "%#{search}%"
     where(query, [a], ilike(a.title, ^pattern))

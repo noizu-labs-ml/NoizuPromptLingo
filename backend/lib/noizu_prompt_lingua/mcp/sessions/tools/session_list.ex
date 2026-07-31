@@ -10,7 +10,10 @@ defmodule NoizuPromptLingua.MCP.Sessions.Tools.SessionList do
   alias NoizuPromptLingua.MCP.{Args, Resolve}
 
   input do
-    field :organization, :string, required: true, description: "Organization slug or UUID (required)"
+    field :organization, :string,
+      required: true,
+      description: "Organization slug or UUID (required)"
+
     field :status, :string, description: "Filter by status (active|archived|completed)"
     field :project, :string, description: "Filter by project slug or UUID"
     field :limit, :integer, description: "Max results (default 50)"
@@ -42,14 +45,22 @@ defmodule NoizuPromptLingua.MCP.Sessions.Tools.SessionList do
 
         sessions = NoizuPromptLingua.Sessions.list_for_org(org_id, opts)
 
-        {:ok, %{
-          sessions: Enum.map(sessions, &%{
-            id: &1.id, title: &1.title, status: &1.status,
-            organization_id: &1.organization_id, project_id: &1.project_id,
-            created_at: &1.inserted_at
-          }),
-          count: length(sessions)
-        }}
+        {:ok,
+         %{
+           sessions:
+             Enum.map(
+               sessions,
+               &%{
+                 id: &1.id,
+                 title: &1.title,
+                 status: &1.status,
+                 organization_id: &1.organization_id,
+                 project_id: &1.project_id,
+                 created_at: &1.inserted_at
+               }
+             ),
+           count: length(sessions)
+         }}
     end
   end
 

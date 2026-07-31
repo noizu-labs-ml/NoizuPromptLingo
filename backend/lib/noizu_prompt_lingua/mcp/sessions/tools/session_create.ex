@@ -11,13 +11,27 @@ defmodule NoizuPromptLingua.MCP.Sessions.Tools.SessionCreate do
   alias NoizuPromptLingua.MCP.{Args, Resolve}
 
   input do
-    field :organization, :string, required: true, description: "Organization slug or UUID (required)"
+    field :organization, :string,
+      required: true,
+      description: "Organization slug or UUID (required)"
+
     field :title, :string, required: true, description: "Human-readable session title"
-    field :description, :string, description: "Optional longer description of the session's purpose"
+
+    field :description, :string,
+      description: "Optional longer description of the session's purpose"
+
     field :status, :string, description: "Initial status (default \"active\")"
-    field :project, :string, description: "Optional project slug or UUID to associate this session with"
-    field :model, :string, description: "Optional model this session targets (e.g. \"5.4\"); tailors tool descriptions"
-    field :runner, :string, description: "Optional harness/runner this session targets (e.g. \"codex\"); tailors tool descriptions"
+
+    field :project, :string,
+      description: "Optional project slug or UUID to associate this session with"
+
+    field :model, :string,
+      description: "Optional model this session targets (e.g. \"5.4\"); tailors tool descriptions"
+
+    field :runner, :string,
+      description:
+        "Optional harness/runner this session targets (e.g. \"codex\"); tailors tool descriptions"
+
     field :owner_id, :string, description: "Optional creating user UUID"
   end
 
@@ -40,16 +54,17 @@ defmodule NoizuPromptLingua.MCP.Sessions.Tools.SessionCreate do
 
       case NoizuPromptLingua.Sessions.create(attrs, Args.get(args, :owner_id)) do
         {:ok, session} ->
-          {:ok, %{
-            id: session.id,
-            title: session.title,
-            status: session.status,
-            organization_id: session.organization_id,
-            project_id: session.project_id,
-            model: session.model,
-            runner: session.runner,
-            created_at: session.inserted_at
-          }}
+          {:ok,
+           %{
+             id: session.id,
+             title: session.title,
+             status: session.status,
+             organization_id: session.organization_id,
+             project_id: session.project_id,
+             model: session.model,
+             runner: session.runner,
+             created_at: session.inserted_at
+           }}
 
         {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
           {:error, "Failed to create session: #{inspect(changeset.errors)}"}
@@ -58,15 +73,21 @@ defmodule NoizuPromptLingua.MCP.Sessions.Tools.SessionCreate do
           {:error, "Failed to create session: #{inspect(reason)}"}
       end
     else
-      {:org, nil} -> {:error, "Organization '#{org_ref}' not found"}
-      {:error, :project_not_found} -> {:error, "Project '#{project_ref}' not found"}
-      {:error, :project_not_in_org} -> {:error, "Project '#{project_ref}' does not belong to this organization"}
+      {:org, nil} ->
+        {:error, "Organization '#{org_ref}' not found"}
+
+      {:error, :project_not_found} ->
+        {:error, "Project '#{project_ref}' not found"}
+
+      {:error, :project_not_in_org} ->
+        {:error, "Project '#{project_ref}' does not belong to this organization"}
     end
   end
 
   # Project is optional. When supplied it must resolve and belong to the org.
   defp resolve_project(nil, _org_id), do: {:ok, nil}
   defp resolve_project("", _org_id), do: {:ok, nil}
+
   defp resolve_project(ref, org_id) do
     case Resolve.project(ref) do
       nil -> {:error, :project_not_found}

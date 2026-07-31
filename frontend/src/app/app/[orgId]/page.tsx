@@ -1,6 +1,7 @@
 'use client';
 
 import { useOrg } from '@/context/org';
+import { MiniRealtimeVoiceWidget } from '@/components/mini-realtime-voice-widget';
 import {
   CubeIcon,
   ClockIcon,
@@ -141,6 +142,10 @@ export default function OrgDashboard() {
 
       {/* Charts + side panels */}
       <div className="dash-grid">
+        {currentOrg ? (
+          <MiniRealtimeVoiceWidget orgId={currentOrg.id} />
+        ) : null}
+
         <section className="dash-panel">
           <div className="dash-panel__head">
             <h2 className="dash-panel__title">Activity</h2>

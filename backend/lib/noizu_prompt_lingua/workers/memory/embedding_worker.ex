@@ -43,7 +43,11 @@ defmodule NoizuPromptLingua.Workers.Memory.EmbeddingWorker do
     {mood, hormones} = Emotion.from_row(mem)
     emotional = %{"emotional" => Emotion.build_vector(mood, hormones)}
 
-    texts = for f <- @text_facets, t = Map.get(mem, f), is_binary(t) and String.trim(t) != "", do: {f, t}
+    texts =
+      for f <- @text_facets,
+          t = Map.get(mem, f),
+          is_binary(t) and String.trim(t) != "",
+          do: {f, t}
 
     case texts do
       [] ->
@@ -59,7 +63,10 @@ defmodule NoizuPromptLingua.Workers.Memory.EmbeddingWorker do
               Map.merge(emotional, text_map)
 
             {:error, reason} ->
-              Logger.warning("[Memory.EmbeddingWorker] embed failed for #{mem.id}: #{inspect(reason)}")
+              Logger.warning(
+                "[Memory.EmbeddingWorker] embed failed for #{mem.id}: #{inspect(reason)}"
+              )
+
               emotional
           end
         else
@@ -87,7 +94,10 @@ defmodule NoizuPromptLingua.Workers.Memory.EmbeddingWorker do
         activate(mem, synced: has_text, model: if(has_text, do: Embeddings.model(), else: nil))
 
       other ->
-        Logger.warning("[Memory.EmbeddingWorker] weaviate upsert failed for #{mem.id}: #{inspect(other)}")
+        Logger.warning(
+          "[Memory.EmbeddingWorker] weaviate upsert failed for #{mem.id}: #{inspect(other)}"
+        )
+
         activate(mem, synced: false, model: nil)
     end
   end
@@ -108,7 +118,9 @@ defmodule NoizuPromptLingua.Workers.Memory.EmbeddingWorker do
     Jobs.enqueue(LinkJob, %{memory_id: memory_id})
     :ok
   rescue
-    e -> Logger.warning("[Memory.EmbeddingWorker] could not enqueue link: #{inspect(e)}"); :ok
+    e ->
+      Logger.warning("[Memory.EmbeddingWorker] could not enqueue link: #{inspect(e)}")
+      :ok
   catch
     :exit, _ -> :ok
   end

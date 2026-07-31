@@ -1,7 +1,8 @@
 defmodule NoizuPromptLingua.Domains.Notifications.Tools.MarkRead do
   use Noizu.MCP.Server.Tool,
     name: "Notifications.MarkRead",
-    description: "Mark notifications read for a recipient. Pass specific `ids`, or omit to mark all.",
+    description:
+      "Mark notifications read for a recipient. Pass specific `ids`, or omit to mark all.",
     hidden: true,
     category: "Notifications"
 

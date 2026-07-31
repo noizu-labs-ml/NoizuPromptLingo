@@ -1,7 +1,8 @@
 defmodule NoizuPromptLingua.Domains.Campaigns.Tools.CampaignList do
   use Noizu.MCP.Server.Tool,
     name: "Campaign.List",
-    description: "List campaigns for an organization, optionally filtered by project, channel, status, or tag.",
+    description:
+      "List campaigns for an organization, optionally filtered by project, channel, status, or tag.",
     annotations: [read_only_hint: true],
     hidden: true,
     category: "Campaigns"
@@ -37,7 +38,15 @@ defmodule NoizuPromptLingua.Domains.Campaigns.Tools.CampaignList do
             limit: Args.get(args, :limit) || 100
           )
 
-        {:ok, %{count: length(campaigns), campaigns: Enum.map(campaigns, &%{id: &1.id, slug: &1.slug, name: &1.name, channel: &1.channel, status: &1.status})}}
+        {:ok,
+         %{
+           count: length(campaigns),
+           campaigns:
+             Enum.map(
+               campaigns,
+               &%{id: &1.id, slug: &1.slug, name: &1.name, channel: &1.channel, status: &1.status}
+             )
+         }}
     end
   end
 end

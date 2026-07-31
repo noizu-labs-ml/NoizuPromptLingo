@@ -5,12 +5,15 @@ defmodule NoizuPromptLingua.Domains.Campaigns.Tools.DomainNameUpdate do
     hidden: true,
     category: "Campaigns.Domains"
 
-  input_schema %{
+  input_schema(%{
     "type" => "object",
     "properties" => %{
       "id" => %{"type" => "string", "description" => "Domain name UUID"},
       "name" => %{"type" => "string", "description" => "FQDN"},
-      "status" => %{"type" => "string", "description" => "candidate, available, registered, in_use, expired"},
+      "status" => %{
+        "type" => "string",
+        "description" => "candidate, available, registered, in_use, expired"
+      },
       "registrar" => %{"type" => "string", "description" => "Registrar"},
       "registered_at" => %{"type" => "string", "description" => "Registration date (YYYY-MM-DD)"},
       "expires_at" => %{"type" => "string", "description" => "Expiry date (YYYY-MM-DD)"},
@@ -19,7 +22,7 @@ defmodule NoizuPromptLingua.Domains.Campaigns.Tools.DomainNameUpdate do
       "tags" => %{"type" => "array", "items" => %{"type" => "string"}, "description" => "Tags"}
     },
     "required" => ["id"]
-  }
+  })
 
   alias NoizuPromptLingua.Domains.Campaigns
   alias NoizuPromptLingua.MCP.Args

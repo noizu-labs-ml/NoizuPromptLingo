@@ -19,7 +19,9 @@ defmodule NoizuPromptLingua.Domains.MockMCP.WeaviateStore do
   @prefix "Mockmcp"
 
   defp base, do: Noizu.Weaviate.api_base()
-  defp call(method, path, body), do: Noizu.Weaviate.api_call(method, base() <> path, body, :json, %{})
+
+  defp call(method, path, body),
+    do: Noizu.Weaviate.api_call(method, base() <> path, body, :json, %{})
 
   @doc "GraphQL-safe class name for a mock's collection (PascalCase, prefixed)."
   def class_name(slug, name), do: @prefix <> pascal(slug) <> pascal(name)
@@ -28,7 +30,9 @@ defmodule NoizuPromptLingua.Domains.MockMCP.WeaviateStore do
     s
     |> to_string()
     |> String.split(~r/[^A-Za-z0-9]+/, trim: true)
-    |> Enum.map_join("", fn w -> String.upcase(String.first(w)) <> (String.slice(w, 1..-1//1) || "") end)
+    |> Enum.map_join("", fn w ->
+      String.upcase(String.first(w)) <> (String.slice(w, 1..-1//1) || "")
+    end)
   end
 
   # ── Provisioning ─────────────────────────────────────────────
@@ -40,9 +44,12 @@ defmodule NoizuPromptLingua.Domains.MockMCP.WeaviateStore do
   def ensure_classes(%{slug: slug}, classes) when is_list(classes) do
     Enum.reduce_while(classes, {:ok, []}, fn c, {:ok, acc} ->
       case class_def_name(c) do
-        nil -> {:cont, {:ok, acc}}
+        nil ->
+          {:cont, {:ok, acc}}
+
         name ->
           cls = class_name(slug, name)
+
           case ensure_class(cls, c) do
             :ok -> {:cont, {:ok, [cls | acc]}}
             {:error, e} -> {:halt, {:error, e}}
@@ -84,7 +91,10 @@ defmodule NoizuPromptLingua.Domains.MockMCP.WeaviateStore do
   end
 
   defp property(p) do
-    %{name: string_field(p, "name") || "value", dataType: [data_type(string_field(p, "dataType"))]}
+    %{
+      name: string_field(p, "name") || "value",
+      dataType: [data_type(string_field(p, "dataType"))]
+    }
   end
 
   defp data_type(t) when t in ~w(text string), do: "text"
@@ -94,7 +104,8 @@ defmodule NoizuPromptLingua.Domains.MockMCP.WeaviateStore do
   defp data_type(_), do: "text"
 
   @doc "Drop all of a mock's collections (teardown). Best-effort."
-  def delete_classes(%{slug: slug, schema_json: %{"weaviate" => classes}}) when is_list(classes) do
+  def delete_classes(%{slug: slug, schema_json: %{"weaviate" => classes}})
+      when is_list(classes) do
     Enum.each(classes, fn c ->
       case class_def_name(c) do
         nil -> :ok
@@ -138,7 +149,7 @@ defmodule NoizuPromptLingua.Domains.MockMCP.WeaviateStore do
     with {:ok, cls} <- resolve_class(def_, name),
          {:ok, qvec} <- embed(query) do
       limit = opts[:limit] || 10
-      fields = ((prop_names(def_, name) ++ ["text"]) |> Enum.uniq() |> Enum.join(" "))
+      fields = (prop_names(def_, name) ++ ["text"]) |> Enum.uniq() |> Enum.join(" ")
 
       gql =
         "{ Get { #{cls}(limit: #{limit}, nearVector: {vector: #{Jason.encode!(qvec)}}) " <>
@@ -177,7 +188,8 @@ defmodule NoizuPromptLingua.Domains.MockMCP.WeaviateStore do
     if Enum.any?(designed, fn n -> pascal(n) == target end) do
       {:ok, class_name(slug, name)}
     else
-      {:error, "unknown collection '#{name}' — declared collections: #{Enum.join(designed, ", ")}"}
+      {:error,
+       "unknown collection '#{name}' — declared collections: #{Enum.join(designed, ", ")}"}
     end
   end
 

@@ -2,13 +2,19 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.ForwardReplies do
   use Noizu.MCP.Server.Tool,
     name: "Chat.ForwardReplies",
     description: "Forward the reply list under a parent message into a target room as a thread.",
-    hidden: true, category: "Chat"
+    hidden: true,
+    category: "Chat"
 
   input do
-    field :parent_message_id, :string, required: true, description: "Source message whose replies are forwarded"
+    field :parent_message_id, :string,
+      required: true,
+      description: "Source message whose replies are forwarded"
+
     field :target_room_id, :string, required: true, description: "Destination room UUID"
     field :sender, :string, required: true, description: "Persona slug forwarding the thread"
-    field :target_parent_id, :string, description: "Existing message in the target to thread under; omit to create a header"
+
+    field :target_parent_id, :string,
+      description: "Existing message in the target to thread under; omit to create a header"
   end
 
   alias NoizuPromptLingua.Domains.Chat
@@ -26,7 +32,8 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.ForwardReplies do
     if replies == [] do
       {:error, "No replies to forward under that message"}
     else
-      with {:ok, thread_parent_id} <- ensure_thread_parent(target_parent_id, target_room_id, sender, parent_id) do
+      with {:ok, thread_parent_id} <-
+             ensure_thread_parent(target_parent_id, target_room_id, sender, parent_id) do
         forwarded =
           Enum.reduce(replies, [], fn reply, acc ->
             case Chat.send_message(%{
@@ -41,7 +48,12 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.ForwardReplies do
           end)
           |> Enum.reverse()
 
-        {:ok, %{thread_parent_id: thread_parent_id, forwarded_count: length(forwarded), forwarded_ids: forwarded}}
+        {:ok,
+         %{
+           thread_parent_id: thread_parent_id,
+           forwarded_count: length(forwarded),
+           forwarded_ids: forwarded
+         }}
       else
         {:error, cs} -> {:error, "Failed: #{inspect(cs)}"}
       end
@@ -59,7 +71,8 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.ForwardReplies do
     end
   end
 
-  defp ensure_thread_parent(target_parent_id, _room, _sender, _source), do: {:ok, target_parent_id}
+  defp ensure_thread_parent(target_parent_id, _room, _sender, _source),
+    do: {:ok, target_parent_id}
 
   defp length_label(source_parent_id), do: "from message #{source_parent_id}"
 end

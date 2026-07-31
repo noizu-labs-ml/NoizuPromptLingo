@@ -1,7 +1,8 @@
 defmodule NoizuPromptLingua.Domains.Notifications.Tools.MarkSeen do
   use Noizu.MCP.Server.Tool,
     name: "Notifications.MarkSeen",
-    description: "Mark notifications seen for a recipient. Pass specific `ids`, or omit to mark all.",
+    description:
+      "Mark notifications seen for a recipient. Pass specific `ids`, or omit to mark all.",
     hidden: true,
     category: "Notifications"
 

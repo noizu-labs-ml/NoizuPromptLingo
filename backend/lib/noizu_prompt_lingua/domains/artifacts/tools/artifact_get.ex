@@ -26,20 +26,21 @@ defmodule NoizuPromptLingua.Domains.Artifacts.Tools.ArtifactGet do
         {:error, "Revision not found"}
 
       {artifact, revision} ->
-        {:ok, %{
-          id: artifact.id,
-          kind: artifact.kind,
-          title: artifact.title,
-          mime_type: artifact.mime_type,
-          revision: %{
-            id: revision.id,
-            revision_number: revision.revision_number,
-            content: revision.content,
-            note: revision.note,
-            created_at: revision.inserted_at
-          },
-          created_at: artifact.inserted_at
-        }}
+        {:ok,
+         %{
+           id: artifact.id,
+           kind: artifact.kind,
+           title: artifact.title,
+           mime_type: artifact.mime_type,
+           revision: %{
+             id: revision.id,
+             revision_number: revision.revision_number,
+             content: revision.content,
+             note: revision.note,
+             created_at: revision.inserted_at
+           },
+           created_at: artifact.inserted_at
+         }}
     end
   end
 end

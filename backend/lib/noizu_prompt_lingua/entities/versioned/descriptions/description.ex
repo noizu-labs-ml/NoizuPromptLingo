@@ -5,7 +5,10 @@ defmodule NoizuPromptLingua.Versioned.Descriptions.Description do
   @repo NoizuPromptLingua.Versioned.Descriptions
   @sref "versioned-description"
   @derive Noizu.Entity.Store.Ecto.EntityProtocol
-  @persistence ecto_store(NoizuPromptLingua.Schema.Versioned.Descriptions.Description, NoizuPromptLingua.Repo)
+  @persistence ecto_store(
+                 NoizuPromptLingua.Schema.Versioned.Descriptions.Description,
+                 NoizuPromptLingua.Repo
+               )
   def_entity do
     id(:uuid)
     field :title, nil, :string

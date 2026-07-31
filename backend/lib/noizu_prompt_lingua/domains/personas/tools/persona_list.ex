@@ -1,14 +1,21 @@
 defmodule NoizuPromptLingua.Domains.Personas.Tools.PersonaList do
-  use Noizu.MCP.Server.Tool, name: "Persona.List",
+  use Noizu.MCP.Server.Tool,
+    name: "Persona.List",
     description:
       "List personas. With a project, returns the effective list: that project's " <>
-      "personas plus org-level (no-project) personas. Without a project, lists all " <>
-      "personas in the organization.",
-    hidden: true, category: "Personas", annotations: [read_only_hint: true]
+        "personas plus org-level (no-project) personas. Without a project, lists all " <>
+        "personas in the organization.",
+    hidden: true,
+    category: "Personas",
+    annotations: [read_only_hint: true]
 
   input do
     field :organization, :string, required: true, description: "Organization slug or UUID"
-    field :project, :string, description: "Optional project slug or UUID. When set, org-level personas are included in the effective list."
+
+    field :project, :string,
+      description:
+        "Optional project slug or UUID. When set, org-level personas are included in the effective list."
+
     field :status, :string, description: "active or archived"
     field :tag, :string
   end
@@ -28,14 +35,30 @@ defmodule NoizuPromptLingua.Domains.Personas.Tools.PersonaList do
           |> put_opt(:tag, Args.get(args, :tag))
 
         personas = Personas.list(opts)
-        {:ok, %{count: length(personas), personas: Enum.map(personas, fn p ->
-          %{id: p.id, slug: p.slug, name: p.name, role: p.role, status: p.status,
-            tags: p.tags, project_id: p.project_id,
-            scope: if(is_nil(p.project_id), do: "org", else: "project")}
-        end)}}
 
-      {:error, :org_not_found} -> {:error, "Organization not found"}
-      {:error, _} -> {:error, "Invalid project"}
+        {:ok,
+         %{
+           count: length(personas),
+           personas:
+             Enum.map(personas, fn p ->
+               %{
+                 id: p.id,
+                 slug: p.slug,
+                 name: p.name,
+                 role: p.role,
+                 status: p.status,
+                 tags: p.tags,
+                 project_id: p.project_id,
+                 scope: if(is_nil(p.project_id), do: "org", else: "project")
+               }
+             end)
+         }}
+
+      {:error, :org_not_found} ->
+        {:error, "Organization not found"}
+
+      {:error, _} ->
+        {:error, "Invalid project"}
     end
   end
 

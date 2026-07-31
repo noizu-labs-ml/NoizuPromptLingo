@@ -20,8 +20,16 @@ defmodule NoizuPromptLingua.Schema.MockMCPCallLog do
 
   def changeset(log, attrs) do
     log
-    |> cast(attrs, [:definition_id, :session_id, :method, :tool_name,
-                     :arguments, :response, :latency_ms, :error])
+    |> cast(attrs, [
+      :definition_id,
+      :session_id,
+      :method,
+      :tool_name,
+      :arguments,
+      :response,
+      :latency_ms,
+      :error
+    ])
     |> validate_required([:definition_id, :method])
   end
 end

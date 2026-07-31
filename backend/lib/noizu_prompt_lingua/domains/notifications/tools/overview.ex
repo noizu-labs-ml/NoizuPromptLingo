@@ -1,7 +1,8 @@
 defmodule NoizuPromptLingua.Domains.Notifications.Tools.Overview do
   use Noizu.MCP.Server.Tool,
     name: "Notifications.Overview",
-    description: "List the notification tools and current notification count for an organization.",
+    description:
+      "List the notification tools and current notification count for an organization.",
     annotations: [read_only_hint: true],
     category: "Notifications"
 
@@ -30,7 +31,10 @@ defmodule NoizuPromptLingua.Domains.Notifications.Tools.Overview do
            tools: [
              %{name: "Notify", description: "Send a short DM (<=128 chars) to user(s)/group(s)"},
              %{name: "Notifications.Get", description: "Cursor pull of new notifications"},
-             %{name: "Notifications.Poll", description: "Monitor — block until a notification arrives"},
+             %{
+               name: "Notifications.Poll",
+               description: "Monitor — block until a notification arrives"
+             },
              %{name: "Notifications.MarkRead", description: "Mark notifications read"},
              %{name: "Notifications.MarkSeen", description: "Mark notifications seen"},
              %{name: "Notifications.Ack", description: "Dismiss (ack) notifications"},

@@ -34,12 +34,25 @@ defmodule NoizuPromptLingua.Domains.PubSub.Tools.Overview do
            channel_count: length(channels),
            channels: channels,
            tools: [
-             %{name: "PubSub.Publish", description: "Append a message to a channel and resurface followers' availability pointers"},
+             %{
+               name: "PubSub.Publish",
+               description:
+                 "Append a message to a channel and resurface followers' availability pointers"
+             },
              %{name: "PubSub.Follow", description: "Follow a channel as a persona"},
              %{name: "PubSub.Unfollow", description: "Stop following a channel"},
-             %{name: "PubSub.Ack", description: "Mark a channel caught-up and clear its availability pointer"},
-             %{name: "PubSub.FetchChannel", description: "Fetch a channel's message log (limit, since cursor)"},
-             %{name: "PubSub.FetchAll", description: "Fetch recent messages across all followed channels (limit)"}
+             %{
+               name: "PubSub.Ack",
+               description: "Mark a channel caught-up and clear its availability pointer"
+             },
+             %{
+               name: "PubSub.FetchChannel",
+               description: "Fetch a channel's message log (limit, since cursor)"
+             },
+             %{
+               name: "PubSub.FetchAll",
+               description: "Fetch recent messages across all followed channels (limit)"
+             }
            ]
          }}
     end

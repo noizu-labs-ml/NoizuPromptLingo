@@ -13,7 +13,11 @@ defmodule NoizuPromptLinguaWeb.FieldDefinitionController do
     with_org(conn, org_id, "viewer", fn resolved_org_id ->
       project_id = blank_to_nil(params["project_id"])
       fields = Definitions.list_fields(resolved_org_id, project_id)
-      json(conn, %{field_definitions: Enum.map(fields, &field_to_json/1), field_types: TicketFieldDefinition.field_types()})
+
+      json(conn, %{
+        field_definitions: Enum.map(fields, &field_to_json/1),
+        field_types: TicketFieldDefinition.field_types()
+      })
     end)
   end
 
@@ -24,10 +28,17 @@ defmodule NoizuPromptLinguaWeb.FieldDefinitionController do
   def show(conn, %{"org_id" => org_id, "id" => id}) do
     with_org(conn, org_id, "viewer", fn resolved_org_id ->
       case Definitions.get_field(id) do
-        nil -> conn |> put_status(:not_found) |> json(%{error: "Field not found"})
-        %{organization_id: nil} = field -> json(conn, %{field_definition: field_to_json(field)})
-        %{organization_id: ^resolved_org_id} = field -> json(conn, %{field_definition: field_to_json(field)})
-        _ -> conn |> put_status(:not_found) |> json(%{error: "Field not found"})
+        nil ->
+          conn |> put_status(:not_found) |> json(%{error: "Field not found"})
+
+        %{organization_id: nil} = field ->
+          json(conn, %{field_definition: field_to_json(field)})
+
+        %{organization_id: ^resolved_org_id} = field ->
+          json(conn, %{field_definition: field_to_json(field)})
+
+        _ ->
+          conn |> put_status(:not_found) |> json(%{error: "Field not found"})
       end
     end)
   end
@@ -35,21 +46,29 @@ defmodule NoizuPromptLinguaWeb.FieldDefinitionController do
   # POST /api/v1/organizations/:org_id/ticket-field-definitions
   def create(conn, %{"org_id" => org_id, "field_definition" => params}) do
     with_org(conn, org_id, "member", fn resolved_org_id ->
-      with {:ok, project_id} <- scope_project(params["scope"], params["project_id"], resolved_org_id) do
+      with {:ok, project_id} <-
+             scope_project(params["scope"], params["project_id"], resolved_org_id) do
         attrs =
           take_attrs(params)
           |> Map.merge(%{organization_id: resolved_org_id, project_id: project_id})
 
         case Definitions.create_field(attrs) do
-          {:ok, field} -> conn |> put_status(:created) |> json(%{field_definition: field_to_json(field)})
-          {:error, changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+          {:ok, field} ->
+            conn |> put_status(:created) |> json(%{field_definition: field_to_json(field)})
+
+          {:error, changeset} ->
+            conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
         end
       else
         {:error, :project_not_in_org} ->
-          conn |> put_status(:unprocessable_entity) |> json(%{error: "Project does not belong to this organization"})
+          conn
+          |> put_status(:unprocessable_entity)
+          |> json(%{error: "Project does not belong to this organization"})
 
         {:error, :global_forbidden} ->
-          conn |> put_status(:forbidden) |> json(%{error: "Global definitions are system-managed and cannot be created here"})
+          conn
+          |> put_status(:forbidden)
+          |> json(%{error: "Global definitions are system-managed and cannot be created here"})
       end
     end)
   end
@@ -58,8 +77,11 @@ defmodule NoizuPromptLinguaWeb.FieldDefinitionController do
   def update(conn, %{"org_id" => org_id, "id" => id, "field_definition" => params}) do
     with_owned_field(conn, org_id, id, fn _field ->
       case Definitions.update_field(id, take_attrs(params)) do
-        {:ok, field} -> json(conn, %{field_definition: field_to_json(field)})
-        {:error, changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+        {:ok, field} ->
+          json(conn, %{field_definition: field_to_json(field)})
+
+        {:error, changeset} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
       end
     end)
   end
@@ -68,8 +90,11 @@ defmodule NoizuPromptLinguaWeb.FieldDefinitionController do
   def delete(conn, %{"org_id" => org_id, "id" => id}) do
     with_owned_field(conn, org_id, id, fn _field ->
       case Definitions.delete_field(id) do
-        {:ok, _} -> json(conn, %{message: "Field deleted"})
-        {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Field not found"})
+        {:ok, _} ->
+          json(conn, %{message: "Field deleted"})
+
+        {:error, :not_found} ->
+          conn |> put_status(:not_found) |> json(%{error: "Field not found"})
       end
     end)
   end
@@ -79,9 +104,16 @@ defmodule NoizuPromptLinguaWeb.FieldDefinitionController do
   defp with_owned_field(conn, org_id, id, fun) do
     with_org(conn, org_id, "member", fn resolved_org_id ->
       case Definitions.get_field(id) do
-        nil -> conn |> put_status(:not_found) |> json(%{error: "Field not found"})
-        %{organization_id: ^resolved_org_id} = field -> fun.(field)
-        _ -> conn |> put_status(:forbidden) |> json(%{error: "This definition is not managed by your organization"})
+        nil ->
+          conn |> put_status(:not_found) |> json(%{error: "Field not found"})
+
+        %{organization_id: ^resolved_org_id} = field ->
+          fun.(field)
+
+        _ ->
+          conn
+          |> put_status(:forbidden)
+          |> json(%{error: "This definition is not managed by your organization"})
       end
     end)
   end
@@ -133,9 +165,14 @@ defmodule NoizuPromptLinguaWeb.FieldDefinitionController do
          {:ok, _} <- Authz.authorize(user_id, "organization", resolved_org_id, role) do
       fun.(resolved_org_id)
     else
-      {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Organization not found"})
-      {:error, :not_a_member} -> conn |> put_status(:forbidden) |> json(%{error: "Not a member of this organization"})
-      {:error, _} -> conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Organization not found"})
+
+      {:error, :not_a_member} ->
+        conn |> put_status(:forbidden) |> json(%{error: "Not a member of this organization"})
+
+      {:error, _} ->
+        conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
     end
   end
 

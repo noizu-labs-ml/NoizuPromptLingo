@@ -1,7 +1,8 @@
 defmodule NoizuPromptLingua.Domains.Campaigns.Tools.LandingPageList do
   use Noizu.MCP.Server.Tool,
     name: "LandingPage.List",
-    description: "List landing pages for an organization, optionally filtered by project, campaign, status, or tag.",
+    description:
+      "List landing pages for an organization, optionally filtered by project, campaign, status, or tag.",
     annotations: [read_only_hint: true],
     hidden: true,
     category: "Campaigns.LandingPages"
@@ -37,7 +38,12 @@ defmodule NoizuPromptLingua.Domains.Campaigns.Tools.LandingPageList do
             limit: Args.get(args, :limit) || 100
           )
 
-        {:ok, %{count: length(pages), landing_pages: Enum.map(pages, &%{id: &1.id, slug: &1.slug, title: &1.title, status: &1.status})}}
+        {:ok,
+         %{
+           count: length(pages),
+           landing_pages:
+             Enum.map(pages, &%{id: &1.id, slug: &1.slug, title: &1.title, status: &1.status})
+         }}
     end
   end
 end

@@ -54,8 +54,11 @@ defmodule NoizuPromptLinguaWeb.TicketController do
       }
 
       case Tickets.create(attrs) do
-        {:ok, ticket} -> conn |> put_status(:created) |> json(%{ticket: ticket_to_json(ticket)})
-        {:error, changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+        {:ok, ticket} ->
+          conn |> put_status(:created) |> json(%{ticket: ticket_to_json(ticket)})
+
+        {:error, changeset} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
       end
     else
       err -> handle_error(conn, err)
@@ -74,12 +77,21 @@ defmodule NoizuPromptLinguaWeb.TicketController do
   # PATCH/PUT /api/v1/organizations/:org_id/tickets/:id
   def update(conn, %{"org_id" => org_id, "id" => id, "ticket" => attrs}) do
     with_org_ticket(conn, org_id, id, "member", fn _ticket ->
-      clean = Map.take(attrs, ~w(title description status priority assignee queue_id parent_id custom_fields stage_id iteration_id))
+      clean =
+        Map.take(
+          attrs,
+          ~w(title description status priority assignee queue_id parent_id custom_fields stage_id iteration_id)
+        )
 
       case Tickets.update(id, clean) do
-        {:ok, ticket} -> json(conn, %{ticket: ticket_to_json(ticket)})
-        {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Ticket not found"})
-        {:error, changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+        {:ok, ticket} ->
+          json(conn, %{ticket: ticket_to_json(ticket)})
+
+        {:error, :not_found} ->
+          conn |> put_status(:not_found) |> json(%{error: "Ticket not found"})
+
+        {:error, changeset} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
       end
     end)
   end
@@ -134,13 +146,22 @@ defmodule NoizuPromptLinguaWeb.TicketController do
 
   defp links_to_json(%{outgoing: out, incoming: inc}) do
     %{
-      outgoing: Enum.map(out, &%{id: &1.id, link_type: &1.link_type, target_ticket_id: &1.target_ticket_id}),
-      incoming: Enum.map(inc, &%{id: &1.id, link_type: &1.link_type, source_ticket_id: &1.source_ticket_id})
+      outgoing:
+        Enum.map(
+          out,
+          &%{id: &1.id, link_type: &1.link_type, target_ticket_id: &1.target_ticket_id}
+        ),
+      incoming:
+        Enum.map(
+          inc,
+          &%{id: &1.id, link_type: &1.link_type, source_ticket_id: &1.source_ticket_id}
+        )
     }
   end
 
   defp validate_project(nil, _org_id), do: {:ok, nil}
   defp validate_project("", _org_id), do: {:ok, nil}
+
   defp validate_project(project_id, org_id) do
     case NoizuPromptLingua.Projects.get_project(project_id) do
       nil -> {:error, :project_not_in_org}
@@ -151,10 +172,19 @@ defmodule NoizuPromptLinguaWeb.TicketController do
 
   defp handle_error(conn, err) do
     case err do
-      {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Organization not found"})
-      {:error, :not_a_member} -> conn |> put_status(:forbidden) |> json(%{error: "Not a member of this organization"})
-      {:error, :project_not_in_org} -> conn |> put_status(:unprocessable_entity) |> json(%{error: "Project does not belong to this organization"})
-      _ -> conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Organization not found"})
+
+      {:error, :not_a_member} ->
+        conn |> put_status(:forbidden) |> json(%{error: "Not a member of this organization"})
+
+      {:error, :project_not_in_org} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{error: "Project does not belong to this organization"})
+
+      _ ->
+        conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
     end
   end
 

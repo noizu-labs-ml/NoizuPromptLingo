@@ -8,8 +8,14 @@ defmodule NoizuPromptLingua.Domains.Browser.Tools.Screenshot do
 
   input do
     field :organization, :string, required: true, description: "Organization slug or UUID"
-    field :full_page, :boolean, required: false, description: "Capture the full scrollable page (default false)"
-    field :selector, :string, required: false, description: "CSS selector to capture a single element instead of the viewport"
+
+    field :full_page, :boolean,
+      required: false,
+      description: "Capture the full scrollable page (default false)"
+
+    field :selector, :string,
+      required: false,
+      description: "CSS selector to capture a single element instead of the viewport"
   end
 
   alias NoizuPromptLingua.Domains.Browser

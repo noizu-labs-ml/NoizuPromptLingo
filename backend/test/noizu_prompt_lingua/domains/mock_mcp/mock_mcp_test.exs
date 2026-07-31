@@ -57,7 +57,14 @@ defmodule NoizuPromptLingua.Domains.MockMCPTest do
     test "set_tools, activate, get_active, get_tools, archive", %{org_id: org_id} do
       {:ok, def_} = MockMCP.create(valid_attrs(org_id))
 
-      tools = [%{"name" => "get_weather", "description" => "Get weather", "inputSchema" => %{"type" => "object"}}]
+      tools = [
+        %{
+          "name" => "get_weather",
+          "description" => "Get weather",
+          "inputSchema" => %{"type" => "object"}
+        }
+      ]
+
       assert {:ok, updated} = MockMCP.set_tools(def_.id, tools)
       assert [%{"name" => "get_weather"}] = updated.tools_json
 

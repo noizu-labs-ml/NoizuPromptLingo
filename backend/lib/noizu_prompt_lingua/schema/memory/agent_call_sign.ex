@@ -26,7 +26,8 @@ defmodule NoizuPromptLingua.Schema.Memory.AgentCallSign do
     |> cast(attrs, ~w(organization_id kind call_sign display_name persona_id status metadata)a)
     |> validate_required([:organization_id, :kind, :call_sign])
     |> validate_format(:call_sign, ~r/^[a-z0-9][a-z0-9\-_]{0,62}$/,
-      message: "must be lowercase alphanumeric with - or _")
+      message: "must be lowercase alphanumeric with - or _"
+    )
     |> unique_constraint([:organization_id, :call_sign], name: :idx_agent_call_signs_org_callsign)
   end
 end

@@ -1,7 +1,8 @@
 defmodule NoizuPromptLingua.Domains.Campaigns.Tools.AdCopyGenerate do
   use Noizu.MCP.Server.Tool,
     name: "AdCopy.Generate",
-    description: "LLM-generate N ad-copy variants for a campaign (optionally an ad group), store the copy as an artifact, and insert one row per variant.",
+    description:
+      "LLM-generate N ad-copy variants for a campaign (optionally an ad group), store the copy as an artifact, and insert one row per variant.",
     hidden: true,
     category: "Campaigns.AdCopy"
 
@@ -13,7 +14,9 @@ defmodule NoizuPromptLingua.Domains.Campaigns.Tools.AdCopyGenerate do
     field :prompt, :string, description: "Optional custom generation prompt"
     field :provider, :string, description: "Override LLM provider"
     field :model, :string, description: "Override LLM model"
-    field :llm_generate, :boolean, description: "Call the LLM (default true). Set false to echo the prompt with no provider."
+
+    field :llm_generate, :boolean,
+      description: "Call the LLM (default true). Set false to echo the prompt with no provider."
   end
 
   alias NoizuPromptLingua.Domains.Campaigns
@@ -36,9 +39,20 @@ defmodule NoizuPromptLingua.Domains.Campaigns.Tools.AdCopyGenerate do
 
     case Campaigns.generate_ad_copy(campaign_id, opts) do
       {:ok, rows} ->
-        {:ok, %{created: length(rows), llm_generated: llm_generate, ad_copies: Enum.map(rows, &%{id: &1.id, variant_number: &1.variant_number, artifact_id: &1.artifact_id})}}
+        {:ok,
+         %{
+           created: length(rows),
+           llm_generated: llm_generate,
+           ad_copies:
+             Enum.map(
+               rows,
+               &%{id: &1.id, variant_number: &1.variant_number, artifact_id: &1.artifact_id}
+             )
+         }}
+
       {:error, :not_found} ->
         {:error, "Campaign '#{campaign_id}' not found"}
+
       {:error, reason} ->
         {:error, "Generation failed: #{inspect(reason)}"}
     end

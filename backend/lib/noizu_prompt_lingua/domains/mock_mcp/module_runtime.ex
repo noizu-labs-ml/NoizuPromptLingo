@@ -63,7 +63,9 @@ defmodule NoizuPromptLingua.Domains.MockMCP.ModuleRuntime do
     s
     |> to_string()
     |> String.split(~r/[^A-Za-z0-9]+/, trim: true)
-    |> Enum.map_join("", fn w -> String.upcase(String.first(w)) <> (String.slice(w, 1..-1//1) || "") end)
+    |> Enum.map_join("", fn w ->
+      String.upcase(String.first(w)) <> (String.slice(w, 1..-1//1) || "")
+    end)
     |> case do
       "" -> "X"
       other -> other
@@ -226,16 +228,22 @@ defmodule NoizuPromptLingua.Domains.MockMCP.ModuleRuntime do
       redis_set: fn key, value -> DataStore.redis_set(def_, key, value) end,
       redis_del: fn key -> DataStore.redis_del(def_, key) end,
       weaviate_add: fn collection, text -> DataStore.weaviate_add(def_, collection, text) end,
-      weaviate_query: fn collection, query -> DataStore.weaviate_query(def_, collection, query) end,
+      weaviate_query: fn collection, query ->
+        DataStore.weaviate_query(def_, collection, query)
+      end,
       # Invoke another of this mock's tools (depth-guarded against recursion).
-      call_tool: fn tool_name, tool_args -> Dispatch.call_tool(def_, tool_name, tool_args, tool_depth: 1) end
+      call_tool: fn tool_name, tool_args ->
+        Dispatch.call_tool(def_, tool_name, tool_args, tool_depth: 1)
+      end
     }
   end
 
   defp to_content(content) when is_binary(content), do: [%{"type" => "text", "text" => content}]
   defp to_content(%{"type" => _} = content), do: [content]
+
   defp to_content(content) when is_map(content) or is_list(content),
     do: [%{"type" => "text", "text" => Jason.encode!(content)}]
+
   defp to_content(other), do: [%{"type" => "text", "text" => to_string_safe(other)}]
 
   defp to_string_safe(v) when is_binary(v), do: v

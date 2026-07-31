@@ -23,6 +23,10 @@ defmodule NoizuPromptLingua.Domains.Campaigns.Tools.AdGroupList do
         limit: Args.get(args, :limit) || 100
       )
 
-    {:ok, %{count: length(groups), ad_groups: Enum.map(groups, &%{id: &1.id, slug: &1.slug, name: &1.name, status: &1.status})}}
+    {:ok,
+     %{
+       count: length(groups),
+       ad_groups: Enum.map(groups, &%{id: &1.id, slug: &1.slug, name: &1.name, status: &1.status})
+     }}
   end
 end

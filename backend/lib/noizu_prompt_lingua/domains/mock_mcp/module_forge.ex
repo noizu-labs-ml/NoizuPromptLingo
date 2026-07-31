@@ -94,7 +94,8 @@ defmodule NoizuPromptLingua.Domains.MockMCP.ModuleForge do
   def test_module(def_, tool_name, opts \\ []) do
     with %{} = tool <- find_tool(def_, tool_name),
          %{"source" => source} <- MockMCP.get_module(def_, tool_name),
-         {:ok, _} <- ModuleRuntime.compile_and_load(ModuleRuntime.module_name(def_.slug, tool_name), source),
+         {:ok, _} <-
+           ModuleRuntime.compile_and_load(ModuleRuntime.module_name(def_.slug, tool_name), source),
          {:ok, samples} <- Agent.module_tests(tool, opts) do
       results =
         Enum.map(samples, fn args ->
@@ -118,8 +119,14 @@ defmodule NoizuPromptLingua.Domains.MockMCP.ModuleForge do
   defp find_tool(def_, name), do: Enum.find(def_.tools_json || [], &(&1["name"] == name))
 
   defp entry(tool, module, source, status, error) do
-    %{"tool" => tool, "module" => inspect(module), "function" => "call",
-      "source" => source, "status" => status, "last_error" => error}
+    %{
+      "tool" => tool,
+      "module" => inspect(module),
+      "function" => "call",
+      "source" => source,
+      "status" => status,
+      "last_error" => error
+    }
   end
 
   # Generate → compile → test, repairing up to @max_attempts. Returns a draft
@@ -128,8 +135,11 @@ defmodule NoizuPromptLingua.Domains.MockMCP.ModuleForge do
     module = ModuleRuntime.module_name(def_.slug, tool["name"])
 
     case Agent.generate_module(def_.prompt, tool, module, opts) do
-      {:ok, source} -> attempt(def_, tool, module, source, opts, 1)
-      {:error, reason} -> entry(tool["name"], module, "", "error", "generation failed: #{inspect(reason)}")
+      {:ok, source} ->
+        attempt(def_, tool, module, source, opts, 1)
+
+      {:error, reason} ->
+        entry(tool["name"], module, "", "error", "generation failed: #{inspect(reason)}")
     end
   end
 
@@ -144,20 +154,29 @@ defmodule NoizuPromptLingua.Domains.MockMCP.ModuleForge do
             entry(tool["name"], module, source, "draft", nil)
 
           {:retry, error} ->
-            Logger.info("[MockMCP.ModuleForge] #{tool["name"]} test failed (attempt #{n}): #{error}")
+            Logger.info(
+              "[MockMCP.ModuleForge] #{tool["name"]} test failed (attempt #{n}): #{error}"
+            )
+
             repair(def_, tool, module, source, error, opts, n)
         end
 
       {:error, error} ->
-        Logger.info("[MockMCP.ModuleForge] #{tool["name"]} compile failed (attempt #{n}): #{error}")
+        Logger.info(
+          "[MockMCP.ModuleForge] #{tool["name"]} compile failed (attempt #{n}): #{error}"
+        )
+
         repair(def_, tool, module, source, error, opts, n)
     end
   end
 
   defp repair(def_, tool, module, source, error, opts, n) do
     case Agent.repair_module(source, error, module, opts) do
-      {:ok, fixed} -> attempt(def_, tool, module, fixed, opts, n + 1)
-      {:error, reason} -> entry(tool["name"], module, source, "error", "repair failed: #{inspect(reason)}")
+      {:ok, fixed} ->
+        attempt(def_, tool, module, fixed, opts, n + 1)
+
+      {:error, reason} ->
+        entry(tool["name"], module, source, "error", "repair failed: #{inspect(reason)}")
     end
   end
 
@@ -171,7 +190,9 @@ defmodule NoizuPromptLingua.Domains.MockMCP.ModuleForge do
         |> Enum.reduce_while(:ok, fn args, _acc ->
           case ModuleRuntime.invoke(def_, Map.put(tool, "function", "call"), args) do
             {:error, reason, _l, _t} ->
-              if hard_failure?(reason), do: {:halt, {:retry, to_string(reason)}}, else: {:cont, :ok}
+              if hard_failure?(reason),
+                do: {:halt, {:retry, to_string(reason)}},
+                else: {:cont, :ok}
 
             {:ok, _content, _l, _t} ->
               {:cont, :ok}
@@ -185,7 +206,14 @@ defmodule NoizuPromptLingua.Domains.MockMCP.ModuleForge do
   end
 
   defp hard_failure?(reason) when is_binary(reason),
-    do: String.contains?(reason, ["crashed", "timed out", "no module compiled", "forbidden references", "syntax error"])
+    do:
+      String.contains?(reason, [
+        "crashed",
+        "timed out",
+        "no module compiled",
+        "forbidden references",
+        "syntax error"
+      ])
 
   defp hard_failure?(_), do: true
 

@@ -17,8 +17,13 @@ defmodule NoizuPromptLingua.MCP.Sessions.Tools.SessionUpdate do
     field :description, :string, description: "New description"
     field :status, :string, description: "New status (active|archived|completed)"
     field :project, :string, description: "Project slug or UUID to associate (\"\" to clear)"
-    field :model, :string, description: "Model this session targets (e.g. \"5.4\"); tailors tool descriptions"
-    field :runner, :string, description: "Harness/runner this session targets (e.g. \"codex\"); tailors tool descriptions"
+
+    field :model, :string,
+      description: "Model this session targets (e.g. \"5.4\"); tailors tool descriptions"
+
+    field :runner, :string,
+      description:
+        "Harness/runner this session targets (e.g. \"codex\"); tailors tool descriptions"
   end
 
   @impl true
@@ -38,14 +43,22 @@ defmodule NoizuPromptLingua.MCP.Sessions.Tools.SessionUpdate do
 
           case NoizuPromptLingua.Sessions.update_session(id, attrs) do
             {:ok, updated} ->
-              {:ok, %{
-                id: updated.id, title: updated.title, status: updated.status,
-                organization_id: updated.organization_id, project_id: updated.project_id,
-                model: updated.model, runner: updated.runner
-              }}
+              {:ok,
+               %{
+                 id: updated.id,
+                 title: updated.title,
+                 status: updated.status,
+                 organization_id: updated.organization_id,
+                 project_id: updated.project_id,
+                 model: updated.model,
+                 runner: updated.runner
+               }}
 
-            {:error, :not_found} -> {:error, "Session '#{id}' not found"}
-            {:error, changeset} -> {:error, "Failed: #{inspect(changeset.errors)}"}
+            {:error, :not_found} ->
+              {:error, "Session '#{id}' not found"}
+
+            {:error, changeset} ->
+              {:error, "Failed: #{inspect(changeset.errors)}"}
           end
         end
     end
@@ -56,8 +69,12 @@ defmodule NoizuPromptLingua.MCP.Sessions.Tools.SessionUpdate do
   # the session's organization.
   defp project_attrs(args, org_id) do
     case Args.get(args, :project) do
-      nil -> {:ok, %{}}
-      "" -> {:ok, %{project_id: nil}}
+      nil ->
+        {:ok, %{}}
+
+      "" ->
+        {:ok, %{project_id: nil}}
+
       ref ->
         case Resolve.project(ref) do
           nil -> {:error, "Project '#{ref}' not found"}

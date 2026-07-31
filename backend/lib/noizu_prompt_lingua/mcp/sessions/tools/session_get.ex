@@ -21,17 +21,18 @@ defmodule NoizuPromptLingua.MCP.Sessions.Tools.SessionGet do
         {:error, "Session '#{id}' not found"}
 
       session ->
-        {:ok, %{
-          id: session.id,
-          title: session.title,
-          description: session.description,
-          status: session.status,
-          organization_id: session.organization_id,
-          project_id: session.project_id,
-          model: session.model,
-          runner: session.runner,
-          created_at: session.inserted_at
-        }}
+        {:ok,
+         %{
+           id: session.id,
+           title: session.title,
+           description: session.description,
+           status: session.status,
+           organization_id: session.organization_id,
+           project_id: session.project_id,
+           model: session.model,
+           runner: session.runner,
+           created_at: session.inserted_at
+         }}
     end
   end
 end

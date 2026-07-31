@@ -6,6 +6,7 @@ defmodule NoizuPromptLingua.Users.Media do
 
   def list(context, options \\ []) do
     settings = Noizu.Entity.Meta.persistence(Entity) |> hd
+
     NoizuPromptLingua.Repo.all(Schema)
     |> Enum.map(fn record ->
       {:ok, entity} = Entity.from_record(record, settings, context, options)
@@ -17,6 +18,7 @@ defmodule NoizuPromptLingua.Users.Media do
   def list_for_user(user_id, context, options \\ []) do
     import Ecto.Query
     settings = Noizu.Entity.Meta.persistence(Entity) |> hd
+
     NoizuPromptLingua.Repo.all(from m in Schema, where: m.user_id == ^user_id)
     |> Enum.map(fn record ->
       {:ok, entity} = Entity.from_record(record, settings, context, options)

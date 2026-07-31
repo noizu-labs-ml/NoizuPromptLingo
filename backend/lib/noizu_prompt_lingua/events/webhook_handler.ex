@@ -48,13 +48,15 @@ defmodule NoizuPromptLingua.Events.WebhookHandler do
   end
 
   defp deliver(webhook, event_type, payload) do
-    body = Jason.encode!(%{
-      event: event_type,
-      payload: payload,
-      timestamp: DateTime.utc_now() |> DateTime.to_iso8601()
-    })
+    body =
+      Jason.encode!(%{
+        event: event_type,
+        payload: payload,
+        timestamp: DateTime.utc_now() |> DateTime.to_iso8601()
+      })
 
-    signature = :crypto.mac(:hmac, :sha256, webhook.secret || "", body) |> Base.encode16(case: :lower)
+    signature =
+      :crypto.mac(:hmac, :sha256, webhook.secret || "", body) |> Base.encode16(case: :lower)
 
     headers = [
       {"content-type", "application/json"},

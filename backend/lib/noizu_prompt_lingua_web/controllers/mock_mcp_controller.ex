@@ -48,7 +48,9 @@ defmodule NoizuPromptLinguaWeb.MockMCPController do
           if params["auto_generate_tools"] != false do
             Task.start(fn -> generate_and_save_tools(def_) end)
           end
+
           conn |> put_status(:created) |> json(%{definition: definition_json(def_)})
+
         {:error, cs} ->
           conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
       end
@@ -71,9 +73,12 @@ defmodule NoizuPromptLinguaWeb.MockMCPController do
             if Map.has_key?(params, "prompt") && params["auto_generate_tools"] != false do
               Task.start(fn -> generate_and_save_tools(updated) end)
             end
+
             json(conn, %{definition: definition_json(updated)})
+
           {:error, :not_found} ->
             conn |> put_status(:not_found) |> json(%{error: "not_found"})
+
           {:error, cs} ->
             conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
         end
@@ -112,16 +117,23 @@ defmodule NoizuPromptLinguaWeb.MockMCPController do
       case Agent.generate_surface(def_.prompt, opts) do
         {:ok, surface} ->
           {:ok, updated} = MockMCP.set_surface(def_.id, surface)
+
           json(conn, %{
             tools: updated.tools_json,
             resources: updated.resources_json,
             prompts: updated.prompts_json,
             schema: updated.schema_json
           })
+
         {:error, :invalid_surface_json, raw} ->
-          conn |> put_status(:unprocessable_entity) |> json(%{error: "LLM returned invalid surface JSON", raw: raw})
+          conn
+          |> put_status(:unprocessable_entity)
+          |> json(%{error: "LLM returned invalid surface JSON", raw: raw})
+
         {:error, reason} ->
-          conn |> put_status(:bad_gateway) |> json(%{error: "LLM call failed", detail: inspect(reason)})
+          conn
+          |> put_status(:bad_gateway)
+          |> json(%{error: "LLM call failed", detail: inspect(reason)})
       end
     end)
   end
@@ -130,9 +142,14 @@ defmodule NoizuPromptLinguaWeb.MockMCPController do
   def provision_db(conn, %{"org_id" => org_id, "slug" => slug}) do
     with_org_definition(conn, org_id, slug, "member", fn _def_ ->
       case MockMCP.provision_db(slug) do
-        {:ok, def_} -> json(conn, %{db_name: def_.db_name, provisioned: true})
-        {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "not_found"})
-        {:error, reason} -> conn |> put_status(:internal_server_error) |> json(%{error: inspect(reason)})
+        {:ok, def_} ->
+          json(conn, %{db_name: def_.db_name, provisioned: true})
+
+        {:error, :not_found} ->
+          conn |> put_status(:not_found) |> json(%{error: "not_found"})
+
+        {:error, reason} ->
+          conn |> put_status(:internal_server_error) |> json(%{error: inspect(reason)})
       end
     end)
   end
@@ -145,9 +162,13 @@ defmodule NoizuPromptLinguaWeb.MockMCPController do
       opts = MockMCP.active_llm_opts(def_)
 
       case ModuleForge.forge(def_, opts) do
-        {:ok, summary} -> json(conn, summary)
+        {:ok, summary} ->
+          json(conn, summary)
+
         {:error, :modules_disabled} ->
-          conn |> put_status(:forbidden) |> json(%{error: "module execution is disabled (mock_mcp.allow_modules=false)"})
+          conn
+          |> put_status(:forbidden)
+          |> json(%{error: "module execution is disabled (mock_mcp.allow_modules=false)"})
       end
     end)
   end
@@ -163,26 +184,39 @@ defmodule NoizuPromptLinguaWeb.MockMCPController do
   # PUT /api/v1/organizations/:org_id/mock-mcp/:slug/modules/:tool  {source}
   # Owner edits a generated module's source; we AST-guard + compile and persist
   # it as a draft (or store the error so edits aren't lost).
-  def update_module(conn, %{"org_id" => org_id, "slug" => slug, "tool" => tool, "source" => source})
+  def update_module(conn, %{
+        "org_id" => org_id,
+        "slug" => slug,
+        "tool" => tool,
+        "source" => source
+      })
       when is_binary(source) do
     with_org_definition(conn, org_id, slug, "member", fn def_ ->
       case ModuleForge.update_source(def_, tool, source) do
-        {:ok, entry} -> json(conn, %{module: entry})
+        {:ok, entry} ->
+          json(conn, %{module: entry})
+
         {:error, error, entry} ->
           conn |> put_status(:unprocessable_entity) |> json(%{error: error, module: entry})
       end
     end)
   end
 
-  def update_module(conn, _), do: conn |> put_status(:bad_request) |> json(%{error: "missing 'source'"})
+  def update_module(conn, _),
+    do: conn |> put_status(:bad_request) |> json(%{error: "missing 'source'"})
 
   # POST /api/v1/organizations/:org_id/mock-mcp/:slug/modules/:tool/approve
   def approve_module(conn, %{"org_id" => org_id, "slug" => slug, "tool" => tool}) do
     with_org_definition(conn, org_id, slug, "member", fn def_ ->
       case ModuleForge.approve(def_, tool) do
-        {:ok, entry} -> json(conn, %{module: entry})
-        {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "no module for tool '#{tool}'"})
-        {:error, error} -> conn |> put_status(:unprocessable_entity) |> json(%{error: error})
+        {:ok, entry} ->
+          json(conn, %{module: entry})
+
+        {:error, :not_found} ->
+          conn |> put_status(:not_found) |> json(%{error: "no module for tool '#{tool}'"})
+
+        {:error, error} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{error: error})
       end
     end)
   end
@@ -193,9 +227,14 @@ defmodule NoizuPromptLinguaWeb.MockMCPController do
       opts = MockMCP.active_llm_opts(def_)
 
       case ModuleForge.test_module(def_, tool, opts) do
-        {:ok, results} -> json(conn, %{results: results})
-        {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "no module for tool '#{tool}'"})
-        {:error, error} -> conn |> put_status(:unprocessable_entity) |> json(%{error: inspect(error)})
+        {:ok, results} ->
+          json(conn, %{results: results})
+
+        {:error, :not_found} ->
+          conn |> put_status(:not_found) |> json(%{error: "no module for tool '#{tool}'"})
+
+        {:error, error} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{error: inspect(error)})
       end
     end)
   end
@@ -212,11 +251,22 @@ defmodule NoizuPromptLinguaWeb.MockMCPController do
   def calls(conn, %{"org_id" => org_id, "slug" => slug}) do
     with_org_definition(conn, org_id, slug, "viewer", fn def_ ->
       logs = MockMCP.list_calls(def_.id)
-      json(conn, %{calls: Enum.map(logs, fn l ->
-        %{id: l.id, method: l.method, tool_name: l.tool_name,
-          arguments: l.arguments, response: l.response,
-          latency_ms: l.latency_ms, error: l.error, at: l.inserted_at}
-      end)})
+
+      json(conn, %{
+        calls:
+          Enum.map(logs, fn l ->
+            %{
+              id: l.id,
+              method: l.method,
+              tool_name: l.tool_name,
+              arguments: l.arguments,
+              response: l.response,
+              latency_ms: l.latency_ms,
+              error: l.error,
+              at: l.inserted_at
+            }
+          end)
+      })
     end)
   end
 
@@ -234,8 +284,11 @@ defmodule NoizuPromptLinguaWeb.MockMCPController do
   def state_db_tables(conn, %{"org_id" => org_id, "slug" => slug}) do
     with_org_definition(conn, org_id, slug, "viewer", fn def_ ->
       case DataStore.list_tables(def_) do
-        {:ok, tables} -> json(conn, %{tables: tables})
-        {:error, msg} -> conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(msg)})
+        {:ok, tables} ->
+          json(conn, %{tables: tables})
+
+        {:error, msg} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(msg)})
       end
     end)
   end
@@ -244,20 +297,27 @@ defmodule NoizuPromptLinguaWeb.MockMCPController do
   def state_db_query(conn, %{"org_id" => org_id, "slug" => slug, "sql" => sql}) do
     with_org_definition(conn, org_id, slug, "member", fn def_ ->
       case DataStore.db_query(def_, sql) do
-        {:ok, %{columns: cols, rows: rows}} -> json(conn, %{columns: cols, rows: rows})
-        {:error, msg} -> conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(msg)})
+        {:ok, %{columns: cols, rows: rows}} ->
+          json(conn, %{columns: cols, rows: rows})
+
+        {:error, msg} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(msg)})
       end
     end)
   end
 
-  def state_db_query(conn, _), do: conn |> put_status(:bad_request) |> json(%{error: "missing 'sql'"})
+  def state_db_query(conn, _),
+    do: conn |> put_status(:bad_request) |> json(%{error: "missing 'sql'"})
 
   # GET /api/v1/organizations/:org_id/mock-mcp/:slug/state/redis?pattern=*
   def state_redis(conn, %{"org_id" => org_id, "slug" => slug} = params) do
     with_org_definition(conn, org_id, slug, "viewer", fn def_ ->
       case DataStore.redis_dump(def_, params["pattern"] || "*") do
-        {:ok, entries} -> json(conn, %{entries: entries})
-        {:error, msg} -> conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(msg)})
+        {:ok, entries} ->
+          json(conn, %{entries: entries})
+
+        {:error, msg} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(msg)})
       end
     end)
   end
@@ -277,13 +337,26 @@ defmodule NoizuPromptLinguaWeb.MockMCPController do
 
           case Agent.handle_tool_call(def_, tool_name, arguments, tool["handler"], opts) do
             {:ok, content, latency, trace} ->
-              MockMCP.log_call(def_.id, %{method: "invoke", tool_name: tool_name,
-                arguments: arguments, response: %{content: content, trace: trace}, latency_ms: latency})
+              MockMCP.log_call(def_.id, %{
+                method: "invoke",
+                tool_name: tool_name,
+                arguments: arguments,
+                response: %{content: content, trace: trace},
+                latency_ms: latency
+              })
+
               json(conn, %{content: content, trace: trace, latency_ms: latency})
 
             {:error, reason, latency, trace} ->
-              MockMCP.log_call(def_.id, %{method: "invoke", tool_name: tool_name,
-                arguments: arguments, error: inspect(reason), response: %{trace: trace}, latency_ms: latency})
+              MockMCP.log_call(def_.id, %{
+                method: "invoke",
+                tool_name: tool_name,
+                arguments: arguments,
+                error: inspect(reason),
+                response: %{trace: trace},
+                latency_ms: latency
+              })
+
               conn |> put_status(:bad_gateway) |> json(%{error: inspect(reason), trace: trace})
           end
       end
@@ -317,8 +390,11 @@ defmodule NoizuPromptLinguaWeb.MockMCPController do
       }
 
       case MockMCP.create_llm(attrs) do
-        {:ok, llm} -> conn |> put_status(:created) |> json(%{llm: llm_json(llm)})
-        {:error, cs} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+        {:ok, llm} ->
+          conn |> put_status(:created) |> json(%{llm: llm_json(llm)})
+
+        {:error, cs} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
       end
     end)
   end
@@ -334,9 +410,14 @@ defmodule NoizuPromptLinguaWeb.MockMCPController do
         |> Map.new(fn {k, v} -> {String.to_existing_atom(k), v} end)
 
       case MockMCP.update_llm(id, attrs) do
-        {:ok, llm} -> json(conn, %{llm: llm_json(llm)})
-        {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "not_found"})
-        {:error, cs} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+        {:ok, llm} ->
+          json(conn, %{llm: llm_json(llm)})
+
+        {:error, :not_found} ->
+          conn |> put_status(:not_found) |> json(%{error: "not_found"})
+
+        {:error, cs} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
       end
     end)
   end
@@ -407,30 +488,52 @@ defmodule NoizuPromptLinguaWeb.MockMCPController do
   defp definition_json(d) do
     # tools/resources/prompts include their private "handler" here (owner-facing
     # management API); the MCP gateway strips handlers before clients see them.
-    %{id: d.id, slug: d.slug, title: d.title, prompt: d.prompt,
-      status: d.status, tools_json: d.tools_json, resources_json: d.resources_json,
-      prompts_json: d.prompts_json, schema_sql: d.schema_sql, schema_json: d.schema_json,
+    %{
+      id: d.id,
+      slug: d.slug,
+      title: d.title,
+      prompt: d.prompt,
+      status: d.status,
+      tools_json: d.tools_json,
+      resources_json: d.resources_json,
+      prompts_json: d.prompts_json,
+      schema_sql: d.schema_sql,
+      schema_json: d.schema_json,
       modules_json: d.modules_json,
       active_llm_id: d.active_llm_id,
       active_llm: d.active_llm_id && llm_json(MockMCP.get_llm(d.active_llm_id)),
-      organization_id: d.organization_id, db_name: d.db_name, db_provisioned: d.db_provisioned,
-      created_by: d.created_by, project_id: d.project_id,
+      organization_id: d.organization_id,
+      db_name: d.db_name,
+      db_provisioned: d.db_provisioned,
+      created_by: d.created_by,
+      project_id: d.project_id,
       tool_count: length(d.tools_json || []),
       resource_count: length(d.resources_json || []),
       prompt_count: length(d.prompts_json || []),
-      created_at: d.inserted_at, updated_at: d.updated_at}
+      created_at: d.inserted_at,
+      updated_at: d.updated_at
+    }
   end
 
   defp llm_json(nil), do: nil
+
   defp llm_json(l) do
-    %{id: l.id, label: l.label, provider: l.provider, model: l.model,
-      endpoint: l.endpoint, api_key_set: present?(l.api_key),
-      created_at: l.inserted_at, updated_at: l.updated_at}
+    %{
+      id: l.id,
+      label: l.label,
+      provider: l.provider,
+      model: l.model,
+      endpoint: l.endpoint,
+      api_key_set: present?(l.api_key),
+      created_at: l.inserted_at,
+      updated_at: l.updated_at
+    }
   end
 
   # An active LLM is optional; when given it must belong to the org.
   defp validate_llm(nil, _org_id), do: {:ok, nil}
   defp validate_llm("", _org_id), do: {:ok, nil}
+
   defp validate_llm(llm_id, org_id) do
     case MockMCP.get_llm(llm_id) do
       %{organization_id: ^org_id} -> {:ok, llm_id}
@@ -440,6 +543,7 @@ defmodule NoizuPromptLinguaWeb.MockMCPController do
 
   defp validate_project(nil, _org_id), do: {:ok, nil}
   defp validate_project("", _org_id), do: {:ok, nil}
+
   defp validate_project(project_id, org_id) do
     case NoizuPromptLingua.Projects.get_project(project_id) do
       nil -> {:error, :project_not_in_org}
@@ -450,11 +554,24 @@ defmodule NoizuPromptLinguaWeb.MockMCPController do
 
   defp handle_error(conn, err) do
     case err do
-      {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Organization not found"})
-      {:error, :not_a_member} -> conn |> put_status(:forbidden) |> json(%{error: "Not a member of this organization"})
-      {:error, :project_not_in_org} -> conn |> put_status(:unprocessable_entity) |> json(%{error: "Project does not belong to this organization"})
-      {:error, :llm_not_in_org} -> conn |> put_status(:unprocessable_entity) |> json(%{error: "LLM connection does not belong to this organization"})
-      _ -> conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Organization not found"})
+
+      {:error, :not_a_member} ->
+        conn |> put_status(:forbidden) |> json(%{error: "Not a member of this organization"})
+
+      {:error, :project_not_in_org} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{error: "Project does not belong to this organization"})
+
+      {:error, :llm_not_in_org} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{error: "LLM connection does not belong to this organization"})
+
+      _ ->
+        conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
     end
   end
 

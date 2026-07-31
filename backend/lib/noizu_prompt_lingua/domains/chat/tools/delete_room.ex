@@ -1,8 +1,10 @@
 defmodule NoizuPromptLingua.Domains.Chat.Tools.DeleteRoom do
   use Noizu.MCP.Server.Tool,
     name: "Chat.DeleteRoom",
-    description: "Delete a chat room and its messages/events/members/notifications (cascade). Irreversible.",
-    hidden: true, category: "Chat",
+    description:
+      "Delete a chat room and its messages/events/members/notifications (cascade). Irreversible.",
+    hidden: true,
+    category: "Chat",
     annotations: [destructive_hint: true]
 
   input do

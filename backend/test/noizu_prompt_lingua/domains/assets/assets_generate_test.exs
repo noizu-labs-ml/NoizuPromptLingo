@@ -40,8 +40,11 @@ defmodule NoizuPromptLingua.Domains.AssetsGenerateTest do
   test "no provider key -> {:error, :generation_unavailable}, never a crash", ctx do
     prev = System.get_env("OPENAI_API_KEY")
     System.put_env("OPENAI_API_KEY", "")
+
     on_exit(fn ->
-      if prev, do: System.put_env("OPENAI_API_KEY", prev), else: System.delete_env("OPENAI_API_KEY")
+      if prev,
+        do: System.put_env("OPENAI_API_KEY", prev),
+        else: System.delete_env("OPENAI_API_KEY")
     end)
 
     assert {:error, :generation_unavailable} = Assets.generate(ctx.entry_id, provider: "openai")

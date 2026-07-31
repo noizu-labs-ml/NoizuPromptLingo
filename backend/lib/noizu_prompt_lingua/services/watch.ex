@@ -47,7 +47,10 @@ defmodule NoizuPromptLingua.Services.Watch do
 
   def watching?(entity_type, entity_id, persona) do
     Watch
-    |> where([w], w.entity_type == ^entity_type and w.entity_id == ^entity_id and w.persona == ^persona)
+    |> where(
+      [w],
+      w.entity_type == ^entity_type and w.entity_id == ^entity_id and w.persona == ^persona
+    )
     |> Repo.exists?()
   end
 

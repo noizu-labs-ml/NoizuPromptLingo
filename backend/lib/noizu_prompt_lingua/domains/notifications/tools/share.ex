@@ -10,10 +10,19 @@ defmodule NoizuPromptLingua.Domains.Notifications.Tools.Share do
     field :organization, :string, required: true, description: "Organization slug or UUID"
     field :project, :string, description: "Optional project slug or UUID (scopes room lookup)"
     field :sender, :string, required: true, description: "Sharer agent handle"
-    field :subject_type, :string, required: true, description: "Source entity type: artifact, chat_message, chat_room, asset, wiki_page"
+
+    field :subject_type, :string,
+      required: true,
+      description: "Source entity type: artifact, chat_message, chat_room, asset, wiki_page"
+
     field :subject_id, :string, required: true, description: "Source entity id"
     field :target_type, :string, required: true, description: "Target: chat_room, thread, or dm"
-    field :target, :string, required: true, description: "Room slug/id (chat_room), parent message id (thread), or recipient handle (dm)"
+
+    field :target, :string,
+      required: true,
+      description:
+        "Room slug/id (chat_room), parent message id (thread), or recipient handle (dm)"
+
     field :note, :string, description: "Optional note to accompany the share"
   end
 
@@ -36,7 +45,8 @@ defmodule NoizuPromptLingua.Domains.Notifications.Tools.Share do
 
     with {:scope, {:ok, org_id, project_id}} <- {:scope, Resolve.scope(org_ref, project_ref)},
          {:source, true} <- {:source, subject_type in @source_types},
-         {:target, {:ok, resolved}} <- {:target, resolve_target(org_id, project_id, target_type, target)} do
+         {:target, {:ok, resolved}} <-
+           {:target, resolve_target(org_id, project_id, target_type, target)} do
       # (a) Record an attachment pointer on the TARGET that points at the SOURCE.
       attachment = attach_pointer(resolved, subject_type, subject_id, sender, note)
 
@@ -67,18 +77,30 @@ defmodule NoizuPromptLingua.Domains.Notifications.Tools.Share do
            }}
 
         {:error, :no_recipients} ->
-          {:error, "Shared (attachment recorded) but no recipients resolved for target '#{target}'"}
+          {:error,
+           "Shared (attachment recorded) but no recipients resolved for target '#{target}'"}
 
         {:error, reason} ->
           {:error, "Share failed: #{inspect(reason)}"}
       end
     else
-      {:scope, {:error, :org_not_found}} -> {:error, "Organization '#{org_ref}' not found"}
-      {:scope, {:error, :project_not_found}} -> {:error, "Project '#{project_ref}' not found"}
-      {:scope, {:error, :project_not_in_org}} -> {:error, "Project does not belong to this organization"}
-      {:source, false} -> {:error, "subject_type must be one of: #{Enum.join(@source_types, ", ")}"}
-      {:target, {:error, :unknown_target_type}} -> {:error, "target_type must be one of: chat_room, thread, dm"}
-      {:target, {:error, :not_found}} -> {:error, "Target '#{target}' not found"}
+      {:scope, {:error, :org_not_found}} ->
+        {:error, "Organization '#{org_ref}' not found"}
+
+      {:scope, {:error, :project_not_found}} ->
+        {:error, "Project '#{project_ref}' not found"}
+
+      {:scope, {:error, :project_not_in_org}} ->
+        {:error, "Project does not belong to this organization"}
+
+      {:source, false} ->
+        {:error, "subject_type must be one of: #{Enum.join(@source_types, ", ")}"}
+
+      {:target, {:error, :unknown_target_type}} ->
+        {:error, "target_type must be one of: chat_room, thread, dm"}
+
+      {:target, {:error, :not_found}} ->
+        {:error, "Target '#{target}' not found"}
     end
   end
 

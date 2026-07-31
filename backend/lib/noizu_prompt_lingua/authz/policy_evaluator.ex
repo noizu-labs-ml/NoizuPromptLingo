@@ -4,13 +4,14 @@ defmodule NoizuPromptLingua.Authz.PolicyEvaluator do
   import Bitwise
 
   @type evaluation_result :: %{
-    allowed: boolean(),
-    reason: :explicit_allow | :explicit_deny | :implicit_deny,
-    matching_statements: [map()]
-  }
+          allowed: boolean(),
+          reason: :explicit_allow | :explicit_deny | :implicit_deny,
+          matching_statements: [map()]
+        }
 
   @doc "Evaluate policies for a user's permission on a resource."
-  @spec evaluate(list(map()), String.t(), String.t(), String.t(), String.t(), map()) :: evaluation_result()
+  @spec evaluate(list(map()), String.t(), String.t(), String.t(), String.t(), map()) ::
+          evaluation_result()
   def evaluate(policies, action, resource_type, resource_id, role, context \\ %{}) do
     resource_urn = "#{resource_type}:#{resource_id}"
 
@@ -43,8 +44,10 @@ defmodule NoizuPromptLingua.Authz.PolicyEvaluator do
     cond do
       denies != [] ->
         %{allowed: false, reason: :explicit_deny, matching_statements: Enum.reverse(denies)}
+
       allows != [] ->
         %{allowed: true, reason: :explicit_allow, matching_statements: Enum.reverse(allows)}
+
       true ->
         %{allowed: false, reason: :implicit_deny, matching_statements: []}
     end
@@ -84,6 +87,7 @@ defmodule NoizuPromptLingua.Authz.PolicyEvaluator do
 
   # Wildcard matching (fnmatch-style: * matches any sequence)
   defp wildcard_match?("*", _string), do: true
+
   defp wildcard_match?(pattern, string) do
     regex_str =
       pattern
@@ -99,6 +103,7 @@ defmodule NoizuPromptLingua.Authz.PolicyEvaluator do
 
   # Condition evaluation (AND logic -- all conditions must match)
   defp conditions_match?(conditions, _context) when map_size(conditions) == 0, do: true
+
   defp conditions_match?(conditions, context) do
     Enum.all?(conditions, fn {operator, checks} ->
       Enum.all?(checks, fn {context_key, expected} ->
@@ -110,11 +115,13 @@ defmodule NoizuPromptLingua.Authz.PolicyEvaluator do
 
   defp evaluate_condition("StringEquals", actual, expected) when is_list(expected),
     do: actual in expected
+
   defp evaluate_condition("StringEquals", actual, expected),
     do: actual == expected
 
   defp evaluate_condition("StringNotEquals", actual, expected) when is_list(expected),
     do: actual not in expected
+
   defp evaluate_condition("StringNotEquals", actual, expected),
     do: actual != expected
 
@@ -125,13 +132,16 @@ defmodule NoizuPromptLingua.Authz.PolicyEvaluator do
 
   defp evaluate_condition("NumericEquals", actual, expected),
     do: to_number(actual) == to_number(expected)
+
   defp evaluate_condition("NumericLessThan", actual, expected),
     do: to_number(actual) < to_number(expected)
+
   defp evaluate_condition("NumericGreaterThan", actual, expected),
     do: to_number(actual) > to_number(expected)
 
   defp evaluate_condition("DateLessThan", actual, expected),
     do: compare_dates(actual, expected) == :lt
+
   defp evaluate_condition("DateGreaterThan", actual, expected),
     do: compare_dates(actual, expected) == :gt
 
@@ -151,12 +161,14 @@ defmodule NoizuPromptLingua.Authz.PolicyEvaluator do
   defp evaluate_condition(_operator, _actual, _expected), do: false
 
   defp to_number(val) when is_number(val), do: val
+
   defp to_number(val) when is_binary(val) do
     case Float.parse(val) do
       {num, ""} -> num
       _ -> 0
     end
   end
+
   defp to_number(_), do: 0
 
   defp to_boolean(true), do: true
@@ -172,6 +184,7 @@ defmodule NoizuPromptLingua.Authz.PolicyEvaluator do
       _ -> :error
     end
   end
+
   defp compare_dates(_, _), do: :error
 
   defp ip_in_cidr?(ip_str, cidr_str) do
@@ -197,9 +210,13 @@ defmodule NoizuPromptLingua.Authz.PolicyEvaluator do
         case {parse_ip(ip), Integer.parse(prefix)} do
           {{:ok, network}, {prefix_len, ""}} when prefix_len >= 0 and prefix_len <= 32 ->
             {network, prefix_len}
-          _ -> :error
+
+          _ ->
+            :error
         end
-      _ -> :error
+
+      _ ->
+        :error
     end
   end
 end

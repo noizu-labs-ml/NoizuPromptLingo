@@ -80,7 +80,10 @@ defmodule NoizuPromptLingua.Github do
 
       :error ->
         RepoSchema
-        |> where([r], r.organization_id == ^organization_id and r.repo_full_name == ^repo_id_or_full_name)
+        |> where(
+          [r],
+          r.organization_id == ^organization_id and r.repo_full_name == ^repo_id_or_full_name
+        )
         |> preload([:token])
         |> NoizuPromptLingua.Repo.one()
     end
@@ -130,7 +133,8 @@ defmodule NoizuPromptLingua.Github do
   """
   def list_repo_grants(repo_id) do
     from(sm in MembershipSchema,
-      join: g in GroupSchema, on: g.id == sm.group_id,
+      join: g in GroupSchema,
+      on: g.id == sm.group_id,
       where:
         sm.resource_type == "github_repo" and
           sm.resource_id == ^repo_id and
@@ -202,7 +206,8 @@ defmodule NoizuPromptLingua.Github do
     # Collect the (target group, permission) pairs granted on this repo.
     grants =
       from(sm in MembershipSchema,
-        join: g in GroupSchema, on: g.id == sm.group_id,
+        join: g in GroupSchema,
+        on: g.id == sm.group_id,
         where:
           sm.resource_type == "github_repo" and
             sm.resource_id == ^repo_id and

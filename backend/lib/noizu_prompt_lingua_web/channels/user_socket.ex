@@ -10,16 +10,20 @@ defmodule NoizuPromptLinguaWeb.UserSocket do
       {:ok, claims} ->
         case NoizuPromptLingua.Guardian.resource_from_claims(claims) do
           {:ok, session} ->
-            user_id = case session.user do
-              {:ref, _, id} -> id
-              %{id: id} -> id
-            end
+            user_id =
+              case session.user do
+                {:ref, _, id} -> id
+                %{id: id} -> id
+              end
+
             {:ok, assign(socket, :user_id, user_id)}
 
-          {:error, _} -> :error
+          {:error, _} ->
+            :error
         end
 
-      {:error, _} -> :error
+      {:error, _} ->
+        :error
     end
   end
 

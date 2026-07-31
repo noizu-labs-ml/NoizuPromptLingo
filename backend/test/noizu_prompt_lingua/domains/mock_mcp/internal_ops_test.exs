@@ -9,13 +9,18 @@ defmodule NoizuPromptLingua.Domains.MockMCP.InternalOpsTest do
   alias NoizuPromptLingua.Domains.MockMCP.InternalOps
 
   defp def_(provisioned? \\ false) do
-    %{slug: "iops-#{System.unique_integer([:positive])}", db_provisioned: provisioned?, db_name: nil}
+    %{
+      slug: "iops-#{System.unique_integer([:positive])}",
+      db_provisioned: provisioned?,
+      db_name: nil
+    }
   end
 
   test "op?/1 recognises the data ops" do
     for op <- ~w(redis_get redis_set redis_del redis_keys db_query db_execute) do
       assert InternalOps.op?(op)
     end
+
     refute InternalOps.op?("echo")
   end
 
@@ -29,7 +34,9 @@ defmodule NoizuPromptLingua.Domains.MockMCP.InternalOpsTest do
     d = def_()
     key = "k-#{System.unique_integer([:positive])}"
 
-    assert {:ok, %{"ok" => true}} = InternalOps.exec(d, "redis_set", %{"key" => key, "value" => "v1"})
+    assert {:ok, %{"ok" => true}} =
+             InternalOps.exec(d, "redis_set", %{"key" => key, "value" => "v1"})
+
     assert {:ok, %{"result" => "v1"}} = InternalOps.exec(d, "redis_get", %{"key" => key})
     assert {:ok, %{"result" => keys}} = InternalOps.exec(d, "redis_keys", %{"pattern" => "*"})
     assert key in keys

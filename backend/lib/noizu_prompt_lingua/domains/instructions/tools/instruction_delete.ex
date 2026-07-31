@@ -1,11 +1,16 @@
 defmodule NoizuPromptLingua.Domains.Instructions.Tools.InstructionDelete do
-  use Noizu.MCP.Server.Tool, name: "Instruction.Delete",
+  use Noizu.MCP.Server.Tool,
+    name: "Instruction.Delete",
     description: "Delete an instruction and all its versions.",
-    hidden: true, category: "Instructions", annotations: [destructive_hint: true]
+    hidden: true,
+    category: "Instructions",
+    annotations: [destructive_hint: true]
 
   input do
     field :instruction, :string, required: true, description: "Slug handle or UUID"
-    field :organization, :string, description: "Organization slug or UUID (needed to resolve a slug)"
+
+    field :organization, :string,
+      description: "Organization slug or UUID (needed to resolve a slug)"
   end
 
   alias NoizuPromptLingua.Domains.Instructions
@@ -18,7 +23,9 @@ defmodule NoizuPromptLingua.Domains.Instructions.Tools.InstructionDelete do
     instruction = (org_id && Instructions.resolve(org_id, key)) || Instructions.get(key)
 
     case instruction do
-      nil -> {:error, "Instruction '#{key}' not found"}
+      nil ->
+        {:error, "Instruction '#{key}' not found"}
+
       i ->
         case Instructions.delete(i.id) do
           {:ok, _} -> {:ok, %{id: i.id, deleted: true}}

@@ -79,9 +79,15 @@ defmodule NoizuPromptLingua.Domains.Notifications.Dispatch do
         persona = member.persona
 
         cond do
-          persona == sender -> :skip
-          muted?(member) -> :skip
-          not MapSet.member?(mentioned, persona) -> :skip
+          persona == sender ->
+            :skip
+
+          muted?(member) ->
+            :skip
+
+          not MapSet.member?(mentioned, persona) ->
+            :skip
+
           true ->
             notify(%{
               organization_id: org_id,
@@ -102,10 +108,18 @@ defmodule NoizuPromptLingua.Domains.Notifications.Dispatch do
         persona = member.persona
 
         cond do
-          persona == sender -> :skip
-          muted?(member) -> :skip
-          mute_unless_mentioned?(member) -> :skip
-          MapSet.member?(mentioned, persona) -> :skip
+          persona == sender ->
+            :skip
+
+          muted?(member) ->
+            :skip
+
+          mute_unless_mentioned?(member) ->
+            :skip
+
+          MapSet.member?(mentioned, persona) ->
+            :skip
+
           true ->
             notify(%{
               organization_id: org_id,
@@ -317,7 +331,11 @@ defmodule NoizuPromptLingua.Domains.Notifications.Dispatch do
           subject_type: entity_type,
           subject_id: entity_id,
           body: text,
-          payload: %{entity_type: entity_type, entity_id: entity_id, change: normalize_change(change)}
+          payload: %{
+            entity_type: entity_type,
+            entity_id: entity_id,
+            change: normalize_change(change)
+          }
         })
       end
     end)

@@ -6,7 +6,8 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.Overview do
     category: "Tickets"
 
   input do
-    field :organization, :string, description: "Organization slug or UUID — when given, lists that org's ticket types"
+    field :organization, :string,
+      description: "Organization slug or UUID — when given, lists that org's ticket types"
   end
 
   alias NoizuPromptLingua.Domains.Tickets
@@ -24,23 +25,37 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.Overview do
 
     status_counts = Tickets.count_by_status()
 
-    {:ok, %{
-      domain: "Tickets",
-      subdomain: "tickets.tobor.locker",
-      status_counts: status_counts,
-      ticket_types: Enum.map(types, fn t ->
-        %{slug: t.slug, name: t.name, description: t.description}
-      end),
-      tools: %{
-        crud: ["Ticket.Create", "Ticket.Get", "Ticket.Update", "Ticket.List"],
-        cross_cutting: ["Ticket.Comment", "Ticket.Watch", "Ticket.Attach", "Ticket.Feed"],
-        links: ["Ticket.Link", "Ticket.Unlink"],
-        queues: ["Ticket.Queue.Create", "Ticket.Queue.Get", "Ticket.Queue.List", "Ticket.Queue.Feed"],
-        definitions: ["Ticket.Definition.Create", "Ticket.Definition.Get",
-                       "Ticket.Definition.Update", "Ticket.Definition.Delete"],
-        fields: ["Ticket.Field.Definition.Create", "Ticket.Field.Definition.Update",
-                  "Ticket.Field.Definition.Delete"]
-      }
-    }}
+    {:ok,
+     %{
+       domain: "Tickets",
+       subdomain: "tickets.tobor.locker",
+       status_counts: status_counts,
+       ticket_types:
+         Enum.map(types, fn t ->
+           %{slug: t.slug, name: t.name, description: t.description}
+         end),
+       tools: %{
+         crud: ["Ticket.Create", "Ticket.Get", "Ticket.Update", "Ticket.List"],
+         cross_cutting: ["Ticket.Comment", "Ticket.Watch", "Ticket.Attach", "Ticket.Feed"],
+         links: ["Ticket.Link", "Ticket.Unlink"],
+         queues: [
+           "Ticket.Queue.Create",
+           "Ticket.Queue.Get",
+           "Ticket.Queue.List",
+           "Ticket.Queue.Feed"
+         ],
+         definitions: [
+           "Ticket.Definition.Create",
+           "Ticket.Definition.Get",
+           "Ticket.Definition.Update",
+           "Ticket.Definition.Delete"
+         ],
+         fields: [
+           "Ticket.Field.Definition.Create",
+           "Ticket.Field.Definition.Update",
+           "Ticket.Field.Definition.Delete"
+         ]
+       }
+     }}
   end
 end

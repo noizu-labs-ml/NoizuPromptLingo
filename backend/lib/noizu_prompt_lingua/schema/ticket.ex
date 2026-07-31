@@ -33,9 +33,22 @@ defmodule NoizuPromptLingua.Schema.Ticket do
 
   def changeset(ticket, attrs) do
     ticket
-    |> cast(attrs, [:organization_id, :title, :description, :ticket_type, :status, :priority,
-                     :assignee, :reporter, :project_id, :queue_id, :parent_id, :custom_fields,
-                     :stage_id, :iteration_id])
+    |> cast(attrs, [
+      :organization_id,
+      :title,
+      :description,
+      :ticket_type,
+      :status,
+      :priority,
+      :assignee,
+      :reporter,
+      :project_id,
+      :queue_id,
+      :parent_id,
+      :custom_fields,
+      :stage_id,
+      :iteration_id
+    ])
     |> validate_required([:organization_id, :title, :ticket_type])
     |> validate_inclusion(:priority, @priorities ++ [nil])
     |> foreign_key_constraint(:organization_id)
@@ -54,9 +67,19 @@ defmodule NoizuPromptLingua.Schema.Ticket do
 
   def update_changeset(ticket, attrs) do
     ticket
-    |> cast(attrs, [:title, :description, :status, :priority,
-                     :assignee, :project_id, :queue_id, :parent_id, :custom_fields,
-                     :stage_id, :iteration_id])
+    |> cast(attrs, [
+      :title,
+      :description,
+      :status,
+      :priority,
+      :assignee,
+      :project_id,
+      :queue_id,
+      :parent_id,
+      :custom_fields,
+      :stage_id,
+      :iteration_id
+    ])
     |> validate_inclusion(:priority, @priorities ++ [nil])
     |> foreign_key_constraint(:stage_id)
     |> foreign_key_constraint(:iteration_id)

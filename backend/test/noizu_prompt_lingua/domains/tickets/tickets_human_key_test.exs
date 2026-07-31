@@ -22,7 +22,9 @@ defmodule NoizuPromptLingua.Domains.TicketsHumanKeyTest do
     t
   end
 
-  defp proj_tkt(c, title), do: create!(%{organization_id: c.org_id, project_id: c.project_id, title: title})
+  defp proj_tkt(c, title),
+    do: create!(%{organization_id: c.org_id, project_id: c.project_id, title: title})
+
   defp org_tkt(c, title), do: create!(%{organization_id: c.org_id, title: title})
 
   test "project tickets get sequential per-project keys with the derived prefix", c do
@@ -58,7 +60,10 @@ defmodule NoizuPromptLingua.Domains.TicketsHumanKeyTest do
   end
 
   test "an explicit project key_prefix overrides the derived default", c do
-    Repo.get!(Project, c.project_id) |> Project.changeset(%{key_prefix: "NOZINF"}) |> Repo.update!()
+    Repo.get!(Project, c.project_id)
+    |> Project.changeset(%{key_prefix: "NOZINF"})
+    |> Repo.update!()
+
     assert proj_tkt(c, "A").key == "NOZINF-001"
   end
 

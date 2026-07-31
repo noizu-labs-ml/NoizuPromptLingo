@@ -24,7 +24,17 @@ defmodule NoizuPromptLingua.Schema.Review do
 
   def changeset(review, attrs) do
     review
-    |> cast(attrs, [:organization_id, :project_id, :artifact_id, :revision_id, :reviewer_persona, :title, :status, :summary, :verdict])
+    |> cast(attrs, [
+      :organization_id,
+      :project_id,
+      :artifact_id,
+      :revision_id,
+      :reviewer_persona,
+      :title,
+      :status,
+      :summary,
+      :verdict
+    ])
     |> validate_required([:organization_id, :artifact_id, :revision_id, :reviewer_persona])
     |> validate_inclusion(:status, @statuses)
     |> validate_inclusion(:verdict, @verdicts ++ [nil])

@@ -6,7 +6,10 @@ defmodule NoizuPromptLingua.Domains.Wiki.Tools.ReactionAdd do
     category: "Wiki"
 
   input do
-    field :target_type, :string, required: true, description: "Reaction target: \"page\" or \"comment\""
+    field :target_type, :string,
+      required: true,
+      description: "Reaction target: \"page\" or \"comment\""
+
     field :target, :string, required: true, description: "Page or comment UUID"
     field :emoji, :string, required: true, description: "Reaction emoji or shortcode"
     field :actor, :string, description: "Actor label (defaults to \"mcp\")"

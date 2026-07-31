@@ -34,16 +34,29 @@ defmodule NoizuPromptLinguaWeb.Plugs.MockMCPGatewayTest do
     {:ok, _} =
       MockMCP.set_surface(def_.id, %{
         "tools" => [
-          %{"name" => "echo", "description" => "Echo input",
-            "inputSchema" => %{"type" => "object"}, "handler" => "echo the args verbatim"}
+          %{
+            "name" => "echo",
+            "description" => "Echo input",
+            "inputSchema" => %{"type" => "object"},
+            "handler" => "echo the args verbatim"
+          }
         ],
         "resources" => [
-          %{"uri" => "mock://hello", "name" => "hello", "description" => "A greeting",
-            "mimeType" => "text/plain", "handler" => "return a greeting"}
+          %{
+            "uri" => "mock://hello",
+            "name" => "hello",
+            "description" => "A greeting",
+            "mimeType" => "text/plain",
+            "handler" => "return a greeting"
+          }
         ],
         "prompts" => [
-          %{"name" => "greet", "description" => "Greeting prompt",
-            "arguments" => [%{"name" => "who", "required" => true}], "handler" => "ask to greet"}
+          %{
+            "name" => "greet",
+            "description" => "Greeting prompt",
+            "arguments" => [%{"name" => "who", "required" => true}],
+            "handler" => "ask to greet"
+          }
         ]
       })
 
@@ -100,8 +113,12 @@ defmodule NoizuPromptLinguaWeb.Plugs.MockMCPGatewayTest do
     {:ok, _} = MockMCP.activate(slug)
 
     conn =
-      rpc(slug, %{"jsonrpc" => "2.0", "id" => 11, "method" => "tools/call",
-        "params" => %{"name" => "redis_set", "arguments" => %{"key" => "x", "value" => "y"}}})
+      rpc(slug, %{
+        "jsonrpc" => "2.0",
+        "id" => 11,
+        "method" => "tools/call",
+        "params" => %{"name" => "redis_set", "arguments" => %{"key" => "x", "value" => "y"}}
+      })
 
     assert decode(conn)["error"]["code"] == -32602
   end
@@ -114,7 +131,10 @@ defmodule NoizuPromptLinguaWeb.Plugs.MockMCPGatewayTest do
     refute Map.has_key?(r, "handler")
 
     pr = decode(rpc(slug, %{"jsonrpc" => "2.0", "id" => 8, "method" => "prompts/list"}))
-    assert [%{"name" => "greet", "arguments" => [%{"name" => "who"}]} = p] = pr["result"]["prompts"]
+
+    assert [%{"name" => "greet", "arguments" => [%{"name" => "who"}]} = p] =
+             pr["result"]["prompts"]
+
     refute Map.has_key?(p, "handler")
   end
 

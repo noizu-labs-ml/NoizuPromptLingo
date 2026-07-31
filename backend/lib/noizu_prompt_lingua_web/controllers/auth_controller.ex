@@ -58,7 +58,9 @@ defmodule NoizuPromptLinguaWeb.AuthController do
       {:ref, _, id} ->
         {:ok, user} = NoizuPromptLingua.Users.get_user(id, Noizu.Context.system())
         user
-      %NoizuPromptLingua.Users.User{} = user -> user
+
+      %NoizuPromptLingua.Users.User{} = user ->
+        user
     end
   end
 
@@ -121,12 +123,14 @@ defmodule NoizuPromptLinguaWeb.AuthController do
   defp maybe_opt(opts, key, value), do: Keyword.put(opts, key, value)
 
   defp derive_host(nil), do: nil
+
   defp derive_host(url) when is_binary(url) do
     case URI.parse(url) do
       %URI{host: host} when is_binary(host) and host != "" -> host
       _ -> nil
     end
   end
+
   defp derive_host(conn) do
     case conn.host do
       host when is_binary(host) and host != "" -> host
@@ -154,7 +158,10 @@ defmodule NoizuPromptLinguaWeb.AuthController do
         if api_key.user_id == user.id do
           mcp_user = %{id: user.id, email: user.email, name: user.user_name}
           {:ok, token, expires_at} = NoizuPromptLingua.Token.mint(mcp_user, api_key)
-          conn |> put_status(:ok) |> json(%{token: token, expires_at: DateTime.to_iso8601(expires_at)})
+
+          conn
+          |> put_status(:ok)
+          |> json(%{token: token, expires_at: DateTime.to_iso8601(expires_at)})
         else
           # Key exists but belongs to a different user — never reveal that.
           conn |> put_status(:unauthorized) |> json(%{error: "invalid or expired API key"})

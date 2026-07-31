@@ -36,7 +36,8 @@ defmodule NoizuPromptLingua.Domains.Assets.GenAIGenerator do
   @doc "Dispatch to the configured generator (default: the genai impl GenAIGenerator.Default)."
   def generate(entry, opts \\ []), do: impl().generate(entry, opts)
 
-  defp impl, do: Application.get_env(:noizu_prompt_lingua, :genai_media_generator, __MODULE__.Default)
+  defp impl,
+    do: Application.get_env(:noizu_prompt_lingua, :genai_media_generator, __MODULE__.Default)
 
   @doc "Map an asset type to its media modality, or `{:error, {:unsupported_asset_type, t}}`."
   def modality(asset_type) do

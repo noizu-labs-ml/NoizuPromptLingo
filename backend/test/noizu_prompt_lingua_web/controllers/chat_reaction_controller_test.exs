@@ -17,10 +17,18 @@ defmodule NoizuPromptLinguaWeb.ChatReactionControllerTest do
     # Create the org via the API so the caller is a member (REST authz checks
     # organization membership), then a room + message via the domain.
     slug = "react-org-#{System.unique_integer([:positive])}"
-    created = post(auth_conn, "/api/v1/organizations", %{organization: %{slug: slug, name: "React Org"}})
+
+    created =
+      post(auth_conn, "/api/v1/organizations", %{organization: %{slug: slug, name: "React Org"}})
+
     org_id = json_response(created, 201)["organization"]["id"]
 
-    {:ok, room} = Chat.create_room(%{organization_id: org_id, name: "Reactions #{System.unique_integer([:positive])}"})
+    {:ok, room} =
+      Chat.create_room(%{
+        organization_id: org_id,
+        name: "Reactions #{System.unique_integer([:positive])}"
+      })
+
     {:ok, msg} = Chat.send_message(%{room_id: room.id, content: "hi", sender: user.id})
 
     base = "/api/v1/organizations/#{org_id}/chat/rooms/#{room.id}/messages/#{msg.id}/reactions"
@@ -34,7 +42,10 @@ defmodule NoizuPromptLinguaWeb.ChatReactionControllerTest do
   end
 
   describe "POST reaction" do
-    test "adds and returns the regrouped summary with me=true for the caller", %{conn: conn, base: base} do
+    test "adds and returns the regrouped summary with me=true for the caller", %{
+      conn: conn,
+      base: base
+    } do
       resp = json_response(post(conn, base, %{emoji: "👍"}), 201)
       assert resp == %{"reactions" => [%{"emoji" => "👍", "count" => 1, "me" => true}]}
     end
@@ -45,12 +56,30 @@ defmodule NoizuPromptLinguaWeb.ChatReactionControllerTest do
       assert resp == %{"reactions" => [%{"emoji" => "👍", "count" => 1, "me" => true}]}
     end
 
-    test "another persona's reaction counts but is not 'me' for the viewer", %{conn: conn, base: base, msg: msg} do
+    test "another persona's reaction counts but is not 'me' for the viewer", %{
+      conn: conn,
+      base: base,
+      msg: msg
+    } do
       # caller reacts 👍 via REST; a DIFFERENT persona's reactions are seeded via the
       # domain (the REST path can't react as someone else — see the spoofing test).
       post(conn, base, %{emoji: "👍"})
-      {:ok, _} = Chat.add_reaction(%{entity_type: "chat_message", entity_id: msg.id, persona: "someone-else", emoji: "👍"})
-      {:ok, _} = Chat.add_reaction(%{entity_type: "chat_message", entity_id: msg.id, persona: "someone-else", emoji: "🚀"})
+
+      {:ok, _} =
+        Chat.add_reaction(%{
+          entity_type: "chat_message",
+          entity_id: msg.id,
+          persona: "someone-else",
+          emoji: "👍"
+        })
+
+      {:ok, _} =
+        Chat.add_reaction(%{
+          entity_type: "chat_message",
+          entity_id: msg.id,
+          persona: "someone-else",
+          emoji: "🚀"
+        })
 
       reactions = json_response(get(conn, base), 200)["reactions"] |> Enum.sort_by(& &1["emoji"])
 
@@ -60,7 +89,12 @@ defmodule NoizuPromptLinguaWeb.ChatReactionControllerTest do
              ]
     end
 
-    test "a client-supplied persona is ignored — caller cannot react as someone else", %{conn: conn, base: base, msg: msg, user: user} do
+    test "a client-supplied persona is ignored — caller cannot react as someone else", %{
+      conn: conn,
+      base: base,
+      msg: msg,
+      user: user
+    } do
       # body carries a foreign persona; the row must be written as the authed actor.
       json_response(post(conn, base, %{emoji: "👍", persona: "someone-else"}), 201)
 
@@ -79,11 +113,23 @@ defmodule NoizuPromptLinguaWeb.ChatReactionControllerTest do
     end
 
     test "404 when the reaction is absent", %{conn: conn, base: base} do
-      assert json_response(delete(conn, base, %{emoji: "👍"}), 404) == %{"error" => "Reaction not found"}
+      assert json_response(delete(conn, base, %{emoji: "👍"}), 404) == %{
+               "error" => "Reaction not found"
+             }
     end
 
-    test "cannot delete another persona's reaction via a client-supplied persona", %{conn: conn, base: base, msg: msg} do
-      {:ok, _} = Chat.add_reaction(%{entity_type: "chat_message", entity_id: msg.id, persona: "someone-else", emoji: "👍"})
+    test "cannot delete another persona's reaction via a client-supplied persona", %{
+      conn: conn,
+      base: base,
+      msg: msg
+    } do
+      {:ok, _} =
+        Chat.add_reaction(%{
+          entity_type: "chat_message",
+          entity_id: msg.id,
+          persona: "someone-else",
+          emoji: "👍"
+        })
 
       # persona is ignored -> delete is scoped to the actor, who has no 👍 -> 404,
       # and someone-else's reaction survives.
@@ -112,7 +158,12 @@ defmodule NoizuPromptLinguaWeb.ChatReactionControllerTest do
     test "404 when the message does not belong to the room", %{conn: conn, base: base, msg: msg} do
       # swap the room segment for a bogus uuid
       bogus = String.replace(base, ~r|/rooms/[^/]+/|, "/rooms/#{Ecto.UUID.generate()}/")
-      assert json_response(get(conn, bogus), 404)["error"] in ["Room not found", "Message not found"]
+
+      assert json_response(get(conn, bogus), 404)["error"] in [
+               "Room not found",
+               "Message not found"
+             ]
+
       _ = msg
     end
   end

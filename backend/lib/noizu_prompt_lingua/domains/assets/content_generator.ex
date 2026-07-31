@@ -75,12 +75,15 @@ defmodule NoizuPromptLingua.Domains.Assets.ContentGenerator do
 
   defp detect_output_format(config) do
     formats = get_in(config, ["output", "formats"]) || []
+
     case formats do
-      [%{"format" => fmt} | _] -> fmt
+      [%{"format" => fmt} | _] ->
+        fmt
+
       _ ->
         config["output"]["text_format"] ||
-        config["output"]["diagram_type"] ||
-        "text"
+          config["output"]["diagram_type"] ||
+          "text"
     end
   end
 
@@ -96,23 +99,26 @@ defmodule NoizuPromptLingua.Domains.Assets.ContentGenerator do
     parts = []
 
     use_case = @type_to_use_case[asset_type]
-    parts = if use_case do
-      case load_fim_file("use-case/#{use_case}.md") do
-        {:ok, content} -> [{"Use-Case Guide (#{use_case})", content} | parts]
-        _ -> parts
-      end
-    else
-      parts
-    end
 
-    parts = if solution_hint do
-      case load_fim_file("solution/#{solution_hint}.md") do
-        {:ok, content} -> [{"Solution Reference (#{solution_hint})", content} | parts]
-        _ -> parts
+    parts =
+      if use_case do
+        case load_fim_file("use-case/#{use_case}.md") do
+          {:ok, content} -> [{"Use-Case Guide (#{use_case})", content} | parts]
+          _ -> parts
+        end
+      else
+        parts
       end
-    else
-      parts
-    end
+
+    parts =
+      if solution_hint do
+        case load_fim_file("solution/#{solution_hint}.md") do
+          {:ok, content} -> [{"Solution Reference (#{solution_hint})", content} | parts]
+          _ -> parts
+        end
+      else
+        parts
+      end
 
     Enum.reverse(parts)
   end
@@ -136,14 +142,19 @@ defmodule NoizuPromptLingua.Domains.Assets.ContentGenerator do
   defp build_system_prompt(custom_system, fim_context, asset_type, output_format) do
     base = custom_system || default_system_prompt(asset_type, output_format)
 
-    fim_section = case fim_context do
-      [] -> ""
-      refs ->
-        sections = Enum.map(refs, fn {title, content} ->
-          "## #{title}\n\n#{content}"
-        end)
-        "\n\n--- FORMAT REFERENCE ---\n\n#{Enum.join(sections, "\n\n")}\n\n--- END FORMAT REFERENCE ---"
-    end
+    fim_section =
+      case fim_context do
+        [] ->
+          ""
+
+        refs ->
+          sections =
+            Enum.map(refs, fn {title, content} ->
+              "## #{title}\n\n#{content}"
+            end)
+
+          "\n\n--- FORMAT REFERENCE ---\n\n#{Enum.join(sections, "\n\n")}\n\n--- END FORMAT REFERENCE ---"
+      end
 
     "#{base}#{fim_section}"
   end
@@ -164,6 +175,7 @@ defmodule NoizuPromptLingua.Domains.Assets.ContentGenerator do
 
   defp load_fim_file(relative_path) do
     path = Path.join([@skill_dir, "references", "fim", relative_path])
+
     case File.read(path) do
       {:ok, content} -> {:ok, content}
       {:error, _} -> :error
@@ -177,30 +189,36 @@ defmodule NoizuPromptLingua.Domains.Assets.ContentGenerator do
   end
 
   defp do_call_llm(messages, url, headers, resolved_model, temperature, max_tokens) do
-    body = Jason.encode!(%{
-      model: resolved_model,
-      messages: messages,
-      temperature: temperature,
-      max_tokens: max_tokens
-    })
+    body =
+      Jason.encode!(%{
+        model: resolved_model,
+        messages: messages,
+        temperature: temperature,
+        max_tokens: max_tokens
+      })
 
     :inets.start()
     :ssl.start()
 
-    case :httpc.request(:post,
-      {String.to_charlist(url),
-       [{~c"Content-Type", ~c"application/json"} | headers],
-       ~c"application/json", body},
-      [{:timeout, 60_000}], []) do
+    case :httpc.request(
+           :post,
+           {String.to_charlist(url), [{~c"Content-Type", ~c"application/json"} | headers],
+            ~c"application/json", body},
+           [{:timeout, 60_000}],
+           []
+         ) do
       {:ok, {{_, 200, _}, _, resp_body}} ->
         case Jason.decode(to_string(resp_body)) do
           {:ok, %{"choices" => [%{"message" => %{"content" => content}} | _]}} ->
             {:ok, String.trim(content)}
+
           {:ok, other} ->
             {:error, {:unexpected_response, other}}
         end
+
       {:ok, {{_, status, _}, _, resp_body}} ->
         {:error, {:http_error, status, to_string(resp_body)}}
+
       {:error, reason} ->
         {:error, {:request_failed, reason}}
     end
@@ -223,10 +241,12 @@ defmodule NoizuPromptLingua.Domains.Assets.ContentGenerator do
   defp resolve_provider("anthropic" <> _, model, endpoint) do
     with {:ok, key} <- require_key("ANTHROPIC_API_KEY") do
       url = endpoint || "https://api.anthropic.com/v1/messages"
-      {url, [
-        {~c"x-api-key", String.to_charlist(key)},
-        {~c"anthropic-version", ~c"2023-06-01"}
-      ], model || "claude-sonnet-4-20250514"}
+
+      {url,
+       [
+         {~c"x-api-key", String.to_charlist(key)},
+         {~c"anthropic-version", ~c"2023-06-01"}
+       ], model || "claude-sonnet-4-20250514"}
     end
   end
 

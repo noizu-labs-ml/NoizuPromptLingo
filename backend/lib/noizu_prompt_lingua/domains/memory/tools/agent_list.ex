@@ -2,12 +2,16 @@ defmodule NoizuPromptLingua.Domains.Memory.Tools.AgentList do
   @moduledoc false
   use Noizu.MCP.Server.Tool,
     name: "Memory.AgentList",
-    description: "List the registered agent identities (weego / team_member call signs) for an organization.",
+    description:
+      "List the registered agent identities (weego / team_member call signs) for an organization.",
     annotations: [read_only_hint: true],
     category: "Memory.Agents"
 
   input do
-    field :organization, :string, required: true, description: "Organization slug or UUID (required)"
+    field :organization, :string,
+      required: true,
+      description: "Organization slug or UUID (required)"
+
     field :kind, :string, description: "Filter by kind: weego | team_member"
   end
 
@@ -29,7 +33,13 @@ defmodule NoizuPromptLingua.Domains.Memory.Tools.AgentList do
            count: length(agents),
            agents:
              Enum.map(agents, fn a ->
-               %{id: a.id, call_sign: a.call_sign, kind: to_string(a.kind), display_name: a.display_name, persona_id: a.persona_id}
+               %{
+                 id: a.id,
+                 call_sign: a.call_sign,
+                 kind: to_string(a.kind),
+                 display_name: a.display_name,
+                 persona_id: a.persona_id
+               }
              end)
          }}
     end

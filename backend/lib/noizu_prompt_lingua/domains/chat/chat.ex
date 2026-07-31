@@ -2,7 +2,15 @@ defmodule NoizuPromptLingua.Domains.Chat do
   import Ecto.Query, except: [update: 2]
   require Logger
   alias NoizuPromptLingua.Repo
-  alias NoizuPromptLingua.Schema.{ChatRoom, ChatMessage, ChatEvent, ChatMember, ChatNotification, Reaction}
+
+  alias NoizuPromptLingua.Schema.{
+    ChatRoom,
+    ChatMessage,
+    ChatEvent,
+    ChatMember,
+    ChatNotification,
+    Reaction
+  }
 
   # Notifications dispatch (Stream B). Resolved at runtime via apply/3 so the
   # chat domain never hard-fails or fails to compile if Dispatch is absent.
@@ -45,8 +53,12 @@ defmodule NoizuPromptLingua.Domains.Chat do
 
   def delete_room(%ChatRoom{} = room) do
     Repo.transaction(fn ->
-      msg_ids = ChatMessage |> where([m], m.room_id == ^room.id) |> select([m], m.id) |> Repo.all()
-      event_ids = ChatEvent |> where([e], e.room_id == ^room.id) |> select([e], e.id) |> Repo.all()
+      msg_ids =
+        ChatMessage |> where([m], m.room_id == ^room.id) |> select([m], m.id) |> Repo.all()
+
+      event_ids =
+        ChatEvent |> where([e], e.room_id == ^room.id) |> select([e], e.id) |> Repo.all()
+
       sweep_reactions("chat_message", msg_ids)
       sweep_reactions("chat_event", event_ids)
 
@@ -80,8 +92,7 @@ defmodule NoizuPromptLingua.Domains.Chat do
   def get_room_by_slug(org_id, project_id, slug) do
     Repo.one(
       from r in ChatRoom,
-        where:
-          r.organization_id == ^org_id and r.project_id == ^project_id and r.slug == ^slug
+        where: r.organization_id == ^org_id and r.project_id == ^project_id and r.slug == ^slug
     )
   end
 
@@ -150,7 +161,9 @@ defmodule NoizuPromptLingua.Domains.Chat do
   end
 
   defp update_room_slug(room, base, attempt) do
-    case room |> ChatRoom.changeset(%{slug: Slug.with_suffix(base, attempt + 1)}) |> Repo.update() do
+    case room
+         |> ChatRoom.changeset(%{slug: Slug.with_suffix(base, attempt + 1)})
+         |> Repo.update() do
       {:error, %Ecto.Changeset{errors: errors}} = err ->
         if Keyword.has_key?(errors, :slug),
           do: update_room_slug(room, base, attempt + 1),
@@ -219,7 +232,7 @@ defmodule NoizuPromptLingua.Domains.Chat do
   end
 
   defp dm_name(members) do
-    "DM: " <> (members |> Enum.sort() |> Enum.join(", ")) |> String.slice(0, 255)
+    ("DM: " <> (members |> Enum.sort() |> Enum.join(", "))) |> String.slice(0, 255)
   end
 
   defp find_existing_dm(org_id, project_id, members) do
@@ -270,7 +283,8 @@ defmodule NoizuPromptLingua.Domains.Chat do
 
   @doc "Recent messages only — the join backlog. Defaults to the last 5 minutes."
   def recent_messages(room_id, minutes \\ 5, opts \\ []) do
-    cutoff = DateTime.utc_now() |> DateTime.add(-minutes * 60, :second) |> DateTime.truncate(:second)
+    cutoff =
+      DateTime.utc_now() |> DateTime.add(-minutes * 60, :second) |> DateTime.truncate(:second)
 
     ChatMessage
     |> where([m], m.room_id == ^room_id and m.inserted_at >= ^cutoff)
@@ -477,7 +491,9 @@ defmodule NoizuPromptLingua.Domains.Chat do
     Enum.group_by(
       counts,
       fn {mid, _emoji, _count} -> mid end,
-      fn {mid, emoji, count} -> %{emoji: emoji, count: count, me: MapSet.member?(mine, {mid, emoji})} end
+      fn {mid, emoji, count} ->
+        %{emoji: emoji, count: count, me: MapSet.member?(mine, {mid, emoji})}
+      end
     )
   end
 
@@ -573,7 +589,9 @@ defmodule NoizuPromptLingua.Domains.Chat do
     case Repo.get(ChatNotification, notification_id) do
       %{persona: ^persona} = notif ->
         notif |> Ecto.Changeset.change(read: true) |> Repo.update()
-      _ -> {:error, :not_found}
+
+      _ ->
+        {:error, :not_found}
     end
   end
 
@@ -582,6 +600,7 @@ defmodule NoizuPromptLingua.Domains.Chat do
       ChatNotification
       |> where([n], n.persona == ^persona and n.read == false)
       |> Repo.update_all(set: [read: true])
+
     {:ok, count}
   end
 
@@ -627,18 +646,21 @@ defmodule NoizuPromptLingua.Domains.Chat do
   defp maybe_filter_event_type(q, t), do: where(q, [e], e.event_type == ^t)
 
   defp maybe_before(q, nil), do: q
+
   defp maybe_before(q, ts) do
     {:ok, dt, _} = DateTime.from_iso8601(ts)
     where(q, [m], m.inserted_at < ^dt)
   end
 
   defp maybe_after(q, nil), do: q
+
   defp maybe_after(q, ts) do
     {:ok, dt, _} = DateTime.from_iso8601(ts)
     where(q, [m], m.inserted_at > ^dt)
   end
 
   defp maybe_since(q, nil), do: q
+
   defp maybe_since(q, ts) do
     {:ok, dt, _} = DateTime.from_iso8601(ts)
     where(q, [e], e.inserted_at > ^dt)

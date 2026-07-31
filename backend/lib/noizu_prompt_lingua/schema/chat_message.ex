@@ -30,7 +30,15 @@ defmodule NoizuPromptLingua.Schema.ChatMessage do
 
   def changeset(msg, attrs) do
     msg
-    |> cast(attrs, [:room_id, :content, :sender, :parent_message_id, :pinned, :highlighted, :scheduled_for])
+    |> cast(attrs, [
+      :room_id,
+      :content,
+      :sender,
+      :parent_message_id,
+      :pinned,
+      :highlighted,
+      :scheduled_for
+    ])
     |> validate_required([:room_id, :content, :sender])
     |> validate_length(:content, max: @content_max)
     |> validate_not_blank(:content)

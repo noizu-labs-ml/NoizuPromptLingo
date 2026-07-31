@@ -33,15 +33,27 @@ defmodule NoizuPromptLingua.Domains.Wiki.Tools.SpaceCreate do
 
       case Wiki.create_space(attrs) do
         {:ok, space} ->
-          {:ok, %{id: space.id, slug: space.slug, name: space.name, organization_id: space.organization_id, project_id: space.project_id}}
+          {:ok,
+           %{
+             id: space.id,
+             slug: space.slug,
+             name: space.name,
+             organization_id: space.organization_id,
+             project_id: space.project_id
+           }}
 
         {:error, changeset} ->
           {:error, "Failed: #{inspect(changeset.errors)}"}
       end
     else
-      {:org, nil} -> {:error, "Organization '#{org_ref}' not found"}
-      {:error, :project_not_found} -> {:error, "Project '#{project_ref}' not found"}
-      {:error, :project_not_in_org} -> {:error, "Project '#{project_ref}' does not belong to this organization"}
+      {:org, nil} ->
+        {:error, "Organization '#{org_ref}' not found"}
+
+      {:error, :project_not_found} ->
+        {:error, "Project '#{project_ref}' not found"}
+
+      {:error, :project_not_in_org} ->
+        {:error, "Project '#{project_ref}' does not belong to this organization"}
     end
   end
 end

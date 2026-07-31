@@ -55,7 +55,8 @@ defmodule NoizuPromptLingua.NPL.Resolver do
   @spec resolve(t(), Expression.t()) :: {:ok, [ResolvedComponent.t()]} | {:error, String.t()}
   def resolve(resolver, %Expression{} = expression) do
     with {:ok, resolver, components_map} <- process_additions(resolver, expression.additions),
-         {:ok, resolver, components_map} <- process_subtractions(resolver, expression.subtractions, components_map) do
+         {:ok, resolver, components_map} <-
+           process_subtractions(resolver, expression.subtractions, components_map) do
       result = build_ordered_result(resolver, expression.additions, components_map)
       {:ok, result}
     end
@@ -165,7 +166,8 @@ defmodule NoizuPromptLingua.NPL.Resolver do
              "Component '#{component.component}' not found in section '#{component.section}'. Available components: #{available}"}
 
           comp_data ->
-            {:ok, resolver, [resolve_component(component.section, comp_data, component.priority_max)]}
+            {:ok, resolver,
+             [resolve_component(component.section, comp_data, component.priority_max)]}
         end
       end
     end

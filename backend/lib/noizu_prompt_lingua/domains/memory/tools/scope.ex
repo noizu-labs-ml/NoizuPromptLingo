@@ -22,11 +22,20 @@ defmodule NoizuPromptLingua.Domains.Memory.Tools.Scope do
          {:scope, {:ok, scope}} <- {:scope, Agents.resolve_scope(org_id, scope_type, agent_ref)} do
       {:ok, Map.merge(scope, %{requester_id: to_string(scope.scope_id), source_agent: "mcp"})}
     else
-      {:org, nil} -> {:error, "Organization '#{org_ref}' not found"}
-      {:type, _} -> {:error, "scope_type must be one of: #{Enum.join(@valid, " | ")}"}
-      {:scope, {:error, :persona_not_found}} -> {:error, "Persona '#{agent_ref}' not found"}
-      {:scope, {:error, :agent_not_found}} -> {:error, "Agent '#{agent_ref}' not found in this org"}
-      {:scope, other} -> {:error, "scope resolution failed: #{inspect(other)}"}
+      {:org, nil} ->
+        {:error, "Organization '#{org_ref}' not found"}
+
+      {:type, _} ->
+        {:error, "scope_type must be one of: #{Enum.join(@valid, " | ")}"}
+
+      {:scope, {:error, :persona_not_found}} ->
+        {:error, "Persona '#{agent_ref}' not found"}
+
+      {:scope, {:error, :agent_not_found}} ->
+        {:error, "Agent '#{agent_ref}' not found in this org"}
+
+      {:scope, other} ->
+        {:error, "scope resolution failed: #{inspect(other)}"}
     end
   end
 
@@ -47,7 +56,12 @@ defmodule NoizuPromptLingua.Domains.Memory.Tools.Scope do
       content_type: m.content_type && to_string(m.content_type),
       occurred_at: m.occurred_at && DateTime.to_iso8601(m.occurred_at),
       mood: %{valence: m.valence, arousal: m.arousal, dominance: m.dominance},
-      hormones: %{cortisol: m.cortisol, dopamine: m.dopamine, oxytocin: m.oxytocin, serotonin: m.serotonin},
+      hormones: %{
+        cortisol: m.cortisol,
+        dopamine: m.dopamine,
+        oxytocin: m.oxytocin,
+        serotonin: m.serotonin
+      },
       salience: m.salience,
       decay_weight: m.decay_weight,
       recall_count: m.recall_count,

@@ -38,7 +38,8 @@ defmodule NoizuPromptLingua.Domains.Memory.Reinforcement do
   def reinforce(memory_id, context \\ %{}), do: adjust(memory_id, context, explicit_boost(), :up)
 
   @doc "Explicit, synchronous denforce of one memory. Returns {:ok, new_decay_weight}."
-  def denforce(memory_id, context \\ %{}), do: adjust(memory_id, context, denforce_penalty(), :down)
+  def denforce(memory_id, context \\ %{}),
+    do: adjust(memory_id, context, denforce_penalty(), :down)
 
   defp adjust(memory_id, context, delta, dir) do
     scope = Sentinel.scope(context)

@@ -78,7 +78,13 @@ defmodule NoizuPromptLingua.Domains.AssetsGenAIGenTest do
     end
 
     test "build_request falls back to the title when the YAML has no prompt text" do
-      req = GenAIGenerator.build_request(%{title: "Fallback", prompt_yaml: "type: image\n"}, :image, [])
+      req =
+        GenAIGenerator.build_request(
+          %{title: "Fallback", prompt_yaml: "type: image\n"},
+          :image,
+          []
+        )
+
       assert req.prompt == "Fallback"
     end
   end

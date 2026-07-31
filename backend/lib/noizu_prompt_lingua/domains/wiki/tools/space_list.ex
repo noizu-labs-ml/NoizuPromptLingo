@@ -35,12 +35,20 @@ defmodule NoizuPromptLingua.Domains.Wiki.Tools.SpaceList do
 
         spaces = Wiki.list_spaces(opts)
 
-        {:ok, %{
-          spaces: Enum.map(spaces, fn s ->
-            %{id: s.id, slug: s.slug, name: s.name, description: s.description, project_id: s.project_id}
-          end),
-          count: length(spaces)
-        }}
+        {:ok,
+         %{
+           spaces:
+             Enum.map(spaces, fn s ->
+               %{
+                 id: s.id,
+                 slug: s.slug,
+                 name: s.name,
+                 description: s.description,
+                 project_id: s.project_id
+               }
+             end),
+           count: length(spaces)
+         }}
     end
   end
 

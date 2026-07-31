@@ -13,7 +13,10 @@ defmodule NoizuPromptLinguaWeb.AssetControllerTest do
     auth_conn = authenticated_conn(conn, token)
 
     slug = "asset-org-#{System.unique_integer([:positive])}"
-    created = post(auth_conn, "/api/v1/organizations", %{organization: %{slug: slug, name: "Asset Org"}})
+
+    created =
+      post(auth_conn, "/api/v1/organizations", %{organization: %{slug: slug, name: "Asset Org"}})
+
     org_id = json_response(created, 201)["organization"]["id"]
 
     {:ok, entry} =
@@ -32,8 +35,11 @@ defmodule NoizuPromptLinguaWeb.AssetControllerTest do
   test "generate with no provider configured -> 503, not 500", %{conn: conn, base: base} do
     prev = System.get_env("OPENAI_API_KEY")
     System.put_env("OPENAI_API_KEY", "")
+
     on_exit(fn ->
-      if prev, do: System.put_env("OPENAI_API_KEY", prev), else: System.delete_env("OPENAI_API_KEY")
+      if prev,
+        do: System.put_env("OPENAI_API_KEY", prev),
+        else: System.delete_env("OPENAI_API_KEY")
     end)
 
     conn = post(conn, base, %{provider: "openai"})

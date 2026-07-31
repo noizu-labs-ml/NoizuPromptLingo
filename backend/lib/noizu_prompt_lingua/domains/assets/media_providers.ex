@@ -25,18 +25,48 @@ defmodule NoizuPromptLingua.Domains.Assets.MediaProviders do
   }
 
   @registry [
-    %{slug: "openai_image", label: "OpenAI · Image (gpt-image-1)", modality: "image",
-      module: GenAI.Provider.OpenAI.Image, env_var: "OPENAI_API_KEY"},
-    %{slug: "gemini_image", label: "Gemini · Imagen", modality: "image",
-      module: GenAI.Provider.Gemini.Image, env_var: "GEMINI_API_KEY"},
-    %{slug: "litellm_media", label: "LiteLLM · Media proxy", modality: "image",
-      module: GenAI.Provider.LiteLLM.Media, env_var: "LITELLM_API_KEY"},
-    %{slug: "openai_speech", label: "OpenAI · Speech / TTS", modality: "speech",
-      module: GenAI.Provider.OpenAI.Speech, env_var: "OPENAI_API_KEY"},
-    %{slug: "openai_transcription", label: "OpenAI · Transcription", modality: "text",
-      module: GenAI.Provider.OpenAI.Transcription, env_var: "OPENAI_API_KEY"},
-    %{slug: "suno", label: "Suno · Music", modality: "music",
-      module: GenAI.Provider.Suno, env_var: "SUNO_API_KEY"}
+    %{
+      slug: "openai_image",
+      label: "OpenAI · Image (gpt-image-1)",
+      modality: "image",
+      module: GenAI.Provider.OpenAI.Image,
+      env_var: "OPENAI_API_KEY"
+    },
+    %{
+      slug: "gemini_image",
+      label: "Gemini · Imagen",
+      modality: "image",
+      module: GenAI.Provider.Gemini.Image,
+      env_var: "GEMINI_API_KEY"
+    },
+    %{
+      slug: "litellm_media",
+      label: "LiteLLM · Media proxy",
+      modality: "image",
+      module: GenAI.Provider.LiteLLM.Media,
+      env_var: "LITELLM_API_KEY"
+    },
+    %{
+      slug: "openai_speech",
+      label: "OpenAI · Speech / TTS",
+      modality: "speech",
+      module: GenAI.Provider.OpenAI.Speech,
+      env_var: "OPENAI_API_KEY"
+    },
+    %{
+      slug: "openai_transcription",
+      label: "OpenAI · Transcription",
+      modality: "text",
+      module: GenAI.Provider.OpenAI.Transcription,
+      env_var: "OPENAI_API_KEY"
+    },
+    %{
+      slug: "suno",
+      label: "Suno · Music",
+      modality: "music",
+      module: GenAI.Provider.Suno,
+      env_var: "SUNO_API_KEY"
+    }
   ]
 
   @doc "The provider catalog the admin UI can configure (static list of known providers)."

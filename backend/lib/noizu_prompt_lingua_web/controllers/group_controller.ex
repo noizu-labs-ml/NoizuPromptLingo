@@ -9,7 +9,10 @@ defmodule NoizuPromptLinguaWeb.GroupController do
   end
 
   def show(conn, %{"id" => id}) do
-    group = if NoizuPromptLingua.UUID.uuid?(id), do: NoizuPromptLingua.Repo.get(NoizuPromptLingua.Schema.Authz.Group, id), else: Groups.get_by_name(id)
+    group =
+      if NoizuPromptLingua.UUID.uuid?(id),
+        do: NoizuPromptLingua.Repo.get(NoizuPromptLingua.Schema.Authz.Group, id),
+        else: Groups.get_by_name(id)
 
     case group do
       nil -> conn |> put_status(:not_found) |> json(%{error: "Group not found"})
@@ -18,10 +21,15 @@ defmodule NoizuPromptLinguaWeb.GroupController do
   end
 
   def policies(conn, %{"id" => id}) do
-    group = if NoizuPromptLingua.UUID.uuid?(id), do: NoizuPromptLingua.Repo.get(NoizuPromptLingua.Schema.Authz.Group, id), else: Groups.get_by_name(id)
+    group =
+      if NoizuPromptLingua.UUID.uuid?(id),
+        do: NoizuPromptLingua.Repo.get(NoizuPromptLingua.Schema.Authz.Group, id),
+        else: Groups.get_by_name(id)
 
     case group do
-      nil -> conn |> put_status(:not_found) |> json(%{error: "Group not found"})
+      nil ->
+        conn |> put_status(:not_found) |> json(%{error: "Group not found"})
+
       g ->
         policies = Groups.list_policies(g.id)
         json(conn, %{group: group_to_json(g), policies: policies})

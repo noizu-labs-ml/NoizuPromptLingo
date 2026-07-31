@@ -7,7 +7,10 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.TicketList do
     annotations: [read_only_hint: true]
 
   input do
-    field :organization, :string, required: true, description: "Organization slug or UUID (required)"
+    field :organization, :string,
+      required: true,
+      description: "Organization slug or UUID (required)"
+
     field :status, :string, description: "Filter by status"
     field :ticket_type, :string, description: "Filter by type slug"
     field :priority, :string, description: "Filter by priority"
@@ -43,14 +46,22 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.TicketList do
 
         tickets = Tickets.list(opts)
 
-        {:ok, %{
-          tickets: Enum.map(tickets, fn t ->
-            %{id: t.id, title: t.title, ticket_type: t.ticket_type,
-              status: t.status, priority: t.priority, assignee: t.assignee,
-              created_at: t.inserted_at}
-          end),
-          count: length(tickets)
-        }}
+        {:ok,
+         %{
+           tickets:
+             Enum.map(tickets, fn t ->
+               %{
+                 id: t.id,
+                 title: t.title,
+                 ticket_type: t.ticket_type,
+                 status: t.status,
+                 priority: t.priority,
+                 assignee: t.assignee,
+                 created_at: t.inserted_at
+               }
+             end),
+           count: length(tickets)
+         }}
     end
   end
 end

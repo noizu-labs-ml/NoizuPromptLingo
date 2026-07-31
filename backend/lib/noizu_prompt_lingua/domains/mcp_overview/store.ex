@@ -105,7 +105,11 @@ defmodule NoizuPromptLingua.Domains.MCPOverview.Store do
 
   @doc "Cosine-distance recall threshold. A cached overview must be within this to hit."
   def similarity_threshold do
-    Application.get_env(:noizu_prompt_lingua, :mcp_overview_similarity_threshold, @default_threshold)
+    Application.get_env(
+      :noizu_prompt_lingua,
+      :mcp_overview_similarity_threshold,
+      @default_threshold
+    )
   end
 
   # ── mcp_overviews ─────────────────────────────────────────────────────────

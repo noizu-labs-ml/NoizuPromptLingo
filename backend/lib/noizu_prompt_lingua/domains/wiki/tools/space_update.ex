@@ -28,10 +28,19 @@ defmodule NoizuPromptLingua.Domains.Wiki.Tools.SpaceUpdate do
 
         case Wiki.update_space(id, attrs) do
           {:ok, updated} ->
-            {:ok, %{id: updated.id, slug: updated.slug, name: updated.name, description: updated.description}}
+            {:ok,
+             %{
+               id: updated.id,
+               slug: updated.slug,
+               name: updated.name,
+               description: updated.description
+             }}
 
-          {:error, :not_found} -> {:error, "Space '#{id}' not found"}
-          {:error, changeset} -> {:error, "Failed: #{inspect(changeset.errors)}"}
+          {:error, :not_found} ->
+            {:error, "Space '#{id}' not found"}
+
+          {:error, changeset} ->
+            {:error, "Failed: #{inspect(changeset.errors)}"}
         end
     end
   end

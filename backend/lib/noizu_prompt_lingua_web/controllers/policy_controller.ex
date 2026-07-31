@@ -14,6 +14,7 @@ defmodule NoizuPromptLinguaWeb.PolicyController do
     case Policies.create_policy(attrs) do
       {:ok, policy} ->
         conn |> put_status(:created) |> json(%{policy: policy_to_json(policy)})
+
       {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
         conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
     end
@@ -28,28 +29,54 @@ defmodule NoizuPromptLinguaWeb.PolicyController do
 
   def update(conn, %{"id" => id, "policy" => attrs}) do
     case Policies.update_policy(id, attrs) do
-      {:ok, policy} -> json(conn, %{policy: policy_to_json(policy)})
-      {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Policy not found"})
-      {:error, :cannot_modify_system_policy} -> conn |> put_status(:forbidden) |> json(%{error: "Cannot modify system policy"})
-      {:error, changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+      {:ok, policy} ->
+        json(conn, %{policy: policy_to_json(policy)})
+
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Policy not found"})
+
+      {:error, :cannot_modify_system_policy} ->
+        conn |> put_status(:forbidden) |> json(%{error: "Cannot modify system policy"})
+
+      {:error, changeset} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
     end
   end
 
   def delete(conn, %{"id" => id}) do
     case Policies.delete_policy(id) do
-      {:ok, _} -> json(conn, %{message: "Policy deleted"})
-      {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Policy not found"})
-      {:error, :cannot_delete_system_policy} -> conn |> put_status(:forbidden) |> json(%{error: "Cannot delete system policy"})
+      {:ok, _} ->
+        json(conn, %{message: "Policy deleted"})
+
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Policy not found"})
+
+      {:error, :cannot_delete_system_policy} ->
+        conn |> put_status(:forbidden) |> json(%{error: "Cannot delete system policy"})
     end
   end
 
-  def check(conn, %{"resource_type" => resource_type, "resource_id" => resource_id, "action" => action}) do
+  def check(conn, %{
+        "resource_type" => resource_type,
+        "resource_id" => resource_id,
+        "action" => action
+      }) do
     user_id = get_user_id(conn)
     allowed = Authz.check_permission(user_id, resource_type, resource_id, action)
-    json(conn, %{allowed: allowed, action: action, resource_type: resource_type, resource_id: resource_id})
+
+    json(conn, %{
+      allowed: allowed,
+      action: action,
+      resource_type: resource_type,
+      resource_id: resource_id
+    })
   end
 
-  def explain(conn, %{"resource_type" => resource_type, "resource_id" => resource_id, "action" => action}) do
+  def explain(conn, %{
+        "resource_type" => resource_type,
+        "resource_id" => resource_id,
+        "action" => action
+      }) do
     user_id = get_user_id(conn)
     result = Authz.explain_permission(user_id, resource_type, resource_id, action)
     json(conn, result)
@@ -69,15 +96,21 @@ defmodule NoizuPromptLinguaWeb.PolicyController do
     ]
 
     case Policies.attach_to_user(target_user_id, policy_id, opts) do
-      {:ok, _} -> conn |> put_status(:created) |> json(%{message: "Policy attached"})
-      {:error, changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+      {:ok, _} ->
+        conn |> put_status(:created) |> json(%{message: "Policy attached"})
+
+      {:error, changeset} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
     end
   end
 
   def detach_from_user(conn, %{"user_id" => target_user_id, "policy_id" => policy_id}) do
     case Policies.detach_from_user(target_user_id, policy_id) do
-      {:ok, _} -> json(conn, %{message: "Policy detached"})
-      {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Policy attachment not found"})
+      {:ok, _} ->
+        json(conn, %{message: "Policy detached"})
+
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Policy attachment not found"})
     end
   end
 

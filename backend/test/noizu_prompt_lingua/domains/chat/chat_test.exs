@@ -31,7 +31,12 @@ defmodule NoizuPromptLingua.Domains.ChatTest do
   # ── reactions ─────────────────────────────────────────────────
 
   defp room_with_message(org_id) do
-    {:ok, room} = Chat.create_room(%{organization_id: org_id, name: "Reactions #{System.unique_integer([:positive])}"})
+    {:ok, room} =
+      Chat.create_room(%{
+        organization_id: org_id,
+        name: "Reactions #{System.unique_integer([:positive])}"
+      })
+
     {:ok, msg} = Chat.send_message(%{room_id: room.id, sender: "alice", content: "ship it"})
     msg
   end
@@ -50,9 +55,29 @@ defmodule NoizuPromptLingua.Domains.ChatTest do
   test "distinct personas/emoji accumulate; counts group by emoji", %{org_id: org_id} do
     msg = room_with_message(org_id)
 
-    {:ok, _} = Chat.add_reaction(%{entity_type: "chat_message", entity_id: msg.id, persona: "bob", emoji: "👍"})
-    {:ok, _} = Chat.add_reaction(%{entity_type: "chat_message", entity_id: msg.id, persona: "carol", emoji: "👍"})
-    {:ok, _} = Chat.add_reaction(%{entity_type: "chat_message", entity_id: msg.id, persona: "bob", emoji: "🚀"})
+    {:ok, _} =
+      Chat.add_reaction(%{
+        entity_type: "chat_message",
+        entity_id: msg.id,
+        persona: "bob",
+        emoji: "👍"
+      })
+
+    {:ok, _} =
+      Chat.add_reaction(%{
+        entity_type: "chat_message",
+        entity_id: msg.id,
+        persona: "carol",
+        emoji: "👍"
+      })
+
+    {:ok, _} =
+      Chat.add_reaction(%{
+        entity_type: "chat_message",
+        entity_id: msg.id,
+        persona: "bob",
+        emoji: "🚀"
+      })
 
     assert length(Chat.list_reactions("chat_message", msg.id)) == 3
     assert Chat.reaction_counts("chat_message", msg.id) == %{"👍" => 2, "🚀" => 1}
@@ -60,7 +85,14 @@ defmodule NoizuPromptLingua.Domains.ChatTest do
 
   test "remove_reaction deletes only the matching row, 404 when absent", %{org_id: org_id} do
     msg = room_with_message(org_id)
-    {:ok, _} = Chat.add_reaction(%{entity_type: "chat_message", entity_id: msg.id, persona: "bob", emoji: "👍"})
+
+    {:ok, _} =
+      Chat.add_reaction(%{
+        entity_type: "chat_message",
+        entity_id: msg.id,
+        persona: "bob",
+        emoji: "👍"
+      })
 
     assert Chat.remove_reaction("chat_message", msg.id, "bob", "👍") == :ok
     assert Chat.list_reactions("chat_message", msg.id) == []
@@ -71,9 +103,30 @@ defmodule NoizuPromptLingua.Domains.ChatTest do
     m1 = room_with_message(org_id)
     m2 = room_with_message(org_id)
 
-    {:ok, _} = Chat.add_reaction(%{entity_type: "chat_message", entity_id: m1.id, persona: "bob", emoji: "👍"})
-    {:ok, _} = Chat.add_reaction(%{entity_type: "chat_message", entity_id: m1.id, persona: "carol", emoji: "👍"})
-    {:ok, _} = Chat.add_reaction(%{entity_type: "chat_message", entity_id: m1.id, persona: "bob", emoji: "🚀"})
+    {:ok, _} =
+      Chat.add_reaction(%{
+        entity_type: "chat_message",
+        entity_id: m1.id,
+        persona: "bob",
+        emoji: "👍"
+      })
+
+    {:ok, _} =
+      Chat.add_reaction(%{
+        entity_type: "chat_message",
+        entity_id: m1.id,
+        persona: "carol",
+        emoji: "👍"
+      })
+
+    {:ok, _} =
+      Chat.add_reaction(%{
+        entity_type: "chat_message",
+        entity_id: m1.id,
+        persona: "bob",
+        emoji: "🚀"
+      })
+
     # m2 has no reactions → absent from the map
 
     summaries = Chat.message_reaction_summaries([m1.id, m2.id], "bob")
@@ -87,18 +140,36 @@ defmodule NoizuPromptLingua.Domains.ChatTest do
            ]
 
     # carol reacted only with 👍 → me:false on 🚀
-    s1_carol = Map.fetch!(Chat.message_reaction_summaries([m1.id], "carol"), m1.id) |> Enum.sort_by(& &1.emoji)
+    s1_carol =
+      Map.fetch!(Chat.message_reaction_summaries([m1.id], "carol"), m1.id)
+      |> Enum.sort_by(& &1.emoji)
+
     assert s1_carol == [
              %{emoji: "👍", count: 2, me: true},
              %{emoji: "🚀", count: 1, me: false}
            ]
   end
 
-  test "reactions are partitioned by entity_type so messages and events don't collide", %{org_id: org_id} do
+  test "reactions are partitioned by entity_type so messages and events don't collide", %{
+    org_id: org_id
+  } do
     msg = room_with_message(org_id)
 
-    {:ok, _} = Chat.add_reaction(%{entity_type: "chat_message", entity_id: msg.id, persona: "bob", emoji: "👍"})
-    {:ok, _} = Chat.add_reaction(%{entity_type: "chat_event", entity_id: msg.id, persona: "bob", emoji: "👍"})
+    {:ok, _} =
+      Chat.add_reaction(%{
+        entity_type: "chat_message",
+        entity_id: msg.id,
+        persona: "bob",
+        emoji: "👍"
+      })
+
+    {:ok, _} =
+      Chat.add_reaction(%{
+        entity_type: "chat_event",
+        entity_id: msg.id,
+        persona: "bob",
+        emoji: "👍"
+      })
 
     assert length(Chat.list_reactions("chat_message", msg.id)) == 1
     assert length(Chat.list_reactions("chat_event", msg.id)) == 1

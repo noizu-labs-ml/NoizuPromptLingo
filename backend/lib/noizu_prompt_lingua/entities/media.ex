@@ -6,6 +6,7 @@ defmodule NoizuPromptLingua.Media do
 
   def list(context, options \\ []) do
     settings = Noizu.Entity.Meta.persistence(Entity) |> hd
+
     NoizuPromptLingua.Repo.all(Schema)
     |> Enum.map(fn record ->
       {:ok, entity} = Entity.from_record(record, settings, context, options)
@@ -51,6 +52,7 @@ defmodule NoizuPromptLingua.Media do
 
   def get_by_short_id(short_id) do
     import Ecto.Query
+
     NoizuPromptLingua.Repo.one(
       from a in Schema,
         where: a.short_id == ^short_id and is_nil(a.deleted_at)
@@ -59,6 +61,7 @@ defmodule NoizuPromptLingua.Media do
 
   def get_cached_variant(media_id, canonical_params) do
     import Ecto.Query
+
     NoizuPromptLingua.Repo.one(
       from v in NoizuPromptLingua.Schema.Media.Variant,
         where: v.media_id == ^media_id and v.params == ^canonical_params
@@ -73,6 +76,7 @@ defmodule NoizuPromptLingua.Media do
 
   def fetch_from_s3(key) do
     config = Application.get_env(:noizu_prompt_lingua, NoizuPromptLingua.Storage, [])
+
     case ExAws.S3.get_object(config[:bucket], key) |> ExAws.request(config) do
       {:ok, %{body: body}} -> {:ok, body}
       error -> error
@@ -81,6 +85,7 @@ defmodule NoizuPromptLingua.Media do
 
   def upload_variant_to_s3(key, binary, content_type) do
     config = Application.get_env(:noizu_prompt_lingua, NoizuPromptLingua.Storage, [])
+
     ExAws.S3.put_object(config[:bucket], key, binary, content_type: content_type)
     |> ExAws.request(config)
   end
@@ -96,7 +101,9 @@ defmodule NoizuPromptLingua.Media do
         with {:ok, original_binary} <- fetch_from_s3(media.file),
              {:ok, transformed, content_type} <-
                NoizuPromptLingua.Media.Transform.transform(original_binary, transform_params) do
-          variant_key = NoizuPromptLingua.Media.Transform.variant_s3_key(media.file, transform_params)
+          variant_key =
+            NoizuPromptLingua.Media.Transform.variant_s3_key(media.file, transform_params)
+
           {:ok, _} = upload_variant_to_s3(variant_key, transformed, content_type)
 
           {:ok, _} =

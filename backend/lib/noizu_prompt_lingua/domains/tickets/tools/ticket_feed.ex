@@ -14,10 +14,12 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.TicketFeed do
   @impl true
   def call(args, _ctx) do
     ticket_id = args[:ticket_id] || args["ticket_id"]
-    {:ok, %{
-      ticket_id: ticket_id,
-      events: [],
-      hint: "Activity feed not yet implemented."
-    }}
+
+    {:ok,
+     %{
+       ticket_id: ticket_id,
+       events: [],
+       hint: "Activity feed not yet implemented."
+     }}
   end
 end

@@ -57,10 +57,16 @@ defmodule NoizuPromptLinguaWeb.ConnCase do
     }
 
     {:ok, access_token, _claims} =
-      NoizuPromptLingua.Guardian.encode_and_sign(session_entity, %{}, token_type: "access", ttl: {1, :hour})
+      NoizuPromptLingua.Guardian.encode_and_sign(session_entity, %{},
+        token_type: "access",
+        ttl: {1, :hour}
+      )
 
     {:ok, refresh_token, %{"jti" => jti}} =
-      NoizuPromptLingua.Guardian.encode_and_sign(session_entity, %{}, token_type: "refresh", ttl: {7, :day})
+      NoizuPromptLingua.Guardian.encode_and_sign(session_entity, %{},
+        token_type: "refresh",
+        ttl: {7, :day}
+      )
 
     NoizuPromptLingua.Auth.TokenStore.store_refresh_jti(jti)
 

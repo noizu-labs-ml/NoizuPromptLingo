@@ -5,14 +5,20 @@ defmodule NoizuPromptLingua.Domains.Campaigns.Tools.CampaignUpdate do
     hidden: true,
     category: "Campaigns"
 
-  input_schema %{
+  input_schema(%{
     "type" => "object",
     "properties" => %{
       "id" => %{"type" => "string", "description" => "Campaign UUID"},
       "name" => %{"type" => "string", "description" => "Name"},
-      "channel" => %{"type" => "string", "description" => "seo, ppc, email, social, content, display"},
+      "channel" => %{
+        "type" => "string",
+        "description" => "seo, ppc, email, social, content, display"
+      },
       "objective" => %{"type" => "string", "description" => "Objective"},
-      "status" => %{"type" => "string", "description" => "draft, active, paused, completed, archived"},
+      "status" => %{
+        "type" => "string",
+        "description" => "draft, active, paused, completed, archived"
+      },
       "budget_cents" => %{"type" => "integer", "description" => "Budget in cents"},
       "currency" => %{"type" => "string", "description" => "Currency code"},
       "start_date" => %{"type" => "string", "description" => "Start date (YYYY-MM-DD)"},
@@ -23,7 +29,7 @@ defmodule NoizuPromptLingua.Domains.Campaigns.Tools.CampaignUpdate do
       "tags" => %{"type" => "array", "items" => %{"type" => "string"}, "description" => "Tags"}
     },
     "required" => ["id"]
-  }
+  })
 
   alias NoizuPromptLingua.Domains.Campaigns
   alias NoizuPromptLingua.MCP.Args

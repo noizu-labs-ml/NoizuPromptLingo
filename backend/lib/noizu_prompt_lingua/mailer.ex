@@ -4,7 +4,9 @@ defmodule NoizuPromptLingua.Mailer do
   end
 
   def from() do
-    {name, address} = Application.get_env(:noizu_prompt_lingua, :mail_from, {"App", "noreply@localhost"})
+    {name, address} =
+      Application.get_env(:noizu_prompt_lingua, :mail_from, {"App", "noreply@localhost"})
+
     %SendGrid.Email{}
     |> SendGrid.Email.put_from(address, name)
   end

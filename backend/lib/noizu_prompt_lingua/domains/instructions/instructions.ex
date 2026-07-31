@@ -20,12 +20,18 @@ defmodule NoizuPromptLingua.Domains.Instructions do
     body = opts[:body] || attrs[:body] || attrs["body"] || ""
 
     Repo.transaction(fn ->
-      case %Instruction{} |> Instruction.changeset(Map.put(attrs, :active_version, 1)) |> Repo.insert() do
+      case %Instruction{}
+           |> Instruction.changeset(Map.put(attrs, :active_version, 1))
+           |> Repo.insert() do
         {:ok, instruction} ->
           {:ok, _v} =
             %InstructionVersion{}
-            |> InstructionVersion.changeset(%{instruction_id: instruction.id, version: 1,
-                 body: body, change_note: "Initial version"})
+            |> InstructionVersion.changeset(%{
+              instruction_id: instruction.id,
+              version: 1,
+              body: body,
+              change_note: "Initial version"
+            })
             |> Repo.insert()
 
           instruction
@@ -42,7 +48,8 @@ defmodule NoizuPromptLingua.Domains.Instructions do
   def resolve(org_id, id_or_slug) do
     case NoizuPromptLingua.UUID.cast(id_or_slug) do
       {:ok, uuid} ->
-        Repo.get(Instruction, uuid) || Repo.get_by(Instruction, organization_id: org_id, slug: id_or_slug)
+        Repo.get(Instruction, uuid) ||
+          Repo.get_by(Instruction, organization_id: org_id, slug: id_or_slug)
 
       :error ->
         Repo.get_by(Instruction, organization_id: org_id, slug: id_or_slug)
@@ -99,8 +106,12 @@ defmodule NoizuPromptLingua.Domains.Instructions do
 
               {:ok, _v} =
                 %InstructionVersion{}
-                |> InstructionVersion.changeset(%{instruction_id: instruction.id, version: new_version,
-                     body: body, change_note: change_note || "Updated"})
+                |> InstructionVersion.changeset(%{
+                  instruction_id: instruction.id,
+                  version: new_version,
+                  body: body,
+                  change_note: change_note || "Updated"
+                })
                 |> Repo.insert()
 
               {Map.put(meta, :active_version, new_version), new_version}
@@ -123,7 +134,8 @@ defmodule NoizuPromptLingua.Domains.Instructions do
   @doc "Point active_version at an existing version (rollback / roll-forward)."
   def set_active_version(id, version) do
     with %Instruction{} = instruction <- get(id),
-         %InstructionVersion{} <- Repo.get_by(InstructionVersion, instruction_id: id, version: version) do
+         %InstructionVersion{} <-
+           Repo.get_by(InstructionVersion, instruction_id: id, version: version) do
       instruction |> Instruction.changeset(%{active_version: version}) |> Repo.update()
     else
       nil -> {:error, :not_found}
@@ -186,6 +198,7 @@ defmodule NoizuPromptLingua.Domains.Instructions do
         merged =
           Enum.reduce(declared, params, fn p, acc ->
             name = p["name"] || p[:name]
+
             cond do
               name == nil -> acc
               Map.has_key?(acc, name) -> acc
@@ -203,14 +216,15 @@ defmodule NoizuPromptLingua.Domains.Instructions do
         if missing != [] do
           {:error, {:missing_params, missing}}
         else
-          {:ok, %{
-            id: instruction.id,
-            slug: instruction.slug,
-            title: instruction.title,
-            version: ver.version,
-            params: merged,
-            body: substitute(ver.body, merged)
-          }}
+          {:ok,
+           %{
+             id: instruction.id,
+             slug: instruction.slug,
+             title: instruction.title,
+             version: ver.version,
+             params: merged,
+             body: substitute(ver.body, merged)
+           }}
         end
     end
   end
@@ -266,8 +280,14 @@ defmodule NoizuPromptLingua.Domains.Instructions do
 
   defp maybe_search(q, nil), do: q
   defp maybe_search(q, ""), do: q
+
   defp maybe_search(q, query) do
     pattern = "%#{query}%"
-    where(q, [i], ilike(i.title, ^pattern) or ilike(i.description, ^pattern) or ilike(i.slug, ^pattern))
+
+    where(
+      q,
+      [i],
+      ilike(i.title, ^pattern) or ilike(i.description, ^pattern) or ilike(i.slug, ^pattern)
+    )
   end
 end

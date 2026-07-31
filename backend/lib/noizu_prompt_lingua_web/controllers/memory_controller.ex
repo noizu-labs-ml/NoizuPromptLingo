@@ -32,7 +32,12 @@ defmodule NoizuPromptLinguaWeb.MemoryController do
         signs =
           Agents.list(org_id, status: "active")
           |> Enum.map(fn a ->
-            %{scope_type: to_string(a.kind), scope_id: a.id, slug: a.call_sign, label: a.display_name || a.call_sign}
+            %{
+              scope_type: to_string(a.kind),
+              scope_id: a.id,
+              slug: a.call_sign,
+              label: a.display_name || a.call_sign
+            }
           end)
 
         json(conn, %{agents: personas ++ signs})
@@ -52,7 +57,9 @@ defmodule NoizuPromptLinguaWeb.MemoryController do
   @doc "POST /api/organization/:org_id/agent/:agent_slug/memory/recall — active multi-path recall by text query."
   def recall(conn, params) do
     with {:ok, context} <- build_context(params) do
-      {:ok, %{results: results}} = Memory.recall(params["query"] || "", [limit: limit(params)], context)
+      {:ok, %{results: results}} =
+        Memory.recall(params["query"] || "", [limit: limit(params)], context)
+
       json(conn, %{results: Enum.map(results, &MemView.memory_view/1)})
     else
       err -> error(conn, err)
@@ -70,7 +77,9 @@ defmodule NoizuPromptLinguaWeb.MemoryController do
         dominance: num(mp["dominance"], 0.5)
       }
 
-      {:ok, %{results: results}} = Memory.recall_by_emotion(%{mood: mood}, [limit: limit(params)], context)
+      {:ok, %{results: results}} =
+        Memory.recall_by_emotion(%{mood: mood}, [limit: limit(params)], context)
+
       json(conn, %{results: Enum.map(results, &MemView.memory_view/1)})
     else
       err -> error(conn, err)
@@ -108,8 +117,12 @@ defmodule NoizuPromptLinguaWeb.MemoryController do
 
       org_id ->
         case Agents.resolve_agent(org_id, slug) do
-          {:ok, scope} -> {:ok, Map.merge(scope, %{requester_id: to_string(scope.scope_id), source_agent: "web"})}
-          {:error, _} -> {:error, :agent_not_found}
+          {:ok, scope} ->
+            {:ok,
+             Map.merge(scope, %{requester_id: to_string(scope.scope_id), source_agent: "web"})}
+
+          {:error, _} ->
+            {:error, :agent_not_found}
         end
     end
   end
@@ -120,12 +133,14 @@ defmodule NoizuPromptLinguaWeb.MemoryController do
 
   defp num(nil, default), do: default
   defp num(n, _default) when is_number(n), do: n
+
   defp num(s, default) when is_binary(s) do
     case Float.parse(s) do
       {f, _} -> f
       :error -> default
     end
   end
+
   defp num(_, default), do: default
 
   defp error(conn, {:error, :org_not_found}), do: not_found(conn)
@@ -133,5 +148,6 @@ defmodule NoizuPromptLinguaWeb.MemoryController do
   defp error(conn, _),
     do: conn |> put_status(:not_found) |> json(%{error: "agent not found in this organization"})
 
-  defp not_found(conn), do: conn |> put_status(:not_found) |> json(%{error: "organization not found"})
+  defp not_found(conn),
+    do: conn |> put_status(:not_found) |> json(%{error: "organization not found"})
 end

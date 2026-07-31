@@ -97,9 +97,12 @@ defmodule NoizuPromptLinguaWeb.SSOController do
 
   def exchange(conn, %{"code" => code}) do
     with {:ok, claimed} <- NoizuPromptLingua.Auth.SSO.claim_session(code),
-         {:ok, session} <- NoizuPromptLingua.Users.Sessions.get(claimed.id, Noizu.Context.system(), []),
-         {:ok, access_token, _} <- Guardian.encode_and_sign(session, %{}, token_type: "access", ttl: {1, :hour}),
-         {:ok, refresh_token, _} <- Guardian.encode_and_sign(session, %{}, token_type: "refresh", ttl: {7, :day}) do
+         {:ok, session} <-
+           NoizuPromptLingua.Users.Sessions.get(claimed.id, Noizu.Context.system(), []),
+         {:ok, access_token, _} <-
+           Guardian.encode_and_sign(session, %{}, token_type: "access", ttl: {1, :hour}),
+         {:ok, refresh_token, _} <-
+           Guardian.encode_and_sign(session, %{}, token_type: "refresh", ttl: {7, :day}) do
       user = resolve_user_from_session(session)
       orgs = Organizations.list_user_organizations(user.id)
 
@@ -141,9 +144,12 @@ defmodule NoizuPromptLinguaWeb.SSOController do
 
     with {:ok, identity} <- NoizuPromptLingua.Auth.RegistrationToken.verify(token),
          {:ok, created} <- NoizuPromptLingua.Auth.SSO.register_user(identity, attrs),
-         {:ok, session} <- NoizuPromptLingua.Users.Sessions.get(created.id, Noizu.Context.system(), []),
-         {:ok, access_token, _} <- Guardian.encode_and_sign(session, %{}, token_type: "access", ttl: {1, :hour}),
-         {:ok, refresh_token, _} <- Guardian.encode_and_sign(session, %{}, token_type: "refresh", ttl: {7, :day}) do
+         {:ok, session} <-
+           NoizuPromptLingua.Users.Sessions.get(created.id, Noizu.Context.system(), []),
+         {:ok, access_token, _} <-
+           Guardian.encode_and_sign(session, %{}, token_type: "access", ttl: {1, :hour}),
+         {:ok, refresh_token, _} <-
+           Guardian.encode_and_sign(session, %{}, token_type: "refresh", ttl: {7, :day}) do
       user = resolve_user_from_session(session)
       orgs = Organizations.list_user_organizations(user.id)
 
@@ -172,7 +178,10 @@ defmodule NoizuPromptLinguaWeb.SSOController do
     case NoizuPromptLingua.Auth.SSO.authenticate_sso(provider_type, attrs) do
       {:ok, session} ->
         # session.claim_code is the one-time hand-off code (no Redis).
-        redirect(conn, external: "#{frontend_url()}/auth/sso-callback?code=#{session.claim_code}&provider=#{provider_type}")
+        redirect(conn,
+          external:
+            "#{frontend_url()}/auth/sso-callback?code=#{session.claim_code}&provider=#{provider_type}"
+        )
 
       {:registration_required, identity} ->
         # No account yet — sign the verified identity into a stateless token.
@@ -204,7 +213,9 @@ defmodule NoizuPromptLinguaWeb.SSOController do
       {:ref, _, id} ->
         {:ok, user} = NoizuPromptLingua.Users.get_user(id, Noizu.Context.system())
         user
-      %NoizuPromptLingua.Users.User{} = user -> user
+
+      %NoizuPromptLingua.Users.User{} = user ->
+        user
     end
   end
 

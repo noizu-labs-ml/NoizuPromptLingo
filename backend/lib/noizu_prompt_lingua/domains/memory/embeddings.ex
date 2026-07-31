@@ -72,7 +72,9 @@ defmodule NoizuPromptLingua.Domains.Memory.Embeddings do
       text
       |> String.downcase()
       |> String.split(~r/[^a-z0-9]+/u, trim: true)
-      |> Enum.reduce(%{}, fn tok, acc -> Map.update(acc, :erlang.phash2(tok, dims), 1.0, &(&1 + 1.0)) end)
+      |> Enum.reduce(%{}, fn tok, acc ->
+        Map.update(acc, :erlang.phash2(tok, dims), 1.0, &(&1 + 1.0))
+      end)
 
     vec = for i <- 0..(dims - 1), do: Map.get(counts, i, 0.0)
     norm = :math.sqrt(Enum.reduce(vec, 0.0, fn x, a -> a + x * x end))

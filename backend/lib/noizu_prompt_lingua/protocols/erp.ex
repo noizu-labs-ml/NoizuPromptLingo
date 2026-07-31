@@ -4,6 +4,7 @@ Protocol.derive(Jason.Encoder, Noizu.Entity.TimeStamp, [])
 defimpl Jason.Encoder, for: Tuple do
   def encode({:ref, _, _} = s, {_, _, user_settings} = opts) do
     json_format = user_settings[:json_format] || :default
+
     with {:ok, sref} <- Noizu.EntityReference.Protocol.sref(s) do
       sref
       |> Jason.Encode.string(opts)
@@ -23,6 +24,7 @@ defimpl Jason.Encoder, for: Tuple do
 
   def encode({:ref, _, _} = s, {_, _, user_settings} = opts) do
     json_format = user_settings[:json_format] || :default
+
     with {:ok, sref} <- Noizu.EntityReference.Protocol.sref(s) do
       sref
       |> Jason.Encode.string(opts)

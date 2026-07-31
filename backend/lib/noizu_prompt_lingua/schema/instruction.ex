@@ -33,8 +33,17 @@ defmodule NoizuPromptLingua.Schema.Instruction do
 
   def changeset(instruction, attrs) do
     instruction
-    |> cast(attrs, [:organization_id, :project_id, :slug, :title, :description, :tags,
-                     :parameters, :active_version, :status])
+    |> cast(attrs, [
+      :organization_id,
+      :project_id,
+      :slug,
+      :title,
+      :description,
+      :tags,
+      :parameters,
+      :active_version,
+      :status
+    ])
     |> validate_required([:organization_id, :slug, :title])
     |> validate_inclusion(:status, @statuses)
     |> foreign_key_constraint(:organization_id)

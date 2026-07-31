@@ -168,12 +168,13 @@ defmodule NoizuPromptLingua.Domains.Wiki do
     )
     |> case do
       {:ok, %Reaction{id: nil}} ->
-        {:ok, Repo.get_by(Reaction,
-          target_type: attrs[:target_type] || attrs["target_type"],
-          target_id: attrs[:target_id] || attrs["target_id"],
-          emoji: attrs[:emoji] || attrs["emoji"],
-          actor: attrs[:actor] || attrs["actor"]
-        )}
+        {:ok,
+         Repo.get_by(Reaction,
+           target_type: attrs[:target_type] || attrs["target_type"],
+           target_id: attrs[:target_id] || attrs["target_id"],
+           emoji: attrs[:emoji] || attrs["emoji"],
+           actor: attrs[:actor] || attrs["actor"]
+         )}
 
       other ->
         other
@@ -226,6 +227,7 @@ defmodule NoizuPromptLingua.Domains.Wiki do
 
   defp maybe_search(query, _fields, nil), do: query
   defp maybe_search(query, _fields, ""), do: query
+
   defp maybe_search(query, [a, b], search) do
     pattern = "%#{search}%"
     where(query, [r], ilike(field(r, ^a), ^pattern) or ilike(field(r, ^b), ^pattern))

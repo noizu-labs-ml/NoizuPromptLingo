@@ -9,15 +9,18 @@ defmodule NoizuPromptLingua.Domains.Artifacts.Tools.ArtifactAddRevision do
   # DSL: the typed-string path chokes on large content payloads (~10KB+ -> opaque "Tool
   # execution failed"), while Create's input_schema handles the same payload fine
   # (a2f06808). The deeper typed-input-DSL large-string bug is flagged to mcp-tooling.
-  input_schema %{
+  input_schema(%{
     "type" => "object",
     "properties" => %{
       "artifact_id" => %{"type" => "string", "description" => "Artifact UUID"},
-      "content" => %{"type" => "string", "description" => "New content (text or base64 for binary)"},
+      "content" => %{
+        "type" => "string",
+        "description" => "New content (text or base64 for binary)"
+      },
       "note" => %{"type" => "string", "description" => "Revision note describing changes"}
     },
     "required" => ["artifact_id", "content"]
-  }
+  })
 
   alias NoizuPromptLingua.Domains.Artifacts
 
@@ -29,11 +32,13 @@ defmodule NoizuPromptLingua.Domains.Artifacts.Tools.ArtifactAddRevision do
 
     case Artifacts.add_revision(artifact_id, content, note) do
       {:ok, revision} ->
-        {:ok, %{
-          revision_id: revision.id,
-          revision_number: revision.revision_number,
-          created_at: revision.inserted_at
-        }}
+        {:ok,
+         %{
+           revision_id: revision.id,
+           revision_number: revision.revision_number,
+           created_at: revision.inserted_at
+         }}
+
       {:error, changeset} ->
         {:error, "Failed: #{inspect(changeset.errors)}"}
     end

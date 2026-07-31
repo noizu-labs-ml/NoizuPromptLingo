@@ -2,7 +2,8 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.LeaveRoom do
   use Noizu.MCP.Server.Tool,
     name: "Chat.LeaveRoom",
     description: "Mark a persona as having left a room.",
-    hidden: true, category: "Chat"
+    hidden: true,
+    category: "Chat"
 
   input do
     field :room_id, :string, required: true, description: "Room UUID"

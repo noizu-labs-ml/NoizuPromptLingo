@@ -44,7 +44,8 @@ defmodule NoizuPromptLingua.Domains.Assets do
   def resolve(org_id, id_or_slug) do
     case NoizuPromptLingua.UUID.cast(id_or_slug) do
       {:ok, uuid} ->
-        Repo.get(AssetEntry, uuid) || Repo.get_by(AssetEntry, organization_id: org_id, slug: id_or_slug)
+        Repo.get(AssetEntry, uuid) ||
+          Repo.get_by(AssetEntry, organization_id: org_id, slug: id_or_slug)
 
       :error ->
         Repo.get_by(AssetEntry, organization_id: org_id, slug: id_or_slug)
@@ -59,7 +60,10 @@ defmodule NoizuPromptLingua.Domains.Assets do
       entry ->
         case entry |> AssetEntry.changeset(attrs) |> Repo.update() do
           {:ok, updated} ->
-            log_history(updated.id, "prompt_updated", opts[:actor], %{changed_fields: Map.keys(attrs)})
+            log_history(updated.id, "prompt_updated", opts[:actor], %{
+              changed_fields: Map.keys(attrs)
+            })
+
             {:ok, updated}
 
           error ->
@@ -109,11 +113,21 @@ defmodule NoizuPromptLingua.Domains.Assets do
   end
 
   def count_by_type(org_id) do
-    AssetEntry |> where([e], e.organization_id == ^org_id) |> group_by([e], e.asset_type) |> select([e], {e.asset_type, count(e.id)}) |> Repo.all() |> Map.new()
+    AssetEntry
+    |> where([e], e.organization_id == ^org_id)
+    |> group_by([e], e.asset_type)
+    |> select([e], {e.asset_type, count(e.id)})
+    |> Repo.all()
+    |> Map.new()
   end
 
   def count_by_status(org_id) do
-    AssetEntry |> where([e], e.organization_id == ^org_id) |> group_by([e], e.status) |> select([e], {e.status, count(e.id)}) |> Repo.all() |> Map.new()
+    AssetEntry
+    |> where([e], e.organization_id == ^org_id)
+    |> group_by([e], e.status)
+    |> select([e], {e.status, count(e.id)})
+    |> Repo.all()
+    |> Map.new()
   end
 
   # ── Outputs (generation) ──────────────────────────────────────
@@ -161,7 +175,12 @@ defmodule NoizuPromptLingua.Domains.Assets do
              })
              |> Repo.insert() do
         entry |> AssetEntry.changeset(%{status: "generating"}) |> Repo.update()
-        log_history(entry_id, "generated", opts[:actor], %{output_id: output.id, variant: next_variant})
+
+        log_history(entry_id, "generated", opts[:actor], %{
+          output_id: output.id,
+          variant: next_variant
+        })
+
         output
       else
         {:error, reason} -> Repo.rollback(reason)
@@ -212,11 +231,17 @@ defmodule NoizuPromptLingua.Domains.Assets do
         {:ok, encode_content(mime, bytes), mime}
 
       {:ok, {:job, job}} ->
-        Logger.info("genai async media job #{inspect(Map.get(job, :id))} for entry #{entry.id}; falling back to media-tool for inline content")
+        Logger.info(
+          "genai async media job #{inspect(Map.get(job, :id))} for entry #{entry.id}; falling back to media-tool for inline content"
+        )
+
         generate_via_media_tool(entry, opts)
 
       {:error, reason} ->
-        Logger.warning("genai media generation failed (#{inspect(reason)}); falling back to media-tool")
+        Logger.warning(
+          "genai media generation failed (#{inspect(reason)}); falling back to media-tool"
+        )
+
         generate_via_media_tool(entry, opts)
     end
   end
@@ -301,7 +326,12 @@ defmodule NoizuPromptLingua.Domains.Assets do
 
   defp log_history(entry_id, action, actor, details \\ nil) do
     %AssetEntryHistory{}
-    |> AssetEntryHistory.changeset(%{entry_id: entry_id, action: action, actor: actor, details: details})
+    |> AssetEntryHistory.changeset(%{
+      entry_id: entry_id,
+      action: action,
+      actor: actor,
+      details: details
+    })
     |> Repo.insert()
   end
 
@@ -313,7 +343,10 @@ defmodule NoizuPromptLingua.Domains.Assets do
   end
 
   defp next_variant_number(entry_id) do
-    (AssetOutput |> where([o], o.entry_id == ^entry_id) |> select([o], max(o.variant_number)) |> Repo.one() || 0) + 1
+    (AssetOutput
+     |> where([o], o.entry_id == ^entry_id)
+     |> select([o], max(o.variant_number))
+     |> Repo.one() || 0) + 1
   end
 
   defp type_to_mime("image"), do: "image/png"

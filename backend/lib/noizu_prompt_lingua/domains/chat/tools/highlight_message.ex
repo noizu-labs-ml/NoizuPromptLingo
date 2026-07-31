@@ -1,8 +1,10 @@
 defmodule NoizuPromptLingua.Domains.Chat.Tools.HighlightMessage do
   use Noizu.MCP.Server.Tool,
     name: "Chat.HighlightMessage",
-    description: "Toggle (or set) the highlighted flag on a message (front-end renders a gold border; payload carries important: true).",
-    hidden: true, category: "Chat"
+    description:
+      "Toggle (or set) the highlighted flag on a message (front-end renders a gold border; payload carries important: true).",
+    hidden: true,
+    category: "Chat"
 
   input do
     field :message_id, :string, required: true, description: "Message UUID"

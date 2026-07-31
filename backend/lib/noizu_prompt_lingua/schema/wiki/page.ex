@@ -23,7 +23,9 @@ defmodule NoizuPromptLingua.Schema.Wiki.Page do
     page
     |> cast(attrs, [:space_id, :parent_id, :slug, :title, :content, :position])
     |> validate_required([:space_id, :slug, :title])
-    |> validate_format(:slug, ~r/^[a-z0-9-]+$/, message: "must be lowercase letters, numbers, and hyphens")
+    |> validate_format(:slug, ~r/^[a-z0-9-]+$/,
+      message: "must be lowercase letters, numbers, and hyphens"
+    )
     |> unique_constraint([:space_id, :slug], name: :idx_wiki_pages_space_slug)
     |> foreign_key_constraint(:space_id)
     |> foreign_key_constraint(:parent_id)

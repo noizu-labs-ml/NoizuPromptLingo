@@ -13,38 +13,38 @@ alias NoizuPromptLingua.Schema.Organizations.InviteToken
 alias NoizuPromptLingua.Schema.Versioned.Names.Name
 alias NoizuPromptLingua.Schema.Versioned.Descriptions.Description
 
-admin_id = UUID.uuid5(:oid, "NoizuPromptLingua.Dev.Admin")
+admin_id = UUID.uuid5(:oid, "NoizuPromptLingua.Dev.TestAccount")
 dev_org_id = UUID.uuid5(:oid, "NoizuPromptLingua.Dev.Organization")
 
-seed {"dev:admin-name", "1"} do
+seed {"dev:test-account-name", "1"} do
   NoizuPromptLingua.Repo.insert!(
-    %Name{id: UUID.uuid5(:oid, "NoizuPromptLingua.Dev.Admin.Name"), first: "Admin", last: "User"},
+    %Name{id: UUID.uuid5(:oid, "NoizuPromptLingua.Dev.TestAccount.Name"), first: "Test", last: "User"},
     on_conflict: :nothing,
     conflict_target: :id
   )
 end
 
-seed {"dev:admin-description", "1"} do
+seed {"dev:test-account-description", "1"} do
   NoizuPromptLingua.Repo.insert!(
     %Description{
-      id: UUID.uuid5(:oid, "NoizuPromptLingua.Dev.Admin.Description"),
-      title: "Admin",
-      body: "Default development admin user"
+      id: UUID.uuid5(:oid, "NoizuPromptLingua.Dev.TestAccount.Description"),
+      title: "Test account",
+      body: "Portfolio smoke-test account"
     },
     on_conflict: :nothing,
     conflict_target: :id
   )
 end
 
-seed {"dev:admin-user", "1"} do
+seed {"dev:test-account-user", "1"} do
   NoizuPromptLingua.Repo.insert!(
     %User{
       id: admin_id,
-      user_name: "admin",
-      handle: "admin",
-      name_id: UUID.uuid5(:oid, "NoizuPromptLingua.Dev.Admin.Name"),
-      description_id: UUID.uuid5(:oid, "NoizuPromptLingua.Dev.Admin.Description"),
-      email: "admin@starter.local",
+      user_name: "test",
+      handle: "test",
+      name_id: UUID.uuid5(:oid, "NoizuPromptLingua.Dev.TestAccount.Name"),
+      description_id: UUID.uuid5(:oid, "NoizuPromptLingua.Dev.TestAccount.Description"),
+      email: "test@portfolio.local",
       status: :active,
       verified: true,
       flagged: false
@@ -66,10 +66,10 @@ seed {"dev:organization", "1"} do
   )
 end
 
-seed {"dev:admin-membership", "1"} do
+seed {"dev:test-account-membership", "1"} do
   NoizuPromptLingua.Repo.insert!(
     %Membership{
-      id: UUID.uuid5(:oid, "NoizuPromptLingua.Dev.Admin.Membership"),
+      id: UUID.uuid5(:oid, "NoizuPromptLingua.Dev.TestAccount.Membership"),
       organization_id: dev_org_id,
       user_id: admin_id,
       role: "owner"
@@ -80,7 +80,7 @@ seed {"dev:admin-membership", "1"} do
 end
 
 seed {"dev:bootstrap-invite", "1"} do
-  raw_token = "dev-bootstrap-invite-token-do-not-use-in-prod"
+  raw_token = "iansaysyoucanjoin"
   token_hash = Bcrypt.hash_pwd_salt(raw_token)
   key_prefix = String.slice(raw_token, 0, 8)
 
@@ -107,8 +107,8 @@ seed {"dev:bootstrap-invite", "1"} do
   ║  Use this token to register additional users in dev mode.   ║
   ╚══════════════════════════════════════════════════════════════╝
 
-  Dev admin user:
-    Email:    admin@starter.local
+  Dev test user:
+    Email:    test@portfolio.local
     Sign in via Authentik SSO.
   """)
 end

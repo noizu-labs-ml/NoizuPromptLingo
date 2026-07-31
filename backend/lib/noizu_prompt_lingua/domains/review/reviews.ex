@@ -9,7 +9,9 @@ defmodule NoizuPromptLingua.Domains.Reviews do
 
   def get(review_id) do
     case Repo.get(Review, review_id) do
-      nil -> nil
+      nil ->
+        nil
+
       review ->
         comments = NoizuPromptLingua.Services.Comment.list("review", review_id)
         overlays = list_overlays(review_id)
@@ -19,7 +21,9 @@ defmodule NoizuPromptLingua.Domains.Reviews do
 
   def complete(review_id, attrs \\ %{}) do
     case Repo.get(Review, review_id) do
-      nil -> {:error, :not_found}
+      nil ->
+        {:error, :not_found}
+
       review ->
         review
         |> Review.changeset(Map.merge(attrs, %{status: "completed"}))
@@ -96,13 +100,17 @@ defmodule NoizuPromptLingua.Domains.Reviews do
   end
 
   defp maybe_filter_organization(query, nil), do: query
-  defp maybe_filter_organization(query, org_id), do: where(query, [r], r.organization_id == ^org_id)
+
+  defp maybe_filter_organization(query, org_id),
+    do: where(query, [r], r.organization_id == ^org_id)
 
   defp maybe_filter_project(query, nil), do: query
   defp maybe_filter_project(query, project_id), do: where(query, [r], r.project_id == ^project_id)
 
   defp maybe_filter_artifact(query, nil), do: query
-  defp maybe_filter_artifact(query, artifact_id), do: where(query, [r], r.artifact_id == ^artifact_id)
+
+  defp maybe_filter_artifact(query, artifact_id),
+    do: where(query, [r], r.artifact_id == ^artifact_id)
 
   defp maybe_filter_status(query, nil), do: query
   defp maybe_filter_status(query, status), do: where(query, [r], r.status == ^status)

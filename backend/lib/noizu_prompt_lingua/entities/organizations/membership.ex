@@ -4,7 +4,10 @@ defmodule NoizuPromptLingua.Organizations.Membership do
   @vsn 1.0
   @repo NoizuPromptLingua.Organizations.Memberships
   @sref "membership"
-  @persistence ecto_store(NoizuPromptLingua.Schema.Organizations.Membership, NoizuPromptLingua.Repo)
+  @persistence ecto_store(
+                 NoizuPromptLingua.Schema.Organizations.Membership,
+                 NoizuPromptLingua.Repo
+               )
   @derive Noizu.Entity.Store.Ecto.EntityProtocol
   def_entity do
     id(:uuid)

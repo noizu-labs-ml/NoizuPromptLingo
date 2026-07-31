@@ -8,16 +8,26 @@ defmodule NoizuPromptLingua.Domains.Notifications.Tools.Notify do
 
   input do
     field :organization, :string, required: true, description: "Organization slug or UUID"
-    field :project, :string, description: "Optional project slug or UUID (scopes group resolution)"
+
+    field :project, :string,
+      description: "Optional project slug or UUID (scopes group resolution)"
+
     field :sender, :string, required: true, description: "Sender agent handle"
     field :recipient, :string, description: "A single recipient handle"
     field :recipients, {:array, :string}, description: "A list of recipient handles"
     field :group, :string, description: "A single group name (resolves to its chat-room members)"
     field :groups, {:array, :string}, description: "A list of group names"
     field :body, :string, description: "Message body (<=128 chars). Required unless ping/pong."
-    field :subject_type, :string, description: "Optional subject pointer type (e.g. chat_message, ticket)"
+
+    field :subject_type, :string,
+      description: "Optional subject pointer type (e.g. chat_message, ticket)"
+
     field :subject_id, :string, description: "Optional subject pointer id"
-    field :ping, :boolean, default: false, description: "Send a ping; recipients should reply with a pong digest"
+
+    field :ping, :boolean,
+      default: false,
+      description: "Send a ping; recipients should reply with a pong digest"
+
     field :pong_to, :string, description: "Reply to a ping: the originating ping notification id"
   end
 
@@ -72,17 +82,27 @@ defmodule NoizuPromptLingua.Domains.Notifications.Tools.Notify do
            }}
 
         {:error, :no_recipients} ->
-          {:error, "No recipients resolved — provide recipient/recipients or a group with members"}
+          {:error,
+           "No recipients resolved — provide recipient/recipients or a group with members"}
 
         {:error, reason} ->
           {:error, "Notify failed: #{inspect(reason)}"}
       end
     else
-      {:scope, {:error, :org_not_found}} -> {:error, "Organization '#{org_ref}' not found"}
-      {:scope, {:error, :project_not_found}} -> {:error, "Project '#{project_ref}' not found"}
-      {:scope, {:error, :project_not_in_org}} -> {:error, "Project does not belong to this organization"}
-      {:error, :body_required} -> {:error, "body is required for a #{kind}"}
-      {:error, :too_long} -> {:error, "body exceeds 128 characters"}
+      {:scope, {:error, :org_not_found}} ->
+        {:error, "Organization '#{org_ref}' not found"}
+
+      {:scope, {:error, :project_not_found}} ->
+        {:error, "Project '#{project_ref}' not found"}
+
+      {:scope, {:error, :project_not_in_org}} ->
+        {:error, "Project does not belong to this organization"}
+
+      {:error, :body_required} ->
+        {:error, "body is required for a #{kind}"}
+
+      {:error, :too_long} ->
+        {:error, "body exceeds 128 characters"}
     end
   end
 

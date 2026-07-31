@@ -7,7 +7,11 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.TicketAttach do
 
   input do
     field :ticket_id, :string, required: true, description: "Ticket UUID"
-    field :artifact_type, :string, required: true, description: "artifact, url, git_branch, or file"
+
+    field :artifact_type, :string,
+      required: true,
+      description: "artifact, url, git_branch, or file"
+
     field :url, :string, description: "URL (for url/file types)"
     field :git_branch, :string, description: "Branch name (for git_branch type)"
     field :description, :string, description: "Attachment description"
@@ -31,6 +35,7 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.TicketAttach do
     case Attach.add("ticket", ticket_id, attrs) do
       {:ok, att} ->
         {:ok, %{id: att.id, ticket_id: ticket_id, artifact_type: att.artifact_type}}
+
       {:error, changeset} ->
         {:error, "Failed: #{inspect(changeset.errors)}"}
     end
