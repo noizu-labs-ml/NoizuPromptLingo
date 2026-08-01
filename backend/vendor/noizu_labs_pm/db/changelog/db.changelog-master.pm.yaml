@@ -77,3 +77,9 @@ databaseChangeLog:
   - include:
       file: 019-trp-parity-columns.yaml
       relativeToChangelogFile: true
+  - include:
+      file: 020-pbac-stored-procedures.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 021-pbac-seed-data.yaml
+      relativeToChangelogFile: true

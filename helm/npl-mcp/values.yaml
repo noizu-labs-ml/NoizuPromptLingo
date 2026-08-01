@@ -1,27 +1,23 @@
 replicas: 1
 domain: tobor.locker
-
 deployment:
   # The backend and frontend run in the same pod. RollingUpdate briefly starts a
   # second backend, which can exhaust the shared Postgres connection ceiling.
   strategy:
     type: Recreate
-
 npl-mcp:
   image:
     repository: ops.noizu.com/npl-mcp/server
-    tag: "v1.0.25"
-
-# Shared pm_core dual-repo (default off). See docs/pm-core-cutover.md.
+    tag: "v1.0.27"
+# Shared pm_core — always-on until microservice split. See docs/pm-core-cutover.md.
 pmCore:
-  enabled: false
-  secretName: ""
+  enabled: true
+  secretName: pm-core-secrets
   databaseUrlKey: PM_CORE_DATABASE_URL
-
 backend:
   image:
     repository: ops.noizu.com/npl-mcp/server
-    tag: "v1.0.25"
+    tag: "v1.0.27"
     pullPolicy: IfNotPresent
   port: 4040
   # Authentik OIDC redirect flow (SSOController). issuer must NOT have a trailing
@@ -49,11 +45,10 @@ backend:
       failureThreshold: 3
   env:
     secretName: npl-mcp-secrets
-
 frontend:
   image:
     repository: ops.noizu.com/npl-mcp/frontend
-    tag: "v1.0.26"
+    tag: "v1.0.28"
     pullPolicy: IfNotPresent
   port: 3000
   resources:
@@ -74,7 +69,6 @@ frontend:
       initialDelaySeconds: 5
       periodSeconds: 10
       failureThreshold: 3
-
 ingress:
   enabled: true
   className: nginx
@@ -83,7 +77,6 @@ ingress:
     # Carried over from the retired platform/tobor-locker TF module — larger
     # proxy buffer for auth headers/cookies on tobor.locker.
     nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
-
 tls:
   enabled: true
   secretName: toborlocker-tls
@@ -98,13 +91,11 @@ tls:
     secretsPath: /apps/tls/toborlocker
     crtKey: TOBORLOCKER_TLS_CRT
     keyKey: TOBORLOCKER_TLS_KEY
-
 autoscaling:
   enabled: false
   minReplicas: 1
   maxReplicas: 3
   targetCPUUtilizationPercentage: 80
-
 podDisruptionBudget:
   enabled: false
   minAvailable: 1

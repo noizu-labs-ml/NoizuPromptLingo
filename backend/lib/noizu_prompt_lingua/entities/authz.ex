@@ -8,6 +8,16 @@ defmodule NoizuPromptLingua.Authz do
   def role_ranks, do: @role_ranks
 
   def check_permission(user_id, resource_type, resource_id, action) do
+    case NoizuPromptLingua.PMCore.with_pm(fn ->
+           Noizu.PM.Authz.check_permission(user_id, resource_type, resource_id, action)
+         end) do
+      {:legacy, _} -> check_permission_local(user_id, resource_type, resource_id, action)
+      result when is_boolean(result) -> result
+      _ -> false
+    end
+  end
+
+  defp check_permission_local(user_id, resource_type, resource_id, action) do
     sql = "SELECT check_user_permission($1::uuid, $2, $3::uuid, $4)"
     params = [uuid_to_bin(user_id), resource_type, uuid_to_bin(resource_id), action]
 
@@ -18,6 +28,15 @@ defmodule NoizuPromptLingua.Authz do
   end
 
   def get_user_role(user_id, resource_type, resource_id) do
+    case NoizuPromptLingua.PMCore.with_pm(fn ->
+           Noizu.PM.Authz.get_user_role(user_id, resource_type, resource_id)
+         end) do
+      {:legacy, _} -> get_user_role_local(user_id, resource_type, resource_id)
+      role -> role
+    end
+  end
+
+  defp get_user_role_local(user_id, resource_type, resource_id) do
     sql = "SELECT get_user_role_in_resource($1::uuid, $2, $3::uuid)"
     params = [uuid_to_bin(user_id), resource_type, uuid_to_bin(resource_id)]
 
@@ -28,7 +47,16 @@ defmodule NoizuPromptLingua.Authz do
   end
 
   def authorize(user_id, resource_type, resource_id, required_role) do
-    case get_user_role(user_id, resource_type, resource_id) do
+    case NoizuPromptLingua.PMCore.with_pm(fn ->
+           Noizu.PM.Authz.authorize(user_id, resource_type, resource_id, required_role)
+         end) do
+      {:legacy, _} -> authorize_local(user_id, resource_type, resource_id, required_role)
+      other -> other
+    end
+  end
+
+  defp authorize_local(user_id, resource_type, resource_id, required_role) do
+    case get_user_role_local(user_id, resource_type, resource_id) do
       nil ->
         {:error, :not_a_member}
 

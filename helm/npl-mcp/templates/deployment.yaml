@@ -44,12 +44,10 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.backend.env.secretName }}
                   key: DATABASE_URL
-            {{- /* Optional dual-repo pm_core (docs/pm-core-cutover.md). Default off. */}}
+            {{- /* Shared pm_core — always-on mode (docs/pm-core-cutover.md). */}}
             {{- if .Values.pmCore }}
-            {{- if .Values.pmCore.enabled }}
             - name: PM_CORE_ENABLED
-              value: "true"
-            {{- end }}
+              value: {{ if hasKey .Values.pmCore "enabled" }}{{ .Values.pmCore.enabled | quote }}{{ else }}"true"{{ end }}
             {{- if and .Values.pmCore.secretName .Values.pmCore.databaseUrlKey }}
             - name: PM_CORE_DATABASE_URL
               valueFrom:

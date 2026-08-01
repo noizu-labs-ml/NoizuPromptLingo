@@ -1,3 +1,9 @@
+# syntax=docker/dockerfile:1.7
+#
+# Cache policy: additive / over-tolerant.
+# - npm package cache on BuildKit mount (partials kept across builds).
+# - Prefer occasional prune over cold npm ci / rebuilds.
+#
 # Headless remote-access tunnel client image.
 #
 # Claims a named tunnel from the cloud (MCP JWT) and runs frpc to expose a local
@@ -20,12 +26,14 @@ WORKDIR /app
 # The postinstall vendors frpc for the image's platform.
 COPY package.json package-lock.json ./
 COPY scripts ./scripts
-RUN npm ci
+RUN --mount=type=cache,id=npl-remote-access-npm,target=/root/.npm,sharing=locked \
+    npm ci
 
 # Build the TypeScript client.
 COPY tsconfig.json ./
 COPY src ./src
-RUN npm run build
+RUN --mount=type=cache,id=npl-remote-access-npm,target=/root/.npm,sharing=locked \
+    npm run build
 
 # Required at runtime (no sensible defaults for a pod):
 #   REMOTE_ACCESS_NAME    subdomain to claim

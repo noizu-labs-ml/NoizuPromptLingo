@@ -3,7 +3,8 @@
 #   or: make run-dev
 #
 # Mounts source as volumes, runs dev servers instead of compiled releases.
-# First run: deps install (~1-2 min). Subsequent starts are fast (named volumes).
+# First run: deps install (~1-2 min). Subsequent starts skip install when
+# lockfile stamps in deps/ and node_modules/ still match (named volumes).
 
 services:
   migrations:
@@ -28,8 +29,7 @@ services:
     depends_on:
       migrations:
         condition: service_completed_successfully
-    command: >
-      bash -c "mix deps.get && mix ecto.migrate && mix phx.server"
+    command: ["bash", "bin/dev-start.sh"]
     working_dir: /app
     volumes:
       - ./backend:/app
@@ -57,15 +57,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.dev
     image: ${IMAGE_NS:-start-app}/frontend:dev
-    command: >
-      sh -c "
-        if [ -f .npmrc.template ]; then
-          GITHUB_TOKEN=$${GITHUB_TOKEN} envsubst < .npmrc.template > .npmrc;
-        fi &&
-        npm install &&
-        npm run regen &&
-        npm run dev
-      "
+    command: ["bash", "bin/dev-start.sh"]
     working_dir: /app
     volumes:
       - ./frontend:/app

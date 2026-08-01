@@ -1,3 +1,9 @@
+# syntax=docker/dockerfile:1.7
+#
+# Cache policy: additive / over-tolerant.
+# - npm package cache on BuildKit mount (partials kept across builds).
+# - Prefer occasional prune over cold npm ci / rebuilds.
+#
 # Headless browser-controller image for running as a server-side pod.
 #
 # Built on the official Playwright image, which ships the matching chromium
@@ -16,12 +22,14 @@ WORKDIR /app
 # (typescript) are needed for the build, so we don't set NODE_ENV=production
 # here — `npm ci` would otherwise prune them before `npm run build` runs.
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN --mount=type=cache,id=npl-browser-npm,target=/root/.npm,sharing=locked \
+    npm ci
 
 # Build the TypeScript controller.
 COPY tsconfig.json ./
 COPY src ./src
-RUN npm run build
+RUN --mount=type=cache,id=npl-browser-npm,target=/root/.npm,sharing=locked \
+    npm run build
 
 # Required at runtime (no sensible defaults for a pod):
 #   BROWSER_CONTROLLER_URL    cloud socket URL (wss://tobor.locker/socket)

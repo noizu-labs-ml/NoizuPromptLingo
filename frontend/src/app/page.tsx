@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth";
+import { HeroMascot } from "@/components/landing/hero-mascot";
 
 const MCP_DOMAINS = [
   { name: "Artifacts", desc: "Create, version, and retrieve typed content objects across every session." },
@@ -52,19 +53,32 @@ const BOARD_PREVIEW = [
 function Landing() {
   return (
     <div className="tl-landing">
-      <section className="tl-hero">
-        <span className="tl-badge">Model Context Protocol server</span>
-        <h1 className="tl-hero__title">
-          Tobor Locker <span className="tl-hero__mcp">(MCP)</span>
-        </h1>
-        <p className="tl-hero__sub">
-          One MCP-native workspace your agents can actually live in. Artifacts, sessions, tickets,
-          wiki, chat, and review — exposed as tools, backed by a production Phoenix API, and wired
-          for SSO from day one.
-        </p>
-        <div className="tl-cta-row">
-          <a href="/auth/oidc"><StyleGuideBtn variant="black" label="Sign in to your locker" /></a>
-          <Link href="/styleguide"><StyleGuideBtn variant="outline" label="View the design system" /></Link>
+      <section className="tl-hero tl-hero--with-mascot">
+        <div className="tl-hero__copy">
+          <span className="tl-badge">Model Context Protocol server</span>
+          <h1 className="tl-hero__title">
+            Tobor Locker <span className="tl-hero__mcp">(MCP)</span>
+          </h1>
+          <p className="tl-hero__sub">
+            One MCP-native workspace your agents can actually live in. Artifacts, sessions, tickets,
+            wiki, chat, and review — exposed as tools, backed by a production Phoenix API, and wired
+            for SSO from day one.
+          </p>
+          <div className="tl-cta-row">
+            <a href="/auth/oidc"><StyleGuideBtn variant="black" label="Sign in to your locker" /></a>
+            <Link href="/styleguide"><StyleGuideBtn variant="outline" label="View the design system" /></Link>
+          </div>
+        </div>
+        <HeroMascot src="/brand/tobor-locker.svg" label="tobor · locker" />
+      </section>
+
+      <section className="tlk-band" aria-label="Vault note">
+        <div className="tlk-band__frame">
+          <span className="tlk-band__tag">[locked]</span>
+          <p className="tlk-band__text">
+            Key on the ring, vault in the chest — tobor holds agent work so sessions, tickets, and
+            artifacts stay where your tools can find them.
+          </p>
         </div>
       </section>
 

@@ -7,7 +7,47 @@ defmodule NoizuPromptLingua.Projects do
 
   import Ecto.Query
 
-  def create_with_owner(attrs, user_id, context \\ Noizu.Context.system()) do
+  def create_with_owner(attrs, user_id, _context \\ Noizu.Context.system()) do
+    case NoizuPromptLingua.PMCore.with_pm(fn ->
+           Noizu.PM.Projects.create_with_owner(attrs, user_id,
+             ensure_user: pm_user_snapshot(user_id),
+             ensure_org: pm_org_snapshot(attrs)
+           )
+         end) do
+      {:legacy, _} -> create_with_owner_legacy(attrs, user_id)
+      other -> other
+    end
+  end
+
+  # Wire identity spine onto pm_core before project insert (FK + membership).
+  defp pm_user_snapshot(user_id) do
+    case NoizuPromptLingua.Repo.get(NoizuPromptLingua.Schema.Users.User, user_id) do
+      nil -> %{id: user_id, email: "user-#{user_id}@tobor.locker"}
+      u ->
+        %{
+          id: u.id,
+          email: u.email,
+          user_name: u.user_name,
+          handle: u.handle,
+          status: u.status,
+          role: u.role,
+          verified: u.verified,
+          bio: u.bio
+        }
+    end
+  end
+
+  defp pm_org_snapshot(attrs) do
+    org_id = Map.get(attrs, :organization_id) || Map.get(attrs, "organization_id")
+
+    case org_id && NoizuPromptLingua.Repo.get(NoizuPromptLingua.Schema.Organizations.Organization, org_id) do
+      nil when is_binary(org_id) -> %{id: org_id}
+      nil -> nil
+      o -> %{id: o.id, slug: o.slug, name: o.name, settings: o.settings, key_prefix: Map.get(o, :key_prefix)}
+    end
+  end
+
+  defp create_with_owner_legacy(attrs, user_id) do
     NoizuPromptLingua.Repo.transaction(fn ->
       with {:ok, project} <-
              %Schema{}
@@ -28,6 +68,16 @@ defmodule NoizuPromptLingua.Projects do
   end
 
   def list_for_user(user_id, organization_id \\ nil) do
+    case NoizuPromptLingua.PMCore.with_pm(fn ->
+           Noizu.PM.Projects.list_for_user(user_id, organization_id)
+         end) do
+      {:legacy, _} -> list_for_user_legacy(user_id, organization_id)
+      rows when is_list(rows) -> rows
+      _ -> []
+    end
+  end
+
+  defp list_for_user_legacy(user_id, organization_id) do
     sql = "SELECT * FROM list_user_accessible_projects($1::uuid, $2::uuid)"
     params = [uuid_to_bin(user_id), uuid_to_bin(organization_id)]
 
@@ -44,9 +94,6 @@ defmodule NoizuPromptLingua.Projects do
     end
   end
 
-  # Raw SQL results bypass Ecto's type module, so uuid columns come back as
-  # 16-byte binaries that Jason cannot encode. Decode them back to strings for
-  # the columns the stored procedure returns as uuid.
   @uuid_columns ~w(id organization_id)
   defp decode_uuid(col, val) when col in @uuid_columns, do: decode_value(val)
   defp decode_uuid(_col, val), do: val
@@ -72,24 +119,14 @@ defmodule NoizuPromptLingua.Projects do
   end
 
   def get_project(id) do
-    case NoizuPromptLingua.PMCore.with_pm(fn -> Noizu.PM.Repo.get(Noizu.PM.Schema.Projects.Project, id) end) do
+    case NoizuPromptLingua.PMCore.with_pm(fn -> Noizu.PM.Projects.get_project(id) end) do
       {:legacy, _} -> NoizuPromptLingua.Repo.get(Schema, id)
       other -> other
     end
   end
 
   def update_project(id, attrs) do
-    case NoizuPromptLingua.PMCore.with_pm(fn ->
-           case Noizu.PM.Repo.get(Noizu.PM.Schema.Projects.Project, id) do
-             nil ->
-               {:error, :not_found}
-
-             project ->
-               project
-               |> Noizu.PM.Schema.Projects.Project.changeset(attrs)
-               |> Noizu.PM.Repo.update()
-           end
-         end) do
+    case NoizuPromptLingua.PMCore.with_pm(fn -> Noizu.PM.Projects.update_project(id, attrs) end) do
       {:legacy, _} ->
         case NoizuPromptLingua.Repo.get(Schema, id) do
           nil -> {:error, :not_found}
@@ -102,42 +139,68 @@ defmodule NoizuPromptLingua.Projects do
   end
 
   def archive(id) do
-    case NoizuPromptLingua.Repo.get(Schema, id) do
-      nil ->
-        {:error, :not_found}
+    case NoizuPromptLingua.PMCore.with_pm(fn -> Noizu.PM.Projects.archive(id) end) do
+      {:legacy, _} ->
+        case NoizuPromptLingua.Repo.get(Schema, id) do
+          nil ->
+            {:error, :not_found}
 
-      project ->
-        project
-        |> Schema.changeset(%{status: "archived", archived_at: DateTime.utc_now()})
-        |> NoizuPromptLingua.Repo.update()
+          project ->
+            project
+            |> Schema.changeset(%{status: "archived", archived_at: DateTime.utc_now()})
+            |> NoizuPromptLingua.Repo.update()
+        end
+
+      other ->
+        other
     end
   end
 
   def unarchive(id) do
-    case NoizuPromptLingua.Repo.get(Schema, id) do
-      nil ->
-        {:error, :not_found}
+    case NoizuPromptLingua.PMCore.with_pm(fn -> Noizu.PM.Projects.unarchive(id) end) do
+      {:legacy, _} ->
+        case NoizuPromptLingua.Repo.get(Schema, id) do
+          nil ->
+            {:error, :not_found}
 
-      project ->
-        project
-        |> Schema.changeset(%{status: "active", archived_at: nil})
-        |> NoizuPromptLingua.Repo.update()
+          project ->
+            project
+            |> Schema.changeset(%{status: "active", archived_at: nil})
+            |> NoizuPromptLingua.Repo.update()
+        end
+
+      other ->
+        other
     end
   end
 
   def delete_project(id) do
-    case NoizuPromptLingua.Repo.get(Schema, id) do
-      nil ->
-        {:error, :not_found}
+    case NoizuPromptLingua.PMCore.with_pm(fn -> Noizu.PM.Projects.soft_delete(id) end) do
+      {:legacy, _} ->
+        case NoizuPromptLingua.Repo.get(Schema, id) do
+          nil ->
+            {:error, :not_found}
 
-      project ->
-        project
-        |> Schema.changeset(%{status: "deleted"})
-        |> NoizuPromptLingua.Repo.update()
+          project ->
+            project
+            |> Schema.changeset(%{status: "deleted"})
+            |> NoizuPromptLingua.Repo.update()
+        end
+
+      other ->
+        other
     end
   end
 
   def list_members(project_id) do
-    NoizuPromptLingua.Authz.ScopedMemberships.list_for_resource("project", project_id)
+    case NoizuPromptLingua.PMCore.with_pm(fn ->
+           Noizu.PM.Projects.list_members(project_id)
+         end) do
+      {:legacy, _} ->
+        NoizuPromptLingua.Authz.ScopedMemberships.list_for_resource("project", project_id)
+
+      other ->
+        other
+    end
   end
 end

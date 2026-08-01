@@ -101,8 +101,8 @@ if config_env() == :prod or config_env() == :dev do
     end
   end
 
-  # Optional shared pm_core connection (dual-repo). Domains stay on App.Repo until
-  # PM_CORE_ENABLED=true after ETL cutover (docs/pm-core-cutover.md).
+  # Shared pm_core (always-on mode until microservice). Require URL in prod.
+  # Emergency opt-out: PM_CORE_ENABLED=0|false.
   if pm_url = System.get_env("PM_CORE_DATABASE_URL") do
     config :noizu_labs_pm, Noizu.PM.Repo,
       url: pm_url,
@@ -110,7 +110,7 @@ if config_env() == :prod or config_env() == :dev do
   end
 
   config :noizu_prompt_lingua, :pm_core,
-    enabled: System.get_env("PM_CORE_ENABLED") in ~w(1 true TRUE yes)
+    enabled: System.get_env("PM_CORE_ENABLED", "true") not in ~w(0 false FALSE no NO)
 
   secret_key_base =
     cond do

@@ -32,7 +32,8 @@ defmodule Noizu.PM.Schema.Projects.Project do
     timestamps(type: :utc_datetime_usec)
   end
 
-  @methodologies ~w(kanban scrum waterfall spiral)
+  # Keep in sync with DB CHECK on projects.default_methodology (includes custom).
+  @methodologies ~w(kanban scrum waterfall spiral custom)
 
   def changeset(project, attrs) do
     project

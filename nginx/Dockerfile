@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1.7
+# Thin nginx conf image: layer cache is the main speed lever (no download steps).
 FROM nginx:1-alpine
 
 RUN rm /etc/nginx/conf.d/default.conf

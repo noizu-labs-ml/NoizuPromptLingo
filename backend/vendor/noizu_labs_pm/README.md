@@ -12,10 +12,11 @@ applications start `Noizu.PM.Repo` in their own supervision tree; this library
 itself stays inert. The schema is managed by the Liquibase changelog under
 `db/changelog/`.
 
-## Cutover status
+## Status
 
-Neither host app is on `pm_core` in production yet. Migration plan and ownership
-matrix: monorepo `docs/pm-core-cutover.md`.
+**Always-on shared mode** for host apps until `pm_core` is split out as a
+microservice. Migration history / ownership matrix: monorepo
+`docs/pm-core-cutover.md`.
 
 Canonical work primitive is **`items`** (NPL `tickets` fold in via ETL /
 `ticket_type` → `item_type`). NPL MCP may keep `Ticket.*` tool names as aliases.
@@ -29,7 +30,7 @@ Canonical work primitive is **`items`** (NPL `tickets` fold in via ETL /
 # application.ex children (in addition to App.Repo)
 {Noizu.PM.Repo, []}
 
-# runtime
+# runtime — always-on; opt-out only via PM_CORE_ENABLED=0
 # PM_CORE_DATABASE_URL=ecto://pm_core:***@app-timescaledb:5432/pm_core
-# config :my_app, :pm_core, enabled: false  # flip after ETL
+# config :my_app, :pm_core, enabled: true
 ```

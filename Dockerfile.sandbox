@@ -1,3 +1,8 @@
+# syntax=docker/dockerfile:1.7
+#
+# Cache policy: sandbox base — hex/rebar mounts for tool bootstrap only.
+# No mix deps.get / npm ci at image build; seed COPY + runtime watchers unchanged.
+#
 # Live-sandbox: combined Node.js + Elixir dev container with Samba file sharing.
 # Mount the exposed share from your host to edit files; watchers rebuild on change.
 #
@@ -10,7 +15,7 @@ FROM elixir:1.19.5-otp-28-slim
 ENV DEBIAN_FRONTEND=noninteractive
 ENV ERL_AFLAGS="+JMsingle true"
 
-# Node.js 22.x
+# Node.js 22.x + sandbox tooling (samba, supervisor)
 RUN apt-get update -y && \
     apt-get install -y curl gnupg2 && \
     curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
@@ -18,7 +23,11 @@ RUN apt-get update -y && \
       nodejs \
       build-essential git inotify-tools gettext-base \
       samba supervisor procps && \
-    apt-get clean && rm -rf /var/lib/apt/lists/* && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Bootstrap hex/rebar (archives in image layer; package caches on mounts)
+RUN --mount=type=cache,target=/root/.hex,sharing=locked \
+    --mount=type=cache,target=/root/.cache/rebar3,sharing=locked \
     mix local.hex --force && mix local.rebar --force
 
 # Samba config — single share at /workspace, writable by 'dev' user
@@ -26,7 +35,9 @@ RUN useradd -m -s /bin/bash dev && \
     (printf 'dev\ndev\n' | smbpasswd -a -s dev)
 
 # Set up hex/rebar for dev user
-RUN su - dev -c "mix local.hex --force && mix local.rebar --force"
+RUN --mount=type=cache,target=/home/dev/.hex,uid=1000,gid=1000,sharing=locked \
+    --mount=type=cache,target=/home/dev/.cache/rebar3,uid=1000,gid=1000,sharing=locked \
+    su - dev -c "mix local.hex --force && mix local.rebar --force"
 
 RUN mkdir -p /workspace/frontend /workspace/backend && \
     chown -R dev:dev /workspace

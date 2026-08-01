@@ -12,6 +12,24 @@ defmodule NoizuPromptLingua.Authz.ScopedMemberships do
   @member_roles ~w(owner admin lead member viewer)
 
   def add_member(resource_type, resource_id, user_id, role_name, added_by \\ nil) do
+    case NoizuPromptLingua.PMCore.with_pm(fn ->
+           Noizu.PM.Authz.ScopedMemberships.add_member(
+             resource_type,
+             resource_id,
+             user_id,
+             role_name,
+             added_by
+           )
+         end) do
+      {:legacy, _} ->
+        add_member_local(resource_type, resource_id, user_id, role_name, added_by)
+
+      other ->
+        other
+    end
+  end
+
+  defp add_member_local(resource_type, resource_id, user_id, role_name, added_by) do
     sql = "SELECT * FROM add_scoped_member($1, $2::uuid, $3::uuid, $4, $5::uuid)"
 
     params = [
@@ -32,6 +50,20 @@ defmodule NoizuPromptLingua.Authz.ScopedMemberships do
   end
 
   def update_role(resource_type, resource_id, user_id, new_role_name) do
+    case NoizuPromptLingua.PMCore.with_pm(fn ->
+           Noizu.PM.Authz.ScopedMemberships.update_role(
+             resource_type,
+             resource_id,
+             user_id,
+             new_role_name
+           )
+         end) do
+      {:legacy, _} -> update_role_local(resource_type, resource_id, user_id, new_role_name)
+      other -> other
+    end
+  end
+
+  defp update_role_local(resource_type, resource_id, user_id, new_role_name) do
     sql = "SELECT * FROM update_scoped_member_role($1, $2::uuid, $3::uuid, $4)"
     params = [resource_type, uuid_to_bin(resource_id), uuid_to_bin(user_id), new_role_name]
 
@@ -45,6 +77,15 @@ defmodule NoizuPromptLingua.Authz.ScopedMemberships do
   end
 
   def remove_member(resource_type, resource_id, user_id) do
+    case NoizuPromptLingua.PMCore.with_pm(fn ->
+           Noizu.PM.Authz.ScopedMemberships.remove_member(resource_type, resource_id, user_id)
+         end) do
+      {:legacy, _} -> remove_member_local(resource_type, resource_id, user_id)
+      other -> other
+    end
+  end
+
+  defp remove_member_local(resource_type, resource_id, user_id) do
     sql = "SELECT * FROM remove_scoped_member_safe($1, $2::uuid, $3::uuid)"
     params = [resource_type, uuid_to_bin(resource_id), uuid_to_bin(user_id)]
 
