@@ -98,6 +98,7 @@ defmodule NoizuPromptLingua.MCPServers do
   @server_modules %{
     "organizations" => NoizuPromptLingua.MCP.Organizations,
     "projects" => NoizuPromptLingua.MCP.Projects,
+    "clients" => NoizuPromptLingua.MCP.Clients,
     "sessions" => NoizuPromptLingua.MCP.Sessions,
     "artifacts" => NoizuPromptLingua.Domains.Artifacts.MCP,
     "chat" => NoizuPromptLingua.Domains.Chat.MCP,

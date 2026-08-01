@@ -41,6 +41,7 @@ defmodule NoizuPromptLingua.Application do
           NoizuPromptLingua.MCP,
           NoizuPromptLingua.MCP.Organizations,
           NoizuPromptLingua.MCP.Projects,
+          NoizuPromptLingua.MCP.Clients,
           NoizuPromptLingua.MCP.Sessions,
           # MCP servers ported from the legacy project (artifacts / chat / review)
           NoizuPromptLingua.Domains.Artifacts.MCP,

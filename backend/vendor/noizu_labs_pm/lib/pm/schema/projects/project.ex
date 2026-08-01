@@ -5,6 +5,8 @@ defmodule Noizu.PM.Schema.Projects.Project do
   @primary_key {:id, Ecto.UUID, autogenerate: true}
   schema "projects" do
     belongs_to :organization, Noizu.PM.Schema.Organizations.Organization, type: Ecto.UUID
+    # Optional client (customer) nesting — distinct from organization tenant.
+    belongs_to :client, Noizu.PM.Schema.Clients.Client, type: Ecto.UUID
     field :name, :string
     field :slug, :string
     field :description, :string
@@ -39,6 +41,7 @@ defmodule Noizu.PM.Schema.Projects.Project do
     project
     |> cast(attrs, [
       :organization_id,
+      :client_id,
       :name,
       :slug,
       :description,
@@ -51,6 +54,8 @@ defmodule Noizu.PM.Schema.Projects.Project do
       :default_queue_id,
       :lock_version
     ])
+    |> foreign_key_constraint(:client_id)
+
     |> validate_required([:organization_id, :name, :slug])
     |> validate_format(:slug, ~r/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/,
       message: "must be lowercase alphanumeric with hyphens, no leading/trailing hyphens"

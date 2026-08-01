@@ -25,6 +25,12 @@ defmodule NoizuPromptLingua.MCP do
   tool(NoizuPromptLingua.MCP.Projects.Tools.ProjectUpdate, category: "Projects")
   tool(NoizuPromptLingua.MCP.Projects.Tools.ProjectList, category: "Projects")
 
+  tool(NoizuPromptLingua.MCP.Clients.Tools.Overview, category: "Clients")
+  tool(NoizuPromptLingua.MCP.Clients.Tools.ClientCreate, category: "Clients")
+  tool(NoizuPromptLingua.MCP.Clients.Tools.ClientGet, category: "Clients")
+  tool(NoizuPromptLingua.MCP.Clients.Tools.ClientUpdate, category: "Clients")
+  tool(NoizuPromptLingua.MCP.Clients.Tools.ClientList, category: "Clients")
+
   # Sessions
   tool(NoizuPromptLingua.MCP.Sessions.Tools.Overview, category: "Sessions")
   tool(NoizuPromptLingua.MCP.Sessions.Tools.SessionCreate, category: "Sessions")

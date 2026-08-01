@@ -87,6 +87,12 @@ defmodule NoizuPromptLinguaWeb.Router do
             NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.MCP.Projects)
   end
 
+  scope "/", host: "clients." do
+    forward "/mcp",
+            Noizu.MCP.Transport.StreamableHTTP.Plug,
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.MCP.Clients)
+  end
+
   scope "/", host: "sessions." do
     forward "/mcp",
             Noizu.MCP.Transport.StreamableHTTP.Plug,

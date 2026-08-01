@@ -96,15 +96,28 @@ case "${1:-}" in
     # then start dev servers after source is in place.
     mkdir -p /workspace/frontend /workspace/backend
 
+    # Only chown after seed or when workspace root is not owned by dev.
+    # Unconditional chown -R over warm deps/node_modules/_build is a major spin-up tax.
+    SEEDED=0
     if [ -d /seed/frontend ] && [ ! -f /workspace/frontend/package.json ]; then
       echo "[sandbox] Seeding frontend source..."
       cp -a /seed/frontend/. /workspace/frontend/
+      SEEDED=1
     fi
     if [ -d /seed/backend ] && [ ! -f /workspace/backend/mix.exs ]; then
       echo "[sandbox] Seeding backend source..."
       cp -a /seed/backend/. /workspace/backend/
+      SEEDED=1
     fi
-    chown -R dev:dev /workspace
+    if [ "$SEEDED" -eq 1 ]; then
+      echo "[sandbox] chown after seed"
+      chown -R dev:dev /workspace
+    elif [ "$(stat -c '%U' /workspace 2>/dev/null || stat -f '%Su' /workspace 2>/dev/null || echo dev)" != "dev" ]; then
+      echo "[sandbox] chown workspace root (owner mismatch)"
+      chown -R dev:dev /workspace
+    else
+      echo "[sandbox] skip chown (warm workspace)"
+    fi
 
     mkdir -p /var/log/samba /var/log/supervisor
 
