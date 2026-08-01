@@ -7,7 +7,12 @@ import McpSetupPanel from '@/components/mcp-setup-panel';
 
 // Install snippet for the optional Local Tools MCP (filesystem/git tools).
 const LOCAL_MCP_INSTALL = `tar xzf noizu-local-mcp.tar.gz && cd local-mcp && npm i && npm run build
-claude mcp add noizu-local -- node "$PWD/dist/index.js"`;
+# Claude Code
+claude mcp add noizu-local -- node "$PWD/dist/index.js"
+# Codex
+codex mcp add noizu-local -- node "$PWD/dist/index.js"
+# Grok
+grok mcp add noizu-local -- node "$PWD/dist/index.js"`;
 
 export default function McpKeysPage() {
   const [keys, setKeys] = useState<McpApiKey[]>([]);
@@ -135,8 +140,9 @@ export default function McpKeysPage() {
       <main>
         <h1 className="sg-page-title">MCP Keys & Setup</h1>
         <p className="sg-page-intro">
-          Create and manage your API keys for MCP server access. Use the setup panel to get
-          the <span className="font-mono"> claude mcp add</span> commands to connect to all MCP servers.
+          Create and manage your API keys for MCP server access. Use the setup panel to generate
+          connection commands for <strong>Claude Code</strong>, <strong>Codex</strong>, or{' '}
+          <strong>Grok</strong> for each MCP endpoint.
         </p>
 
         {/* Local Tools MCP — an optional, self-hosted MCP for filesystem/git
@@ -148,7 +154,8 @@ export default function McpKeysPage() {
           </div>
           <p className="sg-page-intro" style={{ marginBottom: 12 }}>
             An optional MCP server you run on your own machine for filesystem and git tools
-            that can&apos;t run in the cloud. Download it, build it, and connect it to Claude Code.
+            that can&apos;t run in the cloud. Download it, build it, and connect it to Claude Code,
+            Codex, or Grok.
             It provides:{" "}
             <span className="font-mono">file_search</span>,{" "}
             <span className="font-mono">grep</span>,{" "}

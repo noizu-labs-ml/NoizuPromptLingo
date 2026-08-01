@@ -2,7 +2,7 @@ defmodule NoizuPromptLingua.MCPServers do
   @moduledoc """
   Catalog of MCP servers exposed on subdomains. Single source of truth shared
   by the config endpoint (`/api/v1/auth/mcp/config`) and any client that needs
-  to render `claude mcp add` setup commands.
+  to render setup commands (`claude mcp add`, `codex mcp add`, `grok mcp add`).
 
   The `:root` server maps to the bare host (`<host>/mcp`); every other entry is
   served at `<id>.<host>/mcp`. Keep this list in sync with the `host:` scopes

@@ -101,6 +101,17 @@ if config_env() == :prod or config_env() == :dev do
     end
   end
 
+  # Optional shared pm_core connection (dual-repo). Domains stay on App.Repo until
+  # PM_CORE_ENABLED=true after ETL cutover (docs/pm-core-cutover.md).
+  if pm_url = System.get_env("PM_CORE_DATABASE_URL") do
+    config :noizu_labs_pm, Noizu.PM.Repo,
+      url: pm_url,
+      pool_size: String.to_integer(System.get_env("PM_CORE_POOL_SIZE") || "5")
+  end
+
+  config :noizu_prompt_lingua, :pm_core,
+    enabled: System.get_env("PM_CORE_ENABLED") in ~w(1 true TRUE yes)
+
   secret_key_base =
     cond do
       env = System.get_env("SECRET_KEY_BASE") ->

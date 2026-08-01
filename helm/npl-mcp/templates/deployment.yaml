@@ -44,6 +44,20 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.backend.env.secretName }}
                   key: DATABASE_URL
+            {{- /* Optional dual-repo pm_core (docs/pm-core-cutover.md). Default off. */}}
+            {{- if .Values.pmCore }}
+            {{- if .Values.pmCore.enabled }}
+            - name: PM_CORE_ENABLED
+              value: "true"
+            {{- end }}
+            {{- if and .Values.pmCore.secretName .Values.pmCore.databaseUrlKey }}
+            - name: PM_CORE_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.pmCore.secretName | quote }}
+                  key: {{ .Values.pmCore.databaseUrlKey | quote }}
+            {{- end }}
+            {{- end }}
             - name: SECRET_KEY_BASE
               valueFrom:
                 secretKeyRef:

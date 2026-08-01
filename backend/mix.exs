@@ -63,6 +63,8 @@ defmodule NoizuPromptLingua.MixProject do
       {:seed_helper, "~> 0.1.1"},
       {:smart_token, "~> 0.1.3"},
       {:noizu_weaviate, "~> 0.2.0"},
+      # Shared pm_core data layer (orgs/projects/items). Dual-repo; domain cutover behind PM_CORE_ENABLED.
+      noizu_labs_pm_dep(),
 
       # GenAI
       {:genai, "~> 0.3.2"},
@@ -118,5 +120,30 @@ defmodule NoizuPromptLingua.MixProject do
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"]
     ]
+  end
+
+  # Shared PM data layer (pm_core). Resolution order:
+  # 1) NOIZU_LABS_PM_PATH env
+  # 2) vendor/noizu_labs_pm (Docker + self-contained checkout)
+  # 3) monorepo Portfolio/Libs/pm
+  defp noizu_labs_pm_dep do
+    candidates =
+      [
+        System.get_env("NOIZU_LABS_PM_PATH"),
+        Path.expand("vendor/noizu_labs_pm", __DIR__),
+        Path.expand("../../../../Libs/pm", __DIR__)
+      ]
+      |> Enum.reject(&is_nil/1)
+
+    case Enum.find(candidates, &File.dir?/1) do
+      nil ->
+        Mix.raise("""
+        noizu_labs_pm not found. Vendor it under backend/vendor/noizu_labs_pm \
+        or set NOIZU_LABS_PM_PATH.
+        """)
+
+      path ->
+        {:noizu_labs_pm, path: path}
+    end
   end
 end

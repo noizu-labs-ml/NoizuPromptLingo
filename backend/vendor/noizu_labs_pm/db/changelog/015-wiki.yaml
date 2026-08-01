@@ -1,0 +1,59 @@
+databaseChangeLog:
+  # Wiki spaces + pages only. Page comments / attachments / reactions are NOT
+  # dedicated wiki_* tables — they live on the polymorphic pm_comments /
+  # pm_attachments / pm_reactions tables (017-polymorphic) with entity_type
+  # "wiki_page".
+  - changeSet:
+      id: pm-015-wiki-spaces
+      author: noizu-pm
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: wiki_spaces
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE wiki_spaces (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+                project_id uuid REFERENCES projects(id) ON DELETE SET NULL,
+                slug varchar(255) NOT NULL,
+                name varchar(255) NOT NULL,
+                description text,
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+              CREATE UNIQUE INDEX idx_wiki_spaces_org_slug ON wiki_spaces (organization_id, slug);
+              CREATE INDEX idx_wiki_spaces_project_id ON wiki_spaces (project_id);
+      rollback:
+        - dropTable:
+            tableName: wiki_spaces
+
+  - changeSet:
+      id: pm-015-wiki-pages
+      author: noizu-pm
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: wiki_pages
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE wiki_pages (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                space_id uuid NOT NULL REFERENCES wiki_spaces(id) ON DELETE CASCADE,
+                parent_id uuid REFERENCES wiki_pages(id) ON DELETE SET NULL,
+                slug varchar(255) NOT NULL,
+                title varchar(255) NOT NULL,
+                content text,
+                position integer NOT NULL DEFAULT 0,
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+              CREATE UNIQUE INDEX idx_wiki_pages_space_slug ON wiki_pages (space_id, slug);
+              CREATE INDEX idx_wiki_pages_parent_id ON wiki_pages (parent_id);
+      rollback:
+        - dropTable:
+            tableName: wiki_pages

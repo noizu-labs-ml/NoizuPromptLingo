@@ -18,19 +18,22 @@ defmodule NoizuPromptLingua.Application do
     children =
       [
         NoizuPromptLinguaWeb.Telemetry,
-        NoizuPromptLingua.Repo,
-        {Ecto.Migrator,
-         repos: Application.fetch_env!(:noizu_prompt_lingua, :ecto_repos),
-         skip: skip_migrations?()},
-        {DNSCluster,
-         query: Application.get_env(:noizu_prompt_lingua, :dns_cluster_query) || :ignore},
-        {Phoenix.PubSub, name: NoizuPromptLingua.PubSub},
-        NoizuPromptLingua.Redis,
-        # Presence tracker for the notifications domain (Redis-backed online/offline).
-        NoizuPromptLingua.Domains.Notifications.Presence,
-        Noizu.LiveViewEventServer,
-        {Oban, Application.fetch_env!(:noizu_prompt_lingua, Oban)}
+        NoizuPromptLingua.Repo
       ] ++
+        pm_core_children() ++
+        [
+          {Ecto.Migrator,
+           repos: Application.fetch_env!(:noizu_prompt_lingua, :ecto_repos),
+           skip: skip_migrations?()},
+          {DNSCluster,
+           query: Application.get_env(:noizu_prompt_lingua, :dns_cluster_query) || :ignore},
+          {Phoenix.PubSub, name: NoizuPromptLingua.PubSub},
+          NoizuPromptLingua.Redis,
+          # Presence tracker for the notifications domain (Redis-backed online/offline).
+          NoizuPromptLingua.Domains.Notifications.Presence,
+          Noizu.LiveViewEventServer,
+          {Oban, Application.fetch_env!(:noizu_prompt_lingua, Oban)}
+        ] ++
         samly_children ++
         [
           NoizuPromptLingua.Events.WebhookHandler,
@@ -77,5 +80,14 @@ defmodule NoizuPromptLingua.Application do
 
   defp skip_migrations?() do
     System.get_env("RELEASE_NAME") == nil
+  end
+
+  # Start Noizu.PM.Repo only when PM_CORE_DATABASE_URL is set so existing deploys
+  # keep booting without pm_core until cutover wiring is complete.
+  defp pm_core_children do
+    case System.get_env("PM_CORE_DATABASE_URL") do
+      url when is_binary(url) and url != "" -> [Noizu.PM.Repo]
+      _ -> []
+    end
   end
 end

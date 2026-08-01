@@ -9,13 +9,13 @@
 
 ## Description
 
-Self-service hub at `/app/mcp-keys` for minting and managing MCP API keys, generating the `claude mcp add` setup command, and exploring the tool catalog exposed by a user's keys. Also surfaces key-lifecycle security states (expired JWTs, revoked keys, rate-limiting) and is the closest-fit home for remote dev-tunnel setup, since both are "connect my local tooling to NPL" concerns.
+Self-service hub at `/app/mcp-keys` for minting and managing MCP API keys, generating setup commands for Claude Code, Codex, and Grok (`claude mcp add` / `codex mcp add` / `grok mcp add`), and exploring the tool catalog exposed by a user's keys. Also surfaces key-lifecycle security states (expired JWTs, revoked keys, rate-limiting) and is the closest-fit home for remote dev-tunnel setup, since both are "connect my local tooling to NPL" concerns.
 
 ## Key Components
 
 - **API Key List Table** — active/revoked keys with created/last-used metadata (US-041, US-045)
 - **Mint Key Button** — generates a new raw API key (US-041)
-- **Setup Command Generator** — builds and copies the `claude mcp add` command (US-042)
+- **Setup Command Generator** — builds and copies Claude Code / Codex / Grok MCP add commands (US-042)
 - **Tool Catalog Explorer** — lists, keyword-searches, and semantically searches tools on the key's MCP server (US-065, US-066, US-067)
 - **Tool Definition Panel** — full schema and contextual help for a selected tool (US-068, US-069)
 - **Key Security Status Badge** — flags expired JWTs, revoked keys, and rate-limit state (US-083, US-084, US-087)

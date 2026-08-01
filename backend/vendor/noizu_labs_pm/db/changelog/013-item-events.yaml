@@ -1,0 +1,29 @@
+databaseChangeLog:
+  # item_events — append-only field-transition audit trail for items (powers the
+  # activity feed + burndown). Written best-effort via insert_all outside the
+  # item write txn.
+  - changeSet:
+      id: pm-013-item-events
+      author: noizu-pm
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: item_events
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE item_events (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                item_id uuid NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+                actor varchar,
+                field varchar NOT NULL,
+                old_value text,
+                new_value text,
+                occurred_at timestamptz NOT NULL DEFAULT now()
+              );
+              CREATE INDEX idx_item_events_item_time ON item_events (item_id, occurred_at);
+              CREATE INDEX idx_item_events_item_field ON item_events (item_id, field);
+      rollback:
+        - dropTable:
+            tableName: item_events

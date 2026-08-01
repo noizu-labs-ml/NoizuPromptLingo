@@ -1,0 +1,91 @@
+databaseChangeLog:
+  # Personas + journal + knowledge base.
+  - changeSet:
+      id: pm-016-personas
+      author: noizu-pm
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: personas
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE personas (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+                project_id uuid REFERENCES projects(id) ON DELETE SET NULL,
+                slug varchar(255) NOT NULL,
+                name varchar(255) NOT NULL,
+                role varchar(255),
+                bio text,
+                avatar varchar(1024),
+                tags text[] DEFAULT '{}',
+                metadata jsonb DEFAULT '{}'::jsonb,
+                status varchar(255) NOT NULL DEFAULT 'active',
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+              CREATE UNIQUE INDEX idx_personas_org_slug ON personas (organization_id, slug);
+              CREATE INDEX idx_personas_project_id ON personas (project_id);
+              CREATE INDEX idx_personas_status ON personas (status);
+              CREATE INDEX idx_personas_tags ON personas USING gin (tags);
+      rollback:
+        - dropTable:
+            tableName: personas
+
+  - changeSet:
+      id: pm-016-persona-journal-entries
+      author: noizu-pm
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: persona_journal_entries
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE persona_journal_entries (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                persona_id uuid NOT NULL REFERENCES personas(id) ON DELETE CASCADE,
+                category varchar(255) NOT NULL DEFAULT 'work_log',
+                title varchar(512),
+                body text NOT NULL,
+                tags text[] DEFAULT '{}',
+                metadata jsonb DEFAULT '{}'::jsonb,
+                actor varchar(255),
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+              CREATE INDEX idx_persona_journal_persona_id ON persona_journal_entries (persona_id);
+      rollback:
+        - dropTable:
+            tableName: persona_journal_entries
+
+  - changeSet:
+      id: pm-016-persona-knowledge-entries
+      author: noizu-pm
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: persona_knowledge_entries
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE persona_knowledge_entries (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                persona_id uuid NOT NULL REFERENCES personas(id) ON DELETE CASCADE,
+                slug varchar(255) NOT NULL,
+                title varchar(512) NOT NULL,
+                body text NOT NULL,
+                tags text[] DEFAULT '{}',
+                source varchar(1024),
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+              CREATE UNIQUE INDEX idx_persona_kb_persona_slug ON persona_knowledge_entries (persona_id, slug);
+              CREATE INDEX idx_persona_kb_tags ON persona_knowledge_entries USING gin (tags);
+      rollback:
+        - dropTable:
+            tableName: persona_knowledge_entries

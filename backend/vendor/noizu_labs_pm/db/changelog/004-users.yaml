@@ -1,0 +1,47 @@
+databaseChangeLog:
+  # users — UNION of npl + therobotplans, baked into one CREATE.
+  - changeSet:
+      id: pm-004-users
+      author: noizu-pm
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: users
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE users (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                user_name citext UNIQUE,
+                handle citext UNIQUE,
+                name_id uuid REFERENCES versioned_names(id),
+                description_id uuid REFERENCES versioned_descriptions(id),
+                -- invite_token_id FK is added in 007-invite-tokens (invite_tokens is
+                -- created after users — the dependency is circular, so the FK is
+                -- wired once both tables exist).
+                invite_token_id uuid,
+                approved_by_user_id uuid REFERENCES users(id),
+                email citext UNIQUE,
+                hashed_password varchar(255),
+                role user_role_enum NOT NULL DEFAULT 'user',
+                bio text,
+                status user_status_enum NOT NULL DEFAULT 'active',
+                mobile_phone varchar(255),
+                profile_completed_at timestamptz,
+                approved_at timestamptz,
+                verified boolean DEFAULT false,
+                flagged boolean DEFAULT false,
+                admin boolean DEFAULT false,
+                consent_preferences jsonb,
+                consent_updated_at timestamptz,
+                deleted_at timestamptz,
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+              CREATE INDEX idx_users_email ON users (email);
+              CREATE INDEX idx_users_user_name ON users (user_name);
+              CREATE INDEX idx_users_handle ON users (handle);
+      rollback:
+        - dropTable:
+            tableName: users

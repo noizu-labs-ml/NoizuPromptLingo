@@ -15,6 +15,13 @@ defmodule NoizuPromptLingua.Domains.Tickets do
   per org. A rolled-back insert rolls back its counter increment (gap-free preserved).
   """
   def create(attrs) do
+    case NoizuPromptLingua.Domains.Tickets.PMBridge.create(attrs) do
+      {:legacy, _} -> create_legacy(attrs)
+      other -> other
+    end
+  end
+
+  defp create_legacy(attrs) do
     org_id = fetch(attrs, :organization_id)
 
     if is_nil(org_id) do
@@ -43,9 +50,15 @@ defmodule NoizuPromptLingua.Domains.Tickets do
   end
 
   def get(id) do
-    Ticket
-    |> preload([:queue, :parent])
-    |> Repo.get(id)
+    case NoizuPromptLingua.Domains.Tickets.PMBridge.get(id) do
+      {:legacy, _} ->
+        Ticket
+        |> preload([:queue, :parent])
+        |> Repo.get(id)
+
+      other ->
+        other
+    end
   end
 
   @doc "Fetch a ticket by its human key within an organization."
@@ -207,6 +220,13 @@ defmodule NoizuPromptLingua.Domains.Tickets do
   end
 
   def update(id, attrs) do
+    case NoizuPromptLingua.Domains.Tickets.PMBridge.update(id, attrs) do
+      {:legacy, _} -> update_legacy(id, attrs)
+      other -> other
+    end
+  end
+
+  defp update_legacy(id, attrs) do
     case Repo.get(Ticket, id) do
       nil ->
         {:error, :not_found}
@@ -246,6 +266,13 @@ defmodule NoizuPromptLingua.Domains.Tickets do
   defp dispatch_update(other, _prev_assignee), do: other
 
   def list(opts \\ []) do
+    case NoizuPromptLingua.Domains.Tickets.PMBridge.list(opts) do
+      {:legacy, _} -> list_legacy(opts)
+      other -> other
+    end
+  end
+
+  defp list_legacy(opts) do
     Ticket
     |> maybe_filter(:organization_id, opts[:organization_id])
     |> maybe_filter(:status, opts[:status])

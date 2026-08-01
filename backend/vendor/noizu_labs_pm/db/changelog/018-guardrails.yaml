@@ -1,0 +1,73 @@
+databaseChangeLog:
+  # ── Guardrails ─────────────────────────────────────────────────────────────
+  # lock_version is baked into the CREATE TABLE for projects, items, and
+  # memberships (010/012/006). This file adds BEFORE DELETE triggers on the
+  # shared core tables that RAISE to force soft-delete (deleted_at /
+  # archived_at) rather than hard DELETE — so neither app can accidentally
+  # purge a shared row the other depends on.
+  #
+  # Escape hatch: a hard delete (and its cascades) proceeds only when the
+  # session sets `SET LOCAL pm.allow_hard_delete = 'on'` in the same txn —
+  # used by maintenance / data-retention jobs. The GUC is checked in the
+  # trigger so opted-in operator deletes and their FK cascades both pass.
+
+  - changeSet:
+      id: pm-018-soft-delete-guard-fn
+      author: noizu-pm
+      changes:
+        - sql:
+            splitStatements: false
+            sql: |
+              CREATE OR REPLACE FUNCTION pm_guard_soft_delete_only()
+              RETURNS TRIGGER AS $$
+              BEGIN
+                IF current_setting('pm.allow_hard_delete', true) IS DISTINCT FROM 'on' THEN
+                  RAISE EXCEPTION 'hard DELETE blocked on % — use soft-delete (deleted_at/archived_at); set pm.allow_hard_delete=on to override',
+                    TG_TABLE_NAME
+                    USING ERRCODE = 'check_violation';
+                END IF;
+                RETURN OLD;
+              END;
+              $$ LANGUAGE plpgsql;
+      rollback:
+        - sql:
+            sql: DROP FUNCTION IF EXISTS pm_guard_soft_delete_only();
+
+  - changeSet:
+      id: pm-018-guard-triggers
+      author: noizu-pm
+      changes:
+        - sql:
+            sql: |
+              DROP TRIGGER IF EXISTS pm_guard_soft_delete ON users;
+              CREATE TRIGGER pm_guard_soft_delete BEFORE DELETE ON users
+                FOR EACH ROW EXECUTE FUNCTION pm_guard_soft_delete_only();
+
+              DROP TRIGGER IF EXISTS pm_guard_soft_delete ON organizations;
+              CREATE TRIGGER pm_guard_soft_delete BEFORE DELETE ON organizations
+                FOR EACH ROW EXECUTE FUNCTION pm_guard_soft_delete_only();
+
+              DROP TRIGGER IF EXISTS pm_guard_soft_delete ON projects;
+              CREATE TRIGGER pm_guard_soft_delete BEFORE DELETE ON projects
+                FOR EACH ROW EXECUTE FUNCTION pm_guard_soft_delete_only();
+
+              DROP TRIGGER IF EXISTS pm_guard_soft_delete ON memberships;
+              CREATE TRIGGER pm_guard_soft_delete BEFORE DELETE ON memberships
+                FOR EACH ROW EXECUTE FUNCTION pm_guard_soft_delete_only();
+
+              DROP TRIGGER IF EXISTS pm_guard_soft_delete ON items;
+              CREATE TRIGGER pm_guard_soft_delete BEFORE DELETE ON items
+                FOR EACH ROW EXECUTE FUNCTION pm_guard_soft_delete_only();
+
+              DROP TRIGGER IF EXISTS pm_guard_soft_delete ON item_queues;
+              CREATE TRIGGER pm_guard_soft_delete BEFORE DELETE ON item_queues
+                FOR EACH ROW EXECUTE FUNCTION pm_guard_soft_delete_only();
+      rollback:
+        - sql:
+            sql: |
+              DROP TRIGGER IF EXISTS pm_guard_soft_delete ON users;
+              DROP TRIGGER IF EXISTS pm_guard_soft_delete ON organizations;
+              DROP TRIGGER IF EXISTS pm_guard_soft_delete ON projects;
+              DROP TRIGGER IF EXISTS pm_guard_soft_delete ON memberships;
+              DROP TRIGGER IF EXISTS pm_guard_soft_delete ON items;
+              DROP TRIGGER IF EXISTS pm_guard_soft_delete ON item_queues;

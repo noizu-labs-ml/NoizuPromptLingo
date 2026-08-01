@@ -72,13 +72,32 @@ defmodule NoizuPromptLingua.Projects do
   end
 
   def get_project(id) do
-    NoizuPromptLingua.Repo.get(Schema, id)
+    case NoizuPromptLingua.PMCore.with_pm(fn -> Noizu.PM.Repo.get(Noizu.PM.Schema.Projects.Project, id) end) do
+      {:legacy, _} -> NoizuPromptLingua.Repo.get(Schema, id)
+      other -> other
+    end
   end
 
   def update_project(id, attrs) do
-    case NoizuPromptLingua.Repo.get(Schema, id) do
-      nil -> {:error, :not_found}
-      project -> project |> Schema.changeset(attrs) |> NoizuPromptLingua.Repo.update()
+    case NoizuPromptLingua.PMCore.with_pm(fn ->
+           case Noizu.PM.Repo.get(Noizu.PM.Schema.Projects.Project, id) do
+             nil ->
+               {:error, :not_found}
+
+             project ->
+               project
+               |> Noizu.PM.Schema.Projects.Project.changeset(attrs)
+               |> Noizu.PM.Repo.update()
+           end
+         end) do
+      {:legacy, _} ->
+        case NoizuPromptLingua.Repo.get(Schema, id) do
+          nil -> {:error, :not_found}
+          project -> project |> Schema.changeset(attrs) |> NoizuPromptLingua.Repo.update()
+        end
+
+      other ->
+        other
     end
   end
 

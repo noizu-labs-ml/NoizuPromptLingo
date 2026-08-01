@@ -14,6 +14,14 @@ config :noizu_prompt_lingua,
   ecto_repos: [NoizuPromptLingua.Repo],
   generators: [timestamp_type: :utc_datetime]
 
+# Shared pm_core repo (Noizu.PM.Repo). URL bound in runtime.exs when PM_CORE_DATABASE_URL is set.
+# Domain cutover is behind :pm_core enabled (default false) — see docs/pm-core-cutover.md.
+config :noizu_labs_pm, Noizu.PM.Repo,
+  types: Noizu.PM.PostgrexTypes,
+  migration_primary_key: [name: :id, type: :uuid]
+
+config :noizu_prompt_lingua, :pm_core, enabled: false
+
 config :noizu_prompt_lingua, NoizuPromptLinguaWeb.Endpoint,
   url: [host: "localhost"],
   adapter: Bandit.PhoenixAdapter,

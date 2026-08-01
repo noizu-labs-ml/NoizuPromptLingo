@@ -1,0 +1,57 @@
+databaseChangeLog:
+  # artifacts + revisions. kind CHECK is enforced in the Ecto schema (@kinds union
+  # incl. `wiki`); organization_id is included (both app schemas declare it).
+  - changeSet:
+      id: pm-014-artifacts
+      author: noizu-pm
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: artifacts
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE artifacts (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                organization_id uuid REFERENCES organizations(id) ON DELETE CASCADE,
+                kind varchar(255) NOT NULL,
+                title varchar(255) NOT NULL,
+                mime_type varchar(255),
+                project_id uuid REFERENCES projects(id) ON DELETE SET NULL,
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+              CREATE INDEX idx_artifacts_organization_id ON artifacts (organization_id);
+              CREATE INDEX idx_artifacts_kind ON artifacts (kind);
+              CREATE INDEX idx_artifacts_project_id ON artifacts (project_id);
+      rollback:
+        - dropTable:
+            tableName: artifacts
+
+  - changeSet:
+      id: pm-014-artifact-revisions
+      author: noizu-pm
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: artifact_revisions
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE artifact_revisions (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                artifact_id uuid NOT NULL REFERENCES artifacts(id) ON DELETE CASCADE,
+                content text NOT NULL,
+                note varchar(255),
+                revision_number integer NOT NULL,
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+              CREATE INDEX idx_artifact_revisions_artifact_id ON artifact_revisions (artifact_id);
+              CREATE UNIQUE INDEX idx_artifact_revisions_unique
+                ON artifact_revisions (artifact_id, revision_number);
+      rollback:
+        - dropTable:
+            tableName: artifact_revisions

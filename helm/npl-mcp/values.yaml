@@ -12,6 +12,12 @@ npl-mcp:
     repository: ops.noizu.com/npl-mcp/server
     tag: "v1.0.25"
 
+# Shared pm_core dual-repo (default off). See docs/pm-core-cutover.md.
+pmCore:
+  enabled: false
+  secretName: ""
+  databaseUrlKey: PM_CORE_DATABASE_URL
+
 backend:
   image:
     repository: ops.noizu.com/npl-mcp/server

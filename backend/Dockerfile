@@ -22,6 +22,8 @@ RUN mix local.hex --force && mix local.rebar --force
 ENV MIX_ENV=prod
 
 COPY mix.exs mix.lock ./
+# Path-dep for shared pm_core layer (required before mix deps.get).
+COPY vendor/noizu_labs_pm vendor/noizu_labs_pm
 RUN --mount=type=cache,target=/root/.hex \
     --mount=type=cache,target=/root/.cache/rebar3 \
     mix deps.get --only $MIX_ENV && \
