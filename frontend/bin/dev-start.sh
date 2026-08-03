@@ -7,10 +7,14 @@ cd "$(dirname "$0")/.."
 
 hash_npm() {
   # shellcheck disable=SC2046
+  # Only hash files that exist — missing yarn.lock must not trip `set -o pipefail`.
+  local files=(package.json)
+  [ -f package-lock.json ] && files+=(package-lock.json)
+  [ -f yarn.lock ] && files+=(yarn.lock)
   if command -v sha256sum >/dev/null 2>&1; then
-    cat package.json package-lock.json yarn.lock 2>/dev/null | sha256sum | awk '{print $1}'
+    cat "${files[@]}" | sha256sum | awk '{print $1}'
   else
-    cat package.json package-lock.json yarn.lock 2>/dev/null | shasum -a 256 | awk '{print $1}'
+    cat "${files[@]}" | shasum -a 256 | awk '{print $1}'
   fi
 }
 

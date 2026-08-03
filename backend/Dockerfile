@@ -5,9 +5,15 @@
 # - Layer misses still reuse previously compiled beams (partials kept).
 # - Prefer occasional `docker buildx prune` over forcing cold recompiles.
 # - Release is copied out of the cache mount so the image layer has the artifact.
+# - Cache IDs MUST include TARGETARCH — multiarch builds share the builder; a
+#   single npl-mcp-mix-build id lets arm64 erlexec leak into the amd64 image
+#   (Exec format error on cluster).
 ARG BASE_IMAGE="elixir:1.19.5-otp-28-slim"
 
 FROM ${BASE_IMAGE} AS build
+
+# Automatic platform args from BuildKit (used in cache mount ids).
+ARG TARGETARCH
 
 RUN apt-get update -y && \
     apt-get install -y build-essential git && \
@@ -27,14 +33,14 @@ RUN mix local.hex --force && mix local.rebar --force
 
 ENV MIX_ENV=prod
 
-# Stable cache IDs — shared across builds; purge only when intentionally stale.
+# Per-arch cache IDs (amd64 vs arm64 must not share _build/deps beams/erts).
 # sharing=locked: one compile at a time per cache (avoids concurrent corruption).
 COPY mix.exs mix.lock ./
 # Path-dep for shared pm_core layer (required before mix deps.get).
 COPY vendor/noizu_labs_pm vendor/noizu_labs_pm
 RUN --mount=type=cache,target=/root/.hex,sharing=locked \
     --mount=type=cache,target=/root/.cache/rebar3,sharing=locked \
-    --mount=type=cache,id=npl-mcp-mix-deps,target=/app/deps,sharing=locked \
+    --mount=type=cache,id=npl-mcp-mix-deps-${TARGETARCH},target=/app/deps,sharing=locked \
     mix deps.get --only $MIX_ENV && \
     mkdir -p config
 
@@ -42,8 +48,8 @@ COPY config/config.exs config/${MIX_ENV}.exs config/
 # deps.compile: even if this RUN layer misses, _build + deps mounts restore beams.
 RUN --mount=type=cache,target=/root/.hex,sharing=locked \
     --mount=type=cache,target=/root/.cache/rebar3,sharing=locked \
-    --mount=type=cache,id=npl-mcp-mix-deps,target=/app/deps,sharing=locked \
-    --mount=type=cache,id=npl-mcp-mix-build,target=/app/_build,sharing=locked \
+    --mount=type=cache,id=npl-mcp-mix-deps-${TARGETARCH},target=/app/deps,sharing=locked \
+    --mount=type=cache,id=npl-mcp-mix-build-${TARGETARCH},target=/app/_build,sharing=locked \
     MIX_OS_DEPS_COMPILE_PARTITION_COUNT=1 mix deps.compile
 
 COPY lib lib
@@ -51,19 +57,21 @@ COPY priv priv
 
 RUN --mount=type=cache,target=/root/.hex,sharing=locked \
     --mount=type=cache,target=/root/.cache/rebar3,sharing=locked \
-    --mount=type=cache,id=npl-mcp-mix-deps,target=/app/deps,sharing=locked \
-    --mount=type=cache,id=npl-mcp-mix-build,target=/app/_build,sharing=locked \
+    --mount=type=cache,id=npl-mcp-mix-deps-${TARGETARCH},target=/app/deps,sharing=locked \
+    --mount=type=cache,id=npl-mcp-mix-build-${TARGETARCH},target=/app/_build,sharing=locked \
     mix compile
 
 COPY config/runtime.exs config/
 
 # Cache mounts are not in the image — materialize the release into a normal path.
+# --overwrite: noninteractive; avoids hanging on "Release already exists".
 RUN --mount=type=cache,target=/root/.hex,sharing=locked \
     --mount=type=cache,target=/root/.cache/rebar3,sharing=locked \
-    --mount=type=cache,id=npl-mcp-mix-deps,target=/app/deps,sharing=locked \
-    --mount=type=cache,id=npl-mcp-mix-build,target=/app/_build,sharing=locked \
-    mix release && \
-    cp -a /app/_build/${MIX_ENV}/rel/noizu_prompt_lingua /app/release
+    --mount=type=cache,id=npl-mcp-mix-deps-${TARGETARCH},target=/app/deps,sharing=locked \
+    --mount=type=cache,id=npl-mcp-mix-build-${TARGETARCH},target=/app/_build,sharing=locked \
+    mix release --overwrite && \
+    cp -a /app/_build/${MIX_ENV}/rel/noizu_prompt_lingua /app/release && \
+    file /app/release/erts-*/bin/erlexec || true
 
 FROM ${BASE_IMAGE} AS production
 
