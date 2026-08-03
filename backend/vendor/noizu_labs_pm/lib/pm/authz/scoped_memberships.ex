@@ -96,6 +96,24 @@ defmodule Noizu.PM.Authz.ScopedMemberships do
     |> Noizu.PM.Repo.all()
   end
 
+  @doc """
+  Whether `user_id` currently holds any (non-expired) membership on
+  `resource_type`/`resource_id`. Used ahead of `add_member/5` — that call
+  raises `already_member` inside the stored procedure, which is fine for a
+  bare add but poisons an open transaction if the caller needs to no-op
+  instead (e.g. idempotent invite redemption).
+  """
+  def member?(resource_type, resource_id, user_id) do
+    from(sm in Schema,
+      where:
+        sm.member_type == "user" and sm.member_id == ^user_id and
+          sm.resource_type == ^resource_type and sm.resource_id == ^resource_id,
+      where: is_nil(sm.expires_at) or sm.expires_at > ^DateTime.utc_now(),
+      limit: 1
+    )
+    |> Noizu.PM.Repo.exists?()
+  end
+
   def member_roles, do: @member_roles
 
   defp maybe_role_filter(query, nil), do: query

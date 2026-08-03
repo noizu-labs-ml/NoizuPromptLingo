@@ -1,32 +1,16 @@
 defmodule NoizuPromptLingua.PMCore do
   @moduledoc """
-  Shared `pm_core` data layer (`:noizu_labs_pm`).
-
-  **Always-on mode** until `pm_core` is extracted as a microservice.
-  Domain code for orgs/projects/items/authz reads and writes via `Noizu.PM.Repo`.
-  Local app DB remains for NPL-only tables (sessions, chat, memory, …).
-
-  Emergency opt-out only: `PM_CORE_ENABLED=0` (or `false`). Prefer fixing the
-  shared DB over running legacy split-brain.
+  Shared pm_core data layer. Shared orgs/projects/items/authz ALWAYS use Noizu.PM.Repo.
+  No legacy app-DB dual-path. Misconfig (missing PM_CORE_DATABASE_URL) is a hard error.
+  NPL-local tables (sessions, chat, memory, …) stay on the app Repo.
 
   See monorepo `docs/pm-core-cutover.md`.
   """
 
   @doc """
-  Whether domain code should read/write via `Noizu.PM.Repo`.
-
-  Defaults to **true**. Set `PM_CORE_ENABLED` / config `:enabled` to `false` only
-  for emergency rollback.
+  Shared PM is always on. There is no opt-out / legacy mode.
   """
-  def enabled? do
-    case Application.get_env(:noizu_prompt_lingua, :pm_core, [])[:enabled] do
-      false -> false
-      "false" -> false
-      "0" -> false
-      0 -> false
-      _ -> true
-    end
-  end
+  def enabled?, do: true
 
   @doc "Whether the shared repo process is expected to be running."
   def repo_configured? do
@@ -46,22 +30,17 @@ defmodule NoizuPromptLingua.PMCore do
   end
 
   @doc """
-  Run `fun` against shared PM when enabled and configured.
-
-  Returns `{:legacy, reason}` only when disabled or unconfigured (dev without
-  `PM_CORE_DATABASE_URL`, or emergency opt-out).
+  Run `fun` against shared PM. Raises if `PM_CORE_DATABASE_URL` / repo config is missing.
   """
   def with_pm(fun) when is_function(fun, 0) do
-    cond do
-      not enabled?() ->
-        {:legacy, :pm_core_disabled}
-
-      not repo_configured?() ->
-        {:legacy, :pm_core_unconfigured}
-
-      true ->
-        fun.()
+    unless repo_configured?() do
+      raise """
+      PM_CORE_DATABASE_URL is required. Shared PM data has no legacy mode.
+      Set PM_CORE_DATABASE_URL to the pm_core database.
+      """
     end
+
+    fun.()
   end
 
   @doc """

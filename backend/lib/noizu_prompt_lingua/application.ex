@@ -83,8 +83,8 @@ defmodule NoizuPromptLingua.Application do
     System.get_env("RELEASE_NAME") == nil
   end
 
-  # Start Noizu.PM.Repo only when PM_CORE_DATABASE_URL is set so existing deploys
-  # keep booting without pm_core until cutover wiring is complete.
+  # Start Noizu.PM.Repo when PM_CORE_DATABASE_URL is set. Prod requires the URL
+  # (raise in runtime.exs); without it shared PM ops raise at call time.
   defp pm_core_children do
     case System.get_env("PM_CORE_DATABASE_URL") do
       url when is_binary(url) and url != "" -> [Noizu.PM.Repo]

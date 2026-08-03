@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
-# Run durable dual-path tests for Project List/Get/Resolve (pm_core cutover).
+# Run durable dual-path tests for Project List/Get/Resolve/Create (pm_core cutover).
+#
+# Covers:
+#   - source contracts (List dual-path, Resolve PM prefer, Get via Resolve,
+#     Create rescue/format_create_error/"already exists",
+#     app+vendor schema name: :uq_projects_org_slug)
+#   - legacy List/Get/Resolve live path
+#   - PM-entry fallback without live Repo
+#   - optional :pm_core_live (insert via Noizu.PM.Repo)
 #
 # Usage (from backend/):
 #   ./scripts/run_project_dual_path_tests.sh
@@ -25,6 +33,6 @@ if [[ "${1:-}" == "--live" ]]; then
   exec mix test "${FILES[@]}" --include pm_core_live
 fi
 
-echo "Running dual-path tests (legacy + source contracts + PM-entry fallback)"
+echo "Running dual-path tests (legacy + source contracts + Create/constraint + PM-entry fallback)"
 echo "Tip: set PM_CORE_DATABASE_URL and pass --live for insert-via-PM coverage"
 exec mix test "${FILES[@]}" --exclude pm_core_live

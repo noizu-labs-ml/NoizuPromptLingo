@@ -24,6 +24,7 @@ defmodule NoizuPromptLingua.MCP.Projects.Tools.ProjectCreate do
   def call(args, ctx) do
     org_ref = Args.get(args, :organization)
     client_ref = Args.get(args, :client)
+    slug = Args.get(args, :slug)
     owner_id = Args.get(args, :owner_id) || Resolve.current_user_id(ctx)
 
     with {:owner, owner_id} when is_binary(owner_id) <- {:owner, owner_id},
@@ -47,16 +48,35 @@ defmodule NoizuPromptLingua.MCP.Projects.Tools.ProjectCreate do
              client_id: Map.get(project, :client_id)
            }}
 
-        {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
-          {:error, "Failed: #{inspect(changeset.errors)}"}
+        {:error, %Ecto.Changeset{} = changeset} ->
+          {:error, format_create_error(changeset, slug)}
 
         {:error, reason} ->
-          {:error, "Failed: #{inspect(reason)}"}
+          {:error, "Failed to create project: #{inspect(reason)}"}
       end
     else
       {:owner, _} -> {:error, "owner_id is required and could not be derived from the auth token"}
       {:org, _} -> {:error, "Organization '#{org_ref}' not found"}
       {:client, :not_found} -> {:error, "Client '#{client_ref}' not found in organization"}
+    end
+  rescue
+    e in [Ecto.ConstraintError, Postgrex.Error] ->
+      {:error, "Failed to create project: #{Exception.message(e)}"}
+
+    e ->
+      {:error, "Project.Create exception: #{Exception.message(e)}"}
+  catch
+    kind, reason ->
+      {:error, "Project.Create #{kind}: #{inspect(reason)}"}
+  end
+
+  defp format_create_error(%Ecto.Changeset{} = cs, slug) do
+    cond do
+      Keyword.has_key?(cs.errors, :slug) ->
+        "Project slug '#{slug}' already exists in this organization"
+
+      true ->
+        "Failed to create project: #{inspect(cs.errors)}"
     end
   end
 

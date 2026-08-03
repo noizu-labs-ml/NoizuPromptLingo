@@ -101,16 +101,21 @@ if config_env() == :prod or config_env() == :dev do
     end
   end
 
-  # Shared pm_core (always-on mode until microservice). Require URL in prod.
-  # Emergency opt-out: PM_CORE_ENABLED=0|false.
+  # Shared pm_core — always on; no legacy dual-path. Require URL in prod.
   if pm_url = System.get_env("PM_CORE_DATABASE_URL") do
     config :noizu_labs_pm, Noizu.PM.Repo,
       url: pm_url,
       pool_size: String.to_integer(System.get_env("PM_CORE_POOL_SIZE") || "5")
+  else
+    if config_env() == :prod do
+      raise """
+      environment variable PM_CORE_DATABASE_URL is missing.
+      Shared PM data has no legacy mode. Set PM_CORE_DATABASE_URL to the pm_core database.
+      """
+    end
   end
 
-  config :noizu_prompt_lingua, :pm_core,
-    enabled: System.get_env("PM_CORE_ENABLED", "true") not in ~w(0 false FALSE no NO)
+  config :noizu_prompt_lingua, :pm_core, enabled: true
 
   secret_key_base =
     cond do

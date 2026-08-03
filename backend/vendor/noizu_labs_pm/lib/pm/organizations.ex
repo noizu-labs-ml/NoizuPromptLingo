@@ -73,6 +73,26 @@ defmodule Noizu.PM.Organizations do
     Noizu.PM.Repo.all(Schema)
   end
 
+  @doc """
+  Organizations a user belongs to, via their scoped memberships, newest-role
+  first columns dropped in favor of a flat `%{id, slug, name, role}` map — the
+  shape host-app callers (session/me/invite-redeem responses) already expect.
+  """
+  def list_for_user(user_id) do
+    from(sm in Noizu.PM.Schema.Authz.ScopedMembership,
+      join: o in Schema,
+      on: o.id == sm.resource_id,
+      join: g in Noizu.PM.Schema.Authz.Group,
+      on: g.id == sm.group_id,
+      where:
+        sm.member_type == "user" and sm.member_id == ^user_id and
+          sm.resource_type == "organization",
+      where: is_nil(sm.expires_at) or sm.expires_at > ^DateTime.utc_now(),
+      select: %{id: o.id, slug: o.slug, name: o.name, role: g.name}
+    )
+    |> Noizu.PM.Repo.all()
+  end
+
   defp fetch(map, key) when is_atom(key) do
     Map.get(map, key) || Map.get(map, Atom.to_string(key))
   end

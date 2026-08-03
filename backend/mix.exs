@@ -63,7 +63,7 @@ defmodule NoizuPromptLingua.MixProject do
       {:seed_helper, "~> 0.1.1"},
       {:smart_token, "~> 0.1.3"},
       {:noizu_weaviate, "~> 0.2.0"},
-      # Shared pm_core data layer (orgs/projects/items). Dual-repo; domain cutover behind PM_CORE_ENABLED.
+      # Shared pm_core data layer (orgs/projects/items) via Noizu.PM.Repo.
       noizu_labs_pm_dep(),
 
       # GenAI
@@ -124,14 +124,15 @@ defmodule NoizuPromptLingua.MixProject do
 
   # Shared PM data layer (pm_core). Resolution order:
   # 1) NOIZU_LABS_PM_PATH env
-  # 2) vendor/noizu_labs_pm (Docker + self-contained checkout)
-  # 3) monorepo Portfolio/Libs/pm
+  # 2) monorepo Portfolio/Libs/pm (local/dev builds, canonical source)
+  # 3) vendor/noizu_labs_pm (Docker build artifact synced from Portfolio/Libs/pm,
+  #    used when the monorepo path isn't present)
   defp noizu_labs_pm_dep do
     candidates =
       [
         System.get_env("NOIZU_LABS_PM_PATH"),
-        Path.expand("vendor/noizu_labs_pm", __DIR__),
-        Path.expand("../../../../Libs/pm", __DIR__)
+        Path.expand("../../../../Libs/pm", __DIR__),
+        Path.expand("vendor/noizu_labs_pm", __DIR__)
       ]
       |> Enum.reject(&is_nil/1)
 

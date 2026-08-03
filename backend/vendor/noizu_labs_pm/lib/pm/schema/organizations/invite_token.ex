@@ -11,10 +11,19 @@ defmodule Noizu.PM.Schema.Organizations.InviteToken do
     field :email, :string
     # Inviter-chosen join role: admin | member | viewer (never owner).
     field :role, :string, default: "viewer"
+    field :starts_at, :utc_datetime_usec
     field :max_uses, :integer
     field :uses, :integer, default: 0
+    field :redemption_count, :integer, default: 0
     field :expires_at, :utc_datetime_usec
     field :revoked, :boolean, default: false
+    field :status, :string, default: "pending"
+
+    belongs_to :accepted_by_user, Noizu.PM.Schema.Users.User,
+      foreign_key: :accepted_by,
+      type: Ecto.UUID
+
+    field :accepted_at, :utc_datetime_usec
     timestamps(type: :utc_datetime_usec)
   end
 
@@ -29,10 +38,15 @@ defmodule Noizu.PM.Schema.Organizations.InviteToken do
       :key_prefix,
       :email,
       :role,
+      :starts_at,
       :max_uses,
       :uses,
+      :redemption_count,
       :expires_at,
-      :revoked
+      :revoked,
+      :status,
+      :accepted_by,
+      :accepted_at
     ])
     |> validate_required([:token_hash, :key_prefix])
     |> validate_inclusion(:role, @roles)

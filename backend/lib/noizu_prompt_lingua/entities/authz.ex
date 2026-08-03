@@ -11,62 +11,21 @@ defmodule NoizuPromptLingua.Authz do
     case NoizuPromptLingua.PMCore.with_pm(fn ->
            Noizu.PM.Authz.check_permission(user_id, resource_type, resource_id, action)
          end) do
-      {:legacy, _} -> check_permission_local(user_id, resource_type, resource_id, action)
       result when is_boolean(result) -> result
       _ -> false
     end
   end
 
-  defp check_permission_local(user_id, resource_type, resource_id, action) do
-    sql = "SELECT check_user_permission($1::uuid, $2, $3::uuid, $4)"
-    params = [uuid_to_bin(user_id), resource_type, uuid_to_bin(resource_id), action]
-
-    case Ecto.Adapters.SQL.query(NoizuPromptLingua.Repo, sql, params) do
-      {:ok, %{rows: [[result]]}} -> result == true
-      _ -> false
-    end
-  end
-
   def get_user_role(user_id, resource_type, resource_id) do
-    case NoizuPromptLingua.PMCore.with_pm(fn ->
-           Noizu.PM.Authz.get_user_role(user_id, resource_type, resource_id)
-         end) do
-      {:legacy, _} -> get_user_role_local(user_id, resource_type, resource_id)
-      role -> role
-    end
-  end
-
-  defp get_user_role_local(user_id, resource_type, resource_id) do
-    sql = "SELECT get_user_role_in_resource($1::uuid, $2, $3::uuid)"
-    params = [uuid_to_bin(user_id), resource_type, uuid_to_bin(resource_id)]
-
-    case Ecto.Adapters.SQL.query(NoizuPromptLingua.Repo, sql, params) do
-      {:ok, %{rows: [[role]]}} -> role
-      _ -> nil
-    end
+    NoizuPromptLingua.PMCore.with_pm(fn ->
+      Noizu.PM.Authz.get_user_role(user_id, resource_type, resource_id)
+    end)
   end
 
   def authorize(user_id, resource_type, resource_id, required_role) do
-    case NoizuPromptLingua.PMCore.with_pm(fn ->
-           Noizu.PM.Authz.authorize(user_id, resource_type, resource_id, required_role)
-         end) do
-      {:legacy, _} -> authorize_local(user_id, resource_type, resource_id, required_role)
-      other -> other
-    end
-  end
-
-  defp authorize_local(user_id, resource_type, resource_id, required_role) do
-    case get_user_role_local(user_id, resource_type, resource_id) do
-      nil ->
-        {:error, :not_a_member}
-
-      role ->
-        if Map.get(@role_ranks, role, 99) <= Map.get(@role_ranks, required_role, 99) do
-          {:ok, %{role: role, resource_type: resource_type, resource_id: resource_id}}
-        else
-          {:error, :insufficient_role}
-        end
-    end
+    NoizuPromptLingua.PMCore.with_pm(fn ->
+      Noizu.PM.Authz.authorize(user_id, resource_type, resource_id, required_role)
+    end)
   end
 
   def explain_permission(user_id, resource_type, resource_id, action) do
@@ -88,6 +47,7 @@ defmodule NoizuPromptLingua.Authz do
     end
   end
 
+  # Policy document join for explain — still reads via Noizu.PM.Repo (shared PBAC).
   defp get_effective_policies(user_id, resource_type, resource_id) do
     sql = """
     SELECT p.id, p.name, p.description, p.policy_document, p.is_system, gp.priority
@@ -102,17 +62,19 @@ defmodule NoizuPromptLingua.Authz do
     ORDER BY gp.priority ASC
     """
 
-    case Ecto.Adapters.SQL.query(NoizuPromptLingua.Repo, sql, [
-           uuid_to_bin(user_id),
-           resource_type,
-           uuid_to_bin(resource_id)
-         ]) do
-      {:ok, %{rows: rows, columns: cols}} ->
-        Enum.map(rows, fn row -> Enum.zip(cols, row) |> Map.new() end)
+    NoizuPromptLingua.PMCore.with_pm(fn ->
+      case Ecto.Adapters.SQL.query(Noizu.PM.Repo, sql, [
+             uuid_to_bin(user_id),
+             resource_type,
+             uuid_to_bin(resource_id)
+           ]) do
+        {:ok, %{rows: rows, columns: cols}} ->
+          Enum.map(rows, fn row -> Enum.zip(cols, row) |> Map.new() end)
 
-      _ ->
-        []
-    end
+        _ ->
+          []
+      end
+    end)
   end
 
   defp uuid_to_bin(nil), do: nil

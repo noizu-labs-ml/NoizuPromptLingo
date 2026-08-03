@@ -1,7 +1,7 @@
 defmodule Noizu.PM.Projects do
   @moduledoc """
   Shared project domain operations on `Noizu.PM.Repo` (pm_core).
-  Host apps dual-path create/list/archive through this module when `PM_CORE_ENABLED`.
+  Host apps create/list/archive shared projects through this module (pm_core only).
   """
   alias Noizu.PM.Projects.Project, as: Entity
   alias Noizu.PM.Schema.Projects.Project, as: Schema

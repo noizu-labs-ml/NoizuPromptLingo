@@ -12,90 +12,32 @@ defmodule NoizuPromptLingua.Authz.ScopedMemberships do
   @member_roles ~w(owner admin lead member viewer)
 
   def add_member(resource_type, resource_id, user_id, role_name, added_by \\ nil) do
-    case NoizuPromptLingua.PMCore.with_pm(fn ->
-           Noizu.PM.Authz.ScopedMemberships.add_member(
-             resource_type,
-             resource_id,
-             user_id,
-             role_name,
-             added_by
-           )
-         end) do
-      {:legacy, _} ->
-        add_member_local(resource_type, resource_id, user_id, role_name, added_by)
-
-      other ->
-        other
-    end
-  end
-
-  defp add_member_local(resource_type, resource_id, user_id, role_name, added_by) do
-    sql = "SELECT * FROM add_scoped_member($1, $2::uuid, $3::uuid, $4, $5::uuid)"
-
-    params = [
-      resource_type,
-      uuid_to_bin(resource_id),
-      uuid_to_bin(user_id),
-      role_name,
-      uuid_to_bin(added_by)
-    ]
-
-    case Ecto.Adapters.SQL.query(NoizuPromptLingua.Repo, sql, params) do
-      {:ok, %{rows: [row], columns: cols}} ->
-        {:ok, Enum.zip(cols, row) |> Map.new()}
-
-      {:error, %Postgrex.Error{postgres: %{code: :raise_exception, message: msg}}} ->
-        {:error, parse_error(msg)}
-    end
+    NoizuPromptLingua.PMCore.with_pm(fn ->
+      Noizu.PM.Authz.ScopedMemberships.add_member(
+        resource_type,
+        resource_id,
+        user_id,
+        role_name,
+        added_by
+      )
+    end)
   end
 
   def update_role(resource_type, resource_id, user_id, new_role_name) do
-    case NoizuPromptLingua.PMCore.with_pm(fn ->
-           Noizu.PM.Authz.ScopedMemberships.update_role(
-             resource_type,
-             resource_id,
-             user_id,
-             new_role_name
-           )
-         end) do
-      {:legacy, _} -> update_role_local(resource_type, resource_id, user_id, new_role_name)
-      other -> other
-    end
-  end
-
-  defp update_role_local(resource_type, resource_id, user_id, new_role_name) do
-    sql = "SELECT * FROM update_scoped_member_role($1, $2::uuid, $3::uuid, $4)"
-    params = [resource_type, uuid_to_bin(resource_id), uuid_to_bin(user_id), new_role_name]
-
-    case Ecto.Adapters.SQL.query(NoizuPromptLingua.Repo, sql, params) do
-      {:ok, %{rows: [row], columns: cols}} ->
-        {:ok, Enum.zip(cols, row) |> Map.new()}
-
-      {:error, %Postgrex.Error{postgres: %{code: :raise_exception, message: msg}}} ->
-        {:error, parse_error(msg)}
-    end
+    NoizuPromptLingua.PMCore.with_pm(fn ->
+      Noizu.PM.Authz.ScopedMemberships.update_role(
+        resource_type,
+        resource_id,
+        user_id,
+        new_role_name
+      )
+    end)
   end
 
   def remove_member(resource_type, resource_id, user_id) do
-    case NoizuPromptLingua.PMCore.with_pm(fn ->
-           Noizu.PM.Authz.ScopedMemberships.remove_member(resource_type, resource_id, user_id)
-         end) do
-      {:legacy, _} -> remove_member_local(resource_type, resource_id, user_id)
-      other -> other
-    end
-  end
-
-  defp remove_member_local(resource_type, resource_id, user_id) do
-    sql = "SELECT * FROM remove_scoped_member_safe($1, $2::uuid, $3::uuid)"
-    params = [resource_type, uuid_to_bin(resource_id), uuid_to_bin(user_id)]
-
-    case Ecto.Adapters.SQL.query(NoizuPromptLingua.Repo, sql, params) do
-      {:ok, %{rows: [row], columns: cols}} ->
-        {:ok, Enum.zip(cols, row) |> Map.new()}
-
-      {:error, %Postgrex.Error{postgres: %{code: :raise_exception, message: msg}}} ->
-        {:error, parse_error(msg)}
-    end
+    NoizuPromptLingua.PMCore.with_pm(fn ->
+      Noizu.PM.Authz.ScopedMemberships.remove_member(resource_type, resource_id, user_id)
+    end)
   end
 
   # PBAC members over scoped_memberships (4a9aa9d9 + ccaf5684): USER and PERSONA members,
@@ -262,22 +204,4 @@ defmodule NoizuPromptLingua.Authz.ScopedMemberships do
     |> NoizuPromptLingua.Repo.all()
   end
 
-  defp parse_error(msg) do
-    cond do
-      String.contains?(msg, "invalid_role") -> :invalid_role
-      String.contains?(msg, "already_member") -> :already_member
-      String.contains?(msg, "not_found") -> :not_found
-      String.contains?(msg, "sole_owner") -> :sole_owner
-      true -> {:unknown, msg}
-    end
-  end
-
-  defp uuid_to_bin(nil), do: nil
-
-  defp uuid_to_bin(uuid) when is_binary(uuid) do
-    case Ecto.UUID.dump(uuid) do
-      {:ok, bin} -> bin
-      :error -> uuid
-    end
-  end
 end

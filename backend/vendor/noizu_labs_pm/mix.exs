@@ -53,6 +53,9 @@ defmodule Noizu.PM.MixProject do
       {:postgrex, ">= 0.0.0"},
       {:noizu_labs_entities, "~> 0.3.0"},
       {:jason, "~> 1.2"},
+      # Invite tokens are hashed/verified here (Organizations.InviteTokens) —
+      # same version host apps (TRP, NPL) already pin.
+      {:bcrypt_elixir, "~> 3.0"},
       {:credo, "~> 1.7.12", runtime: false},
       {:ex_doc, "~> 0.35", only: :dev, runtime: false}
     ]

@@ -43,7 +43,10 @@ defmodule NoizuPromptLingua.Schema.Projects.Project do
     |> validate_format(:key_prefix, ~r/^[A-Z0-9]{2,16}$/,
       message: "must be 2-16 uppercase letters/digits"
     )
-    |> unique_constraint([:organization_id, :slug])
+    |> unique_constraint([:organization_id, :slug],
+      name: :uq_projects_org_slug,
+      message: "already exists in this organization"
+    )
     |> unique_constraint(:key_prefix, name: :idx_projects_org_key_prefix)
   end
 end

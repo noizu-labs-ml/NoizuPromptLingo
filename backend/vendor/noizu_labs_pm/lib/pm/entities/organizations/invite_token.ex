@@ -20,10 +20,18 @@ defmodule Noizu.PM.Organizations.InviteToken do
     field :token_hash, nil, :string
     field :key_prefix, nil, :string
     field :email, nil, :string
+    field :role, "viewer", :string
+    field :starts_at, nil, :utc_datetime_usec
     field :max_uses, nil, :integer
     field :uses, 0, :integer
+    field :redemption_count, 0, :integer
     field :expires_at, nil, :utc_datetime_usec
     field :revoked, false, :boolean
+    field :status, "pending", :string
+    @config auto: false
+    @store name: :accepted_by
+    field :accepted_by_user, nil, Noizu.PM.Users.UserReference
+    field :accepted_at, nil, :utc_datetime_usec
     field :time_stamp, nil, Noizu.Entity.TimeStamp
   end
 

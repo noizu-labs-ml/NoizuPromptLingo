@@ -62,14 +62,7 @@ defmodule NoizuPromptLingua.Organizations do
 
   @doc "Looks up an org UUID by slug. `slug` is citext (case-insensitive)."
   def get_id_by_slug(slug) do
-    case NoizuPromptLingua.PMCore.with_pm(fn -> Noizu.PM.Organizations.get_id_by_slug(slug) end) do
-      {:legacy, _} ->
-        from(o in Schema, where: o.slug == ^slug, select: o.id)
-        |> NoizuPromptLingua.Repo.one()
-
-      id ->
-        id
-    end
+    NoizuPromptLingua.PMCore.with_pm(fn -> Noizu.PM.Organizations.get_id_by_slug(slug) end)
   end
 
   def update_organization(id, attrs) do
@@ -131,28 +124,9 @@ defmodule NoizuPromptLingua.Organizations do
   end
 
   def create_organization_with_owner(attrs, user_id) do
-    case NoizuPromptLingua.PMCore.with_pm(fn ->
-           Noizu.PM.Organizations.create_with_owner(attrs, user_id)
-         end) do
-      {:legacy, _} ->
-        NoizuPromptLingua.Repo.transaction(fn ->
-          with {:ok, org} <- %Schema{} |> Schema.changeset(attrs) |> NoizuPromptLingua.Repo.insert(),
-               {:ok, _membership} <-
-                 NoizuPromptLingua.Authz.ScopedMemberships.add_member(
-                   "organization",
-                   org.id,
-                   user_id,
-                   "owner"
-                 ) do
-            org
-          else
-            {:error, reason} -> NoizuPromptLingua.Repo.rollback(reason)
-          end
-        end)
-
-      other ->
-        other
-    end
+    NoizuPromptLingua.PMCore.with_pm(fn ->
+      Noizu.PM.Organizations.create_with_owner(attrs, user_id)
+    end)
   end
 
   def list_user_organizations(user_id) do

@@ -1,6 +1,6 @@
 defmodule NoizuPromptLingua.PMCoreTest do
   @moduledoc """
-  Unit coverage for the dual-path gate used by Project List/Get and Resolve.
+  Unit coverage for the shared-only PMCore gate.
 
   These exercise the real `PMCore` module (no mocks): `enabled?/0`,
   `repo_configured?/0`, `with_pm/1`, and `ticket_attrs_to_item/1`.
@@ -24,22 +24,15 @@ defmodule NoizuPromptLingua.PMCoreTest do
   end
 
   describe "enabled?/0" do
-    test "defaults to true when unset or non-false" do
+    test "always true (no opt-out)" do
       Application.delete_env(:noizu_prompt_lingua, :pm_core)
       assert PMCore.enabled?()
 
-      Application.put_env(:noizu_prompt_lingua, :pm_core, enabled: true)
+      Application.put_env(:noizu_prompt_lingua, :pm_core, enabled: false)
       assert PMCore.enabled?()
 
-      Application.put_env(:noizu_prompt_lingua, :pm_core, enabled: "true")
+      Application.put_env(:noizu_prompt_lingua, :pm_core, enabled: "0")
       assert PMCore.enabled?()
-    end
-
-    test "false / \"false\" / \"0\" / 0 disable" do
-      for value <- [false, "false", "0", 0] do
-        Application.put_env(:noizu_prompt_lingua, :pm_core, enabled: value)
-        refute PMCore.enabled?(), "expected enabled?=false for #{inspect(value)}"
-      end
     end
   end
 
@@ -68,29 +61,18 @@ defmodule NoizuPromptLingua.PMCoreTest do
   end
 
   describe "with_pm/1" do
-    test "returns {:legacy, :pm_core_disabled} without calling fun when disabled" do
-      Application.put_env(:noizu_prompt_lingua, :pm_core, enabled: false)
-      System.put_env("PM_CORE_DATABASE_URL", "ecto://example/pm")
-
-      assert {:legacy, :pm_core_disabled} =
-               PMCore.with_pm(fn ->
-                 flunk("fun must not run when pm_core is disabled")
-               end)
-    end
-
-    test "returns {:legacy, :pm_core_unconfigured} without calling fun when unconfigured" do
-      Application.put_env(:noizu_prompt_lingua, :pm_core, enabled: true)
+    test "raises when unconfigured" do
       System.delete_env("PM_CORE_DATABASE_URL")
       Application.put_env(:noizu_labs_pm, Noizu.PM.Repo, types: Noizu.PM.PostgrexTypes)
 
-      assert {:legacy, :pm_core_unconfigured} =
-               PMCore.with_pm(fn ->
-                 flunk("fun must not run when pm_core is unconfigured")
-               end)
+      assert_raise RuntimeError, ~r/PM_CORE_DATABASE_URL is required/, fn ->
+        PMCore.with_pm(fn ->
+          flunk("fun must not run when pm_core is unconfigured")
+        end)
+      end
     end
 
-    test "runs fun and returns its value when enabled and configured" do
-      Application.put_env(:noizu_prompt_lingua, :pm_core, enabled: true)
+    test "runs fun and returns its value when configured" do
       System.put_env("PM_CORE_DATABASE_URL", "ecto://example/pm")
 
       assert {:ok, :from_pm} = PMCore.with_pm(fn -> {:ok, :from_pm} end)
