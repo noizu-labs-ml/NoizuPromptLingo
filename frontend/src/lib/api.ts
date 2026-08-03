@@ -1371,6 +1371,13 @@ function buildQuery(params: Record<string, string | string[] | number | undefine
 }
 
 export const api = {
+  login(email: string, password: string) {
+    return request<AuthResponse>("/api/v1/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    });
+  },
+
   requestMagicLink(email: string) {
     return request<MagicLinkResponse>("/api/v1/auth/magic-link", {
       method: "POST",

@@ -65,7 +65,7 @@ function Landing() {
             for SSO from day one.
           </p>
           <div className="tl-cta-row">
-            <a href="/auth/oidc"><StyleGuideBtn variant="black" label="Sign in to your locker" /></a>
+            <a href="/login"><StyleGuideBtn variant="black" label="Sign in to your locker" /></a>
             <Link href="/styleguide"><StyleGuideBtn variant="outline" label="View the design system" /></Link>
           </div>
         </div>
@@ -154,7 +154,7 @@ function Landing() {
         <h2 className="tl-final__title">Open the locker</h2>
         <p className="tl-final__sub">Sign in with your identity provider and start building on top of the toolchain.</p>
         <div className="tl-cta-row">
-          <a href="/auth/oidc"><StyleGuideBtn variant="black" label="Sign in" /></a>
+          <a href="/login"><StyleGuideBtn variant="black" label="Sign in" /></a>
           <Link href="/sitemap"><StyleGuideBtn variant="outline" label="Explore the site map" /></Link>
         </div>
       </section>

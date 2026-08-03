@@ -19,6 +19,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   organizations: Organization[];
+  login: (email: string, password: string) => Promise<void>;
   requestMagicLink: (email: string) => Promise<{ message: string; dev_link?: string }>;
   loginWithMagicLink: (token: string) => Promise<void>;
   requestOtpLogin: (email: string) => Promise<{ message: string; dev_code?: string }>;
@@ -67,6 +68,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     loadUser();
   }, [loadUser]);
+
+  async function login(email: string, password: string) {
+    const res = await api.login(email, password);
+    localStorage.setItem("access_token", res.access_token);
+    localStorage.setItem("refresh_token", res.refresh_token);
+    setAuthCookie(res.access_token);
+    setUser(res.user);
+    setOrganizations(res.organizations ?? []);
+    analytics.identify({ id: res.user.id, email: res.user.email });
+    analytics.trackEvent({ name: "login", properties: { method: "password" } });
+  }
 
   async function requestMagicLink(email: string) {
     return api.requestMagicLink(email);
@@ -130,7 +142,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, organizations, requestMagicLink, loginWithMagicLink, requestOtpLogin, verifyOtpLogin, ssoExchange, ssoRegister, logout }}>
+    <AuthContext.Provider value={{ user, loading, organizations, login, requestMagicLink, loginWithMagicLink, requestOtpLogin, verifyOtpLogin, ssoExchange, ssoRegister, logout }}>
       {children}
     </AuthContext.Provider>
   );

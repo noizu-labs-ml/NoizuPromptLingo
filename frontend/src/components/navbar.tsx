@@ -87,7 +87,7 @@ export function Navbar() {
           ) : (
             <>
               <CookieSettingsButton />
-              <a href="/auth/oidc" className="sg-btn sg-btn--black sg-btn--sm">
+              <a href="/login" className="sg-btn sg-btn--black sg-btn--sm">
                 Sign In
               </a>
             </>
