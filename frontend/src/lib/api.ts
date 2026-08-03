@@ -86,6 +86,48 @@ export interface ProjectInput {
   key_prefix?: string;
 }
 
+/** Server-side org dashboard aggregates (GET .../dashboard/stats). */
+export interface OrgDashboardStats {
+  range: number;
+  counts: {
+    projects: number;
+    sessions: number;
+    artifacts: number;
+    reviews: number;
+    tickets: number;
+    chat_rooms: number;
+  };
+  by_status: {
+    sessions: Record<string, number>;
+    tickets: Record<string, number>;
+  };
+  by_kind: {
+    artifacts: Record<string, number>;
+  };
+  daily: {
+    keys: string[];
+    sessions: number[];
+    artifacts: number[];
+    chat_rooms: number[];
+    tickets: number[];
+    reviews: number[];
+    projects?: number[];
+  };
+  weekly: Array<{
+    week: string;
+    sessions: number;
+    artifacts: number;
+    chat: number;
+    tickets: number;
+  }>;
+  heatmap?: number[][];
+  attention?: {
+    open_reviews: Array<{ id: string; title?: string | null; status: string; updated_at?: string | null }>;
+    blocked_tickets: Array<{ id: string; title?: string | null; status: string; updated_at?: string | null }>;
+  };
+  recent?: Array<{ type: string; id: string; title?: string | null; at?: string | null }>;
+}
+
 export interface VoiceApprovalScriptResponse {
   approval_script: string;
   execution_enabled: boolean;
@@ -1862,6 +1904,14 @@ export const api = {
     return request<{ message: string }>(`/api/v1/admin/mcp-custom-scopes/${slug}`, {
       method: "DELETE",
     });
+  },
+
+  /** Org usage dashboard aggregates (counts, daily/weekly series, attention). */
+  getOrgDashboardStats(orgId: string, opts?: { range?: 7 | 14 | 30 }) {
+    const suffix = buildQuery({ range: opts?.range });
+    return request<{ stats: OrgDashboardStats }>(
+      `/api/v1/organizations/${orgId}/dashboard/stats${suffix}`,
+    );
   },
 
   listProjects(orgId: string) {
