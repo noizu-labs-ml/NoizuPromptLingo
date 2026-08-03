@@ -24,14 +24,7 @@ defmodule NoizuPromptLingua.MCP.Projects.Tools.ProjectList do
     limit = Args.get(args, :limit) || 50
     offset = Args.get(args, :offset) || 0
 
-    projects =
-      Schema
-      |> maybe_org(org_id)
-      |> maybe_status(status)
-      |> order_by([p], desc: p.inserted_at)
-      |> limit(^limit)
-      |> offset(^offset)
-      |> NoizuPromptLingua.Repo.all()
+    projects = list_projects(org_id, status, limit, offset)
 
     {:ok,
      %{
@@ -49,6 +42,39 @@ defmodule NoizuPromptLingua.MCP.Projects.Tools.ProjectList do
          ),
        count: length(projects)
      }}
+  end
+
+  # Prefer pm_core (same store Project.Create writes to); legacy app DB on opt-out.
+  defp list_projects(org_id, status, limit, offset) do
+    case NoizuPromptLingua.PMCore.with_pm(fn ->
+           list_from_repo(
+             Noizu.PM.Repo,
+             Noizu.PM.Schema.Projects.Project,
+             org_id,
+             status,
+             limit,
+             offset
+           )
+         end) do
+      {:legacy, _} ->
+        list_from_repo(NoizuPromptLingua.Repo, Schema, org_id, status, limit, offset)
+
+      rows when is_list(rows) ->
+        rows
+
+      _ ->
+        []
+    end
+  end
+
+  defp list_from_repo(repo, schema, org_id, status, limit, offset) do
+    schema
+    |> maybe_org(org_id)
+    |> maybe_status(status)
+    |> order_by([p], desc: p.inserted_at)
+    |> limit(^limit)
+    |> offset(^offset)
+    |> repo.all()
   end
 
   defp maybe_org(query, nil), do: query

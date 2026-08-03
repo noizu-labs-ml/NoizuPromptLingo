@@ -15,7 +15,8 @@ defmodule NoizuPromptLingua.MCP.Clients.Tools.ClientUpdate do
     field :status, :string, description: "active|archived|deleted"
     field :currency, :string
     field :default_hourly_rate_cents, :integer
-    field :external_ids, :map, description: "Merge map of external system ids"
+    # MCP field DSL has no free-form :map; accept JSON object as string.
+    field :external_ids, :string, description: "JSON object of external system ids (merged)"
   end
 
   @impl true
@@ -35,6 +36,7 @@ defmodule NoizuPromptLingua.MCP.Clients.Tools.ClientUpdate do
       ])
       |> Enum.reject(fn {_k, v} -> is_nil(v) end)
       |> Map.new()
+      |> decode_external_ids()
 
     case NoizuPromptLingua.Clients.update(id, attrs) do
       {:ok, client} ->
@@ -58,4 +60,20 @@ defmodule NoizuPromptLingua.MCP.Clients.Tools.ClientUpdate do
         {:error, "Failed: #{inspect(reason)}"}
     end
   end
+
+  defp decode_external_ids(%{external_ids: raw} = attrs) when is_binary(raw) do
+    case Jason.decode(raw) do
+      {:ok, map} when is_map(map) -> Map.put(attrs, :external_ids, map)
+      _ -> attrs
+    end
+  end
+
+  defp decode_external_ids(%{"external_ids" => raw} = attrs) when is_binary(raw) do
+    case Jason.decode(raw) do
+      {:ok, map} when is_map(map) -> Map.put(attrs, "external_ids", map)
+      _ -> attrs
+    end
+  end
+
+  defp decode_external_ids(attrs), do: attrs
 end

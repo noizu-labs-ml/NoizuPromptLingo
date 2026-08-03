@@ -2,6 +2,10 @@ defmodule NoizuPromptLingua.MCP.Resolve do
   @moduledoc """
   Reference resolution helpers shared by MCP tools. Accepts either a UUID or a
   human-friendly slug and returns the corresponding schema record (or nil).
+
+  When `PMCore` is enabled, project resolution prefers `Noizu.PM.Repo`
+  (same store `Projects.create_with_owner/2` writes to), with legacy app-local
+  fallback for transition / emergency opt-out.
   """
 
   alias NoizuPromptLingua.Schema.Organizations.Organization, as: OrgSchema
@@ -47,12 +51,30 @@ defmodule NoizuPromptLingua.MCP.Resolve do
   def project(ref) do
     case NoizuPromptLingua.UUID.cast(ref) do
       {:ok, uuid} ->
-        NoizuPromptLingua.Repo.get(ProjectSchema, uuid) ||
+        pm_get_project(uuid) ||
+          NoizuPromptLingua.Repo.get(ProjectSchema, uuid) ||
           NoizuPromptLingua.Repo.get_by(ProjectSchema, slug: ref)
 
       :error ->
-        NoizuPromptLingua.Repo.get_by(ProjectSchema, slug: ref)
+        pm_get_project_by_slug(ref) ||
+          NoizuPromptLingua.Repo.get_by(ProjectSchema, slug: ref)
     end
+  end
+
+  defp pm_get_project(id) do
+    if NoizuPromptLingua.PMCore.enabled?() and NoizuPromptLingua.PMCore.repo_configured?() do
+      Noizu.PM.Repo.get(Noizu.PM.Schema.Projects.Project, id)
+    end
+  rescue
+    _ -> nil
+  end
+
+  defp pm_get_project_by_slug(slug) do
+    if NoizuPromptLingua.PMCore.enabled?() and NoizuPromptLingua.PMCore.repo_configured?() do
+      Noizu.PM.Repo.get_by(Noizu.PM.Schema.Projects.Project, slug: slug)
+    end
+  rescue
+    _ -> nil
   end
 
   @doc """
