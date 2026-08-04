@@ -13,10 +13,12 @@ defmodule NoizuPromptLingua.MCP.Projects.Tools.Overview do
   @impl true
   def call(_args, _ctx) do
     active =
-      NoizuPromptLingua.Repo.aggregate(
-        from(p in NoizuPromptLingua.Schema.Projects.Project, where: p.status == "active"),
-        :count
-      )
+      NoizuPromptLingua.PMCore.with_pm(fn ->
+        Noizu.PM.Repo.aggregate(
+          from(p in Noizu.PM.Schema.Projects.Project, where: p.status == "active"),
+          :count
+        )
+      end)
 
     {:ok,
      %{

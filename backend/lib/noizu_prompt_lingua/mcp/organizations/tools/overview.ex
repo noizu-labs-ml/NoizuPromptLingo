@@ -13,10 +13,12 @@ defmodule NoizuPromptLingua.MCP.Organizations.Tools.Overview do
   @impl true
   def call(_args, _ctx) do
     count =
-      NoizuPromptLingua.Repo.aggregate(
-        from(o in NoizuPromptLingua.Schema.Organizations.Organization),
-        :count
-      )
+      NoizuPromptLingua.PMCore.with_pm(fn ->
+        Noizu.PM.Repo.aggregate(
+          from(o in Noizu.PM.Schema.Organizations.Organization),
+          :count
+        )
+      end)
 
     {:ok,
      %{

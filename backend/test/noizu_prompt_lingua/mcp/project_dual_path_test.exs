@@ -32,6 +32,10 @@ defmodule NoizuPromptLingua.MCP.ProjectSharedOnlyTest do
               "../../../lib/noizu_prompt_lingua/mcp/projects/tools/project_list.ex",
               __DIR__
             )
+  @project_overview_src Path.expand(
+                          "../../../lib/noizu_prompt_lingua/mcp/projects/tools/overview.ex",
+                          __DIR__
+                        )
   @get_src Path.expand(
              "../../../lib/noizu_prompt_lingua/mcp/projects/tools/project_get.ex",
              __DIR__
@@ -76,6 +80,15 @@ defmodule NoizuPromptLingua.MCP.ProjectSharedOnlyTest do
       refute src =~ "{:legacy, _}"
       refute src =~ "list_from_repo(NoizuPromptLingua.Repo"
       refute src =~ "NoizuPromptLingua.Repo.all"
+    end
+
+    test "Project.Overview aggregates via PMCore.with_pm and Noizu.PM.Repo only" do
+      src = File.read!(@project_overview_src)
+      assert src =~ "NoizuPromptLingua.PMCore.with_pm"
+      assert src =~ "Noizu.PM.Repo.aggregate"
+      assert src =~ "Noizu.PM.Schema.Projects.Project"
+      refute src =~ "NoizuPromptLingua.Repo.aggregate"
+      refute src =~ "NoizuPromptLingua.Schema.Projects.Project"
     end
 
     test "Resolve.project uses Noizu.PM.Repo only (no app-DB fallback)" do

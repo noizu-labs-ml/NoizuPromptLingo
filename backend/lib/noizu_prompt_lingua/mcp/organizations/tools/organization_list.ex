@@ -7,7 +7,6 @@ defmodule NoizuPromptLingua.MCP.Organizations.Tools.OrganizationList do
     annotations: [read_only_hint: true]
 
   import Ecto.Query
-  alias NoizuPromptLingua.Schema.Organizations.Organization, as: Schema
   alias NoizuPromptLingua.MCP.Args
 
   input do
@@ -20,17 +19,23 @@ defmodule NoizuPromptLingua.MCP.Organizations.Tools.OrganizationList do
     limit = Args.get(args, :limit) || 50
     offset = Args.get(args, :offset) || 0
 
-    orgs =
-      Schema
-      |> order_by([o], asc: o.name)
-      |> limit(^limit)
-      |> offset(^offset)
-      |> NoizuPromptLingua.Repo.all()
+    orgs = list_organizations(limit, offset)
 
     {:ok,
      %{
        organizations: Enum.map(orgs, &%{id: &1.id, name: &1.name, slug: &1.slug}),
        count: length(orgs)
      }}
+  end
+
+  # Shared pm_core only (same store Organization.Create / Project.Create use).
+  defp list_organizations(limit, offset) do
+    NoizuPromptLingua.PMCore.with_pm(fn ->
+      Noizu.PM.Schema.Organizations.Organization
+      |> order_by([o], asc: o.name)
+      |> limit(^limit)
+      |> offset(^offset)
+      |> Noizu.PM.Repo.all()
+    end)
   end
 end

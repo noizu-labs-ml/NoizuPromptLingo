@@ -89,3 +89,6 @@ databaseChangeLog:
   - include:
       file: 023-invite-redemptions.yaml
       relativeToChangelogFile: true
+  - include:
+      file: 024-pbac-org-project-inherit.yaml
+      relativeToChangelogFile: true
