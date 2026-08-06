@@ -1,4 +1,6 @@
 defmodule NoizuPromptLingua.MCPServers do
+  require Logger
+
   @moduledoc """
   Catalog of MCP servers exposed on subdomains. Single source of truth shared
   by the config endpoint (`/api/v1/auth/mcp/config`) and any client that needs
@@ -173,16 +175,25 @@ defmodule NoizuPromptLingua.MCPServers do
       end)
 
     custom =
-      NoizuPromptLingua.MCPCustomScopes.list()
-      |> Enum.map(fn scope ->
-        %{
-          id: "custom:#{scope.slug}",
-          label: "Custom: #{scope.name}",
-          required: false,
-          desc: scope.description || "Custom MCP include scope",
-          url: custom_url(scope.slug, host)
-        }
-      end)
+      case list_custom_scopes_safely() do
+        {:ok, scopes} ->
+          Enum.map(scopes, fn scope ->
+            %{
+              id: "custom:#{scope.slug}",
+              label: "Custom: #{scope.name}",
+              required: false,
+              desc: scope.description || "Custom MCP include scope",
+              url: custom_url(scope.slug, host)
+            }
+          end)
+
+        {:error, reason} ->
+          Logger.warning(
+            "[MCPServers] custom scopes unavailable, serving static servers only: #{inspect(reason)}"
+          )
+
+          []
+      end
 
     static ++ custom
   end
@@ -202,6 +213,15 @@ defmodule NoizuPromptLingua.MCPServers do
     (all ++ segments)
     |> Enum.uniq_by(& &1.id)
     |> Enum.map(&scope_entry(&1, host))
+  end
+
+  # The static server catalog must always be served even if the
+  # `mcp_custom_scopes` table is missing or unhealthy — otherwise
+  # `/auth/mcp/config` 500s and the client setup panel vanishes silently.
+  defp list_custom_scopes_safely do
+    {:ok, NoizuPromptLingua.MCPCustomScopes.list()}
+  rescue
+    e -> {:error, e}
   end
 
   defp scope_entry(scope, host) do

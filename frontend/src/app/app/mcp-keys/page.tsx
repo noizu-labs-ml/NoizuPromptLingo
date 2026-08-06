@@ -26,6 +26,9 @@ export default function McpKeysPage() {
 
   // Server config (fetched once from backend so the setup panel never hardcodes a host).
   const [servers, setServers] = useState<McpServerConfig[]>([]);
+  // The setup panel only renders when servers.length > 0; if the catalog fetch
+  // fails we surface the error here instead of letting the section vanish silently.
+  const [configError, setConfigError] = useState<string | null>(null);
 
   // Paste-an-existing-key flow: lets a logged-in user recover setup access for a
   // key whose raw value they still hold, without recreating it.
@@ -43,7 +46,18 @@ export default function McpKeysPage() {
 
   useEffect(() => {
     fetchKeys();
-    api.mcpConfig().then((cfg) => setServers(cfg.servers)).catch(() => { /* non-fatal */ });
+    api
+      .mcpConfig()
+      .then((cfg) => {
+        setServers(cfg.servers);
+        setConfigError(null);
+      })
+      .catch((err) => {
+        // A failed catalog fetch would otherwise leave servers empty and the
+        // setup panel hidden with no indication of why — surface it explicitly.
+        console.error("Failed to load MCP server config:", err);
+        setConfigError(err instanceof Error ? err.message : "Unknown error");
+      });
   }, [fetchKeys]);
 
   async function createKey(e: React.FormEvent) {
@@ -306,6 +320,22 @@ export default function McpKeysPage() {
             </ul>
           )}
         </section>
+
+        {configError && (
+          <section className="dash-panel" style={{ marginTop: 'var(--space-4)' }}>
+            <div className="dash-panel__head">
+              <h2 className="dash-panel__title">MCP Setup Unavailable</h2>
+            </div>
+            <p className="sg-page-intro">
+              The MCP server catalog failed to load, so one-click setup commands
+              cannot be shown. You can still create keys and mint tokens above;
+              reload the page to retry.
+            </p>
+            {configError !== "Unknown error" && (
+              <p className="gh-row__sub font-mono">{configError}</p>
+            )}
+          </section>
+        )}
 
         {/* Setup panel for a key with a minted token */}
         {setupKey && tokens[setupKey] && servers.length > 0 && (
