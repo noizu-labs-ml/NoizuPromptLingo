@@ -385,8 +385,8 @@ html[data-design-theme="style-guide"].dark {
   cursor: pointer; transition: opacity 0.15s; border: 1px solid transparent;
 }
 .sg-btn:hover { opacity: 0.85; }
-.sg-btn--black { background: var(--gray-900, #111); color: var(--text-inverse, #fff); }
-.sg-btn--outline { background: transparent; color: var(--gray-900, #111); border-color: var(--gray-300, #d1d5db); }
+.sg-btn--black { background: var(--text, #111); color: var(--surface, #fff); }
+.sg-btn--outline { background: transparent; color: var(--text, #111827); border-color: var(--border, #d1d5db); }
 .sg-btn--sm { padding: var(--space-1, 0.25rem) var(--space-3, 0.75rem); font-size: var(--font-size-xs, 0.75rem); }
 
 /* ── Cookie consent ─── */
