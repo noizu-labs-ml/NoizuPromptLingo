@@ -1,0 +1,54 @@
+{{- if .Values.liquibase.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "npl-mcp.fullname" . }}-liquibase
+  labels:
+    {{- include "npl-mcp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: liquibase-migrate
+  annotations:
+    # Applies Liquibase changesets before the app rolls out, so they reach prod on
+    # deploys (previously only Ecto ran — at app boot — so Liquibase changesets
+    # like 071, which adds the mcp_custom_scopes columns, never applied to prod).
+    # Gated by .Values.liquibase.enabled — see values.yaml for the prerequisites
+    # to enable (publish the db image, pre-create the `vector` extension, etc.).
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ .Values.liquibase.backoffLimit }}
+  ttlSecondsAfterFinished: {{ .Values.liquibase.ttlSecondsAfterFinished }}
+  template:
+    metadata:
+      labels:
+        {{- include "npl-mcp.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: liquibase-migrate
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: ops-registry-secret
+      containers:
+        - name: liquibase
+          image: "{{ .Values.liquibase.image.repository }}:{{ .Values.liquibase.image.tag }}"
+          imagePullPolicy: {{ .Values.liquibase.image.pullPolicy }}
+          # The db image entrypoint envsubst's liquibase.properties.template from
+          # DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD, then runs `liquibase update`.
+          # The changelog (changeLogFile: changelog/db.changelog-master.yaml) is
+          # baked into the image.
+          env:
+            - name: DB_HOST
+              value: {{ .Values.liquibase.db.host | quote }}
+            - name: DB_PORT
+              value: {{ .Values.liquibase.db.port | quote }}
+            - name: DB_NAME
+              value: {{ .Values.liquibase.db.name | quote }}
+            - name: DB_USER
+              value: {{ .Values.liquibase.db.user | quote }}
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: DB_PASSWORD
+          resources:
+            {{- toYaml .Values.liquibase.resources | nindent 12 }}
+{{- end }}

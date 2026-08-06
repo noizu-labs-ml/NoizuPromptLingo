@@ -45,6 +45,43 @@ backend:
       failureThreshold: 3
   env:
     secretName: npl-mcp-secrets
+# ── Liquibase migration job (Option C) — GATED, default disabled ──────────────
+# Applies pending Liquibase changesets as a pre-install/pre-upgrade hook so they
+# reach prod on deploys. Previously only Ecto ran (at app boot), so Liquibase
+# changesets — e.g. 071 (the mcp_custom_scopes columns) — never applied to prod.
+#
+# ENABLE ONLY AFTER:
+#   1. Build + push the db image, then set liquibase.image.tag below to the tag:
+#        docker buildx build --platform linux/amd64 --push \
+#          -t ops.noizu.com/npl-mcp/db:<tag> ./backend/db
+#   2. Pre-create the `vector` extension on tobor_locker (changeset 073a needs
+#      superuser; without it the job fails at 073a and blocks the deploy).
+#   3. Confirm mcp_custom_scopes exists (true on any bootstrapped DB — Ecto
+#      creates it at app boot).
+# Fresh-DB deploys also need Ecto to run BEFORE this hook; follow-up is to add
+# mix releases config + an Ecto pre-install job (Ecto currently runs at pod boot,
+# after pre-install hooks, so a pre-install Liquibase hook would HALT on 071's
+# tableExists precondition against a brand-new DB).
+liquibase:
+  enabled: false
+  image:
+    repository: ops.noizu.com/npl-mcp/db
+    tag: "v1.0.0"
+    pullPolicy: IfNotPresent
+  db:
+    host: app-timescaledb.apps.svc.cluster.local
+    port: 5432
+    name: tobor_locker
+    user: tobor_locker
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 600
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
 frontend:
   image:
     repository: ops.noizu.com/npl-mcp/frontend
