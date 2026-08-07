@@ -119,6 +119,7 @@ const NAV_SECTIONS: NavSectionDef[] = [
       { href: '/browser', Icon: WindowIcon, label: 'Browser', orgScoped: true },
       { href: '/github', Icon: CodeBracketIcon, label: 'GitHub', orgScoped: true },
       { href: '/mock-mcp', Icon: BeakerIcon, label: 'Mock MCP', orgScoped: true },
+      { href: '/app/mcp-keys', Icon: KeyIcon, label: 'MCP clients' },
     ],
   },
   {
@@ -128,6 +129,7 @@ const NAV_SECTIONS: NavSectionDef[] = [
     items: [
       { href: '/ticket-types', Icon: TagIcon, label: 'Ticket Types', orgScoped: true },
       { href: '/ticket-fields', Icon: AdjustmentsHorizontalIcon, label: 'Ticket Fields', orgScoped: true },
+      { href: '/settings', Icon: AdjustmentsHorizontalIcon, label: 'Org settings', orgScoped: true },
     ],
   },
   {

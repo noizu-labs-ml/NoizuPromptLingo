@@ -41,6 +41,9 @@ NoizuPromptLingua.SessionTestSchema.ensure!()
 # Ensure the mcp_overview (Liquibase 073) pgvector tables exist for the overview suite.
 NoizuPromptLingua.McpOverviewTestSchema.ensure!()
 
+# Ensure OAuth AS tables (Liquibase 074) exist for OAuth suite.
+NoizuPromptLingua.OAuthTestSchema.ensure!()
+
 # Overview generation uses the deterministic (network-free) adapter in tests; the real
 # LLM adapter (Generator.LLM) is the runtime default. Embeddings already run deterministic
 # (set below), so the whole mcp_overview flow is offline in the suite.

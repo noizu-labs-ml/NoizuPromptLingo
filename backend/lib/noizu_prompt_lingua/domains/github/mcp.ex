@@ -4,7 +4,7 @@ defmodule NoizuPromptLingua.Domains.Github.MCP do
   branches, and interact with pull requests and issues. All operations are scoped
   to an organization and enforce repo ACL via the can_access/3 checks.
   """
-  use Noizu.MCP.Server,
+  use NoizuPromptLingua.MCP.Server,
     name: "tobor_github",
     version: "0.1.0",
     instructions:

@@ -1,5 +1,5 @@
 defmodule NoizuPromptLingua.Domains.Wiki.MCP do
-  use Noizu.MCP.Server,
+  use NoizuPromptLingua.MCP.Server,
     name: "tobor_wiki",
     version: "0.1.0",
     instructions: "Wiki domain — manage spaces, pages, comments, attachments, and reactions."

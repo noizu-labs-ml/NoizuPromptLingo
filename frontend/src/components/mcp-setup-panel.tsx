@@ -93,6 +93,8 @@ export default function McpSetupPanel({ token, keyLabel, servers, onClose }: Mcp
   }
 
   const activeCount = servers.filter((s) => enabled[s.id]).length;
+  const rootServer = servers.find((s) => s.id === 'root') ?? servers[0];
+  const oauthMcpUrl = rootServer?.url ?? 'https://tobor.locker/mcp';
 
   return (
     <div style={{
@@ -112,6 +114,25 @@ export default function McpSetupPanel({ token, keyLabel, servers, onClose }: Mcp
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={onClose} style={btnSm}>Close</button>
         </div>
+      </div>
+
+      <div style={{
+        marginBottom: 14,
+        padding: 10,
+        borderRadius: 6,
+        background: 'var(--bg-3)',
+        border: '1px solid var(--border)',
+        fontSize: 11,
+        lineHeight: 1.5,
+        color: 'var(--text-2)',
+      }}>
+        <strong style={{ color: 'var(--text-1)' }}>Preferred: OAuth (Claude.ai / ChatGPT)</strong>
+        <br />
+        Add a custom connector with MCP URL{' '}
+        <code style={{ fontFamily: 'monospace' }}>{oauthMcpUrl}</code>
+        {' '}— no API key paste. Hosted clients use DCR + PKCE against this Tobor Locker AS.
+        <br />
+        CLI bearer tokens below remain supported during migration.
       </div>
 
       <div style={{

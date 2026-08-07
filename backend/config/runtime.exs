@@ -171,14 +171,52 @@ if config_env() == :prod or config_env() == :dev do
 
   config :noizu_prompt_lingua, :mcp_oauth,
     issuer: System.get_env("MCP_JWT_ISSUER") || "tobor-locker",
+    issuer_url:
+      System.get_env("MCP_ISSUER_URL") ||
+        System.get_env("FRONTEND_URL") ||
+        "https://#{host}",
     access_token_ttl_seconds:
       String.to_integer(System.get_env("MCP_JWT_TTL_SECONDS") || "#{7 * 24 * 3600}"),
+    oauth_access_ttl_seconds:
+      String.to_integer(System.get_env("MCP_OAUTH_ACCESS_TTL_SECONDS") || "3600"),
     require_aud: require_aud,
     signing_alg: System.get_env("MCP_JWT_ALG") || "RS256",
     public_scheme: System.get_env("MCP_PUBLIC_SCHEME") || "https",
     private_key_pem: System.get_env("MCP_JWT_PRIVATE_KEY"),
     kid: System.get_env("MCP_JWT_KID") || "mcp-1",
     resource_metadata_url: System.get_env("MCP_RESOURCE_METADATA_URL")
+
+  mcp_pdp_mode =
+    case System.get_env("MCP_PDP_MODE") do
+      "spicedb" -> :spicedb
+      "disabled" -> :disabled
+      "local" -> :local
+      _ -> :local
+    end
+
+  config :noizu_prompt_lingua, :mcp_pdp,
+    mode: mcp_pdp_mode,
+    spicedb_http_endpoint: System.get_env("SPICEDB_HTTP_ENDPOINT"),
+    spicedb_preshared_key: System.get_env("SPICEDB_PRESHARED_KEY")
+
+  # Phase 4: set MCP_API_KEY_MINT_ENABLED=false to retire API-key mint/create.
+  mint_enabled =
+    case System.get_env("MCP_API_KEY_MINT_ENABLED") do
+      v when v in ["false", "0", "no"] -> false
+      v when v in ["true", "1", "yes"] -> true
+      _ -> true
+    end
+
+  config :noizu_prompt_lingua, :mcp_legacy_api_keys, mint_enabled: mint_enabled
+
+  elev_enabled =
+    case System.get_env("MCP_ELEVATION_ENABLED") do
+      v when v in ["false", "0", "no"] -> false
+      v when v in ["true", "1", "yes"] -> true
+      _ -> true
+    end
+
+  config :noizu_prompt_lingua, :mcp_elevation, enabled: elev_enabled
 
   # Where the SPA lives. After OIDC the backend 302s the browser here; if this
   # is nil/empty the redirect becomes a relative path against the backend host,

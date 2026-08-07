@@ -1,0 +1,45 @@
+// Tobor Locker MCP authorization schema (Phase 3).
+// Source of truth for SpiceDB when SPICEDB_ENDPOINT is configured.
+// Local PDP implements the same three-axis semantics in-process.
+
+definition user {}
+
+definition client {}
+
+definition agent {
+  relation instance_of: client
+}
+
+definition organization {
+  relation admin: user
+  relation member: user
+  permission administer = admin
+  permission belong = member + admin
+}
+
+definition project {
+  relation org: organization
+  relation maintainer: user
+  relation reader: user
+  permission write = maintainer + org->administer
+  permission read = reader + write + org->belong
+}
+
+definition mcp_server {
+  relation org: organization
+  relation allowed_client: client
+}
+
+definition tool {
+  relation server: mcp_server
+  relation invoker: user | organization#member | organization#admin
+  relation requires_approval_from: user
+  permission invoke = invoker & server->org->belong
+}
+
+definition pairing_grant {
+  relation grantor: user
+  relation client: client
+  relation covers_tool: tool
+  relation status_active: user:*
+}

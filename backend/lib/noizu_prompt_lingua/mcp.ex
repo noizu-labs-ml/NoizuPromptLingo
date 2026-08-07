@@ -4,7 +4,7 @@ defmodule NoizuPromptLingua.MCP do
   tools alongside the Discovery tools so a single endpoint can browse and
   invoke everything via ToolSummary / ToolCall.
   """
-  use Noizu.MCP.Server,
+  use NoizuPromptLingua.MCP.Server,
     name: "noizu_prompt_lingua",
     version: "0.1.0",
     instructions:

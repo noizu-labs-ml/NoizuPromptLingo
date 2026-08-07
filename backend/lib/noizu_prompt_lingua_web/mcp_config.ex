@@ -16,29 +16,97 @@ defmodule NoizuPromptLinguaWeb.MCPConfig do
   def auth_opts(extra_verifier_opts \\ []) do
     oauth = Application.get_env(:noizu_prompt_lingua, :mcp_oauth, [])
 
+    issuers =
+      try do
+        NoizuPromptLingua.OAuth.AuthorizationServer.jwt_issuers()
+      rescue
+        _ -> [NoizuPromptLingua.Token.issuer()]
+      end
+
+    issuer_url =
+      try do
+        NoizuPromptLingua.OAuth.AuthorizationServer.issuer_url()
+      rescue
+        _ -> nil
+      end
+
+    resource_metadata =
+      Keyword.get(oauth, :resource_metadata_url) ||
+        if issuer_url, do: "#{String.trim_trailing(issuer_url, "/")}/.well-known/oauth-protected-resource"
+
     verifier_opts =
       [
         secret: {NoizuPromptLingua.MCPAuth, :secret},
-        issuer: NoizuPromptLingua.Token.issuer(),
+        issuer: issuers,
         validate_api_key: &NoizuPromptLingua.MCPAuth.api_key_active?/1,
         require_aud: Keyword.get(oauth, :require_aud, false),
         public_scheme: Keyword.get(oauth, :public_scheme, "https")
       ] ++ extra_verifier_opts
 
-    auth = [
-      verifier: {NoizuPromptLingua.MCP.DualTokenVerifier, verifier_opts}
-    ]
+    auth = [verifier: {NoizuPromptLingua.MCP.DualTokenVerifier, verifier_opts}]
 
-    case Keyword.get(oauth, :resource_metadata_url) do
-      url when is_binary(url) and url != "" ->
-        Keyword.put(auth, :resource_metadata, url)
-
-      _ ->
-        auth
+    if is_binary(resource_metadata) and resource_metadata != "" do
+      Keyword.put(auth, :resource_metadata, resource_metadata)
+    else
+      auth
     end
   end
 
   def plug_opts(server, extra_verifier_opts \\ []) do
     [server: server, origins: :any, auth: auth_opts(extra_verifier_opts)]
+  end
+
+  @doc """
+  Plug opts for a known MCP subdomain label (e.g. `"sessions"`).
+
+  Pins `expected_audience` to `https://{label}.{base_host}/mcp` when the public
+  base host is configured, so audience-bound OAuth tokens are enforced even
+  before `require_aud` is globally enabled (tokens *with* aud must match).
+  """
+  def plug_opts_for_subdomain(server, subdomain_label)
+      when is_binary(subdomain_label) do
+    resource = resource_url_for_subdomain(subdomain_label)
+    extra = if resource, do: [expected_audience: resource], else: []
+    plug_opts(server, extra)
+  end
+
+  def resource_url_for_subdomain(label) when is_binary(label) do
+    case public_base_host() do
+      host when is_binary(host) and host != "" ->
+        scheme =
+          Application.get_env(:noizu_prompt_lingua, :mcp_oauth, [])
+          |> Keyword.get(:public_scheme, "https")
+
+        "#{scheme}://#{label}.#{host}/mcp"
+
+      _ ->
+        nil
+    end
+  end
+
+  def resource_url_for_subdomain(_), do: nil
+
+  defp public_base_host do
+    oauth = Application.get_env(:noizu_prompt_lingua, :mcp_oauth, [])
+
+    cond do
+      host = Keyword.get(oauth, :public_base_host) ->
+        host
+
+      url = Keyword.get(oauth, :issuer_url) || System.get_env("MCP_ISSUER_URL") ->
+        case URI.parse(url) do
+          %URI{host: h} when is_binary(h) -> h
+          _ -> nil
+        end
+
+      url = Application.get_env(:noizu_prompt_lingua, :frontend_url) ->
+        case URI.parse(url) do
+          %URI{host: h} when is_binary(h) -> h
+          _ -> nil
+        end
+
+      true ->
+        "tobor.locker"
+    end
   end
 end

@@ -1,5 +1,5 @@
 defmodule NoizuPromptLingua.Domains.Assets.MCP do
-  use Noizu.MCP.Server,
+  use NoizuPromptLingua.MCP.Server,
     name: "tobor_assets",
     version: "0.1.0",
     instructions:

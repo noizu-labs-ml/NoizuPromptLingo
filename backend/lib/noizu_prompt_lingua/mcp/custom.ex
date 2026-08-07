@@ -3,7 +3,7 @@ defmodule NoizuPromptLingua.MCP.Custom do
   Dynamic MCP server that exposes a DB-configured include set of existing
   domain MCP tools as one endpoint.
   """
-  use Noizu.MCP.Server,
+  use NoizuPromptLingua.MCP.Server,
     name: "tobor_custom",
     version: "0.1.0",
     instructions:

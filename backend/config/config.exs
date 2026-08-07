@@ -55,16 +55,33 @@ config :noizu_prompt_lingua, NoizuPromptLingua.Guardian,
   issuer: "noizu_prompt_lingua",
   secret_key: "dev-secret-key-change-in-production"
 
-# MCP OAuth / JWT key hygiene (Phase 0). Private key via MCP_JWT_PRIVATE_KEY at runtime.
+# MCP three-axis PDP (Phase 3). :local uses Ecto + Authz; :spicedb needs SPICEDB_*.
+config :noizu_prompt_lingua, :mcp_pdp,
+  mode: :local
+
+# Phase 4: legacy API-key mint (set mint_enabled: false to force OAuth-only).
+config :noizu_prompt_lingua, :mcp_legacy_api_keys,
+  mint_enabled: true
+
+# Phase 4: destructive tool step-up elevation.
+config :noizu_prompt_lingua, :mcp_elevation,
+  enabled: true
+
+# MCP OAuth AS + JWT key hygiene. Private key via MCP_JWT_PRIVATE_KEY at runtime.
 config :noizu_prompt_lingua, :mcp_oauth,
+  # Legacy short JWT iss (API-key path) + full AS issuer URL for OAuth tokens.
   issuer: "tobor-locker",
-  # 7 days (Phase 0); Phase 2 shortens delegated MCP access tokens to ~5 minutes.
+  issuer_url: "https://tobor.locker",
+  # API-key minted tokens (Phase 0).
   access_token_ttl_seconds: 7 * 24 * 3600,
+  # OAuth user-grade access tokens (authorization_code / refresh).
+  oauth_access_ttl_seconds: 3600,
+  # Delegated MCP access tokens (token-exchange) — Phase 2.
+  delegated_access_ttl_seconds: 300,
   # Enforce aud only after clients mint with resource=; dual-accept during grace.
   require_aud: false,
   signing_alg: "RS256",
   public_scheme: "https",
-  # Optional absolute URL advertised in WWW-Authenticate (RFC 9728 PRM later).
   resource_metadata_url: nil
 
 # SSO feature flags (all disabled by default, enabled via runtime env vars)

@@ -15,8 +15,19 @@ defmodule NoizuPromptLinguaWeb.TokenController do
   """
 
   alias NoizuPromptLingua.MCPApiKeys
+  alias NoizuPromptLingua.MCP.LegacyKeys
 
   def create(conn, params) do
+    if not LegacyKeys.mint_enabled?() do
+      conn
+      |> put_status(:gone)
+      |> json(LegacyKeys.disabled_response())
+    else
+      do_create(conn, params)
+    end
+  end
+
+  defp do_create(conn, params) do
     raw_key = params["key"]
     resource = params["resource"] || params["aud"]
 

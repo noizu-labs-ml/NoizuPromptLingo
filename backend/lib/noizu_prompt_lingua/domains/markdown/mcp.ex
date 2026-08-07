@@ -1,5 +1,5 @@
 defmodule NoizuPromptLingua.Domains.Markdown.MCP do
-  use Noizu.MCP.Server,
+  use NoizuPromptLingua.MCP.Server,
     name: "tobor_markdown",
     version: "0.1.0",
     instructions:

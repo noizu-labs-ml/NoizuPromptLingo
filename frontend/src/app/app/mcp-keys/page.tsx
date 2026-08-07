@@ -2,8 +2,15 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
-import { api, type McpApiKey, type McpTokenResponse, type McpServerConfig } from '@/lib/api';
+import {
+  api,
+  type McpApiKey,
+  type McpTokenResponse,
+  type McpServerConfig,
+  type McpOAuthConnection,
+} from '@/lib/api';
 import McpSetupPanel from '@/components/mcp-setup-panel';
+import McpOauthSetup from '@/components/mcp-oauth-setup';
 
 // Install snippet for the optional Local Tools MCP (filesystem/git tools).
 const LOCAL_MCP_INSTALL = `tar xzf noizu-local-mcp.tar.gz && cd local-mcp && npm i && npm run build
@@ -16,6 +23,7 @@ grok mcp add noizu-local -- node "$PWD/dist/index.js"`;
 
 export default function McpKeysPage() {
   const [keys, setKeys] = useState<McpApiKey[]>([]);
+  const [connections, setConnections] = useState<McpOAuthConnection[]>([]);
   // Tokens keyed by api key id (not prefix) — stable across renders.
   const [tokens, setTokens] = useState<Record<string, McpTokenResponse>>({});
   const [newKey, setNewKey] = useState<{ id: string; raw_key: string } | null>(null);
@@ -26,6 +34,12 @@ export default function McpKeysPage() {
 
   // Server config (fetched once from backend so the setup panel never hardcodes a host).
   const [servers, setServers] = useState<McpServerConfig[]>([]);
+  const [oauthMcpUrl, setOauthMcpUrl] = useState('https://tobor.locker/mcp');
+  const [oauthIssuer, setOauthIssuer] = useState('https://tobor.locker');
+  const [asMetadataUrl, setAsMetadataUrl] = useState(
+    'https://tobor.locker/.well-known/oauth-authorization-server'
+  );
+  const [legacyMintEnabled, setLegacyMintEnabled] = useState(true);
   // The setup panel only renders when servers.length > 0; if the catalog fetch
   // fails we surface the error here instead of letting the section vanish silently.
   const [configError, setConfigError] = useState<string | null>(null);
@@ -44,12 +58,31 @@ export default function McpKeysPage() {
     }
   }, []);
 
+  const fetchConnections = useCallback(async () => {
+    try {
+      const data = await api.listMcpConnections();
+      setConnections(data.connections || []);
+    } catch {
+      // Endpoint may 404 on older deploys — ignore
+      setConnections([]);
+    }
+  }, []);
+
   useEffect(() => {
     fetchKeys();
+    fetchConnections();
     api
       .mcpConfig()
       .then((cfg) => {
         setServers(cfg.servers);
+        const issuer = cfg.oauth?.issuer || `https://${cfg.host}`;
+        setOauthIssuer(issuer);
+        setOauthMcpUrl(cfg.oauth?.mcp_url || `https://${cfg.host}/mcp`);
+        setAsMetadataUrl(
+          cfg.oauth?.authorization_server_metadata ||
+            `${issuer.replace(/\/$/, '')}/.well-known/oauth-authorization-server`
+        );
+        setLegacyMintEnabled(cfg.legacy_api_key_mint_enabled !== false);
         setConfigError(null);
       })
       .catch((err) => {
@@ -58,7 +91,7 @@ export default function McpKeysPage() {
         console.error("Failed to load MCP server config:", err);
         setConfigError(err instanceof Error ? err.message : "Unknown error");
       });
-  }, [fetchKeys]);
+  }, [fetchKeys, fetchConnections]);
 
   async function createKey(e: React.FormEvent) {
     e.preventDefault();
@@ -128,6 +161,17 @@ export default function McpKeysPage() {
     }
   }
 
+  async function revokeConnection(grantId: string) {
+    if (!confirm("Revoke this OAuth connection? Connected clients must re-authorize.")) return;
+    try {
+      await api.revokeMcpConnection(grantId);
+      await fetchConnections();
+      toast.success("Connection revoked");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to revoke connection");
+    }
+  }
+
   function copyText(text: string, id: string) {
     navigator.clipboard.writeText(text)
       .then(() => {
@@ -152,12 +196,58 @@ export default function McpKeysPage() {
   return (
     <div className="content">
       <main>
-        <h1 className="sg-page-title">MCP Keys & Setup</h1>
+        <h1 className="sg-page-title">MCP client setup</h1>
         <p className="sg-page-intro">
-          Create and manage your API keys for MCP server access. Use the setup panel to generate
-          connection commands for <strong>Claude Code</strong>, <strong>Codex</strong>, or{' '}
-          <strong>Grok</strong> for each MCP endpoint.
+          Connect agents to Tobor Locker. <strong>OAuth is preferred</strong> — hosted clients
+          invent their own <code className="font-mono">client_id</code> via Dynamic Client
+          Registration; you only approve access in the browser. There is no OAuth secret to copy
+          from this page.
         </p>
+
+        <McpOauthSetup
+          mcpUrl={oauthMcpUrl}
+          asMetadataUrl={asMetadataUrl}
+          issuer={oauthIssuer}
+          servers={servers}
+        />
+
+        <section className="dash-panel" style={{ marginTop: 'var(--space-4)' }}>
+          <div className="dash-panel__head">
+            <h2 className="dash-panel__title">Your OAuth connections</h2>
+            <span className="dash-badge">{connections.length}</span>
+          </div>
+          <p className="sg-page-intro" style={{ marginBottom: 12 }}>
+            After you click <strong>Allow</strong> for a connector, a pairing grant appears here.
+            Each row is a client (e.g. Claude) allowed to call a specific MCP resource.
+            Revoke to cut off that client immediately (refresh tokens stop working).
+          </p>
+          {connections.length === 0 ? (
+            <p className="sg-page-intro">
+              No connections yet — complete a connector setup above. Nothing to copy; the grant is
+              created automatically after consent.
+            </p>
+          ) : (
+            <ul className="admin-table-wrap">
+              {connections.map((c) => (
+                <li key={c.grant_id} className="gh-row">
+                  <div className="gh-row__main">
+                    <div className="gh-row__title font-mono">{c.client_id}</div>
+                    <div className="gh-row__sub font-mono">{c.resource}</div>
+                    <span className="gh-row__sub">
+                      {c.scope} · grant {c.grant_id}
+                    </span>
+                  </div>
+                  <button
+                    className="sg-btn sg-btn--outline sg-btn--sm"
+                    onClick={() => revokeConnection(c.grant_id)}
+                  >
+                    Revoke
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
         {/* Local Tools MCP — an optional, self-hosted MCP for filesystem/git
             tools that can't run in the cloud. Download + install instructions. */}
@@ -200,64 +290,92 @@ export default function McpKeysPage() {
           </div>
         </section>
 
-        {/* Paste an existing key to mint a token (non-destructive). */}
-        <section className="dash-panel" style={{ marginTop: 'var(--space-4)' }}>
-          <div className="dash-panel__head">
-            <h2 className="dash-panel__title">Connect an existing key</h2>
-          </div>
-          <p className="sg-page-intro" style={{ marginBottom: 12 }}>
-            Already have a raw API key? Paste it here — combined with your login it mints an MCP
-            token without creating a new key. The backend verifies the key belongs to you.
-          </p>
-          <form className="gh-add-form" onSubmit={mintFromPaste}>
-            <input
-              className="gh-add-form__input"
-              value={pastedKey}
-              onChange={(e) => setPastedKey(e.target.value)}
-              placeholder="Paste raw API key"
-              aria-label="Raw API key"
-              style={{ flex: 2 }}
-            />
-            <button className="sg-btn sg-btn--black sg-btn--sm" type="submit" disabled={minting || !pastedKey.trim()}>
-              {minting ? "Minting…" : "Mint Token"}
-            </button>
-          </form>
-        </section>
-
-        {/* Create key form */}
-        <section className="dash-panel" style={{ marginTop: 'var(--space-4)' }}>
-          <div className="dash-panel__head">
-            <h2 className="dash-panel__title">Create MCP Key</h2>
-          </div>
-
-          <form className="gh-add-form" onSubmit={createKey}>
-            <input
-              className="gh-add-form__input"
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-              placeholder="Label (e.g. ci-bot, local-dev)"
-              aria-label="Key label"
-            />
-            <button className="sg-btn sg-btn--black sg-btn--sm" type="submit" disabled={loading}>
-              {loading ? "Creating…" : "Generate Key"}
-            </button>
-          </form>
-
-          {newKey && (
-            <div className="authz-reveal" style={{ marginTop: 16 }}>
-              <div className="authz-reveal__label">Raw key (shown once):</div>
-              <div className="authz-reveal__row">
-                <code className="authz-reveal__key font-mono">{newKey.raw_key}</code>
-                <button
-                  className="sg-btn sg-btn--outline sg-btn--sm"
-                  onClick={() => copyText(newKey.raw_key, newKey.id)}>
-                  {copied === newKey.id ? "Copied!" : "Copy"}
-                </button>
+        {legacyMintEnabled ? (
+          <>
+            <section className="dash-panel" style={{ marginTop: 'var(--space-4)' }}>
+              <div className="dash-panel__head">
+                <h2 className="dash-panel__title">Legacy API keys (Bearer token)</h2>
+                <span className="dash-badge">deprecated</span>
               </div>
-              <p className="sg-page-intro">Store this securely — it cannot be retrieved again.</p>
+              <p className="sg-page-intro" style={{ marginBottom: 12 }}>
+                Only for CLIs that <strong>cannot</strong> do OAuth yet. Create a key (shown once),
+                mint a JWT, and pass <code className="font-mono">Authorization: Bearer …</code>.
+                Prefer OAuth above — ChatGPT/Claude.ai connectors <strong>reject</strong> static
+                Bearer keys.
+              </p>
+            </section>
+
+            {/* Paste an existing key to mint a token (non-destructive). */}
+            <section className="dash-panel" style={{ marginTop: 'var(--space-4)' }}>
+              <div className="dash-panel__head">
+                <h2 className="dash-panel__title">Mint token from existing key</h2>
+              </div>
+              <p className="sg-page-intro" style={{ marginBottom: 12 }}>
+                Already have a raw API key? Paste it here — combined with your login it mints an MCP
+                JWT without creating a new key.
+              </p>
+              <form className="gh-add-form" onSubmit={mintFromPaste}>
+                <input
+                  className="gh-add-form__input"
+                  value={pastedKey}
+                  onChange={(e) => setPastedKey(e.target.value)}
+                  placeholder="Paste raw API key"
+                  aria-label="Raw API key"
+                  style={{ flex: 2 }}
+                />
+                <button className="sg-btn sg-btn--black sg-btn--sm" type="submit" disabled={minting || !pastedKey.trim()}>
+                  {minting ? "Minting…" : "Mint Token"}
+                </button>
+              </form>
+            </section>
+
+            {/* Create key form */}
+            <section className="dash-panel" style={{ marginTop: 'var(--space-4)' }}>
+              <div className="dash-panel__head">
+                <h2 className="dash-panel__title">Legacy: create MCP API key</h2>
+                <span className="dash-badge">deprecated</span>
+              </div>
+
+              <form className="gh-add-form" onSubmit={createKey}>
+                <input
+                  className="gh-add-form__input"
+                  value={label}
+                  onChange={(e) => setLabel(e.target.value)}
+                  placeholder="Label (e.g. ci-bot, local-dev)"
+                  aria-label="Key label"
+                />
+                <button className="sg-btn sg-btn--black sg-btn--sm" type="submit" disabled={loading}>
+                  {loading ? "Creating…" : "Generate Key"}
+                </button>
+              </form>
+
+              {newKey && (
+                <div className="authz-reveal" style={{ marginTop: 16 }}>
+                  <div className="authz-reveal__label">Raw key (shown once):</div>
+                  <div className="authz-reveal__row">
+                    <code className="authz-reveal__key font-mono">{newKey.raw_key}</code>
+                    <button
+                      className="sg-btn sg-btn--outline sg-btn--sm"
+                      onClick={() => copyText(newKey.raw_key, newKey.id)}>
+                      {copied === newKey.id ? "Copied!" : "Copy"}
+                    </button>
+                  </div>
+                  <p className="sg-page-intro">Store this securely — it cannot be retrieved again.</p>
+                </div>
+              )}
+            </section>
+          </>
+        ) : (
+          <section className="dash-panel" style={{ marginTop: 'var(--space-4)' }}>
+            <div className="dash-panel__head">
+              <h2 className="dash-panel__title">Legacy API keys disabled</h2>
             </div>
-          )}
-        </section>
+            <p className="sg-page-intro">
+              New API key minting is turned off. Use OAuth custom connectors with{' '}
+              <code className="font-mono">{oauthMcpUrl}</code>. Existing keys can still be revoked below.
+            </p>
+          </section>
+        )}
 
         {/* Keys list */}
         <section className="dash-panel" style={{ marginTop: 'var(--space-4)' }}>

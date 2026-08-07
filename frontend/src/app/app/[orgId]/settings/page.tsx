@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { api, type Organization } from '@/lib/api';
@@ -72,6 +73,19 @@ export default function OrgSettingsPage() {
     <div className="content">
       <main style={{ maxWidth: 560 }}>
         <h1 className="sg-page-title">Organization Settings</h1>
+
+        <section className="dash-panel" style={{ marginBottom: 'var(--space-4)' }}>
+          <div className="dash-panel__head">
+            <h2 className="dash-panel__title">MCP clients</h2>
+          </div>
+          <p className="sg-page-intro" style={{ marginBottom: 12 }}>
+            Connect Claude.ai, ChatGPT, and CLI agents to Tobor Locker via OAuth (no static OAuth
+            secret to copy). Legacy API keys live on the same page for older CLIs.
+          </p>
+          <Link className="sg-btn sg-btn--black sg-btn--sm" href="/app/mcp-keys">
+            Open MCP client setup
+          </Link>
+        </section>
 
         <form onSubmit={handleSave}>
           <div className="sg-field">

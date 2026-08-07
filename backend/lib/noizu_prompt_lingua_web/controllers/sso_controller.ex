@@ -177,11 +177,22 @@ defmodule NoizuPromptLinguaWeb.SSOController do
   defp handle_sso_callback(conn, provider_type, attrs) do
     case NoizuPromptLingua.Auth.SSO.authenticate_sso(provider_type, attrs) do
       {:ok, session} ->
-        # session.claim_code is the one-time hand-off code (no Redis).
-        redirect(conn,
-          external:
-            "#{frontend_url()}/auth/sso-callback?code=#{session.claim_code}&provider=#{provider_type}"
-        )
+        user = resolve_user_from_session(session)
+        conn = put_session(conn, :oauth_user_id, user.id)
+
+        # If this login was started from MCP OAuth authorize, resume that flow
+        # instead of the SPA hand-off (connectors need a browser code redirect).
+        case get_session(conn, :oauth_authorize_params) do
+          params when is_map(params) and map_size(params) > 0 ->
+            redirect(conn, to: "/oauth/authorize?" <> URI.encode_query(params))
+
+          _ ->
+            # session.claim_code is the one-time hand-off code (no Redis).
+            redirect(conn,
+              external:
+                "#{frontend_url()}/auth/sso-callback?code=#{session.claim_code}&provider=#{provider_type}"
+            )
+        end
 
       {:registration_required, identity} ->
         # No account yet — sign the verified identity into a stateless token.
@@ -192,6 +203,7 @@ defmodule NoizuPromptLinguaWeb.SSOController do
         redirect(conn, external: "#{frontend_url()}/auth/sso-callback?error=sso_failed")
     end
   end
+
 
   defp redirect_with_error(conn, error) do
     redirect(conn, external: "#{frontend_url()}/auth/sso-callback?error=#{error}")

@@ -1,5 +1,5 @@
 defmodule NoizuPromptLingua.Domains.Artifacts.MCP do
-  use Noizu.MCP.Server,
+  use NoizuPromptLingua.MCP.Server,
     name: "tobor_artifacts",
     version: "0.1.0",
     instructions:

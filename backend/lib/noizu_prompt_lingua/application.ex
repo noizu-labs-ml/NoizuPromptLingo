@@ -7,6 +7,8 @@ defmodule NoizuPromptLingua.Application do
     OpentelemetryPhoenix.setup(adapter: :bandit)
     OpentelemetryEcto.setup([:noizu_prompt_lingua, :repo])
     OpentelemetryBandit.setup()
+    # Phase 4 elevation txn/active grants (ETS)
+    _ = NoizuPromptLingua.OAuth.Elevation.ensure_table!()
 
     samly_children =
       if Application.get_env(:noizu_prompt_lingua, :saml_enabled) do

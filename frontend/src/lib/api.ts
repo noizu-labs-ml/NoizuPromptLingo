@@ -273,6 +273,22 @@ export interface McpServerConfig {
 export interface McpConfigResponse {
   host: string;
   servers: McpServerConfig[];
+  oauth?: {
+    issuer: string;
+    mcp_url: string;
+    authorization_server_metadata: string;
+  };
+  legacy_api_key_mint_enabled?: boolean;
+}
+
+export interface McpOAuthConnection {
+  grant_id: string;
+  client_id: string;
+  resource: string;
+  scope: string;
+  status: string;
+  inserted_at?: string;
+  expires_at?: string | null;
 }
 
 export interface McpCustomToolParam {
@@ -2394,6 +2410,18 @@ export const api = {
   // ── MCP connection config (host + server list with full URLs). ──
   mcpConfig() {
     return request<McpConfigResponse>("/api/v1/auth/mcp/config");
+  },
+
+  // ── OAuth MCP pairing grants (Phase 4). ──
+  listMcpConnections() {
+    return request<{ connections: McpOAuthConnection[] }>("/api/v1/auth/mcp/connections");
+  },
+
+  revokeMcpConnection(grantId: string) {
+    return request<{ ok: boolean; grant_id: string; status: string }>(
+      `/api/v1/auth/mcp/connections/${encodeURIComponent(grantId)}`,
+      { method: "DELETE" }
+    );
   },
 
   // ── Local Tools MCP download (public, no auth). Absolute URL so a plain

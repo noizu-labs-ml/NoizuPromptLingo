@@ -17,10 +17,25 @@ defmodule NoizuPromptLingua.MCP.Resolve do
   """
   def current_user_id(ctx) do
     case ctx do
-      %{assigns: %{auth_claims: %{"sub" => sub}}} when is_binary(sub) and sub != "" -> sub
-      _ -> nil
+      %{assigns: %{auth_claims: claims}} when is_map(claims) ->
+        normalize_user_id(claims)
+
+      _ ->
+        nil
     end
   end
+
+  @doc "Normalize JWT identity claims to a bare user UUID."
+  def normalize_user_id(%{"user_id" => id}) when is_binary(id) and id != "", do: id
+
+  def normalize_user_id(%{"sub" => "user:" <> id}) when id != "", do: id
+
+  def normalize_user_id(%{"sub" => sub}) when is_binary(sub) and sub != "" do
+    # Legacy API-key JWTs use bare UUID; ignore non-user principals (svc:, client:)
+    if String.contains?(sub, ":"), do: nil, else: sub
+  end
+
+  def normalize_user_id(_), do: nil
 
   @doc "Resolve an organization ref (slug or UUID) to its UUID, or nil."
   def organization_id(nil), do: nil

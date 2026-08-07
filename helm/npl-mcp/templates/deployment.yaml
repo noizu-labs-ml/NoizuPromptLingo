@@ -66,6 +66,42 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.backend.env.secretName }}
                   key: GUARDIAN_SECRET_KEY
+            # MCP OAuth AS (JWKS signing + issuer URL). Keys live in npl-mcp-secrets
+            # via Infisical /apps/npl-mcp (see .infisical-secrets.yaml id:npl-mcp).
+            # optional until MCP_JWT_PRIVATE_KEY is populated in Infisical; without
+            # it the app uses an ephemeral RSA key (fine for single-replica only).
+            - name: MCP_JWT_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: MCP_JWT_PRIVATE_KEY
+                  optional: true
+            - name: MCP_JWT_KID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: MCP_JWT_KID
+                  optional: true
+            - name: MCP_ISSUER_URL
+              value: {{ ((.Values.backend.mcp).issuerUrl) | default (printf "https://%s" .Values.domain) | quote }}
+            - name: MCP_PDP_MODE
+              value: {{ ((.Values.backend.mcp).pdpMode) | default "local" | quote }}
+            - name: MCP_API_KEY_MINT_ENABLED
+              value: {{ ((.Values.backend.mcp).apiKeyMintEnabled) | default true | quote }}
+            - name: MCP_ELEVATION_ENABLED
+              value: {{ ((.Values.backend.mcp).elevationEnabled) | default true | quote }}
+            {{- if ((.Values.backend.mcp).spicedbHttpEndpoint) }}
+            - name: SPICEDB_HTTP_ENDPOINT
+              value: {{ .Values.backend.mcp.spicedbHttpEndpoint | quote }}
+            {{- end }}
+            {{- if ((.Values.backend.mcp).spicedbPresharedKeySecretKey) }}
+            - name: SPICEDB_PRESHARED_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: {{ .Values.backend.mcp.spicedbPresharedKeySecretKey | quote }}
+                  optional: true
+            {{- end }}
             # Host/redirect targets — without PHX_HOST the backend defaults to
             # example.com and the OIDC redirect_uri + SPA redirect break.
             - name: PHX_HOST

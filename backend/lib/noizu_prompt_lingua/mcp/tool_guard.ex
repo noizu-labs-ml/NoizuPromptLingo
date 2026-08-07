@@ -54,8 +54,46 @@ defmodule NoizuPromptLingua.MCP.ToolGuard do
   @spec before_call(map(), map() | nil, map() | nil) :: :ok | {:error, map()}
   def before_call(spec, args, ctx) do
     case authz_meta(spec) do
-      nil -> :ok
-      authz -> authz |> decide(args, ctx) |> finalize(spec, authz)
+      nil ->
+        # Tools without authz metadata still run OAuth grant/client PDP when claims present.
+        oauth_pdp_only(ctx)
+
+      authz ->
+        authz |> decide(args, ctx) |> finalize(spec, authz)
+    end
+  end
+
+  defp oauth_pdp_only(ctx) do
+    if not NoizuPromptLingua.Authz.Pdp.enabled?() do
+      :ok
+    else
+      claims = get_in(ctx, [Access.key(:assigns, %{}), Access.key(:auth_claims, %{})]) || %{}
+      user_id = Resolve.current_user_id(ctx)
+
+      cond do
+        system_principal?(ctx) ->
+          :ok
+
+        is_nil(user_id) and (claims["client_id"] || claims["grant_id"]) ->
+          finalize({:deny, :no_identity}, %{name: "oauth"}, %{})
+
+        is_nil(user_id) ->
+          # Legacy unauthenticated or incomplete claims — leave to transport JWT gate
+          :ok
+
+        true ->
+          req = %{
+            user_id: user_id,
+            client_id: claims["client_id"],
+            grant_id: claims["grant_id"],
+            resource: claims["aud"] || claims["resource"]
+          }
+
+          case NoizuPromptLingua.Authz.Pdp.check(req) do
+            :ok -> :ok
+            {:error, reason} -> finalize({:deny, reason}, %{name: "oauth"}, %{})
+          end
+      end
     end
   end
 
@@ -70,15 +108,105 @@ defmodule NoizuPromptLingua.MCP.ToolGuard do
 
   defp authenticated_decision(authz, args, ctx) do
     case Resolve.current_user_id(ctx) do
-      nil -> {:deny, :no_identity}
-      user_id -> authorize_caller(user_id, authz, args)
+      nil ->
+        {:deny, :no_identity}
+
+      user_id ->
+        case maybe_require_elevation(authz, args, ctx, user_id) do
+          :ok -> authorize_caller(user_id, authz, args, ctx)
+          {:deny, _} = d -> d
+        end
     end
   end
 
-  defp authorize_caller(user_id, authz, args) do
+  # Phase 4: tools tagged sensitivity: :destructive need a single-use elevation JWT.
+  defp maybe_require_elevation(authz, args, ctx, user_id) do
+    sensitivity = meta_get(authz, :sensitivity) || meta_get(authz, "sensitivity")
+
+    if sensitivity in [:destructive, "destructive"] and elevation_enabled?() do
+      tool = field(authz, :action) || meta_get(authz, :action) || field(ctx, :name) || "tool"
+      tool_name = to_string(tool)
+      hash = NoizuPromptLingua.OAuth.Elevation.args_hash(args || %{})
+      elev = elevation_token_from_ctx(ctx)
+
+      verified =
+        cond do
+          is_binary(elev) ->
+            NoizuPromptLingua.OAuth.Elevation.verify_for_tool(elev, tool_name, hash)
+
+          true ->
+            NoizuPromptLingua.OAuth.Elevation.verify_for_tool({:user, user_id}, tool_name, hash)
+        end
+
+      case verified do
+        {:ok, _} ->
+          :ok
+
+        _ ->
+          txn =
+            NoizuPromptLingua.OAuth.Elevation.create_txn!(%{
+              user_id: user_id,
+              tool: tool_name,
+              action: meta_get(authz, :action),
+              args_hash: hash
+            })
+
+          uri = NoizuPromptLingua.OAuth.Elevation.elevation_uri(txn)
+
+          {:deny,
+           %{
+             reason: :elevation_required,
+             elevation_uri: uri,
+             txn: txn,
+             tool: tool_name
+           }}
+      end
+    else
+      :ok
+    end
+  end
+
+  defp elevation_token_from_ctx(ctx) do
+    assigns = (is_map(ctx) && Map.get(ctx, :assigns)) || %{}
+
+    cond do
+      is_binary(assigns[:elevation_token]) -> assigns[:elevation_token]
+      is_binary(assigns["elevation_token"]) -> assigns["elevation_token"]
+      is_map(assigns[:auth_claims]) && assigns[:auth_claims]["elevation"] ->
+        assigns[:auth_claims]["elevation"]
+      true -> nil
+    end
+  end
+
+  defp elevation_enabled? do
+    Application.get_env(:noizu_prompt_lingua, :mcp_elevation, [])
+    |> Keyword.get(:enabled, true)
+  end
+
+  defp authorize_caller(user_id, authz, args, ctx) do
+    claims = get_in(ctx, [Access.key(:assigns, %{}), Access.key(:auth_claims, %{})]) || %{}
+
+    pdp_req =
+      %{
+        user_id: user_id,
+        client_id: claims["client_id"],
+        grant_id: claims["grant_id"],
+        resource: claims["aud"] || claims["resource"],
+        action: authz[:action] || authz["action"],
+        tool: authz[:action] || authz["action"],
+        required_role: required_role(authz)
+      }
+
     case resource_scope(authz) do
       :global ->
-        {:allow, :authenticated}
+        if NoizuPromptLingua.Authz.Pdp.enabled?() do
+          case NoizuPromptLingua.Authz.Pdp.check(pdp_req) do
+            :ok -> {:allow, :authenticated}
+            {:error, reason} -> {:deny, reason}
+          end
+        else
+          {:allow, :authenticated}
+        end
 
       _scoped ->
         case resolve_resource(authz, args) do
@@ -86,9 +214,22 @@ defmodule NoizuPromptLingua.MCP.ToolGuard do
             {:deny, reason}
 
           {:ok, rtype, rid} ->
-            case Authz.authorize(user_id, rtype, rid, required_role(authz)) do
-              {:ok, %{role: role}} -> {:allow, {role, rtype}}
-              {:error, reason} -> {:deny, reason}
+            pdp_req =
+              Map.merge(pdp_req, %{
+                resource_type: rtype,
+                resource_id: rid
+              })
+
+            if NoizuPromptLingua.Authz.Pdp.enabled?() do
+              case NoizuPromptLingua.Authz.Pdp.check(pdp_req) do
+                :ok -> {:allow, {required_role(authz), rtype}}
+                {:error, reason} -> {:deny, reason}
+              end
+            else
+              case Authz.authorize(user_id, rtype, rid, required_role(authz)) do
+                {:ok, %{role: role}} -> {:allow, {role, rtype}}
+                {:error, reason} -> {:deny, reason}
+              end
             end
         end
     end
@@ -134,6 +275,22 @@ defmodule NoizuPromptLingua.MCP.ToolGuard do
   defp finalize({:allow, detail}, spec, authz) do
     log(:allow, detail, spec, authz)
     :ok
+  end
+
+  defp finalize({:deny, reason}, spec, authz) when is_map(reason) do
+    log(:deny, reason, spec, authz)
+
+    case mode() do
+      :enforce ->
+        {:error,
+         Map.merge(
+           %{code: :forbidden, reason: reason[:reason] || :denied, action: action(authz)},
+           Map.take(reason, [:elevation_uri, :txn, :tool])
+         )}
+
+      _shadow ->
+        :ok
+    end
   end
 
   defp finalize({:deny, reason}, spec, authz) do

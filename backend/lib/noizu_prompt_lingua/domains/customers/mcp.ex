@@ -1,5 +1,5 @@
 defmodule NoizuPromptLingua.Domains.Customers.MCP do
-  use Noizu.MCP.Server,
+  use NoizuPromptLingua.MCP.Server,
     name: "tobor_customers",
     version: "0.1.0",
     instructions:

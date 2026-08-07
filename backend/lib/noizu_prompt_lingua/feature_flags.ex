@@ -5,8 +5,19 @@ defmodule NoizuPromptLingua.FeatureFlags do
   end
 
   def all do
-    Application.get_env(:noizu_prompt_lingua, :feature_flags, %{})
-    |> Enum.filter(fn {_k, v} -> v end)
-    |> Enum.map(fn {k, _v} -> Atom.to_string(k) end)
+    flags =
+      Application.get_env(:noizu_prompt_lingua, :feature_flags, %{})
+      |> Enum.filter(fn {_k, v} -> v end)
+      |> Enum.map(fn {k, _v} -> Atom.to_string(k) end)
+
+    # Always expose MCP OAuth migration flags so the SPA can hide legacy mint UI.
+    flags ++
+      [
+        if(NoizuPromptLingua.MCP.LegacyKeys.mint_enabled?(),
+          do: "mcp_api_key_mint",
+          else: "mcp_api_key_mint_disabled"
+        ),
+        "mcp_oauth"
+      ]
   end
 end

@@ -98,7 +98,27 @@ defmodule NoizuPromptLinguaWeb.AuthController do
     case parse_packaging(Map.get(params, "packaging")) do
       {:ok, packaging} ->
         servers = NoizuPromptLingua.MCPServers.for_host(host, packaging, packaging_opts(params))
-        conn |> put_status(:ok) |> json(%{host: host, servers: servers})
+
+        issuer =
+          try do
+            NoizuPromptLingua.OAuth.AuthorizationServer.issuer_url()
+          rescue
+            _ -> "https://#{host}"
+          end
+
+        conn
+        |> put_status(:ok)
+        |> json(%{
+          host: host,
+          servers: servers,
+          oauth: %{
+            issuer: issuer,
+            mcp_url: "https://#{host}/mcp",
+            authorization_server_metadata:
+              "#{String.trim_trailing(issuer, "/")}/.well-known/oauth-authorization-server"
+          },
+          legacy_api_key_mint_enabled: NoizuPromptLingua.MCP.LegacyKeys.mint_enabled?()
+        })
 
       :error ->
         conn
@@ -147,6 +167,16 @@ defmodule NoizuPromptLinguaWeb.AuthController do
   they still hold, without recreating it.
   """
   def mint_mcp_token(conn, params) do
+    if not NoizuPromptLingua.MCP.LegacyKeys.mint_enabled?() do
+      conn
+      |> put_status(:gone)
+      |> json(NoizuPromptLingua.MCP.LegacyKeys.disabled_response())
+    else
+      do_mint_mcp_token(conn, params)
+    end
+  end
+
+  defp do_mint_mcp_token(conn, params) do
     raw_key = params["key"]
     resource = params["resource"] || params["aud"]
     session = Guardian.Plug.current_resource(conn)
@@ -203,21 +233,27 @@ defmodule NoizuPromptLinguaWeb.AuthController do
   end
 
   def create_mcp_key(conn, %{"key" => key_params}) do
-    session = Guardian.Plug.current_resource(conn)
-    user = resolve_user_from_session(session)
-    label = Map.get(key_params, "label", "default")
+    if not NoizuPromptLingua.MCP.LegacyKeys.create_enabled?() do
+      conn
+      |> put_status(:gone)
+      |> json(NoizuPromptLingua.MCP.LegacyKeys.disabled_response())
+    else
+      session = Guardian.Plug.current_resource(conn)
+      user = resolve_user_from_session(session)
+      label = Map.get(key_params, "label", "default")
 
-    case MCPApiKeys.generate_api_key(user.id, label) do
-      {:ok, key, raw_key} ->
-        conn
-        |> put_status(:created)
-        |> json(%{key: mcp_key_json(key), raw_key: raw_key})
+      case MCPApiKeys.generate_api_key(user.id, label) do
+        {:ok, key, raw_key} ->
+          conn
+          |> put_status(:created)
+          |> json(%{key: mcp_key_json(key), raw_key: raw_key})
 
-      {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
-        conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+        {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
+          conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
 
-      {:error, reason} ->
-        conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
+        {:error, reason} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
+      end
     end
   end
 

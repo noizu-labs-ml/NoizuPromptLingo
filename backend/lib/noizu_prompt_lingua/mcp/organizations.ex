@@ -1,5 +1,5 @@
 defmodule NoizuPromptLingua.MCP.Organizations do
-  use Noizu.MCP.Server,
+  use NoizuPromptLingua.MCP.Server,
     name: "tobor_organizations",
     version: "0.1.0",
     instructions: "Organization management domain — list, get, create, and update organizations."

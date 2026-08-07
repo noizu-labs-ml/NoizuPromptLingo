@@ -70,6 +70,35 @@ spec:
                 name: {{ include "npl-mcp.fullname" . }}
                 port:
                   name: mcp
+          # MCP OAuth AS discovery + authorize/consent (must hit Phoenix, not SPA).
+          - path: /.well-known/oauth-authorization-server
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: mcp
+          - path: /.well-known/oauth-protected-resource
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: mcp
+          - path: /.well-known/jwks.json
+            pathType: Exact
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: mcp
+          - path: /oauth
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: mcp
           # Authentik OIDC redirect flow (SSOController :oidc_init / :oidc_callback)
           # lives on the Phoenix backend at /auth/oidc — must not fall through to
           # the SPA catch-all (which 404s).
@@ -121,6 +150,20 @@ spec:
         paths:
           - path: /mcp
             pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: mcp
+          - path: /.well-known/oauth-protected-resource
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: mcp
+          - path: /.well-known/jwks.json
+            pathType: Exact
             backend:
               service:
                 name: {{ include "npl-mcp.fullname" . }}
