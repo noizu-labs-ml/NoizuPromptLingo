@@ -1,0 +1,115 @@
+databaseChangeLog:
+  # ── OAuth 2.1 Authorization Server (Phase 1) ─────────────────────────────
+  # Clients (static + later DCR), authorization codes (PKCE), refresh tokens,
+  # and MCP pairing grants (user × client × resource consent).
+
+  - changeSet:
+      id: 074-create-table-oauth-clients
+      author: loom
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE oauth_clients (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                client_id varchar(255) NOT NULL,
+                client_secret_hash varchar(255),
+                client_name varchar(255) NOT NULL DEFAULT 'unnamed',
+                redirect_uris jsonb NOT NULL DEFAULT '[]'::jsonb,
+                grant_types jsonb NOT NULL DEFAULT '["authorization_code","refresh_token"]'::jsonb,
+                token_endpoint_auth_method varchar(64) NOT NULL DEFAULT 'none',
+                scope varchar(1024) NOT NULL DEFAULT 'openid mcp',
+                is_first_party boolean NOT NULL DEFAULT false,
+                status varchar(16) NOT NULL DEFAULT 'active'
+                  CHECK (status IN ('active', 'revoked')),
+                metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+              CREATE UNIQUE INDEX idx_oauth_clients_client_id ON oauth_clients (client_id);
+              CREATE INDEX idx_oauth_clients_status ON oauth_clients (status);
+      rollback:
+        - dropTable:
+            tableName: oauth_clients
+
+  - changeSet:
+      id: 074-create-table-mcp-pairing-grants
+      author: loom
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE mcp_pairing_grants (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                grant_id varchar(64) NOT NULL,
+                user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                client_id varchar(255) NOT NULL,
+                resource varchar(1024) NOT NULL,
+                scope varchar(1024) NOT NULL DEFAULT 'mcp',
+                authorization_details jsonb NOT NULL DEFAULT '[]'::jsonb,
+                status varchar(16) NOT NULL DEFAULT 'active'
+                  CHECK (status IN ('active', 'revoked')),
+                expires_at timestamptz,
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+              CREATE UNIQUE INDEX idx_mcp_pairing_grants_grant_id ON mcp_pairing_grants (grant_id);
+              CREATE INDEX idx_mcp_pairing_grants_user ON mcp_pairing_grants (user_id);
+              CREATE INDEX idx_mcp_pairing_grants_client_resource
+                ON mcp_pairing_grants (client_id, resource)
+                WHERE status = 'active';
+      rollback:
+        - dropTable:
+            tableName: mcp_pairing_grants
+
+  - changeSet:
+      id: 074-create-table-oauth-authorization-codes
+      author: loom
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE oauth_authorization_codes (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                code_hash varchar(255) NOT NULL,
+                client_id varchar(255) NOT NULL,
+                user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                redirect_uri varchar(2048) NOT NULL,
+                resource varchar(1024),
+                scope varchar(1024) NOT NULL DEFAULT 'mcp',
+                code_challenge varchar(255) NOT NULL,
+                code_challenge_method varchar(16) NOT NULL DEFAULT 'S256'
+                  CHECK (code_challenge_method IN ('S256')),
+                grant_id varchar(64),
+                expires_at timestamptz NOT NULL,
+                consumed_at timestamptz,
+                inserted_at timestamptz NOT NULL DEFAULT now()
+              );
+              CREATE UNIQUE INDEX idx_oauth_auth_codes_hash ON oauth_authorization_codes (code_hash);
+              CREATE INDEX idx_oauth_auth_codes_expires ON oauth_authorization_codes (expires_at);
+      rollback:
+        - dropTable:
+            tableName: oauth_authorization_codes
+
+  - changeSet:
+      id: 074-create-table-oauth-refresh-tokens
+      author: loom
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE oauth_refresh_tokens (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                token_hash varchar(255) NOT NULL,
+                client_id varchar(255) NOT NULL,
+                user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                grant_id varchar(64),
+                resource varchar(1024),
+                scope varchar(1024) NOT NULL DEFAULT 'mcp',
+                expires_at timestamptz NOT NULL,
+                revoked_at timestamptz,
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+              CREATE UNIQUE INDEX idx_oauth_refresh_tokens_hash ON oauth_refresh_tokens (token_hash);
+              CREATE INDEX idx_oauth_refresh_tokens_user ON oauth_refresh_tokens (user_id);
+              CREATE INDEX idx_oauth_refresh_tokens_client ON oauth_refresh_tokens (client_id);
+      rollback:
+        - dropTable:
+            tableName: oauth_refresh_tokens
