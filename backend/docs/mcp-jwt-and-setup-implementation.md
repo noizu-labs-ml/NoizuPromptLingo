@@ -106,19 +106,18 @@ The host is auto-detected from `window.location.hostname` or can be overridden v
    - Backend generates a 32-byte random key, stores hash + prefix
    - Raw key is returned **once** and never persisted
 
-2. **Token Minting**:
-   - Frontend calls `POST /api/mcp/token` with the raw key
+2. **Token Minting** (Phase 0 key hygiene):
+   - Frontend calls `POST /api/mcp/token` with the raw key (optional `resource` / `aud`)
    - Backend verifies the raw key via bcrypt
-   - If valid, mints a JWT signed with `GUARDIAN_SECRET_KEY`
-   - JWT contains: `sub`, `email`, `name`, `api_key_id`, `iss="tobor-locker"`, `exp` (30 days)
+   - If valid, mints a **RS256 JWT** signed by the MCP JWKS keyring (`MCP_JWT_PRIVATE_KEY` or ephemeral RSA in dev)
+   - Default TTL **7 days** (was 30); JWKS at `GET /.well-known/jwks.json`
+   - JWT contains: `sub`, `email`, `name`, `api_key_id`, `iss="tobor-locker"`, `token_version`, optional `aud`, `exp`
 
 3. **MCP Server Authentication**:
    - Clients send JWT via `Authorization: Bearer <token>` header
-   - MCP servers use `CompoundJWTVerifier` to validate:
-     - HS256 signature against shared secret
-     - Issuer matches `tobor-locker`
-     - Token hasn't expired
-     - `api_key_id` points to an active key
+   - MCP servers use `NoizuPromptLingua.MCP.DualTokenVerifier`:
+     - **RS256**: JWKS public key + issuer + expiry + active `api_key_id` + optional `aud`
+     - **Legacy HS256**: still accepted (shared Guardian secret) during migration
 
 ### JWT Claims
 
@@ -129,10 +128,14 @@ The host is auto-detected from `window.location.hostname` or can be overridden v
   "name": "<user_name>",
   "api_key_id": "<api_key_database_id>",
   "iss": "tobor-locker",
-  "iat": <issued_at_unix>,
-  "exp": <expires_at_unix>
+  "token_version": 1,
+  "aud": "https://sessions.tobor.locker/mcp",
+  "iat": "<issued_at_unix>",
+  "exp": "<expires_at_unix>"
 }
 ```
+
+`aud` is optional during the grace window; set `MCP_JWT_REQUIRE_AUD=true` to enforce.
 
 ## Differences from Legacy Project
 
