@@ -1,32 +1,26 @@
-# Project Layout Summary — start-app/frontend
+# Project Layout Summary — frontend
 
 ```
 frontend/
-├── src/
-│   ├── app/
-│   │   ├── layout.tsx
-│   │   ├── page.tsx
-│   │   ├── globals.css
-│   │   ├── design-system.generated.css
-│   │   ├── login/page.tsx
-│   │   ├── signup/page.tsx
-│   │   ├── sitemap/page.tsx
-│   │   └── styleguide/page.tsx
+├── src/                              # → layout/src.md
+│   ├── app/                          # public, auth, /app, /app/[orgId], admin
 │   ├── components/
-│   │   ├── navbar.tsx
-│   │   └── generated/demo.ts
-│   ├── config/theme-style-guide/      # 15 YAML theme files
-│   ├── context/auth.tsx
-│   ├── lib/api.ts
-│   └── scripts/generate-css.ts
+│   ├── config/theme-style-guide/
+│   ├── context/
+│   ├── hooks/
+│   ├── i18n/
+│   ├── lib/
+│   ├── scripts/generate-css.ts
+│   ├── proxy.ts
+│   └── types/
 ├── public/
+├── e2e/
 ├── docs/
+├── bin/ · docker-entrypoint.sh
+├── Dockerfile · Dockerfile.dev
+├── next.config.ts · package.json
+├── playwright.config.ts
+├── postcss.config.mjs · tsconfig.json
 ├── .env
-├── .npmrc.template
-├── .dockerignore
-├── Dockerfile
-├── next.config.ts
-├── package.json
-├── postcss.config.mjs
-└── tsconfig.json
+└── .npmrc.template
 ```

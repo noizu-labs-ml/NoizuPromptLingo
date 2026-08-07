@@ -1,90 +1,77 @@
-# Project Layout
+# Project Layout — backend (NoizuPromptLingua)
 
-Phoenix 1.8 API backend — Elixir app named `Starter`.
+Phoenix 1.8 / Elixir OTP app `:noizu_prompt_lingua`. JSON API, JWT + OIDC SSO, 20+ MCP domain servers, Liquibase + Ecto schema dual-track.
 
 ```
 backend/
 ├── lib/
-│   ├── starter.ex                      # Top-level Starter module
-│   ├── starter/
-│   │   ├── application.ex              # OTP application supervisor
-│   │   ├── repo.ex                     # Ecto repo (Postgres)
-│   │   ├── accounts.ex                 # Accounts context (user CRUD, auth)
-│   │   ├── accounts/
-│   │   │   └── user.ex                 # User schema + changeset
-│   │   └── guardian.ex                 # Guardian JWT config
-│   ├── starter_web.ex                  # Web module helpers (controller, router macros)
-│   ├── starter_web/
-│   │   ├── endpoint.ex                 # HTTP endpoint (Bandit)
-│   │   ├── router.ex                   # Route definitions
-│   │   ├── telemetry.ex                # Telemetry event handlers
-│   │   ├── controllers/
-│   │   │   ├── auth_controller.ex      # Register / login / me endpoints
-│   │   │   ├── health_controller.ex    # Health check endpoint
-│   │   │   └── error_json.ex           # Error response formatting
-│   │   └── plugs/
-│   │       ├── auth_pipeline.ex        # Guardian auth pipeline plug
-│   │       ├── auth_error_handler.ex   # 401 handler for auth failures
-│   │       └── cors.ex                 # CORS plug
-│   └── supports/
-│       └── types.ex                    # Shared type definitions
+│   ├── noizu_prompt_lingua.ex          # App module root
+│   ├── noizu_prompt_lingua/            # Core → [layout/lib.md](layout/lib.md)
+│   │   ├── application.ex              #   OTP supervisor
+│   │   ├── domains/                    #   Business domains + per-domain mcp.ex + tools/
+│   │   ├── mcp/                        #   Tenancy MCP (orgs/projects/sessions) + tool_guard
+│   │   ├── entities/                   #   Noizu entity layer (users, orgs, authz, …)
+│   │   ├── schema/                     #   Ecto schemas
+│   │   ├── npl/                        #   Convention engine (load/parse/resolve)
+│   │   ├── tools/                      #   Discovery tools + npl_load / npl_spec
+│   │   ├── auth/ · authz/ · workers/   #   Auth helpers, PBAC eval, Oban workers
+│   │   ├── repo.ex · guardian.ex       #   Ecto repo, JWT
+│   │   └── …
+│   ├── noizu_prompt_lingua_web.ex
+│   ├── noizu_prompt_lingua_web/
+│   │   ├── endpoint.ex · router.ex · telemetry.ex
+│   │   ├── controllers/                #   REST + MCP gateways + media serve
+│   │   ├── plugs/                      #   Auth, CORS, roles, rate limit, mock MCP
+│   │   └── channels/                   #   UserSocket, org + browser channels
+│   ├── mix/tasks/                      # Custom mix tasks (seed, backfill)
+│   └── supports/                       # Shared types, migration helpers, events
 ├── config/
-│   ├── config.exs                      # Base config (all envs)
-│   ├── dev.exs                         # Dev environment config
-│   ├── test.exs                        # Test environment config
-│   ├── prod.exs                        # Production config
-│   └── runtime.exs                     # Runtime config (env vars)
+│   ├── config.exs · dev.exs · test.exs · prod.exs
+│   └── runtime.exs                     # Env-var runtime config
+├── db/
+│   ├── changelog/                      # Liquibase YAML 000–073 + db.changelog-master.yaml
+│   ├── liquibase.properties
+│   └── Dockerfile                      # Migration runner image
 ├── priv/
-│   └── repo/
-│       ├── migrations/                 # Ecto migrations
-│       │   ├── 20260101000000_create_users.exs
-│       │   └── 20260101000001_create_seed_helper_tables.exs
-│       ├── seeds.exs                   # Seed runner (dispatches by env)
-│       └── seeds/
-│           ├── dev-seeds.exs           # Dev seed data
-│           ├── prod-seeds.exs          # Prod seed data
-│           └── test-seeds.exs          # Test seed data
+│   ├── conventions/                    # NPL YAML corpus (npl.yaml, directives, …)
+│   ├── unicode-codex/global.yaml       # Glyph codex seed
+│   ├── repo/                           # Ecto migrations + seeds/
+│   ├── skills/content-generator/       # Content-generator skill pack
+│   ├── static/downloads/               # Packaged local-mcp / browser / remote-access tarballs
+│   └── gettext/
 ├── test/
-│   ├── test_helper.exs                 # Test bootstrap
-│   └── support/
-│       ├── conn_case.ex                # Shared test case for controllers
-│       └── data_case.ex                # Shared test case for data layer
+│   ├── noizu_prompt_lingua/            # Domain / unit tests
+│   ├── noizu_prompt_lingua_web/        # Controller / channel tests
+│   ├── support/
+│   └── test_helper.exs
+├── bin/dev-start.sh
 ├── docs/
 │   ├── PROJ-LAYOUT.md                  # This file
-│   └── PROJ-LAYOUT.summary.md         # Tree-only quick reference
-├── .claude/
-│   └── settings.local.json            # Claude Code project settings
-├── .env                                # Environment variables — ⚠ configure
-├── .tool-versions                      # asdf versions (Elixir 1.19, Erlang 28, cmake)
-├── .formatter.exs                      # Elixir formatter config
-├── .gitignore                          # Git ignore rules
-├── .dockerignore                       # Docker ignore rules
-├── Dockerfile                          # Container build
-├── mix.exs                             # Project definition + dependencies
-└── mix.lock                            # Locked dependency versions
+│   ├── PROJ-LAYOUT.summary.md
+│   ├── PROJ-ARCH.md · .summary.md
+│   ├── layout/lib.md
+│   └── mcp-jwt-and-setup-implementation.md
+├── vendor/noizu_labs_pm/               # Vendored PM dependency (local path)
+├── Dockerfile · Dockerfile.dev
+├── mix.exs · mix.lock
+└── .env                                # ⚠ configure (make init)
 ```
 
-## Key Files Requiring Setup
+## Key files requiring setup
 
 | File | Action |
 |------|--------|
-| `.env` | Configure database URL, Guardian secret, etc. |
-| `.tool-versions` | Run `asdf install` to match Elixir/Erlang/cmake versions |
+| `.env` | DB URL, Guardian secret, Redis, OIDC — from root `make init` |
+| `db/liquibase.properties` | Usually OK via compose; host CLI needs DB reachable |
 
-## Mix Aliases
+## Mix aliases (typical)
 
 | Command | Purpose |
 |---------|---------|
-| `mix setup` | `deps.get` → `ecto.create` → `ecto.migrate` → seeds |
+| `mix setup` | deps + ecto create/migrate + seeds |
+| `mix test` | Create/migrate test DB + run tests |
 | `mix ecto.reset` | Drop → create → migrate → seeds |
-| `mix test` | Create DB (quiet) → migrate (quiet) → run tests |
 
-## Notable Dependencies
+## Notable stack
 
-- **Phoenix 1.8** + **Bandit** (HTTP server)
-- **Guardian** + **bcrypt_elixir** — JWT auth
-- **Noizu Labs Entities** — entity framework
-- **GenAI** — LLM integration
-- **Syn** — process registry / routing
-- **Redix** — Redis client
-- **PostGIS / pgvector / geo** — spatial + vector DB extensions
+Phoenix 1.8 + Bandit · Guardian JWT · Ueberauth OIDC · Ecto/Postgres (PostGIS, pgvector) · Redix · Oban · Weaviate (tool search / memory) · GenAI · Liquibase changelogs under `db/changelog/`

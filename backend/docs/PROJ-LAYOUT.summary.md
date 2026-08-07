@@ -1,50 +1,39 @@
-# Project Layout Summary
+# Project Layout Summary — backend
 
 ```
 backend/
 ├── lib/
-│   ├── starter.ex
-│   ├── starter/
+│   ├── noizu_prompt_lingua.ex
+│   ├── noizu_prompt_lingua/          # → layout/lib.md
 │   │   ├── application.ex
-│   │   ├── repo.ex
-│   │   ├── accounts.ex
-│   │   ├── accounts/user.ex
-│   │   └── guardian.ex
-│   ├── starter_web.ex
-│   ├── starter_web/
-│   │   ├── endpoint.ex
-│   │   ├── router.ex
-│   │   ├── telemetry.ex
+│   │   ├── domains/                  # artifacts, assets, browser, campaigns, chat, …
+│   │   ├── mcp/                      # orgs, projects, sessions, tool_guard
+│   │   ├── entities/
+│   │   ├── schema/
+│   │   ├── npl/
+│   │   ├── tools/
+│   │   ├── auth/ · authz/ · workers/
+│   │   ├── repo.ex · guardian.ex · …
+│   ├── noizu_prompt_lingua_web.ex
+│   ├── noizu_prompt_lingua_web/
+│   │   ├── endpoint.ex · router.ex
 │   │   ├── controllers/
-│   │   │   ├── auth_controller.ex
-│   │   │   ├── health_controller.ex
-│   │   │   └── error_json.ex
-│   │   └── plugs/
-│   │       ├── auth_pipeline.ex
-│   │       ├── auth_error_handler.ex
-│   │       └── cors.ex
-│   └── supports/types.ex
+│   │   ├── plugs/
+│   │   └── channels/
+│   ├── mix/tasks/
+│   └── supports/
 ├── config/
-│   ├── config.exs
-│   ├── dev.exs
-│   ├── test.exs
-│   ├── prod.exs
-│   └── runtime.exs
-├── priv/repo/
-│   ├── migrations/
-│   ├── seeds.exs
-│   └── seeds/
+├── db/changelog/                     # Liquibase 000–073
+├── priv/
+│   ├── conventions/
+│   ├── unicode-codex/
+│   ├── repo/
+│   ├── skills/
+│   └── static/downloads/
 ├── test/
-│   ├── test_helper.exs
-│   └── support/
 ├── docs/
-├── .claude/
-├── .env
-├── .tool-versions
-├── .formatter.exs
-├── .gitignore
-├── .dockerignore
-├── Dockerfile
-├── mix.exs
-└── mix.lock
+├── vendor/noizu_labs_pm/
+├── Dockerfile · Dockerfile.dev
+├── mix.exs · mix.lock
+└── .env
 ```

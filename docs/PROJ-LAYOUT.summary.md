@@ -1,44 +1,39 @@
-# Project Layout Summary — start-app
+# Project Layout Summary — NoizuPromptLingo
+
+Companion tree for [PROJ-LAYOUT.md](PROJ-LAYOUT.md).
 
 ```
-start-app/
-├── frontend/                       # Next.js 15 app
-│   ├── src/                        #   Pages, components, theme YAML, auth
-│   ├── docs/                       #   Frontend docs
-│   ├── docker-entrypoint.sh        #   Runtime config injection
-│   ├── Dockerfile                  #   Production build
-│   └── Dockerfile.dev              #   Dev build (hot reload)
-├── backend/                        # Phoenix 1.8 API
-│   ├── lib/                        #   Elixir source
-│   ├── config/                     #   Mix config
-│   ├── priv/repo/                  #   Ecto migrations, seeds
-│   ├── db/                         #   Liquibase schema management
-│   │   ├── changelog/              #     Versioned YAML changesets
-│   │   ├── liquibase.properties    #     Connection config
-│   │   └── Dockerfile              #     Migration runner image
-│   ├── docs/                       #   Backend docs
-│   ├── Dockerfile                  #   Production build
-│   └── Dockerfile.dev              #   Dev build (hot reload)
+NoizuPromptLingo/
+├── frontend/                       # Next.js console → frontend/docs/PROJ-LAYOUT.md
+│   ├── src/                        #   App Router, components, lib, theme YAML
+│   ├── e2e/                        #   Playwright
+│   ├── public/
+│   └── docs/
+├── backend/                        # Phoenix API + MCP → backend/docs/PROJ-LAYOUT.md
+│   ├── lib/noizu_prompt_lingua/    #   domains, mcp, entities, schema
+│   ├── lib/noizu_prompt_lingua_web/ #   controllers, plugs, channels
+│   ├── config/
+│   ├── db/changelog/               #   Liquibase 000–073
+│   ├── priv/                       #   conventions, seeds, unicode-codex, downloads
+│   └── test/
 ├── nginx/                          # Reverse proxy
-│   ├── nginx.conf                  #   Routing rules
-│   └── Dockerfile
-├── helm/                           # Kubernetes deployment
-│   └── start-app/                  #   Helm chart
-│       ├── Chart.yaml
-│       ├── values.yaml
-│       └── templates/              #   K8s manifests
-├── scripts/
-│   └── gen-env.sh                  #   Env file generator
-├── docs/
-│   ├── PROJ-LAYOUT.md
-│   ├── PROJ-LAYOUT.summary.md
-│   ├── PROJ-ARCH.md
-│   └── PROJ-ARCH.summary.md
-├── .env.example                    # Env template
-├── .envrc                          # direnv
-├── .tool-versions                  # asdf/mise runtime versions
-├── .gitignore
-├── docker-compose.yaml             # Production services
-├── docker-compose.dev.yaml         # Dev overrides (hot reload)
-└── Makefile                        # Build + lifecycle
+├── helm/
+│   ├── start-app/                  #   App chart
+│   └── npl-mcp/                    #   MCP chart
+├── design/                         # Themes + asset prompts
+├── docs/                           # PROJ-LAYOUT*, PROJ-ARCH*, PROJ-SCHEMA*, audits
+├── local-mcp/                      # Downloadable filesystem MCP
+├── browser-controller/             # Playwright relay client
+├── remote-access-client/           # frpc tunnel client
+├── sandbox/                        # Combined sandbox runtime
+├── agents/                         # Agent prompt defs
+├── commands/                       # Workflow / slash-command docs
+├── project-management/             # Personas, screens, user stories, roadmap
+├── sub-agent-prompts/
+├── scripts/                        # gen-env.sh, cert helpers
+├── docker-compose*.yaml|yml
+├── Dockerfile.sandbox
+├── .env.example
+├── Makefile
+└── README.md
 ```

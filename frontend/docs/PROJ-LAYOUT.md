@@ -1,45 +1,64 @@
-# Project Layout — start-app/frontend
+# Project Layout — frontend (npl-frontend)
 
-Next.js 15 starter frontend with YAML-driven design system, auth scaffolding, and styleguide viewer.
+Next.js App Router console for NoizuPromptLingo: org-scoped work surfaces, admin, MCP key setup, YAML-driven design system.
 
 ```
 frontend/
 ├── src/                                # Application source → [layout/src.md](layout/src.md)
-│   ├── app/                            #   Next.js App Router pages + global styles
-│   ├── components/                     #   Shared React components
-│   ├── config/                         #   Theme YAML definitions (design system input)
-│   ├── context/                        #   React context providers
-│   ├── lib/                            #   Shared utilities and API client
-│   └── scripts/                        #   Build-time code generation
-├── public/                             # Static assets (empty, .gitkeep)
-├── docs/                               # Project documentation
+│   ├── app/                            #   Routes: public, auth, /app, /app/[orgId], admin
+│   ├── components/                     #   Shell, console CRUD, memory, markdown, nav
+│   ├── config/theme-style-guide/       #   Design-system YAML (generate-css input)
+│   ├── context/                        #   auth, org, sidebar providers
+│   ├── hooks/                          #   e.g. use-channel (Phoenix)
+│   ├── i18n/                           #   next-intl config + en messages
+│   ├── lib/                            #   API client, console registry, analytics, otel
+│   ├── scripts/generate-css.ts         #   YAML → design-system.generated.css
+│   ├── proxy.ts                        #   Next proxy helpers
+│   └── types/phoenix.d.ts
+├── public/
+│   ├── brand/ · favicon.svg
+│   └── themes/style-guide.css
+├── e2e/                                # Playwright (auth setup, room, reactions, XSS)
+├── docs/
 │   ├── PROJ-LAYOUT.md                  #   This file
-│   └── layout/                         #   Detailed directory breakdowns
-├── .claude/                            # Claude Code local settings
-│   └── settings.local.json
-├── .env                                # Environment variables (API URLs, secrets)
-├── .npmrc.template                     # Copy to .npmrc — configures GitHub Packages auth
-├── .dockerignore                       # Docker build exclusions
-├── .gitignore                          # Git exclusions
-├── Dockerfile                          # Container build definition
-├── next.config.ts                      # Next.js configuration
-├── package.json                        # Dependencies and scripts
-├── postcss.config.mjs                  # PostCSS / Tailwind v4 config
-└── tsconfig.json                       # TypeScript configuration
+│   ├── PROJ-LAYOUT.summary.md
+│   ├── PROJ-ARCH.md · .summary.md
+│   ├── layout/src.md
+│   └── arch/                           #   auth, deployment, design-system notes
+├── bin/dev-start.sh
+├── docker-entrypoint.sh                # Runtime config → window.__ENV
+├── Dockerfile · Dockerfile.dev
+├── next.config.ts
+├── package.json                        # name: npl-frontend
+├── playwright.config.ts
+├── postcss.config.mjs
+├── tsconfig.json
+├── .env                                # ⚠ API URLs / public config
+└── .npmrc.template                     # GitHub Packages for @noizu/styleguide
 ```
 
-## Key Files Requiring Setup
+## Key files requiring setup
 
 | File | Action |
 |------|--------|
-| `.env` | Configure `NEXT_PUBLIC_API_URL` and other env vars |
-| `.npmrc` | Copy from `.npmrc.template`, add GitHub Packages token |
+| `.env` | From root `make init`; set `NEXT_PUBLIC_API_URL` (compose uses `/api`) |
+| `.npmrc` | Copy from `.npmrc.template` if private `@noizu/*` packages needed |
 
 ## Scripts
 
 | Command | Purpose |
 |---------|---------|
-| `npm run dev` | Start Next.js dev server |
-| `npm run regen` | Clear cache + regenerate CSS from YAML themes |
-| `npm run generate-css` | Generate CSS from YAML (no cache clear) |
-| `npm run build` | Generate CSS then build for production |
+| `npm run dev` | Next dev server |
+| `npm run regen` | Clear cache + regenerate CSS from YAML |
+| `npm run generate-css` | YAML → `design-system.generated.css` |
+| `npm run build` | Generate CSS + production build |
+| `npm run test:e2e` | Playwright suite |
+
+## Route map (high level)
+
+| Prefix | Purpose |
+|--------|---------|
+| `/`, `/login`, `/auth/*`, `/styleguide`, `/sitemap` | Public / auth |
+| `/app` | Post-login hub (orgs, profile, MCP keys, admin) |
+| `/app/[orgId]/*` | Org-scoped: tickets, boards, chat, wiki, sessions, … |
+| `/app/admin/*` | Global admin (users, orgs, LLM models, authz, …) |
