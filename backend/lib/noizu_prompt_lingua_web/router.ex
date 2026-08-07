@@ -61,6 +61,12 @@ defmodule NoizuPromptLinguaWeb.Router do
     get "/browser-sessions", BrowserSessionController, :install
   end
 
+  # MCP OAuth discovery (Phase 0: JWKS; later phases add AS metadata + PRM).
+  scope "/.well-known", NoizuPromptLinguaWeb do
+    pipe_through :api
+    get "/jwks.json", WellKnownController, :jwks
+  end
+
   # Mint a short-lived MCP JWT from an active MCP API key. This is the bootstrap
   # endpoint clients call to obtain the Bearer token the MCP servers require.
   scope "/api/mcp", NoizuPromptLinguaWeb do

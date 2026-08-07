@@ -160,6 +160,26 @@ if config_env() == :prod or config_env() == :dev do
     issuer: "noizu_prompt_lingua",
     secret_key: guardian_secret
 
+  # MCP JWT asymmetric signing (Phase 0). When unset, an ephemeral RSA key is
+  # generated on first mint (dev/test). Production should set MCP_JWT_PRIVATE_KEY.
+  require_aud =
+    case System.get_env("MCP_JWT_REQUIRE_AUD") do
+      v when v in ["true", "1"] -> true
+      v when v in ["false", "0"] -> false
+      _ -> false
+    end
+
+  config :noizu_prompt_lingua, :mcp_oauth,
+    issuer: System.get_env("MCP_JWT_ISSUER") || "tobor-locker",
+    access_token_ttl_seconds:
+      String.to_integer(System.get_env("MCP_JWT_TTL_SECONDS") || "#{7 * 24 * 3600}"),
+    require_aud: require_aud,
+    signing_alg: System.get_env("MCP_JWT_ALG") || "RS256",
+    public_scheme: System.get_env("MCP_PUBLIC_SCHEME") || "https",
+    private_key_pem: System.get_env("MCP_JWT_PRIVATE_KEY"),
+    kid: System.get_env("MCP_JWT_KID") || "mcp-1",
+    resource_metadata_url: System.get_env("MCP_RESOURCE_METADATA_URL")
+
   # Where the SPA lives. After OIDC the backend 302s the browser here; if this
   # is nil/empty the redirect becomes a relative path against the backend host,
   # and the browser lands on Phoenix for frontend routes like

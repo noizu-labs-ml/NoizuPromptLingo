@@ -55,6 +55,18 @@ config :noizu_prompt_lingua, NoizuPromptLingua.Guardian,
   issuer: "noizu_prompt_lingua",
   secret_key: "dev-secret-key-change-in-production"
 
+# MCP OAuth / JWT key hygiene (Phase 0). Private key via MCP_JWT_PRIVATE_KEY at runtime.
+config :noizu_prompt_lingua, :mcp_oauth,
+  issuer: "tobor-locker",
+  # 7 days (Phase 0); Phase 2 shortens delegated MCP access tokens to ~5 minutes.
+  access_token_ttl_seconds: 7 * 24 * 3600,
+  # Enforce aud only after clients mint with resource=; dual-accept during grace.
+  require_aud: false,
+  signing_alg: "RS256",
+  public_scheme: "https",
+  # Optional absolute URL advertised in WWW-Authenticate (RFC 9728 PRM later).
+  resource_metadata_url: nil
+
 # SSO feature flags (all disabled by default, enabled via runtime env vars)
 config :ueberauth, Ueberauth, providers: []
 

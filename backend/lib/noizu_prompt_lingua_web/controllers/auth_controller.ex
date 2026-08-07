@@ -146,31 +146,49 @@ defmodule NoizuPromptLinguaWeb.AuthController do
   This lets a logged-in user recover setup access for a key whose raw value
   they still hold, without recreating it.
   """
-  def mint_mcp_token(conn, %{"key" => raw_key}) when is_binary(raw_key) and raw_key != "" do
+  def mint_mcp_token(conn, params) do
+    raw_key = params["key"]
+    resource = params["resource"] || params["aud"]
     session = Guardian.Plug.current_resource(conn)
     user = resolve_user_from_session(session)
 
-    case MCPApiKeys.verify_api_key(raw_key) do
-      nil ->
-        conn |> put_status(:unauthorized) |> json(%{error: "invalid or expired API key"})
+    cond do
+      not is_binary(raw_key) or raw_key == "" ->
+        conn |> put_status(:bad_request) |> json(%{error: "key required"})
 
-      api_key ->
-        if api_key.user_id == user.id do
-          mcp_user = %{id: user.id, email: user.email, name: user.user_name}
-          {:ok, token, expires_at} = NoizuPromptLingua.Token.mint(mcp_user, api_key)
+      true ->
+        case MCPApiKeys.verify_api_key(raw_key) do
+          nil ->
+            conn |> put_status(:unauthorized) |> json(%{error: "invalid or expired API key"})
 
-          conn
-          |> put_status(:ok)
-          |> json(%{token: token, expires_at: DateTime.to_iso8601(expires_at)})
-        else
-          # Key exists but belongs to a different user — never reveal that.
-          conn |> put_status(:unauthorized) |> json(%{error: "invalid or expired API key"})
+          api_key ->
+            if api_key.user_id == user.id do
+              mcp_user = %{id: user.id, email: user.email, name: user.user_name}
+
+              mint_opts =
+                if is_binary(resource) and resource != "" do
+                  [resource: resource]
+                else
+                  []
+                end
+
+              {:ok, token, expires_at} =
+                NoizuPromptLingua.Token.mint(mcp_user, api_key, mint_opts)
+
+              conn
+              |> put_status(:ok)
+              |> json(%{
+                token: token,
+                expires_at: DateTime.to_iso8601(expires_at),
+                token_type: "Bearer",
+                expires_in: max(DateTime.diff(expires_at, DateTime.utc_now()), 0)
+              })
+            else
+              # Key exists but belongs to a different user — never reveal that.
+              conn |> put_status(:unauthorized) |> json(%{error: "invalid or expired API key"})
+            end
         end
     end
-  end
-
-  def mint_mcp_token(conn, _params) do
-    conn |> put_status(:bad_request) |> json(%{error: "key required"})
   end
 
   def list_mcp_keys(conn, _params) do

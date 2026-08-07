@@ -75,6 +75,9 @@ JWT-based, split across both services, with pluggable SSO providers:
 
 - **Backend**: Guardian issues access (1h) + refresh (7d) tokens. Endpoints at `/api/v1/auth/*`. SSO via Ueberauth — supports OIDC, Google, Facebook, GitHub, LinkedIn, and SAML. SSO auto-creates users or requires invite (`sso_require_invite` config).
 - **Frontend**: `AuthProvider` context stores tokens in `localStorage`, `api.ts` auto-attaches Bearer header. SSO callback at `/auth/sso-callback`. Password reset at `/forgot-password`.
+- **MCP clients (tobor.locker)**: Migrating from custom API-key → long-lived JWT mint to **OAuth 2.1** (AS embedded in this app) so Claude.ai / ChatGPT Custom Connectors can connect via DCR + PKCE. Phase 0 ships JWKS + dual token verification; full program is Phases 0–4.
+
+→ *MCP OAuth design: monorepo `docs/arch/mcp-oauth-authz-design.md` (Phases 0–4 Accepted)*
 
 → *See [backend/docs/PROJ-ARCH.md](../backend/docs/PROJ-ARCH.md) and [frontend/docs/PROJ-ARCH.md](../frontend/docs/PROJ-ARCH.md) for per-service details*
 
