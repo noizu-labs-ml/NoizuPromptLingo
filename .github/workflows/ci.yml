@@ -27,7 +27,10 @@ jobs:
         working-directory: backend
     services:
       postgres:
-        image: postgres:16
+        # timescaledb-ha bundles postgis + pgvector, matching prod
+        # (app-timescaledb); plain postgres:16 lacks the vector extension
+        # and fails changelog 000-extensions.
+        image: timescale/timescaledb-ha:pg16
         env:
           POSTGRES_USER: noizu_prompt_lingua
           POSTGRES_PASSWORD: npl_dev
