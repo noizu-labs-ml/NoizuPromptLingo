@@ -11,10 +11,15 @@ import { loadConfig, loadAllBrandings } from "@noizu/styleguide/css-gen";
 import { Toaster } from "sonner";
 
 export function generateMetadata(): Metadata {
-  const config = loadConfig();
+  // Product document title — do not use style-guide.meta.yaml `title`
+  // (that field is for the styleguide page, e.g. "Style Guide — Base Theme").
   return {
-    title: config.title ?? "Project Name",
-    description: config.description ?? "Built with start-app",
+    title: {
+      default: "NoizuPromptLingo",
+      template: "NoizuPromptLingo - %s",
+    },
+    description:
+      "Prompt engineering language and tooling for structured AI collaboration.",
     icons: {
       icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
       shortcut: [{ url: "/favicon.svg", type: "image/svg+xml" }],
