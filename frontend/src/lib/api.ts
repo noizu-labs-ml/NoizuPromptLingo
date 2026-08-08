@@ -291,6 +291,19 @@ export interface McpOAuthConnection {
   expires_at?: string | null;
 }
 
+// OAuth 2.1 client (DCR-registered or first-party). Admin-only listing;
+// grant_count is the number of active MCP pairing grants for this client.
+export interface OAuthClient {
+  client_id: string;
+  client_name: string;
+  token_endpoint_auth_method: string;
+  redirect_uris: string[];
+  is_first_party: boolean;
+  status: "active" | "revoked";
+  grant_count: number;
+  inserted_at: string;
+}
+
 export interface McpCustomToolParam {
   name: string;
   type: string;
@@ -1876,15 +1889,26 @@ export const api = {
     return request<{ keys: McpApiKey[] }>(`/api/v1/admin/users/${userId}/mcp-keys`);
   },
 
-  adminCreateMcpKey(userId: string, label = "default") {
+  adminCreateMcpKey(userId: string, label = "default", expiresAt?: string) {
     return request<{ key: McpApiKey; raw_key: string }>(`/api/v1/admin/users/${userId}/mcp-keys`, {
       method: "POST",
-      body: JSON.stringify({ key: { label } }),
+      body: JSON.stringify({ key: { label, expires_at: expiresAt } }),
     });
   },
 
   adminRevokeMcpKey(userId: string, id: string) {
     return request<{ key: McpApiKey }>(`/api/v1/admin/users/${userId}/mcp-keys/${id}`, {
+      method: "DELETE",
+    });
+  },
+
+  // ── OAuth clients (admin, global). DCR-registered + first-party. ──
+  adminListOAuthClients() {
+    return request<{ clients: OAuthClient[] }>("/api/v1/admin/oauth-clients");
+  },
+
+  adminRevokeOAuthClient(clientId: string) {
+    return request<{ client: OAuthClient }>(`/api/v1/admin/oauth-clients/${encodeURIComponent(clientId)}`, {
       method: "DELETE",
     });
   },
@@ -2375,10 +2399,10 @@ export const api = {
     return request<{ keys: McpApiKey[] }>("/api/v1/auth/mcp-keys");
   },
 
-  createMcpKey(label = "default") {
+  createMcpKey(label = "default", expiresAt?: string) {
     return request<{ key: McpApiKey; raw_key: string }>("/api/v1/auth/mcp-keys", {
       method: "POST",
-      body: JSON.stringify({ key: { label } }),
+      body: JSON.stringify({ key: { label, expires_at: expiresAt } }),
     });
   },
 

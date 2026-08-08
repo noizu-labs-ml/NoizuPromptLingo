@@ -38,6 +38,7 @@ export default function AdminHomePage() {
     { href: '/app/admin/users', Icon: UsersIcon, label: 'Users', desc: 'System-wide user list and role assignment.' },
     { href: '/app/admin/orgs', Icon: BuildingOfficeIcon, label: 'Organizations', desc: 'Browse all organizations and their members.' },
     { href: '/app/admin/authz', Icon: KeyIcon, label: 'API Keys', desc: 'Mint and revoke long-lived MCP API keys, and build setup commands.' },
+    { href: '/app/admin/oauth-clients', Icon: LinkIcon, label: 'OAuth Clients', desc: 'Registered MCP OAuth 2.1 clients (DCR + first-party) and pairing-grant revocation.' },
   ];
 
   return (

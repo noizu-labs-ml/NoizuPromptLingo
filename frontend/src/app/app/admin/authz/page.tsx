@@ -22,6 +22,8 @@ export default function AdminAuthzPage() {
 
   // New key form
   const [label, setLabel] = useState('default');
+  const [expiryChoice, setExpiryChoice] = useState<'never' | '30d' | '90d' | '1y' | 'custom'>('never');
+  const [customExpiry, setCustomExpiry] = useState('');
   const [creating, setCreating] = useState(false);
 
   // The most recently minted raw key (shown once).
@@ -71,26 +73,37 @@ export default function AdminAuthzPage() {
     api.mcpConfig().then((cfg) => setServers(cfg.servers)).catch(() => { /* non-fatal */ });
   }, [fetchKeys]);
 
+  // Resolves the expiry form state to an ISO8601 string, or undefined for
+  // "never expires".
+  function computeExpiresAt(): string | undefined {
+    const now = Date.now();
+    const days = { '30d': 30, '90d': 90, '1y': 365 } as const;
+    if (expiryChoice === 'never') return undefined;
+    if (expiryChoice === 'custom') {
+      return customExpiry ? new Date(customExpiry).toISOString() : undefined;
+    }
+    return new Date(now + days[expiryChoice] * 24 * 60 * 60 * 1000).toISOString();
+  }
+
   async function createKey(e: React.FormEvent) {
     e.preventDefault();
     if (!userId) return;
     setCreating(true);
     try {
-      const { key, raw_key } = await api.adminCreateMcpKey(userId, label.trim() || 'default');
+      const { key, raw_key } = await api.adminCreateMcpKey(userId, label.trim() || 'default', computeExpiresAt());
       setKeys((prev) => [key, ...prev.filter((k) => k.id !== key.id)]);
       setRevealedKey({ id: key.id, raw: raw_key });
       toast.success('MCP key created — copy it now, it won’t be shown again');
 
-      // Auto-mint a token for the new key so setup is one click. The
-      // authenticated mint is scoped to the logged-in admin, which is correct
-      // when the admin is minting for their own user; for other users the admin
-      // should share the raw key and let the user mint from the /mcp-keys page.
+      // Auto-mint a token for the new key so setup is one click. Uses the
+      // public possession-only mint (POST /api/mcp/token) — it only requires
+      // the raw key, so this works regardless of which user it belongs to.
       try {
-        const tokenData = await api.mintMcpTokenAuthenticated(raw_key);
+        const tokenData = await api.mintMcpToken(raw_key);
         setTokens((prev) => ({ ...prev, [key.id]: tokenData }));
         setSetupKey(key.id);
       } catch (tokenErr) {
-        console.error('Failed to mint token for new key:', tokenErr);
+        toast.error(tokenErr instanceof Error ? tokenErr.message : 'Failed to mint token for new key');
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to create key');
@@ -105,7 +118,7 @@ export default function AdminAuthzPage() {
     if (!raw) return;
     setMinting(true);
     try {
-      const tokenData = await api.mintMcpTokenAuthenticated(raw);
+      const tokenData = await api.mintMcpToken(raw);
       await fetchKeys(userId);
       setTokens((prev) => ({ ...prev, '__pasted__': tokenData }));
       setSetupKey('__pasted__');
@@ -154,6 +167,14 @@ export default function AdminAuthzPage() {
     return `${Math.floor(hrs / 24)}d ago`;
   }
 
+  function expiryLabel(dt?: string | null) {
+    if (!dt) return 'no expiry';
+    const diff = new Date(dt).getTime() - Date.now();
+    if (diff <= 0) return 'expired';
+    const days = Math.ceil(diff / 86400000);
+    return days < 1 ? 'expires <1d' : `expires in ${days}d`;
+  }
+
   if (loadingUsers) {
     return (
       <div className="content">
@@ -190,8 +211,8 @@ export default function AdminAuthzPage() {
             <h2 className="dash-panel__title">Connect an existing key</h2>
           </div>
           <p className="sg-page-intro" style={{ marginBottom: 12 }}>
-            Paste a raw API key — combined with your login it mints an MCP token. The backend verifies
-            ownership, so this only works for your own keys.
+            Paste a raw API key to mint an MCP token for it — possession of the key is all that's required, so
+            this mints for whoever the key belongs to, not necessarily the user selected above.
           </p>
           <form className="gh-add-form" onSubmit={mintFromPaste}>
             <input
@@ -221,6 +242,28 @@ export default function AdminAuthzPage() {
               placeholder="Label (e.g. ci-bot)"
               aria-label="Label"
             />
+            <select
+              className="gh-add-form__input"
+              value={expiryChoice}
+              onChange={(e) => setExpiryChoice(e.target.value as typeof expiryChoice)}
+              aria-label="Expiry"
+            >
+              <option value="never">Never expires</option>
+              <option value="30d">30 days</option>
+              <option value="90d">90 days</option>
+              <option value="1y">1 year</option>
+              <option value="custom">Custom date…</option>
+            </select>
+            {expiryChoice === 'custom' && (
+              <input
+                className="gh-add-form__input"
+                type="date"
+                value={customExpiry}
+                onChange={(e) => setCustomExpiry(e.target.value)}
+                aria-label="Expiry date"
+                min={new Date().toISOString().slice(0, 10)}
+              />
+            )}
             <button className="sg-btn sg-btn--black sg-btn--sm" type="submit" disabled={creating || !userId}>
               {creating ? 'Creating…' : 'Generate key'}
             </button>
@@ -263,6 +306,7 @@ export default function AdminAuthzPage() {
                         {k.status}
                       </span>
                       <span className="gh-row__sub">last used {timeAgo(k.last_used_at)}</span>
+                      <span className="gh-row__sub">{expiryLabel(k.expires_at)}</span>
                     </div>
 
                     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>

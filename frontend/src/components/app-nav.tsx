@@ -29,6 +29,7 @@ import {
   CpuChipIcon,
   FilmIcon,
   BuildingOfficeIcon,
+  LinkIcon,
 } from '@heroicons/react/24/outline';
 import { useOrg } from '@/context/org';
 import { useAuth } from '@/context/auth';
@@ -145,6 +146,7 @@ const NAV_SECTIONS: NavSectionDef[] = [
       { href: '/app/admin/llm-models', Icon: CpuChipIcon, label: 'LLM Catalog', admin: true },
       { href: '/app/admin/media-providers', Icon: FilmIcon, label: 'Media Providers', admin: true },
       { href: '/app/admin/authz', Icon: KeyIcon, label: 'API Keys', admin: true },
+      { href: '/app/admin/oauth-clients', Icon: LinkIcon, label: 'OAuth Clients', admin: true },
     ],
   },
 ];
