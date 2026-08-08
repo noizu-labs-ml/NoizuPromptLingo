@@ -50,7 +50,10 @@ COPY docker/ docker/
 
 RUN uv sync --frozen --no-dev
 
-ENV NPL_DB_HOST=npl-timescaledb \
+ENV PATH="/app/.venv/bin:${PATH}" \
+    PYTHONUNBUFFERED=1 \
+    NPL_PROJECT=NoizuPromptLingo \
+    NPL_DB_HOST=npl-timescaledb \
     NPL_DB_PORT=5432 \
     NPL_DB_NAME=npl \
     NPL_DB_USER=npl \
@@ -61,4 +64,7 @@ EXPOSE 8765
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
     CMD curl -sf http://localhost:8765/api/health/ping || exit 1
 
-CMD ["uv", "run", "npl-mcp", "--host", "0.0.0.0", "--port", "8765"]
+CMD ["npl-mcp", "--host", "0.0.0.0", "--port", "8765"]
+
+# docker-build targets "production" for non-dev builds.
+FROM runtime AS production

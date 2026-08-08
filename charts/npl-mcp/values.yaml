@@ -1,0 +1,129 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/noizu/npl-mcp
+  tag: ""
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+
+service:
+  type: ClusterIP
+  port: 8765
+  targetPort: http
+  annotations: {}
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: npl-mcp.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources: {}
+
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+env:
+  NPL_PROJECT: NoizuPromptLingo
+  NPL_LITELLM_URL: ""
+  NPL_LITELLM_MODEL: ""
+  NPL_LITELLM_EMBED_MODEL: ""
+
+extraEnv: []
+
+secrets:
+  create: true
+  name: ""
+  data:
+    NPL_DB_PASSWORD: npl_secret
+    NPL_LITELLM_KEY: ""
+
+database:
+  host: ""
+  port: 5432
+  name: npl
+  user: npl
+  existingSecret: ""
+  passwordKey: NPL_DB_PASSWORD
+
+postgresql:
+  enabled: true
+  image:
+    repository: timescale/timescaledb
+    tag: 2.24.0-pg17
+    pullPolicy: IfNotPresent
+  initdb:
+    enabled: true
+    scripts:
+      01-extensions.sql: |
+        CREATE EXTENSION IF NOT EXISTS vector;
+        CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+  persistence:
+    enabled: true
+    size: 8Gi
+    storageClass: ""
+  resources: {}
+
+valkey:
+  enabled: true
+  image:
+    repository: valkey/valkey
+    tag: "8.1"
+    pullPolicy: IfNotPresent
+  persistence:
+    enabled: true
+    size: 2Gi
+    storageClass: ""
+  resources: {}
+
+probes:
+  liveness:
+    path: /api/health/ping
+    initialDelaySeconds: 30
+    periodSeconds: 30
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readiness:
+    path: /api/health/ping
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80

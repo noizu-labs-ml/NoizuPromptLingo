@@ -339,14 +339,52 @@ migrate-rollback: .env ## Roll back last Liquibase changeset
 		docker run --rm --env-file .env --network lets-go_default $(IMAGE_MIGRATIONS) liquibase rollback-count 1; \
 	fi
 
-migrate-validate: .env ## Validate Liquibase changelog YAML
-	@if command -v liquibase >/dev/null 2>&1; then \
-		$(LIQUIBASE_HOST_ENV) \
-		cd backend/db && liquibase validate; \
-	else \
-		docker buildx build --load -t $(IMAGE_MIGRATIONS) ./backend/db && \
-		docker run --rm $(IMAGE_MIGRATIONS) liquibase validate; \
-	fi
+# -- Docker ----------------------------------------------------------------
+
+REGISTRY := ops.noizu.com
+IMAGE := npl-mcp
+TAG ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
+
+.PHONY: docker-build
+docker-build: ## Build Docker image
+	docker build -t $(REGISTRY)/$(IMAGE):$(TAG) -t $(REGISTRY)/$(IMAGE):latest .
+
+.PHONY: docker-push
+docker-push: ## Push Docker image to registry
+	docker push $(REGISTRY)/$(IMAGE):$(TAG)
+	docker push $(REGISTRY)/$(IMAGE):latest
+
+.PHONY: docker-run
+docker-run: ## Run full stack via docker-compose
+	docker compose up -d
+
+.PHONY: docker-down
+docker-down: ## Stop docker-compose stack
+	docker compose down
+
+.PHONY: docker-logs
+docker-logs: ## Tail docker-compose logs
+	docker compose logs -f
+
+# -- Helm ------------------------------------------------------------------
+
+CHART_DIR := charts/npl-mcp
+
+.PHONY: helm-lint
+helm-lint: ## Lint Helm chart
+	helm lint $(CHART_DIR)
+
+.PHONY: helm-template
+helm-template: ## Render Helm templates locally
+	helm template npl-mcp $(CHART_DIR)
+
+.PHONY: helm-publish
+helm-publish: ## Package and push chart to OCI registry
+	helm package $(CHART_DIR)
+	helm push npl-mcp-*.tgz oci://ghcr.io/the-robot-lives/charts
+	rm -f npl-mcp-*.tgz
+
+# -- Help ------------------------------------------------------------------
 
 # ── Helm ────────────────────────────────────────────────────────
 
