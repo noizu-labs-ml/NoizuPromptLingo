@@ -9,7 +9,7 @@ defmodule NoizuPromptLinguaWeb.SSOController do
   def providers(conn, _params) do
     providers =
       []
-      |> maybe_add(:oidc_enabled, "authentik")
+      |> maybe_add(:oidc_enabled, "oidc")
 
     json(conn, %{providers: providers})
   end
