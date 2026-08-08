@@ -354,6 +354,11 @@ defmodule NoizuPromptLinguaWeb.Router do
     post "/users/:user_id/mcp-keys", AdminController, :create_mcp_key
     delete "/users/:user_id/mcp-keys/:id", AdminController, :revoke_mcp_key
 
+    # OAuth clients (DCR + first-party) — admin visibility + revoke (cascades
+    # to active pairing grants + refresh tokens for that client).
+    get "/oauth-clients", AdminController, :list_oauth_clients
+    delete "/oauth-clients/:client_id", AdminController, :revoke_oauth_client
+
     # Custom MCP include scopes (global admin-managed presets).
     get "/mcp-custom-scopes/catalog", AdminController, :mcp_custom_scope_catalog
     get "/mcp-custom-scopes", AdminController, :list_mcp_custom_scopes

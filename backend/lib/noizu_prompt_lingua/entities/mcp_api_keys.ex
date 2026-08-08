@@ -16,24 +16,57 @@ defmodule NoizuPromptLingua.MCPApiKeys do
   Generates a new API key for `user_id`. Returns `{:ok, key, raw_key}` — the
   `raw_key` is the only chance to see the secret and must be returned to the
   user immediately.
+
+  Accepts `expires_at: %DateTime{} | nil` in `opts` for a key that stops
+  verifying after a given time (see `parse_expires_at/1` to build it from a
+  request param).
   """
-  def generate_api_key(user_id, label \\ "default") do
+  def generate_api_key(user_id, label \\ "default", opts \\ []) do
     raw_key = :crypto.strong_rand_bytes(32) |> Base.url_encode64(padding: false)
     key_prefix = String.slice(raw_key, 0, 8)
     key_hash = Bcrypt.hash_pwd_salt(raw_key)
 
-    attrs = %{
-      user_id: user_id,
-      label: label,
-      key_prefix: key_prefix,
-      key_hash: key_hash
-    }
+    attrs =
+      %{
+        user_id: user_id,
+        label: label,
+        key_prefix: key_prefix,
+        key_hash: key_hash
+      }
+      |> maybe_put_expires_at(Keyword.get(opts, :expires_at))
 
     case %KeySchema{} |> KeySchema.create_changeset(attrs) |> NoizuPromptLingua.Repo.insert() do
       {:ok, key} -> {:ok, key, raw_key}
       {:error, _} = err -> err
     end
   end
+
+  defp maybe_put_expires_at(attrs, nil), do: attrs
+  defp maybe_put_expires_at(attrs, %DateTime{} = dt), do: Map.put(attrs, :expires_at, dt)
+
+  @doc """
+  Parses an optional `expires_at` request param into `{:ok, %DateTime{} | nil}`
+  for `generate_api_key/3`, or `:error` if it's present but not a valid,
+  future ISO8601 timestamp. `nil`/blank means "no expiry".
+  """
+  def parse_expires_at(nil), do: {:ok, nil}
+  def parse_expires_at(""), do: {:ok, nil}
+
+  def parse_expires_at(str) when is_binary(str) do
+    case DateTime.from_iso8601(str) do
+      {:ok, dt, _offset} ->
+        if DateTime.compare(dt, DateTime.utc_now()) == :gt do
+          {:ok, dt}
+        else
+          :error
+        end
+
+      {:error, _} ->
+        :error
+    end
+  end
+
+  def parse_expires_at(_), do: :error
 
   @doc """
   Verifies a raw API key (during sign-in, not JWT). Looks up by prefix among

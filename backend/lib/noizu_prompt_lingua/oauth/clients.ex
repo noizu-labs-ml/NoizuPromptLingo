@@ -3,7 +3,7 @@ defmodule NoizuPromptLingua.OAuth.Clients do
 
   import Ecto.Query
   alias NoizuPromptLingua.Repo
-  alias NoizuPromptLingua.Schema.OAuthClient
+  alias NoizuPromptLingua.Schema.{OAuthClient, McpPairingGrant, OAuthRefreshToken}
   alias NoizuPromptLingua.OAuth.RedirectPolicy
 
   def get_active(client_id) when is_binary(client_id) do
@@ -14,6 +14,53 @@ defmodule NoizuPromptLingua.OAuth.Clients do
   end
 
   def get_active(_), do: nil
+
+  @doc """
+  Admin listing — every registered client (DCR + first-party), newest first,
+  paired with its active pairing-grant count.
+  """
+  def list_all do
+    grant_counts =
+      from(g in McpPairingGrant,
+        where: g.status == "active",
+        group_by: g.client_id,
+        select: {g.client_id, count(g.id)}
+      )
+      |> Repo.all()
+      |> Map.new()
+
+    from(c in OAuthClient, order_by: [desc: c.inserted_at])
+    |> Repo.all()
+    |> Enum.map(fn c -> {c, Map.get(grant_counts, c.client_id, 0)} end)
+  end
+
+  @doc """
+  Revokes a client: marks it revoked and cascades to its active pairing
+  grants and unexpired refresh tokens, so already-issued tokens stop working.
+  """
+  def revoke_client(client_id) when is_binary(client_id) do
+    case Repo.one(from c in OAuthClient, where: c.client_id == ^client_id) do
+      nil ->
+        {:error, :not_found}
+
+      client ->
+        Repo.transaction(fn ->
+          updated = client |> OAuthClient.changeset(%{status: "revoked"}) |> Repo.update!()
+
+          from(g in McpPairingGrant, where: g.client_id == ^client_id and g.status == "active")
+          |> Repo.update_all(set: [status: "revoked"])
+
+          now = DateTime.utc_now() |> DateTime.truncate(:microsecond)
+
+          from(t in OAuthRefreshToken, where: t.client_id == ^client_id and is_nil(t.revoked_at))
+          |> Repo.update_all(set: [revoked_at: now])
+
+          updated
+        end)
+    end
+  end
+
+  def revoke_client(_), do: {:error, :not_found}
 
   @doc """
   RFC 7591 dynamic client registration (minimal).

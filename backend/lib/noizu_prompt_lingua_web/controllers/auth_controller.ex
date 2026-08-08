@@ -242,17 +242,25 @@ defmodule NoizuPromptLinguaWeb.AuthController do
       user = resolve_user_from_session(session)
       label = Map.get(key_params, "label", "default")
 
-      case MCPApiKeys.generate_api_key(user.id, label) do
-        {:ok, key, raw_key} ->
+      case MCPApiKeys.parse_expires_at(Map.get(key_params, "expires_at")) do
+        {:ok, expires_at} ->
+          case MCPApiKeys.generate_api_key(user.id, label, expires_at: expires_at) do
+            {:ok, key, raw_key} ->
+              conn
+              |> put_status(:created)
+              |> json(%{key: mcp_key_json(key), raw_key: raw_key})
+
+            {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
+              conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+
+            {:error, reason} ->
+              conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
+          end
+
+        :error ->
           conn
-          |> put_status(:created)
-          |> json(%{key: mcp_key_json(key), raw_key: raw_key})
-
-        {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
-          conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
-
-        {:error, reason} ->
-          conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
+          |> put_status(:unprocessable_entity)
+          |> json(%{error: "expires_at must be a future ISO8601 timestamp"})
       end
     end
   end

@@ -337,20 +337,34 @@ defmodule NoizuPromptLinguaWeb.AdminController do
   end
 
   def create_mcp_key(conn, %{"user_id" => user_id, "key" => key_params}) do
-    label = Map.get(key_params, "label", "default")
+    if not NoizuPromptLingua.MCP.LegacyKeys.create_enabled?() do
+      conn
+      |> put_status(:gone)
+      |> json(NoizuPromptLingua.MCP.LegacyKeys.disabled_response())
+    else
+      label = Map.get(key_params, "label", "default")
 
-    case NoizuPromptLingua.MCPApiKeys.generate_api_key(user_id, label) do
-      {:ok, key, raw_key} ->
-        # Return the raw key exactly once, alongside the masked record.
-        conn
-        |> put_status(:created)
-        |> json(%{key: mcp_key_json(key), raw_key: raw_key})
+      case NoizuPromptLingua.MCPApiKeys.parse_expires_at(Map.get(key_params, "expires_at")) do
+        {:ok, expires_at} ->
+          case NoizuPromptLingua.MCPApiKeys.generate_api_key(user_id, label, expires_at: expires_at) do
+            {:ok, key, raw_key} ->
+              # Return the raw key exactly once, alongside the masked record.
+              conn
+              |> put_status(:created)
+              |> json(%{key: mcp_key_json(key), raw_key: raw_key})
 
-      {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
-        conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+            {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
+              conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
 
-      {:error, reason} ->
-        conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
+            {:error, reason} ->
+              conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
+          end
+
+        :error ->
+          conn
+          |> put_status(:unprocessable_entity)
+          |> json(%{error: "expires_at must be a future ISO8601 timestamp"})
+      end
     end
   end
 
@@ -365,6 +379,44 @@ defmodule NoizuPromptLinguaWeb.AdminController do
       {:error, reason} ->
         conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
     end
+  end
+
+  # ── OAuth clients (DCR + first-party) ─────────────────────────────────────
+  # Admin visibility into registered OAuth 2.1 clients. Revoking a client
+  # cascades to its active pairing grants and unexpired refresh tokens, so
+  # already-issued tokens stop working immediately.
+
+  alias NoizuPromptLingua.OAuth.Clients, as: OAuthClients
+
+  def list_oauth_clients(conn, _params) do
+    clients =
+      OAuthClients.list_all()
+      |> Enum.map(fn {client, grant_count} -> oauth_client_json(client, grant_count) end)
+
+    conn |> put_status(:ok) |> json(%{clients: clients})
+  end
+
+  def revoke_oauth_client(conn, %{"client_id" => client_id}) do
+    case OAuthClients.revoke_client(client_id) do
+      {:ok, client} ->
+        conn |> put_status(:ok) |> json(%{client: oauth_client_json(client, 0)})
+
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Client not found"})
+    end
+  end
+
+  defp oauth_client_json(client, grant_count) do
+    %{
+      client_id: client.client_id,
+      client_name: client.client_name,
+      token_endpoint_auth_method: client.token_endpoint_auth_method,
+      redirect_uris: client.redirect_uris,
+      is_first_party: client.is_first_party,
+      status: client.status,
+      grant_count: grant_count,
+      inserted_at: client.inserted_at
+    }
   end
 
   # ── LLM model catalog (global) ────────────────────────────────────────────
