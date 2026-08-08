@@ -177,7 +177,13 @@ defmodule NoizuPromptLinguaWeb.SSOController do
   defp handle_sso_callback(conn, provider_type, attrs) do
     case NoizuPromptLingua.Auth.SSO.authenticate_sso(provider_type, attrs) do
       {:ok, session} ->
-        user = resolve_user_from_session(session)
+        # authenticate_sso returns the freshly-inserted schema struct with
+        # :user not loaded; re-fetch the entity (as register/2 and exchange/2
+        # do) so resolve_user_from_session/1 has a resolvable user.
+        {:ok, loaded} =
+          NoizuPromptLingua.Users.Sessions.get(session.id, Noizu.Context.system(), [])
+
+        user = resolve_user_from_session(loaded)
         conn = put_session(conn, :oauth_user_id, user.id)
 
         # If this login was started from MCP OAuth authorize, resume that flow
