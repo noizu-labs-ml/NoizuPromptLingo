@@ -1,12 +1,12 @@
 name: CI
 
 # Build on native amd64 (colo target), validate, push sha-tagged images, bump
-# the chart — ArgoCD (app "npl-mcp") rolls it out from mono-repo-dev.
+# the chart — ArgoCD (app "npl-mcp") rolls it out from main.
 # Pattern: therobotlearns.com/.github/workflows/ci.yml
 
 on:
   push:
-    branches: [mono-repo-dev]
+    branches: [main]
   pull_request:
 
 concurrency:
@@ -89,7 +89,7 @@ jobs:
 
   build-push:
     needs: [test-backend, test-frontend]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/mono-repo-dev'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
