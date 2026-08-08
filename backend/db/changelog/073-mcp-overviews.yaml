@@ -1,0 +1,118 @@
+databaseChangeLog:
+  # mcp_overview (design spec §5): task-proximity tailored overviews backed by
+  # postgres/pgvector. Two tables:
+  #   * mcp_overviews    — cached, reviewable per-task overviews (task_embedding).
+  #   * mcp_tool_vectors — per-tool description embeddings used to FOCUS a freshly
+  #                        generated overview (near tools get depth, far tools a line).
+  #
+  # DIVERGENCE (explicit instruction 2026-07-16): vectors here live in postgres
+  # (pgvector), NOT Weaviate — contra Domains.Memory.VectorStore and the "no pgvector"
+  # notes in changelogs 046/048. See docs/arch/mcp-description-tailoring-and-packaging.md §5.
+  #
+  # vector(1536) is expressed via raw `sql` changesets: the Liquibase YAML column
+  # model has no native `vector` type, so the DDL is passed through verbatim (the
+  # dimension matches the OpenAI text-embedding-3-small path, Domains.Memory.Embeddings).
+  # FK/index/CHECK style follows 071-mcp-scope-packaging.yaml.
+
+  # ── pgvector extension ─────────────────────────────────────────────────────
+  # FLAG (do not solve here): `CREATE EXTENSION vector` requires SUPERUSER (or a
+  # role with the CREATE privilege on the DB where the .so is allow-listed) on the
+  # SHARED platform postgres. On the throwaway test container the extension is
+  # already present and the role is superuser, so this is a no-op. On the deployed
+  # tobor_locker DB this changeset MUST be run by an operator with rights to install
+  # the extension (or the extension pre-created out of band) BEFORE 073b/073c land —
+  # otherwise the `vector(1536)` column DDL below fails. Tracked as an infra
+  # prerequisite in the design spec's open questions (#4).
+  - changeSet:
+      id: 073a-create-vector-extension
+      author: tobor-locker
+      comment: >-
+        Requires superuser on the shared postgres. Idempotent; pre-create the
+        extension out of band if the migration role lacks install rights.
+      preConditions:
+        - onFail: MARK_RAN
+        - onFailMessage: >-
+            pgvector `vector` extension is not installed and could not be created —
+            an operator with superuser rights must run `CREATE EXTENSION vector`
+            on the tobor_locker DB before 073b/073c (mcp_overview) can apply.
+        - or:
+            - sqlCheck:
+                expectedResult: "1"
+                sql: SELECT count(*) FROM pg_extension WHERE extname = 'vector'
+            - sqlCheck:
+                expectedResult: "1"
+                sql: SELECT count(*) FROM pg_available_extensions WHERE name = 'vector'
+      changes:
+        - sql:
+            sql: CREATE EXTENSION IF NOT EXISTS vector;
+      rollback:
+        # Intentionally NOT dropping the extension on rollback: other objects may
+        # come to depend on it, and DROP EXTENSION is also superuser-gated.
+        - sql:
+            sql: SELECT 1;
+
+  # ── mcp_overviews ──────────────────────────────────────────────────────────
+  - changeSet:
+      id: 073b-create-mcp-overviews
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE mcp_overviews (
+                id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                scope_slug     varchar(255) NOT NULL,
+                task_text      text NOT NULL,
+                task_embedding vector(1536),
+                overview_md    text NOT NULL,
+                runner         varchar(255),
+                model          varchar(255),
+                verbosity      integer,
+                status         varchar(20) NOT NULL DEFAULT 'generated'
+                                 CHECK (status IN ('generated', 'approved', 'rejected')),
+                inserted_at    timestamptz NOT NULL DEFAULT now(),
+                updated_at     timestamptz NOT NULL DEFAULT now()
+              );
+        - createIndex:
+            indexName: idx_mcp_overviews_scope_status
+            tableName: mcp_overviews
+            columns:
+              - column:
+                  name: scope_slug
+              - column:
+                  name: status
+      rollback:
+        - dropTable:
+            tableName: mcp_overviews
+
+  # ── mcp_tool_vectors ───────────────────────────────────────────────────────
+  - changeSet:
+      id: 073c-create-mcp-tool-vectors
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE mcp_tool_vectors (
+                id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                scope_slug       varchar(255) NOT NULL,
+                group_id         varchar(255) NOT NULL,
+                tool_name        varchar(255) NOT NULL,
+                verbosity        integer,
+                description_hash varchar(64) NOT NULL,
+                embedding        vector(1536),
+                inserted_at      timestamptz NOT NULL DEFAULT now(),
+                updated_at       timestamptz NOT NULL DEFAULT now()
+              );
+        - sql:
+            sql: |
+              ALTER TABLE mcp_tool_vectors
+                ADD CONSTRAINT uq_mcp_tool_vectors_scope_tool_hash
+                UNIQUE (scope_slug, tool_name, description_hash);
+        - createIndex:
+            indexName: idx_mcp_tool_vectors_scope
+            tableName: mcp_tool_vectors
+            columns:
+              - column:
+                  name: scope_slug
+      rollback:
+        - dropTable:
+            tableName: mcp_tool_vectors

@@ -1,0 +1,88 @@
+schema: "0.4"
+id: npl-prism-46-campaigns-ad-groups
+type: image
+quality: high
+
+# NoizuPromptLingo creative suite — Campaigns & Ad Groups: campaign/ad-group
+# management with LLM-generated ad copy (approve/reject), landing-page generation,
+# and domain tracking.
+# Theme tenets: luminous frosted glass, cool violet→cyan spectrum gradient, Sora
+# geometric type, 16px radius; data tables stay on a solid surface for legibility.
+# Palette: violet #7c3aed, cyan #06b6d4, fuchsia #d946ef, canvas #f7f8ff, ink #1a1730.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a
+    PREMIUM marketing-campaign workspace inside a modern AI product. Polished,
+    energetic, composed — a growth operator's cockpit. Frosted-glass cards and panels
+    float over a pale spectrum mesh; primary generate actions carry the signature
+    violet→cyan gradient; but dense data (a domain table) sits on a solid, non-glass
+    surface for legibility. Clean geometric sans-serif (Sora), no serif.
+  text: |
+    A 16:9 high-fidelity UI mockup of the CAMPAIGNS & AD GROUPS screen of
+    NoizuPromptLingo's creative suite.
+
+    OVERALL LAYOUT (three regions): a slim LEFT app nav rail (achromatic glass), a
+    CENTER campaign detail column (dominant), and a RIGHT column with ad-copy and
+    landing-page panels — over a pale near-white canvas (#f7f8ff) with a soft blurred
+    violet/cyan spectrum mesh glowing through the glass.
+
+    HEADER BAND: "Campaigns" title in Sora 700 with a campaign-name breadcrumb, and a
+    "New campaign" primary button (violet→cyan gradient, soft glow) at the right.
+
+    CAMPAIGN CARD (center top): a frosted-glass card, 16px radius, gradient-sheen edge,
+    violet-tinted shadow — campaign name in Sora 600, metadata chips (status, budget,
+    dates as pills), and a nested AD GROUP PANEL inside it: a lighter inset glass block
+    listing 2–3 ad groups with small counts, one selected with a subtle violet edge glow.
+
+    RIGHT TOP — AD COPY VARIANT LIST: a glass panel titled "Ad copy" showing 3 generated
+    copy CANDIDATES, each a small glass row with a headline + description line and a
+    paired APPROVE / REJECT control (green ✓ / muted ✕). One variant shows an "approved"
+    flat emerald chip (opaque, never gradient).
+
+    RIGHT LOWER — LANDING PAGE DRAFT PREVIEW: a glass card with a small rendered
+    mini-webpage thumbnail (a generated landing page) behind a subtle gradient frame,
+    a "Draft" pill, and a "Preview" glass button.
+
+    CENTER LOWER — DOMAIN TRACKING TABLE: deliberately a SOLID (non-glass) surface card
+    for legibility — a clean opaque white table with columns Domain / Status / Added, a
+    few rows of real domain names, quiet hairline row rules, and small status dots. This
+    data grid opts out of translucency on purpose; only its header accent is a thin
+    gradient underline.
+
+    PALETTE & TYPE: cool near-white canvas + soft spectrum mesh; ink #1a1730 text; the
+    violet(#7c3aed)→cyan(#06b6d4) gradient only on the primary "New campaign" button and
+    glass-card edges; approvals/status are flat opaque semantic chips (emerald/amber).
+    Sora everywhere, no serif.
+
+    SHAPE & SURFACE: 16px radius on cards, pill chips, translucent frosted glass with
+    backdrop blur and gradient-sheen edges for presentation panels — but the domain
+    table is a solid opaque surface. Violet-tinted soft shadows; luminous, premium.
+
+    MOOD: premium, energetic, organized. A growth operator's creative cockpit — glassy
+    and colorful where it presents, solid and legible where it tabulates.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, gradient body text, gradient status chips, rainbow tie-dye buttons, a data table rendered as unreadable translucent glass, neon-on-black cyberpunk"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches key components — Campaign Card with nested Ad Group Panel, Ad Copy Variant List with approve/reject, Landing Page Draft Preview, Domain Tracking Table"}
+    theme_fidelity: {weight: 3, description: "Prism frosted glass over a spectrum mesh, violet→cyan gradient on primary action/edges only, flat opaque semantic chips, Sora type, 16px radius; the data table correctly opts out of glass to a solid surface"}
+    composition: {weight: 2, description: "Clear hierarchy across campaign/ad-copy/landing/domain regions, plausible real-product layout, comfortable density"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, legible table text, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+    - "the domain data table rendered as low-legibility translucent glass"
+    - "gradient status chips, gradient body text, or rainbow chrome"
+
+tags: [npl-prism, NoizuPromptLingo, screen-mockup, creative-suite]

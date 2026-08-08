@@ -1,0 +1,90 @@
+schema: "0.4"
+id: npl-prism-34-creative-assets-pipeline
+type: image
+quality: high
+
+# NoizuPromptLingo creative suite — Creative Assets Pipeline: generate, regenerate,
+# accept/reject, and publish AI-generated creative assets, with bulk jobs queued and
+# rate-limited.
+# Theme tenets: luminous frosted glass, cool violet→cyan spectrum gradient, Sora
+# geometric type, generous 16px radius; data-dense controls stay legible on glass.
+# Palette: violet #7c3aed, cyan #06b6d4, fuchsia #d946ef, canvas #f7f8ff, ink #1a1730.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a
+    PREMIUM creative-generation workspace inside a modern AI product. The register is
+    polished and energetic but composed — a creative operator's tool, not a toy.
+    Frosted-glass cards float over a pale spectrum mesh; the primary generate/publish
+    actions carry the signature violet→cyan gradient. Clean geometric sans-serif (Sora)
+    throughout, no serif. Comfortable density: a few large glass cards, room to breathe.
+  text: |
+    A 16:9 high-fidelity UI mockup of the CREATIVE ASSETS PIPELINE screen of
+    NoizuPromptLingo's creative suite (route /app/[orgId]/assets).
+
+    OVERALL LAYOUT (three bands): a slim LEFT app nav rail (achromatic glass icons,
+    secondary), a dominant CENTER work area, and a RIGHT ~320px BULK QUEUE panel — all
+    over a pale near-white canvas (#f7f8ff) with a soft blurred violet/cyan spectrum
+    mesh glowing through the glass surfaces.
+
+    HEADER BAND (top of center): screen title "Creative Assets" in Sora 700, an org
+    breadcrumb, and a primary "Generate" button with a violet→cyan gradient fill and
+    soft glow at the right.
+
+    ASSET GENERATION CARD (center, the hero surface): a large frosted-glass card, 16px
+    radius, 1px gradient-sheen edge, violet-tinted soft shadow. Top of the card = a
+    PROMPT / PARAMETERS input area: a glass text field (translucent with an opaque inner
+    backing behind the text for legibility) holding a real creative prompt, plus a small
+    row of parameter chips (aspect, style, count) as pills. Below = a GENERATED OUTPUT
+    PREVIEW: a large rendered image thumbnail with a subtle gradient frame. Under the
+    preview, an ACCEPT / REJECT CONTROL (a green ✓ Accept and a muted ✕ Reject as paired
+    buttons), a glass "Regenerate" secondary button, and a prominent "Publish active
+    output" button (violet→cyan gradient) that marks the accepted candidate as published.
+    Show a small "Published" state chip (flat emerald #10b981, opaque, never gradient) on
+    one candidate.
+
+    A second, smaller asset card peeks below/beside it to imply a scrollable list of
+    asset slots, each its own glass card.
+
+    RIGHT — BULK GENERATION QUEUE PANEL: a frosted glass panel titled "Bulk queue" with
+    a vertical list of job rows, each showing a small status pill — "running" (flat
+    violet), "queued" (muted glass), and one "rate-limited" (flat amber #f59e0b with a
+    small clock glyph) — plus a thin progress bar and a job label. A muted line notes
+    "throttled to org limit". Semantics are flat opaque chips, never gradient.
+
+    PALETTE & TYPE: cool near-white canvas + soft spectrum mesh; ink #1a1730 text; the
+    signature violet(#7c3aed)→cyan(#06b6d4) gradient only on the Generate / Publish
+    buttons and glass-card edges; status uses flat opaque semantic chips (emerald/amber).
+    Sora everywhere, no serif; mono only if an ID or generation seed is shown.
+
+    SHAPE & SURFACE: 16px card radius, 12px on small controls, pill chips; translucent
+    frosted surfaces with backdrop blur, gradient-sheen borders, violet-tinted soft
+    shadows; the mesh glows through. Comfortable, premium, luminous.
+
+    MOOD: premium, creative, energetic-but-calm. A tool a growth/creative operator lives
+    in — color in gradient and glass, legibility never sacrificed to the material.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, gradient body text, gradient status chips, rainbow tie-dye buttons, neon-on-black cyberpunk, scanlines"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches the pipeline's key components — Asset Generation Card with prompt input + output preview, Accept/Reject control, Regenerate + Publish buttons, right-side Bulk Generation Queue with queued/running/rate-limited jobs"}
+    theme_fidelity: {weight: 3, description: "Prism frosted glass over a spectrum mesh, violet→cyan gradient on primary actions/edges only, flat opaque semantic status chips, Sora type, 16px radius — not generic gray SaaS defaults"}
+    composition: {weight: 2, description: "Clear hierarchy, comfortable creative-suite density, plausible real-product layout"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, legible small text on glass, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+    - "gradient status chips or gradient body text"
+    - "flat monochrome gray console with no color or glass"
+
+tags: [npl-prism, NoizuPromptLingo, screen-mockup, creative-suite]

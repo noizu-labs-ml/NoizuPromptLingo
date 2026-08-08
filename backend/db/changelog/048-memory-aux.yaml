@@ -1,0 +1,76 @@
+databaseChangeLog:
+  - changeSet:
+      id: 048-create-table-memory-compartments
+      author: npl-memory
+      changes:
+        - sql:
+            splitStatements: false
+            sql: |
+              CREATE TABLE memory_compartments (
+                id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+                scope_type      memory_scope_type NOT NULL,
+                scope_id        uuid NOT NULL,
+                slug            text NOT NULL,
+                classification  memory_classification NOT NULL DEFAULT 'open',
+                settings        jsonb NOT NULL DEFAULT '{}',
+                inserted_at     timestamptz NOT NULL DEFAULT now(),
+                updated_at      timestamptz NOT NULL DEFAULT now(),
+                CONSTRAINT uq_compartment UNIQUE (organization_id, scope_type, scope_id, slug)
+              );
+      rollback:
+        - dropTable:
+            tableName: memory_compartments
+
+  - changeSet:
+      id: 048-create-table-memory-agent-state
+      author: npl-memory
+      changes:
+        - sql:
+            splitStatements: false
+            sql: |
+              CREATE TABLE memory_agent_state (
+                organization_id     uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+                scope_type          memory_scope_type NOT NULL,
+                scope_id            uuid NOT NULL,
+                status              text NOT NULL DEFAULT 'active',
+                -- 7-d emotional state stored as a float array (no pgvector).
+                current_emotional   real[],
+                baseline_emotional  real[],
+                current_bucket      text,
+                last_bucket_refresh timestamptz,
+                metrics             jsonb NOT NULL DEFAULT '{}',
+                inserted_at         timestamptz NOT NULL DEFAULT now(),
+                updated_at          timestamptz NOT NULL DEFAULT now(),
+                CONSTRAINT pk_memory_agent_state PRIMARY KEY (organization_id, scope_type, scope_id)
+              );
+      rollback:
+        - dropTable:
+            tableName: memory_agent_state
+
+  - changeSet:
+      id: 048-create-table-memory-quarantine
+      author: npl-memory
+      changes:
+        - sql:
+            splitStatements: false
+            sql: |
+              CREATE TABLE memory_quarantine (
+                id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                memory_id       uuid REFERENCES memories(id) ON DELETE SET NULL,
+                organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+                scope_type      memory_scope_type NOT NULL,
+                scope_id        uuid NOT NULL,
+                reason          text NOT NULL,
+                payload         jsonb NOT NULL DEFAULT '{}',
+                resolved        boolean NOT NULL DEFAULT false,
+                inserted_at     timestamptz NOT NULL DEFAULT now(),
+                updated_at      timestamptz NOT NULL DEFAULT now()
+              );
+
+              CREATE INDEX idx_quarantine_unresolved
+                ON memory_quarantine (organization_id, scope_type, scope_id)
+                WHERE resolved = false;
+      rollback:
+        - dropTable:
+            tableName: memory_quarantine

@@ -1,0 +1,205 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "npl-mcp.fullname" . }}
+  labels:
+    {{- include "npl-mcp.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicas }}
+  {{- end }}
+  {{- with .Values.deployment.strategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "npl-mcp.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "npl-mcp.selectorLabels" . | nindent 8 }}
+    spec:
+      imagePullSecrets:
+        - name: ops-registry-secret
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: backend
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          ports:
+            - name: mcp
+              containerPort: {{ .Values.backend.port }}
+              protocol: TCP
+          env:
+            - name: MIX_ENV
+              value: prod
+            - name: PHX_SERVER
+              value: "true"
+            - name: PORT
+              value: {{ .Values.backend.port | quote }}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: DATABASE_URL
+            {{- /* Shared pm_core — always-on mode (docs/pm-core-cutover.md). */}}
+            {{- if .Values.pmCore }}
+            - name: PM_CORE_ENABLED
+              value: {{ if hasKey .Values.pmCore "enabled" }}{{ .Values.pmCore.enabled | quote }}{{ else }}"true"{{ end }}
+            {{- if and .Values.pmCore.secretName .Values.pmCore.databaseUrlKey }}
+            - name: PM_CORE_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.pmCore.secretName | quote }}
+                  key: {{ .Values.pmCore.databaseUrlKey | quote }}
+            {{- end }}
+            {{- end }}
+            - name: SECRET_KEY_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: SECRET_KEY_BASE
+            - name: GUARDIAN_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: GUARDIAN_SECRET_KEY
+            # MCP OAuth AS (JWKS signing + issuer URL). Keys live in npl-mcp-secrets
+            # via Infisical /apps/npl-mcp (see .infisical-secrets.yaml id:npl-mcp).
+            # optional until MCP_JWT_PRIVATE_KEY is populated in Infisical; without
+            # it the app uses an ephemeral RSA key (fine for single-replica only).
+            - name: MCP_JWT_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: MCP_JWT_PRIVATE_KEY
+                  optional: true
+            - name: MCP_JWT_KID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: MCP_JWT_KID
+                  optional: true
+            - name: MCP_ISSUER_URL
+              value: {{ ((.Values.backend.mcp).issuerUrl) | default (printf "https://%s" .Values.domain) | quote }}
+            - name: MCP_PDP_MODE
+              value: {{ ((.Values.backend.mcp).pdpMode) | default "local" | quote }}
+            - name: MCP_API_KEY_MINT_ENABLED
+              value: {{ ((.Values.backend.mcp).apiKeyMintEnabled) | default true | quote }}
+            - name: MCP_ELEVATION_ENABLED
+              value: {{ ((.Values.backend.mcp).elevationEnabled) | default true | quote }}
+            {{- if ((.Values.backend.mcp).spicedbHttpEndpoint) }}
+            - name: SPICEDB_HTTP_ENDPOINT
+              value: {{ .Values.backend.mcp.spicedbHttpEndpoint | quote }}
+            {{- end }}
+            {{- if ((.Values.backend.mcp).spicedbPresharedKeySecretKey) }}
+            - name: SPICEDB_PRESHARED_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: {{ .Values.backend.mcp.spicedbPresharedKeySecretKey | quote }}
+                  optional: true
+            {{- end }}
+            # Host/redirect targets — without PHX_HOST the backend defaults to
+            # example.com and the OIDC redirect_uri + SPA redirect break.
+            - name: PHX_HOST
+              value: {{ .Values.domain | quote }}
+            - name: FRONTEND_URL
+              value: "https://{{ .Values.domain }}"
+            # Authentik OIDC (SSOController :oidc_init / :oidc_callback). Reuses the
+            # AUTHENTIK_* secret values under the OIDC_* names runtime.exs expects.
+            - name: OIDC_ISSUER
+              value: {{ .Values.backend.oidc.issuer | quote }}
+            - name: OIDC_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: AUTHENTIK_CLIENT_ID
+            - name: OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: AUTHENTIK_CLIENT_SECRET
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.backend.probes.liveness.path }}
+              port: mcp
+            initialDelaySeconds: {{ .Values.backend.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.backend.probes.liveness.periodSeconds }}
+            failureThreshold: {{ .Values.backend.probes.liveness.failureThreshold }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.backend.probes.readiness.path }}
+              port: mcp
+            initialDelaySeconds: {{ .Values.backend.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.backend.probes.readiness.periodSeconds }}
+            failureThreshold: {{ .Values.backend.probes.readiness.failureThreshold }}
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+
+        - name: frontend
+          image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.frontend.port }}
+              protocol: TCP
+          env:
+            - name: BACKEND_URL
+              value: "http://localhost:{{ .Values.backend.port }}"
+            - name: AUTH_URL
+              value: "https://{{ .Values.domain }}"
+            - name: AUTH_TRUST_HOST
+              value: "true"
+            - name: AUTHENTIK_ISSUER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: AUTHENTIK_ISSUER
+                  optional: true
+            - name: AUTHENTIK_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: AUTHENTIK_CLIENT_ID
+                  optional: true
+            - name: AUTHENTIK_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: AUTHENTIK_CLIENT_SECRET
+                  optional: true
+            - name: AUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: AUTH_SECRET
+                  optional: true
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.frontend.probes.liveness.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.frontend.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.frontend.probes.liveness.periodSeconds }}
+            failureThreshold: {{ .Values.frontend.probes.liveness.failureThreshold }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.frontend.probes.readiness.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.frontend.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.frontend.probes.readiness.periodSeconds }}
+            failureThreshold: {{ .Values.frontend.probes.readiness.failureThreshold }}
+          resources:
+            {{- toYaml .Values.frontend.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL

@@ -1,0 +1,65 @@
+# ═══════════════════════════════════════════════════════════════
+# NPL — Blueprint · seed deltas over theme-style-guide (treatise §3/§4/§6).
+# Only the seeds this theme pins; everything else rides the base cascade.
+#
+# ACCENT-SLOT NAMING (same convention as the shipped siblings): the cascade's
+# accent slots are brand-red / brand-blue / brand-yellow — the PRIMARY /
+# SECONDARY / TERTIARY slots, NOT bare red/blue/yellow (those are a silent
+# no-op — the base doesn't wire them as accent-driving keys). Their VALUES
+# here are Blueprint's drafting palette, not their color names:
+#   brand-red    = blueprint blue  #245ea8  (PRIMARY — the structure/action voice)
+#   brand-blue   = drafting cyan   #0e9bd6  (SECONDARY — thin rules / highlights)
+#   brand-yellow = redline         #c05a3e  (TERTIARY — markup / attention only)
+#
+# SEED TRAP: the base pins each -light sibling to a color-mix() with the OLD
+# literal Bauhaus hex hard-coded inside it (e.g. `#e20613`), NOT var(--brand-*).
+# Overriding brand-red alone would leave the tint on Bauhaus red, so every
+# -light below is re-pointed to read var(--brand-*) and track the override.
+# (The deeper DARK-mode leak is handled in style-guide.scoped-vars.yaml.)
+# ═══════════════════════════════════════════════════════════════
+
+vars:
+  groups:
+    # ── Surfaces ── §3 neutrals: pale cool drafting sheet + dark navy ink.
+    # These two seeds tint the whole generated gray ramp ~4% toward blue
+    # (treatise §3 "cool-tinted, not pure gray" — what separates Blueprint
+    # from Minimal's pure monochrome).
+    - name: Surfaces
+      vars:
+        white: "#f5f8fc"   # pale cool sheet (canvas) — ~213° at very low saturation
+        black: "#14263f"   # dark navy ink — reads as drafting ink, not pure black
+
+    # ── Primaries ── §3 accents: cool drafting palette, blueprint-blue dominant,
+    # a single warm redline counterpoint (the "red pencil on a blue drawing").
+    - name: Primaries - Drafting Palette
+      vars:
+        brand-red: "#245ea8"     # PRIMARY accent — blueprint blue (~213°); ~6:1 on sheet (body-safe)
+        brand-red-light: "color-mix(in srgb, var(--brand-red) 70%, var(--surface))"
+        brand-blue: "#0e9bd6"    # SECONDARY accent — drafting cyan (~196°); RULES/large-UI only (~3:1, never body)
+        brand-blue-light: "color-mix(in srgb, var(--brand-blue) 70%, var(--surface))"
+        brand-yellow: "#c05a3e"  # TERTIARY accent — redline (~14°); markup rule + tint only (~4.1:1 on sheet, NOT small body text)
+        brand-yellow-light: "color-mix(in srgb, var(--brand-yellow) 70%, var(--surface))"
+
+    # ── Semantic ── §3/§9: technical + distinct. `info` ≡ primary blueprint blue
+    # by design ("info" and "structure" share the blue). `error` drafting-red is
+    # kept cleanly distinct from the more orange/earthy redline accent above.
+    - name: Semantic
+      vars:
+        success: "#2e8b6f"   # teal-green — large-text / icon (pair a glyph)
+        warning: "#c98a2b"   # ochre-amber — large-text / icon (pair a glyph)
+        error: "#bd3b34"     # drafting red — ~5.1:1 on sheet, body-safe; distinct from redline
+        info: "#245ea8"      # blueprint blue — ≡ primary accent (correct here)
+
+    # ── Typography ── §4: IBM Plex Sans for UI/body; IBM Plex Mono as a co-lead
+    # for every precise value — coordinates, policy IDs, scope paths, schema
+    # field names, callout labels. Mono-forward wherever a value is exact.
+    - name: Typography
+      vars:
+        font-sans: "'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif"
+        font-mono: "'IBM Plex Mono', 'Menlo', monospace"
+
+    # ── Shape ── §6: near-square 2px — "drawn," not "stamped" (not Brutalist 0,
+    # not friendly 6px). The cheapest strong signal for precision.
+    - name: Shape
+      vars:
+        radius: "2px"

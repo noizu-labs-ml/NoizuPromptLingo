@@ -1,77 +1,65 @@
-networks:
-  npl-network:
-    driver: bridge
-    name: npl-network
+# Per-project compose — nginx → frontend + backend
+# Connects to shared PG/Redis via external lets-go_default network
+#
+# Images are built by `make build` — this file only runs them.
+# Usage:
+#   make init    — generate .env with secrets + credentials
+#   make build   — build all images
+#   make run     — start containers
 
 services:
-  npl-timescaledb:
-    image: timescale/timescaledb:2.24.0-pg17
-    container_name: npl-timescaledb
-    restart: unless-stopped
+  migrations:
+    build:
+      context: ./backend/db
+      dockerfile: Dockerfile
+    env_file: .env
     networks:
-      - npl-network
-    ports:
-      - "${NPL_DB_PORT:-5432}:5432"
-    environment:
-      POSTGRES_DB: ${NPL_DB_NAME:-npl}
-      POSTGRES_USER: ${NPL_DB_USER:-npl}
-      POSTGRES_PASSWORD: ${NPL_DB_PASSWORD:-npl_secret}
-    volumes:
-      - npl-timescaledb-data:/var/lib/postgresql/data
-      - ./docker/postgres-init:/docker-entrypoint-initdb.d:ro
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${NPL_DB_USER:-npl} -d ${NPL_DB_NAME:-npl}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - infra
+    restart: "no"
 
-  npl-valkey:
-    image: valkey/valkey:8.1
-    container_name: npl-valkey
-    restart: unless-stopped
-    networks:
-      - npl-network
+  nginx:
+    image: ${REGISTRY:-ops.noizu.com}/${IMAGE_NS:-start-app}/nginx:${TAG:-latest}
     ports:
-      - "${NPL_VALKEY_PORT:-6379}:6379"
-    command: valkey-server
-    volumes:
-      - npl-valkey-data:/data
-    healthcheck:
-      test: ["CMD", "valkey-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  npl-mcp:
-    build: .
-    container_name: npl-mcp
-    restart: unless-stopped
-    networks:
-      - npl-network
-    ports:
-      - "${NPL_MCP_PORT:-8765}:8765"
-    environment:
-      NPL_DB_HOST: npl-timescaledb
-      NPL_DB_PORT: 5432
-      NPL_DB_NAME: ${NPL_DB_NAME:-npl}
-      NPL_DB_USER: ${NPL_DB_USER:-npl}
-      NPL_DB_PASSWORD: ${NPL_DB_PASSWORD:-npl_secret}
-      NPL_VALKEY_HOST: npl-valkey
-      NPL_VALKEY_PORT: 6379
+      - "${PORT:-8080}:80"
     depends_on:
-      npl-timescaledb:
-        condition: service_healthy
-      npl-valkey:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:8765/api/health/ping"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
+      - backend
+      - frontend
+    networks:
+      - app
+    restart: unless-stopped
 
-volumes:
-  npl-timescaledb-data:
-    name: npl-timescaledb-data
-  npl-valkey-data:
-    name: npl-valkey-data
+  backend:
+    image: ${REGISTRY:-ops.noizu.com}/${IMAGE_NS:-start-app}/backend:${TAG:-latest}
+    env_file: .env
+    environment:
+      PHX_SERVER: "true"
+      PORT: "4000"
+    expose:
+      - "4000"
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+    networks:
+      - app
+      - infra
+    restart: unless-stopped
+
+  frontend:
+    image: ${REGISTRY:-ops.noizu.com}/${IMAGE_NS:-start-app}/frontend:${TAG:-latest}
+    environment:
+      PORT: "3000"
+    expose:
+      - "3000"
+    depends_on:
+      - backend
+    networks:
+      - app
+    restart: unless-stopped
+
+networks:
+  app:
+    # Project-internal network — nginx, frontend, backend can see each other
+    # but are isolated from other projects' services
+  infra:
+    external: true
+    name: lets-go_default

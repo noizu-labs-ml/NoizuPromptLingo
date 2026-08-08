@@ -1,0 +1,147 @@
+databaseChangeLog:
+  # PubSub channels — named, org-scoped channels that agents publish to and
+  # follow. A followed channel surfaces an AVAILABILITY POINTER in the
+  # follower's notification inbox (kind `pubsub_available`, coalesced per
+  # channel via dedup_key) that remains until the messages are viewed/acked.
+  # The channel message log itself is fetched on demand.
+  #
+  # Each message draws a strictly increasing `seq` from a dedicated sequence
+  # (npl_pubsub_messages_seq) so followers can track read progress with a
+  # cursor (last_acked_seq / last_viewed_seq), mirroring the agent-pipe cursor
+  # pattern. Postgres DEFAULT nextval(...) assigns seq server-side; the schema
+  # reads it back via read_after_writes.
+
+  - changeSet:
+      id: create-sequence-pubsub-messages-seq
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE SEQUENCE IF NOT EXISTS npl_pubsub_messages_seq;
+      rollback:
+        - sql:
+            sql: |
+              DROP SEQUENCE IF EXISTS npl_pubsub_messages_seq;
+
+  - changeSet:
+      id: create-table-pubsub-channels
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE npl_pubsub_channels (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+                project_id uuid REFERENCES projects(id) ON DELETE SET NULL,
+                slug varchar(255) NOT NULL,
+                name varchar(255) NOT NULL,
+                settings jsonb NOT NULL DEFAULT '{}',
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: npl_pubsub_channels
+
+  - changeSet:
+      id: create-indexes-pubsub-channels
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_pubsub_channels_org_slug
+            tableName: npl_pubsub_channels
+            unique: true
+            columns:
+              - column:
+                  name: organization_id
+              - column:
+                  name: slug
+        - createIndex:
+            indexName: idx_pubsub_channels_org
+            tableName: npl_pubsub_channels
+            columns:
+              - column:
+                  name: organization_id
+      rollback:
+        - dropIndex:
+            indexName: idx_pubsub_channels_org_slug
+        - dropIndex:
+            indexName: idx_pubsub_channels_org
+
+  - changeSet:
+      id: create-table-pubsub-messages
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE npl_pubsub_messages (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                channel_id uuid NOT NULL REFERENCES npl_pubsub_channels(id) ON DELETE CASCADE,
+                sender varchar(255) NOT NULL,
+                body text NOT NULL,
+                seq bigint NOT NULL DEFAULT nextval('npl_pubsub_messages_seq'),
+                inserted_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: npl_pubsub_messages
+
+  - changeSet:
+      id: create-indexes-pubsub-messages
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_pubsub_messages_channel_seq
+            tableName: npl_pubsub_messages
+            columns:
+              - column:
+                  name: channel_id
+              - column:
+                  name: seq
+      rollback:
+        - dropIndex:
+            indexName: idx_pubsub_messages_channel_seq
+
+  - changeSet:
+      id: create-table-pubsub-follows
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE npl_pubsub_follows (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                channel_id uuid NOT NULL REFERENCES npl_pubsub_channels(id) ON DELETE CASCADE,
+                persona varchar(255) NOT NULL,
+                last_acked_seq bigint NOT NULL DEFAULT 0,
+                last_viewed_seq bigint NOT NULL DEFAULT 0,
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: npl_pubsub_follows
+
+  - changeSet:
+      id: create-indexes-pubsub-follows
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_pubsub_follows_channel_persona
+            tableName: npl_pubsub_follows
+            unique: true
+            columns:
+              - column:
+                  name: channel_id
+              - column:
+                  name: persona
+        - createIndex:
+            indexName: idx_pubsub_follows_persona
+            tableName: npl_pubsub_follows
+            columns:
+              - column:
+                  name: persona
+      rollback:
+        - dropIndex:
+            indexName: idx_pubsub_follows_channel_persona
+        - dropIndex:
+            indexName: idx_pubsub_follows_persona

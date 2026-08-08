@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: 072-session-runner-model
+      author: loom
+      changes:
+        - sql:
+            sql: |
+              -- Sessions carry an optional harness/model the tailored tool
+              -- descriptions target (spec §3). Both are nullable and change
+              -- dynamically mid-session.
+              ALTER TABLE sessions ADD COLUMN model varchar(255);
+              ALTER TABLE sessions ADD COLUMN runner varchar(255);
+      rollback:
+        - sql:
+            sql: |
+              ALTER TABLE sessions DROP COLUMN runner;
+              ALTER TABLE sessions DROP COLUMN model;

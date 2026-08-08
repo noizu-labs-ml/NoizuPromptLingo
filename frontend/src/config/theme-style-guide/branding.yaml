@@ -1,0 +1,8 @@
+name: "NoizuPromptLingo"
+logo-text: "NPL"
+font-url: "https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+intent: "A prompt-definition language presented as a craft document — a spec you read, annotate, and cite."
+perception: "Considered, premium, durable. The authority of a printed standard."
+audience: "Architects and authors who treat prompts as specifications, not throwaway text."
+tone: "Literate, measured, exact. Footnotes welcome."
+keywords: [spec, literate, craft, durable, considered]

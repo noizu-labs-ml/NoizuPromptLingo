@@ -1,0 +1,10 @@
+# syntax=docker/dockerfile:1.7
+FROM node:22-slim
+
+# Dev image: tool base only; node_modules should live on named volumes at runtime.
+
+RUN apt-get update && apt-get install -y --no-install-recommends gettext-base && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+CMD ["npm", "run", "dev"]

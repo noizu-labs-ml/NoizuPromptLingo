@@ -1,0 +1,187 @@
+databaseChangeLog:
+  # Customers domain (tobor-customers): customer/user personas (ICPs) and market
+  # segments — the marketing audience model, distinct from the agent `personas`
+  # domain. Org-scoped (required) with an optional project; slug unique per org.
+  # Also home to the polymorphic ticket_entity_links table that links a ticket to
+  # any non-ticket entity (a customer persona is the first consumer).
+
+  - changeSet:
+      id: 059a-create-table-customer-segments
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE customer_segments (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+                project_id uuid REFERENCES projects(id) ON DELETE SET NULL,
+                slug varchar(255) NOT NULL,
+                name varchar(255) NOT NULL,
+                description text,
+                criteria jsonb DEFAULT '{}'::jsonb,
+                tags text[] DEFAULT '{}',
+                status varchar(255) NOT NULL DEFAULT 'active',
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: customer_segments
+
+  - changeSet:
+      id: 059b-create-indexes-customer-segments
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_customer_segments_org_slug
+            tableName: customer_segments
+            unique: true
+            columns:
+              - column:
+                  name: organization_id
+              - column:
+                  name: slug
+        - createIndex:
+            indexName: idx_customer_segments_project_id
+            tableName: customer_segments
+            columns:
+              - column:
+                  name: project_id
+        - sql:
+            sql: CREATE INDEX idx_customer_segments_tags ON customer_segments USING gin (tags);
+      rollback:
+        - dropIndex:
+            indexName: idx_customer_segments_org_slug
+        - dropIndex:
+            indexName: idx_customer_segments_project_id
+        - sql:
+            sql: DROP INDEX IF EXISTS idx_customer_segments_tags;
+
+  - changeSet:
+      id: 059c-create-table-customer-personas
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE customer_personas (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+                project_id uuid REFERENCES projects(id) ON DELETE SET NULL,
+                segment_id uuid REFERENCES customer_segments(id) ON DELETE SET NULL,
+                slug varchar(255) NOT NULL,
+                name varchar(255) NOT NULL,
+                archetype varchar(255),
+                demographics jsonb DEFAULT '{}'::jsonb,
+                goals text[] DEFAULT '{}',
+                pains text[] DEFAULT '{}',
+                channels text[] DEFAULT '{}',
+                motivations text,
+                objections text,
+                summary text,
+                artifact_id uuid REFERENCES artifacts(id) ON DELETE SET NULL,
+                tags text[] DEFAULT '{}',
+                status varchar(255) NOT NULL DEFAULT 'active',
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: customer_personas
+
+  - changeSet:
+      id: 059d-create-indexes-customer-personas
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_customer_personas_org_slug
+            tableName: customer_personas
+            unique: true
+            columns:
+              - column:
+                  name: organization_id
+              - column:
+                  name: slug
+        - createIndex:
+            indexName: idx_customer_personas_project_id
+            tableName: customer_personas
+            columns:
+              - column:
+                  name: project_id
+        - createIndex:
+            indexName: idx_customer_personas_segment_id
+            tableName: customer_personas
+            columns:
+              - column:
+                  name: segment_id
+        - sql:
+            sql: |
+              CREATE INDEX idx_customer_personas_goals ON customer_personas USING gin (goals);
+              CREATE INDEX idx_customer_personas_pains ON customer_personas USING gin (pains);
+              CREATE INDEX idx_customer_personas_tags ON customer_personas USING gin (tags);
+      rollback:
+        - dropIndex:
+            indexName: idx_customer_personas_org_slug
+        - dropIndex:
+            indexName: idx_customer_personas_project_id
+        - dropIndex:
+            indexName: idx_customer_personas_segment_id
+        - sql:
+            sql: |
+              DROP INDEX IF EXISTS idx_customer_personas_goals;
+              DROP INDEX IF EXISTS idx_customer_personas_pains;
+              DROP INDEX IF EXISTS idx_customer_personas_tags;
+
+  # Polymorphic ticket↔entity link. No FK on entity_id (cross-domain); the link
+  # tool validates the target exists in the app layer. ticket_links (ticket↔ticket)
+  # is left unchanged — this covers ticket↔anything-else (customer_persona,
+  # customer_segment, campaign, keyword, competitor, landing_page, ...).
+  - changeSet:
+      id: 059e-create-table-ticket-entity-links
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE ticket_entity_links (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                ticket_id uuid NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
+                entity_type varchar(64) NOT NULL,
+                entity_id uuid NOT NULL,
+                link_type varchar(64) NOT NULL DEFAULT 'relates_to',
+                metadata jsonb DEFAULT '{}'::jsonb,
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: ticket_entity_links
+
+  - changeSet:
+      id: 059f-create-indexes-ticket-entity-links
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_ticket_entity_links_uniq
+            tableName: ticket_entity_links
+            unique: true
+            columns:
+              - column:
+                  name: ticket_id
+              - column:
+                  name: entity_type
+              - column:
+                  name: entity_id
+              - column:
+                  name: link_type
+        - createIndex:
+            indexName: idx_ticket_entity_links_entity
+            tableName: ticket_entity_links
+            columns:
+              - column:
+                  name: entity_type
+              - column:
+                  name: entity_id
+      rollback:
+        - dropIndex:
+            indexName: idx_ticket_entity_links_uniq
+        - dropIndex:
+            indexName: idx_ticket_entity_links_entity

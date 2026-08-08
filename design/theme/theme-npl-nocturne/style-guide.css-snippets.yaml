@@ -1,0 +1,202 @@
+# NPL — Nocturne component inflections (treatise §6/§7/§8). This facet ACCUMULATES
+# onto the base (unlike vars/color-modes/typography, which replace), so it is the
+# safe home for Nocturne's instrument chrome without clobbering the base's
+# design-sections.
+#
+# SELF-SCOPED: every selector is nested under html[data-design-theme="npl-nocturne"]
+# and the generator emits css-snippet bodies VERBATIM (css-cache.ts:88,95 marks
+# css-snippets self-scoped — it does NOT prefix them for you like the base's
+# structural sections), so a bare selector would bleed into EVERY sibling theme in
+# a combined stylesheet. Every selector below is scoped by hand. --brand-red
+# resolves to phosphor green (#3fb950) and --brand-blue to link cyan (#58a6ff) in
+# this theme after the seed-trap + dark-leak fixes. Green == live/go/primary is
+# reserved — never a decorative fill (§8). No glow, no gradient (§6).
+css-snippets:
+  - name: Nocturne Focus Ring & Motion
+    slug: npl-nocturne-focus-motion
+    title: "Green focus ring + instrument motion tokens (§7/§9)"
+    description: "A 2px phosphor-green focus outline at 2px offset on every focusable element — never removed (treatise §9); green clears 3:1 on all three surface steps (canvas/panel/raised). Pins the two motion durations the treatise names (§7): micro-feedback 100ms, panel 180ms. prefers-reduced-motion collapses transitions and animations to instant (§9: hover lifts survive as instant swaps, the status pulse stops). Self-scoped so it never overrides a sibling theme's focus."
+    target-section: interaction
+    body: |
+      html[data-design-theme="npl-nocturne"] {
+        --motion-micro: 100ms;
+        --motion-panel: 180ms;
+      }
+      html[data-design-theme="npl-nocturne"] :focus-visible {
+        outline: 2px solid var(--brand-red);
+        outline-offset: 2px;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html[data-design-theme="npl-nocturne"] *,
+        html[data-design-theme="npl-nocturne"] *::before,
+        html[data-design-theme="npl-nocturne"] *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+
+  - name: Nocturne Primary Button
+    slug: npl-nocturne-btn-primary
+    title: "Phosphor-green primary button (§8)"
+    description: "The one lit control (treatise §8): a solid phosphor-green fill with near-black label. Black-on-green ≈ 8:1 (clears WCAG AA for normal text and AAA for large), so — unlike a lighter accent — this needs NO darkened fill. 4px radius. Hover brightens the green a touch (no hue shift, no glow — §6 bans glow); active compresses 1px (§7). Green is reserved for go/primary/live; secondary and destructive buttons never use this fill."
+    target-section: buttons
+    body: |
+      html[data-design-theme="npl-nocturne"] .btn-primary,
+      html[data-design-theme="npl-nocturne"] .btn.primary {
+        background: var(--brand-red);
+        color: #010409;
+        border: none;
+        border-radius: var(--radius);
+        font-weight: 500;
+        transition: background var(--motion-micro, 100ms) ease-out,
+                    transform var(--motion-micro, 100ms) ease-out;
+      }
+      html[data-design-theme="npl-nocturne"] .btn-primary:hover,
+      html[data-design-theme="npl-nocturne"] .btn.primary:hover {
+        background: color-mix(in srgb, var(--brand-red) 90%, white);
+      }
+      html[data-design-theme="npl-nocturne"] .btn-primary:active,
+      html[data-design-theme="npl-nocturne"] .btn.primary:active {
+        transform: translateY(1px);
+      }
+      html[data-design-theme="npl-nocturne"] .btn-primary:focus-visible,
+      html[data-design-theme="npl-nocturne"] .btn.primary:focus-visible {
+        outline: 2px solid var(--brand-red);
+        outline-offset: 2px;
+      }
+
+  - name: Nocturne Recessed Input
+    slug: npl-nocturne-input
+    title: "Recessed, mono-default input (§8)"
+    description: "Inputs are cut in one surface step BELOW their panel (the near-black canvas tone), low dark border, 4px radius — 'recessed', not raised (treatise §8). Value / token inputs default to the mono face (mono is a co-equal voice, §4). Focus swaps the border to the green outline."
+    target-section: forms
+    body: |
+      html[data-design-theme="npl-nocturne"] .input,
+      html[data-design-theme="npl-nocturne"] input[type="text"],
+      html[data-design-theme="npl-nocturne"] input[type="search"],
+      html[data-design-theme="npl-nocturne"] textarea {
+        background: var(--black);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        color: var(--text);
+      }
+      html[data-design-theme="npl-nocturne"] .input.mono,
+      html[data-design-theme="npl-nocturne"] input.token,
+      html[data-design-theme="npl-nocturne"] textarea.mono {
+        font-family: var(--font-mono);
+      }
+      html[data-design-theme="npl-nocturne"] .input:focus-visible,
+      html[data-design-theme="npl-nocturne"] input:focus-visible,
+      html[data-design-theme="npl-nocturne"] textarea:focus-visible {
+        outline: 2px solid var(--brand-red);
+        outline-offset: 2px;
+        border-color: var(--brand-red);
+      }
+
+  - name: Nocturne Panel & Live Edge
+    slug: npl-nocturne-panel
+    title: "Surface-step panel + green live-edge (§6/§8)"
+    description: "The workhorse surface (treatise §8): one surface step up from canvas, 4px radius, low dark border, and NO resting shadow — elevation is expressed by surface lightness, not shadow (§6). A running / live panel carries a 2px phosphor-green LEFT edge (a status, not a tinted fill). Hover lifts one surface step (no hue shift)."
+    target-section: cards
+    body: |
+      html[data-design-theme="npl-nocturne"] .card,
+      html[data-design-theme="npl-nocturne"] .panel {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: none;
+        transition: background var(--motion-panel, 180ms) ease-in-out;
+      }
+      html[data-design-theme="npl-nocturne"] .card:hover,
+      html[data-design-theme="npl-nocturne"] .panel:hover {
+        background: var(--surface-alt);
+      }
+      html[data-design-theme="npl-nocturne"] .panel.live,
+      html[data-design-theme="npl-nocturne"] .panel.running,
+      html[data-design-theme="npl-nocturne"] .card.running {
+        border-left: 2px solid var(--brand-red);
+      }
+
+  - name: Nocturne Nav Rail
+    slug: npl-nocturne-nav
+    title: "Rack-and-instrument nav rail (§8)"
+    description: "The sidebar sits on the canvas tone ('the rack'); content sits on the panel tone ('the instrument') — treatise §8. The active nav item is marked by weight (500) plus a 2px phosphor-green left rail, never a filled background."
+    target-section: navigation
+    body: |
+      html[data-design-theme="npl-nocturne"] .nav-rail,
+      html[data-design-theme="npl-nocturne"] .sidebar {
+        background: var(--black);
+        border-right: 1px solid var(--border);
+      }
+      html[data-design-theme="npl-nocturne"] .nav-item.active,
+      html[data-design-theme="npl-nocturne"] .nav-rail a[aria-current="page"] {
+        font-weight: 500;
+        color: var(--text);
+        border-left: 2px solid var(--brand-red);
+        background: transparent;
+      }
+
+  - name: Nocturne Live Status Pulse
+    slug: npl-nocturne-status-pulse
+    title: "Breathing green 'live' status dot (§7)"
+    description: "The single sanctioned expressive beat (treatise §7): a slow phosphor-green pulse (opacity 0.7→1.0, ~1.6s) permitted ONLY on active / running status indicators — the coal breathing. No glow (§6), just opacity. prefers-reduced-motion replaces the pulse with a static lit-green dot (§9). The @keyframes name is namespaced npl-nocturne-* so it cannot collide with a sibling theme's animation."
+    target-section: interaction
+    body: |
+      html[data-design-theme="npl-nocturne"] .status-dot.live,
+      html[data-design-theme="npl-nocturne"] .status-dot.running {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--brand-red);
+        animation: npl-nocturne-live-pulse 1.6s ease-in-out infinite;
+      }
+      @keyframes npl-nocturne-live-pulse {
+        0%, 100% { opacity: 0.7; }
+        50%      { opacity: 1; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html[data-design-theme="npl-nocturne"] .status-dot.live,
+        html[data-design-theme="npl-nocturne"] .status-dot.running {
+          animation: none;
+          opacity: 1;
+        }
+      }
+
+  - name: NPL Token Chip
+    slug: npl-nocturne-token
+    title: "Monospace NPL token / ID chip (§4/§8)"
+    description: "NPL's literal-content pattern in mono (treatise §4: JetBrains Mono is a co-equal voice). A tonal pill one surface step up, 2px radius (small-chip size, §6), for ticket IDs (NPL-142), session IDs, model names, and NPL glyph tokens. Mono is prominent here, not reserved."
+    target-section: typography
+    body: |
+      html[data-design-theme="npl-nocturne"] .npl-token {
+        font-family: var(--font-mono);
+        font-size: 0.85em;
+        padding: 0.1em 0.45em;
+        border-radius: 2px;
+        background: var(--surface-alt);
+        border: 1px solid var(--border);
+        color: var(--text-secondary);
+        white-space: nowrap;
+      }
+
+  - name: Nocturne Log Stream
+    slug: npl-nocturne-log
+    title: "Mono log / stream pane (§4/§5)"
+    description: "The density reference surface (treatise §5: the Agent Memory Browser / Mock MCP LLM Pool monitor). Mono, line-height 1.5 for log readability, ~80ch measure (wider than sibling themes — terminal habit, §4). Recessed on the canvas tone; the pane's mono legibility is protected under width pressure and never shrunk to fit chrome (§5)."
+    target-section: typography
+    body: |
+      html[data-design-theme="npl-nocturne"] .log-stream,
+      html[data-design-theme="npl-nocturne"] .stream-pane {
+        font-family: var(--font-mono);
+        font-size: 0.85rem;
+        line-height: 1.5;
+        max-width: 80ch;
+        background: var(--black);
+        color: var(--text-secondary);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 12px 14px;
+        overflow-x: auto;
+      }

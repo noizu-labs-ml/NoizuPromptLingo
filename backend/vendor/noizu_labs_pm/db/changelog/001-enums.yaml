@@ -1,0 +1,88 @@
+databaseChangeLog:
+  # Enum baseline — consolidated AND widened to the union of both apps so a single
+  # pm_core serves npl + trp without later ALTER TYPE add-value changesets.
+  #   user_status_enum  : +pending (trp)
+  #   role_name_enum    : +lead (npl 053)
+  #   member_type_enum  : +persona (npl 056)
+  #   resource_type_enum: +github_repo (npl scoped_membership validation)
+
+  - changeSet:
+      id: pm-001-enum-status
+      author: noizu-pm
+      changes:
+        - sql:
+            sql: CREATE TYPE status_enum AS ENUM ('active', 'disabled', 'suspended', 'deleted', 'other');
+      rollback:
+        - sql:
+            sql: DROP TYPE IF EXISTS status_enum;
+
+  - changeSet:
+      id: pm-001-enum-user-status
+      author: noizu-pm
+      changes:
+        - sql:
+            sql: CREATE TYPE user_status_enum AS ENUM ('active', 'pending', 'unverified', 'waitlist', 'suspended', 'deleted', 'other');
+      rollback:
+        - sql:
+            sql: DROP TYPE IF EXISTS user_status_enum;
+
+  - changeSet:
+      id: pm-001-enum-user-role
+      author: noizu-pm
+      changes:
+        - sql:
+            sql: CREATE TYPE user_role_enum AS ENUM ('user', 'moderator', 'admin', 'owner', 'service', 'other');
+      rollback:
+        - sql:
+            sql: DROP TYPE IF EXISTS user_role_enum;
+
+  - changeSet:
+      id: pm-001-enum-credential-status
+      author: noizu-pm
+      changes:
+        - sql:
+            sql: CREATE TYPE credential_status_enum AS ENUM ('active', 'disabled', 'suspended', 'deleted', 'other');
+      rollback:
+        - sql:
+            sql: DROP TYPE IF EXISTS credential_status_enum;
+
+  - changeSet:
+      id: pm-001-enum-session-status
+      author: noizu-pm
+      changes:
+        - sql:
+            sql: CREATE TYPE session_status_enum AS ENUM ('active', 'revoked', 'disabled', 'suspended', 'deleted', 'other');
+      rollback:
+        - sql:
+            sql: DROP TYPE IF EXISTS session_status_enum;
+
+  # PBAC enums (widened to the union).
+  - changeSet:
+      id: pm-001-enum-member-type
+      author: noizu-pm
+      changes:
+        - sql:
+            sql: CREATE TYPE member_type_enum AS ENUM ('user', 'group', 'persona');
+      rollback:
+        - sql:
+            sql: DROP TYPE IF EXISTS member_type_enum;
+
+  - changeSet:
+      id: pm-001-enum-resource-type
+      author: noizu-pm
+      changes:
+        - sql:
+            sql: CREATE TYPE resource_type_enum AS ENUM ('organization', 'project', 'github_repo');
+      rollback:
+        - sql:
+            sql: DROP TYPE IF EXISTS resource_type_enum;
+
+  - changeSet:
+      id: pm-001-enum-role-name
+      author: noizu-pm
+      changes:
+        - sql:
+            sql: CREATE TYPE role_name_enum AS ENUM ('owner', 'admin', 'lead', 'member', 'viewer');
+      rollback:
+        - sql:
+            sql: DROP TYPE IF EXISTS role_name_enum;

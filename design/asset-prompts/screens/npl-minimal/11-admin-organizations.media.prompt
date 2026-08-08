@@ -1,0 +1,79 @@
+schema: "0.4"
+id: npl-minimal-11-admin-organizations
+type: image
+quality: high
+
+# NoizuPromptLingo — a structured prompt-definition language + MCP toolchain for building reliable AI agents — platform Admin Organizations screen.
+# Theme tenets: near-monochrome gray canvas, single cool sky-blue accent, pure-gray neutrals (no tint), 6px soft radius, gray hairline borders (never hard rules), one soft shadow only on overlays.
+# Palette: canvas #ffffff, ink #0a0a0b, sky accent #0284c7, hairline #e0e0e0/#bdbdbd, alt #f5f5f5, warning #d97706, error #dc2626.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a
+    barely-there, precise console UI — calm, quietly authoritative, near-monochrome,
+    in the restrained register of Linear / Vercel dashboards (NOT colorful, NOT
+    playful, NOT a marketing page). Humanist sans-serif (Inter) throughout, NO serif.
+    A single cool sky-blue accent carries interactivity; everything else is pure gray.
+    Type and quiet gray hairlines do the hierarchy — no drop shadows at rest, no
+    gradients, no glow. Structure is felt, not shouted.
+  text: |
+    A 16:9 high-fidelity UI mockup of the platform Admin Organizations screen of
+    NoizuPromptLingo, a prompt-engineering and MCP agent-building platform.
+
+    OVERALL LAYOUT (three bands): a slim achromatic LEFT ADMIN NAV RAIL of monochrome
+    line icons (Organizations active); a dominant CENTER table area on a pure-white
+    canvas; and a RIGHT QUICK-VIEW DRAWER slid in over a faint neutral scrim.
+
+    HEADER BAND: a page title "Organizations" in a 600-weight sans with a muted count
+    "342 orgs", and a search input on the right (white field, quiet gray hairline, 6px
+    radius, magnifier glyph, placeholder "Search organizations…").
+
+    ORGANIZATION SEARCH TABLE (center): about fourteen rows with quiet gray hairline
+    separators, NOT boxed cards. Columns: ORG (name + a small monospace key-prefix chip
+    beneath — a quiet gray pill in JetBrains Mono reading "ACME-"), STATUS BADGE (a
+    small pill: most "Active" in quiet gray, one "Trial" in amber with a small dot
+    glyph, one "Suspended" in muted red with a glyph), MEMBERS (a count), CREATED
+    (muted date), and a right-aligned chevron. One row is in a selected state marked by
+    a 1px sky-blue left border and a faint sky-tinted background.
+
+    ORG QUICK-VIEW DRAWER (right, about 340px, the selected row's summary): a white
+    panel with a soft low shadow on its left edge (the only elevation), softly rounded
+    inner elements. It shows the org NAME header, a monospace key-prefix chip, and quiet
+    hairline-separated metadata rows — Plan, Members, Owner, Created, Region — each a
+    muted label with a value. At the bottom a sky-blue text link "View org dashboard →".
+
+    PALETTE & TYPE: near-monochrome — pure white canvas, whisper-cool near-black ink,
+    mid and light pure grays for secondary text and hairlines; one calm cool sky-blue
+    as the only accent (selected row, the link, focus). Status color only where
+    meaningful (amber trial, muted red suspended), always paired with a glyph.
+    Monospace (JetBrains Mono) used only for the literal key-prefix chips; humanist
+    sans-serif (Inter) everywhere else, no serif.
+
+    SHAPE & SURFACE: 6px soft corners; quiet gray hairlines for rows and metadata; flat
+    tonal surfaces, the single soft shadow reserved for the drawer edge.
+
+    MOOD: precise, calm, supportive — a quiet directory an admin scans to investigate a
+    tenant; restraint everywhere, structure felt not shouted.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches the screen's actual layout and key components as specified"}
+    theme_fidelity: {weight: 3, description: "Palette, typography, radius/shape language match the treatise, not generic UI defaults"}
+    composition: {weight: 2, description: "Clear visual hierarchy, plausible real-product layout"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+
+tags: [npl-minimal, NoizuPromptLingo, screen-mockup]

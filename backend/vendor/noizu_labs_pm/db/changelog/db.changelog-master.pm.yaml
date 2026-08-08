@@ -1,0 +1,94 @@
+databaseChangeLog:
+  # ──────────────────────────────────────────────────────────────────────────
+  # noizu_labs_pm — consolidated pm_core schema.
+  #
+  # Single source of truth for the identity spine + work-item tables shared by
+  # npl-mcp (NoizuPromptLingua) and therobotplans. Consolidated from both apps'
+  # Liquibase changelogs with the reconciliations applied:
+  #   • npl `tickets` / `ticket_*` → `items` / `item_*` (one items family).
+  #   • users = npl ∪ trp (role + bio + invite/approval/password/consent/admin);
+  #     user_status_enum widened to add `pending`.
+  #   • projects = npl + trp superset (default_methodology, default_queue_id).
+  #   • polymorphic npl_comments/npl_reactions/nlp_attachments + trp_* → pm_*.
+  #   • PBAC enums widened to their union (role_name +lead, member_type +persona,
+  #     resource_type +github_repo).
+  #   • guardrails: lock_version on projects/items/memberships; BEFORE DELETE
+  #     triggers forcing soft-delete on the shared core tables.
+  # Every CREATE is guarded by a table-exists precondition so the same changelog
+  # can (re)build a fresh pm_core or adopt tables migrated in from either app.
+  # ──────────────────────────────────────────────────────────────────────────
+  - include:
+      file: 000-extensions.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 001-enums.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 002-versioned-entities.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 003-auth-providers.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 004-users.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 005-credentials-sessions.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 006-organizations.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 007-invite-tokens.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 008-pbac.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 009-custom-roles.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 010-projects.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 011-projects-list-fn.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 012-items.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 013-item-events.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 014-artifacts.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 015-wiki.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 016-personas.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 017-polymorphic.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 018-guardrails.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 019-trp-parity-columns.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 020-pbac-stored-procedures.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 021-pbac-seed-data.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 022-clients.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 023-invite-redemptions.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 024-pbac-org-project-inherit.yaml
+      relativeToChangelogFile: true

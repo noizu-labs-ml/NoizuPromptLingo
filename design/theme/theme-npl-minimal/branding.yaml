@@ -1,0 +1,8 @@
+name: "NPL — Minimal"
+logo-text: "NPL"
+font-url: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+intent: "A structured prompt-definition language and MCP toolchain for building reliable AI agents, rendered as a barely-there console UI — the competent default that recedes so the work stays foreground."
+perception: "Precise, calm, quietly authoritative — a tool that gets out of your way."
+audience: "Prompt engineers and agent builders who value rigor over flash."
+tone: "Direct, technical, unhurried. No marketing noise."
+keywords: [structured, precise, composable, reliable, minimal]

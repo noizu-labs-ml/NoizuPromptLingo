@@ -1,0 +1,83 @@
+schema: "0.4"
+id: npl-editorial-32-artifact-detail
+type: image
+quality: high
+
+# NoizuPromptLingo — a single versioned artifact with its full revision history — Artifact Detail screen.
+# Theme tenets: warm paper stock, serif body (Source Serif 4), single muted-claret ink accent, near-square 2px radius, warm beige hairline rules, protected reading measure.
+# Palette: paper #fbf8f1, warm ink #1c1917, claret #9a2c3f, petrol #1d4e5f, moss #3f6212, beige hairline #e3d9c6.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a
+    published document with an edition history — calm, literate, print-like. The
+    body face is a SERIF; the canvas is warm off-white paper; margins are generous
+    and one reading measure is protected. Revisions read like the printing history
+    of a standard, and any diff is restrained and typographic — never a loud
+    red/green code diff. NOT a cool-white SaaS app, NOT a dark console. Structure
+    comes from type hierarchy and warm hairline rules.
+  text: |
+    A 16:9 high-fidelity UI mockup of the Artifact Detail screen of NoizuPromptLingo,
+    showing one versioned artifact and its full revision history. It reads like a
+    published document with an edition history, not a code diff tool.
+
+    OVERALL LAYOUT (two bands on a warm off-white paper canvas, separated by a warm
+    beige hairline and generous margin): a dominant CENTER artifact content column
+    and a RIGHT revision rail.
+
+    TOP HEADER BAND: serif wordmark "NPL" at left; breadcrumb "Artifacts / Style
+    Guide Draft" in serif; a small monospace artifact-id chip on a warm-paper pill
+    with near-square corners; a "Revert to this revision" typeset ghost label-button
+    (petrol hairline outline) and a muted-claret primary action at right.
+
+    CENTER ARTIFACT CONTENT VIEWER (dominant, protected reading measure about 68
+    characters, wide gutters): the current revision rendered as a typeset document — a
+    serif H1 "Component Style Guide", serif body paragraphs at generous line-height, a
+    short numbered list, one block of literal content in monospace inset on a slightly
+    deeper warm-paper tone with a claret top-rule, and a footnote at the foot of the
+    column. A small VERSION DIFF TOGGLE sits at the top-right of this column as a
+    labeled switch; with it on, a few lines show added text underlined in moss-green
+    and removed text struck through in muted claret — restrained and typographic, not
+    a loud red/green code diff.
+
+    RIGHT REVISION HISTORY LIST (about 300px): a vertical edition history, each entry
+    a borderless block separated by a beige hairline — a monospace revision tag (for
+    example "rev 7"), a warm-gray timestamp and author, and a one-line serif summary.
+    The current revision is marked by a claret left-rule and heavier weight; two
+    entries appear check-selected for comparison, indicated by a small petrol outline,
+    feeding the diff toggle.
+
+    PALETTE & TYPE: warm off-white paper, warm near-black serif ink, one muted claret
+    accent, deep petrol teal for links and selection outlines, moss-green only inside
+    the diff for additions, warm-gray meta text. Warm beige hairlines, never cool
+    gray. Serif (Source Serif 4) for all prose; monospace only for the artifact id,
+    revision tags, and literal content. No geometric sans.
+
+    SHAPE & SURFACE: near-square 2px corners, flat and tonal, separation by paper tone
+    and margin rather than shadows; a faint paper grain on the canvas.
+
+    MOOD: durable, considered, premium — an artifact you cite by revision, set like a
+    printed standard.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Shows the current artifact content, a revision history list, a version diff toggle with a restrained typographic diff, and a revert action"}
+    theme_fidelity: {weight: 3, description: "Warm paper canvas, serif body/headings, single muted-claret accent, petrol links, moss diff additions, warm beige hairlines, near-square 2px radius — not a loud code-diff tool"}
+    composition: {weight: 2, description: "Clear visual hierarchy, protected reading measure, plausible document-detail layout"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+
+tags: [npl-editorial, NoizuPromptLingo, screen-mockup]

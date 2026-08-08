@@ -1,0 +1,102 @@
+databaseChangeLog:
+  - changeSet:
+      id: 046-create-table-memories
+      author: npl-memory
+      changes:
+        - sql:
+            splitStatements: false
+            sql: |
+              CREATE TABLE memories (
+                id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+
+                -- Scope (replaces the flat owner_agent): org-scoped, with a structured agent scope.
+                -- scope_id is polymorphic: persona -> personas.id, weego/team_member -> agent_call_signs.id.
+                organization_id     uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+                project_id          uuid REFERENCES projects(id) ON DELETE SET NULL,
+                scope_type          memory_scope_type NOT NULL,
+                scope_id            uuid NOT NULL,
+                source_agent        text NOT NULL DEFAULT 'external',
+
+                -- Four agent-authored texts (each embedded to a Weaviate named vector)
+                content             text NOT NULL,
+                context             text,
+                reflection          text,
+                tangent             text,
+                summary             text,
+                content_type        memory_content_type NOT NULL DEFAULT 'episodic',
+
+                -- Emotional state: raw VAD + hormone components. The pre-weighted 7-d emotional
+                -- VECTOR lives in Weaviate (named vector "emotional"); Postgres keeps the raw
+                -- numbers for filtering / provenance / display only (no pgvector).
+                valence             real NOT NULL,
+                arousal             real NOT NULL,
+                dominance           real NOT NULL,
+                cortisol            real NOT NULL,
+                dopamine            real NOT NULL,
+                oxytocin            real NOT NULL,
+                serotonin           real NOT NULL,
+                frustration_index   real NOT NULL DEFAULT 0.0,
+                confidence          text NOT NULL DEFAULT 'low',
+
+                -- Contextual metadata (native columns for filtering; jsonb for the rest)
+                occurred_at         timestamptz NOT NULL DEFAULT now(),
+                time_of_day         text,
+                day_of_week         smallint,
+                season              text,
+                domain              text,
+                topic               text,
+                session_id          uuid,
+                turn                integer,
+                modality            text,
+                collaborators       text[] NOT NULL DEFAULT '{}',
+                environment         jsonb  NOT NULL DEFAULT '{}',
+
+                -- Lifecycle
+                state               memory_state NOT NULL DEFAULT 'consolidating',
+                decay_weight        real NOT NULL DEFAULT 1.0,
+                pinned              boolean NOT NULL DEFAULT false,
+                last_recalled_at    timestamptz,
+                last_reinforced_at  timestamptz NOT NULL DEFAULT now(),
+                recall_count        integer NOT NULL DEFAULT 0,
+                reinforcement_count integer NOT NULL DEFAULT 0,
+                denforcement_count  integer NOT NULL DEFAULT 0,
+                consolidation_ids   uuid[] NOT NULL DEFAULT '{}',
+                pruned_at           timestamptz,
+
+                -- Access control
+                compartment         text NOT NULL DEFAULT 'default',
+                classification      memory_classification NOT NULL DEFAULT 'open',
+
+                -- Salience: read-cheap stored generated column (decay * emotional intensity)
+                salience            real GENERATED ALWAYS AS (
+                                      decay_weight * (0.6 + 0.4 * GREATEST(abs(valence), arousal))
+                                    ) STORED,
+
+                -- Embedding provenance (all five named vectors share one model in v1)
+                embedding_model     text,
+                embedding_version   integer NOT NULL DEFAULT 1,
+                vectors_synced      boolean NOT NULL DEFAULT false,
+
+                inserted_at         timestamptz NOT NULL DEFAULT now(),
+                updated_at          timestamptz NOT NULL DEFAULT now()
+              );
+
+              -- Scope frontier (org leads so weego org-wide reads use it too), temporal, lifecycle.
+              CREATE INDEX idx_memories_scope_active
+                ON memories (organization_id, scope_type, scope_id, compartment)
+                WHERE state IN ('active','consolidating');
+              CREATE INDEX idx_memories_org_active
+                ON memories (organization_id)
+                WHERE state IN ('active','consolidating');
+              CREATE INDEX idx_memories_occurred_at ON memories (occurred_at DESC);
+              CREATE INDEX idx_memories_salience ON memories (salience DESC)
+                WHERE state IN ('active','consolidating');
+              CREATE INDEX idx_memories_decay_sweep ON memories (last_reinforced_at)
+                WHERE state = 'active' AND pinned = false;
+              CREATE INDEX idx_memories_session ON memories (session_id) WHERE session_id IS NOT NULL;
+              CREATE INDEX idx_memories_content_trgm ON memories USING gin (content gin_trgm_ops);
+              CREATE INDEX idx_memories_context_trgm ON memories USING gin (context gin_trgm_ops);
+              CREATE INDEX idx_memories_collaborators ON memories USING gin (collaborators);
+      rollback:
+        - dropTable:
+            tableName: memories

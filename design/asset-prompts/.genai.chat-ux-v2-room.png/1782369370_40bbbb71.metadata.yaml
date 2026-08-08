@@ -1,0 +1,62 @@
+service: gemini
+model: imagen-4.0-ultra-generate-001
+timestamp: 1782369405
+eval_score: 0.540
+eval_notes: "The design seems to misunderstand several aspects of the prompt. It features heavy, boxed message cards with large whitespace, which contradicts the requirement for light grouped rows. There's also an always-on reaction circle under every message, which is specifically mentioned as an antipattern. The color scheme appears to use rainbow UI chrome, which is not in line with the desired achromatic graphite chrome and limited color usage. The persona-peek popover is not visible in this design. Howe"
+provider_options:
+  style: String("natural")
+  aspect_ratio: String("16:9")
+prompt: |
+  A 16:9 mockup of a redesigned team-chat room in a dark developer console.
+  
+  OVERALL LAYOUT (three bands):
+  - LEFT: a slim app nav rail (icons, achromatic) — secondary, just for context.
+  - CENTER (dominant): the message THREAD, full readable width.
+  - RIGHT (~280px): a collapsible INFO PANEL with a collapse chevron in the header.
+  
+  ROOM HEADER BAND (top of center+right):
+  - Room name "work-group" in medium-weight sans.
+  - A copyable MONO SLUG CHIP "#work-group" (subtle graphite pill, mono font).
+  - Topic line (muted): "Standing open work group — coordination".
+  - A small stacked MEMBER-AVATAR CLUSTER (4–5 overlapping color dots + "+6").
+  - An info-panel toggle (chevron) at the right edge.
+  
+  THE THREAD (center) — sender-GROUPED, lighter rows, NOT boxed cards:
+  - Messages grouped by sender into blocks. Each block: a COLOR-DOT AVATAR
+    (a filled circle with the speaker's initial, each persona a distinct
+    reserved hue) + persona NAME + a small muted ROLE CHIP (e.g. "UX",
+    "Architect", "QA") + a muted right-aligned timestamp — rendered ONCE at the
+    top of the run; the following 1–2 lines from the same persona are tight body
+    text indented under the identity, no repeated avatar.
+  - Show ~4 grouped blocks from different personas (distinct dot hues): e.g.
+    "Yuki · UX", "Dmitri · Architect", "Sofia · QA", "Marcus · Backend".
+  - A subtle DATE DIVIDER ("Today") separates an earlier run.
+  - Rows are light: no heavy borders/card backgrounds; one row shows a faint
+    hover background with a small right-aligned ACTION CLUSTER revealed
+    (a react "+" and a kebab) — the affordance appears on hover, it is NOT an
+    always-on dashed circle under every message.
+  - Under two messages: compact REACTION COUNT CHIPS (e.g. "👍 3", "🎉 1"),
+    one chip in a "mine" selected state (subtle teal fill + readable count).
+  
+  THE HERO MOMENT — a PERSONA PEEK popover, open over Yuki's avatar:
+  - A small dark rounded popover anchored to the clicked avatar, showing:
+    the color-dot + "Yuki Tanaka" + a "UX Designer" role chip; a 1–2 line BIO
+    ("Research-led UX designer; thinks in journeys, states, and the quiet moments
+     where users get confused"); a tiny "Journal" section with 2 recent entries
+    (short timestamped lines, visibly accruing); a "Knowledge base · 8" count;
+    and a muted "view persona →" link.
+  - This popover is the focal point — it makes the persona's AUTHORED, inspectable
+    identity literally readable. Give it a soft focus ring (reserved teal).
+  
+  RIGHT INFO PANEL:
+  - "Topic" (room description) + the copyable mono slug chip.
+  - "Present" — a vertical list of persona rows (color dot + name + role).
+  - "Pinned" — 1–2 linked-artifact rows (doc icon + title), muted.
+  
+  COMPOSER (bottom of center): a clean single-row input width-aligned to the
+  thread + a primary Send button; placeholder "Write a message…".
+  
+  MOOD: premium, dense, calm, dark. Sans-serif everywhere. Color only on persona
+  dots + reaction chips + the one teal focus accent. This should look like a tool
+  a team actually lives in — and the persona peek should make you believe these
+  teammates have real, authored identities.

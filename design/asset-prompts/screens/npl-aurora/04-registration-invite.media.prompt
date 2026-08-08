@@ -1,0 +1,79 @@
+schema: "0.4"
+id: npl-aurora-04-registration-invite
+type: image
+quality: high
+
+# NoizuPromptLingo (NPL) — a workspace for teams who build, run, and supervise AI agents — invite-gated Registration screen.
+# Theme tenets: warm cream canvas, single grape-violet accent, 14px radius + pill buttons, resting soft shadows.
+# Palette: cream #fff9f4, warm plum-ink #37303a, grape violet #6b4de6, soft coral #f4776b, warm gold #f2b054, mint #2fa980.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a
+    WARM, WELCOMING invite-acceptance screen — the first impression for someone
+    joining a team for the first time. Calm, soft, encouraging within five seconds.
+    Rounded humanist sans-serif (NO serif). One focused task, generous whitespace,
+    gentle depth from soft resting shadows rather than hard borders.
+  text: |
+    A 16:9 high-fidelity UI mockup of the invite-gated Registration screen of
+    NoizuPromptLingo (NPL), a workspace where teams build, run, and supervise AI
+    agents. A newcomer has followed an invite link and is about to join an
+    organization — the screen should feel like a warm welcome, not a gate.
+
+    OVERALL LAYOUT (single centered column over a full-bleed warm canvas):
+    - A slim floating PUBLIC NAV BAR at top on a soft shadow: rounded "NPL"
+      wordmark at left, quiet links at right.
+    - A generously centered REGISTRATION CARD with room to breathe, resting on a
+      soft warm drop-shadow.
+    - Warm cream canvas behind it with a very soft, low-intensity aurora wash
+      (coral-to-gold-to-violet, barely there) pooled only in the corners — never
+      behind text.
+
+    THE REGISTRATION CARD (centered, generously rounded, floating):
+    - A warm HEADING "You're invited" in a heavier rounded weight, with a
+      plain-spoken subhead "Join your team on NPL."
+    - An INVITE TOKEN VALIDITY BANNER in a valid state: a soft mint-green pill
+      row with a small check glyph and text "Invite valid · 2 uses left".
+    - An ORG PREVIEW CARD nested inside: a soft rounded avatar/monogram tile, the
+      organization name "Northwind Labs", a muted line "Project: Agent Platform",
+      and a tiny stacked cluster of 3 member avatars with "+5".
+    - A prominent PILL-SHAPED PRIMARY BUTTON, solid grape-violet with white label
+      "Continue with SSO to join" — the one saturated control.
+    - A muted footnote link "This isn't you? Contact your admin".
+
+    PALETTE & TYPE: warm cream canvas, deep warm plum-ink text, one grape-violet
+    accent on the primary pill, a soft mint-green only on the valid-invite banner.
+    Aurora wash in soft coral, warm gold and violet at low intensity in corners
+    only. Rounded humanist sans-serif everywhere (high x-height, soft terminals) —
+    no serif, no monospace except an optional short token chip.
+
+    SHAPE & SURFACE: soft. Generously rounded outer card and pill button, a
+    slightly rounded inset org-preview tile, no hard borders — separation is warm
+    resting drop-shadow plus a faint cream-to-warmer-cream tonal step.
+
+    MOOD: welcoming, reassuring, a little celebratory — "we're glad you're here."
+    Airy, warm, adult; premium soft-light onboarding, never a hacker tool.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, hard black borders, sharp square corners, dark terminal theme"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches invite Registration: a valid invite-token banner, an org-preview card naming the org/project, and a single SSO join pill button"}
+    theme_fidelity: {weight: 3, description: "Warm cream canvas, grape-violet pill accent, mint only on the valid banner, generously rounded/pill shapes, resting soft shadows, rounded humanist sans"}
+    composition: {weight: 2, description: "One focused task, generous whitespace, clear centered welcome hierarchy, plausible real product"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+    - "hard-edged or dark-terminal aesthetic instead of warm soft onboarding"
+
+tags: [npl-aurora, NoizuPromptLingo, screen-mockup]

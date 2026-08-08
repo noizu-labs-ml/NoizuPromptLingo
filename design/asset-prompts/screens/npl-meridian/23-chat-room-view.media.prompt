@@ -1,0 +1,91 @@
+schema: "0.4"
+id: npl-meridian-23-chat-room-view
+type: image
+quality: high
+
+# NoizuPromptLingo — a structured prompt-definition language + MCP agent toolchain — Chat Room View (single room) screen.
+# Theme tenets: warm espresso-dark surface, single matte-brass accent, verdigris-teal secondary, display-serif titles over Inter body, refined 6px radius, "well-lit study at night".
+# Palette: espresso #1a1613 canvas, panel #241f1a, parchment #f2ebe0 text, brass #c9a15e accent, verdigris #3f857e secondary.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a
+    PREMIUM, warm-dark team chat room — a considered conversation surface, not a
+    terminal and not a consumer messenger. The register is refined, calm, composed,
+    with quiet gravitas: a well-lit study at night. Warm low light, matte brass
+    detailing, unhurried. The room title and any section headers are a warm
+    high-contrast DISPLAY SERIF; message body and labels are a neutral sans; ids,
+    timestamps, and slugs are monospace. The accent is a single matte, desaturated
+    brass used as a thin line or small fill — never a gradient, glow, or gold bling.
+  text: |
+    A 16:9 high-fidelity UI mockup of the Chat Room View screen of NoizuPromptLingo,
+    rendered in a warm espresso-dark mode.
+
+    OVERALL LAYOUT (three bands): a slim LEFT NAV/ROOM RAIL; a dominant CENTER message
+    thread with a pinned rail above and a composer below; a narrow RIGHT PREFERENCES
+    PANEL.
+
+    ROOM HEADER BAND (top of center): the room name in a display-serif heading, a
+    copyable MONO ROOM-SLUG CHIP, a one-line muted topic, and a small present-members
+    avatar cluster at right.
+
+    PINNED MESSAGE RAIL: a slim strip just under the header holding 1-2 pinned-message
+    chips (a small pin glyph + a truncated line + author), marked by a thin brass
+    hairline to read as elevated/pinned.
+
+    MESSAGE TIMELINE (center, sender-grouped): messages grouped by sender into calm
+    light rows — each block a small avatar, the sender name in sans, a muted mono
+    timestamp, then 1-2 body lines. Show ~4 grouped blocks from different senders. One
+    message is a THREADED REPLY, visibly indented under its parent with a thin
+    connector. Under one message sit compact REACTION CHIPS (a small emoji + count),
+    one in a selected "mine" state with a subtle brass tint. One row shows a hover
+    state revealing a small right-aligned action cluster (react + kebab) — an
+    on-hover affordance, not an always-on control.
+
+    MESSAGE COMPOSER (bottom of center): a clean recessed input spanning the thread
+    width with a placeholder ("Write a message…"), a small SCHEDULE-SEND clock glyph
+    and a threaded-reply glyph at left, and a solid BRASS "Send" button (dark espresso
+    label) at right — the one metallic control.
+
+    RIGHT PREFERENCES PANEL: a titled "Notifications" panel with per-room settings — a
+    few labeled toggle rows ("All messages", "Mentions only", "Mute") with one active,
+    and a small "Following" verdigris cue. Quiet hairline separators.
+
+    PALETTE & TYPE: every neutral is a warm charcoal (espresso canvas, warmer raised
+    panels), never cool slate; text is a soft warm parchment, never pure white. The
+    accent is a matte brass/champagne — the Send button, pinned-rail hairline, the
+    "mine" reaction tint, and the focus ring; muted verdigris teal only on the
+    following cue and links. The room title in the warm display serif; message body in
+    a neutral sans; timestamps/slugs in monospace.
+
+    SHAPE & SURFACE: refined 6px radius on the composer, panels, and button; 4px on
+    reaction chips; warm tonal elevation with a soft warm shadow under the pinned rail
+    and any popover — no glow. A barely perceptible warm radial vignette over the
+    shell, like a single study lamp. Brass is a pinstripe, never a heavy frame.
+
+    MOOD: refined, calm, considered — a premium conversation surface that reads as a
+    quiet study, legible and unhurried, never a terminal or a playful chat app.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, cool blue slate tones, neon glow, gold gradient bling, terminal/console green, consumer-messenger bubbles"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches Chat Room View: room header with mono slug chip, a pinned-message rail, a sender-grouped message timeline with a threaded reply and reaction chips (one 'mine'), a hover-revealed action cluster, a composer with schedule-send + a Send button, and a right per-room notification-preferences panel"}
+    theme_fidelity: {weight: 3, description: "Warm espresso-dark neutrals (not cool slate), single matte-brass accent (Send button, pinned hairline, 'mine' reaction) + verdigris following cue, display-serif room title over sans body, 6px radius"}
+    composition: {weight: 2, description: "Clear three-band layout with a calm, legible thread; plausible real product, not a consumer messenger or terminal"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+    - "cool/blue terminal darkness or phosphor-green accent (that is the Nocturne sibling, not Meridian)"
+
+tags: [npl-meridian, NoizuPromptLingo, screen-mockup]

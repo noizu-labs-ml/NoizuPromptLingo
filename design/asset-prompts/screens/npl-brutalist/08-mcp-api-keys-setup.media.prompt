@@ -1,0 +1,92 @@
+schema: "0.4"
+id: npl-brutalist-08-mcp-api-keys-setup
+type: image
+quality: high
+
+# NoizuPromptLingo — MCP API Keys & Setup: a self-service hub for minting and managing
+# MCP API keys, generating the `claude mcp add` setup command, and exploring the tool
+# catalog exposed by a user's keys; surfaces key-lifecycle security states.
+# Theme tenets: hard-grid table density, zero radius, full-strength borders + 1px grid,
+# flat electric accents used as safety signal, hard-offset block shadow as only depth.
+# Palette: vermilion #ff2d00, ultramarine #1500ff, hazard-yellow #ffe600, green #00c853,
+# white #ffffff, black #000000, surface-alt #f2f2f2.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a
+    security-grade settings hub inside a developer console, in a NEO-BRUTALIST register:
+    dense, structural, shown as machinery. Color is used as safety signal (hazard
+    palette), never decoration. Flat fills only — no gradient, glow, blur, or soft
+    shadow; the only depth cue is a hard-offset SOLID block shadow with zero blur.
+    Geometric grotesk (Space Grotesk) UPPERCASE 700 headings; Space Mono for keys,
+    commands, table data, and schemas. No serif. Zero corner radius. Borders and table
+    grid lines are load-bearing, always at full strength.
+  text: |
+    A 16:9 high-fidelity UI mockup of the MCP API KEYS & SETUP screen of NoizuPromptLingo
+    — a self-service hub for minting and managing MCP API keys, generating the setup
+    command, and exploring the tool catalog exposed by a user's keys — rendered as raw,
+    high-voltage machinery.
+
+    OVERALL LAYOUT (on a pure white canvas, a hard 12-column grid, regions separated by
+    2px solid black rules): a top page header, a left-dominant API KEY TABLE + SETUP
+    COMMAND stack, and a right TOOL CATALOG + TOOL DEFINITION column.
+
+    PAGE HEADER: an uppercase grotesk 700 title "MCP API KEYS" and a solid vermilion
+    "MINT KEY" button — rectangular, 2px black border, black uppercase mono label,
+    hard-offset black block shadow with zero blur.
+
+    API KEY LIST TABLE (dominant, dense): a hard-bordered table with 1px solid black grid
+    lines on every cell, zero radius, uppercase mono column headers — NAME, STATUS,
+    CREATED, LAST USED, ACTIONS. Rows of mono data; a KEY SECURITY STATUS BADGE per row
+    rendered as a hard-bordered rectangular tag: an "ACTIVE" row with a solid electric-green
+    badge (black text), a "REVOKED" row with a solid vermilion badge (white text), an
+    "EXPIRED JWT" row with a solid hazard-yellow badge (black text) plus a bordered
+    "REISSUE" action. One newly-minted key shown once as a bordered mono secret string with
+    a "COPY" button.
+
+    SETUP COMMAND GENERATOR (below the table): a wide bordered mono code block on a
+    light-gray surface showing the "claude mcp add ..." command with the key embedded, a
+    hard-offset black block shadow, and a bordered "COPY COMMAND" button.
+
+    RIGHT TOOL CATALOG EXPLORER: a bordered search input (uppercase mono label "SEARCH
+    TOOLS" above it) and a vertical list of hard-bordered tool rows in mono (tool name plus
+    a short descriptor); the selected row is a full inverted block (solid black, white
+    text). Below it a TOOL DEFINITION PANEL — a bordered card showing the selected tool's
+    schema as a mono block, with an ultramarine "VIEW HELP" link. A small REMOTE TUNNEL
+    SETUP CARD at the bottom: a bordered block with a status dot and mono instructions.
+
+    PALETTE & TYPE: pure white canvas, pure black ink and full-strength borders and grid
+    lines, electric vermilion for the mint button and revoked badge, hazard yellow for the
+    expired badge, electric green for the active badge, pure ultramarine for links and
+    focus — each flat and whole at maximum saturation. Space Grotesk uppercase headings,
+    Space Mono for keys, commands, table data, and schemas. No serif.
+
+    SHAPE & SURFACE: zero radius; 1-2px solid black borders and 1px table grid lines at
+    full strength; the only depth is a hard-offset solid block shadow (zero blur) on the
+    mint button and the command block. No gradient, glow, blur, or soft shadow.
+
+    MOOD: dense, raw, structural — a security-grade control surface shown as machinery.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, rounded corners, drop-shadow blur, soft shadow, gradient, neon glow, pastel colors, frosted glass"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches the screen — page header with Mint Key, dense API key table with security status badges, setup command mono block, right tool catalog explorer + tool definition panel + remote tunnel card"}
+    theme_fidelity: {weight: 3, description: "Brutalist language — zero radius, full-strength solid black borders and 1px table grid, flat hazard palette as safety signal (green/vermilion/yellow badges) + ultramarine links/focus, hard-offset block shadow (zero blur), Space Grotesk uppercase + Space Mono, no serif, no gradient/glow/soft shadow"}
+    composition: {weight: 2, description: "Legible table-dense hierarchy on a hard grid, clear security states, plausible real security settings tool"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, legible mono keys/commands, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+    - "rounded corners, soft/blurred drop shadow, gradient, glow, or frosted glass present"
+
+tags: [npl-brutalist, NoizuPromptLingo, screen-mockup, api-keys, settings]

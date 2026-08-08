@@ -1,66 +1,64 @@
-# Project Schema Summary
+# Database Schema Summary — start-app
 
-**Database**: PostgreSQL @ `localhost:5111/npl` | **11 tables** | **1 enum** | **16 changesets** (across 7 files)
+12 tables across 6 domains. All tables use UUID PKs and TIMESTAMPTZ timestamps. Managed by Liquibase YAML changelogs (000–010).
 
-## ERD (Simplified)
+## Extensions
 
-```mermaid
-erDiagram
-    npl_projects ||--o{ npl_tool_sessions : "scopes"
-    npl_tool_sessions ||--o{ npl_tool_sessions : "parent"
-    npl_tool_sessions ||--o{ npl_instructions : "session"
-    npl_instructions ||--o{ npl_instruction_versions : "has versions"
-    npl_instructions ||--o{ npl_instruction_embeddings : "has embeddings"
-    npl_projects ||--o{ npl_user_personas : "has personas"
-    npl_projects ||--o{ npl_user_stories : "has stories"
-    npl_metadata
-    npl_component
-    npl_sections
-    npl_concepts
-    npl_secrets
-```
-
-## Tables
-
-| Table | PK | PK Type | Columns | Domain | Description |
-|-------|----|---------|---------|--------|-------------|
-| npl_metadata | id | VARCHAR(64) | 4 | NPL Content | Key-value config store (JSONB) |
-| npl_component | id | VARCHAR(128) | 10 | NPL Content | Components with vector search |
-| npl_sections | id | VARCHAR(128) | 10 | NPL Content | Section definitions with vector search |
-| npl_concepts | id | VARCHAR(128) | 10 | NPL Content | Concept definitions with vector search |
-| npl_secrets | name | VARCHAR(128) | 4 | Credentials | Named credential store |
-| npl_projects | id | UUID | 7 | Projects | Project scoping container |
-| npl_tool_sessions | id | UUID | 9 | Sessions | Agent session tracking (project-scoped) |
-| npl_instructions | id | UUID | 8 | Instructions | Versioned instruction metadata |
-| npl_instruction_versions | id | UUID | 6 | Instructions | Instruction version bodies |
-| npl_instruction_embeddings | id | UUID | 5 | Instructions | Multi-facet vector embeddings (HNSW) |
-| npl_user_personas | id | UUID | 15 | Project Mgmt | Archetypal user personas |
-| npl_user_stories | id | UUID | 15 | Project Mgmt | User stories with acceptance criteria |
-
-## Relationships
-
-| FK | From | To |
-|----|------|----|
-| fk_tool_sessions_project | npl_tool_sessions.project_id | npl_projects.id |
-| fk_tool_sessions_parent | npl_tool_sessions.parent_id | npl_tool_sessions.id |
-| fk_instructions_session | npl_instructions.session_id | npl_tool_sessions.id |
-| fk_instruction_version_instruction | npl_instruction_versions.instruction_id | npl_instructions.id |
-| fk_instruction_embeddings_instruction | npl_instruction_embeddings.instruction_id | npl_instructions.id |
-| fk_user_personas_project | npl_user_personas.project_id | npl_projects.id |
-| fk_user_stories_project | npl_user_stories.project_id | npl_projects.id |
-
-## Key Features
-
-- **Vector search**: npl_component, npl_sections, npl_concepts have `vector(1536)` with ivfflat indexes; npl_instruction_embeddings uses HNSW index
-- **Soft deletes**: NPL content tables and PM tables use `deleted_at` column
-- **Project scoping**: Sessions unique on (project_id, agent, task); instructions linked to sessions
-- **Session hierarchy**: Self-FK `parent_id` on npl_tool_sessions
-- **Multi-facet embeddings**: Instructions have multiple embedding rows per document (one per descriptive phrase)
-- **Array columns**: `UUID[]` persona_ids with GIN index; `TEXT[]` tags on stories and instructions
-- **Partial indexes**: PM tables index `deleted_at WHERE deleted_at IS NULL`
-- **Timestamps**: All `TIMESTAMP WITHOUT TIME ZONE` with standardized `updated_at` column
-- **pgvector extension** required
+citext, uuid-ossp, postgis, vector, cube, pg_trgm, earthdistance
 
 ## Enum Types
 
-- **npl_element_type**: concept, section, component, label, example, syntax
+status_enum, user_status_enum, credential_status_enum, session_status_enum, media_type_enum, file_type_enum, owner_type_enum, credential_type_enum, device_type_enum
+
+## Tables
+
+| Table | Domain | Columns | Key Relationships |
+|-------|--------|---------|-------------------|
+| seed_helper_records | Infrastructure | 5 | — |
+| versioned_strings | Versioned | 5 | — |
+| versioned_names | Versioned | 7 | — |
+| versioned_descriptions | Versioned | 6 | — |
+| auth_providers | Auth | 7 | — |
+| media | Media | 9 | — |
+| users | Users | 13 | → versioned_names, versioned_descriptions |
+| user_media | Users | 9 | → users, media, versioned_descriptions |
+| user_credentials | Users | 11 | → users, auth_providers |
+| user_sessions | Users | 8 | → users, user_credentials |
+| organizations | Orgs | 6 | — |
+| memberships | Orgs | 6 | → organizations, users |
+| invite_tokens | Orgs | 12 | → organizations, users |
+
+## ERD
+
+```mermaid
+erDiagram
+    users ||--o| versioned_names : "name_id"
+    users ||--o| versioned_descriptions : "description_id"
+    users ||--o{ user_credentials : "has many"
+    users ||--o{ user_sessions : "has many"
+    users ||--o{ user_media : "has many"
+    users ||--o{ memberships : "belongs to orgs"
+    users ||--o{ invite_tokens : "creates"
+    user_credentials }o--|| auth_providers : "uses"
+    user_credentials ||--o{ user_sessions : "creates"
+    user_media }o--|| media : "references"
+    user_media }o--o| versioned_descriptions : "description_id"
+    organizations ||--o{ memberships : "has members"
+    organizations ||--o{ invite_tokens : "scoped to"
+```
+
+## Changeset Reference
+
+| # | Name | Creates |
+|---|------|---------|
+| 000 | extensions | 7 PG extensions |
+| 001 | enums | 9 enum types |
+| 002 | seed-helper | seed_helper_records |
+| 003 | versioned-entities | versioned_strings, versioned_names, versioned_descriptions |
+| 004 | auth-providers | auth_providers |
+| 005 | media | media |
+| 006 | users | users + indexes |
+| 007 | user-media | user_media + index |
+| 008 | credentials-sessions | user_credentials, user_sessions + indexes |
+| 009 | organizations | organizations, memberships + unique constraint |
+| 010 | invite-tokens | invite_tokens + indexes |

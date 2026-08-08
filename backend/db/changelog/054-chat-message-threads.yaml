@@ -1,0 +1,75 @@
+databaseChangeLog:
+  # Threaded replies (ffa2d2f6), one-level / Slack-style. parent_message_id is a
+  # nullable self-reference; ON DELETE SET NULL so deleting a parent DETACHES its
+  # replies to root (never nukes the thread — marcus seq577 / devon seq584). Depth is
+  # one-level (app-guarded: parent must be a root) and same-room (app-guarded); the FK
+  # only guarantees existence, not those.
+  #
+  # Lock-safe sequence (devon seq574): add nullable column -> add FK NOT VALID -> VALIDATE
+  # in a separate changeset (ShareUpdateExclusive scan, not a blocking AccessExclusive) ->
+  # partial index CONCURRENTLY (reply rows only, runInTransaction:false, DROP-first for
+  # re-runnability per D1). Each changeset has an explicit rollback.
+
+  # 054a — nullable column. Metadata-only in PG, no rewrite, safe on a hot table.
+  - changeSet:
+      id: 054a-add-column-chat-messages-parent
+      author: aniket-backend
+      changes:
+        - sql:
+            sql: |
+              ALTER TABLE chat_messages ADD COLUMN parent_message_id uuid;
+      rollback:
+        - sql:
+            sql: |
+              ALTER TABLE chat_messages DROP COLUMN parent_message_id;
+
+  # 054b — self-FK as NOT VALID (skips the blocking validate scan on add).
+  - changeSet:
+      id: 054b-fk-chat-messages-parent-notvalid
+      author: aniket-backend
+      changes:
+        - sql:
+            sql: |
+              ALTER TABLE chat_messages
+                ADD CONSTRAINT chat_messages_parent_message_id_fkey
+                FOREIGN KEY (parent_message_id) REFERENCES chat_messages(id)
+                ON DELETE SET NULL NOT VALID;
+      rollback:
+        - sql:
+            sql: |
+              ALTER TABLE chat_messages DROP CONSTRAINT chat_messages_parent_message_id_fkey;
+
+  # 054c — VALIDATE the FK (cheap: all existing rows are NULL). Separate changeset so the
+  # validate is its own non-blocking step. Rollback is a no-op (un-validating isn't a
+  # thing; 054b's rollback drops the whole constraint to reverse).
+  - changeSet:
+      id: 054c-fk-chat-messages-parent-validate
+      author: aniket-backend
+      changes:
+        - sql:
+            sql: |
+              ALTER TABLE chat_messages VALIDATE CONSTRAINT chat_messages_parent_message_id_fkey;
+      rollback:
+        - sql:
+            sql: |
+              SELECT 1;
+
+  # 054d — partial index for thread reads (WHERE parent_message_id = ?). Only reply rows
+  # are indexed (roots are the majority, don't need it). CONCURRENTLY, OUTSIDE a txn;
+  # DROP-before-CREATE so a failed/INVALID prior build doesn't wedge the retry (D1).
+  - changeSet:
+      id: 054d-index-chat-messages-parent
+      author: aniket-backend
+      runInTransaction: false
+      changes:
+        - sql:
+            splitStatements: true
+            sql: |
+              DROP INDEX IF EXISTS idx_chat_messages_parent;
+              CREATE INDEX CONCURRENTLY idx_chat_messages_parent
+              ON chat_messages (parent_message_id)
+              WHERE parent_message_id IS NOT NULL;
+      rollback:
+        - sql:
+            sql: |
+              DROP INDEX CONCURRENTLY IF EXISTS idx_chat_messages_parent;

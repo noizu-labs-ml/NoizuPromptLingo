@@ -1,0 +1,54 @@
+# ═══════════════════════════════════════════════════════════════
+# NPL — Minimal · seed deltas over theme-style-guide (treatise §3/§4/§6).
+# Only the seeds this theme pins; everything else rides the base cascade.
+#
+# SEED-TRAP FIX (rev 2): the cascade's accent slots are named
+# brand-red / brand-blue / brand-yellow — NOT bare red / blue / yellow.
+# The previous file set red/blue/yellow, which the base does not wire as
+# accent-driving keys, so the sky accent was a SILENT NO-OP and the surface
+# fell back to the base's Bauhaus red. Their VALUES here are Minimal's cool
+# monochrome-plus-sky palette, not their names. Each -light sibling re-points
+# to var(--brand-*) because the base pins them to a color-mix() with the old
+# literal Bauhaus hex hard-coded inside.
+# ═══════════════════════════════════════════════════════════════
+
+vars:
+  groups:
+    # ── Surfaces ── §3 neutrals: pure-white canvas, whisper-cool near-black ink
+    - name: Surfaces
+      vars:
+        white: "#ffffff"   # pure white canvas — no tint; purity is the point
+        black: "#0a0a0b"   # near-black ink, only a whisper of cool
+
+    # ── Primaries ── §3: monochrome + ONE cool accent. Sky is the working voice;
+    # indigo + teal occupy the secondary/tertiary slots but are held in reserve
+    # (data-viz / secondary emphasis), never spent on chrome.
+    - name: Primaries - Cool Monochrome + Sky
+      vars:
+        brand-red: "#0284c7"     # PRIMARY accent — calm sky blue (~200°)
+        brand-red-light: "color-mix(in srgb, var(--brand-red) 70%, var(--surface))"
+        brand-blue: "#4f46e5"    # SECONDARY accent — indigo (reserved, off-chrome)
+        brand-blue-light: "color-mix(in srgb, var(--brand-blue) 70%, var(--surface))"
+        brand-yellow: "#0d9488"  # TERTIARY accent — teal (reserved, off-chrome)
+        brand-yellow-light: "color-mix(in srgb, var(--brand-yellow) 70%, var(--surface))"
+
+    # ── Semantic ── §3/§9: standard + unambiguous; error(red) stays cleanly
+    # distinct from accent(sky). Pinned literal so the sky primary can't swallow
+    # status into monochrome. Tints still derive via color-mix against surface.
+    - name: Semantic
+      vars:
+        success: "#16a34a"   # green — large-text / icon only on white (pair a glyph)
+        warning: "#d97706"   # amber — large-text / icon only on white (pair a glyph)
+        error: "#dc2626"     # red — ~4.8:1 on white, body-safe; distinct from sky
+        info: "#0284c7"      # sky — matches the primary accent
+
+    # ── Typography ── §4: Inter for all UI/body, JetBrains Mono for code/tokens
+    - name: Typography
+      vars:
+        font-sans: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
+        font-mono: "'JetBrains Mono', 'Menlo', monospace"
+
+    # ── Shape ── §6: soft-default 6px — the roundest of the four shipped themes
+    - name: Shape
+      vars:
+        radius: "6px"

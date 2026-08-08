@@ -1,0 +1,29 @@
+databaseChangeLog:
+  # ── MCP API keys ─────────────────────────────────────────────────────────
+  # Long-lived API keys a user presents to mint short-lived MCP JWTs
+  # (POST /api/mcp/token). The raw key is only ever shown once at creation;
+  # we store an 8-char prefix (for lookup) and a bcrypt hash of the full key.
+  - changeSet:
+      id: 028-create-table-mcp-api-keys
+      author: starter-scaffold
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE mcp_api_keys (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                label varchar(255) NOT NULL DEFAULT 'default',
+                key_prefix varchar(8) NOT NULL,
+                key_hash varchar(255) NOT NULL,
+                status varchar(16) NOT NULL DEFAULT 'active'
+                  CHECK (status IN ('active', 'revoked')),
+                last_used_at timestamptz,
+                expires_at timestamptz,
+                inserted_at timestamptz NOT NULL,
+                updated_at timestamptz NOT NULL
+              );
+              CREATE INDEX idx_mcp_api_keys_user_id ON mcp_api_keys (user_id);
+              CREATE INDEX idx_mcp_api_keys_prefix ON mcp_api_keys (key_prefix);
+      rollback:
+        - dropTable:
+            tableName: mcp_api_keys

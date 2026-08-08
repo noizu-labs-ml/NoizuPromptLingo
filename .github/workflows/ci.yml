@@ -1,0 +1,149 @@
+name: CI
+
+# Build on native amd64 (colo target), validate, push sha-tagged images, bump
+# the chart — ArgoCD (app "npl-mcp") rolls it out from mono-repo-dev.
+# Pattern: therobotlearns.com/.github/workflows/ci.yml
+
+on:
+  push:
+    branches: [mono-repo-dev]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ops.noizu.com
+
+jobs:
+  test-backend:
+    # TODO: drop continue-on-error once the suite is confirmed green on a CI
+    # runner — first-cut CI must not block the deploy pipeline.
+    continue-on-error: true
+    runs-on: ubuntu-latest # amd64
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        # timescaledb-ha bundles postgis + pgvector, matching prod
+        # (app-timescaledb); plain postgres:16 lacks the vector extension
+        # and fails changelog 000-extensions.
+        image: timescale/timescaledb-ha:pg16
+        env:
+          POSTGRES_USER: noizu_prompt_lingua
+          POSTGRES_PASSWORD: npl_dev
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U noizu_prompt_lingua"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.19.5"
+          otp-version: "28"
+      - uses: actions/cache@v4
+        with:
+          path: |
+            backend/deps
+            backend/_build
+          key: mix-${{ runner.os }}-${{ hashFiles('backend/mix.lock') }}
+          restore-keys: mix-${{ runner.os }}-
+      - run: mix deps.get
+      - run: mix compile
+      # Liquibase owns the base schema; Ecto migrations are supplementary.
+      # MIX_ENV=test so ecto.create makes noizu_prompt_lingua_test — the DB the
+      # changelog is applied against (see backend/config/test.exs).
+      - run: MIX_ENV=test mix ecto.create --quiet
+      - name: Apply base schema (Liquibase)
+        run: |
+          docker run --rm --network host \
+            -v "$PWD/db:/liquibase/workdir" -w /liquibase/workdir \
+            liquibase/liquibase:4.29 \
+            --url="jdbc:postgresql://localhost:5432/noizu_prompt_lingua_test" \
+            --username=noizu_prompt_lingua --password=npl_dev \
+            --changeLogFile=changelog/db.changelog-master.yaml \
+            update
+      - run: mix test
+
+  test-frontend:
+    runs-on: ubuntu-latest # amd64
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: npx tsc --noEmit
+
+  build-push:
+    needs: [test-backend, test-frontend]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/mono-repo-dev'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+      - name: Short SHA
+        id: sha
+        run: echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+      - name: Build & push backend
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.REGISTRY }}/npl-mcp/server:sha-${{ steps.sha.outputs.short }}
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,scope=backend,mode=max
+      - name: Build & push frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          platforms: linux/amd64
+          push: true
+          build-args: |
+            NEXT_PUBLIC_API_URL=https://tobor.locker
+          secrets: |
+            npm_token=${{ secrets.NPM_TOKEN }}
+          tags: ${{ env.REGISTRY }}/npl-mcp/frontend:sha-${{ steps.sha.outputs.short }}
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,scope=frontend,mode=max
+
+  bump-chart:
+    needs: build-push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bump image tags
+        # yq, not sed — the chart nests repository/tag, and a bare `tag:` sed
+        # would also clobber .liquibase.image.tag (manually versioned, job off).
+        run: |
+          SHORT=${GITHUB_SHA::7}
+          yq -i ".backend.image.tag = \"sha-${SHORT}\"" helm/npl-mcp/values.yaml
+          yq -i ".frontend.image.tag = \"sha-${SHORT}\"" helm/npl-mcp/values.yaml
+      - name: Commit & push
+        run: |
+          git config user.name "npl-mcp-ci"
+          git config user.email "ci@noizu.com"
+          git add helm/npl-mcp/values.yaml
+          git diff --cached --quiet && exit 0
+          git commit -m "ci: deploy sha-${GITHUB_SHA::7} [skip ci]"
+          git push

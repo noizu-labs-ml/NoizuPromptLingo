@@ -1,0 +1,18 @@
+{{- if and .Values.sandbox.enabled .Values.sandbox.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "start-app.fullname" . }}-sandbox-workspace
+  labels:
+    {{- include "start-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: sandbox
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.sandbox.persistence.size | default "5Gi" }}
+  {{- if .Values.sandbox.persistence.storageClass }}
+  storageClassName: {{ .Values.sandbox.persistence.storageClass }}
+  {{- end }}
+{{- end }}

@@ -1,0 +1,37 @@
+# NPL — Meridian color modes (treatise §3 Mode strategy).
+# DARK is primary and the design home — a "study by night": warm espresso canvas,
+# warm-charcoal panels, warm parchment ink. LIGHT is a true warm translation, a
+# "study by day": ivory canvas, espresso ink (not a cold flip — Meridian ships a
+# real warm light mode, unlike Nocturne). shadow-color is a warm low-alpha
+# (rgba(15,10,6,...), treatise §6) — soft, no glow.
+#
+# VERIFICATION NOTE: literal light/dark maps are only fully verified via
+# `npx @noizu/styleguide serve`. The legacy generate-css fallback does NOT emit
+# these maps — modes resolve from the seed cascade + scoped-vars. Because the base
+# scoped-vars force COOL SLATE dark surfaces + revert accents, the real warm
+# mode values are ALSO declared in style-guide.scoped-vars.yaml (both sections),
+# which IS emitted on the legacy path. This file is the serve-path source of truth;
+# scoped-vars is the legacy-path source of truth. Keep the two in agreement.
+color-modes:
+  light:
+    surface: "#f6f1e8"          # ivory canvas — "study by day"
+    surface-alt: "#efe8db"      # raised warm panel
+    surface-inverse: "#1a1613"  # espresso
+    text: "#2a231c"             # espresso ink ≈ 13.6:1 on ivory
+    text-secondary: "#5c5348"   # ≈ 6.5:1 on ivory
+    text-muted: "#6e6456"       # ≈ 4.8:1 on ivory (clears body)
+    text-inverse: "#f2ebe0"     # parchment
+    border: "#e2d9c8"           # low warm border
+    border-strong: "#ccbfa8"
+    shadow-color: "rgba(15, 10, 6, 0.14)"   # soft warm overlay shadow
+  dark:
+    surface: "#1a1613"          # warm espresso canvas — the design home
+    surface-alt: "#241f1a"      # warm-charcoal panel (raised)
+    surface-inverse: "#f6f1e8"  # ivory
+    text: "#f2ebe0"             # warm parchment ≈ 14.9:1 on espresso (never pure white)
+    text-secondary: "#d8cec0"   # ≈ 11.4:1 on espresso
+    text-muted: "#a99d8b"       # warm mid ≈ 6.6:1 on espresso (clears body)
+    text-inverse: "#1a1613"     # espresso
+    border: "#332c25"           # low warm charcoal — separation is via surface steps
+    border-strong: "#4a4038"    # + the occasional brass hairline, not heavy rules (§3/§6)
+    shadow-color: "rgba(15, 10, 6, 0.5)"    # soft warm shadow under raised panels (§6)

@@ -1,0 +1,50 @@
+databaseChangeLog:
+  # organizations + memberships. memberships carries lock_version (guardrail).
+  - changeSet:
+      id: pm-006-organizations
+      author: noizu-pm
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: organizations
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE organizations (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                slug citext NOT NULL UNIQUE,
+                name varchar(255) NOT NULL,
+                settings jsonb DEFAULT '{}',
+                key_prefix varchar(16),
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: organizations
+
+  - changeSet:
+      id: pm-006-memberships
+      author: noizu-pm
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: memberships
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE memberships (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+                user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                role varchar(50) NOT NULL DEFAULT 'viewer',
+                lock_version integer NOT NULL DEFAULT 0,
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now(),
+                CONSTRAINT uq_memberships_org_user UNIQUE (organization_id, user_id)
+              );
+      rollback:
+        - dropTable:
+            tableName: memberships

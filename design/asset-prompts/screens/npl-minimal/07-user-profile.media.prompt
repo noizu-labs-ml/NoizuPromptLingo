@@ -1,0 +1,87 @@
+schema: "0.4"
+id: npl-minimal-07-user-profile
+type: image
+quality: high
+
+# NoizuPromptLingo — a structured prompt-definition language + MCP toolchain for building reliable AI agents — User Profile settings screen.
+# Theme tenets: near-monochrome gray canvas, single cool sky-blue accent, pure-gray neutrals (no tint), 6px soft radius, gray hairline borders (never hard rules), flat/tonal elevation.
+# Palette: canvas #ffffff, ink #0a0a0b, sky accent #0284c7, hairline #e0e0e0/#bdbdbd, alt #f5f5f5, success #16a34a.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a
+    barely-there, precise console UI — calm, quietly authoritative, near-monochrome,
+    in the restrained register of Linear / Vercel dashboards (NOT colorful, NOT
+    playful, NOT a marketing page). Humanist sans-serif (Inter) throughout, NO serif.
+    A single cool sky-blue accent carries interactivity; everything else is pure gray.
+    Type and quiet gray hairlines do the hierarchy — no drop shadows at rest, no
+    gradients, no glow. Structure is felt, not shouted.
+  text: |
+    A 16:9 high-fidelity UI mockup of the User Profile settings screen of
+    NoizuPromptLingo, a prompt-engineering and MCP agent-building platform.
+
+    OVERALL LAYOUT (two bands): a slim achromatic LEFT NAV RAIL of monochrome line
+    icons (secondary, for context), and a dominant CENTER settings column — a single
+    clean column of stacked sections on a flat pure-white canvas with quiet margins,
+    no overlapping or nested panels, no decorative background.
+
+    HEADER: a breadcrumb "Account / Profile" in muted gray, a page title "Profile"
+    in a 600-weight sans, and a muted one-line description. A single solid sky-blue
+    "Save changes" button sits at the top-right, with a gray-hairline ghost "Cancel"
+    beside it.
+
+    PROFILE DETAILS FORM (primary): a comfortable single-column form of white fields
+    with quiet gray hairline borders and softly rounded 6px corners. Fields: a
+    circular AVATAR with a small "Change" ghost control, "Display name", "Email", and
+    "Job title". Each label is a small 500-weight gray cap above its field. Generous
+    but efficient spacing.
+
+    THEME SELECTOR: a labelled row "Appearance" offering two selectable preview cards
+    side by side — "Default" (currently selected, marked by a 1px sky border and a
+    small sky check) and "High-Contrast Nocturne" — each a tiny swatch thumbnail. This
+    is the accessibility theme toggle.
+
+    ACCOUNT SECURITY PANEL: a quiet hairline card, visibly read-only and muted,
+    showing "Signed in with" and an identity-provider row (a small provider glyph +
+    masked account), sourced from single sign-on.
+
+    A SAVE CONFIRMATION TOAST floats at the bottom-right: a small neutral card with a
+    soft, low, single shadow, a green success check glyph, and "Profile saved".
+
+    PALETTE & TYPE: near-monochrome — pure white canvas, a whisper-cool near-black ink
+    for text, mid and light pure grays for secondary text and hairlines, and one calm
+    cool cyan-leaning sky blue — a clear-sky cerulean, never indigo or violet — as the
+    only saturated color (the Save button, the selected theme border, links). Humanist
+    sans-serif (Inter) throughout, no serif; labels and headings separate by weight,
+    not size.
+
+    SHAPE & SURFACE: soft 6px rounded corners on cards, inputs, and buttons; quiet
+    gray hairline borders instead of shadows; flat tonal surfaces (white cards on a
+    faintly grayer field) over a single flat pure-white background — no gradient, no
+    colored mesh, no glass — the only shadow a soft low one under the toast.
+
+    MOOD: precise, calm, quietly authoritative — a tool that gets out of your way. No
+    color drama, no flourish; the settings recede so the work stays foreground.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, gradient background, colored mesh or blobs, glassmorphism, violet or indigo or purple accent, drop shadow under resting cards"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches the screen's actual layout and key components as specified"}
+    theme_fidelity: {weight: 3, description: "Palette, typography, radius/shape language match the treatise, not generic UI defaults"}
+    composition: {weight: 2, description: "Clear visual hierarchy, plausible real-product layout"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+
+tags: [npl-minimal, NoizuPromptLingo, screen-mockup]

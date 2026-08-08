@@ -1,0 +1,86 @@
+schema: "0.4"
+id: npl-editorial-35-instructions-prompt-templates
+type: image
+quality: high
+
+# NoizuPromptLingo — a library of versioned, parameterized prompt templates — Instructions (Prompt Templates) screen.
+# Theme tenets: warm paper stock, serif body (Source Serif 4), single muted-claret ink accent, near-square 2px radius, warm beige hairline rules.
+# Palette: paper #fbf8f1, warm ink #1c1917, claret #9a2c3f, petrol #1d4e5f, ochre #b45309, beige hairline #e3d9c6.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of an
+    editorial prompt-template workbench that reads like a typeset specification, not
+    a code IDE. The body face is a SERIF; the canvas is warm off-white paper;
+    margins are generous. Prompts are authored here like printed standards, with
+    defined-terms tables and version histories. NOT a dark terminal, NOT a
+    cool-white SaaS grid. Structure comes from type hierarchy and warm hairline
+    rules, never heavy borders or shadows.
+  text: |
+    A 16:9 high-fidelity UI mockup of the Instructions (Prompt Templates) screen of
+    NoizuPromptLingo, a library of versioned, parameterized prompt templates. It
+    reads like an editorial spec workbench, not a code IDE.
+
+    OVERALL LAYOUT (three bands on a warm off-white paper canvas, separated by warm
+    beige hairline rules and generous margins): a LEFT template list, a dominant
+    CENTER template editor, and a RIGHT version-and-actions rail.
+
+    TOP HEADER BAND: serif wordmark "NPL" at left; breadcrumb "Instructions /
+    Directive Skeleton" in serif; a primary "Render & Spawn" typeset label-button
+    filled muted claret at right.
+
+    LEFT INSTRUCTION TEMPLATE LIST (about 260px): a table-of-contents list of
+    template names in the serif face, each with a small monospace version tag (for
+    example "v4") and a one-line warm-gray description. The selected template carries
+    a claret left-rule and heavier weight. A monospace small-caps eyebrow "Templates"
+    heads the list.
+
+    CENTER TEMPLATE EDITOR (dominant, protected reading measure): the top two-thirds
+    is the PROMPT BODY — a typeset editable document in serif with one highlighted
+    inline parameter placeholder shown in monospace (a braced token) and a couple of
+    literal tokens in monospace; it reads like a printed spec, not a terminal. Below a
+    beige section rule, a PARAMETER DEFINITIONS block styled like a defined-terms
+    table: each row a serif small-caps term, a monospace type, and a warm-gray gloss.
+    Field chrome is warm-paper on beige hairlines, near-square corners.
+
+    RIGHT VERSION-AND-ACTIONS RAIL (about 280px): a VERSION HISTORY SELECTOR — a
+    vertical list of saved versions (monospace version tag + warm-gray timestamp +
+    author), the current one marked by a claret left-rule; below it a small panel
+    describing the Render & Spawn action with a burnt-ochre "spawns a sub-agent run"
+    note and the primary claret button repeated.
+
+    PALETTE & TYPE: warm off-white paper, warm near-black serif ink, one muted claret
+    accent (active rule and primary button), deep petrol teal for links, burnt-ochre
+    used sparingly for a single highlight note; warm beige hairlines throughout, no
+    cool gray. Serif (Source Serif 4) for all prose and headings; monospace only for
+    tokens, version tags, and parameter types. No geometric sans.
+
+    SHAPE & SURFACE: near-square 2px corners, flat and tonal, separation by warm
+    paper tone steps and margin, no resting drop shadows; a faint paper grain on the
+    canvas.
+
+    MOOD: literate, exact, considered — a craftsperson's spec bench where prompts are
+    authored like standards.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Shows a versioned template list, a template editor with prompt body + parameter definitions, a version history selector, and a Render & Spawn action"}
+    theme_fidelity: {weight: 3, description: "Warm paper canvas, serif body/headings, single muted-claret accent, petrol links, ochre highlight, warm beige hairlines, near-square 2px radius — not a dark IDE or cool-white SaaS"}
+    composition: {weight: 2, description: "Clear visual hierarchy, protected reading measure, plausible spec-workbench layout"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+
+tags: [npl-editorial, NoizuPromptLingo, screen-mockup]

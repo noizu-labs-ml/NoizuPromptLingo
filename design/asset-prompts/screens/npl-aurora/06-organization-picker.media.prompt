@@ -1,0 +1,82 @@
+schema: "0.4"
+id: npl-aurora-06-organization-picker
+type: image
+quality: high
+
+# NoizuPromptLingo (NPL) — a workspace for teams who build, run, and supervise AI agents — Organization Picker screen.
+# Theme's reference screen (treatise §5): one focused choice per viewport, airy, never a dense grid.
+# Theme tenets: warm cream canvas, single grape-violet accent, 14px radius + pill buttons, resting soft shadows.
+# Palette: cream #fff9f4, warm plum-ink #37303a, grape violet #6b4de6, soft coral #f4776b, warm gold #f2b054.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a
+    WARM, WELCOMING "choose your organization" landing screen — the first thing a
+    user sees after signing in. Calm and airy, a few generous choices rather than a
+    dense grid. Rounded humanist sans-serif (NO serif). Gentle depth from soft
+    resting shadows, no hard borders.
+  text: |
+    A 16:9 high-fidelity UI mockup of the Organization Picker screen of
+    NoizuPromptLingo (NPL), a workspace where teams build, run, and supervise AI
+    agents. The signed-in user picks which organization to enter — a warm, low-
+    pressure choice with plenty of room to breathe.
+
+    OVERALL LAYOUT (a centered, airy column — deliberately NOT a dense grid):
+    - A slim floating TOP BAR on a soft shadow: rounded "NPL" wordmark at left, a
+      small round user-avatar and a quiet menu at right.
+    - A centered WELCOME HEADER band: heading "Choose an organization" in a heavier
+      rounded weight, muted subhead "Pick up where your team left off."
+    - A slim rounded ORG SEARCH / FILTER BAR (pill-shaped input, soft inner
+      shadow, magnifier glyph, placeholder "Search organizations").
+    - An ORGANIZATION CARD SET of just 3–4 generous rounded cards in a roomy row or
+      soft two-up layout (never a tight many-column grid), each resting on its own
+      soft warm drop-shadow.
+
+    EACH ORG CARD (generously rounded, floating on soft shadow, 20–24px padding):
+    - A soft rounded monogram/avatar tile in a warm tint, the organization name in
+      a 600 weight (e.g. "Northwind Labs", "Aurora Studio", "Kettle & Co"), and a
+      muted role line ("Owner" / "Member").
+    - A RECENT ACTIVITY SNIPPET: two muted lines like "3 sessions this week ·
+      2 open tickets" with a tiny warm activity sparkline or dots.
+    - On one card, a soft hover-lift state (raised one shadow step, faintly warmed).
+    - A final CREATE-ORGANIZATION CARD rendered as a soft dashed-tint tile with a
+      pill "+ Create organization" button in grape-violet.
+
+    PALETTE & TYPE: warm cream canvas (a soft aurora wash only faintly in the
+    header backdrop, never behind card text), deep warm plum-ink text, one
+    grape-violet accent on the create pill and active states, warm-tinted neutral
+    card fills. Rounded humanist sans-serif everywhere (high x-height, soft
+    terminals) — no serif; monospace only if a tiny org-key chip appears.
+
+    SHAPE & SURFACE: soft and floating. 14px+ rounded cards, pill button and pill
+    search field, no hard borders — every separation is a warm resting drop-shadow
+    plus a gentle cream-to-warmer-cream tonal step. This screen is the clearest
+    showcase of the theme's signature resting elevation.
+
+    MOOD: welcoming, calm, unhurried — "take your time, you belong here." Airy,
+    warm, adult; premium soft-light product, never a dense dashboard or terminal.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, hard black borders, sharp square corners, dark terminal theme, dense many-column grid"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches Organization Picker: a search/filter bar, 3-4 generous org cards each with name/role and a recent-activity snippet, and a create-organization affordance"}
+    theme_fidelity: {weight: 3, description: "Warm cream canvas, grape-violet pill accent, generously rounded floating cards on resting soft shadows, airy (not a dense grid), rounded humanist sans"}
+    composition: {weight: 2, description: "Calm airy hierarchy, a few generous choices, whitespace as a feature, plausible real product"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+    - "hard-edged or dark-terminal aesthetic instead of warm soft onboarding"
+    - "dense many-column grid instead of a few generous cards"
+
+tags: [npl-aurora, NoizuPromptLingo, screen-mockup]

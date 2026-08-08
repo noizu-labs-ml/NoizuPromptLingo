@@ -1,0 +1,8 @@
+name: "NoizuPromptLingo"
+logo-text: "NPL"
+font-url: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+intent: "A prompt-definition language and MCP toolchain — authored on a dark canvas where the signal lives."
+perception: "Focused, immersive, expert. The lights are off and the work is on."
+audience: "Agent engineers running long sessions in terminals and IDEs."
+tone: "Low-noise, high-signal. Speaks in mono."
+keywords: [dark, terminal, signal, focus, mono]

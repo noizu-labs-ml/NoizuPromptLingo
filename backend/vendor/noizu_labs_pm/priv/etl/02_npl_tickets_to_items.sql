@@ -1,0 +1,190 @@
+-- =============================================================================
+-- 02_npl_tickets_to_items.sql — TEMPLATE (not safe to execute blindly)
+-- =============================================================================
+-- Migrates NPL `tickets` → pm_core `items` with column rename:
+--   ticket_type → item_type
+-- Also renames related NPL ticket_* definition tables → item_* (sketched below).
+--
+-- Prerequisites (see 01_order.md):
+--   - 00_id_maps.sql applied
+--   - users / orgs / projects / queues (and definitions) already loaded
+--   - TRP `items` loaded first when UUID collisions are possible (D2)
+--
+-- Connection model (pick one — all TODO for operator):
+--   A) postgres_fdw / dblink from pm_core → SOURCE_NPL_URL
+--   B) ETL runner SELECTs from NPL, INSERTs into PM_CORE_URL
+--   C) pg_dump custom transform (advanced)
+--
+-- Do NOT run against production. Prefer a transaction + dry-run counts first.
+-- =============================================================================
+
+-- Everything below is COMMENTARY / TEMPLATE. Uncomment only after filling TODOs.
+
+/*
+-- ---------------------------------------------------------------------------
+-- 0) Sanity: maps exist
+-- ---------------------------------------------------------------------------
+SELECT COUNT(*) AS user_maps FROM user_id_map WHERE source_system = 'npl';
+SELECT COUNT(*) AS org_maps  FROM org_id_map  WHERE source_system = 'npl';
+SELECT COUNT(*) AS proj_maps FROM project_id_map WHERE source_system = 'npl';
+
+-- ---------------------------------------------------------------------------
+-- 1) Staging view/table of NPL tickets with remapped FKs
+--    Replace npl_remote with your FDW schema or staging copy.
+-- ---------------------------------------------------------------------------
+-- CREATE TEMP TABLE stg_npl_tickets AS
+-- SELECT
+--   t.id                                              AS source_id,
+--   -- Prefer preserve UUID; if already taken by TRP item, allocate/map later
+--   t.id                                              AS candidate_pm_id,
+--   COALESCE(om.pm_id, t.organization_id)             AS organization_id,
+--   COALESCE(pm.pm_id, t.project_id)                  AS project_id,
+--   t.title,
+--   t.description,
+--   t.ticket_type                                     AS item_type,  -- RENAME
+--   t.status,
+--   t.priority,
+--   t.assignee,
+--   t.reporter,
+--   t.custom_fields,
+--   -- TODO: map queue_id via queue_id_map if you added one, else identity
+--   t.queue_id,
+--   -- parent remapped after first-pass insert (self-FK)
+--   t.parent_id                                       AS source_parent_id,
+--   t.inserted_at,
+--   t.updated_at
+-- FROM npl_remote.tickets t
+-- LEFT JOIN org_id_map om
+--   ON om.source_system = 'npl' AND om.source_id = t.organization_id
+-- LEFT JOIN project_id_map pm
+--   ON pm.source_system = 'npl' AND pm.source_id = t.project_id
+-- ;
+
+-- ---------------------------------------------------------------------------
+-- 2) Resolve UUID collisions: if candidate_pm_id already in items, keep TRP
+--    row and assign a new pm_id (or skip insert and only map).
+-- ---------------------------------------------------------------------------
+-- TODO: operator policy for collisions
+-- UPDATE stg_npl_tickets s
+-- SET candidate_pm_id = gen_random_uuid()
+-- WHERE EXISTS (SELECT 1 FROM items i WHERE i.id = s.candidate_pm_id);
+
+-- ---------------------------------------------------------------------------
+-- 3) Insert items (idempotent pattern)
+-- ---------------------------------------------------------------------------
+-- INSERT INTO items (
+--   id,
+--   organization_id,
+--   project_id,
+--   title,
+--   description,
+--   item_type,          -- was ticket_type
+--   status,
+--   priority,
+--   assignee,
+--   reporter,
+--   custom_fields,
+--   queue_id,
+--   parent_id,          -- NULL on first pass; set in step 4
+--   -- TRP-superset columns: leave defaults if NPL lacks them
+--   owner_user_id,
+--   tags,
+--   rank,
+--   start_date,
+--   due_date,
+--   estimate,
+--   number,
+--   key,
+--   lock_version,
+--   inserted_at,
+--   updated_at
+-- )
+-- SELECT
+--   s.candidate_pm_id,
+--   s.organization_id,
+--   s.project_id,
+--   s.title,
+--   s.description,
+--   s.item_type,
+--   s.status,
+--   s.priority,
+--   s.assignee,
+--   s.reporter,
+--   COALESCE(s.custom_fields, '{}'::jsonb),
+--   s.queue_id,
+--   NULL,               -- parent_id second pass
+--   NULL,               -- owner_user_id TODO if personal tickets exist
+--   '{}'::text[],
+--   NULL, NULL, NULL, NULL,
+--   NULL,               -- number/key: preserve if NPL has human keys; else NULL
+--   NULL,
+--   0,
+--   s.inserted_at,
+--   s.updated_at
+-- FROM stg_npl_tickets s
+-- ON CONFLICT (id) DO NOTHING;
+--
+-- -- Record maps even when we skipped insert due to conflict (map → existing)
+-- INSERT INTO item_id_map (source_system, source_id, pm_id, notes)
+-- SELECT
+--   'npl',
+--   s.source_id,
+--   COALESCE(
+--     (SELECT i.id FROM items i WHERE i.id = s.candidate_pm_id),
+--     s.candidate_pm_id
+--   ),
+--   'npl tickets → items; ticket_type→item_type'
+-- FROM stg_npl_tickets s
+-- ON CONFLICT (source_system, source_id) DO NOTHING;
+
+-- ---------------------------------------------------------------------------
+-- 4) Second pass: parent_id via item_id_map
+-- ---------------------------------------------------------------------------
+-- UPDATE items i
+-- SET parent_id = pmap.pm_id
+-- FROM item_id_map child
+-- JOIN stg_npl_tickets s ON s.source_id = child.source_id
+-- JOIN item_id_map pmap
+--   ON pmap.source_system = 'npl' AND pmap.source_id = s.source_parent_id
+-- WHERE child.source_system = 'npl'
+--   AND i.id = child.pm_id
+--   AND s.source_parent_id IS NOT NULL
+--   AND i.parent_id IS DISTINCT FROM pmap.pm_id;
+
+-- ---------------------------------------------------------------------------
+-- 5) Related NPL definition tables (sketch — run in step 5 of 01_order.md)
+-- ---------------------------------------------------------------------------
+-- ticket_field_definitions  → item_field_definitions
+-- ticket_type_definitions   → item_type_definitions
+-- ticket_type_fields        → item_type_fields
+--   (ticket_type_definition_id → item_type_definition_id,
+--    ticket_field_definition_id → item_field_definition_id)
+-- ticket_queues             → item_queues
+--
+-- INSERT INTO item_type_definitions (id, organization_id, project_id, slug, name, ...)
+-- SELECT
+--   d.id,  -- preserve UUID if free
+--   COALESCE(om.pm_id, d.organization_id),
+--   COALESCE(pm.pm_id, d.project_id),
+--   d.slug,
+--   d.name,
+--   ...
+-- FROM npl_remote.ticket_type_definitions d
+-- LEFT JOIN org_id_map om ON om.source_system = 'npl' AND om.source_id = d.organization_id
+-- LEFT JOIN project_id_map pm ON pm.source_system = 'npl' AND pm.source_id = d.project_id
+-- ON CONFLICT (id) DO NOTHING;
+
+-- ---------------------------------------------------------------------------
+-- 6) Dry-run counts (also see 03_validate.sql)
+-- ---------------------------------------------------------------------------
+-- SELECT
+--   (SELECT COUNT(*) FROM npl_remote.tickets) AS npl_tickets,
+--   (SELECT COUNT(*) FROM item_id_map WHERE source_system = 'npl') AS npl_item_maps,
+--   (SELECT COUNT(*) FROM items) AS pm_items;
+*/
+
+-- Guard: file intentionally non-executing when run as-is.
+DO $$
+BEGIN
+  RAISE NOTICE '02_npl_tickets_to_items.sql is a TEMPLATE — review TODOs and uncomment after wiring SOURCE_NPL_URL access. Not executed.';
+END $$;

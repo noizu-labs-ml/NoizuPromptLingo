@@ -1,0 +1,24 @@
+databaseChangeLog:
+  - changeSet:
+      id: pm-003-auth-providers
+      author: noizu-pm
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: auth_providers
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE auth_providers (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                title varchar(255),
+                description text,
+                settings text,
+                deleted_at timestamptz,
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: auth_providers

@@ -1,0 +1,186 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "npl-mcp.fullname" . }}
+  labels:
+    {{- include "npl-mcp.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.ingress.cloudflareWhitelist }}
+    nginx.ingress.kubernetes.io/whitelist-source-range: {{ include "npl-mcp.cloudflareWhitelist" . }}
+    {{- end }}
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "86400"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "86400"
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  {{- if .Values.tls.enabled }}
+  tls:
+    - hosts:
+        - {{ .Values.domain }}
+        - "*.{{ .Values.domain }}"
+      secretName: {{ .Values.tls.secretName }}
+  {{- end }}
+  rules:
+    # ── Root domain ──
+    - host: {{ .Values.domain }}
+      http:
+        paths:
+          - path: /mcp
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: mcp
+          - path: /sse
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: mcp
+          # Phoenix UserSocket (WebSocket) — the local browser-controller and
+          # org channels connect to wss://<host>/socket. Must hit the backend,
+          # not the SPA catch-all (which fails the WS upgrade / 404s).
+          - path: /socket
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: mcp
+          # `curl https://<host>/browser-sessions | bash` launcher (backend).
+          - path: /browser-sessions
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: mcp
+          - path: /health
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: mcp
+          # MCP OAuth AS discovery + authorize/consent (must hit Phoenix, not SPA).
+          - path: /.well-known/oauth-authorization-server
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: mcp
+          - path: /.well-known/oauth-protected-resource
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: mcp
+          - path: /.well-known/jwks.json
+            pathType: Exact
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: mcp
+          - path: /oauth
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: mcp
+          # Authentik OIDC redirect flow (SSOController :oidc_init / :oidc_callback)
+          # lives on the Phoenix backend at /auth/oidc — must not fall through to
+          # the SPA catch-all (which 404s).
+          - path: /auth/oidc
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: mcp
+          - path: /api/auth
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: http
+          - path: /api/keys
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: http
+          - path: /api/mcp-token
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: http
+          - path: /api/
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: mcp
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: http
+    # ── Wildcard subdomains — all MCP traffic to backend ──
+    - host: "*.{{ .Values.domain }}"
+      http:
+        paths:
+          - path: /mcp
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: mcp
+          - path: /.well-known/oauth-protected-resource
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: mcp
+          - path: /.well-known/jwks.json
+            pathType: Exact
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: mcp
+          - path: /assets/
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: mcp
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: http
+{{- end }}

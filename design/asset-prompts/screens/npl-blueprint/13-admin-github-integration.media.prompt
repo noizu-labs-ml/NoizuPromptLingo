@@ -1,0 +1,92 @@
+schema: "0.4"
+id: npl-blueprint-13-admin-github-integration
+type: image
+quality: high
+
+# NoizuPromptLingo (structured prompt-definition language + MCP agent toolchain) — Admin: GitHub Integration screen.
+# Theme tenets: cool drafting sheet, faint grid texture, thin cyan rules + monospace annotations, near-square 2px corners, one warm redline for markup.
+# Palette: sheet #f5f8fc, navy ink #14263f, blueprint-blue #245ea8, drafting cyan #0e9bd6, redline #c05a3e.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a
+    platform-administration surface for NoizuPromptLingo — a structured
+    prompt-definition language and MCP agent toolchain. The register is a
+    technical drafting sheet: cool, exacting, calm — "drawn by someone who
+    measures twice." Structure is the aesthetic — a faint background grid, thin
+    cyan rules, dimension lines, and monospace callout labels do the work.
+    Engineered IBM Plex Sans for UI, IBM Plex Mono for every precise value.
+    Near-square corners, nearly flat surfaces, no gradients or glow. The only
+    warm color is a single red-oxide redline reserved for markup and attention.
+  text: |
+    A 16:9 high-fidelity UI mockup of the Admin: GitHub Integration screen of
+    NoizuPromptLingo — platform-level GitHub access configuration for granting
+    org-scoped tokens and repo access.
+
+    OVERALL LAYOUT (two bands over a faint blueprint grid): a slim LEFT ADMIN NAV
+    RAIL that reads like a sheet index (thin cyan active left-rule, small mono
+    section labels), and a dominant CENTER work area of title-block cards. A
+    monospace breadcrumb path "admin / github" sits at the top with a title
+    "GitHub Integration" in medium-weight sans.
+
+    GITHUB APP CONNECTION CARD (top, title-block header "App connection"): the
+    platform-level GitHub App install status shown as a compact panel — a
+    monospace app identifier, an install state, and a small "Connected" status
+    marker rendered as a teal-green dimension chip paired with a check glyph (not
+    color alone). A secondary cyan-rule ghost button "Reconfigure" at the right.
+
+    ORG TOKEN GRANT TABLE (main card, title-block header "Org grants"): a dense
+    per-org access table with a cyan dimension-line under 500-weight sans column
+    headers (Org, Repositories, Token scope, Granted, Actions). Monospace
+    repository paths (owner/repo) and granted-date columns; quiet cool-hairline
+    row separators; a faint cyan row-hover tint. Each row ends in a small "revoke"
+    action drawn with a warm redline markup so removals read as red-pencil edits.
+
+    GRANT ACCESS MODAL (floating over the table — the one place elevation lifts,
+    a minimal cool shadow, near-square corners): a form to add a new org-level
+    grant with a title-block header "Grant access". Fields with small monospace
+    dimension-labels above — an org selector, a repo-scope field showing a
+    monospace scope pattern (owner/repo or owner/*), and a token-scope choice.
+    A blueprint-blue primary "Grant" button and a plain "Cancel" beside it.
+
+    PALETTE & TYPE: a pale cool drafting-sheet canvas carrying dark navy drafting
+    ink. Structure is blueprint blue; thin rules and highlights are a drafting
+    cyan; a single warm red-oxide redline is reserved for markup, revocations, and
+    attention — the red pencil on a blue drawing. Neutrals are cool-tinted toward
+    blue, never warm, never pure gray. Engineered IBM Plex Sans for UI and body;
+    IBM Plex Mono carries every precise value — repository paths, app identifiers,
+    token scopes, dates, and the small callout labels above fields.
+
+    SHAPE & SURFACE: near-square corners — drawn, not soft, not stamped. Borders
+    are the drawing: thin single-pixel cyan and blueprint-blue rules form every
+    cell divider, panel edge, and dimension line; surfaces are the paper between
+    them. Nearly flat — the connection card and table rest on a rule and a faint
+    tone step, never a drop shadow; only the modal lifts. The faint blueprint grid
+    sits under the whole canvas, static and low-contrast.
+
+    MOOD: precise, technical, trustworthy within five seconds. Cool, exacting,
+    calm — a configuration surface drawn on an engineer's drafting table where
+    correctness and legibility of structure matter more than warmth.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches Admin: GitHub Integration — a GitHub App connection card, a per-org token grant table with repo scopes and revoke actions, and a floating grant-access modal"}
+    theme_fidelity: {weight: 3, description: "Cool drafting sheet, faint blueprint grid, thin cyan/blueprint-blue rules, monospace values, near-square corners, single warm redline for markup — not generic UI defaults"}
+    composition: {weight: 2, description: "Clear visual hierarchy, plausible real-product admin layout with title-block cards and one lifted modal"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+
+tags: [npl-blueprint, NoizuPromptLingo, screen-mockup]

@@ -1,0 +1,38 @@
+databaseChangeLog:
+  - changeSet:
+      id: 026-create-table-sessions
+      author: starter-scaffold
+      changes:
+        - sql:
+            sql: |
+              -- Work sessions group chat rooms, artifacts, and tickets under a
+              -- shared context. A session always belongs to an organization;
+              -- associating it with a specific project is optional.
+              CREATE TABLE sessions (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+                project_id uuid REFERENCES projects(id) ON DELETE SET NULL,
+                title varchar(255) NOT NULL,
+                description text,
+                status varchar(20) NOT NULL DEFAULT 'active'
+                  CHECK (status IN ('active', 'archived', 'completed')),
+                created_by uuid REFERENCES users(id) ON DELETE SET NULL,
+                inserted_at timestamptz NOT NULL,
+                updated_at timestamptz NOT NULL,
+                archived_at timestamptz
+              );
+
+              -- Covering index for active sessions by org
+              CREATE INDEX idx_sessions_org_active_covering
+                ON sessions (organization_id, inserted_at DESC)
+                WHERE status = 'active';
+
+              CREATE INDEX idx_sessions_project_id
+                ON sessions (project_id)
+                WHERE project_id IS NOT NULL;
+
+              CREATE INDEX idx_sessions_status
+                ON sessions (status);
+      rollback:
+        - dropTable:
+            tableName: sessions

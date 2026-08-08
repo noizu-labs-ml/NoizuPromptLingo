@@ -1,0 +1,102 @@
+schema: "0.4"
+id: npl-blueprint-12-admin-authz
+type: image
+quality: high
+
+# NoizuPromptLingo (structured prompt-definition language + MCP agent toolchain) — Admin: Authz (MCP Keys + PBAC) screen.
+# Theme tenets: cool drafting sheet, faint grid texture, thin cyan rules + monospace annotations, near-square 2px corners, one warm redline for markup.
+# Palette: sheet #f5f8fc, navy ink #14263f, blueprint-blue #245ea8, drafting cyan #0e9bd6, redline #c05a3e.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a
+    platform-administration surface for NoizuPromptLingo — a structured
+    prompt-definition language and MCP agent toolchain. The register is a
+    technical drafting sheet: cool, exacting, calm — "drawn by someone who
+    measures twice." Structure is the aesthetic — a faint background grid, thin
+    cyan rules, dimension lines, and monospace callout labels do the work.
+    Engineered IBM Plex Sans for UI, IBM Plex Mono for every precise value.
+    Near-square corners, nearly flat surfaces, no gradients or glow. The only
+    warm color is a single red-oxide redline reserved for markup and attention.
+  text: |
+    A 16:9 high-fidelity UI mockup of the Authorization Control Center (Admin:
+    Authz) of NoizuPromptLingo — a platform-admin screen combining PBAC policy
+    simulation with MCP key-usage auditing.
+
+    OVERALL LAYOUT (three bands): a slim LEFT ADMIN NAV RAIL that reads like a
+    sheet index (thin cyan active left-rule, small mono section labels); a
+    dominant CENTER work area of stacked title-block cards; the whole canvas
+    backed by a faint, static blueprint grid (fine minor lines, heavier major
+    lines, very low contrast).
+
+    TOP STRIP: a monospace breadcrumb path "admin / authz" and a title
+    "Authorization" in medium-weight sans, with a small mono coordinate readout
+    at the far right like a drawing's title block.
+
+    PBAC POLICY SIMULATOR (primary card, title-block header labeled "Policy
+    Simulator"): three cyan-ruled input fields on the grid, each with a small
+    monospace dimension-label above — "actor", "action", "resource" — showing
+    sample values (a member handle, a tool action such as tools.call, a resource
+    path). A blueprint-blue primary "Run check" button at the right. The result
+    reads DENIED as a warm redline attention callout (a left redline rule + faint
+    tint, the word set in ink).
+
+    DENIAL EXPLANATION PANEL (auto-expanded beneath the simulator): a rule-trace
+    as a vertical list joined by thin cyan rules — matched and unmatched policy
+    rules with monospace policy identifiers, each row marked pass or fail, the
+    deciding rule pulled out with a redline margin mark; dimension-line separators
+    between rules.
+
+    MCP KEY USAGE AUDIT TABLE (second card, title-block header "Key Usage"): a
+    dense cross-org audit table with a cyan dimension-line beneath 500-weight sans
+    column headers (Org, Key, Action, When, Result), monospace key-prefix and
+    timestamp columns, quiet cool-hairline row separators, and a faint cyan
+    row-hover tint. A row of filter chips above it (org, key, date range).
+
+    SHADOW-MODE MISMATCH LOG (right-side panel, header "Shadow-mode mismatches"):
+    a compact list of tool_guard identity mismatches recorded without enforcement
+    — monospace identity pairs (expected vs presented), each flagged with a small
+    redline markup and a muted "not enforced" note.
+
+    PALETTE & TYPE: a pale cool drafting-sheet canvas carrying dark navy drafting
+    ink. Structure is blueprint blue; thin rules and highlights are a drafting
+    cyan; a single warm red-oxide redline is reserved for markup, denials, and
+    attention — the red pencil on a blue drawing. Neutrals are cool-tinted toward
+    blue, never warm, never pure gray. Engineered IBM Plex Sans for UI and body;
+    IBM Plex Mono carries every precise value — policy identifiers, scope and
+    resource paths, actor/action keys, timestamps, and the small callout labels
+    above fields.
+
+    SHAPE & SURFACE: near-square corners — drawn, not soft, not stamped. Borders
+    are the drawing: thin single-pixel cyan and blueprint-blue rules form every
+    cell divider, panel edge, and dimension line; surfaces are the paper between
+    them. Nearly flat — cards rest on a rule and a faint tone step, never a drop
+    shadow. The faint blueprint grid sits under the whole canvas, static and
+    low-contrast — present when you look, gone when you read.
+
+    MOOD: precise, technical, trustworthy within five seconds. Cool, exacting,
+    calm — a configuration surface drawn on an engineer's drafting table where
+    correctness and legibility of structure matter more than warmth.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches Admin: Authz — PBAC policy simulator (actor/action/resource) with an auto-expanded denial explanation, an MCP key-usage audit table with filters, and a shadow-mode mismatch log"}
+    theme_fidelity: {weight: 3, description: "Cool drafting sheet, faint blueprint grid, thin cyan/blueprint-blue rules, monospace values, near-square corners, single warm redline for markup — not generic UI defaults"}
+    composition: {weight: 2, description: "Clear visual hierarchy, plausible real-product admin layout with title-block cards"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+
+tags: [npl-blueprint, NoizuPromptLingo, screen-mockup]

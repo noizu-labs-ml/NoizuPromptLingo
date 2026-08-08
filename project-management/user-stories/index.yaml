@@ -1,1913 +1,982 @@
-version: 2
-updated: '2026-02-02T17:30:00Z'
-personas:
-  P-001: AI Agent - Autonomous, programmatic automation agent
-  P-002: Product Manager - Non-technical reviewer needing dashboards
-  P-003: Vibe Coder - Developer focused on rapid prototyping
-  P-004: Project Manager - Coordinates agents, sprint planning, task tracking
-  P-005: Dave - Senior developer focused on code review and quality
-stories:
-  - id: US-001
-    title: Load NPL Core Components
-    file: US-001-load-npl-core.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: critical
-    status: draft
-    prd_group: npl_load
-    prds:
-      - PRD-008
-      - PRD-014
-    related_stories:
+epics:
+  - name: Work Sessions
+    stories:
+      - US-001
       - US-002
-    related_personas:
-      - P-001
-  - id: US-002
-    title: Load Project-Specific Context
-    file: US-002-load-project-context.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: critical
-    status: draft
-    prd_group: npl_load
-    related_stories:
-      - US-001
-    related_personas:
-      - P-001
-  - id: US-003
-    title: Fetch Web Content as Markdown
-    file: US-003-fetch-web-as-markdown.md
-    persona: P-003
-    persona_name: Vibe Coder
-    priority: high
-    status: draft
-    prd_group: npl_load
-    related_personas:
-      - P-003
-  - id: US-025
-    title: Explore Project File Structure
-    file: US-025-explore-project-structure.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: medium
-    status: draft
-    prd_group: npl_load
-    related_personas:
-      - P-001
-  - id: US-004
-    title: Share Artifact in Chat Room
-    file: US-004-share-artifact-chat.md
-    persona: P-003
-    persona_name: Vibe Coder
-    priority: high
-    status: draft
-    prd_group: chat
-    related_stories:
-      - US-007
-      - US-008
-    related_personas:
-      - P-003
-  - id: US-005
-    title: View Session Dashboard
-    file: US-005-view-session-dashboard.md
-    persona: P-002
-    persona_name: Product Manager
-    priority: high
-    status: draft
-    prd_group: chat
-    related_stories:
-      - US-007
-      - US-008
-      - US-016
-    related_personas:
-      - P-002
-  - id: US-006
-    title: Send Message to Chat Room
-    file: US-006-send-message-to-room.md
-    persona: P-003
-    persona_name: Vibe Coder
-    priority: high
-    status: draft
-    prd_group: chat
-    related_stories:
-      - US-007
-      - US-022
-      - US-027
+      - US-003
       - US-004
-    related_personas:
-      - P-003
-  - id: US-007
-    title: Create Chat Room for Collaboration
-    file: US-007-create-chat-room.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: high
-    status: draft
-    prd_group: chat
-    related_stories:
       - US-005
-      - US-006
-      - US-027
-    related_personas:
-      - P-001
-  - id: US-022
-    title: Receive and Manage Notifications
-    file: US-022-receive-notifications.md
-    persona: P-002
-    persona_name: Product Manager
-    priority: medium
-    status: draft
-    prd_group: chat
-    related_stories:
-      - US-006
-      - US-027
-    related_personas:
-      - P-002
-  - id: US-027
-    title: React to Chat Messages
-    file: US-027-react-to-message.md
-    persona: P-003
-    persona_name: Vibe Coder
-    priority: low
-    status: draft
-    prd_group: chat
-    related_stories:
+  - name: Tickets & Boards
+    stories:
       - US-006
       - US-007
-      - US-022
-    related_personas:
-      - P-003
-  - id: US-028
-    title: Create Todo from Chat
-    file: US-028-create-chat-todo.md
-    persona: P-003
-    persona_name: Vibe Coder
-    priority: low
-    status: draft
-    prd_group: chat
-    related_stories:
-      - US-006
-      - US-007
-      - US-016
-      - US-027
-    related_personas:
-      - P-003
-  - id: US-008
-    title: Create Versioned Artifact
-    file: US-008-create-versioned-artifact.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: high
-    status: draft
-    prd_group: artifacts
-    related_stories:
-      - US-009
-      - US-017
-      - US-004
-    related_personas:
-      - P-001
-  - id: US-009
-    title: Review Artifact Revision History
-    file: US-009-review-artifact-history.md
-    persona: P-002
-    persona_name: Product Manager
-    priority: medium
-    status: draft
-    prd_group: artifacts
-    related_stories:
-      - US-008
-      - US-010
-    related_personas:
-      - P-002
-  - id: US-010
-    title: Add Inline Review Comment
-    file: US-010-add-inline-comment.md
-    persona: P-002
-    persona_name: Product Manager
-    priority: medium
-    status: draft
-    prd_group: artifacts
-    related_stories:
-      - US-008
-      - US-009
-    related_personas:
-      - P-002
-  - id: US-011
-    title: Annotate Screenshot with Overlay
-    file: US-011-annotate-screenshot.md
-    persona: P-002
-    persona_name: Product Manager
-    priority: medium
-    status: draft
-    prd_group: artifacts
-    related_stories:
-      - US-008
-      - US-010
-      - US-012
-    related_personas:
-      - P-002
-  - id: US-023
-    title: Complete Review with Summary
-    file: US-023-complete-review.md
-    persona: P-002
-    persona_name: Product Manager
-    priority: medium
-    status: draft
-    prd_group: artifacts
-    related_stories:
-      - US-010
-    related_personas:
-      - P-002
-  - id: US-014
-    title: Pick Up Task from Queue
-    file: US-014-pick-task-from-queue.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: high
-    status: draft
-    prd_group: tasks
-    related_personas:
-      - P-001
-  - id: US-015
-    title: View Task Queue Progress
-    file: US-015-view-task-progress.md
-    persona: P-004
-    persona_name: Project Manager
-    priority: high
-    status: draft
-    prd_group: tasks
-    related_stories:
-      - US-014
-      - US-018
-      - US-031
-      - US-033
-    related_personas:
-      - P-004
-  - id: US-016
-    title: Create Task in Queue
-    file: US-016-create-task.md
-    persona: P-003
-    persona_name: Vibe Coder
-    priority: high
-    status: draft
-    prd_group: tasks
-    related_personas:
-      - P-003
-  - id: US-017
-    title: Link Artifact to Task
-    file: US-017-link-artifact-to-task.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: high
-    status: draft
-    prd_group: tasks
-    related_stories:
-      - US-008
-      - US-016
-    related_personas:
-      - P-001
-  - id: US-018
-    title: Update Task Status
-    file: US-018-update-task-status.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: high
-    status: draft
-    prd_group: tasks
-    related_stories:
-      - US-014
-      - US-015
-      - US-016
-      - US-017
-    related_personas:
-      - P-001
-  - id: US-026
-    title: Ask Question on Task
-    file: US-026-ask-question-on-task.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: medium
-    status: draft
-    prd_group: tasks
-    related_stories:
-      - US-015
-      - US-016
-      - US-018
-      - US-022
-      - US-007
-    related_personas:
-      - P-001
-  - id: US-030
-    title: Assign Task Complexity
-    file: US-030-assign-task-complexity.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: low
-    status: draft
-    prd_group: tasks
-    related_stories:
-      - US-014
-      - US-015
-      - US-016
-      - US-018
-      - US-033
-    related_personas:
-      - P-001
-  - id: US-012
-    title: Capture Screenshot of Current Work
-    file: US-012-capture-screenshot.md
-    persona: P-003
-    persona_name: Vibe Coder
-    priority: medium
-    status: draft
-    prd_group: browser
-    related_personas:
-      - P-003
-  - id: US-013
-    title: Compare Screenshots for Visual Regression
-    file: US-013-compare-screenshots.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: medium
-    status: draft
-    prd_group: browser
-    related_stories:
-      - US-008
-      - US-012
-    related_personas:
-      - P-001
-  - id: US-019
-    title: Automate Form Submission
-    file: US-019-automate-form-submission.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: medium
-    status: draft
-    prd_group: browser
-    related_stories:
-      - US-021
-    related_personas:
-      - P-001
-  - id: US-020
-    title: Quick Form Fill for Developers
-    file: US-020-quick-form-fill.md
-    persona: P-003
-    persona_name: Vibe Coder
-    priority: medium
-    status: draft
-    prd_group: browser
-    related_stories:
-      - US-021
-      - US-024
-    related_personas:
-      - P-003
-  - id: US-021
-    title: Navigate and Interact with Web Pages
-    file: US-021-browser-navigation.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: medium
-    status: draft
-    prd_group: browser
-    related_personas:
-      - P-001
-  - id: US-024
-    title: Manage Browser Session State
-    file: US-024-manage-browser-state.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: low
-    status: draft
-    prd_group: browser
-    related_stories:
-      - US-019
-      - US-020
-      - US-021
-    related_personas:
-      - P-001
-  - id: US-029
-    title: Inject Scripts and Styles
-    file: US-029-inject-page-scripts.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: low
-    status: draft
-    prd_group: browser
-    related_stories:
-      - US-019
-      - US-021
-      - US-024
-    related_personas:
-      - P-001
-  - id: US-031
-    title: View Agent Work Logs
-    file: US-031-view-agent-work-logs.md
-    persona: P-004
-    persona_name: Project Manager
-    priority: high
-    status: draft
-    prd_group: coordination
-    related_stories:
-      - US-014
-      - US-015
-      - US-032
-      - US-033
-      - US-034
-    related_personas:
-      - P-004
-  - id: US-032
-    title: Assign Tasks to Specific Agents
-    file: US-032-assign-tasks-to-agents.md
-    persona: P-004
-    persona_name: Project Manager
-    priority: high
-    status: draft
-    prd_group: coordination
-    related_stories:
-      - US-016
-      - US-022
-      - US-031
-    related_personas:
-      - P-004
-  - id: US-033
-    title: Monitor Sprint Progress with Agent Metrics
-    file: US-033-monitor-sprint-progress.md
-    persona: P-004
-    persona_name: Project Manager
-    priority: medium
-    status: draft
-    prd_group: coordination
-    related_stories:
-      - US-015
-      - US-018
-      - US-030
-      - US-031
-      - US-032
-    related_personas:
-      - P-004
-  - id: US-034
-    title: Review Agent-Generated Code
-    file: US-034-review-agent-generated-code.md
-    persona: P-005
-    persona_name: Dave the Fellow Developer
-    priority: high
-    status: draft
-    prd_group: collaboration
-    related_stories:
-      - US-008
-      - US-009
-      - US-010
-      - US-017
-      - US-018
-      - US-023
-      - US-035
-      - US-036
-      - US-037
-    related_personas:
-      - P-005
-  - id: US-035
-    title: Share Architectural Context with Agents
-    file: US-035-share-context-with-agents.md
-    persona: P-005
-    persona_name: Dave the Fellow Developer
-    priority: high
-    status: draft
-    prd_group: collaboration
-    related_stories:
-      - US-001
-      - US-008
-      - US-009
-      - US-010
-      - US-014
-      - US-034
-      - US-036
-      - US-037
-    related_personas:
-      - P-005
-  - id: US-036
-    title: Pair Program via Chat Room
-    file: US-036-pair-program-via-chat.md
-    persona: P-005
-    persona_name: Dave the Fellow Developer
-    collaborators:
-      - P-003
-      - P-001
-    priority: medium
-    status: draft
-    prd_group: collaboration
-    related_stories:
-      - US-004
-      - US-006
-      - US-007
-      - US-008
-      - US-027
-      - US-028
-      - US-034
-      - US-035
-    related_personas:
-      - P-005
-  - id: US-037
-    title: Track Code Quality Metrics for Agent Output
-    file: US-037-track-code-quality-metrics.md
-    persona: P-005
-    persona_name: Dave the Fellow Developer
-    priority: low
-    status: draft
-    prd_group: collaboration
-    related_stories:
-      - US-008
-      - US-031
-      - US-034
-    related_personas:
-      - P-005
-  - id: US-038
-    title: Apply Database Schema Migration
-    file: US-038-apply-database-schema-migration.md
-    persona: P-005
-    persona_name: Dave the Fellow Developer
-    priority: high
-    status: draft
-    prd_group: coordination
-    prds:
-      - PRD-001
-    related_stories:
-      - US-039
-      - US-041
-      - US-043
-    related_personas:
-      - P-005
-  - id: US-039
-    title: Backup and Restore Database
-    file: US-039-backup-and-restore-database.md
-    persona: P-004
-    persona_name: Project Manager
-    priority: critical
-    status: draft
-    prd_group: coordination
-    prds:
-      - PRD-001
-    related_stories:
-      - US-038
-      - US-043
-    related_personas:
-      - P-004
-  - id: US-040
-    title: Monitor Database Health and Performance
-    file: US-040-monitor-database-health-and-performance.md
-    persona: P-005
-    persona_name: Dave the Fellow Developer
-    priority: medium
-    status: draft
-    prd_group: coordination
-    prds:
-      - PRD-001
-    related_stories: []
-    related_personas:
-      - P-005
-  - id: US-041
-    title: Prevent Concurrent Write Conflicts
-    file: US-041-prevent-concurrent-write-conflicts.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: critical
-    status: draft
-    prd_group: coordination
-    prds:
-      - PRD-001
-    related_stories:
-      - US-032
-    related_personas:
-      - P-001
-  - id: US-042
-    title: Audit Schema Version Compatibility
-    file: US-042-audit-schema-version-compatibility.md
-    persona: P-004
-    persona_name: Project Manager
-    priority: high
-    status: draft
-    prd_group: coordination
-    prds:
-      - PRD-001
-      - PRD-006
-    related_stories:
-      - US-031
-    related_personas:
-      - P-004
-  - id: US-043
-    title: Export and Import Data Between Databases
-    file: US-043-export-and-import-data-between-databases.md
-    persona: P-003
-    persona_name: Vibe Coder
-    priority: medium
-    status: draft
-    prd_group: collaboration
-    prds:
-      - PRD-001
-    related_stories:
-      - US-004
-    related_personas:
-      - P-003
-  - id: US-044
-    title: Validate Database Integrity
-    file: US-044-validate-database-integrity.md
-    persona: P-005
-    persona_name: Dave the Fellow Developer
-    priority: high
-    status: draft
-    prd_group: coordination
-    prds:
-      - PRD-001
-    related_stories: []
-    related_personas:
-      - P-005
-  - id: US-045
-    title: Manage Multiple Database Instances
-    file: US-045-manage-multiple-database-instances.md
-    persona: P-004
-    persona_name: Project Manager
-    priority: low
-    status: draft
-    prd_group: coordination
-    prds:
-      - PRD-001
-    related_stories:
-      - US-005
-    related_personas:
-      - P-004
-  - id: US-046
-    title: Optimize Database Storage
-    file: US-046-optimize-database-storage.md
-    persona: P-005
-    persona_name: Dave the Fellow Developer
-    priority: low
-    status: draft
-    prd_group: coordination
-    prds:
-      - PRD-001
-    related_stories:
-      - US-009
-    related_personas:
-      - P-005
-  - id: US-047
-    title: View Database Schema Documentation
-    file: US-047-view-database-schema-documentation.md
-    persona: P-003
-    persona_name: Vibe Coder
-    priority: medium
-    status: draft
-    prd_group: npl_load
-    prds:
-      - PRD-001
-      - PRD-008
-    related_stories:
-      - US-025
-    related_personas:
-      - P-003
-  - id: US-048
-    title: Real-Time Agent Workflow Failure Diagnostics
-    file: US-048-real-time-agent-workflow-failure-diagnostics.md
-    persona: P-004
-    persona_name: Project Manager
-    priority: high
-    status: draft
-    prd_group: coordination
-    prds:
-      - PRD-005
-      - PRD-006
-    related_stories:
-      - US-031
-      - US-033
-    related_personas:
-      - P-004
-  - id: US-049
-    title: Structured Error Logging for MCP Tools
-    file: US-049-structured-error-logging-for-mcp-tools.md
-    persona: P-005
-    persona_name: Dave the Fellow Developer
-    priority: critical
-    status: draft
-    prd_group: npl_load
-    prds:
-      - PRD-004
-    related_stories:
-      - US-005
-    related_personas:
-      - P-005
-  - id: US-050
-    title: Agent Performance Metrics Dashboard
-    file: US-050-agent-performance-metrics-dashboard.md
-    persona: P-004
-    persona_name: Project Manager
-    priority: medium
-    status: draft
-    prd_group: coordination
-    prds:
-      - PRD-001
-    related_stories:
-      - US-031
-      - US-033
-    related_personas:
-      - P-004
-  - id: US-051
-    title: Worklog Error Propagation Protocol
-    file: US-051-worklog-error-propagation-protocol.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: high
-    status: draft
-    prd_group: coordination
-    prds:
-      - PRD-004
-      - PRD-005
-    related_stories: []
-    related_personas:
-      - P-001
-  - id: US-052
-    title: Browser Automation Timeout & Retry Handling
-    file: US-052-browser-automation-timeout-and-retry-handling.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: high
-    status: draft
-    prd_group: browser
-    prds:
-      - PRD-006
-    related_stories:
-      - US-021
-      - US-024
-    related_personas:
-      - P-001
-  - id: US-053
-    title: Exception Alerting for Long-Running Processes
-    file: US-053-exception-alerting-for-long-running-processes.md
-    persona: P-002
-    persona_name: Product Manager
-    priority: medium
-    status: draft
-    prd_group: chat
-    prds:
-      - PRD-004
-    related_stories:
-      - US-022
-      - US-005
-    related_personas:
-      - P-002
-  - id: US-054
-    title: Test Execution Error Detail Capture
-    file: US-054-test-execution-error-detail-capture.md
-    persona: P-005
-    persona_name: Dave the Fellow Developer
-    priority: high
-    status: draft
-    prd_group: collaboration
-    prds:
-      - PRD-005
-    related_stories: []
-    related_personas:
-      - P-005
-  - id: US-055
-    title: Database Migration Error Recovery
-    file: US-055-database-migration-error-recovery.md
-    persona: P-003
-    persona_name: Vibe Coder
-    priority: critical
-    status: draft
-    prd_group: npl_load
-    prds:
-      - PRD-001
-    related_stories: []
-    related_personas:
-      - P-003
-  - id: US-056
-    title: Token Usage Tracking and Budget Alerts
-    file: US-056-token-usage-tracking-and-budget-alerts.md
-    persona: P-002
-    persona_name: Product Manager
-    priority: medium
-    status: draft
-    prd_group: coordination
-    prds:
-      - PRD-001
-    related_stories:
-      - US-031
-    related_personas:
-      - P-002
-  - id: US-057
-    title: Cross-Agent Debugging Session Replay
-    file: US-057-cross-agent-debugging-session-replay.md
-    persona: P-005
-    persona_name: Dave the Fellow Developer
-    priority: low
-    status: draft
-    prd_group: collaboration
-    prds:
-      - PRD-001
-    related_stories:
-      - US-031
-      - US-009
-    related_personas:
-      - P-005
-  - id: US-058
-    title: Facilitate Multi-Persona Consensus
-    file: US-058-facilitate-multi-persona-consensus.md
-    persona: P-004
-    persona_name: Project Manager
-    priority: high
-    status: draft
-    prd_group: coordination
-    prds:
-      - PRD-004
-    related_stories:
-      - US-032
-    related_personas:
-      - P-004
-  - id: US-059
-    title: Chain Multi-Agent Workflows with Dependencies
-    file: US-059-chain-multi-agent-workflows-with-dependencies.md
-    persona: P-004
-    persona_name: Project Manager
-    priority: high
-    status: draft
-    prd_group: coordination
-    prds:
-      - PRD-004
-    related_stories:
-      - US-032
-    related_personas:
-      - P-004
-  - id: US-060
-    title: Cross-Validate Agent Outputs
-    file: US-060-cross-validate-agent-outputs.md
-    persona: P-005
-    persona_name: Dave the Fellow Developer
-    priority: high
-    status: draft
-    prd_group: collaboration
-    prds:
-      - PRD-004
-    related_stories:
-      - US-034
-    related_personas:
-      - P-005
-  - id: US-061
-    title: Negotiate Resource Access Priority
-    file: US-061-negotiate-resource-access-priority.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: medium
-    status: draft
-    prd_group: coordination
-    prds:
-      - PRD-004
-    related_stories: []
-    related_personas:
-      - P-001
-  - id: US-062
-    title: Visualize Multi-Agent Decision Trees
-    file: US-062-visualize-multi-agent-decision-trees.md
-    persona: P-002
-    persona_name: Product Manager
-    priority: medium
-    status: draft
-    prd_group: coordination
-    prds:
-      - PRD-004
-    related_stories:
-      - US-031
-    related_personas:
-      - P-002
-  - id: US-063
-    title: Multi-Perspective Artifact Review
-    file: US-063-multi-perspective-artifact-review.md
-    persona: P-003
-    persona_name: Vibe Coder
-    priority: high
-    status: draft
-    prd_group: artifacts
-    prds:
-      - PRD-002
-      - PRD-003
-    related_stories:
-      - US-010
-    related_personas:
-      - P-003
-  - id: US-064
-    title: Agent Handoff Protocol
-    file: US-064-agent-handoff-protocol.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: high
-    status: draft
-    prd_group: coordination
-    prds:
-      - PRD-004
-    related_stories:
-      - US-032
-    related_personas:
-      - P-001
-  - id: US-065
-    title: Parallel Agent Synthesis
-    file: US-065-parallel-agent-synthesis.md
-    persona: P-004
-    persona_name: Project Manager
-    priority: medium
-    status: draft
-    prd_group: coordination
-    prds:
-      - PRD-004
-    related_stories: []
-    related_personas:
-      - P-004
-  - id: US-066
-    title: Agent Quality Gates
-    file: US-066-agent-quality-gates.md
-    persona: P-005
-    persona_name: Dave the Fellow Developer
-    priority: high
-    status: draft
-    prd_group: collaboration
-    prds:
-      - PRD-004
-    related_stories:
-      - US-037
-    related_personas:
-      - P-005
-  - id: US-067
-    title: Agent Reasoning Path Export
-    file: US-067-agent-reasoning-path-export.md
-    persona: P-002
-    persona_name: Product Manager
-    priority: medium
-    status: draft
-    prd_group: coordination
-    prds:
-      - PRD-004
-    related_stories:
-      - US-031
-    related_personas:
-      - P-002
-  - id: US-068
-    title: Define Artifact Access Control Policies
-    file: US-068-define-artifact-access-control-policies.md
-    persona: P-004
-    persona_name: Project Manager
-    priority: critical
-    status: draft
-    prd_group: artifacts
-    prds:
-      - PRD-002
-    related_stories:
-      - US-008
-    related_personas:
-      - P-004
-  - id: US-069
-    title: Implement Chat Room Role-Based Access
-    file: US-069-implement-chat-room-role-based-access.md
-    persona: P-004
-    persona_name: Project Manager
-    priority: high
-    status: draft
-    prd_group: chat
-    prds:
-      - PRD-004
-    related_stories:
-      - US-007
-    related_personas:
-      - P-004
-  - id: US-070
-    title: Generate Audit Logs for Sensitive Operations
-    file: US-070-generate-audit-logs-for-sensitive-operations.md
-    persona: P-005
-    persona_name: Dave the Fellow Developer
-    priority: critical
-    status: draft
-    prd_group: coordination
-    prds:
-      - PRD-004
-    related_stories: []
-    related_personas:
-      - P-005
-  - id: US-071
-    title: Detect and Prevent Secret Leakage in Artifacts
-    file: US-071-detect-and-prevent-secret-leakage-in-artifacts.md
-    persona: P-005
-    persona_name: Dave the Fellow Developer
-    priority: critical
-    status: draft
-    prd_group: artifacts
-    prds:
-      - PRD-002
-    related_stories:
-      - US-008
-    related_personas:
-      - P-005
-  - id: US-072
-    title: Implement Persona Permission Scopes
-    file: US-072-implement-persona-permission-scopes.md
-    persona: P-004
-    persona_name: Project Manager
-    priority: high
-    status: draft
-    prd_group: coordination
-    prds:
-      - PRD-004
-    related_stories: []
-    related_personas:
-      - P-004
-  - id: US-073
-    title: Enable Multi-User SQLite Access with Row-Level Security
-    file: US-073-enable-multi-user-sqlite-access-with-row-level-security.md
-    persona: P-005
-    persona_name: Dave the Fellow Developer
-    priority: high
-    status: draft
-    prd_group: npl_load
-    prds:
-      - PRD-001
-    related_stories: []
-    related_personas:
-      - P-005
-  - id: US-074
-    title: Encrypt Sensitive Persona Knowledge Bases
-    file: US-074-encrypt-sensitive-persona-knowledge-bases.md
-    persona: P-002
-    persona_name: Product Manager
-    priority: medium
-    status: draft
-    prd_group: npl_load
-    prds:
-      - PRD-002
-    related_stories: []
-    related_personas:
-      - P-002
-  - id: US-075
-    title: Implement Review Access Control for Sensitive Artifacts
-    file: US-075-implement-review-access-control-for-sensitive-artifacts.md
-    persona: P-002
-    persona_name: Product Manager
-    priority: high
-    status: draft
-    prd_group: artifacts
-    prds:
-      - PRD-002
-      - PRD-003
-    related_stories:
-      - US-010
-      - US-023
-    related_personas:
-      - P-002
-  - id: US-076
-    title: Create Security Dashboard for Access Violations
-    file: US-076-create-security-dashboard-for-access-violations.md
-    persona: P-004
-    persona_name: Project Manager
-    priority: medium
-    status: draft
-    prd_group: coordination
-    prds:
-      - PRD-004
-    related_stories:
-      - US-005
-    related_personas:
-      - P-004
-  - id: US-077
-    title: Manage API Key Vault for Personas
-    file: US-077-manage-api-key-vault-for-personas.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: high
-    status: draft
-    prd_group: npl_load
-    prds:
-      - PRD-004
-    related_stories: []
-    related_personas:
-      - P-001
-  - id: US-078
-    title: Implement MCP Artifact Creation Tool
-    file: US-078-implement-artifact-creation-tool.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: critical
-    status: draft
-    prd_group: mcp_tools
-    related_stories:
       - US-008
       - US-009
       - US-010
       - US-011
-      - US-023
-    related_personas:
-      - P-001
-    legacy_reference: .tmp/docs/PROJECT-ARCH.brief.md
-  - id: US-079
-    title: Define Multi-Agent Orchestration Patterns
-    file: US-079-define-multi-agent-orchestration-patterns.md
-    persona: P-004
-    persona_name: AI Agent
-    priority: high
-    status: draft
-    prd_group: orchestration
-    related_stories:
-      - US-058
-      - US-059
-      - US-064
-      - US-065
-    related_personas:
-      - P-004
-    legacy_reference: .tmp/docs/
-  - id: US-080
-    title: Build NPL Syntax Parser
-    file: US-080-build-npl-syntax-parser.md
-    persona: P-005
-    persona_name: AI Agent
-    priority: high
-    status: draft
-    prd_group: npl_syntax
-    related_stories:
-      - US-001
-      - US-002
-      - US-025
-    related_personas:
-      - P-005
-    legacy_reference: .tmp/docs/
-  - id: US-081
-    title: Implement MCP Chat Room Management Tools
-    file: US-081-implement-mcp-chat-room-management.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: high
-    status: draft
-    prd_group: mcp_tools
-    related_stories:
-      - US-004
-      - US-005
-      - US-006
-      - US-007
-    related_personas:
-      - P-001
-    legacy_reference: .tmp/docs/
-  - id: US-082
-    title: Implement MCP Task Queue System
-    file: US-082-implement-mcp-task-queue-system.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: high
-    status: draft
-    prd_group: mcp_tools
-    related_stories:
+      - US-012
+      - US-013
       - US-014
+  - name: Chat & Collaboration Rooms
+    stories:
       - US-015
       - US-016
       - US-017
       - US-018
-    related_personas:
-      - P-001
-    legacy_reference: .tmp/docs/
-  - id: US-083
-    title: Implement Browser Automation Tools
-    file: US-083-implement-browser-automation-tools.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: high
-    status: draft
-    prd_group: mcp_tools
-    related_stories:
-      - US-012
-      - US-013
       - US-019
       - US-020
       - US-021
+  - name: Agent Personas & Memory
+    stories:
+      - US-022
+      - US-023
       - US-024
-      - US-029
-      - US-052
-    related_personas:
-      - P-001
-    legacy_reference: .tmp/docs/
-  - id: US-084
-    title: Create Agent Definition System
-    file: US-084-create-agent-definition-system.md
-    persona: P-005
-    persona_name: AI Agent
-    priority: high
-    status: draft
-    prd_group: agents
-    related_stories:
-      - US-079
-      - US-086
-    related_personas:
-      - P-005
-    legacy_reference: .tmp/docs/
-  - id: US-085
-    title: Implement CLI Utilities (npl-load, npl-persona, npl-session)
-    file: US-085-implement-cli-utilities.md
-    persona: P-005
-    persona_name: AI Agent
-    priority: high
-    status: draft
-    prd_group: npl_load
-    related_stories:
-      - US-001
-      - US-002
-      - US-003
       - US-025
-      - US-047
-    related_personas:
-      - P-005
-    legacy_reference: .tmp/docs/
-  - id: US-086
-    title: Extract and Load 45 Agent Specifications
-    file: US-086-extract-and-load-agent-specifications.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: high
-    status: draft
-    prd_group: agents
-    related_stories:
-      - US-084
-      - US-079
-    related_personas:
-      - P-001
-    legacy_reference: .tmp/docs/
-  - id: US-087
-    title: Build NPL Syntax Pattern Library (155 elements)
-    file: US-087-build-npl-syntax-pattern-library.md
-    persona: P-005
-    persona_name: AI Agent
-    priority: medium
-    status: draft
-    prd_group: npl_syntax
-    related_stories:
-      - US-080
-    related_personas:
-      - P-005
-    legacy_reference: .tmp/docs/
-  - id: US-088
-    title: Implement Session Management with Worklogs
-    file: US-088-implement-session-management-with-worklogs.md
-    persona: P-004
-    persona_name: AI Agent
-    priority: high
-    status: draft
-    prd_group: coordination
-    related_stories:
+      - US-026
+      - US-027
+      - US-028
+  - name: Creative Assets & Campaigns
+    stories:
+      - US-029
+      - US-030
       - US-031
       - US-032
       - US-033
-    related_personas:
-      - P-004
-    legacy_reference: .tmp/docs/
-  - id: US-089
-    title: Build Multi-Perspective Artifact Review System
-    file: US-089-build-multi-perspective-artifact-review.md
-    persona: P-005
-    persona_name: AI Agent
-    priority: high
-    status: draft
-    prd_group: collaboration
-    related_stories:
       - US-034
       - US-035
       - US-036
-    related_personas:
-      - P-005
-    legacy_reference: .tmp/docs/
-  - id: US-090
-    title: Create Agent Handoff Protocol
-    file: US-090-create-agent-handoff-protocol.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: high
-    status: draft
-    prd_group: coordination
-    related_stories:
-      - US-032
-      - US-059
-      - US-064
-    related_personas:
-      - P-001
-    legacy_reference: .tmp/docs/
-  - id: US-091
-    title: Extract Web Content Programmatically
-    file: US-091-extract-web-content-programmatically.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: medium
-    status: documented
-    prd_group: browser
-    related_stories:
-      - US-012
-      - US-021
-      - US-024
-    related_personas:
-      - P-001
-  - id: US-092
-    title: Manage Browser Cookies and Storage
-    file: US-092-manage-browser-cookies-and-storage.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: medium
-    status: documented
-    prd_group: browser
-    related_stories:
-      - US-019
-      - US-021
-      - US-024
-    related_personas:
-      - P-001
-  - id: US-093
-    title: Inject Scripts and Styles Into Pages
-    file: US-093-inject-scripts-and-styles-into-pages.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: low
-    status: documented
-    prd_group: browser
-    related_stories:
-      - US-019
-      - US-021
-      - US-024
-      - US-029
-    related_personas:
-      - P-001
-  - id: US-094
-    title: Spawn Ephemeral Tasker Agents
-    file: US-094-spawn-ephemeral-tasker-agents.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: high
-    status: documented
-    prd_group: coordination
-    related_stories:
-      - US-014
-      - US-032
-      - US-058
-      - US-064
-    related_personas:
-      - P-001
-  - id: US-095
-    title: Analyze Output with Fabric Patterns
-    file: US-095-analyze-output-with-fabric-patterns.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: medium
-    status: documented
-    prd_group: coordination
-    related_stories:
+  - name: Onboarding & Auth
+    stories:
+      - US-037
+      - US-038
+      - US-039
+      - US-040
+      - US-041
+      - US-042
+      - US-043
+      - US-044
+      - US-045
+      - US-046
+  - name: Settings & Preferences
+    stories:
+      - US-047
       - US-048
+      - US-049
+      - US-050
+      - US-051
+      - US-052
+      - US-053
+  - name: Admin & Platform Operations
+    stories:
       - US-054
+      - US-055
+      - US-056
+      - US-057
+      - US-058
+      - US-059
+      - US-060
+      - US-061
+      - US-062
+      - US-063
+      - US-064
+  - name: Search & Discovery
+    stories:
+      - US-065
+      - US-066
+      - US-067
+      - US-068
+      - US-069
+      - US-070
+      - US-071
+      - US-072
+  - name: Social & Collaboration
+    stories:
+      - US-073
+      - US-074
+      - US-075
+      - US-076
+      - US-077
+      - US-078
+      - US-079
+      - US-080
+      - US-081
+      - US-082
+  - name: Edge Cases & Error States
+    stories:
+      - US-083
+      - US-084
+      - US-085
+      - US-086
+      - US-087
+      - US-088
+      - US-089
+      - US-090
+  - name: Accessibility & Internationalization
+    stories:
+      - US-091
+      - US-092
+      - US-093
       - US-094
-    related_personas:
+      - US-095
+  - name: Performance & Scale
+    stories:
+      - US-096
+      - US-097
+      - US-098
+      - US-099
+  - name: Integration & External APIs
+    stories:
+      - US-100
+      - US-101
+      - US-102
+      - US-103
+      - US-104
+stories:
+  - id: US-001
+    title: Create a new work session scoped to an org/project
+    personas:
       - P-001
-  - id: US-096
-    title: Convert Web Pages to Markdown
-    file: US-096-convert-web-pages-to-markdown.md
-    persona: P-003
-    persona_name: Vibe Coder
-    priority: medium
-    status: documented
-    prd_group: npl_load
-    related_stories:
-      - US-003
-      - US-001
-      - US-002
-    related_personas:
-      - P-003
-  - id: US-097
-    title: Access Session Data via REST API
-    file: US-097-access-session-data-via-rest-api.md
-    persona: P-002
-    persona_name: Product Manager
-    priority: medium
-    status: documented
-    prd_group: chat
-    related_stories:
-      - US-005
-      - US-006
-      - US-007
-    related_personas:
       - P-002
-  - id: US-104
-    title: Validate Artifact Management Implementation
-    file: US-104-validate-artifact-management.md
-    persona: P-005
-    persona_name: Dave
-    priority: high
-    status: draft
-    prd_group: implementation_validation
-    related_personas:
+    epic: Work Sessions
+    priority: must-have
+    complexity: S
+    file: US-001-create-work-session-scoped-to-org-project.md
+  - id: US-002
+    title: Resume an existing session and see its rooms/tickets/artifacts
+    personas:
+      - P-001
+      - P-002
+    epic: Work Sessions
+    priority: must-have
+    complexity: S
+    file: US-002-resume-session-with-rooms-tickets-artifacts.md
+  - id: US-003
+    title: Update a session's status/title/description as work evolves
+    personas:
+      - P-001
+    epic: Work Sessions
+    priority: should-have
+    complexity: S
+    file: US-003-update-session-status-title-description.md
+  - id: US-004
+    title: List all sessions for a project, filtered by status
+    personas:
+      - P-003
+    epic: Work Sessions
+    priority: should-have
+    complexity: S
+    file: US-004-list-project-sessions-filtered-by-status.md
+  - id: US-005
+    title: Tailor a session's tool descriptions to the target model/runner
+    personas:
+      - P-002
+    epic: Work Sessions
+    priority: could-have
+    complexity: M
+    file: US-005-tailor-session-tool-descriptions-to-model-runner.md
+  - id: US-006
+    title: Create a ticket with a custom type and custom fields
+    personas:
+      - P-003
+    epic: Tickets & Boards
+    priority: must-have
+    complexity: M
+    file: US-006-create-ticket-with-custom-type-and-fields.md
+  - id: US-007
+    title: Move a ticket across kanban board stages
+    personas:
+      - P-003
+    epic: Tickets & Boards
+    priority: must-have
+    complexity: S
+    file: US-007-move-ticket-across-board-stages.md
+  - id: US-008
+    title: Assign a sprint/iteration to a ticket
+    personas:
+      - P-003
+    epic: Tickets & Boards
+    priority: must-have
+    complexity: S
+    file: US-008-assign-sprint-iteration-to-ticket.md
+  - id: US-009
+    title: Link two tickets together (blocks/relates-to)
+    personas:
+      - P-003
+      - P-002
+    epic: Tickets & Boards
+    priority: should-have
+    complexity: S
+    file: US-009-link-two-tickets-blocks-relates-to.md
+  - id: US-010
+    title: Link a ticket to a non-ticket entity (polymorphic link)
+    personas:
+      - P-002
+    epic: Tickets & Boards
+    priority: should-have
+    complexity: M
+    file: US-010-link-ticket-to-non-ticket-entity.md
+  - id: US-011
+    title: Define a custom ticket field scoped to a project
+    personas:
+      - P-003
+    epic: Tickets & Boards
+    priority: should-have
+    complexity: M
+    file: US-011-define-custom-ticket-field-scoped-to-project.md
+  - id: US-012
+    title: Define a custom ticket type scoped to an org
+    personas:
+      - P-004
+    epic: Tickets & Boards
+    priority: could-have
+    complexity: M
+    file: US-012-define-custom-ticket-type-scoped-to-org.md
+  - id: US-013
+    title: View a ticket queue's feed of recent activity
+    personas:
+      - P-003
+    epic: Tickets & Boards
+    priority: should-have
+    complexity: S
+    file: US-013-view-ticket-queue-activity-feed.md
+  - id: US-014
+    title: Create a PRD ticket and link multiple user_story tickets to it
+    personas:
+      - P-003
+    epic: Tickets & Boards
+    priority: must-have
+    complexity: M
+    file: US-014-create-prd-ticket-link-user-stories.md
+  - id: US-015
+    title: Create a chat room scoped to a session or project
+    personas:
+      - P-001
+    epic: Chat & Collaboration Rooms
+    priority: must-have
+    complexity: S
+    file: US-015-create-chat-room-scoped-to-session-or-project.md
+  - id: US-016
+    title: Send a message with a threaded reply
+    personas:
+      - P-001
+      - P-002
+    epic: Chat & Collaboration Rooms
+    priority: must-have
+    complexity: S
+    file: US-016-send-message-with-threaded-reply.md
+  - id: US-017
+    title: Pin an important message in a room
+    personas:
+      - P-003
+    epic: Chat & Collaboration Rooms
+    priority: should-have
+    complexity: S
+    file: US-017-pin-important-message-in-room.md
+  - id: US-018
+    title: Schedule a message to send later
+    personas:
+      - P-001
+    epic: Chat & Collaboration Rooms
+    priority: could-have
+    complexity: M
+    file: US-018-schedule-message-to-send-later.md
+  - id: US-019
+    title: Mute a room or mute unless mentioned
+    personas:
+      - P-001
+    epic: Chat & Collaboration Rooms
+    priority: should-have
+    complexity: S
+    file: US-019-mute-room-or-mute-unless-mentioned.md
+  - id: US-020
+    title: React to and highlight a message
+    personas:
+      - P-007
+    epic: Chat & Collaboration Rooms
+    priority: could-have
+    complexity: S
+    file: US-020-react-to-and-highlight-a-message.md
+  - id: US-021
+    title: Receive a room notification and clear it
+    personas:
+      - P-001
+      - P-002
+    epic: Chat & Collaboration Rooms
+    priority: must-have
+    complexity: S
+    file: US-021-receive-room-notification-and-clear-it.md
+  - id: US-022
+    title: Register a new Agent Persona with a bio
+    personas:
+      - P-002
+    epic: Agent Personas & Memory
+    priority: must-have
+    complexity: S
+    file: US-022-register-new-agent-persona-with-bio.md
+  - id: US-023
+    title: Add a journal entry documenting completed work
+    personas:
+      - P-002
+    epic: Agent Personas & Memory
+    priority: must-have
+    complexity: S
+    file: US-023-add-journal-entry-documenting-completed-work.md
+  - id: US-024
+    title: Add a knowledge-base entry to a persona's private KB
+    personas:
+      - P-002
+    epic: Agent Personas & Memory
+    priority: should-have
+    complexity: S
+    file: US-024-add-knowledge-base-entry-to-private-kb.md
+  - id: US-025
+    title: Recall a memory by semantic similarity
+    personas:
+      - P-002
+    epic: Agent Personas & Memory
+    priority: must-have
+    complexity: M
+    file: US-025-recall-memory-by-semantic-similarity.md
+  - id: US-026
+    title: Recall memories by emotional valence or signature
+    personas:
+      - P-002
+    epic: Agent Personas & Memory
+    priority: could-have
+    complexity: M
+    file: US-026-recall-memories-by-emotional-valence-or-signature.md
+  - id: US-027
+    title: Reinforce or de-emphasize a memory association
+    personas:
+      - P-002
+    epic: Agent Personas & Memory
+    priority: should-have
+    complexity: M
+    file: US-027-reinforce-or-deemphasize-a-memory-association.md
+  - id: US-028
+    title: Register an agent call sign and track agent state
+    personas:
+      - P-002
+      - P-006
+    epic: Agent Personas & Memory
+    priority: should-have
+    complexity: S
+    file: US-028-register-agent-call-sign-and-track-agent-state.md
+  - id: US-029
+    title: Create a Campaign with an Ad Group
+    personas:
       - P-005
-  - id: US-105
-    title: Validate Chat System Implementation
-    file: US-105-validate-chat-system.md
-    persona: P-005
-    persona_name: Dave
-    priority: high
-    status: draft
-    prd_group: implementation_validation
-    related_personas:
+    epic: Creative Assets & Campaigns
+    priority: must-have
+    complexity: S
+    file: US-029-create-campaign-with-ad-group.md
+  - id: US-030
+    title: Generate Ad Copy Variants for an Ad Group
+    personas:
       - P-005
-  - id: US-106
-    title: Validate Task Queue Implementation
-    file: US-106-validate-task-queue.md
-    persona: P-005
-    persona_name: Dave
-    priority: high
-    status: draft
-    prd_group: implementation_validation
-    related_personas:
+    epic: Creative Assets & Campaigns
+    priority: must-have
+    complexity: M
+    file: US-030-generate-ad-copy-variants-for-ad-group.md
+  - id: US-031
+    title: Approve or Reject a Generated Ad Copy Variant
+    personas:
       - P-005
-  - id: US-107
-    title: Validate Browser Automation Implementation
-    file: US-107-validate-browser-automation.md
-    persona: P-005
-    persona_name: Dave
-    priority: high
-    status: draft
-    prd_group: implementation_validation
-    related_personas:
+    epic: Creative Assets & Campaigns
+    priority: must-have
+    complexity: S
+    file: US-031-approve-reject-ad-copy-variant.md
+  - id: US-032
+    title: Generate a Landing Page Draft
+    personas:
       - P-005
-  - id: US-108
-    title: Validate Web Interface Implementation
-    file: US-108-validate-web-interface.md
-    persona: P-005
-    persona_name: Dave
-    priority: high
-    status: draft
-    prd_group: implementation_validation
-    related_personas:
+    epic: Creative Assets & Campaigns
+    priority: should-have
+    complexity: M
+    file: US-032-generate-landing-page-draft.md
+  - id: US-033
+    title: Track a Domain Name Against a Campaign
+    personas:
       - P-005
-  - id: US-109
-    title: Add Session Management Test Suite
-    file: US-109-add-session-test-suite.md
-    persona: P-005
-    persona_name: Dave
-    priority: critical
-    status: draft
-    prd_group: test_coverage
-    related_personas:
+    epic: Creative Assets & Campaigns
+    priority: could-have
+    complexity: S
+    file: US-033-track-domain-name-for-campaign.md
+  - id: US-034
+    title: Research Competitors for a Market Segment
+    personas:
       - P-005
-  - id: US-110
-    title: Add Task Queue Test Suite
-    file: US-110-add-task-queue-test-suite.md
-    persona: P-005
-    persona_name: Dave
-    priority: critical
-    status: draft
-    prd_group: test_coverage
-    related_personas:
+    epic: Creative Assets & Campaigns
+    priority: should-have
+    complexity: M
+    file: US-034-research-competitors-for-market-segment.md
+  - id: US-035
+    title: Research and Track Keywords
+    personas:
       - P-005
+    epic: Creative Assets & Campaigns
+    priority: should-have
+    complexity: S
+    file: US-035-research-and-track-keywords.md
+  - id: US-036
+    title: Generate a Creative Asset and Publish Its Active Output
+    personas:
+      - P-005
+    epic: Creative Assets & Campaigns
+    priority: must-have
+    complexity: M
+    file: US-036-generate-and-publish-creative-asset.md
+  - id: US-037
+    title: Register a New Organization
+    personas:
+      - P-004
+    epic: Onboarding & Auth
+    priority: must-have
+    complexity: S
+    file: US-037-register-new-organization.md
+  - id: US-038
+    title: Send an Invite Token with Expiry and Use Cap
+    personas:
+      - P-004
+    epic: Onboarding & Auth
+    priority: must-have
+    complexity: S
+    file: US-038-send-invite-token-with-expiry-and-cap.md
+  - id: US-039
+    title: Accept an Invite and Complete OIDC Login
+    personas:
+      - P-008
+    epic: Onboarding & Auth
+    priority: must-have
+    complexity: M
+    file: US-039-accept-invite-and-complete-oidc-login.md
+  - id: US-040
+    title: Complete a First-Time SSO Callback Flow
+    personas:
+      - P-008
+    epic: Onboarding & Auth
+    priority: must-have
+    complexity: S
+    file: US-040-complete-first-time-sso-callback.md
+  - id: US-041
+    title: Self-Mint an MCP API Key
+    personas:
+      - P-001
+    epic: Onboarding & Auth
+    priority: must-have
+    complexity: S
+    file: US-041-self-mint-mcp-api-key.md
+  - id: US-042
+    title: Copy a Generated `claude mcp add` Setup Command
+    personas:
+      - P-001
+    epic: Onboarding & Auth
+    priority: must-have
+    complexity: S
+    file: US-042-copy-claude-mcp-add-setup-command.md
+  - id: US-043
+    title: Mint an MCP JWT from a Raw API Key
+    personas:
+      - P-001
+      - P-002
+    epic: Onboarding & Auth
+    priority: must-have
+    complexity: S
+    file: US-043-mint-mcp-jwt-from-api-key.md
+  - id: US-044
+    title: Refresh an Expiring Guardian JWT Pair
+    personas:
+      - P-001
+    epic: Onboarding & Auth
+    priority: should-have
+    complexity: S
+    file: US-044-refresh-expiring-guardian-jwt-pair.md
+  - id: US-045
+    title: Revoke a Lost or Leaked MCP API Key
+    personas:
+      - P-001
+    epic: Onboarding & Auth
+    priority: must-have
+    complexity: S
+    file: US-045-revoke-lost-or-leaked-mcp-api-key.md
+  - id: US-046
+    title: View My Organizations After Login
+    personas:
+      - P-008
+    epic: Onboarding & Auth
+    priority: should-have
+    complexity: S
+    file: US-046-view-my-organizations-after-login.md
+  - id: US-047
+    title: Update Organization Name and Key Prefix
+    personas:
+      - P-004
+    epic: Settings & Preferences
+    priority: should-have
+    complexity: S
+    file: US-047-update-org-name-and-key-prefix.md
+  - id: US-048
+    title: Define a Custom Role with Named Permissions
+    personas:
+      - P-004
+    epic: Settings & Preferences
+    priority: should-have
+    complexity: M
+    file: US-048-define-a-custom-role-with-permissions.md
+  - id: US-049
+    title: Assign a Custom Role to a Member
+    personas:
+      - P-004
+    epic: Settings & Preferences
+    priority: should-have
+    complexity: S
+    file: US-049-assign-a-custom-role-to-a-member.md
+  - id: US-050
+    title: Apply an MCP Custom Scope to a Project
+    personas:
+      - P-004
+    epic: Settings & Preferences
+    priority: must-have
+    complexity: M
+    file: US-050-apply-an-mcp-custom-scope-to-a-project.md
+  - id: US-051
+    title: Configure Notification Preferences for a Room
+    personas:
+      - P-001
+    epic: Settings & Preferences
+    priority: could-have
+    complexity: S
+    file: US-051-configure-room-notification-preferences.md
+  - id: US-052
+    title: Update User Profile Details
+    personas:
+      - P-001
+    epic: Settings & Preferences
+    priority: could-have
+    complexity: S
+    file: US-052-update-user-profile-details.md
+  - id: US-053
+    title: Configure a Media-Provider API Key for an Org
+    personas:
+      - P-005
+      - P-004
+    epic: Settings & Preferences
+    priority: should-have
+    complexity: S
+    file: US-053-configure-org-media-provider-api-key.md
+  - id: US-054
+    title: Suspend a User Account
+    personas:
+      - P-006
+    epic: Admin & Platform Operations
+    priority: must-have
+    complexity: S
+    file: US-054-suspend-a-user-account.md
+  - id: US-055
+    title: Change a User's Global Role with Self-Lockout Guard
+    personas:
+      - P-006
+    epic: Admin & Platform Operations
+    priority: must-have
+    complexity: M
+    file: US-055-change-a-users-global-role-with-self-lockout-guard.md
+  - id: US-056
+    title: List and Search All Organizations
+    personas:
+      - P-006
+    epic: Admin & Platform Operations
+    priority: should-have
+    complexity: S
+    file: US-056-search-and-list-all-organizations.md
+  - id: US-057
+    title: Add and Live-Test an LLM Model Provider
+    personas:
+      - P-006
+    epic: Admin & Platform Operations
+    priority: must-have
+    complexity: M
+    file: US-057-add-and-live-test-an-llm-model-provider.md
+  - id: US-058
+    title: Create and Curate a Global MCP Custom-Scope Preset
+    personas:
+      - P-006
+    epic: Admin & Platform Operations
+    priority: should-have
+    complexity: M
+    file: US-058-create-a-global-mcp-custom-scope-preset.md
+  - id: US-059
+    title: Review an MCP Overview Queue Item
+    personas:
+      - P-006
+    epic: Admin & Platform Operations
+    priority: should-have
+    complexity: S
+    file: US-059-review-mcp-overview-queue-item.md
+  - id: US-060
+    title: Grant GitHub Token/Repo Access at the Org Level
+    personas:
+      - P-006
+      - P-004
+    epic: Admin & Platform Operations
+    priority: should-have
+    complexity: M
+    file: US-060-grant-org-level-github-access.md
+  - id: US-061
+    title: Configure an Org-Level Media-Provider Config as Admin
+    personas:
+      - P-006
+    epic: Admin & Platform Operations
+    priority: could-have
+    complexity: S
+    file: US-061-configure-org-level-media-provider-as-admin.md
+  - id: US-062
+    title: Check a PBAC Policy Decision with the Simulator
+    personas:
+      - P-006
+    epic: Admin & Platform Operations
+    priority: should-have
+    complexity: M
+    file: US-062-run-pbac-policy-simulator-check.md
+  - id: US-063
+    title: Explain a PBAC Policy Denial
+    personas:
+      - P-006
+    epic: Admin & Platform Operations
+    priority: should-have
+    complexity: S
+    file: US-063-explain-a-pbac-policy-denial.md
+  - id: US-064
+    title: Audit MCP API Key Usage Across Organizations
+    personas:
+      - P-006
+    epic: Admin & Platform Operations
+    priority: could-have
+    complexity: M
+    file: US-064-audit-mcp-api-key-usage-across-orgs.md
+  - id: US-065
+    title: List All Tools on an MCP Server
+    personas:
+      - P-002
+    epic: Search & Discovery
+    priority: must-have
+    complexity: S
+    file: US-065-list-all-tools-on-an-mcp-server.md
+  - id: US-066
+    title: Search Tools by Keyword
+    personas:
+      - P-001
+      - P-002
+    epic: Search & Discovery
+    priority: must-have
+    complexity: S
+    file: US-066-search-tools-by-keyword.md
+  - id: US-067
+    title: Search Tools by Semantic Intent
+    personas:
+      - P-002
+    epic: Search & Discovery
+    priority: must-have
+    complexity: M
+    file: US-067-search-tools-by-semantic-intent.md
+  - id: US-068
+    title: Get a Tool's Full Definition
+    personas:
+      - P-002
+    epic: Search & Discovery
+    priority: should-have
+    complexity: S
+    file: US-068-get-a-tools-full-definition.md
+  - id: US-069
+    title: Get Contextual Help for a Tool
+    personas:
+      - P-002
+      - P-008
+    epic: Search & Discovery
+    priority: could-have
+    complexity: S
+    file: US-069-get-contextual-help-for-a-tool.md
+  - id: US-070
+    title: Search the NPL Glyph Codex
+    personas:
+      - P-002
+    epic: Search & Discovery
+    priority: should-have
+    complexity: S
+    file: US-070-search-the-npl-glyph-codex.md
+  - id: US-071
+    title: Search the Wiki by Keyword
+    personas:
+      - P-001
+    epic: Search & Discovery
+    priority: should-have
+    complexity: S
+    file: US-071-search-the-wiki-by-keyword.md
+  - id: US-072
+    title: Filter Tickets by Custom Field Values
+    personas:
+      - P-003
+    epic: Search & Discovery
+    priority: should-have
+    complexity: M
+    file: US-072-filter-tickets-by-custom-field-values.md
+  - id: US-073
+    title: Create a Wiki Space and Page
+    personas:
+      - P-003
+    epic: Social & Collaboration
+    priority: must-have
+    complexity: S
+    file: US-073-create-a-wiki-space-and-page.md
+  - id: US-074
+    title: Comment on a Wiki Page
+    personas:
+      - P-001
+    epic: Social & Collaboration
+    priority: should-have
+    complexity: S
+    file: US-074-comment-on-a-wiki-page.md
+  - id: US-075
+    title: Attach a File to a Wiki Page
+    personas:
+      - P-001
+    epic: Social & Collaboration
+    priority: could-have
+    complexity: S
+    file: US-075-attach-a-file-to-a-wiki-page.md
+  - id: US-076
+    title: React to a Wiki Page or Comment
+    personas:
+      - P-001
+    epic: Social & Collaboration
+    priority: could-have
+    complexity: S
+    file: US-076-react-to-a-wiki-page-or-comment.md
+  - id: US-077
+    title: Create a Code Review with Overlay Comments
+    personas:
+      - P-007
+    epic: Social & Collaboration
+    priority: must-have
+    complexity: M
+    file: US-077-create-a-code-review-with-overlay-comments.md
+  - id: US-078
+    title: Compile a Review into a Final Verdict
+    personas:
+      - P-007
+    epic: Social & Collaboration
+    priority: must-have
+    complexity: S
+    file: US-078-compile-a-review-into-a-final-verdict.md
+  - id: US-079
+    title: List GitHub Pull Requests for a Linked Repo
+    personas:
+      - P-007
+    epic: Social & Collaboration
+    priority: should-have
+    complexity: S
+    file: US-079-list-github-pull-requests-for-a-linked-repo.md
+  - id: US-080
+    title: Comment on a GitHub Pull Request
+    personas:
+      - P-007
+    epic: Social & Collaboration
+    priority: should-have
+    complexity: S
+    file: US-080-comment-on-a-github-pull-request.md
+  - id: US-081
+    title: Follow a Pub/Sub Channel for Updates
+    personas:
+      - P-002
+    epic: Social & Collaboration
+    priority: could-have
+    complexity: S
+    file: US-081-follow-a-pub-sub-channel-for-updates.md
+  - id: US-082
+    title: Watch an Entity for Change Notifications
+    personas:
+      - P-001
+      - P-003
+    epic: Social & Collaboration
+    priority: should-have
+    complexity: S
+    file: US-082-watch-an-entity-for-change-notifications.md
+  - id: US-083
+    title: Reject MCP Calls with an Expired JWT
+    personas:
+      - P-002
+    epic: Edge Cases & Error States
+    priority: must-have
+    complexity: S
+    file: US-083-mcp-call-with-expired-jwt.md
+  - id: US-084
+    title: Reject MCP Calls Using a Revoked API Key
+    personas:
+      - P-002
+      - P-006
+    epic: Edge Cases & Error States
+    priority: must-have
+    complexity: S
+    file: US-084-mcp-call-with-revoked-api-key.md
+  - id: US-085
+    title: Block Registration on Expired or Exhausted Invite Tokens
+    personas:
+      - P-008
+    epic: Edge Cases & Error States
+    priority: must-have
+    complexity: S
+    file: US-085-register-with-expired-invite-token.md
+  - id: US-086
+    title: Log tool_guard Identity Mismatches in Shadow Mode
+    personas:
+      - P-006
+    epic: Edge Cases & Error States
+    priority: should-have
+    complexity: M
+    file: US-086-tool-guard-identity-mismatch-shadow-mode.md
+  - id: US-087
+    title: Rate-Limit the Unauthenticated Token-Mint Endpoint
+    personas:
+      - P-006
+    epic: Edge Cases & Error States
+    priority: should-have
+    complexity: S
+    file: US-087-rate-limit-unauthenticated-token-mint.md
+  - id: US-088
+    title: Fall Back to Read-Only When Operating on an Archived Project
+    personas:
+      - P-003
+    epic: Edge Cases & Error States
+    priority: should-have
+    complexity: S
+    file: US-088-archived-project-read-only-fallback.md
+  - id: US-089
+    title: Handle Orphaned Polymorphic Ticket Links Gracefully
+    personas:
+      - P-003
+    epic: Edge Cases & Error States
+    priority: could-have
+    complexity: S
+    file: US-089-orphaned-ticket-link-after-deletion.md
+  - id: US-090
+    title: Quarantine Flagged Content at Memory Ingest
+    personas:
+      - P-002
+      - P-006
+    epic: Edge Cases & Error States
+    priority: should-have
+    complexity: M
+    file: US-090-memory-flagged-quarantine-at-ingest.md
+  - id: US-091
+    title: Full Keyboard Navigation of the Ticket Board
+    personas:
+      - P-003
+    epic: Accessibility & Internationalization
+    priority: must-have
+    complexity: M
+    file: US-091-keyboard-navigation-ticket-board.md
+  - id: US-092
+    title: Announce Dashboard State Changes to Screen Readers
+    personas:
+      - P-001
+    epic: Accessibility & Internationalization
+    priority: must-have
+    complexity: M
+    file: US-092-screen-reader-dashboard-state-changes.md
+  - id: US-093
+    title: Render Non-English Content Correctly in Wiki and Tickets
+    personas:
+      - P-008
+    epic: Accessibility & Internationalization
+    priority: should-have
+    complexity: S
+    file: US-093-non-english-content-rendering-wiki-tickets.md
+  - id: US-094
+    title: Switch to the High-Contrast Nocturne Theme
+    personas:
+      - P-008
+      - P-001
+    epic: Accessibility & Internationalization
+    priority: should-have
+    complexity: S
+    file: US-094-high-contrast-dark-theme-switch.md
+  - id: US-095
+    title: Respect prefers-reduced-motion in Chat and Board Animations
+    personas:
+      - P-008
+    epic: Accessibility & Internationalization
+    priority: could-have
+    complexity: S
+    file: US-095-respect-reduced-motion-chat-board.md
+  - id: US-096
+    title: Paginate Large Ticket Boards Without a Full Reload
+    personas:
+      - P-003
+    epic: Performance & Scale
+    priority: must-have
+    complexity: M
+    file: US-096-paginate-large-ticket-board.md
+  - id: US-097
+    title: Virtualize Chat Rooms with Thousands of Messages
+    personas:
+      - P-001
+    epic: Performance & Scale
+    priority: should-have
+    complexity: M
+    file: US-097-virtualize-chat-room-many-messages.md
   - id: US-098
-    title: Story 98
-    file: US-098-add-browser-automation-test-suite.md
-    persona: P-005
-    persona_name: Dave
-    priority: critical
-    status: draft
-    prd_group: test_coverage
-    related_personas:
-      - P-005
+    title: Bound Memory-Recall Latency as a Persona's Memory Store Grows
+    personas:
+      - P-002
+    epic: Performance & Scale
+    priority: should-have
+    complexity: L
+    file: US-098-bound-memory-recall-latency-at-scale.md
   - id: US-099
-    title: Story 99
-    file: US-099-add-web-interface-test-suite.md
-    persona: P-005
-    persona_name: Dave
-    priority: critical
-    status: draft
-    prd_group: test_coverage
-    related_personas:
+    title: Queue and Rate-Limit Bulk Creative-Asset Generation
+    personas:
       - P-005
+    epic: Performance & Scale
+    priority: could-have
+    complexity: M
+    file: US-099-queue-rate-limit-bulk-creative-asset-generation.md
   - id: US-100
-    title: Story 100
-    file: US-100*.md
-    persona: P-005
-    persona_name: Dave
-    priority: critical
-    status: draft
-    prd_group: test_coverage
-    related_personas:
-      - P-005
+    title: Connect a GitHub Repository and Set Its Default ACL
+    personas:
+      - P-004
+    epic: Integration & External APIs
+    priority: must-have
+    complexity: S
+    file: US-100-connect-github-repo-default-acl.md
   - id: US-101
-    title: Story 101
-    file: US-101*.md
-    persona: P-005
-    persona_name: Dave
-    priority: high
-    status: draft
-    prd_group: executor_exposure
-    related_personas:
-      - P-005
+    title: Create a Pull Request from Within the Platform
+    personas:
+      - P-007
+    epic: Integration & External APIs
+    priority: should-have
+    complexity: M
+    file: US-101-create-pull-request-from-platform.md
   - id: US-102
-    title: Story 102
-    file: US-102*.md
-    persona: P-005
-    persona_name: Dave
-    priority: high
-    status: draft
-    prd_group: executor_exposure
-    related_personas:
-      - P-005
+    title: Open a Remote-Access Tunnel to a Local Dev Server
+    personas:
+      - P-001
+    epic: Integration & External APIs
+    priority: should-have
+    complexity: M
+    file: US-102-remote-access-tunnel-local-dev-server.md
   - id: US-103
-    title: Story 103
-    file: US-103*.md
-    persona: P-005
-    persona_name: Dave
-    priority: high
-    status: draft
-    prd_group: executor_exposure
-    related_personas:
-      - P-005
-  - id: US-201
-    title: Load Directives Section with Priority Filtering
-    file: US-201-load-directives-section.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: high
-    status: draft
-    prd_group: npl_load
-    prds:
-      - PRD-015
-    related_stories:
-      - US-202
-      - US-203
-    related_personas:
+    title: Build a Mock MCP Server from a Prose Description
+    personas:
+      - P-002
       - P-001
+    epic: Integration & External APIs
+    priority: could-have
+    complexity: L
+    file: US-103-mock-mcp-server-from-prose-description.md
+  - id: US-104
+    title: Receive an Outbound Webhook on Ticket State Change
+    personas:
       - P-003
-  - id: US-202
-    title: Load Fences Section with All Layout Strategies
-    file: US-202-load-fences-section.md
-    persona: P-003
-    persona_name: Vibe Coder
-    priority: high
-    status: draft
-    prd_group: npl_load
-    prds:
-      - PRD-015
-    related_stories:
-      - US-201
-      - US-204
-    related_personas:
-      - P-003
-  - id: US-203
-    title: Load Pumps Section with Complex Expressions
-    file: US-203-load-pumps-section.md
-    persona: P-001
-    persona_name: AI Agent
-    priority: medium
-    status: draft
-    prd_group: npl_load
-    prds:
-      - PRD-015
-    related_stories:
-      - US-201
-      - US-204
-    related_personas:
-      - P-001
-  - id: US-204
-    title: Cross-Section Loading with Additions and Subtractions
-    file: US-204-cross-section-loading.md
-    persona: P-003
-    persona_name: Vibe Coder
-    priority: medium
-    status: draft
-    prd_group: npl_load
-    prds:
-      - PRD-015
-    related_stories:
-      - US-202
-      - US-203
-      - US-205
-    related_personas:
-      - P-003
-  - id: US-205
-    title: Generate Coverage Reports for All Loaded Components
-    file: US-205-generate-coverage-reports.md
-    persona: P-005
-    persona_name: Dave
-    priority: high
-    status: draft
-    prd_group: npl_load
-    prds:
-      - PRD-015
-    related_stories:
-      - US-204
-    related_personas:
-      - P-005
-  - id: US-220
-    title: NPL Syntax Validation via CLI with Error Reporting
-    status: draft
-    priority: high
-    prd_group: npl_syntax
-    file: US-220-npl-syntax-validation-cli.md
-    related_personas:
-      - P-005
-    related_stories: []
-  - id: US-221
-    title: Extract Metadata from Agent Definition Files
-    status: draft
-    priority: high
-    prd_group: npl_syntax
-    file: US-221-extract-agent-metadata.md
-    related_personas:
-      - P-005
-    related_stories: []
-  - id: US-222
-    title: IDE Integration for NPL Syntax Highlighting
-    status: draft
-    priority: medium
-    prd_group: npl_syntax
-    file: US-222-npl-ide-syntax-highlighting.md
-    related_personas:
-      - P-005
-    related_stories: []
-  - id: US-223
-    title: List All NPL Syntax Elements in Document
-    status: draft
-    priority: medium
-    prd_group: npl_syntax
-    file: US-223-list-npl-syntax-elements.md
-    related_personas:
-      - P-005
-    related_stories: []
-  - id: US-224
-    title: Skip Already-Loaded Resources Using Flags
-    status: draft
-    priority: medium
-    prd_group: cli_utilities
-    file: US-224-skip-loaded-resources-flag.md
-    related_personas:
-      - P-005
-    related_stories: []
-  - id: US-225
-    title: Cross-Agent Communication Through Shared Worklogs
-    status: draft
-    priority: high
-    prd_group: cli_utilities
-    file: US-225-cross-agent-worklog-communication.md
-    related_personas:
-      - P-005
-    related_stories: []
-  - id: US-111
-    title: Ephemeral Tasker Lifecycle Management
-    status: draft
-    priority: high
-    prd_group: coordination
-    file: US-111-ephemeral-tasker-lifecycle.md
-    prds:
-      - PRD-009
-    legacy_id: US-009-001
-    related_personas:
-      - P-001
-    related_stories:
-      - US-112
-      - US-113
-  - id: US-112
-    title: Fabric CLI Integration
-    status: draft
-    priority: medium
-    prd_group: coordination
-    file: US-112-fabric-cli-integration.md
-    prds:
-      - PRD-009
-    legacy_id: US-009-002
-    related_personas:
-      - P-001
-    related_stories:
-      - US-111
-      - US-113
-  - id: US-113
-    title: MCP Tool Exposure for Taskers
-    status: draft
-    priority: critical
-    prd_group: mcp_tools
-    file: US-113-mcp-tool-exposure-for-taskers.md
-    prds:
-      - PRD-009
-    legacy_id: US-009-003
-    related_personas:
-      - P-001
-    related_stories:
-      - US-111
-      - US-112
-  - id: US-114
-    title: MCP Artifact Management Tools
-    status: draft
-    priority: high
-    prd_group: mcp_tools
-    file: US-114-mcp-artifact-management-tools.md
-    prds:
-      - PRD-010
-      - PRD-002
-    legacy_id: US-008-030
-    related_personas:
-      - P-001
-    related_stories:
-      - US-008
-      - US-009
-      - US-010
-  - id: US-115
-    title: MCP Chat Collaboration Tools
-    status: draft
-    priority: high
-    prd_group: mcp_tools
-    file: US-115-mcp-chat-collaboration-tools.md
-    prds:
-      - PRD-010
-      - PRD-004
-    legacy_id: US-031-045
-    related_personas:
-      - P-001
-    related_stories:
-      - US-004
-      - US-005
-      - US-006
-      - US-007
-  - id: US-116
-    title: MCP Task Queue Tools
-    status: draft
-    priority: high
-    prd_group: mcp_tools
-    file: US-116-mcp-task-queue-tools.md
-    prds:
-      - PRD-010
-      - PRD-005
-    legacy_id: US-046-060
-    related_personas:
-      - P-001
-    related_stories:
-      - US-014
-      - US-015
-      - US-016
-      - US-017
-      - US-018
-  - id: US-117
-    title: MCP Browser Automation Tools
-    status: draft
-    priority: medium
-    prd_group: mcp_tools
-    file: US-117-mcp-browser-automation-tools.md
-    prds:
-      - PRD-010
-      - PRD-006
-    legacy_id: US-061-077
-    related_personas:
-      - P-001
-    related_stories:
-      - US-012
-      - US-013
-      - US-019
-      - US-021
-  - id: US-118
-    title: MCP Cross-Domain Integration Tools
-    status: draft
-    priority: medium
-    prd_group: mcp_tools
-    file: US-118-mcp-cross-domain-integration-tools.md
-    prds:
-      - PRD-010
-    legacy_id: US-078-083
-    related_personas:
-      - P-001
-    related_stories:
-      - US-008
-      - US-004
-      - US-017
-  - id: US-119
-    title: Skill Structure Validator
-    status: draft
-    priority: high
-    prd_group: validation
-    file: US-119-skill-structure-validator.md
-    prds:
-      - PRD-016
-    legacy_id: US-016-001
-    related_personas:
-      - P-005
-    related_stories:
-      - US-120
-  - id: US-120
-    title: Skill Quality Evaluator with Arize Phoenix
-    status: draft
-    priority: high
-    prd_group: validation
-    file: US-120-skill-quality-evaluator.md
-    prds:
-      - PRD-016
-    legacy_id: US-016-002
-    related_personas:
-      - P-005
-    related_stories:
-      - US-119
-  - id: US-226
-    title: Read User Story by ID
-    file: US-226-read-user-story-by-id.md
-    persona: P-008
-    persona_name: TDD Workflow Agent
-    priority: critical
-    status: draft
-    prd_group: pm_mcp_tools
-    related_stories:
-      - US-227
-      - US-228
-    related_personas:
-      - P-008
-      - P-001
-    prds:
-      - PRD-017
-  - id: US-227
-    title: List and Filter User Stories
-    file: US-227-list-and-filter-user-stories.md
-    persona: P-008
-    persona_name: TDD Workflow Agent
-    priority: high
-    status: draft
-    prd_group: pm_mcp_tools
-    related_stories:
-      - US-226
-      - US-228
-    related_personas:
-      - P-008
-      - P-001
-    prds:
-      - PRD-017
-  - id: US-228
-    title: Read PRD Content by ID
-    file: US-228-read-prd-content-by-id.md
-    persona: P-008
-    persona_name: TDD Workflow Agent
-    priority: critical
-    status: draft
-    prd_group: pm_mcp_tools
-    related_stories:
-      - US-226
-      - US-229
-      - US-230
-    related_personas:
-      - P-008
-      - P-001
-    prds:
-      - PRD-017
-  - id: US-229
-    title: Access PRD Functional Requirements
-    file: US-229-access-prd-functional-requirements.md
-    persona: P-008
-    persona_name: TDD Workflow Agent
-    priority: high
-    status: draft
-    prd_group: pm_mcp_tools
-    related_stories:
-      - US-228
-      - US-230
-    related_personas:
-      - P-008
-      - P-001
-    prds:
-      - PRD-017
-  - id: US-230
-    title: Access PRD Acceptance Tests
-    file: US-230-access-prd-acceptance-tests.md
-    persona: P-008
-    persona_name: TDD Workflow Agent
-    priority: critical
-    status: draft
-    prd_group: pm_mcp_tools
-    related_stories:
-      - US-228
-      - US-229
-    related_personas:
-      - P-008
-      - P-001
-    prds:
-      - PRD-017
-  - id: US-231
-    title: Update User Story Metadata
-    file: US-231-update-user-story-metadata.md
-    persona: P-008
-    persona_name: TDD Workflow Agent
-    priority: high
-    status: draft
-    prd_group: pm_mcp_tools
-    related_stories:
-      - US-226
-      - US-227
-    related_personas:
-      - P-008
-      - P-001
-    prds:
-      - PRD-017
-  - id: US-232
-    title: List and Access Personas
-    file: US-232-list-and-access-personas.md
-    persona: P-008
-    persona_name: TDD Workflow Agent
-    priority: medium
-    status: draft
-    prd_group: pm_mcp_tools
-    related_stories:
-      - US-226
-      - US-227
-    related_personas:
-      - P-008
-      - P-001
-    prds:
-      - PRD-017
+    epic: Integration & External APIs
+    priority: could-have
+    complexity: M
+    file: US-104-outbound-webhook-ticket-state-change.md

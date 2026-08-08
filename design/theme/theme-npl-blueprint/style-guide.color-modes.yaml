@@ -1,0 +1,35 @@
+# NPL — Blueprint color modes (treatise §3 Mode strategy).
+# Light (drafting sheet) is primary and the design target: pale cool sheet, navy
+# ink, thin cool rules. Dark is a genuine, designed CYANOTYPE — deep navy canvas
+# with cyan/white lines — the classic blueprint negative, NOT a dimmed light mode.
+# Both modes are first-class and equally on-brand. Neutrals are cool-tinted (~4%
+# toward blue), which is what separates Blueprint from Minimal's pure gray.
+#
+# VERIFICATION NOTE: literal light/dark maps are only fully verified via
+# `npx @noizu/styleguide serve`. The legacy generate-css fallback resolves modes
+# from the white/black seed cascade and does NOT emit these maps, so the dark
+# cyanotype values below are reasoned from contrast math, not serve-verified
+# (see conformance-npl-blueprint.md §3).
+color-modes:
+  light:
+    surface: "var(--white)"          # #f5f8fc pale cool sheet
+    surface-alt: "#eaf1f9"           # cooler panel — title-block strips / alt rows
+    surface-inverse: "#0a1a2f"       # cyanotype navy (inverse chips/badges)
+    text: "var(--black)"             # #14263f navy ink ≈ 14:1 on sheet
+    text-secondary: "#3a5170"        # cool slate ≈ 7.5:1 on sheet
+    text-muted: "#556983"            # cool slate ≈ 5.3:1 on sheet (clears body)
+    text-inverse: "var(--white)"
+    border: "#a9bdd4"                # routine cool rule ≈ 1.8:1 (quiet divider)
+    border-strong: "#7e93ad"         # structural boundary ≈ 3:1 (panel edge / dimension line)
+    shadow-color: "rgba(20, 38, 63, 0.10)"   # cool-tinted from ink; overlays only (§6 nearly flat)
+  dark:
+    surface: "#0a1a2f"               # deep cyanotype navy
+    surface-alt: "#102a45"           # lifted navy panel / title-block
+    surface-inverse: "var(--white)"
+    text: "#dbe7f5"                  # cyan-white ink ≈ 13.9:1 on navy
+    text-secondary: "#a9c2de"        # ≈ 9.5:1 on navy
+    text-muted: "#7f9bbd"            # ≈ 5.9:1 on navy (clears body)
+    text-inverse: "#0a1a2f"
+    border: "#22405f"                # navy rule (visible cyanotype line)
+    border-strong: "#345c85"         # structural boundary ≈ 2.5:1 on navy
+    shadow-color: "rgba(0, 0, 0, 0.5)"

@@ -1,0 +1,55 @@
+# ═══════════════════════════════════════════════════════════════
+# NPL — Editorial · seed deltas over theme-style-guide (treatise §3/§4/§6).
+# Only the seeds this theme pins; everything else rides the base cascade.
+# NOTE: keys brand-red/blue/yellow are the cascade's PRIMARY/SECONDARY/
+# TERTIARY accent slots — their VALUES here are the muted print pigments
+# (claret / petrol / ochre), not their names. The base pins each -light
+# sibling to a color-mix() with the OLD literal Bauhaus hex hard-coded
+# inside it (not var(--brand-*)), so overriding brand-red alone leaves the
+# tint on the old brand color — the seed trap. Each -light is re-pointed to
+# read var(--brand-*) so it tracks the override.
+#   (Bare red/blue/yellow keys — the prior version of this file — are NOT
+#    accent-driving keys in the base and were a silent no-op; fixed here.)
+# ═══════════════════════════════════════════════════════════════
+
+vars:
+  groups:
+    # ── Surfaces ── §3 neutrals: warm off-white paper, warm near-black ink
+    - name: Surfaces
+      vars:
+        white: "#fbf8f1"   # warm paper (canvas) — ~40° at very low saturation
+        black: "#1c1917"   # warm near-black ink — tints the whole gray ramp warm
+
+    # ── Primaries ── §3 accents: muted print pigments, claret dominant
+    - name: Primaries - Print Pigments
+      vars:
+        brand-red: "#9a2c3f"     # PRIMARY accent — claret (~350°), the ink accent
+        brand-red-light: "color-mix(in srgb, var(--brand-red) 70%, var(--surface))"
+        brand-blue: "#1d4e5f"    # SECONDARY accent — deep petrol (~195°), links/info
+        brand-blue-light: "color-mix(in srgb, var(--brand-blue) 70%, var(--surface))"
+        brand-yellow: "#b45309"  # TERTIARY accent — burnt ochre (~28°), sparing highlight
+        brand-yellow-light: "color-mix(in srgb, var(--brand-yellow) 70%, var(--surface))"
+
+    # ── Semantic ── §3: harmonized with the print pigments. error ≡ claret is a
+    # DELIBERATE collision (treatise §3): destructive and primary share the hue,
+    # muted so the clash is gentle — separate destructive intent by label/icon,
+    # never by hue alone.
+    - name: Semantic
+      vars:
+        success: "#3f6212"   # moss / olive
+        warning: "#b45309"   # burnt ochre (≡ brand-yellow)
+        error: "#9a2c3f"     # claret (≡ brand-red — flagged collision)
+        info: "#1d4e5f"      # petrol (≡ brand-blue)
+
+    # ── Typography ── §4: a serif in the SANS slot is the whole thesis — the body
+    # face is a serif, signalling authored, durable prose. IBM Plex Mono is
+    # reserved for literal tokens, NPL glyphs, values, IDs.
+    - name: Typography
+      vars:
+        font-sans: "'Source Serif 4', 'Iowan Old Style', Georgia, serif"
+        font-mono: "'IBM Plex Mono', 'Menlo', monospace"
+
+    # ── Shape ── §6: near-square, a cut-paper edge (no pills)
+    - name: Shape
+      vars:
+        radius: "2px"

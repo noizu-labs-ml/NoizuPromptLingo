@@ -1,0 +1,21 @@
+databaseChangeLog:
+  # Generated module implementations for a mock MCP. Tools whose stored
+  # descriptor has "impl":"module" are served by a runtime-compiled Elixir
+  # module instead of LLM inference. JSONB is the source of truth (the prod
+  # release filesystem is ephemeral), recompiled on demand / activation:
+  #   [{"tool": "<tool name>", "module": "Elixir.NplMockMCP....",
+  #     "function": "call", "source": "<elixir source>"}]
+  - changeSet:
+      id: add-modules-json-to-mock-mcp-definitions
+      author: tobor-locker
+      changes:
+        - addColumn:
+            tableName: mock_mcp_definitions
+            columns:
+              - column:
+                  name: modules_json
+                  type: jsonb
+      rollback:
+        - dropColumn:
+            tableName: mock_mcp_definitions
+            columnName: modules_json

@@ -1,0 +1,37 @@
+databaseChangeLog:
+  # Parity with therobotplans migrations applied after the initial pm_core
+  # consolidation snapshot (TRP 049 invite role, TRP 050 type color).
+  # Safe on fresh installs that already baked these into CREATE (007/012):
+  # ADD COLUMN IF NOT EXISTS is a no-op when the column exists.
+
+  - changeSet:
+      id: pm-019-item-type-definitions-color
+      author: noizu-pm
+      changes:
+        - sql:
+            sql: |
+              ALTER TABLE item_type_definitions
+                ADD COLUMN IF NOT EXISTS color varchar(32);
+              CREATE INDEX IF NOT EXISTS idx_item_type_definitions_deleted_at
+                ON item_type_definitions (deleted_at)
+                WHERE deleted_at IS NOT NULL;
+      rollback:
+        - sql:
+            sql: |
+              DROP INDEX IF EXISTS idx_item_type_definitions_deleted_at;
+              ALTER TABLE item_type_definitions
+                DROP COLUMN IF EXISTS color;
+
+  - changeSet:
+      id: pm-019-invite-tokens-role
+      author: noizu-pm
+      changes:
+        - sql:
+            sql: |
+              ALTER TABLE invite_tokens
+                ADD COLUMN IF NOT EXISTS role varchar(32) NOT NULL DEFAULT 'viewer';
+      rollback:
+        - sql:
+            sql: |
+              ALTER TABLE invite_tokens
+                DROP COLUMN IF EXISTS role;

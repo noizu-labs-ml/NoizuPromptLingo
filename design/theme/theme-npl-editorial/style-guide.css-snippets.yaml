@@ -1,0 +1,189 @@
+# NPL — Editorial component inflections (treatise §6/§7/§8) + project-specific
+# sample elements. This facet ACCUMULATES onto the base (unlike
+# vars/color-modes/typography which replace it wholesale), so it is the safe home
+# for editorial's surface treatments without clobbering the base's design-sections.
+#
+# SELF-SCOPING IS REQUIRED: the engine treats css-snippets as SELF_SCOPED
+# (css-cache.ts) — it emits each body VERBATIM and does NOT prefix the theme
+# selector for you (unlike buttons/cards/etc.). Every selector below is therefore
+# scoped under html[data-design-theme="npl-editorial"] so it cannot bleed into
+# sibling themes. Discipline: one claret ink accent, warm beige hairlines, 2px
+# cut-paper radius, flat/tonal (no resting drop shadows), permanent link
+# underline. var() fallbacks mirror color-modes light values so the snippet still
+# resolves on the legacy generate-css path (which does not emit the color-modes
+# maps).
+css-snippets:
+  - name: Editorial Primary Button
+    slug: editorial-btn-primary
+    title: "Claret primary button (§8)"
+    description: "The one saturated element on a page — a muted-claret fill with warm-paper label text and 2px radius, set as a typeset title-case label (never uppercase-shouting). Warm-paper text on claret clears ~8:1 (AAA, treatise §9). Flat: no resting drop shadow; hover deepens the ink; focus swaps to the petrol outline."
+    target-section: buttons
+    body: |
+      html[data-design-theme="npl-editorial"] .btn.primary,
+      html[data-design-theme="npl-editorial"] .btn-primary {
+        background: var(--brand-red, #9a2c3f);
+        color: #fbf8f1;
+        border: none;
+        border-radius: var(--radius, 2px);
+        padding: 0.5rem 1rem;
+        font-family: var(--font-sans);
+        font-weight: 600;
+        text-transform: none;
+        box-shadow: none;
+        transition: background 140ms ease-out;
+      }
+      html[data-design-theme="npl-editorial"] .btn.primary:hover,
+      html[data-design-theme="npl-editorial"] .btn-primary:hover {
+        background: color-mix(in srgb, var(--brand-red, #9a2c3f) 88%, var(--black, #1c1917));
+      }
+      html[data-design-theme="npl-editorial"] .btn.primary:focus-visible,
+      html[data-design-theme="npl-editorial"] .btn-primary:focus-visible {
+        outline: 2px solid var(--brand-blue, #1d4e5f);
+        outline-offset: 2px;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html[data-design-theme="npl-editorial"] .btn.primary,
+        html[data-design-theme="npl-editorial"] .btn-primary { transition: none; }
+      }
+
+  - name: Editorial Ghost Button
+    slug: editorial-btn-ghost
+    title: "Petrol hairline ghost secondary (§8)"
+    description: "Secondary action — a petrol 1px-hairline ghost on paper, no fill, 2px radius, typeset label. Reads as a quiet counterpart to the claret primary; petrol text clears ~8.5:1 on paper (treatise §9)."
+    target-section: buttons
+    body: |
+      html[data-design-theme="npl-editorial"] .btn.ghost,
+      html[data-design-theme="npl-editorial"] .btn-secondary {
+        background: transparent;
+        color: var(--brand-blue, #1d4e5f);
+        border: 1px solid color-mix(in srgb, var(--brand-blue, #1d4e5f) 55%, var(--surface, #fbf8f1));
+        border-radius: var(--radius, 2px);
+        padding: 0.5rem 1rem;
+        font-family: var(--font-sans);
+        font-weight: 600;
+        box-shadow: none;
+      }
+      html[data-design-theme="npl-editorial"] .btn.ghost:hover,
+      html[data-design-theme="npl-editorial"] .btn-secondary:hover {
+        background: color-mix(in srgb, var(--brand-blue, #1d4e5f) 8%, var(--surface, #fbf8f1));
+      }
+      html[data-design-theme="npl-editorial"] .btn.ghost:focus-visible,
+      html[data-design-theme="npl-editorial"] .btn-secondary:focus-visible {
+        outline: 2px solid var(--brand-blue, #1d4e5f);
+        outline-offset: 2px;
+      }
+
+  - name: Editorial Featured Card
+    slug: editorial-card-featured
+    title: "Claret top-rule featured card (§8)"
+    description: "A clipping / boxed sidebar: surface-alt fill, a warm beige hairline, 2px radius, generous padding, and a claret top-rule to mark a featured/pinned card — never a tinted background. Flat/tonal: no resting drop shadow (treatise §6)."
+    target-section: cards
+    body: |
+      html[data-design-theme="npl-editorial"] .card.featured,
+      html[data-design-theme="npl-editorial"] .card-featured {
+        background: var(--surface-alt, #f4efe4);
+        border: 1px solid var(--border, #e3d9c6);
+        border-top: 2px solid var(--brand-red, #9a2c3f);
+        border-radius: var(--radius, 2px);
+        padding: 20px 24px;
+        box-shadow: none;
+      }
+
+  - name: Editorial Table-of-Contents Nav
+    slug: editorial-nav-toc
+    title: "Claret left-rule active nav (§8)"
+    description: "A table-of-contents sensibility: the active navigation item is marked by a claret left-rule + 600 weight, not a filled pill. Section eyebrows above groups are mono small-caps."
+    target-section: navigation
+    body: |
+      html[data-design-theme="npl-editorial"] .nav-toc a,
+      html[data-design-theme="npl-editorial"] .toc-item {
+        display: block;
+        padding: 6px 12px;
+        border-left: 2px solid transparent;
+        color: var(--text, #1c1917);
+        font-family: var(--font-sans);
+        text-decoration: none;
+      }
+      html[data-design-theme="npl-editorial"] .nav-toc a.active,
+      html[data-design-theme="npl-editorial"] .toc-item.active {
+        border-left-color: var(--brand-red, #9a2c3f);
+        font-weight: 600;
+      }
+      html[data-design-theme="npl-editorial"] .nav-eyebrow {
+        font-family: var(--font-mono, 'IBM Plex Mono', monospace);
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-muted, #8a7f72);
+      }
+
+  - name: Editorial Link Underline & Focus
+    slug: editorial-link-underline
+    title: "Permanent petrol link underline + focus (§7/§9)"
+    description: "The print idiom: link underline is a permanent affordance in petrol, thickening on hover — never removed (an accessibility affordance, not decoration). Focus is a 2px petrol outline, 2px offset, on every focusable element."
+    target-section: interaction
+    body: |
+      html[data-design-theme="npl-editorial"] a {
+        color: var(--brand-blue, #1d4e5f);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+        text-decoration-thickness: 1px;
+        transition: text-decoration-thickness 120ms ease-out;
+      }
+      html[data-design-theme="npl-editorial"] a:hover {
+        text-decoration-thickness: 2px;
+      }
+      html[data-design-theme="npl-editorial"] a:focus-visible {
+        outline: 2px solid var(--brand-blue, #1d4e5f);
+        outline-offset: 2px;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html[data-design-theme="npl-editorial"] a { transition: none; }
+      }
+
+  - name: Editorial Paper Grain Canvas
+    slug: editorial-paper-grain
+    title: "Barely-perceptible paper grain (§6)"
+    description: "The optional 'stock' cue: a ≤3% opacity warm paper grain on the app canvas — nowhere else, and never behind body text. Encoded as a self-contained SVG fractal-noise data URI so it needs no external asset."
+    target-section: colors
+    body: |
+      html[data-design-theme="npl-editorial"] .app-canvas,
+      html[data-design-theme="npl-editorial"] .paper-grain {
+        background-color: var(--surface, #fbf8f1);
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.03'/%3E%3C/svg%3E");
+      }
+
+  - name: NPL Literal Token Chip
+    slug: npl-token-chip
+    title: "Inline NPL literal-token chip (project-specific §4/§8)"
+    description: "NPL's signature domain element — a literal prompt token / NPL glyph / id rendered as an inline monospace chip on a warm-paper field with a beige hairline and 2px radius. Mono is reserved for literal content; this is where it earns its keep."
+    target-section: typography
+    body: |
+      html[data-design-theme="npl-editorial"] .npl-token,
+      html[data-design-theme="npl-editorial"] code.token {
+        font-family: var(--font-mono, 'IBM Plex Mono', monospace);
+        font-size: 0.9em;
+        background: var(--surface-alt, #f4efe4);
+        border: 1px solid var(--border, #e3d9c6);
+        border-radius: var(--radius, 2px);
+        padding: 0.05em 0.35em;
+        color: var(--text, #1c1917);
+      }
+
+  - name: NPL Spec Pull-Quote
+    slug: npl-spec-pullquote
+    title: "Spec pull-quote / convention block (project-specific §6/§8)"
+    description: "The printed-spec 'clipping' — a convention or directive block inset on surface-alt with a claret top-rule (a drop-cap-like section mark), serif, generous padding, capped at the ~68ch reading measure. This is the reading-surface's signature block for a Convention page or Instruction body."
+    target-section: cards
+    body: |
+      html[data-design-theme="npl-editorial"] .npl-spec-pullquote,
+      html[data-design-theme="npl-editorial"] blockquote.spec {
+        background: var(--surface-alt, #f4efe4);
+        border-top: 2px solid var(--brand-red, #9a2c3f);
+        border-radius: var(--radius, 2px);
+        padding: 16px 20px;
+        margin: 1.5rem 0;
+        max-width: 68ch;
+        font-family: var(--font-sans);
+        box-shadow: none;
+      }

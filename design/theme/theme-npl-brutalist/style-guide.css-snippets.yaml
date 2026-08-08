@@ -1,0 +1,245 @@
+# NPL — Brutalist · component inflections (treatise §6/§7/§8). This facet ACCUMULATES
+# onto the base (unlike vars/color-modes/typography, which replace), so it is the safe
+# home for the brutalist surface treatments without clobbering the base's design-sections.
+# Every selector is self-scoped to html[data-design-theme="npl-brutalist"] (the engine
+# normalizes the slug and shipped themes cyberpunk/sumi-e scope the same way) so nothing
+# leaks into sibling themes. Discipline: zero radius, load-bearing full-strength borders,
+# flat fills, and the ONE sanctioned depth cue — a hard-offset SOLID block shadow, zero
+# blur. No gradient, glow, or soft/blurred shadow anywhere.
+css-snippets:
+  - name: Brutalist Surfaces
+    slug: brut-surfaces
+    title: "Hard-bordered surfaces + block shadow (§6)"
+    description: "Cards and panels: zero radius, 2px solid full-strength border, and NO blurred elevation — inherited soft/blurred box-shadows are flattened to none. The single sanctioned depth cue is a solid hard-offset block shadow (offset down-and-right, zero blur), applied only to pulled-forward surfaces via .raised/.block-shadow. Card headers are separated by a full-weight rule, not padding."
+    target-section: cards
+    body: |
+      html[data-design-theme="npl-brutalist"] {
+        --brut-offset: 4px;
+        --motion-micro: 80ms;
+      }
+      html[data-design-theme="npl-brutalist"] .card,
+      html[data-design-theme="npl-brutalist"] .panel,
+      html[data-design-theme="npl-brutalist"] .hui-panel,
+      html[data-design-theme="npl-brutalist"] .hui-popover,
+      html[data-design-theme="npl-brutalist"] .hui-dialog {
+        border-radius: 0;
+        border: 2px solid var(--border);
+        box-shadow: none;
+        background: var(--surface);
+      }
+      html[data-design-theme="npl-brutalist"] .card > header,
+      html[data-design-theme="npl-brutalist"] .card-header {
+        border-bottom: 2px solid var(--border);
+      }
+      html[data-design-theme="npl-brutalist"] .card.raised,
+      html[data-design-theme="npl-brutalist"] .block-shadow {
+        box-shadow: var(--brut-offset) var(--brut-offset) 0 0 var(--border);
+      }
+
+  - name: Brutalist Buttons
+    slug: brut-buttons
+    title: "Rectangular block buttons, invert + press (§8/§7)"
+    description: "Rectangular, 0 radius, 2px solid border, UPPERCASE mono label, hard-offset block shadow. Primary = electric vermilion fill with a black border and near-black text (error and brand-primary share the red hue by design — §3 collision flag — so destructive actions must add an explicit label). Hover INVERTS foreground/background; active PRESSES the element into its offset (translate by the offset, shadow to 0); disabled drops to 40% opacity and loses its fill but KEEPS its border."
+    target-section: buttons
+    body: |
+      html[data-design-theme="npl-brutalist"] .btn,
+      html[data-design-theme="npl-brutalist"] button.btn {
+        border-radius: 0;
+        border: 2px solid var(--border);
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-mono);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        box-shadow: var(--brut-offset) var(--brut-offset) 0 0 var(--border);
+        transition: transform var(--motion-micro) linear, background var(--motion-micro) linear, color var(--motion-micro) linear;
+      }
+      html[data-design-theme="npl-brutalist"] .btn.primary,
+      html[data-design-theme="npl-brutalist"] .btn-primary {
+        background: var(--brand-red);
+        color: var(--black);
+        border-color: var(--black);
+      }
+      html[data-design-theme="npl-brutalist"] .btn:hover {
+        background: var(--text);
+        color: var(--surface);
+      }
+      html[data-design-theme="npl-brutalist"] .btn.primary:hover {
+        background: var(--black);
+        color: var(--brand-red);
+      }
+      html[data-design-theme="npl-brutalist"] .btn:active {
+        transform: translate(var(--brut-offset), var(--brut-offset));
+        box-shadow: 0 0 0 0 var(--border);
+      }
+      html[data-design-theme="npl-brutalist"] .btn:disabled,
+      html[data-design-theme="npl-brutalist"] .btn[disabled] {
+        opacity: 0.4;
+        background: var(--surface);
+        color: var(--text);
+      }
+
+  - name: Brutalist Focus & Motion
+    slug: brut-focus-motion
+    title: "Ultramarine focus ring + instant motion (§7/§9)"
+    description: "Focus is a 3px solid ultramarine outline, 2px offset, on every focusable element — high-contrast on both light and dark canvases, never removed. Motion is instrumental: 0-100ms linear on interactive elements, nothing springs or eases-for-delight. prefers-reduced-motion turns the hover inversion into a hard swap and disables the press-translate; nothing else animates."
+    target-section: interaction
+    body: |
+      html[data-design-theme="npl-brutalist"] :focus-visible {
+        outline: 3px solid var(--brand-blue);
+        outline-offset: 2px;
+      }
+      /* Dark canvas: raw ultramarine on pure black measures ~2.5:1 (below the §9-committed
+         3:1). Add a white hairline co-signal — treatise §7, "state never rides on hue
+         alone" — so focus stays visible in dark mode. Light mode needs none (ultramarine
+         on white clears it). See conformance note escalation on the §9 wording. */
+      html[data-design-theme="npl-brutalist"].dark :focus-visible {
+        box-shadow: 0 0 0 1px var(--text);
+      }
+      html[data-design-theme="npl-brutalist"] .btn,
+      html[data-design-theme="npl-brutalist"] a,
+      html[data-design-theme="npl-brutalist"] input,
+      html[data-design-theme="npl-brutalist"] select,
+      html[data-design-theme="npl-brutalist"] textarea,
+      html[data-design-theme="npl-brutalist"] .card,
+      html[data-design-theme="npl-brutalist"] .nav-item {
+        transition-duration: var(--motion-micro);
+        transition-timing-function: linear;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html[data-design-theme="npl-brutalist"] * { transition: none !important; }
+        html[data-design-theme="npl-brutalist"] .btn:active { transform: none; }
+      }
+
+  - name: Brutalist Inputs
+    slug: brut-inputs
+    title: "Hard-edged fields + square controls (§8)"
+    description: "Inputs: 0 radius, 2px solid border, no inner shadow, mono value text; focus swaps the border to ultramarine (atop the global focus ring). Field labels are UPPERCASE mono and sit above, not floating inside. Checkboxes/radios are square (0 radius) with a black accent-color so a checked state is a solid fill."
+    target-section: forms
+    body: |
+      html[data-design-theme="npl-brutalist"] input,
+      html[data-design-theme="npl-brutalist"] select,
+      html[data-design-theme="npl-brutalist"] textarea,
+      html[data-design-theme="npl-brutalist"] .hui-field {
+        border-radius: 0;
+        border: 2px solid var(--border);
+        background: var(--surface);
+        color: var(--text);
+        box-shadow: none;
+        font-family: var(--font-mono);
+      }
+      html[data-design-theme="npl-brutalist"] input:focus,
+      html[data-design-theme="npl-brutalist"] select:focus,
+      html[data-design-theme="npl-brutalist"] textarea:focus {
+        border-color: var(--brand-blue);
+      }
+      html[data-design-theme="npl-brutalist"] label,
+      html[data-design-theme="npl-brutalist"] .hui-label {
+        font-family: var(--font-mono);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        font-weight: 700;
+      }
+      html[data-design-theme="npl-brutalist"] input[type="checkbox"],
+      html[data-design-theme="npl-brutalist"] input[type="radio"] {
+        border-radius: 0;
+        accent-color: var(--black);
+      }
+
+  - name: Brutalist Tables & Nav
+    slug: brut-tables-nav
+    title: "1px hard grid tables + inverted-fill nav (§8)"
+    description: "Tables render with a 2px outer border and 1px solid full-strength grid lines on every cell; headers are UPPERCASE mono on surface-alt. Navigation active item is a full inverted fill (fg/bg swapped) carrying a thick vermilion accent bar on its leading edge — never a soft pill highlight."
+    target-section: utilities
+    body: |
+      html[data-design-theme="npl-brutalist"] table {
+        border-collapse: collapse;
+        border: 2px solid var(--border);
+      }
+      html[data-design-theme="npl-brutalist"] th,
+      html[data-design-theme="npl-brutalist"] td {
+        border: 1px solid var(--border);
+        border-radius: 0;
+      }
+      html[data-design-theme="npl-brutalist"] th {
+        font-family: var(--font-mono);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        background: var(--surface-alt);
+      }
+      html[data-design-theme="npl-brutalist"] .nav-item.active,
+      html[data-design-theme="npl-brutalist"] [aria-current="page"] {
+        background: var(--text);
+        color: var(--surface);
+        border-left: 4px solid var(--brand-red);
+        border-radius: 0;
+      }
+
+  - name: NPL Brutalist Samples
+    slug: brut-npl-samples
+    title: "Project-specific: glyph codex cell + prompt token (§5/§8)"
+    description: "The product's own dense domain objects rendered in the brutalist idiom. .glyph-cell is a Glyph Codex square: hard 1px border, centered glyph, UPPERCASE mono codepoint beneath; .selected fills electric vermilion on a hard-offset block shadow. .npl-token is a prompt-syntax token chip: mono, uppercase, hard-bordered, zero radius."
+    target-section: utilities
+    body: |
+      html[data-design-theme="npl-brutalist"] .glyph-cell {
+        display: grid;
+        place-content: center;
+        gap: 4px;
+        aspect-ratio: 1 / 1;
+        border: 1px solid var(--border);
+        border-radius: 0;
+        background: var(--surface);
+        text-align: center;
+      }
+      html[data-design-theme="npl-brutalist"] .glyph-cell .glyph {
+        font-size: var(--font-size-2xl);
+        line-height: 1;
+      }
+      html[data-design-theme="npl-brutalist"] .glyph-cell .codepoint {
+        font-family: var(--font-mono);
+        font-size: var(--font-size-2xs);
+        text-transform: uppercase;
+        color: var(--text-muted);
+      }
+      html[data-design-theme="npl-brutalist"] .glyph-cell.selected {
+        background: var(--brand-red);
+        color: var(--black);
+        box-shadow: var(--brut-offset) var(--brut-offset) 0 0 var(--border);
+      }
+      html[data-design-theme="npl-brutalist"] .npl-token {
+        display: inline-block;
+        padding: 2px 8px;
+        border: 1px solid var(--border);
+        border-radius: 0;
+        font-family: var(--font-mono);
+        font-weight: 700;
+        text-transform: uppercase;
+        background: var(--surface-alt);
+        color: var(--text);
+      }
+
+  - name: Brutalist Headings
+    slug: brut-headings
+    title: "Uppercase 700 display headings + mono eyebrows (§4)"
+    description: "Headings are 700 + UPPERCASE with tracking tightened at display sizes and a tight/blocky line-height — brutalist type shouts, undersized headings read as timid. Section eyebrows/labels are UPPERCASE mono. Long paragraphs are never set in 700 or caps (body stays regular grotesk, inherited)."
+    target-section: typography
+    body: |
+      html[data-design-theme="npl-brutalist"] h1,
+      html[data-design-theme="npl-brutalist"] h2,
+      html[data-design-theme="npl-brutalist"] h3,
+      html[data-design-theme="npl-brutalist"] h4 {
+        font-family: var(--font-sans);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: -0.01em;
+        line-height: 1.05;
+      }
+      html[data-design-theme="npl-brutalist"] .eyebrow,
+      html[data-design-theme="npl-brutalist"] .section-label {
+        font-family: var(--font-mono);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 700;
+        color: var(--text-muted);
+      }

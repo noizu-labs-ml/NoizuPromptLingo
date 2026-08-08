@@ -1,0 +1,85 @@
+schema: "0.4"
+id: npl-meridian-24-ticket-board
+type: image
+quality: high
+
+# NoizuPromptLingo — a structured prompt-definition language + MCP agent toolchain — Ticket Board (kanban) screen.
+# Theme tenets: warm espresso-dark surface, single matte-brass accent, verdigris-teal secondary, display-serif titles over Inter body, refined 6px radius, "well-lit study at night".
+# Palette: espresso #1a1613 canvas, panel #241f1a, parchment #f2ebe0 text, brass #c9a15e accent, verdigris #3f857e secondary.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a
+    PREMIUM, warm-dark kanban board — a considered ticket board a delivery lead reads
+    to see work across stages. The register is refined, calm, composed, with quiet
+    gravitas: a well-lit study at night, not a build monitor. Warm low light, matte
+    brass detailing, unhurried. Column headers and the board title are a warm
+    high-contrast DISPLAY SERIF; card body and labels are a neutral sans; ticket ids
+    are monospace. The accent is a single matte, desaturated brass used as a thin line
+    or small fill — never a gradient, glow, or gold bling.
+  text: |
+    A 16:9 high-fidelity UI mockup of the Ticket Board (kanban) screen of
+    NoizuPromptLingo, rendered in a warm espresso-dark mode.
+
+    OVERALL LAYOUT (two regions): a slim LEFT NAV RAIL; a wide MAIN COLUMN with a board
+    header and a horizontal row of kanban columns.
+
+    LEFT NAV RAIL: warm-charcoal sidebar, "NPL" wordmark in the display serif, a short
+    destination list; the active "Tickets" item marked by a thin brass left-rail.
+
+    BOARD HEADER: the board name in a large display-serif heading, a muted subtitle,
+    an ITERATION SELECTOR at right (a recessed dropdown chip reading "Sprint 14"), a
+    small assignee avatar cluster, and a brass-outlined ghost "Filter" button.
+
+    KANBAN COLUMNS: four warm-charcoal BOARD COLUMNS across the canvas — "Backlog",
+    "In Progress", "Review", "Done" — each with a display-serif column header, a small
+    count chip beside it, and a faint hairline separating the header from the stack.
+    Each column holds 2-4 TICKET CARDS.
+
+    TICKET CARD: a raised warm panel at 6px radius with generous padding — a monospace
+    ticket id chip ("NPL-142") at the top, a title line in sans, a thin row of small
+    badges (a status tint, an ITERATION badge, and a small assignee avatar), and a
+    muted meta line. One card sits in a lifted/hover state showing a soft warm shadow
+    and a thin brass hairline; a second card shows a clearly visible 2px BRASS FOCUS
+    OUTLINE (keyboard focus) to signal full keyboard navigability. A "+load more"
+    pagination affordance sits faint at one column's foot.
+
+    PALETTE & TYPE: every neutral is a warm charcoal (espresso canvas, warmer raised
+    cards and columns), never cool slate; text is a soft warm parchment, never pure
+    white. The accent is a matte brass/champagne on the focus outline, featured-card
+    hairline, active nav rail, and ghost-button outline; muted verdigris teal only on
+    links. Iteration and status badges use muted warm tints, never loud brand hues.
+    Column headers and board title in the warm display serif; card body in a neutral
+    sans; ids in monospace.
+
+    SHAPE & SURFACE: refined 6px radius on cards and columns, 4px on badges; warm tonal
+    elevation with a soft warm shadow under the lifted card — no glow. A barely
+    perceptible warm radial vignette over the shell, like a single study lamp. Brass is
+    a pinstripe and a focus line, never a heavy frame.
+
+    MOOD: refined, composed, quietly premium — a considered board for reading the state
+    of work, calm rather than busy, with an obvious accessible focus state.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, cool blue slate tones, neon glow, gold gradient bling, terminal/console green"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches Ticket Board: left nav rail, board header with an iteration selector, a horizontal row of kanban columns (Backlog/In Progress/Review/Done) holding ticket cards with id + iteration + assignee badges, a visible keyboard focus ring, and a column pagination affordance"}
+    theme_fidelity: {weight: 3, description: "Warm espresso-dark neutrals (not cool slate), single matte-brass accent (focus outline, hairlines) + verdigris links, display-serif column headers over sans card body, muted warm badge tints, 6px radius"}
+    composition: {weight: 2, description: "Legible multi-column board with a calm, considered rhythm; plausible real kanban"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+    - "cool/blue terminal darkness or phosphor-green accent (that is the Nocturne sibling, not Meridian)"
+
+tags: [npl-meridian, NoizuPromptLingo, screen-mockup]

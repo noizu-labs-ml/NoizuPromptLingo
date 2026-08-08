@@ -1,0 +1,259 @@
+defmodule NoizuPromptLingua.MCPServers do
+  require Logger
+
+  @moduledoc """
+  Catalog of MCP servers exposed on subdomains. Single source of truth shared
+  by the config endpoint (`/api/v1/auth/mcp/config`) and any client that needs
+  to render setup commands (`claude mcp add`, `codex mcp add`, `grok mcp add`).
+
+  The `:root` server maps to the bare host (`<host>/mcp`); every other entry is
+  served at `<id>.<host>/mcp`. Keep this list in sync with the `host:` scopes
+  wired in `NoizuPromptLinguaWeb.Router`.
+  """
+
+  # %{id: label/required/desc}. `id` doubles as the subdomain label (except root).
+  @servers [
+    %{id: "root", label: "Root MCP", required: true, desc: "Core tools, NPL, discovery"},
+    %{id: "sessions", label: "Sessions", required: true, desc: "Session management"},
+    %{
+      id: "organizations",
+      label: "Organizations",
+      required: true,
+      desc: "Organization management"
+    },
+    %{id: "projects", label: "Projects", required: false, desc: "Project management"},
+    %{id: "tickets", label: "Tickets", required: false, desc: "Task & ticket tracking"},
+    %{id: "assets", label: "Assets", required: false, desc: "Media asset lifecycle"},
+    %{id: "artifacts", label: "Artifacts", required: false, desc: "Versioned content storage"},
+    %{id: "chat", label: "Chat", required: false, desc: "Chat rooms & messages"},
+    %{id: "review", label: "Review", required: false, desc: "Artifact review & overlays"},
+    %{id: "wiki", label: "Wiki", required: false, desc: "Wiki spaces, pages & comments"},
+    %{
+      id: "github",
+      label: "GitHub",
+      required: false,
+      desc: "GitHub integration — repos, branches, PRs, issues"
+    },
+    %{
+      id: "personas",
+      label: "Personas",
+      required: false,
+      desc: "Personas — bio, work log/journal & knowledge base"
+    },
+    %{
+      id: "instructions",
+      label: "Instructions",
+      required: false,
+      desc: "Reusable versioned prompts rendered with params for sub-agents"
+    },
+    %{id: "memory", label: "Memory", required: false, desc: "Knowledge memory and associations"},
+    %{
+      id: "markdown",
+      label: "Markdown",
+      required: false,
+      desc: "URL/HTML→Markdown conversion & heading filter/collapse"
+    },
+    %{
+      id: "notifications",
+      label: "Notifications",
+      required: false,
+      desc: "Per-recipient notification inbox — Notify DMs, Monitor poll, watches, follow-ups"
+    },
+    %{
+      id: "pubsub",
+      label: "PubSub",
+      required: false,
+      desc: "Org-scoped pubsub channels — publish, follow, availability pointers"
+    },
+    %{
+      id: "browser",
+      label: "Browser",
+      required: false,
+      desc: "Drive a Playwright browser on the user's machine via a local controller"
+    },
+    %{
+      id: "customers",
+      label: "Customers",
+      required: false,
+      desc: "Customer/user personas (ICPs) & segments, linkable to tickets"
+    },
+    %{
+      id: "market",
+      label: "Market",
+      required: false,
+      desc: "Competitors, keyword research & market/competitor reports"
+    },
+    %{
+      id: "campaigns",
+      label: "Campaigns",
+      required: false,
+      desc: "Marketing/SEO/PPC campaigns, ad copy, landing pages & domain names"
+    },
+    %{
+      id: "unicode",
+      label: "Unicode Codex",
+      required: false,
+      desc: "Layered Unicode glyph/control-code browser and NPL special usages"
+    }
+  ]
+
+  @server_modules %{
+    "organizations" => NoizuPromptLingua.MCP.Organizations,
+    "projects" => NoizuPromptLingua.MCP.Projects,
+    "clients" => NoizuPromptLingua.MCP.Clients,
+    "sessions" => NoizuPromptLingua.MCP.Sessions,
+    "artifacts" => NoizuPromptLingua.Domains.Artifacts.MCP,
+    "chat" => NoizuPromptLingua.Domains.Chat.MCP,
+    "review" => NoizuPromptLingua.Domains.Review.MCP,
+    "tickets" => NoizuPromptLingua.Domains.Tickets.MCP,
+    "assets" => NoizuPromptLingua.Domains.Assets.MCP,
+    "wiki" => NoizuPromptLingua.Domains.Wiki.MCP,
+    "github" => NoizuPromptLingua.Domains.Github.MCP,
+    "personas" => NoizuPromptLingua.Domains.Personas.MCP,
+    "instructions" => NoizuPromptLingua.Domains.Instructions.MCP,
+    "memory" => NoizuPromptLingua.Domains.Memory.MCP,
+    "markdown" => NoizuPromptLingua.Domains.Markdown.MCP,
+    "notifications" => NoizuPromptLingua.Domains.Notifications.MCP,
+    "pubsub" => NoizuPromptLingua.Domains.PubSub.MCP,
+    "browser" => NoizuPromptLingua.Domains.Browser.MCP,
+    "customers" => NoizuPromptLingua.Domains.Customers.MCP,
+    "market" => NoizuPromptLingua.Domains.Market.MCP,
+    "campaigns" => NoizuPromptLingua.Domains.Campaigns.MCP,
+    "unicode" => NoizuPromptLingua.Domains.UnicodeCodex.MCP
+  }
+
+  @doc "All configured MCP servers."
+  def all, do: @servers
+
+  @doc "MCP servers that can be included in custom scopes."
+  def customizable do
+    Enum.reject(@servers, &(&1.id == "root"))
+  end
+
+  @doc """
+  Ids of the required core groups that participate in custom/all_in_one scopes.
+
+  Derived from the `required` flag on the catalog, excluding `root` (root is the
+  bare-host endpoint and is never a selectable group). These are the groups an
+  `all_in_one` scope auto-includes and protects behind the typed-confirm flow.
+  """
+  def required_ids do
+    customizable() |> Enum.filter(& &1.required) |> Enum.map(& &1.id)
+  end
+
+  @doc "Resolve a public server id to its MCP server module."
+  def server_module(id) when is_binary(id), do: Map.get(@server_modules, id)
+  def server_module(_), do: nil
+
+  @doc """
+  Returns the MCP servers with full connection URLs, derived from the configured
+  `PHX_HOST`. Suitable for JSON serialization to clients building setup commands.
+
+  `packaging` selects the endpoint set (design spec §1):
+
+    * `:default` — full static server list + all custom scopes (unchanged output).
+    * `:core_custom` — core-variant endpoint(s) + custom-scope endpoint(s).
+    * `:all_in_one` — the all_in_one endpoint(s) + any task-segmented one-offs
+      (scopes whose config carries `segment: true`).
+
+  `opts` (`:organization_id`, `:project_id`) scope the non-default packaging sets
+  to global presets plus rows matching the given org/project.
+  """
+  def for_host(host, packaging \\ :default, opts \\ [])
+
+  def for_host(nil, packaging, opts), do: for_host(default_host(), packaging, opts)
+
+  def for_host(host, packaging, opts) when is_binary(host) do
+    packaging_servers(host, packaging, opts)
+  end
+
+  defp packaging_servers(host, :default, _opts) do
+    static =
+      Enum.map(@servers, fn %{id: id} = s ->
+        subdomain = if id == "root", do: host, else: "#{id}.#{host}"
+        Map.put(s, :url, "https://#{subdomain}/mcp")
+      end)
+
+    custom =
+      case list_custom_scopes_safely() do
+        {:ok, scopes} ->
+          Enum.map(scopes, fn scope ->
+            %{
+              id: "custom:#{scope.slug}",
+              label: "Custom: #{scope.name}",
+              required: false,
+              desc: scope.description || "Custom MCP include scope",
+              url: custom_url(scope.slug, host)
+            }
+          end)
+
+        {:error, reason} ->
+          Logger.warning(
+            "[MCPServers] custom scopes unavailable, serving static servers only: #{inspect(reason)}"
+          )
+
+          []
+      end
+
+    static ++ custom
+  end
+
+  defp packaging_servers(host, :core_custom, opts) do
+    NoizuPromptLingua.MCPCustomScopes.scopes_for(["core_variant", "custom"], opts)
+    |> Enum.map(&scope_entry(&1, host))
+  end
+
+  defp packaging_servers(host, :all_in_one, opts) do
+    scoped =
+      NoizuPromptLingua.MCPCustomScopes.scopes_for(["all_in_one", "custom", "core_variant"], opts)
+
+    all = Enum.filter(scoped, &(&1.kind == "all_in_one"))
+    segments = Enum.filter(scoped, &segment_scope?/1)
+
+    (all ++ segments)
+    |> Enum.uniq_by(& &1.id)
+    |> Enum.map(&scope_entry(&1, host))
+  end
+
+  # The static server catalog must always be served even if the
+  # `mcp_custom_scopes` table is missing or unhealthy — otherwise
+  # `/auth/mcp/config` 500s and the client setup panel vanishes silently.
+  defp list_custom_scopes_safely do
+    {:ok, NoizuPromptLingua.MCPCustomScopes.list()}
+  rescue
+    e -> {:error, e}
+  end
+
+  defp scope_entry(scope, host) do
+    %{
+      id: "custom:#{scope.slug}",
+      label: scope_label(scope),
+      required: false,
+      kind: scope.kind,
+      desc: scope.description || "Custom MCP include scope",
+      url: custom_url(scope.slug, host)
+    }
+  end
+
+  defp scope_label(%{kind: "core_variant", name: name}), do: "Core: #{name}"
+  defp scope_label(%{kind: "all_in_one", name: name}), do: "All-in-One: #{name}"
+  defp scope_label(%{name: name}), do: "Custom: #{name}"
+
+  defp segment_scope?(%{config: config}) when is_map(config) do
+    Map.get(config, "segment") == true or Map.get(config, :segment) == true
+  end
+
+  defp segment_scope?(_), do: false
+
+  def custom_url(slug, nil), do: custom_url(slug, default_host())
+  def custom_url(slug, host), do: "https://#{host}/custom/#{slug}/mcp"
+
+  defp default_host do
+    Application.get_env(:noizu_prompt_lingua, NoizuPromptLinguaWeb.Endpoint)
+    |> case do
+      %{url: %{host: host}} when is_binary(host) and host != "" -> host
+      kw when is_list(kw) -> kw |> Keyword.get(:url, []) |> Keyword.get(:host, "localhost")
+      _ -> System.get_env("PHX_HOST") || "localhost"
+    end
+  end
+end

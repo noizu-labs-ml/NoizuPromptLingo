@@ -1,0 +1,500 @@
+version: 1
+unicode_version: "curated-v1"
+scope:
+  type: global
+  organization: null
+  project: null
+
+special_usages:
+  - slug: npl-boundary-control
+    name: "npl-boundary-control"
+    title: "NPL Boundary Control"
+    description: "Marks high-precedence NPL wrapper boundaries such as framework, agent, runtime, and template sections."
+    references:
+      - type: npl-section
+        ref: "special-sections"
+      - type: npl-component
+        ref: "special-sections#npl-extension"
+    flags: [npl, boundary]
+    topics: [npl-syntax, prompt-structure]
+  - slug: npl-secure-block
+    name: "npl-secure-block"
+    title: "NPL Secure Block"
+    description: "Marks protected prompt content or non-disclosure rules in NPL contexts."
+    references:
+      - type: npl-component
+        ref: "special-sections#secure-prompt"
+    flags: [npl, security, high-importance]
+    topics: [npl-syntax, safety]
+  - slug: npl-runtime-flags
+    name: "npl-runtime-flags"
+    title: "NPL Runtime Flags"
+    description: "Signals runtime configuration or behavioral flags inside NPL prompts."
+    references:
+      - type: npl-component
+        ref: "special-sections#runtime-flags"
+    flags: [npl, runtime]
+    topics: [npl-syntax, configuration]
+  - slug: npl-template-block
+    name: "npl-template-block"
+    title: "NPL Template Block"
+    description: "Marks reusable named templates or template fragments."
+    references:
+      - type: npl-component
+        ref: "special-sections#named-template"
+    flags: [npl, template]
+    topics: [npl-syntax, templates]
+  - slug: npl-high-importance
+    name: "npl-high-importance"
+    title: "NPL High Importance"
+    description: "Marks text as high-priority, attention-worthy, or operationally important for an agent."
+    references:
+      - type: npl-label
+        ref: "priority#high"
+    flags: [npl, high-importance]
+    topics: [npl-syntax, emphasis]
+  - slug: unicode-control-hazard
+    name: "unicode-control-hazard"
+    title: "Unicode Control Hazard"
+    description: "Flags non-printable, terminal-sensitive, invisible, or directional Unicode elements that agents should not emit casually."
+    references:
+      - type: unicode-topic
+        ref: "control-code"
+    flags: [control, safety]
+    topics: [unicode, agent-safety]
+
+elements:
+  - slug: top-left-corner
+    codepoint: "U+231C"
+    char: "⌜"
+    name: "TOP LEFT CORNER"
+    title: "Top Left Corner"
+    description: "Visible bracket-like glyph used by NPL as an opening wrapper marker."
+    meaning: "Begins a structured NPL section boundary."
+    printable: true
+    visibility: glyph
+    unicode:
+      block: "Miscellaneous Technical"
+      general_category: "Sm"
+    flags: [npl, boundary, printable]
+    topics: [npl-syntax, wrapper]
+    sentiments: []
+    aliases: ["open-corner", "npl-open"]
+    search_terms: ["NPL opening marker", "corner bracket"]
+    special_usages: [npl-boundary-control]
+    relations:
+      - type: npl-related
+        target: bottom-left-corner
+        description: "NPL close boundary partner."
+      - type: npl-related
+        target: top-right-corner
+        description: "Paired visible corner marker."
+  - slug: top-right-corner
+    codepoint: "U+231D"
+    char: "⌝"
+    name: "TOP RIGHT CORNER"
+    title: "Top Right Corner"
+    description: "Visible bracket-like glyph used in NPL wrapper syntax."
+    meaning: "Completes the visible opening boundary marker."
+    printable: true
+    visibility: glyph
+    unicode:
+      block: "Miscellaneous Technical"
+      general_category: "Sm"
+    flags: [npl, boundary, printable]
+    topics: [npl-syntax, wrapper]
+    sentiments: []
+    aliases: ["close-open-corner"]
+    search_terms: ["NPL opening marker", "corner bracket"]
+    special_usages: [npl-boundary-control]
+    relations:
+      - type: npl-related
+        target: top-left-corner
+        description: "Paired visible corner marker."
+  - slug: bottom-left-corner
+    codepoint: "U+231E"
+    char: "⌞"
+    name: "BOTTOM LEFT CORNER"
+    title: "Bottom Left Corner"
+    description: "Visible bracket-like glyph used by NPL as a closing wrapper marker."
+    meaning: "Begins a structured NPL close boundary."
+    printable: true
+    visibility: glyph
+    unicode:
+      block: "Miscellaneous Technical"
+      general_category: "Sm"
+    flags: [npl, boundary, printable]
+    topics: [npl-syntax, wrapper]
+    sentiments: []
+    aliases: ["npl-close"]
+    search_terms: ["NPL closing marker", "corner bracket"]
+    special_usages: [npl-boundary-control]
+    relations:
+      - type: npl-related
+        target: bottom-right-corner
+        description: "Paired visible closing marker."
+      - type: npl-related
+        target: top-left-corner
+        description: "Opening boundary counterpart."
+  - slug: bottom-right-corner
+    codepoint: "U+231F"
+    char: "⌟"
+    name: "BOTTOM RIGHT CORNER"
+    title: "Bottom Right Corner"
+    description: "Visible bracket-like glyph used in NPL closing wrapper syntax."
+    meaning: "Completes the visible closing boundary marker."
+    printable: true
+    visibility: glyph
+    unicode:
+      block: "Miscellaneous Technical"
+      general_category: "Sm"
+    flags: [npl, boundary, printable]
+    topics: [npl-syntax, wrapper]
+    sentiments: []
+    aliases: ["close-corner"]
+    search_terms: ["NPL closing marker", "corner bracket"]
+    special_usages: [npl-boundary-control]
+    relations:
+      - type: npl-related
+        target: bottom-left-corner
+        description: "Paired visible closing marker."
+  - slug: lock
+    codepoint: "U+1F512"
+    char: "🔒"
+    name: "LOCK"
+    title: "Lock"
+    description: "Emoji glyph used to signal protected or secure NPL content."
+    meaning: "Treat the surrounding block as high-precedence protected content."
+    printable: true
+    visibility: emoji
+    unicode:
+      block: "Miscellaneous Symbols and Pictographs"
+      general_category: "So"
+    flags: [npl, security, high-importance, printable]
+    topics: [npl-syntax, safety]
+    sentiments: [caution]
+    aliases: ["secure", "private"]
+    search_terms: ["secure prompt", "protected block"]
+    special_usages: [npl-secure-block, npl-high-importance]
+  - slug: white-flag
+    codepoint: "U+1F3F3"
+    char: "🏳"
+    name: "WAVING WHITE FLAG"
+    title: "White Flag"
+    description: "Base emoji glyph used by NPL examples for runtime flag sections."
+    meaning: "Signals runtime configuration when used with NPL wrapper syntax."
+    printable: true
+    visibility: emoji
+    unicode:
+      block: "Miscellaneous Symbols and Pictographs"
+      general_category: "So"
+    flags: [npl, runtime, printable]
+    topics: [npl-syntax, configuration]
+    sentiments: []
+    aliases: ["runtime-flag", "flag"]
+    search_terms: ["runtime flags", "NPL flags"]
+    special_usages: [npl-runtime-flags]
+    relations:
+      - type: composes-with
+        target: variation-selector-16
+        description: "Often followed by VS16 for emoji presentation."
+  - slug: brick
+    codepoint: "U+1F9F1"
+    char: "🧱"
+    name: "BRICK"
+    title: "Brick"
+    description: "Emoji glyph used to mark NPL template blocks."
+    meaning: "Signals reusable structured content or template fragments."
+    printable: true
+    visibility: emoji
+    unicode:
+      block: "Supplemental Symbols and Pictographs"
+      general_category: "So"
+    flags: [npl, template, printable]
+    topics: [npl-syntax, templates]
+    sentiments: []
+    aliases: ["template", "building-block"]
+    search_terms: ["NPL template", "template block"]
+    special_usages: [npl-template-block]
+  - slug: target
+    codepoint: "U+1F3AF"
+    char: "🎯"
+    name: "DIRECT HIT"
+    title: "Target"
+    description: "Emoji glyph commonly used in NPL agent declarations for goals or intent."
+    meaning: "Marks objective, target behavior, or explicit aim."
+    printable: true
+    visibility: emoji
+    unicode:
+      block: "Miscellaneous Symbols and Pictographs"
+      general_category: "So"
+    flags: [npl, emphasis, printable]
+    topics: [npl-syntax, goals]
+    sentiments: [focus]
+    aliases: ["direct-hit", "goal"]
+    search_terms: ["goal marker", "objective marker"]
+    special_usages: [npl-high-importance]
+  - slug: lightning
+    codepoint: "U+26A1"
+    char: "⚡"
+    name: "HIGH VOLTAGE SIGN"
+    title: "Lightning"
+    description: "Visible glyph often used as a priority or speed marker."
+    meaning: "Signals urgency, energy, or high-priority execution."
+    printable: true
+    visibility: glyph
+    unicode:
+      block: "Miscellaneous Symbols"
+      general_category: "So"
+    flags: [npl, emphasis, high-importance, printable]
+    topics: [npl-syntax, priority]
+    sentiments: [urgent]
+    aliases: ["high-voltage", "priority"]
+    search_terms: ["priority marker", "urgent marker"]
+    special_usages: [npl-high-importance]
+  - slug: fire
+    codepoint: "U+1F525"
+    char: "🔥"
+    name: "FIRE"
+    title: "Fire"
+    description: "Emoji glyph used in examples as a critical alert marker."
+    meaning: "Signals critical attention or hot-path content."
+    printable: true
+    visibility: emoji
+    unicode:
+      block: "Miscellaneous Symbols and Pictographs"
+      general_category: "So"
+    flags: [npl, emphasis, high-importance, printable]
+    topics: [npl-syntax, alerting]
+    sentiments: [urgent]
+    aliases: ["alert", "critical"]
+    search_terms: ["critical alert", "attention marker"]
+    special_usages: [npl-high-importance]
+  - slug: bell
+    codepoint: "U+0007"
+    char: null
+    name: "BELL"
+    title: "Bell"
+    description: "C0 control character historically used to trigger an audible or visible alert."
+    meaning: "Can cause terminal alert behavior; agents should describe it instead of emitting it casually."
+    printable: false
+    visibility: control
+    unicode:
+      block: "C0 Controls and Basic Latin"
+      general_category: "Cc"
+    flags: [control, non-printable, terminal-sensitive]
+    topics: [unicode, control-code, terminal]
+    sentiments: [caution]
+    aliases: ["BEL", "\\a", "\\x07"]
+    search_terms: ["bell sound code", "terminal bell", "alert control code"]
+    special_usages: [unicode-control-hazard]
+    relations:
+      - type: control-related
+        target: escape
+        description: "Both are terminal-sensitive C0 control characters."
+  - slug: escape
+    codepoint: "U+001B"
+    char: null
+    name: "ESCAPE"
+    title: "Escape"
+    description: "C0 control character used to begin escape sequences."
+    meaning: "Switches interpretation mode in terminals and protocols."
+    printable: false
+    visibility: control
+    unicode:
+      block: "C0 Controls and Basic Latin"
+      general_category: "Cc"
+    flags: [control, non-printable, terminal-sensitive]
+    topics: [unicode, control-code, terminal]
+    sentiments: [caution]
+    aliases: ["ESC", "\\e", "\\x1B"]
+    search_terms: ["escape code", "ansi escape", "terminal escape"]
+    special_usages: [unicode-control-hazard]
+    relations:
+      - type: control-related
+        target: bell
+        description: "Both are terminal-sensitive C0 control characters."
+  - slug: delete-control
+    codepoint: "U+007F"
+    char: null
+    name: "DELETE"
+    title: "Delete Control"
+    description: "C0/C1-era delete control code."
+    meaning: "A non-printing control value; should be surfaced visibly in tools."
+    printable: false
+    visibility: control
+    unicode:
+      block: "C0 Controls and Basic Latin"
+      general_category: "Cc"
+    flags: [control, non-printable]
+    topics: [unicode, control-code]
+    sentiments: [caution]
+    aliases: ["DEL", "\\x7F"]
+    search_terms: ["delete control code", "DEL code"]
+    special_usages: [unicode-control-hazard]
+  - slug: zero-width-space
+    codepoint: "U+200B"
+    char: null
+    name: "ZERO WIDTH SPACE"
+    title: "Zero Width Space"
+    description: "Invisible format character that permits a line break opportunity without visible spacing."
+    meaning: "Can affect tokenization and visual inspection while remaining invisible."
+    printable: false
+    visibility: invisible
+    unicode:
+      block: "General Punctuation"
+      general_category: "Cf"
+    flags: [format, invisible, copy-sensitive]
+    topics: [unicode, invisible, text-processing]
+    sentiments: [caution]
+    aliases: ["ZWSP", "\\u200B"]
+    search_terms: ["zero width space", "invisible space"]
+    special_usages: [unicode-control-hazard]
+  - slug: zero-width-non-joiner
+    codepoint: "U+200C"
+    char: null
+    name: "ZERO WIDTH NON-JOINER"
+    title: "Zero Width Non-Joiner"
+    description: "Invisible format character that prevents joining behavior in scripts that otherwise join."
+    meaning: "Changes shaping without visible width."
+    printable: false
+    visibility: invisible
+    unicode:
+      block: "General Punctuation"
+      general_category: "Cf"
+    flags: [format, invisible, shaping]
+    topics: [unicode, invisible, text-processing]
+    sentiments: [caution]
+    aliases: ["ZWNJ", "\\u200C"]
+    search_terms: ["zero width non joiner", "invisible format"]
+    special_usages: [unicode-control-hazard]
+  - slug: zero-width-joiner
+    codepoint: "U+200D"
+    char: null
+    name: "ZERO WIDTH JOINER"
+    title: "Zero Width Joiner"
+    description: "Invisible format character that requests joining or emoji sequence composition."
+    meaning: "Can change glyph shaping and emoji rendering while remaining invisible."
+    printable: false
+    visibility: invisible
+    unicode:
+      block: "General Punctuation"
+      general_category: "Cf"
+    flags: [format, invisible, shaping, emoji]
+    topics: [unicode, invisible, text-processing]
+    sentiments: [caution]
+    aliases: ["ZWJ", "\\u200D"]
+    search_terms: ["zero width joiner", "emoji sequence"]
+    special_usages: [unicode-control-hazard]
+  - slug: left-to-right-mark
+    codepoint: "U+200E"
+    char: null
+    name: "LEFT-TO-RIGHT MARK"
+    title: "Left-to-Right Mark"
+    description: "Invisible directional formatting character."
+    meaning: "Affects bidirectional text ordering without visible width."
+    printable: false
+    visibility: directional
+    unicode:
+      block: "General Punctuation"
+      general_category: "Cf"
+    flags: [format, invisible, bidi]
+    topics: [unicode, bidirectional-text, invisible]
+    sentiments: [caution]
+    aliases: ["LRM", "\\u200E"]
+    search_terms: ["left to right mark", "bidi control"]
+    special_usages: [unicode-control-hazard]
+  - slug: right-to-left-mark
+    codepoint: "U+200F"
+    char: null
+    name: "RIGHT-TO-LEFT MARK"
+    title: "Right-to-Left Mark"
+    description: "Invisible directional formatting character."
+    meaning: "Affects bidirectional text ordering without visible width."
+    printable: false
+    visibility: directional
+    unicode:
+      block: "General Punctuation"
+      general_category: "Cf"
+    flags: [format, invisible, bidi]
+    topics: [unicode, bidirectional-text, invisible]
+    sentiments: [caution]
+    aliases: ["RLM", "\\u200F"]
+    search_terms: ["right to left mark", "bidi control"]
+    special_usages: [unicode-control-hazard]
+  - slug: right-to-left-override
+    codepoint: "U+202E"
+    char: null
+    name: "RIGHT-TO-LEFT OVERRIDE"
+    title: "Right-to-Left Override"
+    description: "Directional override that can reorder following text."
+    meaning: "Security-sensitive because source text can display in an unexpected order."
+    printable: false
+    visibility: directional
+    unicode:
+      block: "General Punctuation"
+      general_category: "Cf"
+    flags: [format, invisible, bidi, security-sensitive]
+    topics: [unicode, bidirectional-text, security]
+    sentiments: [caution]
+    aliases: ["RLO", "\\u202E"]
+    search_terms: ["right to left override", "bidi override", "trojan source"]
+    special_usages: [unicode-control-hazard]
+  - slug: variation-selector-16
+    codepoint: "U+FE0F"
+    char: null
+    name: "VARIATION SELECTOR-16"
+    title: "Variation Selector 16"
+    description: "Invisible variation selector commonly used to request emoji presentation."
+    meaning: "Changes presentation of the preceding character without visible width."
+    printable: false
+    visibility: invisible
+    unicode:
+      block: "Variation Selectors"
+      general_category: "Mn"
+    flags: [variation-selector, invisible, emoji]
+    topics: [unicode, emoji, text-processing]
+    sentiments: [caution]
+    aliases: ["VS16", "\\uFE0F"]
+    search_terms: ["emoji presentation selector", "variation selector"]
+    special_usages: [unicode-control-hazard]
+    relations:
+      - type: composes-with
+        target: white-flag
+        description: "Used after base symbols such as the white flag to request emoji presentation."
+  - slug: no-break-space
+    codepoint: "U+00A0"
+    char: null
+    name: "NO-BREAK SPACE"
+    title: "No-Break Space"
+    description: "Space separator that prevents line breaking at its position."
+    meaning: "Looks like a space but behaves differently in wrapping and comparisons."
+    printable: false
+    visibility: space
+    unicode:
+      block: "Latin-1 Supplement"
+      general_category: "Zs"
+    flags: [space, invisible-ish, copy-sensitive]
+    topics: [unicode, whitespace, text-processing]
+    sentiments: [caution]
+    aliases: ["NBSP", "&nbsp;", "\\u00A0"]
+    search_terms: ["non breaking space", "nbsp"]
+    special_usages: [unicode-control-hazard]
+  - slug: combining-acute-accent
+    codepoint: "U+0301"
+    char: null
+    name: "COMBINING ACUTE ACCENT"
+    title: "Combining Acute Accent"
+    description: "Combining mark applied to the preceding base character."
+    meaning: "Has no standalone visible width and modifies adjacent text."
+    printable: false
+    visibility: combining
+    unicode:
+      block: "Combining Diacritical Marks"
+      general_category: "Mn"
+    flags: [combining, copy-sensitive]
+    topics: [unicode, normalization, text-processing]
+    sentiments: [caution]
+    aliases: ["acute combining mark", "\\u0301"]
+    search_terms: ["combining acute", "diacritic"]
+    special_usages: [unicode-control-hazard]

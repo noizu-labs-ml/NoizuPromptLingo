@@ -1,0 +1,80 @@
+databaseChangeLog:
+  # Make ticket field & type definitions tri-scoped: global (org & project NULL),
+  # organization (org set, project NULL), or project (both set). A more-specific
+  # scope can override or disable an inherited definition. 035 created these
+  # tables org-scoped; this migration relaxes that. Tables are empty at this
+  # point, so dropping NOT NULL and adding columns needs no backfill.
+
+  # ── ticket_field_definitions ─────────────────────────────────
+  - changeSet:
+      id: ticket-field-definitions-tri-scope
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              DROP INDEX IF EXISTS idx_ticket_field_definitions_org_slug;
+              ALTER TABLE ticket_field_definitions
+                ALTER COLUMN organization_id DROP NOT NULL,
+                ADD COLUMN project_id uuid REFERENCES projects(id) ON DELETE CASCADE,
+                ADD COLUMN disabled boolean NOT NULL DEFAULT false;
+              CREATE UNIQUE INDEX idx_ticket_field_definitions_global_slug
+                ON ticket_field_definitions (slug)
+                WHERE organization_id IS NULL AND project_id IS NULL;
+              CREATE UNIQUE INDEX idx_ticket_field_definitions_org_slug
+                ON ticket_field_definitions (organization_id, slug)
+                WHERE organization_id IS NOT NULL AND project_id IS NULL;
+              CREATE UNIQUE INDEX idx_ticket_field_definitions_project_slug
+                ON ticket_field_definitions (organization_id, project_id, slug)
+                WHERE project_id IS NOT NULL;
+              CREATE INDEX idx_ticket_field_definitions_scope
+                ON ticket_field_definitions (organization_id, project_id);
+      rollback:
+        - sql:
+            sql: |
+              DROP INDEX IF EXISTS idx_ticket_field_definitions_global_slug;
+              DROP INDEX IF EXISTS idx_ticket_field_definitions_org_slug;
+              DROP INDEX IF EXISTS idx_ticket_field_definitions_project_slug;
+              DROP INDEX IF EXISTS idx_ticket_field_definitions_scope;
+              ALTER TABLE ticket_field_definitions
+                DROP COLUMN project_id,
+                DROP COLUMN disabled,
+                ALTER COLUMN organization_id SET NOT NULL;
+              CREATE UNIQUE INDEX idx_ticket_field_definitions_org_slug
+                ON ticket_field_definitions (organization_id, slug);
+
+  # ── ticket_type_definitions ──────────────────────────────────
+  - changeSet:
+      id: ticket-type-definitions-tri-scope
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              DROP INDEX IF EXISTS idx_ticket_type_definitions_org_slug;
+              ALTER TABLE ticket_type_definitions
+                ALTER COLUMN organization_id DROP NOT NULL,
+                ADD COLUMN project_id uuid REFERENCES projects(id) ON DELETE CASCADE,
+                ADD COLUMN disabled boolean NOT NULL DEFAULT false;
+              CREATE UNIQUE INDEX idx_ticket_type_definitions_global_slug
+                ON ticket_type_definitions (slug)
+                WHERE organization_id IS NULL AND project_id IS NULL AND deleted_at IS NULL;
+              CREATE UNIQUE INDEX idx_ticket_type_definitions_org_slug
+                ON ticket_type_definitions (organization_id, slug)
+                WHERE organization_id IS NOT NULL AND project_id IS NULL AND deleted_at IS NULL;
+              CREATE UNIQUE INDEX idx_ticket_type_definitions_project_slug
+                ON ticket_type_definitions (organization_id, project_id, slug)
+                WHERE project_id IS NOT NULL AND deleted_at IS NULL;
+              CREATE INDEX idx_ticket_type_definitions_scope
+                ON ticket_type_definitions (organization_id, project_id);
+      rollback:
+        - sql:
+            sql: |
+              DROP INDEX IF EXISTS idx_ticket_type_definitions_global_slug;
+              DROP INDEX IF EXISTS idx_ticket_type_definitions_org_slug;
+              DROP INDEX IF EXISTS idx_ticket_type_definitions_project_slug;
+              DROP INDEX IF EXISTS idx_ticket_type_definitions_scope;
+              ALTER TABLE ticket_type_definitions
+                DROP COLUMN project_id,
+                DROP COLUMN disabled,
+                ALTER COLUMN organization_id SET NOT NULL;
+              CREATE UNIQUE INDEX idx_ticket_type_definitions_org_slug
+                ON ticket_type_definitions (organization_id, slug);

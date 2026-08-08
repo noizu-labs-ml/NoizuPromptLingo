@@ -1,0 +1,88 @@
+schema: "0.4"
+id: npl-brutalist-43-npl-conventions-browser
+type: image
+quality: high
+
+# NoizuPromptLingo — NPL Conventions Browser: a reference browser documenting NPL's
+# prompt-syntax conventions and patterns for authors writing instructions and personas.
+# Theme tenets: structure shown as machinery, zero radius, hard borders, flat electric
+# accents, one hazard-yellow note block, hard-offset block shadow as the only depth.
+# Palette: vermilion #ff2d00, ultramarine #1500ff, hazard-yellow #ffe600,
+# white #ffffff, black #000000, surface-alt #f2f2f2.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a
+    documentation / reference reading surface inside a developer tool, in a
+    NEO-BRUTALIST register: dense but readable, structure shown as machinery, seams
+    exposed on purpose. Flat fills only — no gradient, glow, blur, or soft shadow; the
+    only depth cue is a hard-offset SOLID block shadow with zero blur. Geometric grotesk
+    (Space Grotesk) UPPERCASE 700 headings; Space Mono for the tree, code, chips, and
+    labels; regular-weight grotesk for explanation body. No serif. Zero corner radius.
+    Borders are load-bearing, always at full strength.
+  text: |
+    A 16:9 high-fidelity UI mockup of the NPL CONVENTIONS BROWSER screen of
+    NoizuPromptLingo — a reference browser documenting NPL's prompt-syntax conventions and
+    patterns for authors writing instructions and personas — rendered as raw, structural
+    machinery.
+
+    OVERALL LAYOUT (on a pure white canvas, a hard grid, regions separated by 2px solid
+    black rules): a top SEARCH BAR spanning the content, a left CONVENTION CATEGORY TREE,
+    and a dominant central CONVENTION DETAIL PANEL.
+
+    TOP SEARCH BAR: a rectangular 2px-bordered input, zero radius, an uppercase mono label
+    "SEARCH CONVENTIONS" above it and a mono placeholder; a bordered "GO" button with a
+    hard-offset black block shadow.
+
+    LEFT CONVENTION CATEGORY TREE (bordered blocks, no soft pills, hard-indented rows): an
+    expandable tree of convention topics in uppercase mono — top-level groups like SYNTAX,
+    DIRECTIVES, PERSONAS, TEMPLATES, ANNOTATIONS, each with indented child rows (e.g.
+    "HANDLEBARS", "ALG PSEUDOCODE", "MOOD MARKERS"). One group is expanded showing its
+    children; the active child is a full inverted block (solid black, white text) with a
+    thick ultramarine accent bar on its left edge. Tree connectors are hard 1px black
+    lines, not faint dotted whispers.
+
+    CENTRAL CONVENTION DETAIL PANEL (hard-bordered rectangle, header separated by a
+    full-weight rule): a big uppercase grotesk title (the selected convention), then an
+    EXPLANATION paragraph in regular-weight black body text, then a SYNTAX EXAMPLE rendered
+    as a bordered mono code block on a light-gray surface with a hard-offset shadow, then a
+    RELATED GLYPHS row of small hard-bordered mono chips (each a glyph plus codepoint) that
+    cross-link into the glyph codex. A hazard-yellow "NOTE" callout — a solid yellow
+    rectangle with black text and a black border — flags a caveat.
+
+    PALETTE & TYPE: pure white canvas, pure black ink and full-strength borders, electric
+    vermilion and pure ultramarine used flat as accents (ultramarine on the active tree
+    item, vermilion sparingly), one hazard-yellow note block. Space Grotesk uppercase
+    headings, Space Mono for the tree, code block, chips, and labels; regular grotesk for
+    the explanation body. No serif.
+
+    SHAPE & SURFACE: zero radius; 1-2px solid black borders on tree, panel, code block, and
+    chips; the only depth is a hard-offset solid block shadow (zero blur) on the code block
+    and the search button. No gradient, glow, blur, or soft shadow.
+
+    MOOD: raw, structural, declarative — a documentation surface that shows its seams, loud
+    but readable.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, rounded corners, drop-shadow blur, soft shadow, gradient, neon glow, pastel colors, frosted glass"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches the browser layout — top search bar, left expandable convention category tree, central detail panel with explanation + mono syntax example + related-glyph chips"}
+    theme_fidelity: {weight: 3, description: "Brutalist language — zero radius, full-strength solid black borders and hard tree connectors, flat ultramarine active accent + one hazard-yellow note block, hard-offset block shadow (zero blur), Space Grotesk uppercase headings + Space Mono code, regular grotesk body, no serif, no gradient/glow/soft shadow"}
+    composition: {weight: 2, description: "Readable documentation hierarchy on a hard grid, clear active tree state, plausible real reference tool"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, legible text and code, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+    - "rounded corners, soft/blurred drop shadow, gradient, glow, or frosted glass present"
+
+tags: [npl-brutalist, NoizuPromptLingo, screen-mockup, conventions, reference]

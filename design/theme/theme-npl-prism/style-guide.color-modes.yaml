@@ -1,0 +1,29 @@
+# NPL — Prism color modes (treatise §3 Mode strategy).
+# Light is primary: frosted glass over a pale spectrum mesh.
+# Dark is a genuine designed translation: glass over a deep violet-navy gradient
+# (#12102a) where the frosted material and spectrum glow read even better.
+# Neutrals lean cool so the spectrum reads as belonging. shadow-color is
+# violet-tinted per §6. Contrast verified in conformance-npl-prism.md §Contrast.
+color-modes:
+  light:
+    surface: "#f7f8ff"          # cool near-white canvas
+    surface-alt: "#eceefb"      # slightly deeper cool panel
+    surface-inverse: "#1a1730"  # ink
+    text: "#1a1730"             # ink on canvas ≈ 14:1
+    text-secondary: "#403b63"   # muted indigo, ≥ 7:1
+    text-muted: "#5b567e"       # muted, ≥ 4.5:1 body
+    text-inverse: "#f7f8ff"
+    border: "#e0e1f2"           # soft cool hairline
+    border-strong: "#c9c9e6"
+    shadow-color: "rgba(90, 60, 200, 0.18)"  # violet-tinted glass shadow
+  dark:
+    surface: "#12102a"          # deep violet-navy
+    surface-alt: "#1c1940"      # raised glass step
+    surface-inverse: "#f7f8ff"
+    text: "#ecebf9"             # near-white on violet-navy, high contrast
+    text-secondary: "#c6c2e6"   # ≥ 7:1
+    text-muted: "#9a94c6"       # ≥ 4.5:1 on #12102a
+    text-inverse: "#12102a"
+    border: "#2b2752"
+    border-strong: "#3d3870"
+    shadow-color: "rgba(8, 4, 26, 0.55)"

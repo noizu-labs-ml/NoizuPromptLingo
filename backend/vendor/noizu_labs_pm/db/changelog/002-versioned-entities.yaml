@@ -1,0 +1,47 @@
+databaseChangeLog:
+  # versioned_names / versioned_descriptions — backing tables for the Noizu
+  # versioned-entity references users point at (name_id / description_id).
+  - changeSet:
+      id: pm-002-versioned-names
+      author: noizu-pm
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: versioned_names
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE versioned_names (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                first varchar(255),
+                middle text[] DEFAULT '{}',
+                last varchar(255),
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: versioned_names
+
+  - changeSet:
+      id: pm-002-versioned-descriptions
+      author: noizu-pm
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: versioned_descriptions
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE versioned_descriptions (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                title varchar(255),
+                body text,
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: versioned_descriptions

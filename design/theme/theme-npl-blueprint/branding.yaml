@@ -1,0 +1,8 @@
+name: "NPL — Blueprint"
+logo-text: "NPL"
+font-url: "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+intent: "Render NPL's most structural surfaces — authorization policies, schemas, custom ticket types, MCP scope trees, project topology — as if drawn on an engineer's drafting table. Structure is the aesthetic: grid, rule, dimension, annotation."
+perception: "Precise, technical, trustworthy within five seconds — drawn by someone who measures twice. Cool, exacting, calm."
+audience: "The Platform Administrator and the Delivery Lead when they are configuring the system — reading policy documents, mapping scopes, wiring schemas — where correctness and legibility of structure matter more than warmth."
+tone: "Exact, annotated, declarative. Labels read like callouts on a drawing."
+keywords: [schematic, precise, drafting, technical, structural]

@@ -1,0 +1,92 @@
+schema: "0.4"
+id: npl-blueprint-14-admin-llm-model-catalog
+type: image
+quality: high
+
+# NoizuPromptLingo (structured prompt-definition language + MCP agent toolchain) — Admin: LLM Model Catalog screen.
+# Theme tenets: cool drafting sheet, faint grid texture, thin cyan rules + monospace annotations, near-square 2px corners, one warm redline for markup.
+# Palette: sheet #f5f8fc, navy ink #14263f, blueprint-blue #245ea8, drafting cyan #0e9bd6, redline #c05a3e.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a
+    platform-administration surface for NoizuPromptLingo — a structured
+    prompt-definition language and MCP agent toolchain. The register is a
+    technical drafting sheet: cool, exacting, calm — "drawn by someone who
+    measures twice." Structure is the aesthetic — a faint background grid, thin
+    cyan rules, dimension lines, and monospace callout labels do the work.
+    Engineered IBM Plex Sans for UI, IBM Plex Mono for every precise value.
+    Near-square corners, nearly flat surfaces, no gradients or glow. The only
+    warm color is a single red-oxide redline reserved for markup and attention.
+  text: |
+    A 16:9 high-fidelity UI mockup of the Admin: LLM Model Catalog screen of
+    NoizuPromptLingo — a platform-wide catalog of available LLM providers and
+    models with live connectivity testing before a model is offered to
+    organizations.
+
+    OVERALL LAYOUT (two bands over a faint blueprint grid): a slim LEFT ADMIN NAV
+    RAIL that reads like a sheet index (thin cyan active left-rule, small mono
+    section labels), and a dominant CENTER work area split into a catalog table on
+    the left and an add-provider form on the right. A monospace breadcrumb path
+    "admin / llm-models" and a title "Model Catalog" in medium-weight sans sit at
+    the top.
+
+    MODEL CATALOG TABLE (main card, title-block header "Providers & models"): a
+    dense table with a cyan dimension-line under 500-weight sans column headers
+    (Provider, Model ID, Health, Enabled orgs). A monospace Model ID column
+    (provider/model-name), quiet cool-hairline row separators, and a faint cyan
+    row-hover tint. A PROVIDER HEALTH BADGE per row: last-known connectivity as a
+    small dimension chip — teal-green with a check glyph for reachable, warm
+    redline with a warning glyph for failing (status is glyph-paired, never color
+    alone). An Enabled-orgs column shows a monospace count.
+
+    ADD MODEL PROVIDER FORM (right card, title-block header "Add provider"):
+    fields with small monospace dimension-labels above — provider name, a
+    monospace endpoint URL field on the grid, and a masked credential/API-key
+    field. A blueprint-blue LIVE CONNECTIVITY TEST BUTTON labeled "Test
+    connection" with, just beneath it, an inline pass result — a teal-green "200 ·
+    reachable" line in monospace paired with a check glyph — shown before saving.
+    A blueprint-blue primary "Save provider" button at the bottom.
+
+    PALETTE & TYPE: a pale cool drafting-sheet canvas carrying dark navy drafting
+    ink. Structure is blueprint blue; thin rules and highlights are a drafting
+    cyan; a single warm red-oxide redline is reserved for failing health and
+    attention — the red pencil on a blue drawing. Success reads as a calm
+    teal-green, always paired with a glyph. Neutrals are cool-tinted toward blue,
+    never warm, never pure gray. Engineered IBM Plex Sans for UI and body; IBM
+    Plex Mono carries every precise value — model identifiers, endpoint URLs,
+    status codes, counts, and the small callout labels above fields.
+
+    SHAPE & SURFACE: near-square corners — drawn, not soft, not stamped. Borders
+    are the drawing: thin single-pixel cyan and blueprint-blue rules form every
+    cell divider, panel edge, and dimension line; surfaces are the paper between
+    them. Nearly flat — cards rest on a rule and a faint tone step, never a drop
+    shadow. The faint blueprint grid sits under the whole canvas, static and
+    low-contrast.
+
+    MOOD: precise, technical, trustworthy within five seconds. Cool, exacting,
+    calm — a configuration surface drawn on an engineer's drafting table where
+    correctness and legibility of structure matter more than warmth.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches Admin: LLM Model Catalog — a provider/model table with per-row health badges, an add-provider form, and a live connectivity test with inline pass/fail"}
+    theme_fidelity: {weight: 3, description: "Cool drafting sheet, faint blueprint grid, thin cyan/blueprint-blue rules, monospace values, near-square corners, glyph-paired teal/redline status — not generic UI defaults"}
+    composition: {weight: 2, description: "Clear visual hierarchy, plausible real-product admin layout with title-block cards"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+
+tags: [npl-blueprint, NoizuPromptLingo, screen-mockup]

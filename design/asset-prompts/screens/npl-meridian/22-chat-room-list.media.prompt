@@ -1,0 +1,82 @@
+schema: "0.4"
+id: npl-meridian-22-chat-room-list
+type: image
+quality: high
+
+# NoizuPromptLingo — a structured prompt-definition language + MCP agent toolchain — Chat Room List screen.
+# Theme tenets: warm espresso-dark surface, single matte-brass accent, verdigris-teal secondary, display-serif titles over Inter body, refined 6px radius, "well-lit study at night".
+# Palette: espresso #1a1613 canvas, panel #241f1a, parchment #f2ebe0 text, brass #c9a15e accent, verdigris #3f857e secondary.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a
+    PREMIUM, warm-dark chat-rooms overview — the org-scoped index of chat rooms an
+    org owner scans to catch up. The register is refined, calm, considered, with quiet
+    gravitas: a well-lit study at night, not a terminal or a consumer messenger. Warm
+    low light, matte brass detailing, unhurried. Section titles are a warm
+    high-contrast DISPLAY SERIF; room names and body are a neutral sans; ids and
+    counts are monospace. The accent is a single matte, desaturated brass used as a
+    thin line or small fill — never a gradient, glow, or gold bling.
+  text: |
+    A 16:9 high-fidelity UI mockup of the Chat Room List screen of NoizuPromptLingo,
+    rendered in a warm espresso-dark mode.
+
+    OVERALL LAYOUT (three regions): a slim LEFT NAV RAIL; a ROOM LIST SIDEBAR; and a
+    wide REST PANE previewing the selected room's summary.
+
+    LEFT NAV RAIL: warm-charcoal rail, "NPL" wordmark in the display serif; the active
+    "Chat" item marked by a thin brass left-rail.
+
+    ROOM LIST SIDEBAR: a titled "Chat Rooms" header in the display serif with a small
+    solid brass "New Room" button (dark espresso label) beside it. Below, a vertical
+    list of ROOM ROWS grouped under small mono eyebrow labels ("Session" / "Project").
+    Each room row: a small entity glyph, the room name in sans, a one-line muted last
+    message, a muted timestamp, and — when unread — a small brass UNREAD COUNT BADGE at
+    the right. One row is selected (a warmer raised fill + a thin brass left-rail). One
+    row shows a muted "muted" bell-off glyph; another shows a small verdigris "following"
+    dot to signal channel follow.
+
+    REST PANE: a calm summary of the selected room — the room name as a display-serif
+    heading, a mono room slug chip, a one-line topic, a small present-members avatar
+    cluster, and a short recent-activity preview list. A quiet context menu is shown
+    open over one sidebar room revealing "Mute", "Mute unless mentioned", and "Follow
+    channel" items.
+
+    PALETTE & TYPE: every neutral is a warm charcoal (espresso canvas, warmer raised
+    rows and panel), never cool slate; text is a soft warm parchment, never pure white.
+    The accent is a matte brass/champagne — unread badges, the New Room button, the
+    selected row's rail, and the focus ring; muted verdigris teal only on the
+    "following" cue and links. Section titles and the room heading in the warm display
+    serif; room names and body in a neutral sans; slug/ids in monospace.
+
+    SHAPE & SURFACE: refined 6px radius on rows, panels, and the button; 4px on badges;
+    warm tonal elevation with a soft warm shadow under the open context menu — no glow.
+    A barely perceptible warm radial vignette over the shell, like a single study lamp.
+    Brass is a pinstripe, never a heavy frame.
+
+    MOOD: refined, calm, considered — a premium chat overview for catching up at a
+    glance, quiet and legible rather than busy or playful.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, cool blue slate tones, neon glow, gold gradient bling, terminal/console green, consumer-messenger bubbles"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches Chat Room List: left nav rail, a room-list sidebar with a create-room button, room rows grouped by scope with unread count badges + mute/follow cues, an open context menu (mute / mute-unless-mentioned / follow), and a summary rest pane for the selected room"}
+    theme_fidelity: {weight: 3, description: "Warm espresso-dark neutrals (not cool slate), single matte-brass accent (unread badges, button, selected rail) + verdigris 'following' cue, display-serif titles over sans room names, 6px radius"}
+    composition: {weight: 2, description: "Clear list-plus-preview hierarchy with a calm, legible rhythm; plausible real product, not a consumer messenger"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+    - "cool/blue terminal darkness or phosphor-green accent (that is the Nocturne sibling, not Meridian)"
+
+tags: [npl-meridian, NoizuPromptLingo, screen-mockup]

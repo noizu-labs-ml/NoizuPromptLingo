@@ -1,0 +1,222 @@
+# NPL — Blueprint component inflections (treatise §6/§7/§8). This facet ACCUMULATES
+# onto the base (unlike vars/color-modes/typography, which replace), so it is the
+# safe home for Blueprint's project-specific sample elements without clobbering the
+# base's design-sections.
+#
+# SELF-SCOPED: the generator marks css-snippets as self-scoped and emits every body
+# VERBATIM (components/styleguide/app/src/lib/css-cache.ts:88,95) — it does NOT add
+# the theme selector for you. So EVERY selector below is hand-scoped under
+# html[data-design-theme="npl-blueprint"] (and dark variants under
+# ...="npl-blueprint"].dark), including compound/descendant and @media-nested
+# selectors, so nothing bleeds onto sibling themes in a combined stylesheet.
+#
+# ACCENT RESOLUTION in this theme: --brand-red = blueprint blue #245ea8,
+# --brand-blue = drafting cyan #0e9bd6, --brand-yellow = redline #c05a3e
+# (see style-guide.vars.yaml). Cyan is RULES/large-UI only (~3:1, never body);
+# redline is a margin-rule + tint with INK text (its ~4.1:1 fails the 4.5 body
+# floor — see conformance §4/§7), never small redline-colored text.
+css-snippets:
+  - name: Blueprint Grid Canvas
+    slug: npl-blueprint-grid
+    title: "Faint blueprint grid texture (§6)"
+    description: "The theme's defining feature — the one NPL theme that treats a grid as texture. A flat, static 8px-minor / 40px-major cyan grid painted onto a canvas region (.blueprint-sheet / .content.full). Cyan is held at ≤6% alpha on the light sheet and ≤10% on the cyanotype dark (treatise §6) so the grid is present when you look, gone when you read — never mistaken for a focus indicator (§9). No gradients, no glow, no animation."
+    target-section: layout
+    body: |
+      html[data-design-theme="npl-blueprint"] .blueprint-sheet {
+        background-color: var(--surface);
+        background-image:
+          linear-gradient(to right, color-mix(in srgb, var(--brand-blue) 5%, transparent) 1px, transparent 1px),
+          linear-gradient(to bottom, color-mix(in srgb, var(--brand-blue) 5%, transparent) 1px, transparent 1px),
+          linear-gradient(to right, color-mix(in srgb, var(--brand-blue) 6%, transparent) 1px, transparent 1px),
+          linear-gradient(to bottom, color-mix(in srgb, var(--brand-blue) 6%, transparent) 1px, transparent 1px);
+        background-size: 8px 8px, 8px 8px, 40px 40px, 40px 40px;
+        background-position: 0 0;
+      }
+      html[data-design-theme="npl-blueprint"].dark .blueprint-sheet {
+        background-image:
+          linear-gradient(to right, color-mix(in srgb, var(--brand-blue) 8%, transparent) 1px, transparent 1px),
+          linear-gradient(to bottom, color-mix(in srgb, var(--brand-blue) 8%, transparent) 1px, transparent 1px),
+          linear-gradient(to right, color-mix(in srgb, var(--brand-blue) 10%, transparent) 1px, transparent 1px),
+          linear-gradient(to bottom, color-mix(in srgb, var(--brand-blue) 10%, transparent) 1px, transparent 1px);
+      }
+
+  - name: Blueprint Focus Ring & Motion
+    slug: npl-blueprint-focus-motion
+    title: "Blueprint-blue focus ring + motion tokens (§7/§9)"
+    description: "A 2px blueprint-blue focus outline at 2px offset on every focusable element — never removed (treatise §9); swaps to cyan #4fc3e8 on the cyanotype dark for contrast (≈8.5:1 on navy). Pins the motion durations the treatise names (§7): micro-feedback 100ms, panel 180ms. Self-scoped so it does not override sibling-theme focus."
+    target-section: interaction
+    body: |
+      html[data-design-theme="npl-blueprint"] {
+        --motion-micro: 100ms;
+        --motion-panel: 180ms;
+      }
+      html[data-design-theme="npl-blueprint"] :focus-visible {
+        outline: 2px solid var(--brand-red);
+        outline-offset: 2px;
+      }
+      html[data-design-theme="npl-blueprint"].dark :focus-visible {
+        outline-color: #4fc3e8;
+      }
+
+  - name: Blueprint Buttons
+    slug: npl-blueprint-buttons
+    title: "Blueprint-blue primary + cyan-rule ghost (§8)"
+    description: "Primary is a solid blueprint-blue fill (--brand-red #245ea8, white label ≈ 6.4:1 — clears AA without darkening), 2px radius, 1px rule; active deepens the blue (§7). Secondary is a cyan-rule ghost on the sheet with a blueprint-blue label (body-safe ≈ 6:1) — cyan is the rule, never the text. Labels are Plex Sans medium, sentence case."
+    target-section: buttons
+    body: |
+      html[data-design-theme="npl-blueprint"] .btn-primary,
+      html[data-design-theme="npl-blueprint"] .btn.primary {
+        background: var(--brand-red);
+        color: #ffffff;
+        border: 1px solid var(--brand-red);
+        border-radius: var(--radius);
+        font-family: var(--font-sans);
+        font-weight: 500;
+        transition: background var(--motion-micro, 100ms) ease-out;
+      }
+      html[data-design-theme="npl-blueprint"] .btn-primary:hover,
+      html[data-design-theme="npl-blueprint"] .btn.primary:hover,
+      html[data-design-theme="npl-blueprint"] .btn-primary:active,
+      html[data-design-theme="npl-blueprint"] .btn.primary:active {
+        background: #1d4e88;
+        border-color: #1d4e88;
+      }
+      html[data-design-theme="npl-blueprint"] .btn-secondary,
+      html[data-design-theme="npl-blueprint"] .btn.secondary {
+        background: transparent;
+        color: var(--brand-red);
+        border: 1px solid var(--brand-blue);
+        border-radius: var(--radius);
+        font-family: var(--font-sans);
+        font-weight: 500;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html[data-design-theme="npl-blueprint"] .btn-primary,
+        html[data-design-theme="npl-blueprint"] .btn.primary { transition: none; }
+      }
+
+  - name: Blueprint Title-Block Card
+    slug: npl-blueprint-card
+    title: "Drawing-region card with title-block header (§6/§8)"
+    description: "Cards are 'drawing regions' — a bordered rectangle on the sheet with a title-block header strip (a labeled top band, like a drawing's title block), 2px radius, and NO resting shadow (§6: depth is drawn, not lit). The header underline is a thin cyan structural rule; the whole card carries no elevation until it floats. Selected/active adds a blueprint-blue edge, never a fill."
+    target-section: cards
+    body: |
+      html[data-design-theme="npl-blueprint"] .card {
+        background: var(--surface);
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius);
+        box-shadow: none;
+      }
+      html[data-design-theme="npl-blueprint"] .card > .card-header,
+      html[data-design-theme="npl-blueprint"] .card > header {
+        background: var(--surface-alt);
+        border-bottom: 1px solid var(--brand-blue);
+        font-family: var(--font-sans);
+        font-weight: 600;
+        color: var(--text);
+      }
+      html[data-design-theme="npl-blueprint"] .card.selected,
+      html[data-design-theme="npl-blueprint"] .card[aria-selected="true"] {
+        border-color: var(--brand-red);
+      }
+
+  - name: Blueprint Field & Mono Callout
+    slug: npl-blueprint-field
+    title: "Cyan-rule input + monospace dimension label (§4/§8)"
+    description: "Inputs sit on the grid — 2px radius, 1px cyan rule, blueprint-blue focus outline (inherited from the focus snippet). Field labels are small IBM Plex Mono callouts above the control, like dimension annotations on a drawing (treatise §8). A .input-mono modifier renders the value in mono for precise fields (coordinates, IDs) without forcing every input monospace."
+    target-section: forms
+    body: |
+      html[data-design-theme="npl-blueprint"] .input,
+      html[data-design-theme="npl-blueprint"] .field input[type="text"],
+      html[data-design-theme="npl-blueprint"] .field input[type="search"],
+      html[data-design-theme="npl-blueprint"] .field input:not([type]) {
+        background: var(--surface);
+        border: 1px solid var(--brand-blue);
+        border-radius: var(--radius);
+        color: var(--text);
+        font-family: var(--font-sans);
+      }
+      html[data-design-theme="npl-blueprint"] .input.input-mono,
+      html[data-design-theme="npl-blueprint"] .field.mono input {
+        font-family: var(--font-mono);
+      }
+      html[data-design-theme="npl-blueprint"] .field > label,
+      html[data-design-theme="npl-blueprint"] .field-label {
+        display: block;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 500;
+        letter-spacing: 0.02em;
+        color: var(--text-secondary);
+        margin-bottom: 4px;
+      }
+
+  - name: Blueprint Scope Tree & Path
+    slug: npl-blueprint-scope-tree
+    title: "MCP scope tree + mono breadcrumb path (§4/§8)"
+    description: "Blueprint's project-specific domain object: the PBAC/MCP scope surfaces (Admin: Authz 12, MCP Custom Scopes 15, Project Detail 19). Tree rows are connected by thin cyan structural rules with the scope path in IBM Plex Mono; the active node gets a 2px blueprint-blue left-rule + medium weight (treatise §8 navigation). Breadcrumbs render as a mono path (org / project / scope). A .redline margin-note carries the drafting redline as a left-rule + faint tint with INK text (never small redline-colored text — its ~4.1:1 fails the body floor)."
+    target-section: navigation
+    body: |
+      html[data-design-theme="npl-blueprint"] .breadcrumb,
+      html[data-design-theme="npl-blueprint"] .scope-path {
+        font-family: var(--font-mono);
+        font-size: 0.8125rem;
+        color: var(--text-secondary);
+      }
+      html[data-design-theme="npl-blueprint"] .scope-tree .tree-row {
+        border-left: 1px solid var(--brand-blue);
+        padding: 4px 0 4px 12px;
+        font-family: var(--font-mono);
+        font-size: 0.8125rem;
+        color: var(--text);
+      }
+      html[data-design-theme="npl-blueprint"] .scope-tree .tree-row.active {
+        border-left: 2px solid var(--brand-red);
+        font-weight: 500;
+      }
+      html[data-design-theme="npl-blueprint"] .redline,
+      html[data-design-theme="npl-blueprint"] .markup-note {
+        border-left: 3px solid var(--brand-yellow);
+        background: color-mix(in srgb, var(--brand-yellow) 8%, var(--surface));
+        color: var(--text);
+        padding: 6px 10px;
+        border-radius: var(--radius);
+      }
+
+  - name: Blueprint Structural Table
+    slug: npl-blueprint-table
+    title: "Dimension-line data table (§5/§8)"
+    description: "The density reference (treatise §5: Admin: Authz key-usage audit, LLM model catalog, GitHub grant table). A cyan dimension-line under 500-weight Plex Sans header labels, quiet cool-hairline row separators, a faint cyan row-hover tint (§7), and a .mono / .npl-coord column for IDs, keys, and coordinate readouts in IBM Plex Mono. Mono coordinate readouts never wrap — they truncate (treatise §5)."
+    target-section: tables
+    body: |
+      html[data-design-theme="npl-blueprint"] .data-table,
+      html[data-design-theme="npl-blueprint"] .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: var(--font-size-sm, 0.875rem);
+      }
+      html[data-design-theme="npl-blueprint"] .data-table thead th,
+      html[data-design-theme="npl-blueprint"] .admin-table thead th {
+        font-family: var(--font-sans);
+        font-weight: 500;
+        color: var(--text-secondary);
+        background: var(--surface-alt);
+        text-align: left;
+        padding: 9px 14px;
+        border-bottom: 1px solid var(--brand-blue);
+      }
+      html[data-design-theme="npl-blueprint"] .data-table tbody td,
+      html[data-design-theme="npl-blueprint"] .admin-table tbody td {
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--border);
+      }
+      html[data-design-theme="npl-blueprint"] .data-table tbody td.mono,
+      html[data-design-theme="npl-blueprint"] .data-table td.npl-coord,
+      html[data-design-theme="npl-blueprint"] .admin-table tbody td.mono {
+        font-family: var(--font-mono);
+        white-space: nowrap;
+      }
+      html[data-design-theme="npl-blueprint"] .data-table tbody tr:hover,
+      html[data-design-theme="npl-blueprint"] .admin-table tbody tr:hover {
+        background: color-mix(in srgb, var(--brand-blue) 6%, var(--surface));
+      }

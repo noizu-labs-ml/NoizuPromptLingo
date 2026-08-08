@@ -1,0 +1,69 @@
+{{- if .Values.sandbox.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "start-app.fullname" . }}-sandbox
+  labels:
+    {{- include "start-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: sandbox
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "start-app.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: sandbox
+  template:
+    metadata:
+      labels:
+        {{- include "start-app.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: sandbox
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: sandbox
+        image: {{ .Values.sandbox.image }}
+        imagePullPolicy: Always
+        ports:
+        - name: smb
+          containerPort: 445
+          protocol: TCP
+        - name: frontend
+          containerPort: 3000
+          protocol: TCP
+        - name: backend
+          containerPort: 4000
+          protocol: TCP
+        env:
+        {{- include "start-app.backendEnv" . | nindent 8 }}
+        - name: MIX_ENV
+          value: "dev"
+        - name: NODE_ENV
+          value: "development"
+        - name: HOSTNAME
+          value: "0.0.0.0"
+        - name: NPM_REGISTRY_INTERNAL
+          value: "http://verdaccio.infra.svc.cluster.local"
+        {{- with .Values.extraEnv }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        resources:
+          {{- toYaml .Values.sandbox.resources | nindent 10 }}
+        volumeMounts:
+        - name: workspace
+          mountPath: /workspace
+      volumes:
+      - name: workspace
+        {{- if .Values.sandbox.persistence.enabled }}
+        persistentVolumeClaim:
+          claimName: {{ include "start-app.fullname" . }}-sandbox-workspace
+        {{- else }}
+        emptyDir:
+          sizeLimit: {{ .Values.sandbox.persistence.size | default "5Gi" }}
+        {{- end }}
+      restartPolicy: Always
+{{- end }}

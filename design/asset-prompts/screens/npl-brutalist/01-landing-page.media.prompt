@@ -1,0 +1,98 @@
+schema: "0.4"
+id: npl-brutalist-01-landing-page
+type: image
+quality: high
+
+# NoizuPromptLingo — a prompt-definition language & MCP toolchain for agentic work
+# sessions, tickets, chat, and personas — public marketing Landing Page.
+# Theme tenets: raw flat structure, zero radius, load-bearing hard borders, flat
+# electric primaries, hard-offset block shadow as the only depth.
+# Palette: vermilion #ff2d00, ultramarine #1500ff, hazard-yellow #ffe600,
+# white #ffffff, black #000000, surface-alt #f2f2f2.
+# Render note (Stage C): the literal word "machinery" pulls photographic reactor/gear
+# imagery from the raster model, and "flat vector illustration" pulls a spot-illustration
+# gallery + lorem ipsum — both drift off-thesis. Best kept render came from this prose;
+# a future re-render should say "hard-edged UI, no photographs" WITHOUT either phrase.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of the
+    public marketing landing page of a developer tool, in a NEO-BRUTALIST register:
+    raw structure shown as machinery, never a skin over it. Loud but disciplined by a
+    hard grid — confident, disruptive, unmistakable within the first second. Borders
+    are load-bearing, color is pure signal, nothing is softened to be polite. Flat
+    fills only: no gradient, no glow, no blur, no soft drop shadow. The single
+    sanctioned depth cue is a hard-offset SOLID block shadow with zero blur. Type is
+    geometric grotesk (Space Grotesk) with UPPERCASE 700 headings and Space Mono for
+    labels, links, tags, and code. No serif, ever. Zero corner radius everywhere.
+  text: |
+    A 16:9 high-fidelity UI mockup of the LANDING / MARKETING PAGE of NoizuPromptLingo
+    (wordmark "NPL"), a prompt-definition language and MCP toolchain for agentic work
+    sessions, tickets, chat, and AI personas — rendered as raw, high-voltage structure.
+
+    OVERALL LAYOUT (top to bottom on a pure white canvas, everything aligned to a hard
+    12-column grid, regions separated by full-width 2px solid black rules): a bordered
+    NAV BAR, a huge HERO BANNER, a four-cell FEATURE GRID, and a footer band.
+
+    NAV BAR (top, one hard-bordered band): left, the "NPL" wordmark in heavy uppercase
+    grotesk set in a solid black block with white letters; center, uppercase mono text
+    links (PRODUCT, DOCS, PROTOCOL, PRICING) with no pill highlights; right, a bordered
+    ghost "LOG IN" link and a solid vermilion "GET STARTED" button — rectangular, 2px
+    black border, black uppercase mono label, a hard-offset black block shadow sitting
+    down-and-right with zero blur.
+
+    HERO BANNER (dominant): an enormous confident headline in uppercase grotesk 700,
+    up to about 4-5x body size, tight line-height, running nearly to the hard border —
+    e.g. "AUTHOR PROMPTS. ORCHESTRATE AGENTS." One word knocked out in a solid vermilion
+    block, another sitting on a hazard-yellow block, black text on each. A short
+    plain-black sub-headline in regular weight below. A thin uppercase mono eyebrow above
+    the headline ("PROMPT SYNTAX, FULL VOLTAGE"). A CTA ROW: a solid vermilion
+    "GET STARTED" primary button with black border and hard-offset block shadow beside a
+    white bordered "LOG IN" secondary button.
+
+    FEATURE GRID (below hero): four hard-bordered rectangular cells butted together,
+    separated by 1px black rules, zero radius — one each for SESSIONS, TICKETS, CHAT, and
+    PERSONAS. Each cell has a big uppercase grotesk title, a one-line mono descriptor, and
+    a small flat monochrome glyph. One cell carries a solid ultramarine fill with white
+    text as an accent; the rest are white with black text.
+
+    FOOTER (bottom, bordered band): grouped uppercase mono nav links (DOCS, PROTOCOL,
+    CONTACT, STATUS) and a small "NPL" mark; flat, hard, no ornament.
+
+    PALETTE & TYPE: pure white canvas, pure black ink and borders at full strength (never
+    a faint hairline), electric vermilion as the primary accent, pure ultramarine blue and
+    hazard yellow as secondary blocks — each flat and whole at maximum saturation, no tints
+    or blends. Space Grotesk for headings and UI (uppercase, heavy), Space Mono for labels,
+    links, and descriptors. No serif.
+
+    SHAPE & SURFACE: zero corner radius on everything; 1-2px solid black borders on every
+    block, button, and card; the only depth is a solid hard-offset block shadow (down-right,
+    zero blur) under the primary buttons and one pulled-forward card. Absolutely no gradient,
+    glow, blur, or soft shadow.
+
+    MOOD: loud, raw, structural, high-voltage — disciplined by a hard grid, not chaotic.
+    This tool does not apologize for taking up space.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, photorealistic, 3D render, blurry, distorted UI, rounded corners, drop-shadow blur, soft shadow, gradient, neon glow, pastel colors, frosted glass"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches the landing page's actual layout — bordered nav bar, huge hero banner with a CTA button group, four-cell feature grid (Sessions/Tickets/Chat/Personas), footer"}
+    theme_fidelity: {weight: 3, description: "Brutalist language — zero radius, full-strength solid black borders, flat electric vermilion/ultramarine/hazard-yellow blocks at max saturation, hard-offset block shadow (zero blur) as the only depth, Space Grotesk uppercase headings + Space Mono, no serif, no gradient/glow/soft shadow"}
+    composition: {weight: 2, description: "Clear visual hierarchy on a hard grid, oversized shouting headline, plausible real-product landing layout"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, legible text, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+    - "rounded corners, soft/blurred drop shadow, gradient, glow, or frosted glass present"
+
+tags: [npl-brutalist, NoizuPromptLingo, screen-mockup, landing-page, hero]

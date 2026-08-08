@@ -1,0 +1,85 @@
+schema: "0.4"
+id: npl-prism-30-review-detail
+type: image
+quality: high
+
+# NoizuPromptLingo collaboration — Review Detail: pixel-anchored x/y overlay comments
+# on a target screenshot, compiled into a pass/fail/changes verdict.
+# Theme tenets: luminous frosted glass, cool violet→cyan spectrum gradient, Sora
+# geometric type, 16px radius; the annotated screenshot is the focal canvas.
+# Palette: violet #7c3aed, cyan #06b6d4, fuchsia #d946ef, canvas #f7f8ff, ink #1a1730.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity UI mockup of a
+    PREMIUM visual-review surface inside a modern AI product. Polished and focused —
+    a central annotated screenshot flanked by frosted-glass panels floating over a pale
+    spectrum mesh. Comment pins and the verdict action use the theme's spectrum accents
+    with discipline. Clean geometric sans-serif (Sora), no serif.
+  text: |
+    A 16:9 high-fidelity UI mockup of the REVIEW DETAIL (overlay annotation) screen of
+    NoizuPromptLingo (route /app/[orgId]/reviews/[id]).
+
+    OVERALL LAYOUT (three regions): a slim LEFT app nav rail (achromatic glass), a
+    dominant CENTER SCREENSHOT OVERLAY CANVAS, and a RIGHT ~340px column holding the
+    comment marker list and the verdict compiler — over a pale near-white canvas
+    (#f7f8ff) with a soft blurred violet/cyan spectrum mesh glowing at the edges.
+
+    HEADER BAND (frosted glass): review title in Sora 700, a breadcrumb back to Reviews,
+    a small "Open · 3 unresolved" status chip, and a primary "Compile verdict" button
+    (violet→cyan gradient, soft glow) at the right.
+
+    SCREENSHOT OVERLAY CANVAS (center, the hero): a large rounded frame (16px) showing a
+    target UI SCREENSHOT (a mockup of some product screen being reviewed) sitting on a
+    soft glass mat. Pinned on top are several OVERLAY COMMENT PINS — numbered circular
+    markers (1,2,3) in the violet primary, each x/y-anchored to a specific point on the
+    screenshot. ONE pin is active/open with a small dark rounded comment popover anchored
+    to it: an author dot + name, a 1–2 line comment, and a reply field — given a soft
+    violet focus ring. The active pin has a subtle spectrum glow.
+
+    RIGHT TOP — COMMENT MARKER LIST: a glass panel listing all pins as rows (numbered dot
+    + first line of each comment + author dot + resolved/open state), the active one
+    highlighted with a violet edge; a filter for open/resolved.
+
+    RIGHT LOWER — VERDICT COMPILER PANEL: a frosted glass card titled "Verdict" that
+    aggregates the open comments into a decision — three selectable options as segmented
+    pills: "Pass" (emerald), "Changes requested" (amber), "Fail" (rose), each a flat
+    opaque semantic tint; a short summary line ("3 open comments") and a "Compile"
+    primary button (violet→cyan gradient).
+
+    PALETTE & TYPE: cool near-white canvas + soft spectrum mesh at edges; ink #1a1730
+    text; the violet(#7c3aed)→cyan(#06b6d4) gradient only on primary buttons, glass edges,
+    and pin/active accents; verdict options are flat opaque semantic chips. Sora
+    everywhere, no serif.
+
+    SHAPE & SURFACE: 16px radius on the canvas frame and panels, pill controls,
+    translucent frosted glass with gradient-sheen edges and violet-tinted soft shadows;
+    the screenshot canvas is the crisp focal object. Luminous, premium, focused.
+
+    MOOD: premium, precise, collaborative. A visual-review tool that feels modern and
+    luminous while keeping the annotated screenshot perfectly legible.
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, gradient body text, gradient status chips, rainbow tie-dye buttons, illegible screenshot, neon-on-black cyberpunk"
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Matches key components — Screenshot Overlay Canvas with pinned x/y Overlay Comment Pins (one open), Comment Marker List sidebar, Verdict Compiler Panel with pass/changes/fail options"}
+    theme_fidelity: {weight: 3, description: "Prism frosted-glass panels over a spectrum mesh, violet→cyan gradient on primary actions/pins/edges only, flat opaque verdict chips, Sora type, 16px radius; the screenshot canvas is crisp and focal"}
+    composition: {weight: 2, description: "Clear focal screenshot with anchored pins + right-side marker list and verdict compiler, plausible real-product layout"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, legible pins/labels and screenshot, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+    - "comment pins not anchored to the screenshot, or no open comment popover"
+    - "gradient status chips, gradient body text, or rainbow chrome"
+
+tags: [npl-prism, NoizuPromptLingo, screen-mockup, collaboration]

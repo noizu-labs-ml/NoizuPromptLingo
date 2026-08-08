@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 220" role="img" aria-label="Tobor locker companion">
+  <title>tobor · locker</title>
+  <desc>Cute vault robot with padlock chest and key — secure teal-dark accents for Tobor Locker.</desc>
+  <defs>
+    <linearGradient id="tlk-body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e6f7f2"/>
+      <stop offset="1" stop-color="#a8d9cc"/>
+    </linearGradient>
+    <linearGradient id="tlk-shell" x1="0.1" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#1e2e2c"/>
+      <stop offset="1" stop-color="#0a1211"/>
+    </linearGradient>
+    <linearGradient id="tlk-lock" x1="0.3" y1="0" x2="0.7" y2="1">
+      <stop offset="0" stop-color="#5eead4"/>
+      <stop offset="1" stop-color="#0f766e"/>
+    </linearGradient>
+    <radialGradient id="tlk-eye" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#2dd4bf" stop-opacity="0.95"/>
+      <stop offset="0.55" stop-color="#2dd4bf" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#2dd4bf" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <ellipse cx="100" cy="208" rx="48" ry="8" fill="#2dd4bf" opacity="0.12"/>
+
+  <!-- torso as mini vault -->
+  <path d="M64 146 C56 146 50 154 50 166 C44 184 42 198 40 210 L160 210 C158 198 156 184 150 166 C150 154 144 146 136 146 C118 138 82 138 64 146 Z"
+        fill="url(#tlk-shell)" stroke="#060c0b" stroke-width="1.6"/>
+  <!-- vault door plate -->
+  <rect x="72" y="158" width="56" height="42" rx="6" fill="#0f1a18" stroke="#2dd4bf" stroke-width="1.4" opacity="0.9"/>
+  <circle cx="100" cy="179" r="10" fill="none" stroke="#5eead4" stroke-width="1.6"/>
+  <circle cx="100" cy="179" r="4" fill="#2dd4bf"/>
+  <rect x="108" y="176" width="14" height="5" rx="1.5" fill="#d4a853" stroke="#1a1408" stroke-width="0.8"/>
+
+  <!-- ears -->
+  <circle cx="48" cy="96" r="12" fill="url(#tlk-body)" stroke="#14221f" stroke-width="1.8"/>
+  <circle cx="48" cy="96" r="4.5" fill="#0a1211"/>
+  <circle cx="152" cy="96" r="12" fill="url(#tlk-body)" stroke="#14221f" stroke-width="1.8"/>
+  <circle cx="152" cy="96" r="4.5" fill="#0a1211"/>
+
+  <!-- head -->
+  <rect x="52" y="42" width="96" height="92" rx="30" fill="url(#tlk-body)" stroke="#14221f" stroke-width="2"/>
+  <!-- antenna lock-ball -->
+  <line x1="100" y1="42" x2="100" y2="24" stroke="#14221f" stroke-width="2.4" stroke-linecap="round"/>
+  <circle cx="100" cy="16" r="7" fill="#2dd4bf"/>
+  <path d="M96 14 A4 4 0 0 1 104 14" fill="none" stroke="#0a1211" stroke-width="1.4"/>
+  <rect x="95" y="14" width="10" height="7" rx="1.5" fill="#0a1211"/>
+
+  <!-- visor -->
+  <rect x="64" y="62" width="72" height="48" rx="22" fill="#0a1211"/>
+  <circle cx="84" cy="84" r="11" fill="url(#tlk-eye)"/>
+  <circle cx="116" cy="84" r="11" fill="url(#tlk-eye)"/>
+  <ellipse cx="84" cy="84" rx="4.2" ry="5" fill="#2dd4bf"/>
+  <ellipse cx="116" cy="84" rx="4.2" ry="5" fill="#2dd4bf"/>
+  <path d="M90 98 Q100 106 110 98" fill="none" stroke="#5eead4" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- padlock prop left -->
+  <g transform="translate(22,120)">
+    <path d="M14 18 V12 A12 12 0 0 1 38 12 V18" fill="none" stroke="#5eead4" stroke-width="3.2" stroke-linecap="round"/>
+    <rect x="8" y="18" width="36" height="28" rx="5" fill="url(#tlk-lock)" stroke="#0a1211" stroke-width="1.4"/>
+    <circle cx="26" cy="30" r="4" fill="#0a1211"/>
+    <rect x="24" y="30" width="4" height="8" rx="1" fill="#0a1211"/>
+  </g>
+
+  <!-- key prop right -->
+  <g transform="translate(148,134) rotate(25)">
+    <circle cx="8" cy="8" r="8" fill="none" stroke="#d4a853" stroke-width="2.4"/>
+    <circle cx="8" cy="8" r="3" fill="#0a1211"/>
+    <rect x="14" y="6" width="28" height="4" rx="1.5" fill="#d4a853"/>
+    <rect x="34" y="6" width="3" height="9" rx="1" fill="#d4a853"/>
+    <rect x="40" y="6" width="3" height="7" rx="1" fill="#d4a853"/>
+  </g>
+</svg>

@@ -1,0 +1,38 @@
+databaseChangeLog:
+  # Stream D — chat enhancements.
+  # 1) DMs as rooms: chat_rooms.kind (channel | dm). A DM is a kind='dm' room
+  #    with 2+ members; a multi-user DM has N members.
+  # 2) Membership settings: per-member mute preferences and a left_at marker.
+
+  - changeSet:
+      id: chat-rooms-add-kind
+      author: stream-d
+      changes:
+        - sql:
+            sql: |
+              ALTER TABLE chat_rooms
+                ADD COLUMN kind varchar(32) NOT NULL DEFAULT 'channel';
+              CREATE INDEX idx_chat_rooms_kind ON chat_rooms (organization_id, kind);
+      rollback:
+        - sql:
+            sql: |
+              DROP INDEX IF EXISTS idx_chat_rooms_kind;
+              ALTER TABLE chat_rooms DROP COLUMN kind;
+
+  - changeSet:
+      id: chat-members-add-settings
+      author: stream-d
+      changes:
+        - sql:
+            sql: |
+              ALTER TABLE chat_members
+                ADD COLUMN muted boolean NOT NULL DEFAULT false,
+                ADD COLUMN mute_unless_mentioned boolean NOT NULL DEFAULT false,
+                ADD COLUMN left_at timestamptz;
+      rollback:
+        - sql:
+            sql: |
+              ALTER TABLE chat_members
+                DROP COLUMN muted,
+                DROP COLUMN mute_unless_mentioned,
+                DROP COLUMN left_at;

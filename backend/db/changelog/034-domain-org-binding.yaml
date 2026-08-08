@@ -1,0 +1,116 @@
+databaseChangeLog:
+  # Bind chat rooms, artifacts, and reviews to an organization (required) and an
+  # optional project, mirroring the sessions binding (026-sessions.yaml). The
+  # 031/032/033 tables are empty at this point, so NOT NULL columns are added
+  # directly without a backfill step.
+
+  # ── Artifacts ────────────────────────────────────────────────
+  - changeSet:
+      id: artifacts-add-organization-id
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              ALTER TABLE artifacts
+                ADD COLUMN organization_id uuid NOT NULL
+                  REFERENCES organizations(id) ON DELETE CASCADE;
+      rollback:
+        - sql:
+            sql: |
+              ALTER TABLE artifacts DROP COLUMN organization_id;
+
+  - changeSet:
+      id: artifacts-index-organization-id
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_artifacts_organization_id
+            tableName: artifacts
+            columns:
+              - column:
+                  name: organization_id
+      rollback:
+        - dropIndex:
+            indexName: idx_artifacts_organization_id
+
+  # ── Chat rooms ───────────────────────────────────────────────
+  - changeSet:
+      id: chat-rooms-add-org-and-project
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              ALTER TABLE chat_rooms
+                ADD COLUMN organization_id uuid NOT NULL
+                  REFERENCES organizations(id) ON DELETE CASCADE,
+                ADD COLUMN project_id uuid
+                  REFERENCES projects(id) ON DELETE SET NULL;
+      rollback:
+        - sql:
+            sql: |
+              ALTER TABLE chat_rooms
+                DROP COLUMN organization_id,
+                DROP COLUMN project_id;
+
+  - changeSet:
+      id: chat-rooms-index-org-and-project
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_chat_rooms_organization_id
+            tableName: chat_rooms
+            columns:
+              - column:
+                  name: organization_id
+        - createIndex:
+            indexName: idx_chat_rooms_project_id
+            tableName: chat_rooms
+            columns:
+              - column:
+                  name: project_id
+      rollback:
+        - dropIndex:
+            indexName: idx_chat_rooms_organization_id
+        - dropIndex:
+            indexName: idx_chat_rooms_project_id
+
+  # ── Reviews ──────────────────────────────────────────────────
+  - changeSet:
+      id: reviews-add-org-and-project
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              ALTER TABLE reviews
+                ADD COLUMN organization_id uuid NOT NULL
+                  REFERENCES organizations(id) ON DELETE CASCADE,
+                ADD COLUMN project_id uuid
+                  REFERENCES projects(id) ON DELETE SET NULL;
+      rollback:
+        - sql:
+            sql: |
+              ALTER TABLE reviews
+                DROP COLUMN organization_id,
+                DROP COLUMN project_id;
+
+  - changeSet:
+      id: reviews-index-org-and-project
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_reviews_organization_id
+            tableName: reviews
+            columns:
+              - column:
+                  name: organization_id
+        - createIndex:
+            indexName: idx_reviews_project_id
+            tableName: reviews
+            columns:
+              - column:
+                  name: project_id
+      rollback:
+        - dropIndex:
+            indexName: idx_reviews_organization_id
+        - dropIndex:
+            indexName: idx_reviews_project_id

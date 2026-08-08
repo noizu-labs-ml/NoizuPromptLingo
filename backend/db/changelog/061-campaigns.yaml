@@ -1,0 +1,315 @@
+databaseChangeLog:
+  # Campaigns domain (tobor-campaigns): marketing/SEO/PPC/content campaigns, ad
+  # groups, ad copy (LLM-generated variants), landing pages (LLM-generated body),
+  # and domain names. Org-scoped (required) with an optional project. Slug-keyed
+  # (no human-key in this pass). Ad copy + landing page bodies stored as artifacts.
+
+  - changeSet:
+      id: 061a-create-table-campaigns
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE campaigns (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+                project_id uuid REFERENCES projects(id) ON DELETE SET NULL,
+                segment_id uuid,
+                slug varchar(255) NOT NULL,
+                name varchar(512) NOT NULL,
+                channel varchar(64) NOT NULL,
+                objective varchar(255),
+                status varchar(255) NOT NULL DEFAULT 'draft',
+                budget_cents bigint,
+                currency varchar(8) DEFAULT 'USD',
+                start_date date,
+                end_date date,
+                targeting jsonb DEFAULT '{}'::jsonb,
+                metadata jsonb DEFAULT '{}'::jsonb,
+                tags text[] DEFAULT '{}',
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: campaigns
+
+  - changeSet:
+      id: 061b-create-indexes-campaigns
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_campaigns_org_slug
+            tableName: campaigns
+            unique: true
+            columns:
+              - column:
+                  name: organization_id
+              - column:
+                  name: slug
+        - createIndex:
+            indexName: idx_campaigns_project_id
+            tableName: campaigns
+            columns:
+              - column:
+                  name: project_id
+        - createIndex:
+            indexName: idx_campaigns_channel
+            tableName: campaigns
+            columns:
+              - column:
+                  name: channel
+        - createIndex:
+            indexName: idx_campaigns_status
+            tableName: campaigns
+            columns:
+              - column:
+                  name: status
+        - sql:
+            sql: CREATE INDEX idx_campaigns_tags ON campaigns USING gin (tags);
+      rollback:
+        - dropIndex:
+            indexName: idx_campaigns_org_slug
+        - dropIndex:
+            indexName: idx_campaigns_project_id
+        - dropIndex:
+            indexName: idx_campaigns_channel
+        - dropIndex:
+            indexName: idx_campaigns_status
+        - sql:
+            sql: DROP INDEX IF EXISTS idx_campaigns_tags;
+
+  - changeSet:
+      id: 061c-create-table-ad-groups
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE ad_groups (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+                project_id uuid REFERENCES projects(id) ON DELETE SET NULL,
+                campaign_id uuid NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+                slug varchar(255) NOT NULL,
+                name varchar(512) NOT NULL,
+                theme varchar(512),
+                keywords text[] DEFAULT '{}',
+                bid_cents bigint,
+                status varchar(255) NOT NULL DEFAULT 'active',
+                metadata jsonb DEFAULT '{}'::jsonb,
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: ad_groups
+
+  - changeSet:
+      id: 061d-create-indexes-ad-groups
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_ad_groups_campaign_slug
+            tableName: ad_groups
+            unique: true
+            columns:
+              - column:
+                  name: campaign_id
+              - column:
+                  name: slug
+        - createIndex:
+            indexName: idx_ad_groups_campaign_id
+            tableName: ad_groups
+            columns:
+              - column:
+                  name: campaign_id
+      rollback:
+        - dropIndex:
+            indexName: idx_ad_groups_campaign_slug
+        - dropIndex:
+            indexName: idx_ad_groups_campaign_id
+
+  - changeSet:
+      id: 061e-create-table-ad-copies
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE ad_copies (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+                project_id uuid REFERENCES projects(id) ON DELETE SET NULL,
+                campaign_id uuid NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+                ad_group_id uuid REFERENCES ad_groups(id) ON DELETE CASCADE,
+                variant_number integer NOT NULL DEFAULT 1,
+                headline varchar(512),
+                body text,
+                cta varchar(255),
+                format varchar(64),
+                artifact_id uuid REFERENCES artifacts(id) ON DELETE SET NULL,
+                llm_generated boolean NOT NULL DEFAULT false,
+                status varchar(255) NOT NULL DEFAULT 'draft',
+                metadata jsonb DEFAULT '{}'::jsonb,
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: ad_copies
+
+  - changeSet:
+      id: 061f-create-indexes-ad-copies
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_ad_copies_campaign_id
+            tableName: ad_copies
+            columns:
+              - column:
+                  name: campaign_id
+        - createIndex:
+            indexName: idx_ad_copies_ad_group_id
+            tableName: ad_copies
+            columns:
+              - column:
+                  name: ad_group_id
+        - sql:
+            sql: |
+              CREATE UNIQUE INDEX idx_ad_copies_group_variant ON ad_copies (ad_group_id, variant_number) WHERE ad_group_id IS NOT NULL;
+      rollback:
+        - dropIndex:
+            indexName: idx_ad_copies_campaign_id
+        - dropIndex:
+            indexName: idx_ad_copies_ad_group_id
+        - sql:
+            sql: DROP INDEX IF EXISTS idx_ad_copies_group_variant;
+
+  - changeSet:
+      id: 061g-create-table-domain-names
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE domain_names (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+                project_id uuid REFERENCES projects(id) ON DELETE SET NULL,
+                campaign_id uuid REFERENCES campaigns(id) ON DELETE SET NULL,
+                slug varchar(255) NOT NULL,
+                name varchar(255) NOT NULL,
+                status varchar(255) NOT NULL DEFAULT 'candidate',
+                registrar varchar(255),
+                registered_at date,
+                expires_at date,
+                metadata jsonb DEFAULT '{}'::jsonb,
+                tags text[] DEFAULT '{}',
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: domain_names
+
+  - changeSet:
+      id: 061h-create-indexes-domain-names
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_domain_names_org_slug
+            tableName: domain_names
+            unique: true
+            columns:
+              - column:
+                  name: organization_id
+              - column:
+                  name: slug
+        - createIndex:
+            indexName: idx_domain_names_org_name
+            tableName: domain_names
+            unique: true
+            columns:
+              - column:
+                  name: organization_id
+              - column:
+                  name: name
+        - createIndex:
+            indexName: idx_domain_names_project_id
+            tableName: domain_names
+            columns:
+              - column:
+                  name: project_id
+        - sql:
+            sql: CREATE INDEX idx_domain_names_tags ON domain_names USING gin (tags);
+      rollback:
+        - dropIndex:
+            indexName: idx_domain_names_org_slug
+        - dropIndex:
+            indexName: idx_domain_names_org_name
+        - dropIndex:
+            indexName: idx_domain_names_project_id
+        - sql:
+            sql: DROP INDEX IF EXISTS idx_domain_names_tags;
+
+  - changeSet:
+      id: 061i-create-table-landing-pages
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE landing_pages (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+                project_id uuid REFERENCES projects(id) ON DELETE SET NULL,
+                campaign_id uuid REFERENCES campaigns(id) ON DELETE SET NULL,
+                domain_name_id uuid REFERENCES domain_names(id) ON DELETE SET NULL,
+                slug varchar(255) NOT NULL,
+                title varchar(512) NOT NULL,
+                path varchar(1024),
+                headline text,
+                artifact_id uuid REFERENCES artifacts(id) ON DELETE SET NULL,
+                status varchar(255) NOT NULL DEFAULT 'draft',
+                metadata jsonb DEFAULT '{}'::jsonb,
+                tags text[] DEFAULT '{}',
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: landing_pages
+
+  - changeSet:
+      id: 061j-create-indexes-landing-pages
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_landing_pages_org_slug
+            tableName: landing_pages
+            unique: true
+            columns:
+              - column:
+                  name: organization_id
+              - column:
+                  name: slug
+        - createIndex:
+            indexName: idx_landing_pages_project_id
+            tableName: landing_pages
+            columns:
+              - column:
+                  name: project_id
+        - createIndex:
+            indexName: idx_landing_pages_campaign_id
+            tableName: landing_pages
+            columns:
+              - column:
+                  name: campaign_id
+        - sql:
+            sql: CREATE INDEX idx_landing_pages_tags ON landing_pages USING gin (tags);
+      rollback:
+        - dropIndex:
+            indexName: idx_landing_pages_org_slug
+        - dropIndex:
+            indexName: idx_landing_pages_project_id
+        - dropIndex:
+            indexName: idx_landing_pages_campaign_id
+        - sql:
+            sql: DROP INDEX IF EXISTS idx_landing_pages_tags;

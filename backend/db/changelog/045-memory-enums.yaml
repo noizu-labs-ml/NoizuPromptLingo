@@ -1,0 +1,23 @@
+databaseChangeLog:
+  - changeSet:
+      id: 045-memory-enums
+      author: npl-memory
+      changes:
+        - sql:
+            splitStatements: false
+            sql: |
+              CREATE EXTENSION IF NOT EXISTS pg_trgm;
+              CREATE TYPE memory_scope_type     AS ENUM ('persona','weego','team_member');
+              CREATE TYPE memory_content_type    AS ENUM ('episodic','semantic','procedural');
+              CREATE TYPE memory_state           AS ENUM ('active','consolidating','archived','quarantined','pruned');
+              CREATE TYPE memory_classification   AS ENUM ('open','restricted','sealed');
+              CREATE TYPE memory_edge_type       AS ENUM ('semantic','emotional','temporal','causal','co_occurrence','synthetic','contextual','tangent');
+      rollback:
+        - sql:
+            splitStatements: false
+            sql: |
+              DROP TYPE IF EXISTS memory_edge_type;
+              DROP TYPE IF EXISTS memory_classification;
+              DROP TYPE IF EXISTS memory_state;
+              DROP TYPE IF EXISTS memory_content_type;
+              DROP TYPE IF EXISTS memory_scope_type;

@@ -1,0 +1,22 @@
+.next/
+node_modules/
+out/
+build/
+.git
+.gitignore
+Dockerfile
+.dockerignore
+*.pem
+.env*
+.npmrc
+.DS_Store
+npm-debug.log*
+src/app/styleguide/
+# Non-runtime noise — keep build context stable / small
+docs/
+e2e/
+playwright.config.*
+playwright-report/
+test-results/
+*.md
+!README.md

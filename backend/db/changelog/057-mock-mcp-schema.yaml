@@ -1,0 +1,22 @@
+databaseChangeLog:
+  # Backing-schema design for a mock MCP, authored by the generation agent
+  # alongside the tool/resource/prompt surface. JSONB:
+  #   { "postgres": ["CREATE TABLE ...", ...],
+  #     "weaviate": [{"name": "Facts", "description": "...",
+  #                   "properties": [{"name": "fact", "dataType": "text"}, ...]}] }
+  # Applied at provision time: postgres DDL runs in the mock's mockmcp_<slug>
+  # schema; weaviate entries become per-mock prefixed classes.
+  - changeSet:
+      id: add-schema-json-to-mock-mcp-definitions
+      author: tobor-locker
+      changes:
+        - addColumn:
+            tableName: mock_mcp_definitions
+            columns:
+              - column:
+                  name: schema_json
+                  type: jsonb
+      rollback:
+        - dropColumn:
+            tableName: mock_mcp_definitions
+            columnName: schema_json

@@ -1,0 +1,84 @@
+# Dev-mode overrides — run with:
+#   docker compose -f docker-compose.yaml -f docker-compose.dev.yaml up
+#   or: make run-dev
+#
+# Mounts source as volumes, runs dev servers instead of compiled releases.
+# First run: deps install (~1-2 min). Subsequent starts skip install when
+# lockfile stamps in deps/ and node_modules/ still match (named volumes).
+
+services:
+  migrations:
+    build:
+      context: ./backend/db
+      dockerfile: Dockerfile
+    # Use root .env only — it points DB/Redis at the cluster via host.docker.internal
+    # (backend/.env uses localhost, which is wrong inside a container).
+    env_file:
+      - .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - infra
+    restart: "no"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    image: ${IMAGE_NS:-start-app}/backend:dev
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+    command: ["bash", "bin/dev-start.sh"]
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+      - backend_build:/app/_build
+      - backend_deps:/app/deps
+    # Use root .env only (host.docker.internal → cluster via port-forward).
+    env_file:
+      - .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      MIX_ENV: dev
+      PHX_SERVER: "true"
+      PHX_IP: "0.0.0.0"
+      PORT: "4000"
+    expose:
+      - "4000"
+    networks:
+      - app
+      - infra
+    restart: "no"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    image: ${IMAGE_NS:-start-app}/frontend:dev
+    command: ["bash", "bin/dev-start.sh"]
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    env_file: .env
+    environment:
+      PORT: "3000"
+      HOSTNAME: "0.0.0.0"
+      GITHUB_TOKEN: "${GITHUB_TOKEN}"
+      # .npmrc.template authenticates to npm.noizu.com with NPM_TOKEN.
+      NPM_TOKEN: "${NPM_TOKEN}"
+    expose:
+      - "3000"
+    networks:
+      - app
+    restart: "no"
+
+  # nginx: no overrides — inherits production config as-is.
+  # HMR websocket proxy (/_next/webpack-hmr) already configured.
+
+volumes:
+  backend_build:
+  backend_deps:
+  frontend_node_modules:

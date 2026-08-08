@@ -1,0 +1,164 @@
+# NPL — Meridian · scoped-var deltas (ACCUMULATE onto the base scoped-vars).
+#
+# WHY THIS FILE IS LOAD-BEARING (two base-cascade defects it corrects):
+#
+# 1. COOL-SLATE DARK SURFACES. The base style-guide.scoped-vars.yaml points dark-mode
+#    surface/surface-alt/text/border at the COOL slate/gray ramp (var(--slate-800) …).
+#    color-modes.yaml would fix this under `npx serve`, but the legacy generate-css
+#    path (styleguide_serve=off) does NOT emit color-modes maps — so without the warm
+#    surface/text overrides below, Meridian's dark mode compiles as COOL SLATE, killing
+#    the entire warm-espresso identity. We therefore re-declare the warm surface/text/
+#    border set in BOTH the standard (light=ivory) and dark (espresso) sections.
+#
+# 2. BRAND / SEMANTIC REVERT IN DARK. The base dark cascade re-points brand-red/-blue
+#    and success/warning/error/info from LITERAL Bauhaus/base hexes (not var(--*)), so a
+#    correct vars.yaml still reverts to Bauhaus red / navy / base green in dark. We
+#    re-point the on-chrome families (brass, verdigris) and the warm semantics to keep
+#    the palette in dark. (brand-yellow is left on the base dark cascade — off-chrome,
+#    a documented low-impact standing caution; its only chrome use, ::selection, is
+#    re-scoped to brass in css-snippets.)
+#
+# LIGHT-MODE BRASS/VERDIGRIS DARKENING lives in css-snippets, NOT here: the base only
+# aliases --brand-* → var(--theme-brand-*) in the DARK section, so a light --theme-brand-red
+# is dead. css-snippets sets the bare --brand-red directly on the light selector
+# (treatise §3/§9: brass darkened to #a67c34 to clear contrast on ivory).
+#
+# A scoped-vars file needs its OWN `sections` (they do not inherit from the base file).
+scoped-vars:
+  prefix: "theme"
+  sections:
+    standard:
+      selector: 'html[data-design-theme="npl-meridian"]'
+      prefix: "theme"
+    dark:
+      selector: 'html[data-design-theme="npl-meridian"].dark'
+      prefix: "theme"
+  vars:
+    # ═══════════════════════════════════════
+    # Warm surfaces / text / borders — BOTH modes (defect 1 above)
+    # ═══════════════════════════════════════
+    - name: surface
+      value:
+        - section: standard
+          value: "#f6f1e8"        # ivory
+        - section: dark
+          value: "#1a1613"        # warm espresso — the design home
+    - name: surface-alt
+      value:
+        - section: standard
+          value: "#efe8db"
+        - section: dark
+          value: "#241f1a"        # warm-charcoal panel
+    - name: surface-inverse
+      value:
+        - section: standard
+          value: "#1a1613"
+        - section: dark
+          value: "#f6f1e8"
+    - name: text
+      value:
+        - section: standard
+          value: "#2a231c"        # espresso ink ≈ 13.6:1 on ivory
+        - section: dark
+          value: "#f2ebe0"        # warm parchment ≈ 14.9:1 on espresso
+    - name: text-secondary
+      value:
+        - section: standard
+          value: "#5c5348"        # ≈ 6.5:1 on ivory
+        - section: dark
+          value: "#d8cec0"        # ≈ 11.4:1 on espresso
+    - name: text-muted
+      value:
+        - section: standard
+          value: "#6e6456"        # ≈ 4.8:1 on ivory (clears body)
+        - section: dark
+          value: "#a99d8b"        # ≈ 6.6:1 on espresso (clears body)
+    - name: text-inverse
+      value:
+        - section: standard
+          value: "#f2ebe0"
+        - section: dark
+          value: "#1a1613"
+    - name: border
+      value:
+        - section: standard
+          value: "#e2d9c8"
+        - section: dark
+          value: "#332c25"        # low warm charcoal — separation via surface steps + brass hairline
+    - name: border-strong
+      value:
+        - section: standard
+          value: "#ccbfa8"
+        - section: dark
+          value: "#4a4038"
+    - name: shadow-color
+      value:
+        - section: standard
+          value: "rgba(15, 10, 6, 0.14)"
+        - section: dark
+          value: "rgba(15, 10, 6, 0.5)"   # soft warm shadow (§6), no glow
+
+    # ═══════════════════════════════════════
+    # Dark-mode brand re-points (defect 2) — brass + verdigris stay themselves
+    # ═══════════════════════════════════════
+    - name: brand-red
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #c9a15e 88%, white)"   # matte brass, lightly lifted for dark
+    - name: brand-red-light
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #c9a15e 18%, var(--surface))"
+    - name: brand-red-mid
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #c9a15e 30%, var(--surface))"
+
+    - name: brand-blue
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #3f857e 72%, white)"   # verdigris brightened → clears AA on espresso
+    - name: brand-blue-light
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #3f857e 18%, var(--surface))"
+    - name: brand-blue-mid
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #3f857e 30%, var(--surface))"
+
+    # ═══════════════════════════════════════
+    # Dark-mode semantic re-points — keep the warm-harmonized palette (defect 2)
+    # ═══════════════════════════════════════
+    - name: success
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #7fa650 82%, white)"   # olive stays olive
+    - name: success-tint
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #7fa650 18%, var(--surface))"
+    - name: warning
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #d98a2b 85%, white)"   # amber; icon-paired, kept off brass
+    - name: warning-tint
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #d98a2b 18%, var(--surface))"
+    - name: error
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #c85248 80%, white)"   # terracotta lifted above 4.5:1 on espresso
+    - name: error-tint
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #c85248 18%, var(--surface))"
+    - name: info
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #5a8fb0 85%, white)"   # muted slate-blue
+    - name: info-tint
+      value:
+        - section: dark
+          value: "color-mix(in srgb, #5a8fb0 18%, var(--surface))"

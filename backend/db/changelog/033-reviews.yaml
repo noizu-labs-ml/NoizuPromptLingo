@@ -1,0 +1,80 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-table-reviews
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE reviews (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                artifact_id uuid NOT NULL,
+                revision_id uuid NOT NULL,
+                reviewer_persona varchar(255) NOT NULL,
+                title varchar(255),
+                status varchar(255) NOT NULL DEFAULT 'open',
+                summary text,
+                verdict varchar(255),
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: reviews
+
+  - changeSet:
+      id: create-indexes-reviews
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_reviews_artifact_id
+            tableName: reviews
+            columns:
+              - column:
+                  name: artifact_id
+        - createIndex:
+            indexName: idx_reviews_status
+            tableName: reviews
+            columns:
+              - column:
+                  name: status
+      rollback:
+        - dropIndex:
+            indexName: idx_reviews_artifact_id
+        - dropIndex:
+            indexName: idx_reviews_status
+
+  - changeSet:
+      id: create-table-review-overlays
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE review_overlays (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                review_id uuid NOT NULL REFERENCES reviews(id) ON DELETE CASCADE,
+                x integer NOT NULL,
+                y integer NOT NULL,
+                width integer,
+                height integer,
+                comment text NOT NULL,
+                persona varchar(255) NOT NULL,
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+      rollback:
+        - dropTable:
+            tableName: review_overlays
+
+  - changeSet:
+      id: create-index-review-overlays
+      author: tobor-locker
+      changes:
+        - createIndex:
+            indexName: idx_review_overlays_review_id
+            tableName: review_overlays
+            columns:
+              - column:
+                  name: review_id
+      rollback:
+        - dropIndex:
+            indexName: idx_review_overlays_review_id
