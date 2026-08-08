@@ -46,10 +46,14 @@ RUN --mount=type=cache,target=/root/.hex,sharing=locked \
 
 COPY config/config.exs config/${MIX_ENV}.exs config/
 # deps.compile: even if this RUN layer misses, _build + deps mounts restore beams.
+# Each mix RUN below re-runs deps.get first: in CI (gha layer cache) a layer
+# can HIT while the cache mounts arrive empty on a fresh runner — deps.get is
+# a ~1s no-op when mounts are warm and repopulates them when they are not.
 RUN --mount=type=cache,target=/root/.hex,sharing=locked \
     --mount=type=cache,target=/root/.cache/rebar3,sharing=locked \
     --mount=type=cache,id=npl-mcp-mix-deps-${TARGETARCH},target=/app/deps,sharing=locked \
     --mount=type=cache,id=npl-mcp-mix-build-${TARGETARCH},target=/app/_build,sharing=locked \
+    mix deps.get --only $MIX_ENV && \
     MIX_OS_DEPS_COMPILE_PARTITION_COUNT=1 mix deps.compile
 
 COPY lib lib
@@ -59,7 +63,7 @@ RUN --mount=type=cache,target=/root/.hex,sharing=locked \
     --mount=type=cache,target=/root/.cache/rebar3,sharing=locked \
     --mount=type=cache,id=npl-mcp-mix-deps-${TARGETARCH},target=/app/deps,sharing=locked \
     --mount=type=cache,id=npl-mcp-mix-build-${TARGETARCH},target=/app/_build,sharing=locked \
-    mix compile
+    mix deps.get --only $MIX_ENV && mix compile
 
 COPY config/runtime.exs config/
 
@@ -69,7 +73,7 @@ RUN --mount=type=cache,target=/root/.hex,sharing=locked \
     --mount=type=cache,target=/root/.cache/rebar3,sharing=locked \
     --mount=type=cache,id=npl-mcp-mix-deps-${TARGETARCH},target=/app/deps,sharing=locked \
     --mount=type=cache,id=npl-mcp-mix-build-${TARGETARCH},target=/app/_build,sharing=locked \
-    mix release --overwrite && \
+    mix deps.get --only $MIX_ENV && mix release --overwrite && \
     cp -a /app/_build/${MIX_ENV}/rel/noizu_prompt_lingua /app/release && \
     file /app/release/erts-*/bin/erlexec || true
 
