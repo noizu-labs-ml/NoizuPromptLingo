@@ -8,13 +8,11 @@ import { useOrg } from "@/context/org";
 import { useSidebar } from "@/context/sidebar";
 import { MobileNav } from "@/components/mobile-nav";
 import { OrgProjectSwitcher } from "@/components/org-project-switcher";
-import { CookieSettingsButton, useCookieConsent } from "@/components/cookie-consent";
 
 export function Navbar() {
   const { user, loading, logout } = useAuth();
   const { currentOrg, currentProject } = useOrg();
   const { toggle } = useSidebar();
-  const { openSettings } = useCookieConsent();
   const displayName = user ? user.user_name || user.handle || user.email : "";
   const isAdmin = user?.role === "admin" || user?.role === "owner";
 
@@ -74,10 +72,6 @@ export function Navbar() {
                     </MenuItem>
                   )}
                   <div className="menu-sep" />
-                  <MenuItem as="button" onClick={openSettings} className="menu-item">
-                    Cookie settings
-                  </MenuItem>
-                  <div className="menu-sep" />
                   <MenuItem as="button" onClick={logout} className="menu-item">
                     Log out
                   </MenuItem>
@@ -85,12 +79,9 @@ export function Navbar() {
               </Menu>
             </>
           ) : (
-            <>
-              <CookieSettingsButton />
-              <a href="/login" className="sg-btn sg-btn--black sg-btn--sm">
-                Sign In
-              </a>
-            </>
+            <a href="/login" className="sg-btn sg-btn--black sg-btn--sm">
+              Sign In
+            </a>
           )}
         </div>
       </div>
