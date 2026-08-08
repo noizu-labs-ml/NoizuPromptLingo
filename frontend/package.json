@@ -9,7 +9,8 @@
     "start": "next start",
     "regen": "rm -rf .cache && npm run generate-css",
     "test:e2e": "playwright test",
-    "test:e2e:install": "playwright install chromium"
+    "test:e2e:install": "playwright install chromium",
+    "test:e2e:authentik": "cypress run --browser chrome --config-file cypress.authentik.config.ts --spec 'cypress/e2e/auth/login-authentik.cy.ts'"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.10",
@@ -45,6 +46,7 @@
     "@types/node": "^26.0.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
+    "cypress": "^15.20.0",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3"
   },

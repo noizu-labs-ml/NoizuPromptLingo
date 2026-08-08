@@ -13,7 +13,7 @@ RUN --mount=type=secret,id=npm_token \
     --mount=type=cache,target=/root/.npm,sharing=locked \
     NPM_TOKEN=$(cat /run/secrets/npm_token) \
     envsubst < .npmrc.template > .npmrc && \
-    npm ci && \
+    CYPRESS_INSTALL_BINARY=0 npm ci && \
     rm -f .npmrc
 
 FROM node:${NODE_VERSION} AS build
