@@ -86,6 +86,7 @@ defmodule NoizuPromptLingua.MixProject do
       # Storage
       {:ex_aws, "~> 2.5"},
       {:ex_aws_s3, "~> 2.5"},
+      {:hackney, "~> 4.0"},
 
       # Image Processing
       {:vix, "~> 0.31"},
