@@ -243,11 +243,34 @@ if config_env() == :prod or config_env() == :dev do
 
   # ── Storage (S3/MinIO) ──────────────────────────────────────────
   if s3_bucket = System.get_env("S3_BUCKET") do
+    s3_scheme = System.get_env("S3_SCHEME", "https://")
+    s3_endpoint = System.get_env("S3_ENDPOINT", "")
+
+    s3_endpoint_url =
+      cond do
+        String.starts_with?(s3_endpoint, "http://") -> s3_endpoint
+        String.starts_with?(s3_endpoint, "https://") -> s3_endpoint
+        true -> "#{s3_scheme}#{s3_endpoint}"
+      end
+
+    %{host: s3_host, port: s3_port} = URI.parse(s3_endpoint_url)
+
+    s3_base = [
+      scheme: s3_scheme,
+      host: s3_host,
+      region: System.get_env("S3_REGION", "us-east-1"),
+      access_key_id: System.get_env("AWS_ACCESS_KEY_ID"),
+      secret_access_key: System.get_env("AWS_SECRET_ACCESS_KEY")
+    ]
+
+    s3_base = if s3_port, do: Keyword.put(s3_base, :port, s3_port), else: s3_base
+
     config :noizu_prompt_lingua, NoizuPromptLingua.Storage,
       bucket: s3_bucket,
       region: System.get_env("S3_REGION", "us-east-1"),
-      host: System.get_env("S3_ENDPOINT"),
-      scheme: System.get_env("S3_SCHEME", "https://"),
+      host: s3_host,
+      scheme: s3_scheme,
+      port: s3_port,
       access_key_id: System.get_env("AWS_ACCESS_KEY_ID"),
       secret_access_key: System.get_env("AWS_SECRET_ACCESS_KEY")
 
@@ -255,11 +278,7 @@ if config_env() == :prod or config_env() == :dev do
       access_key_id: System.get_env("AWS_ACCESS_KEY_ID"),
       secret_access_key: System.get_env("AWS_SECRET_ACCESS_KEY"),
       region: System.get_env("S3_REGION", "us-east-1"),
-      s3: [
-        scheme: System.get_env("S3_SCHEME", "https://"),
-        host: System.get_env("S3_ENDPOINT"),
-        region: System.get_env("S3_REGION", "us-east-1")
-      ]
+      s3: Keyword.take(s3_base, [:scheme, :host, :region] ++ if(s3_port, do: [:port], else: []))
   end
 
   # ── SSO: OIDC ──────────────────────────────────────────────────
