@@ -122,6 +122,33 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.backend.env.secretName }}
                   key: AUTHENTIK_CLIENT_SECRET
+            # --- Fixed-key auth (service-account callers) + LLM/web-research ---
+            # All optional: dark-launch safe. The app boots without them and
+            # degrades gracefully (no API-key auth, no Groq, no Jina search).
+            - name: NPL_SERVICE_API_KEYS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: NPL_SERVICE_API_KEYS
+                  optional: true
+            - name: NPL_SERVICE_USER_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: NPL_SERVICE_USER_ID
+                  optional: true
+            - name: GROQ_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: GROQ_API_KEY
+                  optional: true
+            - name: JINA_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: JINA_API_KEY
+                  optional: true
           livenessProbe:
             httpGet:
               path: {{ .Values.backend.probes.liveness.path }}
