@@ -49,6 +49,11 @@ config :logger, :default_formatter,
 
 config :phoenix, :json_library, Jason
 
+# ex_aws HTTP adapter: use Req (already a direct dep) instead of the default Hackney.
+# Hackney pulls :h2 whose h2_* Erlang modules collide with chatterbox (via grpcbox ←
+# opentelemetry_exporter) at mix release time. Req is Finch/Mint-based, no h2 conflict.
+config :ex_aws, http_client: ExAws.Request.Req
+
 config :noizu_prompt_lingua, :redis, uri: "redis://localhost:6379/0", key_prefix: "starter:"
 
 config :noizu_prompt_lingua, NoizuPromptLingua.Guardian,

@@ -84,9 +84,11 @@ defmodule NoizuPromptLingua.MixProject do
       {:hammer, "~> 6.2"},
 
       # Storage
+      # ex_aws uses Req (already a dep) as its HTTP client — see config/config.exs.
+      # Do NOT add :hackney: it pulls :h2 which conflicts with chatterbox's h2_* modules
+      # at mix release time (duplicate module error).
       {:ex_aws, "~> 2.5"},
       {:ex_aws_s3, "~> 2.5"},
-      {:hackney, "~> 4.0"},
 
       # Image Processing
       {:vix, "~> 0.31"},
