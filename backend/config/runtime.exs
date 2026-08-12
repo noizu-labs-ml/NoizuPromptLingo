@@ -8,6 +8,17 @@ config :noizu_prompt_lingua, :redis,
   uri: System.get_env("REDIS_URL") || "redis://localhost:6379/0",
   key_prefix: System.get_env("REDIS_KEY_PREFIX", "starter:")
 
+# ── Fixed API-key auth (service-account callers alongside OAuth) ──
+# CSV of shared secrets; a matching Bearer/X-API-Key authenticates as the
+# service user identified by NPL_SERVICE_USER_ID. The operator must seed
+# that user (+ org membership) before enabling this path.
+config :noizu_prompt_lingua, :api_key_auth,
+  keys:
+    (System.get_env("NPL_SERVICE_API_KEYS") || "")
+    |> String.split(",", trim: true)
+    |> Enum.map(&String.trim/1),
+  service_user_id: System.get_env("NPL_SERVICE_USER_ID")
+
 # ── GenAI providers (Mock MCP inference) ─────────────────────────
 # Keys flow through the dc/Infisical pipeline; only wire env names here.
 if openai_key = System.get_env("OPENAI_API_KEY") do

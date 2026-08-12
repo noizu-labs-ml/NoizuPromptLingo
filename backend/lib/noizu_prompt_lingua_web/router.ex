@@ -6,6 +6,9 @@ defmodule NoizuPromptLinguaWeb.Router do
   end
 
   pipeline :authenticated do
+    # ApiKeyAuth runs first: if a valid fixed API key is present it sets the
+    # service-user session + halts, skipping Guardian. Otherwise falls through.
+    plug NoizuPromptLinguaWeb.Plugs.ApiKeyAuth
     plug NoizuPromptLinguaWeb.AuthPipeline
   end
 
@@ -315,6 +318,13 @@ defmodule NoizuPromptLinguaWeb.Router do
     get "/auth/mcp/config", AuthController, :mcp_config
     # Mint an MCP JWT from a pasted raw key (ownership-checked to caller).
     post "/auth/mcp/token", AuthController, :mint_mcp_token
+  end
+
+  # REST tool endpoints for trusted backend callers (API-key or JWT auth).
+  scope "/api/v1", NoizuPromptLinguaWeb do
+    pipe_through [:api, :authenticated]
+    post "/tools/web-search", ToolsController, :web_search
+    post "/tools/site-to-md", ToolsController, :site_to_md
   end
 
   scope "/api/v1/organizations/:org_id", NoizuPromptLinguaWeb do
