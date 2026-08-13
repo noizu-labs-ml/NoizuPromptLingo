@@ -223,3 +223,6 @@ databaseChangeLog:
   - include:
       file: 074-oauth-as.yaml
       relativeToChangelogFile: true
+  - include:
+      file: 075-mcp-account-default.yaml
+      relativeToChangelogFile: true

@@ -336,6 +336,23 @@ defmodule NoizuPromptLinguaWeb.AdminController do
     conn |> put_status(:ok) |> json(%{keys: keys})
   end
 
+  def show_user_default_mcp(conn, %{"user_id" => user_id}) do
+    scope = MCPCustomScopes.ensure_account_default(user_id)
+    host = mcp_host(conn)
+
+    conn
+    |> put_status(:ok)
+    |> json(%{
+      scope: MCPCustomScopes.scope_json(scope, host),
+      servers: [
+        scope
+        |> NoizuPromptLingua.MCPServers.scope_entry(host)
+        |> Map.merge(%{required: true, default: true})
+      ],
+      ala_carte: NoizuPromptLingua.MCPServers.ala_carte(host)
+    })
+  end
+
   def create_mcp_key(conn, %{"user_id" => user_id, "key" => key_params}) do
     if not NoizuPromptLingua.MCP.LegacyKeys.create_enabled?() do
       conn

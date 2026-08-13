@@ -1,0 +1,44 @@
+databaseChangeLog:
+  # Per-account default-mcp custom endpoint. Each user gets their own
+  # mcp_custom_scopes row (name default-mcp, short uuid slug) prepopulated
+  # with the standard group set. user_id is nullable so global/org presets
+  # stay valid.
+  - changeSet:
+      id: 075a-mcp-custom-scopes-add-user-id
+      author: tobor-locker
+      preConditions:
+        - onFail: HALT
+        - onFailMessage: >-
+            mcp_custom_scopes is missing — run the Ecto migration
+            20260627002000_create_mcp_custom_scopes (Release.migrate) before
+            `liquibase update`.
+        - tableExists:
+            tableName: mcp_custom_scopes
+      changes:
+        - sql:
+            sql: |
+              ALTER TABLE mcp_custom_scopes
+                ADD COLUMN user_id uuid
+                  REFERENCES users(id) ON DELETE CASCADE;
+      rollback:
+        - sql:
+            sql: |
+              ALTER TABLE mcp_custom_scopes
+                DROP COLUMN user_id;
+
+  - changeSet:
+      id: 075b-mcp-custom-scopes-user-indexes
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE INDEX IF NOT EXISTS idx_mcp_custom_scopes_user_id
+                ON mcp_custom_scopes (user_id);
+              CREATE UNIQUE INDEX IF NOT EXISTS uq_mcp_custom_scopes_user_default
+                ON mcp_custom_scopes (user_id)
+                WHERE user_id IS NOT NULL;
+      rollback:
+        - sql:
+            sql: |
+              DROP INDEX IF EXISTS uq_mcp_custom_scopes_user_default;
+              DROP INDEX IF EXISTS idx_mcp_custom_scopes_user_id;

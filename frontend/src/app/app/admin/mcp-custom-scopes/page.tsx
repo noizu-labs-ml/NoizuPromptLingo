@@ -233,10 +233,11 @@ export default function AdminMcpCustomScopesPage() {
           <h1 className="sg-page-title">MCP endpoints</h1>
         </div>
         <p className="sg-page-intro">
-          Every account is offered the grouped <strong>Tobor Locker</strong> package
-          at <span className="font-mono">/custom/tobor/mcp</span>. Edit its groups
-          below, or add extra a-la-carte endpoints. Served from{' '}
-          <span className="font-mono">/custom/&lt;slug&gt;/mcp</span>.{' '}
+          Each signed-in account gets its own <strong>default-mcp</strong> custom
+          endpoint at <span className="font-mono">/custom/&lt;handle&gt;/mcp</span>
+          {' '}(short uuid). The global <strong>Tobor Locker</strong> package
+          at <span className="font-mono">/custom/tobor/mcp</span> remains the
+          unauthenticated fallback. Edit presets below, or add extra endpoints.{' '}
           <Link href="/app/admin">Back to Admin</Link>
         </p>
 

@@ -2,7 +2,13 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
-import { api, type McpApiKey, type McpTokenResponse, type McpServerConfig } from '@/lib/api';
+import {
+  api,
+  type McpApiKey,
+  type McpTokenResponse,
+  type McpServerConfig,
+  type McpCustomScope,
+} from '@/lib/api';
 import McpSetupPanel from '@/components/mcp-setup-panel';
 
 interface AdminUser {
@@ -37,6 +43,8 @@ export default function AdminAuthzPage() {
 
   // Server config from the backend (host-derived, never hardcoded).
   const [servers, setServers] = useState<McpServerConfig[]>([]);
+  const [alaCarte, setAlaCarte] = useState<McpServerConfig[]>([]);
+  const [defaultScope, setDefaultScope] = useState<McpCustomScope | null>(null);
 
   // Paste-an-existing-key flow (non-destructive token mint for the selected user).
   const [pastedKey, setPastedKey] = useState('');
@@ -70,8 +78,19 @@ export default function AdminAuthzPage() {
       })
       .catch(() => toast.error('Failed to load users'))
       .finally(() => setLoadingUsers(false));
-    api.mcpConfig().then((cfg) => setServers(cfg.servers)).catch(() => { /* non-fatal */ });
   }, [fetchKeys]);
+
+  useEffect(() => {
+    if (!userId) return;
+    api
+      .adminUserDefaultMcp(userId)
+      .then((res) => {
+        setDefaultScope(res.scope);
+        setServers(res.servers ?? []);
+        setAlaCarte(res.ala_carte ?? []);
+      })
+      .catch(() => { /* non-fatal */ });
+  }, [userId]);
 
   // Resolves the expiry form state to an ISO8601 string, or undefined for
   // "never expires".
@@ -356,6 +375,8 @@ export default function AdminAuthzPage() {
                 token={tokens[setupKey].token}
                 keyLabel={key?.label ?? 'pasted key'}
                 servers={servers}
+                alaCarte={alaCarte}
+                defaultScope={defaultScope}
                 onClose={() => setSetupKey(null)}
               />
             );

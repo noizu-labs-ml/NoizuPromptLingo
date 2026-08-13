@@ -2,15 +2,20 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import type { McpServerConfig } from '@/lib/api';
+import type { McpCustomGroup, McpCustomScope, McpServerConfig } from '@/lib/api';
+import McpIncludeEditor from '@/components/mcp-include-editor';
 
-type Tab = 'hosted' | 'cli-oauth' | 'servers';
+type Tab = 'default' | 'alacarte';
 
 interface McpOauthSetupProps {
   mcpUrl: string;
   asMetadataUrl: string;
   issuer: string;
   servers: McpServerConfig[];
+  alaCarte?: McpServerConfig[];
+  catalog?: McpCustomGroup[];
+  defaultScope?: McpCustomScope | null;
+  onDefaultScopeChange?: (scope: McpCustomScope) => void;
 }
 
 /**
@@ -23,8 +28,12 @@ export default function McpOauthSetup({
   asMetadataUrl,
   issuer,
   servers,
+  alaCarte = [],
+  catalog = [],
+  defaultScope = null,
+  onDefaultScopeChange,
 }: McpOauthSetupProps) {
-  const [tab, setTab] = useState<Tab>('hosted');
+  const [tab, setTab] = useState<Tab>('default');
   const [copied, setCopied] = useState<string | null>(null);
 
   async function copy(text: string, id: string) {
@@ -38,10 +47,12 @@ export default function McpOauthSetup({
     }
   }
 
+  const handle = defaultScope?.slug;
+  const clientName = handle ? `tobor-${handle}` : 'tobor-default-mcp';
   const claudeCodeOauth = `# Claude Code — remote MCP over OAuth (no API key)
 # Paste the MCP URL; the client discovers OAuth, registers itself (DCR),
 # and opens a browser for you to sign in + Allow.
-claude mcp add --transport http tobor ${mcpUrl}
+claude mcp add --transport http ${clientName} ${mcpUrl}
 
 # If your CLI still requires a header, use the Legacy API key section below.`;
 
@@ -79,9 +90,8 @@ claude mcp add --transport http tobor ${mcpUrl}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
         {(
           [
-            { id: 'hosted' as const, label: 'Claude.ai / ChatGPT' },
-            { id: 'cli-oauth' as const, label: 'CLI (OAuth)' },
-            { id: 'servers' as const, label: 'Server URLs' },
+            { id: 'default' as const, label: 'Default MCP' },
+            { id: 'alacarte' as const, label: 'À la carte' },
           ] as const
         ).map((t) => (
           <button
@@ -95,7 +105,7 @@ claude mcp add --transport http tobor ${mcpUrl}
         ))}
       </div>
 
-      {tab === 'hosted' && (
+      {tab === 'default' && (
         <div>
           <ol style={{ margin: '0 0 16px', paddingLeft: 20, fontSize: 13, lineHeight: 1.7, color: 'var(--text-1)' }}>
             <li>
@@ -110,7 +120,14 @@ claude mcp add --transport http tobor ${mcpUrl}
             </li>
           </ol>
           <div className="authz-reveal" style={{ marginBottom: 12 }}>
-            <div className="authz-reveal__label">MCP server URL</div>
+            <div className="authz-reveal__label">
+              MCP server URL
+              {handle ? (
+                <span style={{ marginLeft: 8, fontWeight: 400 }}>
+                  handle <span className="font-mono">{handle}</span>
+                </span>
+              ) : null}
+            </div>
             <div className="authz-reveal__row">
               <code className="authz-reveal__key font-mono">{mcpUrl}</code>
               <button type="button" className="sg-btn sg-btn--outline sg-btn--sm" onClick={() => copy(mcpUrl, 'mcp-url')}>
@@ -127,23 +144,20 @@ claude mcp add --transport http tobor ${mcpUrl}
               under OAuth connections on this page.
             </li>
           </ol>
-          <p className="sg-page-intro" style={{ marginTop: 16, marginBottom: 0 }}>
-            Optional discovery (for debugging):{' '}
-            <code className="font-mono" style={{ fontSize: 11 }}>{asMetadataUrl}</code>
-            {' · '}
-            issuer <code className="font-mono" style={{ fontSize: 11 }}>{issuer}</code>
-          </p>
-        </div>
-      )}
 
-      {tab === 'cli-oauth' && (
-        <div>
-          <p className="sg-page-intro" style={{ marginBottom: 12 }}>
-            If your CLI supports remote MCP OAuth, add the URL only — the client runs DCR + PKCE
-            and opens a browser for consent. No key generation in this UI.
-          </p>
-          <div className="authz-reveal" style={{ marginBottom: 12 }}>
-            <div className="authz-reveal__label">Claude Code (HTTP transport)</div>
+          {defaultScope && catalog.length > 0 ? (
+            <div style={{ marginTop: 16 }}>
+              <McpIncludeEditor
+                key={defaultScope.id}
+                catalog={catalog}
+                scope={defaultScope}
+                onSaved={onDefaultScopeChange}
+              />
+            </div>
+          ) : null}
+
+          <div className="authz-reveal" style={{ marginTop: 16, marginBottom: 12 }}>
+            <div className="authz-reveal__label">CLI (OAuth)</div>
             <div className="authz-reveal__row">
               <code className="authz-reveal__key font-mono" style={{ whiteSpace: 'pre-wrap' }}>{claudeCodeOauth}</code>
               <button type="button" className="sg-btn sg-btn--outline sg-btn--sm" onClick={() => copy(claudeCodeOauth, 'claude-oauth')}>
@@ -160,21 +174,26 @@ claude mcp add --transport http tobor ${mcpUrl}
               </button>
             </div>
           </div>
+          <p className="sg-page-intro" style={{ marginTop: 16, marginBottom: 0 }}>
+            Optional discovery (for debugging):{' '}
+            <code className="font-mono" style={{ fontSize: 11 }}>{asMetadataUrl}</code>
+            {' · '}
+            issuer <code className="font-mono" style={{ fontSize: 11 }}>{issuer}</code>
+          </p>
         </div>
       )}
 
-      {tab === 'servers' && (
+      {tab === 'alacarte' && (
         <div>
           <p className="sg-page-intro" style={{ marginBottom: 12 }}>
-            Every account gets the grouped <strong>Tobor Locker</strong> package
-            (<span className="font-mono">/custom/tobor/mcp</span>). Extra subdomain
-            endpoints are optional — add them a-la-carte from the CLI setup panel.
+            Manual extra endpoints — each subdomain is its own MCP server. Prefer the
+            single default-mcp URL unless you need a split catalog.
           </p>
-          {servers.length === 0 ? (
+          {alaCarte.length === 0 && servers.length === 0 ? (
             <p className="sg-page-intro">Loading server catalog…</p>
           ) : (
             <ul className="admin-table-wrap">
-              {servers.map((s) => (
+              {(alaCarte.length > 0 ? alaCarte : servers).map((s) => (
                 <li key={s.id} className="gh-row">
                   <div className="gh-row__main">
                     <div className="gh-row__title">

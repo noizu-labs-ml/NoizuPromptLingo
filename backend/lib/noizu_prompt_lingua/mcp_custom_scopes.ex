@@ -39,6 +39,7 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
   # Global all-in-one package every account gets. NPL load/spec tools are
   # attached by MCP.Custom for all_in_one scopes (not a selectable group).
   @default_package_slug "tobor"
+  @account_default_name "default-mcp"
   @default_package_groups ~w(
     sessions organizations projects tickets chat artifacts wiki
     personas instructions memory review assets github notifications
@@ -49,6 +50,9 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
 
   @doc "Slug of the global default package every account is offered."
   def default_package_slug, do: @default_package_slug
+
+  @doc "Display name of the per-account default custom endpoint."
+  def account_default_name, do: @account_default_name
 
   @doc "Group ids seeded into the default `tobor` all-in-one package."
   def default_package_groups, do: @default_package_groups
@@ -116,8 +120,8 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
   end
 
   @doc """
-  Get-or-create the global `tobor` all-in-one scope. Idempotent. This is the
-  single MCP endpoint the setup UI offers by default.
+  Get-or-create the global `tobor` all-in-one scope. Idempotent. Used as the
+  unauthenticated setup fallback; signed-in accounts get `ensure_account_default/1`.
   """
   def get_default_package(_opts \\ []) do
     case get_by_slug(@default_package_slug) do
@@ -143,6 +147,80 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
       scope ->
         scope
     end
+  end
+
+  @doc "The per-account default-mcp scope for `user_id`, or nil."
+  def get_account_default(user_id) when is_binary(user_id) do
+    Repo.get_by(MCPCustomScope, user_id: user_id)
+  end
+
+  def get_account_default(_), do: nil
+
+  @doc """
+  Get-or-create this user's `default-mcp` custom endpoint.
+
+  Slug is a short uuid handle (`/custom/<handle>/mcp`). Groups are seeded from
+  `default_package_groups/0`. Idempotent per user.
+  """
+  def ensure_account_default(user_id) when is_binary(user_id) do
+    case get_account_default(user_id) do
+      %MCPCustomScope{} = scope ->
+        scope
+
+      nil ->
+        case insert_account_default(user_id) do
+          {:ok, scope} ->
+            scope
+
+          {:error, _} ->
+            get_account_default(user_id) || get_default_package()
+        end
+    end
+  end
+
+  def ensure_account_default(_), do: get_default_package()
+
+  defp insert_account_default(user_id, attempt \\ 0)
+
+  defp insert_account_default(_user_id, attempt) when attempt > 4 do
+    {:error, :handle_collision}
+  end
+
+  defp insert_account_default(user_id, attempt) do
+    groups = Map.new(@default_package_groups, fn id -> {id, %{"tools" => %{}}} end)
+
+    attrs = %{
+      "slug" => short_handle(),
+      "name" => @account_default_name,
+      "description" =>
+        "Your default MCP package — sessions, organizations, projects, tickets, chat, " <>
+          "artifacts, wiki, personas, instructions, memory, review, assets, GitHub, notifications.",
+      "kind" => "custom",
+      "user_id" => user_id,
+      "config" => %{"groups" => groups}
+    }
+
+    case create(attrs) do
+      {:ok, scope} ->
+        {:ok, scope}
+
+      {:error, %Ecto.Changeset{} = cs} ->
+        if slug_taken?(cs) do
+          insert_account_default(user_id, attempt + 1)
+        else
+          {:error, cs}
+        end
+    end
+  end
+
+  defp short_handle do
+    Ecto.UUID.generate()
+    |> String.replace("-", "")
+    |> String.slice(0, 12)
+  end
+
+  defp slug_taken?(%Ecto.Changeset{errors: errors}) do
+    Keyword.has_key?(errors, :slug)
   end
 
   @doc """
@@ -224,11 +302,11 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
     end
   end
 
-  def delete(%MCPCustomScope{slug: slug} = scope) do
-    if slug == @default_package_slug do
-      {:error, :protected}
-    else
-      Repo.delete(scope)
+  def delete(%MCPCustomScope{slug: slug, user_id: user_id} = scope) do
+    cond do
+      slug == @default_package_slug -> {:error, :protected}
+      not is_nil(user_id) -> {:error, :protected}
+      true -> Repo.delete(scope)
     end
   end
 
@@ -403,6 +481,7 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
       kind: scope.kind,
       organization_id: scope.organization_id,
       project_id: scope.project_id,
+      user_id: scope.user_id,
       description: scope.description,
       config: normalize_config(scope.config || %{}, scope.kind),
       url: host && MCPServers.custom_url(scope.slug, host),
@@ -425,6 +504,7 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
         "kind",
         "organization_id",
         "project_id",
+        "user_id",
         "config",
         :slug,
         :name,
@@ -432,6 +512,7 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
         :kind,
         :organization_id,
         :project_id,
+        :user_id,
         :config
       ])
       |> stringify_keys()

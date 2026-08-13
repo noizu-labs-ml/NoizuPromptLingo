@@ -2,15 +2,17 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import type { McpServerConfig } from '@/lib/api';
+import type { McpCustomScope, McpServerConfig } from '@/lib/api';
 
 type McpClient = 'claude' | 'codex' | 'grok';
+type SetupTab = 'default' | 'alacarte';
 
 interface McpSetupPanelProps {
   token: string; // The MCP JWT token
   keyLabel: string; // Label of the API key
   servers: McpServerConfig[]; // Default grouped endpoint(s)
   alaCarte?: McpServerConfig[]; // Optional individual subdomain endpoints
+  defaultScope?: McpCustomScope | null;
   onClose: () => void;
 }
 
@@ -22,10 +24,11 @@ const CLIENT_OPTIONS: { id: McpClient; label: string }[] = [
 
 /**
  * Sanitize MCP server registration names.
- * Grok only allows letters, numbers, hyphens, underscores; custom scopes
- * arrive as "custom:slug" and must become "custom-slug".
+ * Grok only allows letters, numbers, hyphens, underscores. Custom scopes
+ * arrive as "custom:<handle>" and register as "tobor-<handle>".
  */
 function serverName(id: string) {
+  if (id.startsWith('custom:')) return `tobor-${id.slice('custom:'.length)}`;
   return `tobor-${id.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
 }
 
@@ -44,9 +47,16 @@ function serverName(id: string) {
  * Server URLs come from the backend config endpoint (host-derived), so this
  * component never hardcodes a host.
  */
-export default function McpSetupPanel({ token, keyLabel, servers, alaCarte = [], onClose }: McpSetupPanelProps) {
+export default function McpSetupPanel({
+  token,
+  keyLabel,
+  servers,
+  alaCarte = [],
+  defaultScope = null,
+  onClose,
+}: McpSetupPanelProps) {
   const [client, setClient] = useState<McpClient>('claude');
-  const [showAlaCarte, setShowAlaCarte] = useState(false);
+  const [tab, setTab] = useState<SetupTab>('default');
   const [enabled, setEnabled] = useState<Record<string, boolean>>(() => {
     const state: Record<string, boolean> = {};
     servers.forEach((s) => { state[s.id] = true; });
@@ -55,10 +65,10 @@ export default function McpSetupPanel({ token, keyLabel, servers, alaCarte = [],
   });
   const [copiedCmd, setCopiedCmd] = useState<string | null>(null);
 
-  const catalog = showAlaCarte ? [...servers, ...alaCarte] : servers;
+  const endpointCatalog = tab === 'alacarte' ? [...servers, ...alaCarte] : servers;
 
   function toggle(id: string) {
-    const server = catalog.find((s) => s.id === id);
+    const server = endpointCatalog.find((s) => s.id === id);
     if (server?.required) return;
     setEnabled((prev) => ({ ...prev, [id]: !prev[id] }));
   }
@@ -80,7 +90,7 @@ export default function McpSetupPanel({ token, keyLabel, servers, alaCarte = [],
       `export AUTH_TOKEN=${token}`,
       '',
     ];
-    catalog.filter((s) => enabled[s.id]).forEach((s) => {
+    endpointCatalog.filter((s) => enabled[s.id]).forEach((s) => {
       lines.push(getCommandLine(s));
     });
     return lines.join('\n');
@@ -97,9 +107,9 @@ export default function McpSetupPanel({ token, keyLabel, servers, alaCarte = [],
     }
   }
 
-  const activeCount = catalog.filter((s) => enabled[s.id]).length;
+  const activeCount = endpointCatalog.filter((s) => enabled[s.id]).length;
   const rootServer = servers.find((s) => s.default) ?? servers.find((s) => s.id === 'root') ?? servers[0];
-  const oauthMcpUrl = rootServer?.url ?? 'https://tobor.locker/custom/tobor/mcp';
+  const oauthMcpUrl = defaultScope?.url ?? rootServer?.url ?? 'https://tobor.locker/custom/tobor/mcp';
 
   return (
     <div style={{
@@ -191,71 +201,98 @@ export default function McpSetupPanel({ token, keyLabel, servers, alaCarte = [],
         </p>
       )}
 
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-        gap: 6,
-        marginBottom: 16,
-      }}>
-        {alaCarte.length > 0 && (
-          <div style={{ marginBottom: 12 }}>
-            <button
-              type="button"
-              onClick={() => setShowAlaCarte((v) => !v)}
-              style={{ ...btnSm, fontSize: 12 }}
-            >
-              {showAlaCarte ? 'Hide extra endpoints' : 'Add individual endpoints'}
-            </button>
-            <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--text-3)' }}>
-              Default is the grouped Tobor Locker package. Extra subdomain endpoints are optional.
-            </span>
-          </div>
-        )}
-
-        {catalog.map((s) => (
-          <label
-            key={s.id}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+        {([
+          { id: 'default' as const, label: 'Default MCP' },
+          { id: 'alacarte' as const, label: 'À la carte' },
+        ]).map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => setTab(t.id)}
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '6px 10px',
-              borderRadius: 6,
-              background: enabled[s.id] ? 'var(--accent-dim)' : 'var(--bg-3)',
-              border: `1px solid ${enabled[s.id] ? 'var(--accent)' : 'var(--border)'}`,
-              cursor: s.required ? 'default' : 'pointer',
-              fontSize: 12,
+              ...btnSm,
+              ...(tab === t.id
+                ? { background: 'var(--accent)', color: 'white', borderColor: 'var(--accent)' }
+                : {}),
             }}
           >
-            <input
-              type="checkbox"
-              checked={enabled[s.id]}
-              onChange={() => toggle(s.id)}
-              disabled={s.required}
-              style={{ accentColor: 'var(--accent)' }}
-            />
-            <div>
-              <div style={{
-                fontWeight: 500,
-                color: enabled[s.id] ? 'var(--text-0)' : 'var(--text-3)',
-              }}>
-                {s.label}
-                {s.default && (
-                  <span style={{ fontSize: 9, color: 'var(--text-3)', marginLeft: 4 }}>
-                    default
-                  </span>
-                )}
-                {s.required && (
-                  <span style={{ fontSize: 9, color: 'var(--text-3)', marginLeft: 4 }}>
-                    required
-                  </span>
-                )}
-              </div>
-              <div style={{ fontSize: 10, color: 'var(--text-3)' }}>{s.desc}</div>
-            </div>
-          </label>
+            {t.label}
+          </button>
         ))}
       </div>
+
+      {tab === 'default' && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 10 }}>
+            One custom endpoint
+            {defaultScope?.slug ? (
+              <>
+                {' '}with handle{' '}
+                <span className="font-mono" style={{ color: 'var(--text-1)' }}>{defaultScope.slug}</span>
+              </>
+            ) : null}
+            . Included services are edited on the Default MCP tab above; this
+            command registers that single URL.
+          </div>
+        </div>
+      )}
+
+      {tab === 'alacarte' && (
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+          gap: 6,
+          marginBottom: 16,
+        }}>
+          <div style={{ gridColumn: '1 / -1', fontSize: 11, color: 'var(--text-3)', marginBottom: 4 }}>
+            Manual extra endpoints — each selected row becomes its own <span className="font-mono">mcp add</span>.
+          </div>
+          {endpointCatalog.map((s) => (
+            <label
+              key={s.id}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '6px 10px',
+                borderRadius: 6,
+                background: enabled[s.id] ? 'var(--accent-dim)' : 'var(--bg-3)',
+                border: `1px solid ${enabled[s.id] ? 'var(--accent)' : 'var(--border)'}`,
+                cursor: s.required ? 'default' : 'pointer',
+                fontSize: 12,
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={enabled[s.id]}
+                onChange={() => toggle(s.id)}
+                disabled={s.required}
+                style={{ accentColor: 'var(--accent)' }}
+              />
+              <div>
+                <div style={{
+                  fontWeight: 500,
+                  color: enabled[s.id] ? 'var(--text-0)' : 'var(--text-3)',
+                }}>
+                  {s.label}
+                  {s.default && (
+                    <span style={{ fontSize: 9, color: 'var(--text-3)', marginLeft: 4 }}>
+                      default
+                    </span>
+                  )}
+                  {s.required && (
+                    <span style={{ fontSize: 9, color: 'var(--text-3)', marginLeft: 4 }}>
+                      required
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: 10, color: 'var(--text-3)' }}>{s.desc}</div>
+              </div>
+            </label>
+          ))}
+        </div>
+      )}
 
       <div style={{ position: 'relative' }}>
         <button

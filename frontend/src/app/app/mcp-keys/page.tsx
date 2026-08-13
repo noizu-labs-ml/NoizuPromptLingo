@@ -8,6 +8,8 @@ import {
   type McpTokenResponse,
   type McpServerConfig,
   type McpOAuthConnection,
+  type McpCustomGroup,
+  type McpCustomScope,
 } from '@/lib/api';
 import McpSetupPanel from '@/components/mcp-setup-panel';
 import McpOauthSetup from '@/components/mcp-oauth-setup';
@@ -35,6 +37,8 @@ export default function McpKeysPage() {
   // Server config (fetched once from backend so the setup panel never hardcodes a host).
   const [servers, setServers] = useState<McpServerConfig[]>([]);
   const [alaCarte, setAlaCarte] = useState<McpServerConfig[]>([]);
+  const [catalog, setCatalog] = useState<McpCustomGroup[]>([]);
+  const [defaultScope, setDefaultScope] = useState<McpCustomScope | null>(null);
   const [oauthMcpUrl, setOauthMcpUrl] = useState('https://tobor.locker/mcp');
   const [oauthIssuer, setOauthIssuer] = useState('https://tobor.locker');
   const [asMetadataUrl, setAsMetadataUrl] = useState(
@@ -77,9 +81,14 @@ export default function McpKeysPage() {
       .then((cfg) => {
         setServers(cfg.servers);
         setAlaCarte(cfg.ala_carte ?? []);
+        if (cfg.default_scope) setDefaultScope(cfg.default_scope);
         const issuer = cfg.oauth?.issuer || `https://${cfg.host}`;
         setOauthIssuer(issuer);
-        setOauthMcpUrl(cfg.oauth?.mcp_url || `https://${cfg.host}/custom/tobor/mcp`);
+        setOauthMcpUrl(
+          cfg.default_scope?.url ||
+            cfg.oauth?.mcp_url ||
+            `https://${cfg.host}/custom/tobor/mcp`
+        );
         setAsMetadataUrl(
           cfg.oauth?.authorization_server_metadata ||
             `${issuer.replace(/\/$/, '')}/.well-known/oauth-authorization-server`
@@ -93,6 +102,9 @@ export default function McpKeysPage() {
         console.error("Failed to load MCP server config:", err);
         setConfigError(err instanceof Error ? err.message : "Unknown error");
       });
+    api.mcpCatalog().then((res) => setCatalog(res.groups ?? [])).catch(() => {
+      // Include editor is optional; setup URL still works without it.
+    });
   }, [fetchKeys, fetchConnections]);
 
   async function createKey(e: React.FormEvent) {
@@ -200,13 +212,17 @@ export default function McpKeysPage() {
       <main>
         <h1 className="sg-page-title">MCP client setup</h1>
         <p className="sg-page-intro">
-          Connect agents to Tobor Locker with one grouped MCP endpoint — sessions,
-          orgs, projects, tickets, chat, memory, and the rest of the default tool
-          set. <strong>OAuth is preferred</strong> — hosted clients invent their own
-          {' '}<code className="font-mono">client_id</code> via Dynamic Client
-          Registration; you only approve access in the browser. There is no OAuth secret to copy
-          from this page. Admins can edit that default package or add extra endpoints
-          under MCP custom scopes.
+          Every account gets a <strong>default-mcp</strong> custom endpoint
+          {defaultScope?.slug ? (
+            <>
+              {' '}(<span className="font-mono">/custom/{defaultScope.slug}/mcp</span>)
+            </>
+          ) : null}
+          {' '}preloaded with the standard services. Paste that one URL. Tweak
+          what&apos;s included below, or switch to the à la carte tab for individual
+          subdomain servers. <strong>OAuth is preferred</strong> — hosted clients
+          invent their own <code className="font-mono">client_id</code> via Dynamic
+          Client Registration; you only approve access in the browser.
         </p>
 
         <McpOauthSetup
@@ -214,6 +230,10 @@ export default function McpKeysPage() {
           asMetadataUrl={asMetadataUrl}
           issuer={oauthIssuer}
           servers={servers}
+          alaCarte={alaCarte}
+          catalog={catalog}
+          defaultScope={defaultScope}
+          onDefaultScopeChange={setDefaultScope}
         />
 
         <section className="dash-panel" style={{ marginTop: 'var(--space-4)' }}>
@@ -470,6 +490,7 @@ export default function McpKeysPage() {
                 keyLabel={key?.label ?? "pasted key"}
                 servers={servers}
                 alaCarte={alaCarte}
+                defaultScope={defaultScope}
                 onClose={() => setSetupKey(null)}
               />
             );

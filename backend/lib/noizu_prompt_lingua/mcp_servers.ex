@@ -155,10 +155,12 @@ defmodule NoizuPromptLingua.MCPServers do
     * `:core_custom` — core-variant endpoint(s) + custom-scope endpoint(s).
     * `:all_in_one` — the all_in_one endpoint(s) + any task-segmented one-offs
       (scopes whose config carries `segment: true`).
-    * `:setup` — the seeded default `tobor` package only (used by the setup UI).
+    * `:setup` — the signed-in user's `default-mcp` custom endpoint (short uuid
+      handle), falling back to the global `tobor` package when no user is present.
 
-  `opts` (`:organization_id`, `:project_id`) scope the non-default packaging sets
-  to global presets plus rows matching the given org/project.
+  `opts` (`:organization_id`, `:project_id`, `:user_id`) scope the non-default
+  packaging sets to global presets plus rows matching the given org/project.
+  `:user_id` selects the per-account default for `:setup`.
   """
   def for_host(host, packaging \\ :default, opts \\ [])
 
@@ -218,14 +220,27 @@ defmodule NoizuPromptLingua.MCPServers do
     |> Enum.map(&scope_entry(&1, host))
   end
 
-  defp packaging_servers(host, :setup, _opts) do
-    scope = NoizuPromptLingua.MCPCustomScopes.get_default_package()
-
+  defp packaging_servers(host, :setup, opts) do
     [
-      scope
+      opts
+      |> setup_scope()
       |> scope_entry(host)
       |> Map.merge(%{required: true, default: true})
     ]
+  end
+
+  @doc """
+  Scope the setup UI should advertise: the caller's per-account `default-mcp`
+  when `:user_id` is set, otherwise the global `tobor` package.
+  """
+  def setup_scope(opts \\ []) do
+    case Keyword.get(opts, :user_id) do
+      user_id when is_binary(user_id) and user_id != "" ->
+        NoizuPromptLingua.MCPCustomScopes.ensure_account_default(user_id)
+
+      _ ->
+        NoizuPromptLingua.MCPCustomScopes.get_default_package()
+    end
   end
 
   @doc """

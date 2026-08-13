@@ -111,7 +111,10 @@ defmodule NoizuPromptLingua.MCP.Custom do
   defp include_npl?(ctx) do
     with slug when is_binary(slug) <- scope_slug(ctx),
          scope when not is_nil(scope) <- MCPCustomScopes.get_by_slug(slug) do
-      scope.kind == "all_in_one" or scope.slug == MCPCustomScopes.default_package_slug()
+      scope.kind == "all_in_one" or
+        scope.slug == MCPCustomScopes.default_package_slug() or
+        scope.name == MCPCustomScopes.account_default_name() or
+        not is_nil(scope.user_id)
     else
       _ -> false
     end

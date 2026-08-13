@@ -319,6 +319,9 @@ defmodule NoizuPromptLinguaWeb.Router do
 
     # MCP connection config (host + server list) for building setup commands.
     get "/auth/mcp/config", AuthController, :mcp_config
+    get "/auth/mcp/catalog", AuthController, :mcp_custom_scope_catalog
+    get "/auth/mcp/default-endpoint", AuthController, :show_default_mcp
+    patch "/auth/mcp/default-endpoint", AuthController, :update_default_mcp
     # Mint an MCP JWT from a pasted raw key (ownership-checked to caller).
     post "/auth/mcp/token", AuthController, :mint_mcp_token
   end
@@ -366,6 +369,7 @@ defmodule NoizuPromptLinguaWeb.Router do
     get "/users/:user_id/mcp-keys", AdminController, :list_mcp_keys
     post "/users/:user_id/mcp-keys", AdminController, :create_mcp_key
     delete "/users/:user_id/mcp-keys/:id", AdminController, :revoke_mcp_key
+    get "/users/:user_id/mcp-default-endpoint", AdminController, :show_user_default_mcp
 
     # OAuth clients (DCR + first-party) — admin visibility + revoke (cascades
     # to active pairing grants + refresh tokens for that client).

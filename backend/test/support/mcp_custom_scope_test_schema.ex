@@ -36,7 +36,18 @@ defmodule NoizuPromptLingua.MCPCustomScopeTestSchema do
       ALTER TABLE mcp_custom_scopes
         ADD COLUMN IF NOT EXISTS kind varchar(20) NOT NULL DEFAULT 'custom',
         ADD COLUMN IF NOT EXISTS organization_id uuid,
-        ADD COLUMN IF NOT EXISTS project_id uuid
+        ADD COLUMN IF NOT EXISTS project_id uuid,
+        ADD COLUMN IF NOT EXISTS user_id uuid
+      """,
+      []
+    )
+
+    Ecto.Adapters.SQL.query!(
+      Repo,
+      """
+      CREATE UNIQUE INDEX IF NOT EXISTS uq_mcp_custom_scopes_user_default
+        ON mcp_custom_scopes (user_id)
+        WHERE user_id IS NOT NULL
       """,
       []
     )

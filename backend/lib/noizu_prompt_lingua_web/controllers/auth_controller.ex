@@ -97,8 +97,15 @@ defmodule NoizuPromptLinguaWeb.AuthController do
     # is byte-identical to the pre-packaging behavior.
     case parse_packaging(Map.get(params, "packaging")) do
       {:ok, packaging} ->
-        servers = NoizuPromptLingua.MCPServers.for_host(host, packaging, packaging_opts(params))
+        opts = packaging_opts(conn, params)
+        servers = NoizuPromptLingua.MCPServers.for_host(host, packaging, opts)
         ala_carte = if packaging == :setup, do: NoizuPromptLingua.MCPServers.ala_carte(host), else: []
+
+        default_scope =
+          if packaging == :setup do
+            NoizuPromptLingua.MCPServers.setup_scope(opts)
+            |> NoizuPromptLingua.MCPCustomScopes.scope_json(host)
+          end
 
         issuer =
           try do
@@ -108,9 +115,13 @@ defmodule NoizuPromptLinguaWeb.AuthController do
           end
 
         mcp_url =
-          case List.first(servers) do
-            %{url: url} when packaging == :setup and is_binary(url) -> url
-            _ -> "https://#{host}/mcp"
+          case default_scope do
+            %{url: url} when is_binary(url) -> url
+            _ ->
+              case List.first(servers) do
+                %{url: url} when packaging == :setup and is_binary(url) -> url
+                _ -> "https://#{host}/mcp"
+              end
           end
 
         conn
@@ -119,6 +130,7 @@ defmodule NoizuPromptLinguaWeb.AuthController do
           host: host,
           servers: servers,
           ala_carte: ala_carte,
+          default_scope: default_scope,
           oauth: %{
             issuer: issuer,
             mcp_url: mcp_url,
@@ -135,16 +147,90 @@ defmodule NoizuPromptLinguaWeb.AuthController do
     end
   end
 
+  def mcp_custom_scope_catalog(conn, _params) do
+    conn
+    |> put_status(:ok)
+    |> json(%{groups: NoizuPromptLingua.MCPCustomScopes.catalog()})
+  end
+
+  def show_default_mcp(conn, _params) do
+    case current_user_id(conn) do
+      nil ->
+        conn |> put_status(:unauthorized) |> json(%{error: "authentication required"})
+
+      user_id ->
+        scope = NoizuPromptLingua.MCPCustomScopes.ensure_account_default(user_id)
+
+        conn
+        |> put_status(:ok)
+        |> json(%{scope: NoizuPromptLingua.MCPCustomScopes.scope_json(scope, mcp_host(conn))})
+    end
+  end
+
+  def update_default_mcp(conn, params) do
+    case current_user_id(conn) do
+      nil ->
+        conn |> put_status(:unauthorized) |> json(%{error: "authentication required"})
+
+      user_id ->
+        scope = NoizuPromptLingua.MCPCustomScopes.ensure_account_default(user_id)
+        config = default_mcp_config(params)
+
+        case NoizuPromptLingua.MCPCustomScopes.update(scope, %{"config" => config},
+               actor_id: user_id
+             ) do
+          {:ok, updated} ->
+            conn
+            |> put_status(:ok)
+            |> json(%{scope: NoizuPromptLingua.MCPCustomScopes.scope_json(updated, mcp_host(conn))})
+
+          {:error, :confirmation_required, groups} ->
+            conn
+            |> put_status(:unprocessable_entity)
+            |> json(%{
+              error: "confirmation required to disable required core group(s)",
+              required_groups: groups,
+              confirm_required: true
+            })
+
+          {:error, %Ecto.Changeset{} = cs} ->
+            conn
+            |> put_status(:unprocessable_entity)
+            |> json(%{errors: Ecto.Changeset.traverse_errors(cs, fn {msg, _} -> msg end)})
+        end
+    end
+  end
+
+  defp default_mcp_config(%{"scope" => %{"config" => config}}) when is_map(config), do: config
+  defp default_mcp_config(%{"config" => config}) when is_map(config), do: config
+  defp default_mcp_config(_), do: %{}
+
+  defp mcp_host(conn) do
+    Application.get_env(:noizu_prompt_lingua, :frontend_url)
+    |> derive_host() ||
+      derive_host(conn) ||
+      "localhost"
+  end
+
   defp parse_packaging(nil), do: {:ok, :default}
   defp parse_packaging("core+custom"), do: {:ok, :core_custom}
   defp parse_packaging("all-in-one"), do: {:ok, :all_in_one}
   defp parse_packaging("setup"), do: {:ok, :setup}
   defp parse_packaging(_), do: :error
 
-  defp packaging_opts(params) do
+  defp packaging_opts(conn, params) do
     []
     |> maybe_opt(:organization_id, Map.get(params, "organization_id"))
     |> maybe_opt(:project_id, Map.get(params, "project_id"))
+    |> maybe_opt(:user_id, current_user_id(conn))
+  end
+
+  defp current_user_id(conn) do
+    case Guardian.Plug.current_resource(conn) do
+      %{user: {:ref, _, id}} when is_binary(id) -> id
+      %{user: %{id: id}} when is_binary(id) -> id
+      _ -> nil
+    end
   end
 
   defp maybe_opt(opts, _key, nil), do: opts

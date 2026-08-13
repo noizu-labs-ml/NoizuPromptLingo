@@ -116,6 +116,30 @@ defmodule NoizuPromptLingua.MCP.ScopePackagingTest do
     end
   end
 
+  describe "ensure_account_default/1" do
+    test "seeds a per-user default-mcp custom endpoint with a short uuid handle" do
+      user = insert_user()
+      first = MCPCustomScopes.ensure_account_default(user.id)
+      second = MCPCustomScopes.ensure_account_default(user.id)
+
+      assert first.id == second.id
+      assert first.name == "default-mcp"
+      assert first.kind == "custom"
+      assert first.user_id == user.id
+      assert first.slug =~ ~r/^[a-z0-9]{12}$/
+      assert Map.has_key?(first.config["groups"], "sessions")
+      assert Map.has_key?(first.config["groups"], "tickets")
+      refute first.slug == "tobor"
+    end
+
+    test "different users get different handles" do
+      a = MCPCustomScopes.ensure_account_default(insert_user().id)
+      b = MCPCustomScopes.ensure_account_default(insert_user().id)
+      assert a.slug != b.slug
+      assert a.id != b.id
+    end
+  end
+
   describe "for_host/3 packaging" do
     setup do
       {:ok, custom} =
@@ -187,6 +211,16 @@ defmodule NoizuPromptLingua.MCP.ScopePackagingTest do
 
       assert entry.kind == "core_variant"
     end
+
+    test "setup with user_id opt is that user's default-mcp handle" do
+      user = insert_user()
+      [entry] = MCPServers.for_host("tobor.locker", :setup, user_id: user.id)
+      scope = MCPCustomScopes.get_account_default(user.id)
+      assert scope
+      assert entry.id == "custom:#{scope.slug}"
+      assert entry.default == true
+      assert entry.url == "https://tobor.locker/custom/#{scope.slug}/mcp"
+    end
   end
 
   describe "AuthController.mcp_config packaging param" do
@@ -198,7 +232,7 @@ defmodule NoizuPromptLingua.MCP.ScopePackagingTest do
       assert Map.has_key?(body, "oauth")
     end
 
-    test "setup packaging returns the seeded tobor package plus ala_carte" do
+    test "setup packaging without a user returns the seeded tobor package plus ala_carte" do
       conn = AuthController.mcp_config(build_conn(), %{"packaging" => "setup"})
       body = json_response(conn, 200)
       ids = Enum.map(body["servers"], & &1["id"])
@@ -208,6 +242,25 @@ defmodule NoizuPromptLingua.MCP.ScopePackagingTest do
       assert Enum.any?(body["ala_carte"], &(&1["id"] == "sessions"))
       refute Enum.any?(body["ala_carte"], &(&1["id"] == "root"))
       assert String.contains?(body["oauth"]["mcp_url"], "/custom/tobor/mcp")
+      assert body["default_scope"]["slug"] == "tobor"
+    end
+
+    test "setup packaging for a signed-in user returns their default-mcp handle" do
+      user = insert_user()
+
+      conn =
+        build_conn()
+        |> NoizuPromptLingua.Guardian.Plug.put_current_resource(%{user: {:ref, :user, user.id}})
+
+      conn = AuthController.mcp_config(conn, %{"packaging" => "setup"})
+      body = json_response(conn, 200)
+      scope = body["default_scope"]
+      assert scope["name"] == "default-mcp"
+      assert scope["user_id"] == user.id
+      assert scope["slug"] =~ ~r/^[a-z0-9]{12}$/
+      assert Enum.map(body["servers"], & &1["id"]) == ["custom:#{scope["slug"]}"]
+      assert hd(body["servers"])["default"] == true
+      assert String.contains?(body["oauth"]["mcp_url"], "/custom/#{scope["slug"]}/mcp")
     end
 
     test "valid packaging is passed through" do
@@ -229,5 +282,20 @@ defmodule NoizuPromptLingua.MCP.ScopePackagingTest do
       conn = AuthController.mcp_config(build_conn(), %{"packaging" => "bogus"})
       assert %{"error" => _} = json_response(conn, 422)
     end
+  end
+
+  defp insert_user do
+    uniq = System.unique_integer([:positive])
+
+    {:ok, user} =
+      NoizuPromptLingua.Repo.insert(%NoizuPromptLingua.Schema.Users.User{
+        id: Ecto.UUID.generate(),
+        email: "mcp-setup-#{uniq}@example.com",
+        user_name: "mcpsetup#{uniq}",
+        handle: "mcp#{uniq}",
+        status: :active
+      })
+
+    user
   end
 end

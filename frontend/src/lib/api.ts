@@ -280,6 +280,7 @@ export interface McpConfigResponse {
   host: string;
   servers: McpServerConfig[];
   ala_carte?: McpServerConfig[];
+  default_scope?: McpCustomScope | null;
   oauth?: {
     issuer: string;
     mcp_url: string;
@@ -330,6 +331,7 @@ export interface McpCustomGroup {
   id: string;
   label: string;
   desc: string;
+  required?: boolean;
   tools: McpCustomTool[];
 }
 
@@ -346,6 +348,9 @@ export interface McpCustomScope {
   slug: string;
   name: string;
   kind?: string;
+  organization_id?: string | null;
+  project_id?: string | null;
+  user_id?: string | null;
   description?: string | null;
   config: McpCustomScopeConfig;
   url?: string | null;
@@ -1955,6 +1960,14 @@ export const api = {
     });
   },
 
+  adminUserDefaultMcp(userId: string) {
+    return request<{
+      scope: McpCustomScope;
+      servers: McpServerConfig[];
+      ala_carte: McpServerConfig[];
+    }>(`/api/v1/admin/users/${userId}/mcp-default-endpoint`);
+  },
+
   /** Org usage dashboard aggregates (counts, daily/weekly series, attention). */
   getOrgDashboardStats(orgId: string, opts?: { range?: 7 | 14 | 30 }) {
     const suffix = buildQuery({ range: opts?.range });
@@ -2446,6 +2459,21 @@ export const api = {
       ? `?packaging=${encodeURIComponent(opts.packaging)}`
       : "";
     return request<McpConfigResponse>(`/api/v1/auth/mcp/config${q}`);
+  },
+
+  mcpCatalog() {
+    return request<{ groups: McpCustomGroup[] }>("/api/v1/auth/mcp/catalog");
+  },
+
+  getDefaultMcpEndpoint() {
+    return request<{ scope: McpCustomScope }>("/api/v1/auth/mcp/default-endpoint");
+  },
+
+  updateDefaultMcpEndpoint(config: McpCustomScopeConfig) {
+    return request<{ scope: McpCustomScope }>("/api/v1/auth/mcp/default-endpoint", {
+      method: "PATCH",
+      body: JSON.stringify({ scope: { config } }),
+    });
   },
 
   // ── OAuth MCP pairing grants (Phase 4). ──
