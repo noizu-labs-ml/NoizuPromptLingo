@@ -36,8 +36,22 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
   # intentionally omitted here (see report follow-ups).
   @core_variant_groups ~w(sessions projects organizations)
 
+  # Global all-in-one package every account gets. NPL load/spec tools are
+  # attached by MCP.Custom for all_in_one scopes (not a selectable group).
+  @default_package_slug "tobor"
+  @default_package_groups ~w(
+    sessions organizations projects tickets chat artifacts wiki
+    personas instructions memory review assets github notifications
+  )
+
   @doc "The typed-confirmation phrase for disabling required core groups."
   def confirm_phrase, do: @confirm_phrase
+
+  @doc "Slug of the global default package every account is offered."
+  def default_package_slug, do: @default_package_slug
+
+  @doc "Group ids seeded into the default `tobor` all-in-one package."
+  def default_package_groups, do: @default_package_groups
 
   @doc """
   List scopes. Optional `filters`:
@@ -99,6 +113,36 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
 
   def get_by_slug(slug) when is_binary(slug) do
     Repo.get_by(MCPCustomScope, slug: normalize_slug(slug))
+  end
+
+  @doc """
+  Get-or-create the global `tobor` all-in-one scope. Idempotent. This is the
+  single MCP endpoint the setup UI offers by default.
+  """
+  def get_default_package(_opts \\ []) do
+    case get_by_slug(@default_package_slug) do
+      nil ->
+        groups = Map.new(@default_package_groups, fn id -> {id, %{"tools" => %{}}} end)
+
+        attrs = %{
+          "slug" => @default_package_slug,
+          "name" => "Tobor Locker",
+          "description" =>
+            "Default MCP package for every account — sessions, organizations, projects, " <>
+              "tickets, chat, artifacts, wiki, personas, instructions, memory, review, " <>
+              "assets, GitHub, notifications, plus NPL load/spec.",
+          "kind" => "all_in_one",
+          "config" => %{"groups" => groups}
+        }
+
+        case create(attrs) do
+          {:ok, scope} -> scope
+          {:error, _} -> get_by_slug(@default_package_slug)
+        end
+
+      scope ->
+        scope
+    end
   end
 
   @doc """
@@ -180,12 +224,18 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
     end
   end
 
-  def delete(%MCPCustomScope{} = scope), do: Repo.delete(scope)
+  def delete(%MCPCustomScope{slug: slug} = scope) do
+    if slug == @default_package_slug do
+      {:error, :protected}
+    else
+      Repo.delete(scope)
+    end
+  end
 
   def delete(slug) when is_binary(slug) do
     case get_by_slug(slug) do
       nil -> {:error, :not_found}
-      scope -> Repo.delete(scope)
+      scope -> delete(scope)
     end
   end
 

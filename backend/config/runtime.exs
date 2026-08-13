@@ -294,11 +294,18 @@ if config_env() == :prod or config_env() == :dev do
 
   # ── SSO: OIDC ──────────────────────────────────────────────────
   if oidc_client_id = System.get_env("OIDC_CLIENT_ID") do
+    # Authentik's per-provider issuer often has a trailing slash
+    # (`.../application/o/tobor-locker/`). Concatenating "/.well-known/..."
+    # onto that produces a double-slash discovery URL that 404s. Strip first.
+    oidc_issuer =
+      (System.get_env("OIDC_ISSUER") || "")
+      |> String.trim()
+      |> String.trim_trailing("/")
+
     # openid_connect 1.0 takes an explicit config map (atom keys) at each call
     # site rather than a named provider registered in app env.
     config :noizu_prompt_lingua, :oidc_provider, %{
-      discovery_document_uri:
-        System.get_env("OIDC_ISSUER") <> "/.well-known/openid-configuration",
+      discovery_document_uri: oidc_issuer <> "/.well-known/openid-configuration",
       client_id: oidc_client_id,
       client_secret: System.get_env("OIDC_CLIENT_SECRET"),
       redirect_uri: System.get_env("OIDC_REDIRECT_URI") || "https://#{host}/auth/oidc/callback",

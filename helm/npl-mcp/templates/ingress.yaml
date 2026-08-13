@@ -109,6 +109,29 @@ spec:
                 name: {{ include "npl-mcp.fullname" . }}
                 port:
                   name: mcp
+          # SPA finishes the hand-off. Exact so it never hits Phoenix.
+          - path: /auth/sso-callback
+            pathType: Exact
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: http
+          - path: /auth/register
+            pathType: Exact
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: http
+          # Grouped custom MCP scopes: /custom/<slug>/mcp
+          - path: /custom
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: mcp
           - path: /api/auth
             pathType: Prefix
             backend:

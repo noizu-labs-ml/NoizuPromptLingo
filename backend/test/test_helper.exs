@@ -32,6 +32,22 @@ NoizuPromptLingua.MarketingTestSchema.ensure!()
 # Ensure the custom MCP include scope table exists for custom gateway/catalog tests.
 NoizuPromptLingua.MCPCustomScopeTestSchema.ensure!()
 
+# SSO hand-off columns (Liquibase 025) — Helm Liquibase is gated off in prod;
+# tests must not assume the column exists.
+try do
+  Ecto.Adapters.SQL.query!(
+    NoizuPromptLingua.Repo,
+    """
+    ALTER TABLE user_sessions
+      ADD COLUMN IF NOT EXISTS claim_code varchar(255),
+      ADD COLUMN IF NOT EXISTS claim_code_expires_at timestamptz
+    """,
+    []
+  )
+rescue
+  _ -> :ok
+end
+
 # Ensure the Unicode Codex reference tables exist for Unicode domain/controller/MCP tests.
 NoizuPromptLingua.UnicodeCodexTestSchema.ensure!()
 

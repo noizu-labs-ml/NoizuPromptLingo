@@ -122,6 +122,8 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.backend.env.secretName }}
                   key: AUTHENTIK_CLIENT_SECRET
+            - name: OIDC_REDIRECT_URI
+              value: "https://{{ .Values.domain }}/auth/oidc/callback"
             # --- Fixed-key auth (service-account callers) + LLM/web-research ---
             # All optional: dark-launch safe. The app boots without them and
             # degrades gracefully (no API-key auth, no Groq, no Jina search).

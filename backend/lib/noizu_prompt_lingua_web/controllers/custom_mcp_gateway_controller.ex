@@ -11,8 +11,12 @@ defmodule NoizuPromptLinguaWeb.CustomMCPGatewayController do
         |> json(%{error: "Custom MCP scope not found"})
 
       _scope ->
+        resource = "https://#{conn.host}/custom/#{slug}/mcp"
+
         opts =
-          NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.MCP.Custom)
+          NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.MCP.Custom,
+            expected_audience: resource
+          )
           |> Keyword.put(:context, {__MODULE__, :mcp_context})
           |> Noizu.MCP.Transport.StreamableHTTP.Plug.init()
 

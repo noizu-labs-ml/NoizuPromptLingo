@@ -104,6 +104,18 @@ defmodule NoizuPromptLingua.MCP.ScopePackagingTest do
     end
   end
 
+  describe "get_default_package/0" do
+    test "seeds the tobor all_in_one scope once" do
+      first = MCPCustomScopes.get_default_package()
+      second = MCPCustomScopes.get_default_package()
+      assert first.id == second.id
+      assert first.slug == "tobor"
+      assert first.kind == "all_in_one"
+      assert Map.has_key?(first.config["groups"], "sessions")
+      assert Map.has_key?(first.config["groups"], "tickets")
+    end
+  end
+
   describe "for_host/3 packaging" do
     setup do
       {:ok, custom} =
@@ -160,6 +172,7 @@ defmodule NoizuPromptLingua.MCP.ScopePackagingTest do
 
     test "all_in_one returns all_in_one scopes + segmented one-offs" do
       ids = MCPServers.for_host("tobor.locker", :all_in_one) |> Enum.map(& &1.id)
+      assert "custom:tobor" in ids
       assert "custom:aio" in ids
       # seg carries segment: true
       assert "custom:seg" in ids
@@ -177,11 +190,24 @@ defmodule NoizuPromptLingua.MCP.ScopePackagingTest do
   end
 
   describe "AuthController.mcp_config packaging param" do
-    test "missing param returns the default server set with unchanged response shape" do
+    test "missing param returns the default server set with host and servers" do
       conn = AuthController.mcp_config(build_conn(), %{})
       body = json_response(conn, 200)
       assert is_list(body["servers"])
-      assert body |> Map.keys() |> Enum.sort() == ["host", "servers"]
+      assert is_binary(body["host"])
+      assert Map.has_key?(body, "oauth")
+    end
+
+    test "setup packaging returns the seeded tobor package plus ala_carte" do
+      conn = AuthController.mcp_config(build_conn(), %{"packaging" => "setup"})
+      body = json_response(conn, 200)
+      ids = Enum.map(body["servers"], & &1["id"])
+      assert ids == ["custom:tobor"]
+      assert hd(body["servers"])["required"] == true
+      assert is_list(body["ala_carte"])
+      assert Enum.any?(body["ala_carte"], &(&1["id"] == "sessions"))
+      refute Enum.any?(body["ala_carte"], &(&1["id"] == "root"))
+      assert String.contains?(body["oauth"]["mcp_url"], "/custom/tobor/mcp")
     end
 
     test "valid packaging is passed through" do

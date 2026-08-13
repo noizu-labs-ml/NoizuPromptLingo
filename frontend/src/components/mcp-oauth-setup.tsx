@@ -166,8 +166,9 @@ claude mcp add --transport http tobor ${mcpUrl}
       {tab === 'servers' && (
         <div>
           <p className="sg-page-intro" style={{ marginBottom: 12 }}>
-            Tobor Locker serves one aggregator plus optional subdomain MCP servers.
-            Hosted connectors usually use the root URL; advanced setups can target a single domain.
+            Every account gets the grouped <strong>Tobor Locker</strong> package
+            (<span className="font-mono">/custom/tobor/mcp</span>). Extra subdomain
+            endpoints are optional — add them a-la-carte from the CLI setup panel.
           </p>
           {servers.length === 0 ? (
             <p className="sg-page-intro">Loading server catalog…</p>

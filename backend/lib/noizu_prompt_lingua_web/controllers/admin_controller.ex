@@ -923,6 +923,7 @@ defmodule NoizuPromptLinguaWeb.AdminController do
 
   def list_mcp_custom_scopes(conn, _params) do
     host = mcp_host(conn)
+    _ = MCPCustomScopes.get_default_package()
     scopes = MCPCustomScopes.list() |> Enum.map(&MCPCustomScopes.scope_json(&1, host))
     conn |> put_status(:ok) |> json(%{scopes: scopes})
   end
@@ -992,6 +993,10 @@ defmodule NoizuPromptLinguaWeb.AdminController do
     case MCPCustomScopes.delete(slug) do
       {:ok, _} -> conn |> put_status(:ok) |> json(%{message: "Scope deleted"})
       {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Scope not found"})
+      {:error, :protected} ->
+        conn
+        |> put_status(:forbidden)
+        |> json(%{error: "The default Tobor Locker package cannot be deleted"})
     end
   end
 

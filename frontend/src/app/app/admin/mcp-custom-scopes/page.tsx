@@ -16,8 +16,11 @@ type ScopeForm = {
   slug: string;
   name: string;
   description: string;
+  kind: string;
   config: McpCustomScopeConfig;
 };
+
+const DEFAULT_SLUG = 'tobor';
 
 const emptyConfig = (): McpCustomScopeConfig => ({ groups: {} });
 
@@ -34,7 +37,7 @@ function normalizeConfig(config?: McpCustomScopeConfig | null): McpCustomScopeCo
 }
 
 function blankForm(): ScopeForm {
-  return { slug: '', name: '', description: '', config: emptyConfig() };
+  return { slug: '', name: '', description: '', kind: 'custom', config: emptyConfig() };
 }
 
 function formFromScope(scope: McpCustomScope): ScopeForm {
@@ -43,6 +46,7 @@ function formFromScope(scope: McpCustomScope): ScopeForm {
     slug: scope.slug,
     name: scope.name,
     description: scope.description ?? '',
+    kind: scope.kind || 'custom',
     config: normalizeConfig(scope.config),
   };
 }
@@ -106,7 +110,8 @@ export default function AdminMcpCustomScopesPage() {
           const updated = scopesRes.scopes.find((s) => s.slug === current.originalSlug);
           return updated ? formFromScope(updated) : current;
         }
-        return current;
+        const def = scopesRes.scopes.find((s) => s.slug === DEFAULT_SLUG);
+        return def ? formFromScope(def) : current;
       });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to load custom scopes');
@@ -179,6 +184,7 @@ export default function AdminMcpCustomScopesPage() {
         slug: form.slug.trim(),
         name: form.name.trim(),
         description: form.description.trim(),
+        kind: form.kind || 'custom',
         config: form.config,
       };
       const res = form.originalSlug
@@ -195,6 +201,10 @@ export default function AdminMcpCustomScopesPage() {
   }
 
   async function remove(scope: McpCustomScope) {
+    if (scope.slug === DEFAULT_SLUG) {
+      toast.error('The default Tobor Locker package cannot be deleted');
+      return;
+    }
     if (!confirm(`Delete ${scope.name}?`)) return;
     try {
       await api.adminDeleteMcpCustomScope(scope.slug);
@@ -220,10 +230,13 @@ export default function AdminMcpCustomScopesPage() {
     <div className="content">
       <main>
         <div className="projects-header">
-          <h1 className="sg-page-title">Custom MCP Scopes</h1>
+          <h1 className="sg-page-title">MCP endpoints</h1>
         </div>
         <p className="sg-page-intro">
-          Admin-managed MCP presets served from <span className="font-mono">/custom/&lt;slug&gt;/mcp</span>.{' '}
+          Every account is offered the grouped <strong>Tobor Locker</strong> package
+          at <span className="font-mono">/custom/tobor/mcp</span>. Edit its groups
+          below, or add extra a-la-carte endpoints. Served from{' '}
+          <span className="font-mono">/custom/&lt;slug&gt;/mcp</span>.{' '}
           <Link href="/app/admin">Back to Admin</Link>
         </p>
 
@@ -234,7 +247,7 @@ export default function AdminMcpCustomScopesPage() {
             <section className="dash-panel">
               <div className="dash-panel__head">
                 <h2 className="dash-panel__title">Scopes</h2>
-                <button className="sg-btn sg-btn--outline sg-btn--sm" onClick={() => setForm(blankForm())}>New</button>
+                <button className="sg-btn sg-btn--outline sg-btn--sm" onClick={() => setForm(blankForm())}>Add endpoint</button>
               </div>
               {scopes.length === 0 ? (
                 <p className="sg-page-intro">No custom scopes yet.</p>
@@ -248,7 +261,10 @@ export default function AdminMcpCustomScopesPage() {
                       onClick={() => setForm(formFromScope(scope))}
                     >
                       <span>
-                        <span style={{ display: 'block', fontWeight: 600 }}>{scope.name}</span>
+                        <span style={{ display: 'block', fontWeight: 600 }}>
+                          {scope.name}
+                          {scope.slug === DEFAULT_SLUG ? ' (default)' : ''}
+                        </span>
                         <span className="font-mono" style={{ display: 'block', fontSize: 12 }}>{scope.slug}</span>
                       </span>
                     </button>
@@ -288,9 +304,24 @@ export default function AdminMcpCustomScopesPage() {
                   <input
                     id="mcp-slug"
                     value={form.slug}
+                    disabled={form.originalSlug === DEFAULT_SLUG}
                     onChange={(e) => setForm((current) => ({ ...current, slug: slugify(e.target.value) }))}
                   />
                 </div>
+              </div>
+
+              <div className="sg-field">
+                <label htmlFor="mcp-kind">Kind</label>
+                <select
+                  id="mcp-kind"
+                  value={form.kind}
+                  disabled={form.originalSlug === DEFAULT_SLUG}
+                  onChange={(e) => setForm((current) => ({ ...current, kind: e.target.value }))}
+                >
+                  <option value="all_in_one">All-in-one (grouped default package)</option>
+                  <option value="custom">Custom (a-la-carte extra endpoint)</option>
+                  <option value="core_variant">Core variant</option>
+                </select>
               </div>
 
               <div className="sg-field">
@@ -380,7 +411,7 @@ export default function AdminMcpCustomScopesPage() {
               </div>
 
               <div className="modal-actions">
-                {form.originalSlug && (
+                {form.originalSlug && form.originalSlug !== DEFAULT_SLUG && (
                   <button type="button" className="sg-btn sg-btn--danger" onClick={() => selectedScope && remove(selectedScope)}>
                     Delete
                   </button>

@@ -155,6 +155,7 @@ defmodule NoizuPromptLingua.MCPServers do
     * `:core_custom` — core-variant endpoint(s) + custom-scope endpoint(s).
     * `:all_in_one` — the all_in_one endpoint(s) + any task-segmented one-offs
       (scopes whose config carries `segment: true`).
+    * `:setup` — the seeded default `tobor` package only (used by the setup UI).
 
   `opts` (`:organization_id`, `:project_id`) scope the non-default packaging sets
   to global presets plus rows matching the given org/project.
@@ -204,6 +205,8 @@ defmodule NoizuPromptLingua.MCPServers do
   end
 
   defp packaging_servers(host, :all_in_one, opts) do
+    _ = NoizuPromptLingua.MCPCustomScopes.get_default_package()
+
     scoped =
       NoizuPromptLingua.MCPCustomScopes.scopes_for(["all_in_one", "custom", "core_variant"], opts)
 
@@ -215,16 +218,29 @@ defmodule NoizuPromptLingua.MCPServers do
     |> Enum.map(&scope_entry(&1, host))
   end
 
-  # The static server catalog must always be served even if the
-  # `mcp_custom_scopes` table is missing or unhealthy — otherwise
-  # `/auth/mcp/config` 500s and the client setup panel vanishes silently.
-  defp list_custom_scopes_safely do
-    {:ok, NoizuPromptLingua.MCPCustomScopes.list()}
-  rescue
-    e -> {:error, e}
+  defp packaging_servers(host, :setup, _opts) do
+    scope = NoizuPromptLingua.MCPCustomScopes.get_default_package()
+
+    [
+      scope
+      |> scope_entry(host)
+      |> Map.merge(%{required: true, default: true})
+    ]
   end
 
-  defp scope_entry(scope, host) do
+  @doc """
+  Individual subdomain endpoints a user can add a-la-carte on top of the
+  default package. Excludes `root` (replaced by the default grouped endpoint).
+  """
+  def ala_carte(host) when is_binary(host) do
+    Enum.map(customizable(), fn %{id: id} = s ->
+      Map.put(s, :url, "https://#{id}.#{host}/mcp")
+    end)
+  end
+
+  def ala_carte(_), do: ala_carte(default_host())
+
+  def scope_entry(scope, host) do
     %{
       id: "custom:#{scope.slug}",
       label: scope_label(scope),
@@ -233,6 +249,15 @@ defmodule NoizuPromptLingua.MCPServers do
       desc: scope.description || "Custom MCP include scope",
       url: custom_url(scope.slug, host)
     }
+  end
+
+  # The static server catalog must always be served even if the
+  # `mcp_custom_scopes` table is missing or unhealthy — otherwise
+  # `/auth/mcp/config` 500s and the client setup panel vanishes silently.
+  defp list_custom_scopes_safely do
+    {:ok, NoizuPromptLingua.MCPCustomScopes.list()}
+  rescue
+    e -> {:error, e}
   end
 
   defp scope_label(%{kind: "core_variant", name: name}), do: "Core: #{name}"

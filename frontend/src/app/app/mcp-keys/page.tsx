@@ -34,6 +34,7 @@ export default function McpKeysPage() {
 
   // Server config (fetched once from backend so the setup panel never hardcodes a host).
   const [servers, setServers] = useState<McpServerConfig[]>([]);
+  const [alaCarte, setAlaCarte] = useState<McpServerConfig[]>([]);
   const [oauthMcpUrl, setOauthMcpUrl] = useState('https://tobor.locker/mcp');
   const [oauthIssuer, setOauthIssuer] = useState('https://tobor.locker');
   const [asMetadataUrl, setAsMetadataUrl] = useState(
@@ -72,12 +73,13 @@ export default function McpKeysPage() {
     fetchKeys();
     fetchConnections();
     api
-      .mcpConfig()
+      .mcpConfig({ packaging: "setup" })
       .then((cfg) => {
         setServers(cfg.servers);
+        setAlaCarte(cfg.ala_carte ?? []);
         const issuer = cfg.oauth?.issuer || `https://${cfg.host}`;
         setOauthIssuer(issuer);
-        setOauthMcpUrl(cfg.oauth?.mcp_url || `https://${cfg.host}/mcp`);
+        setOauthMcpUrl(cfg.oauth?.mcp_url || `https://${cfg.host}/custom/tobor/mcp`);
         setAsMetadataUrl(
           cfg.oauth?.authorization_server_metadata ||
             `${issuer.replace(/\/$/, '')}/.well-known/oauth-authorization-server`
@@ -198,10 +200,13 @@ export default function McpKeysPage() {
       <main>
         <h1 className="sg-page-title">MCP client setup</h1>
         <p className="sg-page-intro">
-          Connect agents to Tobor Locker. <strong>OAuth is preferred</strong> — hosted clients
-          invent their own <code className="font-mono">client_id</code> via Dynamic Client
+          Connect agents to Tobor Locker with one grouped MCP endpoint — sessions,
+          orgs, projects, tickets, chat, memory, and the rest of the default tool
+          set. <strong>OAuth is preferred</strong> — hosted clients invent their own
+          {' '}<code className="font-mono">client_id</code> via Dynamic Client
           Registration; you only approve access in the browser. There is no OAuth secret to copy
-          from this page.
+          from this page. Admins can edit that default package or add extra endpoints
+          under MCP custom scopes.
         </p>
 
         <McpOauthSetup
@@ -464,6 +469,7 @@ export default function McpKeysPage() {
                 token={tokens[setupKey].token}
                 keyLabel={key?.label ?? "pasted key"}
                 servers={servers}
+                alaCarte={alaCarte}
                 onClose={() => setSetupKey(null)}
               />
             );

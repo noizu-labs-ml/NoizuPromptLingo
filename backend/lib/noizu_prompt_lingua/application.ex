@@ -41,6 +41,7 @@ defmodule NoizuPromptLingua.Application do
           NoizuPromptLingua.Events.WebhookHandler,
           # MCP servers (organization / project / session domains + root aggregator)
           NoizuPromptLingua.MCP,
+          NoizuPromptLingua.MCP.Custom,
           NoizuPromptLingua.MCP.Organizations,
           NoizuPromptLingua.MCP.Projects,
           NoizuPromptLingua.MCP.Clients,

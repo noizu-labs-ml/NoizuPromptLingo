@@ -48,5 +48,17 @@ defmodule NoizuPromptLinguaWeb.MCPCustomScopeControllerTest do
 
     list = conn |> get("/api/v1/admin/mcp-custom-scopes") |> json_response(200)
     assert Enum.any?(list["scopes"], &(&1["slug"] == "ops-admin"))
+    assert Enum.any?(list["scopes"], &(&1["slug"] == "tobor"))
+  end
+
+  test "default tobor package cannot be deleted", %{conn: conn} do
+    conn |> get("/api/v1/admin/mcp-custom-scopes") |> json_response(200)
+
+    denied =
+      conn
+      |> delete("/api/v1/admin/mcp-custom-scopes/tobor")
+      |> json_response(403)
+
+    assert denied["error"] =~ "cannot be deleted"
   end
 end

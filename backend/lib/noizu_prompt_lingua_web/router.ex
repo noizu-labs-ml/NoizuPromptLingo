@@ -18,6 +18,9 @@ defmodule NoizuPromptLinguaWeb.Router do
       key: "_starter_sso",
       signing_salt: "sso_session_salt",
       same_site: "Lax",
+      # HTTPS site (tobor.locker). Without Secure, some browsers / Cloudflare
+      # drop the cookie on the Authentik return and the callback is state_mismatch.
+      secure: true,
       # 15 minutes, raised from 5. This cookie now carries the OIDC flow's
       # `state` and `nonce`, so it must outlive the user's round trip through
       # the identity provider - five minutes does not cover a password plus a

@@ -9,7 +9,8 @@ type McpClient = 'claude' | 'codex' | 'grok';
 interface McpSetupPanelProps {
   token: string; // The MCP JWT token
   keyLabel: string; // Label of the API key
-  servers: McpServerConfig[]; // Servers + URLs from backend config endpoint
+  servers: McpServerConfig[]; // Default grouped endpoint(s)
+  alaCarte?: McpServerConfig[]; // Optional individual subdomain endpoints
   onClose: () => void;
 }
 
@@ -43,17 +44,21 @@ function serverName(id: string) {
  * Server URLs come from the backend config endpoint (host-derived), so this
  * component never hardcodes a host.
  */
-export default function McpSetupPanel({ token, keyLabel, servers, onClose }: McpSetupPanelProps) {
+export default function McpSetupPanel({ token, keyLabel, servers, alaCarte = [], onClose }: McpSetupPanelProps) {
   const [client, setClient] = useState<McpClient>('claude');
+  const [showAlaCarte, setShowAlaCarte] = useState(false);
   const [enabled, setEnabled] = useState<Record<string, boolean>>(() => {
     const state: Record<string, boolean> = {};
     servers.forEach((s) => { state[s.id] = true; });
+    alaCarte.forEach((s) => { state[s.id] = false; });
     return state;
   });
   const [copiedCmd, setCopiedCmd] = useState<string | null>(null);
 
+  const catalog = showAlaCarte ? [...servers, ...alaCarte] : servers;
+
   function toggle(id: string) {
-    const server = servers.find((s) => s.id === id);
+    const server = catalog.find((s) => s.id === id);
     if (server?.required) return;
     setEnabled((prev) => ({ ...prev, [id]: !prev[id] }));
   }
@@ -75,7 +80,7 @@ export default function McpSetupPanel({ token, keyLabel, servers, onClose }: Mcp
       `export AUTH_TOKEN=${token}`,
       '',
     ];
-    servers.filter((s) => enabled[s.id]).forEach((s) => {
+    catalog.filter((s) => enabled[s.id]).forEach((s) => {
       lines.push(getCommandLine(s));
     });
     return lines.join('\n');
@@ -92,9 +97,9 @@ export default function McpSetupPanel({ token, keyLabel, servers, onClose }: Mcp
     }
   }
 
-  const activeCount = servers.filter((s) => enabled[s.id]).length;
-  const rootServer = servers.find((s) => s.id === 'root') ?? servers[0];
-  const oauthMcpUrl = rootServer?.url ?? 'https://tobor.locker/mcp';
+  const activeCount = catalog.filter((s) => enabled[s.id]).length;
+  const rootServer = servers.find((s) => s.default) ?? servers.find((s) => s.id === 'root') ?? servers[0];
+  const oauthMcpUrl = rootServer?.url ?? 'https://tobor.locker/custom/tobor/mcp';
 
   return (
     <div style={{
@@ -192,7 +197,22 @@ export default function McpSetupPanel({ token, keyLabel, servers, onClose }: Mcp
         gap: 6,
         marginBottom: 16,
       }}>
-        {servers.map((s) => (
+        {alaCarte.length > 0 && (
+          <div style={{ marginBottom: 12 }}>
+            <button
+              type="button"
+              onClick={() => setShowAlaCarte((v) => !v)}
+              style={{ ...btnSm, fontSize: 12 }}
+            >
+              {showAlaCarte ? 'Hide extra endpoints' : 'Add individual endpoints'}
+            </button>
+            <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--text-3)' }}>
+              Default is the grouped Tobor Locker package. Extra subdomain endpoints are optional.
+            </span>
+          </div>
+        )}
+
+        {catalog.map((s) => (
           <label
             key={s.id}
             style={{
@@ -220,6 +240,11 @@ export default function McpSetupPanel({ token, keyLabel, servers, onClose }: Mcp
                 color: enabled[s.id] ? 'var(--text-0)' : 'var(--text-3)',
               }}>
                 {s.label}
+                {s.default && (
+                  <span style={{ fontSize: 9, color: 'var(--text-3)', marginLeft: 4 }}>
+                    default
+                  </span>
+                )}
                 {s.required && (
                   <span style={{ fontSize: 9, color: 'var(--text-3)', marginLeft: 4 }}>
                     required

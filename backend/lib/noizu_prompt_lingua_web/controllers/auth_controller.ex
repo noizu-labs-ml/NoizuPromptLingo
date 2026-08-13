@@ -98,6 +98,7 @@ defmodule NoizuPromptLinguaWeb.AuthController do
     case parse_packaging(Map.get(params, "packaging")) do
       {:ok, packaging} ->
         servers = NoizuPromptLingua.MCPServers.for_host(host, packaging, packaging_opts(params))
+        ala_carte = if packaging == :setup, do: NoizuPromptLingua.MCPServers.ala_carte(host), else: []
 
         issuer =
           try do
@@ -106,14 +107,21 @@ defmodule NoizuPromptLinguaWeb.AuthController do
             _ -> "https://#{host}"
           end
 
+        mcp_url =
+          case List.first(servers) do
+            %{url: url} when packaging == :setup and is_binary(url) -> url
+            _ -> "https://#{host}/mcp"
+          end
+
         conn
         |> put_status(:ok)
         |> json(%{
           host: host,
           servers: servers,
+          ala_carte: ala_carte,
           oauth: %{
             issuer: issuer,
-            mcp_url: "https://#{host}/mcp",
+            mcp_url: mcp_url,
             authorization_server_metadata:
               "#{String.trim_trailing(issuer, "/")}/.well-known/oauth-authorization-server"
           },
@@ -123,13 +131,14 @@ defmodule NoizuPromptLinguaWeb.AuthController do
       :error ->
         conn
         |> put_status(:unprocessable_entity)
-        |> json(%{error: "invalid packaging; expected 'core+custom' or 'all-in-one'"})
+        |> json(%{error: "invalid packaging; expected 'core+custom', 'all-in-one', or 'setup'"})
     end
   end
 
   defp parse_packaging(nil), do: {:ok, :default}
   defp parse_packaging("core+custom"), do: {:ok, :core_custom}
   defp parse_packaging("all-in-one"), do: {:ok, :all_in_one}
+  defp parse_packaging("setup"), do: {:ok, :setup}
   defp parse_packaging(_), do: :error
 
   defp packaging_opts(params) do

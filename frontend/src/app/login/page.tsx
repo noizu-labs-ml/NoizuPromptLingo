@@ -31,7 +31,7 @@ export default function LoginPage() {
   const { login, requestMagicLink, requestOtpLogin, verifyOtpLogin } = useAuth();
   const router = useRouter();
   const [mode, setMode] = useState<LoginMode>("password");
-  const [ssoProviders, setSsoProviders] = useState<string[]>([]);
+  const [ssoProviders, setSsoProviders] = useState<string[]>(["oidc"]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [otpCode, setOtpCode] = useState("");
@@ -43,7 +43,15 @@ export default function LoginPage() {
   const [devCode, setDevCode] = useState<string | null>(null);
 
   useEffect(() => {
-    api.ssoProviders().then((res) => setSsoProviders(res.providers)).catch(() => {});
+    // Authentik is the only IdP. Always offer SSO even if the providers
+    // fetch fails (wrong baked API URL used to hide the only working button).
+    api
+      .ssoProviders()
+      .then((res) => {
+        const list = res.providers?.length ? res.providers : ["oidc"];
+        setSsoProviders(list.includes("oidc") ? list : ["oidc", ...list]);
+      })
+      .catch(() => setSsoProviders(["oidc"]));
   }, []);
 
   async function handlePasswordSubmit(e: React.FormEvent) {

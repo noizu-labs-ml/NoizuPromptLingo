@@ -9,6 +9,8 @@ const ERROR_MESSAGES: Record<string, string> = {
   not_provisioned: "No account exists for this email. Please contact your administrator.",
   sso_failed: "SSO authentication failed. Please try again.",
   oidc_failed: "OpenID Connect authentication failed.",
+  state_mismatch: "Sign-in timed out or was started in another tab. Please try again.",
+  nonce_mismatch: "Sign-in could not be verified. Please try again.",
   google_failed: "Google sign-in failed.",
   facebook_failed: "Facebook sign-in failed.",
   github_failed: "GitHub sign-in failed.",

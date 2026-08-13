@@ -1,5 +1,6 @@
 defmodule NoizuPromptLinguaWeb.SSOController do
   use NoizuPromptLinguaWeb, :controller
+  require Logger
 
   alias NoizuPromptLingua.Guardian
   alias NoizuPromptLingua.Organizations
@@ -17,25 +18,27 @@ defmodule NoizuPromptLinguaWeb.SSOController do
   # ── OIDC ──────────────────────────────────────────────────────
 
   def oidc_init(conn, _params) do
-    config = oidc_config()
+    with config when is_map(config) <- oidc_config_or_nil(),
+         state = random_token(),
+         nonce = random_token(),
+         {:ok, uri} <-
+           OpenIDConnect.authorization_uri(config, config.redirect_uri, %{
+             state: state,
+             nonce: nonce
+           }) do
+      conn
+      |> put_session(:sso_state, state)
+      |> put_session(:sso_nonce, nonce)
+      |> redirect(external: uri)
+    else
+      nil ->
+        Logger.error("[SSO] OIDC init skipped: :oidc_provider is not configured")
+        redirect_with_error(conn, "oidc_failed")
 
-    # `state` guards against login-CSRF - an attacker completing a flow so the
-    # victim is silently signed in as the attacker - and `nonce` against
-    # id_token replay. Neither was previously sent. Ueberauth already does this
-    # for the social providers; the raw OIDC path was the gap.
-    state = random_token()
-    nonce = random_token()
-
-    {:ok, uri} =
-      OpenIDConnect.authorization_uri(config, config.redirect_uri, %{
-        state: state,
-        nonce: nonce
-      })
-
-    conn
-    |> put_session(:sso_state, state)
-    |> put_session(:sso_nonce, nonce)
-    |> redirect(external: uri)
+      {:error, reason} ->
+        Logger.error("[SSO] OIDC authorization_uri failed: #{inspect(reason)}")
+        redirect_with_error(conn, "oidc_failed")
+    end
   end
 
   defp verify_state(nil, _received), do: {:error, :state_mismatch}
@@ -99,11 +102,11 @@ defmodule NoizuPromptLinguaWeb.SSOController do
     with {:ok, claimed} <- NoizuPromptLingua.Auth.SSO.claim_session(code),
          {:ok, session} <-
            NoizuPromptLingua.Users.Sessions.get(claimed.id, Noizu.Context.system(), []),
+         user when not is_nil(user) <- resolve_user_from_session(session),
          {:ok, access_token, _} <-
            Guardian.encode_and_sign(session, %{}, token_type: "access", ttl: {1, :hour}),
          {:ok, refresh_token, _} <-
            Guardian.encode_and_sign(session, %{}, token_type: "refresh", ttl: {7, :day}) do
-      user = resolve_user_from_session(session)
       orgs = Organizations.list_user_organizations(user.id)
 
       conn
@@ -174,17 +177,26 @@ defmodule NoizuPromptLinguaWeb.SSOController do
 
   defp oidc_config, do: Application.fetch_env!(:noizu_prompt_lingua, :oidc_provider)
 
+  defp oidc_config_or_nil do
+    Application.get_env(:noizu_prompt_lingua, :oidc_provider)
+  end
+
   defp handle_sso_callback(conn, provider_type, attrs) do
     case NoizuPromptLingua.Auth.SSO.authenticate_sso(provider_type, attrs) do
       {:ok, session} ->
         # authenticate_sso returns the freshly-inserted schema struct with
         # :user not loaded; re-fetch the entity (as register/2 and exchange/2
-        # do) so resolve_user_from_session/1 has a resolvable user.
-        {:ok, loaded} =
-          NoizuPromptLingua.Users.Sessions.get(session.id, Noizu.Context.system(), [])
+        # do) so resolve_user_from_session/1 has a resolvable user. A get
+        # failure must not 500 after Authentik already succeeded — fall back
+        # to the raw session's user_id.
+        user = load_session_user(session)
 
-        user = resolve_user_from_session(loaded)
-        conn = put_session(conn, :oauth_user_id, user.id)
+        conn =
+          if user && Map.get(user, :id) do
+            put_session(conn, :oauth_user_id, user.id)
+          else
+            conn
+          end
 
         # If this login was started from MCP OAuth authorize, resume that flow
         # instead of the SPA hand-off (connectors need a browser code redirect).
@@ -226,14 +238,40 @@ defmodule NoizuPromptLinguaWeb.SSOController do
     end
   end
 
-  defp resolve_user_from_session(%NoizuPromptLingua.Users.Sessions.UserSession{} = session) do
-    case session.user do
+  defp load_session_user(session) do
+    case NoizuPromptLingua.Users.Sessions.get(session.id, Noizu.Context.system(), []) do
+      {:ok, loaded} -> resolve_user_from_session(loaded)
+      _ -> resolve_user_from_session(session)
+    end
+  end
+
+  defp user_ref_from_session(%{user: user}) when not is_nil(user), do: user
+  defp user_ref_from_session(%{user_id: id}) when is_binary(id), do: id
+  defp user_ref_from_session(_), do: nil
+
+  # Entity.ref/1 sometimes wraps as {:ok, {:ref, mod, id}}.
+  defp unwrap_user_ref({:ok, inner}), do: unwrap_user_ref(inner)
+  defp unwrap_user_ref(other), do: other
+
+  defp resolve_user_from_session(session) do
+    case unwrap_user_ref(user_ref_from_session(session)) do
       {:ref, _, id} ->
-        {:ok, user} = NoizuPromptLingua.Users.get_user(id, Noizu.Context.system())
-        user
+        case NoizuPromptLingua.Users.get_user(id, Noizu.Context.system()) do
+          {:ok, user} -> user
+          _ -> nil
+        end
 
       %NoizuPromptLingua.Users.User{} = user ->
         user
+
+      id when is_binary(id) ->
+        case NoizuPromptLingua.Users.get_user(id, Noizu.Context.system()) do
+          {:ok, user} -> user
+          _ -> nil
+        end
+
+      _ ->
+        nil
     end
   end
 

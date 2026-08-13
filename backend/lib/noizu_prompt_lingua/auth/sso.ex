@@ -2,6 +2,7 @@ defmodule NoizuPromptLingua.Auth.SSO do
   alias NoizuPromptLingua.Schema.Users.User, as: UserSchema
   alias NoizuPromptLingua.Schema.Users.Credentials.UserCredential, as: CredentialSchema
   alias NoizuPromptLingua.Schema.Users.Sessions.UserSession, as: SessionSchema
+  alias NoizuPromptLingua.Schema.Auth.Providers.Provider, as: ProviderSchema
   alias NoizuPromptLingua.Schema.Versioned.Names.Name
   import Ecto.Query, only: [from: 2]
 
@@ -13,7 +14,7 @@ defmodule NoizuPromptLingua.Auth.SSO do
   def authenticate_sso(:authentik = provider_type, attrs) do
     email = normalize_email(attrs[:email])
     provider_ref = unwrap_ref(@provider_map[provider_type].())
-    provider_id = provider_ref_id(provider_ref)
+    provider_id = ensure_authentik_provider(provider_ref_id(provider_ref))
     fingerprint = sso_fingerprint(provider_type, attrs)
 
     # Identity is resolved by the linked credential (provider + external subject)
@@ -78,12 +79,33 @@ defmodule NoizuPromptLingua.Auth.SSO do
   end
 
   defp find_user_by_email(email) do
-    q = from u in UserSchema, where: u.email == ^email, where: u.status == :active, limit: 1
+    q =
+      from u in UserSchema,
+        where: u.email == ^email,
+        where: u.status != :deleted,
+        limit: 1
 
     case NoizuPromptLingua.Repo.one(q) do
       nil -> :not_found
       user -> {:ok, user}
     end
+  end
+
+  # Seeds are skipped in some deploys; the credential FK still needs the row.
+  defp ensure_authentik_provider(provider_id) when is_binary(provider_id) do
+    unless NoizuPromptLingua.Repo.get(ProviderSchema, provider_id) do
+      NoizuPromptLingua.Repo.insert!(
+        %ProviderSchema{
+          id: provider_id,
+          title: "Authentik",
+          description: "Authentik OIDC SSO"
+        },
+        on_conflict: :nothing,
+        conflict_target: :id
+      )
+    end
+
+    provider_id
   end
 
   # Raw-insert the SSO credential if the user doesn't already have an active one
@@ -163,7 +185,7 @@ defmodule NoizuPromptLingua.Auth.SSO do
       when provider in ["authentik"] do
     provider_type = String.to_existing_atom(provider)
     provider_ref = unwrap_ref(@provider_map[provider_type].())
-    provider_id = provider_ref_id(provider_ref)
+    provider_id = ensure_authentik_provider(provider_ref_id(provider_ref))
     email = normalize_email(identity[:email])
     handle = derive_handle(email, %{sub: sub})
     sso_attrs = %{sub: sub, email: email}
@@ -175,7 +197,7 @@ defmodule NoizuPromptLingua.Auth.SSO do
         middle: attrs[:middle] || []
       })
 
-    {:ok, user} =
+    {:ok, inserted} =
       NoizuPromptLingua.Repo.insert(
         %UserSchema{
           user_name: handle,
@@ -191,6 +213,13 @@ defmodule NoizuPromptLingua.Auth.SSO do
         on_conflict: :nothing,
         conflict_target: :email
       )
+
+    user =
+      cond do
+        is_binary(inserted.id) -> inserted
+        is_binary(email) -> NoizuPromptLingua.Repo.get_by!(UserSchema, email: email)
+        true -> inserted
+      end
 
     ensure_sso_credential(user, provider_id, provider_type, sso_attrs)
     create_sso_session(user, provider_type)

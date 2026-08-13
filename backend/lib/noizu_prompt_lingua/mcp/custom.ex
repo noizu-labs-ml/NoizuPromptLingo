@@ -42,7 +42,7 @@ defmodule NoizuPromptLingua.MCP.Custom do
   end
 
   def catalog_specs(ctx) do
-    custom_specs(ctx) ++ discovery_specs() ++ overview_specs()
+    custom_specs(ctx) ++ npl_specs(ctx) ++ discovery_specs() ++ overview_specs()
   end
 
   # Hidden overview tool (auto-registered like the discovery block). Its scope is
@@ -95,6 +95,26 @@ defmodule NoizuPromptLingua.MCP.Custom do
 
   defp discovery_specs do
     Tools.expand(@discovery_tools)
+  end
+
+  # NPL load/spec live on the root aggregator, not a selectable group. Include
+  # them on the default all-in-one package so one endpoint covers the daily set.
+  @npl_tools [
+    {NoizuPromptLingua.Tools.NPLLoad, [category: "NPL"]},
+    {NoizuPromptLingua.Tools.NPLSpec, [category: "NPL"]}
+  ]
+
+  defp npl_specs(ctx) do
+    if include_npl?(ctx), do: Tools.expand(@npl_tools), else: []
+  end
+
+  defp include_npl?(ctx) do
+    with slug when is_binary(slug) <- scope_slug(ctx),
+         scope when not is_nil(scope) <- MCPCustomScopes.get_by_slug(slug) do
+      scope.kind == "all_in_one" or scope.slug == MCPCustomScopes.default_package_slug()
+    else
+      _ -> false
+    end
   end
 
   defp tool_category(spec) do

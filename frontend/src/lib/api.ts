@@ -1,4 +1,8 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
+// Browser talks same-origin (ingress splits /api to Phoenix). A baked
+// NEXT_PUBLIC_API_URL that doesn't match the page origin used to hide SSO
+// and fail the code exchange after Authentik.
+const API_URL =
+  typeof window !== "undefined" ? "" : process.env.NEXT_PUBLIC_API_URL || "";
 
 export interface User {
   id: string;
@@ -268,11 +272,14 @@ export interface McpServerConfig {
   required: boolean;
   desc: string;
   url: string;
+  kind?: string;
+  default?: boolean;
 }
 
 export interface McpConfigResponse {
   host: string;
   servers: McpServerConfig[];
+  ala_carte?: McpServerConfig[];
   oauth?: {
     issuer: string;
     mcp_url: string;
@@ -338,6 +345,7 @@ export interface McpCustomScope {
   id: string;
   slug: string;
   name: string;
+  kind?: string;
   description?: string | null;
   config: McpCustomScopeConfig;
   url?: string | null;
@@ -349,6 +357,7 @@ export interface McpCustomScopeInput {
   slug?: string;
   name: string;
   description?: string;
+  kind?: string;
   config: McpCustomScopeConfig;
 }
 
@@ -2432,8 +2441,11 @@ export const api = {
   },
 
   // ── MCP connection config (host + server list with full URLs). ──
-  mcpConfig() {
-    return request<McpConfigResponse>("/api/v1/auth/mcp/config");
+  mcpConfig(opts?: { packaging?: string }) {
+    const q = opts?.packaging
+      ? `?packaging=${encodeURIComponent(opts.packaging)}`
+      : "";
+    return request<McpConfigResponse>(`/api/v1/auth/mcp/config${q}`);
   },
 
   // ── OAuth MCP pairing grants (Phase 4). ──
