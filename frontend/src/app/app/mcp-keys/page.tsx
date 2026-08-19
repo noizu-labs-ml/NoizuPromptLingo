@@ -13,6 +13,7 @@ import {
 } from '@/lib/api';
 import McpSetupPanel from '@/components/mcp-setup-panel';
 import McpOauthSetup from '@/components/mcp-oauth-setup';
+import McpEndpointManager from '@/components/mcp-endpoint-manager';
 
 // Install snippet for the optional Local Tools MCP (filesystem/git tools).
 const LOCAL_MCP_INSTALL = `tar xzf noizu-local-mcp.tar.gz && cd local-mcp && npm i && npm run build
@@ -39,6 +40,8 @@ export default function McpKeysPage() {
   const [alaCarte, setAlaCarte] = useState<McpServerConfig[]>([]);
   const [catalog, setCatalog] = useState<McpCustomGroup[]>([]);
   const [defaultScope, setDefaultScope] = useState<McpCustomScope | null>(null);
+  const [templates, setTemplates] = useState<McpCustomScope[]>([]);
+  const [endpoints, setEndpoints] = useState<McpCustomScope[]>([]);
   const [oauthMcpUrl, setOauthMcpUrl] = useState('https://tobor.locker/mcp');
   const [oauthIssuer, setOauthIssuer] = useState('https://tobor.locker');
   const [asMetadataUrl, setAsMetadataUrl] = useState(
@@ -82,6 +85,16 @@ export default function McpKeysPage() {
         setServers(cfg.servers);
         setAlaCarte(cfg.ala_carte ?? []);
         if (cfg.default_scope) setDefaultScope(cfg.default_scope);
+        api.listMcpEndpoints().then((res) => {
+          setTemplates(res.templates ?? []);
+          setEndpoints(res.endpoints ?? []);
+          if (res.default_scope) {
+            setDefaultScope(res.default_scope);
+            setOauthMcpUrl(res.default_scope.url || cfg.oauth?.mcp_url || `https://${cfg.host}/custom/tobor/mcp`);
+          }
+        }).catch(() => {
+          // Picker is optional; setup URL from packaging=setup still works.
+        });
         const issuer = cfg.oauth?.issuer || `https://${cfg.host}`;
         setOauthIssuer(issuer);
         setOauthMcpUrl(
@@ -107,27 +120,42 @@ export default function McpKeysPage() {
     });
   }, [fetchKeys, fetchConnections]);
 
+  function applyScope(scope: McpCustomScope) {
+    setDefaultScope(scope);
+    if (scope.url) {
+      setOauthMcpUrl(scope.url);
+      setServers([
+        {
+          id: `custom:${scope.slug}`,
+          label: scope.name,
+          required: true,
+          default: true,
+          desc: scope.description || "Custom MCP include scope",
+          url: scope.url,
+          kind: scope.kind,
+        },
+      ]);
+    }
+  }
+
   async function createKey(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setNewKey(null);
 
     try {
-      const data = await api.createMcpKey(label.trim() || "default");
+      const data = await api.createMcpSetupKey(label.trim() || "default", {
+        resource: defaultScope?.url || undefined,
+      });
       setNewKey({ id: data.key.id, raw_key: data.raw_key });
       setLabel("");
       await fetchKeys();
-
-      // Auto-mint a token via the authenticated endpoint so setup is one click.
-      try {
-        const tokenRes = await api.mintMcpTokenAuthenticated(data.raw_key);
-        setTokens((prev) => ({ ...prev, [data.key.id]: tokenRes }));
-        setSetupKey(data.key.id);
-        toast.success("MCP API key created");
-      } catch (tokenErr) {
-        console.error("Failed to auto-mint token for new key:", tokenErr);
-        toast.success("MCP API key created — paste it below to mint a token");
-      }
+      setTokens((prev) => ({
+        ...prev,
+        [data.key.id]: { token: data.token, expires_at: data.expires_at },
+      }));
+      setSetupKey(data.key.id);
+      toast.success("Key generated — add command is ready below");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create key");
     } finally {
@@ -212,18 +240,30 @@ export default function McpKeysPage() {
       <main>
         <h1 className="sg-page-title">MCP client setup</h1>
         <p className="sg-page-intro">
-          Every account gets a <strong>default-mcp</strong> custom endpoint
+          <strong>Tobor Locker</strong> is the standard custom endpoint
           {defaultScope?.slug ? (
             <>
               {' '}(<span className="font-mono">/custom/{defaultScope.slug}/mcp</span>)
             </>
           ) : null}
-          {' '}preloaded with the standard services. Paste that one URL. Tweak
-          what&apos;s included below, or switch to the à la carte tab for individual
-          subdomain servers. <strong>OAuth is preferred</strong> — hosted clients
-          invent their own <code className="font-mono">client_id</code> via Dynamic
-          Client Registration; you only approve access in the browser.
+          . Every user and organization gets one from that template. Choose it,
+          edit what it includes, or copy it. <strong>OAuth is preferred</strong> —
+          hosted clients invent their own <code className="font-mono">client_id</code> via
+          Dynamic Client Registration. The À la carte tab is the old per-subdomain flow.
         </p>
+
+        <McpEndpointManager
+          templates={templates}
+          endpoints={endpoints}
+          selected={defaultScope}
+          catalog={catalog}
+          onSelect={applyScope}
+          onChange={({ templates: nextTemplates, endpoints: nextEndpoints, selected }) => {
+            setTemplates(nextTemplates);
+            setEndpoints(nextEndpoints);
+            applyScope(selected);
+          }}
+        />
 
         <McpOauthSetup
           mcpUrl={oauthMcpUrl}
@@ -233,7 +273,7 @@ export default function McpKeysPage() {
           alaCarte={alaCarte}
           catalog={catalog}
           defaultScope={defaultScope}
-          onDefaultScopeChange={setDefaultScope}
+          onDefaultScopeChange={applyScope}
         />
 
         <section className="dash-panel" style={{ marginTop: 'var(--space-4)' }}>
@@ -323,44 +363,22 @@ export default function McpKeysPage() {
                 <span className="dash-badge">deprecated</span>
               </div>
               <p className="sg-page-intro" style={{ marginBottom: 12 }}>
-                Only for CLIs that <strong>cannot</strong> do OAuth yet. Create a key (shown once),
-                mint a JWT, and pass <code className="font-mono">Authorization: Bearer …</code>.
-                Prefer OAuth above — ChatGPT/Claude.ai connectors <strong>reject</strong> static
-                Bearer keys.
+                Only for CLIs that <strong>cannot</strong> do OAuth yet. One click
+                generates a key and the <code className="font-mono">mcp add</code> command
+                for the selected custom endpoint. Prefer OAuth above — ChatGPT/Claude.ai
+                connectors <strong>reject</strong> static Bearer keys.
               </p>
             </section>
 
-            {/* Paste an existing key to mint a token (non-destructive). */}
             <section className="dash-panel" style={{ marginTop: 'var(--space-4)' }}>
               <div className="dash-panel__head">
-                <h2 className="dash-panel__title">Mint token from existing key</h2>
+                <h2 className="dash-panel__title">Generate key &amp; add command</h2>
+                <span className="dash-badge">one step</span>
               </div>
               <p className="sg-page-intro" style={{ marginBottom: 12 }}>
-                Already have a raw API key? Paste it here — combined with your login it mints an MCP
-                JWT without creating a new key.
+                Creates a key, mints a JWT, and shows the add command for{' '}
+                <span className="font-mono">{defaultScope?.url || oauthMcpUrl}</span>.
               </p>
-              <form className="gh-add-form" onSubmit={mintFromPaste}>
-                <input
-                  className="gh-add-form__input"
-                  value={pastedKey}
-                  onChange={(e) => setPastedKey(e.target.value)}
-                  placeholder="Paste raw API key"
-                  aria-label="Raw API key"
-                  style={{ flex: 2 }}
-                />
-                <button className="sg-btn sg-btn--black sg-btn--sm" type="submit" disabled={minting || !pastedKey.trim()}>
-                  {minting ? "Minting…" : "Mint Token"}
-                </button>
-              </form>
-            </section>
-
-            {/* Create key form */}
-            <section className="dash-panel" style={{ marginTop: 'var(--space-4)' }}>
-              <div className="dash-panel__head">
-                <h2 className="dash-panel__title">Legacy: create MCP API key</h2>
-                <span className="dash-badge">deprecated</span>
-              </div>
-
               <form className="gh-add-form" onSubmit={createKey}>
                 <input
                   className="gh-add-form__input"
@@ -370,24 +388,22 @@ export default function McpKeysPage() {
                   aria-label="Key label"
                 />
                 <button className="sg-btn sg-btn--black sg-btn--sm" type="submit" disabled={loading}>
-                  {loading ? "Creating…" : "Generate Key"}
+                  {loading ? "Generating…" : "Generate key & add command"}
                 </button>
               </form>
-
-              {newKey && (
-                <div className="authz-reveal" style={{ marginTop: 16 }}>
-                  <div className="authz-reveal__label">Raw key (shown once):</div>
-                  <div className="authz-reveal__row">
-                    <code className="authz-reveal__key font-mono">{newKey.raw_key}</code>
-                    <button
-                      className="sg-btn sg-btn--outline sg-btn--sm"
-                      onClick={() => copyText(newKey.raw_key, newKey.id)}>
-                      {copied === newKey.id ? "Copied!" : "Copy"}
-                    </button>
-                  </div>
-                  <p className="sg-page-intro">Store this securely — it cannot be retrieved again.</p>
-                </div>
-              )}
+              <form className="gh-add-form" onSubmit={mintFromPaste} style={{ marginTop: 12 }}>
+                <input
+                  className="gh-add-form__input"
+                  value={pastedKey}
+                  onChange={(e) => setPastedKey(e.target.value)}
+                  placeholder="Or paste an existing raw API key"
+                  aria-label="Raw API key"
+                  style={{ flex: 2 }}
+                />
+                <button className="sg-btn sg-btn--outline sg-btn--sm" type="submit" disabled={minting || !pastedKey.trim()}>
+                  {minting ? "Minting…" : "Mint & add command"}
+                </button>
+              </form>
             </section>
           </>
         ) : (
@@ -491,6 +507,15 @@ export default function McpKeysPage() {
                 servers={servers}
                 alaCarte={alaCarte}
                 defaultScope={defaultScope}
+                endpoints={endpoints}
+                templates={templates}
+                catalog={catalog}
+                rawKey={newKey && setupKey === newKey.id ? newKey.raw_key : null}
+                onSelectEndpoint={applyScope}
+                onEndpointChange={(scope) => {
+                  setEndpoints((prev) => prev.map((s) => (s.id === scope.id ? { ...s, ...scope } : s)));
+                  applyScope(scope);
+                }}
                 onClose={() => setSetupKey(null)}
               />
             );

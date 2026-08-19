@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import type { McpCustomScope, McpServerConfig } from '@/lib/api';
+import { api, type McpCustomGroup, type McpCustomScope, type McpServerConfig } from '@/lib/api';
+import McpIncludeEditor from '@/components/mcp-include-editor';
 
 type McpClient = 'claude' | 'codex' | 'grok';
 type SetupTab = 'default' | 'alacarte';
@@ -13,6 +14,12 @@ interface McpSetupPanelProps {
   servers: McpServerConfig[]; // Default grouped endpoint(s)
   alaCarte?: McpServerConfig[]; // Optional individual subdomain endpoints
   defaultScope?: McpCustomScope | null;
+  endpoints?: McpCustomScope[];
+  templates?: McpCustomScope[];
+  catalog?: McpCustomGroup[];
+  rawKey?: string | null;
+  onSelectEndpoint?: (scope: McpCustomScope) => void;
+  onEndpointChange?: (scope: McpCustomScope) => void;
   onClose: () => void;
 }
 
@@ -53,6 +60,12 @@ export default function McpSetupPanel({
   servers,
   alaCarte = [],
   defaultScope = null,
+  endpoints = [],
+  templates = [],
+  catalog = [],
+  rawKey = null,
+  onSelectEndpoint,
+  onEndpointChange,
   onClose,
 }: McpSetupPanelProps) {
   const [client, setClient] = useState<McpClient>('claude');
@@ -65,12 +78,42 @@ export default function McpSetupPanel({
   });
   const [copiedCmd, setCopiedCmd] = useState<string | null>(null);
 
-  const endpointCatalog = tab === 'alacarte' ? [...servers, ...alaCarte] : servers;
+  const selectable = useMemo(() => {
+    const seen = new Set<string>();
+    const rows: McpCustomScope[] = [];
+    for (const row of [...endpoints, ...templates]) {
+      if (!row?.id || seen.has(row.id)) continue;
+      seen.add(row.id);
+      rows.push(row);
+    }
+    return rows;
+  }, [endpoints, templates]);
+
+  const activeScope = defaultScope;
+
+  const defaultServers: McpServerConfig[] = activeScope?.url
+    ? [{
+        id: `custom:${activeScope.slug}`,
+        label: activeScope.name,
+        required: true,
+        default: true,
+        desc: activeScope.description || 'Custom MCP include scope',
+        url: activeScope.url,
+        kind: activeScope.kind,
+      }]
+    : servers;
+
+  const endpointCatalog = tab === 'alacarte' ? [...defaultServers, ...alaCarte] : defaultServers;
+
+  function isEnabled(id: string) {
+    if (tab === 'default') return enabled[id] !== false;
+    return !!enabled[id];
+  }
 
   function toggle(id: string) {
     const server = endpointCatalog.find((s) => s.id === id);
     if (server?.required) return;
-    setEnabled((prev) => ({ ...prev, [id]: !prev[id] }));
+    setEnabled((prev) => ({ ...prev, [id]: !isEnabled(id) }));
   }
 
   function getCommandLine(server: McpServerConfig) {
@@ -90,7 +133,7 @@ export default function McpSetupPanel({
       `export AUTH_TOKEN=${token}`,
       '',
     ];
-    endpointCatalog.filter((s) => enabled[s.id]).forEach((s) => {
+    endpointCatalog.filter((s) => isEnabled(s.id)).forEach((s) => {
       lines.push(getCommandLine(s));
     });
     return lines.join('\n');
@@ -107,7 +150,7 @@ export default function McpSetupPanel({
     }
   }
 
-  const activeCount = endpointCatalog.filter((s) => enabled[s.id]).length;
+  const activeCount = endpointCatalog.filter((s) => isEnabled(s.id)).length;
   const rootServer = servers.find((s) => s.default) ?? servers.find((s) => s.id === 'root') ?? servers[0];
   const oauthMcpUrl = defaultScope?.url ?? rootServer?.url ?? 'https://tobor.locker/custom/tobor/mcp';
 
@@ -204,7 +247,7 @@ export default function McpSetupPanel({
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
         {([
           { id: 'default' as const, label: 'Default MCP' },
-          { id: 'alacarte' as const, label: 'À la carte' },
+          { id: 'alacarte' as const, label: 'À la carte (old flow)' },
         ]).map((t) => (
           <button
             key={t.id}
@@ -224,17 +267,46 @@ export default function McpSetupPanel({
 
       {tab === 'default' && (
         <div style={{ marginBottom: 16 }}>
+          {selectable.length > 0 ? (
+            <div className="sg-field" style={{ marginBottom: 12 }}>
+              <label htmlFor="mcp-setup-endpoint">Custom endpoint</label>
+              <select
+                id="mcp-setup-endpoint"
+                value={activeScope?.id ?? ''}
+                onChange={(e) => {
+                  const next = selectable.find((s) => s.id === e.target.value);
+                  if (next) onSelectEndpoint?.(next);
+                }}
+              >
+                {selectable.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name} — /custom/{s.slug}/mcp
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
           <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 10 }}>
             One custom endpoint
-            {defaultScope?.slug ? (
+            {activeScope?.slug ? (
               <>
                 {' '}with handle{' '}
-                <span className="font-mono" style={{ color: 'var(--text-1)' }}>{defaultScope.slug}</span>
+                <span className="font-mono" style={{ color: 'var(--text-1)' }}>{activeScope.slug}</span>
               </>
             ) : null}
-            . Included services are edited on the Default MCP tab above; this
-            command registers that single URL.
+            . This command registers that single URL. Use the À la carte tab
+            for the old per-subdomain flow.
           </div>
+          {activeScope && catalog.length > 0 ? (
+            <McpIncludeEditor
+              key={activeScope.id}
+              catalog={catalog}
+              scope={activeScope}
+              readOnly={activeScope.editable === false}
+              save={(config) => api.updateMcpEndpoint(activeScope.id, { config }).then((r) => r.endpoint)}
+              onSaved={(scope) => onEndpointChange?.(scope)}
+            />
+          ) : null}
         </div>
       )}
 
@@ -246,7 +318,8 @@ export default function McpSetupPanel({
           marginBottom: 16,
         }}>
           <div style={{ gridColumn: '1 / -1', fontSize: 11, color: 'var(--text-3)', marginBottom: 4 }}>
-            Manual extra endpoints — each selected row becomes its own <span className="font-mono">mcp add</span>.
+            Old flow — each selected subdomain is its own <span className="font-mono">mcp add</span>.
+            Prefer the Default MCP tab (one Tobor Locker URL) unless you need a split catalog.
           </div>
           {endpointCatalog.map((s) => (
             <label
@@ -257,15 +330,15 @@ export default function McpSetupPanel({
                 gap: 8,
                 padding: '6px 10px',
                 borderRadius: 6,
-                background: enabled[s.id] ? 'var(--accent-dim)' : 'var(--bg-3)',
-                border: `1px solid ${enabled[s.id] ? 'var(--accent)' : 'var(--border)'}`,
+                background: isEnabled(s.id) ? 'var(--accent-dim)' : 'var(--bg-3)',
+                border: `1px solid ${isEnabled(s.id) ? 'var(--accent)' : 'var(--border)'}`,
                 cursor: s.required ? 'default' : 'pointer',
                 fontSize: 12,
               }}
             >
               <input
                 type="checkbox"
-                checked={enabled[s.id]}
+                checked={isEnabled(s.id)}
                 onChange={() => toggle(s.id)}
                 disabled={s.required}
                 style={{ accentColor: 'var(--accent)' }}
@@ -273,7 +346,7 @@ export default function McpSetupPanel({
               <div>
                 <div style={{
                   fontWeight: 500,
-                  color: enabled[s.id] ? 'var(--text-0)' : 'var(--text-3)',
+                  color: isEnabled(s.id) ? 'var(--text-0)' : 'var(--text-3)',
                 }}>
                   {s.label}
                   {s.default && (
@@ -310,6 +383,14 @@ export default function McpSetupPanel({
         >
           {copiedCmd === 'script' ? 'Copied!' : `Copy (${activeCount})`}
         </button>
+        {rawKey ? (
+          <div className="authz-reveal" style={{ marginBottom: 12 }}>
+            <div className="authz-reveal__label">Raw API key (shown once)</div>
+            <div className="authz-reveal__row">
+              <code className="authz-reveal__key font-mono">{rawKey}</code>
+            </div>
+          </div>
+        ) : null}
         <pre style={{
           margin: 0,
           padding: 16,

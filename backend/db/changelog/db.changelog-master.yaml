@@ -226,3 +226,6 @@ databaseChangeLog:
   - include:
       file: 075-mcp-account-default.yaml
       relativeToChangelogFile: true
+  - include:
+      file: 076-mcp-endpoint-templates.yaml
+      relativeToChangelogFile: true

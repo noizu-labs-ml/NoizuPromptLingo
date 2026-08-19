@@ -351,11 +351,21 @@ export interface McpCustomScope {
   organization_id?: string | null;
   project_id?: string | null;
   user_id?: string | null;
+  is_default?: boolean;
+  source_template_slug?: string | null;
+  owner_kind?: "template" | "user" | "organization" | string;
+  editable?: boolean;
   description?: string | null;
   config: McpCustomScopeConfig;
   url?: string | null;
   inserted_at: string;
   updated_at?: string;
+}
+
+export interface McpEndpointsResponse {
+  templates: McpCustomScope[];
+  endpoints: McpCustomScope[];
+  default_scope: McpCustomScope | null;
 }
 
 export interface McpCustomScopeInput {
@@ -2428,6 +2438,24 @@ export const api = {
     });
   },
 
+  /** One-step: create a key and mint the JWT used by `mcp add` commands. */
+  createMcpSetupKey(label = "default", opts?: { expiresAt?: string; resource?: string }) {
+    return request<{
+      key: McpApiKey;
+      raw_key: string;
+      token: string;
+      expires_at: string;
+      token_type?: string;
+      expires_in?: number;
+    }>("/api/v1/auth/mcp-keys/setup", {
+      method: "POST",
+      body: JSON.stringify({
+        key: { label, expires_at: opts?.expiresAt },
+        resource: opts?.resource,
+      }),
+    });
+  },
+
   revokeMcpKey(id: string) {
     return request<{ key: McpApiKey }>(`/api/v1/auth/mcp-keys/${id}`, {
       method: "DELETE",
@@ -2473,6 +2501,60 @@ export const api = {
     return request<{ scope: McpCustomScope }>("/api/v1/auth/mcp/default-endpoint", {
       method: "PATCH",
       body: JSON.stringify({ scope: { config } }),
+    });
+  },
+
+  listMcpEndpoints() {
+    return request<McpEndpointsResponse>("/api/v1/auth/mcp/endpoints");
+  },
+
+  getMcpEndpoint(id: string) {
+    return request<{ endpoint: McpCustomScope }>(`/api/v1/auth/mcp/endpoints/${id}`);
+  },
+
+  createMcpEndpoint(input: {
+    source_id?: string;
+    source_slug?: string;
+    name?: string;
+    description?: string;
+    organization_id?: string;
+    use?: boolean;
+  }) {
+    return request<{ endpoint: McpCustomScope }>("/api/v1/auth/mcp/endpoints", {
+      method: "POST",
+      body: JSON.stringify({ endpoint: input }),
+    });
+  },
+
+  updateMcpEndpoint(
+    id: string,
+    patch: Partial<{ name: string; description: string; config: McpCustomScopeConfig; use: boolean; confirm: string }>,
+  ) {
+    return request<{ endpoint: McpCustomScope; scope: McpCustomScope }>(
+      `/api/v1/auth/mcp/endpoints/${id}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ endpoint: patch }),
+      },
+    );
+  },
+
+  copyMcpEndpoint(id: string, input?: { name?: string; organization_id?: string; use?: boolean }) {
+    return request<{ endpoint: McpCustomScope }>(`/api/v1/auth/mcp/endpoints/${id}/copy`, {
+      method: "POST",
+      body: JSON.stringify({ endpoint: input ?? {} }),
+    });
+  },
+
+  useMcpEndpoint(id: string) {
+    return request<{ endpoint: McpCustomScope }>(`/api/v1/auth/mcp/endpoints/${id}/use`, {
+      method: "POST",
+    });
+  },
+
+  deleteMcpEndpoint(id: string) {
+    return request<{ ok: boolean; id: string }>(`/api/v1/auth/mcp/endpoints/${id}`, {
+      method: "DELETE",
     });
   },
 

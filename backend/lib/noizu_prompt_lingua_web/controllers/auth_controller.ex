@@ -327,6 +327,87 @@ defmodule NoizuPromptLinguaWeb.AuthController do
     conn |> put_status(:ok) |> json(%{keys: keys})
   end
 
+  @doc """
+  One-step CLI setup: create an API key and mint a JWT in the same request.
+  """
+  def create_mcp_setup_key(conn, params) do
+    if not NoizuPromptLingua.MCP.LegacyKeys.create_enabled?() do
+      conn
+      |> put_status(:gone)
+      |> json(NoizuPromptLingua.MCP.LegacyKeys.disabled_response())
+    else
+      key_params = Map.get(params, "key") || params
+      user = resolve_setup_user(conn)
+
+      if is_nil(user) do
+        conn |> put_status(:unauthorized) |> json(%{error: "authentication required"})
+      else
+        do_create_mcp_setup_key(conn, params, key_params, user)
+      end
+    end
+  end
+
+  defp do_create_mcp_setup_key(conn, params, key_params, user) do
+      label = Map.get(key_params, "label") || Map.get(params, "label") || "default"
+      resource = params["resource"] || params["aud"] || key_params["resource"]
+
+      case MCPApiKeys.parse_expires_at(Map.get(key_params, "expires_at") || params["expires_at"]) do
+        {:ok, expires_at} ->
+          case MCPApiKeys.generate_api_key(user.id, label, expires_at: expires_at) do
+            {:ok, key, raw_key} ->
+              mcp_user = %{id: user.id, email: user.email, name: user.user_name}
+
+              mint_opts =
+                if is_binary(resource) and resource != "" do
+                  [resource: resource]
+                else
+                  []
+                end
+
+              {:ok, token, expires_at_tok} =
+                NoizuPromptLingua.Token.mint(mcp_user, key, mint_opts)
+
+              conn
+              |> put_status(:created)
+              |> json(%{
+                key: mcp_key_json(key),
+                raw_key: raw_key,
+                token: token,
+                expires_at: DateTime.to_iso8601(expires_at_tok),
+                token_type: "Bearer",
+                expires_in: max(DateTime.diff(expires_at_tok, DateTime.utc_now()), 0)
+              })
+
+            {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
+              conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+
+            {:error, reason} ->
+              conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
+          end
+
+        :error ->
+          conn
+          |> put_status(:unprocessable_entity)
+          |> json(%{error: "expires_at must be a future ISO8601 timestamp"})
+      end
+  end
+
+  defp resolve_setup_user(conn) do
+    case Guardian.Plug.current_resource(conn) do
+      %NoizuPromptLingua.Users.Sessions.UserSession{} = session ->
+        resolve_user_from_session(session)
+
+      %{user: {:ref, _, id}} when is_binary(id) ->
+        Repo.get(UserSchema, id)
+
+      %{user: %{id: id}} when is_binary(id) ->
+        Repo.get(UserSchema, id)
+
+      _ ->
+        nil
+    end
+  end
+
   def create_mcp_key(conn, %{"key" => key_params}) do
     if not NoizuPromptLingua.MCP.LegacyKeys.create_enabled?() do
       conn

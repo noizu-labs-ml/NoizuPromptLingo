@@ -25,6 +25,12 @@ defmodule NoizuPromptLinguaWeb.OrganizationController do
            user.id
          ) do
       {:ok, org} ->
+        try do
+          _ = NoizuPromptLingua.MCPCustomScopes.ensure_org_default(org.id, org.name)
+        rescue
+          _ -> :ok
+        end
+
         conn
         |> put_status(:created)
         |> json(%{

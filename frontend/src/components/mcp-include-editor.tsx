@@ -13,13 +13,21 @@ interface McpIncludeEditorProps {
   catalog: McpCustomGroup[];
   scope: McpCustomScope;
   onSaved?: (scope: McpCustomScope) => void;
+  readOnly?: boolean;
+  save?: (config: McpCustomScopeConfig) => Promise<McpCustomScope>;
 }
 
 function included(config: McpCustomScopeConfig, groupId: string) {
   return !!config.groups[groupId] && config.groups[groupId].disabled !== true;
 }
 
-export default function McpIncludeEditor({ catalog, scope, onSaved }: McpIncludeEditorProps) {
+export default function McpIncludeEditor({
+  catalog,
+  scope,
+  onSaved,
+  readOnly = false,
+  save,
+}: McpIncludeEditorProps) {
   const [config, setConfig] = useState<McpCustomScopeConfig>(() => ({
     groups: { ...(scope.config?.groups ?? {}) },
   }));
@@ -45,11 +53,14 @@ export default function McpIncludeEditor({ catalog, scope, onSaved }: McpInclude
     });
   }
 
-  async function save() {
+  async function persist() {
+    if (readOnly) return;
     setSaving(true);
     try {
-      const res = await api.updateDefaultMcpEndpoint(config);
-      onSaved?.(res.scope);
+      const updated = save
+        ? await save(config)
+        : (await api.updateDefaultMcpEndpoint(config)).scope;
+      onSaved?.(updated);
       toast.success('Included services updated');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to save included services');
@@ -73,17 +84,21 @@ export default function McpIncludeEditor({ catalog, scope, onSaved }: McpInclude
             Included services
           </div>
           <div style={{ fontSize: 11, color: 'var(--text-3)' }}>
-            These ride on your single default-mcp endpoint — not extra servers.
+            {readOnly
+              ? 'Read-only template. Copy it to your endpoints to edit included services.'
+              : 'These ride on this custom endpoint — one URL, not extra servers.'}
           </div>
         </div>
-        <button
-          type="button"
-          className="sg-btn sg-btn--black sg-btn--sm"
-          onClick={save}
-          disabled={saving}
-        >
-          {saving ? 'Saving…' : `Save (${selectedCount})`}
-        </button>
+        {!readOnly ? (
+          <button
+            type="button"
+            className="sg-btn sg-btn--black sg-btn--sm"
+            onClick={persist}
+            disabled={saving}
+          >
+            {saving ? 'Saving…' : `Save (${selectedCount})`}
+          </button>
+        ) : null}
       </div>
 
       <div style={{
@@ -104,7 +119,7 @@ export default function McpIncludeEditor({ catalog, scope, onSaved }: McpInclude
                 borderRadius: 6,
                 background: on ? 'var(--accent-dim)' : 'var(--bg-3)',
                 border: `1px solid ${on ? 'var(--accent)' : 'var(--border)'}`,
-                cursor: 'pointer',
+                cursor: readOnly ? 'default' : 'pointer',
                 fontSize: 12,
               }}
             >
@@ -112,6 +127,7 @@ export default function McpIncludeEditor({ catalog, scope, onSaved }: McpInclude
                 type="checkbox"
                 checked={on}
                 onChange={(e) => toggle(group.id, e.target.checked)}
+                disabled={readOnly}
                 style={{ accentColor: 'var(--accent)' }}
               />
               <div>

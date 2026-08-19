@@ -1,0 +1,58 @@
+databaseChangeLog:
+  # Multiple personal/org custom MCP endpoints. Each user/org still has exactly
+  # one default (cloned from the global `tobor` template); extra copies are
+  # allowed. is_default + source_template_slug track that relationship.
+  - changeSet:
+      id: 076a-mcp-custom-scopes-endpoint-columns
+      author: tobor-locker
+      preConditions:
+        - onFail: HALT
+        - onFailMessage: >-
+            mcp_custom_scopes is missing — run the Ecto migration
+            20260627002000_create_mcp_custom_scopes (Release.migrate) before
+            `liquibase update`.
+        - tableExists:
+            tableName: mcp_custom_scopes
+      changes:
+        - sql:
+            sql: |
+              ALTER TABLE mcp_custom_scopes
+                ADD COLUMN IF NOT EXISTS is_default boolean NOT NULL DEFAULT false;
+              ALTER TABLE mcp_custom_scopes
+                ADD COLUMN IF NOT EXISTS source_template_slug text;
+              UPDATE mcp_custom_scopes
+                 SET is_default = true
+               WHERE user_id IS NOT NULL;
+              UPDATE mcp_custom_scopes
+                 SET source_template_slug = 'tobor'
+               WHERE user_id IS NOT NULL
+                 AND source_template_slug IS NULL;
+      rollback:
+        - sql:
+            sql: |
+              ALTER TABLE mcp_custom_scopes
+                DROP COLUMN IF EXISTS source_template_slug;
+              ALTER TABLE mcp_custom_scopes
+                DROP COLUMN IF EXISTS is_default;
+
+  - changeSet:
+      id: 076b-mcp-custom-scopes-default-indexes
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              DROP INDEX IF EXISTS uq_mcp_custom_scopes_user_default;
+              CREATE UNIQUE INDEX IF NOT EXISTS uq_mcp_custom_scopes_user_default
+                ON mcp_custom_scopes (user_id)
+                WHERE user_id IS NOT NULL AND is_default = true;
+              CREATE UNIQUE INDEX IF NOT EXISTS uq_mcp_custom_scopes_org_default
+                ON mcp_custom_scopes (organization_id)
+                WHERE organization_id IS NOT NULL AND user_id IS NULL AND is_default = true;
+      rollback:
+        - sql:
+            sql: |
+              DROP INDEX IF EXISTS uq_mcp_custom_scopes_org_default;
+              DROP INDEX IF EXISTS uq_mcp_custom_scopes_user_default;
+              CREATE UNIQUE INDEX IF NOT EXISTS uq_mcp_custom_scopes_user_default
+                ON mcp_custom_scopes (user_id)
+                WHERE user_id IS NOT NULL;

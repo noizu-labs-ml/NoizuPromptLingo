@@ -117,15 +117,17 @@ defmodule NoizuPromptLingua.MCP.ScopePackagingTest do
   end
 
   describe "ensure_account_default/1" do
-    test "seeds a per-user default-mcp custom endpoint with a short uuid handle" do
+    test "seeds a per-user Tobor Locker endpoint cloned from the tobor template" do
       user = insert_user()
       first = MCPCustomScopes.ensure_account_default(user.id)
       second = MCPCustomScopes.ensure_account_default(user.id)
 
       assert first.id == second.id
-      assert first.name == "default-mcp"
+      assert first.name == "Tobor Locker"
       assert first.kind == "custom"
       assert first.user_id == user.id
+      assert first.is_default == true
+      assert first.source_template_slug == "tobor"
       assert first.slug =~ ~r/^[a-z0-9]{12}$/
       assert Map.has_key?(first.config["groups"], "sessions")
       assert Map.has_key?(first.config["groups"], "tickets")
@@ -255,7 +257,7 @@ defmodule NoizuPromptLingua.MCP.ScopePackagingTest do
       conn = AuthController.mcp_config(conn, %{"packaging" => "setup"})
       body = json_response(conn, 200)
       scope = body["default_scope"]
-      assert scope["name"] == "default-mcp"
+      assert scope["name"] == "Tobor Locker"
       assert scope["user_id"] == user.id
       assert scope["slug"] =~ ~r/^[a-z0-9]{12}$/
       assert Enum.map(body["servers"], & &1["id"]) == ["custom:#{scope["slug"]}"]
@@ -281,6 +283,87 @@ defmodule NoizuPromptLingua.MCP.ScopePackagingTest do
     test "invalid packaging returns 422" do
       conn = AuthController.mcp_config(build_conn(), %{"packaging" => "bogus"})
       assert %{"error" => _} = json_response(conn, 422)
+    end
+  end
+
+  describe "copy/2 and org defaults" do
+    test "copy clones groups onto a new personal handle" do
+      user = insert_user()
+      source = MCPCustomScopes.ensure_account_default(user.id)
+
+      assert {:ok, clone} =
+               MCPCustomScopes.copy(source, %{
+                 "user_id" => user.id,
+                 "name" => "Lean pack"
+               })
+
+      assert clone.id != source.id
+      assert clone.slug != source.slug
+      assert clone.name == "Lean pack"
+      assert clone.is_default == false
+      assert clone.source_template_slug == "tobor"
+      assert clone.config["groups"]["sessions"]
+    end
+
+    test "ensure_org_default is idempotent per organization" do
+      uniq = System.unique_integer([:positive])
+
+      {:ok, org} =
+        NoizuPromptLingua.Repo.insert(%NoizuPromptLingua.Schema.Organizations.Organization{
+          slug: "acme-mcp-#{uniq}",
+          name: "Acme"
+        })
+
+      first = MCPCustomScopes.ensure_org_default(org.id, "Acme")
+      second = MCPCustomScopes.ensure_org_default(org.id, "Acme")
+
+      assert first.id == second.id
+      assert first.organization_id == org.id
+      assert is_nil(first.user_id)
+      assert first.is_default == true
+      assert first.source_template_slug == "tobor"
+      assert first.name == "Tobor Locker"
+    end
+
+    test "set_account_default switches among personal copies" do
+      user = insert_user()
+      original = MCPCustomScopes.ensure_account_default(user.id)
+
+      {:ok, copy} =
+        MCPCustomScopes.copy(original, %{"user_id" => user.id, "name" => "Alt"})
+
+      assert {:ok, used} = MCPCustomScopes.set_account_default(user.id, copy)
+      assert used.id == copy.id
+      assert used.is_default == true
+      assert MCPCustomScopes.get_account_default(user.id).id == copy.id
+      refute MCPCustomScopes.get(original.id).is_default
+    end
+
+    test "protected defaults cannot be deleted" do
+      user = insert_user()
+      personal = MCPCustomScopes.ensure_account_default(user.id)
+      assert {:error, :protected} = MCPCustomScopes.delete(personal)
+      assert {:error, :protected} = MCPCustomScopes.delete(MCPCustomScopes.get_default_package())
+    end
+  end
+
+  describe "McpEndpointsController.index/2" do
+    test "seeds the tobor template and a personal default" do
+      user = insert_user()
+
+      conn =
+        build_conn()
+        |> NoizuPromptLingua.Guardian.Plug.put_current_resource(%{user: {:ref, :user, user.id}})
+
+      conn = NoizuPromptLinguaWeb.McpEndpointsController.index(conn, %{})
+      body = json_response(conn, 200)
+
+      assert Enum.any?(body["templates"], &(&1["slug"] == "tobor"))
+      assert Enum.any?(body["templates"], &(&1["slug"] == "core"))
+      assert body["default_scope"]["name"] == "Tobor Locker"
+      assert body["default_scope"]["user_id"] == user.id
+      assert body["default_scope"]["editable"] == true
+      assert Enum.any?(body["endpoints"], &(&1["id"] == body["default_scope"]["id"]))
     end
   end
 

@@ -37,7 +37,21 @@ defmodule NoizuPromptLingua.MCPCustomScopeTestSchema do
         ADD COLUMN IF NOT EXISTS kind varchar(20) NOT NULL DEFAULT 'custom',
         ADD COLUMN IF NOT EXISTS organization_id uuid,
         ADD COLUMN IF NOT EXISTS project_id uuid,
-        ADD COLUMN IF NOT EXISTS user_id uuid
+        ADD COLUMN IF NOT EXISTS user_id uuid,
+        ADD COLUMN IF NOT EXISTS is_default boolean NOT NULL DEFAULT false,
+        ADD COLUMN IF NOT EXISTS source_template_slug text
+      """,
+      []
+    )
+
+    Ecto.Adapters.SQL.query!(Repo, "DROP INDEX IF EXISTS uq_mcp_custom_scopes_user_default", [])
+
+    Ecto.Adapters.SQL.query!(
+      Repo,
+      """
+      CREATE UNIQUE INDEX IF NOT EXISTS uq_mcp_custom_scopes_user_default
+        ON mcp_custom_scopes (user_id)
+        WHERE user_id IS NOT NULL AND is_default = true
       """,
       []
     )
@@ -45,9 +59,25 @@ defmodule NoizuPromptLingua.MCPCustomScopeTestSchema do
     Ecto.Adapters.SQL.query!(
       Repo,
       """
-      CREATE UNIQUE INDEX IF NOT EXISTS uq_mcp_custom_scopes_user_default
-        ON mcp_custom_scopes (user_id)
-        WHERE user_id IS NOT NULL
+      CREATE UNIQUE INDEX IF NOT EXISTS uq_mcp_custom_scopes_org_default
+        ON mcp_custom_scopes (organization_id)
+        WHERE organization_id IS NOT NULL AND user_id IS NULL AND is_default = true
+      """,
+      []
+    )
+
+    Ecto.Adapters.SQL.query!(
+      Repo,
+      """
+      UPDATE mcp_custom_scopes
+         SET is_default = true
+       WHERE user_id IS NOT NULL
+         AND is_default = false
+         AND NOT EXISTS (
+           SELECT 1 FROM mcp_custom_scopes other
+            WHERE other.user_id = mcp_custom_scopes.user_id
+              AND other.is_default = true
+         )
       """,
       []
     )

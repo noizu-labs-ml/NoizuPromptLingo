@@ -27,6 +27,8 @@ defmodule NoizuPromptLingua.Schema.MCPCustomScope do
     field :organization_id, :binary_id
     field :project_id, :binary_id
     field :user_id, :binary_id
+    field :is_default, :boolean, default: false
+    field :source_template_slug, :string
     field :config, :map, default: %{}
 
     timestamps(type: :utc_datetime)
@@ -37,7 +39,18 @@ defmodule NoizuPromptLingua.Schema.MCPCustomScope do
 
   def changeset(scope, attrs) do
     scope
-    |> cast(attrs, [:slug, :name, :description, :kind, :organization_id, :project_id, :user_id, :config])
+    |> cast(attrs, [
+      :slug,
+      :name,
+      :description,
+      :kind,
+      :organization_id,
+      :project_id,
+      :user_id,
+      :is_default,
+      :source_template_slug,
+      :config
+    ])
     |> update_change(:slug, &normalize_slug/1)
     |> validate_required([:slug, :name, :kind])
     |> validate_inclusion(:kind, @kinds)
@@ -45,6 +58,7 @@ defmodule NoizuPromptLingua.Schema.MCPCustomScope do
     |> validate_change(:config, &validate_config/2)
     |> unique_constraint(:slug, name: :uq_mcp_custom_scopes_slug)
     |> unique_constraint(:user_id, name: :uq_mcp_custom_scopes_user_default)
+    |> unique_constraint(:organization_id, name: :uq_mcp_custom_scopes_org_default)
   end
 
   defp normalize_slug(nil), do: nil

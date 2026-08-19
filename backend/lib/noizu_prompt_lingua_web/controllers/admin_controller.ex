@@ -941,6 +941,7 @@ defmodule NoizuPromptLinguaWeb.AdminController do
   def list_mcp_custom_scopes(conn, _params) do
     host = mcp_host(conn)
     _ = MCPCustomScopes.get_default_package()
+    _ = MCPCustomScopes.get_core_variant()
     scopes = MCPCustomScopes.list() |> Enum.map(&MCPCustomScopes.scope_json(&1, host))
     conn |> put_status(:ok) |> json(%{scopes: scopes})
   end

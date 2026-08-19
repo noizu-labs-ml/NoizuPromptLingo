@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import type { McpCustomGroup, McpCustomScope, McpServerConfig } from '@/lib/api';
-import McpIncludeEditor from '@/components/mcp-include-editor';
 
 type Tab = 'default' | 'alacarte';
 
@@ -29,9 +28,7 @@ export default function McpOauthSetup({
   issuer,
   servers,
   alaCarte = [],
-  catalog = [],
   defaultScope = null,
-  onDefaultScopeChange,
 }: McpOauthSetupProps) {
   const [tab, setTab] = useState<Tab>('default');
   const [copied, setCopied] = useState<string | null>(null);
@@ -91,7 +88,7 @@ claude mcp add --transport http ${clientName} ${mcpUrl}
         {(
           [
             { id: 'default' as const, label: 'Default MCP' },
-            { id: 'alacarte' as const, label: 'À la carte' },
+            { id: 'alacarte' as const, label: 'À la carte (old flow)' },
           ] as const
         ).map((t) => (
           <button
@@ -145,17 +142,6 @@ claude mcp add --transport http ${clientName} ${mcpUrl}
             </li>
           </ol>
 
-          {defaultScope && catalog.length > 0 ? (
-            <div style={{ marginTop: 16 }}>
-              <McpIncludeEditor
-                key={defaultScope.id}
-                catalog={catalog}
-                scope={defaultScope}
-                onSaved={onDefaultScopeChange}
-              />
-            </div>
-          ) : null}
-
           <div className="authz-reveal" style={{ marginTop: 16, marginBottom: 12 }}>
             <div className="authz-reveal__label">CLI (OAuth)</div>
             <div className="authz-reveal__row">
@@ -186,8 +172,8 @@ claude mcp add --transport http ${clientName} ${mcpUrl}
       {tab === 'alacarte' && (
         <div>
           <p className="sg-page-intro" style={{ marginBottom: 12 }}>
-            Manual extra endpoints — each subdomain is its own MCP server. Prefer the
-            single default-mcp URL unless you need a split catalog.
+            Old flow — each subdomain is its own MCP server. Prefer the single
+            Tobor Locker URL on the Default MCP tab unless you need a split catalog.
           </p>
           {alaCarte.length === 0 && servers.length === 0 ? (
             <p className="sg-page-intro">Loading server catalog…</p>

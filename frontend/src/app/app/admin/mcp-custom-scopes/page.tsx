@@ -216,6 +216,30 @@ export default function AdminMcpCustomScopesPage() {
     }
   }
 
+  async function duplicate() {
+    if (!form.originalSlug) {
+      toast.error('Save the endpoint before copying it');
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await api.adminCreateMcpCustomScope({
+        slug: slugify(`${form.slug}-copy`),
+        name: `${form.name} copy`,
+        description: form.description.trim(),
+        kind: form.kind === 'all_in_one' ? 'custom' : form.kind || 'custom',
+        config: form.config,
+      });
+      setScopes((prev) => [res.scope, ...prev.filter((s) => s.id !== res.scope.id)]);
+      setForm(formFromScope(res.scope));
+      toast.success('Copied to a new endpoint');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Copy failed');
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function copy(text?: string | null) {
     if (!text) return;
     try {
@@ -233,12 +257,11 @@ export default function AdminMcpCustomScopesPage() {
           <h1 className="sg-page-title">MCP endpoints</h1>
         </div>
         <p className="sg-page-intro">
-          Each signed-in account gets its own <strong>default-mcp</strong> custom
-          endpoint at <span className="font-mono">/custom/&lt;handle&gt;/mcp</span>
-          {' '}(short uuid). The global <strong>Tobor Locker</strong> package
-          at <span className="font-mono">/custom/tobor/mcp</span> remains the
-          unauthenticated fallback. Edit presets below, or add extra endpoints.{' '}
-          <Link href="/app/admin">Back to Admin</Link>
+          Users and organizations are always given a <strong>Tobor Locker</strong>
+          endpoint cloned from the global template at{' '}
+          <span className="font-mono">/custom/tobor/mcp</span>. Edit standard
+          templates here; people can copy and edit their own instances from
+          MCP client setup. <Link href="/app/admin">Back to Admin</Link>
         </p>
 
         {loading ? (
@@ -277,11 +300,18 @@ export default function AdminMcpCustomScopesPage() {
             <form className="dash-panel" onSubmit={save}>
               <div className="dash-panel__head">
                 <h2 className="dash-panel__title">{form.originalSlug ? 'Edit Scope' : 'New Scope'}</h2>
-                {selectedScope?.url && (
-                  <button type="button" className="sg-btn sg-btn--outline sg-btn--sm" onClick={() => copy(selectedScope.url)}>
-                    Copy URL
-                  </button>
-                )}
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {selectedScope?.url && (
+                    <button type="button" className="sg-btn sg-btn--outline sg-btn--sm" onClick={() => copy(selectedScope.url)}>
+                      Copy URL
+                    </button>
+                  )}
+                  {form.originalSlug && (
+                    <button type="button" className="sg-btn sg-btn--outline sg-btn--sm" onClick={duplicate} disabled={saving}>
+                      Copy endpoint
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>

@@ -36,10 +36,12 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
   # intentionally omitted here (see report follow-ups).
   @core_variant_groups ~w(sessions projects organizations)
 
-  # Global all-in-one package every account gets. NPL load/spec tools are
-  # attached by MCP.Custom for all_in_one scopes (not a selectable group).
+  # Global all-in-one package every account/org is cloned from. NPL load/spec
+  # tools are attached by MCP.Custom for all_in_one scopes and tobor clones
+  # (not a selectable group).
   @default_package_slug "tobor"
-  @account_default_name "default-mcp"
+  @account_default_name "Tobor Locker"
+  @legacy_account_default_name "default-mcp"
   @default_package_groups ~w(
     sessions organizations projects tickets chat artifacts wiki
     personas instructions memory review assets github notifications
@@ -63,6 +65,8 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
     * `{:kind, kind | [kind]}` — restrict by kind
     * `{:organization_id, uuid | nil}` — exact match (`nil` = global/org-less)
     * `{:project_id, uuid | nil}` — exact match (`nil` = project-less)
+    * `{:user_id, uuid}` — scopes owned by this user
+    * `{:is_default, boolean}`
   """
   def list(filters \\ []) do
     MCPCustomScope
@@ -111,9 +115,14 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
       {:organization_id, org}, q -> where(q, [s], s.organization_id == ^org)
       {:project_id, nil}, q -> where(q, [s], is_nil(s.project_id))
       {:project_id, pid}, q -> where(q, [s], s.project_id == ^pid)
+      {:user_id, uid}, q when is_binary(uid) -> where(q, [s], s.user_id == ^uid)
+      {:is_default, flag}, q when is_boolean(flag) -> where(q, [s], s.is_default == ^flag)
       _, q -> q
     end)
   end
+
+  def get(id) when is_binary(id), do: Repo.get(MCPCustomScope, id)
+  def get(_), do: nil
 
   def get_by_slug(slug) when is_binary(slug) do
     Repo.get_by(MCPCustomScope, slug: normalize_slug(slug))
@@ -149,23 +158,30 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
     end
   end
 
-  @doc "The per-account default-mcp scope for `user_id`, or nil."
+  @doc "The per-account default custom endpoint for `user_id`, or nil."
   def get_account_default(user_id) when is_binary(user_id) do
-    Repo.get_by(MCPCustomScope, user_id: user_id)
+    Repo.one(
+      from(s in MCPCustomScope,
+        where: s.user_id == ^user_id and s.is_default == true,
+        limit: 1
+      )
+    )
   end
 
   def get_account_default(_), do: nil
 
   @doc """
-  Get-or-create this user's `default-mcp` custom endpoint.
-
-  Slug is a short uuid handle (`/custom/<handle>/mcp`). Groups are seeded from
-  `default_package_groups/0`. Idempotent per user.
+  Get-or-create this user's standard custom endpoint, cloned from the global
+  `tobor` (Tobor Locker) template. Slug is a short uuid handle
+  (`/custom/<handle>/mcp`). Idempotent per user.
   """
   def ensure_account_default(user_id) when is_binary(user_id) do
+    _ = get_default_package()
+    _ = get_core_variant()
+
     case get_account_default(user_id) do
       %MCPCustomScope{} = scope ->
-        scope
+        maybe_refresh_account_default(scope)
 
       nil ->
         case insert_account_default(user_id) do
@@ -180,6 +196,38 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
 
   def ensure_account_default(_), do: get_default_package()
 
+  defp maybe_refresh_account_default(%MCPCustomScope{} = scope) do
+    attrs =
+      %{}
+      |> maybe_put_name_refresh(scope)
+      |> maybe_put_template_refresh(scope)
+
+    if attrs == %{} do
+      scope
+    else
+      case update(scope, attrs) do
+        {:ok, updated} -> updated
+        _ -> scope
+      end
+    end
+  end
+
+  defp maybe_put_name_refresh(attrs, %{name: name})
+       when name in [@legacy_account_default_name, "default-mcp"] do
+    Map.put(attrs, "name", @account_default_name)
+  end
+
+  defp maybe_put_name_refresh(attrs, _), do: attrs
+
+  defp maybe_put_template_refresh(attrs, %{source_template_slug: slug})
+       when is_binary(slug) and slug != "" do
+    attrs
+  end
+
+  defp maybe_put_template_refresh(attrs, _) do
+    Map.put(attrs, "source_template_slug", @default_package_slug)
+  end
+
   defp insert_account_default(user_id, attempt \\ 0)
 
   defp insert_account_default(_user_id, attempt) when attempt > 4 do
@@ -187,17 +235,18 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
   end
 
   defp insert_account_default(user_id, attempt) do
-    groups = Map.new(@default_package_groups, fn id -> {id, %{"tools" => %{}}} end)
+    template = get_default_package()
 
     attrs = %{
       "slug" => short_handle(),
       "name" => @account_default_name,
       "description" =>
-        "Your default MCP package — sessions, organizations, projects, tickets, chat, " <>
-          "artifacts, wiki, personas, instructions, memory, review, assets, GitHub, notifications.",
+        "Your standard Tobor Locker MCP package — cloned from the #{template.name} template.",
       "kind" => "custom",
       "user_id" => user_id,
-      "config" => %{"groups" => groups}
+      "is_default" => true,
+      "source_template_slug" => template.slug,
+      "config" => %{"groups" => groups_from(template)}
     }
 
     case create(attrs) do
@@ -205,13 +254,225 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
         {:ok, scope}
 
       {:error, %Ecto.Changeset{} = cs} ->
-        if slug_taken?(cs) do
-          insert_account_default(user_id, attempt + 1)
-        else
-          {:error, cs}
+        cond do
+          slug_taken?(cs) ->
+            insert_account_default(user_id, attempt + 1)
+
+          default_taken?(cs) ->
+            case get_account_default(user_id) do
+              %MCPCustomScope{} = existing -> {:ok, existing}
+              _ -> {:error, cs}
+            end
+
+          true ->
+            {:error, cs}
         end
     end
   end
+
+  @doc "The per-org default custom endpoint, or nil."
+  def get_org_default(organization_id) when is_binary(organization_id) do
+    Repo.one(
+      from(s in MCPCustomScope,
+        where:
+          s.organization_id == ^organization_id and is_nil(s.user_id) and s.is_default == true,
+        limit: 1
+      )
+    )
+  end
+
+  def get_org_default(_), do: nil
+
+  @doc """
+  Get-or-create this organization's standard custom endpoint, cloned from the
+  global `tobor` template. Idempotent per org.
+  """
+  def ensure_org_default(organization_id, org_name \\ nil)
+
+  def ensure_org_default(organization_id, org_name) when is_binary(organization_id) do
+    _ = get_default_package()
+    _ = get_core_variant()
+
+    case get_org_default(organization_id) do
+      %MCPCustomScope{} = scope ->
+        scope
+
+      nil ->
+        case insert_org_default(organization_id, org_name) do
+          {:ok, scope} ->
+            scope
+
+          {:error, _} ->
+            get_org_default(organization_id) || get_default_package()
+        end
+    end
+  end
+
+  def ensure_org_default(_, _), do: get_default_package()
+
+  defp insert_org_default(organization_id, org_name, attempt \\ 0)
+
+  defp insert_org_default(_organization_id, _org_name, attempt) when attempt > 4 do
+    {:error, :handle_collision}
+  end
+
+  defp insert_org_default(organization_id, org_name, attempt) do
+    template = get_default_package()
+    label = if is_binary(org_name) and org_name != "", do: org_name, else: "this organization"
+
+    attrs = %{
+      "slug" => short_handle(),
+      "name" => @account_default_name,
+      "description" =>
+        "Standard Tobor Locker MCP package for #{label} — cloned from the #{template.name} template.",
+      "kind" => "custom",
+      "organization_id" => organization_id,
+      "is_default" => true,
+      "source_template_slug" => template.slug,
+      "config" => %{"groups" => groups_from(template)}
+    }
+
+    case create(attrs) do
+      {:ok, scope} ->
+        {:ok, scope}
+
+      {:error, %Ecto.Changeset{} = cs} ->
+        cond do
+          slug_taken?(cs) ->
+            insert_org_default(organization_id, org_name, attempt + 1)
+
+          default_taken?(cs) ->
+            case get_org_default(organization_id) do
+              %MCPCustomScope{} = existing -> {:ok, existing}
+              _ -> {:error, cs}
+            end
+
+          true ->
+            {:error, cs}
+        end
+    end
+  end
+
+  @doc "Global (user-less, org-less) presets, including seeded `tobor` and `core`."
+  def list_templates do
+    _ = get_default_package()
+    _ = get_core_variant()
+
+    from(s in MCPCustomScope,
+      where: is_nil(s.user_id) and is_nil(s.organization_id),
+      order_by: [asc: s.name]
+    )
+    |> Repo.all()
+  end
+
+  @doc "Every custom endpoint owned by `user_id` (default first)."
+  def list_for_user(user_id) when is_binary(user_id) do
+    from(s in MCPCustomScope,
+      where: s.user_id == ^user_id,
+      order_by: [desc: s.is_default, asc: s.name]
+    )
+    |> Repo.all()
+  end
+
+  def list_for_user(_), do: []
+
+  @doc "Org-owned endpoints (no user_id) for the given organization ids."
+  def list_for_organizations(org_ids) when is_list(org_ids) do
+    org_ids = Enum.filter(org_ids, &is_binary/1)
+
+    if org_ids == [] do
+      []
+    else
+      from(s in MCPCustomScope,
+        where: s.organization_id in ^org_ids and is_nil(s.user_id),
+        order_by: [desc: s.is_default, asc: s.name]
+      )
+      |> Repo.all()
+    end
+  end
+
+  def list_for_organizations(_), do: []
+
+  @doc """
+  Duplicate `source` into a new endpoint. `attrs` may set `name`, `slug`,
+  `description`, `kind`, `user_id`, `organization_id`, `is_default`.
+  """
+  def copy(source, attrs \\ %{})
+
+  def copy(%MCPCustomScope{} = source, attrs) do
+    attrs = stringify_keys(attrs || %{})
+    is_default = truthy?(Map.get(attrs, "is_default"))
+
+    create(%{
+      "slug" => Map.get(attrs, "slug") || short_handle(),
+      "name" => Map.get(attrs, "name") || "#{source.name} copy",
+      "description" => Map.get(attrs, "description") || source.description,
+      "kind" => Map.get(attrs, "kind") || "custom",
+      "user_id" => Map.get(attrs, "user_id"),
+      "organization_id" => Map.get(attrs, "organization_id"),
+      "project_id" => Map.get(attrs, "project_id"),
+      "is_default" => is_default,
+      "source_template_slug" =>
+        Map.get(attrs, "source_template_slug") || source.source_template_slug || source.slug,
+      "config" => %{"groups" => groups_from(source)}
+    })
+  end
+
+  def copy(slug, attrs) when is_binary(slug) do
+    case get_by_slug(slug) do
+      nil -> {:error, :not_found}
+      scope -> copy(scope, attrs)
+    end
+  end
+
+  @doc """
+  Mark `scope` as this user's account default. Other personal defaults are
+  cleared. `scope` must be owned by `user_id`.
+  """
+  def set_account_default(user_id, %MCPCustomScope{} = scope) when is_binary(user_id) do
+    cond do
+      scope.user_id != user_id ->
+        {:error, :forbidden}
+
+      scope.is_default == true ->
+        {:ok, scope}
+
+      true ->
+        Repo.transaction(fn ->
+          now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+          from(s in MCPCustomScope,
+            where: s.user_id == ^user_id and s.is_default == true
+          )
+          |> Repo.update_all(set: [is_default: false, updated_at: now])
+
+          case scope
+               |> MCPCustomScope.changeset(%{"is_default" => true})
+               |> Repo.update() do
+            {:ok, updated} -> updated
+            {:error, cs} -> Repo.rollback(cs)
+          end
+        end)
+    end
+  end
+
+  def set_account_default(_, _), do: {:error, :not_found}
+
+  defp groups_from(%{config: config}) do
+    groups = (config || %{}) |> Map.get("groups") || Map.get(config || %{}, :groups)
+
+    if is_map(groups) and map_size(groups) > 0 do
+      groups
+    else
+      Map.new(@default_package_groups, fn id -> {id, %{"tools" => %{}}} end)
+    end
+  end
+
+  defp groups_from(_), do: Map.new(@default_package_groups, fn id -> {id, %{"tools" => %{}}} end)
+
+  defp truthy?(true), do: true
+  defp truthy?("true"), do: true
+  defp truthy?(_), do: false
 
   defp short_handle do
     Ecto.UUID.generate()
@@ -221,6 +482,10 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
 
   defp slug_taken?(%Ecto.Changeset{errors: errors}) do
     Keyword.has_key?(errors, :slug)
+  end
+
+  defp default_taken?(%Ecto.Changeset{errors: errors}) do
+    Keyword.has_key?(errors, :user_id) or Keyword.has_key?(errors, :organization_id)
   end
 
   @doc """
@@ -302,11 +567,16 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
     end
   end
 
-  def delete(%MCPCustomScope{slug: slug, user_id: user_id} = scope) do
+  def delete(%MCPCustomScope{} = scope) do
     cond do
-      slug == @default_package_slug -> {:error, :protected}
-      not is_nil(user_id) -> {:error, :protected}
-      true -> Repo.delete(scope)
+      scope.slug == @default_package_slug -> {:error, :protected}
+      scope.slug == @core_variant_slug -> {:error, :protected}
+      scope.is_default == true and not is_nil(scope.user_id) -> {:error, :protected}
+      scope.is_default == true and not is_nil(scope.organization_id) and is_nil(scope.user_id) ->
+        {:error, :protected}
+
+      true ->
+        Repo.delete(scope)
     end
   end
 
@@ -482,6 +752,8 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
       organization_id: scope.organization_id,
       project_id: scope.project_id,
       user_id: scope.user_id,
+      is_default: scope.is_default == true,
+      source_template_slug: scope.source_template_slug,
       description: scope.description,
       config: normalize_config(scope.config || %{}, scope.kind),
       url: host && MCPServers.custom_url(scope.slug, host),
@@ -505,6 +777,8 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
         "organization_id",
         "project_id",
         "user_id",
+        "is_default",
+        "source_template_slug",
         "config",
         :slug,
         :name,
@@ -513,6 +787,8 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
         :organization_id,
         :project_id,
         :user_id,
+        :is_default,
+        :source_template_slug,
         :config
       ])
       |> stringify_keys()

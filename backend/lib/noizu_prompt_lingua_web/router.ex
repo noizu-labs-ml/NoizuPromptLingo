@@ -311,6 +311,7 @@ defmodule NoizuPromptLinguaWeb.Router do
     # User-scoped MCP API keys (legacy; gated by MCP_API_KEY_MINT_ENABLED)
     get "/auth/mcp-keys", AuthController, :list_mcp_keys
     post "/auth/mcp-keys", AuthController, :create_mcp_key
+    post "/auth/mcp-keys/setup", AuthController, :create_mcp_setup_key
     delete "/auth/mcp-keys/:id", AuthController, :revoke_mcp_key
 
     # OAuth MCP connections (pairing grants) — Phase 4 primary surface
@@ -322,6 +323,13 @@ defmodule NoizuPromptLinguaWeb.Router do
     get "/auth/mcp/catalog", AuthController, :mcp_custom_scope_catalog
     get "/auth/mcp/default-endpoint", AuthController, :show_default_mcp
     patch "/auth/mcp/default-endpoint", AuthController, :update_default_mcp
+    get "/auth/mcp/endpoints", McpEndpointsController, :index
+    post "/auth/mcp/endpoints", McpEndpointsController, :create
+    get "/auth/mcp/endpoints/:id", McpEndpointsController, :show
+    patch "/auth/mcp/endpoints/:id", McpEndpointsController, :update
+    delete "/auth/mcp/endpoints/:id", McpEndpointsController, :delete
+    post "/auth/mcp/endpoints/:id/copy", McpEndpointsController, :duplicate
+    post "/auth/mcp/endpoints/:id/use", McpEndpointsController, :use_default
     # Mint an MCP JWT from a pasted raw key (ownership-checked to caller).
     post "/auth/mcp/token", AuthController, :mint_mcp_token
   end

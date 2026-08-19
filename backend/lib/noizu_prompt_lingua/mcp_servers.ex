@@ -155,8 +155,9 @@ defmodule NoizuPromptLingua.MCPServers do
     * `:core_custom` — core-variant endpoint(s) + custom-scope endpoint(s).
     * `:all_in_one` — the all_in_one endpoint(s) + any task-segmented one-offs
       (scopes whose config carries `segment: true`).
-    * `:setup` — the signed-in user's `default-mcp` custom endpoint (short uuid
-      handle), falling back to the global `tobor` package when no user is present.
+    * `:setup` — the signed-in user's default custom endpoint (Tobor Locker
+      clone, short uuid handle), falling back to the global `tobor` package
+      when no user is present.
 
   `opts` (`:organization_id`, `:project_id`, `:user_id`) scope the non-default
   packaging sets to global presets plus rows matching the given org/project.
@@ -230,8 +231,9 @@ defmodule NoizuPromptLingua.MCPServers do
   end
 
   @doc """
-  Scope the setup UI should advertise: the caller's per-account `default-mcp`
-  when `:user_id` is set, otherwise the global `tobor` package.
+  Scope the setup UI should advertise: the caller's per-account default
+  (cloned from Tobor Locker) when `:user_id` is set, otherwise the global
+  `tobor` package.
   """
   def setup_scope(opts \\ []) do
     case Keyword.get(opts, :user_id) do

@@ -113,8 +113,10 @@ defmodule NoizuPromptLingua.MCP.Custom do
          scope when not is_nil(scope) <- MCPCustomScopes.get_by_slug(slug) do
       scope.kind == "all_in_one" or
         scope.slug == MCPCustomScopes.default_package_slug() or
+        scope.source_template_slug == MCPCustomScopes.default_package_slug() or
         scope.name == MCPCustomScopes.account_default_name() or
-        not is_nil(scope.user_id)
+        not is_nil(scope.user_id) or
+        not is_nil(scope.organization_id)
     else
       _ -> false
     end
