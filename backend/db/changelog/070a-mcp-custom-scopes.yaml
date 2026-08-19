@@ -1,0 +1,32 @@
+databaseChangeLog:
+  # mcp_custom_scopes was originally created only by Ecto
+  # (priv/repo/migrations/20260627002000_create_mcp_custom_scopes.exs).
+  # CI and other Liquibase-only boots never run that migration, so 071 HALTed.
+  # Create the table here when missing; MARK_RAN if Ecto already created it.
+  - changeSet:
+      id: 070a-create-mcp-custom-scopes
+      author: tobor-locker
+      preConditions:
+        - onFail: MARK_RAN
+        - onFailMessage: mcp_custom_scopes already exists (Ecto or prior apply)
+        - not:
+            tableExists:
+              tableName: mcp_custom_scopes
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE mcp_custom_scopes (
+                id uuid PRIMARY KEY,
+                slug varchar(255) NOT NULL,
+                name varchar(255) NOT NULL,
+                description text,
+                config jsonb NOT NULL DEFAULT '{}'::jsonb,
+                inserted_at timestamp without time zone NOT NULL,
+                updated_at timestamp without time zone NOT NULL
+              );
+              CREATE UNIQUE INDEX uq_mcp_custom_scopes_slug
+                ON mcp_custom_scopes (slug);
+      rollback:
+        - sql:
+            sql: |
+              DROP TABLE IF EXISTS mcp_custom_scopes;

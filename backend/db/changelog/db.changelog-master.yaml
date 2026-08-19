@@ -212,6 +212,9 @@ databaseChangeLog:
       file: 070-unicode-codex.yaml
       relativeToChangelogFile: true
   - include:
+      file: 070a-mcp-custom-scopes.yaml
+      relativeToChangelogFile: true
+  - include:
       file: 071-mcp-scope-packaging.yaml
       relativeToChangelogFile: true
   - include:
