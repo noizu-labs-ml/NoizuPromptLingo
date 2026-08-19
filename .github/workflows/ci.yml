@@ -71,6 +71,9 @@ jobs:
       - run: mix test
 
   test-frontend:
+    # Smoke only: npm ci + tsc. Not a full Next build and not Cypress.
+    # npm ci talks to npm.noizu.com — cap so a dead registry cannot sit 40+ min.
+    timeout-minutes: 10
     runs-on: ubuntu-latest # amd64
     defaults:
       run:

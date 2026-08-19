@@ -30,15 +30,20 @@
   },
   "include": [
     "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
+    "src/**/*.ts",
+    "src/**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
-    "e2e",
     "app",
-    "playwright.config.ts"
+    "components",
+    "lib",
+    "cypress",
+    "e2e",
+    "playwright.config.ts",
+    "cypress.config.ts",
+    "cypress.authentik.config.ts"
   ]
 }
