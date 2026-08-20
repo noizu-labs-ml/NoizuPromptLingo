@@ -6,22 +6,23 @@ defmodule NoizuPromptLingua.MCP.Dispatch do
   authz seam without patching `noizu_mcp`.
   """
 
+  alias Noizu.MCP.{Error, Schema}
   alias Noizu.MCP.Server.Features.Tools
-  alias Noizu.MCP.Server.Tool.Spec
-  alias Noizu.MCP.Protocol.{Error, ToolResult}
+  alias Noizu.MCP.Server.Tool.{Fields, Spec}
+  alias Noizu.MCP.Types.ToolResult
   alias NoizuPromptLingua.MCP.ToolGuard
 
   def call(server_mod, name, args, ctx) when is_atom(server_mod) and is_binary(name) do
-    registered = server_mod.__mcp__(:tools)
+    specs = expand_specs(server_mod, ctx)
 
-    case registered |> Tools.expand() |> Enum.find(&(&1.definition.name == name)) do
+    case Enum.find(specs, &(lookup_name(&1.definition.name) == lookup_name(name))) do
       nil ->
         {:error, Error.invalid_params("Unknown tool: #{name}")}
 
       %Spec{} = spec ->
         case ToolGuard.before_call(spec_to_guard(spec), args, ctx) do
           :ok ->
-            Tools.dispatch(registered, name, args, ctx)
+            run_spec(spec, args || %{}, ctx)
 
           {:error, %{code: code, reason: reason, elevation_uri: uri} = meta} when is_binary(uri) ->
             # Phase 4 step-up: surface elevation URI for HITL approval.
@@ -45,6 +46,44 @@ defmodule NoizuPromptLingua.MCP.Dispatch do
           {:error, other} ->
             ToolResult.error("authorization_denied: #{inspect(other)}")
         end
+    end
+  end
+
+  # Dynamic servers (e.g. NoizuPromptLingua.MCP.Custom) expose their tool set
+  # via catalog_specs/1 instead of the compile-time __mcp__(:tools) registry.
+  defp expand_specs(server_mod, ctx) do
+    if function_exported?(server_mod, :catalog_specs, 1) do
+      server_mod.catalog_specs(ctx)
+    else
+      server_mod.__mcp__(:tools) |> Tools.expand()
+    end
+  end
+
+  # Clients sanitize MCP tool names for their own tool-name charset
+  # ("Organization.Overview" -> "Organization_Overview"), so compare with
+  # dots and underscores folded to one form on both sides.
+  defp lookup_name(name) when is_binary(name), do: String.replace(name, ".", "_")
+
+  defp run_spec(%Spec{} = spec, args, ctx) do
+    case Schema.validate(spec.definition.input_schema, args) do
+      :ok ->
+        args =
+          case spec.cast_plan do
+            nil -> args
+            plan -> Fields.cast(plan, args)
+          end
+
+        call_args =
+          case spec.arity do
+            0 -> []
+            1 -> [args]
+            2 -> [args, ctx]
+          end
+
+        apply(spec.module, spec.fun, call_args) |> Tools.normalize(spec.output_schema)
+
+      {:error, message} ->
+        ToolResult.error("Invalid arguments for tool #{spec.definition.name}: #{message}")
     end
   end
 
