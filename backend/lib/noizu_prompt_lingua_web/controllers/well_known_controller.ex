@@ -7,6 +7,12 @@ defmodule NoizuPromptLinguaWeb.WellKnownController do
   - `GET /.well-known/jwks.json` — MCP JWT verification keys
   - `GET /.well-known/oauth-authorization-server` — RFC 8414 AS metadata
   - `GET /.well-known/oauth-protected-resource` — RFC 9728 (root host)
+  - `GET /.well-known/oauth-protected-resource/*path` — RFC 9728 path-scoped
+
+  The path-scoped form matters for MCP endpoints that are not at `/mcp`:
+  the custom-scope gateway lives at `/custom/<slug>/mcp` and audience-binds
+  tokens to *that* URL, so advertising the root `/mcp` resource to clients
+  would hand them a token the gateway then rejects as `:bad_aud`.
   """
 
   alias NoizuPromptLingua.OAuth.{AuthorizationServer, Jwks}
@@ -23,16 +29,25 @@ defmodule NoizuPromptLinguaWeb.WellKnownController do
     |> json(AuthorizationServer.metadata())
   end
 
-  def oauth_protected_resource(conn, _params) do
+  def oauth_protected_resource(conn, params) do
     base = AuthorizationServer.issuer_url() |> String.trim_trailing("/")
     host = conn.host
 
+    # RFC 9728 path-scoped metadata: the resource path is appended to the
+    # well-known prefix, so `/custom/<slug>/mcp` is discovered at
+    # `/.well-known/oauth-protected-resource/custom/<slug>/mcp`.
+    path =
+      case params["resource_path"] do
+        segments when is_list(segments) and segments != [] -> "/" <> Enum.join(segments, "/")
+        _ -> "/mcp"
+      end
+
     resource =
       if host in [nil, ""] do
-        "#{base}/mcp"
+        "#{base}#{path}"
       else
         scheme = if conn.scheme == :https, do: "https", else: public_scheme()
-        "#{scheme}://#{host}/mcp"
+        "#{scheme}://#{host}#{path}"
       end
 
     doc = %{

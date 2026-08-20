@@ -72,6 +72,10 @@ config :noizu_prompt_lingua, :mcp_legacy_api_keys,
 config :noizu_prompt_lingua, :mcp_elevation,
   enabled: true
 
+# Compile-time env, read at runtime by NoizuPromptLingua.OAuth.Jwks to decide
+# whether an ephemeral JWT signing key is tolerable (it never is in prod).
+config :noizu_prompt_lingua, env: config_env()
+
 # MCP OAuth AS + JWT key hygiene. Private key via MCP_JWT_PRIVATE_KEY at runtime.
 config :noizu_prompt_lingua, :mcp_oauth,
   # Legacy short JWT iss (API-key path) + full AS issuer URL for OAuth tokens.

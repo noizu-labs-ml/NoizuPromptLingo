@@ -194,7 +194,14 @@ if config_env() == :prod or config_env() == :dev do
     signing_alg: System.get_env("MCP_JWT_ALG") || "RS256",
     public_scheme: System.get_env("MCP_PUBLIC_SCHEME") || "https",
     private_key_pem: System.get_env("MCP_JWT_PRIVATE_KEY"),
-    kid: System.get_env("MCP_JWT_KID") || "mcp-1",
+    # Retired signing keys, verification-only, so rotating MCP_JWT_PRIVATE_KEY
+    # does not invalidate tokens still inside their TTL. Comma/newline separated,
+    # each optionally `<kid>=<pem>` to pin the kid it was published under.
+    previous_key_pems: System.get_env("MCP_JWT_PREVIOUS_KEYS"),
+    # No "mcp-1" default: an unset kid means the kid is the key's RFC 7638
+    # thumbprint, so a key change is visible to clients as :unknown_kid instead
+    # of surfacing as an opaque bad signature.
+    kid: System.get_env("MCP_JWT_KID"),
     resource_metadata_url: System.get_env("MCP_RESOURCE_METADATA_URL")
 
   mcp_pdp_mode =

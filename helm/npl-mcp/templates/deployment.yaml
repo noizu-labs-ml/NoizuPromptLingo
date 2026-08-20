@@ -68,14 +68,28 @@ spec:
                   key: GUARDIAN_SECRET_KEY
             # MCP OAuth AS (JWKS signing + issuer URL). Keys live in npl-mcp-secrets
             # via Infisical /apps/npl-mcp (see .infisical-secrets.yaml id:npl-mcp).
-            # optional until MCP_JWT_PRIVATE_KEY is populated in Infisical; without
-            # it the app uses an ephemeral RSA key (fine for single-replica only).
+            # REQUIRED in prod: without a stable key the app regenerates its RSA
+            # signing key on every boot, silently invalidating every token it has
+            # ever minted -- that is true at a single replica too, so the pod now
+            # refuses to start rather than issue tokens that die on next restart.
+            # Value may be a raw PEM, a base64-encoded PEM, or a \n-escaped PEM.
             - name: MCP_JWT_PRIVATE_KEY
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.backend.env.secretName }}
                   key: MCP_JWT_PRIVATE_KEY
                   optional: true
+            # Retired signing keys (verification only), so rotating the active key
+            # does not invalidate tokens still inside their TTL.
+            - name: MCP_JWT_PREVIOUS_KEYS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: MCP_JWT_PREVIOUS_KEYS
+                  optional: true
+            # Leave UNSET so the kid is the key's RFC 7638 thumbprint: a key change
+            # then yields a new kid and stale tokens fail as :unknown_kid instead of
+            # as an opaque bad signature. Pin only to keep an already-published kid.
             - name: MCP_JWT_KID
               valueFrom:
                 secretKeyRef:

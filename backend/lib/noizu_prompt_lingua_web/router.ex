@@ -73,6 +73,11 @@ defmodule NoizuPromptLinguaWeb.Router do
     get "/jwks.json", WellKnownController, :jwks
     get "/oauth-authorization-server", WellKnownController, :oauth_authorization_server
     get "/oauth-protected-resource", WellKnownController, :oauth_protected_resource
+    # Path-scoped variant (RFC 9728) for MCP endpoints not mounted at /mcp,
+    # e.g. /.well-known/oauth-protected-resource/custom/<slug>/mcp.
+    get "/oauth-protected-resource/*resource_path",
+        WellKnownController,
+        :oauth_protected_resource
   end
 
   # OAuth 2.1 Authorization Server (MCP connectors: Claude.ai, ChatGPT, CLI).

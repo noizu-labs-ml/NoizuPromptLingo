@@ -52,8 +52,25 @@ defmodule NoizuPromptLinguaWeb.MCPConfig do
     end
   end
 
-  def plug_opts(server, extra_verifier_opts \\ []) do
-    [server: server, origins: :any, auth: auth_opts(extra_verifier_opts)]
+  def plug_opts(server, extra_verifier_opts \\ [], auth_overrides \\ []) do
+    auth = auth_opts(extra_verifier_opts) |> Keyword.merge(auth_overrides)
+    [server: server, origins: :any, auth: auth]
+  end
+
+  @doc """
+  RFC 9728 metadata URL for an MCP endpoint mounted at `path`.
+
+  The 401 challenge must point at the document describing *this* resource. The
+  root document declares `<host>/mcp`; an endpoint that audience-binds to a
+  different URL must advertise its own, or clients request a token for the
+  wrong resource and are rejected as `:bad_aud`.
+  """
+  def resource_metadata_url_for_path(host, path) when is_binary(host) and is_binary(path) do
+    scheme =
+      Application.get_env(:noizu_prompt_lingua, :mcp_oauth, [])
+      |> Keyword.get(:public_scheme, "https")
+
+    "#{scheme}://#{host}/.well-known/oauth-protected-resource#{path}"
   end
 
   @doc """

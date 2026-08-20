@@ -13,6 +13,8 @@ defmodule NoizuPromptLingua.MCP.DualTokenVerifier do
 
   @behaviour Noizu.MCP.Auth.TokenVerifier
 
+  require Logger
+
   alias NoizuPromptLingua.OAuth.Jwks
 
   @asymmetric_algs ~w(RS256 ES256 EdDSA PS256)
@@ -31,21 +33,42 @@ defmodule NoizuPromptLingua.MCP.DualTokenVerifier do
   def verify(_token, _conn_info, _opts), do: {:error, :invalid_token}
 
   defp verify_asymmetric(token, conn_info, opts) do
-    with {:ok, header} <- peek_header(token),
-         kid <- Map.get(header, "kid"),
-         {:ok, jwk, default_alg} <- Jwks.verify_jwk(kid),
-         algs <- [Map.get(header, "alg") || default_alg],
-         {true, %JOSE.JWT{fields: claims}, _jws} <- JOSE.JWT.verify_strict(jwk, algs, token),
-         :ok <- check_expiry(claims),
-         :ok <- check_issuer(claims, Keyword.get(opts, :issuer)),
-         :ok <- check_api_key(claims, Keyword.get(opts, :validate_api_key)),
-         :ok <- check_aud(claims, conn_info, opts) do
-      {:ok, claims}
-    else
-      {false, _, _} -> {:error, :invalid_token}
-      {:error, _} -> {:error, :invalid_token}
-      _ -> {:error, :invalid_token}
+    kid = with {:ok, header} <- peek_header(token), do: Map.get(header, "kid")
+
+    result =
+      with {:ok, header} <- peek_header(token),
+           {:ok, jwk, default_alg} <- Jwks.verify_jwk(Map.get(header, "kid")),
+           algs <- [Map.get(header, "alg") || default_alg],
+           {true, %JOSE.JWT{fields: claims}, _jws} <- JOSE.JWT.verify_strict(jwk, algs, token),
+           :ok <- check_expiry(claims),
+           :ok <- check_issuer(claims, Keyword.get(opts, :issuer)),
+           :ok <- check_api_key(claims, Keyword.get(opts, :validate_api_key)),
+           :ok <- check_aud(claims, conn_info, opts) do
+        {:ok, claims}
+      else
+        # verify_strict/3 returning false is a signature mismatch: the token was
+        # signed by a key this instance does not hold under that kid.
+        {false, _, _} -> {:error, :bad_signature}
+        {:error, reason} -> {:error, reason}
+        other -> {:error, {:unexpected, other}}
+      end
+
+    case result do
+      {:ok, claims} -> {:ok, claims}
+      {:error, reason} -> reject(reason, kid, "asymmetric")
     end
+  end
+
+  # The MCP transport only understands :invalid_token, so the specific reason
+  # would otherwise be lost entirely — log it before collapsing. Without this a
+  # revoked API key, a rotated signing key, a wrong issuer and a bad audience
+  # are indistinguishable in production logs.
+  defp reject(reason, kid, path) do
+    Logger.warning(
+      "[MCP auth] rejecting #{path} bearer token: #{inspect(reason)} (kid=#{inspect(kid)})"
+    )
+
+    {:error, :invalid_token}
   end
 
   defp verify_legacy(token, conn_info, opts) do
@@ -58,11 +81,11 @@ defmodule NoizuPromptLingua.MCP.DualTokenVerifier do
       {:ok, claims} ->
         case check_aud(claims, conn_info, opts) do
           :ok -> {:ok, claims}
-          {:error, _} -> {:error, :invalid_token}
+          {:error, reason} -> reject(reason, nil, "legacy")
         end
 
-      other ->
-        other
+      {:error, reason} ->
+        reject(reason, nil, "legacy")
     end
   end
 
