@@ -185,6 +185,12 @@ spec:
               value: "http://localhost:{{ .Values.backend.port }}"
             - name: AUTH_URL
               value: "https://{{ .Values.domain }}"
+            - name: API_URL
+              value: "https://{{ .Values.domain }}"
+            - name: APP_URL
+              value: "https://{{ .Values.domain }}"
+            - name: COOKIE_DOMAIN
+              value: ".{{ .Values.domain }}"
             - name: AUTH_TRUST_HOST
               value: "true"
             - name: AUTHENTIK_ISSUER

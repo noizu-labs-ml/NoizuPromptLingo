@@ -1,6 +1,8 @@
 // Browser talks same-origin (ingress splits /api to Phoenix). A baked
 // NEXT_PUBLIC_API_URL that doesn't match the page origin used to hide SSO
 // and fail the code exchange after Authentik.
+import { AUTH_COOKIE_MAX_AGE_SEC, cookieDomainAttribute } from "@/lib/auth-redirect";
+
 const API_URL =
   typeof window !== "undefined" ? "" : process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -1191,7 +1193,7 @@ async function attemptRefresh(): Promise<string | null> {
         localStorage.setItem("refresh_token", data.refresh_token);
       }
       // Sync cookie for middleware
-      document.cookie = `access_token=${data.access_token}; path=/; max-age=${60 * 60}; SameSite=Lax`;
+      document.cookie = `access_token=${data.access_token}; path=/; max-age=${AUTH_COOKIE_MAX_AGE_SEC}; SameSite=Lax${cookieDomainAttribute()}`;
       return data.access_token;
     }
     return null;
@@ -1241,7 +1243,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     // Refresh failed — clear tokens and redirect to login
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
-    document.cookie = "access_token=; path=/; max-age=0; SameSite=Lax";
+    document.cookie = `access_token=; path=/; max-age=0; SameSite=Lax${cookieDomainAttribute()}`;
     if (typeof window !== "undefined") {
       window.location.href = "/login";
     }

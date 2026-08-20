@@ -199,11 +199,14 @@ spec:
                 name: {{ include "npl-mcp.fullname" . }}
                 port:
                   name: mcp
+          # Browser GETs on wiki./tickets./… used to hit the SPA. Host-only
+          # cookies made that look like a logged-out app. Phoenix redirects
+          # non-MCP paths to the apex host (tobor.locker).
           - path: /
             pathType: Prefix
             backend:
               service:
                 name: {{ include "npl-mcp.fullname" . }}
                 port:
-                  name: http
+                  name: mcp
 {{- end }}

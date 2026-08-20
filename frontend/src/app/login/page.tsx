@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useAuth } from "@/context/auth";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
 import Link from "next/link";
 import { AuthCard } from "@/components/auth-card";
+import { rememberAuthRedirect, safePostLoginPath } from "@/lib/auth-redirect";
 
 type LoginMode = "password" | "magic-link" | "otp";
 
@@ -28,8 +29,18 @@ const SSO_PATHS: Record<string, string> = {
 };
 
 export default function LoginPage() {
-  const { login, requestMagicLink, requestOtpLogin, verifyOtpLogin } = useAuth();
+  return (
+    <Suspense fallback={<p>Loading…</p>}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
+  const { user, loading: authLoading, login, requestMagicLink, requestOtpLogin, verifyOtpLogin } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextPath = safePostLoginPath(searchParams.get("redirect") || searchParams.get("next"));
   const [mode, setMode] = useState<LoginMode>("password");
   const [ssoProviders, setSsoProviders] = useState<string[]>(["oidc"]);
   const [email, setEmail] = useState("");
@@ -41,6 +52,14 @@ export default function LoginPage() {
   const [otpSent, setOtpSent] = useState(false);
   const [devLink, setDevLink] = useState<string | null>(null);
   const [devCode, setDevCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    rememberAuthRedirect(nextPath);
+  }, [nextPath]);
+
+  useEffect(() => {
+    if (!authLoading && user) router.replace(nextPath);
+  }, [authLoading, user, router, nextPath]);
 
   useEffect(() => {
     // Authentik is the only IdP. Always offer SSO even if the providers
@@ -60,7 +79,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login(email, password);
-      router.push("/app");
+      router.push(nextPath);
     } catch {
       setError("Invalid email or password");
     } finally {
@@ -104,7 +123,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await verifyOtpLogin(email, otpCode);
-      router.push("/app");
+      router.push(nextPath);
     } catch {
       setError("Invalid or expired code");
     } finally {
@@ -137,6 +156,10 @@ export default function LoginPage() {
       <p>Don&apos;t have an account? <Link href="/signup" data-cy="signup-link">Sign up</Link></p>
     </div>
   );
+
+  if (authLoading || user) {
+    return <p>Loading…</p>;
+  }
 
   return (
     <AuthCard title="Sign in to your locker" cyId="login" error={error}>

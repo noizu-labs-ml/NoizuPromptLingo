@@ -20,5 +20,6 @@ defmodule NoizuPromptLinguaWeb.Endpoint do
     pass: ["*/*"],
     json_decoder: Phoenix.json_library()
 
+  plug NoizuPromptLinguaWeb.Plugs.McpHostRedirect
   plug NoizuPromptLinguaWeb.Router
 end
