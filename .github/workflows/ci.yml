@@ -88,6 +88,22 @@ jobs:
       - run: npm ci
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Next config must be TypeScript (standalone)
+        # next.config.js wins over next.config.ts and the leftover Phoenix
+        # static export used distDir: '../src/npl_mcp/web/static', which
+        # crashes Next 16 Turbopack in docker build-push.
+        run: |
+          if [ -f next.config.js ] || [ -f next.config.mjs ]; then
+            echo "next.config.js/.mjs would override next.config.ts and break the image build" >&2
+            ls -l next.config.* >&2
+            exit 1
+          fi
+          if [ -d app ]; then
+            echo "root frontend/app/ would win over src/app and break next build" >&2
+            exit 1
+          fi
+          test -f next.config.ts
+          grep -q 'output: "standalone"' next.config.ts
       - run: npx tsc --noEmit
 
   build-push:
@@ -135,6 +151,18 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Need write credentials on main so the tag bump can push.
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ github.sha }}
+      - name: Install yq
+        # ubuntu-latest does not ship mikefarah/yq; without this the bump job
+        # fails and helm tags stay split (backend v1.0.* vs frontend sha-*).
+        run: |
+          sudo curl -fsSL -o /usr/local/bin/yq \
+            https://github.com/mikefarah/yq/releases/download/v4.44.6/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+          yq --version
       - name: Bump image tags
         # yq, not sed — the chart nests repository/tag, and a bare `tag:` sed
         # would also clobber .liquibase.image.tag (manually versioned, job off).
@@ -142,11 +170,16 @@ jobs:
           SHORT=${GITHUB_SHA::7}
           yq -i ".backend.image.tag = \"sha-${SHORT}\"" helm/npl-mcp/values.yaml
           yq -i ".frontend.image.tag = \"sha-${SHORT}\"" helm/npl-mcp/values.yaml
+          echo "backend.image.tag=$(yq -r '.backend.image.tag' helm/npl-mcp/values.yaml)"
+          echo "frontend.image.tag=$(yq -r '.frontend.image.tag' helm/npl-mcp/values.yaml)"
       - name: Commit & push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "npl-mcp-ci"
           git config user.email "ci@noizu.com"
           git add helm/npl-mcp/values.yaml
           git diff --cached --quiet && exit 0
           git commit -m "ci: deploy sha-${GITHUB_SHA::7} [skip ci]"
-          git push
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
+          git push origin HEAD:main

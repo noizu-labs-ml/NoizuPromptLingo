@@ -1,5 +1,4 @@
 import type { Config } from "tailwindcss";
-import typography from "@tailwindcss/typography";
 
 /**
  * NPL Studio Tailwind config.
@@ -128,5 +127,5 @@ export default {
       },
     },
   },
-  plugins: [typography],
+  plugins: [],
 } satisfies Config;

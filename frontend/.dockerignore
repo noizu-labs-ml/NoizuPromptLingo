@@ -1,5 +1,8 @@
 .next/
 node_modules/
+# Leftover Phoenix/static console — Next would compile root app/ instead of src/app.
+app/
+legacy-app/
 out/
 build/
 .git

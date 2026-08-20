@@ -95,7 +95,7 @@ defmodule NoizuPromptLinguaWeb.McpEndpointsController do
   end
 
   def duplicate(conn, %{"id" => id} = params) do
-    create(conn, Map.put(params, "source_id", id))
+    create(conn, put_source_id(params, id))
   end
 
   def update(conn, %{"id" => id} = params) do
@@ -208,16 +208,18 @@ defmodule NoizuPromptLinguaWeb.McpEndpointsController do
 
   defp resolve_source(params) do
     attrs = endpoint_params(params)
+    source_id = present(attrs["source_id"]) || present(params["source_id"])
+    source_slug = present(attrs["source_slug"]) || present(params["source_slug"])
 
     cond do
-      is_binary(attrs["source_id"]) and attrs["source_id"] != "" ->
-        case MCPCustomScopes.get(attrs["source_id"]) do
+      is_binary(source_id) ->
+        case MCPCustomScopes.get(source_id) do
           nil -> {:error, :not_found}
           scope -> {:ok, scope}
         end
 
-      is_binary(attrs["source_slug"]) and attrs["source_slug"] != "" ->
-        case MCPCustomScopes.get_by_slug(attrs["source_slug"]) do
+      is_binary(source_slug) ->
+        case MCPCustomScopes.get_by_slug(source_slug) do
           nil -> {:error, :not_found}
           scope -> {:ok, scope}
         end
@@ -226,6 +228,33 @@ defmodule NoizuPromptLinguaWeb.McpEndpointsController do
         {:ok, MCPCustomScopes.get_default_package()}
     end
   end
+
+  # `/copy` is routed as `:id`; the JSON body is often `%{"endpoint" => %{...}}`.
+  # Putting `source_id` only at the top level would be dropped by endpoint_params/1.
+  defp put_source_id(%{"endpoint" => attrs} = params, id) when is_map(attrs) do
+    params
+    |> Map.put("endpoint", Map.put(stringify(attrs), "source_id", id))
+    |> Map.put("source_id", id)
+  end
+
+  defp put_source_id(%{endpoint: attrs} = params, id) when is_map(attrs) do
+    put_source_id(stringify(params), id)
+  end
+
+  defp put_source_id(%{"scope" => attrs} = params, id) when is_map(attrs) do
+    params
+    |> Map.put("scope", Map.put(stringify(attrs), "source_id", id))
+    |> Map.put("source_id", id)
+  end
+
+  defp put_source_id(%{scope: attrs} = params, id) when is_map(attrs) do
+    put_source_id(stringify(params), id)
+  end
+
+  defp put_source_id(params, id) when is_map(params), do: Map.put(params, "source_id", id)
+
+  defp present(value) when is_binary(value) and value != "", do: value
+  defp present(_), do: nil
 
   defp owner_attrs(user_id, params) do
     org_id = param(params, "organization_id")
