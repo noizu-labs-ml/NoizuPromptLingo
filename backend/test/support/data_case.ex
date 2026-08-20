@@ -19,5 +19,11 @@ defmodule NoizuPromptLingua.DataCase do
   def setup_sandbox(tags) do
     pid = Ecto.Adapters.SQL.Sandbox.start_owner!(NoizuPromptLingua.Repo, shared: not tags[:async])
     on_exit(fn -> Ecto.Adapters.SQL.Sandbox.stop_owner(pid) end)
+
+    # Shared pm_core lives in its own database/repo; it needs its own sandbox owner.
+    if Process.whereis(Noizu.PM.Repo) do
+      pm = Ecto.Adapters.SQL.Sandbox.start_owner!(Noizu.PM.Repo, shared: not tags[:async])
+      on_exit(fn -> Ecto.Adapters.SQL.Sandbox.stop_owner(pm) end)
+    end
   end
 end

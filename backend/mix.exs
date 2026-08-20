@@ -121,7 +121,15 @@ defmodule NoizuPromptLingua.MixProject do
       setup: ["deps.get", "ecto.setup"],
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
-      test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"]
+      # Noizu.PM.Repo (shared pm_core) is a second database, created explicitly:
+      # it is not in :ecto_repos (no Ecto migrations of its own — schema comes
+      # from the vendored PM Liquibase changelog).
+      test: [
+        "ecto.create --quiet",
+        "ecto.migrate --quiet",
+        "ecto.create --quiet -r Noizu.PM.Repo",
+        "test"
+      ]
     ]
   end
 

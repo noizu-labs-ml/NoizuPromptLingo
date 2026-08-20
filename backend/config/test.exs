@@ -14,6 +14,22 @@ config :noizu_prompt_lingua, NoizuPromptLingua.Repo,
   ownership_timeout: 120_000,
   timeout: 120_000
 
+# Shared pm_core repo (Noizu.PM.Repo) — a SEPARATE database from the app repo; its schema
+# comes from the vendored PM Liquibase changelog (vendor/noizu_labs_pm/db/changelog).
+# Configuring :database here is what makes NoizuPromptLingua.PMCore.repo_configured?/0 true
+# in test without requiring PM_CORE_DATABASE_URL (runtime.exs only binds it in :prod/:dev).
+config :noizu_labs_pm, Noizu.PM.Repo,
+  username: System.get_env("PM_CORE_DB_USER", System.get_env("DB_USER", "noizu_prompt_lingua")),
+  password: System.get_env("PM_CORE_DB_PASS", System.get_env("DB_PASS", "npl_dev")),
+  hostname: System.get_env("PM_CORE_DB_HOST", System.get_env("DB_HOST", "localhost")),
+  database:
+    "#{System.get_env("PM_CORE_DB_NAME", "pm_core")}_test#{System.get_env("MIX_TEST_PARTITION")}",
+  port: String.to_integer(System.get_env("PM_CORE_DB_PORT") || System.get_env("DB_PORT") || "5432"),
+  pool: Ecto.Adapters.SQL.Sandbox,
+  pool_size: System.schedulers_online() * 2,
+  ownership_timeout: 120_000,
+  timeout: 120_000
+
 config :noizu_prompt_lingua, NoizuPromptLinguaWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4002],
   secret_key_base: "test-secret-key-base-must-be-at-least-64-bytes-long-for-phoenix!!!!!!!!!!!",

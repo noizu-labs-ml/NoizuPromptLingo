@@ -68,6 +68,19 @@ jobs:
             --username=noizu_prompt_lingua --password=npl_dev \
             --changeLogFile=changelog/db.changelog-master.yaml \
             update
+      # Shared pm_core is a SEPARATE database with its own changelog (vendored PM
+      # lib). config/test.exs binds Noizu.PM.Repo to pm_core_test; without this
+      # schema every shared-PM call raises "PM_CORE_DATABASE_URL is required".
+      - name: Apply pm_core schema (Liquibase)
+        working-directory: backend/vendor/noizu_labs_pm/db
+        run: |
+          docker run --rm --network host \
+            -v "$PWD:/liquibase/workdir" -w /liquibase/workdir \
+            liquibase/liquibase:4.29 \
+            --url="jdbc:postgresql://localhost:5432/pm_core_test" \
+            --username=noizu_prompt_lingua --password=npl_dev \
+            --changeLogFile=changelog/db.changelog-master.pm.yaml \
+            update
       - run: mix test
 
   test-frontend:
