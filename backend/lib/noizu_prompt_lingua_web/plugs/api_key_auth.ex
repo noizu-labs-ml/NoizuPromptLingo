@@ -4,9 +4,10 @@ defmodule NoizuPromptLinguaWeb.Plugs.ApiKeyAuth do
 
   When a request carries a Bearer token or X-API-Key header matching one of the
   configured `:api_key_auth` keys AND `NPL_SERVICE_USER_ID` is set, this plug
-  loads the service user, builds a synthetic `%UserSession{}`, puts it as the
-  Guardian current resource, and halts the pipeline so the downstream Guardian
-  `VerifyHeader` → `EnsureAuthenticated` does not reject the non-JWT bearer.
+  loads the service user, builds a synthetic `%UserSession{}`, and puts it as
+  the Guardian current resource. AuthPipeline then skips JWT verification for
+  `:auth_method == :api_key`. This plug must not `halt/1` — a halted conn never
+  reaches the controller.
 
   If no key is present, the key is invalid, or the service user is not
   configured / does not exist, the conn passes through unchanged so the normal
@@ -66,10 +67,12 @@ defmodule NoizuPromptLinguaWeb.Plugs.ApiKeyAuth do
     case load_service_user(service_user_id) do
       {:ok, user} when user != nil ->
         session = build_session(user)
+        # Do not halt: Phoenix skips the controller when conn.halted is set, so
+        # a successful API-key auth would never reach the action. AuthPipeline
+        # skips Guardian when :auth_method == :api_key.
         conn
         |> put_current_resource(session)
         |> assign(:auth_method, :api_key)
-        |> halt()
 
       _ ->
         # Service user doesn't exist, nil, or DB error — fall through.

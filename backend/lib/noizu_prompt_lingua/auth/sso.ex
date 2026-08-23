@@ -140,7 +140,8 @@ defmodule NoizuPromptLingua.Auth.SSO do
   # controller puts in the redirect; the SPA exchanges it via claim_session/1.
   defp create_sso_session(user, provider_type) do
     claim_code = :crypto.strong_rand_bytes(32) |> Base.url_encode64(padding: false)
-    expires = DateTime.utc_now() |> DateTime.add(60, :second)
+    # 5 minutes: Authentik round-trip + a backgrounded tab used to blow the 60s TTL.
+    expires = DateTime.utc_now() |> DateTime.add(5 * 60, :second)
 
     NoizuPromptLingua.Repo.insert(%SessionSchema{
       user_id: user.id,

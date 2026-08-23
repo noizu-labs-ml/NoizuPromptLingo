@@ -37,19 +37,19 @@ defmodule NoizuPromptLingua.OAuth.Jwks do
           source: :configured | :retired | :ephemeral
         }
 
-  @type keyring :: %{active: entry(), verify: %{String.t() => entry()}}
+  @type keyring :: %{active: entry(), verify: %{String.t() => [entry()]}}
 
   @doc "Public JWKS document (`{\"keys\": [...]}`) — active key first, then retired."
   def document do
-    %{active: active, verify: verify} = keyring()
+    {keys, _seen} =
+      Enum.reduce(all_candidates(), {[], MapSet.new()}, fn entry, {acc, seen} ->
+        pub = public_key_map(entry)
+        kid = if MapSet.member?(seen, pub["kid"]), do: thumbprint_kid(entry.jwk), else: pub["kid"]
+        pub = Map.put(pub, "kid", kid)
+        {acc ++ [pub], MapSet.put(seen, kid)}
+      end)
 
-    retired =
-      verify
-      |> Map.delete(active.kid)
-      |> Map.values()
-      |> Enum.sort_by(& &1.kid)
-
-    %{"keys" => Enum.map([active | retired], &public_key_map/1)}
+    %{"keys" => keys}
   end
 
   @doc "Signing entry used for new MCP access tokens."
@@ -63,18 +63,48 @@ defmodule NoizuPromptLingua.OAuth.Jwks do
   signal that the token was signed by a key this instance no longer holds.
   """
   def verify_jwk(kid) when is_binary(kid) and kid != "" do
-    %{active: active, verify: verify} = keyring()
-
-    case Map.fetch(verify, kid) do
-      {:ok, entry} -> {:ok, JOSE.JWK.to_public(entry.jwk), entry.alg}
-      :error when kid == active.kid -> {:ok, JOSE.JWK.to_public(active.jwk), active.alg}
-      :error -> {:error, :unknown_kid}
+    case verify_candidates(kid) do
+      {:ok, [entry | _]} -> {:ok, JOSE.JWK.to_public(entry.jwk), entry.alg}
+      {:error, _} = err -> err
     end
   end
 
   def verify_jwk(_) do
     active = signing_entry()
     {:ok, JOSE.JWK.to_public(active.jwk), active.alg}
+  end
+
+  @doc """
+  Every verification entry published under `kid`.
+
+  A pinned kid (`MCP_JWT_KID=mcp-1`) can label both the active key and a
+  retired key. Returning a list — active first — lets the verifier try them
+  in order instead of treating a rotation as a bad signature.
+  """
+  def verify_candidates(kid) when is_binary(kid) and kid != "" do
+    %{active: active, verify: verify} = keyring()
+
+    case Map.get(verify, kid, []) do
+      [] when kid == active.kid -> {:ok, [active]}
+      [] -> {:error, :unknown_kid}
+      entries -> {:ok, put_active_first(entries, active)}
+    end
+  end
+
+  def verify_candidates(_), do: {:ok, [signing_entry()]}
+
+  @doc "Active key first, then every retired key (including same-kid duplicates)."
+  def all_candidates do
+    %{active: active, verify: verify} = keyring()
+
+    rest =
+      verify
+      |> Map.values()
+      |> List.flatten()
+      |> Enum.reject(&same_key?(&1, active))
+      |> Enum.sort_by(& &1.kid)
+
+    [active | rest]
   end
 
   @doc "The full keyring (active + verification keys), cached in `:persistent_term`."
@@ -113,11 +143,12 @@ defmodule NoizuPromptLingua.OAuth.Jwks do
       |> Kernel.||(System.get_env("MCP_JWT_PREVIOUS_KEYS"))
       |> parse_retired(alg)
 
+    grouped = Enum.group_by(retired, & &1.kid)
+
     verify =
-      retired
-      |> Map.new(&{&1.kid, &1})
-      # the active key always wins its kid slot
-      |> Map.put(active.kid, active)
+      Map.update(grouped, active.kid, [active], fn existing ->
+        [active | Enum.reject(existing, &same_key?(&1, active))]
+      end)
 
     %{active: active, verify: verify}
   end
@@ -273,6 +304,13 @@ defmodule NoizuPromptLingua.OAuth.Jwks do
   end
 
   defp thumbprint_kid(jwk), do: JOSE.JWK.thumbprint(jwk)
+
+  defp same_key?(a, b), do: thumbprint_kid(a.jwk) == thumbprint_kid(b.jwk)
+
+  defp put_active_first(entries, active) do
+    {match, rest} = Enum.split_with(entries, &same_key?(&1, active))
+    match ++ rest
+  end
 
   defp public_key_map(entry) do
     {_kty, key_map} = entry.jwk |> JOSE.JWK.to_public() |> JOSE.JWK.to_map()

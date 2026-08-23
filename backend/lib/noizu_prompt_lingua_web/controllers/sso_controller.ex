@@ -103,10 +103,7 @@ defmodule NoizuPromptLinguaWeb.SSOController do
          {:ok, session} <-
            NoizuPromptLingua.Users.Sessions.get(claimed.id, Noizu.Context.system(), []),
          user when not is_nil(user) <- resolve_user_from_session(session),
-         {:ok, access_token, _} <-
-           Guardian.encode_and_sign(session, %{}, token_type: "access", ttl: {1, :hour}),
-         {:ok, refresh_token, _} <-
-           Guardian.encode_and_sign(session, %{}, token_type: "refresh", ttl: {7, :day}) do
+         {:ok, access_token, refresh_token} <- issue_guardian_pair(session) do
       orgs = Organizations.list_user_organizations(user.id)
 
       conn
@@ -149,10 +146,7 @@ defmodule NoizuPromptLinguaWeb.SSOController do
          {:ok, created} <- NoizuPromptLingua.Auth.SSO.register_user(identity, attrs),
          {:ok, session} <-
            NoizuPromptLingua.Users.Sessions.get(created.id, Noizu.Context.system(), []),
-         {:ok, access_token, _} <-
-           Guardian.encode_and_sign(session, %{}, token_type: "access", ttl: {1, :hour}),
-         {:ok, refresh_token, _} <-
-           Guardian.encode_and_sign(session, %{}, token_type: "refresh", ttl: {7, :day}) do
+         {:ok, access_token, refresh_token} <- issue_guardian_pair(session) do
       user = resolve_user_from_session(session)
       orgs = Organizations.list_user_organizations(user.id)
 
@@ -295,5 +289,25 @@ defmodule NoizuPromptLinguaWeb.SSOController do
 
   defp maybe_add(list, flag, name) do
     if Application.get_env(:noizu_prompt_lingua, flag), do: [name | list], else: list
+  end
+
+  # Password login used to register refresh JTIs in Redis. SSO is now the only
+  # live login path and was skipping that step, so AuthController.refresh
+  # rejected every SSO refresh after the 1h access token died.
+  defp issue_guardian_pair(session) do
+    with {:ok, access_token, _} <-
+           Guardian.encode_and_sign(session, %{}, token_type: "access", ttl: {1, :hour}),
+         {:ok, refresh_token, claims} <-
+           Guardian.encode_and_sign(session, %{}, token_type: "refresh", ttl: {7, :day}) do
+      case claims do
+        %{"jti" => jti} when is_binary(jti) and jti != "" ->
+          NoizuPromptLingua.Auth.TokenStore.store_refresh_jti(jti)
+
+        _ ->
+          :ok
+      end
+
+      {:ok, access_token, refresh_token}
+    end
   end
 end

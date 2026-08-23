@@ -57,7 +57,7 @@ defmodule NoizuPromptLinguaWeb.Plugs.ApiKeyAuthTest do
 
   # ── Valid key authenticates as service user ──────────────────────
 
-  test "valid Bearer key authenticates, sets current_resource, and halts" do
+  test "valid Bearer key authenticates and sets current_resource without halting" do
     user = seed_service_user()
     key = "test-service-key-12345"
     configure_api_key(key, user.id)
@@ -67,7 +67,7 @@ defmodule NoizuPromptLinguaWeb.Plugs.ApiKeyAuthTest do
       |> put_req_header("authorization", "Bearer #{key}")
       |> call_plug()
 
-    assert conn.halted == true
+    refute conn.halted
     assert conn.assigns[:auth_method] == :api_key
 
     session = Guardian.Plug.current_resource(conn)
@@ -75,7 +75,7 @@ defmodule NoizuPromptLinguaWeb.Plugs.ApiKeyAuthTest do
     assert session.status == :active
   end
 
-  test "valid X-API-Key header authenticates and halts" do
+  test "valid X-API-Key header authenticates without halting" do
     user = seed_service_user()
     key = "xkey-test-67890"
     configure_api_key(key, user.id)
@@ -85,7 +85,7 @@ defmodule NoizuPromptLinguaWeb.Plugs.ApiKeyAuthTest do
       |> put_req_header("x-api-key", key)
       |> call_plug()
 
-    assert conn.halted == true
+    refute conn.halted
     assert conn.assigns[:auth_method] == :api_key
     assert Guardian.Plug.current_resource(conn) != nil
   end

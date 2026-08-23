@@ -33,21 +33,21 @@ defmodule NoizuPromptLingua.MCP.DualTokenVerifier do
   def verify(_token, _conn_info, _opts), do: {:error, :invalid_token}
 
   defp verify_asymmetric(token, conn_info, opts) do
-    kid = with {:ok, header} <- peek_header(token), do: Map.get(header, "kid")
+    kid =
+      case peek_header(token) do
+        {:ok, header} -> Map.get(header, "kid")
+        _ -> nil
+      end
 
     result =
       with {:ok, header} <- peek_header(token),
-           {:ok, jwk, default_alg} <- Jwks.verify_jwk(Map.get(header, "kid")),
-           algs <- [Map.get(header, "alg") || default_alg],
-           {true, %JOSE.JWT{fields: claims}, _jws} <- JOSE.JWT.verify_strict(jwk, algs, token),
+           {:ok, claims} <- verify_signed(token, header),
            :ok <- check_expiry(claims),
            :ok <- check_issuer(claims, Keyword.get(opts, :issuer)),
            :ok <- check_api_key(claims, Keyword.get(opts, :validate_api_key)),
            :ok <- check_aud(claims, conn_info, opts) do
         {:ok, claims}
       else
-        # verify_strict/3 returning false is a signature mismatch: the token was
-        # signed by a key this instance does not hold under that kid.
         {false, _, _} -> {:error, :bad_signature}
         {:error, reason} -> {:error, reason}
         other -> {:error, {:unexpected, other}}
@@ -57,6 +57,33 @@ defmodule NoizuPromptLingua.MCP.DualTokenVerifier do
       {:ok, claims} -> {:ok, claims}
       {:error, reason} -> reject(reason, kid, "asymmetric")
     end
+  end
+
+  # Try kid-matched keys first, then the rest of the ring. A pinned kid
+  # (`mcp-1`) after a rotation otherwise verifies only against the new key
+  # and reports a generic bad signature for every still-valid old token.
+  defp verify_signed(token, header) do
+    algs = [Map.get(header, "alg") || "RS256"]
+    kid = Map.get(header, "kid")
+
+    candidates =
+      case Jwks.verify_candidates(kid) do
+        {:ok, found} -> uniq_entries(found ++ Jwks.all_candidates())
+        {:error, :unknown_kid} -> Jwks.all_candidates()
+      end
+
+    Enum.find_value(candidates, {:error, :bad_signature}, fn entry ->
+      jwk = JOSE.JWK.to_public(entry.jwk)
+
+      case JOSE.JWT.verify_strict(jwk, algs, token) do
+        {true, %JOSE.JWT{fields: claims}, _} -> {:ok, claims}
+        _ -> nil
+      end
+    end)
+  end
+
+  defp uniq_entries(entries) do
+    Enum.uniq_by(entries, fn entry -> JOSE.JWK.thumbprint(entry.jwk) end)
   end
 
   # The MCP transport only understands :invalid_token, so the specific reason
@@ -72,15 +99,21 @@ defmodule NoizuPromptLingua.MCP.DualTokenVerifier do
   end
 
   defp verify_legacy(token, conn_info, opts) do
+    # CompoundJWTVerifier only accepts a scalar `iss == expected`. Production
+    # passes `jwt_issuers()` (a list). Forwarding that list made every HS256
+    # token fail `:bad_issuer`. DualTokenVerifier applies the list-aware check.
     legacy_opts =
       opts
-      |> Keyword.take([:secret, :issuer, :validate_api_key, :algorithms])
+      |> Keyword.take([:secret, :validate_api_key, :algorithms])
       |> Keyword.put_new(:algorithms, ["HS256"])
+      |> maybe_put_scalar_issuer(Keyword.get(opts, :issuer))
 
     case Noizu.MCP.Auth.CompoundJWTVerifier.verify(token, conn_info, legacy_opts) do
       {:ok, claims} ->
-        case check_aud(claims, conn_info, opts) do
-          :ok -> {:ok, claims}
+        with :ok <- check_issuer(claims, Keyword.get(opts, :issuer)),
+             :ok <- check_aud(claims, conn_info, opts) do
+          {:ok, claims}
+        else
           {:error, reason} -> reject(reason, nil, "legacy")
         end
 
@@ -88,6 +121,11 @@ defmodule NoizuPromptLingua.MCP.DualTokenVerifier do
         reject(reason, nil, "legacy")
     end
   end
+
+  defp maybe_put_scalar_issuer(opts, issuer) when is_binary(issuer),
+    do: Keyword.put(opts, :issuer, issuer)
+
+  defp maybe_put_scalar_issuer(opts, _), do: opts
 
   defp check_api_key(%{"api_key_id" => id}, fun) when is_function(fun, 1) do
     if fun.(id), do: :ok, else: {:error, :api_key_revoked}
@@ -176,13 +214,24 @@ defmodule NoizuPromptLingua.MCP.DualTokenVerifier do
   defp peek_header(token) do
     case String.split(token, ".", parts: 3) do
       [header_b64, _payload, _sig] ->
-        case Base.url_decode64(header_b64, padding: false) do
+        case decode_b64url(header_b64) do
           {:ok, json} -> Jason.decode(json)
           :error -> {:error, :bad_header}
         end
 
       _ ->
         {:error, :bad_token}
+    end
+  end
+
+  defp decode_b64url(s) do
+    case Base.url_decode64(s, padding: false) do
+      {:ok, _} = ok ->
+        ok
+
+      :error ->
+        pad = rem(4 - rem(byte_size(s), 4), 4)
+        Base.url_decode64(s <> String.duplicate("=", pad))
     end
   end
 end

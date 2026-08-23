@@ -164,9 +164,15 @@ defmodule NoizuPromptLinguaWeb.RemoteAccessController do
       token ->
         verifier_opts = NoizuPromptLinguaWeb.MCPConfig.auth_opts()[:verifier] |> elem(1)
 
-        case Noizu.MCP.Auth.CompoundJWTVerifier.verify(token, %{}, verifier_opts) do
-          {:ok, %{"sub" => user_id}} when is_binary(user_id) and user_id != "" ->
-            fun.(user_id)
+        case NoizuPromptLingua.MCP.DualTokenVerifier.verify(token, %{}, verifier_opts) do
+          {:ok, claims} ->
+            case NoizuPromptLingua.MCP.Resolve.normalize_user_id(claims) do
+              id when is_binary(id) and id != "" ->
+                fun.(id)
+
+              _ ->
+                conn |> put_status(:unauthorized) |> json(%{error: "invalid MCP token"})
+            end
 
           _ ->
             conn |> put_status(:unauthorized) |> json(%{error: "invalid MCP token"})

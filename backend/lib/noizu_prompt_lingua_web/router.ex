@@ -7,7 +7,7 @@ defmodule NoizuPromptLinguaWeb.Router do
 
   pipeline :authenticated do
     # ApiKeyAuth runs first: if a valid fixed API key is present it sets the
-    # service-user session + halts, skipping Guardian. Otherwise falls through.
+    # service-user session and :auth_method, and AuthPipeline skips Guardian.
     plug NoizuPromptLinguaWeb.Plugs.ApiKeyAuth
     plug NoizuPromptLinguaWeb.AuthPipeline
   end

@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useAuth } from "@/context/auth";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
+import { takeAuthRedirect } from "@/lib/auth-redirect";
 
 function Register() {
   const { ssoRegister } = useAuth();
@@ -32,7 +33,7 @@ function Register() {
     setSubmitting(true);
     try {
       await ssoRegister({ token, first, last, bio });
-      router.push("/");
+      router.push(takeAuthRedirect("/app"));
     } catch {
       setError("Failed to complete registration. The link may have expired — please sign in again.");
       setSubmitting(false);

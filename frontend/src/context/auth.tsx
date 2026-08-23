@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { api, type Organization } from "@/lib/api";
 import { analytics } from "@/lib/analytics";
-import { AUTH_COOKIE_MAX_AGE_SEC, cookieDomainAttribute } from "@/lib/auth-redirect";
+import { authCookieClearSuffix, authCookieSetSuffix } from "@/lib/auth-redirect";
 
 interface User {
   id: string;
@@ -34,11 +34,10 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 function setAuthCookie(token: string | null) {
   if (typeof document === "undefined") return;
-  const domain = cookieDomainAttribute();
   if (token) {
-    document.cookie = `access_token=${token}; path=/; max-age=${AUTH_COOKIE_MAX_AGE_SEC}; SameSite=Lax${domain}`;
+    document.cookie = `access_token=${token}${authCookieSetSuffix()}`;
   } else {
-    document.cookie = `access_token=; path=/; max-age=0; SameSite=Lax${domain}`;
+    document.cookie = `access_token=${authCookieClearSuffix()}`;
   }
 }
 

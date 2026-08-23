@@ -35,13 +35,16 @@ defmodule NoizuPromptLinguaWeb.MCPConfig do
         if issuer_url, do: "#{String.trim_trailing(issuer_url, "/")}/.well-known/oauth-protected-resource"
 
     verifier_opts =
-      [
-        secret: {NoizuPromptLingua.MCPAuth, :secret},
-        issuer: issuers,
-        validate_api_key: &NoizuPromptLingua.MCPAuth.api_key_active?/1,
-        require_aud: Keyword.get(oauth, :require_aud, false),
-        public_scheme: Keyword.get(oauth, :public_scheme, "https")
-      ] ++ extra_verifier_opts
+      Keyword.merge(
+        [
+          secret: {NoizuPromptLingua.MCPAuth, :secret},
+          issuer: issuers,
+          validate_api_key: &NoizuPromptLingua.MCPAuth.api_key_active?/1,
+          require_aud: Keyword.get(oauth, :require_aud, false),
+          public_scheme: Keyword.get(oauth, :public_scheme, "https")
+        ],
+        extra_verifier_opts
+      )
 
     auth = [verifier: {NoizuPromptLingua.MCP.DualTokenVerifier, verifier_opts}]
 

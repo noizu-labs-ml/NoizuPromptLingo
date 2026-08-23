@@ -29,14 +29,17 @@ defmodule NoizuPromptLinguaWeb.UserSocket do
 
   # Headless clients (e.g. the local browser controller) authenticate with an
   # MCP JWT — the same Bearer token the MCP gateway accepts — rather than an
-  # interactive Guardian session. Verified with the shared CompoundJWTVerifier;
-  # the `sub` claim is the owning user id used for per-org authorization.
+  # interactive Guardian session. DualTokenVerifier accepts RS256 (JWKS) and
+  # legacy HS256; CompoundJWTVerifier is HS256-only and rejects issuer lists.
   def connect(%{"mcp_token" => token}, socket, _connect_info) do
     verifier_opts = NoizuPromptLinguaWeb.MCPConfig.auth_opts()[:verifier] |> elem(1)
 
-    case Noizu.MCP.Auth.CompoundJWTVerifier.verify(token, %{}, verifier_opts) do
-      {:ok, %{"sub" => user_id}} when is_binary(user_id) and user_id != "" ->
-        {:ok, assign(socket, :user_id, user_id)}
+    case NoizuPromptLingua.MCP.DualTokenVerifier.verify(token, %{}, verifier_opts) do
+      {:ok, claims} ->
+        case NoizuPromptLingua.MCP.Resolve.normalize_user_id(claims) do
+          id when is_binary(id) and id != "" -> {:ok, assign(socket, :user_id, id)}
+          _ -> :error
+        end
 
       _ ->
         :error

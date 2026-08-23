@@ -32,6 +32,19 @@ export function takeAuthRedirect(fallback = "/app"): string {
   }
 }
 
+function cookieSecureAttribute() {
+  if (typeof window === "undefined") return "";
+  return window.location.protocol === "https:" ? "; Secure" : "";
+}
+
+export function authCookieSetSuffix() {
+  return `; path=/; max-age=${AUTH_COOKIE_MAX_AGE_SEC}; SameSite=Lax${cookieSecureAttribute()}${cookieDomainAttribute()}`;
+}
+
+export function authCookieClearSuffix() {
+  return `; path=/; max-age=0; SameSite=Lax${cookieSecureAttribute()}${cookieDomainAttribute()}`;
+}
+
 /** Share the session cookie across MCP subdomains (wiki.tobor.locker, …). */
 export function cookieDomainAttribute() {
   if (typeof window === "undefined") return "";

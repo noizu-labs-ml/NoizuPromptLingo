@@ -143,6 +143,67 @@ defmodule NoizuPromptLingua.OAuth.JwksAndTokenTest do
 
       assert {:ok, _jwk, "RS256"} = Jwks.verify_jwk("mcp-1")
     end
+
+    test "a pinned kid shared by active and retired keys keeps both verifiable" do
+      retired_pem = generate_pem()
+      Jwks.reset!()
+      put_oauth_cfg(private_key_pem: retired_pem, kid: "mcp-1")
+      user = %{id: Ecto.UUID.generate(), email: "a@b.co", name: "Ada"}
+      key = %{id: Ecto.UUID.generate()}
+      {:ok, old_token, _} = Token.mint(user, key)
+
+      Jwks.reset!()
+      put_oauth_cfg(
+        private_key_pem: generate_pem(),
+        kid: "mcp-1",
+        previous_key_pems: "mcp-1=" <> Base.encode64(retired_pem)
+      )
+
+      assert {:ok, entries} = Jwks.verify_candidates("mcp-1")
+      assert length(entries) >= 2
+
+      kids = Jwks.document()["keys"] |> Enum.map(& &1["kid"])
+      assert "mcp-1" in kids
+      assert length(Enum.uniq(kids)) == length(kids)
+
+      assert {:ok, _} =
+               DualTokenVerifier.verify(
+                 old_token,
+                 %{method: "POST", peer: nil, headers: []},
+                 [
+                   secret: fn -> "unused-hmac-secret-for-rs256-path!!!!!!!!!!!!!!!!" end,
+                   issuer: Token.issuer(),
+                   validate_api_key: fn _ -> true end,
+                   require_aud: false
+                 ]
+               )
+    end
+
+    test "old mcp-1 tokens still verify when the retired key was stored without a pinned kid" do
+      retired_pem = generate_pem()
+      Jwks.reset!()
+      put_oauth_cfg(private_key_pem: retired_pem, kid: "mcp-1")
+      user = %{id: Ecto.UUID.generate(), email: "a@b.co", name: "Ada"}
+      key = %{id: Ecto.UUID.generate()}
+      {:ok, old_token, _} = Token.mint(user, key)
+
+      Jwks.reset!()
+      put_oauth_cfg(private_key_pem: generate_pem(), kid: "mcp-1", previous_key_pems: retired_pem)
+
+      assert length(Jwks.all_candidates()) >= 2
+
+      assert {:ok, _} =
+               DualTokenVerifier.verify(
+                 old_token,
+                 %{method: "POST", peer: nil, headers: []},
+                 [
+                   secret: fn -> "unused-hmac-secret-for-rs256-path!!!!!!!!!!!!!!!!" end,
+                   issuer: Token.issuer(),
+                   validate_api_key: fn _ -> true end,
+                   require_aud: false
+                 ]
+               )
+    end
   end
 
   describe "Token.mint" do
@@ -297,6 +358,46 @@ defmodule NoizuPromptLingua.OAuth.JwksAndTokenTest do
                  token,
                  %{method: "POST", peer: nil, headers: []},
                  verifier_opts(validate_api_key: fn _ -> false end)
+               )
+    end
+
+    test "accepts RS256 token when issuer is the production list" do
+      user = %{id: Ecto.UUID.generate(), email: "a@b.co", name: "Ada"}
+      key = %{id: Ecto.UUID.generate()}
+      {:ok, token, _} = Token.mint(user, key)
+
+      assert {:ok, _} =
+               DualTokenVerifier.verify(
+                 token,
+                 %{method: "POST", peer: nil, headers: []},
+                 verifier_opts(issuer: ["tobor-locker", "https://tobor.locker"])
+               )
+    end
+
+    test "accepts legacy HS256 token when issuer is the production list" do
+      previous = Application.get_env(:noizu_prompt_lingua, NoizuPromptLingua.Guardian)
+
+      Application.put_env(:noizu_prompt_lingua, NoizuPromptLingua.Guardian,
+        secret_key: "test-hmac-secret-for-dual-verifier-phase0!!!!!!!!"
+      )
+
+      on_exit(fn ->
+        if previous,
+          do: Application.put_env(:noizu_prompt_lingua, NoizuPromptLingua.Guardian, previous)
+      end)
+
+      user = %{id: Ecto.UUID.generate(), email: "a@b.co", name: "Ada"}
+      key = %{id: Ecto.UUID.generate()}
+      {:ok, token, _} = Token.mint(user, key, alg: :hs256)
+
+      assert {:ok, _} =
+               DualTokenVerifier.verify(
+                 token,
+                 %{method: "POST", peer: nil, headers: []},
+                 verifier_opts(
+                   secret: "test-hmac-secret-for-dual-verifier-phase0!!!!!!!!",
+                   issuer: ["tobor-locker", "https://tobor.locker"]
+                 )
                )
     end
   end
