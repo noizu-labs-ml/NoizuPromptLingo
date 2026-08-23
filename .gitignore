@@ -9,6 +9,11 @@ frontend/.env
 # OS
 .DS_Store
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
 # Dependencies (if running locally)
 backend/_build/
 backend/deps/
