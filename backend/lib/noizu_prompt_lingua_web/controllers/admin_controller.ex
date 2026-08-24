@@ -540,6 +540,7 @@ defmodule NoizuPromptLinguaWeb.AdminController do
       "openai" -> fetch_openai_models()
       "anthropic" -> fetch_anthropic_models()
       "groq" -> fetch_groq_models()
+      "openrouter" -> fetch_openrouter_models()
       "cerebras" -> fetch_cerebras_models()
       "deepseek" -> fetch_deepseek_models()
       _ -> {:error, "Provider not supported for model fetching"}
@@ -560,6 +561,7 @@ defmodule NoizuPromptLinguaWeb.AdminController do
           "openai" -> test_openai_connection(model, endpoint)
           "anthropic" -> test_anthropic_connection(model, endpoint)
           "groq" -> test_groq_connection(model, endpoint)
+          "openrouter" -> test_openrouter_connection(model, endpoint)
           "cerebras" -> test_cerebras_connection(model, endpoint)
           "deepseek" -> test_deepseek_connection(model, endpoint)
           "ollama" -> test_ollama_connection(model, endpoint)
@@ -728,6 +730,37 @@ defmodule NoizuPromptLinguaWeb.AdminController do
     end
   end
 
+  defp fetch_openrouter_models do
+    case get_openrouter_api_key() do
+      nil ->
+        {:error, "OPENROUTER_API_KEY not configured"}
+
+      api_key ->
+        headers = [
+          {"Authorization", "Bearer #{api_key}"},
+          {"Content-Type", "application/json"}
+        ]
+
+        case request_json(:get, "https://openrouter.ai/api/v1/models", headers) do
+          {:ok, %{"data" => models}} ->
+            {:ok, Enum.map(models, & &1["id"])}
+
+          {:ok, _} ->
+            {:error, "Invalid JSON response"}
+
+          {:error, reason} ->
+            {:error, reason}
+        end
+    end
+  end
+
+  defp test_openrouter_connection(model, _custom_endpoint) do
+    case get_openrouter_api_key() do
+      nil -> {:error, "OPENROUTER_API_KEY not configured"}
+      _ -> {:ok, %{"model" => model, "provider" => "openrouter", "status" => "configured"}}
+    end
+  end
+
   # ── Cerebras integration ───────────────────────────────────────────────────
   defp fetch_cerebras_models do
     case get_cerebras_api_key() do
@@ -858,6 +891,10 @@ defmodule NoizuPromptLinguaWeb.AdminController do
 
   defp get_groq_api_key do
     System.get_env("GROQ_API_KEY") || Application.get_env(:genai, :groq, [])[:api_key]
+  end
+
+  defp get_openrouter_api_key do
+    System.get_env("OPENROUTER_API_KEY") || Application.get_env(:genai, :openrouter, [])[:api_key]
   end
 
   defp get_cerebras_api_key do

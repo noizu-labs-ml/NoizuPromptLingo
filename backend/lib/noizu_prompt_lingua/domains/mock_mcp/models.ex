@@ -92,6 +92,24 @@ defmodule NoizuPromptLingua.Domains.MockMCP.Models do
       label: "LiteLLM · proxy default",
       provider: "litellm",
       model: "default"
+    },
+    %{
+      id: "openrouter:openai/gpt-4o",
+      label: "OpenRouter · GPT-4o",
+      provider: "openrouter",
+      model: "openai/gpt-4o"
+    },
+    %{
+      id: "openrouter:anthropic/claude-sonnet-4",
+      label: "OpenRouter · Claude Sonnet 4",
+      provider: "openrouter",
+      model: "anthropic/claude-sonnet-4"
+    },
+    %{
+      id: "openrouter:google/gemini-2.5-flash",
+      label: "OpenRouter · Gemini 2.5 Flash",
+      provider: "openrouter",
+      model: "google/gemini-2.5-flash"
     }
   ]
 
@@ -204,6 +222,12 @@ defmodule NoizuPromptLingua.Domains.MockMCP.Models do
   def resolve("litellm", model, _endpoint) when is_binary(model) and model != "",
     do: GenAI.Provider.LiteLLM.Models.model(model)
 
+  def resolve("openrouter", model, _endpoint) when is_binary(model) and model != "",
+    do: GenAI.Provider.OpenRouter.Models.model(model)
+
+  def resolve("qwen", model, _endpoint) when is_binary(model) and model != "",
+    do: GenAI.Provider.Qwen.Models.model(model)
+
   # Local / OpenAI-compatible custom endpoints are addressed through the OpenAI
   # provider (chat/completions shape). Unknown providers fall back here too.
   def resolve(_provider, model, _endpoint) when is_binary(model) and model != "" do
@@ -225,5 +249,7 @@ defmodule NoizuPromptLingua.Domains.MockMCP.Models do
   def provider_module("grok"), do: GenAI.Provider.XAI
   def provider_module("groq"), do: GenAI.Provider.Groq
   def provider_module("litellm"), do: GenAI.Provider.LiteLLM
+  def provider_module("openrouter"), do: GenAI.Provider.OpenRouter
+  def provider_module("qwen"), do: GenAI.Provider.Qwen
   def provider_module(_), do: GenAI.Provider.OpenAI
 end
