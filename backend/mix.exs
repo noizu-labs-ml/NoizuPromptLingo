@@ -67,7 +67,8 @@ defmodule NoizuPromptLingua.MixProject do
       noizu_labs_pm_dep(),
 
       # GenAI
-      {:genai, "~> 0.3.2"},
+      # 0.3.8 is on develop (Qwen media); Hex still at 0.3.5.
+      {:genai, "~> 0.3.8", github: "noizu-labs-ml/genai", branch: "develop"},
       # {:ex_llama, "~> 0.2.0"},
 
       # Routing

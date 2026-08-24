@@ -40,6 +40,13 @@ defmodule NoizuPromptLingua.Domains.Assets.MediaProviders do
       env_var: "GEMINI_API_KEY"
     },
     %{
+      slug: "qwen_image",
+      label: "Qwen · Image 3.0 (DashScope)",
+      modality: "image",
+      module: GenAI.Provider.Qwen.Image,
+      env_var: "DASHSCOPE_API_KEY"
+    },
+    %{
       slug: "litellm_media",
       label: "LiteLLM · Media proxy",
       modality: "image",
@@ -52,6 +59,20 @@ defmodule NoizuPromptLingua.Domains.Assets.MediaProviders do
       modality: "speech",
       module: GenAI.Provider.OpenAI.Speech,
       env_var: "OPENAI_API_KEY"
+    },
+    %{
+      slug: "qwen_speech",
+      label: "Qwen · TTS (DashScope)",
+      modality: "speech",
+      module: GenAI.Provider.Qwen.Speech,
+      env_var: "DASHSCOPE_API_KEY"
+    },
+    %{
+      slug: "qwen_video",
+      label: "Wan · Video 2.7 (DashScope)",
+      modality: "video",
+      module: GenAI.Provider.Qwen.Video,
+      env_var: "DASHSCOPE_API_KEY"
     },
     %{
       slug: "openai_transcription",

@@ -135,8 +135,11 @@ config :noizu_prompt_lingua, :jobs_mode, :oban
 config :genai, :media_providers, [
   GenAI.Provider.OpenAI.Image,
   GenAI.Provider.Gemini.Image,
+  GenAI.Provider.Qwen.Image,
   GenAI.Provider.OpenAI.Speech,
+  GenAI.Provider.Qwen.Speech,
   GenAI.Provider.OpenAI.Transcription,
+  GenAI.Provider.Qwen.Video,
   GenAI.Provider.Suno,
   GenAI.Provider.LiteLLM.Media
 ]

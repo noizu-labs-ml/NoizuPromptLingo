@@ -159,6 +159,24 @@ spec:
                   name: {{ .Values.backend.env.secretName }}
                   key: GROQ_API_KEY
                   optional: true
+            - name: DASHSCOPE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: DASHSCOPE_API_KEY
+                  optional: true
+            - name: QWEN_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: QWEN_API_KEY
+                  optional: true
+            - name: QWEN_TOKEN_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: QWEN_TOKEN_KEY
+                  optional: true
             - name: JINA_API_KEY
               valueFrom:
                 secretKeyRef:
