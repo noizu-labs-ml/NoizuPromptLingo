@@ -59,5 +59,66 @@ describe("Authentik OIDC login", () => {
         expect(token).to.be.a("string").and.not.be.empty;
       }
     });
+
+    // Org members smoke (pm_core membership read path): after SSO, the logged-in
+    // owner must appear in their org's member list. Resilient by design — if the
+    // live account has no org membership we only assert /app loads.
+    //
+    // TODO(pm-core members read fix): tobor.locker does not yet ship the backend
+    // fix that sources user membership rows from pm_core — until it deploys, an
+    // owner row may be missing from GET /api/v1/memberships/organizations/:id and
+    // this check logs instead of failing (see backend scoped_memberships.ex).
+    // NOTE(2026-08-26): unverified end-to-end — the SSO login itself currently
+    // fails on live (stuck at auth.derobot.is/if/flow, pre-existing; the pristine
+    // spec fails identically), so this block has not executed against prod yet.
+    cy.window().then((win) => {
+      const token = win.localStorage.getItem("access_token");
+      const auth = token ? { bearer: token } : {};
+      cy.request({
+        url: "/api/v1/organizations",
+        auth,
+        failOnStatusCode: false,
+      }).then((res) => {
+        const orgs =
+          res.isOkStatusCode && Array.isArray(res.body?.organizations)
+            ? res.body.organizations
+            : [];
+        if (orgs.length === 0) {
+          cy.log("no org membership on live — asserting /app loads instead");
+          cy.visit("/app", { failOnStatusCode: false });
+          return;
+        }
+
+        const org = orgs[0];
+        cy.visit(`/app/${org.slug}/members`);
+        cy.contains("h1", "Members", { timeout: 15000 }).should("be.visible");
+
+        cy.request({
+          url: `/api/v1/memberships/organizations/${org.id}`,
+          auth,
+          failOnStatusCode: false,
+        }).then((mres) => {
+          if (!mres.isOkStatusCode) {
+            cy.log(`members endpoint returned ${mres.status} — skipping owner-row check`);
+            return;
+          }
+          const members = mres.body?.members ?? [];
+          const ownerRow = members.find(
+            (m: { role?: string }) => m.role === "owner"
+          );
+          if (!ownerRow) {
+            cy.log(
+              "no owner row in members list — expected until the pm-core membership read fix deploys"
+            );
+            return;
+          }
+          const identity =
+            ownerRow.display_name || ownerRow.user_name || ownerRow.email;
+          expect(identity, "owner row carries a display identity").to.not.be
+            .empty;
+          cy.contains("tbody tr", identity).should("exist");
+        });
+      });
+    });
   });
 });

@@ -130,38 +130,40 @@ defmodule NoizuPromptLingua.Organizations do
   end
 
   def list_user_organizations(user_id) do
-    from(sm in ScopedMembershipSchema,
-      join: o in Schema,
-      on: o.id == sm.resource_id,
-      join: g in NoizuPromptLingua.Schema.Authz.Group,
-      on: g.id == sm.group_id,
-      left_join: og in NoizuPromptLingua.Schema.Authz.Group,
-      on: og.name == "owner",
-      left_join: osm in ScopedMembershipSchema,
-      on:
-        osm.resource_id == o.id and osm.resource_type == "organization" and
-          osm.member_type == "user" and osm.group_id == og.id,
-      left_join: ou in NoizuPromptLingua.Schema.Users.User,
-      on: ou.id == osm.member_id,
-      where:
-        sm.member_type == "user" and sm.member_id == ^user_id and
-          sm.resource_type == "organization",
-      where: is_nil(sm.expires_at) or sm.expires_at > ^DateTime.utc_now(),
-      group_by: [o.id, o.slug, o.name, g.name],
-      select: %{
-        id: o.id,
-        slug: o.slug,
-        name: o.name,
-        role: g.name,
-        # ADR-015 affordance echo (16dc3df2): the caller's effective role in THIS org,
-        # per row, so the FE gates row actions (advisory only — the RBAC guard is the
-        # deny-closed boundary). Same value as `role` (this query already joins the
-        # caller's membership); exposed under the contract field name the FE consumes.
-        effective_role: g.name,
-        owner: fragment("max(coalesce(?, ?, ?))", ou.user_name, ou.handle, ou.email)
-      }
-    )
-    |> NoizuPromptLingua.Repo.all()
+    # pm_core cutover: org rows + user scoped memberships live on Noizu.PM.Repo — the app
+    # DB only holds pre-cutover stale rows, so an app-DB join here drops every post-cutover
+    # org from session/me + the org switcher. Same select shape as before (ADR-015
+    # effective_role echo + owner display).
+    NoizuPromptLingua.PMCore.with_pm(fn ->
+      from(sm in Noizu.PM.Schema.Authz.ScopedMembership,
+        join: o in Noizu.PM.Schema.Organizations.Organization,
+        on: o.id == sm.resource_id,
+        join: g in Noizu.PM.Schema.Authz.Group,
+        on: g.id == sm.group_id,
+        left_join: og in Noizu.PM.Schema.Authz.Group,
+        on: og.name == "owner",
+        left_join: osm in Noizu.PM.Schema.Authz.ScopedMembership,
+        on:
+          osm.resource_id == o.id and osm.resource_type == "organization" and
+            osm.member_type == "user" and osm.group_id == og.id,
+        left_join: ou in Noizu.PM.Schema.Users.User,
+        on: ou.id == osm.member_id,
+        where:
+          sm.member_type == "user" and sm.member_id == ^user_id and
+            sm.resource_type == "organization",
+        where: is_nil(sm.expires_at) or sm.expires_at > ^DateTime.utc_now(),
+        group_by: [o.id, o.slug, o.name, g.name],
+        select: %{
+          id: o.id,
+          slug: o.slug,
+          name: o.name,
+          role: g.name,
+          effective_role: g.name,
+          owner: fragment("max(coalesce(?, ?, ?))", ou.user_name, ou.handle, ou.email)
+        }
+      )
+      |> Noizu.PM.Repo.all()
+    end)
   end
 
   def authorize(user_id, organization_id, required_role) do

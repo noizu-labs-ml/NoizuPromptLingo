@@ -45,7 +45,28 @@ defmodule NoizuPromptLingua.Authz.ScopedMemberships do
   # and an optional role facet (scalar or list). LEFT joins both users + personas, keyed by
   # member_type, with a unified display_name; persona-specific fields (persona_slug/avatar)
   # are nil for users and vice-versa. member_type-agnostic for the FE.
+  #
+  # pm_core cutover split: USER memberships are written via Noizu.PM.Authz.ScopedMemberships
+  # (pm_core DB) while PERSONA memberships (add_persona_member below) stay on the app DB —
+  # so reads must UNION the two sources or post-cutover owners never appear in members lists.
   def list_for_resource(resource_type, resource_id, opts \\ []) do
+    user_rows =
+      NoizuPromptLingua.PMCore.with_pm(fn ->
+        Noizu.PM.Authz.ScopedMemberships.list_for_resource(resource_type, resource_id, opts)
+      end)
+      |> Enum.map(&Map.merge(%{persona_id: nil, persona_slug: nil, avatar: nil}, &1))
+
+    persona_rows =
+      persona_rows_query(resource_type, resource_id)
+      |> maybe_role_filter(opts[:role])
+      |> NoizuPromptLingua.Repo.all()
+
+    user_rows ++ persona_rows
+  end
+
+  # App-DB side of the union: PERSONA rows only (users live on pm_core). Same select shape
+  # as the pm user rows so the FE stays member_type-agnostic.
+  defp persona_rows_query(resource_type, resource_id) do
     from(sm in Schema,
       join: g in NoizuPromptLingua.Schema.Authz.Group,
       on: g.id == sm.group_id,
@@ -54,7 +75,7 @@ defmodule NoizuPromptLingua.Authz.ScopedMemberships do
       left_join: p in NoizuPromptLingua.Schema.Persona,
       on: sm.member_type == "persona" and p.id == sm.member_id,
       where: sm.resource_type == ^resource_type and sm.resource_id == ^resource_id,
-      where: sm.member_type in ["user", "persona"],
+      where: sm.member_type == "persona",
       where: is_nil(sm.expires_at) or sm.expires_at > ^DateTime.utc_now(),
       select: %{
         id: sm.id,
@@ -74,12 +95,46 @@ defmodule NoizuPromptLingua.Authz.ScopedMemberships do
         expires_at: sm.expires_at
       }
     )
-    |> maybe_role_filter(opts[:role])
-    |> NoizuPromptLingua.Repo.all()
   end
 
   # Single membership by id (getMember), same shape as a list row. nil if absent.
+  # User membership ids are pm_core ids; persona membership ids are app-DB ids — resolve
+  # both, pm (users) first.
   def get_membership(id) do
+    pm_user_membership(id) || persona_membership(id)
+  end
+
+  defp pm_user_membership(id) do
+    NoizuPromptLingua.PMCore.with_pm(fn ->
+      from(sm in Noizu.PM.Schema.Authz.ScopedMembership,
+        join: g in Noizu.PM.Schema.Authz.Group,
+        on: g.id == sm.group_id,
+        left_join: u in Noizu.PM.Schema.Users.User,
+        on: sm.member_type == "user" and u.id == sm.member_id,
+        where: sm.id == ^id and sm.member_type == "user",
+        select: %{
+          id: sm.id,
+          member_type: sm.member_type,
+          member_id: sm.member_id,
+          user_id: u.id,
+          email: u.email,
+          user_name: u.user_name,
+          persona_id: nil,
+          persona_slug: nil,
+          avatar: nil,
+          display_name: fragment("coalesce(?, ?)", u.user_name, u.email),
+          role: g.name,
+          resource_type: sm.resource_type,
+          resource_id: sm.resource_id,
+          joined_at: sm.created_at,
+          expires_at: sm.expires_at
+        }
+      )
+      |> Noizu.PM.Repo.one()
+    end)
+  end
+
+  defp persona_membership(id) do
     from(sm in Schema,
       join: g in NoizuPromptLingua.Schema.Authz.Group,
       on: g.id == sm.group_id,
@@ -87,7 +142,7 @@ defmodule NoizuPromptLingua.Authz.ScopedMemberships do
       on: sm.member_type == "user" and u.id == sm.member_id,
       left_join: p in NoizuPromptLingua.Schema.Persona,
       on: sm.member_type == "persona" and p.id == sm.member_id,
-      where: sm.id == ^id and sm.member_type in ["user", "persona"],
+      where: sm.id == ^id and sm.member_type == "persona",
       select: %{
         id: sm.id,
         member_type: sm.member_type,
@@ -187,21 +242,25 @@ defmodule NoizuPromptLingua.Authz.ScopedMemberships do
   defp maybe_role_filter(query, role), do: where(query, [sm, g, u], g.name == ^role)
 
   def list_for_user(user_id) do
-    from(sm in Schema,
-      join: g in NoizuPromptLingua.Schema.Authz.Group,
-      on: g.id == sm.group_id,
-      where: sm.member_type == "user" and sm.member_id == ^user_id,
-      where: is_nil(sm.expires_at) or sm.expires_at > ^DateTime.utc_now(),
-      select: %{
-        id: sm.id,
-        resource_type: sm.resource_type,
-        resource_id: sm.resource_id,
-        role: g.name,
-        joined_at: sm.created_at,
-        expires_at: sm.expires_at
-      }
-    )
-    |> NoizuPromptLingua.Repo.all()
+    # pm_core cutover: user memberships live on Noizu.PM.Repo (add_member path); the app DB
+    # only holds pre-cutover stale rows.
+    NoizuPromptLingua.PMCore.with_pm(fn ->
+      from(sm in Noizu.PM.Schema.Authz.ScopedMembership,
+        join: g in Noizu.PM.Schema.Authz.Group,
+        on: g.id == sm.group_id,
+        where: sm.member_type == "user" and sm.member_id == ^user_id,
+        where: is_nil(sm.expires_at) or sm.expires_at > ^DateTime.utc_now(),
+        select: %{
+          id: sm.id,
+          resource_type: sm.resource_type,
+          resource_id: sm.resource_id,
+          role: g.name,
+          joined_at: sm.created_at,
+          expires_at: sm.expires_at
+        }
+      )
+      |> Noizu.PM.Repo.all()
+    end)
   end
 
 end
