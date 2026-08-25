@@ -81,7 +81,11 @@ jobs:
             --username=noizu_prompt_lingua --password=npl_dev \
             --changeLogFile=changelog/db.changelog-master.pm.yaml \
             update
+      # :memory hits live Weaviate (unauthed in CI) — skip on main pushes; PRs run the full suite
+      - run: mix test --exclude memory --exclude redis
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       - run: mix test
+        if: github.event_name == 'pull_request'
 
   test-frontend:
     # Smoke only: npm ci + tsc. Not a full Next build and not Cypress.
