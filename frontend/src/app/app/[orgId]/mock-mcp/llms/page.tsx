@@ -231,7 +231,8 @@ export default function MockMcpLlmsPage() {
             </button>
           </div>
         ) : (
-          <table className="sg-table">
+          <div className="admin-table-wrap">
+            <table className="sg-table">
             <thead>
               <tr>
                 <th>Label</th>
@@ -267,7 +268,8 @@ export default function MockMcpLlmsPage() {
                 </tr>
               ))}
             </tbody>
-          </table>
+            </table>
+          </div>
         )}
       </main>
 

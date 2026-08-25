@@ -1845,6 +1845,10 @@ button.chat-room-header__slug:focus-visible { outline: 2px solid var(--field-foc
 .console-multifacet__clear:focus-visible { outline: 2px solid var(--field-focus-border, var(--brand-blue, #1d4e5f)); outline-offset: -1px; border-radius: 4px; }
 @media (prefers-reduced-motion: reduce) { .console-multifacet__menu.is-open { animation: reaction-fade 90ms ease-out; } }
 
+/* Horizontal scroll on narrow viewports — wide grids scroll inside this wrapper
+   instead of blowing out the page layout. Tables size naturally (width: 100%),
+   so narrow tables never show a scrollbar. */
+.console-table__scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
 .console-table__grid { width: 100%; border-collapse: collapse; font-size: var(--font-size-sm, 0.875rem); }
 .console-table__grid th, .console-table__grid td { text-align: left; padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem); border-bottom: 1px solid var(--border); }
 .console-table--compact .console-table__grid th, .console-table--compact .console-table__grid td { padding: 3px var(--space-2, 0.5rem); }

@@ -259,98 +259,100 @@ export function DataTable<T, TInput>({
       {pageRows.length === 0 ? (
         <p className="console-state console-state--empty">No {labels.plural.toLowerCase()} found.</p>
       ) : (
-        <table className="console-table__grid">
-          <thead>
-            <tr>
-              {bulkEnabled && <th className="console-table__check" scope="col" aria-label="Select" />}
-              {columns.map((c) => {
-                const isSorted = sortKey === c.key;
-                return (
-                  <th
-                    key={c.key}
-                    scope="col"
-                    style={c.width ? { width: c.width } : undefined}
-                    aria-sort={isSorted ? (sortDir === 'asc' ? 'ascending' : 'descending') : undefined}
-                    className={c.align ? `is-${c.align}` : undefined}
-                  >
-                    {c.sortable ? (
-                      <button type="button" className="console-table__sort" onClick={() => toggleSort(c.key)}>
-                        {c.label}
-                        <span aria-hidden className="console-table__sort-ind">
-                          {isSorted ? (sortDir === 'asc' ? '▲' : '▼') : ''}
-                        </span>
-                      </button>
-                    ) : (
-                      c.label
-                    )}
-                  </th>
-                );
-              })}
-              <th scope="col" className="console-table__actions-col" aria-label="Actions" />
-            </tr>
-          </thead>
-          <tbody onKeyDown={onRowsKeyDown}>
-            {pageRows.map((row, i) => {
-              const id = rowId(row);
-              return (
-                <tr
-                  key={id}
-                  className={`console-table__row${i === activeRow ? ' is-active' : ''}${
-                    rowClassName?.(row, ctx) ? ` ${rowClassName(row, ctx)}` : ''
-                  }`}
-                  tabIndex={i === activeRow ? 0 : -1}
-                  aria-selected={selected.has(id) || undefined}
-                  onFocus={() => setActiveRow(i)}
-                >
-                  {bulkEnabled && (
-                    <td className="console-table__check">
-                      <input
-                        type="checkbox"
-                        aria-label={`Select row ${i + 1}`}
-                        checked={selected.has(id)}
-                        onChange={(e) =>
-                          setSelected((prev) => {
-                            const next = new Set(prev);
-                            if (e.target.checked) next.add(id);
-                            else next.delete(id);
-                            return next;
-                          })
-                        }
-                      />
-                    </td>
-                  )}
-                  {columns.map((c) => (
-                    <td key={c.key} className={c.align ? `is-${c.align}` : undefined}>
-                      {c.primary && onOpenRow ? (
-                        <button type="button" className="console-table__open" onClick={() => onOpenRow(row)}>
-                          {renderCell(c, row)}
+        <div className="console-table__scroll">
+          <table className="console-table__grid">
+            <thead>
+              <tr>
+                {bulkEnabled && <th className="console-table__check" scope="col" aria-label="Select" />}
+                {columns.map((c) => {
+                  const isSorted = sortKey === c.key;
+                  return (
+                    <th
+                      key={c.key}
+                      scope="col"
+                      style={c.width ? { width: c.width } : undefined}
+                      aria-sort={isSorted ? (sortDir === 'asc' ? 'ascending' : 'descending') : undefined}
+                      className={c.align ? `is-${c.align}` : undefined}
+                    >
+                      {c.sortable ? (
+                        <button type="button" className="console-table__sort" onClick={() => toggleSort(c.key)}>
+                          {c.label}
+                          <span aria-hidden className="console-table__sort-ind">
+                            {isSorted ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+                          </span>
                         </button>
                       ) : (
-                        renderCell(c, row)
+                        c.label
                       )}
+                    </th>
+                  );
+                })}
+                <th scope="col" className="console-table__actions-col" aria-label="Actions" />
+              </tr>
+            </thead>
+            <tbody onKeyDown={onRowsKeyDown}>
+              {pageRows.map((row, i) => {
+                const id = rowId(row);
+                return (
+                  <tr
+                    key={id}
+                    className={`console-table__row${i === activeRow ? ' is-active' : ''}${
+                      rowClassName?.(row, ctx) ? ` ${rowClassName(row, ctx)}` : ''
+                    }`}
+                    tabIndex={i === activeRow ? 0 : -1}
+                    aria-selected={selected.has(id) || undefined}
+                    onFocus={() => setActiveRow(i)}
+                  >
+                    {bulkEnabled && (
+                      <td className="console-table__check">
+                        <input
+                          type="checkbox"
+                          aria-label={`Select row ${i + 1}`}
+                          checked={selected.has(id)}
+                          onChange={(e) =>
+                            setSelected((prev) => {
+                              const next = new Set(prev);
+                              if (e.target.checked) next.add(id);
+                              else next.delete(id);
+                              return next;
+                            })
+                          }
+                        />
+                      </td>
+                    )}
+                    {columns.map((c) => (
+                      <td key={c.key} className={c.align ? `is-${c.align}` : undefined}>
+                        {c.primary && onOpenRow ? (
+                          <button type="button" className="console-table__open" onClick={() => onOpenRow(row)}>
+                            {renderCell(c, row)}
+                          </button>
+                        ) : (
+                          renderCell(c, row)
+                        )}
+                      </td>
+                    ))}
+                    <td className="console-table__actions-col">
+                      <RowMenu
+                        row={row}
+                        ctx={ctx}
+                        actions={actions?.rowActions}
+                        api={descriptor.api}
+                        onOpenRow={onOpenRow}
+                        onEditRow={onEditRow}
+                        onDeleteRow={onDeleteRow}
+                        onAction={onAction}
+                        canEdit={actions?.canEdit}
+                        canDelete={actions?.canDelete}
+                        builtinLabels={actions?.builtinLabels}
+                        label={labels.singular}
+                      />
                     </td>
-                  ))}
-                  <td className="console-table__actions-col">
-                    <RowMenu
-                      row={row}
-                      ctx={ctx}
-                      actions={actions?.rowActions}
-                      api={descriptor.api}
-                      onOpenRow={onOpenRow}
-                      onEditRow={onEditRow}
-                      onDeleteRow={onDeleteRow}
-                      onAction={onAction}
-                      canEdit={actions?.canEdit}
-                      canDelete={actions?.canDelete}
-                      builtinLabels={actions?.builtinLabels}
-                      label={labels.singular}
-                    />
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {!embedded && pageCount > 1 && (

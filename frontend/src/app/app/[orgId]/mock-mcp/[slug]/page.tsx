@@ -383,10 +383,12 @@ export default function MockMcpDetailPage() {
                 <button className="sg-btn sg-btn--outline" onClick={loadState}>Refresh</button>
               </div>
               {redisEntries.length === 0 ? <p className="sg-field__hint">No keys.</p> : (
-                <table className="sg-table">
-                  <thead><tr><th>Key</th><th>Value</th></tr></thead>
-                  <tbody>{redisEntries.map((e) => <tr key={e.key}><td className="font-mono">{e.key}</td><td className="font-mono" style={{ wordBreak: 'break-all' }}>{e.value}</td></tr>)}</tbody>
-                </table>
+                <div className="admin-table-wrap">
+                  <table className="sg-table">
+                    <thead><tr><th>Key</th><th>Value</th></tr></thead>
+                    <tbody>{redisEntries.map((e) => <tr key={e.key}><td className="font-mono">{e.key}</td><td className="font-mono" style={{ wordBreak: 'break-all' }}>{e.value}</td></tr>)}</tbody>
+                  </table>
+                </div>
               )}
             </section>
           </>
@@ -438,7 +440,8 @@ export default function MockMcpDetailPage() {
           <section className="sg-section">
             <h2 className="sg-section-heading">Call log</h2>
             {calls.length === 0 ? <p className="sg-field__hint">No calls recorded yet.</p> : (
-              <table className="sg-table">
+              <div className="admin-table-wrap">
+                <table className="sg-table">
                 <thead><tr><th>Method</th><th>Tool</th><th>Latency</th><th>Result</th><th></th></tr></thead>
                 <tbody>
                   {calls.map((c) => (
@@ -462,7 +465,8 @@ export default function MockMcpDetailPage() {
                     </Fragment>
                   ))}
                 </tbody>
-              </table>
+                </table>
+              </div>
             )}
           </section>
         )}

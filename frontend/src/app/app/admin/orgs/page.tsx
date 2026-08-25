@@ -29,7 +29,8 @@ export default function AdminOrgsPage() {
   return (
     <div style={{ maxWidth: 800, margin: "40px auto", padding: "0 24px" }}>
       <h1 style={{ fontSize: 24, marginBottom: 8 }}>Organizations ({total})</h1>
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <div className="admin-table-wrap">
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
         <thead>
           <tr style={{ borderBottom: "2px solid #eee", textAlign: "left" }}>
             <th style={{ padding: 8 }}>Name</th>
@@ -46,7 +47,8 @@ export default function AdminOrgsPage() {
             </tr>
           ))}
         </tbody>
-      </table>
+        </table>
+      </div>
       <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
         <button disabled={page <= 1} onClick={() => setPage(page - 1)} style={{ padding: "4px 12px" }}>Prev</button>
         <span style={{ padding: "4px 8px" }}>Page {page}</span>

@@ -107,7 +107,8 @@ export default function SitemapPage() {
         {/* ─── Page Inventory ─── */}
         <section className="sg-sitemap-section">
           <h2 className="sg-section-heading">Page Inventory</h2>
-          <table className="spec-table">
+          <div className="admin-table-wrap">
+            <table className="spec-table">
             <thead>
               <tr>
                 <th>Route</th>
@@ -132,7 +133,8 @@ export default function SitemapPage() {
                 <td>mermaid.js, spec-table</td>
               </tr>
             </tbody>
-          </table>
+            </table>
+          </div>
         </section>
 
         {/* ─── Style Guide Sections ─── */}

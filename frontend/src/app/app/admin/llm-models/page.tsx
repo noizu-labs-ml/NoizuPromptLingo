@@ -400,7 +400,8 @@ export default function AdminLlmModelsPage() {
             </button>
           </div>
         ) : (
-          <table className="sg-table">
+          <div className="admin-table-wrap">
+            <table className="sg-table">
             <thead>
               <tr>
                 <th>Label</th>
@@ -430,7 +431,8 @@ export default function AdminLlmModelsPage() {
                 </tr>
               ))}
             </tbody>
-          </table>
+            </table>
+          </div>
         )}
       </main>
 

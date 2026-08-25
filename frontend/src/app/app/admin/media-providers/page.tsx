@@ -209,7 +209,8 @@ export default function AdminMediaProvidersPage() {
         ) : registry.length === 0 ? (
           <p className="sg-page-intro">No media providers registered.</p>
         ) : (
-          <table className="sg-table">
+          <div className="admin-table-wrap">
+            <table className="sg-table">
             <thead>
               <tr>
                 <th>Provider</th>
@@ -249,7 +250,8 @@ export default function AdminMediaProvidersPage() {
                 );
               })}
             </tbody>
-          </table>
+            </table>
+          </div>
         )}
       </main>
 
