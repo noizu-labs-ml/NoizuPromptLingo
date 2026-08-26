@@ -1,0 +1,47 @@
+databaseChangeLog:
+  # Public marketing signups (landing/waitlist email capture) + the admin-editable
+  # single-row settings that gate them. Two INDEPENDENT caps:
+  #   beta_signup_cap — max accepted (non-waitlisted) signups; NULL = unlimited
+  #   promo_cap       — max founding-promo awards ("2 months free"); NULL = unlimited
+  # signups_open is the master kill-switch for acceptance (closed => waitlist).
+  - changeSet:
+      id: create-table-marketing-signups
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE marketing_signups (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                email varchar(255) NOT NULL,
+                source varchar(64) NOT NULL DEFAULT 'landing',
+                promo_awarded boolean NOT NULL DEFAULT false,
+                waitlisted boolean NOT NULL DEFAULT false,
+                metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now(),
+                CONSTRAINT uq_marketing_signups_email UNIQUE (email)
+              );
+              CREATE INDEX idx_marketing_signups_source ON marketing_signups (source);
+              CREATE INDEX idx_marketing_signups_waitlisted ON marketing_signups (waitlisted);
+      rollback:
+        - sql:
+            sql: DROP TABLE IF EXISTS marketing_signups;
+
+  - changeSet:
+      id: create-table-marketing-settings
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE marketing_settings (
+                id integer PRIMARY KEY DEFAULT 1 CONSTRAINT marketing_settings_singleton CHECK (id = 1),
+                beta_signup_cap integer,
+                promo_cap integer,
+                signups_open boolean NOT NULL DEFAULT true,
+                promo_active boolean NOT NULL DEFAULT true,
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+              INSERT INTO marketing_settings (id) VALUES (1);
+      rollback:
+        - sql:
+            sql: DROP TABLE IF EXISTS marketing_settings;

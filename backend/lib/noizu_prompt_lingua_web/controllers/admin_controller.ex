@@ -508,6 +508,111 @@ defmodule NoizuPromptLinguaWeb.AdminController do
     }
   end
 
+  # ── Marketing signups + caps (landing email capture) ──────────────────────
+  # The singleton settings row gates public acceptance/promo awarding; the
+  # signups listing powers the admin console table. See Domains.Marketing.Signups.
+
+  alias NoizuPromptLingua.Domains.Marketing.Signups, as: MarketingSignups
+
+  def marketing_settings(conn, _params) do
+    settings = MarketingSignups.get_settings!()
+    conn |> put_status(:ok) |> json(%{settings: marketing_settings_json(settings), counts: MarketingSignups.counts()})
+  end
+
+  def update_marketing_settings(conn, %{"settings" => attrs}) do
+    attrs =
+      attrs
+      |> Map.take(["beta_signup_cap", "promo_cap", "signups_open", "promo_active"])
+      |> coerce_optional_integer("beta_signup_cap")
+      |> coerce_optional_integer("promo_cap")
+
+    case MarketingSignups.update_settings(attrs) do
+      {:ok, settings} ->
+        conn |> put_status(:ok) |> json(%{settings: marketing_settings_json(settings), counts: MarketingSignups.counts()})
+
+      {:error, %Ecto.Changeset{} = cs} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+
+      {:error, reason} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
+    end
+  end
+
+  def update_marketing_settings(conn, _params) do
+    conn |> put_status(:unprocessable_entity) |> json(%{error: "Expected a \"settings\" object"})
+  end
+
+  def list_marketing_signups(conn, params) do
+    page = parse_int(Map.get(params, "page"), 1)
+    per_page = parse_int(Map.get(params, "per_page"), 50)
+
+    filters = %{
+      source: params["source"],
+      waitlisted: params["waitlisted"]
+    }
+
+    {rows, total} = MarketingSignups.list_signups(filters, page, per_page)
+
+    conn
+    |> put_status(:ok)
+    |> json(%{
+      signups: Enum.map(rows, &marketing_signup_json/1),
+      total: total,
+      page: page,
+      per_page: per_page
+    })
+  end
+
+  # Empty string clears an optional cap (NULL = unlimited); otherwise integer.
+  defp coerce_optional_integer(attrs, key) do
+    case Map.fetch(attrs, key) do
+      {:ok, value} when is_binary(value) ->
+        trimmed = String.trim(value)
+
+        cond do
+          trimmed == "" -> Map.put(attrs, key, nil)
+          Regex.match?(~r/^\d+$/, trimmed) -> Map.put(attrs, key, String.to_integer(trimmed))
+          true -> Map.put(attrs, key, value)
+        end
+
+      _ ->
+        attrs
+    end
+  end
+
+  defp parse_int(nil, default), do: default
+
+  defp parse_int(value, default) when is_binary(value) do
+    case Integer.parse(value) do
+      {n, ""} when n > 0 -> n
+      _ -> default
+    end
+  end
+
+  defp parse_int(value, _default) when is_integer(value) and value > 0, do: value
+  defp parse_int(_, default), do: default
+
+  defp marketing_settings_json(s) do
+    %{
+      beta_signup_cap: s.beta_signup_cap,
+      promo_cap: s.promo_cap,
+      signups_open: s.signups_open,
+      promo_active: s.promo_active,
+      updated_at: s.updated_at
+    }
+  end
+
+  defp marketing_signup_json(row) do
+    %{
+      id: row.id,
+      email: row.email,
+      source: row.source,
+      promo_awarded: row.promo_awarded,
+      waitlisted: row.waitlisted,
+      created_at: row.inserted_at
+    }
+  end
+
   # ── LLM provider introspection ───────────────────────────────────────────────
   # Fetch available models from provider APIs and test LLM configuration.
 

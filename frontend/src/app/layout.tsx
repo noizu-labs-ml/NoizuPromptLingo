@@ -19,7 +19,7 @@ export function generateMetadata(): Metadata {
       template: "NoizuPromptLingo - %s",
     },
     description:
-      "Prompt engineering language and tooling for structured AI collaboration.",
+      "Tobor Locker — MCP-native work infrastructure for AI agents. Durable artifacts, tickets, sessions, wiki, chat, review, and memory for Claude Code, Codex, and any MCP client.",
     icons: {
       icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
       shortcut: [{ url: "/favicon.svg", type: "image/svg+xml" }],

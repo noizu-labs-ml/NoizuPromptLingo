@@ -1375,6 +1375,56 @@ export interface LlmModelInput {
   notes?: string | null;
 }
 
+// ── Public marketing (landing page) ──
+export interface MarketingStatus {
+  signups_open: boolean;
+  beta_cap: number | null;
+  beta_remaining: number | null;
+  promo_active: boolean;
+  promo_cap: number | null;
+  promo_remaining: number | null;
+  price_cents: number;
+}
+
+export interface MarketingSignupResponse {
+  accepted: boolean;
+  waitlisted?: boolean;
+  promo_awarded: boolean;
+  promo_remaining: number | null;
+  already_registered?: boolean;
+}
+
+// ── Admin: marketing signup caps + capture list ──
+export interface MarketingSettingsRow {
+  beta_signup_cap: number | null;
+  promo_cap: number | null;
+  signups_open: boolean;
+  promo_active: boolean;
+  updated_at?: string;
+}
+
+export interface MarketingCounts {
+  signups: number;
+  promo_awarded: number;
+  waitlisted: number;
+}
+
+export interface MarketingSignupRow {
+  id: string;
+  email: string;
+  source: string;
+  promo_awarded: boolean;
+  waitlisted: boolean;
+  created_at?: string;
+}
+
+export interface MarketingSettingsInput {
+  beta_signup_cap?: number | null;
+  promo_cap?: number | null;
+  signups_open?: boolean;
+  promo_active?: boolean;
+}
+
 // ── Admin: per-org media provider config ──
 export interface MediaProviderRegistryEntry {
   slug: string;
@@ -3096,6 +3146,39 @@ export const api = {
   getMemoryAssociations(orgId: string, agentSlug: string, memoryId: string) {
     return request<{ edges: MemoryEdge[] }>(
       `/api/organization/${encodeURIComponent(orgId)}/agent/${encodeURIComponent(agentSlug)}/memory/${encodeURIComponent(memoryId)}/associations`,
+    );
+  },
+
+  // ── Public marketing (landing page email capture) ──
+  marketingStatus() {
+    return request<MarketingStatus>("/api/v1/public/marketing/status");
+  },
+
+  marketingSignup(email: string, source: string) {
+    return request<MarketingSignupResponse>("/api/v1/public/marketing/signup", {
+      method: "POST",
+      body: JSON.stringify({ email, source }),
+    });
+  },
+
+  // ── Admin: marketing settings + signups ──
+  adminMarketingSettings() {
+    return request<{ settings: MarketingSettingsRow; counts: MarketingCounts }>("/api/v1/admin/marketing/settings");
+  },
+
+  adminUpdateMarketingSettings(patch: MarketingSettingsInput) {
+    return request<{ settings: MarketingSettingsRow; counts: MarketingCounts }>("/api/v1/admin/marketing/settings", {
+      method: "PUT",
+      body: JSON.stringify({ settings: patch }),
+    });
+  },
+
+  adminListMarketingSignups(params: { page?: number; per_page?: number; source?: string; waitlisted?: string } = {}) {
+    const qs = new URLSearchParams();
+    for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== "") qs.set(k, String(v));
+    const s = qs.toString();
+    return request<{ signups: MarketingSignupRow[]; total: number; page: number; per_page: number }>(
+      `/api/v1/admin/marketing/signups${s ? `?${s}` : ""}`,
     );
   },
 };

@@ -4,7 +4,9 @@ defmodule NoizuPromptLinguaWeb.Plugs.RateLimit do
 
   @default_limits %{
     auth: {10, 60_000},
-    auth_sensitive: {5, 60_000}
+    auth_sensitive: {5, 60_000},
+    # Public (unauthenticated) landing email capture.
+    marketing_signup: {10, 60_000}
   }
 
   @impl true

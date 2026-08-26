@@ -232,3 +232,6 @@ databaseChangeLog:
   - include:
       file: 076-mcp-endpoint-templates.yaml
       relativeToChangelogFile: true
+  - include:
+      file: 077-marketing-signups.yaml
+      relativeToChangelogFile: true

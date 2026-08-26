@@ -29,6 +29,10 @@ NoizuPromptLingua.TicketTestSchema.ensure!()
 # exist on the test DB so the customers/market/campaigns suites are self-contained. Idempotent.
 NoizuPromptLingua.MarketingTestSchema.ensure!()
 
+# Ensure the Liquibase 077 marketing-signup tables (marketing_signups,
+# marketing_settings) exist for the public landing capture suite. Idempotent.
+NoizuPromptLingua.MarketingSignupTestSchema.ensure!()
+
 # Ensure the custom MCP include scope table exists for custom gateway/catalog tests.
 NoizuPromptLingua.MCPCustomScopeTestSchema.ensure!()
 

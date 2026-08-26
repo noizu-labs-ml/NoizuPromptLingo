@@ -39,6 +39,10 @@ defmodule NoizuPromptLinguaWeb.Router do
     plug NoizuPromptLinguaWeb.Plugs.RateLimit, action: :auth_sensitive
   end
 
+  pipeline :rate_limited_marketing do
+    plug NoizuPromptLinguaWeb.Plugs.RateLimit, action: :marketing_signup
+  end
+
   pipeline :org_viewer do
     plug NoizuPromptLinguaWeb.Plugs.RequireRole, role: "viewer"
   end
@@ -369,6 +373,18 @@ defmodule NoizuPromptLinguaWeb.Router do
     get "/agent/:agent_slug/memory/:id/associations", MemoryController, :associations
   end
 
+  # Public (unauthenticated) marketing endpoints for the landing page.
+  # Status is cheap and uncapped; signup is per-IP rate limited.
+  scope "/api/v1/public/marketing", NoizuPromptLinguaWeb do
+    pipe_through [:api]
+    get "/status", MarketingController, :status
+  end
+
+  scope "/api/v1/public/marketing", NoizuPromptLinguaWeb do
+    pipe_through [:api, :rate_limited_marketing]
+    post "/signup", MarketingController, :signup
+  end
+
   scope "/api/v1/admin", NoizuPromptLinguaWeb do
     pipe_through [:api, :authenticated, :admin]
     get "/users", AdminController, :list_users
@@ -414,6 +430,11 @@ defmodule NoizuPromptLinguaWeb.Router do
     # LLM provider introspection — fetch available models from provider APIs
     get "/llm-providers/:provider/models", AdminController, :fetch_provider_models
     post "/llm-providers/:provider/test", AdminController, :test_llm_configuration
+
+    # Marketing signups + caps (public landing capture; admin-editable knobs).
+    get "/marketing/settings", AdminController, :marketing_settings
+    put "/marketing/settings", AdminController, :update_marketing_settings
+    get "/marketing/signups", AdminController, :list_marketing_signups
 
     # Media provider config (org-scoped) — per-org api_key/model/settings overrides
     # for the registered genai media providers used by asset generation.

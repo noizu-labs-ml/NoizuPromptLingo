@@ -9,6 +9,7 @@ import {
   FilmIcon,
   KeyIcon,
   LinkIcon,
+  MegaphoneIcon,
   WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
 import type { ComponentType, SVGProps } from 'react';
@@ -29,6 +30,7 @@ export default function AdminHomePage() {
 
   const cards: Card[] = [
     { href: '/app/admin/llm-models', Icon: CpuChipIcon, label: 'LLM Catalog', desc: 'Edit the provider/model pairs available in the Mock MCP picker and ListModels.' },
+    { href: '/app/admin/marketing', Icon: MegaphoneIcon, label: 'Marketing', desc: 'Landing-page signups: beta/promo caps, open/close switches, and the capture list.' },
     { href: '/app/admin/mcp-custom-scopes', Icon: WrenchScrewdriverIcon, label: 'MCP endpoints', desc: 'Edit the default Tobor Locker package every account gets, or add extra endpoints.' },
     { href: '/app/admin/media-providers', Icon: FilmIcon, label: 'Media Providers', desc: 'Per-org API keys, models, and toggles for image/voice/music asset generation.' },
     { href: '/app/admin/github', Icon: CodeBracketIcon, label: 'GitHub Config', desc: 'Org-scoped GitHub tokens, repos, and per-group repo access grants.' },

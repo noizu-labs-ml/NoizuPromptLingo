@@ -79,9 +79,14 @@ export function Navbar() {
               </Menu>
             </>
           ) : (
-            <a href="/login" className="sg-btn sg-btn--black sg-btn--sm">
-              Sign In
-            </a>
+            <>
+              <a href="/login" className="sg-btn sg-btn--outline sg-btn--sm">
+                Sign In
+              </a>
+              <a href="/#pricing" className="sg-btn sg-btn--primary sg-btn--sm" data-cy="nav-get-access">
+                Get access
+              </a>
+            </>
           )}
         </div>
       </div>

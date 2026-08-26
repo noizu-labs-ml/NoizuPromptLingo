@@ -153,7 +153,7 @@ function LoginForm() {
         <p><a href="#" data-cy="auth-mode-otp" onClick={(e) => { e.preventDefault(); switchMode("otp"); }}>Sign in with email code</a></p>
       )}
       <p><Link href="/forgot-password" data-cy="forgot-password-link">Forgot password?</Link></p>
-      <p>Don&apos;t have an account? <Link href="/signup" data-cy="signup-link">Sign up</Link></p>
+      <p>Don&apos;t have an account? <Link href="/#pricing" data-cy="signup-link">Get early access</Link></p>
     </div>
   );
 

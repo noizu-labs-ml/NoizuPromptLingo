@@ -1,0 +1,9 @@
+{
+  "signups_open": false,
+  "beta_cap": 200,
+  "beta_remaining": 0,
+  "promo_active": true,
+  "promo_cap": 100,
+  "promo_remaining": 12,
+  "price_cents": 495
+}
