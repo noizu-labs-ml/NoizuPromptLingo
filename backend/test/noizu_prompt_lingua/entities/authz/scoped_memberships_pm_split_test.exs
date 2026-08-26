@@ -111,6 +111,45 @@ defmodule NoizuPromptLingua.Authz.ScopedMembershipsPMSplitTest do
     assert String.starts_with?(owner_name, "PM Split User")
   end
 
+  # ── regression: pm read alone must not empty the org switcher ──────────
+  # Reading list_user_organizations / list_for_user from pm ONLY returns [] for
+  # memberships that exist solely on the app DB: pre-cutover rows (never
+  # re-written to pm) and ETL-collapsed users whose pm member_id is a different
+  # uuid than the app user id. An empty list degrades every console route to the
+  # org dashboard (nav hrefs fall back to /app/<section>, which the [orgId]
+  # route renders). The union must surface app-DB-only rows, deduped.
+
+  test "app-DB-only (pre-cutover) org appears in list_user_organizations", %{
+    user_id: uid
+  } do
+    legacy = insert_app_org_with_owner(uid)
+
+    orgs = Organizations.list_user_organizations(uid)
+    slugs = Enum.map(orgs, & &1.slug)
+    assert legacy.slug in slugs
+    assert Enum.find(orgs, &(&1.slug == legacy.slug)).role == "owner"
+    # no dupes across the two sources
+    assert length(slugs) == length(Enum.uniq(slugs))
+  end
+
+  test "org mirrored in both DBs renders once (pm row wins)", %{org_id: org, user_id: uid} do
+    mirror_app_membership(org, uid, "owner")
+
+    orgs = Organizations.list_user_organizations(uid)
+    rows = Enum.filter(orgs, &(to_string(&1.id) == to_string(org)))
+    assert length(rows) == 1
+  end
+
+  test "app-DB-only membership appears in list_for_user, deduped", %{user_id: uid} do
+    legacy = insert_app_org_with_owner(uid)
+
+    mine = ScopedMemberships.list_for_user(uid)
+    assert Enum.find(mine, &(to_string(&1.resource_id) == legacy.id and &1.role == "owner"))
+
+    keys = Enum.map(mine, &{&1.resource_type, to_string(&1.resource_id)})
+    assert length(keys) == length(Enum.uniq(keys))
+  end
+
   # ── seed helpers ────────────────────────────────────────────────────────
 
   defp insert_pm_user do
@@ -157,5 +196,41 @@ defmodule NoizuPromptLingua.Authz.ScopedMembershipsPMSplitTest do
       )
 
     Ecto.UUID.load!(raw)
+  end
+
+  # App-DB-only org + owner membership — the pre-cutover shape that was never
+  # re-written to pm (and what the ETL member_id remap leaves unmatched).
+  defp insert_app_org_with_owner(user_id) do
+    slug = "legacy-org-#{System.unique_integer([:positive])}"
+
+    %{rows: [[raw_id]]} =
+      Repo.query!(
+        "WITH o AS (INSERT INTO organizations (id, slug, name, inserted_at, updated_at) " <>
+          "VALUES (gen_random_uuid(), $1, 'Legacy Org', now(), now()) RETURNING id), " <>
+          "m AS (INSERT INTO scoped_memberships (id, group_id, resource_type, resource_id, member_type, member_id, created_at) " <>
+          "SELECT gen_random_uuid(), g.id, 'organization', o.id, 'user', $2::uuid, now() " <>
+          "FROM o, groups g WHERE g.name = 'owner' RETURNING resource_id) " <>
+          "SELECT id FROM o",
+        [slug, Ecto.UUID.dump!(user_id)]
+      )
+
+    %{id: Ecto.UUID.load!(raw_id), slug: slug}
+  end
+
+  # Mirror a pm org into the app DB with a same-role membership, as the ETL /
+  # insert_persona mirror path does — the union must not double-render it.
+  defp mirror_app_membership(org_id, user_id, role) do
+    Repo.query!(
+      "INSERT INTO organizations (id, slug, name, inserted_at, updated_at) " <>
+        "VALUES ($1::uuid, $2, 'Mirror Org', now(), now()) ON CONFLICT (id) DO NOTHING",
+      [Ecto.UUID.dump!(org_id), "mirror-#{System.unique_integer([:positive])}"]
+    )
+
+    Repo.query!(
+      "INSERT INTO scoped_memberships (id, group_id, resource_type, resource_id, member_type, member_id, created_at) " <>
+        "SELECT gen_random_uuid(), g.id, 'organization', $1::uuid, 'user', $2::uuid, now() " <>
+        "FROM groups g WHERE g.name = $3",
+      [Ecto.UUID.dump!(org_id), Ecto.UUID.dump!(user_id), role]
+    )
   end
 end

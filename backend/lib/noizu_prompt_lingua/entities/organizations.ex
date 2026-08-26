@@ -130,23 +130,59 @@ defmodule NoizuPromptLingua.Organizations do
   end
 
   def list_user_organizations(user_id) do
-    # pm_core cutover: org rows + user scoped memberships live on Noizu.PM.Repo — the app
-    # DB only holds pre-cutover stale rows, so an app-DB join here drops every post-cutover
-    # org from session/me + the org switcher. Same select shape as before (ADR-015
-    # effective_role echo + owner display).
-    NoizuPromptLingua.PMCore.with_pm(fn ->
-      from(sm in Noizu.PM.Schema.Authz.ScopedMembership,
-        join: o in Noizu.PM.Schema.Organizations.Organization,
+    # pm_core cutover: post-cutover org rows + user scoped memberships live on Noizu.PM.Repo
+    # — same select shape as the app-DB source (ADR-015 effective_role echo + owner display).
+    # UNION the app-DB rows too: pre-cutover memberships were never re-written to pm, and the
+    # staging ETL remapped member_id for "collapsed" users (email-matched to a pm user whose
+    # uuid differs from the app user id), so the pm read alone returns [] for those users —
+    # emptying session/me + the org switcher and degrading every console route to the org
+    # dashboard (nav hrefs fall back to /app/<section>, which the [orgId] route renders as
+    # the dashboard). Dedupe by org id, pm rows first (post-cutover rows are authoritative).
+    pm_rows =
+      NoizuPromptLingua.PMCore.with_pm(fn ->
+        from(sm in Noizu.PM.Schema.Authz.ScopedMembership,
+          join: o in Noizu.PM.Schema.Organizations.Organization,
+          on: o.id == sm.resource_id,
+          join: g in Noizu.PM.Schema.Authz.Group,
+          on: g.id == sm.group_id,
+          left_join: og in Noizu.PM.Schema.Authz.Group,
+          on: og.name == "owner",
+          left_join: osm in Noizu.PM.Schema.Authz.ScopedMembership,
+          on:
+            osm.resource_id == o.id and osm.resource_type == "organization" and
+              osm.member_type == "user" and osm.group_id == og.id,
+          left_join: ou in Noizu.PM.Schema.Users.User,
+          on: ou.id == osm.member_id,
+          where:
+            sm.member_type == "user" and sm.member_id == ^user_id and
+              sm.resource_type == "organization",
+          where: is_nil(sm.expires_at) or sm.expires_at > ^DateTime.utc_now(),
+          group_by: [o.id, o.slug, o.name, g.name],
+          select: %{
+            id: o.id,
+            slug: o.slug,
+            name: o.name,
+            role: g.name,
+            effective_role: g.name,
+            owner: fragment("max(coalesce(?, ?, ?))", ou.user_name, ou.handle, ou.email)
+          }
+        )
+        |> Noizu.PM.Repo.all()
+      end)
+
+    app_rows =
+      from(sm in ScopedMembershipSchema,
+        join: o in Schema,
         on: o.id == sm.resource_id,
-        join: g in Noizu.PM.Schema.Authz.Group,
+        join: g in NoizuPromptLingua.Schema.Authz.Group,
         on: g.id == sm.group_id,
-        left_join: og in Noizu.PM.Schema.Authz.Group,
+        left_join: og in NoizuPromptLingua.Schema.Authz.Group,
         on: og.name == "owner",
-        left_join: osm in Noizu.PM.Schema.Authz.ScopedMembership,
+        left_join: osm in ScopedMembershipSchema,
         on:
           osm.resource_id == o.id and osm.resource_type == "organization" and
             osm.member_type == "user" and osm.group_id == og.id,
-        left_join: ou in Noizu.PM.Schema.Users.User,
+        left_join: ou in NoizuPromptLingua.Schema.Users.User,
         on: ou.id == osm.member_id,
         where:
           sm.member_type == "user" and sm.member_id == ^user_id and
@@ -162,8 +198,9 @@ defmodule NoizuPromptLingua.Organizations do
           owner: fragment("max(coalesce(?, ?, ?))", ou.user_name, ou.handle, ou.email)
         }
       )
-      |> Noizu.PM.Repo.all()
-    end)
+      |> NoizuPromptLingua.Repo.all()
+
+    Enum.uniq_by(pm_rows ++ app_rows, & &1.id)
   end
 
   def authorize(user_id, organization_id, required_role) do

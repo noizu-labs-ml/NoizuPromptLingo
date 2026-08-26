@@ -242,11 +242,33 @@ defmodule NoizuPromptLingua.Authz.ScopedMemberships do
   defp maybe_role_filter(query, role), do: where(query, [sm, g, u], g.name == ^role)
 
   def list_for_user(user_id) do
-    # pm_core cutover: user memberships live on Noizu.PM.Repo (add_member path); the app DB
-    # only holds pre-cutover stale rows.
-    NoizuPromptLingua.PMCore.with_pm(fn ->
-      from(sm in Noizu.PM.Schema.Authz.ScopedMembership,
-        join: g in Noizu.PM.Schema.Authz.Group,
+    # pm_core cutover: post-cutover user memberships live on Noizu.PM.Repo (add_member path).
+    # UNION the app-DB rows too — pre-cutover memberships were never re-written to pm, and
+    # the staging ETL remapped member_id for "collapsed" users (email-matched pm uuid ≠ app
+    # user id), so the pm read alone drops them from /memberships/me. Dedupe by resource,
+    # pm rows first (post-cutover rows are authoritative).
+    pm_rows =
+      NoizuPromptLingua.PMCore.with_pm(fn ->
+        from(sm in Noizu.PM.Schema.Authz.ScopedMembership,
+          join: g in Noizu.PM.Schema.Authz.Group,
+          on: g.id == sm.group_id,
+          where: sm.member_type == "user" and sm.member_id == ^user_id,
+          where: is_nil(sm.expires_at) or sm.expires_at > ^DateTime.utc_now(),
+          select: %{
+            id: sm.id,
+            resource_type: sm.resource_type,
+            resource_id: sm.resource_id,
+            role: g.name,
+            joined_at: sm.created_at,
+            expires_at: sm.expires_at
+          }
+        )
+        |> Noizu.PM.Repo.all()
+      end)
+
+    app_rows =
+      from(sm in Schema,
+        join: g in NoizuPromptLingua.Schema.Authz.Group,
         on: g.id == sm.group_id,
         where: sm.member_type == "user" and sm.member_id == ^user_id,
         where: is_nil(sm.expires_at) or sm.expires_at > ^DateTime.utc_now(),
@@ -259,8 +281,9 @@ defmodule NoizuPromptLingua.Authz.ScopedMemberships do
           expires_at: sm.expires_at
         }
       )
-      |> Noizu.PM.Repo.all()
-    end)
+      |> NoizuPromptLingua.Repo.all()
+
+    Enum.uniq_by(pm_rows ++ app_rows, &{&1.resource_type, &1.resource_id})
   end
 
 end
