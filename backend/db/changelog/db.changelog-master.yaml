@@ -238,3 +238,6 @@ databaseChangeLog:
   - include:
       file: 078-pm-split-drop-cross-db-fks.yaml
       relativeToChangelogFile: true
+  - include:
+      file: 079-session-inactivity.yaml
+      relativeToChangelogFile: true

@@ -110,6 +110,92 @@ defmodule NoizuPromptLingua.MCP.SessionsTest do
     end
   end
 
+  describe "inactivity tracking (Liquibase 079)" do
+    alias NoizuPromptLingua.Domains.Chat
+    alias NoizuPromptLingua.Domains.Memory.Store
+    alias NoizuPromptLingua.Repo
+
+    test "status validation accepts 'inactive'", %{org_id: org_id} do
+      {:ok, session} = Sessions.create(%{organization_id: org_id, title: "I"})
+      assert {:ok, updated} = Sessions.update_session(session.id, %{status: "inactive"})
+      assert updated.status == "inactive"
+    end
+
+    test "create initializes last_activity_at to the insert time", %{org_id: org_id} do
+      before = DateTime.utc_now() |> DateTime.add(-1, :second)
+      {:ok, session} = Sessions.create(%{organization_id: org_id, title: "LA"})
+
+      assert session.last_activity_at != nil
+      assert DateTime.compare(session.last_activity_at, before) == :gt
+    end
+
+    test "update_session bumps last_activity_at", %{org_id: org_id} do
+      {:ok, session} = Sessions.create(%{organization_id: org_id, title: "T"})
+      stale = DateTime.utc_now() |> DateTime.add(-48, :hour)
+      backdate(session.id, stale)
+
+      assert {:ok, updated} = Sessions.update_session(session.id, %{title: "T2"})
+      assert DateTime.compare(updated.last_activity_at, stale) == :gt
+    end
+
+    test "get_session bumps last_activity_at (REST show / MCP Session.Get path)", %{
+      org_id: org_id
+    } do
+      {:ok, session} = Sessions.create(%{organization_id: org_id, title: "G"})
+      stale = DateTime.utc_now() |> DateTime.add(-48, :hour)
+      backdate(session.id, stale)
+
+      # get_session returns the pre-touch snapshot; read the row fresh
+      Sessions.get_session(session.id)
+      touched = Repo.get!(NoizuPromptLingua.Schema.Sessions.Session, session.id)
+      assert DateTime.compare(touched.last_activity_at, stale) == :gt
+    end
+
+    test "a chat message in a session-linked room bumps last_activity_at", %{org_id: org_id} do
+      {:ok, session} = Sessions.create(%{organization_id: org_id, title: "C"})
+
+      {:ok, room} =
+        Chat.create_room(%{organization_id: org_id, name: "R", session_id: session.id})
+
+      stale = DateTime.utc_now() |> DateTime.add(-48, :hour)
+      backdate(session.id, stale)
+
+      assert {:ok, _msg} =
+               Chat.send_message(%{room_id: room.id, content: "ping", sender: "tester"})
+
+      touched = Repo.get!(NoizuPromptLingua.Schema.Sessions.Session, session.id)
+      assert DateTime.compare(touched.last_activity_at, stale) == :gt
+    end
+
+    test "a memory write carrying session_id bumps last_activity_at", %{org_id: org_id} do
+      {:ok, session} = Sessions.create(%{organization_id: org_id, title: "M"})
+      stale = DateTime.utc_now() |> DateTime.add(-48, :hour)
+      backdate(session.id, stale)
+
+      context = %{
+        organization_id: org_id,
+        scope_type: :persona,
+        scope_id: Ecto.UUID.generate()
+      }
+
+      assert {:ok, _} =
+               Store.remember(
+                 %{content: "session activity memory", session_id: session.id},
+                 context
+               )
+
+      touched = Repo.get!(NoizuPromptLingua.Schema.Sessions.Session, session.id)
+      assert DateTime.compare(touched.last_activity_at, stale) == :gt
+    end
+  end
+
+  defp backdate(session_id, dt) do
+    import Ecto.Query
+
+    from(s in NoizuPromptLingua.Schema.Sessions.Session, where: s.id == ^session_id)
+    |> Repo.update_all(set: [last_activity_at: dt])
+  end
+
   defp insert_org do
     %{rows: [[raw]]} =
       Repo.query!(

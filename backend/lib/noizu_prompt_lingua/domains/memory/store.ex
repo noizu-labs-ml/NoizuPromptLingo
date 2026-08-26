@@ -107,6 +107,7 @@ defmodule NoizuPromptLingua.Domains.Memory.Store do
 
     case %Memory{} |> Memory.changeset(row) |> Repo.insert() do
       {:ok, mem} ->
+        touch_session_activity(attrs[:session_id])
         enqueue_embedding(mem.id)
         status = if Embeddings.configured?(), do: :embedding_pending, else: :stored
         {:ok, %{id: mem.id, status: status, confidence: confidence}}
@@ -115,6 +116,18 @@ defmodule NoizuPromptLingua.Domains.Memory.Store do
         Logger.warning("[Memory.Store] insert failed: #{inspect(changeset.errors)}")
         {:error, changeset}
     end
+  end
+
+  # A memory written with a session_id counts as session activity for the
+  # inactivity sweep. Best-effort: a failed touch never fails the store.
+  defp touch_session_activity(nil), do: :ok
+
+  defp touch_session_activity(session_id) do
+    NoizuPromptLingua.Sessions.touch_activity(session_id)
+  rescue
+    e ->
+      Logger.warning("[Memory.Store] session activity touch failed: #{inspect(e)}")
+      :ok
   end
 
   defp resolve_mood(attrs) do

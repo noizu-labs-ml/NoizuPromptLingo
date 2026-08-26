@@ -257,9 +257,23 @@ defmodule NoizuPromptLingua.Domains.Chat do
 
   def send_message(attrs) do
     with {:ok, msg} <- %ChatMessage{} |> ChatMessage.changeset(attrs) |> Repo.insert() do
+      touch_session_activity(msg.room_id)
       dispatch_chat_message(msg)
       {:ok, msg}
     end
+  end
+
+  # A message posted to a session-linked room counts as session activity for the
+  # inactivity sweep. Best-effort: a failed touch never fails the message post.
+  defp touch_session_activity(room_id) do
+    session_id =
+      Repo.one(from r in ChatRoom, where: r.id == ^room_id, select: r.session_id)
+
+    if session_id, do: NoizuPromptLingua.Sessions.touch_activity(session_id)
+  rescue
+    e ->
+      Logger.warning("[Chat] session activity touch failed for room #{room_id}: #{inspect(e)}")
+      :ok
   end
 
   def list_messages(room_id, opts \\ []) do

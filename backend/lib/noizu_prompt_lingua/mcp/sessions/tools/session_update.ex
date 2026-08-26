@@ -15,7 +15,12 @@ defmodule NoizuPromptLingua.MCP.Sessions.Tools.SessionUpdate do
     field :session, :string, required: true, description: "Session UUID"
     field :title, :string, description: "New title"
     field :description, :string, description: "New description"
-    field :status, :string, description: "New status (active|archived|completed)"
+
+    field :status, :string,
+      description:
+        "New status (active|archived|completed|inactive; 'inactive' is normally set by the " <>
+          "inactivity sweep — passing 'active' reactivates)"
+
     field :project, :string, description: "Project slug or UUID to associate (\"\" to clear)"
 
     field :model, :string,

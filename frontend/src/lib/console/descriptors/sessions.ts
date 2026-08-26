@@ -4,10 +4,12 @@ import { api, type Session, type SessionInput } from '@/lib/api';
 import type { ConsoleDescriptor } from '../types';
 
 // Session status set is small + app-defined; not a tri-scoped definition, so static here.
+// 'inactive' is set by the backend inactivity sweep (no events for NPL_SESSION_INACTIVITY_HOURS).
 const STATUSES = [
   { value: 'active', label: 'Active' },
   { value: 'archived', label: 'Archived' },
   { value: 'completed', label: 'Completed' },
+  { value: 'inactive', label: 'Inactive' },
 ];
 
 export const sessionsDescriptor: ConsoleDescriptor<Session, SessionInput> = {

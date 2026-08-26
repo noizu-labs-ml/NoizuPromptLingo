@@ -9,6 +9,10 @@ defmodule NoizuPromptLingua.Schema.Sessions.Session do
     field :title, :string
     field :description, :string
     field :status, :string, default: "active"
+    # Last user/agent activity, maintained by the Sessions context touch points
+    # (create/update/get, chat posts to session rooms, memory writes carrying a
+    # session_id). Drives the inactivity sweep (SessionInactivityWorker).
+    field :last_activity_at, :utc_datetime_usec
     # Optional harness/model tailoring the session's tool descriptions target
     # (spec §3). Both change dynamically mid-session.
     field :model, :string
@@ -34,10 +38,11 @@ defmodule NoizuPromptLingua.Schema.Sessions.Session do
       :model,
       :runner,
       :created_by,
-      :archived_at
+      :archived_at,
+      :last_activity_at
     ])
     |> validate_required([:organization_id, :title])
-    |> validate_inclusion(:status, ["active", "archived", "completed"])
+    |> validate_inclusion(:status, ["active", "archived", "completed", "inactive"])
     |> foreign_key_constraint(:organization_id)
     |> foreign_key_constraint(:project_id)
   end

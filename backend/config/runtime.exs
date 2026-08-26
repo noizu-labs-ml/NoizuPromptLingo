@@ -83,6 +83,18 @@ config :noizu_prompt_lingua, :memory_weaviate,
   enabled: System.get_env("WEAVIATE_ENABLED") == "true",
   class: System.get_env("WEAVIATE_CLASS", "NplMemory")
 
+# ── Session inactivity sweep (Liquibase 079) ─────────────────────
+# Work sessions with no activity for this many hours are flipped active →
+# inactive (SessionInactivityWorker, hourly). Unset/invalid defaults to 24;
+# set NPL_SESSION_INACTIVITY_HOURS=0 to disable the sweep.
+session_inactivity_hours =
+  case Integer.parse(System.get_env("NPL_SESSION_INACTIVITY_HOURS") || "") do
+    {hours, _} -> hours
+    :error -> 24
+  end
+
+config :noizu_prompt_lingua, :session_inactivity_hours, session_inactivity_hours
+
 # ── OpenTelemetry ────────────────────────────────────────────────
 if otel_endpoint = System.get_env("OTEL_EXPORTER_OTLP_ENDPOINT") do
   config :opentelemetry_exporter,

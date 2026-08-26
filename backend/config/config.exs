@@ -119,7 +119,8 @@ config :noizu_prompt_lingua, Oban,
     {Oban.Plugins.Pruner, max_age: 60 * 60 * 24 * 7},
     {Oban.Plugins.Cron,
      crontab: [
-       {"0 */6 * * *", NoizuPromptLingua.Workers.CleanupWorker}
+       {"0 */6 * * *", NoizuPromptLingua.Workers.CleanupWorker},
+       {"0 * * * *", NoizuPromptLingua.Workers.SessionInactivityWorker}
      ]}
   ]
 

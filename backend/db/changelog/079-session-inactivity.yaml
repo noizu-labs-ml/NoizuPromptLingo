@@ -1,0 +1,39 @@
+databaseChangeLog:
+  - changeSet:
+      id: 079-sessions-inactive-status
+      author: loom
+      changes:
+        - sql:
+            sql: |
+              -- Session inactivity sweep: 'inactive' joins the status vocabulary.
+              -- Set by SessionInactivityWorker when a session has had no activity
+              -- for the configured window; cleared by any explicit session write.
+              ALTER TABLE sessions DROP CONSTRAINT IF EXISTS sessions_status_check;
+
+              ALTER TABLE sessions ADD CONSTRAINT sessions_status_check
+                CHECK (status IN ('active', 'archived', 'completed', 'inactive'));
+      rollback:
+        - sql:
+            sql: |
+              ALTER TABLE sessions DROP CONSTRAINT IF EXISTS sessions_status_check;
+
+              ALTER TABLE sessions ADD CONSTRAINT sessions_status_check
+                CHECK (status IN ('active', 'archived', 'completed'));
+
+  - changeSet:
+      id: 079-sessions-last-activity-at
+      author: loom
+      changes:
+        - sql:
+            sql: |
+              -- Last activity timestamp maintained by the Sessions context touch
+              -- points (create/update/get, chat posts, memory writes). NULL means
+              -- the row predates the column; the sweep falls back to updated_at.
+              ALTER TABLE sessions ADD COLUMN IF NOT EXISTS last_activity_at timestamptz;
+
+              UPDATE sessions SET last_activity_at = updated_at
+                WHERE last_activity_at IS NULL;
+      rollback:
+        - sql:
+            sql: |
+              ALTER TABLE sessions DROP COLUMN IF EXISTS last_activity_at;
