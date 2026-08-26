@@ -33,5 +33,8 @@ databaseChangeLog:
               END $$;
       rollback:
         - sql:
-            sql: -- Not restorable here: cross-DB FKs cannot be valid post-cutover.
-                 -- Re-run the original per-table changesets if pm_core is re-merged.
+            # Unquoted '--' comment scalars with ':' break YAML parsing (CI
+            # Liquibase step failed on this) — use a folded scalar instead.
+            sql: >-
+              -- Not restorable here: cross-DB FKs cannot be valid post-cutover.
+              -- Re-run the original per-table changesets if pm_core is re-merged.
