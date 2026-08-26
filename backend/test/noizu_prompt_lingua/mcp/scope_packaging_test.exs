@@ -347,6 +347,119 @@ defmodule NoizuPromptLingua.MCP.ScopePackagingTest do
     end
   end
 
+  describe "default package healing" do
+    # Simulate prod drift: rows written before the current group list (or by an
+    # editor that bypassed normalize). change/2 + Repo.update! writes the config
+    # verbatim, unlike create/update which re-normalize.
+    defp drift!(scope, config) do
+      scope |> Ecto.Changeset.change(config: config) |> Repo.update!()
+    end
+
+    test "get_default_package re-adds missing groups to a drifted tobor template" do
+      template = MCPCustomScopes.get_default_package()
+
+      drift!(template, %{
+        "groups" => %{"tickets" => %{"tools" => %{}}}
+      })
+
+      healed = MCPCustomScopes.get_default_package()
+
+      groups = healed.config["groups"]
+      assert Map.has_key?(groups, "sessions")
+      assert Map.has_key?(groups, "notifications")
+      assert Map.has_key?(groups, "memory")
+
+      # Persisted, not just patched in the return value.
+      persisted = MCPCustomScopes.get_by_slug("tobor")
+      assert Map.has_key?(persisted.config["groups"], "notifications")
+    end
+
+    test "get_default_package re-enables an unconfirmed disabled required group" do
+      template = MCPCustomScopes.get_default_package()
+
+      groups =
+        template.config["groups"]
+        |> Map.put("sessions", %{"disabled" => true, "tools" => %{}})
+
+      drift!(template, %{"groups" => groups})
+
+      healed = MCPCustomScopes.get_default_package()
+      refute healed.config["groups"]["sessions"]["disabled"] == true
+    end
+
+    test "get_default_package respects a confirmed disable of a required group" do
+      template = MCPCustomScopes.get_default_package()
+
+      confirmed = %{
+        "disabled" => true,
+        "disabled_confirmed_at" => "2026-01-01T00:00:00Z",
+        "tools" => %{}
+      }
+
+      groups = template.config["groups"] |> Map.put("sessions", confirmed)
+      drift!(template, %{"groups" => groups})
+
+      healed = MCPCustomScopes.get_default_package()
+      assert healed.config["groups"]["sessions"]["disabled"] == true
+      assert healed.config["groups"]["sessions"]["disabled_confirmed_at"]
+    end
+
+    test "ensure_account_default adds missing groups to a drifted clone, keeping user choices" do
+      user = insert_user()
+
+      {:ok, _} =
+        MCPCustomScopes.create(%{
+          "slug" => "driftedclone",
+          "name" => "Tobor Locker",
+          "kind" => "custom",
+          "user_id" => user.id,
+          "is_default" => true,
+          "source_template_slug" => "tobor",
+          "config" => %{"groups" => %{"chat" => %{"tools" => %{}}}}
+        })
+
+      # Deliberate user choice recorded after clone: wiki off.
+      drifted = MCPCustomScopes.get_account_default(user.id)
+      drift!(drifted, %{"groups" => %{"chat" => %{}, "wiki" => %{"disabled" => true}}})
+
+      scope = MCPCustomScopes.ensure_account_default(user.id)
+      groups = scope.config["groups"]
+
+      assert Map.has_key?(groups, "sessions")
+      assert Map.has_key?(groups, "tickets")
+      assert groups["wiki"]["disabled"] == true
+    end
+
+    test "ensure_account_default leaves hand-built defaults untouched" do
+      user = insert_user()
+
+      {:ok, _} =
+        MCPCustomScopes.create(%{
+          "slug" => "handbuilt",
+          "name" => "My own mix",
+          "kind" => "custom",
+          "user_id" => user.id,
+          "is_default" => true,
+          "config" => %{"groups" => %{"chat" => %{"tools" => %{}}}}
+        })
+
+      scope = MCPCustomScopes.ensure_account_default(user.id)
+      assert scope.slug == "handbuilt"
+      assert scope.config["groups"] == %{"chat" => %{"tools" => %{}}}
+    end
+
+    test "ensure_org_default heals a drifted org default" do
+      org_id = Ecto.UUID.generate()
+      org_default = MCPCustomScopes.ensure_org_default(org_id, "Acme")
+
+      drift!(org_default, %{"groups" => %{"tickets" => %{"tools" => %{}}}})
+
+      healed = MCPCustomScopes.ensure_org_default(org_id, "Acme")
+      assert Map.has_key?(healed.config["groups"], "sessions")
+      assert Map.has_key?(healed.config["groups"], "notifications")
+    end
+  end
+
   describe "McpEndpointsController.index/2" do
     test "seeds the tobor template and a personal default" do
       user = insert_user()
