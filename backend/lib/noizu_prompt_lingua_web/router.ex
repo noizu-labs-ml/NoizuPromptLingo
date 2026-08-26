@@ -117,133 +117,199 @@ defmodule NoizuPromptLinguaWeb.Router do
   scope "/", host: "organizations." do
     forward "/mcp",
             Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(NoizuPromptLingua.MCP.Organizations, "organizations")
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
+              NoizuPromptLingua.MCP.Organizations,
+              "organizations"
+            )
   end
 
   scope "/", host: "projects." do
     forward "/mcp",
             Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(NoizuPromptLingua.MCP.Projects, "projects")
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
+              NoizuPromptLingua.MCP.Projects,
+              "projects"
+            )
   end
 
   scope "/", host: "clients." do
     forward "/mcp",
             Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(NoizuPromptLingua.MCP.Clients, "clients")
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
+              NoizuPromptLingua.MCP.Clients,
+              "clients"
+            )
   end
 
   scope "/", host: "sessions." do
     forward "/mcp",
             Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(NoizuPromptLingua.MCP.Sessions, "sessions")
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
+              NoizuPromptLingua.MCP.Sessions,
+              "sessions"
+            )
   end
 
   scope "/", host: "artifacts." do
     forward "/mcp",
             Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(NoizuPromptLingua.Domains.Artifacts.MCP, "artifacts")
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
+              NoizuPromptLingua.Domains.Artifacts.MCP,
+              "artifacts"
+            )
   end
 
   scope "/", host: "chat." do
     forward "/mcp",
             Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(NoizuPromptLingua.Domains.Chat.MCP, "chat")
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
+              NoizuPromptLingua.Domains.Chat.MCP,
+              "chat"
+            )
   end
 
   scope "/", host: "review." do
     forward "/mcp",
             Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(NoizuPromptLingua.Domains.Review.MCP, "review")
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
+              NoizuPromptLingua.Domains.Review.MCP,
+              "review"
+            )
   end
 
   scope "/", host: "tickets." do
     forward "/mcp",
             Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(NoizuPromptLingua.Domains.Tickets.MCP, "tickets")
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
+              NoizuPromptLingua.Domains.Tickets.MCP,
+              "tickets"
+            )
   end
 
   scope "/", host: "assets." do
     forward "/mcp",
             Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(NoizuPromptLingua.Domains.Assets.MCP, "assets")
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
+              NoizuPromptLingua.Domains.Assets.MCP,
+              "assets"
+            )
   end
 
   scope "/", host: "wiki." do
     forward "/mcp",
             Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(NoizuPromptLingua.Domains.Wiki.MCP, "wiki")
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
+              NoizuPromptLingua.Domains.Wiki.MCP,
+              "wiki"
+            )
   end
 
   scope "/", host: "github." do
     forward "/mcp",
             Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(NoizuPromptLingua.Domains.Github.MCP, "github")
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
+              NoizuPromptLingua.Domains.Github.MCP,
+              "github"
+            )
   end
 
   scope "/", host: "personas." do
     forward "/mcp",
             Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(NoizuPromptLingua.Domains.Personas.MCP, "personas")
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
+              NoizuPromptLingua.Domains.Personas.MCP,
+              "personas"
+            )
   end
 
   scope "/", host: "instructions." do
     forward "/mcp",
             Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(NoizuPromptLingua.Domains.Instructions.MCP, "instructions")
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
+              NoizuPromptLingua.Domains.Instructions.MCP,
+              "instructions"
+            )
   end
 
   scope "/", host: "memory." do
     forward "/mcp",
             Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(NoizuPromptLingua.Domains.Memory.MCP, "memory")
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
+              NoizuPromptLingua.Domains.Memory.MCP,
+              "memory"
+            )
   end
 
   scope "/", host: "markdown." do
     forward "/mcp",
             Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(NoizuPromptLingua.Domains.Markdown.MCP, "markdown")
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
+              NoizuPromptLingua.Domains.Markdown.MCP,
+              "markdown"
+            )
   end
 
   scope "/", host: "notifications." do
     forward "/mcp",
             Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(NoizuPromptLingua.Domains.Notifications.MCP, "notifications")
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
+              NoizuPromptLingua.Domains.Notifications.MCP,
+              "notifications"
+            )
   end
 
   scope "/", host: "pubsub." do
     forward "/mcp",
             Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(NoizuPromptLingua.Domains.PubSub.MCP, "pubsub")
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
+              NoizuPromptLingua.Domains.PubSub.MCP,
+              "pubsub"
+            )
   end
 
   scope "/", host: "browser." do
     forward "/mcp",
             Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(NoizuPromptLingua.Domains.Browser.MCP, "browser")
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
+              NoizuPromptLingua.Domains.Browser.MCP,
+              "browser"
+            )
   end
 
   scope "/", host: "customers." do
     forward "/mcp",
             Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(NoizuPromptLingua.Domains.Customers.MCP, "customers")
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
+              NoizuPromptLingua.Domains.Customers.MCP,
+              "customers"
+            )
   end
 
   scope "/", host: "market." do
     forward "/mcp",
             Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(NoizuPromptLingua.Domains.Market.MCP, "market")
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
+              NoizuPromptLingua.Domains.Market.MCP,
+              "market"
+            )
   end
 
   scope "/", host: "campaigns." do
     forward "/mcp",
             Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(NoizuPromptLingua.Domains.Campaigns.MCP, "campaigns")
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
+              NoizuPromptLingua.Domains.Campaigns.MCP,
+              "campaigns"
+            )
   end
 
   scope "/", host: "unicode." do
     forward "/mcp",
             Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(NoizuPromptLingua.Domains.UnicodeCodex.MCP, "unicode")
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
+              NoizuPromptLingua.Domains.UnicodeCodex.MCP,
+              "unicode"
+            )
   end
 
   # Dynamic mock-MCP gateway. Each mock MCP (defined + activated via the
@@ -435,6 +501,11 @@ defmodule NoizuPromptLinguaWeb.Router do
     get "/marketing/settings", AdminController, :marketing_settings
     put "/marketing/settings", AdminController, :update_marketing_settings
     get "/marketing/signups", AdminController, :list_marketing_signups
+
+    # pm_core membership reconciliation (post-cutover backfill): GET = dry-run
+    # census of planned inserts; POST dry_run=false executes. Admin-gated above.
+    get "/authz/pm-backfill", AdminController, :pm_membership_backfill
+    post "/authz/pm-backfill", AdminController, :pm_membership_backfill
 
     # Media provider config (org-scoped) — per-org api_key/model/settings overrides
     # for the registered genai media providers used by asset generation.

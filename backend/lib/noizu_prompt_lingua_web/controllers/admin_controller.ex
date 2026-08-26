@@ -117,6 +117,28 @@ defmodule NoizuPromptLinguaWeb.AdminController do
 
   defp parse_role(_), do: :error
 
+  # pm_core membership reconciliation (post-cutover backfill). GET = dry-run by
+  # default (returns the exact planned inserts — the read-only census); POST with
+  # dry_run=false executes through Noizu.PM.Authz.ScopedMemberships.add_member.
+  # Admin-gated by the :admin pipeline; every insert is logged by PMBackfill.
+  def pm_membership_backfill(conn, params) do
+    dry_run = Map.get(params, "dry_run", "true") != "false"
+
+    plan = NoizuPromptLingua.Authz.PMBackfill.plan()
+
+    result =
+      if dry_run do
+        %{dry_run: true, inserted: 0, skipped: 0, errors: []}
+      else
+        actor_id = conn.assigns[:admin_user] && to_string(conn.assigns.admin_user.id)
+
+        %{dry_run: false} |> Map.merge(NoizuPromptLingua.Authz.PMBackfill.execute(plan, actor_id))
+      end
+      |> Map.merge(Map.take(plan, [:total_app_user_rows, :already_present, :planned, :unmatched]))
+
+    conn |> put_status(:ok) |> json(result)
+  end
+
   def list_organizations(conn, params) do
     page = String.to_integer(Map.get(params, "page", "1"))
     per_page = String.to_integer(Map.get(params, "per_page", "50"))
@@ -363,7 +385,9 @@ defmodule NoizuPromptLinguaWeb.AdminController do
 
       case NoizuPromptLingua.MCPApiKeys.parse_expires_at(Map.get(key_params, "expires_at")) do
         {:ok, expires_at} ->
-          case NoizuPromptLingua.MCPApiKeys.generate_api_key(user_id, label, expires_at: expires_at) do
+          case NoizuPromptLingua.MCPApiKeys.generate_api_key(user_id, label,
+                 expires_at: expires_at
+               ) do
             {:ok, key, raw_key} ->
               # Return the raw key exactly once, alongside the masked record.
               conn
@@ -371,7 +395,9 @@ defmodule NoizuPromptLinguaWeb.AdminController do
               |> json(%{key: mcp_key_json(key), raw_key: raw_key})
 
             {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
-              conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+              conn
+              |> put_status(:unprocessable_entity)
+              |> json(%{errors: format_errors(changeset)})
 
             {:error, reason} ->
               conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
@@ -516,7 +542,10 @@ defmodule NoizuPromptLinguaWeb.AdminController do
 
   def marketing_settings(conn, _params) do
     settings = MarketingSignups.get_settings!()
-    conn |> put_status(:ok) |> json(%{settings: marketing_settings_json(settings), counts: MarketingSignups.counts()})
+
+    conn
+    |> put_status(:ok)
+    |> json(%{settings: marketing_settings_json(settings), counts: MarketingSignups.counts()})
   end
 
   def update_marketing_settings(conn, %{"settings" => attrs}) do
@@ -528,7 +557,9 @@ defmodule NoizuPromptLinguaWeb.AdminController do
 
     case MarketingSignups.update_settings(attrs) do
       {:ok, settings} ->
-        conn |> put_status(:ok) |> json(%{settings: marketing_settings_json(settings), counts: MarketingSignups.counts()})
+        conn
+        |> put_status(:ok)
+        |> json(%{settings: marketing_settings_json(settings), counts: MarketingSignups.counts()})
 
       {:error, %Ecto.Changeset{} = cs} ->
         conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
@@ -1151,8 +1182,12 @@ defmodule NoizuPromptLinguaWeb.AdminController do
 
   def delete_mcp_custom_scope(conn, %{"slug" => slug}) do
     case MCPCustomScopes.delete(slug) do
-      {:ok, _} -> conn |> put_status(:ok) |> json(%{message: "Scope deleted"})
-      {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Scope not found"})
+      {:ok, _} ->
+        conn |> put_status(:ok) |> json(%{message: "Scope deleted"})
+
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Scope not found"})
+
       {:error, :protected} ->
         conn
         |> put_status(:forbidden)
