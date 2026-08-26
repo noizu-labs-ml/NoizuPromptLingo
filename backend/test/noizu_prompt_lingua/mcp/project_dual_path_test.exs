@@ -150,9 +150,11 @@ defmodule NoizuPromptLingua.MCP.ProjectSharedOnlyTest do
     @describetag :pm_core_live
 
     setup do
+      # ExUnit 1.19+ rejects the legacy {:skip, _} setup return, so fail loudly
+      # instead of silently skipping when the repo somehow isn't up (test env
+      # starts it via config/test.exs — this should never fire).
       unless pm_repo_live?() do
-        {:skip,
-         "Noizu.PM.Repo not running — set PM_CORE_DATABASE_URL and restart mix test to exercise live PM path"}
+        raise "Noizu.PM.Repo not running — live PM tests require it (config/test.exs starts it)"
       else
         _ = maybe_sandbox_pm_repo()
 
@@ -195,7 +197,10 @@ defmodule NoizuPromptLingua.MCP.ProjectSharedOnlyTest do
   # ---------------------------------------------------------------------------
 
   defp pm_repo_live? do
-    match?({:ok, _}, Code.ensure_loaded(Noizu.PM.Repo)) and is_pid(Process.whereis(Noizu.PM.Repo))
+    # Code.ensure_loaded/1 returns {:module, mod} | {:error, reason} — matching
+    # {:ok, _} was always false, so the live tests silently skipped (the legacy
+    # {:skip, _} setup return) until ExUnit 1.19+ turned it into an error.
+    match?({:module, _}, Code.ensure_loaded(Noizu.PM.Repo)) and is_pid(Process.whereis(Noizu.PM.Repo))
   end
 
   defp maybe_sandbox_pm_repo do

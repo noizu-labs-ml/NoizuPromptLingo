@@ -8,7 +8,7 @@ defmodule NoizuPromptLingua.Domains.Links do
   """
   import Ecto.Query, except: [update: 2]
   alias NoizuPromptLingua.Repo
-  alias NoizuPromptLingua.Schema.{TicketEntityLink, Ticket}
+  alias NoizuPromptLingua.Schema.TicketEntityLink
 
   @doc """
   Link `ticket_id` to an entity. Validates the ticket exists (entity targets are
@@ -20,7 +20,9 @@ defmodule NoizuPromptLingua.Domains.Links do
     metadata = opts[:metadata] || %{}
 
     cond do
-      is_nil(Repo.get(Ticket, ticket_id)) ->
+      # Tickets live on pm_core post-cutover — the app-DB `tickets` table no longer
+      # receives rows, so validate existence through the domain (PMBridge), not Repo.
+      is_nil(NoizuPromptLingua.Domains.Tickets.get(ticket_id)) ->
         {:error, :ticket_not_found}
 
       true ->

@@ -1,0 +1,37 @@
+# pm-core cutover follow-up (docs/pm-core-cutover.md): "Cross-database references
+# are UUID columns without Postgres FKs; domain code validates existence in
+# pm_core." organizations/projects rows live in the shared pm_core database, so
+# NPL-local FKs to those tables can never be satisfied for post-cutover rows —
+# inserts fail with 23503 (chat_rooms, artifacts, reviews, tickets, ...).
+#
+# The FKs were declared inline in earlier changesets (CREATE TABLE ... REFERENCES
+# organizations(id)); this changeset drops every remaining FK on app-DB tables
+# that points at organizations/projects, plus FKs to the legacy app-DB `tickets`
+# table (tickets live on pm_core `items` post-cutover — e.g.
+# ticket_entity_links.ticket_id). Dynamic (catalog-driven) so it also sweeps
+# tables added since — idempotent by construction (re-runs find nothing).
+databaseChangeLog:
+  - changeSet:
+      id: drop-cross-db-fks-organizations-projects
+      author: tobor-locker
+      changes:
+        - sql:
+            splitStatements: false
+            sql: |
+              DO $$
+              DECLARE
+                fk record;
+              BEGIN
+                FOR fk IN
+                  SELECT conname, conrelid::regclass::text AS tbl
+                  FROM pg_constraint
+                  WHERE contype = 'f'
+                    AND confrelid IN ('organizations'::regclass, 'projects'::regclass, 'tickets'::regclass)
+                LOOP
+                  EXECUTE format('ALTER TABLE %s DROP CONSTRAINT IF EXISTS %I', fk.tbl, fk.conname);
+                END LOOP;
+              END $$;
+      rollback:
+        - sql:
+            sql: -- Not restorable here: cross-DB FKs cannot be valid post-cutover.
+                 -- Re-run the original per-table changesets if pm_core is re-merged.

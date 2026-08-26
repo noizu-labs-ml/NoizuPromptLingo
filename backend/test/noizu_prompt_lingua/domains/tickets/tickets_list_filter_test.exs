@@ -68,7 +68,7 @@ defmodule NoizuPromptLingua.Domains.TicketsListFilterTest do
 
   defp insert_org do
     %{rows: [[raw]]} =
-      Repo.query!(
+      Noizu.PM.Repo.query!(
         "INSERT INTO organizations (id, slug, name, inserted_at, updated_at) " <>
           "VALUES (gen_random_uuid(), $1, $2, now(), now()) RETURNING id",
         ["tixfilter-#{System.unique_integer([:positive])}", "Tix Filter Org"]

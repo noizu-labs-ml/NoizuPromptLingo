@@ -142,6 +142,11 @@ defmodule NoizuPromptLingua.Domains.NotificationsTest do
   test "get returns rows with seq > cursor, ordered asc; cursor at head returns []", %{
     org_id: org_id
   } do
+    # The Redis-backed delivery rate-limit (1 non-empty batch / 5 min / recipient)
+    # throttles any same-recipient re-pull inside the window, so each cursor
+    # assertion uses a fresh recipient — that keeps this test green whether or
+    # not Redis is reachable (the throttle itself is covered by the :redis
+    # describe below).
     rcpt = uniq("reader")
 
     {:ok, [r1]} =
@@ -154,13 +159,49 @@ defmodule NoizuPromptLingua.Domains.NotificationsTest do
     assert Enum.map(rows, & &1.id) == [r1.id, r2.id]
     assert r1.seq < r2.seq
 
-    # next_cursor == the last delivered seq; re-pulling past it yields nothing.
-    next_cursor = rows |> List.last() |> Map.fetch!(:seq)
-    assert {:ok, []} = Notifications.get(org_id, rcpt, cursor: next_cursor)
+    # cursor at the head's last seq yields [] (empty first delivery — never stamps
+    # the rate-limit window)
+    rcpt_head = uniq("reader")
 
-    # an intermediate cursor returns only the tail
-    {:ok, tail} = Notifications.get(org_id, rcpt, cursor: r1.seq)
-    assert Enum.map(tail, & &1.id) == [r2.id]
+    {:ok, [h1]} =
+      Notifications.notify(%{
+        organization_id: org_id,
+        kind: "share",
+        recipient: rcpt_head,
+        body: "1"
+      })
+
+    {:ok, [h2]} =
+      Notifications.notify(%{
+        organization_id: org_id,
+        kind: "share",
+        recipient: rcpt_head,
+        body: "2"
+      })
+
+    assert {:ok, []} = Notifications.get(org_id, rcpt_head, cursor: max(h1.seq, h2.seq))
+
+    # an intermediate cursor returns only the tail (non-empty first delivery)
+    rcpt_tail = uniq("reader")
+
+    {:ok, [t1]} =
+      Notifications.notify(%{
+        organization_id: org_id,
+        kind: "share",
+        recipient: rcpt_tail,
+        body: "1"
+      })
+
+    {:ok, [t2]} =
+      Notifications.notify(%{
+        organization_id: org_id,
+        kind: "share",
+        recipient: rcpt_tail,
+        body: "2"
+      })
+
+    {:ok, tail} = Notifications.get(org_id, rcpt_tail, cursor: t1.seq)
+    assert Enum.map(tail, & &1.id) == [t2.id]
   end
 
   test "get can filter by :kinds", %{org_id: org_id} do

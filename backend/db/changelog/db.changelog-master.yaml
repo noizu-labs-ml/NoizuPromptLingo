@@ -235,3 +235,6 @@ databaseChangeLog:
   - include:
       file: 077-marketing-signups.yaml
       relativeToChangelogFile: true
+  - include:
+      file: 078-pm-split-drop-cross-db-fks.yaml
+      relativeToChangelogFile: true

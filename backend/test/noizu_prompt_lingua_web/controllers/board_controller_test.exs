@@ -109,9 +109,11 @@ defmodule NoizuPromptLinguaWeb.BoardControllerTest do
   defp uslug(p), do: "#{p}-#{System.unique_integer([:positive])}"
 
   # ticket_queues.project_id -> projects(id); the project-scope cases need a backing row.
+  # Projects live on pm_core post-cutover — the controller validates project ∈ org
+  # against Noizu.PM.Repo, so the fixture must land in the pm_core test DB.
   defp insert_project(org_id) do
     %{rows: [[raw]]} =
-      Repo.query!(
+      Noizu.PM.Repo.query!(
         "INSERT INTO projects (id, organization_id, slug, name, inserted_at, updated_at) " <>
           "VALUES (gen_random_uuid(), $1, $2, $3, now(), now()) RETURNING id",
         [

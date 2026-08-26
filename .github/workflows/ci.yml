@@ -40,6 +40,17 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
+      redis:
+        # TokenStore refresh-JTIs, Notifications delivery rate-limit, chat
+        # presence etc. talk to Redis at runtime even under --exclude redis
+        # (config default redis://localhost:6379/0 — see backend/config.exs).
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: erlef/setup-beam@v1
@@ -92,11 +103,10 @@ jobs:
             --username=noizu_prompt_lingua --password=npl_dev \
             --changeLogFile=changelog/db.changelog-master.pm.yaml \
             update
-      # :memory hits live Weaviate (unauthed in CI) — skip on main pushes; PRs run the full suite
-      - run: mix test --exclude memory --exclude redis
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-      - run: mix test
-        if: github.event_name == 'pull_request'
+      # :memory hits live Weaviate (Cloudflare-Access-authed; unauthed in CI) —
+      # excluded in CI; run locally with Weaviate access to exercise it.
+      # Redis-tagged tests run: a redis service container is provided above.
+      - run: mix test --exclude memory
 
   test-frontend:
     # Smoke only: npm ci + tsc. Not a full Next build and not Cypress.

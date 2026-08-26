@@ -138,6 +138,13 @@ defmodule NoizuPromptLingua.Schema.Unicode.Element do
       {"organization", _, project} when is_binary(project) ->
         add_error(changeset, :project_id, "must be empty for organization scope")
 
+      {"project", nil, nil} ->
+        # Both layers missing — report both (a single-clause match would only
+        # surface the first, hiding the second from callers).
+        changeset
+        |> add_error(:organization_id, "is required for project scope")
+        |> add_error(:project_id, "is required for project scope")
+
       {"project", nil, _} ->
         add_error(changeset, :organization_id, "is required for project scope")
 

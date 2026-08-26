@@ -492,13 +492,20 @@ defmodule NoizuPromptLingua.Domains.UnicodeCodex do
   defp effective_row(rows), do: Enum.max_by(rows, &scope_rank/1)
 
   defp get_by_scope(schema, attrs) do
-    Repo.get_by(schema,
-      scope: attrs.scope || attrs[:scope],
-      organization_id: attrs.organization_id || attrs[:organization_id],
-      project_id: attrs.project_id || attrs[:project_id],
-      slug: attrs.slug || attrs[:slug]
-    )
+    # Upsert identity = (scope, slug, organization_id, project_id) with NULL meaning
+    # "IS NULL" — Repo.get_by cannot express nil (Ecto 3.14 raises) and silently
+    # dropping nils would conflate the org and project layers, so build the query
+    # explicitly. Mirrors the partial unique indexes (idx_unicode_elements_org_slug etc.).
+    scope = attrs[:scope] || "global"
+
+    from(r in schema, where: r.scope == ^scope and r.slug == ^attrs[:slug])
+    |> scope_filter(:organization_id, attrs[:organization_id])
+    |> scope_filter(:project_id, attrs[:project_id])
+    |> Repo.one()
   end
+
+  defp scope_filter(query, field, nil), do: where(query, [r], is_nil(field(r, ^field)))
+  defp scope_filter(query, field, value), do: where(query, [r], field(r, ^field) == ^value)
 
   defp insert_or_update(changeset, nil), do: Repo.insert(changeset)
   defp insert_or_update(changeset, _existing), do: Repo.update(changeset)

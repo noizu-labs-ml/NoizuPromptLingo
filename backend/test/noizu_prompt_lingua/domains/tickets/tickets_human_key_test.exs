@@ -7,7 +7,7 @@ defmodule NoizuPromptLingua.Domains.TicketsHumanKeyTest do
   use NoizuPromptLingua.DataCase
 
   alias NoizuPromptLingua.Domains.Tickets
-  alias NoizuPromptLingua.Schema.Projects.Project
+  alias Noizu.PM.Schema.Projects.Project
 
   @moduletag :db
 
@@ -60,9 +60,9 @@ defmodule NoizuPromptLingua.Domains.TicketsHumanKeyTest do
   end
 
   test "an explicit project key_prefix overrides the derived default", c do
-    Repo.get!(Project, c.project_id)
+    Noizu.PM.Repo.get!(Project, c.project_id)
     |> Project.changeset(%{key_prefix: "NOZINF"})
-    |> Repo.update!()
+    |> Noizu.PM.Repo.update!()
 
     assert proj_tkt(c, "A").key == "NOZINF-001"
   end
@@ -85,9 +85,11 @@ defmodule NoizuPromptLingua.Domains.TicketsHumanKeyTest do
   end
 
   # ── fixtures ──
+  # Tickets live on Noizu.PM.Repo post-cutover (PMBridge), so org/project fixtures
+  # must land in the pm_core test DB — Noizu.PM.Items.ensure_prefix reads them there.
   defp insert_org(slug) do
     %{rows: [[raw]]} =
-      Repo.query!(
+      Noizu.PM.Repo.query!(
         "INSERT INTO organizations (id, slug, name, inserted_at, updated_at) " <>
           "VALUES (gen_random_uuid(), $1, $2, now(), now()) RETURNING id",
         ["#{slug}-#{System.unique_integer([:positive])}" |> String.slice(0, 40), "Org"]
@@ -100,7 +102,7 @@ defmodule NoizuPromptLingua.Domains.TicketsHumanKeyTest do
 
   defp insert_project(org_id, slug) do
     %{rows: [[raw]]} =
-      Repo.query!(
+      Noizu.PM.Repo.query!(
         "INSERT INTO projects (id, organization_id, slug, name, inserted_at, updated_at) " <>
           "VALUES (gen_random_uuid(), $1, $2, $3, now(), now()) RETURNING id",
         [Ecto.UUID.dump!(org_id), "#{slug}-#{System.unique_integer([:positive])}", "Project"]
@@ -111,8 +113,8 @@ defmodule NoizuPromptLingua.Domains.TicketsHumanKeyTest do
 
   defp raw_keyless_ticket(org_id, project_id, title, secs_ago) do
     %{rows: [[raw]]} =
-      Repo.query!(
-        "INSERT INTO tickets (id, organization_id, project_id, title, ticket_type, status, inserted_at, updated_at) " <>
+      Noizu.PM.Repo.query!(
+        "INSERT INTO items (id, organization_id, project_id, title, item_type, status, inserted_at, updated_at) " <>
           "VALUES (gen_random_uuid(), $1, $2, $3, 'task', 'open', now() - ($4 || ' seconds')::interval, now()) RETURNING id",
         [Ecto.UUID.dump!(org_id), Ecto.UUID.dump!(project_id), title, Integer.to_string(secs_ago)]
       )

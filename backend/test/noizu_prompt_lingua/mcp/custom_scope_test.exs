@@ -60,7 +60,11 @@ defmodule NoizuPromptLingua.MCP.CustomScopeTest do
     refute "Projects" in categories
 
     {:ok, search} = ToolSearch.call(%{query: "Project", mode: :text, limit: 10}, c)
-    assert search.total_matches == 0
+    # Text search matches descriptions too — session tools legitimately mention
+    # "project" in their docs. The scope contract is that no Project.* tool is
+    # reachable, not that the substring never appears.
+    assert search.matches |> Enum.map(& &1.name) |> Enum.all?(&String.starts_with?(&1, "Session."))
+    refute Enum.any?(search.matches, &String.starts_with?(&1.name, "Project."))
 
     {:ok, definitions} = ToolDefinition.call(%{tool: "Session.Get,Project.Get"}, c)
     assert [%{name: "Session.Get"}] = definitions.definitions

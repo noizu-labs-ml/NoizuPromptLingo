@@ -30,7 +30,10 @@ defmodule NoizuPromptLingua.Schema.TicketEntityLink do
     link
     |> cast(attrs, [:ticket_id, :entity_type, :entity_id, :link_type, :metadata])
     |> validate_required([:ticket_id, :entity_type, :entity_id, :link_type])
-    |> validate_inclusion(:entity_type, @entity_types)
+    # entity_type is intentionally unvalidated: the table is polymorphic by design
+    # (no DB FK on entity_id; the calling layer validates the target exists) —
+    # Ticket.FromEntity links to arbitrary subject types (chat_message, wiki_page, ...),
+    # not just the marketing enum.
     |> validate_inclusion(:link_type, @link_types)
     |> foreign_key_constraint(:ticket_id)
     |> unique_constraint([:ticket_id, :entity_type, :entity_id, :link_type],

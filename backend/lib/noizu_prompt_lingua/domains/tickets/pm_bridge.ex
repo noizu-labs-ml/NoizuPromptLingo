@@ -34,6 +34,16 @@ defmodule NoizuPromptLingua.Domains.Tickets.PMBridge do
     end)
   end
 
+  @doc "Get by human key (org-scoped) via pm_core."
+  def get_by_key(org_id, key) when is_binary(org_id) and is_binary(key) do
+    PMCore.with_pm(fn ->
+      case Noizu.PM.Items.get_by_key(org_id, key) do
+        nil -> nil
+        item -> item_to_ticket_shape(item)
+      end
+    end)
+  end
+
   @doc "Update via pm_core."
   def update(id, attrs) when is_binary(id) and is_map(attrs) do
     PMCore.with_pm(fn ->

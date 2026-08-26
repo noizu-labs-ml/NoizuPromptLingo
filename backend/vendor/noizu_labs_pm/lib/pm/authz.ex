@@ -19,7 +19,9 @@ defmodule Noizu.PM.Authz do
 
     params = [
       uuid_to_bin(user_id),
-      resource_type,
+      # Callers pass resource types as atoms (:organization/:project) or strings —
+      # Postgrex rejects atoms for text params, so normalize before encoding.
+      to_string(resource_type),
       uuid_to_bin(resource_id),
       action
     ]
@@ -32,7 +34,7 @@ defmodule Noizu.PM.Authz do
 
   def get_user_role(user_id, resource_type, resource_id) do
     sql = "SELECT get_user_role_in_resource($1::uuid, $2, $3::uuid)"
-    params = [uuid_to_bin(user_id), resource_type, uuid_to_bin(resource_id)]
+    params = [uuid_to_bin(user_id), to_string(resource_type), uuid_to_bin(resource_id)]
 
     case Ecto.Adapters.SQL.query(Noizu.PM.Repo, sql, params) do
       {:ok, %{rows: [[role]]}} when is_binary(role) -> role
@@ -47,7 +49,9 @@ defmodule Noizu.PM.Authz do
         {:error, :not_a_member}
 
       role ->
-        if Map.get(@role_ranks, role, 99) <= Map.get(@role_ranks, required_role, 99) do
+        # @role_ranks is string-keyed; required_role may arrive as an atom from
+        # host-app callers (e.g. NoizuPromptLingua.Authz.Pdp.Local) — normalize.
+        if Map.get(@role_ranks, role, 99) <= Map.get(@role_ranks, to_string(required_role), 99) do
           {:ok, %{role: role, resource_type: resource_type, resource_id: resource_id}}
         else
           {:error, :insufficient_role}
