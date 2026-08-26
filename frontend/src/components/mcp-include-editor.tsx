@@ -21,6 +21,11 @@ function included(config: McpCustomScopeConfig, groupId: string) {
   return !!config.groups[groupId] && config.groups[groupId].disabled !== true;
 }
 
+function toolEnabled(config: McpCustomScopeConfig, groupId: string, toolName: string) {
+  const tools = config.groups[groupId]?.tools;
+  return !tools || tools[toolName] === undefined || tools[toolName].disabled !== true;
+}
+
 export default function McpIncludeEditor({
   catalog,
   scope,
@@ -32,6 +37,7 @@ export default function McpIncludeEditor({
     groups: { ...(scope.config?.groups ?? {}) },
   }));
   const [saving, setSaving] = useState(false);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   const selectedCount = useMemo(
     () => catalog.filter((g) => included(config, g.id)).length,
@@ -50,6 +56,20 @@ export default function McpIncludeEditor({
         delete groups[groupId];
       }
       return { groups };
+    });
+  }
+
+  // Per-tool toggles always SET `disabled` (never delete entries) — the backend
+  // reads the flag from mcp/custom.ex, so absent vs. explicitly-false must stay
+  // indistinguishable to it. Group membership is left untouched.
+  function toggleTool(groupId: string, toolName: string, value: boolean) {
+    setConfig((current) => {
+      // If the group entry was removed (group unchecked), re-create it as
+      // disabled so editing tools on an excluded group never re-includes it.
+      const prevGroup = current.groups[groupId] ?? { tools: {}, disabled: true };
+      const prevTools = prevGroup.tools ?? {};
+      const tools = { ...prevTools, [toolName]: { ...(prevTools[toolName] ?? {}), disabled: !value } };
+      return { groups: { ...current.groups, [groupId]: { ...prevGroup, tools } } };
     });
   }
 
@@ -86,7 +106,7 @@ export default function McpIncludeEditor({
           <div style={{ fontSize: 11, color: 'var(--text-3)' }}>
             {readOnly
               ? 'Read-only template. Copy it to your endpoints to edit included services.'
-              : 'These ride on this custom endpoint — one URL, not extra servers.'}
+              : 'These ride on this custom endpoint — one URL, not extra servers. Expand a service to toggle individual tools.'}
           </div>
         </div>
         {!readOnly ? (
@@ -108,40 +128,121 @@ export default function McpIncludeEditor({
       }}>
         {catalog.map((group) => {
           const on = included(config, group.id);
+          const open = !!expanded[group.id];
+          const tools = group.tools ?? [];
           return (
-            <label
+            <div
               key={group.id}
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
                 padding: '6px 10px',
                 borderRadius: 6,
                 background: on ? 'var(--accent-dim)' : 'var(--bg-3)',
                 border: `1px solid ${on ? 'var(--accent)' : 'var(--border)'}`,
-                cursor: readOnly ? 'default' : 'pointer',
                 fontSize: 12,
               }}
             >
-              <input
-                type="checkbox"
-                checked={on}
-                onChange={(e) => toggle(group.id, e.target.checked)}
-                disabled={readOnly}
-                style={{ accentColor: 'var(--accent)' }}
-              />
-              <div>
-                <div style={{ fontWeight: 500, color: on ? 'var(--text-0)' : 'var(--text-3)' }}>
-                  {group.label}
-                  {group.required ? (
-                    <span style={{ fontSize: 9, color: 'var(--text-3)', marginLeft: 4 }}>
-                      recommended
-                    </span>
-                  ) : null}
-                </div>
-                <div style={{ fontSize: 10, color: 'var(--text-3)' }}>{group.desc}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    flex: 1,
+                    minWidth: 0,
+                    cursor: readOnly ? 'default' : 'pointer',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={on}
+                    onChange={(e) => toggle(group.id, e.target.checked)}
+                    disabled={readOnly}
+                    style={{ accentColor: 'var(--accent)' }}
+                  />
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontWeight: 500, color: on ? 'var(--text-0)' : 'var(--text-3)' }}>
+                      {group.label}
+                      {group.required ? (
+                        <span style={{ fontSize: 9, color: 'var(--text-3)', marginLeft: 4 }}>
+                          recommended
+                        </span>
+                      ) : null}
+                    </div>
+                    <div style={{ fontSize: 10, color: 'var(--text-3)' }}>{group.desc}</div>
+                  </div>
+                </label>
+                <span
+                  style={{
+                    fontSize: 9,
+                    color: 'var(--text-3)',
+                    background: 'var(--bg-2)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 8,
+                    padding: '1px 6px',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {tools.length} tools
+                </span>
+                {tools.length > 0 ? (
+                  <button
+                    type="button"
+                    aria-expanded={open}
+                    aria-label={`Toggle tools for ${group.label}`}
+                    onClick={() => setExpanded((prev) => ({ ...prev, [group.id]: !prev[group.id] }))}
+                    style={{
+                      border: 0,
+                      background: 'transparent',
+                      color: 'var(--text-2)',
+                      cursor: 'pointer',
+                      fontSize: 10,
+                      padding: '2px 4px',
+                      transform: open ? 'rotate(180deg)' : 'none',
+                    }}
+                  >
+                    ▾
+                  </button>
+                ) : null}
               </div>
-            </label>
+
+              {open && tools.length > 0 ? (
+                <div style={{
+                  marginTop: 8,
+                  paddingTop: 8,
+                  borderTop: '1px solid var(--border)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 4,
+                }}>
+                  {tools.map((tool) => {
+                    const toolOn = toolEnabled(config, group.id, tool.name);
+                    return (
+                      <label
+                        key={tool.name}
+                        title={tool.description}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          fontSize: 11,
+                          cursor: readOnly ? 'default' : 'pointer',
+                          color: on && toolOn ? 'var(--text-1)' : 'var(--text-3)',
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={toolOn}
+                          onChange={(e) => toggleTool(group.id, tool.name, e.target.checked)}
+                          disabled={readOnly}
+                          style={{ accentColor: 'var(--accent)' }}
+                        />
+                        <span className="font-mono" style={{ wordBreak: 'break-all' }}>{tool.name}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </div>
           );
         })}
       </div>

@@ -14,6 +14,8 @@ import {
 import McpSetupPanel from '@/components/mcp-setup-panel';
 import McpOauthSetup from '@/components/mcp-oauth-setup';
 import McpEndpointManager from '@/components/mcp-endpoint-manager';
+import { useOrg } from '@/context/org';
+import { mcpAuthEnvVar } from '@/lib/mcp-setup';
 
 // Install snippet for the optional Local Tools MCP (filesystem/git tools).
 const LOCAL_MCP_INSTALL = `tar xzf noizu-local-mcp.tar.gz && cd local-mcp && npm i && npm run build
@@ -56,6 +58,11 @@ export default function McpKeysPage() {
   // key whose raw value they still hold, without recreating it.
   const [pastedKey, setPastedKey] = useState("");
   const [minting, setMinting] = useState(false);
+
+  // Org-scoped env var name for CLI bearer tokens (e.g. NOIZU_LABS_AUTH_TOKEN)
+  // so multi-org shells don't collide on a bare AUTH_TOKEN.
+  const { organizations } = useOrg();
+  const authEnvName = mcpAuthEnvVar(organizations[0]?.slug);
 
   const fetchKeys = useCallback(async () => {
     try {
@@ -269,6 +276,7 @@ export default function McpKeysPage() {
           mcpUrl={oauthMcpUrl}
           asMetadataUrl={asMetadataUrl}
           issuer={oauthIssuer}
+          authEnvName={authEnvName}
           servers={servers}
           alaCarte={alaCarte}
           catalog={catalog}
@@ -504,6 +512,7 @@ export default function McpKeysPage() {
               <McpSetupPanel
                 token={tokens[setupKey].token}
                 keyLabel={key?.label ?? "pasted key"}
+                authEnvName={authEnvName}
                 servers={servers}
                 alaCarte={alaCarte}
                 defaultScope={defaultScope}
