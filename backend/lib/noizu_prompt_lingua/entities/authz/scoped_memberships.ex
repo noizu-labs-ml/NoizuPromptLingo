@@ -56,17 +56,39 @@ defmodule NoizuPromptLingua.Authz.ScopedMemberships do
       end)
       |> Enum.map(&Map.merge(%{persona_id: nil, persona_slug: nil, avatar: nil}, &1))
 
-    persona_rows =
-      persona_rows_query(resource_type, resource_id)
+    app_user_rows =
+      app_rows_query(resource_type, resource_id, "user")
       |> maybe_role_filter(opts[:role])
       |> NoizuPromptLingua.Repo.all()
 
-    user_rows ++ persona_rows
+    persona_rows =
+      app_rows_query(resource_type, resource_id, "persona")
+      |> maybe_role_filter(opts[:role])
+      |> NoizuPromptLingua.Repo.all()
+
+    # pm rows win: drop app-DB USER rows a pm row already covers. Match on
+    # member_id first; for ETL-collapsed users the pm member_id is a different
+    # uuid, so also match on normalized email (same person, two ids).
+    pm_member_ids = MapSet.new(user_rows, & &1.member_id)
+    pm_emails = MapSet.new(user_rows, &normalize_email(&1.email))
+
+    app_user_rows =
+      Enum.reject(app_user_rows, fn row ->
+        row.member_id in pm_member_ids or
+          (is_binary(row.email) and normalize_email(row.email) in pm_emails)
+      end)
+
+    user_rows ++ app_user_rows ++ persona_rows
   end
 
-  # App-DB side of the union: PERSONA rows only (users live on pm_core). Same select shape
-  # as the pm user rows so the FE stays member_type-agnostic.
-  defp persona_rows_query(resource_type, resource_id) do
+  defp normalize_email(email) when is_binary(email), do: String.downcase(email, :ascii)
+  defp normalize_email(_), do: nil
+
+  # App-DB side of the union (USER + PERSONA rows; pm_core only guarantees
+  # POST-cutover user rows — pre-cutover / ETL-remapped user memberships exist
+  # solely here). Same select shape as the pm user rows so the FE stays
+  # member_type-agnostic.
+  defp app_rows_query(resource_type, resource_id, member_type) do
     from(sm in Schema,
       join: g in NoizuPromptLingua.Schema.Authz.Group,
       on: g.id == sm.group_id,
@@ -75,7 +97,7 @@ defmodule NoizuPromptLingua.Authz.ScopedMemberships do
       left_join: p in NoizuPromptLingua.Schema.Persona,
       on: sm.member_type == "persona" and p.id == sm.member_id,
       where: sm.resource_type == ^resource_type and sm.resource_id == ^resource_id,
-      where: sm.member_type == "persona",
+      where: sm.member_type == ^member_type,
       where: is_nil(sm.expires_at) or sm.expires_at > ^DateTime.utc_now(),
       select: %{
         id: sm.id,

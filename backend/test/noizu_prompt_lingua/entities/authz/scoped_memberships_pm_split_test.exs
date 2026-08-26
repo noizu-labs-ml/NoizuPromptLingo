@@ -168,10 +168,58 @@ defmodule NoizuPromptLingua.Authz.ScopedMembershipsPMSplitTest do
     assert to_string(got.member_id) == to_string(uid)
   end
 
+  # members list (list_for_resource) must union app-DB USER rows too — b2a5237's
+  # app-DB side matched personas only, so a pre-cutover/ETL-remapped owner vanished
+  # from /memberships/organizations/:id and the org members table read "not a member".
+
+  test "app-DB-only USER membership appears in list_for_resource", %{user_id: uid} do
+    legacy = insert_app_org_with_owner(uid)
+
+    rows = ScopedMemberships.list_for_resource("organization", legacy.id)
+    user_row = Enum.find(rows, &(&1.member_type == "user"))
+
+    assert user_row,
+           "expected the app-DB user row, got: #{inspect(Enum.map(rows, & &1.member_type))}"
+
+    assert to_string(user_row.member_id) == to_string(uid)
+    assert user_row.role == "owner"
+  end
+
+  test "same member on both repos renders once in list_for_resource (pm wins)", %{
+    org_id: org,
+    user_id: uid
+  } do
+    mirror_app_membership(org, uid, "owner")
+
+    rows = ScopedMemberships.list_for_resource("organization", org)
+    mine = Enum.filter(rows, &(&1.member_type == "user" and &1.member_id == uid))
+    assert length(mine) == 1
+    # the surviving row is the pm one (id resolvable on the pm repo)
+    assert ScopedMemberships.get_membership(hd(mine).id)
+  end
+
+  test "ETL-collapsed user (same email, different uuid) renders once (pm wins)", %{
+    org_id: org,
+    user_id: owner
+  } do
+    email = "collapsed-#{System.unique_integer([:positive])}@example.com"
+    pm_uid = insert_pm_user(email)
+    {:ok, _} = ScopedMemberships.add_member("organization", org, pm_uid, "member", owner)
+
+    # same person pre-cutover: app-DB user row w/ the SAME email but a different uuid
+    app_uid = insert_app_user(email, "Collapsed App User")
+    mirror_app_membership(org, app_uid, "member")
+
+    rows = ScopedMemberships.list_for_resource("organization", org)
+    collapsed = Enum.filter(rows, &(&1.email == email))
+    assert length(collapsed) == 1, "expected dedupe by email, got: #{inspect(collapsed)}"
+    assert hd(collapsed).member_id == pm_uid
+  end
+
   # ── seed helpers ────────────────────────────────────────────────────────
 
-  defp insert_pm_user do
-    email = "pm-split-#{System.unique_integer([:positive])}@example.com"
+  defp insert_pm_user(email \\ nil) do
+    email = email || "pm-split-#{System.unique_integer([:positive])}@example.com"
 
     %{rows: [[raw]]} =
       Ecto.Adapters.SQL.query!(
@@ -179,6 +227,19 @@ defmodule NoizuPromptLingua.Authz.ScopedMembershipsPMSplitTest do
         "INSERT INTO users (id, email, user_name, inserted_at, updated_at) " <>
           "VALUES (gen_random_uuid(), $1, $2, now(), now()) RETURNING id",
         [email, "PM Split User #{System.unique_integer([:positive])}"]
+      )
+
+    Ecto.UUID.load!(raw)
+  end
+
+  # App-DB user (pre-cutover/ETL-collapsed identity): email may match a pm user
+  # while the uuid differs.
+  defp insert_app_user(email, user_name) do
+    %{rows: [[raw]]} =
+      Repo.query!(
+        "INSERT INTO users (id, email, user_name, inserted_at, updated_at) " <>
+          "VALUES (gen_random_uuid(), $1::citext, $2, now(), now()) RETURNING id",
+        [email, user_name]
       )
 
     Ecto.UUID.load!(raw)
