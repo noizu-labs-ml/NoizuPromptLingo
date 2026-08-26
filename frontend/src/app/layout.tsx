@@ -55,7 +55,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script src="/__env.js" />
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){if(localStorage.getItem('color-mode')==='dark')document.documentElement.classList.add('dark')})()`,
+            __html: `(function(){try{var saved=localStorage.getItem('color-mode');var mode=saved==='light'||saved==='dark'?saved:'dark';document.documentElement.classList.toggle('dark',mode==='dark');document.documentElement.style.colorScheme=mode}catch(_){document.documentElement.classList.add('dark')}})()`,
           }}
         />
       </head>

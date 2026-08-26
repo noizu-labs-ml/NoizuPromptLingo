@@ -63,6 +63,8 @@ export function AppSidebar() {
                       key={item.href}
                       href={item.href}
                       className={`app-sidebar__item app-sidebar__item--nested${item.active ? ' is-active' : ''}`}
+                      aria-current={item.active ? 'page' : undefined}
+                      aria-label={collapsed ? item.label : undefined}
                       title={collapsed ? item.label : undefined}
                     >
                       <item.Icon className="app-sidebar__glyph" />

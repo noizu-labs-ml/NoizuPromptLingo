@@ -2,12 +2,62 @@
 
 import Link from "next/link";
 import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/react";
-import { Bars3Icon } from "@heroicons/react/24/outline";
+import { Bars3Icon, MoonIcon, SunIcon } from "@heroicons/react/24/outline";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth";
 import { useOrg } from "@/context/org";
 import { useSidebar } from "@/context/sidebar";
 import { MobileNav } from "@/components/mobile-nav";
 import { OrgProjectSwitcher } from "@/components/org-project-switcher";
+
+type ColorMode = "light" | "dark";
+
+const COLOR_MODE_KEY = "color-mode";
+
+function AppearanceToggle() {
+  const [mode, setMode] = useState<ColorMode>("dark");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const stored = localStorage.getItem(COLOR_MODE_KEY);
+    const resolved: ColorMode = stored === "light" || stored === "dark" ? stored : "dark";
+    setMode(resolved);
+    document.documentElement.classList.toggle("dark", resolved === "dark");
+    document.documentElement.style.colorScheme = resolved;
+    setMounted(true);
+  }, []);
+
+  function toggleAppearance() {
+    const next: ColorMode = mode === "dark" ? "light" : "dark";
+    setMode(next);
+    document.documentElement.classList.toggle("dark", next === "dark");
+    document.documentElement.style.colorScheme = next;
+    localStorage.setItem(COLOR_MODE_KEY, next);
+  }
+
+  const nextMode = mode === "dark" ? "light" : "dark";
+
+  return (
+    <button
+      type="button"
+      className="appearance-toggle"
+      onClick={toggleAppearance}
+      aria-label={`Switch to ${nextMode} appearance`}
+      aria-pressed={mounted && mode === "dark"}
+      title={`Switch to ${nextMode} appearance`}
+    >
+      {mode === "dark" ? (
+        <MoonIcon className="appearance-toggle__icon" aria-hidden="true" />
+      ) : (
+        <SunIcon className="appearance-toggle__icon" aria-hidden="true" />
+      )}
+      <span className="appearance-toggle__label">Appearance</span>
+      <span className="appearance-toggle__value" aria-hidden="true">
+        {mounted ? (mode === "dark" ? "Dark" : "Light") : "Theme"}
+      </span>
+    </button>
+  );
+}
 
 export function Navbar() {
   const { user, loading, logout } = useAuth();
@@ -44,7 +94,11 @@ export function Navbar() {
             <Link href="/" className="tl-brand__name">Tobor Locker</Link>
             <span className="tl-brand__badge">MCP</span>
             {user && (currentProject || currentOrg) && (
-              <span className="tl-brand__scope" title="Active scope">
+              <span
+                className="tl-brand__scope"
+                aria-label={`Active context: ${currentOrg?.name ?? "Organization"}${currentProject ? `, project ${currentProject.name}` : ""}`}
+                title="Active organization and project"
+              >
                 {currentOrg?.name}
                 {currentProject && <span className="tl-brand__scope-proj"> / {currentProject.name}</span>}
               </span>
@@ -55,6 +109,7 @@ export function Navbar() {
           {loading ? null : user ? (
             <>
               <MobileNav />
+              <AppearanceToggle />
               <Menu>
                 <MenuButton className="menu-btn sg-navbar__user">{displayName}</MenuButton>
                 <MenuItems anchor="bottom end" className="menu-items">

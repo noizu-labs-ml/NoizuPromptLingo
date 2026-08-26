@@ -1,31 +1,31 @@
 typography:
   - var: font-sans
-    name: Space Grotesk
-    description: "Primary typeface. Used for headings, UI labels, and body text. Geometric sans with humanist proportions."
+    name: Instrument Sans
+    description: "Primary typeface. A calm, highly legible sans for dense professional interfaces."
     usage: "Headings, card titles, buttons, body copy"
-    weights: [400, 600, 700]
+    weights: [400, 500, 600]
 
   - var: font-mono
     name: IBM Plex Mono
     description: "Monospace typeface. Used for code, token names, tags, and technical labels."
     usage: "Code, token values, tags, metadata"
-    weights: [400, 500, 700]
+    weights: [400, 500]
     colors:
       - label: "Brand Red"
         value: "var(--brand-red)"
         background: "var(--slate-800)"
-        note: "Terminal prompts, error output, and interactive shell highlights — draws the eye to actionable lines."
+        note: "Terminal prompts, links, focus, and interactive shell highlights."
       - label: "Brand Yellow"
         value: "var(--brand-yellow)"
         background: "var(--slate-900)"
-        note: "Warnings, diff markers, and syntax emphasis — signals caution without halting the reader."
+        note: "Warnings and diff markers only; cyan remains the sole interaction accent."
 
 typography-classes:
   - name: Display
     class: typography-display
     font-family: "var(--font-sans)"
     font-size: "var(--font-size-display)"
-    font-weight: "700"
+    font-weight: "500"
     line-height: "1.05"
     letter-spacing: "-0.03em"
 
@@ -33,7 +33,7 @@ typography-classes:
     class: typography-h1
     font-family: "var(--font-sans)"
     font-size: "var(--font-size-3xl)"
-    font-weight: "700"
+    font-weight: "500"
     line-height: "1.1"
     letter-spacing: "-0.02em"
 
@@ -41,7 +41,7 @@ typography-classes:
     class: typography-h2
     font-family: "var(--font-sans)"
     font-size: "var(--font-size-2xl)"
-    font-weight: "700"
+    font-weight: "500"
     line-height: "1.2"
     letter-spacing: "-0.015em"
 

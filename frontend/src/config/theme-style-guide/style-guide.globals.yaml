@@ -14,4 +14,4 @@ globals: |
     background: var(--base-background);
     line-height: var(--base-line-height);
   }
-  ::selection { background: var(--brand-yellow); color: var(--text); }
+  ::selection { background: color-mix(in srgb, var(--brand-blue) 34%, transparent); color: var(--text); }
