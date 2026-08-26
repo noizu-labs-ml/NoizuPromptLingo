@@ -134,6 +134,9 @@ defmodule NoizuPromptLingua.Authz.ScopedMemberships do
     end)
   end
 
+  # App-DB fallback of get_membership: persona rows primarily, but keep matching
+  # app-DB USER rows too (pre-cutover memberships + ETL-collapsed users whose pm
+  # member_id differs — same class the list_for_user union surfaces).
   defp persona_membership(id) do
     from(sm in Schema,
       join: g in NoizuPromptLingua.Schema.Authz.Group,
@@ -142,7 +145,7 @@ defmodule NoizuPromptLingua.Authz.ScopedMemberships do
       on: sm.member_type == "user" and u.id == sm.member_id,
       left_join: p in NoizuPromptLingua.Schema.Persona,
       on: sm.member_type == "persona" and p.id == sm.member_id,
-      where: sm.id == ^id and sm.member_type == "persona",
+      where: sm.id == ^id and sm.member_type in ["user", "persona"],
       select: %{
         id: sm.id,
         member_type: sm.member_type,
@@ -285,5 +288,4 @@ defmodule NoizuPromptLingua.Authz.ScopedMemberships do
 
     Enum.uniq_by(pm_rows ++ app_rows, &{&1.resource_type, &1.resource_id})
   end
-
 end

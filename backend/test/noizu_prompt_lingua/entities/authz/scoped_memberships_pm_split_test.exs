@@ -73,7 +73,9 @@ defmodule NoizuPromptLingua.Authz.ScopedMembershipsPMSplitTest do
     assert got_user.role == "owner"
     assert got_user.email == user_row.email
 
-    {:ok, persona} = ScopedMemberships.add_persona_member("organization", org, insert_persona(org), "viewer")
+    {:ok, persona} =
+      ScopedMemberships.add_persona_member("organization", org, insert_persona(org), "viewer")
+
     # persona.id is the app-DB membership id on this path
     got_persona = ScopedMemberships.get_membership(persona.id)
     assert got_persona.member_type == "persona"
@@ -105,7 +107,10 @@ defmodule NoizuPromptLingua.Authz.ScopedMembershipsPMSplitTest do
     user_id: uid
   } do
     orgs = Organizations.list_user_organizations(uid)
-    assert [%{id: id, slug: slug, role: "owner", effective_role: "owner", owner: owner_name}] = orgs
+
+    assert [%{id: id, slug: slug, role: "owner", effective_role: "owner", owner: owner_name}] =
+             orgs
+
     assert to_string(id) == to_string(org)
     assert slug =~ "split-org-"
     assert String.starts_with?(owner_name, "PM Split User")
@@ -150,6 +155,19 @@ defmodule NoizuPromptLingua.Authz.ScopedMembershipsPMSplitTest do
     assert length(keys) == length(Enum.uniq(keys))
   end
 
+  test "get_membership resolves an app-DB USER membership id (pre-cutover shape)", %{
+    user_id: uid
+  } do
+    legacy = insert_app_org_with_owner(uid)
+
+    got = ScopedMemberships.get_membership(legacy.membership_id)
+    assert got, "app-DB user membership id resolved nil"
+    assert got.member_type == "user"
+    assert got.role == "owner"
+    assert to_string(got.resource_id) == legacy.id
+    assert to_string(got.member_id) == to_string(uid)
+  end
+
   # ── seed helpers ────────────────────────────────────────────────────────
 
   defp insert_pm_user do
@@ -180,7 +198,7 @@ defmodule NoizuPromptLingua.Authz.ScopedMembershipsPMSplitTest do
     # (same UUID) there so app-DB persona rows can reference it.
     Repo.query!(
       "INSERT INTO organizations (id, slug, name, inserted_at, updated_at) " <>
-          "VALUES ($1::uuid, $2, 'Split Org Mirror', now(), now()) ON CONFLICT (id) DO NOTHING",
+        "VALUES ($1::uuid, $2, 'Split Org Mirror', now(), now()) ON CONFLICT (id) DO NOTHING",
       [Ecto.UUID.dump!(org_id), "split-mirror-#{System.unique_integer([:positive])}"]
     )
 
@@ -200,21 +218,22 @@ defmodule NoizuPromptLingua.Authz.ScopedMembershipsPMSplitTest do
 
   # App-DB-only org + owner membership — the pre-cutover shape that was never
   # re-written to pm (and what the ETL member_id remap leaves unmatched).
+  # Returns the membership id too (get_membership coverage below).
   defp insert_app_org_with_owner(user_id) do
     slug = "legacy-org-#{System.unique_integer([:positive])}"
 
-    %{rows: [[raw_id]]} =
+    %{rows: [[raw_id, raw_mid]]} =
       Repo.query!(
         "WITH o AS (INSERT INTO organizations (id, slug, name, inserted_at, updated_at) " <>
           "VALUES (gen_random_uuid(), $1, 'Legacy Org', now(), now()) RETURNING id), " <>
           "m AS (INSERT INTO scoped_memberships (id, group_id, resource_type, resource_id, member_type, member_id, created_at) " <>
           "SELECT gen_random_uuid(), g.id, 'organization', o.id, 'user', $2::uuid, now() " <>
-          "FROM o, groups g WHERE g.name = 'owner' RETURNING resource_id) " <>
-          "SELECT id FROM o",
+          "FROM o, groups g WHERE g.name = 'owner' RETURNING id, resource_id) " <>
+          "SELECT o.id, m.id FROM o, m",
         [slug, Ecto.UUID.dump!(user_id)]
       )
 
-    %{id: Ecto.UUID.load!(raw_id), slug: slug}
+    %{id: Ecto.UUID.load!(raw_id), membership_id: Ecto.UUID.load!(raw_mid), slug: slug}
   end
 
   # Mirror a pm org into the app DB with a same-role membership, as the ETL /
