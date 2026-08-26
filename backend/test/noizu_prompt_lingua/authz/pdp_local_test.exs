@@ -1,5 +1,7 @@
 defmodule NoizuPromptLingua.Authz.Pdp.LocalTest do
-  use ExUnit.Case, async: true
+  # Local.check/1 queries OAuth Clients/Grants on the app repo — needs sandbox checkout
+  use NoizuPromptLingua.DataCase
+  @moduletag :db
 
   alias NoizuPromptLingua.Authz.Pdp.Local
 
