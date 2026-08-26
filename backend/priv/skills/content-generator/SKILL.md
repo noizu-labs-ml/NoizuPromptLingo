@@ -1,6 +1,8 @@
 ---
 name: content-generator
-description: >
+description: >-
+  Research trends, validate demand, and create platform-ready ideas, abstracts, outlines, calendars, funnels, or article visuals. Use for keyword mining, topic validation, editorial planning, cross-posting, and content pipelines.
+extended_description: >
   Research trends, validate topics, generate article ideas, create abstracts, and
   optimize content for specific platforms. Use this skill when the user wants to
   research content opportunities, find trending topics, do keyword research, validate
