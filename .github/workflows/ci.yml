@@ -18,9 +18,6 @@ env:
 
 jobs:
   test-backend:
-    # TODO: drop continue-on-error once the suite is confirmed green on a CI
-    # runner — first-cut CI must not block the deploy pipeline.
-    continue-on-error: true
     runs-on: ubuntu-latest # amd64
     defaults:
       run:
