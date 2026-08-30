@@ -3,7 +3,7 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.DM do
     name: "Chat.DM",
     description:
       "Open (or reuse) a direct-message room between 2+ personas and optionally post to it.",
-    hidden: true,
+    hidden: false,
     category: "Chat"
 
   input do

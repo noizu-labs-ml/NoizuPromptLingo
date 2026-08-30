@@ -2,7 +2,7 @@ defmodule NoizuPromptLingua.Domains.Instructions.Tools.InstructionList do
   use Noizu.MCP.Server.Tool,
     name: "Instruction.List",
     description: "List/search instructions in an organization (optional project/tag/query).",
-    hidden: true,
+    hidden: false,
     category: "Instructions",
     annotations: [read_only_hint: true]
 

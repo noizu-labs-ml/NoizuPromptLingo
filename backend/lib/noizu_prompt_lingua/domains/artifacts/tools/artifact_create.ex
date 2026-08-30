@@ -2,7 +2,7 @@ defmodule NoizuPromptLingua.Domains.Artifacts.Tools.ArtifactCreate do
   use Noizu.MCP.Server.Tool,
     name: "Artifact.Create",
     description: "Create a new artifact with its initial revision.",
-    hidden: true,
+    hidden: false,
     category: "Artifacts"
 
   input_schema(%{

@@ -2,7 +2,7 @@ defmodule NoizuPromptLingua.MCP.Sessions.Tools.SessionGet do
   use Noizu.MCP.Server.Tool,
     name: "Session.Get",
     description: "Get a session by UUID.",
-    hidden: true,
+    hidden: false,
     category: "Sessions",
     annotations: [read_only_hint: true]
 

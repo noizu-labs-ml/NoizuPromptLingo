@@ -2,7 +2,7 @@ defmodule NoizuPromptLingua.MCP.Organizations.Tools.OrganizationGet do
   use Noizu.MCP.Server.Tool,
     name: "Organization.Get",
     description: "Get an organization by slug or UUID.",
-    hidden: true,
+    hidden: false,
     category: "Organizations",
     annotations: [read_only_hint: true]
 

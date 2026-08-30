@@ -89,4 +89,34 @@ defmodule NoizuPromptLingua.MCP.CustomScopeTest do
 
     assert missing.status == "error"
   end
+
+  test "core session tools are public by default and re-hideable per scope" do
+    {:ok, _plain} =
+      MCPCustomScopes.create(%{
+        "slug" => "plain",
+        "name" => "Plain",
+        "config" => %{"groups" => %{"sessions" => %{}}}
+      })
+
+    {:ok, _lean} =
+      MCPCustomScopes.create(%{
+        "slug" => "lean",
+        "name" => "Lean",
+        "config" => %{
+          "groups" => %{
+            "sessions" => %{"tools" => %{"Session.Create" => %{"hidden" => true}}}
+          }
+        }
+      })
+
+    # Compile-time default: surfaced in tools/list without any override.
+    plain = tool_specs("plain")
+    assert Enum.find(plain, &(&1.definition.name == "Session.Create")).hidden == false
+
+    # Per-scope override re-hides it — but it stays in the catalog (callable
+    # via ToolCall), which is what list_tools rejects on, not this.
+    lean_names = tool_specs("lean") |> Enum.map(& &1.definition.name)
+    assert "Session.Create" in lean_names
+    assert Enum.find(tool_specs("lean"), &(&1.definition.name == "Session.Create")).hidden == true
+  end
 end

@@ -2,7 +2,7 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.TicketGet do
   use Noizu.MCP.Server.Tool,
     name: "Ticket.Get",
     description: "Fetch a ticket by UUID with fields, links, and attachments.",
-    hidden: true,
+    hidden: false,
     category: "Tickets",
     annotations: [read_only_hint: true]
 

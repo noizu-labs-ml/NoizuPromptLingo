@@ -2,7 +2,7 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.TicketComment do
   use Noizu.MCP.Server.Tool,
     name: "Ticket.Comment",
     description: "Add a comment to a ticket or list existing comments.",
-    hidden: true,
+    hidden: false,
     category: "Tickets"
 
   input do

@@ -2,7 +2,7 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.CreateRoom do
   use Noizu.MCP.Server.Tool,
     name: "Chat.CreateRoom",
     description: "Create a new chat room.",
-    hidden: true,
+    hidden: false,
     category: "Chat"
 
   input do

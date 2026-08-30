@@ -6,7 +6,7 @@ defmodule NoizuPromptLingua.MCP.Sessions.Tools.SessionUpdate do
         "model/runner it targets. Pass `project` to (re)associate with a project, or an " <>
         "empty string to clear it. `model` and `runner` may change mid-session as the " <>
         "harness or model switches.",
-    hidden: true,
+    hidden: false,
     category: "Sessions"
 
   alias NoizuPromptLingua.MCP.{Args, Resolve}

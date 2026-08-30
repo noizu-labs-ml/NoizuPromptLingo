@@ -3,7 +3,7 @@ defmodule NoizuPromptLingua.Domains.Instructions.Tools.InstructionRender do
     name: "Instruction.Render",
     description:
       "Render an instruction's body with task params — the prompt to hand a sub-agent. Reference by slug handle so the full text never has to be re-sent.",
-    hidden: true,
+    hidden: false,
     category: "Instructions",
     annotations: [read_only_hint: true]
 

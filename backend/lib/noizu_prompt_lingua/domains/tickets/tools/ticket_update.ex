@@ -2,7 +2,7 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.TicketUpdate do
   use Noizu.MCP.Server.Tool,
     name: "Ticket.Update",
     description: "Update ticket fields (partial update, custom_fields are merged).",
-    hidden: true,
+    hidden: false,
     category: "Tickets"
 
   input_schema(%{
