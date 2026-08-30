@@ -110,7 +110,7 @@ export function OrgProjectSwitcher() {
         type="button"
         className="ops__trigger"
         onClick={() => setOpen((v) => !v)}
-        aria-label="Switch organization or project"
+        aria-label={`Switch organization or project. Current organization: ${currentOrg?.name ?? 'none'}${currentProject ? `; current project: ${currentProject.name}` : ''}`}
         aria-haspopup="true"
         aria-expanded={open}
         title="Switch organization or project"
@@ -131,6 +131,7 @@ export function OrgProjectSwitcher() {
               type="text"
               className="ops__search-input"
               placeholder="Search organizations…"
+              aria-label="Search organizations"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />

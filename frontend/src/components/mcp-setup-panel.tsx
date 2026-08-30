@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { api, type McpCustomGroup, type McpCustomScope, type McpServerConfig } from '@/lib/api';
+import { DEFAULT_MCP_AUTH_ENV_VAR } from '@/lib/mcp-setup';
 import McpIncludeEditor from '@/components/mcp-include-editor';
 
 type McpClient = 'claude' | 'codex' | 'grok';
@@ -11,6 +12,8 @@ type SetupTab = 'default' | 'alacarte';
 interface McpSetupPanelProps {
   token: string; // The MCP JWT token
   keyLabel: string; // Label of the API key
+  // Env var the token is exported as (org-scoped; see mcpAuthEnvVar).
+  authEnvName?: string;
   servers: McpServerConfig[]; // Default grouped endpoint(s)
   alaCarte?: McpServerConfig[]; // Optional individual subdomain endpoints
   defaultScope?: McpCustomScope | null;
@@ -40,16 +43,17 @@ function serverName(id: string) {
 }
 
 /**
- * Generates MCP add commands for the given MCP servers.
+ * Generates MCP add commands for the given MCP servers. The bearer token is
+ * exported under `authEnvName` (org-scoped; see mcpAuthEnvVar).
  *
  * Claude Code:
- *   claude mcp add --transport http tobor-{id} {url} --header "Authorization: Bearer $AUTH_TOKEN"
+ *   claude mcp add --transport http tobor-{id} {url} --header "Authorization: Bearer $AUTH_ENV"
  *
  * Codex:
- *   codex mcp add tobor-{id} --url {url} --bearer-token-env-var AUTH_TOKEN
+ *   codex mcp add tobor-{id} --url {url} --bearer-token-env-var AUTH_ENV
  *
  * Grok:
- *   grok mcp add --transport http tobor-{id} {url} --header "Authorization: Bearer $AUTH_TOKEN"
+ *   grok mcp add --transport http tobor-{id} {url} --header "Authorization: Bearer $AUTH_ENV"
  *
  * Server URLs come from the backend config endpoint (host-derived), so this
  * component never hardcodes a host.
@@ -57,6 +61,7 @@ function serverName(id: string) {
 export default function McpSetupPanel({
   token,
   keyLabel,
+  authEnvName = DEFAULT_MCP_AUTH_ENV_VAR,
   servers,
   alaCarte = [],
   defaultScope = null,
@@ -119,18 +124,18 @@ export default function McpSetupPanel({
   function getCommandLine(server: McpServerConfig) {
     const name = serverName(server.id);
     if (client === 'codex') {
-      return `codex mcp add ${name} --url ${server.url} --bearer-token-env-var AUTH_TOKEN`;
+      return `codex mcp add ${name} --url ${server.url} --bearer-token-env-var ${authEnvName}`;
     }
     if (client === 'grok') {
-      return `grok mcp add --transport http ${name} ${server.url} --header "Authorization: Bearer $AUTH_TOKEN"`;
+      return `grok mcp add --transport http ${name} ${server.url} --header "Authorization: Bearer $${authEnvName}"`;
     }
 
-    return `claude mcp add --transport http ${name} ${server.url} --header "Authorization: Bearer $AUTH_TOKEN"`;
+    return `claude mcp add --transport http ${name} ${server.url} --header "Authorization: Bearer $${authEnvName}"`;
   }
 
   function buildScript() {
     const lines = [
-      `export AUTH_TOKEN=${token}`,
+      `export ${authEnvName}=${token}`,
       '',
     ];
     endpointCatalog.filter((s) => isEnabled(s.id)).forEach((s) => {

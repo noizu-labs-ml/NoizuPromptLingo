@@ -1,5 +1,5 @@
 version: 2
-updated: '2026-04-22'
+updated: '2026-08-26'
 documentation_source: src/npl_mcp
 
 prds:
@@ -233,6 +233,18 @@ prds:
     database_tables: []
     test_coverage: 0%
     notes: Renamed from PRD-017-pm-mcp-tools. All 7 FRs implemented. Needs README.md added.
+
+  - id: PRD-019
+    title: Tobor Locker UX Overhaul
+    file: PRD-019-tobor-locker-ux-overhaul.md
+    status: approved
+    version: 1.0
+    tools: []
+    user_stories: []
+    database_tables: []
+    web_routes: []
+    test_coverage: contract tests added
+    notes: Nocturne/Minimal shell refresh; existing routes remain unchanged.
 
 tool_to_prd_mapping:
   # PRD-002: Artifact Management

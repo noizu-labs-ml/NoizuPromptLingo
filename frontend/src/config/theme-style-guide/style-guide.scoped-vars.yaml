@@ -36,91 +36,88 @@ scoped-vars:
     - name: surface
       value:
         - section: standard
-          value: "var(--white)"
+          value: "#ffffff"
         - section: dark
-          value: "var(--slate-800)"
+          value: "#14181f"
 
     - name: surface-alt
       value:
         - section: standard
-          value: "var(--slate-50)"
+          value: "#f1f5f7"
         - section: dark
-          value: "var(--slate-700)"
+          value: "#1b212a"
 
     - name: surface-inverse
       value:
         - section: standard
-          value: "var(--slate-900)"
+          value: "#111820"
         - section: dark
-          value: "var(--gray-200)"
+          value: "#d8dce5"
 
     - name: text
       value:
         - section: standard
-          value: "var(--black)"
+          value: "#111820"
         - section: dark
-          value: "var(--gray-100)"
+          value: "#d8dce5"
 
     - name: text-secondary
       value:
         - section: standard
-          value: "var(--gray-600)"
+          value: "#465461"
         - section: dark
-          value: "var(--gray-200)"
+          value: "#a7b0bd"
 
     - name: text-muted
       value:
         - section: standard
-          value: "var(--gray-400)"
+          value: "#687785"
         - section: dark
-          value: "var(--gray-300)"
+          value: "#7f8a99"
 
     - name: text-inverse
       value:
         - section: standard
-          value: "var(--white)"
+          value: "#f7f9fb"
         - section: dark
-          value: "var(--gray-900)"
+          value: "#09090b"
 
     - name: border
       value:
         - section: standard
-          value: "var(--slate-200)"
+          value: "#d8e0e6"
         - section: dark
-          value: "var(--gray-700)"
+          value: "#29313d"
 
     - name: border-strong
       value:
         - section: standard
-          value: "var(--slate-300)"
+          value: "#b8c4cd"
         - section: dark
-          value: "var(--gray-600)"
+          value: "#3a4654"
 
     - name: shadow-color
       value:
         - section: standard
-          value: "rgba(0,0,0,0.1)"
+          value: "rgba(9, 15, 20, 0.14)"
         - section: dark
-          value: "rgba(0,0,0,0.4)"
+          value: "rgba(0, 0, 0, 0.58)"
 
     # ═══════════════════════════════════════
-    # Light mode: tint opacity override (was 12% engine default → 70%)
-    # The styleguide engine derives -light / -tint tokens at 12% against the
-    # surface. These standard-section overrides bump them to 70% so tinted
-    # surfaces read as solid accent washes instead of faint hints.
+    # Light mode: restrained signal washes. Accent remains a small-area cue.
     # ═══════════════════════════════════════
     - name: brand-red-light
       value:
         - section: standard
-          value: "color-mix(in srgb, var(--brand-red) 70%, var(--surface))"
+          value: "color-mix(in srgb, var(--brand-red) 12%, var(--surface))"
     - name: brand-blue-light
       value:
         - section: standard
-          value: "color-mix(in srgb, var(--brand-blue) 70%, var(--surface))"
+          value: "color-mix(in srgb, var(--brand-blue) 12%, var(--surface))"
     - name: brand-yellow-light
       value:
         - section: standard
-          value: "color-mix(in srgb, var(--brand-yellow) 70%, var(--surface))"
+          value: "color-mix(in srgb, var(--brand-yellow) 12%, var(--surface))"
     - name: rose-light
       value:
         - section: standard
@@ -196,41 +193,41 @@ scoped-vars:
     - name: brand-red
       value:
         - section: dark
-          value: "color-mix(in srgb, #e20613 75%, white)"
+          value: "#f87171"
     - name: brand-red-light
       value:
         - section: dark
-          value: "color-mix(in srgb, #e20613 18%, var(--surface))"
+          value: "color-mix(in srgb, #f87171 12%, var(--surface))"
     - name: brand-red-mid
       value:
         - section: dark
-          value: "color-mix(in srgb, #e20613 30%, var(--surface))"
+          value: "color-mix(in srgb, #f87171 20%, var(--surface))"
 
     - name: brand-blue
       value:
         - section: dark
-          value: "color-mix(in srgb, #0047ab 75%, white)"
+          value: "#22d3ee"
     - name: brand-blue-light
       value:
         - section: dark
-          value: "color-mix(in srgb, #0047ab 18%, var(--surface))"
+          value: "color-mix(in srgb, #22d3ee 12%, var(--surface))"
     - name: brand-blue-mid
       value:
         - section: dark
-          value: "color-mix(in srgb, #0047ab 30%, var(--surface))"
+          value: "color-mix(in srgb, #22d3ee 20%, var(--surface))"
 
     - name: brand-yellow
       value:
         - section: dark
-          value: "color-mix(in srgb, #f5c518 75%, white)"
+          value: "#facc15"
     - name: brand-yellow-light
       value:
         - section: dark
-          value: "color-mix(in srgb, #f5c518 18%, var(--surface))"
+          value: "color-mix(in srgb, #facc15 12%, var(--surface))"
     - name: brand-yellow-mid
       value:
         - section: dark
-          value: "color-mix(in srgb, #f5c518 30%, var(--surface))"
+          value: "color-mix(in srgb, #facc15 20%, var(--surface))"
 
     # ═══════════════════════════════════════
     # Dark mode: palette color brightening
@@ -358,38 +355,38 @@ scoped-vars:
     - name: success
       value:
         - section: dark
-          value: "color-mix(in srgb, #1a8a3f 75%, white)"
+          value: "#4ade80"
     - name: success-tint
       value:
         - section: dark
-          value: "color-mix(in srgb, #1a8a3f 18%, var(--surface))"
+          value: "color-mix(in srgb, #4ade80 12%, var(--surface))"
 
     - name: warning
       value:
         - section: dark
-          value: "color-mix(in srgb, #c27a00 75%, white)"
+          value: "#facc15"
     - name: warning-tint
       value:
         - section: dark
-          value: "color-mix(in srgb, #c27a00 18%, var(--surface))"
+          value: "color-mix(in srgb, #facc15 12%, var(--surface))"
 
     - name: error
       value:
         - section: dark
-          value: "color-mix(in srgb, #c41a1a 75%, white)"
+          value: "#f87171"
     - name: error-tint
       value:
         - section: dark
-          value: "color-mix(in srgb, #c41a1a 18%, var(--surface))"
+          value: "color-mix(in srgb, #f87171 12%, var(--surface))"
 
     - name: info
       value:
         - section: dark
-          value: "color-mix(in srgb, #0047ab 75%, white)"
+          value: "#22d3ee"
     - name: info-tint
       value:
         - section: dark
-          value: "color-mix(in srgb, #0047ab 18%, var(--surface))"
+          value: "color-mix(in srgb, #22d3ee 12%, var(--surface))"
 
     # ═══════════════════════════════════════
     # Layout presets

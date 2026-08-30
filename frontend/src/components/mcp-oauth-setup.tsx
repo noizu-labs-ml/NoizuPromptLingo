@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import type { McpCustomGroup, McpCustomScope, McpServerConfig } from '@/lib/api';
+import { api, type McpCustomGroup, McpCustomScope, McpServerConfig } from '@/lib/api';
+import { DEFAULT_MCP_AUTH_ENV_VAR } from '@/lib/mcp-setup';
+import McpIncludeEditor from '@/components/mcp-include-editor';
 
 type Tab = 'default' | 'alacarte';
 
@@ -10,6 +12,8 @@ interface McpOauthSetupProps {
   mcpUrl: string;
   asMetadataUrl: string;
   issuer: string;
+  // Env var name used in legacy-key CLI snippets (org-scoped; see mcpAuthEnvVar).
+  authEnvName?: string;
   servers: McpServerConfig[];
   alaCarte?: McpServerConfig[];
   catalog?: McpCustomGroup[];
@@ -26,9 +30,12 @@ export default function McpOauthSetup({
   mcpUrl,
   asMetadataUrl,
   issuer,
+  authEnvName = DEFAULT_MCP_AUTH_ENV_VAR,
   servers,
   alaCarte = [],
+  catalog = [],
   defaultScope = null,
+  onDefaultScopeChange,
 }: McpOauthSetupProps) {
   const [tab, setTab] = useState<Tab>('default');
   const [copied, setCopied] = useState<string | null>(null);
@@ -55,7 +62,8 @@ claude mcp add --transport http ${clientName} ${mcpUrl}
 
   const codexNote = `# Codex — prefer remote MCP URL if your build supports OAuth connectors.
 # Otherwise use Legacy API key → mint token, then:
-#   codex mcp add tobor --url ${mcpUrl} --bearer-token-env-var AUTH_TOKEN`;
+#   export ${authEnvName}=<token>
+#   codex mcp add tobor --url ${mcpUrl} --bearer-token-env-var ${authEnvName}`;
 
   return (
     <section className="dash-panel" style={{ marginTop: 'var(--space-4)' }}>
@@ -132,6 +140,18 @@ claude mcp add --transport http ${clientName} ${mcpUrl}
               </button>
             </div>
           </div>
+          {defaultScope && catalog.length > 0 ? (
+            <div style={{ marginBottom: 16 }}>
+              <McpIncludeEditor
+                key={defaultScope.id}
+                catalog={catalog}
+                scope={defaultScope}
+                readOnly={defaultScope.editable === false}
+                save={(config) => api.updateMcpEndpoint(defaultScope.id, { config }).then((r) => r.endpoint)}
+                onSaved={onDefaultScopeChange}
+              />
+            </div>
+          ) : null}
           <ol start={4} style={{ margin: 0, paddingLeft: 20, fontSize: 13, lineHeight: 1.7, color: 'var(--text-1)' }}>
             <li>
               When prompted, sign in at Tobor Locker and click <strong>Allow</strong> on the consent screen.

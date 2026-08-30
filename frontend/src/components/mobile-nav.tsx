@@ -55,6 +55,7 @@ function MobileNavSection({ section }: { section: ResolvedNavSection }) {
               as={Link}
               href={item.href}
               className={`menu-item nav-menu-item${item.active ? ' menu-item--active' : ''}`}
+              aria-current={item.active ? 'page' : undefined}
             >
               <item.Icon className="nav-menu-item__icon" />
               {item.label}

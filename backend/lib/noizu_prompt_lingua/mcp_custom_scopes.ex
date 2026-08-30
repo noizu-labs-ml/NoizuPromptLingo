@@ -154,7 +154,48 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
         end
 
       scope ->
-        scope
+        heal_default_package(scope)
+    end
+  end
+
+  # Repair drift on the stored global template: union-merge any missing
+  # @default_package_groups (enabled) and re-enable required core groups whose
+  # disable was never confirmation-stamped. Additive only — never removes a
+  # group or clobbers audit fields, so concurrent heals converge and an admin's
+  # deliberate non-required choices survive. Persists only when something
+  # actually changed; on update failure the healed config is still returned so
+  # the caller sees the intended tool set.
+  defp heal_default_package(%MCPCustomScope{} = scope) do
+    groups = normalize_groups(scope.config || %{})
+    required = MCPServers.required_ids()
+
+    healed =
+      Enum.reduce(@default_package_groups, groups, fn id, acc ->
+        case Map.get(acc, id) do
+          nil ->
+            Map.put(acc, id, %{"tools" => %{}})
+
+          %{"disabled" => true} = gc ->
+            if id in required and not already_confirmed_disabled?(gc) do
+              Map.put(acc, id, clear_disable(gc))
+            else
+              acc
+            end
+
+          _enabled_or_absent_flag ->
+            acc
+        end
+      end)
+
+    if healed == groups do
+      scope
+    else
+      config = Map.put(scope.config || %{}, "groups", healed)
+
+      case update(scope, %{"config" => config}) do
+        {:ok, updated} -> updated
+        _ -> %{scope | config: config}
+      end
     end
   end
 
@@ -201,6 +242,7 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
       %{}
       |> maybe_put_name_refresh(scope)
       |> maybe_put_template_refresh(scope)
+      |> maybe_put_groups_refresh(scope)
 
     if attrs == %{} do
       scope
@@ -227,6 +269,31 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
   defp maybe_put_template_refresh(attrs, _) do
     Map.put(attrs, "source_template_slug", @default_package_slug)
   end
+
+  # Lazily repair defaults cloned from the tobor template: add any
+  # default-package groups missing from their config (template drift at clone
+  # time, e.g. a `sessions` group that never made it in). Additive only — a
+  # group the owner deliberately disabled stays disabled, and hand-built scopes
+  # (empty source_template_slug) are left alone. Other top-level config keys
+  # (e.g. `segment`) are preserved.
+  defp maybe_put_groups_refresh(attrs, %{
+         source_template_slug: @default_package_slug,
+         config: config
+       }) do
+    groups = normalize_groups(config || %{})
+
+    missing =
+      Enum.reject(@default_package_groups, fn id -> Map.has_key?(groups, id) end)
+
+    if missing == [] do
+      attrs
+    else
+      merged = Map.merge(groups, Map.new(missing, fn id -> {id, %{"tools" => %{}}} end))
+      Map.put(attrs, "config", Map.put(config || %{}, "groups", merged))
+    end
+  end
+
+  defp maybe_put_groups_refresh(attrs, _), do: attrs
 
   defp insert_account_default(user_id, attempt \\ 0)
 
@@ -295,7 +362,7 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
 
     case get_org_default(organization_id) do
       %MCPCustomScope{} = scope ->
-        scope
+        maybe_refresh_account_default(scope)
 
       nil ->
         case insert_org_default(organization_id, org_name) do

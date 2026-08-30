@@ -2,21 +2,22 @@ vars:
   groups:
     - name: "Seed Colors"
       vars:
-        white: "#fbf8f1"    # warm paper
-        black: "#1c1917"    # warm near-black ink
-        red: "#9a2c3f"      # primary accent — claret
-        blue: "#1d4e5f"     # secondary accent — deep petrol
-        yellow: "#b45309"   # tertiary accent — burnt ochre
+        white: "#f7f9fb"    # cool light-mode canvas
+        black: "#09090b"    # nocturne void
+        red: "#b91c1c"      # light-mode danger signal
+        blue: "#0e7490"     # accessible light-mode cyan signal
+        yellow: "#a16207"   # light-mode warning only
     - name: "Semantic Colors"
       vars:
-        success: "#3f6212"
-        warning: "#b45309"
-        error: "#9a2c3f"
-        info: "#1d4e5f"
+        success: "#15803d"
+        warning: "#a16207"
+        error: "#b91c1c"
+        info: "#0e7490"
     - name: "Typography"
       vars:
-        font-sans: "'Source Serif 4', 'Iowan Old Style', Georgia, serif"
+        font-sans: "'Instrument Sans', Inter, system-ui, -apple-system, sans-serif"
         font-mono: "'IBM Plex Mono', 'Menlo', monospace"
+        font-size-base: "16px"
     - name: "Shape"
       vars:
-        radius: "2px"
+        radius: "8px"

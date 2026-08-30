@@ -1,8 +1,8 @@
-# Identity from the canonical editorial theme (design/theme/theme-npl-editorial).
+# Tobor Locker's dark-native workspace theme.
 # slug stays "style-guide" — it is the data-design-theme value the app renders
 # (see frontend/src/app/layout.tsx) and keeps the generated per-theme CSS path
 # (public/themes/style-guide.css) stable.
-name: "NPL — Editorial"
+name: "Tobor Locker — Nocturne"
 slug: style-guide
 title: "NoizuPromptLingo"
-description: "The language as a published spec: warm paper, serif type, claret ink, generous margins. Read it like a standard."
+description: "A low-glare professional instrument with neutral depth, crisp type, and restrained cyan signal color."
