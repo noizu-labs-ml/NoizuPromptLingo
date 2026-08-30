@@ -3,7 +3,7 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.JoinRoom do
     name: "Chat.JoinRoom",
     description:
       "Join (or rejoin) a room. Returns only the recent backlog (last few minutes), not full history.",
-    hidden: true,
+    hidden: false,
     category: "Chat"
 
   input do

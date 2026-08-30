@@ -2,7 +2,7 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.SendMessage do
   use Noizu.MCP.Server.Tool,
     name: "Chat.SendMessage",
     description: "Post a message to a chat room.",
-    hidden: true,
+    hidden: false,
     category: "Chat"
 
   input do

@@ -5,7 +5,7 @@ defmodule NoizuPromptLingua.MCP.Sessions.Tools.SessionCreate do
       "Create a new work session. Sessions group chat rooms, artifacts, and tickets under a " <>
         "shared context. An `organization` is required; use the optional `project` field to " <>
         "associate the session with a project by slug or UUID.",
-    hidden: true,
+    hidden: false,
     category: "Sessions"
 
   alias NoizuPromptLingua.MCP.{Args, Resolve}

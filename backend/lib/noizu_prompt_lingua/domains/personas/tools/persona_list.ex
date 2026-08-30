@@ -5,7 +5,7 @@ defmodule NoizuPromptLingua.Domains.Personas.Tools.PersonaList do
       "List personas. With a project, returns the effective list: that project's " <>
         "personas plus org-level (no-project) personas. Without a project, lists all " <>
         "personas in the organization.",
-    hidden: true,
+    hidden: false,
     category: "Personas",
     annotations: [read_only_hint: true]
 

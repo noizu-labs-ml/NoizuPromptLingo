@@ -2,7 +2,7 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.TicketCreate do
   use Noizu.MCP.Server.Tool,
     name: "Ticket.Create",
     description: "Create a new ticket with typed fields.",
-    hidden: true,
+    hidden: false,
     category: "Tickets"
 
   input_schema(%{

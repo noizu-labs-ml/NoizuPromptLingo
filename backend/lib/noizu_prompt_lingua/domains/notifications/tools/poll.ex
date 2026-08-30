@@ -3,7 +3,7 @@ defmodule NoizuPromptLingua.Domains.Notifications.Tools.Poll do
     name: "Notifications.Poll",
     description:
       "Monitor for notifications: like Notifications.Get, but if nothing is deliverable it BLOCKS until a notification arrives (returning instantly) or wait_ms elapses, instead of returning empty. Run this in a Monitor loop so the agent is woken the moment something arrives rather than polling on a timer. Honors the same per-recipient rate-limit (one batch per 5 minutes) — a throttled poll holds until the window elapses.",
-    hidden: true,
+    hidden: false,
     category: "Notifications",
     annotations: [read_only_hint: true]
 

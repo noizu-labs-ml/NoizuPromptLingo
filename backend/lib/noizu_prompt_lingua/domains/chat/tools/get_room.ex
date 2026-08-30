@@ -2,7 +2,7 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.GetRoom do
   use Noizu.MCP.Server.Tool,
     name: "Chat.GetRoom",
     description: "Get room details.",
-    hidden: true,
+    hidden: false,
     category: "Chat",
     annotations: [read_only_hint: true]
 

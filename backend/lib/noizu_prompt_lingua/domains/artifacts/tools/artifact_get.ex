@@ -2,7 +2,7 @@ defmodule NoizuPromptLingua.Domains.Artifacts.Tools.ArtifactGet do
   use Noizu.MCP.Server.Tool,
     name: "Artifact.Get",
     description: "Fetch an artifact with its content. Returns latest revision by default.",
-    hidden: true,
+    hidden: false,
     category: "Artifacts",
     annotations: [read_only_hint: true]
 

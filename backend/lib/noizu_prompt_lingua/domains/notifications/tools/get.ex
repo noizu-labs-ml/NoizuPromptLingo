@@ -3,7 +3,7 @@ defmodule NoizuPromptLingua.Domains.Notifications.Tools.Get do
     name: "Notifications.Get",
     description:
       "Immediate cursor pull of new notifications for a recipient. Pass the prior call's next_cursor (start at 0) to receive only newer items; returns an updated next_cursor. `max` caps items per call; `auto_read` marks returned items read. A per-recipient rate-limit delivers at most one non-empty batch per 5 minutes — while throttled the response is empty with throttled:true and retry_after_ms set.",
-    hidden: true,
+    hidden: false,
     category: "Notifications",
     annotations: [read_only_hint: true]
 

@@ -2,7 +2,7 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.ListRooms do
   use Noizu.MCP.Server.Tool,
     name: "Chat.ListRooms",
     description: "List chat rooms.",
-    hidden: true,
+    hidden: false,
     category: "Chat",
     annotations: [read_only_hint: true]
 

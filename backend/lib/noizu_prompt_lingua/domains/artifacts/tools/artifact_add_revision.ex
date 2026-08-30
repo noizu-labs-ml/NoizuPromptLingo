@@ -2,7 +2,7 @@ defmodule NoizuPromptLingua.Domains.Artifacts.Tools.ArtifactAddRevision do
   use Noizu.MCP.Server.Tool,
     name: "Artifact.AddRevision",
     description: "Append a new revision to an existing artifact.",
-    hidden: true,
+    hidden: false,
     category: "Artifacts"
 
   # Use a raw input_schema (mirroring Artifact.Create) rather than the typed `input do`

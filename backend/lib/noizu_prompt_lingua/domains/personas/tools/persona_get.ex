@@ -2,7 +2,7 @@ defmodule NoizuPromptLingua.Domains.Personas.Tools.PersonaGet do
   use Noizu.MCP.Server.Tool,
     name: "Persona.Get",
     description: "Get a persona with recent journal entries and knowledge-base index.",
-    hidden: true,
+    hidden: false,
     category: "Personas",
     annotations: [read_only_hint: true]
 

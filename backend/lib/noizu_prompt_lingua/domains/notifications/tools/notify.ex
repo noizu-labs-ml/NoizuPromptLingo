@@ -3,7 +3,7 @@ defmodule NoizuPromptLingua.Domains.Notifications.Tools.Notify do
     name: "Notify",
     description:
       "Send a short direct message (<=128 chars) to one or more recipients. Target a user (recipient), a list of users (recipients), a group (group), or a list of groups (groups) — groups resolve to their chat-room members, fanning out one notification per member. Set ping:true to send a ping (body optional); the recipient should reply with a pong digest via Notify pong_to:<notification_id>. Replaces the deprecated Pipe.Output.",
-    hidden: true,
+    hidden: false,
     category: "Notifications"
 
   input do

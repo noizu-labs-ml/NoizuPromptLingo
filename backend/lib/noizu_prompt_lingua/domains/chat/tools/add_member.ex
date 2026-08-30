@@ -2,7 +2,7 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.AddMember do
   use Noizu.MCP.Server.Tool,
     name: "Chat.AddMember",
     description: "Add a persona to a room.",
-    hidden: true,
+    hidden: false,
     category: "Chat"
 
   input do

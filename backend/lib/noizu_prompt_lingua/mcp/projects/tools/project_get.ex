@@ -2,7 +2,7 @@ defmodule NoizuPromptLingua.MCP.Projects.Tools.ProjectGet do
   use Noizu.MCP.Server.Tool,
     name: "Project.Get",
     description: "Get a project by slug or UUID.",
-    hidden: true,
+    hidden: false,
     category: "Projects",
     annotations: [read_only_hint: true]
 
