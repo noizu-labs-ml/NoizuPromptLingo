@@ -932,12 +932,33 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
   defp normalize_tools_config(_), do: %{}
 
   defp normalize_tool_config(config) when is_map(config) do
+    # W9/F3/F2 fields ride the same tool entry as disabled/hidden — carried
+    # through verbatim when present so persistence never strips them.
     %{}
     |> put_bool("disabled", Map.get(config, "disabled", Map.get(config, :disabled)))
     |> put_bool("hidden", Map.get(config, "hidden", Map.get(config, :hidden)))
+    |> carry_entry_keys(config)
   end
 
   defp normalize_tool_config(_), do: %{}
+
+  @entry_extra_keys [
+    "name_override",
+    "description_override",
+    "arg_overrides",
+    "hide_until",
+    "enable_for_hours",
+    "enable_from"
+  ]
+
+  defp carry_entry_keys(map, config) do
+    Enum.reduce(@entry_extra_keys, map, fn key, acc ->
+      case get_key(config, key) do
+        nil -> acc
+        value -> Map.put(acc, key, value)
+      end
+    end)
+  end
 
   defp put_bool(map, _key, nil), do: map
   defp put_bool(map, key, value) when is_boolean(value), do: Map.put(map, key, value)
