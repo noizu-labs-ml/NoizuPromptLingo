@@ -185,31 +185,127 @@ defmodule NoizuPromptLingua.MCP.WindowTest do
       refute Map.has_key?(normalized, "enable_for_hours")
     end
 
-    test "stamps enabled_at when anchoring enable_for_hours" do
+    test "stamps set_at when anchoring enable_for_hours" do
       normalized = Window.normalize_entry(%{}, %{"enable_for_hours" => 24})
 
       assert normalized["enable_for_hours"] == 24
-      assert {:ok, %DateTime{}, _} = DateTime.from_iso8601(normalized["enabled_at"])
+      refute Map.has_key?(normalized, "enabled_at")
+      assert {:ok, %DateTime{}, _} = DateTime.from_iso8601(normalized["set_at"])
 
       # anchor is fresh (stamped now)
-      stamped = DateTime.from_iso8601(normalized["enabled_at"]) |> elem(1)
+      stamped = DateTime.from_iso8601(normalized["set_at"]) |> elem(1)
       assert DateTime.diff(DateTime.utc_now(), stamped) < 5
     end
 
-    test "keeps an existing anchor (re-normalize does not slide the window)" do
+    test "every write re-stamps set_at (re-set/extend resets the anchor)" do
       config = %{
         "enable_for_hours" => 24,
+        "set_at" => "2026-08-30T00:00:00Z",
         "enabled_at" => "2026-08-30T00:00:00Z"
       }
 
       normalized = Window.normalize_entry(%{}, config)
-      assert normalized["enabled_at"] == "2026-08-30T00:00:00Z"
+
+      # stale anchors are not carried; the anchor slides to the new write
+      refute normalized["set_at"] == "2026-08-30T00:00:00Z"
+      refute Map.has_key?(normalized, "enabled_at")
+      assert {:ok, stamped, _} = DateTime.from_iso8601(normalized["set_at"])
+      assert DateTime.diff(DateTime.utc_now(), stamped) < 5
+    end
+
+    test "regression: hand-edited malformed anchor is INERT (no raise), window re-anchors" do
+      # Before the fix this raised: elem/1 of the parse error tuple flowed
+      # into DateTime.to_iso8601/1.
+      normalized =
+        Window.normalize_entry(%{}, %{
+          "enable_for_hours" => 24,
+          "enabled_at" => "not-a-timestamp"
+        })
+
+      assert normalized["enable_for_hours"] == 24
+      assert is_binary(normalized["set_at"])
+
+      # ...and the same malformed jsonb evaluates as a live re-anchored window
+      assert {true, %DateTime{}} = Window.evaluate(normalized)
+
+      # non-string garbage anchors are inert on write too
+      normalized2 = Window.normalize_entry(%{}, %{"enable_for_hours" => 24, "enabled_at" => 42})
+      assert is_binary(normalized2["set_at"])
+    end
+
+    test "evaluate prefers set_at over legacy enabled_at" do
+      entry = %{
+        "enable_for_hours" => 24,
+        "set_at" => "2026-08-31T00:00:00Z",
+        "enabled_at" => "2026-08-01T00:00:00Z"
+      }
+
+      assert {true, ~U[2026-09-01 00:00:00Z]} = Window.evaluate(entry, @now)
+    end
+
+    test "hide_until writes also stamp set_at" do
+      normalized = Window.normalize_entry(%{}, %{"hide_until" => @future})
+      assert is_binary(normalized["set_at"])
     end
 
     test "drops invalid values silently (strict rejection lives on the changeset)" do
       assert Window.normalize_entry(%{}, %{"hide_until" => "someday"}) == %{}
       assert Window.normalize_entry(%{}, %{"enable_for_hours" => 0}) == %{}
       assert Window.normalize_entry(%{}, %{"hide_until" => @future, "enable_for_hours" => 24}) == %{}
+    end
+  end
+
+  # ------------------------------------------------------------------
+  # lifting?/2 — enable_for_hours lifts BOTH static flags while live
+  # ------------------------------------------------------------------
+
+  describe "lifting?/2" do
+    test "live window lifts" do
+      entry = %{"enable_for_hours" => 24, "set_at" => "2026-08-31T00:00:00Z"}
+      assert Window.lifting?(entry, @now)
+    end
+
+    test "legacy enabled_at anchor still lifts" do
+      entry = %{"enable_for_hours" => 24, "enabled_at" => "2026-08-31T00:00:00Z"}
+      assert Window.lifting?(entry, @now)
+    end
+
+    test "elapsed window does not lift" do
+      entry = %{"enable_for_hours" => 24, "set_at" => "2026-08-29T00:00:00Z"}
+      refute Window.lifting?(entry, @now)
+    end
+
+    test "unanchored / malformed / hide_until entries never lift" do
+      refute Window.lifting?(%{"enable_for_hours" => 24}, @now)
+      refute Window.lifting?(%{"enable_for_hours" => 24, "set_at" => "garbage"}, @now)
+      refute Window.lifting?(%{"hide_until" => @future}, @now)
+      refute Window.lifting?(%{}, @now)
+      refute Window.lifting?(nil, @now)
+    end
+  end
+
+  # ------------------------------------------------------------------
+  # Retention — prune expired windows >7d old on write
+  # ------------------------------------------------------------------
+
+  describe "normalize_entry/2 retention prune" do
+    test "hide_until expired more than 7d ago is pruned" do
+      ancient = DateTime.add(@now, -8 * 86_400, :second)
+
+      assert Window.normalize_entry(%{}, %{"hide_until" => ancient}) == %{}
+    end
+
+    test "hide_until expired within 7d is kept (inert at evaluation)" do
+      recent = DateTime.add(@now, -3 * 86_400, :second)
+
+      normalized = Window.normalize_entry(%{}, %{"hide_until" => recent})
+      assert is_binary(normalized["hide_until"])
+      assert {true, nil} = Window.evaluate(normalized, DateTime.utc_now())
+    end
+
+    test "future hide_until is kept" do
+      normalized = Window.normalize_entry(%{}, %{"hide_until" => @future})
+      assert is_binary(normalized["hide_until"])
     end
   end
 
@@ -245,7 +341,24 @@ defmodule NoizuPromptLingua.MCP.WindowTest do
 
       tool = MCPCustomScopes.normalize_config(config, "custom")["groups"]["sessions"]["tools"]["Session_List"]
       assert tool["enable_for_hours"] == 48
-      assert is_binary(tool["enabled_at"])
+      assert is_binary(tool["set_at"])
+    end
+
+    test "regression: hand-edited malformed anchor in scope-config jsonb is inert on write" do
+      config = %{
+        "groups" => %{
+          "sessions" => %{
+            "tools" => %{"Session_List" => %{"enable_for_hours" => 48, "enabled_at" => "garbage"}}
+          }
+        }
+      }
+
+      # raised (DateTime.to_iso8601 on an error tuple) before the fix
+      tool =
+        MCPCustomScopes.normalize_config(config, "custom")["groups"]["sessions"]["tools"]["Session_List"]
+
+      assert tool["enable_for_hours"] == 48
+      assert {:ok, %DateTime{}, _} = DateTime.from_iso8601(tool["set_at"])
     end
 
     test "evaluates end-to-end after normalization round-trip" do
