@@ -9,9 +9,14 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
   Resolution cascade (most specific wins per key; absent field inherits; a
   tool absent from every layer is ENABLED + VISIBLE — inverted semantics):
 
-    1. global `tobor` template config
-    2. custom-scope config (`mcp_custom_scopes.config`)
-    3. client `toolset_config` (API key today; OAuth client jsonb via W8)
+    1. custom-scope config (`mcp_custom_scopes.config`)
+    2. client `toolset_config` (API key today; OAuth client jsonb via W8)
+
+  The global `tobor` template is NOT a resolution layer (I10): user/org scopes
+  are clones that snapshot its groups at creation, so re-overlaying the live
+  template at request time would leak template flags onto frozen clones, root
+  listings, and ToolGuard denies. Template drift heals on the ensure_* clone
+  paths, never here.
 
   Per layer, a tool-level entry beats its group's flags (boolean overrides).
 
@@ -79,60 +84,53 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
   def resolve(scope, client, user_ref_or_nil, at \\ DateTime.utc_now())
 
   def resolve(scope, client, _user_ref, at) do
-    template = template_config()
     scope_cfg = scope_config(scope)
     client_cfg = normalize_config(client_config(client))
 
-    groups = include_groups(scope_cfg, template, client_cfg)
-
-    groups
+    scope_cfg
+    |> include_groups(client_cfg)
     |> Enum.flat_map(fn group_id ->
-      tool_names(group_id, [client_cfg, scope_cfg, template])
+      tool_names(group_id, [client_cfg, scope_cfg])
       |> Enum.uniq()
       |> Map.new(fn tool_name ->
-        {canonical(tool_name), state(group_id, tool_name, template, scope_cfg, client_cfg, at)}
+        {canonical(tool_name), resolve_state(group_id, tool_name, scope_cfg, client_cfg, at)}
       end)
     end)
     |> Enum.into(%{})
   end
 
-  # Include set: with a scope, the scope's groups govern (clients/templates only
-  # flip flags). Without one (static subdomain servers, ToolGuard), union of
-  # template + client groups — there is no scope include set to respect.
-  defp include_groups(nil = _scope_cfg, template, client_cfg) do
-    (Map.get(template || %{}, "groups") || %{})
-    |> Map.merge(Map.get(client_cfg || %{}, "groups") || %{})
-    |> Map.keys()
-  end
+  # Include set: with a scope, the scope's normalized groups govern (clients
+  # only flip flags; the `tobor` template is never re-overlaid — I10). Without
+  # one (static subdomain servers), client groups only — a root/static listing
+  # is key-gated, never template-gated.
+  defp include_groups(nil = _scope_cfg, client_cfg),
+    do: Map.keys(Map.get(client_cfg || %{}, "groups") || %{})
 
-  defp include_groups(scope_cfg, _template, _client_cfg),
+  defp include_groups(scope_cfg, _client_cfg),
     do: Map.keys(Map.get(scope_cfg, "groups") || %{})
 
   @doc """
   Single-tool state — the hot-path entry point (ToolGuard / Catalog). Same
   cascade as `resolve/4` but resolves one (group, tool) pair without
   enumerating the group's catalog. `group_id: nil` (root-only Discovery/NPL
-  tools) is ungated: inherit-everything.
+  tools) is ungated: inherit-everything. DB reads: at most the scope + client
+  lookups the CALLER already performed — this body is pure.
   """
   @spec state(String.t() | nil, String.t(), scope, client, DateTime.t()) :: tool_state()
   def state(group_id, tool_name, scope, client, at \\ DateTime.utc_now())
 
   def state(group_id, tool_name, scope, client, at)
       when is_binary(group_id) and is_binary(tool_name) do
-    template = template_config()
-    scope_cfg = scope_config(scope)
-    client_cfg = normalize_config(client_config(client))
-
-    state(group_id, tool_name, template, scope_cfg, client_cfg, at)
+    resolve_state(group_id, tool_name, scope_config(scope), normalize_config(client_config(client)), at)
   end
 
   def state(nil, _tool_name, _scope, _client, _at), do: @default_state
 
-  # Cascade across [client, scope, template]: per key, the most specific layer
-  # with an opinion wins; within a layer, the tool entry beats the group flag.
-  defp state(group_id, tool_name, template, scope_cfg, client_cfg, at) do
+  # Cascade across [client, scope]: per key, the most specific layer with an
+  # opinion wins; within a layer, the tool entry beats the group flag.
+  defp resolve_state(group_id, tool_name, scope_cfg, client_cfg, at) do
     entries =
-      [client_cfg, scope_cfg, template]
+      [client_cfg, scope_cfg]
       |> Enum.flat_map(fn layer ->
         case layer_entries(layer, group_id, tool_name) do
           nil -> []
@@ -210,7 +208,8 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
     end)
   end
 
-  defp string_or_nil(v) when is_binary(v), do: v
+  # Spec §2.7: string values only; empty string is absent.
+  defp string_or_nil(v) when is_binary(v) and v != "", do: v
   defp string_or_nil(_), do: nil
 
   # ── consumers ──────────────────────────────────────────────────────────────
@@ -261,6 +260,9 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
   `Tools.Catalog`): resolve the caller's client + scope states and drop
   hidden/disabled specs. Discovery/NPL categories are never gated. `group_id`
   pins the owning group when the caller knows it.
+
+  Scope + client configs are loaded ONCE per listing, never per spec — the
+  per-spec body is a pure map lookup (perf gate: no per-tool DB reads).
   """
   def apply_to_specs(specs, ctx, group_id \\ nil) when is_list(specs) do
     client = client_for_ctx(ctx)
@@ -269,12 +271,16 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
     if client == nil and scope == nil do
       specs
     else
+      scope_cfg = scope_config(scope)
+      client_cfg = normalize_config(client_config(client))
+      now = DateTime.utc_now()
+
       Enum.reject(specs, fn spec ->
         if ungated_category?(spec) do
-          true
+          false
         else
           gid = group_id || MCPServers.group_id_for_tool_module(spec.module)
-          ts = state(gid, spec.definition.name, scope, client)
+          ts = resolve_state(gid, spec.definition.name, scope_cfg, client_cfg, now)
           not ts.visible or not ts.enabled
         end
       end)
@@ -420,34 +426,51 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
     end
   end
 
+  @name_override_max 128
+  @description_override_max 1024
+
+  # Spec §2.7: string values only, empty string absent, caps enforced.
   defp override_value(map, key, overrides) do
     case Map.get(overrides, key) do
-      value when is_binary(value) -> Map.put(map, key, value)
-      _ -> map
+      value when is_binary(value) and value != "" ->
+        Map.put(map, key, String.slice(value, 0, override_cap(key)))
+
+      _ ->
+        map
     end
   end
 
-  # ── config layer readers ───────────────────────────────────────────────────
+  defp override_cap("description_override"), do: @description_override_max
+  defp override_cap(_), do: @name_override_max
 
-  # Raw read of the global `tobor` template — NO heal write on this hot path
-  # (drift repair stays on the ensure_* paths that own the template).
-  defp template_config do
-    case MCPCustomScopes.get_by_slug(MCPCustomScopes.default_package_slug()) do
-      %{config: config} when is_map(config) -> normalize_config(config)
-      _ -> nil
-    end
-  rescue
-    _ -> nil
-  end
+  # ── config layer readers ──────────────────────────────────────────────────
 
   defp scope_config(nil), do: nil
 
+  # I9: scope flags are read from the scope context's normalize_config/2 output
+  # (never the raw stored config) so the all_in_one required-core mutations —
+  # force-enable of unconfirmed disables, confirmed-disable honoring — apply on
+  # read, matching MCP.Custom's universe expansion which normalizes the same way.
   defp scope_config(scope) do
-    case scope do
-      %{config: config} -> normalize_config(config)
-      %{"config" => config} -> normalize_config(config)
-      _ -> nil
-    end
+    config =
+      case scope do
+        %{config: config} -> config
+        %{"config" => config} -> config
+        _ -> %{}
+      end
+
+    kind =
+      case scope do
+        %{kind: kind} when is_binary(kind) -> kind
+        %{"kind" => kind} when is_binary(kind) -> kind
+        _ -> "custom"
+      end
+
+    MCPCustomScopes.normalize_config(if(is_map(config), do: config, else: %{}), kind)
+  rescue
+    e ->
+      Logger.warning("[EffectiveToolset] scope config normalization failed: #{Exception.message(e)}")
+      %{"groups" => %{}}
   end
 
   defp client_config(nil), do: nil
@@ -517,7 +540,12 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
       with module when is_atom(module) and not is_nil(module) <- MCPServers.server_module(group_id),
            true <- Code.ensure_loaded?(module),
            true <- function_exported?(module, :__mcp__, 1) do
-        module.__mcp__(:tools) |> Tools.expand() |> Enum.map(& &1.definition.name)
+        module.__mcp__(:tools)
+        |> Tools.expand()
+        # Discovery tools are registered server-wide (browsing plane), never
+        # part of a group's include set — same rejection as MCP.Custom.custom_specs.
+        |> Enum.reject(&(discovery_category?(&1)))
+        |> Enum.map(& &1.definition.name)
       else
         _ -> []
       end
@@ -530,5 +558,9 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
       end)
 
     Enum.uniq(from_module ++ from_config)
+  end
+
+  defp discovery_category?(spec) do
+    spec.definition.meta && spec.definition.meta["category"] == "Discovery"
   end
 end
