@@ -1,7 +1,7 @@
-import assert from 'node:assert/strict';
+import * as assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import test from 'node:test';
+import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -14,7 +14,7 @@ function contract(source: string, pattern: RegExp, message: string) {
   assert.ok(pattern.test(source), message);
 }
 
-test('OAuth setup copies snippets for every required client', () => {
+void test('OAuth setup copies snippets for every required client', () => {
   contract(src, /MCP_OAUTH_CLIENTS/, 'must iterate MCP_OAUTH_CLIENTS');
   contract(src, /mcpOauthSnippet/, 'must render mcpOauthSnippet');
   contract(lib, /id: 'claude-code'/, 'Claude Code');
@@ -33,14 +33,14 @@ test('OAuth setup copies snippets for every required client', () => {
   assert.doesNotMatch(src, /Authorization: Bearer/, 'OAuth panel must not paste a bearer');
 });
 
-test('mcp-keys page hosts the OAuth panel', () => {
+void test('mcp-keys page hosts the OAuth panel', () => {
   contract(page, /McpOauthSetup/, 'mcp-keys renders McpOauthSetup');
   const oauthCall = page.match(/<McpOauthSetup[\s\S]*?\/>/);
   assert.ok(oauthCall, 'McpOauthSetup is invoked');
   assert.doesNotMatch(oauthCall[0], /authEnvName/, 'OAuth panel is not passed a bearer env var');
 });
 
-test('legacy setup panel also exposes Desktop, Cursor, and VS Code', () => {
+void test('legacy setup panel also exposes Desktop, Cursor, and VS Code', () => {
   contract(panel, /id: 'desktop'/, 'Claude Desktop');
   contract(panel, /id: 'cursor'/, 'Cursor');
   contract(panel, /id: 'vscode'/, 'VS Code Copilot');
