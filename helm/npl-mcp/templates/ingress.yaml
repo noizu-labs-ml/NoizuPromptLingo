@@ -132,6 +132,22 @@ spec:
                 name: {{ include "npl-mcp.fullname" . }}
                 port:
                   name: mcp
+          # W1 org-scoped custom MCP scopes: /org/<org_slug>/custom/<slug>/mcp
+          - path: /org
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: mcp
+          # W2 account-scoped custom MCP scopes: /user/<slug>/mcp
+          - path: /user
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: mcp
           - path: /api/auth
             pathType: Prefix
             backend:
