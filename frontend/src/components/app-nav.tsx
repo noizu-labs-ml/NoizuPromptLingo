@@ -30,6 +30,7 @@ import {
   FilmIcon,
   BuildingOfficeIcon,
   LinkIcon,
+  WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
 import { useOrg } from '@/context/org';
 import { useAuth } from '@/context/auth';
@@ -147,6 +148,7 @@ const NAV_SECTIONS: NavSectionDef[] = [
       { href: '/app/admin/media-providers', Icon: FilmIcon, label: 'Media Providers', admin: true },
       { href: '/app/admin/authz', Icon: KeyIcon, label: 'API Keys', admin: true },
       { href: '/app/admin/oauth-clients', Icon: LinkIcon, label: 'OAuth Clients', admin: true },
+      { href: '/app/admin/mcp-config', Icon: WrenchScrewdriverIcon, label: 'MCP Config', admin: true },
     ],
   },
 ];
