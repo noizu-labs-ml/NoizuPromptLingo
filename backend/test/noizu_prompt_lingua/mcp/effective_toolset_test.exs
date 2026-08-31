@@ -8,6 +8,7 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetTest do
   alias NoizuPromptLingua.MCPCustomScopes
 
   @tool "Ticket.List"
+  @tool_canonical "Ticket_List"   # F5: resolve/2 output is keyed canonical underscore
   @group "tickets"
 
   defp ticket_specs do
@@ -124,7 +125,7 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetTest do
       client = client(scope_config(%{@group => %{"disabled" => true}}))
 
       states = EffectiveToolset.resolve(scope, client, nil)
-      refute Map.has_key?(states, @tool)
+      refute Map.has_key?(states, @tool_canonical)
     end
 
     test "nil scope (static servers): template + client groups union" do
@@ -132,7 +133,7 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetTest do
       client = client(scope_config(%{@group => %{"disabled" => true}}))
 
       states = EffectiveToolset.resolve(nil, client, nil)
-      assert Map.has_key?(states, @tool)
+      assert Map.has_key?(states, @tool_canonical)
       refute EffectiveToolset.lookup(states, @tool).enabled
     end
   end
