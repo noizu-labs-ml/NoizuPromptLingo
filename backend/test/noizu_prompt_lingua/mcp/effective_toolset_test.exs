@@ -37,7 +37,9 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetTest do
     scope
   end
 
-  # The global `tobor` template — EffectiveToolset reads it by slug.
+  # The global `tobor` template row — resolution must NEVER read it (I10):
+  # scope clones freeze its config at creation, root/static listings are
+  # key-gated only.
   defp create_template(config), do: create_scope("tobor", config)
 
   defp key_ctx(config) do
@@ -60,19 +62,18 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetTest do
 
   defp client(config), do: %{id: "c1", kind: :api_key, toolset_config: config}
 
-  # ── cascade precedence ──────────────────────────────────────────────────────
+  # ── cascade precedence (scope < client; no template layer) ──────────────────
 
-  describe "cascade precedence (template < scope < client)" do
-    test "template flag is overridden by scope; absent = enabled" do
-      create_template(scope_config(%{@group => %{"disabled" => true}}))
-      scope = create_scope("acme", scope_config(%{@group => %{"tools" => %{@tool => %{"disabled" => false}}}}))
+  describe "cascade precedence (scope < client)" do
+    test "template is never overlaid at request time (I10)" do
+      create_template(scope_config(%{@group => %{"disabled" => true, "hidden" => true}}))
+      scope = create_scope("acme", scope_config(%{@group => %{"tools" => %{}}}))
 
       state = EffectiveToolset.lookup(EffectiveToolset.resolve(scope, nil, nil), @tool)
-      assert state.enabled
+      assert state == EffectiveToolset.default_state()
     end
 
-    test "scope hidden beats template absent; client visible beats scope hidden" do
-      create_template(scope_config(%{@group => %{"hidden" => true}}))
+    test "scope hidden; client visible beats scope hidden" do
       scope = create_scope("acme", scope_config(%{@group => %{"hidden" => true}}))
 
       refute EffectiveToolset.lookup(EffectiveToolset.resolve(scope, nil, nil), @tool).visible
@@ -128,13 +129,23 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetTest do
       refute Map.has_key?(states, @tool_canonical)
     end
 
-    test "nil scope (static servers): template + client groups union" do
+    test "nil scope (static servers): client groups only — template ignored (I10)" do
       create_template(scope_config(%{"sessions" => %{"tools" => %{}}}))
       client = client(scope_config(%{@group => %{"disabled" => true}}))
 
       states = EffectiveToolset.resolve(nil, client, nil)
       assert Map.has_key?(states, @tool_canonical)
       refute EffectiveToolset.lookup(states, @tool).enabled
+
+      # template groups must not enter the root universe
+      session_tools =
+        NoizuPromptLingua.MCP.Sessions.__mcp__(:tools)
+        |> Noizu.MCP.Server.Features.Tools.expand()
+        |> Enum.map(&NoizuPromptLingua.MCP.ToolNames.canonical(&1.definition.name))
+
+      for name <- session_tools do
+        refute Map.has_key?(states, name)
+      end
     end
   end
 
@@ -162,19 +173,31 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetTest do
       assert state.description_override == "List tickets, focused view"
     end
 
-    test "client cannot set overrides (flags only)" do
-      scope = create_scope("acme", scope_config(%{@group => %{"tools" => %{@tool => %{}}}}))
-
-      client =
-        client(
-          scope_config(%{@group => %{"tools" => %{@tool => %{"name_override" => "Hax"}}}})
+    test "client layer wins over scope layer when non-null (§2.7)" do
+      scope =
+        create_scope(
+          "acme",
+          scope_config(%{
+            @group => %{
+              "tools" => %{
+                @tool => %{
+                  "name_override" => "Scope_Name",
+                  "description_override" => "Scope description"
+                }
+              }
+            }
+          })
         )
 
-      # client overrides are honored by the cascade shape — the override field
-      # is config, not a flag, so a client CAN carry it; policy (which clients
-      # may set what) is enforced at the editor layer (W9).
+      # client overrides only the name — the description inherits the scope value
+      client =
+        client(
+          scope_config(%{@group => %{"tools" => %{@tool => %{"name_override" => "Client_Name"}}}})
+        )
+
       state = EffectiveToolset.state(@group, @tool, scope, client)
-      assert state.name_override == "Hax"
+      assert state.name_override == "Client_Name"
+      assert state.description_override == "Scope description"
     end
 
     test "apply_state renames the spec definition for listing" do
@@ -350,6 +373,41 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetTest do
       entry = get_in(scope.config, ["groups", @group, "tools", @tool])
       assert entry["name_override"] == "Tickets_Listing"
       assert entry["hide_until"] == "2099-01-01T00:00:00Z"
+    end
+
+    test "empty string override is absent (§2.7)" do
+      scope =
+        create_scope(
+          "acme",
+          scope_config(%{@group => %{"tools" => %{@tool => %{"name_override" => ""}}}})
+        )
+
+      entry = get_in(scope.config, ["groups", @group, "tools", @tool])
+      refute Map.has_key?(entry, "name_override")
+
+      state = EffectiveToolset.lookup(EffectiveToolset.resolve(scope, nil, nil), @tool)
+      assert is_nil(state.name_override)
+    end
+
+    test "override caps: name ≤ 128, description ≤ 1024 (§2.7)" do
+      scope =
+        create_scope(
+          "acme",
+          scope_config(%{
+            @group => %{
+              "tools" => %{
+                @tool => %{
+                  "name_override" => String.duplicate("n", 500),
+                  "description_override" => String.duplicate("d", 5000)
+                }
+              }
+            }
+          })
+        )
+
+      entry = get_in(scope.config, ["groups", @group, "tools", @tool])
+      assert String.length(entry["name_override"]) == 128
+      assert String.length(entry["description_override"]) == 1024
     end
   end
 end

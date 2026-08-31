@@ -176,9 +176,14 @@ defmodule NoizuPromptLingua.MCP.KeyToolsetsTest do
       refute "Ticket.List" in names
       assert "Ticket.Get" in names
 
-      # group-level disable on sessions hides the whole group from listing
+      # group-level disable on sessions hides the whole gated group from listing;
+      # Discovery/NPL categories are never gated (I7) — the server-wide browsing
+      # plane registered on every domain server stays.
       kept_sessions = KeyToolsets.apply_hidden(sessions_specs, ctx, "sessions")
-      assert kept_sessions == []
+      assert kept_sessions != []
+      assert Enum.all?(kept_sessions, fn spec ->
+               spec.definition.meta && spec.definition.meta["category"] in ["Discovery", "NPL"]
+             end)
 
       # no key config -> passthrough
       assert KeyToolsets.apply_hidden(tickets_specs, %Ctx{assigns: %{}}, nil) == tickets_specs
