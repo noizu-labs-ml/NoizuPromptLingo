@@ -143,10 +143,34 @@ defmodule NoizuPromptLingua.MCP.Window do
         end
 
       {:ok, %{enable_for_hours: hours}} when is_integer(hours) ->
-        # Fresh anchor every write (set_at = now): re-set/extend resets.
-        base
-        |> Map.put(@hours_field, hours)
-        |> Map.put(@set_at_field, DateTime.to_iso8601(now))
+        cond do
+          # set_at-era entry — write contract: every write re-stamps, so a
+          # re-set/extend slides the anchor to now.
+          anchored_by_set_at?(config) ->
+            base
+            |> Map.put(@hours_field, hours)
+            |> Map.put(@set_at_field, DateTime.to_iso8601(now))
+
+          # Legacy (pre-set_at) jsonb anchored via enabled_at: PRESERVE the
+          # anchor. normalize_entry also runs on the READ path
+          # (EffectiveToolset.scope_config → MCPCustomScopes.normalize_config);
+          # re-stamping set_at there would re-anchor the window to "now" on
+          # every read, so it would never expire. enabled_at remains the
+          # fallback anchor per the moduledoc; an explicit admin write merges
+          # its own window map on top and re-anchors deliberately.
+          legacy_anchor?(config) ->
+            base
+            |> Map.put(@hours_field, hours)
+            # carry the legacy anchor verbatim so evaluation (which reads the
+            # NORMALIZED entry) still finds it
+            |> Map.put(@anchor_field, raw(config, @anchor_field))
+
+          # Fresh window — stamp the anchor now.
+          true ->
+            base
+            |> Map.put(@hours_field, hours)
+            |> Map.put(@set_at_field, DateTime.to_iso8601(now))
+        end
 
       _ ->
         base
@@ -252,6 +276,22 @@ defmodule NoizuPromptLingua.MCP.Window do
     case parse_until(raw(entry, @set_at_field)) do
       {:ok, %DateTime{} = dt} -> {:ok, dt}
       _ -> parse_until(raw(entry, @anchor_field))
+    end
+  end
+
+  # Entry carries a VALID set_at anchor (the set_at-era write contract case).
+  defp anchored_by_set_at?(entry) do
+    case raw(entry, @set_at_field) do
+      nil -> false
+      value -> match?({:ok, %DateTime{}}, parse_until(value))
+    end
+  end
+
+  # Entry carries a VALID legacy enabled_at anchor (pre-set_at jsonb).
+  defp legacy_anchor?(entry) do
+    case raw(entry, @anchor_field) do
+      nil -> false
+      value -> match?({:ok, %DateTime{}}, parse_until(value))
     end
   end
 

@@ -1217,10 +1217,28 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
     Enum.reduce(@entry_extra_keys, map, fn key, acc ->
       case get_key(config, key) do
         nil -> acc
-        value -> Map.put(acc, key, value)
+        value -> maybe_carry_entry(acc, key, value)
       end
     end)
   end
+
+  # F2 §2.7: name/description overrides are string-only, empty string = absent,
+  # capped (name ≤ 128, description ≤ 1024). Other extra keys carried verbatim.
+  @name_override_max 128
+  @description_override_max 1024
+
+  defp maybe_carry_entry(acc, "name_override", value),
+    do: carry_override(acc, "name_override", value, @name_override_max)
+
+  defp maybe_carry_entry(acc, "description_override", value),
+    do: carry_override(acc, "description_override", value, @description_override_max)
+
+  defp maybe_carry_entry(acc, key, value), do: Map.put(acc, key, value)
+
+  defp carry_override(acc, key, value, cap) when is_binary(value) and value != "",
+    do: Map.put(acc, key, String.slice(value, 0, cap))
+
+  defp carry_override(acc, _key, _value, _cap), do: acc
 
   defp put_bool(map, _key, nil), do: map
   defp put_bool(map, key, value) when is_boolean(value), do: Map.put(map, key, value)

@@ -3,8 +3,9 @@ defmodule NoizuPromptLingua.MCP.KeyToolsets do
   Per-API-key MCP toolset resolution — THIN CALLER over
   `NoizuPromptLingua.MCP.EffectiveToolset` (contract §2).
 
-  The cascade itself (global `tobor` template → custom-scope config → client
-  `toolset_config`) lives in EffectiveToolset; this module keeps the
+  The cascade itself (custom-scope config → client
+  `toolset_config`) lives in EffectiveToolset; the global `tobor` template is
+  not a layer (clones freeze it at creation — I10); this module keeps the
   key-shaped API the gateway grew up on:
 
     * `state/3` (group, tool, ctx) → `%{disabled:, hidden:}` — consumed by
