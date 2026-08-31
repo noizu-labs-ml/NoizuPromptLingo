@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import {
   api,
@@ -114,6 +115,18 @@ function nextConfig(
 }
 
 export default function AdminMcpCustomScopesPage() {
+  return (
+    <Suspense fallback={
+      <div className="content"><main><p className="sg-page-intro">Loading…</p></main></div>
+    }>
+      <AdminMcpCustomScopesInner />
+    </Suspense>
+  );
+}
+
+function AdminMcpCustomScopesInner() {
+  const searchParams = useSearchParams();
+  const deepLinkScope = searchParams.get('scope');
   const [catalog, setCatalog] = useState<McpCustomGroup[]>([]);
   const [scopes, setScopes] = useState<McpCustomScope[]>([]);
   const [form, setForm] = useState<ScopeForm>(blankForm());
@@ -155,6 +168,11 @@ export default function AdminMcpCustomScopesPage() {
           const updated = scopesRes.scopes.find((s) => s.slug === current.originalSlug);
           return updated ? formFromScope(updated) : current;
         }
+        // Deep link (?scope=slug) from the MCP Config hub / endpoint rows.
+        if (deepLinkScope) {
+          const linked = scopesRes.scopes.find((s) => s.slug === deepLinkScope);
+          if (linked) return formFromScope(linked);
+        }
         const def = scopesRes.scopes.find((s) => s.slug === DEFAULT_SLUG);
         return def ? formFromScope(def) : current;
       });
@@ -163,7 +181,7 @@ export default function AdminMcpCustomScopesPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [deepLinkScope]);
 
   useEffect(() => {
     load();
