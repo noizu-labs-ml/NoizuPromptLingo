@@ -300,15 +300,6 @@ function AdminMcpCustomScopesInner() {
     }));
   }
 
-  // W9 — name/description/arg-description overrides. Entries key by canonical
-  // underscore tool name (contract §4/§7); toggle fields are preserved.
-  function setToolOverrides(groupId: string, toolName: string, entry: ToolOverrideEntry) {
-    setForm((current) => ({
-      ...current,
-      config: applyOverridePatch(current.config, groupId, toolName, entry),
-    }));
-  }
-
   async function save(e: React.FormEvent) {
     e.preventDefault();
     if (!form.name.trim()) {
