@@ -141,7 +141,6 @@ function AdminMcpCustomScopesInner() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [overridesOpen, setOverridesOpen] = useState<Record<string, boolean>>({});
-  const [overridesOpen, setOverridesOpen] = useState<Record<string, boolean>>({});
 
   // W6: settings sidebar (double-click a scope to toggle) + its tabs.
   const [sidebarOpen, setSidebarOpen] = useState(false);
