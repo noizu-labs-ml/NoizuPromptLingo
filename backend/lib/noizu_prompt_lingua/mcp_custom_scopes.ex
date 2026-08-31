@@ -735,6 +735,7 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
     %MCPCustomScope{}
     |> MCPCustomScope.changeset(normalize_attrs(attrs))
     |> Repo.insert()
+    |> bump_cache_on_ok()
   end
 
   @doc """
@@ -773,6 +774,7 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
           )
         )
         |> Repo.update()
+        |> bump_cache_on_ok()
 
       {:error, :confirmation_required, groups} ->
         {:error, :confirmation_required, groups}
@@ -821,8 +823,18 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
 
       true ->
         Repo.delete(scope)
+        |> bump_cache_on_ok()
     end
   end
+
+  # Scope rows feed the EffectiveToolset cascade (template / scope configs) via
+  # the ToolsetCache — drop the cache whenever a scope write lands.
+  defp bump_cache_on_ok({:ok, _} = ok) do
+    NoizuPromptLingua.MCP.ToolsetCache.bump()
+    ok
+  end
+
+  defp bump_cache_on_ok(other), do: other
 
   def delete(slug) when is_binary(slug) do
     case get_by_slug(slug) do

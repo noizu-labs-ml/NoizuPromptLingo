@@ -52,3 +52,8 @@ config :noizu_prompt_lingua, :jobs_mode, :sync
 # Keep asset generation off the genai/network path by default in tests (no real provider
 # calls). Tests opt in explicitly via `generator: :genai` (+ a stub generator).
 config :noizu_prompt_lingua, :assets_genai_media, false
+
+# ToolsetCache off in tests: suites share one BEAM + sandbox, so a cached
+# scope/key/client row would leak across tests. Cache-specific tests opt in
+# via NoizuPromptLingua.MCP.ToolsetCache.enable/0 + flush/0.
+config :noizu_prompt_lingua, :mcp_toolset_cache_enabled, false
