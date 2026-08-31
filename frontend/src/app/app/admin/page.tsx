@@ -4,6 +4,7 @@ import Link from 'next/link';
 import {
   UsersIcon,
   BuildingOfficeIcon,
+  BookOpenIcon,
   CodeBracketIcon,
   CpuChipIcon,
   FilmIcon,
@@ -29,9 +30,11 @@ export default function AdminHomePage() {
   const orgSlug = currentOrg?.slug;
 
   const cards: Card[] = [
+    { href: '/app/admin/mcp-config', Icon: WrenchScrewdriverIcon, label: 'MCP Config', desc: 'OAuth clients, API keys (legacy vs OAuth), and custom MCP endpoints in one place.' },
     { href: '/app/admin/llm-models', Icon: CpuChipIcon, label: 'LLM Catalog', desc: 'Edit the provider/model pairs available in the Mock MCP picker and ListModels.' },
     { href: '/app/admin/marketing', Icon: MegaphoneIcon, label: 'Marketing', desc: 'Landing-page signups: beta/promo caps, open/close switches, and the capture list.' },
     { href: '/app/admin/mcp-custom-scopes', Icon: WrenchScrewdriverIcon, label: 'MCP endpoints', desc: 'Edit the default Tobor Locker package every account gets, or add extra endpoints.' },
+    { href: '/app/admin/mcp-entities', Icon: BookOpenIcon, label: 'MCP entities', desc: 'Versioned prompts plus resources/resource templates served over the prompts/resources MCP groups.' },
     { href: '/app/admin/media-providers', Icon: FilmIcon, label: 'Media Providers', desc: 'Per-org API keys, models, and toggles for image/voice/music asset generation.' },
     { href: '/app/admin/github', Icon: CodeBracketIcon, label: 'GitHub Config', desc: 'Org-scoped GitHub tokens, repos, and per-group repo access grants.' },
     ...(orgSlug

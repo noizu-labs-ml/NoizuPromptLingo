@@ -14,6 +14,13 @@ defmodule NoizuPromptLingua.Schema.OAuthClient do
     field :is_first_party, :boolean, default: false
     field :status, :string, default: "active"
     field :metadata, :map, default: %{}
+
+    # W8: per-client MCP toolset narrowing captured at consent time.
+    # Shape-identical to `mcp_api_keys.toolset_config` (see
+    # `NoizuPromptLingua.MCP.KeyToolsets`): only BLOCKED entries are stored
+    # (`disabled`/`hidden` flags; absent = allowed). `%{}` (column default)
+    # = no narrowing = legacy behavior (everything allowed).
+    field :toolset_config, :map, default: %{}
     timestamps(type: :utc_datetime_usec)
   end
 
@@ -29,7 +36,8 @@ defmodule NoizuPromptLingua.Schema.OAuthClient do
       :scope,
       :is_first_party,
       :status,
-      :metadata
+      :metadata,
+      :toolset_config
     ])
     |> validate_required([:client_id, :client_name, :redirect_uris])
     |> validate_inclusion(:status, ["active", "revoked"])

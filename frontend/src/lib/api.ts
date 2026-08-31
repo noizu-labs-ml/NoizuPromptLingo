@@ -341,7 +341,14 @@ export interface McpCustomScopeConfig {
   groups: Record<string, {
     disabled?: boolean;
     hidden?: boolean;
-    tools?: Record<string, { disabled?: boolean; hidden?: boolean }>;
+    tools?: Record<string, {
+      disabled?: boolean;
+      hidden?: boolean;
+      // W9 name/description overrides (keyed by canonical underscore tool name)
+      name_override?: string;
+      description_override?: string;
+      arg_overrides?: Record<string, string>;
+    }>;
   }>;
 }
 
@@ -376,6 +383,76 @@ export interface McpCustomScopeInput {
   description?: string;
   kind?: string;
   config: McpCustomScopeConfig;
+}
+
+// ── W4 MCP entities ──
+export interface McpPromptArgument {
+  name: string;
+  description?: string;
+  required?: boolean;
+}
+
+export interface McpPrompt {
+  id: string;
+  slug: string;
+  name: string;
+  description?: string | null;
+  arguments: McpPromptArgument[];
+  active_version: number;
+  organization_id?: string | null;
+  project_id?: string | null;
+  inserted_at?: string;
+}
+
+export interface McpPromptInput {
+  slug?: string;
+  name: string;
+  description?: string;
+  arguments?: McpPromptArgument[];
+  organization_id?: string | null;
+  project_id?: string | null;
+}
+
+export interface McpResource {
+  id: string;
+  uri: string;
+  name: string;
+  description?: string | null;
+  mime_type?: string;
+  content?: string;
+  organization_id?: string | null;
+  project_id?: string | null;
+  inserted_at?: string;
+}
+
+export interface McpResourceInput {
+  uri: string;
+  name: string;
+  description?: string;
+  mime_type?: string;
+  content: string;
+  organization_id?: string | null;
+  project_id?: string | null;
+}
+
+export interface McpResourceTemplate {
+  id: string;
+  uri_template: string;
+  name: string;
+  description?: string | null;
+  mime_type?: string;
+  organization_id?: string | null;
+  project_id?: string | null;
+  inserted_at?: string;
+}
+
+export interface McpResourceTemplateInput {
+  uri_template: string;
+  name: string;
+  description?: string;
+  mime_type?: string;
+  organization_id?: string | null;
+  project_id?: string | null;
 }
 
 export interface SessionInput {
@@ -2009,6 +2086,16 @@ export const api = {
     });
   },
 
+  adminCloneMcpCustomScope(slug: string, patch?: Partial<McpCustomScopeInput>) {
+    return request<{ scope: McpCustomScope }>(
+      `/api/v1/admin/mcp-custom-scopes/${encodeURIComponent(slug)}/clone`,
+      {
+        method: "POST",
+        body: JSON.stringify({ scope: patch ?? {} }),
+      },
+    );
+  },
+
   adminUpdateMcpCustomScope(slug: string, patch: Partial<McpCustomScopeInput>) {
     return request<{ scope: McpCustomScope }>(`/api/v1/admin/mcp-custom-scopes/${slug}`, {
       method: "PATCH",
@@ -2018,6 +2105,97 @@ export const api = {
 
   adminDeleteMcpCustomScope(slug: string) {
     return request<{ message: string }>(`/api/v1/admin/mcp-custom-scopes/${slug}`, {
+      method: "DELETE",
+    });
+  },
+
+  // ── MCP entities: versioned prompts + resources/templates (W4, admin). ──
+  listMcpPrompts() {
+    return request<{ prompts: McpPrompt[] }>("/api/v1/admin/mcp-prompts");
+  },
+
+  createMcpPrompt(prompt: McpPromptInput) {
+    return request<{ prompt: McpPrompt }>("/api/v1/admin/mcp-prompts", {
+      method: "POST",
+      body: JSON.stringify({ prompt }),
+    });
+  },
+
+  updateMcpPrompt(slug: string, patch: Partial<McpPromptInput>) {
+    return request<{ prompt: McpPrompt }>(`/api/v1/admin/mcp-prompts/${slug}`, {
+      method: "PATCH",
+      body: JSON.stringify({ prompt: patch }),
+    });
+  },
+
+  deleteMcpPrompt(slug: string) {
+    return request<{ message: string }>(`/api/v1/admin/mcp-prompts/${slug}`, {
+      method: "DELETE",
+    });
+  },
+
+  publishMcpPromptVersion(slug: string, template: string, changeNote?: string) {
+    return request<{ prompt: McpPrompt }>(
+      `/api/v1/admin/mcp-prompts/${slug}/versions`,
+      {
+        method: "POST",
+        body: JSON.stringify({ template, change_note: changeNote }),
+      },
+    );
+  },
+
+  listMcpResources() {
+    return request<{ resources: McpResource[] }>("/api/v1/admin/mcp-resources");
+  },
+
+  createMcpResource(resource: McpResourceInput) {
+    return request<{ resource: McpResource }>("/api/v1/admin/mcp-resources", {
+      method: "POST",
+      body: JSON.stringify({ resource }),
+    });
+  },
+
+  updateMcpResource(id: string, patch: Partial<McpResourceInput>) {
+    return request<{ resource: McpResource }>(`/api/v1/admin/mcp-resources/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ resource: patch }),
+    });
+  },
+
+  deleteMcpResource(id: string) {
+    return request<{ message: string }>(`/api/v1/admin/mcp-resources/${id}`, {
+      method: "DELETE",
+    });
+  },
+
+  listMcpResourceTemplates() {
+    return request<{ templates: McpResourceTemplate[] }>(
+      "/api/v1/admin/mcp-resource-templates",
+    );
+  },
+
+  createMcpResourceTemplate(template: McpResourceTemplateInput) {
+    return request<{ template: McpResourceTemplate }>(
+      "/api/v1/admin/mcp-resource-templates",
+      {
+        method: "POST",
+        body: JSON.stringify({ template }),
+      },
+    );
+  },
+
+  updateMcpResourceTemplate(id: string, patch: Partial<McpResourceTemplateInput>) {
+    return request<{ template: McpResourceTemplate }>(
+      `/api/v1/admin/mcp-resource-templates/${id}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ template: patch }),
+      },
+    );
+  },
+
+  deleteMcpResourceTemplate(id: string) {
+    return request<{ message: string }>(`/api/v1/admin/mcp-resource-templates/${id}`, {
       method: "DELETE",
     });
   },

@@ -36,6 +36,10 @@ NoizuPromptLingua.MarketingSignupTestSchema.ensure!()
 # Ensure the custom MCP include scope table exists for custom gateway/catalog tests.
 NoizuPromptLingua.MCPCustomScopeTestSchema.ensure!()
 
+# Ensure the W4 MCP entity tables (Liquibase 019: mcp_prompts, mcp_prompt_versions,
+# mcp_resources, mcp_resource_templates) exist for the mcp-entities suites. Idempotent.
+NoizuPromptLingua.McpEntitiesTestSchema.ensure!()
+
 # SSO hand-off columns (Liquibase 025) — Helm Liquibase is gated off in prod;
 # tests must not assume the column exists.
 try do
@@ -63,6 +67,9 @@ NoizuPromptLingua.McpOverviewTestSchema.ensure!()
 
 # Ensure OAuth AS tables (Liquibase 074) exist for OAuth suite.
 NoizuPromptLingua.OAuthTestSchema.ensure!()
+
+# Ensure ACL/group tables (Liquibase 081) exist for the ACL suite.
+NoizuPromptLingua.AclTestSchema.ensure!()
 
 # Overview generation uses the deterministic (network-free) adapter in tests; the real
 # LLM adapter (Generator.LLM) is the runtime default. Embeddings already run deterministic

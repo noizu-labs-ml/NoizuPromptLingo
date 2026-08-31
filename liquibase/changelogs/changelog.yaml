@@ -50,3 +50,6 @@ databaseChangeLog:
   - include:
       file: changelogs/changeset-018.metrics-tables.yaml
       relativeToChangelogFile: false
+  - include:
+      file: changelogs/changeset-019.mcp-entities.yaml
+      relativeToChangelogFile: false

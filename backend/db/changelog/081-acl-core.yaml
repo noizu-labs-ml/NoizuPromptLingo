@@ -1,0 +1,80 @@
+databaseChangeLog:
+  # ── ACL / group library (tobor.locker overhaul F1) ───────────────────────
+  # Reusable permission primitives on Noizu ERP references ({:ref, Type, id}
+  # records stored as {"type": ..., "id": ...} jsonb) so grants bind to ANY
+  # arbitrary entity. Deny-wins resolution in NoizuPromptLingua.Acl.
+
+  - changeSet:
+      id: 081-create-table-acl-groups
+      author: loom
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE acl_groups (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                name varchar(255) NOT NULL,
+                description text,
+                ref jsonb,
+                status varchar(16) NOT NULL DEFAULT 'active'
+                  CHECK (status IN ('active', 'archived')),
+                metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+              CREATE UNIQUE INDEX idx_acl_groups_name ON acl_groups (name);
+              CREATE INDEX idx_acl_groups_ref ON acl_groups ((ref->>'type'), (ref->>'id'));
+      rollback:
+        - sql:
+            sql: DROP TABLE IF EXISTS acl_groups;
+
+  - changeSet:
+      id: 081-create-table-acl-group-members
+      author: loom
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE acl_group_members (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                group_id uuid NOT NULL REFERENCES acl_groups(id) ON DELETE CASCADE,
+                member_ref jsonb NOT NULL,
+                expires_at timestamptz,
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now(),
+                CONSTRAINT uq_acl_group_members_group_member UNIQUE (group_id, member_ref)
+              );
+              CREATE INDEX idx_acl_group_members_group ON acl_group_members (group_id);
+              CREATE INDEX idx_acl_group_members_member
+                ON acl_group_members ((member_ref->>'type'), (member_ref->>'id'));
+      rollback:
+        - sql:
+            sql: DROP TABLE IF EXISTS acl_group_members;
+
+  - changeSet:
+      id: 081-create-table-acl-rules
+      author: loom
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE acl_rules (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                subject_ref jsonb NOT NULL,
+                resource_ref jsonb NOT NULL,
+                action varchar(255) NOT NULL,
+                effect varchar(16) NOT NULL
+                  CHECK (effect IN ('allow', 'deny')),
+                scope varchar(255),
+                priority integer NOT NULL DEFAULT 0,
+                status varchar(16) NOT NULL DEFAULT 'active'
+                  CHECK (status IN ('active', 'archived')),
+                metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+              CREATE INDEX idx_acl_rules_subject
+                ON acl_rules ((subject_ref->>'type'), (subject_ref->>'id'));
+              CREATE INDEX idx_acl_rules_resource
+                ON acl_rules ((resource_ref->>'type'), (resource_ref->>'id'));
+              CREATE INDEX idx_acl_rules_action ON acl_rules (action);
+      rollback:
+        - sql:
+            sql: DROP TABLE IF EXISTS acl_rules;

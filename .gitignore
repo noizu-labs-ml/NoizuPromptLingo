@@ -19,6 +19,7 @@ backend/_build/
 backend/deps/
 frontend/node_modules/
 frontend/.next/
+*_crash.dump
 
 # Vendored Mix/JS plugin trees
 plugins/llm/**/_build/

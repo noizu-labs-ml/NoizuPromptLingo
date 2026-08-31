@@ -352,6 +352,23 @@ defmodule NoizuPromptLinguaWeb.Router do
     match :*, "/custom/:slug/mcp", CustomMCPGatewayController, :handle
   end
 
+  # Org-addressed custom MCP gateway — the canonical URL shape:
+  # <host>/org/<org_slug>/custom/<slug>/mcp. The org segment scopes the slug
+  # lookup (the scope must belong to that org). The legacy <host>/custom/<slug>/mcp
+  # path above remains a permanent alias: it 301s browser GETs of org-bound
+  # scopes to this canonical form and serves everything else in place.
+  scope "/", NoizuPromptLinguaWeb do
+    match :*, "/org/:org_slug/custom/:slug/mcp", CustomMCPGatewayController, :handle_org
+  end
+
+  # Account-level custom-scope gateway (W2 sharing). Scopes with visibility
+  # "account"/"shared" are additionally served at <host>/user/<slug>/mcp; the
+  # controller's resolve_scope/3 is the shared resolution point the org route
+  # (/org/:org_slug/custom/:slug/mcp, W1) lands on too.
+  scope "/", NoizuPromptLinguaWeb do
+    match :*, "/user/:slug/mcp", CustomMCPGatewayController, :handle_user
+  end
+
   scope "/mcp" do
     forward "/",
             Noizu.MCP.Transport.StreamableHTTP.Plug,
@@ -508,6 +525,27 @@ defmodule NoizuPromptLinguaWeb.Router do
     get "/mcp-custom-scopes/:slug", AdminController, :show_mcp_custom_scope
     patch "/mcp-custom-scopes/:slug", AdminController, :update_mcp_custom_scope
     delete "/mcp-custom-scopes/:slug", AdminController, :delete_mcp_custom_scope
+    post "/mcp-custom-scopes/:slug/clone", AdminController, :clone_mcp_custom_scope
+    # Legacy alias — the action was originally named copy; kept resolving so any
+    # external callers with copy in their scripts keep working.
+    post "/mcp-custom-scopes/:slug/copy", AdminController, :clone_mcp_custom_scope
+
+    # W4 MCP entities — versioned prompts + resources/resource templates.
+    get "/mcp-prompts", AdminController, :list_mcp_prompts
+    post "/mcp-prompts", AdminController, :create_mcp_prompt
+    patch "/mcp-prompts/:slug", AdminController, :update_mcp_prompt
+    delete "/mcp-prompts/:slug", AdminController, :delete_mcp_prompt
+    post "/mcp-prompts/:slug/versions", AdminController, :publish_mcp_prompt_version
+
+    get "/mcp-resources", AdminController, :list_mcp_resources
+    post "/mcp-resources", AdminController, :create_mcp_resource
+    patch "/mcp-resources/:id", AdminController, :update_mcp_resource
+    delete "/mcp-resources/:id", AdminController, :delete_mcp_resource
+
+    get "/mcp-resource-templates", AdminController, :list_mcp_resource_templates
+    post "/mcp-resource-templates", AdminController, :create_mcp_resource_template
+    patch "/mcp-resource-templates/:id", AdminController, :update_mcp_resource_template
+    delete "/mcp-resource-templates/:id", AdminController, :delete_mcp_resource_template
 
     # mcp_overview review flow — list generated overviews, approve/reject/edit
     # (editing the Markdown implies approval). UI is a follow-up.

@@ -356,7 +356,8 @@ defmodule NoizuPromptLingua.MCPServers do
   def custom_url(slug, nil), do: custom_url(slug, default_host())
   def custom_url(slug, host), do: "https://#{host}/custom/#{slug}/mcp"
 
-  defp default_host do
+  @doc "The default public host (PHX_HOST / endpoint config) used to build URLs."
+  def default_host do
     Application.get_env(:noizu_prompt_lingua, NoizuPromptLinguaWeb.Endpoint)
     |> case do
       %{url: %{host: host}} when is_binary(host) and host != "" -> host

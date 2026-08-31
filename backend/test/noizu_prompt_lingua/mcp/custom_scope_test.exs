@@ -62,12 +62,14 @@ defmodule NoizuPromptLingua.MCP.CustomScopeTest do
     {:ok, search} = ToolSearch.call(%{query: "Project", mode: :text, limit: 10}, c)
     # Text search matches descriptions too — session tools legitimately mention
     # "project" in their docs. The scope contract is that no Project.* tool is
-    # reachable, not that the substring never appears.
-    assert search.matches |> Enum.map(& &1.name) |> Enum.all?(&String.starts_with?(&1, "Session."))
-    refute Enum.any?(search.matches, &String.starts_with?(&1.name, "Project."))
+    # reachable, not that the substring never appears. Names emit canonical
+    # underscore form (F5): Session_*, never dotted.
+    assert search.matches |> Enum.map(& &1.name) |> Enum.all?(&String.starts_with?(&1, "Session_"))
+    refute Enum.any?(search.matches, &String.starts_with?(&1.name, "Project_"))
 
     {:ok, definitions} = ToolDefinition.call(%{tool: "Session.Get,Project.Get"}, c)
-    assert [%{name: "Session.Get"}] = definitions.definitions
+    # dotted input accepted as alias; emitted name is canonical underscore
+    assert [%{name: "Session_Get"}] = definitions.definitions
     assert definitions.not_found == ["Project.Get"]
   end
 
@@ -82,7 +84,8 @@ defmodule NoizuPromptLingua.MCP.CustomScopeTest do
     {:ok, found} =
       ToolHelp.call(%{tool: "Ticket.Create", task: "create a task"}, ctx("tickets-only"))
 
-    assert found.tool == "Ticket.Create"
+    # dotted input accepted as alias; echoed name is canonical underscore (F5)
+    assert found.tool == "Ticket_Create"
 
     {:ok, missing} =
       ToolHelp.call(%{tool: "Project.Get", task: "inspect project"}, ctx("tickets-only"))

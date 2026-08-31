@@ -64,11 +64,12 @@ defmodule NoizuPromptLingua.MCP.CustomKeyToolsetTest do
     cat_names = Custom.catalog_specs(ctx) |> Enum.map(& &1.definition.name)
     assert "Session.Update" in cat_names
 
-    # listing: dropped
+    # listing: dropped. Listing emits canonical underscore names (F5 naming);
+    # catalog_specs returns raw registry names (dotted = alias source).
     {:ok, tools, _cursor} = NPLServer.list_tools(Custom, nil, ctx)
     listed = Enum.map(tools, & &1.name)
-    refute "Session.Update" in listed
-    assert "Session.Get" in listed
+    refute "Session_Update" in listed
+    assert "Session_Get" in listed
   end
 
   test "key-hidden hides from listing; scope-hidden still hides; both callable if enabled", %{
@@ -87,9 +88,9 @@ defmodule NoizuPromptLingua.MCP.CustomKeyToolsetTest do
     listed = Enum.map(tools, & &1.name)
 
     # scope-level hidden (Project.Create) and key-level hidden (Session.Get)
-    refute "Project.Create" in listed
-    refute "Session.Get" in listed
-    assert "Session.Update" in listed
+    refute "Project_Create" in listed
+    refute "Session_Get" in listed
+    assert "Session_Update" in listed
   end
 
   test "key group-level disabled hides that group's tools from listing", %{
@@ -107,8 +108,8 @@ defmodule NoizuPromptLingua.MCP.CustomKeyToolsetTest do
 
     # group disabled -> dropped from listing AND catalog calls denied by guard;
     # the OTHER group's tools remain
-    refute "Project.Get" in listed
-    assert "Session.Update" in listed
+    refute "Project_Get" in listed
+    assert "Session_Update" in listed
   end
 
   test "no key on the request -> scope config alone governs", %{scope: scope} do
@@ -116,8 +117,8 @@ defmodule NoizuPromptLingua.MCP.CustomKeyToolsetTest do
     {:ok, tools, _cursor} = NPLServer.list_tools(Custom, nil, ctx)
     listed = Enum.map(tools, & &1.name)
 
-    refute "Project.Create" in listed
-    assert "Session.Update" in listed
-    assert "Session.Get" in listed
+    refute "Project_Create" in listed
+    assert "Session_Update" in listed
+    assert "Session_Get" in listed
   end
 end
