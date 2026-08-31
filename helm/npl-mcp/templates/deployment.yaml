@@ -44,18 +44,8 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.backend.env.secretName }}
                   key: DATABASE_URL
-            {{- /* Shared pm_core — always-on mode (docs/pm-core-cutover.md). */}}
-            {{- if .Values.pmCore }}
-            - name: PM_CORE_ENABLED
-              value: {{ if hasKey .Values.pmCore "enabled" }}{{ .Values.pmCore.enabled | quote }}{{ else }}"true"{{ end }}
-            {{- if and .Values.pmCore.secretName .Values.pmCore.databaseUrlKey }}
-            - name: PM_CORE_DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.pmCore.secretName | quote }}
-                  key: {{ .Values.pmCore.databaseUrlKey | quote }}
-            {{- end }}
-            {{- end }}
+            {{- /* pm_core DB access REMOVED at W8 activation (2026-09-01): NPL is
+                   API-only over the TRP shared-key plane (docs/pm-core-cutover.md). */}}
             - name: SECRET_KEY_BASE
               valueFrom:
                 secretKeyRef:

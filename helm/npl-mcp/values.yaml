@@ -9,11 +9,6 @@ npl-mcp:
   image:
     repository: ops.noizu.com/npl-mcp/server
     tag: "v1.0.34"
-# Shared pm_core — always-on until microservice split. See docs/pm-core-cutover.md.
-pmCore:
-  enabled: true
-  secretName: pm-core-secrets
-  databaseUrlKey: PM_CORE_DATABASE_URL
 backend:
   image:
     repository: ops.noizu.com/npl-mcp/server
