@@ -10,6 +10,7 @@ import {
   type McpCustomScopeConfig,
   type McpCustomTool,
 } from '@/lib/api';
+import McpEndpointSetupPopunder from '@/components/mcp-endpoint-setup-popunder';
 
 type ScopeForm = {
   originalSlug?: string;
@@ -51,6 +52,19 @@ function formFromScope(scope: McpCustomScope): ScopeForm {
   };
 }
 
+/**
+ * STUB — canonical URL builder is the backend `NoizuPromptLingua.MCP.Urls`
+ * (TOBOR-CONTRACTS §2, F2 branch). Until that merges, prefer the scope's own
+ * backend-provided URL and otherwise build the canonical
+ * `/org/:org_slug/custom/:slug/mcp` shape with the org segment unresolved.
+ */
+function stubScopeUrl(scope?: McpCustomScope | null): string {
+  if (!scope) return 'https://tobor.locker/org/:org_slug/custom/:slug/mcp';
+  return (
+    scope.url || `https://tobor.locker/org/:org_slug/custom/${encodeURIComponent(scope.slug)}/mcp`
+  );
+}
+
 function included(config: McpCustomScopeConfig, groupId: string) {
   return !!config.groups[groupId] && config.groups[groupId].disabled !== true;
 }
@@ -90,6 +104,7 @@ export default function AdminMcpCustomScopesPage() {
   const [form, setForm] = useState<ScopeForm>(blankForm());
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [setupOpen, setSetupOpen] = useState(false);
 
   const selectedScope = useMemo(
     () => scopes.find((s) => s.slug === form.originalSlug) ?? null,
@@ -216,25 +231,22 @@ export default function AdminMcpCustomScopesPage() {
     }
   }
 
-  async function duplicate() {
+  async function clone() {
     if (!form.originalSlug) {
-      toast.error('Save the endpoint before copying it');
+      toast.error('Save the endpoint before cloning it');
       return;
     }
     setSaving(true);
     try {
-      const res = await api.adminCreateMcpCustomScope({
-        slug: slugify(`${form.slug}-copy`),
-        name: `${form.name} copy`,
-        description: form.description.trim(),
-        kind: form.kind === 'all_in_one' ? 'custom' : form.kind || 'custom',
-        config: form.config,
+      const res = await api.adminCloneMcpCustomScope(form.originalSlug, {
+        slug: slugify(`${form.slug}-clone`),
+        name: `${form.name} clone`,
       });
       setScopes((prev) => [res.scope, ...prev.filter((s) => s.id !== res.scope.id)]);
       setForm(formFromScope(res.scope));
-      toast.success('Copied to a new endpoint');
+      toast.success('Cloned to a new endpoint');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Copy failed');
+      toast.error(err instanceof Error ? err.message : 'Clone failed');
     } finally {
       setSaving(false);
     }
@@ -260,7 +272,7 @@ export default function AdminMcpCustomScopesPage() {
           Users and organizations are always given a <strong>Tobor Locker</strong>
           endpoint cloned from the global template at{' '}
           <span className="font-mono">/custom/tobor/mcp</span>. Edit standard
-          templates here; people can copy and edit their own instances from
+          templates here; people can clone and edit their own instances from
           MCP client setup. <Link href="/app/admin">Back to Admin</Link>
         </p>
 
@@ -307,8 +319,13 @@ export default function AdminMcpCustomScopesPage() {
                     </button>
                   )}
                   {form.originalSlug && (
-                    <button type="button" className="sg-btn sg-btn--outline sg-btn--sm" onClick={duplicate} disabled={saving}>
-                      Copy endpoint
+                    <button type="button" className="sg-btn sg-btn--outline sg-btn--sm" onClick={clone} disabled={saving}>
+                      Clone endpoint
+                    </button>
+                  )}
+                  {form.originalSlug && (
+                    <button type="button" className="sg-btn sg-btn--outline sg-btn--sm" onClick={() => setSetupOpen(true)}>
+                      Setup MCP
                     </button>
                   )}
                 </div>
@@ -453,6 +470,15 @@ export default function AdminMcpCustomScopesPage() {
               </div>
             </form>
           </div>
+        )}
+
+        {selectedScope && (
+          <McpEndpointSetupPopunder
+            open={setupOpen}
+            onClose={() => setSetupOpen(false)}
+            scope={selectedScope}
+            mcpUrl={stubScopeUrl(selectedScope)}
+          />
         )}
       </main>
     </div>

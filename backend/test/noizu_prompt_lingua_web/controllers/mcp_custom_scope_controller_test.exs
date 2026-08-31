@@ -61,4 +61,47 @@ defmodule NoizuPromptLinguaWeb.MCPCustomScopeControllerTest do
 
     assert denied["error"] =~ "cannot be deleted"
   end
+
+  test "admin can clone a custom scope (config copied, original untouched)", %{conn: conn} do
+    post(conn, "/api/v1/admin/mcp-custom-scopes", %{
+      scope: %{
+        slug: "clone-src",
+        name: "Clone Source",
+        description: "before clone",
+        config: %{groups: %{sessions: %{tools: %{"Session.Create" => %{disabled: true}}}}}
+      }
+    })
+    |> json_response(201)
+
+    clone =
+      post(conn, "/api/v1/admin/mcp-custom-scopes/clone-src/clone", %{
+        scope: %{slug: "clone-dst", name: "Clone Dst"}
+      })
+      |> json_response(201)
+
+    assert clone["scope"]["slug"] == "clone-dst"
+    assert clone["scope"]["name"] == "Clone Dst"
+    # description/kind/config fall back to the source
+    assert clone["scope"]["description"] == "before clone"
+    assert clone["scope"]["source_template_slug"] == "clone-src"
+    assert clone["scope"]["config"]["groups"]["sessions"]["tools"]["Session.Create"]["disabled"] ==
+             true
+
+    # the source scope is untouched
+    orig = conn |> get("/api/v1/admin/mcp-custom-scopes/clone-src") |> json_response(200)
+    assert orig["scope"]["name"] == "Clone Source"
+    assert orig["scope"]["slug"] == "clone-src"
+
+    # legacy /copy alias route resolves to the same action
+    alias_copy =
+      post(conn, "/api/v1/admin/mcp-custom-scopes/clone-src/copy", %{
+        scope: %{slug: "clone-alias"}
+      })
+      |> json_response(201)
+
+    assert alias_copy["scope"]["slug"] == "clone-alias"
+
+    missing = post(conn, "/api/v1/admin/mcp-custom-scopes/nope/clone") |> json_response(404)
+    assert missing["error"] =~ "not found"
+  end
 end

@@ -2009,6 +2009,16 @@ export const api = {
     });
   },
 
+  adminCloneMcpCustomScope(slug: string, patch?: Partial<McpCustomScopeInput>) {
+    return request<{ scope: McpCustomScope }>(
+      `/api/v1/admin/mcp-custom-scopes/${encodeURIComponent(slug)}/clone`,
+      {
+        method: "POST",
+        body: JSON.stringify({ scope: patch ?? {} }),
+      },
+    );
+  },
+
   adminUpdateMcpCustomScope(slug: string, patch: Partial<McpCustomScopeInput>) {
     return request<{ scope: McpCustomScope }>(`/api/v1/admin/mcp-custom-scopes/${slug}`, {
       method: "PATCH",
