@@ -455,6 +455,10 @@ function clickIdpPrimary(
     return pool.first();
   };
 
+  // Single clean submit. Re-clicking after stage transitions re-submits EMPTY
+  // forms (uid_field/password "required" errors) and trips hosted-Authentik
+  // step-up protection (ak-stage-authenticator-validate with no devices =>
+  // unrecoverable "Empty response" loop).
   const clickOnce = () => {
     cy.get(PRIMARY_BUTTON, q)
       .filter(":visible")
@@ -464,14 +468,6 @@ function clickIdpPrimary(
         const el = $btn[0] as HTMLButtonElement;
         el.focus();
         el.click();
-        el.dispatchEvent(
-          new MouseEvent("click", {
-            bubbles: true,
-            cancelable: true,
-            composed: true,
-            view: window,
-          })
-        );
         const form = el.closest("form");
         if (form && typeof form.requestSubmit === "function") {
           try {
@@ -481,10 +477,6 @@ function clickIdpPrimary(
           }
         }
       });
-    cy.get(PRIMARY_BUTTON, q)
-      .filter(":visible")
-      .then(($btns) => pick($btns))
-      .click({ force: true });
   };
 
   clickOnce();
@@ -566,7 +558,7 @@ function authentikStageFill(
   const advanceIfOnIdp = () => {
     cy.location("href", { timeout: 20000 }).then((href) => {
       if (!IDP_HOST_RE.test(href)) return;
-      cy.document().then((doc) => {
+      cy.document({ log: false }).then((doc) => {
         const text = deepBodyText(doc);
         if (
           /Request has been denied|Flow does not apply to current user/i.test(
@@ -578,34 +570,72 @@ function authentikStageFill(
           );
         }
       });
-      // Do not re-submit empty identity if we somehow bounced back
-      cy.get("body").then(($body) => {
+      // Only interact when an interactive stage is actually mounted. Blind
+      // re-clicks submit EMPTY forms ("uid_field/password required" errors)
+      // and trip hosted-Authentik step-up protection.
+      cy.get("body", { timeout: 10000 }).then(($body) => {
         const idVisible = $body
           .find(selectors.identity)
           .filter((_, el) => isReallyVisible(el as HTMLElement));
         const pwVisible = $body
           .find(selectors.password)
           .filter((_, el) => isReallyVisible(el as HTMLElement));
+        const stageTags: string[] = [];
+        const collect = (root: ParentNode) => {
+          root
+            .querySelectorAll(
+              "ak-stage-authenticator-validate, ak-stage-access-denied"
+            )
+            .forEach((e) => stageTags.push(e.tagName.toLowerCase()));
+          root.querySelectorAll("*").forEach((e) => {
+            const sr = (e as Element & { shadowRoot?: ShadowRoot | null })
+              .shadowRoot;
+            if (sr) collect(sr);
+          });
+        };
+        collect(document.body);
+        if (stageTags.includes("ak-stage-authenticator-validate")) {
+          throw new Error(
+            "Authentik presented an MFA validation stage (ak-stage-authenticator-validate) the smoke user cannot satisfy (no enrolled devices). Hosted-Authentik policy change, not a selector issue."
+          );
+        }
+        if (stageTags.includes("ak-stage-access-denied")) {
+          throw new Error(
+            "Authentik access-denied stage rendered (policy/binding)."
+          );
+        }
         if (idVisible.length && !pwVisible.length) {
           cy.log("Bounced to identity during advance — refill user");
           fillVisibleField(selectors.identity, user, {
             log: true,
             timeout: 15000,
           });
+          clickIdpPrimary(q);
+          return;
         }
         if (pwVisible.length) {
           fillVisibleField(selectors.password, pass, {
             log: false,
             timeout: 15000,
           });
+          clickIdpPrimary(q);
+          return;
         }
+        // No identity/password fields and no MFA stage: consent or already
+        // advancing. Click primary only if a visible submit button exists.
+        cy.get(PRIMARY_BUTTON, { includeShadowDom: true, timeout: 5000 })
+          .filter(":visible")
+          .then(($btns) => {
+            if ($btns.length) {
+              clickIdpPrimary(
+                { includeShadowDom: true, timeout: 10000 },
+                { preferContinue: true }
+              );
+            } else {
+              cy.wait(2000);
+            }
+          });
       });
-      const onConsent = /explicit-consent|consent/i.test(href);
-      clickIdpPrimary(
-        { includeShadowDom: true, timeout: 15000 },
-        { preferContinue: onConsent || true }
-      );
-      cy.wait(2000);
     });
   };
   advanceIfOnIdp();
@@ -779,6 +809,7 @@ function fillAuthentikForm(
           return use.first();
         };
 
+        // Single clean submit — no re-click (see clickIdpPrimary note).
         const clickPrimary = (preferContinue = false) => {
           cy.get(primarySel, q)
             .filter(":visible")
@@ -788,14 +819,6 @@ function fillAuthentikForm(
               const el = $btn[0] as HTMLButtonElement;
               el.focus();
               el.click();
-              el.dispatchEvent(
-                new MouseEvent("click", {
-                  bubbles: true,
-                  cancelable: true,
-                  composed: true,
-                  view: window,
-                })
-              );
               const form = el.closest("form");
               if (form && typeof form.requestSubmit === "function") {
                 try {
@@ -805,10 +828,6 @@ function fillAuthentikForm(
                 }
               }
             });
-          cy.get(primarySel, q)
-            .filter(":visible")
-            .then(($btns) => pickPrimary($btns, preferContinue))
-            .click({ force: true });
         };
 
         cy.get(`${sel.identity}, ${sel.password}, ${primarySel}`, q)
