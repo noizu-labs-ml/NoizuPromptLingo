@@ -39,7 +39,7 @@ defmodule Noizu.Google.MCP.MixProject do
     if File.dir?(Path.join(sibling, "lib")) do
       {:noizu_google, path: sibling, override: true}
     else
-      {:noizu_google, "~> 0.2.4"}
+      {:noizu_google, "~> 0.2.3"}
     end
   end
 

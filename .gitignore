@@ -19,3 +19,9 @@ backend/_build/
 backend/deps/
 frontend/node_modules/
 frontend/.next/
+
+# Vendored Mix/JS plugin trees
+plugins/llm/**/_build/
+plugins/llm/**/deps/
+plugins/llm/**/node_modules/
+plugins/llm/**/.elixir_ls/

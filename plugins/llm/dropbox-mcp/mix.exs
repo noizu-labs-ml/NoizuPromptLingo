@@ -33,8 +33,8 @@ defmodule DropboxMCP.MixProject do
 
   defp deps do
     [
-      {:noizu_mcp, path: "../../../Libs/ai/elixir-mcp"},
-      {:noizu_dropbox, path: "../../../Libs/api/elixir-dropbox"},
+      {:noizu_mcp, "~> 0.1.5"},
+      {:noizu_dropbox, "~> 0.1.0"},
       {:jason, "~> 1.4"},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
     ]

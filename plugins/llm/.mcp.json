@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "doc-pointers": {
+      "command": "bin/doc-pointers-mcp"
+    },
+    "noizu-google": {
+      "command": "bin/noizu-google-mcp"
+    },
+    "dropbox": {
+      "command": "bin/dropbox-mcp"
+    }
+  }
+}

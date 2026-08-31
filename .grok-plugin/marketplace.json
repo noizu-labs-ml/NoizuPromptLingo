@@ -1,0 +1,12 @@
+{
+  "name": "Noizu Prompt Lingua",
+  "description": "NPL first-party plugins",
+  "owner": { "name": "Noizu Labs" },
+  "plugins": [
+    {
+      "name": "llm",
+      "description": "Local MCP servers: doc-pointers, Google, Dropbox; plus run-claude and llm-toolkit sources",
+      "source": { "type": "local", "path": "./plugins/llm" }
+    }
+  ]
+}

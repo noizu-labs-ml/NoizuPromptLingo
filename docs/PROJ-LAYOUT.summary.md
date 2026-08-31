@@ -21,6 +21,7 @@ NoizuPromptLingo/
 ├── liquibase/              # Database migrations (Liquibase YAML, changesets 001–018)
 ├── docker/                 # Docker config (PostgreSQL init)
 ├── tools/                  # Utility scripts (git, markdown, validators, arize)
+├── plugins/llm/            # Squash-vendored local LLM MCP plugin (doc-pointers, Google, Dropbox)
 ├── gh-pages                # GitHub Pages submodule (static site, branch: gh-pages)
 ├── .claude/                # Claude Code config (agents/, commands/, skills symlink, settings)
 ├── .agents/                # Alternate agent discovery path (skills symlink)
