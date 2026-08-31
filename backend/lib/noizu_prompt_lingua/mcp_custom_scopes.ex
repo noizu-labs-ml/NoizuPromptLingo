@@ -1197,7 +1197,7 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
     "name_override",
     "description_override",
     "arg_overrides"
-    # window keys (hide_until / enable_for_hours / enabled_at) are owned and
+    # window keys (hide_until / enable_for_hours / set_at) are owned and
     # normalized by MCP.Window.normalize_entry — not carried verbatim.
   ]
 

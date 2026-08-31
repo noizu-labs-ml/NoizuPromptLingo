@@ -268,6 +268,111 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetTest do
       assert state.visible
       assert is_nil(state.expires_at)
     end
+
+    test "live enable window LIFTS disabled (enforcement wiring)" do
+      at = DateTime.utc_now()
+      anchor = DateTime.add(at, -3600, :second)
+
+      state =
+        EffectiveToolset.state(@group, @tool, %{
+          "config" =>
+            scope_config(%{
+              @group => %{
+                "tools" => %{
+                  @tool => %{"disabled" => true, "enable_for_hours" => 24, "enabled_at" => DateTime.to_iso8601(anchor)}
+                }
+              }
+            })
+        }, nil, at)
+
+      assert state.enabled
+      assert %DateTime{} = state.expires_at
+    end
+
+    test "live enable window LIFTS hidden (enforcement wiring)" do
+      at = DateTime.utc_now()
+      anchor = DateTime.add(at, -3600, :second)
+
+      state =
+        EffectiveToolset.state(@group, @tool, %{
+          "config" =>
+            scope_config(%{
+              @group => %{
+                "tools" => %{
+                  @tool => %{"hidden" => true, "enable_for_hours" => 24, "enabled_at" => DateTime.to_iso8601(anchor)}
+                }
+              }
+            })
+        }, nil, at)
+
+      assert state.visible
+      assert state.enabled
+    end
+
+    test "expired enable window does NOT lift disabled (no-op after expiry)" do
+      at = DateTime.utc_now()
+      anchor = DateTime.add(at, -48 * 3600, :second)
+
+      state =
+        EffectiveToolset.state(@group, @tool, %{
+          "config" =>
+            scope_config(%{
+              @group => %{
+                "tools" => %{
+                  @tool => %{"disabled" => true, "enable_for_hours" => 24, "enabled_at" => DateTime.to_iso8601(anchor)}
+                }
+              }
+            })
+        }, nil, at)
+
+      refute state.enabled
+      assert is_nil(state.expires_at)
+    end
+
+    test "hide_until suppresses listing but does not disable execution" do
+      at = DateTime.utc_now()
+
+      state =
+        EffectiveToolset.state(@group, @tool, %{
+          "config" =>
+            scope_config(%{
+              @group => %{
+                "tools" => %{
+                  @tool => %{"disabled" => false, "hide_until" => DateTime.add(at, 3600, :second) |> DateTime.to_iso8601()}
+                }
+              }
+            })
+        }, nil, at)
+
+      refute state.visible
+      assert state.enabled
+    end
+
+    test "KeyToolsets.state/3 honors the window lift (ToolGuard path)" do
+      at = DateTime.utc_now()
+      anchor = DateTime.add(at, -3600, :second)
+      slug = "win-lift"
+
+      create_scope(
+        slug,
+        scope_config(%{
+          @group => %{
+            "tools" => %{
+              @tool => %{"disabled" => true, "enable_for_hours" => 24, "enabled_at" => DateTime.to_iso8601(anchor)}
+            }
+          }
+        })
+      )
+
+      ctx = %Ctx{
+        server: NoizuPromptLingua.MCP,
+        assigns: %{custom_scope_slug: slug, auth_claims: %{}}
+      }
+
+      flags = KeyToolsets.state(@group, @tool, ctx)
+      refute flags.disabled
+      refute flags.hidden
+    end
   end
 
   # ── hidden vs disabled semantics ────────────────────────────────────────────
