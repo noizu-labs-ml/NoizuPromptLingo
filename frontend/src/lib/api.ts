@@ -341,7 +341,14 @@ export interface McpCustomScopeConfig {
   groups: Record<string, {
     disabled?: boolean;
     hidden?: boolean;
-    tools?: Record<string, { disabled?: boolean; hidden?: boolean }>;
+    tools?: Record<string, {
+      disabled?: boolean;
+      hidden?: boolean;
+      // W9 name/description overrides (keyed by canonical underscore tool name)
+      name_override?: string;
+      description_override?: string;
+      arg_overrides?: Record<string, string>;
+    }>;
   }>;
 }
 

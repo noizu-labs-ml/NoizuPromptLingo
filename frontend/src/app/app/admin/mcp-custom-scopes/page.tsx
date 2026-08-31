@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import {
@@ -10,6 +10,14 @@ import {
   type McpCustomScopeConfig,
   type McpCustomTool,
 } from '@/lib/api';
+import { ToolOverrideFields } from '@/components/kit/tool-overrides-editor';
+import {
+  applyOverridePatch,
+  canonicalToolName,
+  hasOverrides,
+  overrideEntry,
+  type ToolOverrideEntry,
+} from '@/lib/tool-overrides';
 
 type ScopeForm = {
   originalSlug?: string;
@@ -90,6 +98,7 @@ export default function AdminMcpCustomScopesPage() {
   const [form, setForm] = useState<ScopeForm>(blankForm());
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [overridesOpen, setOverridesOpen] = useState<Record<string, boolean>>({});
 
   const selectedScope = useMemo(
     () => scopes.find((s) => s.slug === form.originalSlug) ?? null,
@@ -165,6 +174,15 @@ export default function AdminMcpCustomScopesPage() {
       group.tools[toolName] = { ...(group.tools[toolName] ?? {}), hidden: !value };
       draft.groups[groupId] = group;
     });
+  }
+
+  // W9 — name/description/arg-description overrides. Entries key by canonical
+  // underscore tool name (contract §4/§7); toggle fields are preserved.
+  function setToolOverrides(groupId: string, toolName: string, entry: ToolOverrideEntry) {
+    setForm((current) => ({
+      ...current,
+      config: applyOverridePatch(current.config, groupId, toolName, entry),
+    }));
   }
 
   async function save(e: React.FormEvent) {
@@ -404,34 +422,85 @@ export default function AdminMcpCustomScopesPage() {
                                 <th>Category</th>
                                 <th>Enabled</th>
                                 <th>Visible</th>
+                                <th>Overrides</th>
                               </tr>
                             </thead>
                             <tbody>
-                              {group.tools.map((tool) => (
-                                <tr key={tool.name}>
-                                  <td>
-                                    <div className="font-mono">{tool.name}</div>
-                                    <span className="sg-field__hint">{tool.description}</span>
-                                  </td>
-                                  <td>{tool.category}</td>
-                                  <td>
-                                    <input
-                                      type="checkbox"
-                                      checked={toolEnabled(form.config, group.id, tool.name)}
-                                      onChange={(e) => setToolEnabled(group.id, tool.name, e.target.checked)}
-                                      aria-label={`${tool.name} enabled`}
-                                    />
-                                  </td>
-                                  <td>
-                                    <input
-                                      type="checkbox"
-                                      checked={toolVisible(form.config, group.id, tool)}
-                                      onChange={(e) => setToolVisible(group.id, tool.name, e.target.checked)}
-                                      aria-label={`${tool.name} visible`}
-                                    />
-                                  </td>
-                                </tr>
-                              ))}
+                              {group.tools.map((tool) => {
+                                const toolKey = canonicalToolName(tool.name);
+                                const openKey = `${group.id}/${toolKey}`;
+                                const overridesShown = overridesOpen[openKey] ?? false;
+                                const overridden = hasOverrides(form.config, group.id, toolKey);
+                                return (
+                                  <Fragment key={tool.name}>
+                                    <tr>
+                                      <td>
+                                        <div className="font-mono">
+                                          {tool.name}
+                                          {overridden && (
+                                            <span
+                                              title="Has name/description overrides"
+                                              style={{
+                                                marginLeft: 6,
+                                                fontSize: 9,
+                                                padding: '1px 5px',
+                                                borderRadius: 8,
+                                                background: 'var(--accent, #333)',
+                                                color: '#fff',
+                                                verticalAlign: 'middle',
+                                              }}
+                                            >
+                                              edited
+                                            </span>
+                                          )}
+                                        </div>
+                                        <span className="sg-field__hint">{tool.description}</span>
+                                      </td>
+                                      <td>{tool.category}</td>
+                                      <td>
+                                        <input
+                                          type="checkbox"
+                                          checked={toolEnabled(form.config, group.id, tool.name)}
+                                          onChange={(e) => setToolEnabled(group.id, tool.name, e.target.checked)}
+                                          aria-label={`${tool.name} enabled`}
+                                        />
+                                      </td>
+                                      <td>
+                                        <input
+                                          type="checkbox"
+                                          checked={toolVisible(form.config, group.id, tool)}
+                                          onChange={(e) => setToolVisible(group.id, tool.name, e.target.checked)}
+                                          aria-label={`${tool.name} visible`}
+                                        />
+                                      </td>
+                                      <td>
+                                        <button
+                                          type="button"
+                                          className="sg-btn sg-btn--outline sg-btn--sm"
+                                          aria-expanded={overridesShown}
+                                          onClick={() =>
+                                            setOverridesOpen((cur) => ({ ...cur, [openKey]: !overridesShown }))
+                                          }
+                                        >
+                                          {overridesShown ? 'Hide' : 'Edit'}
+                                        </button>
+                                      </td>
+                                    </tr>
+                                    {overridesShown && (
+                                      <tr>
+                                        <td colSpan={5} style={{ background: 'var(--bg-3, #fafafa)' }}>
+                                          <ToolOverrideFields
+                                            idPrefix={`scope-${group.id}-${toolKey}`}
+                                            tool={tool}
+                                            entry={overrideEntry(form.config, group.id, toolKey)}
+                                            onChange={(next) => setToolOverrides(group.id, tool.name, next)}
+                                          />
+                                        </td>
+                                      </tr>
+                                    )}
+                                  </Fragment>
+                                );
+                              })}
                             </tbody>
                           </table>
                         </div>
