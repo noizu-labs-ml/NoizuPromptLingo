@@ -15,6 +15,8 @@ defmodule NoizuPromptLingua.Schema.MCPCustomScope do
   use Ecto.Schema
   import Ecto.Changeset
 
+  alias NoizuPromptLingua.MCP.Window
+
   @kinds ~w(custom all_in_one core_variant)
 
   @primary_key {:id, :binary_id, autogenerate: true}
@@ -69,6 +71,37 @@ defmodule NoizuPromptLingua.Schema.MCPCustomScope do
     |> String.downcase()
   end
 
-  defp validate_config(:config, value) when is_map(value), do: []
+  defp validate_config(:config, value) when is_map(value) do
+    validate_window_entries(value)
+  end
+
   defp validate_config(:config, _), do: [config: "must be an object"]
+
+  # F3 temporal windows: every tool entry in the config jsonb is validated via
+  # `NoizuPromptLingua.MCP.Window.validate_entry/1` (mutual exclusion of
+  # hide_until/enable_for_hours, datetime + positive-integer shape). Errors are
+  # keyed to the offending entry path.
+  defp validate_window_entries(config) do
+    groups = Map.get(config, "groups") || Map.get(config, :groups) || %{}
+
+    if is_map(groups) do
+      Enum.flat_map(groups, fn {group_id, group_cfg} ->
+        tools = group_tools(group_cfg)
+
+        Enum.flat_map(tools, fn {tool_name, tool_cfg} ->
+          tool_cfg
+          |> Kernel.||(%{})
+          |> Window.validate_entry()
+          |> Enum.map(&{:config, "groups.#{group_id}.tools.#{tool_name}: #{&1}"})
+        end)
+      end)
+    else
+      []
+    end
+  end
+
+  defp group_tools(group_cfg) when is_map(group_cfg),
+    do: Map.get(group_cfg, "tools") || Map.get(group_cfg, :tools) || %{}
+
+  defp group_tools(_), do: %{}
 end

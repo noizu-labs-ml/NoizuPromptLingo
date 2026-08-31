@@ -18,6 +18,7 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
 
   alias NoizuPromptLingua.Repo
   alias NoizuPromptLingua.Schema.MCPCustomScope
+  alias NoizuPromptLingua.MCP.Window
   alias NoizuPromptLingua.MCPServers
   alias NoizuPromptLingua.Tools.Catalog
 
@@ -938,6 +939,10 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
     |> put_bool("disabled", Map.get(config, "disabled", Map.get(config, :disabled)))
     |> put_bool("hidden", Map.get(config, "hidden", Map.get(config, :hidden)))
     |> carry_entry_keys(config)
+    # F3 temporal windows (hide_until / enable_for_hours); invalid values are
+    # dropped here — strict rejection lives on the scope changeset. Window
+    # owns these keys (see @entry_extra_keys) so carry never duplicates them.
+    |> Window.normalize_entry(config)
   end
 
   defp normalize_tool_config(_), do: %{}
@@ -945,10 +950,9 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
   @entry_extra_keys [
     "name_override",
     "description_override",
-    "arg_overrides",
-    "hide_until",
-    "enable_for_hours",
-    "enable_from"
+    "arg_overrides"
+    # window keys (hide_until / enable_for_hours / enabled_at) are owned and
+    # normalized by MCP.Window.normalize_entry — not carried verbatim.
   ]
 
   defp carry_entry_keys(map, config) do
