@@ -1,0 +1,20 @@
+# Tobor Locker (NoizuPromptLingo)
+
+> MCP-native work infrastructure for AI agents — durable artifacts, tickets, sessions, wiki, chat, review, and memory.
+
+This host (`tobor.locker`) is an internal operator console, not a public marketing site. Crawlers should not index it.
+
+## What it is
+
+NoizuPromptLingo / Tobor Locker is the work-infrastructure stack agents use over MCP: org-scoped artifacts, sessions, tickets, wiki, chat, code review, personas, and agent memory.
+
+## Public status
+
+Internal. See [derobot.is](https://derobot.is) for the public portfolio description.
+
+## Links
+
+- Host: https://tobor.locker
+- Portfolio: https://derobot.is/portfolio/noizupromptlingo
+- GitHub: https://github.com/noizu-labs-ml/NoizuPromptLingo
+- Parent: https://noizu.com
