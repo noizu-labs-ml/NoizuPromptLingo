@@ -1,0 +1,35 @@
+# =============================================================================
+# Hook configuration for run-claude proxy
+# =============================================================================
+# Hooks execute in order listed. Errors are logged but don't stop the chain.
+# Each hook needs: name, module, function. Optional: enabled (default true), config.
+#
+# To add custom hooks, create a Python module and reference it here.
+# Use python_path to add directories containing custom hook modules.
+# =============================================================================
+
+hooks:
+  pre_request:
+    - name: provider_compat
+      module: run_claude.hooks.builtin
+      function: strip_provider_fields
+      enabled: true
+
+    - name: log_request
+      module: run_claude.hooks.builtin
+      function: log_request
+      enabled: false  # Enable for debugging
+      config:
+        verbose: false
+
+  post_response:
+    - name: log_response
+      module: run_claude.hooks.builtin
+      function: log_response
+      enabled: false  # Enable for debugging
+      config:
+        include_tokens: true
+
+# Additional Python paths for custom hooks
+python_path: []
+  # - "${HOME}/my-custom-hooks"

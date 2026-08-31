@@ -1,0 +1,5 @@
+{
+  "name": "llm",
+  "version": "0.1.0",
+  "description": "Local LLM MCP servers and harness tools vendored into Noizu Prompt Lingua (doc-pointers, Google, Dropbox, run-claude, llm-toolkit)."
+}

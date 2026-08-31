@@ -1,0 +1,31 @@
+# skill-manage configuration
+# Copy to: ~/.config/skill-manage/config.yaml
+version: 1
+
+sources:
+  skills:
+    - path: ${SKILL_REPO}   # or absolute path to monorepo skills/
+      priority: 10
+  agents:
+    - path: ~/.claude/agents
+      priority: 10
+  commands:
+    - path: ~/.claude/commands
+      priority: 10
+
+providers:
+  claude:
+    skills_dir: ~/.claude/skills
+    agents_dir: ~/.claude/agents
+    commands_dir: ~/.claude/commands
+  codex:
+    skills_dir: ~/.codex/skills
+    commands_dir: ~/.codex/commands
+  grok:
+    skills_dir: ~/.grok/skills
+
+catalog: ~/.config/skill-manage/catalog.yaml
+
+defaults:
+  provider: all
+  replace: false

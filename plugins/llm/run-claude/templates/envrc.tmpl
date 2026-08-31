@@ -1,0 +1,13 @@
+# Claude Switch - Auto-generated
+# Edit .envrc.user for customization (gitignored)
+
+# Stable token for this directory
+export AGENT_SHIM_TOKEN="{{TOKEN}}"
+
+# Load user customizations
+source_env_if_exists .envrc.user
+
+# Apply shim configuration
+if [[ -n "$AGENT_SHIM_PROFILE" ]]; then
+    eval "$(run-claude env "$AGENT_SHIM_PROFILE" 2>/dev/null)"
+fi

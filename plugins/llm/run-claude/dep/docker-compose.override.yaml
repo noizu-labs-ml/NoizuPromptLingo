@@ -1,0 +1,17 @@
+# =============================================================================
+# run-claude Docker Compose Local Development Overrides
+# =============================================================================
+# This file is automatically loaded when running `docker compose up`
+# Customize for your local development environment
+#
+# For production, use: docker compose -f docker-compose.yaml up -d
+# =============================================================================
+
+services:
+  # ===========================================================================
+  # Expose database port for local development/debugging
+  # ===========================================================================
+
+  timescaledb:
+    ports:
+      - "5433:5432"   # PostgreSQL (unique port to avoid conflicts)

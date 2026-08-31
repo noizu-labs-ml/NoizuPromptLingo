@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Stdio launcher for vendored doc-pointers. Resolves via BASH_SOURCE so hosts
+# that spawn the wrapper with an absolute path (no plugin cwd) still work.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT/doc-pointers"
+
+export PATH="/opt/homebrew/bin:/usr/local/bin:${HOME}/.asdf/shims:${HOME}/.local/share/mise/shims:${HOME}/.mix/escripts:${PATH}"
+
+if ! command -v mix >/dev/null 2>&1; then
+  echo "doc-pointers-mcp: mix not found on PATH" >&2
+  exit 127
+fi
+
+exec mix doc_pointers.mcp.stdio

@@ -102,6 +102,8 @@ NoizuPromptLingo/
 ├── tools/                          # Utility scripts (git_tree, git_dump, markdown, validators, arize)
 │   ├── lib/                        #   Shared tool library (git_helpers)
 │   └── validators/                 #   Skill/eval/fine-tune/structure validators
+├── plugins/                        # First-party Grok/Claude plugin marketplace sources
+│   └── llm/                        # Squash-vendored local MCP servers (doc-pointers, Google, Dropbox) + run-claude / llm-toolkit
 ├── gh-pages                        # GitHub Pages submodule (static site, branch: gh-pages)
 ├── .claude/                        # Claude Code configuration
 │   ├── agents/                     #   Agent definitions (symlinks + local)

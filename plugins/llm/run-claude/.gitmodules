@@ -1,0 +1,3 @@
+[submodule "repos/litellm"]
+	path = repos/litellm
+	url = git@github.com:noizu/litellm.git

@@ -1,0 +1,27 @@
+{
+  "name": "llm-toolkit",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Search, browse, edit, and extract reusable artifacts from Claude Code conversations",
+  "scripts": {
+    "dev:api": "pnpm --filter @llm-toolkit/api dev",
+    "dev:web": "pnpm --filter @llm-toolkit/web dev",
+    "dev:cli": "pnpm --filter @llm-toolkit/cli dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "clean": "pnpm -r clean"
+  },
+  "bin": {
+    "llm-toolkit": "./packages/cli/bin.ts"
+  },
+  "keywords": ["claude", "conversations", "search", "cli"],
+  "author": "Keith Brings <keith.brings@noizu.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "tsx": "^4.19.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["better-sqlite3", "esbuild", "onnxruntime-node", "protobufjs", "sharp"]
+  }
+}

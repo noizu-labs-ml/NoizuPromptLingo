@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Stdio launcher for :noizu_google_mcp. cds into the Mix project so hosts
+# without an MCP cwd field (Grok config.toml) still start correctly.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+export PATH="/opt/homebrew/bin:/usr/local/bin:${HOME}/.asdf/shims:${HOME}/.local/share/mise/shims:${HOME}/.mix/escripts:${PATH}"
+
+if ! command -v mix >/dev/null 2>&1; then
+  echo "noizu-google-mcp: mix not found on PATH" >&2
+  exit 127
+fi
+
+exec mix run --no-halt
