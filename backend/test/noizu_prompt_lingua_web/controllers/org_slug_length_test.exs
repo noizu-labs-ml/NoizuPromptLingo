@@ -55,6 +55,9 @@ defmodule NoizuPromptLinguaWeb.OrgSlugLengthTest do
   end
 
   setup %{conn: conn} do
+    # W4 cutover: slug resolution reads the TRP org inventory (stub-backed).
+    NoizuPromptLingua.TRP.Cache.clear()
+    NoizuPromptLingua.TRP.TestStub.reset()
     %{access_token: token} = setup_user_and_token()
     {:ok, conn: authenticated_conn(conn, token)}
   end
@@ -71,6 +74,7 @@ defmodule NoizuPromptLinguaWeb.OrgSlugLengthTest do
       })
 
     org_id = json_response(created, 201)["organization"]["id"]
+    NoizuPromptLingua.TRP.TestStub.seed_org(org_id, slug)
 
     project_name = "project-for-#{slug}"
 

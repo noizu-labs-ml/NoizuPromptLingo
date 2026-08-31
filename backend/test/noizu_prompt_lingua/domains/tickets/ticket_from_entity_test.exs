@@ -14,19 +14,10 @@ defmodule NoizuPromptLingua.Domains.Tickets.TicketFromEntityTest do
   alias NoizuPromptLingua.Domains.Tickets.Tools.TicketFromEntity
   alias NoizuPromptLingua.Domains.Links
 
-  defp insert_org do
-    %{rows: [[raw]]} =
-      Noizu.PM.Repo.query!(
-        "INSERT INTO organizations (id, slug, name, inserted_at, updated_at) " <>
-          "VALUES (gen_random_uuid(), $1, $2, now(), now()) RETURNING id",
-        ["tfeorg-#{System.unique_integer([:positive])}", "TFE Test Org"]
-      )
-
-    Ecto.UUID.load!(raw)
-  end
-
   setup do
-    {:ok, org_id: insert_org()}
+    NoizuPromptLingua.TRP.Cache.clear()
+    NoizuPromptLingua.TRP.TestStub.reset()
+    {:ok, org_id: NoizuPromptLingua.TRP.TestStub.seed_org(Ecto.UUID.generate(), "tfeorg")}
   end
 
   test "FromEntity creates a ticket and a `references` link to the source", %{org_id: org_id} do

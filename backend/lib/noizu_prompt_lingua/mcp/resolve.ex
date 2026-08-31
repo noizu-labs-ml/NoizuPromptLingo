@@ -3,10 +3,8 @@ defmodule NoizuPromptLingua.MCP.Resolve do
   Reference resolution helpers shared by MCP tools. Accepts either a UUID or a
   human-friendly slug and returns the corresponding schema record (or nil).
 
-  Shared PM data (orgs/projects) resolves exclusively via `Noizu.PM.Repo`.
+  Shared PM data (orgs/projects) resolves via the TRP shared-key plane.
   """
-
-  alias NoizuPromptLingua.PMCore
 
   @doc """
   Extract the authenticated caller's user UUID from a tool `ctx`.
@@ -47,34 +45,24 @@ defmodule NoizuPromptLingua.MCP.Resolve do
     end
   end
 
-  @doc "Resolve an organization ref to its PM schema record, or nil."
+  @doc "Resolve an organization ref to its TRP org map (id/slug/name), or nil."
   def organization(nil), do: nil
 
   def organization(ref) do
     case organization_id(ref) do
-      nil ->
-        nil
-
-      id ->
-        PMCore.with_pm(fn ->
-          Noizu.PM.Repo.get(Noizu.PM.Schema.Organizations.Organization, id)
-        end)
+      nil -> nil
+      id -> NoizuPromptLingua.TRP.get_organization(id)
     end
   end
 
-  @doc "Resolve a project ref (slug or UUID) to its PM schema record, or nil."
+  @doc "Resolve a project ref (slug or UUID) to its TRP project map, or nil."
   def project(nil), do: nil
 
   def project(ref) do
-    PMCore.with_pm(fn ->
-      case NoizuPromptLingua.UUID.cast(ref) do
-        {:ok, uuid} ->
-          Noizu.PM.Repo.get(Noizu.PM.Schema.Projects.Project, uuid)
-
-        :error ->
-          Noizu.PM.Repo.get_by(Noizu.PM.Schema.Projects.Project, slug: ref)
-      end
-    end)
+    case project_across_scope(ref) do
+      {:error, _} -> nil
+      other -> other
+    end
   end
 
   @doc """
@@ -88,10 +76,27 @@ defmodule NoizuPromptLingua.MCP.Resolve do
   def project_in_org("", _org_id), do: {:ok, nil}
 
   def project_in_org(ref, org_id) do
-    case project(ref) do
-      nil -> {:error, :project_not_found}
-      %{organization_id: ^org_id} = project -> {:ok, project.id}
-      _ -> {:error, :project_not_in_org}
+    # Direct org-scoped lookup (NOT project/1 — that scans every scope org and
+    # would recurse back through here).
+    case NoizuPromptLingua.UUID.cast(ref) do
+      {:ok, uuid} ->
+        case NoizuPromptLingua.TRP.get_project(org_id, uuid) do
+          %{} = project -> {:ok, project.id}
+          nil -> {:error, :project_not_found}
+          {:error, _} -> {:error, :project_not_found}
+        end
+
+      :error ->
+        case NoizuPromptLingua.TRP.list_projects(org_id) do
+          rows when is_list(rows) ->
+            case Enum.find(rows, &(&1.slug == ref)) do
+              nil -> {:error, :project_not_found}
+              project -> {:ok, project.id}
+            end
+
+          {:error, _} ->
+            {:error, :project_not_found}
+        end
     end
   end
 
@@ -118,5 +123,25 @@ defmodule NoizuPromptLingua.MCP.Resolve do
           err -> err
         end
     end
+  end
+
+  # TRP is org-pathed; a bare ref is searched across the cached key scope.
+  defp project_across_scope(ref) do
+    orgs =
+      case NoizuPromptLingua.TRP.list_organizations() do
+        list when is_list(list) -> list
+        {:error, _} = err -> err
+      end
+
+    orgs = if is_list(orgs), do: orgs, else: []
+
+    Enum.reduce_while(orgs, nil, fn org, _acc ->
+      case project_in_org(ref, org.id) do
+        {:ok, nil} -> {:cont, nil}
+        {:ok, project_id} -> {:halt, NoizuPromptLingua.TRP.get_project(org.id, project_id)}
+        {:error, :project_not_found} -> {:cont, nil}
+        {:error, _} = err -> {:halt, err}
+      end
+    end)
   end
 end

@@ -1,16 +1,18 @@
 defmodule NoizuPromptLingua.Domains.TicketsListFilterTest do
   @moduledoc """
-  Multi-select array filters on Tickets.list (3c2d6bbe). A list value filters with `in`
-  (= ANY, OR-within-facet); a scalar keeps `==`. Bracket array params
-  (?status[]=a&status[]=b -> ["a","b"]) and scalars route through the same path.
+  Multi-select array filters on Tickets.list (3c2d6bbe), preserved client-side
+  over the TRP list page (TRP v1 filter contract is scalar-only): a list value
+  filters with `in` (OR within facet); a scalar keeps ==; empty list is a no-op.
   """
-  use NoizuPromptLingua.DataCase
-  @moduletag :db
+  use NoizuPromptLingua.DataCase, async: false
 
   alias NoizuPromptLingua.Domains.Tickets
+  alias NoizuPromptLingua.TRP.TestStub
 
   setup do
-    org_id = insert_org()
+    NoizuPromptLingua.TRP.Cache.clear()
+    TestStub.reset()
+    org_id = TestStub.seed_org(Ecto.UUID.generate(), "tixfilter")
 
     {:ok, a} =
       Tickets.create(%{organization_id: org_id, title: "A", ticket_type: "bug", status: "open"})
@@ -42,7 +44,7 @@ defmodule NoizuPromptLingua.Domains.TicketsListFilterTest do
     refute MapSet.member?(got, b.id)
   end
 
-  test "scalar value still uses == (backward compatible)", %{org_id: org, a: a} do
+  test "scalar value still uses ==", %{org_id: org, a: a} do
     got = Tickets.list(organization_id: org, status: "open") |> ids()
     assert got == MapSet.new([a.id])
   end
@@ -53,7 +55,6 @@ defmodule NoizuPromptLingua.Domains.TicketsListFilterTest do
   end
 
   test "multiple array facets AND across facets, OR within each", %{org_id: org, c: c} do
-    # status in (open, closed) AND ticket_type in (task) -> only C
     got =
       Tickets.list(organization_id: org, status: ["open", "closed"], ticket_type: ["task"])
       |> ids()
@@ -64,16 +65,5 @@ defmodule NoizuPromptLingua.Domains.TicketsListFilterTest do
   test "empty list is a no-op (not a match-nothing)", %{org_id: org, a: a, b: b, c: c} do
     got = Tickets.list(organization_id: org, status: []) |> ids()
     assert got == MapSet.new([a.id, b.id, c.id])
-  end
-
-  defp insert_org do
-    %{rows: [[raw]]} =
-      Noizu.PM.Repo.query!(
-        "INSERT INTO organizations (id, slug, name, inserted_at, updated_at) " <>
-          "VALUES (gen_random_uuid(), $1, $2, now(), now()) RETURNING id",
-        ["tixfilter-#{System.unique_integer([:positive])}", "Tix Filter Org"]
-      )
-
-    Ecto.UUID.load!(raw)
   end
 end

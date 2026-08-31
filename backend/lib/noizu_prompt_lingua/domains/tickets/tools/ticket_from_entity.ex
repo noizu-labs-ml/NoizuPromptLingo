@@ -94,7 +94,9 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.TicketFromEntity do
           link_type: link.link_type
         }
 
-      _ ->
+      error ->
+        require Logger
+        Logger.error("TicketFromEntity link_source failed: #{inspect(error)}")
         nil
     end
   end

@@ -6,8 +6,8 @@ defmodule NoizuPromptLingua.MCP.Organizations.Tools.OrganizationList do
     category: "Organizations",
     annotations: [read_only_hint: true]
 
-  import Ecto.Query
   alias NoizuPromptLingua.MCP.Args
+  alias NoizuPromptLingua.TRP
 
   input do
     field :limit, :integer, description: "Max results (default 50)"
@@ -28,14 +28,11 @@ defmodule NoizuPromptLingua.MCP.Organizations.Tools.OrganizationList do
      }}
   end
 
-  # Shared pm_core only (same store Organization.Create / Project.Create use).
+  # TRP key scope IS the org inventory for this key (spec 4.1); cached 30s.
   defp list_organizations(limit, offset) do
-    NoizuPromptLingua.PMCore.with_pm(fn ->
-      Noizu.PM.Schema.Organizations.Organization
-      |> order_by([o], asc: o.name)
-      |> limit(^limit)
-      |> offset(^offset)
-      |> Noizu.PM.Repo.all()
-    end)
+    case TRP.list_organizations() do
+      list when is_list(list) -> list |> Enum.sort_by(& &1.name) |> Enum.drop(offset) |> Enum.take(limit)
+      {:error, _} -> []
+    end
   end
 end

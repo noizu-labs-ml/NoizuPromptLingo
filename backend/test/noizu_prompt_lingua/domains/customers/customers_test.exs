@@ -5,6 +5,8 @@ defmodule NoizuPromptLingua.Domains.CustomersTest do
   alias NoizuPromptLingua.Domains.{Customers, Links, Tickets}
 
   setup do
+    NoizuPromptLingua.TRP.Cache.clear()
+    NoizuPromptLingua.TRP.TestStub.reset()
     {:ok, org_id: insert_org()}
   end
 
@@ -107,14 +109,15 @@ defmodule NoizuPromptLingua.Domains.CustomersTest do
     end
   end
 
+  # W4 cutover: orgs live on TRP; the app-DB organizations row stays because
+  # customer tables are app-local. The stub registration covers TRP lookups.
   defp insert_org do
-    %{rows: [[raw]]} =
-      Noizu.PM.Repo.query!(
-        "INSERT INTO organizations (id, slug, name, inserted_at, updated_at) " <>
-          "VALUES (gen_random_uuid(), $1, $2, now(), now()) RETURNING id",
-        ["custtest-#{System.unique_integer([:positive])}", "Customers Test Org"]
-      )
+    id = NoizuPromptLingua.TRP.TestStub.seed_org(Ecto.UUID.generate(), "custtest")
 
-    Ecto.UUID.load!(raw)
+    %NoizuPromptLingua.Schema.Organizations.Organization{}
+    |> Ecto.Changeset.change(%{id: id, slug: "custtest", name: "Customers Test Org"})
+    |> NoizuPromptLingua.Repo.insert!(on_conflict: :nothing, conflict_target: :id)
+
+    id
   end
 end

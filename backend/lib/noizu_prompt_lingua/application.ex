@@ -20,9 +20,11 @@ defmodule NoizuPromptLingua.Application do
     children =
       [
         NoizuPromptLinguaWeb.Telemetry,
-        NoizuPromptLingua.Repo
+        NoizuPromptLingua.Repo,
+        # TRP shared-key plane: dedicated Finch pool + read-cache (W4 cutover).
+        {Finch, name: NoizuPromptLingua.TRP.Finch},
+        NoizuPromptLingua.TRP.Cache
       ] ++
-        pm_core_children() ++
         [
           {Ecto.Migrator,
            repos: Application.fetch_env!(:noizu_prompt_lingua, :ecto_repos),
@@ -84,19 +86,5 @@ defmodule NoizuPromptLingua.Application do
 
   defp skip_migrations?() do
     System.get_env("RELEASE_NAME") == nil
-  end
-
-  # Start Noizu.PM.Repo when PM_CORE_DATABASE_URL is set. Prod requires the URL
-  # (raise in runtime.exs); without it shared PM ops raise at call time.
-  defp pm_core_children do
-    # PMCore.repo_configured?/0 covers both the env-var path (prod/dev) and a
-    # statically configured repo (:test binds Noizu.PM.Repo in config/test.exs).
-    # Without this the repo never starts under `mix test` and every shared-PM
-    # call raises "PM_CORE_DATABASE_URL is required".
-    if NoizuPromptLingua.PMCore.repo_configured?() do
-      [Noizu.PM.Repo]
-    else
-      []
-    end
   end
 end

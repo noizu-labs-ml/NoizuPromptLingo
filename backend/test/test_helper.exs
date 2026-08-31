@@ -107,3 +107,13 @@ NoizuPromptLingua.Domains.Memory.VectorStore.delete_class()
 NoizuPromptLingua.Domains.Memory.VectorStore.ensure_class()
 
 Ecto.Adapters.SQL.Sandbox.mode(NoizuPromptLingua.Repo, :manual)
+
+# W4 cutover: route the TRP client at the in-memory stub transport. base_url/key
+# are set so Config.configured?/0 is true; the stub never touches the network.
+Application.put_env(:noizu_prompt_lingua, :trp,
+  base_url: "http://trp.test",
+  shared_key: "trp_sk_test"
+)
+
+Application.put_env(:noizu_prompt_lingua, :trp_transport, NoizuPromptLingua.TRP.TestStub)
+NoizuPromptLingua.TRP.TestStub.reset()

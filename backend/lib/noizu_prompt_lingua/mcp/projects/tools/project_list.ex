@@ -6,8 +6,8 @@ defmodule NoizuPromptLingua.MCP.Projects.Tools.ProjectList do
     category: "Projects",
     annotations: [read_only_hint: true]
 
-  import Ecto.Query
   alias NoizuPromptLingua.MCP.{Args, Resolve}
+  alias NoizuPromptLingua.TRP
 
   input do
     field :organization, :string, description: "Organization slug or UUID to scope to"
@@ -43,22 +43,35 @@ defmodule NoizuPromptLingua.MCP.Projects.Tools.ProjectList do
      }}
   end
 
-  # Shared pm_core only (same store Project.Create writes to).
+  # TRP key scope (spec 4.2); status filter client-side (spec filter is items-only).
   defp list_projects(org_id, status, limit, offset) do
-    NoizuPromptLingua.PMCore.with_pm(fn ->
-      Noizu.PM.Schema.Projects.Project
-      |> maybe_org(org_id)
-      |> maybe_status(status)
-      |> order_by([p], desc: p.inserted_at)
-      |> limit(^limit)
-      |> offset(^offset)
-      |> Noizu.PM.Repo.all()
-    end)
+    rows =
+      case org_id do
+        nil ->
+          case TRP.list_organizations() do
+            orgs when is_list(orgs) ->
+              Enum.flat_map(orgs, fn o ->
+                case TRP.list_projects(o.id, status: status) do
+                  ps when is_list(ps) -> ps
+                  {:error, _} -> []
+                end
+              end)
+
+            {:error, _} ->
+              []
+          end
+
+        org_id ->
+          case TRP.list_projects(org_id, status: status) do
+            ps when is_list(ps) -> ps
+            {:error, _} -> []
+          end
+      end
+
+    rows
+    |> Enum.reject(&(&1.status && status && &1.status != status))
+    |> Enum.sort_by(& &1.inserted_at, :desc)
+    |> Enum.drop(offset)
+    |> Enum.take(limit)
   end
-
-  defp maybe_org(query, nil), do: query
-  defp maybe_org(query, org_id), do: where(query, [p], p.organization_id == ^org_id)
-
-  defp maybe_status(query, nil), do: query
-  defp maybe_status(query, status), do: where(query, [p], p.status == ^status)
 end

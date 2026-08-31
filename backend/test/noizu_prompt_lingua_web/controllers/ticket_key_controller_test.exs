@@ -16,6 +16,11 @@ defmodule NoizuPromptLinguaWeb.TicketKeyControllerTest do
 
     org_id = json_response(created, 201)["organization"]["id"]
 
+    # W4 cutover: TRP stub backs ticket data; register the org for id-only reads.
+    NoizuPromptLingua.TRP.Cache.clear()
+    NoizuPromptLingua.TRP.TestStub.reset()
+    NoizuPromptLingua.TRP.TestStub.seed_org(org_id, slug)
+
     {:ok, conn: auth, org_id: org_id, base: "/api/v1/organizations/#{org_id}/tickets"}
   end
 
@@ -28,7 +33,8 @@ defmodule NoizuPromptLinguaWeb.TicketKeyControllerTest do
         "ticket"
       ]
 
-    assert t["number"] == 1
+    # Key/number GENERATION is TRP-owned post-cutover; NPL echoes it verbatim.
+    assert is_integer(t["number"])
     assert t["key"] =~ ~r/^[A-Z0-9]{2,16}-\d{3,}$/
 
     by_key = json_response(get(conn, "#{base}/#{t["key"]}"), 200)["ticket"]
@@ -50,6 +56,6 @@ defmodule NoizuPromptLinguaWeb.TicketKeyControllerTest do
         "ticket"
       ]
 
-    assert b["number"] == a["number"] + 1
+    assert is_integer(b["number"]) and b["number"] != a["number"]
   end
 end

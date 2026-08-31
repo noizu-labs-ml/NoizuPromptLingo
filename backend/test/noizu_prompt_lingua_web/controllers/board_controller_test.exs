@@ -13,6 +13,10 @@ defmodule NoizuPromptLinguaWeb.BoardControllerTest do
   alias NoizuPromptLingua.Repo
 
   setup %{conn: conn} do
+    # W4 cutover: project ∈ org validation resolves via the TRP stub.
+    NoizuPromptLingua.TRP.Cache.clear()
+    NoizuPromptLingua.TRP.TestStub.reset()
+
     %{access_token: token} = setup_user_and_token()
     auth_conn = authenticated_conn(conn, token)
 
@@ -22,6 +26,7 @@ defmodule NoizuPromptLinguaWeb.BoardControllerTest do
       post(auth_conn, "/api/v1/organizations", %{organization: %{slug: slug, name: "Board Org"}})
 
     org_id = json_response(created, 201)["organization"]["id"]
+    NoizuPromptLingua.TRP.TestStub.seed_org(org_id, slug)
 
     project_id = insert_project(org_id)
     base = "/api/v1/organizations/#{org_id}/boards"
@@ -109,20 +114,17 @@ defmodule NoizuPromptLinguaWeb.BoardControllerTest do
   defp uslug(p), do: "#{p}-#{System.unique_integer([:positive])}"
 
   # ticket_queues.project_id -> projects(id); the project-scope cases need a backing row.
-  # Projects live on pm_core post-cutover — the controller validates project ∈ org
-  # against Noizu.PM.Repo, so the fixture must land in the pm_core test DB.
+  # W4 cutover: Projects.get_project (the controller's project ∈ org validation)
+  # resolves via the TRP stub, while ticket_queues' FK stays app-local.
   defp insert_project(org_id) do
-    %{rows: [[raw]]} =
-      Noizu.PM.Repo.query!(
-        "INSERT INTO projects (id, organization_id, slug, name, inserted_at, updated_at) " <>
-          "VALUES (gen_random_uuid(), $1, $2, $3, now(), now()) RETURNING id",
-        [
-          Ecto.UUID.dump!(org_id),
-          "boardproj-#{System.unique_integer([:positive])}",
-          "Board Test Project"
-        ]
-      )
+    id = Ecto.UUID.generate()
 
-    Ecto.UUID.load!(raw)
+    NoizuPromptLingua.TRP.TestStub.seed_project(org_id, %{
+      id: id,
+      slug: "boardproj-#{System.unique_integer([:positive])}",
+      name: "Board Test Project"
+    })
+
+    id
   end
 end

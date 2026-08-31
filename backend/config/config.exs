@@ -14,13 +14,9 @@ config :noizu_prompt_lingua,
   ecto_repos: [NoizuPromptLingua.Repo],
   generators: [timestamp_type: :utc_datetime]
 
-# Shared pm_core repo (Noizu.PM.Repo). URL bound in runtime.exs when PM_CORE_DATABASE_URL is set.
-# Always-on shared mode until microservice split — see docs/pm-core-cutover.md.
-config :noizu_labs_pm, Noizu.PM.Repo,
-  types: Noizu.PM.PostgrexTypes,
-  migration_primary_key: [name: :id, type: :uuid]
-
-config :noizu_prompt_lingua, :pm_core, enabled: true
+# TRP shared-key plane (W4 cutover). Base URL + key bind in runtime.exs from
+# TRP_API_BASE_URL / TRP_SHARED_KEY; missing config fails at call time, not boot.
+config :noizu_prompt_lingua, :trp, base_url: nil, shared_key: nil
 
 config :noizu_prompt_lingua, NoizuPromptLinguaWeb.Endpoint,
   url: [host: "localhost"],

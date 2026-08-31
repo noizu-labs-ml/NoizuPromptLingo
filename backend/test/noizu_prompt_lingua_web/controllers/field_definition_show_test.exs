@@ -18,6 +18,11 @@ defmodule NoizuPromptLinguaWeb.FieldDefinitionShowTest do
 
     org_id = json_response(created, 201)["organization"]["id"]
 
+    # W4 cutover: definitions live on the TRP stub; register the org for id-only reads.
+    NoizuPromptLingua.TRP.Cache.clear()
+    NoizuPromptLingua.TRP.TestStub.reset()
+    NoizuPromptLingua.TRP.TestStub.seed_org(org_id, "fd-org")
+
     field =
       post(auth, "/api/v1/organizations/#{org_id}/ticket-field-definitions", %{
         field_definition: %{

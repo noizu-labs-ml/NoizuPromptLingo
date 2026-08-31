@@ -588,8 +588,6 @@ defmodule NoizuPromptLinguaWeb.Router do
 
     # pm_core membership reconciliation (post-cutover backfill): GET = dry-run
     # census of planned inserts; POST dry_run=false executes. Admin-gated above.
-    get "/authz/pm-backfill", AdminController, :pm_membership_backfill
-    post "/authz/pm-backfill", AdminController, :pm_membership_backfill
 
     # Media provider config (org-scoped) — per-org api_key/model/settings overrides
     # for the registered genai media providers used by asset generation.

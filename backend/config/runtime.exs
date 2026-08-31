@@ -126,21 +126,12 @@ if config_env() == :prod or config_env() == :dev do
     end
   end
 
-  # Shared pm_core — always on; no legacy dual-path. Require URL in prod.
-  if pm_url = System.get_env("PM_CORE_DATABASE_URL") do
-    config :noizu_labs_pm, Noizu.PM.Repo,
-      url: pm_url,
-      pool_size: String.to_integer(System.get_env("PM_CORE_POOL_SIZE") || "5")
-  else
-    if config_env() == :prod do
-      raise """
-      environment variable PM_CORE_DATABASE_URL is missing.
-      Shared PM data has no legacy mode. Set PM_CORE_DATABASE_URL to the pm_core database.
-      """
-    end
-  end
-
-  config :noizu_prompt_lingua, :pm_core, enabled: true
+  # TRP shared-key plane (W4 cutover). NOT a boot error when missing: un-activated
+  # deploys boot fine and the first TRP call returns {:error, :trp_not_configured}.
+  # W8/W9 activation sets TRP_API_BASE_URL + TRP_SHARED_KEY.
+  config :noizu_prompt_lingua, :trp,
+    base_url: System.get_env("TRP_API_BASE_URL"),
+    shared_key: System.get_env("TRP_SHARED_KEY")
 
   secret_key_base =
     cond do

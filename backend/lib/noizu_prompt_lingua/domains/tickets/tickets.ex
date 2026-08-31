@@ -2,7 +2,6 @@ defmodule NoizuPromptLingua.Domains.Tickets do
   import Ecto.Query, except: [update: 2]
   alias NoizuPromptLingua.Repo
   alias NoizuPromptLingua.Schema.{Ticket, TicketLink}
-  alias NoizuPromptLingua.PMCore
 
   @doc """
   Create a ticket, assigning an immutable human key (PREFIX-NNN) race-safe on insert.
@@ -27,7 +26,6 @@ defmodule NoizuPromptLingua.Domains.Tickets do
   # chars; format_key zero-pads to >= 3 digits). Matched case-insensitively and
   # normalized to upper before lookup.
   @key_format ~r/^[A-Za-z0-9]{2,6}-\d{3,}$/
-
   @doc """
   Resolve a ticket for MCP tool addressing: UUID args keep the legacy id lookup,
   anything matching the human-key grammar (PREFIX-NNN) resolves via the
@@ -60,17 +58,6 @@ defmodule NoizuPromptLingua.Domains.Tickets do
             {:error, :not_found}
         end
     end
-  end
-
-  @doc """
-  Backfill human keys for pre-existing keyless items (055 deploy step). Idempotent:
-  only NULL-key items, oldest-first so per-scope numbers follow inserted_at; reuses
-  the SAME atomic counter + prefix logic as create (one generator). Re-runnable.
-  Runs against pm_core — tickets/items live on Noizu.PM.Repo post-cutover (the old
-  app-DB `tickets` table is dead).
-  """
-  def backfill_keys(batch_size \\ 500) do
-    PMCore.with_pm(fn -> Noizu.PM.Items.backfill_keys(batch_size) end)
   end
 
   def update(id, attrs) do

@@ -62,7 +62,12 @@ defmodule NoizuPromptLingua.Organizations do
 
   @doc "Looks up an org UUID by slug. `slug` is citext (case-insensitive)."
   def get_id_by_slug(slug) do
-    NoizuPromptLingua.PMCore.with_pm(fn -> Noizu.PM.Organizations.get_id_by_slug(slug) end)
+    # TRP shared-key list IS the org inventory for this key (spec §4.1); cached 30s.
+    case NoizuPromptLingua.TRP.find_organization_by_slug(slug) do
+      %{id: id} -> id
+      nil -> nil
+      {:error, _} -> nil
+    end
   end
 
   @doc """
@@ -137,55 +142,40 @@ defmodule NoizuPromptLingua.Organizations do
     end
   end
 
+  # SPEC GAP (W0 §4.1): TRP v1 has no shared-key org creation (POST /organizations
+  # is JWT-only). Org creation stays LOCAL (app-DB org row + owner membership,
+  # both DB-independent) so console/MCP signup keeps working; the TRP-side org +
+  # key-scope provisioning is deferred to W8/W9 activation (logged, not silent).
   def create_organization_with_owner(attrs, user_id) do
-    NoizuPromptLingua.PMCore.with_pm(fn ->
-      Noizu.PM.Organizations.create_with_owner(attrs, user_id)
-    end)
+    require Logger
+
+    case %Schema{}
+         |> Schema.changeset(attrs)
+         |> NoizuPromptLingua.Repo.insert() do
+      {:ok, org} ->
+        case NoizuPromptLingua.Authz.ScopedMemberships.add_member("organization", org.id, user_id, "owner", user_id) do
+          {:ok, _} ->
+            Logger.warning(
+              "Org #{org.id} created locally; TRP org provisioning + key-scope add pending W8 activation"
+            )
+
+            {:ok, org}
+
+          error ->
+            NoizuPromptLingua.Repo.delete(org)
+            error
+        end
+
+      {:error, changeset} ->
+        {:error, changeset}
+    end
   end
 
   def list_user_organizations(user_id) do
-    # pm_core cutover: post-cutover org rows + user scoped memberships live on Noizu.PM.Repo
-    # — same select shape as the app-DB source (ADR-015 effective_role echo + owner display).
-    # UNION the app-DB rows too: pre-cutover memberships were never re-written to pm, and the
-    # staging ETL remapped member_id for "collapsed" users (email-matched to a pm user whose
-    # uuid differs from the app user id), so the pm read alone returns [] for those users —
-    # emptying session/me + the org switcher and degrading every console route to the org
-    # dashboard (nav hrefs fall back to /app/<section>, which the [orgId] route renders as
-    # the dashboard). Dedupe by org id, pm rows first (post-cutover rows are authoritative).
-    pm_rows =
-      NoizuPromptLingua.PMCore.with_pm(fn ->
-        from(sm in Noizu.PM.Schema.Authz.ScopedMembership,
-          join: o in Noizu.PM.Schema.Organizations.Organization,
-          on: o.id == sm.resource_id,
-          join: g in Noizu.PM.Schema.Authz.Group,
-          on: g.id == sm.group_id,
-          left_join: og in Noizu.PM.Schema.Authz.Group,
-          on: og.name == "owner",
-          left_join: osm in Noizu.PM.Schema.Authz.ScopedMembership,
-          on:
-            osm.resource_id == o.id and osm.resource_type == "organization" and
-              osm.member_type == "user" and osm.group_id == og.id,
-          left_join: ou in Noizu.PM.Schema.Users.User,
-          on: ou.id == osm.member_id,
-          where:
-            sm.member_type == "user" and sm.member_id == ^user_id and
-              sm.resource_type == "organization",
-          where: is_nil(sm.expires_at) or sm.expires_at > ^DateTime.utc_now(),
-          group_by: [o.id, o.slug, o.name, g.name],
-          select: %{
-            id: o.id,
-            slug: o.slug,
-            name: o.name,
-            role: g.name,
-            effective_role: g.name,
-            owner: fragment("max(coalesce(?, ?, ?))", ou.user_name, ou.handle, ou.email)
-          }
-        )
-        |> Noizu.PM.Repo.all()
-      end)
-
-    app_rows =
-      from(sm in ScopedMembershipSchema,
+    # TRP v1 has no user-membership surface (identity gap), so the pm_core half
+    # of the former UNION is gone. The app-DB side keeps session/me + the org
+    # switcher working; W8/W9 must decide whether memberships move to TRP.
+    from(sm in ScopedMembershipSchema,
         join: o in Schema,
         on: o.id == sm.resource_id,
         join: g in NoizuPromptLingua.Schema.Authz.Group,
@@ -213,8 +203,6 @@ defmodule NoizuPromptLingua.Organizations do
         }
       )
       |> NoizuPromptLingua.Repo.all()
-
-    Enum.uniq_by(pm_rows ++ app_rows, & &1.id)
   end
 
   def authorize(user_id, organization_id, required_role) do

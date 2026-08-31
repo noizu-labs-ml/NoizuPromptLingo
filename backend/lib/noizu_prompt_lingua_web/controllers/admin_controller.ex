@@ -117,28 +117,6 @@ defmodule NoizuPromptLinguaWeb.AdminController do
 
   defp parse_role(_), do: :error
 
-  # pm_core membership reconciliation (post-cutover backfill). GET = dry-run by
-  # default (returns the exact planned inserts — the read-only census); POST with
-  # dry_run=false executes through Noizu.PM.Authz.ScopedMemberships.add_member.
-  # Admin-gated by the :admin pipeline; every insert is logged by PMBackfill.
-  def pm_membership_backfill(conn, params) do
-    dry_run = Map.get(params, "dry_run", "true") != "false"
-
-    plan = NoizuPromptLingua.Authz.PMBackfill.plan()
-
-    result =
-      if dry_run do
-        %{dry_run: true, inserted: 0, skipped: 0, errors: []}
-      else
-        actor_id = conn.assigns[:admin_user] && to_string(conn.assigns.admin_user.id)
-
-        %{dry_run: false} |> Map.merge(NoizuPromptLingua.Authz.PMBackfill.execute(plan, actor_id))
-      end
-      |> Map.merge(Map.take(plan, [:total_app_user_rows, :already_present, :planned, :unmatched]))
-
-    conn |> put_status(:ok) |> json(result)
-  end
-
   def list_organizations(conn, params) do
     page = String.to_integer(Map.get(params, "page", "1"))
     per_page = String.to_integer(Map.get(params, "per_page", "50"))

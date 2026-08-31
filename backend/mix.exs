@@ -63,8 +63,6 @@ defmodule NoizuPromptLingua.MixProject do
       {:seed_helper, "~> 0.1.1"},
       {:smart_token, "~> 0.1.3"},
       {:noizu_weaviate, "~> 0.2.0"},
-      # Shared pm_core data layer (orgs/projects/items) via Noizu.PM.Repo.
-      noizu_labs_pm_dep(),
 
       # GenAI
       # 0.3.9 is on develop (Qwen media + OpenRouter); Hex still at 0.3.5.
@@ -122,41 +120,12 @@ defmodule NoizuPromptLingua.MixProject do
       setup: ["deps.get", "ecto.setup"],
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
-      # Noizu.PM.Repo (shared pm_core) is a second database, created explicitly:
-      # it is not in :ecto_repos (no Ecto migrations of its own — schema comes
-      # from the vendored PM Liquibase changelog).
       test: [
         "ecto.create --quiet",
         "ecto.migrate --quiet",
-        "ecto.create --quiet -r Noizu.PM.Repo",
         "test"
       ]
     ]
   end
 
-  # Shared PM data layer (pm_core). Resolution order:
-  # 1) NOIZU_LABS_PM_PATH env
-  # 2) monorepo Portfolio/Libs/pm (local/dev builds, canonical source)
-  # 3) vendor/noizu_labs_pm (Docker build artifact synced from Portfolio/Libs/pm,
-  #    used when the monorepo path isn't present)
-  defp noizu_labs_pm_dep do
-    candidates =
-      [
-        System.get_env("NOIZU_LABS_PM_PATH"),
-        Path.expand("../../../../Libs/pm", __DIR__),
-        Path.expand("vendor/noizu_labs_pm", __DIR__)
-      ]
-      |> Enum.reject(&is_nil/1)
-
-    case Enum.find(candidates, &File.dir?/1) do
-      nil ->
-        Mix.raise("""
-        noizu_labs_pm not found. Vendor it under backend/vendor/noizu_labs_pm \
-        or set NOIZU_LABS_PM_PATH.
-        """)
-
-      path ->
-        {:noizu_labs_pm, path: path}
-    end
-  end
 end

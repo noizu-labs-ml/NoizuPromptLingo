@@ -5,7 +5,7 @@ defmodule NoizuPromptLingua.MCP.Organizations.Tools.Overview do
     annotations: [read_only_hint: true],
     category: "Organizations"
 
-  import Ecto.Query
+  alias NoizuPromptLingua.TRP
 
   input do
   end
@@ -13,12 +13,10 @@ defmodule NoizuPromptLingua.MCP.Organizations.Tools.Overview do
   @impl true
   def call(_args, _ctx) do
     count =
-      NoizuPromptLingua.PMCore.with_pm(fn ->
-        Noizu.PM.Repo.aggregate(
-          from(o in Noizu.PM.Schema.Organizations.Organization),
-          :count
-        )
-      end)
+      case TRP.list_organizations() do
+        list when is_list(list) -> length(list)
+        {:error, _} -> 0
+      end
 
     {:ok,
      %{
