@@ -1,0 +1,58 @@
+# Slug-URL work (feat/slug-urls): organizations.slug is the primary segment of
+# the canonical custom-MCP URL (/org/<org_slug>/custom/<slug>/mcp), so it must
+# be clean and unique. The app-DB table was created with `slug citext NOT NULL
+# UNIQUE` (009), and pm_core — the authoritative org store post-cutover — has
+# the same (vendor 006-organizations.yaml), so this changeset is a safety net:
+# it normalizes slugs (slugify; collisions resolved with -2/-3 suffixes) and
+# adds a named unique index. Idempotent by construction (already-clean rows are
+# skipped, IF NOT EXISTS index) and designed to be runnable post-merge.
+# The unit-tested reference logic lives in
+# NoizuPromptLingua.Organizations.SlugBackfill (slugify + -2/-3 collision rule).
+databaseChangeLog:
+  - changeSet:
+      id: org-slug-normalize-and-unique-index
+      author: tobor-locker
+      changes:
+        - sql:
+            splitStatements: false
+            sql: |
+              DO $$
+              DECLARE
+                r record;
+                base text;
+                candidate text;
+                n int;
+              BEGIN
+                FOR r IN SELECT id, slug, name FROM organizations LOOP
+                  base := lower(regexp_replace(
+                    coalesce(nullif(btrim(coalesce(r.slug, '')), ''), r.name, r.id::text),
+                    '[^a-z0-9]+', '-', 'g'));
+                  base := btrim(base, '-');
+                  IF base IS NULL OR base = '' THEN
+                    base := 'org-' || left(r.id::text, 8);
+                  END IF;
+                  base := left(base, 64);
+                  candidate := base;
+                  n := 1;
+                  WHILE EXISTS (
+                    SELECT 1 FROM organizations o
+                    WHERE o.slug = candidate AND o.id <> r.id
+                  ) LOOP
+                    n := n + 1;
+                    candidate := base || '-' || n::text;
+                  END LOOP;
+                  IF candidate <> r.slug THEN
+                    UPDATE organizations
+                      SET slug = candidate, updated_at = now()
+                      WHERE id = r.id;
+                  END IF;
+                END LOOP;
+              END $$;
+              CREATE UNIQUE INDEX IF NOT EXISTS idx_organizations_slug
+                ON organizations (slug);
+      rollback:
+        - sql:
+            # The named index only; normalized slugs are kept (data fix, not a
+            # schema fix — restoring whitespace would be restoring damage).
+            sql: |
+              DROP INDEX IF EXISTS idx_organizations_slug;

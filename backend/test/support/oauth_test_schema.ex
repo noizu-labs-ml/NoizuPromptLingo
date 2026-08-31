@@ -17,10 +17,16 @@ defmodule NoizuPromptLingua.OAuthTestSchema do
       is_first_party boolean NOT NULL DEFAULT false,
       status varchar(16) NOT NULL DEFAULT 'active',
       metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+      toolset_config jsonb NOT NULL DEFAULT '{}'::jsonb,
       inserted_at timestamptz NOT NULL DEFAULT now(),
       updated_at timestamptz NOT NULL DEFAULT now()
     )
     """)
+
+    # Pre-existing test DBs (table created before W8) get the column added.
+    Repo.query!(
+      "ALTER TABLE oauth_clients ADD COLUMN IF NOT EXISTS toolset_config JSONB NOT NULL DEFAULT '{}'::jsonb"
+    )
 
     Repo.query!(
       "CREATE UNIQUE INDEX IF NOT EXISTS idx_oauth_clients_client_id ON oauth_clients (client_id)"

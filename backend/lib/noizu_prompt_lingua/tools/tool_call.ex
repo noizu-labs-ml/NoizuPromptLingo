@@ -4,7 +4,8 @@ defmodule NoizuPromptLingua.Tools.ToolCall do
     description:
       "Invoke any hidden (discoverable) tool by name with arguments. " <>
         "This is the primary way to call domain tools that are not MCP-visible. " <>
-        "Supports alias resolution for old tool names.",
+        "Canonical names use underscore separators (Session_Create); the legacy " <>
+        "dotted spelling (Session.Create) is accepted as an alias.",
     category: "Discovery"
 
   input_schema(%{
@@ -12,7 +13,8 @@ defmodule NoizuPromptLingua.Tools.ToolCall do
     "properties" => %{
       "tool" => %{
         "type" => "string",
-        "description" => "Exact tool name (e.g., \"Project.Create\")"
+        "description" =>
+          "Exact tool name, canonical underscore form (e.g., \"Project_Create\"); dotted \"Project.Create\" accepted as alias"
       },
       "arguments" => %{
         "type" => "object",

@@ -77,10 +77,13 @@ defmodule NoizuPromptLingua.Tools.ToolSummary do
   defp get_tool(path, server, ctx) do
     [cat_path, tool_name] = String.split(path, "#", parts: 2)
     catalog = Catalog.build(server, ctx)
+    # Dotted spellings (Session.Create) are accepted as aliases of the
+    # canonical underscore names the catalog emits.
+    canonical_name = Catalog.resolve_alias(tool_name)
 
     entry =
-      Enum.find(catalog, fn t -> t.name == tool_name and t.category == cat_path end) ||
-        Enum.find(catalog, fn t -> t.name == tool_name end)
+      Enum.find(catalog, fn t -> t.name == canonical_name and t.category == cat_path end) ||
+        Enum.find(catalog, fn t -> t.name == canonical_name end)
 
     case entry do
       nil ->

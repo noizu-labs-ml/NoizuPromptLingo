@@ -15,7 +15,13 @@ defmodule NoizuPromptLingua.Schema.MCPCustomScope do
   use Ecto.Schema
   import Ecto.Changeset
 
+  alias NoizuPromptLingua.MCP.Window
+
   @kinds ~w(custom all_in_one core_variant)
+
+  # W2 scope sharing. Canonical storage is the config jsonb key `"visibility"`
+  # (no column); this virtual field + `visibility/1` surface it on the schema.
+  @visibilities ~w(org account shared)
 
   @primary_key {:id, :binary_id, autogenerate: true}
 
@@ -31,11 +37,32 @@ defmodule NoizuPromptLingua.Schema.MCPCustomScope do
     field :source_template_slug, :string
     field :config, :map, default: %{}
 
+    # Virtual: persisted at `config.visibility` (see @visibilities above).
+    field :visibility, :string, virtual: true
+
     timestamps(type: :utc_datetime)
   end
 
   @doc "Valid `kind` values."
   def kinds, do: @kinds
+
+  @doc "Valid `visibility` values."
+  def visibilities, do: @visibilities
+
+  @doc """
+  Scope sharing mode: `"org"` (default), `"account"`, or `"shared"`. Reads the
+  config jsonb key `"visibility"`; anything absent/invalid resolves to `"org"`.
+  """
+  def visibility(%__MODULE__{config: %{} = config}) do
+    case get_config_key(config, "visibility") do
+      v when v in @visibilities -> v
+      _ -> "org"
+    end
+  end
+
+  def visibility(_), do: "org"
+
+  defp get_config_key(config, key), do: Map.get(config, key, Map.get(config, String.to_atom(key)))
 
   def changeset(scope, attrs) do
     scope
@@ -69,6 +96,42 @@ defmodule NoizuPromptLingua.Schema.MCPCustomScope do
     |> String.downcase()
   end
 
-  defp validate_config(:config, value) when is_map(value), do: []
+  defp validate_config(:config, value) when is_map(value) do
+    validate_window_entries(value) ++
+      case get_config_key(value, "visibility") do
+        nil -> []
+        v when v in @visibilities -> []
+        _ -> [visibility: "must be one of: #{Enum.join(@visibilities, ", ")}"]
+      end
+  end
+
   defp validate_config(:config, _), do: [config: "must be an object"]
+
+  # F3 temporal windows: every tool entry in the config jsonb is validated via
+  # `NoizuPromptLingua.MCP.Window.validate_entry/1` (mutual exclusion of
+  # hide_until/enable_for_hours, datetime + positive-integer shape). Errors are
+  # keyed to the offending entry path.
+  defp validate_window_entries(config) do
+    groups = Map.get(config, "groups") || Map.get(config, :groups) || %{}
+
+    if is_map(groups) do
+      Enum.flat_map(groups, fn {group_id, group_cfg} ->
+        tools = group_tools(group_cfg)
+
+        Enum.flat_map(tools, fn {tool_name, tool_cfg} ->
+          tool_cfg
+          |> Kernel.||(%{})
+          |> Window.validate_entry()
+          |> Enum.map(&{:config, "groups.#{group_id}.tools.#{tool_name}: #{&1}"})
+        end)
+      end)
+    else
+      []
+    end
+  end
+
+  defp group_tools(group_cfg) when is_map(group_cfg),
+    do: Map.get(group_cfg, "tools") || Map.get(group_cfg, :tools) || %{}
+
+  defp group_tools(_), do: %{}
 end

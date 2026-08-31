@@ -1,0 +1,230 @@
+databaseChangeLog:
+  # W4 mcp-entities: versioned MCP prompts + versions, resources, templates.
+  # Mirrors priv/repo/migrations/20260831120000_mcp_entities.exs.
+  - changeSet:
+      id: 019-mcp-entities
+      author: system
+      changes:
+        - createTable:
+            tableName: mcp_prompts
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: slug
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: text
+                  constraints:
+                    nullable: true
+              - column:
+                  name: arguments
+                  type: jsonb
+                  defaultValue: '[]'
+                  constraints:
+                    nullable: false
+              - column:
+                  name: active_version
+                  type: integer
+                  defaultValueNumeric: 1
+                  constraints:
+                    nullable: false
+              - column:
+                  name: organization_id
+                  type: uuid
+                  constraints:
+                    nullable: true
+              - column:
+                  name: project_id
+                  type: uuid
+                  constraints:
+                    nullable: true
+              - column:
+                  name: inserted_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: uq_mcp_prompts_slug
+            tableName: mcp_prompts
+            unique: true
+            columns:
+              - column:
+                  name: slug
+        - createTable:
+            tableName: mcp_prompt_versions
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: prompt_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: version
+                  type: integer
+                  constraints:
+                    nullable: false
+              - column:
+                  name: template
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: change_note
+                  type: text
+                  constraints:
+                    nullable: true
+              - column:
+                  name: inserted_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_mcp_prompt_versions_unique
+            tableName: mcp_prompt_versions
+            unique: true
+            columns:
+              - column:
+                  name: prompt_id
+              - column:
+                  name: version
+        - createTable:
+            tableName: mcp_resources
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: uri
+                  type: varchar(2048)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: text
+                  constraints:
+                    nullable: true
+              - column:
+                  name: mime_type
+                  type: varchar(255)
+                  defaultValue: text/plain
+                  constraints:
+                    nullable: false
+              - column:
+                  name: content
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: organization_id
+                  type: uuid
+                  constraints:
+                    nullable: true
+              - column:
+                  name: project_id
+                  type: uuid
+                  constraints:
+                    nullable: true
+              - column:
+                  name: inserted_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_mcp_resources_uri
+            tableName: mcp_resources
+            columns:
+              - column:
+                  name: uri
+        - createTable:
+            tableName: mcp_resource_templates
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: uri_template
+                  type: varchar(2048)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: text
+                  constraints:
+                    nullable: true
+              - column:
+                  name: mime_type
+                  type: varchar(255)
+                  defaultValue: text/plain
+                  constraints:
+                    nullable: false
+              - column:
+                  name: organization_id
+                  type: uuid
+                  constraints:
+                    nullable: true
+              - column:
+                  name: project_id
+                  type: uuid
+                  constraints:
+                    nullable: true
+              - column:
+                  name: inserted_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_mcp_resource_templates_uri
+            tableName: mcp_resource_templates
+            columns:
+              - column:
+                  name: uri_template

@@ -7,16 +7,17 @@ import {
   resolveProxySegments,
   upstreamUrl,
   proxyAccessAllowed,
-} from './trp-board-embed.ts';
+} from './trp-board-embed';
 
 test('trpEmbedConfig returns null until host + key are provisioned', () => {
-  assert.equal(trpEmbedConfig({}), null);
-  assert.equal(trpEmbedConfig({ TRP_COMPONENT_BASE_URL: 'https://app.therobotplans.com' }), null);
-  assert.equal(trpEmbedConfig({ TRP_EMBED_API_KEY: 'shared-key' }), null);
+  assert.equal(trpEmbedConfig({ NODE_ENV: 'test' }), null);
+  assert.equal(trpEmbedConfig({ NODE_ENV: 'test', TRP_COMPONENT_BASE_URL: 'https://app.therobotplans.com' }), null);
+  assert.equal(trpEmbedConfig({ NODE_ENV: 'test', TRP_EMBED_API_KEY: 'shared-key' }), null);
 });
 
 test('trpEmbedConfig reads server env with defaults and trims the base url', () => {
   const config = trpEmbedConfig({
+    NODE_ENV: 'test',
     TRP_COMPONENT_BASE_URL: 'https://app.therobotplans.com///',
     TRP_EMBED_API_KEY: ' shared-key ',
   });
@@ -30,6 +31,7 @@ test('trpEmbedConfig reads server env with defaults and trims the base url', () 
 
 test('trpEmbedConfig honors component-name + org overrides', () => {
   const config = trpEmbedConfig({
+    NODE_ENV: 'test',
     TRP_COMPONENT_BASE_URL: 'https://trp.example.test',
     TRP_EMBED_API_KEY: 'k',
     TRP_COMPONENT_NAME: 'trp-item-timeline-pro',
@@ -40,7 +42,7 @@ test('trpEmbedConfig honors component-name + org overrides', () => {
 });
 
 test('the bundle maps onto the TRP public static asset path', () => {
-  const config = trpEmbedConfig({ TRP_COMPONENT_BASE_URL: 'https://trp.example.test', TRP_EMBED_API_KEY: 'k' })!;
+  const config = trpEmbedConfig({ NODE_ENV: 'test', TRP_COMPONENT_BASE_URL: 'https://trp.example.test', TRP_EMBED_API_KEY: 'k' })!;
   assert.equal(
     trpBundleUrl(config),
     'https://trp.example.test/components/trp-item-timeline/trp-item-timeline.js',
@@ -65,7 +67,7 @@ test('resolveProxySegments rejects traversal, empty segments and unknown prefixe
 });
 
 test('upstreamUrl resolves bundle + data targets, null for rejected segments', () => {
-  const config = trpEmbedConfig({ TRP_COMPONENT_BASE_URL: 'https://trp.example.test', TRP_EMBED_API_KEY: 'k' })!;
+  const config = trpEmbedConfig({ NODE_ENV: 'test', TRP_COMPONENT_BASE_URL: 'https://trp.example.test', TRP_EMBED_API_KEY: 'k' })!;
   assert.equal(
     upstreamUrl(config, resolveProxySegments(['component-bundle'])),
     'https://trp.example.test/components/trp-item-timeline/trp-item-timeline.js',

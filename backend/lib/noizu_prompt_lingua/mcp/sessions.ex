@@ -11,6 +11,7 @@ defmodule NoizuPromptLingua.MCP.Sessions do
   tool(NoizuPromptLingua.MCP.Sessions.Tools.SessionUpdate, category: "Sessions")
   tool(NoizuPromptLingua.MCP.Sessions.Tools.SessionList, category: "Sessions")
   tool(NoizuPromptLingua.MCP.Sessions.Tools.SessionArchive, category: "Sessions")
+  tool(NoizuPromptLingua.MCP.Sessions.Tools.Manifest, category: "Sessions")
 
   tool(NoizuPromptLingua.Tools.ToolSummary, category: "Discovery")
   tool(NoizuPromptLingua.Tools.ToolSearch, category: "Discovery")
