@@ -17,7 +17,7 @@ import {
   ToolTogglesGrid,
   TempWindowEditor,
   type ContextMenuItem,
-  type ToolToggleGroup,
+  type ToolSection,
   type TempWindow,
 } from '@/components/kit';
 import {
@@ -491,39 +491,44 @@ function AdminMcpCustomScopesInner() {
   const selectedClient = clients.find((c) => c.id === selectedClientId) ?? null;
 
   /** Client toolset toggles derived from catalog × client toolset_config (absent = enabled + visible). */
-  const clientToggleGroups: ToolToggleGroup[] = useMemo(() => {
+  const clientToggleGroups: ToolSection[] = useMemo(() => {
     const cfg = clientPerms?.toolsetConfig ?? { groups: {} };
     return catalog.map((group) => ({
-      group: group.label,
+      name: group.label,
       tools: group.tools.map((tool) => {
         const override = cfg.groups[group.id]?.tools?.[tool.name] ?? {};
+        const hidden = override.hidden === undefined ? tool.hidden : override.hidden;
         return {
-          name: tool.name,
-          enabled: override.disabled !== true,
-          hidden: override.hidden === undefined ? tool.hidden : override.hidden,
+          tool: { kind: 'mcp_tool', id: tool.name },
+          state: {
+            enabled: override.disabled !== true,
+            visible: !hidden,
+          },
         };
       }),
     }));
   }, [catalog, clientPerms]);
 
-  function patchClientToggleGroups(next: ToolToggleGroup[]) {
+  function patchClientToggleGroups(next: ToolSection[]) {
     setClientPerms((current) => {
       if (!current) return current;
       const labelToId = new Map(catalog.map((g) => [g.label, g.id]));
       const groups: McpCustomScopeConfig['groups'] = {};
-      for (const tg of next) {
-        const groupId = labelToId.get(tg.group) ?? tg.group;
+      for (const section of next) {
+        const groupId = labelToId.get(section.name) ?? section.name;
         const catalogGroup = catalog.find((g) => g.id === groupId);
         const tools: Record<string, { disabled?: boolean; hidden?: boolean }> = {};
-        for (const entry of tg.tools) {
-          const catalogTool = catalogGroup?.tools.find((t) => t.name === entry.name);
+        for (const entry of section.tools) {
+          const name = entry.tool.id;
+          const catalogTool = catalogGroup?.tools.find((t) => t.name === name);
+          const hidden = !entry.state.visible;
           const tool: { disabled?: boolean; hidden?: boolean } = {};
-          if (!entry.enabled) tool.disabled = true;
+          if (!entry.state.enabled) tool.disabled = true;
           // Only persist hidden when it diverges from the catalog default
           // (inverted semantics: absent = visible).
-          if (catalogTool && entry.hidden !== catalogTool.hidden) tool.hidden = entry.hidden;
-          else if (!catalogTool && entry.hidden) tool.hidden = true;
-          tools[entry.name] = tool;
+          if (catalogTool && hidden !== catalogTool.hidden) tool.hidden = hidden;
+          else if (!catalogTool && hidden) tool.hidden = true;
+          tools[name] = tool;
         }
         groups[groupId] = { tools };
       }
@@ -843,7 +848,7 @@ function AdminMcpCustomScopesInner() {
               Per-client overrides layer on top of the scope config (absent = enabled + visible).
             </span>
             <ToolTogglesGrid
-              groups={clientToggleGroups}
+              sections={clientToggleGroups}
               onChange={patchClientToggleGroups}
             />
           </section>

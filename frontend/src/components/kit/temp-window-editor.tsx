@@ -1,6 +1,10 @@
 'use client';
 
+import { useId } from 'react';
 import { kitBtnSm, kitFieldLabel, kitInput } from './shared';
+
+/** Upper bound for `enable_for_hours` (30 days). */
+export const MAX_ENABLE_HOURS = 720;
 
 export interface TempWindow {
   /** ISO 8601 datetime; tool stays hidden until this instant (F3 field). */
@@ -32,14 +36,16 @@ function modeOf(v: TempWindow): Mode {
  */
 export default function TempWindowEditor({ value, onChange, readOnly = false }: TempWindowEditorProps) {
   const mode = modeOf(value);
+  const uid = useId();
+  const hideUntilId = `${uid}-hide-until`;
+  const enableHoursId = `${uid}-enable-hours`;
 
   function setMode(next: Mode) {
     if (next === 'none') {
       onChange({ hide_until: null, enable_for_hours: null });
     } else if (next === 'hide_until') {
-      // Default to 24h out, expressed in the user's local input format.
-      const d = new Date(Date.now() + 24 * 3600 * 1000);
-      onChange({ hide_until: toLocalInput(d), enable_for_hours: null });
+      // Default to 24h out — always ISO 8601 UTC, never a naive local string.
+      onChange({ hide_until: new Date(Date.now() + 24 * 3600 * 1000).toISOString(), enable_for_hours: null });
     } else {
       onChange({ hide_until: null, enable_for_hours: 24 });
     }
@@ -93,9 +99,9 @@ export default function TempWindowEditor({ value, onChange, readOnly = false }: 
 
       {mode === 'hide_until' ? (
         <div>
-          <label htmlFor="temp-window-hide-until" style={kitFieldLabel}>Hidden until</label>
+          <label htmlFor={hideUntilId} style={kitFieldLabel}>Hidden until</label>
           <input
-            id="temp-window-hide-until"
+            id={hideUntilId}
             type="datetime-local"
             value={value.hide_until ? toLocalInput(new Date(value.hide_until)) : ''}
             onChange={(e) => onChange({ ...value, hide_until: e.target.value ? new Date(e.target.value).toISOString() : null })}
@@ -118,16 +124,19 @@ export default function TempWindowEditor({ value, onChange, readOnly = false }: 
 
       {mode === 'enable_for' ? (
         <div>
-          <label htmlFor="temp-window-enable-hours" style={kitFieldLabel}>Enabled for (hours)</label>
+          <label htmlFor={enableHoursId} style={kitFieldLabel}>Enabled for (hours)</label>
           <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
             <input
-              id="temp-window-enable-hours"
+              id={enableHoursId}
               type="number"
               min={1}
+              max={MAX_ENABLE_HOURS}
               step={1}
               value={value.enable_for_hours ?? ''}
               onChange={(e) => {
-                const n = e.target.value === '' ? null : Math.max(1, Math.floor(Number(e.target.value)));
+                const n = e.target.value === ''
+                  ? null
+                  : Math.min(MAX_ENABLE_HOURS, Math.max(1, Math.floor(Number(e.target.value))));
                 onChange({ ...value, enable_for_hours: Number.isNaN(n as number) ? null : n });
               }}
               style={{ ...kitInput, width: 90 }}
