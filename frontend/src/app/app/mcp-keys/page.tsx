@@ -276,7 +276,6 @@ export default function McpKeysPage() {
           mcpUrl={oauthMcpUrl}
           asMetadataUrl={asMetadataUrl}
           issuer={oauthIssuer}
-          authEnvName={authEnvName}
           servers={servers}
           alaCarte={alaCarte}
           catalog={catalog}
