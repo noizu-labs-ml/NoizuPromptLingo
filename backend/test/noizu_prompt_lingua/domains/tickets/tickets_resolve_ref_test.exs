@@ -3,27 +3,32 @@ defmodule NoizuPromptLingua.Domains.Tickets.TicketResolveRefTest do
   Human-key addressing for Ticket.* tools: `Tickets.get_by_ref/2` keeps the legacy
   UUID id lookup and adds org-scoped PREFIX-NNN key lookup. Tool wiring is verified
   via Ticket.Get (TicketResolver + optional `organization` arg + `key` in output).
+
+  Post-TRP-cutover (W4/W8), tickets resolve through the TRP shared-key plane, so
+  fixtures ride the TRP TestStub (org seeded by slug; key issued at item create).
   """
-  use NoizuPromptLingua.DataCase
-  import Ecto.Query
+  use NoizuPromptLingua.DataCase, async: false
 
   alias NoizuPromptLingua.Domains.Tickets
+  alias NoizuPromptLingua.TRP.TestStub
 
   @moduletag :db
 
+  @org_slug "acme-corp"
+
   setup do
-    org_id = insert_org("acme-corp")
-    project_id = insert_project(org_id, "noizu-infra")
+    NoizuPromptLingua.TRP.Cache.clear()
+    TestStub.reset()
+    org_id = TestStub.seed_org(Ecto.UUID.generate(), @org_slug)
 
     {:ok, ticket} =
       Tickets.create(%{
         ticket_type: "task",
         organization_id: org_id,
-        project_id: project_id,
         title: "Resolve me"
       })
 
-    {:ok, org_id: org_id, ticket: ticket}
+    {:ok, org_id: org_id, org_slug: @org_slug, ticket: ticket}
   end
 
   # ── Tickets.get_by_ref/2 ──────────────────────────────────────
@@ -48,7 +53,7 @@ defmodule NoizuPromptLingua.Domains.Tickets.TicketResolveRefTest do
   end
 
   test "a human key with the wrong org is not found", %{ticket: ticket} do
-    other_org = insert_org("side-org")
+    other_org = TestStub.seed_org(Ecto.UUID.generate(), "side-org")
     assert {:error, :not_found} = Tickets.get_by_ref(ticket.key, other_org)
   end
 
@@ -60,12 +65,7 @@ defmodule NoizuPromptLingua.Domains.Tickets.TicketResolveRefTest do
   # ── tool wiring (Ticket.Get) ──────────────────────────────────
 
   test "Ticket.Get accepts a human key + organization and echoes the key",
-       %{org_id: org_id, ticket: ticket} do
-    %{rows: [[org_slug]]} =
-      Noizu.PM.Repo.query!("SELECT slug FROM organizations WHERE id = $1", [
-        Ecto.UUID.dump!(org_id)
-      ])
-
+       %{org_slug: org_slug, ticket: ticket} do
     assert {:ok, %{id: id, key: key}} =
              Tickets.Tools.TicketGet.call(
                %{ticket_id: ticket.key, organization: org_slug},
@@ -83,30 +83,5 @@ defmodule NoizuPromptLingua.Domains.Tickets.TicketResolveRefTest do
     assert {:ok, %{id: id, key: key}} = Tickets.Tools.TicketGet.call(%{ticket_id: ticket.id}, %{})
     assert id == ticket.id
     assert key == ticket.key
-  end
-
-  # ── fixtures ──
-  # Tickets live on Noizu.PM.Repo post-cutover (PMBridge), so org/project fixtures
-  # must land in the pm_core test DB — Noizu.PM.Items reads them there.
-  defp insert_org(slug) do
-    %{rows: [[raw]]} =
-      Noizu.PM.Repo.query!(
-        "INSERT INTO organizations (id, slug, name, inserted_at, updated_at) " <>
-          "VALUES (gen_random_uuid(), $1, $2, now(), now()) RETURNING id",
-        ["#{slug}-#{System.unique_integer([:positive])}" |> String.slice(0, 40), "Org"]
-      )
-
-    Ecto.UUID.load!(raw)
-  end
-
-  defp insert_project(org_id, slug) do
-    %{rows: [[raw]]} =
-      Noizu.PM.Repo.query!(
-        "INSERT INTO projects (id, organization_id, slug, name, inserted_at, updated_at) " <>
-          "VALUES (gen_random_uuid(), $1, $2, $3, now(), now()) RETURNING id",
-        [Ecto.UUID.dump!(org_id), "#{slug}-#{System.unique_integer([:positive])}", "Project"]
-      )
-
-    Ecto.UUID.load!(raw)
   end
 end

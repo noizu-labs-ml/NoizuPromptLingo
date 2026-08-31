@@ -21,6 +21,26 @@ defmodule NoizuPromptLinguaWeb.CustomMCPGatewaySlugUrlsTest do
     # cached in Redis and the sandbox does not roll Redis back (same hazard as
     # org_slug_length_test). unique_integer is not ExUnit-seed derived.
     uniq = System.unique_integer([:positive])
+
+    # Post-TRP-cutover the gateway resolves org slugs through the TRP shared-key
+    # plane — point the client at the TestStub so created orgs resolve.
+    prev_cfg = Application.get_env(:noizu_prompt_lingua, :trp)
+    prev_transport = Application.get_env(:noizu_prompt_lingua, :trp_transport)
+
+    Application.put_env(:noizu_prompt_lingua, :trp,
+      base_url: "http://trp.test",
+      shared_key: "trp_sk_test"
+    )
+
+    Application.put_env(:noizu_prompt_lingua, :trp_transport, NoizuPromptLingua.TRP.TestStub)
+    NoizuPromptLingua.TRP.Cache.clear()
+    NoizuPromptLingua.TRP.TestStub.reset()
+
+    on_exit(fn ->
+      if prev_cfg, do: Application.put_env(:noizu_prompt_lingua, :trp, prev_cfg)
+      if prev_transport, do: Application.put_env(:noizu_prompt_lingua, :trp_transport, prev_transport)
+    end)
+
     %{uniq: uniq, org_a: nil, org_b: nil}
   end
 
@@ -128,18 +148,22 @@ defmodule NoizuPromptLinguaWeb.CustomMCPGatewaySlugUrlsTest do
 
   defp org_slug(prefix, uniq), do: "#{prefix}-org-#{uniq}"
 
+  # Post-TRP-cutover (W4/W8) NPL keeps org rows in its own app DB — the
+  # gateway's org-slug resolution reads them there; no pm_core repo involved.
   defp pm_repo_live? do
-    match?({:module, _}, Code.ensure_loaded(Noizu.PM.Repo)) and
-      is_pid(Process.whereis(Noizu.PM.Repo))
+    is_pid(Process.whereis(NoizuPromptLingua.Repo))
   end
 
   defp create_org(slug) do
-    {:ok, org} =
-      %Noizu.PM.Schema.Organizations.Organization{}
-      |> Ecto.Changeset.change(%{slug: slug, name: "W1 Org #{slug}"})
-      |> Noizu.PM.Repo.insert()
-
-    org
+    %NoizuPromptLingua.Schema.Organizations.Organization{}
+    |> Ecto.Changeset.change(%{slug: slug, name: "W1 Org #{slug}"})
+    |> NoizuPromptLingua.Repo.insert()
+    |> then(fn
+      {:ok, org} -> org
+      # Unique-violation on a re-run — the existing row is equally valid.
+      {:error, _} -> NoizuPromptLingua.Repo.get_by!(NoizuPromptLingua.Schema.Organizations.Organization, slug: slug)
+    end)
+    |> tap(&NoizuPromptLingua.TRP.TestStub.seed_org(&1.id, slug))
   end
 
   defp create_scope(slug, org_id) do

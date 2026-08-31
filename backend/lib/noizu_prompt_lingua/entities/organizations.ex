@@ -71,17 +71,17 @@ defmodule NoizuPromptLingua.Organizations do
   end
 
   @doc """
-  Slug for an org id (pm_core), or nil. Inverse of `get_id_by_slug/1`; used to
+  Slug for an org id (app-DB row), or nil. Inverse of `get_id_by_slug/1`; used to
   build canonical org-addressed URLs (e.g. the custom-MCP gateway's 301 of the
   legacy `/custom/:slug/mcp` path to `/org/:org_slug/custom/:slug/mcp`).
+  Post-TRP-cutover (W4/W8) orgs are read locally — the NPL app-DB row is the
+  org-slug source of truth for URL addressing; no pm_core repo involved.
   """
   def get_slug_by_id(id) do
-    NoizuPromptLingua.PMCore.with_pm(fn ->
-      case Noizu.PM.Organizations.get_organization(id) do
-        %{slug: slug} -> slug
-        _ -> nil
-      end
-    end)
+    case NoizuPromptLingua.Repo.get(Schema, id) do
+      %{slug: slug} -> slug
+      _ -> nil
+    end
   end
 
   def update_organization(id, attrs) do
