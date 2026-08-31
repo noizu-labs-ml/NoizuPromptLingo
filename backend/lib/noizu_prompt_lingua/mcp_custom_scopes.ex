@@ -49,6 +49,20 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
     pubsub
   )
 
+  # W5: the session manifest tool is enabled by default everywhere the tobor
+  # template applies — seeded (unrestricted, i.e. enabled + visible per the
+  # toolset layer's inverted semantics) into the template's sessions group and
+  # union-healed into template-derived scopes. jsonb only; no Liquibase.
+  @manifest_tool "Session_Manifest"
+
+  @doc "The manifest tool seeded by default into the `tobor` template's sessions group."
+  def manifest_tool, do: @manifest_tool
+
+  # Fresh group config for a default-package group; the sessions group carries
+  # the manifest tool entry explicitly.
+  defp group_seed("sessions"), do: %{"tools" => %{@manifest_tool => %{}}}
+  defp group_seed(_), do: %{"tools" => %{}}
+
   @doc "The typed-confirmation phrase for disabling required core groups."
   def confirm_phrase, do: @confirm_phrase
 
@@ -147,7 +161,7 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
   def get_default_package(_opts \\ []) do
     case get_by_slug(@default_package_slug) do
       nil ->
-        groups = Map.new(@default_package_groups, fn id -> {id, %{"tools" => %{}}} end)
+        groups = Map.new(@default_package_groups, fn id -> {id, group_seed(id)} end)
 
         attrs = %{
           "slug" => @default_package_slug,
@@ -185,7 +199,7 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
       Enum.reduce(@default_package_groups, groups, fn id, acc ->
         case Map.get(acc, id) do
           nil ->
-            Map.put(acc, id, %{"tools" => %{}})
+            Map.put(acc, id, group_seed(id))
 
           %{"disabled" => true} = gc ->
             if id in required and not already_confirmed_disabled?(gc) do
@@ -198,6 +212,7 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
             acc
         end
       end)
+      |> ensure_manifest_tool()
 
     if healed == groups do
       scope
@@ -284,10 +299,11 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
 
   # Lazily repair defaults cloned from the tobor template: add any
   # default-package groups missing from their config (template drift at clone
-  # time, e.g. a `sessions` group that never made it in). Additive only — a
-  # group the owner deliberately disabled stays disabled, and hand-built scopes
-  # (empty source_template_slug) are left alone. Other top-level config keys
-  # (e.g. `segment`) are preserved.
+  # time, e.g. a `sessions` group that never made it in), and additively seed
+  # the `Session_Manifest` tool into the sessions group when absent. Additive
+  # only — a group (or tool) the owner deliberately disabled stays disabled,
+  # and hand-built scopes (empty source_template_slug) are left alone. Other
+  # top-level config keys (e.g. `segment`) are preserved.
   defp maybe_put_groups_refresh(attrs, %{
          source_template_slug: @default_package_slug,
          config: config
@@ -297,10 +313,14 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
     missing =
       Enum.reject(@default_package_groups, fn id -> Map.has_key?(groups, id) end)
 
-    if missing == [] do
+    merged =
+      groups
+      |> Map.merge(Map.new(missing, fn id -> {id, group_seed(id)} end))
+      |> ensure_manifest_tool()
+
+    if merged == groups do
       attrs
     else
-      merged = Map.merge(groups, Map.new(missing, fn id -> {id, %{"tools" => %{}}} end))
       Map.put(attrs, "config", Map.put(config || %{}, "groups", merged))
     end
   end
@@ -543,11 +563,33 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
     if is_map(groups) and map_size(groups) > 0 do
       groups
     else
-      Map.new(@default_package_groups, fn id -> {id, %{"tools" => %{}}} end)
+      Map.new(@default_package_groups, fn id -> {id, group_seed(id)} end)
     end
   end
 
-  defp groups_from(_), do: Map.new(@default_package_groups, fn id -> {id, %{"tools" => %{}}} end)
+  defp groups_from(_), do: Map.new(@default_package_groups, fn id -> {id, group_seed(id)} end)
+
+  # Additive-only: the sessions group always carries the (unrestricted)
+  # manifest tool entry. An explicit owner override for `Session_Manifest`
+  # (disabled/hidden) is already present in the tools map and never clobbered.
+  defp ensure_manifest_tool(groups) when is_map(groups) do
+    case Map.get(groups, "sessions") do
+      %{"tools" => tools} = gc when is_map(tools) ->
+        if Map.has_key?(tools, @manifest_tool) do
+          groups
+        else
+          Map.put(groups, "sessions", Map.put(gc, "tools", Map.put(tools, @manifest_tool, %{})))
+        end
+
+      gc when is_map(gc) ->
+        Map.put(groups, "sessions", Map.put(gc, "tools", %{@manifest_tool => %{}}))
+
+      _ ->
+        groups
+    end
+  end
+
+  defp ensure_manifest_tool(groups), do: groups
 
   defp truthy?(true), do: true
   defp truthy?("true"), do: true
@@ -574,7 +616,7 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
   def get_core_variant(_opts \\ []) do
     case get_by_slug(@core_variant_slug) do
       nil ->
-        groups = Map.new(@core_variant_groups, fn id -> {id, %{"tools" => %{}}} end)
+        groups = Map.new(@core_variant_groups, fn id -> {id, group_seed(id)} end)
 
         attrs = %{
           "slug" => @core_variant_slug,
