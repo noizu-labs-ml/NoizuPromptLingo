@@ -16,7 +16,7 @@ defmodule NoizuPromptLinguaWeb.MCPCustomScopeControllerTest do
     assert %{"groups" => groups} = body
     sessions = Enum.find(groups, &(&1["id"] == "sessions"))
     assert sessions["label"] == "Sessions"
-    assert Enum.any?(sessions["tools"], &(&1["name"] == "Session.Create"))
+    assert Enum.any?(sessions["tools"], &(&1["name"] == "Session_Create"))
     refute Enum.any?(sessions["tools"], &(&1["name"] == "ToolSummary"))
   end
 
