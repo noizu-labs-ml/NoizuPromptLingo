@@ -17,27 +17,10 @@
  */
 
 import type { McpCustomScopeConfig } from '@/lib/api';
+import type { AclGroup, AclRule, AclState } from '@/types/tool-state';
 
-/** Mirrors kit ACLEditor AclRule (binds F1 AclRule: subject/resource are opaque ERP ref strings). */
-export interface AclRule {
-  id: string;
-  subject: string;
-  resource: string;
-  effect: 'allow' | 'deny';
-  scope: string;
-}
-
-/** Mirrors kit ACLEditor AclGroup. */
-export interface AclGroup {
-  id: string;
-  name: string;
-  members: string[];
-}
-
-export interface AclState {
-  rules: AclRule[];
-  groups: AclGroup[];
-}
+/** Shared F4 tool-state contract (F1 ERP refs) — re-exported for kit consumers. */
+export type { AclGroup, AclRule, AclState } from '@/types/tool-state';
 
 export type ClientKind = 'api_key' | 'oauth_client';
 
@@ -112,21 +95,27 @@ const FIXTURE_ACL: AclState = {
   rules: [
     {
       id: 'rule-fixture-1',
-      subject: 'ref:client:key-fixture-1',
-      resource: 'ref:organization:the-robot-lives',
+      subject: { kind: 'client', id: 'key-fixture-1' },
+      resource: { kind: 'organization', id: 'the-robot-lives' },
       effect: 'allow',
       scope: 'read',
+      priority: 0,
     },
     {
       id: 'rule-fixture-2',
-      subject: 'ref:client:key-fixture-1',
-      resource: 'ref:wiki:internal-notes',
+      subject: { kind: 'client', id: 'key-fixture-1' },
+      resource: { kind: 'wiki', id: 'internal-notes' },
       effect: 'deny',
       scope: 'read',
+      priority: 0,
     },
   ],
   groups: [
-    { id: 'group-fixture-1', name: 'ci-bots', members: ['ref:client:key-fixture-1'] },
+    {
+      id: 'group-fixture-1',
+      name: 'ci-bots',
+      members: [{ kind: 'client', id: 'key-fixture-1' }],
+    },
   ],
 };
 
@@ -143,7 +132,7 @@ function fixturePermissions(client: ScopeClient): ClientPermissions {
     toolsetConfig: { groups: {} },
     tempWindows: {},
     acl: {
-      rules: FIXTURE_ACL.rules.map((r) => ({ ...r, subject: `ref:client:${client.id}` })),
+      rules: FIXTURE_ACL.rules.map((r) => ({ ...r, subject: { kind: 'client', id: client.id } })),
       groups: FIXTURE_ACL.groups.map((g) => ({ ...g })),
     },
     permissionGroups: client.kind === 'api_key' ? ['ci-bots'] : [],

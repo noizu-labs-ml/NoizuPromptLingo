@@ -12,10 +12,21 @@ export { default as SlideOverSidebar } from './slideover-sidebar';
 export type { SlideOverTab } from './slideover-sidebar';
 
 export { default as ACLEditor } from './acl-editor';
-export type { AclEffect, AclRule, AclGroup, AclState } from './acl-editor';
 
 export { default as ToolTogglesGrid } from './tool-toggles-grid';
-export type { ToolToggleEntry, ToolToggleGroup } from './tool-toggles-grid';
+
+// Shared tool-state contract (F1/F2 binding) — canonical types live in
+// @/types/tool-state; re-exported here so kit consumers have one import site.
+export type {
+  AclEffect,
+  AclGroup,
+  AclRule,
+  AclState,
+  EffectiveToolState,
+  EntityRef,
+  ToolEntry,
+  ToolSection,
+} from '@/types/tool-state';
 
 export { default as TempWindowEditor } from './temp-window-editor';
 export type { TempWindow } from './temp-window-editor';
