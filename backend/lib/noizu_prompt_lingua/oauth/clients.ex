@@ -134,6 +134,27 @@ defmodule NoizuPromptLingua.OAuth.Clients do
 
   def authenticate_client(_, _), do: {:error, :invalid_client}
 
+  @doc """
+  W8: persist the consent screen's toolset narrowing on the client
+  (`oauth_clients.toolset_config`, KeyToolsets shape — only blocked entries
+  stored). Normalized on write via the shared API-key normalizer; an empty
+  narrowing stores `%{}` (= no narrowing = legacy ungated behavior).
+  """
+  def update_toolset_config(%OAuthClient{} = client, config) do
+    normalized = NoizuPromptLingua.MCPApiKeys.normalize_toolset(config || %{})
+
+    # A narrowing with no entries collapses to the bare empty config so the
+    # row stays byte-identical to legacy clients (config_for/1 treats %{} as nil).
+    normalized =
+      if Map.get(normalized, "groups", %{}) == %{}, do: %{}, else: normalized
+
+    client
+    |> OAuthClient.changeset(%{toolset_config: normalized})
+    |> Repo.update()
+  end
+
+  def update_toolset_config(_, _), do: {:error, :invalid_client}
+
   def create_first_party!(attrs) do
     client_id = attrs[:client_id] || "fp_" <> random_id(8)
 

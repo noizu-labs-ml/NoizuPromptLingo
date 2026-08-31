@@ -21,13 +21,17 @@ defmodule NoizuPromptLingua.Tools.Catalog do
           hidden: boolean()
         }
 
-  def resolve_alias(name) do
-    name
-  end
+  @doc """
+  Canonical tool name for a caller-supplied identifier. Dotted spellings
+  (`Session.Create`) are aliases; the canonical form is `Session_Create`
+  (see `NoizuPromptLingua.MCP.ToolNames`).
+  """
+  def resolve_alias(name), do: NoizuPromptLingua.MCP.ToolNames.canonical(name)
 
   def build(server \\ NoizuPromptLingua.MCP, ctx \\ nil) do
     specs =
       specs(server, ctx)
+      |> NoizuPromptLingua.MCP.ToolNames.canonical_specs()
       |> NoizuPromptLingua.MCP.KeyToolsets.apply_hidden(ctx, nil)
 
     Enum.map(specs, fn spec ->
@@ -77,7 +81,8 @@ defmodule NoizuPromptLingua.Tools.Catalog do
 
   def call_hidden_tool(name, arguments, server \\ NoizuPromptLingua.MCP, ctx \\ nil) do
     name = resolve_alias(name)
-    specs = specs(server, ctx)
+    # Canonicalize specs so dotted catalog names match the canonical lookup.
+    specs = NoizuPromptLingua.MCP.ToolNames.canonical_specs(specs(server, ctx))
 
     case Enum.find(specs, &(&1.definition.name == name)) do
       nil ->

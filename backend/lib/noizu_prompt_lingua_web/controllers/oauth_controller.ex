@@ -14,6 +14,7 @@ defmodule NoizuPromptLinguaWeb.OAuthController do
   alias NoizuPromptLingua.OAuth.{
     AuthorizationServer,
     Clients,
+    ConsentManifest,
     Elevation,
     Grants,
     Pkce,
@@ -98,6 +99,11 @@ defmodule NoizuPromptLinguaWeb.OAuthController do
             send_resp(conn, 400, "missing code_challenge")
 
           true ->
+            # W8: persist the consent screen's toolset narrowing (allow/block
+            # per section + tool) on the client before issuing the code.
+            # Failure is logged, never blocks consent.
+            capture_narrowing(client, params)
+
             grant = Grants.approve!(user.id, client.client_id, resource, scope)
 
             code =
@@ -352,6 +358,7 @@ defmodule NoizuPromptLinguaWeb.OAuthController do
           <dt>Resource</dt><dd><code>#{html_escape(resource)}</code></dd>
           <dt>Scopes</dt><dd><code>#{html_escape(params["scope"] || "mcp")}</code></dd>
         </dl>
+        #{consent_manifest_html(ConsentManifest.sections())}
         <form method="post" action="/oauth/consent">
           <input type="hidden" name="client_id" value="#{html_escape(client.client_id)}" />
           <input type="hidden" name="redirect_uri" value="#{html_escape(params["redirect_uri"])}" />
@@ -369,6 +376,71 @@ defmodule NoizuPromptLinguaWeb.OAuthController do
     |> put_session(:oauth_pending, pending)
     |> put_resp_content_type("text/html")
     |> send_resp(200, html)
+  end
+
+  # ── W8: consent tool manifest ─────────────────────────────────────────────
+
+  # Requested manifest: one section (group) per row of the tobor default
+  # package, per-tool allow toggles pre-checked to the client's request.
+  # The user narrows by unchecking; required core groups render locked.
+  defp consent_manifest_html(sections) do
+    rows =
+      Enum.map_join(sections, "\n", fn %{group: gid, label: label, required: required?, tools: tools} ->
+        """
+        <fieldset class="consent-section">
+          <legend>
+            <input type="checkbox" name="allow_group[#{html_escape(gid)}]" value="on" checked
+                   onclick="consentToggleGroup(this, '#{html_escape(gid)}')"
+                   #{if required?, do: "disabled"} />
+            #{html_escape(label)}#{if required?, do: " <span class=\"consent-note\">(required)</span>"}
+          </legend>
+          #{consent_tools_html(gid, tools)}
+        </fieldset>
+        """
+      end)
+
+    """
+    <p><strong>Requested tool access</strong> <span class="consent-note">(uncheck anything you want to withhold)</span></p>
+    #{rows}
+    <script>
+      function consentToggleGroup(cb, gid) {
+        document.querySelectorAll('input[data-group="' + gid + '"]').forEach(function (t) {
+          t.checked = cb.checked;
+          t.disabled = !cb.checked;
+        });
+      }
+    </script>
+    """
+  end
+
+  defp consent_tools_html(_gid, []), do: ""
+
+  defp consent_tools_html(gid, tools) do
+    Enum.map_join(tools, "\n", fn name ->
+      """
+      <label class="consent-tool">
+        <input type="checkbox" name="allow_tool[#{html_escape(gid)}][#{html_escape(name)}]" value="on" checked data-group="#{html_escape(gid)}" />
+        <code>#{html_escape(name)}</code>
+      </label>
+      """
+    end)
+  end
+
+  # Latest consent decision wins: rebuild the manifest server-side and persist
+  # whatever the submitted checkboxes imply (only blocked entries are stored).
+  defp capture_narrowing(client, params) do
+    narrowing = ConsentManifest.narrowing(ConsentManifest.sections(), params)
+
+    case Clients.update_toolset_config(client, narrowing) do
+      {:ok, _} ->
+        :ok
+
+      {:error, reason} ->
+        require Logger
+        Logger.warning("[OAuth] toolset narrowing not persisted for #{client.client_id}: #{inspect(reason)}")
+
+        :ok
+    end
   end
 
   defp validate_authorize_params(params) do
@@ -514,6 +586,10 @@ defmodule NoizuPromptLinguaWeb.OAuthController do
         dt { font-weight: 600; margin-top: 0.75rem; }
         dd { margin: 0.25rem 0 0; }
         button { cursor: pointer; }
+        .consent-section { margin: 0.9rem 0; border: 1px solid #e4e4e7; border-radius: 8px; padding: 0.5rem 0.75rem; }
+        .consent-section legend { font-weight: 600; padding: 0 0.35rem; }
+        .consent-tool { display: block; margin: 0.15rem 0; }
+        .consent-note { color: #71717a; font-size: 0.85rem; font-weight: 400; }
       </style>
     </head>
     <body>

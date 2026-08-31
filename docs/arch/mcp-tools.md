@@ -2,6 +2,8 @@
 
 The NPL MCP server exposes **58 MCP-visible tools** and **22 hidden discoverable tools** callable via `ToolCall`. Tools are registered in `src/npl_mcp/launcher.py` using `@mcp_discoverable` (visible) or `register_discoverable()` (hidden).
 
+> **Naming (F5):** canonical tool names use UNDERSCORE separators (`Session_Create`, `Organization_List`). The legacy dotted spelling (`Session.Create`) is accepted as an alias at dispatch, discovery, and `ToolCall`, but is never emitted.
+
 ---
 
 ## Discovery (5 tools)
@@ -29,7 +31,7 @@ The NPL MCP server exposes **58 MCP-visible tools** and **22 hidden discoverable
 
 | Tool | Parameters | Returns | When to Use |
 |------|-----------|---------|-------------|
-| **ToolSession.Generate** | `agent`, `brief`, `task`, `project`, `parent?`, `notes?` | UUID + action (created\|existing) | Create/lookup agent session by (project, agent, task) |
+| **ToolSession_Generate** | `agent`, `brief`, `task`, `project`, `parent?`, `notes?` | UUID + action (created\|existing) | Create/lookup agent session by (project, agent, task) |
 | **ToolSession** | `uuid`, `verbose?` | Session metadata | Retrieve session info by UUID |
 
 ---
@@ -39,11 +41,11 @@ The NPL MCP server exposes **58 MCP-visible tools** and **22 hidden discoverable
 | Tool | Tier | Parameters | When to Use |
 |------|------|-----------|-------------|
 | **Instructions** | Visible | `uuid`, `session`, `version?`, `json?` | Retrieve versioned instruction document |
-| **Instructions.Create** | Visible | `title`, `description`, `tags[]`, `body`, `session` | Create new instruction with v1 |
-| **Instructions.List** | Visible | `session`, `query?`, `mode?`, `tags?`, `limit?` | Search/list instructions |
-| **Instructions.Update** | Hidden | `uuid`, `body`, `change_note?`, `session` | Create new version of instruction |
-| **Instructions.ActiveVersion** | Hidden | `uuid`, `version`, `session` | Switch active version |
-| **Instructions.Versions** | Hidden | `uuid`, `session` | List version history |
+| **Instructions_Create** | Visible | `title`, `description`, `tags[]`, `body`, `session` | Create new instruction with v1 |
+| **Instructions_List** | Visible | `session`, `query?`, `mode?`, `tags?`, `limit?` | Search/list instructions |
+| **Instructions_Update** | Hidden | `uuid`, `body`, `change_note?`, `session` | Create new version of instruction |
+| **Instructions_ActiveVersion** | Hidden | `uuid`, `version`, `session` | Switch active version |
+| **Instructions_Versions** | Hidden | `uuid`, `session` | List version history |
 
 ---
 
@@ -51,8 +53,8 @@ The NPL MCP server exposes **58 MCP-visible tools** and **22 hidden discoverable
 
 | Tool | Parameters | Returns | When to Use |
 |------|-----------|---------|-------------|
-| **Agent.List** | — | Agent metadata list (name, model, description) | List available agent definitions |
-| **Agent.Load** | `name` | Full agent spec with markdown body | Load complete agent specification |
+| **Agent_List** | — | Agent metadata list (name, model, description) | List available agent definitions |
+| **Agent_Load** | `name` | Full agent spec with markdown body | Load complete agent specification |
 
 ---
 
@@ -60,10 +62,10 @@ The NPL MCP server exposes **58 MCP-visible tools** and **22 hidden discoverable
 
 | Tool | Parameters | When to Use |
 |------|-----------|-------------|
-| **Tasks.Create** | `title`, `description?`, `status?`, `priority?`, `assigned_to?`, `notes?` | Create a task |
-| **Tasks.Get** | `task_id` | Fetch task by ID |
-| **Tasks.List** | `status?`, `assigned_to?`, `limit?` | List tasks with filtering |
-| **Tasks.UpdateStatus** | `task_id`, `status`, `notes?` | Update status, append note |
+| **Tasks_Create** | `title`, `description?`, `status?`, `priority?`, `assigned_to?`, `notes?` | Create a task |
+| **Tasks_Get** | `task_id` | Fetch task by ID |
+| **Tasks_List** | `status?`, `assigned_to?`, `limit?` | List tasks with filtering |
+| **Tasks_UpdateStatus** | `task_id`, `status`, `notes?` | Update status, append note |
 
 ---
 
@@ -71,15 +73,15 @@ The NPL MCP server exposes **58 MCP-visible tools** and **22 hidden discoverable
 
 | Tool | Parameters | When to Use |
 |------|-----------|-------------|
-| **TaskQueue.Create** | `name`, `description?`, `session_id?`, `chat_room_id?` | Create named task queue |
-| **TaskQueue.Get** | `queue_id` | Get queue with task counts |
-| **TaskQueue.List** | `status?`, `limit?` | List queues |
-| **TaskQueue.Feed** | `queue_id`, `since?`, `limit?` | Queue activity feed |
-| **Tasks.CreateInQueue** | `queue_id`, `title`, `description?`, `status?`, `priority?`, `assigned_to?`, `acceptance_criteria?`, `deadline?`, `complexity?` | Create task in queue |
-| **Tasks.AssignComplexity** | `task_id`, `complexity`, `notes?` | Set complexity score |
-| **Tasks.AddArtifact** | `task_id`, `artifact_type`, `artifact_id?`, `git_branch?`, `description?` | Link artifact/branch to task |
-| **Tasks.ListArtifacts** | `task_id` | List linked artifacts |
-| **Tasks.Feed** | `task_id`, `since?`, `limit?` | Task activity feed |
+| **TaskQueue_Create** | `name`, `description?`, `session_id?`, `chat_room_id?` | Create named task queue |
+| **TaskQueue_Get** | `queue_id` | Get queue with task counts |
+| **TaskQueue_List** | `status?`, `limit?` | List queues |
+| **TaskQueue_Feed** | `queue_id`, `since?`, `limit?` | Queue activity feed |
+| **Tasks_CreateInQueue** | `queue_id`, `title`, `description?`, `status?`, `priority?`, `assigned_to?`, `acceptance_criteria?`, `deadline?`, `complexity?` | Create task in queue |
+| **Tasks_AssignComplexity** | `task_id`, `complexity`, `notes?` | Set complexity score |
+| **Tasks_AddArtifact** | `task_id`, `artifact_type`, `artifact_id?`, `git_branch?`, `description?` | Link artifact/branch to task |
+| **Tasks_ListArtifacts** | `task_id` | List linked artifacts |
+| **Tasks_Feed** | `task_id`, `since?`, `limit?` | Task activity feed |
 
 ---
 
@@ -87,12 +89,12 @@ The NPL MCP server exposes **58 MCP-visible tools** and **22 hidden discoverable
 
 | Tool | Parameters | When to Use |
 |------|-----------|-------------|
-| **Artifact.Create** | `title`, `content?`, `kind?`, `description?`, `created_by?`, `notes?`, `binary_content_b64?`, `mime_type?` | Create text or binary artifact |
-| **Artifact.AddRevision** | `artifact_id`, `content?`, `notes?`, `created_by?`, `binary_content_b64?`, `mime_type?` | Add revision to artifact |
-| **Artifact.Get** | `artifact_id`, `revision?` | Fetch artifact with specific revision |
-| **Artifact.GetBinary** | `artifact_id`, `revision?` | Get binary content as base64 |
-| **Artifact.List** | `kind?`, `limit?` | List artifacts |
-| **Artifact.ListRevisions** | `artifact_id` | List revision summaries |
+| **Artifact_Create** | `title`, `content?`, `kind?`, `description?`, `created_by?`, `notes?`, `binary_content_b64?`, `mime_type?` | Create text or binary artifact |
+| **Artifact_AddRevision** | `artifact_id`, `content?`, `notes?`, `created_by?`, `binary_content_b64?`, `mime_type?` | Add revision to artifact |
+| **Artifact_Get** | `artifact_id`, `revision?` | Fetch artifact with specific revision |
+| **Artifact_GetBinary** | `artifact_id`, `revision?` | Get binary content as base64 |
+| **Artifact_List** | `kind?`, `limit?` | List artifacts |
+| **Artifact_ListRevisions** | `artifact_id` | List revision summaries |
 
 ---
 
@@ -100,12 +102,12 @@ The NPL MCP server exposes **58 MCP-visible tools** and **22 hidden discoverable
 
 | Tool | Parameters | When to Use |
 |------|-----------|-------------|
-| **Session.Create** | `title?`, `description?`, `status?`, `created_by?` | Create generic work session |
-| **Session.Get** | `session_id` | Fetch session |
-| **Session.List** | `status?`, `limit?` | List sessions |
-| **Session.Update** | `session_id`, `title?`, `status?`, `description?` | Update session metadata |
-| **Session.Contents** | `session_id` | Get aggregated chat rooms + artifacts |
-| **Session.Archive** | `session_id` | Archive a session |
+| **Session_Create** | `title?`, `description?`, `status?`, `created_by?` | Create generic work session |
+| **Session_Get** | `session_id` | Fetch session |
+| **Session_List** | `status?`, `limit?` | List sessions |
+| **Session_Update** | `session_id`, `title?`, `status?`, `description?` | Update session metadata |
+| **Session_Contents** | `session_id` | Get aggregated chat rooms + artifacts |
+| **Session_Archive** | `session_id` | Archive a session |
 
 ---
 
@@ -124,20 +126,20 @@ The NPL MCP server exposes **58 MCP-visible tools** and **22 hidden discoverable
 
 | Tool | Parameters | When to Use |
 |------|-----------|-------------|
-| **Chat.ListRooms** | `limit?` | List rooms by activity |
-| **Chat.CreateRoom** | `name`, `description?` | Create chat room |
-| **Chat.GetRoom** | `room_id` | Get room details |
-| **Chat.ListMessages** | `room_id`, `limit?`, `before_id?` | List messages (newest first) |
-| **Chat.SendMessage** | `room_id`, `content`, `author?` | Post message |
-| **Chat.AddMember** | `room_id`, `persona_slug` | Add persona to room |
-| **Chat.ListMembers** | `room_id` | List room members |
-| **Chat.CreateEvent** | `room_id`, `event_type`, `persona`, `data?` | Create structured event |
-| **Chat.ListEvents** | `room_id`, `since?`, `limit?` | List events |
-| **Chat.React** | `event_id`, `persona`, `emoji` | React to event |
-| **Chat.CreateTodo** | `room_id`, `persona`, `description`, `assigned_to?` | Create todo item |
-| **Chat.ShareArtifact** | `room_id`, `persona`, `artifact_id`, `revision?` | Share artifact in room |
-| **Chat.Notifications** | `persona`, `unread_only?` | List notifications |
-| **Chat.ReadNotification** | `notification_id` | Mark notification read |
+| **Chat_ListRooms** | `limit?` | List rooms by activity |
+| **Chat_CreateRoom** | `name`, `description?` | Create chat room |
+| **Chat_GetRoom** | `room_id` | Get room details |
+| **Chat_ListMessages** | `room_id`, `limit?`, `before_id?` | List messages (newest first) |
+| **Chat_SendMessage** | `room_id`, `content`, `author?` | Post message |
+| **Chat_AddMember** | `room_id`, `persona_slug` | Add persona to room |
+| **Chat_ListMembers** | `room_id` | List room members |
+| **Chat_CreateEvent** | `room_id`, `event_type`, `persona`, `data?` | Create structured event |
+| **Chat_ListEvents** | `room_id`, `since?`, `limit?` | List events |
+| **Chat_React** | `event_id`, `persona`, `emoji` | React to event |
+| **Chat_CreateTodo** | `room_id`, `persona`, `description`, `assigned_to?` | Create todo item |
+| **Chat_ShareArtifact** | `room_id`, `persona`, `artifact_id`, `revision?` | Share artifact in room |
+| **Chat_Notifications** | `persona`, `unread_only?` | List notifications |
+| **Chat_ReadNotification** | `notification_id` | Mark notification read |
 
 ---
 
@@ -145,11 +147,11 @@ The NPL MCP server exposes **58 MCP-visible tools** and **22 hidden discoverable
 
 | Tool | Parameters | When to Use |
 |------|-----------|-------------|
-| **Review.Create** | `artifact_id`, `revision_id`, `reviewer_persona` | Start review for artifact revision |
-| **Review.AddComment** | `review_id`, `location`, `comment`, `persona` | Add inline comment |
-| **Review.AddOverlay** | `review_id`, `x`, `y`, `comment`, `persona` | Add coordinate annotation (images) |
-| **Review.Get** | `review_id`, `include_comments?` | Fetch review with comments |
-| **Review.Complete** | `review_id`, `overall_comment?` | Mark review completed |
+| **Review_Create** | `artifact_id`, `revision_id`, `reviewer_persona` | Start review for artifact revision |
+| **Review_AddComment** | `review_id`, `location`, `comment`, `persona` | Add inline comment |
+| **Review_AddOverlay** | `review_id`, `x`, `y`, `comment`, `persona` | Add coordinate annotation (images) |
+| **Review_Get** | `review_id`, `include_comments?` | Fetch review with comments |
+| **Review_Complete** | `review_id`, `overall_comment?` | Mark review completed |
 
 ---
 
@@ -157,7 +159,7 @@ The NPL MCP server exposes **58 MCP-visible tools** and **22 hidden discoverable
 
 | Tool | Parameters | When to Use |
 |------|-----------|-------------|
-| **Orchestration.Trigger** | `feature_description`, `agent?` (default: npl-tdd-coder) | Queue feature for TDD pipeline |
+| **Orchestration_Trigger** | `feature_description`, `agent?` (default: npl-tdd-coder) | Queue feature for TDD pipeline |
 
 ---
 
@@ -165,8 +167,8 @@ The NPL MCP server exposes **58 MCP-visible tools** and **22 hidden discoverable
 
 | Tool | Parameters | When to Use |
 |------|-----------|-------------|
-| **Skill.Validate** | `content`, `filename?` | Validate skill file structure |
-| **Skill.Evaluate** | `content`, `filename?` | Score skill quality (0.0–1.0) across dimensions |
+| **Skill_Validate** | `content`, `filename?` | Validate skill file structure |
+| **Skill_Evaluate** | `content`, `filename?` | Score skill quality (0.0–1.0) across dimensions |
 
 ---
 
@@ -174,15 +176,15 @@ The NPL MCP server exposes **58 MCP-visible tools** and **22 hidden discoverable
 
 | Tool | Parameters | When to Use |
 |------|-----------|-------------|
-| **Tasker.Spawn** | `task`, `chat_room_id`, `parent_agent_id?`, `patterns?`, `session_id?`, `timeout_minutes?`, `nag_minutes?` | Spawn ephemeral tasker |
-| **Tasker.Get** | `tasker_id` | Fetch tasker status |
-| **Tasker.List** | `status?`, `session_id?` | List taskers |
-| **Tasker.Touch** | `tasker_id` | Reset idle timer |
-| **Tasker.Dismiss** | `tasker_id`, `reason?` | Terminate tasker |
-| **Tasker.KeepAlive** | `tasker_id` | Respond to nag |
-| **Fabric.Apply** | `content`, `pattern`, `model?`, `timeout?` | Apply fabric pattern |
-| **Fabric.Analyze** | `content`, `patterns[]`, `combine_results?` | Apply multiple patterns |
-| **Fabric.ListPatterns** | — | List available patterns |
+| **Tasker_Spawn** | `task`, `chat_room_id`, `parent_agent_id?`, `patterns?`, `session_id?`, `timeout_minutes?`, `nag_minutes?` | Spawn ephemeral tasker |
+| **Tasker_Get** | `tasker_id` | Fetch tasker status |
+| **Tasker_List** | `status?`, `session_id?` | List taskers |
+| **Tasker_Touch** | `tasker_id` | Reset idle timer |
+| **Tasker_Dismiss** | `tasker_id`, `reason?` | Terminate tasker |
+| **Tasker_KeepAlive** | `tasker_id` | Respond to nag |
+| **Fabric_Apply** | `content`, `pattern`, `model?`, `timeout?` | Apply fabric pattern |
+| **Fabric_Analyze** | `content`, `patterns[]`, `combine_results?` | Apply multiple patterns |
+| **Fabric_ListPatterns** | — | List available patterns |
 
 ---
 
@@ -192,16 +194,16 @@ The NPL MCP server exposes **58 MCP-visible tools** and **22 hidden discoverable
 
 | Tool | Parameters | When to Use |
 |------|-----------|-------------|
-| **Browser.Capture** | `url`, `viewport?`, `theme?`, `full_page?`, `session_key?` | Screenshot a web page |
-| **Browser.Interact.Navigate** | `session_id`, `url` | Navigate browser session |
-| **Browser.Interact.Click** | `session_id`, `selector` | Click element |
-| **Browser.Interact.Fill** | `session_id`, `selector`, `value` | Fill form field |
-| **Browser.Interact.GetState** | `session_id` | Get page state (URL, title, scroll) |
-| **Browser.ListSessions** | — | List active browser sessions |
-| **Browser.CloseSession** | `session_id` | Close browser session |
-| **Browser.Diff** | `baseline_bytes`, `comparison_bytes`, `threshold?` | Compare two screenshots |
-| **Browser.Checkpoint** | `name`, `urls[]`, `base_url?`, `viewports?`, `themes?` | Multi-URL visual checkpoint |
-| **Browser.CompareCheckpoints** | `baseline_slug`, `comparison_slug`, `threshold?` | Compare checkpoint sets |
+| **Browser_Capture** | `url`, `viewport?`, `theme?`, `full_page?`, `session_key?` | Screenshot a web page |
+| **Browser_Interact.Navigate** | `session_id`, `url` | Navigate browser session |
+| **Browser_Interact.Click** | `session_id`, `selector` | Click element |
+| **Browser_Interact.Fill** | `session_id`, `selector`, `value` | Fill form field |
+| **Browser_Interact.GetState** | `session_id` | Get page state (URL, title, scroll) |
+| **Browser_ListSessions** | — | List active browser sessions |
+| **Browser_CloseSession** | `session_id` | Close browser session |
+| **Browser_Diff** | `baseline_bytes`, `comparison_bytes`, `threshold?` | Compare two screenshots |
+| **Browser_Checkpoint** | `name`, `urls[]`, `base_url?`, `viewports?`, `themes?` | Multi-URL visual checkpoint |
+| **Browser_CompareCheckpoints** | `baseline_slug`, `comparison_slug`, `threshold?` | Compare checkpoint sets |
 
 ### Hidden (via ToolCall)
 
@@ -221,9 +223,9 @@ All callable via `ToolCall`. Provide DB-backed CRUD for projects, personas, and 
 
 | Tool | When to Use |
 |------|-------------|
-| **Proj.Projects.Create/Get/List** | Project CRUD |
-| **Proj.UserPersonas.Create/Get/Update/Delete/List** | Persona CRUD |
-| **Proj.UserStories.Create/Get/Update/Delete/List** | Story CRUD |
+| **Proj_Projects.Create/Get/List** | Project CRUD |
+| **Proj_UserPersonas.Create/Get/Update/Delete/List** | Persona CRUD |
+| **Proj_UserStories.Create/Get/Update/Delete/List** | Story CRUD |
 
 ---
 

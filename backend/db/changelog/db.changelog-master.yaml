@@ -244,3 +244,9 @@ databaseChangeLog:
   - include:
       file: 080-mcp-key-toolsets.yaml
       relativeToChangelogFile: true
+  - include:
+      file: 081-acl-core.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 082-org-slug-uniqueness.yaml
+      relativeToChangelogFile: true
