@@ -64,6 +64,9 @@ NoizuPromptLingua.McpOverviewTestSchema.ensure!()
 # Ensure OAuth AS tables (Liquibase 074) exist for OAuth suite.
 NoizuPromptLingua.OAuthTestSchema.ensure!()
 
+# Ensure ACL/group tables (Liquibase 081) exist for the ACL suite.
+NoizuPromptLingua.AclTestSchema.ensure!()
+
 # Overview generation uses the deterministic (network-free) adapter in tests; the real
 # LLM adapter (Generator.LLM) is the runtime default. Embeddings already run deterministic
 # (set below), so the whole mcp_overview flow is offline in the suite.
