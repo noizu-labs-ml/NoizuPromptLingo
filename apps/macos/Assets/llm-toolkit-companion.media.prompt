@@ -1,0 +1,28 @@
+schema: "0.4"
+id: llm-toolkit-macos-companion
+type: image
+service: imagine
+quality: high
+
+prompt:
+  text: |
+    Square bust portrait of the LLM Toolkit watchdog mascot. Matte charcoal
+    robot, rounded head, single plasma-cyan visor slit, cyan diamond on the
+    chest. Dark void background with faint cyan falloff. Quiet, competent,
+    not a toy. No text.
+  negative: "text, letters, watermark, busy background, cute chibi exaggeration"
+
+output:
+  formats:
+    - format: png
+      quality: 100
+      filename: WatchdogCompanion
+  dimensions:
+    width: 1024
+    height: 1024
+    aspect_ratio: "1:1"
+  transparency: none
+  color_space: sRGB
+
+tags: [llm-toolkit, macos, companion, brand]
+product_targets: [macos-in-app]

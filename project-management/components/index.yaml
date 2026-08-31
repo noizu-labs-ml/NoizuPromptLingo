@@ -1,0 +1,281 @@
+components:
+  - id: CMP-01
+    name: Search Bar
+    slug: search-bar
+    category: Input & Forms
+    surfaces: [web, cli-ink]
+    file: 01-search-bar.md
+    used_in: [SCR-01, SCR-16]
+  - id: CMP-02
+    name: Filter Bar
+    slug: filter-bar
+    category: Input & Forms
+    surfaces: [web, cli-ink]
+    file: 02-filter-bar.md
+    used_in: [SCR-01, SCR-03, SCR-16, SCR-18]
+  - id: CMP-03
+    name: Tag Chips
+    slug: tag-chips
+    category: Input & Forms
+    surfaces: [web, cli-ink]
+    file: 03-tag-chips.md
+    used_in: [SCR-02, SCR-03, SCR-04, SCR-11, SCR-12, SCR-17, SCR-19, SCR-25, SCR-26]
+  - id: CMP-04
+    name: Stat Row / Stat Card
+    slug: stat-row
+    category: Data Display
+    surfaces: [web]
+    file: 04-stat-row.md
+    used_in: [SCR-01, SCR-02]
+  - id: CMP-05
+    name: Conversation List Item (Card / Row)
+    slug: conversation-list-item
+    category: Cards & Tiles
+    surfaces: [web, cli-ink]
+    file: 05-conversation-list-item.md
+    used_in: [SCR-01, SCR-02, SCR-03, SCR-16, SCR-17, SCR-18]
+  - id: CMP-06
+    name: Search Result Row
+    slug: search-result-row
+    category: Data Display
+    surfaces: [web, cli-ink, cli-command]
+    file: 06-search-result-row.md
+    used_in: [SCR-01, SCR-16, SCR-31]
+  - id: CMP-07
+    name: Project Sidebar / Project Card
+    slug: project-sidebar-card
+    category: Cards & Tiles
+    surfaces: [web, cli-ink]
+    file: 07-project-sidebar-card.md
+    used_in: [SCR-01, SCR-02, SCR-16, SCR-17]
+  - id: CMP-08
+    name: Group Header
+    slug: group-header
+    category: Navigation & Layout
+    surfaces: [web, cli-ink]
+    file: 08-group-header.md
+    used_in: [SCR-01, SCR-16]
+  - id: CMP-09
+    name: Dataset Card
+    slug: dataset-card
+    category: Cards & Tiles
+    surfaces: [web, cli-ink]
+    file: 09-dataset-card.md
+    used_in: [SCR-09, SCR-23]
+  - id: CMP-10
+    name: Quality Bar
+    slug: quality-bar
+    category: Feedback & Indicators
+    surfaces: [web, cli-ink]
+    file: 10-quality-bar.md
+    used_in: [SCR-09, SCR-10, SCR-23, SCR-24]
+  - id: CMP-11
+    name: Quality Label Badge / Selector
+    slug: quality-label-badge
+    category: Data Display
+    surfaces: [web, cli-ink]
+    file: 11-quality-label-badge.md
+    used_in: [SCR-10, SCR-24]
+  - id: CMP-12
+    name: Source Badge
+    slug: source-badge
+    category: Data Display
+    surfaces: [web, cli-ink]
+    file: 12-source-badge.md
+    used_in: [SCR-10, SCR-11, SCR-24, SCR-25]
+  - id: CMP-13
+    name: Thread Header
+    slug: thread-header
+    category: Navigation & Layout
+    surfaces: [web, cli-ink]
+    file: 13-thread-header.md
+    used_in: [SCR-04, SCR-19]
+  - id: CMP-14
+    name: Action Bar
+    slug: action-bar
+    category: Navigation & Layout
+    surfaces: [web, cli-ink]
+    file: 14-action-bar.md
+    used_in: [SCR-04, SCR-19]
+  - id: CMP-15
+    name: Thread Timeline
+    slug: thread-timeline
+    category: Domain-Specific
+    surfaces: [web]
+    file: 15-thread-timeline.md
+    used_in: [SCR-04]
+  - id: CMP-16
+    name: Version Timeline
+    slug: version-timeline
+    category: Domain-Specific
+    surfaces: [web]
+    file: 16-version-timeline.md
+    used_in: [SCR-05]
+  - id: CMP-17
+    name: Message Block
+    slug: message-block
+    category: AI-Specific
+    surfaces: [web, cli-ink]
+    file: 17-message-block.md
+    used_in: [SCR-04, SCR-05, SCR-08, SCR-19, SCR-21, SCR-33]
+  - id: CMP-18
+    name: Thinking Block
+    slug: thinking-block
+    category: AI-Specific
+    surfaces: [web, cli-ink]
+    file: 18-thinking-block.md
+    used_in: [SCR-04, SCR-19]
+  - id: CMP-19
+    name: Tool Use / Tool Result Block
+    slug: tool-use-result-block
+    category: AI-Specific
+    surfaces: [web, cli-ink]
+    file: 19-tool-use-result-block.md
+    used_in: [SCR-04, SCR-19, SCR-33]
+  - id: CMP-20
+    name: Diff View
+    slug: diff-view
+    category: Tables & Lists
+    surfaces: [web]
+    file: 20-diff-view.md
+    used_in: [SCR-05]
+  - id: CMP-21
+    name: Edit Toolbar
+    slug: edit-toolbar
+    category: Navigation & Layout
+    surfaces: [web, cli-ink]
+    file: 21-edit-toolbar.md
+    used_in: [SCR-05, SCR-21]
+  - id: CMP-22
+    name: Inject Panel
+    slug: inject-panel
+    category: Modals & Overlays
+    surfaces: [web, cli-ink]
+    file: 22-inject-panel.md
+    used_in: [SCR-05, SCR-21]
+  - id: CMP-23
+    name: Simplify Panel
+    slug: simplify-panel
+    category: AI-Specific
+    surfaces: [web, cli-ink]
+    file: 23-simplify-panel.md
+    used_in: [SCR-05, SCR-21]
+  - id: CMP-24
+    name: Save Bar
+    slug: save-bar
+    category: Input & Forms
+    surfaces: [web, cli-ink]
+    file: 24-save-bar.md
+    used_in: [SCR-05, SCR-21]
+  - id: CMP-25
+    name: Step Wizard / Step Indicator
+    slug: step-wizard
+    category: Navigation & Layout
+    surfaces: [web, cli-ink]
+    file: 25-step-wizard.md
+    used_in: [SCR-06, SCR-22]
+  - id: CMP-26
+    name: Candidate Panel
+    slug: candidate-panel
+    category: AI-Specific
+    surfaces: [web, cli-ink]
+    file: 26-candidate-panel.md
+    used_in: [SCR-06, SCR-22]
+  - id: CMP-27
+    name: Compare View / Thread Panel
+    slug: compare-view
+    category: Domain-Specific
+    surfaces: [web]
+    file: 27-compare-view.md
+    used_in: [SCR-08]
+  - id: CMP-28
+    name: Assembly Zone / Merged Section
+    slug: assembly-zone
+    category: Domain-Specific
+    surfaces: [web]
+    file: 28-assembly-zone.md
+    used_in: [SCR-08]
+  - id: CMP-29
+    name: Output Preview
+    slug: output-preview
+    category: Data Display
+    surfaces: [web, cli-ink]
+    file: 29-output-preview.md
+    used_in: [SCR-06, SCR-08, SCR-22]
+  - id: CMP-30
+    name: Dataset Entry Preview
+    slug: entry-preview
+    category: Tables & Lists
+    surfaces: [web, cli-ink]
+    file: 30-entry-preview.md
+    used_in: [SCR-10, SCR-24]
+  - id: CMP-31
+    name: Provider Config Panel
+    slug: provider-config-panel
+    category: Input & Forms
+    surfaces: [web, cli-ink]
+    file: 31-provider-config-panel.md
+    used_in: [SCR-14, SCR-27]
+  - id: CMP-32
+    name: Command Palette
+    slug: command-palette
+    category: Navigation & Layout
+    surfaces: [web]
+    file: 32-command-palette.md
+    used_in: [SCR-01]
+  - id: CMP-33
+    name: Index Status Indicator
+    slug: index-status
+    category: Feedback & Indicators
+    surfaces: [web, cli-ink]
+    file: 33-index-status.md
+    used_in: [SCR-01, SCR-14, SCR-16, SCR-27]
+  - id: CMP-34
+    name: Empty State
+    slug: empty-state
+    category: Feedback & Indicators
+    surfaces: [web, cli-ink]
+    file: 34-empty-state.md
+    used_in: [SCR-01, SCR-02, SCR-03, SCR-09, SCR-10, SCR-11, SCR-16, SCR-23, SCR-24, SCR-25]
+  - id: CMP-35
+    name: Confirm Dialog
+    slug: confirm-dialog
+    category: Modals & Overlays
+    surfaces: [web, cli-ink, tui-ratatui]
+    file: 35-confirm-dialog.md
+    used_in: [SCR-04, SCR-09, SCR-10, SCR-19, SCR-21, SCR-24, SCR-25, SCR-26, SCR-39]
+  - id: CMP-36
+    name: Input Modal / Inline Edit
+    slug: input-modal
+    category: Modals & Overlays
+    surfaces: [web, cli-ink, tui-ratatui]
+    file: 36-input-modal.md
+    used_in: [SCR-04, SCR-17, SCR-19, SCR-21, SCR-23, SCR-25, SCR-26, SCR-38]
+  - id: CMP-37
+    name: Pagination
+    slug: pagination
+    category: Navigation & Layout
+    surfaces: [web, cli-ink]
+    file: 37-pagination.md
+    used_in: [SCR-01, SCR-03, SCR-16, SCR-18]
+  - id: CMP-38
+    name: Selectable List
+    slug: selectable-list
+    category: Tables & Lists
+    surfaces: [cli-ink, tui-ratatui]
+    file: 38-selectable-list.md
+    used_in: [SCR-16, SCR-17, SCR-18, SCR-19, SCR-21, SCR-23, SCR-24, SCR-25, SCR-26, SCR-27, SCR-36, SCR-37]
+  - id: CMP-39
+    name: Status Line / Key Legend
+    slug: status-line
+    category: Feedback & Indicators
+    surfaces: [cli-ink, tui-ratatui]
+    file: 39-status-line.md
+    used_in: [SCR-16, SCR-17, SCR-18, SCR-19, SCR-20, SCR-21, SCR-22, SCR-23, SCR-24, SCR-25, SCR-26, SCR-27, SCR-28, SCR-29, SCR-36, SCR-37]
+  - id: CMP-40
+    name: Help Overlay
+    slug: help-overlay
+    category: Modals & Overlays
+    surfaces: [tui-ratatui]
+    file: 40-help-overlay.md
+    used_in: [SCR-36, SCR-37, SCR-40]

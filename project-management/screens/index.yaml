@@ -1,0 +1,349 @@
+screens:
+  - id: SCR-01
+    name: Explore — Unified Search & Browse
+    slug: explore-unified-search-browse
+    surface: web
+    type: primary
+    category: Discovery
+    file: 01-explore-unified-search-browse.md
+    user_stories: [US-003, US-004, US-005, US-013, US-021, US-022, US-023, US-024, US-025, US-026, US-027, US-028, US-040, US-065, US-070, US-071, US-072, US-081, US-082, US-097, US-100]
+  - id: SCR-02
+    name: Projects List
+    slug: projects-list
+    surface: web
+    type: dashboard
+    category: Discovery / Admin
+    file: 02-projects-list.md
+    user_stories: [US-061, US-070, US-071]
+  - id: SCR-03
+    name: Project Detail
+    slug: project-detail
+    surface: web
+    type: primary
+    category: Discovery / Admin
+    file: 03-project-detail.md
+    user_stories: [US-063, US-070, US-071, US-083]
+  - id: SCR-04
+    name: Thread Viewer
+    slug: thread-viewer
+    surface: web
+    type: primary
+    category: Core
+    file: 04-thread-viewer.md
+    user_stories: [US-029, US-030, US-031, US-032, US-033, US-034, US-035, US-036, US-037, US-038, US-058, US-061, US-062, US-064, US-069, US-074, US-084, US-087, US-097, US-099]
+  - id: SCR-05
+    name: Thread Editor
+    slug: thread-editor
+    surface: web
+    type: primary
+    category: Core
+    file: 05-thread-editor.md
+    user_stories: [US-041, US-042, US-043, US-044, US-045, US-046, US-062, US-066]
+  - id: SCR-06
+    name: Convert Wizard
+    slug: convert-wizard
+    surface: web
+    type: storyboard
+    category: Core
+    file: 06-convert-wizard.md
+    user_stories: [US-047, US-048, US-049, US-050, US-051, US-052, US-085]
+  - id: SCR-07
+    name: Continue Session
+    slug: continue-session
+    surface: web
+    type: primary
+    category: Core
+    file: 07-continue-session.md
+    user_stories: [US-035, US-093]
+  - id: SCR-08
+    name: Merge View
+    slug: merge-view
+    surface: web
+    type: primary
+    category: Core
+    file: 08-merge-view.md
+    user_stories: [US-066, US-068]
+    status: planned-not-implemented
+  - id: SCR-09
+    name: Datasets List
+    slug: datasets-list
+    surface: web
+    type: dashboard
+    category: Core
+    file: 09-datasets-list.md
+    user_stories: [US-053, US-057]
+  - id: SCR-10
+    name: Dataset Detail
+    slug: dataset-detail
+    surface: web
+    type: primary
+    category: Core
+    file: 10-dataset-detail.md
+    user_stories: [US-054, US-055, US-056, US-057]
+  - id: SCR-11
+    name: Prompts Library
+    slug: prompts-library
+    surface: web
+    type: primary
+    category: Core
+    file: 11-prompts-library.md
+    user_stories: [US-048]
+  - id: SCR-12
+    name: Tags Manager
+    slug: tags-manager
+    surface: web
+    type: settings
+    category: Admin
+    file: 12-tags-manager.md
+    user_stories: [US-061, US-067]
+  - id: SCR-13
+    name: Safety Watch
+    slug: safety-watch
+    surface: web
+    type: dashboard
+    category: Admin
+    file: 13-safety-watch.md
+    user_stories: [US-073, US-074, US-075]
+    status: stub
+  - id: SCR-14
+    name: Settings
+    slug: settings
+    surface: web
+    type: settings
+    category: Onboarding / Core
+    file: 14-settings.md
+    user_stories: [US-006, US-011, US-012, US-016, US-017, US-018, US-019, US-020, US-039, US-081, US-086, US-098]
+  - id: SCR-15
+    name: Style Guide Reference
+    slug: style-guide-reference
+    surface: web
+    type: primary
+    category: Internal / Meta
+    file: 15-style-guide-reference.md
+    user_stories: []
+  - id: SCR-16
+    name: CLI Explore
+    slug: cli-explore
+    surface: cli-ink
+    type: primary
+    category: Discovery
+    file: 16-cli-explore.md
+    user_stories: [US-021, US-022, US-023, US-024, US-025, US-026, US-027, US-028, US-070, US-071, US-072]
+  - id: SCR-17
+    name: CLI Projects
+    slug: cli-projects
+    surface: cli-ink
+    type: primary
+    category: Discovery / Admin
+    file: 17-cli-projects.md
+    user_stories: [US-061, US-070, US-071]
+  - id: SCR-18
+    name: CLI Project Detail
+    slug: cli-project-detail
+    surface: cli-ink
+    type: primary
+    category: Discovery / Admin
+    file: 18-cli-project-detail.md
+    user_stories: [US-063, US-070, US-071]
+  - id: SCR-19
+    name: CLI Thread
+    slug: cli-thread
+    surface: cli-ink
+    type: primary
+    category: Core
+    file: 19-cli-thread.md
+    user_stories: [US-029, US-030, US-033, US-034, US-035, US-036, US-037, US-061, US-062, US-064, US-069]
+  - id: SCR-20
+    name: CLI Continue Session
+    slug: cli-continue-session
+    surface: cli-ink
+    type: primary
+    category: Core
+    file: 20-cli-continue-session.md
+    user_stories: [US-035, US-093]
+  - id: SCR-21
+    name: CLI Edit
+    slug: cli-edit
+    surface: cli-ink
+    type: primary
+    category: Core
+    file: 21-cli-edit.md
+    user_stories: [US-041, US-042, US-043, US-044, US-045, US-046]
+  - id: SCR-22
+    name: CLI Convert
+    slug: cli-convert
+    surface: cli-ink
+    type: storyboard
+    category: Core
+    file: 22-cli-convert.md
+    user_stories: [US-047, US-048, US-049, US-050, US-051, US-052]
+  - id: SCR-23
+    name: CLI Datasets
+    slug: cli-datasets
+    surface: cli-ink
+    type: primary
+    category: Core
+    file: 23-cli-datasets.md
+    user_stories: [US-053, US-057]
+  - id: SCR-24
+    name: CLI Dataset Detail
+    slug: cli-dataset-detail
+    surface: cli-ink
+    type: primary
+    category: Core
+    file: 24-cli-dataset-detail.md
+    user_stories: [US-054, US-055, US-056, US-057]
+  - id: SCR-25
+    name: CLI Prompts
+    slug: cli-prompts
+    surface: cli-ink
+    type: primary
+    category: Core
+    file: 25-cli-prompts.md
+    user_stories: [US-048]
+  - id: SCR-26
+    name: CLI Tags
+    slug: cli-tags
+    surface: cli-ink
+    type: settings
+    category: Admin
+    file: 26-cli-tags.md
+    user_stories: [US-061, US-067]
+  - id: SCR-27
+    name: CLI Settings
+    slug: cli-settings
+    surface: cli-ink
+    type: settings
+    category: Onboarding / Core
+    file: 27-cli-settings.md
+    user_stories: [US-006, US-012, US-016, US-017, US-018, US-019, US-020, US-039, US-081, US-086, US-098]
+  - id: SCR-28
+    name: CLI Style Guide
+    slug: cli-style-guide
+    surface: cli-ink
+    type: primary
+    category: Internal / Meta
+    file: 28-cli-style-guide.md
+    user_stories: []
+  - id: SCR-29
+    name: CLI Safety Watch
+    slug: cli-safety-watch
+    surface: cli-ink
+    type: dashboard
+    category: Admin
+    file: 29-cli-safety-watch.md
+    user_stories: [US-073, US-074, US-075]
+    status: stub
+  - id: SCR-30
+    name: CLI Recent (command output)
+    slug: cli-recent-output
+    surface: cli-command
+    type: primary
+    category: Core
+    file: 30-cli-recent-output.md
+    user_stories: [US-059]
+  - id: SCR-31
+    name: CLI Search (command output)
+    slug: cli-search-output
+    surface: cli-command
+    type: primary
+    category: Core
+    file: 31-cli-search-output.md
+    user_stories: [US-021, US-022, US-060]
+  - id: SCR-32
+    name: CLI List (command output)
+    slug: cli-list-output
+    surface: cli-command
+    type: primary
+    category: Core
+    file: 32-cli-list-output.md
+    user_stories: [US-070]
+  - id: SCR-33
+    name: CLI Show (command output)
+    slug: cli-show-output
+    surface: cli-command
+    type: primary
+    category: Core
+    file: 33-cli-show-output.md
+    user_stories: [US-076]
+  - id: SCR-34
+    name: CLI Index Rebuild (command output)
+    slug: cli-index-rebuild-output
+    surface: cli-command
+    type: primary
+    category: Indexing & Ingestion
+    file: 34-cli-index-rebuild-output.md
+    user_stories: [US-012, US-080]
+  - id: SCR-35
+    name: CLI Install & First-Run Setup
+    slug: cli-install-first-run
+    surface: cli-command
+    type: storyboard
+    category: Onboarding
+    file: 35-cli-install-first-run.md
+    user_stories: [US-001, US-002, US-006, US-007, US-008, US-009]
+    status: partially-planned
+  - id: SCR-36
+    name: TUI Catalog Browser
+    slug: tui-catalog-browser
+    surface: tui-ratatui
+    type: primary
+    category: skill-manage (core)
+    file: 36-tui-catalog-browser.md
+    user_stories: [US-077, US-078, US-079, US-096]
+  - id: SCR-37
+    name: TUI Profiles Screen
+    slug: tui-profiles-screen
+    surface: tui-ratatui
+    type: primary
+    category: skill-manage (core)
+    file: 37-tui-profiles-screen.md
+    user_stories: [US-077, US-079]
+  - id: SCR-38
+    name: TUI Edit Metadata Modal
+    slug: tui-edit-metadata-modal
+    surface: tui-ratatui
+    type: modal
+    category: skill-manage (core)
+    file: 38-tui-edit-metadata-modal.md
+    user_stories: [US-077]
+  - id: SCR-39
+    name: TUI Confirm Replace Modal
+    slug: tui-confirm-replace-modal
+    surface: tui-ratatui
+    type: modal
+    category: skill-manage (audit)
+    file: 39-tui-confirm-replace-modal.md
+    user_stories: [US-094]
+  - id: SCR-40
+    name: TUI Help Overlay
+    slug: tui-help-overlay
+    surface: tui-ratatui
+    type: modal
+    category: skill-manage (core)
+    file: 40-tui-help-overlay.md
+    user_stories: [US-077, US-078, US-096]
+  - id: SCR-41
+    name: skill-manage Audit (command output)
+    slug: skill-manage-audit-output
+    surface: cli-command
+    type: primary
+    category: skill-manage (audit)
+    file: 41-skill-manage-audit-output.md
+    user_stories: [US-094]
+  - id: SCR-42
+    name: skill-manage Context Budget Report (command output)
+    slug: skill-manage-context-budget-output
+    surface: cli-command
+    type: primary
+    category: skill-manage (audit)
+    file: 42-skill-manage-context-budget-output.md
+    user_stories: [US-095]
+  - id: SCR-43
+    name: macOS Console Host
+    slug: macos-console
+    surface: macos
+    type: primary
+    category: Desktop
+    file: 43-macos-console.md
+    user_stories: [US-021, US-022, US-029, US-035, US-041, US-047, US-053, US-070, US-073]

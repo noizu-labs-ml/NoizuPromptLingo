@@ -1,0 +1,32 @@
+schema: "0.4"
+id: llm-toolkit-macos-app-icon
+type: image
+service: imagine
+quality: high
+
+prompt:
+  text: |
+    Premium macOS app icon for LLM Toolkit, a local developer tool that searches
+    and extracts meaning from AI coding-agent conversations.
+    Single rounded-square app icon filling a 1:1 canvas with normal macOS padding.
+    Dark charcoal-to-void gradient base (#0F0F14 to #18181F) with soft glass sheen.
+    Centered emblem: two stacked conversation slabs (wider silver top, narrower
+    slate below) with a glowing plasma-cyan extraction diamond (#06B6D4) at the
+    lower right. Dimensional SF-style product icon, crisp silhouette, readable
+    at dock size. No text, no letters, no numbers, no mockup board.
+  negative: "text, words, letters, numbers, size labels, preview thumbnails, multiple icons, mockup board, watermark, signature, realistic photo, clutter, people"
+
+output:
+  formats:
+    - format: png
+      quality: 100
+      filename: LLMToolkitIcon-1024
+  dimensions:
+    width: 1024
+    height: 1024
+    aspect_ratio: "1:1"
+  transparency: none
+  color_space: sRGB
+
+tags: [llm-toolkit, macos, app-icon, brand]
+product_targets: [macos-app-icon]
