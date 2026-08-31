@@ -387,6 +387,10 @@ defmodule NoizuPromptLinguaWeb.Router do
     get "/auth/mcp-keys", AuthController, :list_mcp_keys
     post "/auth/mcp-keys", AuthController, :create_mcp_key
     post "/auth/mcp-keys/setup", AuthController, :create_mcp_setup_key
+    # Per-key toolset management (caller's own keys; symmetric with Key.* MCP tools)
+    get "/auth/mcp-keys/:id", AuthController, :show_mcp_key
+    patch "/auth/mcp-keys/:id", AuthController, :update_mcp_key
+    post "/auth/mcp-keys/:id/clone", AuthController, :clone_mcp_key
     delete "/auth/mcp-keys/:id", AuthController, :revoke_mcp_key
 
     # OAuth MCP connections (pairing grants) — Phase 4 primary surface
@@ -465,6 +469,12 @@ defmodule NoizuPromptLinguaWeb.Router do
     post "/users/:user_id/mcp-keys", AdminController, :create_mcp_key
     delete "/users/:user_id/mcp-keys/:id", AdminController, :revoke_mcp_key
     get "/users/:user_id/mcp-default-endpoint", AdminController, :show_user_default_mcp
+
+    # Per-key toolset management (cross-user; symmetric with Key.* MCP tools).
+    get "/mcp-keys", AdminController, :list_all_mcp_keys
+    get "/mcp-keys/:id", AdminController, :show_mcp_key
+    patch "/mcp-keys/:id", AdminController, :update_mcp_key
+    post "/mcp-keys/:id/clone", AdminController, :clone_mcp_key
 
     # OAuth clients (DCR + first-party) — admin visibility + revoke (cascades
     # to active pairing grants + refresh tokens for that client).

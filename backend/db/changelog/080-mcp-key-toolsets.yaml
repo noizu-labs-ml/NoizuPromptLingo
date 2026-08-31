@@ -1,0 +1,25 @@
+databaseChangeLog:
+  # Per-key MCP toolset config. Every mcp_api_keys row may carry its own
+  # toolset flags (groups.{id}.{disabled,hidden} +
+  # groups.{id}.tools.{"Tool.Name"}.{disabled,hidden}); they override the
+  # custom-scope cascade for that key. Empty object = inherit everything.
+  - changeSet:
+      id: 080a-mcp-api-keys-add-toolset-config
+      author: tobor-locker
+      preConditions:
+        - onFail: HALT
+        - onFailMessage: >-
+            mcp_api_keys is missing — the base changelog (028-mcp-api-keys)
+            must run first.
+        - tableExists:
+            tableName: mcp_api_keys
+      changes:
+        - sql:
+            sql: |
+              ALTER TABLE mcp_api_keys
+                ADD COLUMN toolset_config JSONB NOT NULL DEFAULT '{}'::jsonb;
+      rollback:
+        - sql:
+            sql: |
+              ALTER TABLE mcp_api_keys
+                DROP COLUMN toolset_config;

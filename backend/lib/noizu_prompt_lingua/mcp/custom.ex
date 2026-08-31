@@ -9,9 +9,7 @@ defmodule NoizuPromptLingua.MCP.Custom do
     instructions:
       "Custom Noizu Prompt Lingua MCP scope. Use Discovery tools to inspect the enabled tool set."
 
-  alias Noizu.MCP.{Error, Schema}
-  alias Noizu.MCP.Server.Features.{Pagination, Tools}
-  alias Noizu.MCP.Server.Tool.{Fields, Spec}
+  alias Noizu.MCP.Server.Features.Tools
   alias NoizuPromptLingua.MCPCustomScopes
 
   @discovery_tools [
@@ -21,25 +19,6 @@ defmodule NoizuPromptLingua.MCP.Custom do
     {NoizuPromptLingua.Tools.ToolCall, [category: "Discovery"]},
     {NoizuPromptLingua.Tools.ToolHelp, [category: "Discovery"]}
   ]
-
-  @impl true
-  def handle_list_tools(cursor, ctx) do
-    definitions =
-      ctx
-      |> catalog_specs()
-      |> Enum.reject(& &1.hidden)
-      |> Enum.map(& &1.definition)
-
-    Pagination.paginate(definitions, cursor)
-  end
-
-  @impl true
-  def handle_call_tool(name, args, ctx) do
-    case Enum.find(catalog_specs(ctx), &(&1.definition.name == name)) do
-      nil -> {:error, Error.invalid_params("Unknown tool: #{name}")}
-      spec -> run_spec(spec, args || %{}, ctx)
-    end
-  end
 
   def catalog_specs(ctx) do
     custom_specs(ctx) ++ npl_specs(ctx) ++ discovery_specs() ++ overview_specs()
@@ -131,29 +110,4 @@ defmodule NoizuPromptLingua.MCP.Custom do
   end
 
   defp scope_slug(_), do: nil
-
-  defp run_spec(%Spec{} = spec, args, ctx) do
-    case Schema.validate(spec.definition.input_schema, args) do
-      :ok ->
-        args =
-          case spec.cast_plan do
-            nil -> args
-            plan -> Fields.cast(plan, args)
-          end
-
-        call_args =
-          case spec.arity do
-            0 -> []
-            1 -> [args]
-            2 -> [args, ctx]
-          end
-
-        apply(spec.module, spec.fun, call_args) |> Tools.normalize(spec.output_schema)
-
-      {:error, message} ->
-        Noizu.MCP.Types.ToolResult.error(
-          "Invalid arguments for tool #{spec.definition.name}: #{message}"
-        )
-    end
-  end
 end

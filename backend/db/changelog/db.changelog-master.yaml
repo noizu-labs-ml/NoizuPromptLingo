@@ -241,3 +241,6 @@ databaseChangeLog:
   - include:
       file: 079-session-inactivity.yaml
       relativeToChangelogFile: true
+  - include:
+      file: 080-mcp-key-toolsets.yaml
+      relativeToChangelogFile: true

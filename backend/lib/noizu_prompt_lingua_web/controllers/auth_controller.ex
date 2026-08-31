@@ -418,21 +418,26 @@ defmodule NoizuPromptLinguaWeb.AuthController do
       user = resolve_user_from_session(session)
       label = Map.get(key_params, "label", "default")
 
-      case MCPApiKeys.parse_expires_at(Map.get(key_params, "expires_at")) do
-        {:ok, expires_at} ->
-          case MCPApiKeys.generate_api_key(user.id, label, expires_at: expires_at) do
-            {:ok, key, raw_key} ->
-              conn
-              |> put_status(:created)
-              |> json(%{key: mcp_key_json(key), raw_key: raw_key})
-
-            {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
-              conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
-
-            {:error, reason} ->
-              conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
+      with {:ok, expires_at} <- MCPApiKeys.parse_expires_at(Map.get(key_params, "expires_at")) do
+        opts =
+          case Map.get(key_params, "toolset_config") do
+            nil -> [expires_at: expires_at]
+            config -> [expires_at: expires_at, toolset_config: config]
           end
 
+        case MCPApiKeys.generate_api_key(user.id, label, opts) do
+          {:ok, key, raw_key} ->
+            conn
+            |> put_status(:created)
+            |> json(%{key: mcp_key_json(key), raw_key: raw_key})
+
+          {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
+            conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+
+          {:error, reason} ->
+            conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
+        end
+      else
         :error ->
           conn
           |> put_status(:unprocessable_entity)
@@ -460,6 +465,95 @@ defmodule NoizuPromptLinguaWeb.AuthController do
     end
   end
 
+  # Per-key toolset management (the caller's own keys) — symmetric with the
+  # Key.* MCP tools. Responses are masked (prefix only; raw values never returned).
+
+  def show_mcp_key(conn, %{"id" => id}) do
+    session = Guardian.Plug.current_resource(conn)
+    user = resolve_user_from_session(session)
+
+    case owned_mcp_key(user.id, id) do
+      nil ->
+        conn |> put_status(:not_found) |> json(%{error: "Key not found"})
+
+      key ->
+        conn |> put_status(:ok) |> json(%{key: mcp_key_json(key)})
+    end
+  end
+
+  def update_mcp_key(conn, %{"id" => id} = params) do
+    session = Guardian.Plug.current_resource(conn)
+    user = resolve_user_from_session(session)
+
+    case owned_mcp_key(user.id, id) do
+      nil ->
+        conn |> put_status(:not_found) |> json(%{error: "Key not found"})
+
+      key ->
+        with {:ok, key} <- apply_mcp_key_updates(key, params) do
+          conn |> put_status(:ok) |> json(%{key: mcp_key_json(key)})
+        else
+          {:error, %Ecto.Changeset{} = cs} ->
+            conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+
+          {:error, reason} ->
+            conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
+        end
+    end
+  end
+
+  def clone_mcp_key(conn, %{"id" => id} = params) do
+    session = Guardian.Plug.current_resource(conn)
+    user = resolve_user_from_session(session)
+
+    case owned_mcp_key(user.id, id) do
+      nil ->
+        conn |> put_status(:not_found) |> json(%{error: "Key not found"})
+
+      key ->
+        label = Map.get(params, "label")
+
+        with {:ok, key, raw_key} <-
+               MCPApiKeys.clone(key, user_id: user.id, label: label) do
+          conn |> put_status(:created) |> json(%{key: mcp_key_json(key), raw_key: raw_key})
+        else
+          {:error, %Ecto.Changeset{} = cs} ->
+            conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+
+          {:error, reason} ->
+            conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
+        end
+    end
+  end
+
+  defp owned_mcp_key(user_id, id) do
+    case MCPApiKeys.get(id) do
+      %{user_id: ^user_id} = key -> key
+      _ -> nil
+    end
+  end
+
+  defp apply_mcp_key_updates(key, params) do
+    attrs =
+      %{}
+      |> maybe_put_param(:label, params["label"])
+      |> maybe_put_param(:status, params["status"])
+      |> maybe_put_param(:toolset_config, params["toolset_config"])
+
+    with {:ok, key} <- MCPApiKeys.update(key, attrs, owner_id: key.user_id) do
+      apply_mcp_key_scope_copy(key, params["toolset_from_scope"])
+    end
+  end
+
+  defp apply_mcp_key_scope_copy(key, nil), do: {:ok, key}
+
+  defp apply_mcp_key_scope_copy(key, scope_ref) do
+    MCPApiKeys.copy_toolset_from(key, scope_ref)
+  end
+
+  defp maybe_put_param(attrs, _key, nil), do: attrs
+  defp maybe_put_param(attrs, key, value), do: Map.put(attrs, key, value)
+
   defp mcp_key_json(key) do
     %{
       id: key.id,
@@ -468,6 +562,7 @@ defmodule NoizuPromptLinguaWeb.AuthController do
       status: key.status,
       last_used_at: key.last_used_at,
       expires_at: key.expires_at,
+      toolset_config: key.toolset_config,
       inserted_at: key.inserted_at
     }
   end

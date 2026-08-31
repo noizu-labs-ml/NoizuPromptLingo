@@ -50,16 +50,53 @@ defmodule NoizuPromptLingua.MCP.ToolGuard do
   Returns `:ok` to allow dispatch or `{:error, map}` to deny. In `:shadow` mode it
   always returns `:ok` (the would-be denial is logged), so it is safe to wire ahead
   of validating the policy against real traffic.
+
+  Per-key toolset config (`NoizuPromptLingua.MCP.KeyToolsets`) is checked FIRST
+  and enforced in BOTH modes — `disabled: true` on the calling API key is hard
+  capability config, not part of the RBAC shadow rollout.
   """
   @spec before_call(map(), map() | nil, map() | nil) :: :ok | {:error, map()}
   def before_call(spec, args, ctx) do
-    case authz_meta(spec) do
-      nil ->
-        # Tools without authz metadata still run OAuth grant/client PDP when claims present.
-        oauth_pdp_only(ctx)
+    case key_toolset_check(spec, ctx) do
+      :ok ->
+        case authz_meta(spec) do
+          nil ->
+            # Tools without authz metadata still run OAuth grant/client PDP when claims present.
+            oauth_pdp_only(ctx)
 
-      authz ->
-        authz |> decide(args, ctx) |> finalize(spec, authz)
+          authz ->
+            authz |> decide(args, ctx) |> finalize(spec, authz)
+        end
+
+      {:error, _} = denial ->
+        denial
+    end
+  end
+
+  # Per-API-key toolset capability check. `disabled: true` denies execution
+  # regardless of :mcp_authz_mode; `hidden` does not apply at call time.
+  # Specs without a tool module (unit-test fakes, root-only tools) resolve no
+  # group => ungated, per KeyToolsets.state/3.
+  defp key_toolset_check(%{name: name} = spec, ctx) do
+    group_id =
+      case spec do
+        %{module: module} when is_atom(module) ->
+          NoizuPromptLingua.MCPServers.group_id_for_tool_module(module)
+
+        _ ->
+          nil
+      end
+
+    case NoizuPromptLingua.MCP.KeyToolsets.state(group_id, name, ctx) do
+      %{disabled: true} ->
+        Logger.info(
+          "[mcp-authz] mode=#{mode()} decision=deny tool=#{name} reason=:tool_disabled_for_key"
+        )
+
+        {:error, %{code: :forbidden, reason: :tool_disabled_for_key, action: name}}
+
+      _ ->
+        :ok
     end
   end
 

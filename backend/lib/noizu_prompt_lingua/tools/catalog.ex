@@ -26,7 +26,9 @@ defmodule NoizuPromptLingua.Tools.Catalog do
   end
 
   def build(server \\ NoizuPromptLingua.MCP, ctx \\ nil) do
-    specs = specs(server, ctx)
+    specs =
+      specs(server, ctx)
+      |> NoizuPromptLingua.MCP.KeyToolsets.apply_hidden(ctx, nil)
 
     Enum.map(specs, fn spec ->
       defn = spec.definition
@@ -81,16 +83,25 @@ defmodule NoizuPromptLingua.Tools.Catalog do
       nil ->
         {:error, "Tool '#{name}' not found"}
 
-      %{hidden: false} ->
-        {:mcp, "Tool '#{name}' is MCP-visible — call it directly via MCP protocol"}
-
       spec ->
-        # Forward the caller's ctx so the dispatched tool keeps the auth context
-        # (assigns.auth_claims, etc.). Only fabricate a bare ctx when invoked
-        # without one (e.g. internal/non-request callers).
-        ctx = dispatch_ctx(ctx, server)
-        args = cast_arguments(spec, arguments || %{})
-        spec.module.call(args, ctx)
+        group_id = NoizuPromptLingua.MCPServers.group_id_for_tool_module(spec.module)
+
+        case NoizuPromptLingua.MCP.KeyToolsets.state(group_id, name, ctx) do
+          %{disabled: true} ->
+            {:error, "Tool '#{name}' is disabled for this API key"}
+
+          _ ->
+            if spec.hidden == false do
+              {:mcp, "Tool '#{name}' is MCP-visible — call it directly via MCP protocol"}
+            else
+              # Forward the caller's ctx so the dispatched tool keeps the auth context
+              # (assigns.auth_claims, etc.). Only fabricate a bare ctx when invoked
+              # without one (e.g. internal/non-request callers).
+              ctx = dispatch_ctx(ctx, server)
+              args = cast_arguments(spec, arguments || %{})
+              spec.module.call(args, ctx)
+            end
+        end
     end
   end
 

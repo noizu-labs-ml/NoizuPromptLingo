@@ -51,4 +51,12 @@ defmodule NoizuPromptLingua.MCP do
   # NPL — Noizu Prompt Lingua convention loading & spec generation (read-only)
   tool(NoizuPromptLingua.Tools.NPLLoad, category: "NPL")
   tool(NoizuPromptLingua.Tools.NPLSpec, category: "NPL")
+
+  # Keys — per-API-key MCP toolset management (caller-scoped; raw keys shown once)
+  tool(NoizuPromptLingua.MCP.Keys.Tools.KeyCreate, category: "Keys")
+  tool(NoizuPromptLingua.MCP.Keys.Tools.KeyList, category: "Keys")
+  tool(NoizuPromptLingua.MCP.Keys.Tools.KeyGet, category: "Keys")
+  tool(NoizuPromptLingua.MCP.Keys.Tools.KeyUpdate, category: "Keys")
+  tool(NoizuPromptLingua.MCP.Keys.Tools.KeyClone, category: "Keys")
+  tool(NoizuPromptLingua.MCP.Keys.Tools.KeyRevoke, category: "Keys")
 end

@@ -146,6 +146,72 @@ defmodule NoizuPromptLingua.MCPServers do
   def server_module(_), do: nil
 
   @doc """
+  Resolve the MCP group id (`organizations`, `tickets`, ...) that owns `module`
+  — the SERVER module itself (e.g. `NoizuPromptLingua.MCP.Organizations`) or
+  any registered tool module beneath it. Tool modules do NOT always share the
+  server module's namespace (e.g. `NoizuPromptLingua.Domains.Tickets.Tools.*`
+  register on `NoizuPromptLingua.Domains.Tickets.MCP`), so ownership is a
+  reverse index over each server's `__mcp__(:tools)` registrations, cached per
+  module (`:persistent_term`). Returns `nil` for modules outside every known
+  group (root-only tools such as Discovery / NPL cannot be key-gated by group).
+  """
+  def group_id_for_tool_module(module) when is_atom(module) do
+    case :persistent_term.get({__MODULE__, :tool_group, module}, :miss) do
+      :miss ->
+        group_id = compute_group_id(module)
+
+        if group_id do
+          :persistent_term.put({__MODULE__, :tool_group, module}, group_id)
+        end
+
+        group_id
+
+      group_id ->
+        group_id
+    end
+  end
+
+  def group_id_for_tool_module(_), do: nil
+
+  defp compute_group_id(module) do
+    case module_group_id(module) do
+      nil ->
+        # A tool module registered under MORE than one group is shared
+        # infrastructure (Discovery tools register on every domain server) —
+        # ambiguous ownership means ungated, never a guess.
+        @server_modules
+        |> Enum.filter(fn {_id, server_mod} -> module in registered_tool_modules(server_mod) end)
+        |> case do
+          [{id, _}] -> id
+          _ -> nil
+        end
+
+      id ->
+        id
+    end
+  end
+
+  defp module_group_id(candidate) do
+    @server_modules
+    |> Enum.find(fn {_id, mod} -> mod == candidate end)
+    |> case do
+      {id, _} -> id
+      _ -> nil
+    end
+  end
+
+  defp registered_tool_modules(server_mod) do
+    if Code.ensure_loaded?(server_mod) and function_exported?(server_mod, :__mcp__, 1) do
+      server_mod.__mcp__(:tools)
+      |> Enum.map(fn {tool_module, _opts} -> tool_module end)
+    else
+      []
+    end
+  rescue
+    _ -> []
+  end
+
+  @doc """
   Returns the MCP servers with full connection URLs, derived from the configured
   `PHX_HOST`. Suitable for JSON serialization to clients building setup commands.
 
