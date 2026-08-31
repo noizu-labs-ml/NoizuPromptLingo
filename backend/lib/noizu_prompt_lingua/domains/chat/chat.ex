@@ -96,6 +96,32 @@ defmodule NoizuPromptLingua.Domains.Chat do
     )
   end
 
+  # Resolve a room for MCP tool addressing: UUID args keep the legacy id lookup,
+  # anything else is treated as the room's immutable slug. Slugs are unique per
+  # (org, project) bucket (ADR-013 A3), so slug lookup requires org scope — callers
+  # resolve the org ref via MCP.Resolve first. Returns {:ok, room} |
+  # {:error, :organization_required} | {:error, :not_found}.
+  def resolve_room(ref, org_id \\ nil)
+
+  def resolve_room(ref, org_id) do
+    case NoizuPromptLingua.UUID.cast(ref) do
+      {:ok, uuid} ->
+        case get_room(uuid) do
+          nil -> {:error, :not_found}
+          room -> {:ok, room}
+        end
+
+      :error when is_nil(org_id) ->
+        {:error, :organization_required}
+
+      :error ->
+        case get_room_by_slug(org_id, nil, ref) do
+          nil -> {:error, :not_found}
+          room -> {:ok, room}
+        end
+    end
+  end
+
   @doc """
   Backfill slugs for pre-existing rooms (Liquibase 052 deploy step). Idempotent:
   only fills NULL slugs, re-runnable, suffix assigned via 23505 retry against the

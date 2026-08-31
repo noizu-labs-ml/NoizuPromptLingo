@@ -8,7 +8,11 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.TicketUpdate do
   input_schema(%{
     "type" => "object",
     "properties" => %{
-      "ticket_id" => %{"type" => "string", "description" => "Ticket UUID"},
+      "ticket_id" => %{"type" => "string", "description" => "Ticket UUID or human key (PREFIX-NNN)"},
+      "organization" => %{
+        "type" => "string",
+        "description" => "Org slug or UUID (required when ticket_id is a human key)"
+      },
       "title" => %{"type" => "string", "description" => "New title"},
       "description" => %{"type" => "string", "description" => "New description"},
       "status" => %{"type" => "string", "description" => "New status"},
@@ -26,10 +30,11 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.TicketUpdate do
   })
 
   alias NoizuPromptLingua.Domains.Tickets
+  alias NoizuPromptLingua.Domains.Tickets.Tools.TicketResolver
 
   @impl true
   def call(args, _ctx) do
-    ticket_id = args["ticket_id"]
+    ticket_ref = args["ticket_id"]
 
     attrs =
       extract(
@@ -37,19 +42,26 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.TicketUpdate do
         ~w(title description status priority assignee project_id queue_id parent_id custom_fields)
       )
 
-    case Tickets.update(ticket_id, attrs) do
-      {:ok, ticket} ->
-        {:ok,
-         %{
-           id: ticket.id,
-           title: ticket.title,
-           status: ticket.status,
-           priority: ticket.priority,
-           updated_at: ticket.updated_at
-         }}
+    with {:ok, ticket} <- TicketResolver.call(args),
+         {:ok, ticket} <- Tickets.update(ticket.id, attrs) do
+      {:ok,
+       %{
+         id: ticket.id,
+         key: ticket.key,
+         title: ticket.title,
+         status: ticket.status,
+         priority: ticket.priority,
+         updated_at: ticket.updated_at
+       }}
+    else
+      {:error, :organization_required} ->
+        {:error, "organization is required when ticket_id is a human key (PREFIX-NNN)"}
+
+      {:error, msg} when is_binary(msg) ->
+        {:error, msg}
 
       {:error, :not_found} ->
-        {:error, "Ticket '#{ticket_id}' not found"}
+        {:error, "Ticket '#{ticket_ref}' not found"}
 
       {:error, changeset} ->
         {:error, "Failed: #{inspect(changeset.errors)}"}
