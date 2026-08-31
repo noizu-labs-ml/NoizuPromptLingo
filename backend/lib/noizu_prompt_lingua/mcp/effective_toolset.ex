@@ -75,6 +75,7 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
   alias NoizuPromptLingua.MCPServers
   alias NoizuPromptLingua.Repo
   alias NoizuPromptLingua.Schema.McpApiKey
+  alias NoizuPromptLingua.Schema.MCPCustomScope
   alias NoizuPromptLingua.Schema.OAuthClient
   alias NoizuPromptLingua.Schema.McpTool
   require Noizu.EntityReference.Records

@@ -9,7 +9,7 @@ import {
   mcpOauthServerName,
   mcpOauthSnippet,
   type McpOauthClient,
-} from './mcp-setup.ts';
+} from './mcp-setup';
 
 const URL = 'https://tobor.locker/custom/tobor/mcp';
 const NAME = 'tobor-tobor';
