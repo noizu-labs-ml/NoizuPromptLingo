@@ -1,0 +1,701 @@
+user_stories:
+  - id: US-001
+    title: Install via install script
+    slug: install-via-script
+    epic: Onboarding & Install
+    priority: must-have
+    personas: [P-001, P-007]
+    file: US-001-install-via-script.md
+  - id: US-002
+    title: First-run indexing wizard
+    slug: first-run-indexing-wizard
+    epic: Onboarding & Install
+    priority: must-have
+    personas: [P-001, P-007]
+    file: US-002-first-run-indexing-wizard.md
+  - id: US-003
+    title: Guided empty-state dashboard
+    slug: guided-empty-state-dashboard
+    epic: Onboarding & Install
+    priority: should-have
+    personas: [P-007]
+    file: US-003-guided-empty-state-dashboard.md
+  - id: US-004
+    title: Inline search-mode guidance
+    slug: inline-search-mode-guidance
+    epic: Onboarding & Install
+    priority: should-have
+    personas: [P-007]
+    file: US-004-inline-search-mode-guidance.md
+  - id: US-005
+    title: In-app glossary panel
+    slug: in-app-glossary-panel
+    epic: Onboarding & Install
+    priority: could-have
+    personas: [P-007]
+    file: US-005-in-app-glossary-panel.md
+  - id: US-006
+    title: Configure embedding model on first run
+    slug: configure-embedding-model-first-run
+    epic: Onboarding & Install
+    priority: must-have
+    personas: [P-001, P-008]
+    file: US-006-configure-embedding-model-first-run.md
+  - id: US-007
+    title: CLI init bootstraps config
+    slug: cli-init-bootstraps-config
+    epic: Onboarding & Install
+    priority: must-have
+    personas: [P-001]
+    file: US-007-cli-init-bootstraps-config.md
+  - id: US-008
+    title: Post-install health check
+    slug: post-install-health-check
+    epic: Onboarding & Install
+    priority: should-have
+    personas: [P-001, P-008]
+    file: US-008-post-install-health-check.md
+  - id: US-009
+    title: Defer indexing large history
+    slug: defer-indexing-large-history
+    epic: Onboarding & Install
+    priority: should-have
+    personas: [P-001, P-005]
+    file: US-009-defer-indexing-large-history.md
+  - id: US-010
+    title: Real-time file watcher
+    slug: realtime-file-watcher
+    epic: Indexing & Ingestion
+    priority: must-have
+    personas: [P-001]
+    file: US-010-realtime-file-watcher.md
+  - id: US-011
+    title: Incremental append-only re-index
+    slug: incremental-append-only-reindex
+    epic: Indexing & Ingestion
+    priority: must-have
+    personas: [P-001, P-003]
+    file: US-011-incremental-append-only-reindex.md
+  - id: US-012
+    title: Manual re-index CLI command
+    slug: manual-reindex-cli-command
+    epic: Indexing & Ingestion
+    priority: must-have
+    personas: [P-001, P-008]
+    file: US-012-manual-reindex-cli-command.md
+  - id: US-013
+    title: Dashboard index health indicator
+    slug: dashboard-index-health-indicator
+    epic: Indexing & Ingestion
+    priority: should-have
+    personas: [P-005]
+    file: US-013-dashboard-index-health-indicator.md
+  - id: US-014
+    title: Handle malformed JSONL lines
+    slug: handle-malformed-jsonl-lines
+    epic: Indexing & Ingestion
+    priority: must-have
+    personas: [P-001, P-006]
+    file: US-014-handle-malformed-jsonl-lines.md
+  - id: US-015
+    title: Fully local indexing and search
+    slug: fully-local-indexing-and-search
+    epic: Privacy & Local-only
+    priority: must-have
+    personas: [P-001, P-005]
+    file: US-015-fully-local-indexing-and-search.md
+  - id: US-016
+    title: Explicit local-only statement in Settings
+    slug: explicit-local-only-statement-settings
+    epic: Privacy & Local-only
+    priority: should-have
+    personas: [P-005, P-007]
+    file: US-016-explicit-local-only-statement-settings.md
+  - id: US-017
+    title: Configure OpenAI-compatible LLM endpoint
+    slug: configure-openai-compatible-llm-endpoint
+    epic: Settings & LLM Provider Config
+    priority: must-have
+    personas: [P-008]
+    file: US-017-configure-openai-compatible-llm-endpoint.md
+  - id: US-018
+    title: Switch default embedding model
+    slug: switch-default-embedding-model
+    epic: Settings & LLM Provider Config
+    priority: should-have
+    personas: [P-003, P-008]
+    file: US-018-switch-default-embedding-model.md
+  - id: US-019
+    title: Per-operation LLM provider override
+    slug: per-operation-llm-provider-override
+    epic: Settings & LLM Provider Config
+    priority: could-have
+    personas: [P-008]
+    file: US-019-per-operation-llm-provider-override.md
+  - id: US-020
+    title: Validate LLM provider connectivity
+    slug: validate-llm-provider-connectivity
+    epic: Settings & LLM Provider Config
+    priority: should-have
+    personas: [P-008]
+    file: US-020-validate-llm-provider-connectivity.md
+  - id: US-021
+    title: Full-text keyword search
+    slug: full-text-keyword-search
+    epic: Search & Discovery
+    priority: must-have
+    personas: [P-001, P-007]
+    file: US-021-full-text-keyword-search.md
+  - id: US-022
+    title: Semantic search by meaning
+    slug: semantic-search-by-meaning
+    epic: Search & Discovery
+    priority: must-have
+    personas: [P-001, P-003]
+    file: US-022-semantic-search-by-meaning.md
+  - id: US-023
+    title: Filter search results by project
+    slug: filter-search-by-project
+    epic: Search & Discovery
+    priority: must-have
+    personas: [P-001, P-005]
+    file: US-023-filter-search-by-project.md
+  - id: US-024
+    title: Filter search results by role
+    slug: filter-search-by-role
+    epic: Search & Discovery
+    priority: should-have
+    personas: [P-001, P-003]
+    file: US-024-filter-search-by-role.md
+  - id: US-025
+    title: Filter search results by date range
+    slug: filter-search-by-date-range
+    epic: Search & Discovery
+    priority: should-have
+    personas: [P-001, P-005]
+    file: US-025-filter-search-by-date-range.md
+  - id: US-026
+    title: Keyword vs semantic mode toggle with guidance
+    slug: keyword-semantic-mode-toggle-guidance
+    epic: Search & Discovery
+    priority: should-have
+    personas: [P-007, P-001]
+    file: US-026-keyword-semantic-mode-toggle-guidance.md
+  - id: US-027
+    title: Similarity score on semantic results
+    slug: similarity-score-semantic-results
+    epic: Search & Discovery
+    priority: should-have
+    personas: [P-003]
+    file: US-027-similarity-score-semantic-results.md
+  - id: US-028
+    title: Search-as-you-type live results
+    slug: search-as-you-type-live-results
+    epic: Search & Discovery
+    priority: could-have
+    personas: [P-001]
+    file: US-028-search-as-you-type-live-results.md
+  - id: US-029
+    title: Markdown-formatted thread rendering
+    slug: markdown-formatted-thread-rendering
+    epic: Thread Viewer
+    priority: must-have
+    personas: [P-001, P-007]
+    file: US-029-markdown-formatted-thread-rendering.md
+  - id: US-030
+    title: Syntax-highlighted code blocks
+    slug: syntax-highlighted-code-blocks
+    epic: Thread Viewer
+    priority: must-have
+    personas: [P-001, P-002]
+    file: US-030-syntax-highlighted-code-blocks.md
+  - id: US-031
+    title: Inline Mermaid diagram rendering
+    slug: inline-mermaid-diagram-rendering
+    epic: Thread Viewer
+    priority: should-have
+    personas: [P-002, P-004]
+    file: US-031-inline-mermaid-diagram-rendering.md
+  - id: US-032
+    title: Inline LaTeX rendering
+    slug: inline-latex-rendering
+    epic: Thread Viewer
+    priority: could-have
+    personas: [P-003]
+    file: US-032-inline-latex-rendering.md
+  - id: US-033
+    title: Collapsible tool-call/result blocks
+    slug: collapsible-tool-call-result-blocks
+    epic: Thread Viewer
+    priority: must-have
+    personas: [P-001, P-002]
+    file: US-033-collapsible-tool-call-result-blocks.md
+  - id: US-034
+    title: Collapsible extended-thinking blocks
+    slug: collapsible-extended-thinking-blocks
+    epic: Thread Viewer
+    priority: should-have
+    personas: [P-002, P-004]
+    file: US-034-collapsible-extended-thinking-blocks.md
+  - id: US-035
+    title: One-click resume command
+    slug: one-click-resume-command
+    epic: Thread Viewer
+    priority: must-have
+    personas: [P-001, P-007]
+    file: US-035-one-click-resume-command.md
+  - id: US-036
+    title: Jump-to-message navigation
+    slug: jump-to-message-navigation
+    epic: Thread Viewer
+    priority: should-have
+    personas: [P-002, P-005]
+    file: US-036-jump-to-message-navigation.md
+  - id: US-037
+    title: Full keyboard navigation in thread viewer
+    slug: full-keyboard-navigation-thread-viewer
+    epic: Accessibility & i18n
+    priority: must-have
+    personas: [P-007]
+    file: US-037-full-keyboard-navigation-thread-viewer.md
+  - id: US-038
+    title: Screen-reader labels on controls
+    slug: screen-reader-labels-on-controls
+    epic: Accessibility & i18n
+    priority: should-have
+    personas: [P-007]
+    file: US-038-screen-reader-labels-on-controls.md
+  - id: US-039
+    title: High-contrast / reduced-motion theme
+    slug: high-contrast-reduced-motion-theme
+    epic: Accessibility & i18n
+    priority: could-have
+    personas: [P-007]
+    file: US-039-high-contrast-reduced-motion-theme.md
+  - id: US-040
+    title: Keyboard shortcuts reference panel
+    slug: keyboard-shortcuts-reference-panel
+    epic: Accessibility & i18n
+    priority: should-have
+    personas: [P-001, P-007]
+    file: US-040-keyboard-shortcuts-reference-panel.md
+  - id: US-041
+    title: Collapse message range non-destructively
+    slug: collapse-message-range-non-destructively
+    epic: Thread Editing
+    priority: must-have
+    personas: [P-002]
+    file: US-041-collapse-message-range-non-destructively.md
+  - id: US-042
+    title: Remove a tangent from an edited version
+    slug: remove-tangent-edited-version
+    epic: Thread Editing
+    priority: must-have
+    personas: [P-002, P-006]
+    file: US-042-remove-tangent-edited-version.md
+  - id: US-043
+    title: Reorder messages in an edited version
+    slug: reorder-messages-edited-version
+    epic: Thread Editing
+    priority: should-have
+    personas: [P-002]
+    file: US-043-reorder-messages-edited-version.md
+  - id: US-044
+    title: Inject a note into an edited version
+    slug: inject-note-edited-version
+    epic: Thread Editing
+    priority: should-have
+    personas: [P-002]
+    file: US-044-inject-note-edited-version.md
+  - id: US-045
+    title: Save edited version with description
+    slug: save-edited-version-description
+    epic: Thread Editing
+    priority: must-have
+    personas: [P-002, P-006]
+    file: US-045-save-edited-version-description.md
+  - id: US-046
+    title: View version history and diff
+    slug: view-version-history-diff
+    epic: Thread Editing
+    priority: should-have
+    personas: [P-002, P-005]
+    file: US-046-view-version-history-diff.md
+  - id: US-047
+    title: 'Convert wizard: choose artifact type'
+    slug: convert-wizard-choose-artifact-type
+    epic: Convert
+    priority: must-have
+    personas: [P-002, P-004]
+    file: US-047-convert-wizard-choose-artifact-type.md
+  - id: US-048
+    title: AI-suggested candidate panel
+    slug: ai-suggested-candidate-panel
+    epic: Convert
+    priority: should-have
+    personas: [P-002, P-004]
+    file: US-048-ai-suggested-candidate-panel.md
+  - id: US-049
+    title: Manually select conversion range
+    slug: manually-select-conversion-range
+    epic: Convert
+    priority: must-have
+    personas: [P-002, P-006]
+    file: US-049-manually-select-conversion-range.md
+  - id: US-050
+    title: Configure artifact metadata
+    slug: configure-artifact-metadata
+    epic: Convert
+    priority: must-have
+    personas: [P-004]
+    file: US-050-configure-artifact-metadata.md
+  - id: US-051
+    title: Preview generated artifact before export
+    slug: preview-generated-artifact-before-export
+    epic: Convert
+    priority: must-have
+    personas: [P-004, P-002]
+    file: US-051-preview-generated-artifact-before-export.md
+  - id: US-052
+    title: Export converted artifact to file path
+    slug: export-converted-artifact-to-file-path
+    epic: Convert
+    priority: must-have
+    personas: [P-002, P-004, P-006]
+    file: US-052-export-converted-artifact-to-file-path.md
+  - id: US-053
+    title: Create a topic-scoped dataset
+    slug: create-topic-scoped-dataset
+    epic: Datasets
+    priority: must-have
+    personas: [P-003]
+    file: US-053-create-topic-scoped-dataset.md
+  - id: US-054
+    title: Tag message range into dataset
+    slug: tag-message-range-into-dataset
+    epic: Datasets
+    priority: must-have
+    personas: [P-003]
+    file: US-054-tag-message-range-into-dataset.md
+  - id: US-055
+    title: Rate dataset entry quality
+    slug: rate-dataset-entry-quality
+    epic: Datasets
+    priority: must-have
+    personas: [P-003]
+    file: US-055-rate-dataset-entry-quality.md
+  - id: US-056
+    title: View dataset quality breakdown
+    slug: view-dataset-quality-breakdown
+    epic: Datasets
+    priority: should-have
+    personas: [P-003]
+    file: US-056-view-dataset-quality-breakdown.md
+  - id: US-057
+    title: Export dataset in multiple formats
+    slug: export-dataset-multiple-formats
+    epic: Datasets
+    priority: must-have
+    personas: [P-003]
+    file: US-057-export-dataset-multiple-formats.md
+  - id: US-058
+    title: Low-bandwidth plaintext fallback view
+    slug: low-bandwidth-plaintext-fallback-view
+    epic: Accessibility & i18n
+    priority: could-have
+    personas: [P-007]
+    file: US-058-low-bandwidth-plaintext-fallback-view.md
+  - id: US-059
+    title: CLI recent command
+    slug: cli-recent-command
+    epic: CLI (Ink)
+    priority: must-have
+    personas: [P-001]
+    file: US-059-cli-recent-command.md
+  - id: US-060
+    title: CLI search with JSON output
+    slug: cli-search-json-output
+    epic: CLI (Ink)
+    priority: should-have
+    personas: [P-001, P-008]
+    file: US-060-cli-search-json-output.md
+  - id: US-061
+    title: Tag a conversation with a label
+    slug: tag-conversation-with-label
+    epic: Conversation Operations
+    priority: must-have
+    personas: [P-001, P-005]
+    file: US-061-tag-conversation-with-label.md
+  - id: US-062
+    title: Clone a conversation before editing
+    slug: clone-conversation-before-editing
+    epic: Conversation Operations
+    priority: must-have
+    personas: [P-006, P-002]
+    file: US-062-clone-conversation-before-editing.md
+  - id: US-063
+    title: Rehome conversation to new project dir
+    slug: rehome-conversation-new-project-dir
+    epic: Conversation Operations
+    priority: must-have
+    personas: [P-006]
+    file: US-063-rehome-conversation-new-project-dir.md
+  - id: US-064
+    title: Archive a conversation
+    slug: archive-a-conversation
+    epic: Conversation Operations
+    priority: should-have
+    personas: [P-006, P-005]
+    file: US-064-archive-a-conversation.md
+  - id: US-065
+    title: Restore an archived conversation
+    slug: restore-archived-conversation
+    epic: Conversation Operations
+    priority: should-have
+    personas: [P-006]
+    file: US-065-restore-archived-conversation.md
+  - id: US-066
+    title: Merge two conversations into one document
+    slug: merge-two-conversations-into-one-document
+    epic: Conversation Operations
+    priority: must-have
+    personas: [P-002]
+    file: US-066-merge-two-conversations-into-one-document.md
+  - id: US-067
+    title: Bulk-tag multiple conversations
+    slug: bulk-tag-multiple-conversations
+    epic: Conversation Operations
+    priority: could-have
+    personas: [P-005, P-001]
+    file: US-067-bulk-tag-multiple-conversations.md
+  - id: US-068
+    title: Export merged conversation to shared location
+    slug: export-merged-conversation-shared-location
+    epic: Conversation Operations
+    priority: should-have
+    personas: [P-002]
+    file: US-068-export-merged-conversation-shared-location.md
+  - id: US-069
+    title: Delete a conversation with confirmation
+    slug: delete-conversation-with-confirmation
+    epic: Conversation Operations
+    priority: should-have
+    personas: [P-005, P-006]
+    file: US-069-delete-conversation-with-confirmation.md
+  - id: US-070
+    title: Browse grouped by project
+    slug: browse-grouped-by-project
+    epic: Admin & Oversight
+    priority: must-have
+    personas: [P-005, P-001]
+    file: US-070-browse-grouped-by-project.md
+  - id: US-071
+    title: Sort Browse by activity
+    slug: sort-browse-by-activity
+    epic: Admin & Oversight
+    priority: should-have
+    personas: [P-005]
+    file: US-071-sort-browse-by-activity.md
+  - id: US-072
+    title: Dashboard stat row
+    slug: dashboard-stat-row
+    epic: Admin & Oversight
+    priority: must-have
+    personas: [P-005, P-001]
+    file: US-072-dashboard-stat-row.md
+  - id: US-073
+    title: Safety Watch flags unusual threads
+    slug: safety-watch-flags-unusual-threads
+    epic: Admin & Oversight
+    priority: could-have
+    personas: [P-005]
+    file: US-073-safety-watch-flags-unusual-threads.md
+  - id: US-074
+    title: Spot-check thread for leaked secrets
+    slug: spot-check-thread-leaked-secrets
+    epic: Admin & Oversight
+    priority: should-have
+    personas: [P-005]
+    file: US-074-spot-check-thread-leaked-secrets.md
+  - id: US-075
+    title: Track threads converted into durable assets
+    slug: track-threads-converted-durable-assets
+    epic: Admin & Oversight
+    priority: could-have
+    personas: [P-005]
+    file: US-075-track-threads-converted-durable-assets.md
+  - id: US-076
+    title: CLI show command
+    slug: cli-show-command
+    epic: CLI (Ink)
+    priority: must-have
+    personas: [P-001]
+    file: US-076-cli-show-command.md
+  - id: US-077
+    title: Catalog skills/agents/commands across providers
+    slug: catalog-skills-agents-commands-across-providers
+    epic: skill-manage (core)
+    priority: must-have
+    personas: [P-004, P-008]
+    file: US-077-catalog-skills-agents-commands-across-providers.md
+  - id: US-078
+    title: Enable a skill for a provider
+    slug: enable-skill-for-provider
+    epic: skill-manage (core)
+    priority: must-have
+    personas: [P-004, P-008]
+    file: US-078-enable-skill-for-provider.md
+  - id: US-079
+    title: Batch-enable a skill bundle
+    slug: batch-enable-skill-bundle
+    epic: skill-manage (core)
+    priority: should-have
+    personas: [P-008]
+    file: US-079-batch-enable-skill-bundle.md
+  - id: US-080
+    title: Index large existing history without blocking
+    slug: index-large-history-without-blocking
+    epic: Performance & Scale
+    priority: must-have
+    personas: [P-001, P-005]
+    file: US-080-index-large-history-without-blocking.md
+  - id: US-081
+    title: Graceful handling of locked/corrupted index
+    slug: graceful-locked-corrupted-index
+    epic: Edge Cases & Error States
+    priority: must-have
+    personas: [P-001, P-005]
+    file: US-081-graceful-locked-corrupted-index.md
+  - id: US-082
+    title: Empty search results with suggestions
+    slug: empty-search-results-with-suggestions
+    epic: Edge Cases & Error States
+    priority: should-have
+    personas: [P-007, P-001]
+    file: US-082-empty-search-results-with-suggestions.md
+  - id: US-083
+    title: Handle orphaned JSONL directories
+    slug: handle-orphaned-jsonl-directories
+    epic: Edge Cases & Error States
+    priority: should-have
+    personas: [P-006]
+    file: US-083-handle-orphaned-jsonl-directories.md
+  - id: US-084
+    title: Confirm before irreversible delete
+    slug: confirm-before-irreversible-delete
+    epic: Edge Cases & Error States
+    priority: must-have
+    personas: [P-005, P-007]
+    file: US-084-confirm-before-irreversible-delete.md
+  - id: US-085
+    title: Convert export failure handling
+    slug: convert-export-failure-handling
+    epic: Edge Cases & Error States
+    priority: should-have
+    personas: [P-004, P-002]
+    file: US-085-convert-export-failure-handling.md
+  - id: US-086
+    title: LLM provider request failure surfaced clearly
+    slug: llm-provider-request-failure-surfaced
+    epic: Edge Cases & Error States
+    priority: should-have
+    personas: [P-008]
+    file: US-086-llm-provider-request-failure-surfaced.md
+  - id: US-087
+    title: Resume fails when session directory is gone
+    slug: resume-fails-session-directory-gone
+    epic: Edge Cases & Error States
+    priority: could-have
+    personas: [P-001, P-007]
+    file: US-087-resume-fails-session-directory-gone.md
+  - id: US-088
+    title: Hono API core endpoints
+    slug: hono-api-core-endpoints
+    epic: Integration & API
+    priority: must-have
+    personas: [P-003, P-008]
+    file: US-088-hono-api-core-endpoints.md
+  - id: US-089
+    title: Dataset export API endpoint
+    slug: dataset-export-api-endpoint
+    epic: Integration & API
+    priority: must-have
+    personas: [P-003]
+    file: US-089-dataset-export-api-endpoint.md
+  - id: US-090
+    title: Rehome exposed via API
+    slug: rehome-exposed-via-api
+    epic: Integration & API
+    priority: should-have
+    personas: [P-006]
+    file: US-090-rehome-exposed-via-api.md
+  - id: US-091
+    title: API bound to localhost with no unauthenticated remote access
+    slug: api-localhost-no-unauth-remote-access
+    epic: Integration & API
+    priority: must-have
+    personas: [P-005, P-008]
+    file: US-091-api-localhost-no-unauth-remote-access.md
+  - id: US-092
+    title: Event stream for newly indexed conversations
+    slug: event-stream-newly-indexed-conversations
+    epic: Integration & API
+    priority: wont-have
+    personas: [P-008]
+    file: US-092-event-stream-newly-indexed-conversations.md
+  - id: US-093
+    title: Gemini/OpenCode/Aider harness import (stubbed)
+    slug: gemini-opencode-aider-harness-import-stub
+    epic: Integration & API
+    priority: wont-have
+    personas: [P-008]
+    file: US-093-gemini-opencode-aider-harness-import-stub.md
+  - id: US-094
+    title: skill-manage audit detects symlink drift
+    slug: skill-manage-audit-detects-symlink-drift
+    epic: skill-manage (audit)
+    priority: must-have
+    personas: [P-004, P-008]
+    file: US-094-skill-manage-audit-detects-symlink-drift.md
+  - id: US-095
+    title: skill-manage context budget report
+    slug: skill-manage-context-budget-report
+    epic: skill-manage (audit)
+    priority: must-have
+    personas: [P-008]
+    file: US-095-skill-manage-context-budget-report.md
+  - id: US-096
+    title: skill-manage TUI provider comparison
+    slug: skill-manage-tui-provider-comparison
+    epic: skill-manage (audit)
+    priority: should-have
+    personas: [P-008]
+    file: US-096-skill-manage-tui-provider-comparison.md
+  - id: US-097
+    title: Semantic search latency at scale
+    slug: semantic-search-latency-at-scale
+    epic: Performance & Scale
+    priority: must-have
+    personas: [P-003, P-001]
+    file: US-097-semantic-search-latency-at-scale.md
+  - id: US-098
+    title: Low idle resource usage for watcher
+    slug: low-idle-resource-usage-watcher
+    epic: Performance & Scale
+    priority: should-have
+    personas: [P-001, P-008]
+    file: US-098-low-idle-resource-usage-watcher.md
+  - id: US-099
+    title: Virtualized rendering for long threads
+    slug: virtualized-rendering-long-threads
+    epic: Performance & Scale
+    priority: should-have
+    personas: [P-002, P-005]
+    file: US-099-virtualized-rendering-long-threads.md
+  - id: US-100
+    title: Dashboard stays responsive as corpus grows
+    slug: dashboard-responsive-as-corpus-grows
+    epic: Performance & Scale
+    priority: could-have
+    personas: [P-005]
+    file: US-100-dashboard-responsive-as-corpus-grows.md

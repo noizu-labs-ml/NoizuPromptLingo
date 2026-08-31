@@ -1,0 +1,133 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PROJ_DIR="$(cd "$(dirname "$(readlink -f "$0" 2>/dev/null || realpath "$0")")/.." && pwd)"
+API_PORT="${LLM_TOOLKIT_API_PORT:-${CLAUDE_ASSIST_API_PORT:-3100}}"
+WEB_PORT="${LLM_TOOLKIT_WEB_PORT:-${CLAUDE_ASSIST_WEB_PORT:-5173}}"
+
+is_api_running() {
+  curl -sf --max-time 1 "http://localhost:${API_PORT}/api/health" >/dev/null 2>&1
+}
+
+start_api() {
+  if is_api_running; then
+    echo "[llm-toolkit] API already running on port ${API_PORT}"
+    return 0
+  fi
+  echo "[llm-toolkit] Starting API on port ${API_PORT}..."
+  cd "$PROJ_DIR"
+  PORT="$API_PORT" pnpm dev:api
+}
+
+start_web() {
+  echo "[llm-toolkit] Starting Web UI on port ${WEB_PORT}..."
+  cd "$PROJ_DIR"
+  pnpm dev:web
+}
+
+use_zellij() {
+  if ! command -v zellij >/dev/null 2>&1; then
+    return 1
+  fi
+  # Don't nest zellij sessions
+  if [ -n "${ZELLIJ:-}" ]; then
+    return 1
+  fi
+  return 0
+}
+
+layout_file() {
+  local tmp
+  tmp="$(mktemp "${TMPDIR:-/tmp}/llm-toolkit-layout.XXXXXX.kdl")"
+  local api_cmd="PORT=${API_PORT} pnpm dev:api"
+  if is_api_running; then
+    api_cmd="echo '[llm-toolkit] API already running on port ${API_PORT}'; read -r -p 'Press enter to close this pane...'"
+  fi
+  cat > "$tmp" <<LAYOUT
+layout {
+    pane split_direction="vertical" {
+        pane command="bash" size="80%" {
+            args "-c" "cd ${PROJ_DIR} && pnpm dev:web"
+            name "web"
+        }
+    }
+    pane command="bash" size="20%" {
+        args "-c" "cd ${PROJ_DIR} && ${api_cmd}"
+        name "api"
+    }
+}
+LAYOUT
+  echo "$tmp"
+}
+
+case "${1:-}" in
+  "")
+    if use_zellij; then
+      layout="$(layout_file)"
+      trap "rm -f '$layout'" EXIT
+      echo "[llm-toolkit] Launching with zellij..."
+      zellij --layout "$layout" options --session-name llm-toolkit
+    else
+      # Fallback: same as --no-zellij
+      exec "$0" --no-zellij
+    fi
+    ;;
+  api)
+    start_api
+    ;;
+  web)
+    start_web
+    ;;
+  --no-zellij)
+    # Run both in foreground without zellij (api backgrounded)
+    if ! is_api_running; then
+      echo "[llm-toolkit] Starting API in background..."
+      cd "$PROJ_DIR"
+      PORT="$API_PORT" pnpm dev:api &
+      API_PID=$!
+      trap "kill $API_PID 2>/dev/null" EXIT
+      # Wait for API to be ready
+      for _ in $(seq 1 30); do
+        is_api_running && break
+        sleep 0.3
+      done
+    else
+      echo "[llm-toolkit] API already running on port ${API_PORT}"
+    fi
+    start_web
+    ;;
+  --help|-h)
+    cat <<USAGE
+llm-toolkit — Claude Code conversation browser (TS/pnpm) + skill-manage (Rust)
+
+Usage:
+  llm-toolkit                    Launch API + web UI (zellij split pane if available)
+  llm-toolkit api                Start only the API server
+  llm-toolkit web                Start only the web UI (dev server, foreground)
+  llm-toolkit --no-zellij        Launch API + web without zellij (API backgrounded)
+  llm-toolkit skill <cmd>        Manage provider skills/agents/commands (see below)
+  llm-toolkit <cmd> [args]       Conversation CLI: recent, search, list, show,
+                                  index, serve, interactive, help
+
+Run 'llm-toolkit skill --help' for the full skill-manage subcommand list.
+Run 'llm-toolkit help' for the conversation CLI's own usage output.
+USAGE
+    ;;
+  skill)
+    shift
+    SKILL_BIN="$PROJ_DIR/skill-manage/target/release/skill-manage"
+    if [ ! -x "$SKILL_BIN" ]; then
+      if command -v cargo >/dev/null 2>&1; then
+        echo "[llm-toolkit] Building skill-manage (first run)..." >&2
+        (cd "$PROJ_DIR/skill-manage" && cargo build --release >&2)
+      else
+        echo "[llm-toolkit] skill-manage binary missing and cargo unavailable. Run: make -C $PROJ_DIR compile" >&2
+        exit 1
+      fi
+    fi
+    exec "$SKILL_BIN" "$@"
+    ;;
+  *)
+    exec "$PROJ_DIR/node_modules/.bin/tsx" "$PROJ_DIR/packages/cli/bin.ts" "$@"
+    ;;
+esac

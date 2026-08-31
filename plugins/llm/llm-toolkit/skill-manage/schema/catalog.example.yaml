@@ -1,0 +1,113 @@
+# skill-manage catalog — tags, work types, editor profiles
+# Copy to: ~/.config/skill-manage/catalog.yaml
+version: 1
+
+skills:
+  react-engineer:
+    tags: [frontend, web, react]
+    work_types: [feature-dev, migration]
+    providers: [claude, codex, grok]
+    notes: "Next.js 15–16 focused"
+  kubernetes-engineer:
+    tags: [infra, k8s]
+    work_types: [infra, deploy]
+  technical-writer:
+    tags: [docs]
+    work_types: [feature-dev, planning, docs]
+  terraform-engineer:
+    tags: [infra, terraform]
+    work_types: [infra, deploy]
+  proposal-writer:
+    tags: [docs, business]
+    work_types: [planning]
+
+agents:
+  npl-tasker:
+    tags: [utility, ephemeral]
+    work_types: [feature-dev, debugging, research]
+  npl-prd-editor:
+    tags: [product, specs]
+    work_types: [planning, feature-dev]
+  npl-idea-to-spec:
+    tags: [product, specs]
+    work_types: [planning]
+
+commands:
+  reflect:
+    tags: [process]
+    work_types: [all]
+  task-wizard:
+    tags: [process, tasks]
+    work_types: [feature-dev, planning]
+  migrate-k8-config:
+    tags: [infra]
+    work_types: [infra]
+
+work_types:
+  feature-dev:
+    description: Product feature implementation
+    skills: [react-engineer, technical-writer]
+    agents: [npl-tasker]
+    commands: [reflect, task-wizard]
+    editor_profiles: [vscode-web]
+  infra:
+    description: Cluster / Terraform / deploy work
+    skills: [kubernetes-engineer, terraform-engineer]
+    agents: [npl-tasker]
+    commands: [migrate-k8-config]
+    editor_profiles: [vscode-infra]
+  planning:
+    description: Specs, PRDs, architecture docs
+    skills: [technical-writer, proposal-writer]
+    agents: [npl-prd-editor, npl-idea-to-spec]
+    commands: [reflect]
+    editor_profiles: [vscode-docs]
+  debugging:
+    description: Investigating failures and regressions
+    skills: []
+    agents: [npl-tasker]
+    commands: [reflect]
+    editor_profiles: []
+  research:
+    description: Exploration and analysis tasks
+    skills: []
+    agents: [npl-tasker]
+    commands: [reflect]
+    editor_profiles: []
+  docs:
+    description: Documentation-focused work
+    skills: [technical-writer]
+    agents: []
+    commands: [reflect]
+    editor_profiles: [vscode-docs]
+  migration:
+    description: Framework or platform migrations
+    skills: [react-engineer]
+    agents: [npl-tasker]
+    commands: [reflect]
+    editor_profiles: [vscode-web]
+  deploy:
+    description: Deployment and release operations
+    skills: [kubernetes-engineer, terraform-engineer]
+    agents: []
+    commands: [migrate-k8-config]
+    editor_profiles: [vscode-infra]
+
+editor_profiles:
+  vscode-web:
+    description: VS Code / Cursor settings for web app work
+    files:
+      - path: ~/.config/Code/User/settings.json
+        role: settings
+      - path: ~/dotfiles/vscode/web.code-workspace
+        role: workspace
+  vscode-infra:
+    description: Infra-focused editor profile
+    files:
+      - path: ~/dotfiles/vscode/infra.code-workspace
+        role: workspace
+  vscode-docs:
+    description: Markdown / docs writing
+    files:
+      - path: ~/dotfiles/vscode/docs.code-workspace
+        role: workspace

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <title>Claude Assist</title>
+  <defs>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- Conversation block 1 (wider, top) -->
+  <rect x="10" y="16" width="34" height="10" rx="1" fill="#CDCDE0"/>
+  <!-- Conversation block 2 (narrower, below) -->
+  <rect x="14" y="30" width="26" height="10" rx="1" fill="#8888A0"/>
+  <!-- Extraction chevron (bottom-right, cyan glow) -->
+  <polygon points="48,42 42,48 48,54 54,48" fill="#06B6D4" filter="url(#glow)"/>
+</svg>
