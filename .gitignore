@@ -1,3 +1,6 @@
+# work trees
+staging/
+
 start-app*tar.gz
 # Generated secrets
 start-app*tgz
