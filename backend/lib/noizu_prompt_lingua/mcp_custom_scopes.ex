@@ -637,9 +637,15 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
 
   def delete(%MCPCustomScope{} = scope) do
     cond do
-      scope.slug == @default_package_slug -> {:error, :protected}
-      scope.slug == @core_variant_slug -> {:error, :protected}
-      scope.is_default == true and not is_nil(scope.user_id) -> {:error, :protected}
+      scope.slug == @default_package_slug ->
+        {:error, :protected}
+
+      scope.slug == @core_variant_slug ->
+        {:error, :protected}
+
+      scope.is_default == true and not is_nil(scope.user_id) ->
+        {:error, :protected}
+
       scope.is_default == true and not is_nil(scope.organization_id) and is_nil(scope.user_id) ->
         {:error, :protected}
 
@@ -686,8 +692,10 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
   # Non-server groups kept by the normalizer (W7): per-key gating of the Lit
   # component registry uses group id "components" (see
   # NoizuPromptLinguaWeb.ComponentController) even though no MCP server maps
-  # to it.
-  @non_server_groups ["components"]
+  # to it. W4 adds "prompts"/"resources" — DB-backed MCP prompt/resource
+  # capability groups gated by NoizuPromptLingua.MCP.Custom's prompts/* and
+  # resources/* handlers (no MCP server module maps to them).
+  @non_server_groups ["components", "prompts", "resources"]
 
   defp normalize_groups(config) do
     groups = Map.get(config, "groups") || Map.get(config, :groups) || %{}
@@ -893,6 +901,7 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
 
   defp normalize_group_config(config) when is_map(config) do
     tools = Map.get(config, "tools") || Map.get(config, :tools) || %{}
+    entries = Map.get(config, "entries") || Map.get(config, :entries) || %{}
 
     base =
       %{}
@@ -900,7 +909,15 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
       |> put_bool("hidden", Map.get(config, "hidden", Map.get(config, :hidden)))
       |> carry_audit(config)
 
-    Map.put(base, "tools", normalize_tools_config(tools))
+    base = Map.put(base, "tools", normalize_tools_config(tools))
+
+    # W4: per-entry gating for the DB-backed prompts/resources groups
+    # (keyed by prompt slug / resource URI). Same flags as tools; omitted
+    # when empty so normalize output for existing configs is unchanged.
+    case normalize_tools_config(entries) do
+      empty when empty == %{} -> base
+      entries -> Map.put(base, "entries", entries)
+    end
   end
 
   defp normalize_group_config(_), do: %{"tools" => %{}}

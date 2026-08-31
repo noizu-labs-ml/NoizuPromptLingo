@@ -36,6 +36,10 @@ NoizuPromptLingua.MarketingSignupTestSchema.ensure!()
 # Ensure the custom MCP include scope table exists for custom gateway/catalog tests.
 NoizuPromptLingua.MCPCustomScopeTestSchema.ensure!()
 
+# Ensure the W4 MCP entity tables (Liquibase 019: mcp_prompts, mcp_prompt_versions,
+# mcp_resources, mcp_resource_templates) exist for the mcp-entities suites. Idempotent.
+NoizuPromptLingua.McpEntitiesTestSchema.ensure!()
+
 # SSO hand-off columns (Liquibase 025) — Helm Liquibase is gated off in prod;
 # tests must not assume the column exists.
 try do
