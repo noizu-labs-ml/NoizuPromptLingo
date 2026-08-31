@@ -47,6 +47,27 @@ defmodule NoizuPromptLingua.OAuth.ClientToolsetsTest do
     %{client: client}
   end
 
+  describe "silent re-auth (W8 gate)" do
+    test "re-consent with unchanged full grant is a no-op (stays ungated, listing unchanged)", %{
+      client: client
+    } do
+      # First grant: every group and every tool checked -> nothing blocked ->
+      # narrowing is empty and persists as %{} (ungated / legacy semantics).
+      full = %{
+        "allow_group" => %{"chat" => "on", "sessions" => "on"},
+        "allow_tool" => %{"chat" => %{"Chat_Send" => "on", "Chat_List" => "on"}}
+      }
+
+      assert ConsentManifest.narrowing(@sections, full) == %{"groups" => %{}}
+      assert {:ok, client} = Clients.update_toolset_config(client, %{"groups" => %{}})
+      assert client.toolset_config == %{}
+
+      # Silent re-auth: no narrowing captured, listing is untouched.
+      assert OAuthToolsets.apply_hidden(specs(), ctx(client.client_id), "chat") == specs()
+      assert OAuthToolsets.apply_hidden(specs(), ctx(client.client_id), nil) == specs()
+    end
+  end
+
   describe "legacy grants (no stored toolset_config)" do
     test "fresh client has empty config and is ungated", %{client: client} do
       assert client.toolset_config == %{}

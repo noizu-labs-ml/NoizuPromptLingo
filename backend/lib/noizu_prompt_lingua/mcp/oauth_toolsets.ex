@@ -32,6 +32,7 @@ defmodule NoizuPromptLingua.MCP.OAuthToolsets do
 
   require Logger
 
+  alias NoizuPromptLingua.MCP.EffectiveToolset
   alias NoizuPromptLingua.MCP.KeyToolsets
   alias NoizuPromptLingua.MCPServers
   alias NoizuPromptLingua.Repo
@@ -80,7 +81,9 @@ defmodule NoizuPromptLingua.MCP.OAuthToolsets do
       specs
     else
       Enum.reject(specs, fn spec ->
-        KeyToolsets.ungated_category?(KeyToolsets.tool_category(spec)) or ungated?(spec, config, group_id)
+        # F2 integration: category gating lives on EffectiveToolset (spec-based,
+        # reads definition.meta category); KeyToolsets.tool_category/1 is gone.
+        EffectiveToolset.ungated_category?(spec) or ungated?(spec, config, group_id)
       end)
     end
   end
