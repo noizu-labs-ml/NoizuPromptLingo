@@ -1299,6 +1299,191 @@ defmodule NoizuPromptLinguaWeb.AdminController do
     end
   end
 
+  # ── W4 MCP entities: versioned prompts, resources, resource templates ─────
+
+  def list_mcp_prompts(conn, _params) do
+    prompts =
+      NoizuPromptLingua.MCPrompts.list()
+      |> Enum.map(&NoizuPromptLingua.MCPrompts.prompt_json/1)
+
+    conn |> put_status(:ok) |> json(%{prompts: prompts})
+  end
+
+  def create_mcp_prompt(conn, %{"prompt" => attrs}) do
+    case NoizuPromptLingua.MCPrompts.create(attrs) do
+      {:ok, prompt} ->
+        conn
+        |> put_status(:created)
+        |> json(%{prompt: NoizuPromptLingua.MCPrompts.prompt_json(prompt)})
+
+      {:error, %Ecto.Changeset{} = cs} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+    end
+  end
+
+  def create_mcp_prompt(conn, _params),
+    do: conn |> put_status(:bad_request) |> json(%{error: "prompt required"})
+
+  def update_mcp_prompt(conn, %{"slug" => slug, "prompt" => attrs}) do
+    case NoizuPromptLingua.MCPrompts.update_prompt(slug, attrs) do
+      {:ok, prompt} ->
+        conn
+        |> put_status(:ok)
+        |> json(%{prompt: NoizuPromptLingua.MCPrompts.prompt_json(prompt)})
+
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Prompt not found"})
+
+      {:error, %Ecto.Changeset{} = cs} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+    end
+  end
+
+  def update_mcp_prompt(conn, _params),
+    do: conn |> put_status(:bad_request) |> json(%{error: "prompt required"})
+
+  def delete_mcp_prompt(conn, %{"slug" => slug}) do
+    case NoizuPromptLingua.MCPrompts.delete_prompt(slug) do
+      {:ok, _} ->
+        conn |> put_status(:ok) |> json(%{message: "Prompt deleted"})
+
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Prompt not found"})
+    end
+  end
+
+  def publish_mcp_prompt_version(conn, %{"slug" => slug} = params) do
+    template = params["template"] || get_in(params, ["version", "template"])
+    change_note = params["change_note"] || get_in(params, ["version", "change_note"])
+
+    cond do
+      not (is_binary(template) && template != "") ->
+        conn |> put_status(:bad_request) |> json(%{error: "template required"})
+
+      true ->
+        case NoizuPromptLingua.MCPrompts.publish_version(slug, template, change_note) do
+          {:ok, _version} ->
+            prompt = NoizuPromptLingua.MCPrompts.get_by_slug(slug)
+
+            conn
+            |> put_status(:created)
+            |> json(%{prompt: NoizuPromptLingua.MCPrompts.prompt_json(prompt)})
+
+          {:error, :not_found} ->
+            conn |> put_status(:not_found) |> json(%{error: "Prompt not found"})
+
+          {:error, %Ecto.Changeset{} = cs} ->
+            conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+        end
+    end
+  end
+
+  def list_mcp_resources(conn, _params) do
+    conn
+    |> put_status(:ok)
+    |> json(%{
+      resources:
+        NoizuPromptLingua.MCPResources.list_resources()
+        |> Enum.map(&NoizuPromptLingua.MCPResources.resource_json/1)
+    })
+  end
+
+  def create_mcp_resource(conn, %{"resource" => attrs}) do
+    case NoizuPromptLingua.MCPResources.create_resource(attrs) do
+      {:ok, resource} ->
+        conn
+        |> put_status(:created)
+        |> json(%{resource: NoizuPromptLingua.MCPResources.resource_json(resource)})
+
+      {:error, %Ecto.Changeset{} = cs} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+    end
+  end
+
+  def create_mcp_resource(conn, _params),
+    do: conn |> put_status(:bad_request) |> json(%{error: "resource required"})
+
+  def update_mcp_resource(conn, %{"id" => id, "resource" => attrs}) do
+    case NoizuPromptLingua.MCPResources.update_resource(id, attrs) do
+      {:ok, resource} ->
+        conn
+        |> put_status(:ok)
+        |> json(%{resource: NoizuPromptLingua.MCPResources.resource_json(resource)})
+
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Resource not found"})
+
+      {:error, %Ecto.Changeset{} = cs} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+    end
+  end
+
+  def update_mcp_resource(conn, _params),
+    do: conn |> put_status(:bad_request) |> json(%{error: "resource required"})
+
+  def delete_mcp_resource(conn, %{"id" => id}) do
+    case NoizuPromptLingua.MCPResources.delete_resource(id) do
+      {:ok, _} ->
+        conn |> put_status(:ok) |> json(%{message: "Resource deleted"})
+
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Resource not found"})
+    end
+  end
+
+  def list_mcp_resource_templates(conn, _params) do
+    conn
+    |> put_status(:ok)
+    |> json(%{
+      templates:
+        NoizuPromptLingua.MCPResources.list_templates()
+        |> Enum.map(&NoizuPromptLingua.MCPResources.template_json/1)
+    })
+  end
+
+  def create_mcp_resource_template(conn, %{"template" => attrs}) do
+    case NoizuPromptLingua.MCPResources.create_template(attrs) do
+      {:ok, template} ->
+        conn
+        |> put_status(:created)
+        |> json(%{template: NoizuPromptLingua.MCPResources.template_json(template)})
+
+      {:error, %Ecto.Changeset{} = cs} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+    end
+  end
+
+  def create_mcp_resource_template(conn, _params),
+    do: conn |> put_status(:bad_request) |> json(%{error: "template required"})
+
+  def update_mcp_resource_template(conn, %{"id" => id, "template" => attrs}) do
+    case NoizuPromptLingua.MCPResources.update_template(id, attrs) do
+      {:ok, template} ->
+        conn
+        |> put_status(:ok)
+        |> json(%{template: NoizuPromptLingua.MCPResources.template_json(template)})
+
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Template not found"})
+
+      {:error, %Ecto.Changeset{} = cs} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+    end
+  end
+
+  def update_mcp_resource_template(conn, _params),
+    do: conn |> put_status(:bad_request) |> json(%{error: "template required"})
+
+  def delete_mcp_resource_template(conn, %{"id" => id}) do
+    case NoizuPromptLingua.MCPResources.delete_template(id) do
+      {:ok, _} ->
+        conn |> put_status(:ok) |> json(%{message: "Template deleted"})
+
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Template not found"})
+    end
+  end
+
   # Build config attrs. A blank api_key on update means "leave unchanged" (drop it);
   # on create it is simply absent. org_id is set only on create.
   defp media_attrs(attrs, org_id) do

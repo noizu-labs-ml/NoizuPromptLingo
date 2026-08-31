@@ -522,6 +522,23 @@ defmodule NoizuPromptLinguaWeb.Router do
     # external callers with copy in their scripts keep working.
     post "/mcp-custom-scopes/:slug/copy", AdminController, :clone_mcp_custom_scope
 
+    # W4 MCP entities — versioned prompts + resources/resource templates.
+    get "/mcp-prompts", AdminController, :list_mcp_prompts
+    post "/mcp-prompts", AdminController, :create_mcp_prompt
+    patch "/mcp-prompts/:slug", AdminController, :update_mcp_prompt
+    delete "/mcp-prompts/:slug", AdminController, :delete_mcp_prompt
+    post "/mcp-prompts/:slug/versions", AdminController, :publish_mcp_prompt_version
+
+    get "/mcp-resources", AdminController, :list_mcp_resources
+    post "/mcp-resources", AdminController, :create_mcp_resource
+    patch "/mcp-resources/:id", AdminController, :update_mcp_resource
+    delete "/mcp-resources/:id", AdminController, :delete_mcp_resource
+
+    get "/mcp-resource-templates", AdminController, :list_mcp_resource_templates
+    post "/mcp-resource-templates", AdminController, :create_mcp_resource_template
+    patch "/mcp-resource-templates/:id", AdminController, :update_mcp_resource_template
+    delete "/mcp-resource-templates/:id", AdminController, :delete_mcp_resource_template
+
     # mcp_overview review flow — list generated overviews, approve/reject/edit
     # (editing the Markdown implies approval). UI is a follow-up.
     get "/mcp-overviews", McpOverviewController, :index
