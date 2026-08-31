@@ -1,61 +1,58 @@
 'use client';
 
-export interface ToolToggleEntry {
-  name: string;
-  enabled: boolean;
-  hidden: boolean;
-}
-
-export interface ToolToggleGroup {
-  group: string;
-  tools: ToolToggleEntry[];
-}
+import type { EffectiveToolState, ToolSection } from '@/types/tool-state';
 
 interface ToolTogglesGridProps {
-  groups: ToolToggleGroup[];
+  sections: ToolSection[];
   /** Emits the full next state (pure controlled component). */
-  onChange: (next: ToolToggleGroup[]) => void;
+  onChange: (next: ToolSection[]) => void;
   readOnly?: boolean;
 }
 
 /**
- * Grid of grouped tool entries with per-tool enabled/hidden toggles and
+ * Grid of grouped tool entries with per-tool enabled/visible toggles and
  * group-level toggles that cascade to every child tool. Pure controlled
- * component — the host owns persistence.
- *
- * Semantics match the tobor.locker toolset model: `enabled` gates execution,
- * `hidden` gates discovery (visible vs hidden in list_tools).
+ * component — the host owns persistence. Binds the shared F4 tool-state
+ * contract (`ToolSection` / `EffectiveToolState` from `@/types/tool-state`),
+ * which mirrors F2 EffectiveToolset semantics: `enabled` gates execution,
+ * `visible` gates discovery (listing). Toggles only touch those two fields —
+ * override/temporal fields pass through untouched.
  */
-export default function ToolTogglesGrid({ groups, onChange, readOnly = false }: ToolTogglesGridProps) {
-  function patchTool(groupName: string, toolName: string, patch: Partial<ToolToggleEntry>) {
+export default function ToolTogglesGrid({ sections, onChange, readOnly = false }: ToolTogglesGridProps) {
+  function patchTool(sectionName: string, toolId: string, patch: Partial<EffectiveToolState>) {
     onChange(
-      groups.map((g) =>
-        g.group !== groupName
-          ? g
-          : { ...g, tools: g.tools.map((t) => (t.name === toolName ? { ...t, ...patch } : t)) },
+      sections.map((s) =>
+        s.name !== sectionName
+          ? s
+          : {
+              ...s,
+              tools: s.tools.map((e) =>
+                e.tool.id === toolId ? { ...e, state: { ...e.state, ...patch } } : e,
+              ),
+            },
       ),
     );
   }
 
-  function cascade(group: ToolToggleGroup, patch: (t: ToolToggleEntry) => Partial<ToolToggleEntry>) {
+  function cascade(section: ToolSection, patch: (e: ToolSection['tools'][number]) => Partial<EffectiveToolState>) {
     onChange(
-      groups.map((g) =>
-        g.group !== group.group
-          ? g
-          : { ...g, tools: g.tools.map((t) => ({ ...t, ...patch(t) })) },
+      sections.map((s) =>
+        s.name !== section.name
+          ? s
+          : { ...s, tools: s.tools.map((e) => ({ ...e, state: { ...e.state, ...patch(e) } })) },
       ),
     );
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }} role="group" aria-label="Tool toggles">
-      {groups.map((group) => {
-        const allEnabled = group.tools.length > 0 && group.tools.every((t) => t.enabled);
-        const allHidden = group.tools.length > 0 && group.tools.every((t) => t.hidden);
+      {sections.map((section) => {
+        const allEnabled = section.tools.length > 0 && section.tools.every((e) => e.state.enabled);
+        const allVisible = section.tools.length > 0 && section.tools.every((e) => e.state.visible);
         return (
           <section
-            key={group.group}
-            aria-label={`Tool group ${group.group}`}
+            key={section.name}
+            aria-label={`Tool group ${section.label ?? section.name}`}
             style={{
               borderRadius: 6,
               border: '1px solid var(--border)',
@@ -75,24 +72,24 @@ export default function ToolTogglesGrid({ groups, onChange, readOnly = false }: 
               }}
             >
               <span style={{ fontSize: 12, fontWeight: 600, flex: 1, color: 'var(--text-0)' }}>
-                {group.group}
+                {section.label ?? section.name}
                 <span style={{ fontWeight: 400, fontSize: 10, color: 'var(--text-3)', marginLeft: 6 }}>
-                  {group.tools.filter((t) => t.enabled).length}/{group.tools.length} enabled
+                  {section.tools.filter((e) => e.state.enabled).length}/{section.tools.length} enabled
                 </span>
               </span>
               <Toggle
-                id={`ttg-${group.group}-enabled`}
+                id={`ttg-${section.name}-enabled`}
                 label="Enabled"
                 checked={allEnabled}
                 disabled={readOnly}
-                onChange={(v) => cascade(group, () => ({ enabled: v }))}
+                onChange={(v) => cascade(section, () => ({ enabled: v }))}
               />
               <Toggle
-                id={`ttg-${group.group}-hidden`}
-                label="Hidden"
-                checked={allHidden}
+                id={`ttg-${section.name}-visible`}
+                label="Visible"
+                checked={allVisible}
                 disabled={readOnly}
-                onChange={(v) => cascade(group, () => ({ hidden: v }))}
+                onChange={(v) => cascade(section, () => ({ visible: v }))}
               />
             </div>
 
@@ -105,50 +102,53 @@ export default function ToolTogglesGrid({ groups, onChange, readOnly = false }: 
                 padding: 10,
               }}
             >
-              {group.tools.map((tool) => (
-                <div
-                  key={tool.name}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                    padding: '6px 10px',
-                    borderRadius: 4,
-                    background: 'var(--bg-2)',
-                    border: '1px solid var(--border)',
-                    opacity: tool.enabled ? 1 : 0.6,
-                  }}
-                >
-                  <span
-                    title={tool.name}
+              {section.tools.map((entry) => {
+                const toolLabel = entry.tool.label ?? entry.tool.id;
+                return (
+                  <div
+                    key={entry.tool.id}
                     style={{
-                      flex: 1,
-                      fontSize: 11,
-                      fontFamily: 'monospace',
-                      color: tool.enabled ? 'var(--text-0)' : 'var(--text-3)',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      padding: '6px 10px',
+                      borderRadius: 4,
+                      background: 'var(--bg-2)',
+                      border: '1px solid var(--border)',
+                      opacity: entry.state.enabled ? 1 : 0.6,
                     }}
                   >
-                    {tool.name}
-                  </span>
-                  <Toggle
-                    id={`ttg-${group.group}-${tool.name}-enabled`}
-                    label="On"
-                    checked={tool.enabled}
-                    disabled={readOnly}
-                    onChange={(v) => patchTool(group.group, tool.name, { enabled: v })}
-                  />
-                  <Toggle
-                    id={`ttg-${group.group}-${tool.name}-hidden`}
-                    label="Hide"
-                    checked={tool.hidden}
-                    disabled={readOnly}
-                    onChange={(v) => patchTool(group.group, tool.name, { hidden: v })}
-                  />
-                </div>
-              ))}
+                    <span
+                      title={entry.tool.id}
+                      style={{
+                        flex: 1,
+                        fontSize: 11,
+                        fontFamily: 'monospace',
+                        color: entry.state.enabled ? 'var(--text-0)' : 'var(--text-3)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {toolLabel}
+                    </span>
+                    <Toggle
+                      id={`ttg-${section.name}-${entry.tool.id}-enabled`}
+                      label="On"
+                      checked={entry.state.enabled}
+                      disabled={readOnly}
+                      onChange={(v) => patchTool(section.name, entry.tool.id, { enabled: v })}
+                    />
+                    <Toggle
+                      id={`ttg-${section.name}-${entry.tool.id}-visible`}
+                      label="Show"
+                      checked={entry.state.visible}
+                      disabled={readOnly}
+                      onChange={(v) => patchTool(section.name, entry.tool.id, { visible: v })}
+                    />
+                  </div>
+                );
+              })}
             </div>
           </section>
         );

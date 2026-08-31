@@ -22,6 +22,14 @@
 import type { McpCustomScopeConfig } from '@/lib/api';
 import { canonicalToolName, normalizeConfigToolKeys } from '@/lib/tool-overrides';
 
+// NOTE: these ACL shapes intentionally stay local (NOT re-exported from
+// @/types/tool-state) — they mirror the real D3 backend payloads:
+// rule subject/resource are opaque ERP ref strings (sref model, f5275922c)
+// and group members carry the {ref, ref_string, expires_at} jsonb+string
+// serialization. The kit's EntityRef-flavored contract in
+// @/types/tool-state serves the F4 ACLEditor only, which today is fed
+// empty ACL state (rule CRUD endpoints are out of D3 scope).
+
 /** Mirrors kit ACLEditor AclRule (subject/resource are opaque ERP ref strings). */
 export interface AclRule {
   id: string;

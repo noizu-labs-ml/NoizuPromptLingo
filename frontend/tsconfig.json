@@ -44,6 +44,7 @@
     "e2e",
     "playwright.config.ts",
     "cypress.config.ts",
-    "cypress.authentik.config.ts"
+    "cypress.authentik.config.ts",
+    "src/**/*.test.ts"
   ]
 }

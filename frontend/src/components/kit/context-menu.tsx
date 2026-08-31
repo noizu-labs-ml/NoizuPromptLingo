@@ -40,11 +40,21 @@ interface ContextMenuProps {
   menuLabel?: string;
 }
 
+function nextEnabled(items: ContextMenuItem[], from: number, dir: 1 | -1): number {
+  for (let i = 0; i < items.length; i++) {
+    const idx = (from + dir * i + dir + items.length) % items.length;
+    if (!items[idx].disabled) return idx;
+  }
+  return from;
+}
+
 /**
  * Right-click context menu. Wrap any content; the menu opens at the cursor,
  * supports icons, destructive styling, disabled items, separators, shortcuts,
- * and one level of submenu. Keyboard: arrows navigate, Enter/Space activate,
- * Right opens a submenu, Esc / click-outside dismisses.
+ * and one level of submenu. Keyboard (WAI-ARIA menu pattern): arrows navigate,
+ * Home/End jump to first/last item, Enter/Space activate, Enter/ArrowRight
+ * opens a submenu (ArrowLeft/Esc closes it), Tab dismisses, Esc / click /
+ * scroll outside dismiss and focus returns to the trigger.
  */
 export default function ContextMenu({
   items,
@@ -57,17 +67,31 @@ export default function ContextMenu({
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   const [activeIdx, setActiveIdx] = useState(-1);
   const [openSubmenuIdx, setOpenSubmenuIdx] = useState<number | null>(null);
+  const [activeSubIdx, setActiveSubIdx] = useState(-1);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
   const menuId = useId();
 
   const isOpen = pos !== null;
 
-  const close = useCallback(() => {
-    setPos(null);
-    setActiveIdx(-1);
-    setOpenSubmenuIdx(null);
-    onClose?.();
-  }, [onClose]);
+  const close = useCallback(
+    (opts: { restoreFocus?: boolean } = {}) => {
+      const wasOpen = pos !== null;
+      setPos(null);
+      setActiveIdx(-1);
+      setOpenSubmenuIdx(null);
+      setActiveSubIdx(-1);
+      if (wasOpen) {
+        if (opts.restoreFocus !== false) {
+          const t = triggerRef.current;
+          if (t && t.isConnected) t.focus({ preventScroll: true });
+        }
+        triggerRef.current = null;
+        onClose?.();
+      }
+    },
+    [pos, onClose],
+  );
 
   // Clamp the open menu inside the viewport.
   useEffect(() => {
@@ -81,20 +105,23 @@ export default function ContextMenu({
     }
   }, [isOpen]);
 
-  // Dismiss on outside click / scroll / Esc handled in keydown below.
+  // Dismiss on outside click, scroll, or resize. Esc is handled in keydown.
   useEffect(() => {
     if (!isOpen) return;
     function onPointerDown(e: PointerEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) close();
     }
-    function onScrollOrBlur() {
+    function onScrollOrResize() {
       close();
     }
     window.addEventListener('pointerdown', onPointerDown, true);
-    window.addEventListener('resize', onScrollOrBlur);
+    // capture: scroll events don't bubble; capture still sees them.
+    window.addEventListener('scroll', onScrollOrResize, true);
+    window.addEventListener('resize', onScrollOrResize);
     return () => {
       window.removeEventListener('pointerdown', onPointerDown, true);
-      window.removeEventListener('resize', onScrollOrBlur);
+      window.removeEventListener('scroll', onScrollOrResize, true);
+      window.removeEventListener('resize', onScrollOrResize);
     };
   }, [isOpen, close]);
 
@@ -103,10 +130,18 @@ export default function ContextMenu({
     if (isOpen) menuRef.current?.focus();
   }, [isOpen]);
 
-  function openAt(x: number, y: number) {
+  function openAt(x: number, y: number, trigger: HTMLElement | null) {
+    triggerRef.current = trigger;
     setPos({ x, y });
     setActiveIdx(firstEnabledIndex(items));
     setOpenSubmenuIdx(null);
+    setActiveSubIdx(-1);
+  }
+
+  function openSubmenu(idx: number) {
+    const subs = items[idx]?.submenu ?? [];
+    setOpenSubmenuIdx(idx);
+    setActiveSubIdx(subs.findIndex((s) => !s.disabled));
   }
 
   function activate(item: ContextMenuItem) {
@@ -117,50 +152,104 @@ export default function ContextMenu({
 
   function onKeyDown(e: ReactKeyboardEvent) {
     if (!isOpen) return;
-    const flat = items;
+    const submenuOpen = openSubmenuIdx !== null && openSubmenuIdx === activeIdx;
+    const subs = submenuOpen ? (items[openSubmenuIdx]?.submenu ?? []) : [];
+
+    if (e.key === 'Tab') {
+      // Close and let focus move on with the default tab order.
+      close({ restoreFocus: false });
+      return;
+    }
     if (e.key === 'Escape') {
       e.preventDefault();
-      close();
+      if (submenuOpen) {
+        // First Esc closes the submenu, second closes the menu.
+        setOpenSubmenuIdx(null);
+        setActiveSubIdx(-1);
+      } else {
+        close();
+      }
+      return;
+    }
+    if (e.key === 'Home' || e.key === 'End') {
+      e.preventDefault();
+      if (submenuOpen) {
+        const candidates = subs.map((s, i) => ({ s, i })).filter(({ s }) => !s.disabled);
+        setActiveSubIdx(candidates.length ? (e.key === 'Home' ? candidates[0].i : candidates[candidates.length - 1].i) : -1);
+      } else {
+        setActiveIdx(e.key === 'Home' ? firstEnabledIndex(items) : lastEnabledIndex(items));
+        setOpenSubmenuIdx(null);
+        setActiveSubIdx(-1);
+      }
       return;
     }
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault();
       const dir = e.key === 'ArrowDown' ? 1 : -1;
-      let idx = activeIdx;
-      for (let i = 0; i < flat.length; i++) {
-        idx = (idx + dir + flat.length) % flat.length;
-        if (!flat[idx].disabled) break;
+      if (submenuOpen) {
+        setActiveSubIdx((cur) => {
+          let idx = cur;
+          for (let i = 0; i < subs.length; i++) {
+            idx = (idx + dir + subs.length) % subs.length;
+            if (!subs[idx].disabled) break;
+          }
+          return idx;
+        });
+      } else {
+        setActiveIdx((cur) => nextEnabled(items, cur, dir));
+        setOpenSubmenuIdx(null);
+        setActiveSubIdx(-1);
       }
-      setActiveIdx(idx);
-      setOpenSubmenuIdx(null);
       return;
     }
     if (e.key === 'ArrowRight') {
-      const item = flat[activeIdx];
-      if (item?.submenu?.length) {
-        e.preventDefault();
-        setOpenSubmenuIdx(activeIdx);
+      e.preventDefault();
+      if (submenuOpen) {
+        const sub = subs[activeSubIdx];
+        if (sub) activate(sub);
+      } else {
+        const item = items[activeIdx];
+        if (item?.submenu?.length) openSubmenu(activeIdx);
       }
       return;
     }
-    if (e.key === 'ArrowLeft' && openSubmenuIdx !== null) {
-      e.preventDefault();
-      setOpenSubmenuIdx(null);
+    if (e.key === 'ArrowLeft') {
+      if (submenuOpen) {
+        e.preventDefault();
+        setOpenSubmenuIdx(null);
+        setActiveSubIdx(-1);
+      }
       return;
     }
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      const item = flat[activeIdx];
-      if (item) activate(item);
+      if (submenuOpen) {
+        const sub = subs[activeSubIdx];
+        if (sub) activate(sub);
+        return;
+      }
+      const item = items[activeIdx];
+      if (!item) return;
+      if (item.submenu?.length) openSubmenu(activeIdx);
+      else activate(item);
     }
   }
+
+  const activeDescendant =
+    activeIdx >= 0
+      ? submenuOpenId(menuId, activeIdx, openSubmenuIdx === activeIdx ? activeSubIdx : null)
+      : undefined;
 
   return (
     <div
       onContextMenu={(e) => {
         if (disabled) return;
         e.preventDefault();
-        openAt(e.clientX, e.clientY);
+        const trigger =
+          document.activeElement instanceof HTMLElement && document.activeElement !== document.body
+            ? document.activeElement
+            : (e.target as HTMLElement);
+        openAt(e.clientX, e.clientY, trigger);
       }}
     >
       {children}
@@ -170,6 +259,7 @@ export default function ContextMenu({
           id={menuId}
           role="menu"
           aria-label={menuLabel}
+          aria-activedescendant={activeDescendant}
           tabIndex={-1}
           onKeyDown={onKeyDown}
           style={{
@@ -188,6 +278,7 @@ export default function ContextMenu({
               <button
                 type="button"
                 role="menuitem"
+                id={submenuOpenId(menuId, idx, null)}
                 aria-disabled={item.disabled || undefined}
                 aria-haspopup={item.submenu?.length ? 'menu' : undefined}
                 aria-expanded={item.submenu?.length ? openSubmenuIdx === idx : undefined}
@@ -200,6 +291,7 @@ export default function ContextMenu({
                 onMouseEnter={() => {
                   setActiveIdx(idx);
                   setOpenSubmenuIdx(item.submenu?.length ? idx : null);
+                  setActiveSubIdx(-1);
                 }}
                 onClick={() => activate(item)}
               >
@@ -224,13 +316,20 @@ export default function ContextMenu({
                     zIndex: 1001,
                   }}
                 >
-                  {item.submenu.map((sub) => (
+                  {item.submenu.map((sub, sIdx) => (
                     <button
                       key={sub.id}
                       type="button"
                       role="menuitem"
+                      id={submenuOpenId(menuId, idx, sIdx)}
                       aria-disabled={sub.disabled || undefined}
-                      style={kitMenuItem({ destructive: sub.destructive, disabled: sub.disabled })}
+                      style={{
+                        ...kitMenuItem({ destructive: sub.destructive, disabled: sub.disabled }),
+                        ...(activeSubIdx === sIdx && !sub.disabled
+                          ? { background: 'var(--accent-dim, var(--bg-3))' }
+                          : {}),
+                      }}
+                      onMouseEnter={() => setActiveSubIdx(sIdx)}
                       onClick={() => activate(sub)}
                     >
                       {sub.icon ? <span aria-hidden="true" style={{ display: 'inline-flex', width: 16 }}>{sub.icon}</span> : null}
@@ -247,7 +346,18 @@ export default function ContextMenu({
   );
 }
 
+function submenuOpenId(menuId: string, idx: number, subIdx: number | null): string {
+  return subIdx === null ? `${menuId}-item-${idx}` : `${menuId}-item-${idx}-${subIdx}`;
+}
+
 function firstEnabledIndex(items: ContextMenuItem[]): number {
   const idx = items.findIndex((i) => !i.disabled);
   return idx === -1 ? 0 : idx;
+}
+
+function lastEnabledIndex(items: ContextMenuItem[]): number {
+  for (let i = items.length - 1; i >= 0; i--) {
+    if (!items[i].disabled) return i;
+  }
+  return items.length - 1;
 }
