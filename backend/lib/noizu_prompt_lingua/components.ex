@@ -36,6 +36,18 @@ defmodule NoizuPromptLingua.Components do
           "fetches over /api/v1/organizations/:org_id/boards + /tickets.",
       content_type: "text/javascript",
       entry: "npl-queue-board.js"
+    },
+    %{
+      name: "trp-item-timeline",
+      version: "0.1.0",
+      description:
+        "TRP-authored Lit web component rendering a TRP item header card plus " <>
+          "its append-only activity timeline. Pair with createTrpApiProvider " <>
+          "data fetches over items/:id + items/:id/activity (TRP shared-key " <>
+          "endpoints, docs/api/shared-key-api.md §4.3). Mirrored from the TRP " <>
+          "repo for keyed distribution; the TRP embed path serves it directly.",
+      content_type: "text/javascript",
+      entry: "trp-item-timeline.js"
     }
   ]
 

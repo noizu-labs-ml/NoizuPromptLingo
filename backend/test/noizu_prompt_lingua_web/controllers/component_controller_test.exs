@@ -80,6 +80,20 @@ defmodule NoizuPromptLinguaWeb.ComponentControllerTest do
       |> json_response(200)
     end
 
+    test "also lists the mirrored trp-item-timeline component (W7 v2)", %{conn: conn, user: user} do
+      raw = key_for(user)
+
+      body =
+        conn
+        |> key_conn(raw)
+        |> get("/api/v1/components")
+        |> json_response(200)
+
+      component = Enum.find(body["components"], &(&1["name"] == "trp-item-timeline"))
+      assert component
+      assert component["version"] == "0.1.0"
+    end
+
     test "hidden component is omitted from the listing", %{conn: conn, user: user} do
       raw =
         key_for(user,

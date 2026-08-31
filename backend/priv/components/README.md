@@ -9,6 +9,7 @@ do not edit by hand. Source of truth per component:
 | Component         | Authored package                                   | Synced file                        |
 |-------------------|----------------------------------------------------|------------------------------------|
 | `npl-queue-board` | `frontend/packages/npl-queue-board` (build → dist) | `npl-queue-board/npl-queue-board.js` |
+| `trp-item-timeline` | TRP repo `app/frontend/packages/trp-item-timeline` (build → dist; mirrored here for keyed distribution — the TRP embed path serves the bundle from TRP's own public asset) | `trp-item-timeline/trp-item-timeline.js` |
 
 To sync after rebuilding a package:
 
