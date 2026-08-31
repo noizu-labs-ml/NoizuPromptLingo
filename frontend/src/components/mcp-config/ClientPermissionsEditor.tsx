@@ -38,6 +38,8 @@ export interface ClientPermissionsValue {
 }
 
 export interface ClientPermissionsCatalogGroup {
+  /** Catalog group id (used as the toolset_config groups key on save). */
+  id: string;
   group: string;
   tools: { name: string; description?: string }[];
 }

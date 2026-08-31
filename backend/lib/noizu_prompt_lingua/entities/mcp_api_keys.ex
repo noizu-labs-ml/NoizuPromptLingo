@@ -84,6 +84,7 @@ defmodule NoizuPromptLingua.MCPApiKeys do
       key
       |> KeySchema.toolset_changeset(normalize_update_attrs(attrs))
       |> NoizuPromptLingua.Repo.update()
+      |> bump_cache_on_ok()
     end
   end
 
@@ -158,6 +159,7 @@ defmodule NoizuPromptLingua.MCPApiKeys do
         toolset_config: MCPCustomScopes.normalize_config(scope.config || %{}, scope.kind)
       })
       |> NoizuPromptLingua.Repo.update()
+      |> bump_cache_on_ok()
     end
   end
 
@@ -269,7 +271,19 @@ defmodule NoizuPromptLingua.MCPApiKeys do
         {:error, :not_found}
 
       key ->
-        key |> KeySchema.status_changeset(%{status: "revoked"}) |> NoizuPromptLingua.Repo.update()
+        key
+        |> KeySchema.status_changeset(%{status: "revoked"})
+        |> NoizuPromptLingua.Repo.update()
+        |> bump_cache_on_ok()
     end
   end
+
+  # Cached keys (ToolsetCache) feed the EffectiveToolset cascade — drop the
+  # cache whenever a key's status/toolset write lands.
+  defp bump_cache_on_ok({:ok, _} = ok) do
+    NoizuPromptLingua.MCP.ToolsetCache.bump()
+    ok
+  end
+
+  defp bump_cache_on_ok(other), do: other
 end

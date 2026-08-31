@@ -12,6 +12,16 @@ defmodule NoizuPromptLingua.Domains.AssetsGenerateTest do
 
   @moduletag :db
 
+  # Hermetic: availability must not depend on the workstation having (or lacking)
+  # the `generate-media-prompt` binary on PATH. Stub the swappable runner to fail
+  # so the graceful-unavailable contract is exercised deterministically.
+  defmodule NoProviderStub do
+    @behaviour NoizuPromptLingua.Domains.Assets.MediaToolRunner
+
+    @impl true
+    def run(_prompt_path, _tmp_dir, _opts), do: {:error, :no_provider_stub}
+  end
+
   setup do
     org_id = insert_org()
 
@@ -37,14 +47,13 @@ defmodule NoizuPromptLingua.Domains.AssetsGenerateTest do
     assert {:ok, %AssetOutput{}} = Assets.generate(ctx.entry_id, content: "rendered content")
   end
 
-  test "no provider key -> {:error, :generation_unavailable}, never a crash", ctx do
-    prev = System.get_env("OPENAI_API_KEY")
-    System.put_env("OPENAI_API_KEY", "")
+  test "no provider available -> {:error, :generation_unavailable}, never a crash", ctx do
+    prev = Application.get_env(:noizu_prompt_lingua, :media_tool_runner)
+    Application.put_env(:noizu_prompt_lingua, :media_tool_runner, NoProviderStub)
 
     on_exit(fn ->
-      if prev,
-        do: System.put_env("OPENAI_API_KEY", prev),
-        else: System.delete_env("OPENAI_API_KEY")
+      if prev, do: Application.put_env(:noizu_prompt_lingua, :media_tool_runner, prev),
+        else: Application.delete_env(:noizu_prompt_lingua, :media_tool_runner)
     end)
 
     assert {:error, :generation_unavailable} = Assets.generate(ctx.entry_id, provider: "openai")

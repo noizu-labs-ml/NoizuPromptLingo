@@ -67,6 +67,7 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
   """
 
   alias Noizu.MCP.Server.Features.Tools
+  alias NoizuPromptLingua.MCP.ToolsetCache
   alias NoizuPromptLingua.Acl
   alias NoizuPromptLingua.MCP.Window
   alias NoizuPromptLingua.MCPApiKeys
@@ -75,8 +76,8 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
   alias NoizuPromptLingua.Repo
   alias NoizuPromptLingua.Schema.McpApiKey
   alias NoizuPromptLingua.Schema.MCPCustomScope
+  alias NoizuPromptLingua.Schema.OAuthClient
   alias NoizuPromptLingua.Schema.McpTool
-
   require Noizu.EntityReference.Records
   alias Noizu.EntityReference.Records, as: R
 
@@ -459,20 +460,26 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
   # ── ctx plumbing ───────────────────────────────────────────────────────────
 
   @doc """
-  The calling client resolved from `ctx.assigns.auth_claims`: the active API
-  key (minted into the MCP JWT at token time) with its `toolset_config`, or
-  nil when the request carries no API key (OAuth-only / system principal —
-  OAuth clients gain their jsonb overrides via W8).
+  The calling client resolved from `ctx.assigns.auth_claims`, cached via
+  `ToolsetCache` (positives only):
+
+    * the active API key (`"api_key_id"`, minted into the MCP JWT at token
+      time) with its `toolset_config`, or
+    * the active OAuth client (`"client_id"`, W8 consent narrowing in
+      `oauth_clients.toolset_config`) — `%{}`/nil config stays
+      `toolset_config: nil` (ungated, legacy-grant semantics), or
+    * nil when the request carries neither (system principal / unauthenticated).
   """
   def client_for_ctx(ctx) do
     claims = get_in(ctx, [Access.key(:assigns, %{}), Access.key(:auth_claims, %{})]) || %{}
 
     with api_key_id when is_binary(api_key_id) <- claims["api_key_id"],
-         %McpApiKey{status: "active"} = key <- Repo.get(McpApiKey, api_key_id) do
+         %McpApiKey{status: "active"} = key <-
+           ToolsetCache.fetch(:api_key, api_key_id, fn -> Repo.get(McpApiKey, api_key_id) end) do
       config = if is_map(key.toolset_config) and key.toolset_config != %{}, do: key.toolset_config
       %{id: key.id, kind: :api_key, toolset_config: config}
     else
-      _ -> nil
+      _ -> oauth_client_for_ctx(claims)
     end
   rescue
     e ->
@@ -480,13 +487,32 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
       nil
   end
 
-  @doc "The custom scope serving this request (ctx assigns), or nil."
+  # W8 swap: OAuth clients flow through the same cascade as API keys. Active
+  # clients only (revoked/unknown => nil, ungated); an empty stored narrowing
+  # keeps `toolset_config: nil` so standing-consent grants stay identity no-ops.
+  defp oauth_client_for_ctx(claims) do
+    with client_id when is_binary(client_id) <- claims["client_id"],
+         %OAuthClient{status: "active"} = client <-
+           ToolsetCache.fetch(:oauth_client, client_id, fn ->
+             Repo.get_by(OAuthClient, client_id: client_id)
+           end) do
+      config =
+        if is_map(client.toolset_config) and client.toolset_config != %{},
+          do: client.toolset_config
+
+      %{id: client.id, kind: :oauth_client, toolset_config: config}
+    else
+      _ -> nil
+    end
+  end
+
+  @doc "The custom scope serving this request (ctx assigns), or nil. Cached via `ToolsetCache`."
   def scope_from_ctx(ctx) do
     assigns = get_in(ctx, [Access.key(:assigns, %{})]) || %{}
     slug = assigns[:custom_scope_slug] || assigns["custom_scope_slug"]
 
     with slug when is_binary(slug) <- slug do
-      MCPCustomScopes.get_by_slug(slug)
+      ToolsetCache.fetch(:scope, slug, fn -> MCPCustomScopes.get_by_slug(slug) end)
     else
       _ -> nil
     end
@@ -595,12 +621,17 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
   # ── config layer readers ───────────────────────────────────────────────────
 
   # Raw read of the global `tobor` template — NO heal write on this hot path
-  # (drift repair stays on the ensure_* paths that own the template).
+  # (drift repair stays on the ensure_* paths that own the template). Cached
+  # under the template's slug; scope writes bump the generation.
   defp template_config do
-    case MCPCustomScopes.get_by_slug(MCPCustomScopes.default_package_slug()) do
-      %{config: config} when is_map(config) -> normalize_config(config)
-      _ -> nil
-    end
+    slug = MCPCustomScopes.default_package_slug()
+
+    ToolsetCache.fetch(:scope, slug, fn ->
+      case MCPCustomScopes.get_by_slug(slug) do
+        %{config: config} when is_map(config) -> normalize_config(config)
+        _ -> nil
+      end
+    end)
   rescue
     _ -> nil
   end

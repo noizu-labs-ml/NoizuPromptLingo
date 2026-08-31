@@ -1299,6 +1299,446 @@ defmodule NoizuPromptLinguaWeb.AdminController do
     end
   end
 
+  # ── D3: per-scope client permissions + ACL group admin ────────────────────
+  #
+  # Clients that can hit a scope's MCP endpoint: user MCP API keys (PATs) and
+  # OAuth clients. No scope↔client association table exists (api keys are
+  # user-scoped credentials; oauth clients carry only an OIDC scope string),
+  # so every client is listed with `linked: false` — the Manage Clients UI
+  # treats the list as the addressable client universe and each client's
+  # `toolset_config` jsonb as the permission surface (F2 EffectiveToolset
+  # cascade layer 3).
+  #
+  # The toolset_config PUT normalizes on write: dotted tool keys collapse to
+  # canonical underscore (F5), unknown fields are rejected (strict 422 — the
+  # scope-side normalizer is silent-drop; client configs are admin-written so
+  # strictness is cheap), and an empty map resets to %{}.
+
+  alias NoizuPromptLingua.Schema.McpApiKey
+  alias NoizuPromptLingua.Schema.OAuthClient
+  alias NoizuPromptLingua.Schema.Acl.Group
+  alias NoizuPromptLingua.Schema.Acl.GroupMember
+  alias NoizuPromptLingua.Acl
+  alias NoizuPromptLingua.Acl.ERPRef
+  alias NoizuPromptLingua.MCP.ToolNames
+  alias NoizuPromptLingua.MCP.Window
+
+  @client_kinds %{
+    "api_key" => :api_key,
+    "api-key" => :api_key,
+    "oauth_client" => :oauth_client,
+    "oauth-client" => :oauth_client
+  }
+
+  # "enabled_at" rides along (Window's enable_for_hours anchor, stamped on
+  # write) so fetched configs round-trip through PUT without unknown-field 422s.
+  @tool_entry_keys ~w(disabled hidden name_override description_override hide_until enable_for_hours enabled_at)
+
+  def list_scope_clients(conn, %{"slug" => slug}) do
+    case MCPCustomScopes.get_by_slug(slug) do
+      nil ->
+        conn |> put_status(:not_found) |> json(%{error: "Scope not found"})
+
+      _scope ->
+        keys =
+          NoizuPromptLingua.Repo.all(from k in McpApiKey, order_by: [desc: k.inserted_at])
+          |> Enum.map(&api_key_client_json/1)
+
+        oauth =
+          NoizuPromptLingua.Repo.all(from c in OAuthClient, order_by: [desc: c.inserted_at])
+          |> Enum.map(&oauth_client_client_json/1)
+
+        conn |> put_status(:ok) |> json(%{clients: keys ++ oauth})
+    end
+  end
+
+  defp api_key_client_json(key) do
+    %{
+      id: key.id,
+      kind: "api_key",
+      label: String.trim_trailing("#{key.label}#{key_prefix_suffix(key)}"),
+      status: key.status,
+      inserted_at: key.inserted_at,
+      linked: false
+    }
+  end
+
+  defp key_prefix_suffix(%{key_prefix: nil}), do: ""
+  defp key_prefix_suffix(%{key_prefix: ""}), do: ""
+  defp key_prefix_suffix(%{key_prefix: prefix}), do: " (#{prefix})"
+
+  defp oauth_client_client_json(client) do
+    %{
+      id: client.id,
+      kind: "oauth_client",
+      label: client.client_name,
+      status: client.status,
+      inserted_at: client.inserted_at,
+      linked: false
+    }
+  end
+
+  def show_client_toolset_config(conn, %{"kind" => kind, "id" => id}) do
+    case fetch_client(kind, id) do
+      nil ->
+        conn |> put_status(:not_found) |> json(%{error: "Client not found"})
+
+      client ->
+        conn |> put_status(:ok) |> json(%{toolset_config: client.toolset_config || %{}})
+    end
+  end
+
+  def update_client_toolset_config(conn, %{"kind" => kind, "id" => id, "toolset_config" => cfg}) do
+    client = fetch_client(kind, id)
+
+    with %{toolset_config: _} <- client || :not_found,
+         {:ok, normalized} <- normalize_toolset_config(cfg) do
+      changeset =
+        case client do
+          %McpApiKey{} = key -> McpApiKey.toolset_changeset(key, %{"toolset_config" => normalized})
+          %OAuthClient{} = oc -> OAuthClient.changeset(oc, %{"toolset_config" => normalized})
+        end
+
+      case NoizuPromptLingua.Repo.update(changeset) do
+        {:ok, updated} ->
+          conn |> put_status(:ok) |> json(%{toolset_config: updated.toolset_config || %{}})
+
+        {:error, %Ecto.Changeset{} = cs} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+      end
+    else
+      :not_found ->
+        conn |> put_status(:not_found) |> json(%{error: "Client not found"})
+
+      {:error, errors} when is_list(errors) ->
+        conn |> put_status(:unprocessable_entity) |> json(%{errors: errors})
+
+      {:error, changeset} ->
+        conn |> put_status(:bad_request) |> json(%{error: inspect(changeset)})
+    end
+  end
+
+  def update_client_toolset_config(conn, _params),
+    do: conn |> put_status(:bad_request) |> json(%{error: "toolset_config required"})
+
+  defp fetch_client(kind, id) when is_binary(id) do
+    case @client_kinds[kind] do
+      :api_key -> NoizuPromptLingua.Repo.get(McpApiKey, id)
+      # The W7 editor route may carry either the row uuid or the public
+      # client_id string (DCR identifier).
+      :oauth_client ->
+        NoizuPromptLingua.Repo.get(OAuthClient, id) ||
+          NoizuPromptLingua.Repo.one(from c in OAuthClient, where: c.client_id == ^id)
+      _ -> nil
+    end
+  end
+
+  defp fetch_client(_, _), do: nil
+
+  # Empty config = reset (client inherits scope/template layers untouched).
+  defp normalize_toolset_config(cfg) when cfg == %{}, do: {:ok, %{}}
+
+  defp normalize_toolset_config(%{"groups" => groups} = cfg) when is_map(groups) do
+    unknown = Map.keys(cfg) -- ["groups"]
+
+    cond do
+      unknown != [] ->
+        {:error, ["unknown field(s): #{Enum.join(unknown, ", ")} (only \"groups\" is supported)"]}
+
+      true ->
+        normalize_groups(groups)
+    end
+  end
+
+  defp normalize_toolset_config(_),
+    do: {:error, ["toolset_config must be an object with a \"groups\" map, or empty to reset"]}
+
+  defp normalize_groups(groups) do
+    groups
+    |> Enum.reduce_while({:ok, %{}}, fn {gid, group_cfg}, {:ok, acc} ->
+      case normalize_group(group_cfg) do
+        {:ok, normalized} -> {:cont, {:ok, Map.put(acc, to_string(gid), normalized)}}
+        {:error, errs} -> {:halt, {:error, Enum.map(errs, &"groups.#{gid}.#{&1}")}}
+      end
+    end)
+    |> case do
+      {:ok, wrapped} -> {:ok, %{"groups" => wrapped}}
+      error -> error
+    end
+  end
+
+  defp normalize_group(group_cfg) when is_map(group_cfg) do
+    unknown = Map.keys(group_cfg) -- ["disabled", "hidden", "tools"]
+
+    cond do
+      unknown != [] ->
+        {:error, ["unknown field(s): #{Enum.join(unknown, ", ")}"]}
+
+      true ->
+        with {:ok, flags} <- bool_fields(group_cfg, ["disabled", "hidden"]),
+             {:ok, tools} <- normalize_tools(Map.get(group_cfg, "tools") || %{}) do
+          {:ok, flags |> maybe_put_tools(tools)}
+        end
+    end
+  end
+
+  defp normalize_group(_), do: {:error, ["must be an object"]}
+
+  defp maybe_put_tools(flags, tools) when tools == %{}, do: flags
+  defp maybe_put_tools(flags, tools), do: Map.put(flags, "tools", tools)
+
+  # Collapse dotted (F5-alias) tool keys into their canonical underscore form
+  # so repeated edits stop accumulating both spellings. A dotted alias merges
+  # under its canonical key (field-level: canonical values win).
+  defp normalize_tools(tools) when is_map(tools) do
+    {canonical_list, dotted_list} =
+      Enum.split_with(tools, fn {name, _} -> not ToolNames.alias?(name) end)
+
+    canonical = Map.new(canonical_list)
+
+    dotted_list
+    |> Enum.map(fn {name, entry} -> {ToolNames.canonical(name), entry} end)
+    |> Enum.into(canonical, fn {key, dotted_entry} ->
+      {key, Map.merge(dotted_entry, Map.get(canonical, key, %{}))}
+    end)
+    |> Enum.reduce_while({:ok, %{}}, fn {name, entry}, {:ok, acc} ->
+      case normalize_tool_entry(entry) do
+        {:ok, normalized} -> {:cont, {:ok, Map.put(acc, name, normalized)}}
+        {:error, errs} -> {:halt, {:error, Enum.map(errs, &"tools.#{name}.#{&1}")}}
+      end
+    end)
+  end
+
+  defp normalize_tools(_), do: {:error, ["tools must be an object"]}
+
+  defp normalize_tool_entry(entry) when is_map(entry) do
+    unknown = Map.keys(entry) -- @tool_entry_keys
+
+    cond do
+      unknown != [] ->
+        {:error, ["unknown field(s): #{Enum.join(unknown, ", ")}"]}
+
+      true ->
+        with {:ok, flags} <- bool_fields(entry, ["disabled", "hidden"]),
+             {:ok, overrides} <- string_fields(entry, ["name_override", "description_override"]),
+             {:ok, window} <- window_fields(entry) do
+          {:ok, flags |> Map.merge(overrides) |> Window.normalize_entry(entry) |> Map.merge(window)}
+        end
+    end
+  end
+
+  defp normalize_tool_entry(_), do: {:error, ["must be an object"]}
+
+  defp bool_fields(map, keys) do
+    Enum.reduce_while(keys, {:ok, %{}}, fn key, {:ok, acc} ->
+      case Map.get(map, key) do
+        nil -> {:cont, {:ok, acc}}
+        value when is_boolean(value) -> {:cont, {:ok, Map.put(acc, key, value)}}
+        other -> {:halt, {:error, ["#{key}: must be a boolean (got #{inspect(other)})"]}}
+      end
+    end)
+  end
+
+  defp string_fields(map, keys) do
+    Enum.reduce_while(keys, {:ok, %{}}, fn key, {:ok, acc} ->
+      case Map.get(map, key) do
+        nil -> {:cont, {:ok, acc}}
+        value when is_binary(value) -> {:cont, {:ok, Map.put(acc, key, value)}}
+        other -> {:halt, {:error, ["#{key}: must be a string (got #{inspect(other)})"]}}
+      end
+    end)
+  end
+
+  # Strict window validation (unlike the silent-drop scope-side path): invalid
+  # values are rejected with 422 so the admin UI surfaces them. Valid values
+  # are then stored via Window.normalize_entry (ISO8601 UTC + enabled_at anchor).
+  defp window_fields(entry) do
+    case Window.validate_entry(entry) do
+      [] ->
+        {:ok, %{}}
+
+      errs ->
+        {:error, errs}
+    end
+  end
+
+  # ── D3: ACL group admin (F1 NoizuPromptLingua.Acl context) ────────────────
+
+  def list_acl_groups(conn, _params) do
+    groups =
+      NoizuPromptLingua.Repo.all(from g in Group, where: g.status == "active", order_by: g.name)
+
+    members_by_group =
+      NoizuPromptLingua.Repo.all(from m in GroupMember, order_by: m.inserted_at)
+      |> Enum.group_by(& &1.group_id)
+
+    conn
+    |> put_status(:ok)
+    |> json(%{
+      groups:
+        Enum.map(groups, fn g ->
+          acl_group_json(g, Map.get(members_by_group, g.id, []))
+        end)
+    })
+  end
+
+  def create_acl_group(conn, %{"group" => attrs}) do
+    case Acl.create_group(filter_nils(%{"name" => attrs["name"], "description" => attrs["description"]})) do
+      {:ok, group} ->
+        conn |> put_status(:created) |> json(%{group: acl_group_json(group, [])})
+
+      {:error, %Ecto.Changeset{} = cs} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+    end
+  end
+
+  def create_acl_group(conn, _params),
+    do: conn |> put_status(:bad_request) |> json(%{error: "group required"})
+
+  def update_acl_group(conn, %{"id" => id, "group" => attrs}) do
+    group = Acl.get_group(id)
+
+    cond do
+      is_nil(group) or group.status == "archived" ->
+        conn |> put_status(:not_found) |> json(%{error: "Group not found"})
+
+      true ->
+        case Acl.update_group(
+               group,
+               filter_nils(%{
+                 "name" => attrs["name"],
+                 "description" => attrs["description"],
+                 "status" => attrs["status"]
+               })
+             ) do
+          {:ok, updated} ->
+            conn
+            |> put_status(:ok)
+            |> json(%{group: acl_group_json(updated, Acl.members(updated))})
+
+          {:error, %Ecto.Changeset{} = cs} ->
+            conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+        end
+    end
+  end
+
+  def update_acl_group(conn, _params),
+    do: conn |> put_status(:bad_request) |> json(%{error: "group required"})
+
+  # Soft-disable (archive) — archived groups stop resolving; rows survive for
+  # audit/membership history.
+  def delete_acl_group(conn, %{"id" => id}) do
+    case Acl.archive_group(id) do
+      {:ok, _group} ->
+        conn |> put_status(:ok) |> json(%{message: "Group archived"})
+
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Group not found"})
+
+      {:error, %Ecto.Changeset{} = cs} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+    end
+  end
+
+  def add_acl_group_member(conn, %{"id" => id, "member" => member} = params) do
+    with {:ok, ref} <- parse_ref(member),
+         {:ok, expires_at} <- parse_member_expires_at(params["expires_at"]),
+         {:ok, _member} <- Acl.add_member(id, ref, expires_at: expires_at) do
+      group = Acl.get_group(id)
+      conn |> put_status(:created) |> json(%{group: acl_group_json(group, Acl.members(group))})
+    else
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Group not found"})
+
+      {:error, %Ecto.Changeset{} = cs} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+
+      {:error, :invalid_ref} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{error: "member must be {type, id} or \"type:id\" (ERP ref)"})
+
+      {:error, :invalid_expires_at} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{error: "expires_at must be an ISO8601 datetime"})
+    end
+  end
+
+  def add_acl_group_member(conn, _params),
+    do: conn |> put_status(:bad_request) |> json(%{error: "member required"})
+
+  def remove_acl_group_member(conn, %{"id" => id, "member" => member}) do
+    with {:ok, ref} <- parse_ref(member),
+         {:ok, count} <- Acl.remove_member(id, ref) do
+      conn |> put_status(:ok) |> json(%{removed: count})
+    else
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Group not found"})
+
+      {:error, :invalid_ref} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{error: "member must be {type, id} or \"type:id\" (ERP ref)"})
+    end
+  end
+
+  def remove_acl_group_member(conn, _params),
+    do: conn |> put_status(:bad_request) |> json(%{error: "member required"})
+
+  defp acl_group_json(group, members) do
+    %{
+      id: group.id,
+      name: group.name,
+      description: group.description,
+      status: group.status,
+      ref: ERPRef.dump_map(group.ref),
+      inserted_at: group.inserted_at,
+      members:
+        Enum.map(members, fn m ->
+          %{
+            ref: ERPRef.dump_map(m.member_ref),
+            ref_string: ref_string(m.member_ref),
+            expires_at: m.expires_at
+          }
+        end)
+    }
+  end
+
+  # Member refs arrive as jsonb maps ({"type", "id"} — ERPRef.load form) or
+  # opaque "type:id" strings (TS side treats refs as plain strings).
+  defp filter_nils(map), do: Map.reject(map, fn {_k, v} -> is_nil(v) end)
+
+  defp parse_ref(%{"type" => type, "id" => id}) when is_binary(type) and is_binary(id),
+    do: ERPRef.load(%{"type" => type, "id" => id})
+
+  defp parse_ref(ref) when is_binary(ref) do
+    case String.split(ref, ":", parts: 2) do
+      [type, id] -> parse_ref(%{"type" => type, "id" => id})
+      _ -> {:error, :invalid_ref}
+    end
+  end
+
+  defp parse_ref(_), do: {:error, :invalid_ref}
+
+  defp parse_member_expires_at(nil), do: {:ok, nil}
+
+  defp parse_member_expires_at(bin) when is_binary(bin) do
+    case DateTime.from_iso8601(bin) do
+      {:ok, dt, _} -> {:ok, dt}
+      _ -> {:error, :invalid_expires_at}
+    end
+  end
+
+  defp parse_member_expires_at(_), do: {:error, :invalid_expires_at}
+
+  defp ref_string(ref) do
+    case ERPRef.dump_map(ref) do
+      %{"type" => type, "id" => id} -> "#{type}:#{id}"
+      _ -> nil
+    end
+  end
+
   # ── W4 MCP entities: versioned prompts, resources, resource templates ─────
 
   def list_mcp_prompts(conn, _params) do

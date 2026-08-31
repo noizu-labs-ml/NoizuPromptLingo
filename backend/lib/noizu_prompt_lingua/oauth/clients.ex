@@ -57,8 +57,18 @@ defmodule NoizuPromptLingua.OAuth.Clients do
 
           updated
         end)
+        |> tap_ok_bump_cache()
     end
   end
+
+  # Cached OAuth clients (ToolsetCache) feed the EffectiveToolset cascade —
+  # drop the cache whenever a client's config/status write lands.
+  defp tap_ok_bump_cache({:ok, _} = ok) do
+    NoizuPromptLingua.MCP.ToolsetCache.bump()
+    ok
+  end
+
+  defp tap_ok_bump_cache(other), do: other
 
   def revoke_client(_), do: {:error, :not_found}
 
@@ -151,6 +161,7 @@ defmodule NoizuPromptLingua.OAuth.Clients do
     client
     |> OAuthClient.changeset(%{toolset_config: normalized})
     |> Repo.update()
+    |> tap_ok_bump_cache()
   end
 
   def update_toolset_config(_, _), do: {:error, :invalid_client}

@@ -1,7 +1,12 @@
 defmodule NoizuPromptLingua.OAuth.ClientToolsetsTest do
   use NoizuPromptLingua.DataCase, async: false
 
-  alias NoizuPromptLingua.MCP.OAuthToolsets
+  # D1: OAuthToolsets is gone — OAuth clients flow through the same
+  # EffectiveToolset cascade as API keys (W8 handoff). These tests keep the W8
+  # gates (silent re-auth identity no-op, legacy grants ungated, consent
+  # narrowing enforced, revoked client ungated) with the ToolsetCache ENABLED,
+  # so the write-path invalidation (bump on client config/revoke) is under test.
+  alias NoizuPromptLingua.MCP.{EffectiveToolset, ToolsetCache}
   alias NoizuPromptLingua.OAuth.{Clients, ConsentManifest}
 
   @sections [
@@ -9,9 +14,31 @@ defmodule NoizuPromptLingua.OAuth.ClientToolsetsTest do
     %{group: "sessions", label: "Sessions", required: true, tools: ["Session_Create"]}
   ]
 
-  # Narrowing: block the whole chat group except nothing, block Chat_List... —
-  # concrete: chat group allowed but Chat_List blocked; tickets-like second
-  # optional group absent from @sections, so no group-level block.
+  setup context do
+    NoizuPromptLingua.OAuthTestSchema.ensure!()
+
+    if context[:cache] do
+      ToolsetCache.enable()
+      ToolsetCache.flush()
+    end
+
+    on_exit(fn ->
+      Application.delete_env(:noizu_prompt_lingua, :mcp_toolset_cache_enabled)
+    end)
+
+    uniq = System.unique_integer([:positive])
+
+    {:ok, reg} =
+      Clients.register(%{
+        "client_name" => "consent-cli-#{uniq}",
+        "redirect_uris" => ["http://127.0.0.1:9876/callback"],
+        "token_endpoint_auth_method" => "none"
+      })
+
+    client = Clients.get_active(reg["client_id"])
+    %{client: client}
+  end
+
   defp narrowing do
     ConsentManifest.narrowing(@sections, %{
       "allow_group" => %{"chat" => "on", "sessions" => "on"},
@@ -31,23 +58,8 @@ defmodule NoizuPromptLingua.OAuth.ClientToolsetsTest do
     ]
   end
 
-  setup do
-    NoizuPromptLingua.OAuthTestSchema.ensure!()
-
-    uniq = System.unique_integer([:positive])
-
-    {:ok, reg} =
-      Clients.register(%{
-        "client_name" => "consent-cli-#{uniq}",
-        "redirect_uris" => ["http://127.0.0.1:9876/callback"],
-        "token_endpoint_auth_method" => "none"
-      })
-
-    client = Clients.get_active(reg["client_id"])
-    %{client: client}
-  end
-
   describe "silent re-auth (W8 gate)" do
+    @tag :cache
     test "re-consent with unchanged full grant is a no-op (stays ungated, listing unchanged)", %{
       client: client
     } do
@@ -62,35 +74,42 @@ defmodule NoizuPromptLingua.OAuth.ClientToolsetsTest do
       assert {:ok, client} = Clients.update_toolset_config(client, %{"groups" => %{}})
       assert client.toolset_config == %{}
 
-      # Silent re-auth: no narrowing captured, listing is untouched.
-      assert OAuthToolsets.apply_hidden(specs(), ctx(client.client_id), "chat") == specs()
-      assert OAuthToolsets.apply_hidden(specs(), ctx(client.client_id), nil) == specs()
+      # Silent re-auth: no narrowing captured, listing is untouched — identity
+      # no-op even with the client resolved through the cached cascade.
+      assert EffectiveToolset.apply_to_specs(specs(), ctx(client.client_id), "chat") == specs()
+      assert EffectiveToolset.apply_to_specs(specs(), ctx(client.client_id), nil) == specs()
     end
   end
 
   describe "legacy grants (no stored toolset_config)" do
     test "fresh client has empty config and is ungated", %{client: client} do
       assert client.toolset_config == %{}
-      assert OAuthToolsets.config_for(ctx(client.client_id)) == nil
+
+      # The active client resolves, but carries NO narrowing (ungated).
+      assert %{kind: :oauth_client, toolset_config: nil} =
+               EffectiveToolset.client_for_ctx(ctx(client.client_id))
     end
 
     test "list filtering is an identity no-op for legacy clients", %{client: client} do
-      assert OAuthToolsets.apply_hidden(specs(), ctx(client.client_id), "chat") == specs()
+      assert EffectiveToolset.apply_to_specs(specs(), ctx(client.client_id), "chat") == specs()
     end
 
     test "empty narrowing persists as %{} (stays ungated)", %{client: client} do
       assert {:ok, updated} = Clients.update_toolset_config(client, %{"groups" => %{}})
       assert updated.toolset_config == %{}
-      assert OAuthToolsets.config_for(ctx(client.client_id)) == nil
+
+      # Client resolves; the collapsed %{} narrowing means no overrides.
+      assert %{kind: :oauth_client, toolset_config: nil} =
+               EffectiveToolset.client_for_ctx(ctx(client.client_id))
     end
 
     test "ctx without client_id (api-key / system principal) is ungated" do
-      assert OAuthToolsets.config_for(%{assigns: %{auth_claims: %{"api_key_id" => "k"}}}) == nil
-      assert OAuthToolsets.config_for(%{assigns: %{}}) == nil
+      assert EffectiveToolset.client_for_ctx(%{assigns: %{auth_claims: %{"api_key_id" => "k"}}}) == nil
+      assert EffectiveToolset.client_for_ctx(%{assigns: %{}}) == nil
     end
 
     test "unknown client_id is ungated" do
-      assert OAuthToolsets.config_for(ctx("dcr_does_not_exist")) == nil
+      assert EffectiveToolset.client_for_ctx(ctx("dcr_does_not_exist")) == nil
     end
   end
 
@@ -112,14 +131,14 @@ defmodule NoizuPromptLingua.OAuth.ClientToolsetsTest do
       {:ok, _} = Clients.update_toolset_config(client, narrowing())
 
       assert %{disabled: true, hidden: false} =
-               OAuthToolsets.state_from_config(
+               EffectiveToolset.state_from_config(
                  Clients.get_active(client.client_id).toolset_config,
                  "chat",
                  "Chat_List"
                )
 
       assert %{disabled: false, hidden: false} =
-               OAuthToolsets.state_from_config(
+               EffectiveToolset.state_from_config(
                  Clients.get_active(client.client_id).toolset_config,
                  "chat",
                  "Chat_Send"
@@ -127,17 +146,20 @@ defmodule NoizuPromptLingua.OAuth.ClientToolsetsTest do
 
       # Required group never narrowed.
       assert %{disabled: false, hidden: false} =
-               OAuthToolsets.state_from_config(
+               EffectiveToolset.state_from_config(
                  Clients.get_active(client.client_id).toolset_config,
                  "sessions",
                  "Session_Create"
                )
     end
 
-    test "list filtering drops consent-blocked tools only", %{client: client} do
+    @tag :cache
+    test "list filtering drops consent-blocked tools only (cache invalidated on write)", %{
+      client: client
+    } do
       {:ok, _} = Clients.update_toolset_config(client, narrowing())
 
-      filtered = OAuthToolsets.apply_hidden(specs(), ctx(client.client_id), "chat")
+      filtered = EffectiveToolset.apply_to_specs(specs(), ctx(client.client_id), "chat")
       names = Enum.map(filtered, & &1.definition.name)
 
       assert names == ["Chat_Send", "Session_Create"]
@@ -149,14 +171,20 @@ defmodule NoizuPromptLingua.OAuth.ClientToolsetsTest do
       {:ok, _} = Clients.update_toolset_config(client, narrowing())
 
       # Group nil + unknown module resolves to nil group → flags default open.
-      assert OAuthToolsets.apply_hidden(specs(), ctx(client.client_id), nil) == specs()
+      assert EffectiveToolset.apply_to_specs(specs(), ctx(client.client_id), nil) == specs()
     end
 
-    test "revoked client is ungated (config not honored)", %{client: client} do
+    @tag :cache
+    test "revoked client is ungated (config not honored; cache invalidated on revoke)", %{
+      client: client
+    } do
       {:ok, _} = Clients.update_toolset_config(client, narrowing())
+      # Prime the cache with the active, narrowed client.
+      assert EffectiveToolset.client_for_ctx(ctx(client.client_id)) != nil
+
       {:ok, _} = Clients.revoke_client(client.client_id)
 
-      assert OAuthToolsets.config_for(ctx(client.client_id)) == nil
+      assert EffectiveToolset.client_for_ctx(ctx(client.client_id)) == nil
     end
 
     test "update_toolset_config rejects non-client input" do
