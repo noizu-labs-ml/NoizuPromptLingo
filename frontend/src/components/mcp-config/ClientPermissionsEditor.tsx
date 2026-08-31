@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ToolTogglesGrid, TempWindowEditor, ACLEditor } from '@/components/kit';
+import { ToolTogglesGrid, TempWindowEditor, ACLEditor, type AclState } from '@/components/kit';
 
 // ---------------------------------------------------------------------------
 // ClientPermissionsEditor — shared per-client permission stack (W7).
@@ -18,22 +18,9 @@ import { ToolTogglesGrid, TempWindowEditor, ACLEditor } from '@/components/kit';
 // file (acceptable per TOBOR-CONTRACTS.md §8).
 // ---------------------------------------------------------------------------
 
-export interface ClientAclRule {
-  id: string;
-  subject: string;
-  resource: string;
-  effect: 'allow' | 'deny';
-  scope: string;
-}
-
-// Structural stand-in for the kit's AclGroup; integration reconciles with the
-// kit export (contract §8 leaves the group shape to F1/kit).
-export interface ClientAclGroup {
-  id: string;
-  name: string;
-  entity_ref?: string;
-  members?: string[];
-}
+// F5-integration: the kit's ACL shapes (feat/ui-kit) are canonical — the
+// former local stand-ins (ClientAclRule/ClientAclGroup) are dropped in favor
+// of AclRule/AclGroup/AclState exported from @/components/kit.
 
 export interface ClientPermissionsToolState {
   enabled: boolean;
@@ -47,7 +34,7 @@ export interface ClientPermissionsToolState {
 export interface ClientPermissionsValue {
   /** Keyed by canonical underscore tool name (F5). */
   tools: Record<string, ClientPermissionsToolState>;
-  acl: { rules: ClientAclRule[]; groups: ClientAclGroup[] };
+  acl: AclState;
 }
 
 export interface ClientPermissionsCatalogGroup {
@@ -163,7 +150,7 @@ export default function ClientPermissionsEditor({
   }
 
   // --- ACL section (ACLEditor) ---------------------------------------------
-  function handleAclChange(next: { rules: ClientAclRule[]; groups: ClientAclGroup[] }) {
+  function handleAclChange(next: AclState) {
     onChange({ ...value, acl: next });
   }
 
