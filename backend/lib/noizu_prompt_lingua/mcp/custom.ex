@@ -10,6 +10,7 @@ defmodule NoizuPromptLingua.MCP.Custom do
       "Custom Noizu Prompt Lingua MCP scope. Use Discovery tools to inspect the enabled tool set."
 
   alias Noizu.MCP.Server.Features.Tools
+  alias NoizuPromptLingua.MCP.EffectiveToolset
   alias NoizuPromptLingua.MCPCustomScopes
 
   @discovery_tools [
@@ -33,40 +34,33 @@ defmodule NoizuPromptLingua.MCP.Custom do
   def custom_specs(ctx) do
     with slug when is_binary(slug) <- scope_slug(ctx),
          scope when not is_nil(scope) <- MCPCustomScopes.get_by_slug(slug) do
+      # Effective state for the scope layer (client layer is applied later by
+      # MCP.Server.list_tools via KeyToolsets/EffectiveToolset with the ctx).
+      states = EffectiveToolset.resolve(scope, nil, nil)
+
       scope.config
       |> MCPCustomScopes.normalize_config(scope.kind)
       |> Map.fetch!("groups")
       |> Enum.flat_map(fn {group_id, group_config} ->
-        group_specs(group_id, group_config)
+        group_specs(group_id, group_config, states)
       end)
     else
       _ -> []
     end
   end
 
-  defp group_specs(_group_id, %{"disabled" => true}), do: []
+  defp group_specs(_group_id, %{"disabled" => true}, _states), do: []
 
-  defp group_specs(group_id, group_config) do
+  defp group_specs(group_id, _group_config, states) do
     with module when is_atom(module) and not is_nil(module) <-
            NoizuPromptLingua.MCPServers.server_module(group_id) do
-      group_hidden = Map.get(group_config, "hidden")
-      tool_config = Map.get(group_config, "tools") || %{}
-
       module.__mcp__(:tools)
       |> Tools.expand()
       |> Enum.reject(&(tool_category(&1) == "Discovery"))
-      |> Enum.reject(fn spec ->
-        get_in(tool_config, [spec.definition.name, "disabled"]) == true
-      end)
       |> Enum.map(fn spec ->
-        tool_hidden = get_in(tool_config, [spec.definition.name, "hidden"])
-
-        cond do
-          is_boolean(tool_hidden) -> %{spec | hidden: tool_hidden}
-          is_boolean(group_hidden) -> %{spec | hidden: group_hidden}
-          true -> spec
-        end
+        EffectiveToolset.apply_state(spec, EffectiveToolset.lookup(states, spec.definition.name))
       end)
+      |> Enum.reject(&is_nil/1)
     else
       _ -> []
     end
