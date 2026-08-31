@@ -131,6 +131,16 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
   end
 
   @doc """
+  Resolve a scope by (organization_id, slug) — the org-addressed URL form
+  `/org/:org_slug/custom/:slug/mcp`. Slug matching is normalized case-insensitively,
+  as in `get_by_slug/1`. Returns nil when the slug exists but belongs to a
+  different org (or no org), so a slug can never be served outside its owner.
+  """
+  def get_by_org_and_slug(org_id, slug) when is_binary(slug) do
+    Repo.get_by(MCPCustomScope, organization_id: org_id, slug: normalize_slug(slug))
+  end
+
+  @doc """
   Get-or-create the global `tobor` all-in-one scope. Idempotent. Used as the
   unauthenticated setup fallback; signed-in accounts get `ensure_account_default/1`.
   """
