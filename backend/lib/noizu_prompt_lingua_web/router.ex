@@ -508,6 +508,10 @@ defmodule NoizuPromptLinguaWeb.Router do
     get "/mcp-custom-scopes/:slug", AdminController, :show_mcp_custom_scope
     patch "/mcp-custom-scopes/:slug", AdminController, :update_mcp_custom_scope
     delete "/mcp-custom-scopes/:slug", AdminController, :delete_mcp_custom_scope
+    post "/mcp-custom-scopes/:slug/clone", AdminController, :clone_mcp_custom_scope
+    # Legacy alias — the action was originally named copy; kept resolving so any
+    # external callers with copy in their scripts keep working.
+    post "/mcp-custom-scopes/:slug/copy", AdminController, :clone_mcp_custom_scope
 
     # mcp_overview review flow — list generated overviews, approve/reject/edit
     # (editing the Markdown implies approval). UI is a follow-up.

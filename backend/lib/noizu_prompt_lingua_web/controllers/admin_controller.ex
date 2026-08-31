@@ -1229,6 +1229,28 @@ defmodule NoizuPromptLinguaWeb.AdminController do
     conn |> put_status(:bad_request) |> json(%{error: "scope required"})
   end
 
+  @doc """
+  Clone a custom scope into a new endpoint (config copied verbatim, original
+  untouched). Mirrors `clone_mcp_key`. `scope` attrs may override `name`,
+  `slug`, `description`, `kind`. `/copy` is kept as a legacy alias route.
+  """
+  def clone_mcp_custom_scope(conn, %{"slug" => slug} = params) do
+    attrs = Map.get(params, "scope") || %{}
+
+    case MCPCustomScopes.copy(slug, attrs) do
+      {:ok, scope} ->
+        conn
+        |> put_status(:created)
+        |> json(%{scope: MCPCustomScopes.scope_json(scope, mcp_host(conn))})
+
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Scope not found"})
+
+      {:error, %Ecto.Changeset{} = cs} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+    end
+  end
+
   def update_mcp_custom_scope(conn, %{"slug" => slug, "scope" => attrs} = params) do
     # `confirm` may arrive at the top level or inside the scope map; thread the
     # acting admin so a confirmed disable records who authorized it.
