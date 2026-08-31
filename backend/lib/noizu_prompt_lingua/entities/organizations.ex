@@ -144,8 +144,9 @@ defmodule NoizuPromptLingua.Organizations do
 
   # SPEC GAP (W0 §4.1): TRP v1 has no shared-key org creation (POST /organizations
   # is JWT-only). Org creation stays LOCAL (app-DB org row + owner membership,
-  # both DB-independent) so console/MCP signup keeps working; the TRP-side org +
-  # key-scope provisioning is deferred to W8/W9 activation (logged, not silent).
+  # both DB-independent) so console/MCP signup keeps working; the TRP-side org is
+  # mirrored best-effort via the service identity (W8: TRP.Provisioning) — any
+  # provisioning failure keeps the local create + a logged warning (re-run is ops).
   def create_organization_with_owner(attrs, user_id) do
     require Logger
 
@@ -155,9 +156,18 @@ defmodule NoizuPromptLingua.Organizations do
       {:ok, org} ->
         case NoizuPromptLingua.Authz.ScopedMemberships.add_member("organization", org.id, user_id, "owner", user_id) do
           {:ok, _} ->
-            Logger.warning(
-              "Org #{org.id} created locally; TRP org provisioning + key-scope add pending W8 activation"
-            )
+            case NoizuPromptLingua.TRP.Provisioning.provision_org(%{slug: org.slug, name: org.name}) do
+              {:ok, _trp_org} ->
+                :ok
+
+              {:error, :trp_not_configured} ->
+                :ok
+
+              {:error, reason} ->
+                Logger.warning(
+                  "Org #{org.id} created locally; TRP org provisioning failed (#{inspect(reason)}) — ops re-run required"
+                )
+            end
 
             {:ok, org}
 
