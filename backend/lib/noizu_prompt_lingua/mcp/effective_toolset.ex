@@ -23,6 +23,39 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
         description_override: String.t() | nil,
         expires_at: DateTime.t() | nil}    # temporal window, via MCP.Window
 
+  ## ACL layer (debt D2 — per-user FINAL override)
+
+  When `user_ref` is present, an ACL pass runs AFTER the config cascade and
+  acts as the final override layer (`NoizuPromptLingua.Acl`, action
+  `"mcp.tool"`):
+
+    * per-tool resource: `{:ref, Schema.McpTool, canonical_tool_name}` — a
+      matching `deny` rule HIDES + DISABLES that tool for that user
+      (`enabled: false, visible: false`); kind wildcard
+      `{:ref, Schema.McpTool, :any}` covers every tool, `{:ref, :any, :any}`
+      globally.
+    * scope-wide resource: `{:ref, Schema.MCPCustomScope, scope.id}` — a
+      matching `deny` disables EVERY tool the scope serves.
+    * `allow` verdicts and no-matches (resolved with `default: :allow`) are
+      NO-OPS — the config cascade's state survives untouched. Explicit allow
+      never overrides a config `disabled`/`hidden`.
+    * users with NO rules match nothing => no-op, so nothing changes for
+      anyone without ACL rules. `user_ref` absent => no ACL pass at all
+      (legacy behavior byte-identical).
+
+  `user_ref` normalization: an ERP ref passes through as-is, any entity struct
+  via the ERP protocol, a bare binary is treated as a
+  `NoizuPromptLingua.Users.User` id.
+
+  Group membership comes free via `Acl.resolve` (transitive BFS expansion):
+  W6's "permission group assignment" = adding the user's ref to an `acl_group`
+  whose rules target tool/scope resources (`subject_ref = group.ref`).
+
+  Enforcement seams: `resolve/4` (listings, Session.Manifest) and `state/6`
+  (the hot path — ToolGuard via `KeyToolsets.state/3`, `apply_to_specs`).
+  Root-only Discovery/NPL tools stay ungated, matching the existing
+  toolset-gating policy.
+
   Semantics preserved from the pre-refactor split:
 
     * `enabled: false` — blocks EXECUTION (`ToolGuard` via `KeyToolsets.state/3`,
@@ -34,14 +67,24 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
   """
 
   alias Noizu.MCP.Server.Features.Tools
+  alias NoizuPromptLingua.Acl
   alias NoizuPromptLingua.MCP.Window
   alias NoizuPromptLingua.MCPApiKeys
   alias NoizuPromptLingua.MCPCustomScopes
   alias NoizuPromptLingua.MCPServers
   alias NoizuPromptLingua.Repo
   alias NoizuPromptLingua.Schema.McpApiKey
+  alias NoizuPromptLingua.Schema.MCPCustomScope
+  alias NoizuPromptLingua.Schema.McpTool
+
+  require Noizu.EntityReference.Records
+  alias Noizu.EntityReference.Records, as: R
 
   require Logger
+
+  # ACL action for the toolset override layer (debt D2): subject performs
+  # `mcp.tool` on a tool (or scope) resource; deny hides + disables.
+  @acl_action "mcp.tool"
 
   @type tool_state :: %{
           enabled: boolean(),
@@ -72,28 +115,33 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
 
   Returns a map keyed by canonical tool name (underscore form once F5 lands;
   dotted today — `canonical/1` picks up `MCP.ToolNames` automatically at
-  merge). `user_ref_or_nil` is reserved for the F1 ACL layering (per-user
-  denies/grants folded into the same map) and does not affect state yet.
+  merge). When `user_ref_or_nil` is present, the ACL override layer (see
+  "ACL layer" in the moduledoc) applies as the final pass — per-user denies
+  hide + disable tools; absent user or no rules => config cascade unchanged.
   """
   @spec resolve(scope, client, term(), DateTime.t()) :: %{String.t() => tool_state()}
   def resolve(scope, client, user_ref_or_nil, at \\ DateTime.utc_now())
 
-  def resolve(scope, client, _user_ref, at) do
+  def resolve(scope, client, user_ref, at) do
     template = template_config()
     scope_cfg = scope_config(scope)
     client_cfg = normalize_config(client_config(client))
 
     groups = include_groups(scope_cfg, template, client_cfg)
 
-    groups
-    |> Enum.flat_map(fn group_id ->
-      tool_names(group_id, [client_cfg, scope_cfg, template])
-      |> Enum.uniq()
-      |> Map.new(fn tool_name ->
-        {canonical(tool_name), state(group_id, tool_name, template, scope_cfg, client_cfg, at)}
+    states =
+      groups
+      |> Enum.flat_map(fn group_id ->
+        tool_names(group_id, [client_cfg, scope_cfg, template])
+        |> Enum.uniq()
+        |> Map.new(fn tool_name ->
+          {canonical(tool_name),
+           cascade_state(group_id, tool_name, template, scope_cfg, client_cfg, at)}
+        end)
       end)
-    end)
-    |> Enum.into(%{})
+      |> Enum.into(%{})
+
+    apply_acl(states, scope, at, user_ref)
   end
 
   # Include set: with a scope, the scope's groups govern (clients/templates only
@@ -112,7 +160,8 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
   Single-tool state — the hot-path entry point (ToolGuard / Catalog). Same
   cascade as `resolve/4` but resolves one (group, tool) pair without
   enumerating the group's catalog. `group_id: nil` (root-only Discovery/NPL
-  tools) is ungated: inherit-everything.
+  tools) is ungated: inherit-everything. No user context (5th arg is `at`) =>
+  no ACL pass.
   """
   @spec state(String.t() | nil, String.t(), scope, client, DateTime.t()) :: tool_state()
   def state(group_id, tool_name, scope, client, at \\ DateTime.utc_now())
@@ -123,14 +172,35 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
     scope_cfg = scope_config(scope)
     client_cfg = normalize_config(client_config(client))
 
-    state(group_id, tool_name, template, scope_cfg, client_cfg, at)
+    cascade_state(group_id, tool_name, template, scope_cfg, client_cfg, at)
   end
 
   def state(nil, _tool_name, _scope, _client, _at), do: @default_state
 
+  @doc """
+  Single-tool state WITH the per-user ACL override (debt D2) — the
+  enforcement hot path (ToolGuard via `KeyToolsets.state/3`, `apply_to_specs`).
+  Same cascade as `state/5`, then the ACL pass for `user_ref` (ERP ref, user
+  struct, or bare `Users.User` id; nil => no ACL pass — identical to `state/5`).
+  """
+  @spec state(String.t() | nil, String.t(), scope, client, term(), DateTime.t()) :: tool_state()
+  def state(group_id, tool_name, scope, client, user_ref, at)
+
+  def state(group_id, tool_name, scope, client, user_ref, at)
+      when is_binary(group_id) and is_binary(tool_name) do
+    template = template_config()
+    scope_cfg = scope_config(scope)
+    client_cfg = normalize_config(client_config(client))
+
+    cascade_state(group_id, tool_name, template, scope_cfg, client_cfg, at)
+    |> apply_acl_tool(scope, at, user_ref, tool_name)
+  end
+
+  def state(nil, _tool_name, _scope, _client, _user_ref, _at), do: @default_state
+
   # Cascade across [client, scope, template]: per key, the most specific layer
   # with an opinion wins; within a layer, the tool entry beats the group flag.
-  defp state(group_id, tool_name, template, scope_cfg, client_cfg, at) do
+  defp cascade_state(group_id, tool_name, template, scope_cfg, client_cfg, at) do
     entries =
       [client_cfg, scope_cfg, template]
       |> Enum.flat_map(fn layer ->
@@ -207,6 +277,105 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
   defp string_or_nil(v) when is_binary(v), do: v
   defp string_or_nil(_), do: nil
 
+  # ── ACL override layer (debt D2) ───────────────────────────────────────────
+
+  @doc "The ACL action the toolset layer resolves (`\"mcp.tool\"`; `\"*\"` also matches)."
+  def acl_action, do: @acl_action
+
+  @doc "ACL resource ref for a canonical tool name (action `#{inspect(@acl_action)}`)."
+  def tool_resource(tool_name), do: McpTool.ref(canonical(tool_name))
+
+  @doc """
+  The ACL subject for a request ctx: `MCP.Resolve.current_user_id/1` claims
+  normalized to a `NoizuPromptLingua.Users.User` ref — nil (=> no ACL pass)
+  for API-key-only/service principals and unauthenticated calls.
+  """
+  def user_for_ctx(ctx) do
+    case NoizuPromptLingua.MCP.Resolve.current_user_id(ctx) do
+      id when is_binary(id) and id != "" -> R.ref(module: NoizuPromptLingua.Users.User, id: id)
+      _ -> nil
+    end
+  end
+
+  # Final override pass over resolved states: deny hides + disables; allow and
+  # no-match (`default: :allow`) are no-ops. nil user => identity (legacy).
+  defp apply_acl(states, _scope, _at, nil), do: states
+
+  defp apply_acl(states, scope, at, user_ref) do
+    case acl_subject(user_ref) do
+      nil ->
+        states
+
+      subject ->
+        if match?({:deny, _}, scope_verdict(subject, scope, opts(at))) do
+          Map.new(states, fn {name, st} -> {name, %{st | enabled: false, visible: false}} end)
+        else
+          Map.new(states, fn
+            # Already blocked by the cascade — nothing an ACL pass could add.
+            {name, %{enabled: false} = st} ->
+              {name, st}
+
+            {name, st} ->
+              {name, apply_acl_tool(st, subject, at, name)}
+          end)
+        end
+    end
+  end
+
+  # Single-tool ACL override (hot path). 4-arity: scope verdict already
+  # resolved (map pass); 5-arity entry resolves it (state/6).
+  defp apply_acl_tool(%{enabled: false} = ts, _subject, _at, _tool_name), do: ts
+
+  defp apply_acl_tool(ts, subject, at, tool_name) do
+    case Acl.resolve(subject, @acl_action, tool_resource(tool_name), opts(at)) do
+      {:deny, _} -> %{ts | enabled: false, visible: false}
+      _ -> ts
+    end
+  end
+
+  defp apply_acl_tool(ts, _scope, _at, nil, _tool_name), do: ts
+
+  defp apply_acl_tool(ts, scope, at, user_ref, tool_name) do
+    case acl_subject(user_ref) do
+      nil ->
+        ts
+
+      subject ->
+        if match?({:deny, _}, scope_verdict(subject, scope, opts(at))) do
+          %{ts | enabled: false, visible: false}
+        else
+          apply_acl_tool(ts, subject, at, tool_name)
+        end
+    end
+  end
+
+  defp opts(at), do: [default: :allow, at: at]
+
+  # Scope-wide knob: `mcp.tool` on the scope's own ref denies every tool the
+  # scope serves (kind/global wildcards apply via the standard rule matching).
+  defp scope_verdict(_subject, nil, _opts), do: {:allow, :default}
+
+  defp scope_verdict(subject, scope, opts) do
+    case scope do
+      %{id: id} when is_binary(id) ->
+        Acl.resolve(subject, @acl_action, R.ref(module: MCPCustomScope, id: id), opts)
+
+      %{"id" => id} when is_binary(id) ->
+        Acl.resolve(subject, @acl_action, R.ref(module: MCPCustomScope, id: id), opts)
+
+      _ ->
+        {:allow, :default}
+    end
+  end
+
+  # Normalize the caller-supplied user: ERP ref as-is, entity struct via the
+  # protocol (Acl casts it), bare binary = Users.User id, anything else => nil
+  # (no ACL pass rather than a bogus subject lookup).
+  defp acl_subject(R.ref() = ref), do: ref
+  defp acl_subject(subject) when is_struct(subject), do: subject
+  defp acl_subject(id) when is_binary(id), do: R.ref(module: NoizuPromptLingua.Users.User, id: id)
+  defp acl_subject(_), do: nil
+
   # ── consumers ──────────────────────────────────────────────────────────────
 
   @doc """
@@ -253,12 +422,14 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
   @doc """
   Listing filter for the shared server pipeline (`MCP.Server.list_tools`,
   `Tools.Catalog`): resolve the caller's client + scope states and drop
-  hidden/disabled specs. Discovery/NPL categories are never gated. `group_id`
-  pins the owning group when the caller knows it.
+  hidden/disabled specs (config cascade + per-user ACL override, debt D2).
+  Discovery/NPL categories are never gated. `group_id` pins the owning group
+  when the caller knows it.
   """
   def apply_to_specs(specs, ctx, group_id \\ nil) when is_list(specs) do
     client = client_for_ctx(ctx)
     scope = scope_from_ctx(ctx)
+    user_ref = user_for_ctx(ctx)
 
     if client == nil and scope == nil do
       specs
@@ -268,7 +439,7 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
           true
         else
           gid = group_id || MCPServers.group_id_for_tool_module(spec.module)
-          ts = state(gid, spec.definition.name, scope, client)
+          ts = state(gid, spec.definition.name, scope, client, user_ref, DateTime.utc_now())
           not ts.visible or not ts.enabled
         end
       end)

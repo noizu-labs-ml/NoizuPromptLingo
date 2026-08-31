@@ -48,7 +48,9 @@ defmodule NoizuPromptLingua.MCP.KeyToolsets do
 
   @doc """
   Resolve the effective (disabled, hidden) flags for a (group, tool) pair from
-  the calling ctx — full EffectiveToolset cascade (client + scope + template).
+  the calling ctx — full EffectiveToolset cascade (client + scope + template)
+  plus the per-user ACL override (debt D2: `mcp.tool` deny rules hide + disable
+  the tool for that user; no rules => unchanged).
 
     * `disabled` — blocks EXECUTION (ToolGuard, pre-RBAC, both authz modes).
     * `hidden` — blocks LISTING/DISCOVERY only; the tool remains callable
@@ -60,7 +62,9 @@ defmodule NoizuPromptLingua.MCP.KeyToolsets do
         group_id,
         tool_name,
         EffectiveToolset.scope_from_ctx(ctx),
-        EffectiveToolset.client_for_ctx(ctx)
+        EffectiveToolset.client_for_ctx(ctx),
+        EffectiveToolset.user_for_ctx(ctx),
+        DateTime.utc_now()
       )
 
     %{disabled: not ts.enabled, hidden: not ts.visible}
