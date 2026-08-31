@@ -1,0 +1,49 @@
+personas:
+  - id: P-001
+    name: Marcus Reyes
+    slug: marcus-reyes
+    archetype: Solo power-user developer
+    segment: primary
+    file: P-001-marcus-reyes.md
+  - id: P-002
+    name: Priya Natarajan
+    slug: priya-natarajan
+    archetype: Staff engineer curating team knowledge
+    segment: primary
+    file: P-002-priya-natarajan.md
+  - id: P-003
+    name: Elena Vasquez
+    slug: elena-vasquez
+    archetype: ML / fine-tuning engineer
+    segment: primary
+    file: P-003-elena-vasquez.md
+  - id: P-004
+    name: Tobias Lindqvist
+    slug: tobias-lindqvist
+    archetype: Prompt / skill author packaging reusable agents
+    segment: secondary
+    file: P-004-tobias-lindqvist.md
+  - id: P-005
+    name: Daniel Okonkwo
+    slug: daniel-okonkwo
+    archetype: Engineering lead auditing AI usage
+    segment: secondary
+    file: P-005-daniel-okonkwo.md
+  - id: P-006
+    name: Sofia Almeida
+    slug: sofia-almeida
+    archetype: OSS maintainer
+    segment: tertiary
+    file: P-006-sofia-almeida.md
+  - id: P-007
+    name: Jamie O'Connell
+    slug: jamie-oconnell
+    archetype: Occasional / novice Claude Code user
+    segment: edge-case
+    file: P-007-jamie-oconnell.md
+  - id: P-008
+    name: Yusuf Demir
+    slug: yusuf-demir
+    archetype: Multi-provider agent tinkerer
+    segment: tertiary
+    file: P-008-yusuf-demir.md

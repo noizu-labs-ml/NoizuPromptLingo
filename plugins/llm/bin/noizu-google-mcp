@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Stdio launcher for vendored :noizu_google_mcp. Resolves via BASH_SOURCE so
+# hosts that spawn the wrapper with an absolute path (no plugin cwd) still work.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT/elixir-google-mcp"
+
+export PATH="/opt/homebrew/bin:/usr/local/bin:${HOME}/.asdf/shims:${HOME}/.local/share/mise/shims:${HOME}/.mix/escripts:${PATH}"
+
+if ! command -v mix >/dev/null 2>&1; then
+  echo "noizu-google-mcp: mix not found on PATH" >&2
+  exit 127
+fi
+
+exec mix run --no-halt

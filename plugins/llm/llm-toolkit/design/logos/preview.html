@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Assist — Logo Preview</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0F0F14;
+      color: #CDCDE0;
+      font-family: Inter, system-ui, sans-serif;
+      padding: 48px;
+      min-height: 100vh;
+    }
+    h1 {
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #06B6D4;
+      margin-bottom: 48px;
+    }
+    .variant {
+      margin-bottom: 48px;
+    }
+    .variant-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #8888A0;
+      margin-bottom: 16px;
+    }
+    .variant-desc {
+      font-size: 12px;
+      color: #5A5A72;
+      margin-bottom: 12px;
+    }
+    .variant-preview {
+      padding: 24px;
+      border: 1px solid #1E1E2A;
+      border-radius: 4px;
+      display: inline-block;
+    }
+    .variant-preview.light {
+      background: #F5F5F7;
+    }
+    .variant-preview.dark {
+      background: #18181F;
+    }
+    .variant-preview img {
+      display: block;
+    }
+    .row {
+      display: flex;
+      gap: 32px;
+      align-items: flex-start;
+    }
+    .size-note {
+      font-size: 10px;
+      color: #5A5A72;
+      margin-top: 8px;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <h1>Claude Assist / Logo Variants</h1>
+
+  <div class="variant">
+    <div class="variant-label">1. Logomark</div>
+    <div class="variant-desc">claude-assist-mark.svg &mdash; 64&times;64</div>
+    <div class="row">
+      <div>
+        <div class="variant-preview dark">
+          <img src="claude-assist-mark.svg" width="64" height="64" alt="Claude Assist mark">
+        </div>
+        <div class="size-note">64px (1x)</div>
+      </div>
+      <div>
+        <div class="variant-preview dark">
+          <img src="claude-assist-mark.svg" width="32" height="32" alt="Claude Assist mark small">
+        </div>
+        <div class="size-note">32px (0.5x)</div>
+      </div>
+      <div>
+        <div class="variant-preview dark">
+          <img src="claude-assist-mark.svg" width="128" height="128" alt="Claude Assist mark large">
+        </div>
+        <div class="size-note">128px (2x)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="variant">
+    <div class="variant-label">2. Logotype (Wordmark)</div>
+    <div class="variant-desc">claude-assist-type.svg &mdash; 280&times;40</div>
+    <div class="variant-preview dark">
+      <img src="claude-assist-type.svg" width="280" height="40" alt="Claude Assist wordmark">
+    </div>
+  </div>
+
+  <div class="variant">
+    <div class="variant-label">3. Combo Mark</div>
+    <div class="variant-desc">claude-assist-combo.svg &mdash; 320&times;48</div>
+    <div class="variant-preview dark">
+      <img src="claude-assist-combo.svg" width="320" height="48" alt="Claude Assist combo mark">
+    </div>
+  </div>
+
+  <div class="variant">
+    <div class="variant-label">4. Favicon</div>
+    <div class="variant-desc">claude-assist-favicon.svg &mdash; 32&times;32</div>
+    <div class="row">
+      <div>
+        <div class="variant-preview dark">
+          <img src="claude-assist-favicon.svg" width="32" height="32" alt="Claude Assist favicon">
+        </div>
+        <div class="size-note">32px (native)</div>
+      </div>
+      <div>
+        <div class="variant-preview dark">
+          <img src="claude-assist-favicon.svg" width="16" height="16" alt="Claude Assist favicon 16px">
+        </div>
+        <div class="size-note">16px (tab size)</div>
+      </div>
+      <div>
+        <div class="variant-preview dark">
+          <img src="claude-assist-favicon.svg" width="64" height="64" alt="Claude Assist favicon enlarged">
+        </div>
+        <div class="size-note">64px (enlarged)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="variant">
+    <div class="variant-label">5. Monochrome</div>
+    <div class="variant-desc">claude-assist-mono.svg &mdash; single color #CDCDE0</div>
+    <div class="variant-preview dark">
+      <img src="claude-assist-mono.svg" width="320" height="48" alt="Claude Assist monochrome">
+    </div>
+  </div>
+
+  <div class="variant">
+    <div class="variant-label">6. Reversed (Light Background)</div>
+    <div class="variant-desc">claude-assist-reversed.svg &mdash; inverted for light contexts</div>
+    <div class="variant-preview light">
+      <img src="claude-assist-reversed.svg" width="320" height="48" alt="Claude Assist reversed">
+    </div>
+  </div>
+</body>
+</html>

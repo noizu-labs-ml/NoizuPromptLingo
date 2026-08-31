@@ -348,6 +348,10 @@ export interface McpCustomScopeConfig {
       name_override?: string;
       description_override?: string;
       arg_overrides?: Record<string, string>;
+      // F3 temporal windows (mutually exclusive; enabled_at stamped server-side)
+      hide_until?: string | null;
+      enable_for_hours?: number | null;
+      enabled_at?: string;
     }>;
   }>;
 }

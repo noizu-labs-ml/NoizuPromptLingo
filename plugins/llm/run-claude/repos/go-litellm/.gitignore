@@ -1,0 +1,6 @@
+/bin/
+/go-litellm
+*.exe
+*.test
+coverage.out
+.DS_Store

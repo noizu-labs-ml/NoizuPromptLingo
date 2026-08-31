@@ -23,6 +23,45 @@ defmodule NoizuPromptLingua.Domains.Tickets do
     NoizuPromptLingua.Domains.Tickets.PMBridge.get_by_key(org_id, key)
   end
 
+  # Human key grammar: <PREFIX>-<NNN> (TicketKey.derive_prefix caps at 6 A-Z0-9
+  # chars; format_key zero-pads to >= 3 digits). Matched case-insensitively and
+  # normalized to upper before lookup.
+  @key_format ~r/^[A-Za-z0-9]{2,6}-\d{3,}$/
+
+  @doc """
+  Resolve a ticket for MCP tool addressing: UUID args keep the legacy id lookup,
+  anything matching the human-key grammar (PREFIX-NNN) resolves via the
+  org-scoped key index. Keys are scoped per (org, project), so key lookup
+  requires `org_id`. Returns {:ok, ticket} | {:error, :organization_required} |
+  {:error, :not_found}.
+  """
+  def get_by_ref(ref, org_id \\ nil)
+
+  def get_by_ref(ref, org_id) when is_binary(ref) do
+    cond do
+      Regex.match?(@key_format, ref) and is_nil(org_id) ->
+        {:error, :organization_required}
+
+      Regex.match?(@key_format, ref) ->
+        case get_by_key(org_id, String.upcase(ref)) do
+          nil -> {:error, :not_found}
+          ticket -> {:ok, ticket}
+        end
+
+      true ->
+        case NoizuPromptLingua.UUID.cast(ref) do
+          {:ok, uuid} ->
+            case get(uuid) do
+              nil -> {:error, :not_found}
+              ticket -> {:ok, ticket}
+            end
+
+          :error ->
+            {:error, :not_found}
+        end
+    end
+  end
+
   @doc """
   Backfill human keys for pre-existing keyless items (055 deploy step). Idempotent:
   only NULL-key items, oldest-first so per-scope numbers follow inserted_at; reuses
@@ -88,5 +127,4 @@ defmodule NoizuPromptLingua.Domains.Tickets do
 
     %{outgoing: outgoing, incoming: incoming}
   end
-
 end

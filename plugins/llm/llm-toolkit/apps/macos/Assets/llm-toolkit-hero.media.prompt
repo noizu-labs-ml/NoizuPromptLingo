@@ -1,0 +1,29 @@
+schema: "0.4"
+id: llm-toolkit-macos-hero
+type: image
+service: imagine
+quality: high
+
+prompt:
+  text: |
+    Cinematic wide brand hero for LLM Toolkit. Nocturne void canvas (#0F0F14).
+    A small matte-charcoal watchdog robot with a plasma-cyan visor slit sits
+    on a workbench at the right, watching floating conversation windows that
+    recede into depth; the nearest slab peels into a glowing cyan diamond.
+    Quiet competence, no text, no UI chrome.
+  negative: "text, letters, watermark, logo lockup, bright white background"
+
+output:
+  formats:
+    - format: png
+      quality: 100
+      filename: WatchdogHero
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+  transparency: none
+  color_space: sRGB
+
+tags: [llm-toolkit, macos, hero, brand]
+product_targets: [macos-in-app]

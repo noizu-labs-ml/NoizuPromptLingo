@@ -52,6 +52,7 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.TicketList do
              Enum.map(tickets, fn t ->
                %{
                  id: t.id,
+                 key: t.key,
                  title: t.title,
                  ticket_type: t.ticket_type,
                  status: t.status,

@@ -3,7 +3,13 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { api, type McpCustomGroup, McpCustomScope, McpServerConfig } from '@/lib/api';
-import { DEFAULT_MCP_AUTH_ENV_VAR } from '@/lib/mcp-setup';
+import {
+  MCP_OAUTH_CLIENTS,
+  mcpOauthHint,
+  mcpOauthServerName,
+  mcpOauthSnippet,
+  type McpOauthClient,
+} from '@/lib/mcp-setup';
 import McpIncludeEditor from '@/components/mcp-include-editor';
 
 type Tab = 'default' | 'alacarte';
@@ -12,8 +18,6 @@ interface McpOauthSetupProps {
   mcpUrl: string;
   asMetadataUrl: string;
   issuer: string;
-  // Env var name used in legacy-key CLI snippets (org-scoped; see mcpAuthEnvVar).
-  authEnvName?: string;
   servers: McpServerConfig[];
   alaCarte?: McpServerConfig[];
   catalog?: McpCustomGroup[];
@@ -30,7 +34,6 @@ export default function McpOauthSetup({
   mcpUrl,
   asMetadataUrl,
   issuer,
-  authEnvName = DEFAULT_MCP_AUTH_ENV_VAR,
   servers,
   alaCarte = [],
   catalog = [],
@@ -38,6 +41,7 @@ export default function McpOauthSetup({
   onDefaultScopeChange,
 }: McpOauthSetupProps) {
   const [tab, setTab] = useState<Tab>('default');
+  const [client, setClient] = useState<McpOauthClient>('claude-code');
   const [copied, setCopied] = useState<string | null>(null);
 
   async function copy(text: string, id: string) {
@@ -51,19 +55,9 @@ export default function McpOauthSetup({
     }
   }
 
-  const handle = defaultScope?.slug;
-  const clientName = handle ? `tobor-${handle}` : 'tobor-default-mcp';
-  const claudeCodeOauth = `# Claude Code — remote MCP over OAuth (no API key)
-# Paste the MCP URL; the client discovers OAuth, registers itself (DCR),
-# and opens a browser for you to sign in + Allow.
-claude mcp add --transport http ${clientName} ${mcpUrl}
-
-# If your CLI still requires a header, use the Legacy API key section below.`;
-
-  const codexNote = `# Codex — prefer remote MCP URL if your build supports OAuth connectors.
-# Otherwise use Legacy API key → mint token, then:
-#   export ${authEnvName}=<token>
-#   codex mcp add tobor --url ${mcpUrl} --bearer-token-env-var ${authEnvName}`;
+  const clientName = mcpOauthServerName(defaultScope?.slug);
+  const snippet = mcpOauthSnippet(client, clientName, mcpUrl);
+  const selected = MCP_OAUTH_CLIENTS.find((c) => c.id === client);
 
   return (
     <section className="dash-panel" style={{ marginTop: 'var(--space-4)' }}>
@@ -90,6 +84,11 @@ claude mcp add --transport http ${clientName} ${mcpUrl}
         <strong>register themselves</strong> (RFC 7591 DCR), and open a browser window.
         You sign in with Authentik and click <strong>Allow</strong>. A pairing grant appears
         under “OAuth connections” below — that is your authorization, not a copy-paste secret.
+        <br />
+        <strong style={{ color: 'var(--text-1)' }}>Access is not unlimited.</strong>
+        {' '}This pairing is the selected endpoint’s standing catalog; revoke it anytime
+        under OAuth connections. MCP PKCE stays on <code className="font-mono">/oauth</code>
+        (not Authentik).
       </div>
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
@@ -127,9 +126,9 @@ claude mcp add --transport http ${clientName} ${mcpUrl}
           <div className="authz-reveal" style={{ marginBottom: 12 }}>
             <div className="authz-reveal__label">
               MCP server URL
-              {handle ? (
+              {defaultScope?.slug ? (
                 <span style={{ marginLeft: 8, fontWeight: 400 }}>
-                  handle <span className="font-mono">{handle}</span>
+                  handle <span className="font-mono">{defaultScope.slug}</span>
                 </span>
               ) : null}
             </div>
@@ -162,21 +161,68 @@ claude mcp add --transport http ${clientName} ${mcpUrl}
             </li>
           </ol>
 
-          <div className="authz-reveal" style={{ marginTop: 16, marginBottom: 12 }}>
-            <div className="authz-reveal__label">CLI (OAuth)</div>
-            <div className="authz-reveal__row">
-              <code className="authz-reveal__key font-mono" style={{ whiteSpace: 'pre-wrap' }}>{claudeCodeOauth}</code>
-              <button type="button" className="sg-btn sg-btn--outline sg-btn--sm" onClick={() => copy(claudeCodeOauth, 'claude-oauth')}>
-                {copied === 'claude-oauth' ? 'Copied!' : 'Copy'}
-              </button>
-            </div>
+          <div style={{ marginTop: 16, marginBottom: 8, fontSize: 12, fontWeight: 600, color: 'var(--text-1)' }}>
+            Install snippets
           </div>
+          <p className="sg-page-intro" style={{ marginTop: 0, marginBottom: 10 }}>
+            OAuth URL only — no long-lived bearer. Pick a client, copy, then Allow in the browser.
+          </p>
+          <div
+            style={{
+              display: 'inline-flex',
+              flexWrap: 'wrap',
+              border: '1px solid var(--border)',
+              borderRadius: 6,
+              overflow: 'hidden',
+              background: 'var(--bg-3)',
+              marginBottom: 10,
+            }}
+          >
+            {MCP_OAUTH_CLIENTS.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                aria-pressed={client === option.id}
+                onClick={() => setClient(option.id)}
+                style={{
+                  padding: '5px 10px',
+                  fontSize: 11,
+                  border: 0,
+                  cursor: 'pointer',
+                  fontFamily: 'var(--font)',
+                  ...(client === option.id
+                    ? { background: 'var(--accent)', color: 'white' }
+                    : { background: 'transparent', color: 'var(--text-1)' }),
+                }}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <p style={{ margin: '0 0 10px', fontSize: 11, lineHeight: 1.5, color: 'var(--text-2)' }}>
+            {mcpOauthHint(client)}
+          </p>
           <div className="authz-reveal">
-            <div className="authz-reveal__label">Codex / others</div>
+            <div className="authz-reveal__label">
+              {selected?.label}
+              {selected?.dest ? (
+                <span style={{ marginLeft: 8, fontWeight: 400 }}>{selected.dest}</span>
+              ) : null}
+            </div>
             <div className="authz-reveal__row">
-              <code className="authz-reveal__key font-mono" style={{ whiteSpace: 'pre-wrap' }}>{codexNote}</code>
-              <button type="button" className="sg-btn sg-btn--outline sg-btn--sm" onClick={() => copy(codexNote, 'codex')}>
-                {copied === 'codex' ? 'Copied!' : 'Copy'}
+              <code
+                className="authz-reveal__key font-mono"
+                data-mcp-oauth-client={client}
+                style={{ whiteSpace: 'pre-wrap' }}
+              >
+                {snippet}
+              </code>
+              <button
+                type="button"
+                className="sg-btn sg-btn--outline sg-btn--sm"
+                onClick={() => copy(snippet, client)}
+              >
+                {copied === client ? 'Copied!' : 'Copy'}
               </button>
             </div>
           </div>

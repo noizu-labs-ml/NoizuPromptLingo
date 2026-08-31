@@ -1,0 +1,40 @@
+{
+  "_comment": "Claude Code / Cursor / Grok-compat: copy mcpServers into .mcp.json or .cursor/mcp.json. VS Code Copilot: copy servers into .vscode/mcp.json (type=stdio required). Codex and Grok native configs are TOML — see README. Stdio only; do not expose this server over unauthenticated HTTP. Read tools are granted by default. Set GOOGLE_MCP_WRITES=1 to enable write tools (Ads mutates still default to dry_run and need confirm=true for live applies).",
+  "mcpServers": {
+    "noizu-google": {
+      "command": "mix",
+      "args": ["run", "--no-halt"],
+      "cwd": "REPLACE_WITH_ABS_PATH/elixir-google-mcp",
+      "env": {
+        "GOOGLE_APPLICATION_CREDENTIALS": "/absolute/path/to/service-account.json",
+        "GOOGLE_SCOPES": "https://www.googleapis.com/auth/webmasters",
+        "GOOGLE_ACCESS_TOKEN": "",
+        "GOOGLE_REFRESH_TOKEN": "",
+        "GOOGLE_CLIENT_ID": "",
+        "GOOGLE_CLIENT_SECRET": "",
+        "GOOGLE_ADS_DEVELOPER_TOKEN": "",
+        "GOOGLE_ADS_LOGIN_CUSTOMER_ID": "",
+        "GOOGLE_MCP_WRITES": ""
+      }
+    }
+  },
+  "servers": {
+    "noizu-google": {
+      "type": "stdio",
+      "command": "mix",
+      "args": ["run", "--no-halt"],
+      "cwd": "REPLACE_WITH_ABS_PATH/elixir-google-mcp",
+      "env": {
+        "GOOGLE_APPLICATION_CREDENTIALS": "/absolute/path/to/service-account.json",
+        "GOOGLE_SCOPES": "https://www.googleapis.com/auth/webmasters",
+        "GOOGLE_ACCESS_TOKEN": "",
+        "GOOGLE_REFRESH_TOKEN": "",
+        "GOOGLE_CLIENT_ID": "",
+        "GOOGLE_CLIENT_SECRET": "",
+        "GOOGLE_ADS_DEVELOPER_TOKEN": "",
+        "GOOGLE_ADS_LOGIN_CUSTOMER_ID": "",
+        "GOOGLE_MCP_WRITES": ""
+      }
+    }
+  }
+}

@@ -1,0 +1,240 @@
+#compdef llm-toolkit
+# zsh completion for llm-toolkit.
+#
+# Install (either works):
+#   1. Copy onto $fpath as `_llm-toolkit` (done by `make install-completions`),
+#      then ensure the directory is in fpath before compinit runs.
+#   2. Source this file directly from .zshrc (after compinit).
+
+_llm-toolkit_skill_kinds() {
+  local -a kinds=('skills:Skill definitions' 'agents:Agent definitions' 'commands:Slash commands')
+  _describe -t kinds 'kind' kinds
+}
+
+_llm-toolkit_skill_kind_filter() {
+  local -a kinds=('skills:Skill definitions' 'agents:Agent definitions' 'commands:Slash commands' 'all:All kinds')
+  _describe -t kinds 'kind' kinds
+}
+
+_llm-toolkit_skill_providers() {
+  local -a providers=('claude:Claude Code' 'codex:Codex' 'grok:Grok' 'all:All providers')
+  _describe -t providers 'provider' providers
+}
+
+_llm-toolkit_skill_status() {
+  local -a statuses=(enabled disabled foreign real broken missing-source)
+  _describe -t statuses 'install status' statuses
+}
+
+_llm-toolkit() {
+  local curcontext="$curcontext" state line ret=1
+  typeset -A opt_args
+
+  _arguments -C \
+    '(-h --help)'{-h,--help}'[show usage and exit]' \
+    '1:command:->command' \
+    '*::arg:->args' && ret=0
+
+  case $state in
+    command)
+      local -a commands=(
+        'api:Start the API server'
+        'web:Start the web UI'
+        'skill:Manage provider skills, agents, and commands'
+        '--no-zellij:Run api + web in the foreground without zellij'
+        'recent:Recent sessions (direct DB; default: 1h)'
+        'search:Search conversations'
+        'list:List conversations'
+        'show:View a conversation'
+        'index:Rebuild search index'
+        'serve:Start API + web UI'
+        'interactive:Launch full-screen TUI'
+        'help:Show CLI usage'
+      )
+      _describe -t commands 'llm-toolkit command' commands && ret=0
+      ;;
+    args)
+      case $words[1] in
+        skill)
+          _llm-toolkit_skill && ret=0
+          ;;
+        recent)
+          _arguments \
+            '(--period --since)'{--period,--since}'=[period, e.g. 30m, 2h, 1d]:period:' \
+            '--limit=[maximum sessions (default 50, max 1000)]:count:' \
+            '--full[do not truncate first/last message previews]' \
+            '--json[emit machine-readable JSON]' \
+            '(-h --help)'{-h,--help}'[show usage]' \
+            '1:period:' && ret=0
+          ;;
+        search)
+          _arguments '*:query:' && ret=0
+          ;;
+        list)
+          _arguments \
+            '--project=[filter by project path]:project:_files -/' \
+            '--limit=[max results (default 20)]:count:' && ret=0
+          ;;
+        show)
+          _arguments '1:conversation id:' && ret=0
+          ;;
+        index|serve|interactive|help|api|web|--no-zellij)
+          ret=0
+          ;;
+      esac
+      ;;
+  esac
+
+  return ret
+}
+
+# Nested completion for `llm-toolkit skill ...` (the embedded skill-manage Rust binary).
+_llm-toolkit_skill() {
+  local curcontext="$curcontext" state line ret=1
+  typeset -A opt_args
+
+  _arguments -C \
+    '--config=[path to config.yaml]:config file:_files' \
+    '--catalog=[override catalog path]:catalog file:_files' \
+    '(-v --verbose)'{-v,--verbose}'[verbose output]' \
+    '(-q --quiet)'{-q,--quiet}'[quiet output]' \
+    '(-h --help)'{-h,--help}'[show usage]' \
+    '1:subcommand:->subcommand' \
+    '*::arg:->args' && ret=0
+
+  case $state in
+    subcommand)
+      local -a subcommands=(
+        'list:List discovered items and install status'
+        'skills:Browse / toggle skills (list by default; -i for TUI)'
+        'agents:Browse / toggle agent definitions (-i for TUI)'
+        'commands:Browse / toggle slash commands (-i for TUI)'
+        'profiles:Work-type profiles TUI / list'
+        'tui:Full-screen TUI hub (optional starting screen)'
+        'enable:Enable (symlink) items into provider dirs'
+        'disable:Disable (remove managed symlink)'
+        'enable-set:Enable catalog-recommended set for a work type'
+        'audit:Audit structure + install matrix + catalog'
+        'status:Summary counts per kind x provider'
+        'context:Measure selected frontmatter and provider context-budget usage'
+        'catalog:Catalog operations'
+        'work-types:Work type listing / detail'
+        'path:Print resolved source path for an item'
+        'init-config:Write starter config.yaml'
+      )
+      _describe -t subcommands 'skill-manage subcommand' subcommands && ret=0
+      ;;
+    args)
+      case $words[1] in
+        list)
+          _arguments \
+            '--provider=[claude|codex|grok|all]:provider:_llm-toolkit_skill_providers' \
+            '--tag=[filter by tag]:tag:' \
+            '--work-type=[filter by work type]:work type:' \
+            '--status=[filter by install status]:status:_llm-toolkit_skill_status' \
+            '1:kind:_llm-toolkit_skill_kind_filter' && ret=0
+          ;;
+        skills|agents|commands|profiles)
+          _arguments \
+            '(-i --interactive)'{-i,--interactive}'[interactive TUI]' \
+            '--provider=[claude|codex|grok|all]:provider:_llm-toolkit_skill_providers' && ret=0
+          ;;
+        tui)
+          _arguments \
+            '--provider=[claude|codex|grok|all]:provider:_llm-toolkit_skill_providers' \
+            '1:screen:(skills agents commands profiles)' && ret=0
+          ;;
+        enable)
+          _arguments \
+            '--all[apply to all items of this kind]' \
+            '--provider=[claude|codex|grok|all]:provider:_llm-toolkit_skill_providers' \
+            '--replace[overwrite existing foreign/real files]' \
+            '--dry-run[show what would change]' \
+            '1:kind:_llm-toolkit_skill_kinds' \
+            '2:name:' && ret=0
+          ;;
+        disable)
+          _arguments \
+            '--all[apply to all items of this kind]' \
+            '--provider=[claude|codex|grok|all]:provider:_llm-toolkit_skill_providers' \
+            '--dry-run[show what would change]' \
+            '1:kind:_llm-toolkit_skill_kinds' \
+            '2:name:' && ret=0
+          ;;
+        enable-set)
+          _arguments \
+            '--work-type=[work type name (required)]:work type:' \
+            '--provider=[claude|codex|grok|all]:provider:_llm-toolkit_skill_providers' \
+            '--replace[overwrite existing foreign/real files]' \
+            '--dry-run[show what would change]' && ret=0
+          ;;
+        audit)
+          _arguments \
+            '--provider=[claude|codex|grok|all]:provider:_llm-toolkit_skill_providers' \
+            '--strict[fail on any drift]' \
+            '--json[output as JSON]' \
+            '1:kind:_llm-toolkit_skill_kind_filter' && ret=0
+          ;;
+        status)
+          ret=0
+          ;;
+        context)
+          _arguments \
+            '--provider=[claude|codex|grok|all]:provider:_llm-toolkit_skill_providers' \
+            '--selection=[active|enabled|all]:selection:(active enabled all)' \
+            '--context-window=[model context window in tokens]:tokens:' \
+            '--frontmatter-limit-bytes=[raw frontmatter byte cap]:bytes:' \
+            '--json[output as JSON]' \
+            '1:kind:_llm-toolkit_skill_kind_filter' && ret=0
+          ;;
+        catalog)
+          if (( CURRENT == 2 )); then
+            local -a actions=(
+              'init:Write example catalog if missing'
+              'show:Print catalog path and summary'
+              'validate:Validate catalog against discovered sources'
+              'edit-path:Print catalog file path'
+            )
+            _describe -t actions 'catalog action' actions && ret=0
+          else
+            case $words[2] in
+              init)
+                _arguments '--force[overwrite existing catalog]' && ret=0 ;;
+            esac
+          fi
+          ;;
+        work-types)
+          if (( CURRENT == 2 )); then
+            local -a actions=(
+              'list:List work types'
+              'show:Show a work type definition'
+            )
+            _describe -t actions 'work-types action' actions && ret=0
+          else
+            case $words[2] in
+              show)
+                _arguments '1:name:' && ret=0 ;;
+            esac
+          fi
+          ;;
+        path)
+          _arguments \
+            '1:kind:_llm-toolkit_skill_kinds' \
+            '2:name:' && ret=0
+          ;;
+        init-config)
+          _arguments '--force[overwrite existing config.yaml]' && ret=0
+          ;;
+      esac
+      ;;
+  esac
+
+  return ret
+}
+
+# Dual-mode: autoloaded from fpath (#compdef) vs sourced from .zshrc.
+if [[ "${funcstack[1]}" == "_llm-toolkit" ]]; then
+  _llm-toolkit "$@"
+elif (( ${+functions[compdef]} )); then
+  compdef _llm-toolkit llm-toolkit
+fi

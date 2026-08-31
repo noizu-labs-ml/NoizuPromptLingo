@@ -530,6 +530,22 @@ defmodule NoizuPromptLinguaWeb.Router do
     # external callers with copy in their scripts keep working.
     post "/mcp-custom-scopes/:slug/copy", AdminController, :clone_mcp_custom_scope
 
+    # D3: per-scope client permissions — client universe + per-client
+    # toolset_config jsonb (F2 EffectiveToolset cascade layer 3).
+    get "/mcp-custom-scopes/:slug/clients", AdminController, :list_scope_clients
+    get "/mcp-custom-scopes/:slug/clients/:kind/:id/toolset_config", AdminController, :show_client_toolset_config
+    put "/mcp-custom-scopes/:slug/clients/:kind/:id/toolset_config", AdminController, :update_client_toolset_config
+
+    # D3: ACL group admin (F1 NoizuPromptLingua.Acl context) — group CRUD +
+    # membership. DELETE groups is a soft archive; member refs are ERP refs
+    # ({"type","id"} maps or "type:id" strings).
+    get "/acl/groups", AdminController, :list_acl_groups
+    post "/acl/groups", AdminController, :create_acl_group
+    patch "/acl/groups/:id", AdminController, :update_acl_group
+    delete "/acl/groups/:id", AdminController, :delete_acl_group
+    post "/acl/groups/:id/members", AdminController, :add_acl_group_member
+    delete "/acl/groups/:id/members", AdminController, :remove_acl_group_member
+
     # W4 MCP entities — versioned prompts + resources/resource templates.
     get "/mcp-prompts", AdminController, :list_mcp_prompts
     post "/mcp-prompts", AdminController, :create_mcp_prompt
