@@ -113,8 +113,8 @@ defmodule NoizuPromptLingua.TRP.TestStub do
         due_date: nil,
         estimate: nil,
         custom_fields: attrs[:custom_fields] || %{},
-        inserted_at: DateTime.utc_now(),
-        updated_at: DateTime.utc_now()
+        inserted_at: attrs[:inserted_at] || DateTime.utc_now(),
+        updated_at: attrs[:updated_at] || DateTime.utc_now()
       }
 
     update(fn s -> %{s | items: Map.put(s.items, {org_id, id}, item)} |> Map.put(:__ret, item) end)

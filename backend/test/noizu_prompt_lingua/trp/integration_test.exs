@@ -51,6 +51,23 @@ defmodule NoizuPromptLingua.TRP.IntegrationTest do
     assert length(Tickets.list(organization_id: org)) == 1
   end
 
+  test "adapter preserves the legacy desc ordering over TRP's asc wire order", %{org_id: org} do
+    # Seed items with distinct inserted_at; the stub (like TRP, spec §4.6)
+    # returns them `inserted_at asc, id asc` — NPL must re-sort to the legacy
+    # pm_core contract (`inserted_at desc`) in the shapes/adapter layer.
+    now = DateTime.utc_now()
+
+    Enum.each(1..3, fn i ->
+      TestStub.seed_item(org, %{
+        title: "t#{i}",
+        inserted_at: DateTime.add(now, -100 + i, :second)
+      })
+    end)
+
+    titles = Enum.map(Tickets.list(organization_id: org), & &1.title)
+    assert titles == ["t3", "t2", "t1"]
+  end
+
   # ── organizations / projects ──────────────────────────────────
 
   test "get_id_by_slug resolves via the TRP org list", %{org_id: org} do

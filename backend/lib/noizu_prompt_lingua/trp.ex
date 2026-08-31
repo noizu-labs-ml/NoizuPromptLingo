@@ -96,7 +96,13 @@ defmodule NoizuPromptLingua.TRP do
     cached_get(key, @entity_ttl, fn ->
       with {:ok, json} <-
              get("/api/v1/organizations/#{org_id}/items", query_opts(opts)) do
-        Enum.map(unwrap_list(json, :items), &Shapes.item/1)
+        # TRP's wire order is `inserted_at asc, id asc` (spec §4.6, pinned for
+        # pagination safety); NPL re-sorts here for legacy parity — pm_core
+        # lists were `inserted_at desc` — so web/MCP consumers see the same
+        # ordering as before the cutover. NB: limit/offset still windows the
+        # TRP asc page; a deep page re-sorts only that window.
+        rows = Enum.map(unwrap_list(json, :items), &Shapes.item/1)
+        Enum.sort_by(rows, &{&1.inserted_at, &1.id}, :desc)
       end
     end)
   end
