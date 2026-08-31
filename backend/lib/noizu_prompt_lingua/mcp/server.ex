@@ -11,10 +11,10 @@ defmodule NoizuPromptLingua.MCP.Server do
         instructions: "..."
 
   `handle_call_tool/3` routes through `NoizuPromptLingua.MCP.Dispatch` (ToolGuard
-  + PDP). `handle_list_tools/2` applies per-API-key `hidden`/`disabled` toolset
-  flags (see `NoizuPromptLingua.MCP.KeyToolsets`) before the default listing;
-  servers exposing `catalog_specs/1` (dynamic endpoints) are filtered the same
-  way.
+  + PDP). `handle_list_tools/2` resolves the calling client (API key OR OAuth
+  client, see `NoizuPromptLingua.MCP.EffectiveToolset`) and drops hidden/disabled
+  tools before the default listing; servers exposing `catalog_specs/1` (dynamic
+  endpoints) are filtered the same way.
   """
 
   defmacro __using__(opts) do
@@ -41,8 +41,8 @@ defmodule NoizuPromptLingua.MCP.Server do
   Shared `handle_list_tools` implementation: expand the server's tool set
   (registered tools, or `catalog_specs/1` for dynamic servers), rewrite names to
   canonical underscore form (dotted spellings are aliases, never emitted), drop
-  tools the calling API key has hidden/disabled, drop tools the calling OAuth
-  client's consent narrowing has hidden/disabled, drop static hidden tools,
+  tools the calling client (API key or OAuth consent narrowing) has
+  hidden/disabled via the EffectiveToolset cascade, drop static hidden tools,
   paginate.
   """
   def list_tools(server, cursor, ctx) do
@@ -55,8 +55,7 @@ defmodule NoizuPromptLingua.MCP.Server do
 
     specs
     |> NoizuPromptLingua.MCP.ToolNames.canonical_specs()
-    |> NoizuPromptLingua.MCP.KeyToolsets.apply_hidden(ctx, nil)
-    |> NoizuPromptLingua.MCP.OAuthToolsets.apply_hidden(ctx, nil)
+    |> NoizuPromptLingua.MCP.EffectiveToolset.apply_to_specs(ctx, nil)
     |> Enum.reject(& &1.hidden)
     |> Enum.map(& &1.definition)
     |> Pagination.paginate(cursor)
