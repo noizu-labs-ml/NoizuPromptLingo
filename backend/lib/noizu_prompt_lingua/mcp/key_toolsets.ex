@@ -105,12 +105,22 @@ defmodule NoizuPromptLingua.MCP.KeyToolsets do
     groups = Map.get(normalize(config), "groups", %{})
     group = Map.get(groups, group_id) || %{}
     tools = Map.get(group, "tools") || %{}
-    tool = Map.get(tools, tool_name) || %{}
+    tool = tool_entry(tools, tool_name) || %{}
 
     %{
       disabled: flag(group, tool, "disabled"),
       hidden: flag(group, tool, "hidden")
     }
+  end
+
+  # Configs in the wild may key tools by the dotted spelling (Session.Create)
+  # or the canonical underscore form (Session_Create) — accept either when
+  # probing (F5 naming: underscore canonical, dotted = alias).
+  defp tool_entry(tools, tool_name) do
+    canonical = NoizuPromptLingua.MCP.ToolNames.canonical(tool_name)
+
+    Map.get(tools, tool_name) || Map.get(tools, canonical) ||
+      Map.get(tools, NoizuPromptLingua.MCP.ToolNames.dotted(canonical))
   end
 
   def state_from_config(_, _, _), do: %{disabled: false, hidden: false}
@@ -170,7 +180,8 @@ defmodule NoizuPromptLingua.MCP.KeyToolsets do
       Map.new(scope_tools, fn {tool_name, tool_cfg} ->
         tool_name = to_string(tool_name)
 
-        case Map.get(key_tools, tool_name) do
+        # Probe both spelling forms (F5: dotted aliases vs canonical underscore).
+        case tool_entry(key_tools, tool_name) do
           nil -> {tool_name, tool_cfg}
           overrides -> {tool_name, overlay_tool(tool_cfg || %{}, overrides)}
         end

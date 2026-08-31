@@ -39,8 +39,10 @@ defmodule NoizuPromptLingua.MCP.Server do
 
   @doc """
   Shared `handle_list_tools` implementation: expand the server's tool set
-  (registered tools, or `catalog_specs/1` for dynamic servers), drop tools the
-  calling API key has hidden/disabled, drop static hidden tools, paginate.
+  (registered tools, or `catalog_specs/1` for dynamic servers), rewrite names to
+  canonical underscore form (dotted spellings are aliases, never emitted), drop
+  tools the calling API key has hidden/disabled, drop static hidden tools,
+  paginate.
   """
   def list_tools(server, cursor, ctx) do
     specs =
@@ -51,6 +53,7 @@ defmodule NoizuPromptLingua.MCP.Server do
       end
 
     specs
+    |> NoizuPromptLingua.MCP.ToolNames.canonical_specs()
     |> NoizuPromptLingua.MCP.KeyToolsets.apply_hidden(ctx, nil)
     |> Enum.reject(& &1.hidden)
     |> Enum.map(& &1.definition)

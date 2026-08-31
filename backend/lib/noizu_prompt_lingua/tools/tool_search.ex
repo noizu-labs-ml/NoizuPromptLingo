@@ -45,7 +45,8 @@ defmodule NoizuPromptLingua.Tools.ToolSearch do
 
   defp text_search(query, limit, server, ctx) do
     catalog = Catalog.build(server, ctx)
-    q = String.downcase(query)
+    # Dotted queries match the canonical underscore names the catalog emits.
+    q = String.downcase(NoizuPromptLingua.MCP.ToolNames.canonical(query))
 
     {exact, name_match, desc_match} =
       Enum.reduce(catalog, {[], [], []}, fn tool, {exact, names, descs} ->

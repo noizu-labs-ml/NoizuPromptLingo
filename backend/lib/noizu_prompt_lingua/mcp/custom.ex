@@ -56,10 +56,10 @@ defmodule NoizuPromptLingua.MCP.Custom do
       |> Tools.expand()
       |> Enum.reject(&(tool_category(&1) == "Discovery"))
       |> Enum.reject(fn spec ->
-        get_in(tool_config, [spec.definition.name, "disabled"]) == true
+        tool_config_entry(tool_config, spec.definition.name)["disabled"] == true
       end)
       |> Enum.map(fn spec ->
-        tool_hidden = get_in(tool_config, [spec.definition.name, "hidden"])
+        tool_hidden = tool_config_entry(tool_config, spec.definition.name)["hidden"]
 
         cond do
           is_boolean(tool_hidden) -> %{spec | hidden: tool_hidden}
@@ -70,6 +70,15 @@ defmodule NoizuPromptLingua.MCP.Custom do
     else
       _ -> []
     end
+  end
+
+  # Scope configs may key tool entries by the dotted spelling (Session.Create)
+  # or the canonical underscore form (Session_Create) — accept either (F5).
+  defp tool_config_entry(tool_config, name) do
+    canonical = NoizuPromptLingua.MCP.ToolNames.canonical(name)
+
+    Map.get(tool_config, name) || Map.get(tool_config, canonical) ||
+      Map.get(tool_config, NoizuPromptLingua.MCP.ToolNames.dotted(canonical)) || %{}
   end
 
   defp discovery_specs do
