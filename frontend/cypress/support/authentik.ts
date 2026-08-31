@@ -8,8 +8,24 @@
  * SOURCE OF TRUTH for the command implementation used by per-app copies.
  * Keep in sync with commands.ts + auth-config.ts.
  *
- * Sync into apps:
- *   bash Portfolio/shared/cypress-authentik/scripts/sync-support.sh
+ * HOW APPS CONSUME THIS
+ *   Apps do not import this package. `scripts/sync-support.sh` COPIES this
+ *   file into every frontend listed in fixtures/sites.json, as
+ *   <frontendRoot>/cypress/support/authentik.ts, prefixed with an
+ *   "AUTO-SYNCED ... Do not edit by hand" header. That copy registers
+ *   cy.loginViaAuthentik on import from cypress/support/e2e.ts.
+ *   Consequence: edits made in an app's copy are silently reverted by the
+ *   next sync. Fix bugs HERE, then re-run:
+ *     bash Portfolio/shared/cypress-authentik/scripts/sync-support.sh
+ *
+ * CROSS-ORIGIN FACTS (verified live against therobotlearns, 2026-08-08)
+ *   Cypress's origin boundary is the SUPERDOMAIN. For apps split across apex
+ *   and an app subdomain (therobotlearns.com -> app.therobotlearns.com), the
+ *   post-callback hop is same-origin to Cypress: cy.location / cy.window /
+ *   localStorage all read fine, and cy.origin for that host would THROW.
+ *   auth.derobot.is is the only true foreign origin, and it is reached by a
+ *   full-page redirect, where cy.origin is likewise illegal — hence the
+ *   top-is-already-IdP branch in fillAuthentikForm.
  *
  * Password is NEVER logged.
  *
@@ -32,14 +48,21 @@ export interface LoginViaAuthentikOptions {
   cacheSession?: boolean;
   consentStorageKey?: string;
   consentStorageValue?: string;
+  /**
+   * Hard-fail when no access_token is in storage after login. Default false
+   * (soft, logged) because apps differ in where they persist the session.
+   * Also settable per-run via Cypress env REQUIRE_TOKEN=true.
+   */
+  requireToken?: boolean;
 }
 
 const DEFAULT_AUTHENTIK_ORIGIN = "https://auth.derobot.is";
 const DEFAULT_AUTHENTIK_USERNAME = "testing@therobotlives.com";
 const DEFAULT_LOGIN_PATH = "/login";
 // Include post-auth provisioning routes (first-login register / pending approval)
+// Post-login product + first-login provisioning. Stuck /auth/sso-callback is NOT success.
 const DEFAULT_SUCCESS_PATH =
-  /^\/(app|studio|dashboard|auth\/register|auth\/sso-callback|auth\/oidc\/callback|auth\/callback|complete-registration|pending-approval|session-cookie-required)(\/|$|\?)/;
+  /^\/(app|studio|dashboard|workspace|learn|auth\/register|complete-registration|pending-approval|session-cookie-required)(\/|$|\?)/;
 
 /**
  * Authentik 2025.x stage fields.
@@ -94,6 +117,24 @@ const APP_SSO = {
 } as const;
 
 const IDP_HOST_RE = /auth\.derobot\.is/i;
+
+// Post-password settle loop: attempts x 2s of patience before we call it dead.
+// Observed real redirects land in 2-8s; 40s covers a slow IdP or a 2FA stage.
+const IDP_SETTLE_ATTEMPTS = 20;
+// Countdown value at which a stuck password stage gets ONE resubmit (~28s in).
+const IDP_RESUBMIT_AT = 6;
+
+/**
+ * True only for a real consent/authorization stage. Deliberately narrow: a
+ * false positive here re-clicks a stage that was already submitted, which is
+ * what restarts the Authentik flow.
+ */
+function isConsentStage(href: string, text: string): boolean {
+  if (/explicit-consent/i.test(href)) return true;
+  return /you are about to sign in|would like to|requires the following permissions|permissions requested|consent/i.test(
+    text
+  );
+}
 
 function resolveUsername(opts?: LoginViaAuthentikOptions): string {
   return (
@@ -422,6 +463,30 @@ function deepBodyText(doc: Document): string {
 }
 
 /**
+ * Fast-fail stage detection (port of NPL PR #37). Walks open shadow roots
+ * collecting Authentik blocking-stage tags. Hosted-Authentik step-up lands the
+ * flow on ak-stage-authenticator-validate (no enrolled devices for the smoke
+ * user) and wedges in an "Empty response" loop; without this check the runner
+ * burns its whole timeout instead of reporting the real cause.
+ */
+function collectBlockingStageTags(root: ParentNode): string[] {
+  const tags: string[] = [];
+  const walk = (node: ParentNode) => {
+    node
+      .querySelectorAll(
+        "ak-stage-authenticator-validate, ak-stage-access-denied"
+      )
+      .forEach((e) => tags.push(e.tagName.toLowerCase()));
+    node.querySelectorAll("*").forEach((e) => {
+      const sr = (e as Element & { shadowRoot?: ShadowRoot | null }).shadowRoot;
+      if (sr) walk(sr);
+    });
+  };
+  walk(root);
+  return tags;
+}
+
+/**
  * Authentik stage fill (identity → password → optional consent).
  * Must run either inside cy.origin(IdP) OR when top is already the IdP
  * (e.g. direct-oidc / sso-link full-page redirect so cy.origin is illegal).
@@ -555,93 +620,113 @@ function authentikStageFill(
     cy.get("body", { timeout: 15000 }).should("be.visible");
   });
 
-  const advanceIfOnIdp = () => {
-    cy.location("href", { timeout: 20000 }).then((href) => {
-      if (!IDP_HOST_RE.test(href)) return;
-      cy.document({ log: false }).then((doc) => {
-        const text = deepBodyText(doc);
-        if (
-          /Request has been denied|Flow does not apply to current user/i.test(
-            text
-          )
-        ) {
-          throw new Error(
-            `Authentik denied authorization (policy/binding): ${text.slice(0, 240)}`
-          );
-        }
+  waitForRedirectOffIdp({
+    attempts: IDP_SETTLE_ATTEMPTS,
+    resubmitAt: IDP_RESUBMIT_AT,
+    onConsent: () =>
+      clickIdpPrimary(
+        { includeShadowDom: true, timeout: 15000 },
+        { preferContinue: true }
+      ),
+    onStuckPasswordStage: () => {
+      fillVisibleField(selectors.password, pass, {
+        log: false,
+        timeout: 15000,
       });
-      // Only interact when an interactive stage is actually mounted. Blind
-      // re-clicks submit EMPTY forms ("uid_field/password required" errors)
-      // and trip hosted-Authentik step-up protection.
-      cy.get("body", { timeout: 10000 }).then(($body) => {
-        const idVisible = $body
-          .find(selectors.identity)
-          .filter((_, el) => isReallyVisible(el as HTMLElement));
-        const pwVisible = $body
-          .find(selectors.password)
-          .filter((_, el) => isReallyVisible(el as HTMLElement));
-        const stageTags: string[] = [];
-        const collect = (root: ParentNode) => {
-          root
-            .querySelectorAll(
-              "ak-stage-authenticator-validate, ak-stage-access-denied"
-            )
-            .forEach((e) => stageTags.push(e.tagName.toLowerCase()));
-          root.querySelectorAll("*").forEach((e) => {
-            const sr = (e as Element & { shadowRoot?: ShadowRoot | null })
-              .shadowRoot;
-            if (sr) collect(sr);
-          });
-        };
-        collect(document.body);
-        if (stageTags.includes("ak-stage-authenticator-validate")) {
-          throw new Error(
-            "Authentik presented an MFA validation stage (ak-stage-authenticator-validate) the smoke user cannot satisfy (no enrolled devices). Hosted-Authentik policy change, not a selector issue."
-          );
-        }
-        if (stageTags.includes("ak-stage-access-denied")) {
-          throw new Error(
-            "Authentik access-denied stage rendered (policy/binding)."
-          );
-        }
-        if (idVisible.length && !pwVisible.length) {
-          cy.log("Bounced to identity during advance — refill user");
-          fillVisibleField(selectors.identity, user, {
-            log: true,
-            timeout: 15000,
-          });
-          clickIdpPrimary(q);
-          return;
-        }
-        if (pwVisible.length) {
-          fillVisibleField(selectors.password, pass, {
-            log: false,
-            timeout: 15000,
-          });
-          clickIdpPrimary(q);
-          return;
-        }
-        // No identity/password fields and no MFA stage: consent or already
-        // advancing. Click primary only if a visible submit button exists.
-        cy.get(PRIMARY_BUTTON, { includeShadowDom: true, timeout: 5000 })
-          .filter(":visible")
-          .then(($btns) => {
-            if ($btns.length) {
-              clickIdpPrimary(
-                { includeShadowDom: true, timeout: 10000 },
-                { preferContinue: true }
-              );
-            } else {
-              cy.wait(2000);
-            }
-          });
-      });
+      clickIdpPrimary({ includeShadowDom: true, timeout: 15000 });
+    },
+    passwordStageVisible: (doc) =>
+      Array.from(doc.querySelectorAll(selectors.password)).some((el) =>
+        isReallyVisible(el as HTMLElement)
+      ),
+    readText: deepBodyText,
+  });
+}
+
+/**
+ * Poll until Authentik hands control back to the application.
+ *
+ * REGRESSION GUARD — read before changing. This replaced four unconditional
+ * `advanceIfOnIdp()` calls that fired immediately after the password submit.
+ * At that moment the redirect has not happened yet, so those passes re-filled
+ * and re-submitted the password stage, Authentik restarted the flow, and the
+ * runner was left on a blank identification stage until the success assertion
+ * timed out. Every app's smoke was intermittently red for this reason.
+ *
+ * The rule: after a stage is submitted once, WAIT. Only click again for a
+ * genuine consent stage, or as a single late recovery if the password stage
+ * demonstrably never took the submit.
+ */
+function waitForRedirectOffIdp(opts: {
+  attempts: number;
+  resubmitAt: number;
+  onConsent: () => void;
+  onStuckPasswordStage: () => void;
+  passwordStageVisible: (doc: Document) => boolean;
+  readText: (doc: Document) => string;
+}): void {
+  if (opts.attempts <= 0) {
+    throw new Error(
+      "Authentik never redirected back to the application after the password stage " +
+        "(still on the IdP). Check the provider binding, the redirect_uri, and the " +
+        "app's OIDC callback route."
+    );
+  }
+
+  cy.location("href", { log: false, timeout: 30000 }).then((href) => {
+    if (!IDP_HOST_RE.test(href)) return; // handed back to the app — done
+
+    cy.document({ log: false }).then((doc) => {
+      const text = opts.readText(doc);
+
+      // Fail fast rather than burning the full timeout on a hopeless flow.
+      if (
+        /Request has been denied|Flow does not apply to current user/i.test(text)
+      ) {
+        throw new Error(
+          `Authentik denied authorization (policy/binding): ${text.slice(0, 240)}`
+        );
+      }
+      if (
+        /Invalid password|Failed to authenticate|Incorrect password/i.test(text)
+      ) {
+        throw new Error(
+          "Authentik rejected the test credentials (check AUTHENTIK_PASSWORD / the test user)"
+        );
+      }
+
+      // Fail fast on blocking stages the smoke user cannot get past (ported
+      // from NPL PR #37) rather than burning the settle loop on them.
+      const stageTags = collectBlockingStageTags(doc.body);
+      if (stageTags.includes("ak-stage-authenticator-validate")) {
+        throw new Error(
+          "Authentik presented an MFA validation stage (ak-stage-authenticator-validate) the smoke user cannot satisfy (no enrolled devices). Hosted-Authentik policy change, not a selector issue."
+        );
+      }
+      if (stageTags.includes("ak-stage-access-denied")) {
+        throw new Error(
+          "Authentik access-denied stage rendered (policy/binding)."
+        );
+      }
+
+      if (isConsentStage(href, text)) {
+        cy.log("Consent stage — continuing");
+        opts.onConsent();
+        cy.wait(2000, { log: false });
+        waitForRedirectOffIdp({ ...opts, attempts: opts.attempts - 1 });
+        return;
+      }
+
+      // Single late recovery: the submit never registered on the password stage.
+      if (opts.attempts === opts.resubmitAt && opts.passwordStageVisible(doc)) {
+        cy.log("Password stage still present — resubmitting once");
+        opts.onStuckPasswordStage();
+      }
+
+      cy.wait(2000, { log: false });
+      waitForRedirectOffIdp({ ...opts, attempts: opts.attempts - 1 });
     });
-  };
-  advanceIfOnIdp();
-  advanceIfOnIdp();
-  advanceIfOnIdp();
-  advanceIfOnIdp();
+  });
 }
 
 /**
@@ -865,10 +950,18 @@ function fillAuthentikForm(
         fill(sel.password, pass, false);
         clickPrimary(false);
 
-        const advance = () => {
-          cy.location("href", { timeout: 20000 }).then((href) => {
+        // Mirror of the outer waitForRedirectOffIdp — see the REGRESSION GUARD
+        // note there. Inlined because cy.origin serializes only this callback.
+        // Wait for the redirect; never blind-resubmit a stage we already sent.
+        const settle = (attempts: number) => {
+          if (attempts <= 0) {
+            throw new Error(
+              "Authentik never redirected back to the application after the password stage"
+            );
+          }
+          cy.location("href", { log: false, timeout: 30000 }).then((href) => {
             if (!/auth\.derobot\.is/i.test(href)) return;
-            cy.document().then((doc) => {
+            cy.document({ log: false }).then((doc) => {
               const text = deepText(doc);
               if (
                 /Request has been denied|Flow does not apply to current user/i.test(
@@ -879,50 +972,113 @@ function fillAuthentikForm(
                   `Authentik denied authorization (policy/binding): ${text.slice(0, 240)}`
                 );
               }
-            });
-            cy.get("body").then(($body) => {
-              const idVisible = $body
-                .find(sel.identity)
-                .toArray()
-                .some((el) => isReal(el as HTMLElement));
-              const pwVisible = $body
-                .find(sel.password)
-                .toArray()
-                .some((el) => isReal(el as HTMLElement));
-              if (idVisible && !pwVisible) {
-                fill(sel.identity, user, true);
+              if (
+                /Invalid password|Failed to authenticate|Incorrect password/i.test(
+                  text
+                )
+              ) {
+                throw new Error(
+                  "Authentik rejected the test credentials (check AUTHENTIK_PASSWORD / the test user)"
+                );
               }
-              if (pwVisible) {
+
+              // Fast-fail on blocking stages (mirror of the outer
+              // collectBlockingStageTags — inlined because cy.origin
+              // serializes only this callback).
+              const stageTags: string[] = [];
+              const collectTags = (root: ParentNode) => {
+                root
+                  .querySelectorAll(
+                    "ak-stage-authenticator-validate, ak-stage-access-denied"
+                  )
+                  .forEach((e) => stageTags.push(e.tagName.toLowerCase()));
+                root.querySelectorAll("*").forEach((e) => {
+                  const sr = (e as Element & { shadowRoot?: ShadowRoot | null })
+                    .shadowRoot;
+                  if (sr) collectTags(sr);
+                });
+              };
+              collectTags(doc.body);
+              if (stageTags.includes("ak-stage-authenticator-validate")) {
+                throw new Error(
+                  "Authentik presented an MFA validation stage (ak-stage-authenticator-validate) the smoke user cannot satisfy (no enrolled devices). Hosted-Authentik policy change, not a selector issue."
+                );
+              }
+              if (stageTags.includes("ak-stage-access-denied")) {
+                throw new Error(
+                  "Authentik access-denied stage rendered (policy/binding)."
+                );
+              }
+
+              const consent =
+                /explicit-consent/i.test(href) ||
+                /you are about to sign in|would like to|requires the following permissions|permissions requested|consent/i.test(
+                  text
+                );
+              if (consent) {
+                clickPrimary(true);
+                cy.wait(2000, { log: false });
+                settle(attempts - 1);
+                return;
+              }
+
+              // Single late recovery for a password stage that never submitted.
+              const pwVisible = Array.from(
+                doc.querySelectorAll(sel.password)
+              ).some((el) => isReal(el as HTMLElement));
+              if (attempts === 6 && pwVisible) {
                 fill(sel.password, pass, false);
+                clickPrimary(false);
               }
+
+              cy.wait(2000, { log: false });
+              settle(attempts - 1);
             });
-            clickPrimary(true);
-            cy.wait(2000);
           });
         };
-        advance();
-        advance();
-        advance();
-        advance();
+        settle(20);
       }
     );
   });
 }
 
-function assertAuthenticated(successPathMatch: RegExp): void {
+/**
+ * Assert the app finished the login, on whatever shape THIS app uses.
+ *
+ * Nothing product-specific is hardcoded: the landing route comes from the
+ * caller's `successPathMatch` (option > SUCCESS_PATH_MATCH env >
+ * DEFAULT_SUCCESS_PATH), and the session check is soft by default because
+ * apps differ in where they persist the token. Apps that guarantee an
+ * `access_token` can opt into a hard assertion with `requireToken: true`.
+ *
+ * The pathname retry window is generous on purpose. Apps that split apex and
+ * app subdomain hop apex/auth/oidc/callback -> app.<domain>/auth/sso-callback
+ * -> the landing route, and the SPA's code exchange runs in between. Cypress's
+ * origin boundary is the SUPERDOMAIN, so that hop needs no cy.origin — and
+ * cy.origin would in fact throw for a same-superdomain host.
+ */
+function assertAuthenticated(
+  successPathMatch: RegExp,
+  requireToken: boolean
+): void {
   // Leave IdP first (may land on apex or app.* subdomain)
   cy.url({ timeout: 60000 }).should(
     "not.match",
     /auth\.derobot\.is|\/if\/flow\//
   );
-  cy.location("pathname", { timeout: 15000 }).should("match", successPathMatch);
-  cy.window({ timeout: 15000 }).then((win) => {
+  // Retries through the callback -> exchange -> landing-route sequence.
+  cy.location("pathname", { timeout: 60000 }).should("match", successPathMatch);
+  cy.window({ timeout: 20000 }).then((win) => {
     const token =
       win.localStorage.getItem("access_token") ||
       win.localStorage.getItem("token") ||
       win.sessionStorage.getItem("access_token");
     if (token) {
       expect(token, "access token present").to.be.a("string").and.not.be.empty;
+    } else if (requireToken) {
+      throw new Error(
+        "No access_token in localStorage/sessionStorage after login (requireToken: true)"
+      );
     } else {
       cy.log("No access_token in storage; relying on success path / cookies");
     }
@@ -944,13 +1100,15 @@ export function loginViaAuthentikImpl(
     DEFAULT_LOGIN_PATH;
   const successPathMatch = resolveSuccessMatch(options);
   const cacheSession = options.cacheSession !== false;
+  const requireToken =
+    options.requireToken ?? Cypress.env("REQUIRE_TOKEN") === true;
   const baseUrl = Cypress.config("baseUrl") || "";
 
   const run = () => {
     seedConsentIfConfigured(options);
     triggerAppSso(appTrigger, loginPath, username, authentikOrigin);
     fillAuthentikForm(authentikOrigin, username, password);
-    assertAuthenticated(successPathMatch);
+    assertAuthenticated(successPathMatch, requireToken);
   };
 
   if (cacheSession) {
@@ -1012,6 +1170,13 @@ Cypress.on("uncaught:exception", (err) => {
     /Text content does not match server-rendered HTML/i.test(msg) ||
     /There was an error while hydrating/i.test(msg)
   ) {
+    return false;
+  }
+  // Cypress runner internals, not the app: PrimaryOriginCommunicator throws
+  // "Cannot read properties of null (reading 'postMessage')" while the AUT
+  // hops IdP -> apex -> app subdomain. It surfaces as an app error and fails
+  // the spec. Real app errors still fail.
+  if (/postMessage/i.test(msg) || /PrimaryOriginCommunicator/i.test(msg)) {
     return false;
   }
   return true;
