@@ -16,6 +16,7 @@ import {
   applyOverridePatch,
   canonicalToolName,
   hasOverrides,
+  normalizeConfigToolKeys,
   overrideEntry,
 } from './tool-overrides';
 import type { McpCustomScopeConfig } from './api';
@@ -114,4 +115,44 @@ test('source config is never mutated', () => {
   applyOverridePatch(cfg, 'sessions', 'Session_Create', { name_override: 'Z' });
   assert.equal(cfg.groups.sessions.tools?.Session_Create?.name_override, undefined);
   assert.deepEqual(Object.keys(cfg.groups), ['sessions']);
+});
+
+// ── D3 dotted-write normalization ──────────────────────────────────────────
+
+test('normalizeConfigToolKeys collapses dotted aliases under canonical entries', () => {
+  const cfg = normalizeConfigToolKeys(base());
+  const tools = cfg.groups.sessions.tools ?? {};
+  assert.deepEqual(Object.keys(tools).sort(), ['Session_Create', 'Session_List']);
+  assert.equal(tools.Session_Create?.disabled, true);
+  // Session.List is the legacy dotted spelling of Session_List — its fields
+  // ride the canonical key, and no dotted spelling survives.
+  assert.equal(tools.Session_List?.hidden, true);
+  assert.ok(!Object.keys(tools).some((k) => k.includes('.')), 'no dotted keys survive');
+});
+
+test('normalizeConfigToolKeys keeps multiple tools and non-tool group keys', () => {
+  const cfg: McpCustomScopeConfig = {
+    groups: {
+      tickets: {
+        hidden: true,
+        tools: {
+          'Ticket.List': { disabled: true },
+          Ticket_Create: { hidden: true },
+          'Ticket.Get': { name_override: 'fetch' },
+        },
+      },
+    },
+  };
+  const next = normalizeConfigToolKeys(cfg);
+  const tools = next.groups.tickets.tools ?? {};
+  assert.deepEqual(Object.keys(tools).sort(), ['Ticket_Create', 'Ticket_Get', 'Ticket_List']);
+  assert.equal(next.groups.tickets.hidden, true, 'group-level flags untouched');
+  assert.equal(cfg.groups.tickets.tools?.['Ticket.List']?.disabled, true, 'input never mutated');
+});
+
+test('normalizeConfigToolKeys is a no-op on already-canonical configs', () => {
+  const cfg: McpCustomScopeConfig = {
+    groups: { sessions: { tools: { Session_Create: { disabled: true } } } },
+  };
+  assert.deepEqual(normalizeConfigToolKeys(cfg), cfg);
 });

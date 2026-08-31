@@ -1,24 +1,28 @@
 'use client';
 
 /**
- * W6 scope-manager-ux — typed API client for ACL + per-client MCP permissions.
+ * Typed API client for ACL + per-client MCP permissions (W6/W7, D3 debt sprint).
  *
- * Backend status (2026-08-31):
- *  - ACL core is F1's (branch feat/acl-core): `NoizuPromptLingua.ACL` context,
- *    tables acl_groups / acl_group_members / acl_rules (TOBOR-CONTRACTS.md §1).
- *    The REST endpoints below DO NOT EXIST yet.
- *  - Per-scope client listing / per-client toolset_config persistence does not
- *    exist yet either (generalized key_toolsets layering lands via F2).
+ * Backend (AdminController D3 section, all behind the admin gate):
+ *  - GET   /api/v1/admin/mcp-custom-scopes/:slug/clients
+ *  - GET   /api/v1/admin/mcp-custom-scopes/:slug/clients/:kind/:id/toolset_config
+ *  - PUT   /api/v1/admin/mcp-custom-scopes/:slug/clients/:kind/:id/toolset_config
+ *  - GET   /api/v1/admin/acl/groups
+ *  - POST  /api/v1/admin/acl/groups
+ *  - PATCH /api/v1/admin/acl/groups/:id
+ *  - DELETE /api/v1/admin/acl/groups/:id            (soft archive)
+ *  - POST   /api/v1/admin/acl/groups/:id/members    (member = ERP ref map or "type:id")
+ *  - DELETE /api/v1/admin/acl/groups/:id/members    (body: {member})
  *
- * Until those endpoints ship, every function here falls back to clearly marked
- * FIXTURE data (or a no-op success) so the W6 UI is fully wireable. Each stub
- * is tagged with `// STUB:` — integration (I1) swaps the fallbacks for real
- * responses without touching callers.
+ * The W6 stub-phase fixture fallbacks are gone — every call hits the real API
+ * and errors surface to callers. Per-client ACL *rules* are NOT persisted by
+ * D3 (rule CRUD endpoints are out of scope); group membership IS.
  */
 
 import type { McpCustomScopeConfig } from '@/lib/api';
+import { canonicalToolName, normalizeConfigToolKeys } from '@/lib/tool-overrides';
 
-/** Mirrors kit ACLEditor AclRule (binds F1 AclRule: subject/resource are opaque ERP ref strings). */
+/** Mirrors kit ACLEditor AclRule (subject/resource are opaque ERP ref strings). */
 export interface AclRule {
   id: string;
   subject: string;
@@ -27,11 +31,20 @@ export interface AclRule {
   scope: string;
 }
 
-/** Mirrors kit ACLEditor AclGroup. */
+/** An ACL group member — backend serializes ERP refs as jsonb map + string form. */
+export interface AclGroupMember {
+  ref: { type: string; id: string };
+  ref_string: string;
+  expires_at: string | null;
+}
+
+/** Mirrors kit ACLEditor AclGroup, with real backend membership. */
 export interface AclGroup {
   id: string;
   name: string;
-  members: string[];
+  description?: string | null;
+  status?: string;
+  members: AclGroupMember[];
 }
 
 export interface AclState {
@@ -45,27 +58,30 @@ export type ClientKind = 'api_key' | 'oauth_client';
 export interface ScopeClient {
   id: string;
   kind: ClientKind;
-  /** Display label (key label or OAuth client_name). */
+  /** Display label (key label + prefix, or OAuth client_name). */
   label: string;
   status: 'active' | 'revoked';
   inserted_at: string;
+  /** No scope↔client association table exists yet — always false today. */
+  linked: boolean;
 }
+
+/** F3 temporal window fields per canonical tool name (mutually exclusive). */
+export type TempWindows = Record<string, { hide_until: string | null; enable_for_hours: number | null }>;
 
 /**
  * Per-client permission bundle persisted as the client's `toolset_config`
- * jsonb (same shape family as scope config) + ACL rows + permission-group
- * membership. This is the payload W6's Manage Clients tab edits and saves.
+ * jsonb (temporal windows ride the per-tool entries, F3) + ACL permission-group
+ * membership. ACL rules stay local (no rule CRUD endpoints in D3).
  */
 export interface ClientPermissions {
   clientId: string;
   clientKind: ClientKind;
-  /** Tool restrict config — same jsonb shape as scope config ({groups:{gid:{tools:{name:{disabled,hidden}}}}}). */
+  /** Tool restrict config — same jsonb shape as scope config ({groups:{gid:{tools:{name:{...}}}}}). */
   toolsetConfig: McpCustomScopeConfig;
-  /** F3 temporal windows per canonical tool name: {hide_until, enable_for_hours} (mutually exclusive). */
-  tempWindows: Record<string, { hide_until: string | null; enable_for_hours: number | null }>;
-  /** F1 ACL grants/denies bound to this client as subject. */
+  tempWindows: TempWindows;
   acl: AclState;
-  /** Names of ACL permission groups this client belongs to (datalist-driven). */
+  /** Names of ACL permission groups this client belongs to. */
   permissionGroups: string[];
 }
 
@@ -84,149 +100,174 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body.error || `Request failed: ${res.status}`);
+    throw new Error(body.error || body.errors?.join?.(', ') || `Request failed: ${res.status}`);
   }
   return res.json();
 }
 
-// ── Fixture data (STUB fallbacks — remove when F1/F2 endpoints land) ──
+// ── Clients ────────────────────────────────────────────────────────────────
 
-const FIXTURE_CLIENTS: ScopeClient[] = [
-  {
-    id: 'key-fixture-1',
-    kind: 'api_key',
-    label: 'ci-runner key (…ab12)',
-    status: 'active',
-    inserted_at: '2026-08-01T00:00:00Z',
-  },
-  {
-    id: 'oauth-fixture-1',
-    kind: 'oauth_client',
-    label: 'Claude Desktop (fixture)',
-    status: 'active',
-    inserted_at: '2026-08-15T00:00:00Z',
-  },
-];
-
-const FIXTURE_ACL: AclState = {
-  rules: [
-    {
-      id: 'rule-fixture-1',
-      subject: 'ref:client:key-fixture-1',
-      resource: 'ref:organization:the-robot-lives',
-      effect: 'allow',
-      scope: 'read',
-    },
-    {
-      id: 'rule-fixture-2',
-      subject: 'ref:client:key-fixture-1',
-      resource: 'ref:wiki:internal-notes',
-      effect: 'deny',
-      scope: 'read',
-    },
-  ],
-  groups: [
-    { id: 'group-fixture-1', name: 'ci-bots', members: ['ref:client:key-fixture-1'] },
-  ],
-};
-
-const FIXTURE_GROUPS: AclGroup[] = [
-  { id: 'group-fixture-1', name: 'ci-bots', members: [] },
-  { id: 'group-fixture-2', name: 'admins', members: [] },
-  { id: 'group-fixture-3', name: 'read-only', members: [] },
-];
-
-function fixturePermissions(client: ScopeClient): ClientPermissions {
-  return {
-    clientId: client.id,
-    clientKind: client.kind,
-    toolsetConfig: { groups: {} },
-    tempWindows: {},
-    acl: {
-      rules: FIXTURE_ACL.rules.map((r) => ({ ...r, subject: `ref:client:${client.id}` })),
-      groups: FIXTURE_ACL.groups.map((g) => ({ ...g })),
-    },
-    permissionGroups: client.kind === 'api_key' ? ['ci-bots'] : [],
-  };
-}
-
-// ── Public API ──
-
-/**
- * List clients (API keys + OAuth clients) attached to a custom scope.
- *
- * STUB: GET /api/v1/admin/mcp-custom-scopes/:slug/clients — endpoint does not
- * exist yet (F2 generalizes client layering). Falls back to fixtures on 404.
- */
+/** GET /mcp-custom-scopes/:slug/clients — api keys + oauth clients (linked: false). */
 export async function fetchScopeClients(scopeSlug: string): Promise<ScopeClient[]> {
-  try {
-    const res = await request<{ clients: ScopeClient[] }>(
-      `/api/v1/admin/mcp-custom-scopes/${encodeURIComponent(scopeSlug)}/clients`,
-    );
-    return res.clients;
-  } catch {
-    // STUB fallback — fixture clients until the endpoint exists.
-    return FIXTURE_CLIENTS.map((c) => ({ ...c }));
+  const res = await request<{ clients: ScopeClient[] }>(
+    `/api/v1/admin/mcp-custom-scopes/${encodeURIComponent(scopeSlug)}/clients`,
+  );
+  return res.clients;
+}
+
+/** Extract F3 temporal windows out of a config's per-tool entries. */
+function extractTempWindows(config: McpCustomScopeConfig): TempWindows {
+  const windows: TempWindows = {};
+  for (const group of Object.values(config.groups ?? {})) {
+    for (const [toolName, entry] of Object.entries(group.tools ?? {})) {
+      if (entry && (entry.hide_until != null || entry.enable_for_hours != null)) {
+        windows[toolName] = {
+          hide_until: entry.hide_until ?? null,
+          enable_for_hours: entry.enable_for_hours ?? null,
+        };
+      }
+    }
   }
+  return windows;
+}
+
+/** Merge temporal windows into a config's per-tool entries (canonical keys). */
+function mergeTempWindows(
+  config: McpCustomScopeConfig,
+  tempWindows: TempWindows,
+): McpCustomScopeConfig {
+  const draft = normalizeConfigToolKeys(config);
+  for (const group of Object.values(draft.groups)) {
+    for (const [toolName, win] of Object.entries(tempWindows)) {
+      const key = canonicalToolName(toolName);
+      const entry = group.tools?.[key] ?? {};
+      group.tools = group.tools ?? {};
+      group.tools[key] = { ...entry, hide_until: win.hide_until, enable_for_hours: win.enable_for_hours };
+    }
+  }
+  return draft;
 }
 
 /**
- * Load the permission bundle for one client on one scope.
- *
- * STUB: GET /api/v1/admin/mcp-custom-scopes/:slug/clients/:clientId/permissions
- * — falls back to fixtures on 404.
+ * Load the permission bundle for one client on one scope (GET toolset_config,
+ * ACL/rules state left empty — rule CRUD endpoints are not part of D3).
  */
 export async function fetchClientPermissions(
   scopeSlug: string,
   client: ScopeClient,
 ): Promise<ClientPermissions> {
-  try {
-    const res = await request<{ permissions: ClientPermissions }>(
-      `/api/v1/admin/mcp-custom-scopes/${encodeURIComponent(scopeSlug)}/clients/${encodeURIComponent(client.id)}/permissions`,
-    );
-    return res.permissions;
-  } catch {
-    // STUB fallback — fixture bundle until the endpoint exists.
-    return fixturePermissions(client);
-  }
+  const res = await request<{ toolset_config: McpCustomScopeConfig }>(
+    `/api/v1/admin/mcp-custom-scopes/${encodeURIComponent(scopeSlug)}/clients/${encodeURIComponent(client.kind)}/${encodeURIComponent(client.id)}/toolset_config`,
+  );
+  const toolsetConfig = res.toolset_config ?? {};
+  return {
+    clientId: client.id,
+    clientKind: client.kind,
+    toolsetConfig,
+    tempWindows: extractTempWindows(toolsetConfig),
+    acl: { rules: [], groups: [] },
+    permissionGroups: [],
+  };
 }
 
 /**
- * Persist a client's permission bundle.
- *
- * STUB: PUT /api/v1/admin/mcp-custom-scopes/:slug/clients/:clientId/permissions
- * — endpoint does not exist yet (F1 ACL writes + F2 toolset_config). Resolves
- * as success without persisting anything.
+ * Persist a client's permission bundle: temporal windows fold into the
+ * toolset_config entries (keys canonicalized) and the bundle is PUT to the
+ * backend. Permission-group membership is synced by the caller.
  */
 export async function saveClientPermissions(
   scopeSlug: string,
   permissions: ClientPermissions,
-): Promise<{ ok: true; stub?: true }> {
-  try {
-    return await request<{ ok: true }>(
-      `/api/v1/admin/mcp-custom-scopes/${encodeURIComponent(scopeSlug)}/clients/${encodeURIComponent(permissions.clientId)}/permissions`,
-      { method: 'PUT', body: JSON.stringify({ permissions }) },
-    );
-  } catch {
-    // STUB fallback — pretend-save until the endpoint exists.
-    console.info(
-      `[acl-api] STUB saveClientPermissions (scope=${scopeSlug}, client=${permissions.clientId}) — backend endpoint not implemented yet`,
-    );
-    return { ok: true, stub: true };
-  }
+): Promise<{ ok: true; toolsetConfig: McpCustomScopeConfig }> {
+  const res = await request<{ toolset_config: McpCustomScopeConfig }>(
+    `/api/v1/admin/mcp-custom-scopes/${encodeURIComponent(scopeSlug)}/clients/${encodeURIComponent(permissions.clientKind)}/${encodeURIComponent(permissions.clientId)}/toolset_config`,
+    {
+      method: 'PUT',
+      body: JSON.stringify({
+        toolset_config: mergeTempWindows(permissions.toolsetConfig, permissions.tempWindows),
+      }),
+    },
+  );
+  return { ok: true, toolsetConfig: res.toolset_config ?? {} };
 }
 
+// ── ACL groups ─────────────────────────────────────────────────────────────
+
 /**
- * List available ACL permission groups (names for the assignment datalist).
- *
- * STUB: GET /api/v1/admin/acl/groups — F1 backend. Falls back to fixtures.
+ * Raw toolset_config PUT for the W7 per-item editor (no bundle context). The
+ * :slug segment is URL context only — the backend resolves the client by
+ * kind+id.
  */
+export async function putClientToolsetConfig(
+  scopeSlug: string,
+  kind: ClientKind,
+  clientId: string,
+  toolsetConfig: McpCustomScopeConfig,
+): Promise<McpCustomScopeConfig> {
+  const res = await request<{ toolset_config: McpCustomScopeConfig }>(
+    `/api/v1/admin/mcp-custom-scopes/${encodeURIComponent(scopeSlug)}/clients/${encodeURIComponent(kind)}/${encodeURIComponent(clientId)}/toolset_config`,
+    { method: 'PUT', body: JSON.stringify({ toolset_config: normalizeConfigToolKeys(toolsetConfig) }) },
+  );
+  return res.toolset_config ?? {};
+}
+
+/** GET /admin/acl/groups — active groups with members. */
 export async function fetchAclGroups(): Promise<AclGroup[]> {
-  try {
-    const res = await request<{ groups: AclGroup[] }>('/api/v1/admin/acl/groups');
-    return res.groups;
-  } catch {
-    // STUB fallback.
-    return FIXTURE_GROUPS.map((g) => ({ ...g }));
-  }
+  const res = await request<{ groups: AclGroup[] }>('/api/v1/admin/acl/groups');
+  return res.groups;
+}
+
+/** POST /admin/acl/groups. */
+export async function createAclGroup(name: string, description?: string): Promise<AclGroup> {
+  const res = await request<{ group: AclGroup }>('/api/v1/admin/acl/groups', {
+    method: 'POST',
+    body: JSON.stringify({ group: { name, description } }),
+  });
+  return res.group;
+}
+
+/** DELETE /admin/acl/groups/:id — soft archive (group stops resolving). */
+export async function deleteAclGroup(groupId: string): Promise<void> {
+  await request(`/api/v1/admin/acl/groups/${encodeURIComponent(groupId)}`, { method: 'DELETE' });
+}
+
+function refForClient(kind: ClientKind, clientId: string): { type: string; id: string } {
+  return {
+    type: kind === 'api_key' ? 'NoizuPromptLingua.Schema.McpApiKey' : 'NoizuPromptLingua.Schema.OAuthClient',
+    id: clientId,
+  };
+}
+
+/** Opaque ERP ref string for a client ("Type:id") — membership comparisons use it. */
+export function clientAclRefString(kind: ClientKind, clientId: string): string {
+  return refString(kind, clientId);
+}
+
+function refString(kind: ClientKind, clientId: string): string {
+  const ref = refForClient(kind, clientId);
+  return `${ref.type}:${ref.id}`;
+}
+
+/** POST /admin/acl/groups/:id/members — attach a client to a permission group. */
+export async function addAclGroupMember(
+  groupId: string,
+  kind: ClientKind,
+  clientId: string,
+): Promise<void> {
+  await request(`/api/v1/admin/acl/groups/${encodeURIComponent(groupId)}/members`, {
+    method: 'POST',
+    body: JSON.stringify({ member: refForClient(kind, clientId) }),
+  });
+}
+
+/** DELETE /admin/acl/groups/:id/members — detach a client from a permission group. */
+export async function removeAclGroupMember(
+  groupId: string,
+  kind: ClientKind,
+  clientId: string,
+): Promise<void> {
+  await request(`/api/v1/admin/acl/groups/${encodeURIComponent(groupId)}/members`, {
+    method: 'DELETE',
+    body: JSON.stringify({ member: refString(kind, clientId) }),
+  });
 }
