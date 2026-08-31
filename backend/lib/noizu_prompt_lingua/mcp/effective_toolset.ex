@@ -175,17 +175,23 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
     name_override = flag(entries, "name_override")
     description_override = flag(entries, "description_override")
 
-    {window_visible, expires_at} =
+    merged =
       entries
       |> Enum.reverse()
       |> Enum.reduce(%{}, fn {group, tool}, acc -> acc |> Map.merge(group) |> Map.merge(tool) end)
-      |> Window.evaluate(at)
+
+    {window_visible, expires_at} = Window.evaluate(merged, at)
+
+    # F3 enforcement wiring: a LIVE enable_for_hours window LIFTS BOTH static
+    # flags (disabled + hidden) while active; expired windows are no-ops
+    # (evaluate degrades to {true, nil} and lifting? to false).
+    lifted? = Window.lifting?(merged, at)
 
     base_visible = hidden != true
 
     %{
-      enabled: disabled != true,
-      visible: if(is_boolean(window_visible), do: base_visible and window_visible, else: base_visible),
+      enabled: lifted? or disabled != true,
+      visible: lifted? or (base_visible and window_visible),
       name_override: string_or_nil(name_override),
       description_override: string_or_nil(description_override),
       expires_at: expires_at
