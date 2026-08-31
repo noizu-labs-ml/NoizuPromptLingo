@@ -154,8 +154,10 @@ defmodule NoizuPromptLingua.MCP.SessionManifestTest do
       assert Map.has_key?(scope.config["groups"]["sessions"]["tools"], @manifest)
     end
 
+    # user_id must reference a real users row (fresh DBs enforce
+    # mcp_custom_scopes_user_id_fkey — incrementally-migrated DBs predated it).
     test "clone/heal path backfills the manifest tool into a stale account default" do
-      user_id = Ecto.UUID.generate()
+      user_id = insert_user().id
 
       # Account default cloned before W5: sessions group, no manifest entry.
       {:ok, _} =
@@ -174,7 +176,7 @@ defmodule NoizuPromptLingua.MCP.SessionManifestTest do
       assert Map.has_key?(scope.config["groups"]["sessions"]["tools"], @manifest)
 
       # Hand-built scopes (no source_template_slug) are left alone.
-      other = Ecto.UUID.generate()
+      other = insert_user().id
 
       {:ok, hand_built} =
         MCPCustomScopes.create(%{
@@ -194,5 +196,20 @@ defmodule NoizuPromptLingua.MCP.SessionManifestTest do
       core = MCPCustomScopes.get_core_variant()
       assert Map.has_key?(core.config["groups"]["sessions"]["tools"], @manifest)
     end
+  end
+
+  defp insert_user do
+    uniq = System.unique_integer([:positive])
+
+    {:ok, user} =
+      NoizuPromptLingua.Repo.insert(%NoizuPromptLingua.Schema.Users.User{
+        id: Ecto.UUID.generate(),
+        email: "session-manifest-#{uniq}@example.com",
+        user_name: "smanifest#{uniq}",
+        handle: "sman#{uniq}",
+        status: :active
+      })
+
+    user
   end
 end
