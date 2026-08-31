@@ -189,6 +189,35 @@ spec:
                   name: {{ .Values.backend.env.secretName }}
                   key: JINA_API_KEY
                   optional: true
+            # --- TRP shared-key plane (W8, docs/api/shared-key-api.md) ---
+            # Optional: missing TRP_API_BASE_URL/TRP_SHARED_KEY is the
+            # pre-activation state — NoizuPromptLingua.TRP.Config gates at
+            # call time ({:error, :trp_not_configured}), never at boot.
+            - name: TRP_API_BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: TRP_API_BASE_URL
+                  optional: true
+            - name: TRP_SHARED_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: TRP_SHARED_KEY
+                  optional: true
+            # Service identity for JWT-only TRP surfaces (org provisioning).
+            - name: TRP_SERVICE_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: TRP_SERVICE_EMAIL
+                  optional: true
+            - name: TRP_SERVICE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: TRP_SERVICE_PASSWORD
+                  optional: true
           livenessProbe:
             httpGet:
               path: {{ .Values.backend.probes.liveness.path }}
@@ -254,6 +283,27 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.backend.env.secretName }}
                   key: AUTH_SECRET
+                  optional: true
+            # --- TRP embed proxy (W7 v2: /app/[orgId]/trp-item, §9) ---
+            # The Next.js /api/trp-board route handler attaches the key
+            # server-side; missing values degrade to the empty-state embed.
+            - name: TRP_COMPONENT_BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: TRP_COMPONENT_BASE_URL
+                  optional: true
+            - name: TRP_COMPONENT_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: TRP_COMPONENT_NAME
+                  optional: true
+            - name: TRP_EMBED_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: TRP_EMBED_API_KEY
                   optional: true
           livenessProbe:
             httpGet:
