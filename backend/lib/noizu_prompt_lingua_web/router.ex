@@ -12,6 +12,18 @@ defmodule NoizuPromptLinguaWeb.Router do
     plug NoizuPromptLinguaWeb.AuthPipeline
   end
 
+  # W7 component plane: per-consumer MCP API key auth over plain HTTP.
+  # :mcp_key_required — keyed-only endpoints (component registry).
+  # :mcp_key_optional — pass-through; upgrades a request when a key is
+  #   present, otherwise the normal Guardian pipeline authenticates.
+  pipeline :mcp_key_required do
+    plug NoizuPromptLinguaWeb.Plugs.McpKeyAuth, require: true
+  end
+
+  pipeline :mcp_key_optional do
+    plug NoizuPromptLinguaWeb.Plugs.McpKeyAuth, require: false
+  end
+
   pipeline :sso_session do
     plug Plug.Session,
       store: :cookie,
@@ -107,6 +119,14 @@ defmodule NoizuPromptLinguaWeb.Router do
     post "/token", TokenController, :create
     # Browser controller boot exchange: raw API key → {token, org_id, url}.
     post "/browser-bootstrap", BrowserSessionController, :bootstrap
+  end
+
+  # W7: keyed Lit component registry (read-only). Per-key toolset_config
+  # governs visibility — see NoizuPromptLinguaWeb.ComponentController.
+  scope "/api/v1/components", NoizuPromptLinguaWeb do
+    pipe_through [:api, :mcp_key_required]
+    get "/", ComponentController, :index
+    get "/:name/bundle", ComponentController, :bundle
   end
 
   # MCP servers (Streamable HTTP), routed by subdomain — each domain is served
@@ -615,6 +635,18 @@ defmodule NoizuPromptLinguaWeb.Router do
       post "/archive", SessionController, :archive
       post "/unarchive", SessionController, :unarchive
     end
+  end
+
+  # W7: embedded-component data plane. The same boards/tickets listings the
+  # npl-queue-board Lit component consumes, with per-consumer MCP API key
+  # acceptance in front of the normal session/JWT pipeline (the plug is
+  # pass-through when no key is present; org-scope role checks still apply
+  # to the key owner). Declared before the general org scopes so these two
+  # GETs take the key-aware route.
+  scope "/api/v1/organizations/:org_id", NoizuPromptLinguaWeb do
+    pipe_through [:api, :mcp_key_optional, :authenticated]
+    get "/boards", BoardController, :index
+    get "/tickets", TicketController, :index
   end
 
   # Chat, Artifacts, Reviews: bound to an organization (required); associating

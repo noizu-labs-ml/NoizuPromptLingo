@@ -682,13 +682,19 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
     end
   end
 
+  # Non-server groups kept by the normalizer (W7): per-key gating of the Lit
+  # component registry uses group id "components" (see
+  # NoizuPromptLinguaWeb.ComponentController) even though no MCP server maps
+  # to it.
+  @non_server_groups ["components"]
+
   defp normalize_groups(config) do
     groups = Map.get(config, "groups") || Map.get(config, :groups) || %{}
 
     Enum.reduce(groups, %{}, fn {group_id, group_cfg}, acc ->
       group_id = to_string(group_id)
 
-      if MCPServers.server_module(group_id) do
+      if not is_nil(MCPServers.server_module(group_id)) or group_id in @non_server_groups do
         Map.put(acc, group_id, normalize_group_config(group_cfg || %{}))
       else
         acc
