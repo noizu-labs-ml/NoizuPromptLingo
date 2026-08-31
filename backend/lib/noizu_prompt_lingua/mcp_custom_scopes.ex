@@ -36,6 +36,30 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
   # intentionally omitted here (see report follow-ups).
   @core_variant_groups ~w(sessions projects organizations)
 
+  # W2 scope sharing. Canonical storage is the config jsonb key `"visibility"`;
+  # the schema surfaces it via `MCPCustomScope.visibility/1` (virtual field).
+  @visibilities ~w(org account shared)
+
+  # W2 named presets, selectable at scope creation via attrs["preset"].
+  # `:crud_entity` names the primary entity per group: within preset groups,
+  # only `<Entity>_Overview` + `<Entity>_(Create|Get|List|Update|Delete)` stay
+  # enabled — everything else in the group is seeded disabled. Groups without a
+  # `:crud_entity` keep current behavior (all tools enabled).
+  @presets %{
+    "basic_crud" => %{
+      name: "Basic CRUD",
+      description:
+        "Sessions, organizations, projects & tickets — basic CRUD tools only.",
+      groups: ~w(sessions organizations projects tickets),
+      crud_entity: %{
+        "sessions" => "Session",
+        "organizations" => "Organization",
+        "projects" => "Project",
+        "tickets" => "Ticket"
+      }
+    }
+  }
+
   # Global all-in-one package every account/org is cloned from. NPL load/spec
   # tools are attached by MCP.Custom for all_in_one scopes and tobor clones
   # (not a selectable group).
@@ -59,6 +83,68 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
 
   @doc "Group ids seeded into the default `tobor` all-in-one package."
   def default_package_groups, do: @default_package_groups
+
+  @doc "Named presets selectable at scope creation (attrs[\"preset\"])."
+  def presets, do: @presets
+
+  @doc """
+  Config seed for a named preset, or `nil` when unknown. For CRUD-preset groups
+  the seed disables every non-CRUD tool (keys follow the live catalog's emitted
+  tool-name form, so downstream disabled lookups match whatever the server
+  currently emits); unknown groups seed plain group configs.
+  """
+  def preset_config(slug) when is_binary(slug) do
+    case Map.fetch(@presets, slug) do
+      :error ->
+        nil
+
+      {:ok, preset} ->
+        crud = Map.get(preset, :crud_entity) || %{}
+        groups =
+          Map.new(preset.groups, fn id ->
+            {id, %{"tools" => preset_tools_config(id, crud)}}
+          end)
+
+        %{"groups" => groups}
+    end
+  end
+
+  def preset_config(_), do: nil
+
+  defp preset_tools_config(group_id, crud) do
+    case Map.fetch(crud, group_id) do
+      :error ->
+        %{}
+
+      {:ok, entity} ->
+        group_id
+        |> MCPServers.server_module()
+        |> case do
+          nil ->
+            %{}
+
+          module ->
+            module.__mcp__(:tools)
+            |> Noizu.MCP.Server.Features.Tools.expand()
+            |> Enum.reject(&discovery_spec?/1)
+            |> Enum.flat_map(fn spec ->
+              if basic_crud_tool?(entity, spec.definition.name),
+                do: [],
+                else: [{spec.definition.name, %{"disabled" => true}}]
+            end)
+            |> Map.new()
+        end
+    end
+  end
+
+  defp basic_crud_tool?(entity, name) do
+    normalized = String.replace(name, ".", "_")
+    normalized == "#{entity}_Overview" or Regex.match?(~r/^#{entity}_(Create|Get|List|Update|Delete)$/, normalized)
+  end
+
+  defp discovery_spec?(spec) do
+    ((spec.definition.meta && spec.definition.meta["category"]) || "Uncategorized") == "Discovery"
+  end
 
   @doc """
   List scopes. Optional `filters`:
@@ -610,6 +696,10 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
     actor_id = Keyword.get(opts, :actor_id)
     incoming_config = fetch_config(attrs)
 
+    # A visibility-only edit must not clobber the stored group config: seed the
+    # normalization input from the stored config when the caller didn't send one.
+    attrs = seed_config_for_reserved_attrs(scope, attrs)
+
     case check_required_core(scope, incoming_config, kind, confirm) do
       :ok ->
         scope
@@ -634,6 +724,25 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
       scope -> update(scope, attrs, opts)
     end
   end
+
+  # Reserved top-level attrs (`visibility`, `preset`) can arrive without a
+  # `config`; seed the stored config so normalization merges into it instead of
+  # starting from an empty map (which would drop existing groups).
+  defp seed_config_for_reserved_attrs(%MCPCustomScope{} = scope, attrs)
+       when is_map(attrs) do
+    reserved_sent? =
+      (Map.has_key?(attrs, "visibility") or Map.has_key?(attrs, :visibility) or
+         Map.has_key?(attrs, "preset") or Map.has_key?(attrs, :preset)) and
+        not (Map.has_key?(attrs, "config") or Map.has_key?(attrs, :config))
+
+    if reserved_sent? do
+      Map.put(attrs, "config", scope.config || %{})
+    else
+      attrs
+    end
+  end
+
+  defp seed_config_for_reserved_attrs(_, attrs), do: attrs
 
   def delete(%MCPCustomScope{} = scope) do
     cond do
@@ -669,18 +778,32 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
     groups = normalize_groups(config)
 
     %{"groups" => enforce_required(groups, kind, opts)}
-    |> put_segment(config)
+    |> put_reserved_keys(config, Keyword.get(opts, :prior) || %{})
   end
 
   def normalize_config(_, kind, opts), do: %{"groups" => enforce_required(%{}, kind, opts)}
 
-  # Preserve the top-level `segment` flag (task one-off marker) across normalization;
-  # only emitted when present, so plain configs are unchanged.
-  defp put_segment(normalized, config) do
-    case get_key(config, "segment") do
-      seg when is_boolean(seg) -> Map.put(normalized, "segment", seg)
-      _ -> normalized
-    end
+  # Preserve reserved top-level config flags across normalization; only emitted
+  # when present, so plain configs are unchanged.
+  #   * `segment` — task one-off marker (W7 packaging); boolean-filtered.
+  #   * `visibility` — scope sharing mode (W2): "org" | "account" | "shared".
+  #     Carried verbatim (from the incoming config, falling back to `prior` so a
+  #     group-only edit keeps the stored mode); invalid values are carried too so
+  #     the schema's config validation rejects them rather than silently dropping.
+  defp put_reserved_keys(normalized, config, prior) do
+    normalized
+    |> maybe_put_reserved("segment", config, prior, &is_boolean/1)
+    |> maybe_put_reserved("visibility", config, prior, fn _ -> true end)
+  end
+
+  defp maybe_put_reserved(map, key, config, prior, valid?) do
+    value =
+      case get_key(config, key) do
+        nil -> get_key(prior, key)
+        value -> value
+      end
+
+    if value != nil and valid?.(value), do: Map.put(map, key, value), else: map
   end
 
   # Non-server groups kept by the normalizer (W7): per-key gating of the Lit
@@ -798,6 +921,10 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
 
   defp confirm_value(attrs), do: Map.get(attrs, "confirm") || Map.get(attrs, :confirm)
 
+  # String/atom dual-key read for the fixed reserved attr names ("preset",
+  # "visibility") — fixed internal keys only, never user input.
+  defp attrs_key(attrs, key), do: Map.get(attrs, key) || Map.get(attrs, String.to_atom(key))
+
   defp fetch_config(attrs) do
     Map.get(attrs, "config") || Map.get(attrs, :config)
   end
@@ -828,6 +955,7 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
       user_id: scope.user_id,
       is_default: scope.is_default == true,
       source_template_slug: scope.source_template_slug,
+      visibility: MCPCustomScope.visibility(scope),
       description: scope.description,
       config: normalize_config(scope.config || %{}, scope.kind),
       url: host && MCPServers.custom_url(scope.slug, host),
@@ -840,9 +968,11 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
 
   defp normalize_attrs(attrs, opts) when is_map(attrs) do
     kind = Keyword.get(opts, :kind) || attrs_kind(attrs) || "custom"
+    visibility = attrs_key(attrs, "visibility")
 
     attrs =
       attrs
+      |> apply_preset()
       |> Map.take([
         "slug",
         "name",
@@ -868,24 +998,63 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
       |> stringify_keys()
       |> Map.put("kind", kind)
 
+    # W2: top-level `visibility` attr overrides the config jsonb value. Applied
+    # after group normalization, verbatim — invalid values reach the schema's
+    # config validation and reject the changeset.
     case Map.fetch(attrs, "config") do
       {:ok, config} ->
-        Map.put(
-          attrs,
-          "config",
-          normalize_config(config, kind,
+        normalized =
+          config
+          |> normalize_config(kind,
             confirm: Keyword.get(opts, :confirm),
             actor_id: Keyword.get(opts, :actor_id),
             prior: Keyword.get(opts, :prior)
           )
-        )
+          |> maybe_put_visibility(visibility)
+
+        Map.put(attrs, "config", normalized)
 
       :error ->
-        attrs
+        if visibility do
+          Map.put(attrs, "config", normalize_config(%{"visibility" => visibility}, kind))
+        else
+          attrs
+        end
     end
   end
 
   defp normalize_attrs(_, _), do: %{}
+
+  defp maybe_put_visibility(config, nil), do: config
+  defp maybe_put_visibility(config, visibility), do: Map.put(config, "visibility", visibility)
+
+  # W2: named preset ("basic_crud", ...) provides the base config at scope
+  # creation. Caller-supplied `config.groups` win per group id; preset groups
+  # fill the rest. Unknown preset slugs are ignored (forward-compatible).
+  defp apply_preset(attrs) when is_map(attrs) do
+    case attrs_key(attrs, "preset") do
+      nil ->
+        attrs
+
+      preset_slug ->
+        case preset_config(preset_slug) do
+          nil ->
+            attrs
+
+          seed ->
+            attrs
+            |> Map.delete("preset")
+            |> Map.delete(:preset)
+            |> Map.update("config", seed, fn config ->
+              config = stringify_keys(config)
+              user_groups = Map.get(config, "groups") || %{}
+              Map.put(config, "groups", Map.merge(Map.get(seed, "groups"), user_groups))
+            end)
+        end
+    end
+  end
+
+  defp apply_preset(_), do: %{}
 
   defp stringify_keys(map) do
     Map.new(map, fn {key, value} -> {to_string(key), value} end)
