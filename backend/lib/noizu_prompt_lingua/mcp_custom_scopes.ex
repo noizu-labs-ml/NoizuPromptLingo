@@ -45,6 +45,7 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
   @default_package_groups ~w(
     sessions organizations projects tickets chat artifacts wiki
     personas instructions memory review assets github notifications
+    pubsub
   )
 
   @doc "The typed-confirmation phrase for disabling required core groups."
