@@ -155,7 +155,14 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
 
       group ->
         tools = Map.get(group, "tools") || %{}
-        tool = Map.get(tools, tool_name) || Map.get(tools, canonical(tool_name)) || %{}
+
+        # F5 naming: configs may key tools dotted (Session.Create) or canonical
+        # underscore (Session_Create) — probe both spellings so no read path is
+        # dotted-only (contract ledger #4).
+        tool =
+          Map.get(tools, tool_name) || Map.get(tools, canonical(tool_name)) ||
+            Map.get(tools, dotted(canonical(tool_name))) || %{}
+
         {group, tool}
     end
   end
@@ -484,6 +491,18 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
   end
 
   defp canonical(name), do: name
+
+  # Dotted alias of a canonical name (F5). Defensive shape mirrors canonical/1.
+  defp dotted(name) when is_binary(name) do
+    if Code.ensure_loaded?(NoizuPromptLingua.MCP.ToolNames) and
+         function_exported?(NoizuPromptLingua.MCP.ToolNames, :dotted, 1) do
+      apply(NoizuPromptLingua.MCP.ToolNames, :dotted, [name])
+    else
+      name
+    end
+  end
+
+  defp dotted(name), do: name
 
   # ── group enumeration (full-map resolution) ────────────────────────────────
 

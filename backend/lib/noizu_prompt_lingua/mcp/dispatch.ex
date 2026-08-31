@@ -10,16 +10,22 @@ defmodule NoizuPromptLingua.MCP.Dispatch do
   alias Noizu.MCP.Server.Features.Tools
   alias Noizu.MCP.Server.Tool.{Fields, Spec}
   alias Noizu.MCP.Types.ToolResult
-  alias NoizuPromptLingua.MCP.ToolGuard
+  alias NoizuPromptLingua.MCP.{ToolGuard, ToolNames}
 
   def call(server_mod, name, args, ctx) when is_atom(server_mod) and is_binary(name) do
     specs = expand_specs(server_mod, ctx)
 
-    case Enum.find(specs, &(lookup_name(&1.definition.name) == lookup_name(name))) do
+    # Names are matched on the canonical underscore form; dotted spellings
+    # (Session.Create) are aliases accepted at dispatch, never the wire name.
+    case Enum.find(specs, &(ToolNames.canonical(&1.definition.name) == ToolNames.canonical(name))) do
       nil ->
         {:error, Error.invalid_params("Unknown tool: #{name}")}
 
       %Spec{} = spec ->
+        # Canonicalize so ToolGuard/config keys and error text see the
+        # underscore name regardless of which alias the client dispatched.
+        spec = ToolNames.canonical_spec(spec)
+
         case ToolGuard.before_call(spec_to_guard(spec), args, ctx) do
           :ok ->
             run_spec(spec, args || %{}, ctx)
@@ -60,9 +66,8 @@ defmodule NoizuPromptLingua.MCP.Dispatch do
   end
 
   # Clients sanitize MCP tool names for their own tool-name charset
-  # ("Organization.Overview" -> "Organization_Overview"), so compare with
-  # dots and underscores folded to one form on both sides.
-  defp lookup_name(name) when is_binary(name), do: String.replace(name, ".", "_")
+  # ("Organization.Overview" -> "Organization_Overview"), so dispatch matches on
+  # the canonical underscore form; dotted spellings are accepted as aliases.
 
   defp run_spec(%Spec{} = spec, args, ctx) do
     case Schema.validate(spec.definition.input_schema, args) do

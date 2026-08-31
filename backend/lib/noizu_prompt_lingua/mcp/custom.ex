@@ -58,8 +58,7 @@ defmodule NoizuPromptLingua.MCP.Custom do
       |> Tools.expand()
       |> Enum.reject(&(tool_category(&1) == "Discovery"))
       |> Enum.map(fn spec ->
-        EffectiveToolset.apply_state(spec, EffectiveToolset.lookup(states, spec.definition.name))
-      end)
+        EffectiveToolset.apply_state(spec, EffectiveToolset.lookup(states, spec.definition.name))      end)
       |> Enum.reject(&is_nil/1)
     else
       _ -> []
