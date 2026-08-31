@@ -18,6 +18,7 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
 
   alias NoizuPromptLingua.Repo
   alias NoizuPromptLingua.Schema.MCPCustomScope
+  alias NoizuPromptLingua.MCP.Window
   alias NoizuPromptLingua.MCPServers
   alias NoizuPromptLingua.Tools.Catalog
 
@@ -935,6 +936,9 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
     %{}
     |> put_bool("disabled", Map.get(config, "disabled", Map.get(config, :disabled)))
     |> put_bool("hidden", Map.get(config, "hidden", Map.get(config, :hidden)))
+    # F3 temporal windows (hide_until / enable_for_hours); invalid values are
+    # dropped here — strict rejection lives on the scope changeset.
+    |> Window.normalize_entry(config)
   end
 
   defp normalize_tool_config(_), do: %{}
