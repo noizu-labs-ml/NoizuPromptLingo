@@ -19,6 +19,10 @@ defmodule NoizuPromptLingua.Schema.MCPCustomScope do
 
   @kinds ~w(custom all_in_one core_variant)
 
+  # W2 scope sharing. Canonical storage is the config jsonb key `"visibility"`
+  # (no column); this virtual field + `visibility/1` surface it on the schema.
+  @visibilities ~w(org account shared)
+
   @primary_key {:id, :binary_id, autogenerate: true}
 
   schema "mcp_custom_scopes" do
@@ -33,11 +37,32 @@ defmodule NoizuPromptLingua.Schema.MCPCustomScope do
     field :source_template_slug, :string
     field :config, :map, default: %{}
 
+    # Virtual: persisted at `config.visibility` (see @visibilities above).
+    field :visibility, :string, virtual: true
+
     timestamps(type: :utc_datetime)
   end
 
   @doc "Valid `kind` values."
   def kinds, do: @kinds
+
+  @doc "Valid `visibility` values."
+  def visibilities, do: @visibilities
+
+  @doc """
+  Scope sharing mode: `"org"` (default), `"account"`, or `"shared"`. Reads the
+  config jsonb key `"visibility"`; anything absent/invalid resolves to `"org"`.
+  """
+  def visibility(%__MODULE__{config: %{} = config}) do
+    case get_config_key(config, "visibility") do
+      v when v in @visibilities -> v
+      _ -> "org"
+    end
+  end
+
+  def visibility(_), do: "org"
+
+  defp get_config_key(config, key), do: Map.get(config, key, Map.get(config, String.to_atom(key)))
 
   def changeset(scope, attrs) do
     scope
@@ -72,7 +97,12 @@ defmodule NoizuPromptLingua.Schema.MCPCustomScope do
   end
 
   defp validate_config(:config, value) when is_map(value) do
-    validate_window_entries(value)
+    validate_window_entries(value) ++
+      case get_config_key(value, "visibility") do
+        nil -> []
+        v when v in @visibilities -> []
+        _ -> [visibility: "must be one of: #{Enum.join(@visibilities, ", ")}"]
+      end
   end
 
   defp validate_config(:config, _), do: [config: "must be an object"]

@@ -361,6 +361,14 @@ defmodule NoizuPromptLinguaWeb.Router do
     match :*, "/org/:org_slug/custom/:slug/mcp", CustomMCPGatewayController, :handle_org
   end
 
+  # Account-level custom-scope gateway (W2 sharing). Scopes with visibility
+  # "account"/"shared" are additionally served at <host>/user/<slug>/mcp; the
+  # controller's resolve_scope/3 is the shared resolution point the org route
+  # (/org/:org_slug/custom/:slug/mcp, W1) lands on too.
+  scope "/", NoizuPromptLinguaWeb do
+    match :*, "/user/:slug/mcp", CustomMCPGatewayController, :handle_user
+  end
+
   scope "/mcp" do
     forward "/",
             Noizu.MCP.Transport.StreamableHTTP.Plug,

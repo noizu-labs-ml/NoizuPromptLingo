@@ -66,6 +66,48 @@ defmodule NoizuPromptLinguaWeb.CustomMCPGatewayController do
         |> json(%{redirect: location})
       end
   end
+  @doc """
+  Account-level gateway path — `/user/:slug/mcp` (W2). Serves scopes whose
+  `visibility` is `"account"` or `"shared"`; org-only scopes 404 (no
+  existence leak). `resolve_scope/3` is the shared resolution point for this
+  path (W1's /org route keeps its (org_id, slug) ownership check in
+  `handle_org/2`, and the legacy path keeps its 301 redirect behavior).
+  """
+  def handle_user(conn, %{"slug" => _slug} = params) do
+    with {:ok, scope, _slug, path} <- resolve_scope(conn, :user, params) do
+      serve(conn, scope, path, nil)
+    else
+      {:error, :not_found} -> not_found(conn)
+    end
+  end
+
+  @doc """
+  Common route resolution for the custom-scope gateway paths.
+
+    * `:legacy` — any existing scope resolves.
+    * `:user`   — existing scope whose visibility is `account`/`shared`.
+
+  Returns `{:ok, scope, slug, path}` (path is the route actually hit — the
+  endpoint audience-binds to its own URL) or `{:error, :not_found}`.
+  """
+  def resolve_scope(_conn, route, %{"slug" => slug})
+      when route in [:legacy, :user] do
+    case MCPCustomScopes.get_by_slug(slug) do
+      nil ->
+        {:error, :not_found}
+
+      scope ->
+        cond do
+          route == :legacy -> {:ok, scope, slug, "/custom/#{slug}/mcp"}
+          account_visible?(scope) -> {:ok, scope, slug, "/user/#{slug}/mcp"}
+          true -> {:error, :not_found}
+        end
+    end
+  end
+
+  def resolve_scope(_, _, _), do: {:error, :not_found}
+
+  defp account_visible?(scope), do: MCPCustomScope.visibility(scope) in ~w(account shared)
 
   defp not_found(conn) do
     conn
