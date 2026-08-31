@@ -237,7 +237,7 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetTest do
             scope_config(%{
               @group => %{
                 "tools" => %{
-                  @tool => %{"enable_for_hours" => 24, "enable_from" => DateTime.to_iso8601(anchor)}
+                  @tool => %{"enable_for_hours" => 24, "enabled_at" => DateTime.to_iso8601(anchor)}
                 }
               }
             })
@@ -258,7 +258,7 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetTest do
             scope_config(%{
               @group => %{
                 "tools" => %{
-                  @tool => %{"enable_for_hours" => 24, "enable_from" => DateTime.to_iso8601(anchor)}
+                  @tool => %{"enable_for_hours" => 24, "enabled_at" => DateTime.to_iso8601(anchor)}
                 }
               }
             })
