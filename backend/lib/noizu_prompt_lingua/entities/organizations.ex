@@ -65,6 +65,20 @@ defmodule NoizuPromptLingua.Organizations do
     NoizuPromptLingua.PMCore.with_pm(fn -> Noizu.PM.Organizations.get_id_by_slug(slug) end)
   end
 
+  @doc """
+  Slug for an org id (pm_core), or nil. Inverse of `get_id_by_slug/1`; used to
+  build canonical org-addressed URLs (e.g. the custom-MCP gateway's 301 of the
+  legacy `/custom/:slug/mcp` path to `/org/:org_slug/custom/:slug/mcp`).
+  """
+  def get_slug_by_id(id) do
+    NoizuPromptLingua.PMCore.with_pm(fn ->
+      case Noizu.PM.Organizations.get_organization(id) do
+        %{slug: slug} -> slug
+        _ -> nil
+      end
+    end)
+  end
+
   def update_organization(id, attrs) do
     case NoizuPromptLingua.Repo.get(Schema, id) do
       nil ->

@@ -352,6 +352,15 @@ defmodule NoizuPromptLinguaWeb.Router do
     match :*, "/custom/:slug/mcp", CustomMCPGatewayController, :handle
   end
 
+  # Org-addressed custom MCP gateway — the canonical URL shape:
+  # <host>/org/<org_slug>/custom/<slug>/mcp. The org segment scopes the slug
+  # lookup (the scope must belong to that org). The legacy <host>/custom/<slug>/mcp
+  # path above remains a permanent alias: it 301s browser GETs of org-bound
+  # scopes to this canonical form and serves everything else in place.
+  scope "/", NoizuPromptLinguaWeb do
+    match :*, "/org/:org_slug/custom/:slug/mcp", CustomMCPGatewayController, :handle_org
+  end
+
   scope "/mcp" do
     forward "/",
             Noizu.MCP.Transport.StreamableHTTP.Plug,
