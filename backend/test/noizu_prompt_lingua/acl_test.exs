@@ -198,5 +198,76 @@ defmodule NoizuPromptLingua.AclTest do
       rule!(user, R.ref(module: @project_kind, id: :any), "*", "allow")
       assert Acl.allowed?(user, "anything.else", project_ref())
     end
+
+    test "nil-resource request matches resource-agnostic rules only" do
+      user = user_ref()
+
+      # exact-resource rule must NOT match a resource-agnostic request
+      rule!(user, project_ref(), "project.read", "allow")
+      assert {:deny, :default} = Acl.resolve(user, "project.read", nil)
+
+      # global wildcard rule (resource-agnostic grant) does match
+      rule!(user, R.ref(module: :any, id: :any), "project.read", "allow")
+      assert {:allow, _} = Acl.resolve(user, "project.read", nil)
+      assert Acl.allowed?(user, "project.read", nil)
+    end
+
+    test "sref/map inputs normalize before queries" do
+      id = uid()
+      subject = R.ref(module: @user_kind, id: id)
+      project = project_ref()
+
+      rule!(subject, R.ref(module: @project_kind, id: :any), "project.read", "allow")
+
+      # sref subject string (previously crashed at dump)
+      assert {:allow, _} =
+               Acl.resolve("ref." <> "#{@user_kind}.#{id}", "project.read", project)
+
+      # sref resource string
+      assert {:allow, _} =
+               Acl.resolve(subject, "project.read", "ref.#{@project_kind}.#{elem(project, 2)}")
+
+      # jsonb map subject
+      assert {:allow, _} =
+               Acl.resolve(%{"type" => "#{@user_kind}", "id" => id}, "project.read", project)
+
+      # unparseable ref normalizes to nil → default deny, no crash
+      assert {:deny, :default} = Acl.resolve("ref.not.a.real.kind.abc", "project.read", project)
+    end
+  end
+
+  describe "normalize/1" do
+    test "accepts refs, structs-shape tuples, maps, and sref strings" do
+      id = uid()
+      ref = R.ref(module: @user_kind, id: id)
+
+      assert Acl.normalize(ref) == ref
+      assert Acl.normalize({:ref, @user_kind, id}) == ref
+      assert Acl.normalize("ref.#{@user_kind}.#{id}") == ref
+      assert Acl.normalize("#{@user_kind}.#{id}") == ref
+      assert Acl.normalize("ref.any.any") == R.ref(module: :any, id: :any)
+      assert Acl.normalize(%{"type" => "#{@user_kind}", "id" => id}) == ref
+      assert Acl.normalize(%{type: "#{@user_kind}", id: id}) == ref
+      assert Acl.normalize(nil) == nil
+      assert Acl.normalize("ref.unknown-kind.x") == nil
+    end
+  end
+
+  describe "frontier cap (runaway-graph guard)" do
+    test "over-limit frontier is trimmed, not discarded" do
+      user = user_ref()
+
+      # subject directly in > cap groups — old code discarded the entire
+      # frontier (candidates = subject only); capped expansion keeps 15 of 20.
+      groups = Enum.map(1..20, fn i -> group!("cap-#{i}") end)
+      Enum.each(groups, &member!(&1, user))
+
+      candidates = Acl.subject_candidates(user)
+      assert length(candidates) == 16
+      assert user in candidates
+      assert Enum.any?(candidates, &(&1 != user))
+      # cycle guard still intact
+      assert candidates == Enum.uniq(candidates)
+    end
   end
 end
