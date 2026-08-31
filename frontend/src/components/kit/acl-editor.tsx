@@ -1,49 +1,40 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { kitBtnSm, kitFieldLabel, kitInput } from './shared';
+import type { AclEffect, AclGroup, AclRule, AclState, EntityRef } from '@/types/tool-state';
 
-/**
- * ACL shapes bind against the F1 acl-core contract: subject and resource are
- * opaque ERP ref strings (`{:ref, Type, id}` serialized), effect is allow/deny,
- * scope is a free-form string supplied by the host. This component knows
- * nothing about backend code — the host owns persistence.
- */
+export type { AclEffect, AclGroup, AclRule, AclState };
 
-export type AclEffect = 'allow' | 'deny';
-
-export interface AclRule {
-  /** Client-side id (host-assigned or generated). */
-  id: string;
-  /** Opaque ERP ref string, e.g. subject user/org/group ref. */
-  subject: string;
-  /** Opaque ERP ref string for the protected entity. */
-  resource: string;
-  effect: AclEffect;
-  /** Permission scope label (e.g. "read", "write", "admin"). */
-  scope: string;
+/** Human label for a ref in aria-labels / chips: "label (kind:id)" or "kind:id". */
+export function refLabel(r: EntityRef): string {
+  const base = `${r.kind}:${r.id}`;
+  return r.label ? `${r.label} (${base})` : base;
 }
 
-export interface AclGroup {
-  id: string;
-  name: string;
-  /** Member subject refs (opaque ERP ref strings). */
-  members: string[];
+function sameRef(a: EntityRef, b: EntityRef): boolean {
+  return a.kind === b.kind && a.id === b.id;
 }
 
-export interface AclState {
-  rules: AclRule[];
-  groups: AclGroup[];
+/** Parse "kind:id" (or bare "id" → kind "any") into an EntityRef. */
+export function parseRef(input: string): EntityRef | null {
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+  const sep = trimmed.indexOf(':');
+  if (sep === -1) return { kind: 'any', id: trimmed };
+  const kind = trimmed.slice(0, sep).trim();
+  const id = trimmed.slice(sep + 1).trim();
+  return kind && id ? { kind, id } : null;
 }
 
 interface ACLEditorProps {
   value: AclState;
   onChange: (next: AclState) => void;
   /** Suggested subject refs for datalist autocomplete. */
-  subjectSuggestions?: string[];
+  subjectSuggestions?: EntityRef[];
   /** Suggested resource refs for datalist autocomplete. */
-  resourceSuggestions?: string[];
+  resourceSuggestions?: EntityRef[];
   /** Allowed scope labels (free-form when omitted). */
   scopeOptions?: string[];
   readOnly?: boolean;
@@ -55,10 +46,22 @@ function localId() {
   return `acl-${Date.now()}-${seq}`;
 }
 
+/** Deny rules sort before allow rules for display (stable within effect). */
+export function denyFirst(rules: AclRule[]): AclRule[] {
+  return [...rules].sort(
+    (a, b) => (a.effect === 'deny' ? 0 : 1) - (b.effect === 'deny' ? 0 : 1),
+  );
+}
+
 /**
  * Grant/deny rule editor with named permission groups. Pure controlled
  * component: emits the full next state via onChange; never mutates props.
- * Accessible: labeled inputs, datalist suggestions, aria-labels on icon buttons.
+ * Binds the shared F4 tool-state contract (`AclState` from
+ * `@/types/tool-state`) — subjects/resources are F1 ERP refs (kind + id),
+ * not opaque strings. Rules render deny-before-allow regardless of stored
+ * order (deny wins under F1 evaluation).
+ * Accessible: labeled inputs, datalist suggestions, subject-named aria-labels
+ * on icon buttons.
  */
 export default function ACLEditor({
   value,
@@ -70,6 +73,10 @@ export default function ACLEditor({
 }: ACLEditorProps) {
   const { rules, groups } = value;
   const [newGroupMembers, setNewGroupMembers] = useState<Record<string, string>>({});
+  const uid = useId();
+  const subjectListId = `${uid}-subject-suggestions`;
+  const resourceListId = `${uid}-resource-suggestions`;
+  const kindListId = `${uid}-kind-suggestions`;
 
   function updateRules(next: AclRule[]) {
     onChange({ rules: next, groups });
@@ -82,13 +89,27 @@ export default function ACLEditor({
   function addRule() {
     updateRules([
       ...rules,
-      { id: localId(), subject: '', resource: '', effect: 'allow', scope: scopeOptions[0] ?? 'read' },
+      {
+        id: localId(),
+        subject: { kind: 'any', id: '' },
+        resource: null,
+        effect: 'deny',
+        scope: scopeOptions[0] ?? 'read',
+        priority: 0,
+      },
     ]);
   }
 
   function patchRule(id: string, patch: Partial<AclRule>) {
     updateRules(rules.map((r) => (r.id === id ? { ...r, ...patch } : r)));
   }
+
+  const kindSuggestions = [
+    ...new Set([
+      ...subjectSuggestions.map((s) => s.kind),
+      ...resourceSuggestions.map((s) => s.kind),
+    ]),
+  ];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -108,14 +129,14 @@ export default function ACLEditor({
           <p style={{ fontSize: 11, color: 'var(--text-3)', margin: 0 }}>No rules — access falls through to defaults.</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {rules.map((rule, idx) => (
+            {denyFirst(rules).map((rule) => (
               <div
                 key={rule.id}
                 role="group"
-                aria-label={`Rule ${idx + 1}`}
+                aria-label={`${rule.effect} rule for ${refLabel(rule.subject)}`}
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'auto 1fr 1fr auto 1fr auto',
+                  gridTemplateColumns: 'auto 1fr 1fr 1fr 64px auto',
                   gap: 6,
                   alignItems: 'end',
                   padding: 8,
@@ -137,40 +158,78 @@ export default function ACLEditor({
                       fontWeight: 600,
                     }}
                   >
-                    <option value="allow">allow</option>
                     <option value="deny">deny</option>
+                    <option value="allow">allow</option>
                   </select>
                 </div>
                 <div>
                   <label htmlFor={`acl-subject-${rule.id}`} style={kitFieldLabel}>Subject ref</label>
-                  <input
-                    id={`acl-subject-${rule.id}`}
-                    list="acl-subject-suggestions"
-                    value={rule.subject}
-                    readOnly={readOnly}
-                    placeholder="user/org/group ref"
-                    onChange={(e) => patchRule(rule.id, { subject: e.target.value })}
-                    style={{ ...kitInput, width: '100%', fontFamily: 'monospace' }}
-                  />
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    <input
+                      id={`acl-subject-kind-${rule.id}`}
+                      list={kindListId}
+                      aria-label={`Subject kind for ${refLabel(rule.subject)}`}
+                      value={rule.subject.kind}
+                      readOnly={readOnly}
+                      placeholder="kind"
+                      onChange={(e) => patchRule(rule.id, { subject: { ...rule.subject, kind: e.target.value } })}
+                      style={{ ...kitInput, width: 84, fontFamily: 'monospace' }}
+                    />
+                    <input
+                      id={`acl-subject-${rule.id}`}
+                      list={subjectListId}
+                      aria-label={`Subject id for ${refLabel(rule.subject)}`}
+                      value={rule.subject.id}
+                      readOnly={readOnly}
+                      placeholder="subject id"
+                      onChange={(e) => patchRule(rule.id, { subject: { ...rule.subject, id: e.target.value } })}
+                      style={{ ...kitInput, width: '100%', fontFamily: 'monospace' }}
+                    />
+                  </div>
                 </div>
                 <div>
                   <label htmlFor={`acl-resource-${rule.id}`} style={kitFieldLabel}>Resource ref</label>
-                  <input
-                    id={`acl-resource-${rule.id}`}
-                    list="acl-resource-suggestions"
-                    value={rule.resource}
-                    readOnly={readOnly}
-                    placeholder="entity ref"
-                    onChange={(e) => patchRule(rule.id, { resource: e.target.value })}
-                    style={{ ...kitInput, width: '100%', fontFamily: 'monospace' }}
-                  />
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    <input
+                      id={`acl-resource-kind-${rule.id}`}
+                      list={kindListId}
+                      aria-label={`Resource kind${rule.resource ? ` for ${refLabel(rule.resource)}` : ''}`}
+                      value={rule.resource?.kind ?? ''}
+                      readOnly={readOnly}
+                      placeholder="kind"
+                      onChange={(e) =>
+                        patchRule(rule.id, {
+                          resource: e.target.value || rule.resource?.id
+                            ? { kind: e.target.value, id: rule.resource?.id ?? '' }
+                            : null,
+                        })
+                      }
+                      style={{ ...kitInput, width: 84, fontFamily: 'monospace' }}
+                    />
+                    <input
+                      id={`acl-resource-${rule.id}`}
+                      list={resourceListId}
+                      aria-label={`Resource id${rule.resource ? ` for ${refLabel(rule.resource)}` : ''}`}
+                      value={rule.resource?.id ?? ''}
+                      readOnly={readOnly}
+                      placeholder="entity id"
+                      onChange={(e) =>
+                        patchRule(rule.id, {
+                          resource: e.target.value || rule.resource?.kind
+                            ? { kind: rule.resource?.kind ?? '', id: e.target.value }
+                            : null,
+                        })
+                      }
+                      style={{ ...kitInput, width: '100%', fontFamily: 'monospace' }}
+                    />
+                  </div>
                 </div>
                 <div>
                   <label htmlFor={`acl-scope-${rule.id}`} style={kitFieldLabel}>Scope</label>
                   {scopeOptions.length > 0 ? (
                     <select
                       id={`acl-scope-${rule.id}`}
-                      value={rule.scope}
+                      value={rule.scope ?? ''}
                       disabled={readOnly}
                       onChange={(e) => patchRule(rule.id, { scope: e.target.value })}
                       style={{ ...kitInput, width: '100%' }}
@@ -182,12 +241,25 @@ export default function ACLEditor({
                   ) : (
                     <input
                       id={`acl-scope-${rule.id}`}
-                      value={rule.scope}
+                      value={rule.scope ?? ''}
                       readOnly={readOnly}
                       onChange={(e) => patchRule(rule.id, { scope: e.target.value })}
                       style={{ ...kitInput, width: '100%' }}
                     />
                   )}
+                </div>
+                <div>
+                  <label htmlFor={`acl-priority-${rule.id}`} style={kitFieldLabel}>Prio</label>
+                  <input
+                    id={`acl-priority-${rule.id}`}
+                    type="number"
+                    step={1}
+                    value={rule.priority}
+                    readOnly={readOnly}
+                    aria-label={`Priority for ${rule.effect} rule on ${refLabel(rule.subject)}`}
+                    onChange={(e) => patchRule(rule.id, { priority: Math.floor(Number(e.target.value)) || 0 })}
+                    style={{ ...kitInput, width: '100%' }}
+                  />
                 </div>
                 <span style={{ fontSize: 10, color: 'var(--text-3)', paddingBottom: 6 }}>
                   {rule.effect === 'deny' ? 'blocks' : 'grants'} access
@@ -197,7 +269,7 @@ export default function ACLEditor({
                     type="button"
                     onClick={() => updateRules(rules.filter((r) => r.id !== rule.id))}
                     style={{ ...kitBtnSm, border: 0, background: 'transparent', color: 'var(--red, #ef4444)', paddingBottom: 4 }}
-                    aria-label={`Delete rule ${idx + 1}`}
+                    aria-label={`Delete ${rule.effect} rule for ${refLabel(rule.subject)}`}
                   >
                     <TrashIcon style={{ width: 14, height: 14 }} aria-hidden="true" />
                   </button>
@@ -208,11 +280,18 @@ export default function ACLEditor({
             ))}
           </div>
         )}
-        <datalist id="acl-subject-suggestions">
-          {subjectSuggestions.map((s) => <option key={s} value={s} />)}
+        <datalist id={subjectListId}>
+          {subjectSuggestions.map((s) => (
+            <option key={`${s.kind}:${s.id}`} value={s.id}>{s.label ?? `${s.kind}:${s.id}`}</option>
+          ))}
         </datalist>
-        <datalist id="acl-resource-suggestions">
-          {resourceSuggestions.map((s) => <option key={s} value={s} />)}
+        <datalist id={resourceListId}>
+          {resourceSuggestions.map((s) => (
+            <option key={`${s.kind}:${s.id}`} value={s.id}>{s.label ?? `${s.kind}:${s.id}`}</option>
+          ))}
+        </datalist>
+        <datalist id={kindListId}>
+          {kindSuggestions.map((k) => <option key={k} value={k} />)}
         </datalist>
       </section>
 
@@ -236,7 +315,7 @@ export default function ACLEditor({
           <p style={{ fontSize: 11, color: 'var(--text-3)', margin: 0 }}>No groups defined.</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {groups.map((group, gIdx) => (
+            {groups.map((group) => (
               <div
                 key={group.id}
                 style={{
@@ -274,9 +353,9 @@ export default function ACLEditor({
                   {group.members.length === 0 ? (
                     <span style={{ fontSize: 11, color: 'var(--text-3)' }}>No members.</span>
                   ) : (
-                    group.members.map((m, mIdx) => (
+                    group.members.map((m) => (
                       <span
-                        key={m}
+                        key={`${m.kind}:${m.id}`}
                         style={{
                           display: 'inline-flex',
                           alignItems: 'center',
@@ -290,16 +369,16 @@ export default function ACLEditor({
                           color: 'var(--text-1)',
                         }}
                       >
-                        {m}
+                        {m.label ?? `${m.kind}:${m.id}`}
                         {!readOnly ? (
                           <button
                             type="button"
-                            aria-label={`Remove member ${m} from group ${group.name}`}
+                            aria-label={`Remove member ${refLabel(m)} from group ${group.name}`}
                             onClick={() =>
                               updateGroups(
                                 groups.map((g) =>
                                   g.id === group.id
-                                    ? { ...g, members: g.members.filter((_, i) => i !== mIdx) }
+                                    ? { ...g, members: g.members.filter((x) => !sameRef(x, m)) }
                                     : g,
                                 ),
                               )
@@ -317,17 +396,17 @@ export default function ACLEditor({
                   <div style={{ display: 'flex', gap: 6 }}>
                     <input
                       value={newGroupMembers[group.id] ?? ''}
-                      placeholder="add member ref…"
+                      placeholder="add member as kind:id…"
                       aria-label={`Add member to group ${group.name}`}
                       onChange={(e) => setNewGroupMembers((prev) => ({ ...prev, [group.id]: e.target.value }))}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
-                          const member = (newGroupMembers[group.id] ?? '').trim();
+                          const member = parseRef(newGroupMembers[group.id] ?? '');
                           if (!member) return;
                           updateGroups(
                             groups.map((g) =>
-                              g.id === group.id && !g.members.includes(member)
+                              g.id === group.id && !g.members.some((x) => sameRef(x, member))
                                 ? { ...g, members: [...g.members, member] }
                                 : g,
                             ),
@@ -340,11 +419,11 @@ export default function ACLEditor({
                     <button
                       type="button"
                       onClick={() => {
-                        const member = (newGroupMembers[group.id] ?? '').trim();
+                        const member = parseRef(newGroupMembers[group.id] ?? '');
                         if (!member) return;
                         updateGroups(
                           groups.map((g) =>
-                            g.id === group.id && !g.members.includes(member)
+                            g.id === group.id && !g.members.some((x) => sameRef(x, member))
                               ? { ...g, members: [...g.members, member] }
                               : g,
                           ),

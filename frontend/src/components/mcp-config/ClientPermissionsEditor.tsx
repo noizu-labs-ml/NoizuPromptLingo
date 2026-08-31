@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ToolTogglesGrid, TempWindowEditor, ACLEditor, type AclState } from '@/components/kit';
+import { ToolTogglesGrid, TempWindowEditor, ACLEditor, type AclState, type ToolSection } from '@/components/kit';
 
 // ---------------------------------------------------------------------------
 // ClientPermissionsEditor — shared per-client permission stack (W7).
@@ -49,7 +49,7 @@ const DEFAULT_TOOL_STATE: ClientPermissionsToolState = {
   enable_for_hours: null,
 };
 
-type GridGroups = { group: string; tools: { name: string; enabled: boolean; hidden: boolean }[] }[];
+type GridGroups = ToolSection[];
 type WindowValue = { hide_until: string | null; enable_for_hours: number | null };
 
 export function defaultClientPermissions(
@@ -110,22 +110,26 @@ export default function ClientPermissionsEditor({
 
   // --- Tools section (ToolTogglesGrid) ------------------------------------
   const gridGroups: GridGroups = catalog.map((g) => ({
-    group: g.group,
+    name: g.group,
     tools: g.tools.map((t) => {
       const s = stateFor(t.name);
-      return { name: t.name, enabled: s.enabled, hidden: !s.visible };
+      return {
+        tool: { kind: 'mcp_tool', id: t.name },
+        state: { enabled: s.enabled, visible: s.visible },
+      };
     }),
   }));
 
   function handleGridChange(nextGroups: GridGroups) {
     const tools = { ...value.tools };
-    for (const group of nextGroups) {
-      for (const tool of group.tools) {
+    for (const section of nextGroups) {
+      for (const entry of section.tools) {
+        const name = entry.tool.id;
         // Preserve window fields; take enabled/visible from the grid.
-        tools[tool.name] = {
-          ...stateFor(tool.name),
-          enabled: tool.enabled,
-          visible: !tool.hidden,
+        tools[name] = {
+          ...stateFor(name),
+          enabled: entry.state.enabled,
+          visible: entry.state.visible,
         };
       }
     }
@@ -188,7 +192,7 @@ export default function ClientPermissionsEditor({
             Toggle whether each tool is executable (enabled) and discoverable via listing
             (visible). Untouched tools stay enabled and visible.
           </p>
-          <ToolTogglesGrid groups={gridGroups} onChange={handleGridChange} readOnly={readOnly} />
+          <ToolTogglesGrid sections={gridGroups} onChange={handleGridChange} readOnly={readOnly} />
         </div>
       )}
 

@@ -10,7 +10,7 @@
     "regen": "rm -rf .cache && npm run generate-css",
     "test:e2e": "playwright test",
     "test:e2e:install": "playwright install chromium",
-    "test:contracts": "node --import tsx --test src/components/app-shell.contract.test.ts src/lib/pm/trp-board-embed.test.ts src/lib/mcp-setup.test.ts src/components/mcp-oauth-setup.contract.test.ts src/lib/tool-overrides.test.ts",
+    "test:contracts": "node --import tsx --test src/components/app-shell.contract.test.ts src/lib/pm/trp-board-embed.test.ts src/lib/mcp-setup.test.ts src/components/mcp-oauth-setup.contract.test.ts src/lib/tool-overrides.test.ts src/components/kit/acl-editor.contract.test.ts",
     "test:e2e:authentik": "cypress run --browser chrome --config-file cypress.authentik.config.ts --spec 'cypress/e2e/auth/login-authentik.cy.ts'"
   },
   "dependencies": {
