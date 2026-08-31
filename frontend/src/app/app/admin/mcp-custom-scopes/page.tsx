@@ -14,19 +14,22 @@ import {
 import {
   ContextMenu,
   SlideOverSidebar,
-  ACLEditor,
   ToolTogglesGrid,
   TempWindowEditor,
   type ContextMenuItem,
-  type AclState,
   type ToolToggleGroup,
   type TempWindow,
 } from '@/components/kit';
 import {
+  addAclGroupMember,
+  clientAclRefString,
+  createAclGroup,
   fetchAclGroups,
   fetchClientPermissions,
   fetchScopeClients,
+  removeAclGroupMember,
   saveClientPermissions,
+  type AclGroup,
   type ClientPermissions,
   type ScopeClient,
 } from '@/lib/acl-api';
@@ -36,6 +39,7 @@ import {
   applyOverridePatch,
   canonicalToolName,
   hasOverrides,
+  normalizeConfigToolKeys,
   overrideEntry,
   type ToolOverrideEntry,
 } from '@/lib/tool-overrides';
@@ -153,7 +157,7 @@ function AdminMcpCustomScopesInner() {
   const [clientPerms, setClientPerms] = useState<ClientPermissions | null>(null);
   const [clientPermsLoading, setClientPermsLoading] = useState(false);
   const [clientSaving, setClientSaving] = useState(false);
-  const [aclGroups, setAclGroups] = useState<{ id: string; name: string }[]>([]);
+  const [aclGroups, setAclGroups] = useState<AclGroup[]>([]);
   const [tempTool, setTempTool] = useState('');
   const [newGroupName, setNewGroupName] = useState('');
   const [setupScope, setSetupScope] = useState<McpCustomScope | null>(null);
@@ -274,10 +278,15 @@ function AdminMcpCustomScopesInner() {
     updateConfig((draft) => {
       const group = draft.groups[groupId] ?? { tools: {} };
       group.tools = group.tools ?? {};
-      const tool = group.tools[toolName] ?? {};
+      // F5 dotted-write normalization: key by canonical underscore; a legacy
+      // dotted entry migrates under it instead of accumulating both spellings.
+      const toolKey = canonicalToolName(toolName);
+      const legacy = toolKey !== toolName ? (group.tools[toolName] ?? {}) : {};
+      const tool = { ...legacy, ...(group.tools[toolKey] ?? {}) };
       if (value) delete tool.disabled;
       else tool.disabled = true;
-      group.tools[toolName] = tool;
+      if (toolKey !== toolName) delete group.tools[toolName];
+      group.tools[toolKey] = tool;
       draft.groups[groupId] = group;
     });
   }
@@ -286,7 +295,14 @@ function AdminMcpCustomScopesInner() {
     updateConfig((draft) => {
       const group = draft.groups[groupId] ?? { tools: {} };
       group.tools = group.tools ?? {};
-      group.tools[toolName] = { ...(group.tools[toolName] ?? {}), hidden: !value };
+      const toolKey = canonicalToolName(toolName);
+      const tool = {
+        ...(group.tools[toolKey] ?? {}),
+        ...(toolKey !== toolName ? (group.tools[toolName] ?? {}) : {}),
+        hidden: !value,
+      };
+      if (toolKey !== toolName) delete group.tools[toolName];
+      group.tools[toolKey] = tool;
       draft.groups[groupId] = group;
     });
   }
@@ -318,7 +334,9 @@ function AdminMcpCustomScopesInner() {
         name: form.name.trim(),
         description: form.description.trim(),
         kind: form.kind || 'custom',
-        config: form.config,
+        // D3 dotted-write normalization: collapse legacy dotted tool keys to
+        // canonical underscore so configs stop accumulating both spellings.
+        config: normalizeConfigToolKeys(form.config),
       };
       const res = form.originalSlug
         ? await api.adminUpdateMcpCustomScope(form.originalSlug, payload)
@@ -533,41 +551,59 @@ function AdminMcpCustomScopesInner() {
     );
   }
 
-  const groupNameSuggestions = useMemo(() => {
-    const names = new Set(aclGroups.map((g) => g.name));
-    for (const g of clientPerms?.acl.groups ?? []) names.add(g.name);
-    return [...names];
-  }, [aclGroups, clientPerms]);
+  const groupNameSuggestions = useMemo(() => aclGroups.map((g) => g.name), [aclGroups]);
+
+  // D3: membership is real (acl_group_members rows) — derive the selected
+  // client's groups from the fetched ACL groups instead of local bundle state.
+  const currentPermissionGroups = useMemo(() => {
+    if (!selectedClient) return [];
+    const refString = clientAclRefString(selectedClient.kind, selectedClient.id);
+    return aclGroups.filter((g) => g.members.some((m) => m.ref_string === refString)).map((g) => g.name);
+  }, [aclGroups, selectedClient]);
 
   function assignPermissionGroup(name: string) {
     const trimmed = name.trim();
-    if (!trimmed || !clientPerms) return;
-    if (clientPerms.permissionGroups.includes(trimmed)) return;
-    setClientPerms({
-      ...clientPerms,
-      permissionGroups: [...clientPerms.permissionGroups, trimmed],
-    });
-    setNewGroupName('');
+    const client = selectedClient;
+    if (!trimmed || !client) return;
+    (async () => {
+      try {
+        // D3: group membership persists immediately via the ACL endpoints —
+        // create the group on first use, then attach the client's ERP ref.
+        let group = aclGroups.find((g) => g.name === trimmed);
+        if (!group) group = await createAclGroup(trimmed);
+        await addAclGroupMember(group.id, client.kind, client.id);
+        const groups = await fetchAclGroups();
+        setAclGroups(groups);
+        setNewGroupName('');
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Failed to add group');
+      }
+    })();
   }
 
   function unassignPermissionGroup(name: string) {
-    setClientPerms((current) =>
-      current
-        ? { ...current, permissionGroups: current.permissionGroups.filter((g) => g !== name) }
-        : current,
-    );
+    const client = selectedClient;
+    const group = aclGroups.find((g) => g.name === name);
+    if (!client || !group) return;
+    (async () => {
+      try {
+        await removeAclGroupMember(group.id, client.kind, client.id);
+        setAclGroups(await fetchAclGroups());
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Failed to remove group');
+      }
+    })();
   }
 
   async function saveClient() {
     if (!form.originalSlug || !clientPerms) return;
     setClientSaving(true);
     try {
-      const res = await saveClientPermissions(form.originalSlug, clientPerms);
-      if (res.stub) {
-        toast.success('Saved locally (stub — ACL backend endpoints not merged yet)');
-      } else {
-        toast.success('Client permissions saved');
-      }
+      // D3: real persistence — toolset_config (+ temporal windows folded into
+      // the per-tool entries) PUT to the backend; permission-group membership
+      // is applied immediately by assign/unassignPermissionGroup.
+      await saveClientPermissions(form.originalSlug, clientPerms);
+      toast.success('Client permissions saved');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Save failed');
     } finally {
@@ -849,15 +885,11 @@ function AdminMcpCustomScopesInner() {
           </section>
 
           <section style={{ border: '1px solid var(--border, #e5e5e5)', borderRadius: 8, padding: '0.875rem' }}>
-            <h3 style={{ margin: '0 0 0.5rem', fontSize: 13, fontWeight: 700 }}>ACL permissions</h3>
-            <ACLEditor
-              value={clientPerms.acl}
-              onChange={(next: AclState) => setClientPerms({ ...clientPerms, acl: next })}
-            />
-          </section>
-
-          <section style={{ border: '1px solid var(--border, #e5e5e5)', borderRadius: 8, padding: '0.875rem' }}>
             <h3 style={{ margin: '0 0 0.5rem', fontSize: 13, fontWeight: 700 }}>Permission groups</h3>
+            <span className="sg-field__hint" style={{ display: 'block', marginBottom: '0.5rem' }}>
+              Membership is applied immediately via the ACL API (acl_group_members). Per-client ACL
+              rules land with the rules API — group-level rules already resolve through F1.
+            </span>
             <div style={{ display: 'flex', gap: 8 }}>
               <input
                 list="acl-group-names"
@@ -885,9 +917,9 @@ function AdminMcpCustomScopesInner() {
                 Add
               </button>
             </div>
-            {clientPerms.permissionGroups.length > 0 && (
+            {currentPermissionGroups.length > 0 && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-                {clientPerms.permissionGroups.map((name) => (
+                {currentPermissionGroups.map((name) => (
                   <span
                     key={name}
                     style={{

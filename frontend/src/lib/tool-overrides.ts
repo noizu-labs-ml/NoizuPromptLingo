@@ -129,3 +129,26 @@ export function hasOverrides(config: McpCustomScopeConfig, groupId: string, tool
     !!entry.arg_overrides && Object.values(entry.arg_overrides).some((v) => v.trim() !== '')
   );
 }
+
+/**
+ * D3 dotted-write normalization: rewrite EVERY tools key in a config to the
+ * canonical underscore form (F5). Legacy dotted entries merge under their
+ * canonical key (canonical field values win), so saved configs stop carrying
+ * both spellings of the same tool. Run this on save from every write path that
+ * keys tool entries by catalog name.
+ */
+export function normalizeConfigToolKeys(config: McpCustomScopeConfig): McpCustomScopeConfig {
+  const draft = cloneConfig(config);
+  for (const group of Object.values(draft.groups)) {
+    if (!group.tools) continue;
+    const next: Record<string, ScopeToolEntry> = {};
+    for (const [key, entry] of Object.entries(group.tools)) {
+      const canonicalKey = canonicalToolName(key);
+      const existing = next[canonicalKey];
+      next[canonicalKey] =
+        existing && key !== canonicalKey ? { ...entry, ...existing } : { ...(existing ?? entry) };
+    }
+    group.tools = next;
+  }
+  return draft;
+}
