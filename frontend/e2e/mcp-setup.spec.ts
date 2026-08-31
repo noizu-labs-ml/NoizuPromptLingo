@@ -2,9 +2,10 @@ import { test, expect, type Page } from "@playwright/test";
 
 /**
  * E2E for the MCP client setup page (/app/mcp-keys):
- *  1. Org-scoped AUTH_TOKEN env var — no bare `export AUTH_TOKEN=` anywhere,
- *     and CLI snippets reference an *_AUTH_TOKEN env var name.
- *  2. OAuth Default tab include editor — expand a group, disable one tool,
+ *  1. OAuth install snippets for Claude Code, Claude Desktop, Codex toml,
+ *     Cursor, VS Code Copilot, and Grok — URL/OAuth only, no bearer.
+ *  2. Nowhere on the page may a script export the legacy bare AUTH_TOKEN name.
+ *  3. OAuth Default tab include editor — expand a group, disable one tool,
  *     Save, reload, assert the toggle persisted.
  *
  * Auth is OIDC (see auth.setup.ts): specs only run with E2E_STORAGE_STATE set,
@@ -22,23 +23,55 @@ async function gotoMcpKeys(page: Page) {
 }
 
 test.describe("MCP setup page", () => {
-  test("legacy-key snippets use the org-scoped AUTH env var, never bare AUTH_TOKEN", async ({ page }) => {
+  test("OAuth install snippets cover Claude Code, Desktop, Codex toml, Cursor, VS Code, Grok", async ({ page }) => {
     await gotoMcpKeys(page);
 
-    // OAuth panel renders CLI snippets (codex note) that must reference the
-    // org-scoped env var name.
-    const body = page.locator("body");
-    await expect(body).toContainText(AUTH_ENV_PATTERN);
+    const oauthSnippet = page.locator("code[data-mcp-oauth-client]");
+    await expect(oauthSnippet).toBeVisible();
+    await expect(oauthSnippet).toHaveAttribute("data-mcp-oauth-client", "claude-code");
+    await expect(oauthSnippet).toContainText("claude mcp add --transport http");
+    await expect(oauthSnippet).not.toContainText("Authorization");
 
-    // Nowhere on the page may a script export the legacy bare name.
+    const clients: { label: string; id: string; needle: string | RegExp }[] = [
+      { label: "Claude Desktop", id: "claude-desktop", needle: "claude_desktop_config.json" },
+      { label: "Claude Desktop", id: "claude-desktop", needle: "mcpServers" },
+      { label: "Codex", id: "codex", needle: "[mcp_servers." },
+      { label: "Codex", id: "codex", needle: "~/.codex/config.toml" },
+      { label: "Cursor", id: "cursor", needle: ".cursor/mcp.json" },
+      { label: "VS Code Copilot", id: "vscode", needle: ".vscode/mcp.json" },
+      { label: "VS Code Copilot", id: "vscode", needle: '"type": "http"' },
+      { label: "Grok", id: "grok", needle: "grok mcp add --transport http" },
+    ];
+
+    // Labels are unique on the OAuth picker; click once per client id.
+    const seen = new Set<string>();
+    for (const row of clients) {
+      if (!seen.has(row.id)) {
+        await page.getByRole("button", { name: row.label, exact: true }).first().click();
+        seen.add(row.id);
+      }
+      await expect(oauthSnippet).toHaveAttribute("data-mcp-oauth-client", row.id);
+      await expect(page.locator("body")).toContainText(row.needle);
+      await expect(oauthSnippet).not.toContainText("Bearer");
+    }
+
+    await expect(page.getByText("Access is not unlimited.")).toBeVisible();
+    await expect(page.locator("body")).not.toContainText("export AUTH_TOKEN=");
+    await expect(page.locator("body")).not.toContainText("--bearer-token-env-var AUTH_TOKEN");
+  });
+
+  test("legacy-key snippets never use the bare AUTH_TOKEN name", async ({ page }) => {
+    await gotoMcpKeys(page);
+
+    const body = page.locator("body");
     await expect(body).not.toContainText("export AUTH_TOKEN=");
     await expect(body).not.toContainText("--bearer-token-env-var AUTH_TOKEN");
-
-    // Full-script assertion (needs a minted token) is backend-state dependent —
-    // covered by the unit layer; here we assert the fallback name appears in
-    // the codex snippet even when no org slug resolves.
-    const codexSnippet = page.locator("code", { hasText: "codex mcp add" }).first();
-    await expect(codexSnippet).toContainText(AUTH_ENV_PATTERN);
+    // Org-scoped env var is only in the minted-key panel (state-dependent).
+    // The OAuth Codex toml must not fall back to a bearer env var.
+    await page.getByRole("button", { name: "Codex", exact: true }).first().click();
+    const oauthSnippet = page.locator("code[data-mcp-oauth-client='codex']");
+    await expect(oauthSnippet).toContainText("[mcp_servers.");
+    await expect(oauthSnippet).not.toContainText(AUTH_ENV_PATTERN);
   });
 
   test("OAuth Default tab include editor persists a per-tool toggle", async ({ page }) => {

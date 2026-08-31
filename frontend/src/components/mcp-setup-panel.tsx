@@ -3,10 +3,10 @@
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { api, type McpCustomGroup, type McpCustomScope, type McpServerConfig } from '@/lib/api';
-import { DEFAULT_MCP_AUTH_ENV_VAR } from '@/lib/mcp-setup';
+import { DEFAULT_MCP_AUTH_ENV_VAR, mcpCliServerName } from '@/lib/mcp-setup';
 import McpIncludeEditor from '@/components/mcp-include-editor';
 
-type McpClient = 'claude' | 'codex' | 'grok';
+type McpClient = 'claude' | 'codex' | 'grok' | 'desktop' | 'cursor' | 'vscode';
 type SetupTab = 'default' | 'alacarte';
 
 interface McpSetupPanelProps {
@@ -28,19 +28,12 @@ interface McpSetupPanelProps {
 
 const CLIENT_OPTIONS: { id: McpClient; label: string }[] = [
   { id: 'claude', label: 'Claude Code' },
+  { id: 'desktop', label: 'Claude Desktop' },
   { id: 'codex', label: 'Codex' },
+  { id: 'cursor', label: 'Cursor' },
+  { id: 'vscode', label: 'VS Code Copilot' },
   { id: 'grok', label: 'Grok' },
 ];
-
-/**
- * Sanitize MCP server registration names.
- * Grok only allows letters, numbers, hyphens, underscores. Custom scopes
- * arrive as "custom:<handle>" and register as "tobor-<handle>".
- */
-function serverName(id: string) {
-  if (id.startsWith('custom:')) return `tobor-${id.slice('custom:'.length)}`;
-  return `tobor-${id.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
-}
 
 /**
  * Generates MCP add commands for the given MCP servers. The bearer token is
@@ -49,8 +42,14 @@ function serverName(id: string) {
  * Claude Code:
  *   claude mcp add --transport http tobor-{id} {url} --header "Authorization: Bearer $AUTH_ENV"
  *
+ * Claude Desktop / Cursor:
+ *   mcpServers JSON (claude_desktop_config.json / .cursor/mcp.json)
+ *
  * Codex:
  *   codex mcp add tobor-{id} --url {url} --bearer-token-env-var AUTH_ENV
+ *
+ * VS Code Copilot:
+ *   .vscode/mcp.json `servers` JSON with type http
  *
  * Grok:
  *   grok mcp add --transport http tobor-{id} {url} --header "Authorization: Bearer $AUTH_ENV"
@@ -122,7 +121,7 @@ export default function McpSetupPanel({
   }
 
   function getCommandLine(server: McpServerConfig) {
-    const name = serverName(server.id);
+    const name = mcpCliServerName(server.id);
     if (client === 'codex') {
       return `codex mcp add ${name} --url ${server.url} --bearer-token-env-var ${authEnvName}`;
     }
@@ -133,7 +132,37 @@ export default function McpSetupPanel({
     return `claude mcp add --transport http ${name} ${server.url} --header "Authorization: Bearer $${authEnvName}"`;
   }
 
+  function buildConfigSnippet() {
+    const enabledServers = endpointCatalog.filter((s) => isEnabled(s.id));
+    const dest =
+      client === 'desktop' ? '# claude_desktop_config.json'
+        : client === 'vscode' ? '# .vscode/mcp.json'
+          : '# .cursor/mcp.json';
+    if (client === 'vscode') {
+      const serverMap: Record<string, { type: 'http'; url: string; headers: { Authorization: string } }> = {};
+      enabledServers.forEach((s) => {
+        serverMap[mcpCliServerName(s.id)] = {
+          type: 'http',
+          url: s.url,
+          headers: { Authorization: `Bearer ${token}` },
+        };
+      });
+      return [dest, '', JSON.stringify({ servers: serverMap }, null, 2)].join('\n');
+    }
+    const mcpServers: Record<string, { url: string; headers: { Authorization: string } }> = {};
+    enabledServers.forEach((s) => {
+      mcpServers[mcpCliServerName(s.id)] = {
+        url: s.url,
+        headers: { Authorization: `Bearer ${token}` },
+      };
+    });
+    return [dest, '', JSON.stringify({ mcpServers }, null, 2)].join('\n');
+  }
+
   function buildScript() {
+    if (client === 'desktop' || client === 'cursor' || client === 'vscode') {
+      return buildConfigSnippet();
+    }
     const lines = [
       `export ${authEnvName}=${token}`,
       '',
@@ -210,6 +239,7 @@ export default function McpSetupPanel({
         </span>
         <div style={{
           display: 'inline-flex',
+          flexWrap: 'wrap',
           border: '1px solid var(--border)',
           borderRadius: 6,
           overflow: 'hidden',
@@ -246,6 +276,24 @@ export default function McpSetupPanel({
           {' '}<span style={{ fontFamily: 'monospace' }}>.grok/config.toml</span>.
           Verify with <span style={{ fontFamily: 'monospace' }}>grok mcp list</span> or
           {' '}<span style={{ fontFamily: 'monospace' }}>/mcps</span> in the TUI.
+        </p>
+      )}
+      {client === 'desktop' && (
+        <p style={{ margin: '0 0 12px', fontSize: 11, lineHeight: 1.5, color: 'var(--text-2)' }}>
+          Merge into <span style={{ fontFamily: 'monospace' }}>claude_desktop_config.json</span>
+          {' '}(macOS: ~/Library/Application Support/Claude/). Prefer the OAuth snippet above when Desktop can DCR.
+        </p>
+      )}
+      {client === 'cursor' && (
+        <p style={{ margin: '0 0 12px', fontSize: 11, lineHeight: 1.5, color: 'var(--text-2)' }}>
+          Merge into <span style={{ fontFamily: 'monospace' }}>.cursor/mcp.json</span> (project) or
+          {' '}<span style={{ fontFamily: 'monospace' }}>~/.cursor/mcp.json</span>. Prefer the OAuth URL-only snippet above.
+        </p>
+      )}
+      {client === 'vscode' && (
+        <p style={{ margin: '0 0 12px', fontSize: 11, lineHeight: 1.5, color: 'var(--text-2)' }}>
+          Merge into <span style={{ fontFamily: 'monospace' }}>.vscode/mcp.json</span> (Copilot MCP).
+          Prefer the OAuth URL-only snippet above.
         </p>
       )}
 
