@@ -424,6 +424,88 @@ defmodule NoizuPromptLinguaWeb.AdminController do
     end
   end
 
+  # ── Per-key toolset management (cross-user) ───────────────────────────────
+  # Symmetric with the Key.* MCP tools but admin-scoped: any user's keys.
+  # Responses are masked (prefix only; raw key values are never returned).
+
+  def list_all_mcp_keys(conn, _params) do
+    keys =
+      NoizuPromptLingua.MCPApiKeys.list_all()
+      |> Enum.map(&mcp_key_json/1)
+
+    conn |> put_status(:ok) |> json(%{keys: keys})
+  end
+
+  def show_mcp_key(conn, %{"id" => id}) do
+    case NoizuPromptLingua.MCPApiKeys.get(id) do
+      nil ->
+        conn |> put_status(:not_found) |> json(%{error: "Key not found"})
+
+      key ->
+        conn |> put_status(:ok) |> json(%{key: mcp_key_json(key)})
+    end
+  end
+
+  def update_mcp_key(conn, %{"id" => id} = params) do
+    case NoizuPromptLingua.MCPApiKeys.get(id) do
+      nil ->
+        conn |> put_status(:not_found) |> json(%{error: "Key not found"})
+
+      key ->
+        with {:ok, key} <- apply_mcp_key_updates(key, params) do
+          conn |> put_status(:ok) |> json(%{key: mcp_key_json(key)})
+        else
+          {:error, %Ecto.Changeset{} = cs} ->
+            conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+
+          {:error, reason} ->
+            conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
+        end
+    end
+  end
+
+  def clone_mcp_key(conn, %{"id" => id} = params) do
+    case NoizuPromptLingua.MCPApiKeys.get(id) do
+      nil ->
+        conn |> put_status(:not_found) |> json(%{error: "Key not found"})
+
+      key ->
+        owner_id = Map.get(params, "user_id") || key.user_id
+
+        with {:ok, key, raw_key} <-
+               NoizuPromptLingua.MCPApiKeys.clone(key,
+                 user_id: owner_id,
+                 label: Map.get(params, "label")
+               ) do
+          conn |> put_status(:created) |> json(%{key: mcp_key_json(key), raw_key: raw_key})
+        else
+          {:error, %Ecto.Changeset{} = cs} ->
+            conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+
+          {:error, reason} ->
+            conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
+        end
+    end
+  end
+
+  defp apply_mcp_key_updates(key, params) do
+    attrs =
+      %{}
+      |> maybe_put_param(:label, params["label"])
+      |> maybe_put_param(:status, params["status"])
+      |> maybe_put_param(:toolset_config, params["toolset_config"])
+
+    with {:ok, key} <- NoizuPromptLingua.MCPApiKeys.update(key, attrs) do
+      case params["toolset_from_scope"] do
+        nil -> {:ok, key}
+        scope_ref -> NoizuPromptLingua.MCPApiKeys.copy_toolset_from(key, scope_ref)
+      end
+    end
+  end
+
+  defp maybe_put_param(attrs, _key, nil), do: attrs
+  defp maybe_put_param(attrs, key, value), do: Map.put(attrs, key, value)
+
   # ── OAuth clients (DCR + first-party) ─────────────────────────────────────
   # Admin visibility into registered OAuth 2.1 clients. Revoking a client
   # cascades to its active pairing grants and unexpired refresh tokens, so
@@ -1264,6 +1346,7 @@ defmodule NoizuPromptLinguaWeb.AdminController do
       status: key.status,
       last_used_at: key.last_used_at,
       expires_at: key.expires_at,
+      toolset_config: key.toolset_config,
       inserted_at: key.inserted_at
     }
   end
