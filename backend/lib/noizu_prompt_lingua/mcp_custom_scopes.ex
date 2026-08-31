@@ -142,6 +142,10 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
             module.__mcp__(:tools)
             |> Noizu.MCP.Server.Features.Tools.expand()
             |> Enum.reject(&discovery_spec?/1)
+            # W5: Session_Manifest is enabled by default everywhere (it is the
+            # client's own state report, not a mutating tool) — the preset never
+            # disables it (contract §5; integration decision).
+            |> Enum.reject(&manifest_spec?/1)
             |> Enum.flat_map(fn spec ->
               if basic_crud_tool?(entity, spec.definition.name),
                 do: [],
@@ -159,6 +163,10 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
 
   defp discovery_spec?(spec) do
     ((spec.definition.meta && spec.definition.meta["category"]) || "Uncategorized") == "Discovery"
+  end
+
+  defp manifest_spec?(spec) do
+    NoizuPromptLingua.MCP.ToolNames.canonical(spec.definition.name) == "Session_Manifest"
   end
 
   @doc """
