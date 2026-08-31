@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# =============================================================================
+# Development only: run LiteLLM locally (not in container)
+# =============================================================================
+# Use this for local debugging when you don't want to rebuild the container.
+# For normal usage, use: run-claude proxy start
+# =============================================================================
+set -euo pipefail
+
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/run-claude"
+
+# Load env
+if [[ -f "$CONFIG_DIR/.env" ]]; then
+    set -a
+    source "$CONFIG_DIR/.env"
+    set +a
+else
+    echo "Error: $CONFIG_DIR/.env not found"
+    echo "Run: run-claude secrets export"
+    exit 1
+fi
+
+echo "Starting LiteLLM locally (dev mode)..."
+echo "Config: $CONFIG_DIR/litellm_config.yaml"
+
+exec uvx --with 'litellm[proxy]' --with psycopg2-binary \
+    litellm --host 127.0.0.1 --port 4444 \
+    --config "$CONFIG_DIR/litellm_config.yaml"

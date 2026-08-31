@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+# ex-litellm launcher — the drop-in for the Python `litellm` binary that
+# run-claude execs. Maps the litellm-style CLI flags to the env vars the Mix
+# release reads at boot, then starts the self-contained release (bundled ERTS +
+# NIFs — no system Elixir/Erlang required).
+#
+# Usage (same shape run-claude uses for litellm):
+#   ex-litellm --host 127.0.0.1 --port 4443 --config /path/config.yaml
+set -euo pipefail
+
+HOST="127.0.0.1"
+PORT=""
+CONFIG=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --host)   HOST="$2"; shift 2 ;;
+    --port)   PORT="$2"; shift 2 ;;
+    --config) CONFIG="$2"; shift 2 ;;
+    --host=*)   HOST="${1#*=}"; shift ;;
+    --port=*)   PORT="${1#*=}"; shift ;;
+    --config=*) CONFIG="${1#*=}"; shift ;;
+    *) echo "ex-litellm: ignoring unknown arg: $1" >&2; shift ;;
+  esac
+done
+
+# Resolve the release directory relative to this script — following symlinks, so
+# an installed `~/.local/bin/ex-litellm` symlink still finds the co-located
+# release under its real install prefix.
+SOURCE="${BASH_SOURCE[0]}"
+while [[ -h "$SOURCE" ]]; do
+  DIR="$(cd "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ "$SOURCE" != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+SCRIPT_DIR="$(cd "$(dirname "$SOURCE")" && pwd)"
+
+# Prefer an installed release next to this wrapper; fall back to the build dir.
+if [[ -x "$SCRIPT_DIR/ex_litellm/bin/ex_litellm" ]]; then
+  RELEASE_BIN="$SCRIPT_DIR/ex_litellm/bin/ex_litellm"
+elif [[ -x "$SCRIPT_DIR/../_build/prod/rel/ex_litellm/bin/ex_litellm" ]]; then
+  RELEASE_BIN="$SCRIPT_DIR/../_build/prod/rel/ex_litellm/bin/ex_litellm"
+else
+  echo "ex-litellm: release not found; build with: MIX_ENV=prod mix release" >&2
+  exit 1
+fi
+
+# Run as a non-distributed node — ex-litellm needs no Erlang clustering, and a
+# named node collides if run-claude relaunches (health-recovery) before the old
+# BEAM fully exits. This avoids the "name ... already in use" epmd conflict.
+export RELEASE_DISTRIBUTION="none"
+
+# Map flags → the env the release reads (Runtime + runtime.exs).
+export EX_LITELLM_HOST="$HOST"
+[[ -n "$PORT" ]]   && export EX_LITELLM_PORT="$PORT"
+[[ -n "$CONFIG" ]] && export CONFIG_FILE_PATH="$CONFIG"
+
+# `start` runs in the foreground (run-claude backgrounds it and tracks the PID),
+# matching how it launches the Python proxy.
+exec "$RELEASE_BIN" start

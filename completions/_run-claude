@@ -1,0 +1,262 @@
+#compdef run-claude
+# zsh completion for run-claude.
+#
+# Install (either works):
+#   1. Copy onto $fpath as `_run-claude` (done by `make install-completions`),
+#      then ensure the directory is in fpath before compinit runs.
+#   2. Source this file directly from .zshrc (after compinit).
+
+_run-claude_profiles() {
+  local -a profiles
+  profiles=(${(f)"$(run-claude profiles list 2>/dev/null | awk '/^  /{print $1}')"})
+  _describe -t profiles 'profile' profiles
+}
+
+_run-claude_model_defs() {
+  local -a models
+  models=(${(f)"$(run-claude models list 2>/dev/null | awk '/^  /{print $1}')"})
+  _describe -t models 'model definition' models
+}
+
+_run-claude_enabled_models() {
+  local -a models
+  # NF==1 guard: with the proxy down the command prints a status sentence, not names.
+  models=(${(f)"$(run-claude models enabled --names-only 2>/dev/null | awk 'NF==1')"})
+  _describe -t models 'enabled model' models
+}
+
+_run-claude() {
+  local curcontext="$curcontext" state line ret=1
+  typeset -A opt_args
+
+  _arguments -C \
+    '(-V --version)'{-V,--version}'[show version and exit]' \
+    '(-d --debug)'{-d,--debug}'[enable debug output]' \
+    '(-x --enhanced)'{-x,--enhanced}'[shorthand for: run-claude with claude-enhanced]' \
+    '(-xx --kitchen-sink)'{-xx,--kitchen-sink}'[shorthand for: run-claude with kitchen-sink]' \
+    '1:command:->command' \
+    '*::arg:->args' && ret=0
+
+  case $state in
+    command)
+      local -a commands=(
+        'enter:Enter a shimmed directory'
+        'leave:Leave a shimmed directory'
+        'janitor:Clean up unused models and stale tokens'
+        'set-folder:Assign a profile to a directory'
+        'status:Show shim/proxy status'
+        'env:Print environment for a profile'
+        'proxy:Manage the LiteLLM proxy'
+        'watchdog:Manage the proxy watchdog'
+        'db:Manage the TimescaleDB container'
+        'profiles:List/show/install profiles'
+        'models:List/show model definitions'
+        'keys:Runtime provider key swap'
+        'chat:Chat directly with an enabled model'
+        'with:Run Claude (or a command) with a profile'
+        'install:Install shell hooks and config'
+        'secrets:Manage the secrets file'
+      )
+      _describe -t commands 'run-claude command' commands && ret=0
+      ;;
+    args)
+      case $words[1] in
+        enter)
+          _arguments \
+            '--dir=[directory path (default: cwd)]:directory:_files -/' \
+            '--refresh[force reload model definitions and re-register with proxy]' \
+            '1:token:' \
+            '2:profile:_run-claude_profiles' && ret=0
+          ;;
+        leave)
+          _arguments '1:token:' && ret=0
+          ;;
+        janitor)
+          _arguments \
+            '(-q --quiet)'{-q,--quiet}'[suppress output]' \
+            '(-f --force)'{-f,--force}'[force cleanup]' && ret=0
+          ;;
+        set-folder)
+          _arguments \
+            '--dir=[directory path (default: cwd)]:directory:_files -/' \
+            '1:profile:_run-claude_profiles' && ret=0
+          ;;
+        status)
+          _arguments '--health[include health checks]' && ret=0
+          ;;
+        env)
+          _arguments \
+            '(-e --export)'{-e,--export}'[print as export statements]' \
+            '1:profile:_run-claude_profiles' && ret=0
+          ;;
+        proxy)
+          if (( CURRENT == 2 )); then
+            local -a actions=(
+              'start:Start the proxy'
+              'stop:Stop the proxy'
+              'restart:Restart the proxy'
+              'supervise:Run supervision loop'
+              'status:Show proxy status'
+              'health:Check proxy health'
+              'db-test:Test database connectivity'
+            )
+            _describe -t actions 'proxy action' actions && ret=0
+          else
+            case $words[2] in
+              start|restart)
+                _arguments '--no-db[do not manage the database]' && ret=0 ;;
+              supervise)
+                _arguments \
+                  '--no-db[do not manage the database]' \
+                  '--interval=[poll interval in seconds (default: 5.0)]:seconds:' && ret=0 ;;
+              stop)
+                _arguments \
+                  '--with-db[also stop the database]' \
+                  '--all[stop proxy, watchdog, and database]' && ret=0 ;;
+            esac
+          fi
+          ;;
+        watchdog)
+          if (( CURRENT == 2 )); then
+            local -a actions=(
+              'start:Start the watchdog'
+              'stop:Stop the watchdog'
+              'restart:Restart the watchdog'
+              'status:Show watchdog status'
+            )
+            _describe -t actions 'watchdog action' actions && ret=0
+          else
+            case $words[2] in
+              start)
+                _arguments '--interval=[poll interval in seconds]:seconds:' && ret=0 ;;
+              stop)
+                _arguments '--with-proxy[also stop the proxy]' && ret=0 ;;
+            esac
+          fi
+          ;;
+        db)
+          if (( CURRENT == 2 )); then
+            local -a actions=(
+              'start:Start the database container'
+              'stop:Stop the database container'
+              'status:Show database status'
+              'migrate:Run database migrations'
+            )
+            _describe -t actions 'db action' actions && ret=0
+          else
+            case $words[2] in
+              stop)
+                _arguments '(-r --remove)'{-r,--remove}'[remove the container]' && ret=0 ;;
+            esac
+          fi
+          ;;
+        profiles)
+          if (( CURRENT == 2 )); then
+            local -a actions=(
+              'list:List available profiles'
+              'show:Show a profile definition'
+              'install:Install built-in profiles to user config'
+            )
+            _describe -t actions 'profiles action' actions && ret=0
+          elif [[ $words[2] == show ]] && (( CURRENT == 3 )); then
+            _run-claude_profiles && ret=0
+          fi
+          ;;
+        models)
+          if (( CURRENT == 2 )); then
+            local -a actions=(
+              'list:List model definitions'
+              'enabled:List models enabled on the proxy'
+              'show:Show a model definition'
+              'avail:List models available from providers'
+              'wipe:Remove all models from the proxy'
+            )
+            _describe -t actions 'models action' actions && ret=0
+          else
+            case $words[2] in
+              enabled)
+                _arguments '--names-only[print bare names, one per line]' && ret=0 ;;
+              avail)
+                _arguments \
+                  '--json[output as JSON]' \
+                  '--short[compact output]' && ret=0 ;;
+              wipe)
+                _arguments '(-f --force)'{-f,--force}'[skip confirmation]' && ret=0 ;;
+              show)
+                (( CURRENT == 3 )) && _run-claude_model_defs && ret=0 ;;
+            esac
+          fi
+          ;;
+        keys)
+          if (( CURRENT == 2 )); then
+            local -a actions=(
+              'list:List named keys and live bindings'
+              'add:Add or replace a named key'
+              'delete:Remove a named key'
+              'switch:Bind a model family to a named key'
+            )
+            _describe -t actions 'keys action' actions && ret=0
+          else
+            case $words[2] in
+              add)
+                _arguments \
+                  '--env=[read value from environment variable]:env var:' \
+                  '--from-env=[read value from environment variable]:env var:' \
+                  '--value=[literal key value]:value:' \
+                  '1:name:' && ret=0 ;;
+              delete)
+                _arguments '1:name:' && ret=0 ;;
+              switch)
+                _arguments \
+                  '--using=[rebind models currently using this key]:key:' \
+                  '1:target:' \
+                  '2:key:' && ret=0 ;;
+            esac
+          fi
+          ;;
+        chat)
+          _arguments \
+            '--system=[system prompt for the session]:system prompt:' \
+            '--prompt=[send one prompt and exit]:prompt:' \
+            '--timeout=[timeout in seconds (default: 300)]:seconds:' \
+            '1:model:_run-claude_enabled_models' && ret=0
+          ;;
+        with)
+          _arguments \
+            '--refresh[force reload model definitions and re-register with proxy]' \
+            '1:profile:_run-claude_profiles' \
+            '*:::command:_normal' && ret=0
+          ;;
+        install)
+          _arguments '(-f --force)'{-f,--force}'[overwrite existing files]' && ret=0
+          ;;
+        secrets)
+          if (( CURRENT == 2 )); then
+            local -a actions=(
+              'init:Initialize the secrets file'
+              'path:Print the secrets file path'
+              'export:Print secrets as export statements'
+            )
+            _describe -t actions 'secrets action' actions && ret=0
+          else
+            case $words[2] in
+              init)
+                _arguments \
+                  '(-g --generate)'{-g,--generate}'[generate values]' \
+                  '(-f --force)'{-f,--force}'[overwrite existing]' && ret=0 ;;
+            esac
+          fi
+          ;;
+      esac
+      ;;
+  esac
+
+  return ret
+}
+
+# Dual-mode: autoloaded from fpath (#compdef) vs sourced from .zshrc.
+if [[ "${funcstack[1]}" == "_run-claude" ]]; then
+  _run-claude "$@"
+elif (( ${+functions[compdef]} )); then
+  compdef _run-claude run-claude
+fi

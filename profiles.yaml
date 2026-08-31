@@ -1,0 +1,667 @@
+# run-claude profiles
+#
+# Profile search order (first match wins):
+# 1. ~/.config/run-claude/user.profiles.yaml
+# 2. ~/.config/run-claude/profiles.yaml
+# 3. <install>/user.profiles.yaml
+# 4. <install>/profiles.yaml
+#
+# To disable a profile from a higher-priority file, set model: null or model: false
+# Example:
+#   cerebras:
+#     model: null  # This disables cerebras, falling through to lower-priority files
+
+# Anthropic - Native Claude models
+anthropic:
+  name: "Anthropic"
+  opus_model: "claude-opus-4-20250514"
+  sonnet_model: "claude-sonnet-4-20250514"
+  haiku_model: "claude-3-5-haiku-20241022"
+
+# OpenAI - GPT models
+openai:
+  name: "OpenAI"
+  opus_model: "openai-gpt5.5"
+  sonnet_model: "openai-gpt5.4"
+  haiku_model: "openai-gpt5.4-mini"
+  extended:
+    - "openai-gpt5.5-2026-04-23"
+    - "openai-gpt4"
+    - "openai-gpt4o"
+    - "openai-gpt4o-mini"
+    - "openai-o1"
+    - "openai-o3-mini"
+
+# Cerebras - Speed optimized inference
+cerebras:
+  name: "Cerebras"
+  opus_model: "cerebras/gpt-oss-120b"
+  sonnet_model: "cerebras/qwen-3-32b"
+  haiku_model: "cerebras/llama3.1-8b"
+
+# Cerebras2 - Alternative Cerebras config with GLM
+cerebras2:
+  name: "Cerebras (GLM)"
+  opus_model: "cerebras/zai-glm-4.7"
+  sonnet_model: "cerebras/gpt-oss-120b"
+  haiku_model: "cerebras/qwen-3-32b"
+
+# Cerebras Subscription - GLM with thinking tiers
+cerebras-pro:
+  name: "Cerebras Pro Subscription"
+  opus_model: "cerebras-pro/opus"
+  sonnet_model: "cerebras-pro/sonnet"
+  haiku_model: "cerebras-pro/haiku"
+  # Claude Code v2.1.116+ appends "[1m]" for the 1M-context variants; register
+  # aliases so those requests route instead of timing out.
+  extended:
+    - "cerebras-pro/opus[1m]"
+    - "cerebras-pro/sonnet[1m]"
+    - "cerebras-pro/haiku[1m]"
+
+groq-pro:
+  name: "Groq Equivalent"
+  opus_model: "groq/opus"
+  sonnet_model: "groq/sonnet"
+  haiku_model: "groq/haiku"
+  # Claude Code v2.1.116+ appends "[1m]" for the 1M-context variants; register
+  # aliases so those requests route instead of 404ing. Llama 3/4, Kimi K2, and
+  # Qwen3-32b were shut down on Groq (2026); the live catalog is GPT-OSS,
+  # Compound, Qwen3.6-27B, MiniMax M2.7, and the safety/guard models.
+  extended:
+    - "groq/opus[1m]"
+    - "groq/sonnet[1m]"
+    - "groq/haiku[1m]"
+    - "groq-compound"
+    - "groq-compound-mini"
+    - "groq-qwen3.6-27b"
+    - "groq-gpt-oss-20b"
+    - "groq-safety-gpt-oss-20b"
+    - "groq-minimax-m2.7"
+
+
+# Z.AI Subscription - GLM with thinking tiers
+# Requires: ZAI_SUB_KEY; Tyna copies also need ZAI_SUB_KEY_TYNA
+zai-pro:
+  name: "Zai Subscription"
+  opus_model: "zai/opus"
+  sonnet_model: "zai/sonnet"
+  haiku_model: "zai/haiku"
+  extended:
+    - "zai/opus[1m]"
+    - "zai/sonnet[1m]"
+    - "zai/haiku[1m]"
+    - "zai-tyna/opus"
+    - "zai-tyna/opus[1m]"
+    - "zai-tyna/sonnet"
+    - "zai-tyna/sonnet[1m]"
+    - "zai-tyna/haiku"
+    - "zai-tyna/haiku[1m]"
+    - "zai-oa/glm-5.3"
+    - "zai-oa/glm-5-turbo"
+    - "zai-oa/glm-4.7"
+
+# Z.AI Subscription - OpenAI v1 endpoint format
+zai-oa:
+  name: "Zai Subscription (OpenAI v1)"
+  opus_model: "zai-oa/glm-5.3"
+  sonnet_model: "zai-oa/glm-5-turbo"
+  haiku_model: "zai-oa/glm-4.7"
+  extended:
+    - "zai-oa/opus"
+    - "zai-oa/sonnet"
+    - "zai-oa/haiku"
+
+# Wafer Serverless — Kimi-K3 opus, GLM-5.2 sonnet, DeepSeek V4 Flash Fast haiku
+# Requires: WAFER_AI_API_KEY
+wafer:
+  name: "Wafer Serverless"
+  opus_model: "wafer/opus[1m]"
+  sonnet_model: "wafer/sonnet[1m]"
+  haiku_model: "wafer/haiku"
+  extended:
+    - "wafer/opus"
+    - "wafer/sonnet"
+    - "wafer/haiku[1m]"
+    - "WAFER_GLM52"
+    - "WAFER_GLM52[1m]"
+    - "WAFER_KIMI_K3"
+    - "WAFER_KIMI_K3[1m]"
+    - "WAFER_KIMI_K26"
+    - "WAFER_KIMI_K26[1m]"
+    - "WAFER_QWEN35_397B"
+    - "WAFER_QWEN35_397B[1m]"
+    - "WAFER_DS_V4_FLASH_FAST"
+    - "WAFER_DS_V4_FLASH_FAST[1m]"
+
+# Alibaba Token Plan — Anthropic-compatible API (Qwen + third-party chat)
+# Requires: QWEN_SUB_KEY (Token Plan dedicated key, typically sk-sp-*)
+# Endpoint: https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic
+# Tiers (best-of-breed across the catalog, not all-Qwen):
+#   fable  = kimi-k3        (Claude Code fable alias → Kimi K3)
+#   opus   = qwen3.8-max    (flagship, 1M, vision)
+#   sonnet = glm-5.2        (coding daily driver, 1M)
+#   haiku  = qwen3.6-flash  (fast/cheap, 1M, vision — official CC haiku)
+alibaba:
+  name: "Alibaba Token Plan"
+  opus_model: "alibaba/opus"
+  sonnet_model: "alibaba/sonnet"
+  haiku_model: "alibaba/haiku"
+  fable_model: "alibaba/fable"
+  extended:
+    - "alibaba/opus[1m]"
+    - "alibaba/sonnet[1m]"
+    - "alibaba/haiku[1m]"
+    - "alibaba/fable[1m]"
+    - "alibaba/qwen3.8-max"
+    - "alibaba/qwen3.8-max-preview"
+    - "alibaba/qwen3.7-max"
+    - "alibaba/qwen3.7-plus"
+    - "alibaba/qwen3.6-plus"
+    - "alibaba/qwen3.6-flash"
+    - "alibaba/deepseek-v4-pro"
+    - "alibaba/deepseek-v4-flash"
+    - "alibaba/deepseek-v4-flash-0731"
+    - "alibaba/kimi-k3"
+    - "alibaba/kimi-k2.7-code"
+    - "alibaba/kimi-k2.6"
+    - "alibaba/kimi-k2.5"
+    - "alibaba/glm-5.2"
+    - "alibaba/glm-5.1"
+    - "alibaba/glm-5"
+    - "alibaba/minimax-m2.5"
+
+# OpenRouter — Free Tier models
+# Requires: OPENROUTER_API_KEY
+# No tier mappings (chat/coding/embed/TTS mix; pick per-model via extended).
+openrouter:
+  name: "OpenRouter (Free Tier)"
+  extended:
+    - "openrouter/lfm-2.5-embedding-350m"
+    - "openrouter/dots-3-note-preview"
+    - "openrouter/flux-tts"
+    - "openrouter/lfm-2.5-2.6b"
+    - "openrouter/nemotron-3.5-lightning"
+    - "openrouter/inkling-small"
+    - "openrouter/s2.1-pro-free"
+    - "openrouter/laguna-s-2.1"
+    - "openrouter/inkling"
+    - "openrouter/nemotron-3-embed-1b"
+    - "openrouter/laguna-xs-2.1"
+    - "openrouter/north-mini-code"
+    - "openrouter/glm-5.2-free"
+    - "openrouter/llama-nemotron-rerank-vl-1b-v2"
+    - "openrouter/nemotron-3.5-content-safety"
+    - "openrouter/nemotron-3-ultra"
+    - "openrouter/minimax-m3"
+    - "openrouter/ox-alpha"
+
+# Claude Plan - OAuth Pass-through (Pro/Max subscription)
+# Anthropic models go directly to api.anthropic.com via front proxy.
+# Non-Anthropic models route through LiteLLM for model translation.
+claude-plan:
+  name: "Claude Plan (OAuth Pass-through)"
+
+  opus_model: "claude-opus-4-8"
+  sonnet_model: "claude-sonnet-5"
+  haiku_model: "claude-haiku-4-5-20251001"
+  extended:
+    - "claude-opus-4-8[1m]"
+    - "claude-sonnet-5[1m]"
+    - "claude-haiku-4-5-20251001[1m]"
+    - "claude-opus-4-7"
+    - "claude-opus-4-7[1m]"
+    - "cerebras-pro/opus"
+    - "cerebras-pro/sonnet"
+    - "cerebras-pro/haiku"
+    - "cerebras-pro/opus[1m]"
+    - "cerebras-pro/sonnet[1m]"
+    - "cerebras-pro/haiku[1m]"
+    - "zai/opus"
+    - "zai/sonnet"
+    - "zai/haiku"
+    - "zai/opus[1m]"
+    - "zai/sonnet[1m]"
+    - "zai/haiku[1m]"
+    - "zai-tyna/opus"
+    - "zai-tyna/opus[1m]"
+    - "zai-tyna/sonnet"
+    - "zai-tyna/sonnet[1m]"
+    - "zai-tyna/haiku"
+    - "zai-tyna/haiku[1m]"
+    - "zai-oa/glm-5.3"
+    - "zai-oa/glm-5-turbo"
+    - "zai-oa/glm-4.7"
+    # Wafer (pay-as-you-go)
+    - "wafer/opus"
+    - "wafer/opus[1m]"
+    - "wafer/sonnet"
+    - "wafer/sonnet[1m]"
+    - "wafer/haiku"
+    - "wafer/haiku[1m]"
+    - "WAFER_GLM52"
+    - "WAFER_KIMI_K3"
+    - "WAFER_KIMI_K26"
+    - "WAFER_QWEN35_397B"
+    - "WAFER_DS_V4_FLASH_FAST"
+    # Alibaba Token Plan
+    - "alibaba/opus"
+    - "alibaba/opus[1m]"
+    - "alibaba/sonnet"
+    - "alibaba/sonnet[1m]"
+    - "alibaba/haiku"
+    - "alibaba/haiku[1m]"
+    - "alibaba/fable"
+    - "alibaba/fable[1m]"
+    - "alibaba/qwen3.8-max"
+    - "alibaba/qwen3.8-max-preview"
+    - "alibaba/qwen3.7-max"
+    - "alibaba/qwen3.7-plus"
+    - "alibaba/qwen3.6-plus"
+    - "alibaba/qwen3.6-flash"
+    - "alibaba/deepseek-v4-pro"
+    - "alibaba/deepseek-v4-flash"
+    - "alibaba/deepseek-v4-flash-0731"
+    - "alibaba/kimi-k3"
+    - "alibaba/kimi-k2.7-code"
+    - "alibaba/kimi-k2.6"
+    - "alibaba/kimi-k2.5"
+    - "alibaba/glm-5.2"
+    - "alibaba/glm-5.1"
+    - "alibaba/glm-5"
+    - "alibaba/minimax-m2.5"
+
+# All-Sub - Opus on Claude plan, Sonnet on Z.AI (glm-5.1), Haiku on Cerebras
+# Requires: Claude Pro/Max login + ZAI_SUB_KEY + CEREBRAS_SUB_KEY in .secrets
+all-sub:
+  name: "All Subscriptions (Claude + Z.AI + Cerebras)"
+
+  opus_model: "claude-opus-4-8"
+  sonnet_model: "zai/opus"
+  haiku_model: "cerebras-pro/opus"
+  extended:
+    # Claude variants
+    - "claude-opus-4-8[1m]"
+    - "claude-opus-4-7"
+    - "claude-opus-4-7[1m]"
+    - "claude-sonnet-5"
+    - "claude-sonnet-5[1m]"
+    - "claude-haiku-4-5-20251001"
+    - "claude-haiku-4-5-20251001[1m]"
+    # Z.AI full set
+    - "zai/opus"
+    - "zai/opus[1m]"
+    - "zai/sonnet"
+    - "zai/sonnet[1m]"
+    - "zai/haiku"
+    - "zai/haiku[1m]"
+    - "zai-tyna/opus"
+    - "zai-tyna/opus[1m]"
+    - "zai-tyna/sonnet"
+    - "zai-tyna/sonnet[1m]"
+    - "zai-tyna/haiku"
+    - "zai-tyna/haiku[1m]"
+    - "zai-oa/glm-5.3"
+    - "zai-oa/glm-5-turbo"
+    - "zai-oa/glm-4.7"
+    # Wafer (pay-as-you-go)
+    - "wafer/opus"
+    - "wafer/opus[1m]"
+    - "wafer/sonnet"
+    - "wafer/sonnet[1m]"
+    - "wafer/haiku"
+    - "wafer/haiku[1m]"
+    - "WAFER_GLM52"
+    - "WAFER_KIMI_K3"
+    - "WAFER_KIMI_K26"
+    - "WAFER_QWEN35_397B"
+    - "WAFER_DS_V4_FLASH_FAST"
+    # Alibaba Token Plan
+    - "alibaba/opus"
+    - "alibaba/opus[1m]"
+    - "alibaba/sonnet"
+    - "alibaba/sonnet[1m]"
+    - "alibaba/haiku"
+    - "alibaba/haiku[1m]"
+    - "alibaba/fable"
+    - "alibaba/fable[1m]"
+    - "alibaba/qwen3.8-max"
+    - "alibaba/qwen3.8-max-preview"
+    - "alibaba/qwen3.7-max"
+    - "alibaba/qwen3.7-plus"
+    - "alibaba/qwen3.6-plus"
+    - "alibaba/qwen3.6-flash"
+    - "alibaba/deepseek-v4-pro"
+    - "alibaba/deepseek-v4-flash"
+    - "alibaba/deepseek-v4-flash-0731"
+    - "alibaba/kimi-k3"
+    - "alibaba/kimi-k2.7-code"
+    - "alibaba/kimi-k2.6"
+    - "alibaba/kimi-k2.5"
+    - "alibaba/glm-5.2"
+    - "alibaba/glm-5.1"
+    - "alibaba/glm-5"
+    - "alibaba/minimax-m2.5"
+    # Cerebras full set
+    - "cerebras-pro/opus"
+    - "cerebras-pro/opus[1m]"
+    - "cerebras-pro/sonnet"
+    - "cerebras-pro/sonnet[1m]"
+    - "cerebras-pro/haiku"
+    - "cerebras-pro/haiku[1m]"
+
+# Claude Enhanced - Claude for all tiers + every alternative provider in extended
+# Requires: Claude Pro/Max login + ZAI_SUB_KEY + CEREBRAS_SUB_KEY + GROQ_API_KEY
+#           + QWEN_SUB_KEY (Alibaba Token Plan)
+claude-enhanced:
+  name: "Claude Enhanced (All Providers)"
+
+  opus_model: "claude-opus-4-8"
+  sonnet_model: "claude-sonnet-5"
+  haiku_model: "claude-haiku-4-5-20251001"
+  extended:
+    # Claude variants
+    - "claude-opus-4-8[1m]"
+    - "claude-opus-4-7"
+    - "claude-opus-4-7[1m]"
+    - "claude-sonnet-5[1m]"
+    - "claude-haiku-4-5-20251001[1m]"
+    # Z.AI (sub)
+    - "zai/opus"
+    - "zai/opus[1m]"
+    - "zai/sonnet"
+    - "zai/sonnet[1m]"
+    - "zai/haiku"
+    - "zai/haiku[1m]"
+    - "zai-tyna/opus"
+    - "zai-tyna/opus[1m]"
+    - "zai-tyna/sonnet"
+    - "zai-tyna/sonnet[1m]"
+    - "zai-tyna/haiku"
+    - "zai-tyna/haiku[1m]"
+    - "zai-oa/glm-5.3"
+    - "zai-oa/glm-5-turbo"
+    - "zai-oa/glm-4.7"
+    # Wafer (pay-as-you-go)
+    - "wafer/opus"
+    - "wafer/opus[1m]"
+    - "wafer/sonnet"
+    - "wafer/sonnet[1m]"
+    - "wafer/haiku"
+    - "wafer/haiku[1m]"
+    - "WAFER_GLM52"
+    - "WAFER_KIMI_K3"
+    - "WAFER_KIMI_K26"
+    - "WAFER_QWEN35_397B"
+    - "WAFER_DS_V4_FLASH_FAST"
+    # Alibaba Token Plan
+    - "alibaba/opus"
+    - "alibaba/opus[1m]"
+    - "alibaba/sonnet"
+    - "alibaba/sonnet[1m]"
+    - "alibaba/haiku"
+    - "alibaba/haiku[1m]"
+    - "alibaba/fable"
+    - "alibaba/fable[1m]"
+    - "alibaba/qwen3.8-max"
+    - "alibaba/qwen3.8-max-preview"
+    - "alibaba/qwen3.7-max"
+    - "alibaba/qwen3.7-plus"
+    - "alibaba/qwen3.6-plus"
+    - "alibaba/qwen3.6-flash"
+    - "alibaba/deepseek-v4-pro"
+    - "alibaba/deepseek-v4-flash"
+    - "alibaba/deepseek-v4-flash-0731"
+    - "alibaba/kimi-k3"
+    - "alibaba/kimi-k2.7-code"
+    - "alibaba/kimi-k2.6"
+    - "alibaba/kimi-k2.5"
+    - "alibaba/glm-5.2"
+    - "alibaba/glm-5.1"
+    - "alibaba/glm-5"
+    - "alibaba/minimax-m2.5"
+    # Cerebras (sub)
+    - "cerebras-pro/opus"
+    - "cerebras-pro/opus[1m]"
+    - "cerebras-pro/sonnet"
+    - "cerebras-pro/sonnet[1m]"
+    - "cerebras-pro/haiku"
+    - "cerebras-pro/haiku[1m]"
+    # Groq
+    - "groq/opus"
+    - "groq/sonnet"
+    - "groq/haiku"
+    - "groq-compound"
+    - "groq-compound-mini"
+    - "groq-kimi-k2"
+    - "groq-llama-4-scout"
+    - "groq-llama-4-maverick"
+    - "groq-qwen3-32b"
+    - "groq-qwen3.6-27b"
+    - "groq-llama-3.3-70b"
+    - "groq-llama-3.1-8b"
+    - "groq-gpt-oss-20b"
+
+# Kitchen Sink - claude-enhanced plus DeepSeek, OpenAI, and xAI/Grok
+# Requires: Claude Pro/Max login + ZAI_SUB_KEY + CEREBRAS_SUB_KEY + GROQ_API_KEY
+#           + DEEPSEEK_API_KEY + OPENAI_API_KEY + GROK_API_KEY + QWEN_SUB_KEY
+kitchen-sink:
+  name: "Kitchen Sink (Every Provider)"
+
+  opus_model: "claude-opus-4-8"
+  sonnet_model: "claude-sonnet-5"
+  haiku_model: "claude-haiku-4-5-20251001"
+  extended:
+    # Claude variants
+    - "claude-opus-5"
+    - "claude-opus-5[1m]"
+    - "claude-opus-4-8[1m]"
+    - "claude-opus-4-7"
+    - "claude-opus-4-7[1m]"
+    # Old Opus 4.6 - kept selectable now that 4.8 is primary
+    - "claude-opus-4-6"
+    - "claude-opus-4-6[1m]"
+    - "claude-sonnet-5[1m]"
+    - "claude-haiku-4-5-20251001[1m]"
+    # Z.AI (sub)
+    - "zai/opus"
+    - "zai/opus[1m]"
+    - "zai/sonnet"
+    - "zai/sonnet[1m]"
+    - "zai/haiku"
+    - "zai/haiku[1m]"
+    - "zai-tyna/opus"
+    - "zai-tyna/opus[1m]"
+    - "zai-tyna/sonnet"
+    - "zai-tyna/sonnet[1m]"
+    - "zai-tyna/haiku"
+    - "zai-tyna/haiku[1m]"
+    # Wafer (pay-as-you-go)
+    - "wafer/opus"
+    - "wafer/opus[1m]"
+    - "wafer/sonnet"
+    - "wafer/sonnet[1m]"
+    - "wafer/haiku"
+    - "wafer/haiku[1m]"
+    - "WAFER_GLM52"
+    - "WAFER_KIMI_K3"
+    - "WAFER_KIMI_K26"
+    - "WAFER_QWEN35_397B"
+    - "WAFER_DS_V4_FLASH_FAST"
+    # Alibaba Token Plan
+    - "alibaba/opus"
+    - "alibaba/opus[1m]"
+    - "alibaba/sonnet"
+    - "alibaba/sonnet[1m]"
+    - "alibaba/haiku"
+    - "alibaba/haiku[1m]"
+    - "alibaba/fable"
+    - "alibaba/fable[1m]"
+    - "alibaba/qwen3.8-max"
+    - "alibaba/qwen3.8-max-preview"
+    - "alibaba/qwen3.7-max"
+    - "alibaba/qwen3.7-plus"
+    - "alibaba/qwen3.6-plus"
+    - "alibaba/qwen3.6-flash"
+    - "alibaba/deepseek-v4-pro"
+    - "alibaba/deepseek-v4-flash"
+    - "alibaba/deepseek-v4-flash-0731"
+    - "alibaba/kimi-k3"
+    - "alibaba/kimi-k2.7-code"
+    - "alibaba/kimi-k2.6"
+    - "alibaba/kimi-k2.5"
+    - "alibaba/glm-5.2"
+    - "alibaba/glm-5.1"
+    - "alibaba/glm-5"
+    - "alibaba/minimax-m2.5"
+    # Cerebras (sub)
+    - "cerebras-pro/opus"
+    - "cerebras-pro/opus[1m]"
+    - "cerebras-pro/sonnet"
+    - "cerebras-pro/sonnet[1m]"
+    - "cerebras-pro/haiku"
+    - "cerebras-pro/haiku[1m]"
+    # Groq
+    - "groq/opus"
+    - "groq/sonnet"
+    - "groq/haiku"
+    - "groq-compound"
+    - "groq-compound-mini"
+    - "groq-kimi-k2"
+    - "groq-llama-4-scout"
+    - "groq-llama-4-maverick"
+    - "groq-qwen3-32b"
+    - "groq-qwen3.6-27b"
+    - "groq-llama-3.3-70b"
+    - "groq-llama-3.1-8b"
+    - "groq-gpt-oss-20b"
+    - "groq-safety-gpt-oss-20b"
+    - "groq-llama-prompt-guard-2-22m"
+    - "groq-llama-prompt-guard-2-86m"
+    # DeepSeek
+    - "deepseek-v4-pro"
+    - "deepseek-v4-flash"
+    - "deepseek-reasoner"
+    - "deepseek-chat"
+    - "deepseek-coder"
+    # OpenAI
+    - "openai-gpt5.5"
+    - "openai-gpt5.5-2026-04-23"
+    - "openai-gpt5.4"
+    - "openai-gpt5.4-mini"
+    - "openai-gpt4"
+    - "openai-gpt4o"
+    - "openai-gpt4o-mini"
+    - "openai-o1"
+    - "openai-o3-mini"
+    # xAI / Grok
+    - "grok-4.3"
+    - "grok-build-0.1"
+    - "grok-2"
+    - "grok-2-mini"
+    - "grok-vision"
+
+# glm 4.7 group
+fast-glm:
+  name: "Cerebras Pro Subscription"
+  opus_model: "zai/opus"
+  sonnet_model: "groq/opus"
+  haiku_model: "cerebras-pro/opus"
+
+# Groq - Ultra-fast inference
+groq:
+  name: "Groq"
+  opus_model: "groq-compound"
+  sonnet_model: "groq.qwen3-32b"
+  haiku_model: "groq.gpt-oss-120b"
+  extended:
+    - "groq-compound-mini"
+    - "groq.kimi-k2-instruct"
+    - "groq-kimi-k2"
+    - "groq-qwen3.6-27b"
+    - "groq-gpt-oss-20b"
+
+# Groq2 - Alternative Groq config (speed optimized)
+groq2:
+  name: "Groq (Speed)"
+  opus_model: "groq.gpt-oss-120b"
+  sonnet_model: "groq.qwen3-32b"
+  haiku_model: "groq.llama-3.3-70b"
+
+# Groq Mix - Optimized Groq blend (intelligence-first)
+groq-mix:
+  name: "Groq Mix (Intelligence-First)"
+  opus_model: "groq-compound"
+  sonnet_model: "groq.gpt-oss-120b"
+  haiku_model: "groq.qwen3-32b"
+  extended:
+    - "groq-compound-mini"
+    - "groq.kimi-k2-instruct"
+    - "groq-gpt-oss-20b"
+    - "groq-qwen3.6-27b"
+    - "groq.llama-3.3-70b"
+    - "groq-llama-3.1-8b"
+    - "groq-llama-4-scout"
+    - "groq-llama-4-maverick"
+
+# Gemini - Google AI models
+gemini:
+  name: "Google Gemini"
+  opus_model: "gemini-pro"
+  sonnet_model: "gemini-flash"
+  haiku_model: "gemini-flash-lite"
+
+# Azure OpenAI - Enterprise Azure deployment
+azure:
+  name: "Azure OpenAI"
+  opus_model: "azure-gpt4"
+  sonnet_model: "azure-gpt4o"
+  haiku_model: "azure-gpt4o-mini"
+
+# Grok - xAI models
+grok:
+  name: "xAI Grok"
+  opus_model: "grok-4.3"
+  sonnet_model: "grok-build-0.1"
+  haiku_model: "grok-2-mini"
+  extended:
+    - "grok-2"
+    - "grok-vision"
+
+# DeepSeek - DeepSeek AI models
+deepseek:
+  name: "DeepSeek"
+  opus_model: "deepseek-v4-pro"
+  sonnet_model: "deepseek-v4-flash"
+  haiku_model: "deepseek-chat"
+  extended:
+    - "deepseek-reasoner"
+    - "deepseek-coder"
+
+# Mistral - Mistral AI models
+mistral:
+  name: "Mistral AI"
+  opus_model: "mistral-large"
+  sonnet_model: "mistral-medium"
+  haiku_model: "mistral-small"
+
+# Perplexity - Search-enabled inference
+perplexity:
+  name: "Perplexity (Search-Augmented)"
+  opus_model: "perplexity-large"
+  sonnet_model: "perplexity-medium"
+  haiku_model: "perplexity-fast"
+
+# Local - Ollama / vLLM / LM Studio
+local:
+  name: "Local/Self-Hosted"
+  opus_model: "local-large"
+  sonnet_model: "local-medium"
+  haiku_model: "local-small"
+
+# Multi - Best-of-breed from multiple providers
+multi:
+  name: "Multi-Provider (Best of Breed)"
+  opus_model: "openai-gpt4"
+  sonnet_model: "gemini-flash"
+  haiku_model: "gemini-flash-lite"
