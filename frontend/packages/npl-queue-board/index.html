@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>npl-queue-board demo</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+        background: #f5f6f8;
+        color: #1f2430;
+        transition: background 160ms ease;
+      }
+      body[data-theme='dark'] {
+        background: #0f1115;
+        color: #e8eaf0;
+      }
+      .toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 20px;
+        border-bottom: 1px solid rgba(128, 138, 158, 0.25);
+      }
+      .toolbar h1 {
+        margin: 0;
+        font-size: 1rem;
+      }
+      .toolbar button {
+        font: inherit;
+        font-size: 0.8rem;
+        padding: 4px 10px;
+        border-radius: 6px;
+        border: 1px solid rgba(128, 138, 158, 0.4);
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+      }
+      #event-log {
+        padding: 8px 20px;
+        font-size: 0.8rem;
+        font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+        color: #5b6472;
+        min-height: 1.2em;
+      }
+      main {
+        padding: 8px 20px 40px;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="toolbar">
+      <h1>&lt;npl-queue-board&gt; demo</h1>
+      <div>
+        <button data-theme="auto">Auto</button>
+        <button data-theme="light">Light</button>
+        <button data-theme="dark">Dark</button>
+      </div>
+    </header>
+    <p id="event-log"></p>
+    <main>
+      <npl-queue-board heading="Delivery boards"></npl-queue-board>
+    </main>
+    <script type="module" src="/src/demo.ts"></script>
+  </body>
+</html>

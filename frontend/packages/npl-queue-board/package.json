@@ -1,0 +1,37 @@
+{
+  "name": "npl-queue-board",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Self-contained Lit web component rendering NPL ticket queues (boards) with stage columns and ticket cards. Embeddable in any host (Next.js, plain HTML).",
+  "type": "module",
+  "main": "dist/npl-queue-board.js",
+  "module": "dist/npl-queue-board.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/npl-queue-board.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build --config vite.lib.config.ts && tsc -p tsconfig.build.json",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "test": "web-test-runner",
+    "test:watch": "web-test-runner --watch"
+  },
+  "devDependencies": {
+    "@open-wc/testing": "^4.0.0",
+    "@types/mocha": "^10.0.10",
+    "@web/dev-server-esbuild": "^1.0.5",
+    "@web/test-runner": "^0.18.3",
+    "@web/test-runner-playwright": "^0.11.1",
+    "lit": "^3.3.3",
+    "typescript": "^5.9.3",
+    "vite": "^6.4.3"
+  }
+}
