@@ -16,6 +16,7 @@ defmodule NoizuPromptLingua.MCP.WindowTest do
   describe "parse/1" do
     test "no window fields parses to nils" do
       assert {:ok, %{hide_until: nil, enable_for_hours: nil}} = Window.parse(%{})
+
       assert {:ok, %{hide_until: nil, enable_for_hours: nil}} =
                Window.parse(%{"disabled" => true, "hidden" => false})
     end
@@ -172,6 +173,31 @@ defmodule NoizuPromptLingua.MCP.WindowTest do
   end
 
   # ------------------------------------------------------------------
+  # state/2 — combined {visible, expires_at, lifted?} (single parse)
+  # ------------------------------------------------------------------
+
+  describe "state/2" do
+    test "hide_until: hidden now, expires when the hide lifts, never lifts" do
+      assert {false, @future, false} = Window.state(%{"hide_until" => @future}, @now)
+      assert {true, nil, false} = Window.state(%{"hide_until" => @past}, @now)
+    end
+
+    test "enable_for_hours: live window lifts and reports expiry" do
+      entry = %{"enable_for_hours" => 24, "set_at" => "2026-08-31T00:00:00Z"}
+      assert {true, ~U[2026-09-01 00:00:00Z], true} = Window.state(entry, @now)
+    end
+
+    test "enable_for_hours: elapsed / unanchored / no window are inert" do
+      assert {true, nil, false} =
+               Window.state(%{"enable_for_hours" => 24, "set_at" => "2026-08-29T00:00:00Z"}, @now)
+
+      assert {true, nil, false} = Window.state(%{"enable_for_hours" => 24}, @now)
+      assert {true, nil, false} = Window.state(%{}, @now)
+      assert {true, nil, false} = Window.state(nil, @now)
+    end
+  end
+
+  # ------------------------------------------------------------------
   # normalize_entry/2
   # ------------------------------------------------------------------
 
@@ -251,7 +277,9 @@ defmodule NoizuPromptLingua.MCP.WindowTest do
     test "drops invalid values silently (strict rejection lives on the changeset)" do
       assert Window.normalize_entry(%{}, %{"hide_until" => "someday"}) == %{}
       assert Window.normalize_entry(%{}, %{"enable_for_hours" => 0}) == %{}
-      assert Window.normalize_entry(%{}, %{"hide_until" => @future, "enable_for_hours" => 24}) == %{}
+
+      assert Window.normalize_entry(%{}, %{"hide_until" => @future, "enable_for_hours" => 24}) ==
+               %{}
     end
   end
 
@@ -339,7 +367,11 @@ defmodule NoizuPromptLingua.MCP.WindowTest do
         }
       }
 
-      tool = MCPCustomScopes.normalize_config(config, "custom")["groups"]["sessions"]["tools"]["Session_List"]
+      tool =
+        MCPCustomScopes.normalize_config(config, "custom")["groups"]["sessions"]["tools"][
+          "Session_List"
+        ]
+
       assert tool["enable_for_hours"] == 48
       assert is_binary(tool["set_at"])
     end
@@ -355,7 +387,9 @@ defmodule NoizuPromptLingua.MCP.WindowTest do
 
       # raised (DateTime.to_iso8601 on an error tuple) before the fix
       tool =
-        MCPCustomScopes.normalize_config(config, "custom")["groups"]["sessions"]["tools"]["Session_List"]
+        MCPCustomScopes.normalize_config(config, "custom")["groups"]["sessions"]["tools"][
+          "Session_List"
+        ]
 
       assert tool["enable_for_hours"] == 48
       assert {:ok, %DateTime{}, _} = DateTime.from_iso8601(tool["set_at"])
@@ -364,13 +398,132 @@ defmodule NoizuPromptLingua.MCP.WindowTest do
     test "evaluates end-to-end after normalization round-trip" do
       config = %{
         "groups" => %{
-          "sessions" => %{"tools" => %{"Session_Create" => %{"hide_until" => "2026-09-07T12:00:00Z"}}}
+          "sessions" => %{
+            "tools" => %{"Session_Create" => %{"hide_until" => "2026-09-07T12:00:00Z"}}
+          }
         }
       }
 
-      tool = MCPCustomScopes.normalize_config(config, "custom")["groups"]["sessions"]["tools"]["Session_Create"]
+      tool =
+        MCPCustomScopes.normalize_config(config, "custom")["groups"]["sessions"]["tools"][
+          "Session_Create"
+        ]
+
       assert {false, %DateTime{}} = Window.evaluate(tool, @now)
       assert {true, nil} = Window.evaluate(tool, ~U[2026-09-08 12:00:00Z])
+    end
+  end
+
+  # ------------------------------------------------------------------
+  # Read-path anchor preservation (preserve_anchors: true) — the fail-open
+  # leak fix: re-stamping set_at on every read would re-anchor the window to
+  # "now", so a live enable_for_hours window would never expire and would
+  # permanently lift disabled/hidden.
+  # ------------------------------------------------------------------
+
+  describe "normalize_config/3 preserve_anchors (read path)" do
+    @stored_set_at "2026-08-30T00:00:00Z"
+
+    test "stored set_at is carried verbatim (not re-stamped)" do
+      config = %{
+        "groups" => %{
+          "sessions" => %{
+            "tools" => %{"Session_List" => %{"enable_for_hours" => 2, "set_at" => @stored_set_at}}
+          }
+        }
+      }
+
+      tool =
+        MCPCustomScopes.normalize_config(config, "custom", preserve_anchors: true)[
+          "groups"
+        ]["sessions"]["tools"]["Session_List"]
+
+      assert tool["set_at"] == @stored_set_at
+    end
+
+    test "expired set_at window stays expired: does NOT lift, no expiry" do
+      config = %{
+        "groups" => %{
+          "sessions" => %{
+            "tools" => %{"Session_List" => %{"enable_for_hours" => 2, "set_at" => @stored_set_at}}
+          }
+        }
+      }
+
+      tool =
+        MCPCustomScopes.normalize_config(config, "custom", preserve_anchors: true)[
+          "groups"
+        ]["sessions"]["tools"]["Session_List"]
+
+      # set_at + 2h = 2026-08-30T02:00:00Z — long past evaluation time.
+      refute Window.lifting?(tool)
+      assert {true, nil, false} = Window.state(tool, DateTime.utc_now())
+    end
+
+    test "within the window, expiry anchors to the ORIGINAL set_at (not now)" do
+      config = %{
+        "groups" => %{
+          "sessions" => %{
+            "tools" => %{"Session_List" => %{"enable_for_hours" => 2, "set_at" => @stored_set_at}}
+          }
+        }
+      }
+
+      tool =
+        MCPCustomScopes.normalize_config(config, "custom", preserve_anchors: true)[
+          "groups"
+        ]["sessions"]["tools"]["Session_List"]
+
+      assert {true, ~U[2026-08-30T02:00:00Z], true} = Window.state(tool, ~U[2026-08-30T01:00:00Z])
+    end
+
+    test "unanchored / malformed-anchor entries gain NO anchor (stay inert)" do
+      base = %{
+        "groups" => %{"sessions" => %{"tools" => %{"Session_List" => %{"enable_for_hours" => 2}}}}
+      }
+
+      tool =
+        MCPCustomScopes.normalize_config(base, "custom", preserve_anchors: true)["groups"][
+          "sessions"
+        ]["tools"]["Session_List"]
+
+      assert tool["enable_for_hours"] == 2
+      refute Map.has_key?(tool, "set_at")
+      refute Window.lifting?(tool)
+
+      bad = %{
+        "groups" => %{
+          "sessions" => %{
+            "tools" => %{"Session_List" => %{"enable_for_hours" => 2, "set_at" => "garbage"}}
+          }
+        }
+      }
+
+      tool2 =
+        MCPCustomScopes.normalize_config(bad, "custom", preserve_anchors: true)["groups"][
+          "sessions"
+        ]["tools"]["Session_List"]
+
+      refute Map.has_key?(tool2, "set_at")
+      refute Window.lifting?(tool2)
+    end
+
+    test "default (write) normalization still stamps fresh set_at" do
+      config = %{
+        "groups" => %{
+          "sessions" => %{
+            "tools" => %{"Session_List" => %{"enable_for_hours" => 2, "set_at" => @stored_set_at}}
+          }
+        }
+      }
+
+      tool =
+        MCPCustomScopes.normalize_config(config, "custom")["groups"]["sessions"]["tools"][
+          "Session_List"
+        ]
+
+      refute tool["set_at"] == @stored_set_at
+      assert {:ok, %DateTime{}, _} = DateTime.from_iso8601(tool["set_at"])
     end
   end
 
@@ -405,7 +558,10 @@ defmodule NoizuPromptLingua.MCP.WindowTest do
           "groups" => %{
             "sessions" => %{
               "tools" => %{
-                "Session_Create" => %{"hide_until" => "2026-09-07T12:00:00Z", "enable_for_hours" => 24}
+                "Session_Create" => %{
+                  "hide_until" => "2026-09-07T12:00:00Z",
+                  "enable_for_hours" => 24
+                }
               }
             }
           }

@@ -8,7 +8,8 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetTest do
   alias NoizuPromptLingua.MCPCustomScopes
 
   @tool "Ticket.List"
-  @tool_canonical "Ticket_List"   # F5: resolve/2 output is keyed canonical underscore
+  # F5: resolve/2 output is keyed canonical underscore
+  @tool_canonical "Ticket_List"
   @group "tickets"
 
   defp ticket_specs do
@@ -83,7 +84,12 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetTest do
     end
 
     test "client disabled wins over scope enabled" do
-      scope = create_scope("acme", scope_config(%{@group => %{"tools" => %{@tool => %{"disabled" => false}}}}))
+      scope =
+        create_scope(
+          "acme",
+          scope_config(%{@group => %{"tools" => %{@tool => %{"disabled" => false}}}})
+        )
+
       client = client(scope_config(%{@group => %{"tools" => %{@tool => %{"disabled" => true}}}}))
 
       refute EffectiveToolset.state(@group, @tool, scope, client).enabled
@@ -225,12 +231,24 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetTest do
       at = DateTime.utc_now()
 
       state =
-        EffectiveToolset.state(@group, @tool, %{
-          "config" =>
-            scope_config(%{
-              @group => %{"tools" => %{@tool => %{"hide_until" => DateTime.add(at, 3600, :second) |> DateTime.to_iso8601()}}}
-            })
-        }, nil, at)
+        EffectiveToolset.state(
+          @group,
+          @tool,
+          %{
+            "config" =>
+              scope_config(%{
+                @group => %{
+                  "tools" => %{
+                    @tool => %{
+                      "hide_until" => DateTime.add(at, 3600, :second) |> DateTime.to_iso8601()
+                    }
+                  }
+                }
+              })
+          },
+          nil,
+          at
+        )
 
       refute state.visible
       assert state.enabled
@@ -240,12 +258,24 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetTest do
       at = DateTime.utc_now()
 
       state =
-        EffectiveToolset.state(@group, @tool, %{
-          "config" =>
-            scope_config(%{
-              @group => %{"tools" => %{@tool => %{"hide_until" => DateTime.add(at, -3600, :second) |> DateTime.to_iso8601()}}}
-            })
-        }, nil, at)
+        EffectiveToolset.state(
+          @group,
+          @tool,
+          %{
+            "config" =>
+              scope_config(%{
+                @group => %{
+                  "tools" => %{
+                    @tool => %{
+                      "hide_until" => DateTime.add(at, -3600, :second) |> DateTime.to_iso8601()
+                    }
+                  }
+                }
+              })
+          },
+          nil,
+          at
+        )
 
       assert state.visible
       assert is_nil(state.expires_at)
@@ -256,16 +286,25 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetTest do
       anchor = DateTime.add(at, -3600, :second)
 
       state =
-        EffectiveToolset.state(@group, @tool, %{
-          "config" =>
-            scope_config(%{
-              @group => %{
-                "tools" => %{
-                  @tool => %{"enable_for_hours" => 24, "enabled_at" => DateTime.to_iso8601(anchor)}
+        EffectiveToolset.state(
+          @group,
+          @tool,
+          %{
+            "config" =>
+              scope_config(%{
+                @group => %{
+                  "tools" => %{
+                    @tool => %{
+                      "enable_for_hours" => 24,
+                      "enabled_at" => DateTime.to_iso8601(anchor)
+                    }
+                  }
                 }
-              }
-            })
-        }, nil, at)
+              })
+          },
+          nil,
+          at
+        )
 
       assert state.visible
       assert %DateTime{} = state.expires_at
@@ -277,16 +316,25 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetTest do
       anchor = DateTime.add(at, -48 * 3600, :second)
 
       state =
-        EffectiveToolset.state(@group, @tool, %{
-          "config" =>
-            scope_config(%{
-              @group => %{
-                "tools" => %{
-                  @tool => %{"enable_for_hours" => 24, "enabled_at" => DateTime.to_iso8601(anchor)}
+        EffectiveToolset.state(
+          @group,
+          @tool,
+          %{
+            "config" =>
+              scope_config(%{
+                @group => %{
+                  "tools" => %{
+                    @tool => %{
+                      "enable_for_hours" => 24,
+                      "enabled_at" => DateTime.to_iso8601(anchor)
+                    }
+                  }
                 }
-              }
-            })
-        }, nil, at)
+              })
+          },
+          nil,
+          at
+        )
 
       assert state.visible
       assert is_nil(state.expires_at)
@@ -297,16 +345,26 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetTest do
       anchor = DateTime.add(at, -3600, :second)
 
       state =
-        EffectiveToolset.state(@group, @tool, %{
-          "config" =>
-            scope_config(%{
-              @group => %{
-                "tools" => %{
-                  @tool => %{"disabled" => true, "enable_for_hours" => 24, "enabled_at" => DateTime.to_iso8601(anchor)}
+        EffectiveToolset.state(
+          @group,
+          @tool,
+          %{
+            "config" =>
+              scope_config(%{
+                @group => %{
+                  "tools" => %{
+                    @tool => %{
+                      "disabled" => true,
+                      "enable_for_hours" => 24,
+                      "enabled_at" => DateTime.to_iso8601(anchor)
+                    }
+                  }
                 }
-              }
-            })
-        }, nil, at)
+              })
+          },
+          nil,
+          at
+        )
 
       assert state.enabled
       assert %DateTime{} = state.expires_at
@@ -317,16 +375,26 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetTest do
       anchor = DateTime.add(at, -3600, :second)
 
       state =
-        EffectiveToolset.state(@group, @tool, %{
-          "config" =>
-            scope_config(%{
-              @group => %{
-                "tools" => %{
-                  @tool => %{"hidden" => true, "enable_for_hours" => 24, "enabled_at" => DateTime.to_iso8601(anchor)}
+        EffectiveToolset.state(
+          @group,
+          @tool,
+          %{
+            "config" =>
+              scope_config(%{
+                @group => %{
+                  "tools" => %{
+                    @tool => %{
+                      "hidden" => true,
+                      "enable_for_hours" => 24,
+                      "enabled_at" => DateTime.to_iso8601(anchor)
+                    }
+                  }
                 }
-              }
-            })
-        }, nil, at)
+              })
+          },
+          nil,
+          at
+        )
 
       assert state.visible
       assert state.enabled
@@ -337,35 +405,120 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetTest do
       anchor = DateTime.add(at, -48 * 3600, :second)
 
       state =
-        EffectiveToolset.state(@group, @tool, %{
-          "config" =>
-            scope_config(%{
-              @group => %{
-                "tools" => %{
-                  @tool => %{"disabled" => true, "enable_for_hours" => 24, "enabled_at" => DateTime.to_iso8601(anchor)}
+        EffectiveToolset.state(
+          @group,
+          @tool,
+          %{
+            "config" =>
+              scope_config(%{
+                @group => %{
+                  "tools" => %{
+                    @tool => %{
+                      "disabled" => true,
+                      "enable_for_hours" => 24,
+                      "enabled_at" => DateTime.to_iso8601(anchor)
+                    }
+                  }
                 }
-              }
-            })
-        }, nil, at)
+              })
+          },
+          nil,
+          at
+        )
 
       refute state.enabled
       assert is_nil(state.expires_at)
+    end
+
+    # Regression: the read path used to re-stamp a stored set_at anchor to
+    # "now" on EVERY read, so a set_at-era window (set_at + hours) never
+    # expired and permanently lifted disabled/hidden (fail-open leak).
+    test "set_at-era window past expiry is NOT re-anchored to now (stay disabled)" do
+      at = DateTime.utc_now()
+      stored_anchor = DateTime.add(at, -6, :hour) |> DateTime.to_iso8601()
+
+      state =
+        EffectiveToolset.state(
+          @group,
+          @tool,
+          %{
+            "config" =>
+              scope_config(%{
+                @group => %{
+                  "tools" => %{
+                    @tool => %{
+                      "disabled" => true,
+                      "enable_for_hours" => 2,
+                      "set_at" => stored_anchor
+                    }
+                  }
+                }
+              })
+          },
+          nil,
+          at
+        )
+
+      refute state.enabled
+      assert is_nil(state.expires_at)
+    end
+
+    test "live set_at-era window keeps its ORIGINAL anchor (expires = set_at + hours)" do
+      at = DateTime.utc_now()
+      stored_anchor = DateTime.add(at, -3600, :second)
+      anchor_iso = DateTime.to_iso8601(stored_anchor)
+
+      state =
+        EffectiveToolset.state(
+          @group,
+          @tool,
+          %{
+            "config" =>
+              scope_config(%{
+                @group => %{
+                  "tools" => %{
+                    @tool => %{
+                      "disabled" => true,
+                      "enable_for_hours" => 2,
+                      "set_at" => anchor_iso
+                    }
+                  }
+                }
+              })
+          },
+          nil,
+          at
+        )
+
+      assert state.enabled
+      # anchored at stored_anchor (1h ago) + 2h => ~1h from now; a re-stamped
+      # anchor would report the full 2h.
+      assert_in_delta DateTime.diff(state.expires_at, at) / 3600, 1, 0.1
     end
 
     test "hide_until suppresses listing but does not disable execution" do
       at = DateTime.utc_now()
 
       state =
-        EffectiveToolset.state(@group, @tool, %{
-          "config" =>
-            scope_config(%{
-              @group => %{
-                "tools" => %{
-                  @tool => %{"disabled" => false, "hide_until" => DateTime.add(at, 3600, :second) |> DateTime.to_iso8601()}
+        EffectiveToolset.state(
+          @group,
+          @tool,
+          %{
+            "config" =>
+              scope_config(%{
+                @group => %{
+                  "tools" => %{
+                    @tool => %{
+                      "disabled" => false,
+                      "hide_until" => DateTime.add(at, 3600, :second) |> DateTime.to_iso8601()
+                    }
+                  }
                 }
-              }
-            })
-        }, nil, at)
+              })
+          },
+          nil,
+          at
+        )
 
       refute state.visible
       assert state.enabled
@@ -381,7 +534,11 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetTest do
         scope_config(%{
           @group => %{
             "tools" => %{
-              @tool => %{"disabled" => true, "enable_for_hours" => 24, "enabled_at" => DateTime.to_iso8601(anchor)}
+              @tool => %{
+                "disabled" => true,
+                "enable_for_hours" => 24,
+                "enabled_at" => DateTime.to_iso8601(anchor)
+              }
             }
           }
         })
@@ -402,7 +559,12 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetTest do
 
   describe "hidden vs disabled through apply_state/apply_to_specs" do
     test "hidden tool stays in the resolved set but is flagged hidden for listings" do
-      scope = create_scope("acme", scope_config(%{@group => %{"tools" => %{@tool => %{"hidden" => true}}}}))
+      scope =
+        create_scope(
+          "acme",
+          scope_config(%{@group => %{"tools" => %{@tool => %{"hidden" => true}}}})
+        )
+
       states = EffectiveToolset.resolve(scope, nil, nil)
 
       # hidden ≠ removed from the state map (Session.Manifest reports it)
@@ -410,16 +572,27 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetTest do
 
       # ...and the listing spec keeps its identity but is flagged hidden
       # (MCP.Server.list_tools drops on spec.hidden)
-      kept = EffectiveToolset.apply_state(ticket_spec(@tool), EffectiveToolset.lookup(states, @tool))
+      kept =
+        EffectiveToolset.apply_state(ticket_spec(@tool), EffectiveToolset.lookup(states, @tool))
+
       refute is_nil(kept)
       assert kept.hidden
     end
 
     test "disabled tool is dropped from listings entirely" do
-      scope = create_scope("acme", scope_config(%{@group => %{"tools" => %{@tool => %{"disabled" => true}}}}))
+      scope =
+        create_scope(
+          "acme",
+          scope_config(%{@group => %{"tools" => %{@tool => %{"disabled" => true}}}})
+        )
+
       states = EffectiveToolset.resolve(scope, nil, nil)
 
-      assert EffectiveToolset.apply_state(ticket_spec(@tool), EffectiveToolset.lookup(states, @tool)) |> is_nil()
+      assert EffectiveToolset.apply_state(
+               ticket_spec(@tool),
+               EffectiveToolset.lookup(states, @tool)
+             )
+             |> is_nil()
     end
 
     test "default state is a no-op (registration-hidden specs keep their flag)" do
@@ -442,6 +615,7 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetTest do
 
     test "KeyToolsets.state honors scope config via ctx assigns (custom endpoint)" do
       create_scope("acme", scope_config(%{@group => %{"disabled" => true}}))
+
       ctx = %Ctx{
         server: NoizuPromptLingua.MCP,
         assigns: %{custom_scope_slug: "acme", auth_claims: %{}}
@@ -453,7 +627,11 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetTest do
     test "KeyToolsets.state_from_config is pure (no template layer)" do
       create_template(scope_config(%{@group => %{"disabled" => true}}))
 
-      assert KeyToolsets.state_from_config(scope_config(%{@group => %{"tools" => %{}}}), @group, @tool) ==
+      assert KeyToolsets.state_from_config(
+               scope_config(%{@group => %{"tools" => %{}}}),
+               @group,
+               @tool
+             ) ==
                %{disabled: false, hidden: false}
     end
   end

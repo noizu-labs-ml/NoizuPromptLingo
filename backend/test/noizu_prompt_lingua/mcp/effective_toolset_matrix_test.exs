@@ -24,34 +24,41 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetMatrixTest do
 
   # ── fixture matrix ──────────────────────────────────────────────────────────
 
+  # Keyed fixtures (fetch by key via scope/1) — never Enum.at/position.
   defp scopes do
     [
-      {"custom:flags",
-       %{
-         "groups" => %{
-           @group => %{
-             "tools" => %{
-               @tool_hidden => %{"hidden" => true},
-               @tool_plain => %{"disabled" => true}
+      flags:
+        {"custom:flags",
+         %{
+           "groups" => %{
+             @group => %{
+               "tools" => %{
+                 @tool_hidden => %{"hidden" => true},
+                 @tool_plain => %{"disabled" => true}
+               }
              }
            }
-         }
-       }, "custom"},
-      {"custom:group-disabled", %{"groups" => %{"chat" => %{"disabled" => true}, @group => %{}}}, "custom"},
-      {"custom:empty", %{"groups" => %{}}, "custom"},
-      {"all_in_one:empty", %{}, "all_in_one"},
-      {"all_in_one:confirmed-disable",
-       %{
-         "groups" => %{
-           hd(MCPServers.required_ids()) => %{
-             "disabled" => true,
-             "confirmed" => true,
-             "disabled_confirmed_at" => "2026-01-01T00:00:00Z"
+         }, "custom"},
+      group_disabled:
+        {"custom:group-disabled",
+         %{"groups" => %{"chat" => %{"disabled" => true}, @group => %{}}}, "custom"},
+      empty: {"custom:empty", %{"groups" => %{}}, "custom"},
+      all_in_one_empty: {"all_in_one:empty", %{}, "all_in_one"},
+      all_in_one_confirmed:
+        {"all_in_one:confirmed-disable",
+         %{
+           "groups" => %{
+             hd(MCPServers.required_ids()) => %{
+               "disabled" => true,
+               "confirmed" => true,
+               "disabled_confirmed_at" => "2026-01-01T00:00:00Z"
+             }
            }
-         }
-       }, "all_in_one"}
+         }, "all_in_one"}
     ]
   end
+
+  defp scope(key), do: Keyword.fetch!(scopes(), key)
 
   defp keys do
     [
@@ -84,7 +91,9 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetMatrixTest do
 
         gcfg["disabled"] == true ->
           # group absent — contributes zero specs
-          Enum.map(names, fn name -> {ToolNames.canonical(name), %{listed: false, callable: false}} end)
+          Enum.map(names, fn name ->
+            {ToolNames.canonical(name), %{listed: false, callable: false}}
+          end)
 
         true ->
           Enum.map(names, fn name ->
@@ -126,7 +135,7 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetMatrixTest do
 
   describe "old vs new snapshot matrix" do
     test "listing + execution decisions identical across scope kinds × key configs" do
-      for {scope_tag, cfg, kind} <- scopes(), {key_tag, key} <- keys() do
+      for {_key, {scope_tag, cfg, kind}} <- scopes(), {key_tag, key} <- keys() do
         legacy = legacy_decisions(cfg, kind, key)
         new = new_decisions(cfg, kind, key)
 
@@ -150,7 +159,7 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetMatrixTest do
 
   describe "I1 scope-only resolution" do
     test "hidden tool stays in the state map (invisible); disabled group dropped" do
-      {_, cfg, kind} = Enum.at(scopes(), 0)
+      {_, cfg, kind} = scope(:flags)
       states = EffectiveToolset.resolve(%{"config" => cfg, "kind" => kind}, nil, nil)
 
       hidden = EffectiveToolset.lookup(states, @tool_hidden)
@@ -164,8 +173,13 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetMatrixTest do
 
   describe "I2 keys never add tools or groups" do
     test "key-only group is ignored on a scoped endpoint" do
-      {_, cfg, kind} = Enum.at(scopes(), 2)
-      client = %{id: "k", kind: :api_key, toolset_config: %{"groups" => %{"sessions" => %{"disabled" => true}}}}
+      {_, cfg, kind} = scope(:empty)
+
+      client = %{
+        id: "k",
+        kind: :api_key,
+        toolset_config: %{"groups" => %{"sessions" => %{"disabled" => true}}}
+      }
 
       states = EffectiveToolset.resolve(%{"config" => cfg, "kind" => kind}, client, nil)
       assert states == %{}
@@ -174,7 +188,7 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetMatrixTest do
 
   describe "I3 key disabled blocks execution" do
     test "key-disabled tool resolves enabled: false" do
-      {_, cfg, kind} = Enum.at(scopes(), 0)
+      {_, cfg, kind} = scope(:flags)
 
       key = %{"groups" => %{@group => %{"tools" => %{@tool_plain => %{"disabled" => true}}}}}
 
@@ -191,7 +205,7 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetMatrixTest do
 
   describe "I4 hidden-only remains callable" do
     test "visible false, enabled true" do
-      {_, cfg, kind} = Enum.at(scopes(), 0)
+      {_, cfg, kind} = scope(:flags)
       states = EffectiveToolset.resolve(%{"config" => cfg, "kind" => kind}, nil, nil)
 
       hidden = EffectiveToolset.lookup(states, @tool_hidden)
@@ -202,10 +216,16 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetMatrixTest do
 
   describe "I5 OAuth-only (nil client) = scope-only state" do
     test "nil client == client with empty config" do
-      {_, cfg, kind} = Enum.at(scopes(), 0)
+      {_, cfg, kind} = scope(:flags)
 
       a = EffectiveToolset.resolve(%{"config" => cfg, "kind" => kind}, nil, nil)
-      b = EffectiveToolset.resolve(%{"config" => cfg, "kind" => kind}, %{id: "k", kind: :api_key, toolset_config: nil}, nil)
+
+      b =
+        EffectiveToolset.resolve(
+          %{"config" => cfg, "kind" => kind},
+          %{id: "k", kind: :api_key, toolset_config: nil},
+          nil
+        )
 
       assert a == b
     end
@@ -238,7 +258,10 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetMatrixTest do
           toolset_config: %{"groups" => %{@group => %{"disabled" => true}}}
         )
 
-      ctx = %Ctx{server: NoizuPromptLingua.MCP, assigns: %{auth_claims: %{"api_key_id" => key.id}}}
+      ctx = %Ctx{
+        server: NoizuPromptLingua.MCP,
+        assigns: %{auth_claims: %{"api_key_id" => key.id}}
+      }
 
       discovery_spec =
         NoizuPromptLingua.Domains.Tickets.MCP.__mcp__(:tools)
@@ -300,15 +323,24 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetMatrixTest do
 
   describe "I10 template isolation" do
     test "template flags never reach custom clones, root listings, or state/5" do
-      create_scope("tobor", %{"groups" => %{@group => %{"disabled" => true, "hidden" => true}}})
+      create_scope(MCPCustomScopes.default_package_slug(), %{
+        "groups" => %{@group => %{"disabled" => true, "hidden" => true}}
+      })
 
       # clone with NO flags — template must not bleed in
       clone = create_scope("clone-acme", %{"groups" => %{@group => %{"tools" => %{}}}})
       clone_states = EffectiveToolset.resolve(clone, nil, nil)
-      assert EffectiveToolset.lookup(clone_states, @tool_plain) == EffectiveToolset.default_state()
+
+      assert EffectiveToolset.lookup(clone_states, @tool_plain) ==
+               EffectiveToolset.default_state()
 
       # root/static universe: client groups only
-      client = %{id: "k", kind: :api_key, toolset_config: %{"groups" => %{"chat" => %{"tools" => %{}}}}}
+      client = %{
+        id: "k",
+        kind: :api_key,
+        toolset_config: %{"groups" => %{"chat" => %{"tools" => %{}}}}
+      }
+
       root_states = EffectiveToolset.resolve(nil, client, nil)
 
       for name <- Map.keys(root_states) do
@@ -317,7 +349,8 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetMatrixTest do
       end
 
       # ToolGuard hot path: nil scope + nil client => ungated regardless of template
-      assert EffectiveToolset.state(@group, @tool_plain, nil, nil) == EffectiveToolset.default_state()
+      assert EffectiveToolset.state(@group, @tool_plain, nil, nil) ==
+               EffectiveToolset.default_state()
     end
   end
 

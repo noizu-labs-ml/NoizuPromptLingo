@@ -73,6 +73,7 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
 
   alias Noizu.MCP.Server.Features.Tools
   alias NoizuPromptLingua.MCP.ToolsetCache
+  alias NoizuPromptLingua.MCP.ToolsetConfig
   alias NoizuPromptLingua.Acl
   alias NoizuPromptLingua.MCP.Window
   alias NoizuPromptLingua.MCPApiKeys
@@ -168,7 +169,13 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
 
   def state(group_id, tool_name, scope, client, at)
       when is_binary(group_id) and is_binary(tool_name) do
-    resolve_state(group_id, tool_name, scope_config(scope), normalize_config(client_config(client)), at)
+    resolve_state(
+      group_id,
+      tool_name,
+      scope_config(scope),
+      normalize_config(client_config(client)),
+      at
+    )
   end
 
   def state(nil, _tool_name, _scope, _client, _at), do: @default_state
@@ -184,8 +191,23 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
 
   def state(group_id, tool_name, scope, client, user_ref, at)
       when is_binary(group_id) and is_binary(tool_name) do
-    resolve_state(group_id, tool_name, scope_config(scope), normalize_config(client_config(client)), at)
-    |> apply_acl_tool(scope, at, user_ref, tool_name)
+    ts =
+      resolve_state(
+        group_id,
+        tool_name,
+        scope_config(scope),
+        normalize_config(client_config(client)),
+        at
+      )
+
+    case acl_subject(user_ref) do
+      nil ->
+        ts
+
+      subject ->
+        # Invariant across the single-tool call: resolve the scope verdict once.
+        acl_pass(ts, scope_verdict(subject, scope, opts(at)), subject, at, tool_name)
+    end
   end
 
   def state(nil, _tool_name, _scope, _client, _user_ref, _at), do: @default_state
@@ -232,44 +254,24 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
   defp layer_entries(_, _, _), do: nil
 
   defp build_state(entries, at) do
-    disabled = flag(entries, "disabled")
-    hidden = flag(entries, "hidden")
-    name_override = flag(entries, "name_override")
-    description_override = flag(entries, "description_override")
-
+    # Merge-overwrite precedence (reverse puts the most-specific layer last, so
+    # its keys win): identical to a first-layer-carrying-key-wins reduce,
+    # including present-but-nil and explicit-false opinions.
     merged =
       entries
       |> Enum.reverse()
       |> Enum.reduce(%{}, fn {group, tool}, acc -> acc |> Map.merge(group) |> Map.merge(tool) end)
 
-    {window_visible, expires_at} = Window.evaluate(merged, at)
-
-    # F3 enforcement wiring: a LIVE enable_for_hours window LIFTS BOTH static
-    # flags (disabled + hidden) while active; expired windows are no-ops
-    # (evaluate degrades to {true, nil} and lifting? to false).
-    lifted? = Window.lifting?(merged, at)
-
-    base_visible = hidden != true
+    # One parse yields visibility, expiry, AND the flag lift (F3).
+    {window_visible, expires_at, lifted?} = Window.state(merged, at)
 
     %{
-      enabled: lifted? or disabled != true,
-      visible: lifted? or (base_visible and window_visible),
-      name_override: string_or_nil(name_override),
-      description_override: string_or_nil(description_override),
+      enabled: lifted? or Map.get(merged, "disabled") != true,
+      visible: lifted? or (Map.get(merged, "hidden") != true and window_visible),
+      name_override: string_or_nil(merged["name_override"]),
+      description_override: string_or_nil(merged["description_override"]),
       expires_at: expires_at
     }
-  end
-
-  # First layer carrying the key wins; a present-but-false value IS an opinion
-  # (so reduce_while, not find_value — find_value would skip explicit `false`).
-  defp flag(entries, key) do
-    Enum.reduce_while(entries, nil, fn {group, tool}, _acc ->
-      cond do
-        Map.has_key?(tool, key) -> {:halt, tool[key]}
-        Map.has_key?(group, key) -> {:halt, group[key]}
-        true -> {:cont, nil}
-      end
-    end)
   end
 
   # Spec §2.7: string values only; empty string is absent.
@@ -298,6 +300,8 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
 
   # Final override pass over resolved states: deny hides + disables; allow and
   # no-match (`default: :allow`) are no-ops. nil user => identity (legacy).
+  # The invariant scope verdict is resolved ONCE per listing/call and threaded
+  # in — never re-resolved per tool.
   defp apply_acl(states, _scope, _at, nil), do: states
 
   defp apply_acl(states, scope, at, user_ref) do
@@ -306,45 +310,30 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
         states
 
       subject ->
-        if match?({:deny, _}, scope_verdict(subject, scope, opts(at))) do
-          Map.new(states, fn {name, st} -> {name, %{st | enabled: false, visible: false}} end)
-        else
-          Map.new(states, fn
-            # Already blocked by the cascade — nothing an ACL pass could add.
-            {name, %{enabled: false} = st} ->
-              {name, st}
+        scope_verdict = scope_verdict(subject, scope, opts(at))
 
-            {name, st} ->
-              {name, apply_acl_tool(st, subject, at, name)}
-          end)
-        end
+        Map.new(states, fn {name, st} ->
+          {name, acl_pass(st, scope_verdict, subject, at, name)}
+        end)
     end
   end
 
-  # Single-tool ACL override (hot path). 4-arity: scope verdict already
-  # resolved (map pass); 5-arity entry resolves it (state/6).
-  defp apply_acl_tool(%{enabled: false} = ts, _subject, _at, _tool_name), do: ts
+  # Single-tool override pass, shared by the map path (apply_acl) and the hot
+  # paths (state/6, apply_to_specs): nil subject / already-blocked tool are
+  # no-ops, a denied SCOPE ref blocks everything, a denied TOOL ref hides +
+  # disables. Both denials produce the same terminal state, so the two legacy
+  # implementations collapse onto this one clause list.
+  defp acl_pass(ts, _scope_verdict, nil, _at, _tool_name), do: ts
 
-  defp apply_acl_tool(ts, subject, at, tool_name) do
+  defp acl_pass(%{enabled: false} = ts, _scope_verdict, _subject, _at, _tool_name), do: ts
+
+  defp acl_pass(ts, {:deny, _}, _subject, _at, _tool_name),
+    do: %{ts | enabled: false, visible: false}
+
+  defp acl_pass(ts, _scope_verdict, subject, at, tool_name) do
     case Acl.resolve(subject, @acl_action, tool_resource(tool_name), opts(at)) do
       {:deny, _} -> %{ts | enabled: false, visible: false}
       _ -> ts
-    end
-  end
-
-  defp apply_acl_tool(ts, _scope, _at, nil, _tool_name), do: ts
-
-  defp apply_acl_tool(ts, scope, at, user_ref, tool_name) do
-    case acl_subject(user_ref) do
-      nil ->
-        ts
-
-      subject ->
-        if match?({:deny, _}, scope_verdict(subject, scope, opts(at))) do
-          %{ts | enabled: false, visible: false}
-        else
-          apply_acl_tool(ts, subject, at, tool_name)
-        end
     end
   end
 
@@ -425,7 +414,7 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
   Discovery/NPL categories are never gated. `group_id` pins the owning group
   when the caller knows it. Configs are loaded ONCE per listing, never per
   spec — the per-spec body is a pure map lookup (perf gate: no per-tool config
-  DB reads); only the per-tool ACL denies resolve per spec.
+  DB reads); ACL resolves once for the scope verdict + once per tool deny.
   """
   def apply_to_specs(specs, ctx, group_id \\ nil) when is_list(specs) do
     client = client_for_ctx(ctx)
@@ -438,15 +427,23 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
       scope_cfg = scope_config(scope)
       client_cfg = normalize_config(client_config(client))
       now = DateTime.utc_now()
+      subject = acl_subject(user_ref)
+
+      # Invariant across the listing: resolve the scope-wide verdict ONCE, not
+      # per spec (the map path apply_acl already did; the listing path now
+      # matches).
+      scope_verdict = if subject, do: scope_verdict(subject, scope, opts(now)), else: nil
 
       Enum.reject(specs, fn spec ->
         if ungated_category?(spec) do
           false
         else
           gid = group_id || MCPServers.group_id_for_tool_module(spec.module)
+
           ts =
             resolve_state(gid, spec.definition.name, scope_cfg, client_cfg, now)
-            |> apply_acl_tool(scope, now, user_ref, spec.definition.name)
+            |> acl_pass(scope_verdict, subject, now, spec.definition.name)
+
           not ts.visible or not ts.enabled
         end
       end)
@@ -458,10 +455,12 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
   # flags via Catalog).
   @ungated_categories ["Discovery", "NPL"]
 
-  def ungated_category?(spec) do
-    category = spec.definition && spec.definition.meta && spec.definition.meta["category"]
-    category in @ungated_categories
-  end
+  def ungated_category?(spec), do: category(spec) in @ungated_categories
+
+  # Nil-guarded category read (spec.definition may be absent on synthetic
+  # specs); shared by ungated_category?/1 and discovery_category?/1.
+  defp category(spec),
+    do: spec.definition && spec.definition.meta && spec.definition.meta["category"]
 
   # ── ctx plumbing ───────────────────────────────────────────────────────────
 
@@ -617,22 +616,11 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
     end
   end
 
-  @name_override_max 128
-  @description_override_max 1024
-
-  # Spec §2.7: string values only, empty string absent, caps enforced.
-  defp override_value(map, key, overrides) do
-    case Map.get(overrides, key) do
-      value when is_binary(value) and value != "" ->
-        Map.put(map, key, String.slice(value, 0, override_cap(key)))
-
-      _ ->
-        map
-    end
-  end
-
-  defp override_cap("description_override"), do: @description_override_max
-  defp override_cap(_), do: @name_override_max
+  # Spec §2.7: string values only, empty string absent, caps enforced —
+  # the shared policy lives in NoizuPromptLingua.MCP.ToolsetConfig (the write
+  # path in MCPCustomScopes applies the same rule).
+  defp override_value(map, key, overrides),
+    do: ToolsetConfig.carry_override(map, key, Map.get(overrides, key))
 
   # ── config layer readers ──────────────────────────────────────────────────
 
@@ -642,6 +630,14 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
   # (never the raw stored config) so the all_in_one required-core mutations —
   # force-enable of unconfirmed disables, confirmed-disable honoring — apply on
   # read, matching MCP.Custom's universe expansion which normalizes the same way.
+  #
+  # Hot path: this runs per tool invocation (state/5, state/6, resolve/4), but
+  # normalization walks server modules (MCPServers.server_module → __mcp__ →
+  # Tools.expand), so the projection is memoized in ToolsetCache keyed
+  # {:scope_cfg, id, kind}. Invalidation: every scope write (create/update/
+  # delete) fires ToolsetCache.bump/0 (MCPCustomScopes.bump_cache_on_ok), and
+  # the 45s TTL backstops out-of-band writes. Read-path anchor preservation
+  # (preserve_anchors) is baked into the cached projection.
   defp scope_config(scope) do
     config =
       case scope do
@@ -657,12 +653,41 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
         _ -> "custom"
       end
 
-    MCPCustomScopes.normalize_config(if(is_map(config), do: config, else: %{}), kind)
+    case scope_cache_id(scope) do
+      # No stable id (ad-hoc map/test fixture) — normalize fresh, no caching.
+      nil ->
+        normalize_scope_config(config, kind)
+
+      id ->
+        ToolsetCache.fetch(:scope_cfg, {id, kind}, fn -> normalize_scope_config(config, kind) end)
+    end
+  end
+
+  defp normalize_scope_config(config, kind) do
+    MCPCustomScopes.normalize_config(if(is_map(config), do: config, else: %{}), kind,
+      preserve_anchors: true
+    )
   rescue
     e ->
-      Logger.warning("[EffectiveToolset] scope config normalization failed: #{Exception.message(e)}")
+      # Fail-open default (inverted semantics): an unusable config means
+      # everything default-enabled. Kept, but observable — the previous
+      # warn-and-forget hid this from dashboards/alerts.
+      Logger.warning(
+        "[EffectiveToolset] scope config normalization failed: #{Exception.message(e)}"
+      )
+
+      :telemetry.execute(
+        [:noizu_prompt_lingua, :toolset, :config_error],
+        %{count: 1},
+        %{kind: kind, error: Exception.message(e)}
+      )
+
       %{"groups" => %{}}
   end
+
+  defp scope_cache_id(%{id: id}) when is_binary(id), do: id
+  defp scope_cache_id(%{"id" => id}) when is_binary(id), do: id
+  defp scope_cache_id(_), do: nil
 
   defp client_config(nil), do: nil
   defp client_config(%{toolset_config: config}), do: config
@@ -728,14 +753,15 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
 
   defp tool_names(group_id, configs) do
     from_module =
-      with module when is_atom(module) and not is_nil(module) <- MCPServers.server_module(group_id),
+      with module when is_atom(module) and not is_nil(module) <-
+             MCPServers.server_module(group_id),
            true <- Code.ensure_loaded?(module),
            true <- function_exported?(module, :__mcp__, 1) do
         module.__mcp__(:tools)
         |> Tools.expand()
         # Discovery tools are registered server-wide (browsing plane), never
         # part of a group's include set — same rejection as MCP.Custom.custom_specs.
-        |> Enum.reject(&(discovery_category?(&1)))
+        |> Enum.reject(&discovery_category?(&1))
         |> Enum.map(& &1.definition.name)
       else
         _ -> []
@@ -751,7 +777,5 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
     Enum.uniq(from_module ++ from_config)
   end
 
-  defp discovery_category?(spec) do
-    spec.definition.meta && spec.definition.meta["category"] == "Discovery"
-  end
+  defp discovery_category?(spec), do: category(spec) == "Discovery"
 end
