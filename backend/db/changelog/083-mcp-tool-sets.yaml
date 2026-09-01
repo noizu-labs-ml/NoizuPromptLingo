@@ -1,0 +1,49 @@
+databaseChangeLog:
+  # MCP tool sets (PRD-N2 FR-2A-1): NPL-owned durable storage for named tool
+  # sets — the N2a sibling of mcp_custom_scopes. One org-wide slug namespace
+  # across all audience shapes (org-set / project-set / group-set — R4), a
+  # closed-vocabulary `config` jsonb (validated in the app layer), and a
+  # whitelisted `settings` jsonb. Rows start empty in prod until N3 serves
+  # sets; profiles are virtual (code-only, never rows).
+  #
+  # FK targets verified: organizations, projects, groups (authz — table name
+  # confirmed from schema/authz/group.ex:6). Style follows 070a: raw SQL +
+  # tableExists guard so a manually pre-applied table MARK_RANs.
+  - changeSet:
+      id: 083a-create-mcp-tool-sets
+      author: tobor-locker
+      preConditions:
+        - onFail: MARK_RAN
+        - onFailMessage: mcp_tool_sets already exists (prior apply)
+        - not:
+            tableExists:
+              tableName: mcp_tool_sets
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE mcp_tool_sets (
+                id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                organization_id uuid NOT NULL REFERENCES organizations (id) ON DELETE CASCADE,
+                project_id uuid REFERENCES projects (id) ON DELETE CASCADE,
+                group_id uuid REFERENCES groups (id) ON DELETE CASCADE,
+                slug varchar(64) NOT NULL,
+                display_name varchar(200),
+                description text,
+                source varchar(20) NOT NULL DEFAULT 'custom' CHECK (source IN ('custom', 'clone')),
+                source_profile varchar(64),
+                config jsonb NOT NULL DEFAULT '{}'::jsonb,
+                settings jsonb NOT NULL DEFAULT '{}'::jsonb,
+                expires_at timestamptz,
+                is_active boolean NOT NULL DEFAULT true,
+                inserted_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now()
+              );
+              ALTER TABLE mcp_tool_sets
+                ADD CONSTRAINT mcp_tool_sets_org_slug_key UNIQUE (organization_id, slug);
+              CREATE INDEX mcp_tool_sets_org_idx ON mcp_tool_sets (organization_id);
+              CREATE INDEX mcp_tool_sets_proj_idx ON mcp_tool_sets (project_id);
+              CREATE INDEX mcp_tool_sets_group_idx ON mcp_tool_sets (group_id);
+      rollback:
+        - sql:
+            sql: |
+              DROP TABLE IF EXISTS mcp_tool_sets;

@@ -250,3 +250,6 @@ databaseChangeLog:
   - include:
       file: 082-org-slug-uniqueness.yaml
       relativeToChangelogFile: true
+  - include:
+      file: 083-mcp-tool-sets.yaml
+      relativeToChangelogFile: true
