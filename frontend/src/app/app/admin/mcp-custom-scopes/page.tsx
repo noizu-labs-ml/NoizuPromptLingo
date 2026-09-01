@@ -29,10 +29,11 @@ import {
   fetchScopeClients,
   removeAclGroupMember,
   saveClientPermissions,
-  type AclGroup,
+  type AclGroupWire,
   type ClientPermissions,
   type ScopeClient,
 } from '@/lib/acl-api';
+import { wireGroupHasMember } from '@/lib/acl-convert';
 import McpEndpointSetupPopunder from '@/components/mcp-endpoint-setup-popunder';
 import { ToolOverrideFields } from '@/components/kit/tool-overrides-editor';
 import {
@@ -157,7 +158,7 @@ function AdminMcpCustomScopesInner() {
   const [clientPerms, setClientPerms] = useState<ClientPermissions | null>(null);
   const [clientPermsLoading, setClientPermsLoading] = useState(false);
   const [clientSaving, setClientSaving] = useState(false);
-  const [aclGroups, setAclGroups] = useState<AclGroup[]>([]);
+  const [aclGroups, setAclGroups] = useState<AclGroupWire[]>([]);
   const [tempTool, setTempTool] = useState('');
   const [newGroupName, setNewGroupName] = useState('');
   const [setupScope, setSetupScope] = useState<McpCustomScope | null>(null);
@@ -563,7 +564,7 @@ function AdminMcpCustomScopesInner() {
   const currentPermissionGroups = useMemo(() => {
     if (!selectedClient) return [];
     const refString = clientAclRefString(selectedClient.kind, selectedClient.id);
-    return aclGroups.filter((g) => g.members.some((m) => m.ref_string === refString)).map((g) => g.name);
+    return aclGroups.filter((g) => wireGroupHasMember(g, refString)).map((g) => g.name);
   }, [aclGroups, selectedClient]);
 
   function assignPermissionGroup(name: string) {
