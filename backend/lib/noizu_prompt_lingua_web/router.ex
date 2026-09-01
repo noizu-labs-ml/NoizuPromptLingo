@@ -462,6 +462,21 @@ defmodule NoizuPromptLinguaWeb.Router do
     resources "/members", MembershipController, only: [:index, :show, :create, :update, :delete]
   end
 
+  # N4a: MCP tool-set admin (PRD-N4 §4.1) — built-in profiles (read-only, R1)
+  # next to the org's own sets; create/update/deactivate/clone through
+  # MCP.ToolSets. Org-admin gated; serving gateway lands at N3.
+  # N4b: `POST .../tool-sets/validate` (Validator.compile/3 dry-run) lands with
+  # the PRD-3 gate — see the seam marker in ToolSetProfilesController.
+  scope "/api/v1/organizations/:org_id", NoizuPromptLinguaWeb do
+    pipe_through [:api, :authenticated, :org_admin]
+    post "/tool-sets/clone", ToolSetProfilesController, :clone
+    get "/tool-sets", ToolSetProfilesController, :index
+    post "/tool-sets", ToolSetProfilesController, :create
+    get "/tool-sets/:slug", ToolSetProfilesController, :show
+    patch "/tool-sets/:slug", ToolSetProfilesController, :update
+    post "/tool-sets/:slug/deactivate", ToolSetProfilesController, :deactivate
+  end
+
   # Browser feature: controller-connected status + captured screenshots/videos.
   scope "/api/v1/organizations/:org_id", NoizuPromptLinguaWeb do
     pipe_through [:api, :authenticated, :org_viewer]
@@ -533,8 +548,14 @@ defmodule NoizuPromptLinguaWeb.Router do
     # D3: per-scope client permissions — client universe + per-client
     # toolset_config jsonb (F2 EffectiveToolset cascade layer 3).
     get "/mcp-custom-scopes/:slug/clients", AdminController, :list_scope_clients
-    get "/mcp-custom-scopes/:slug/clients/:kind/:id/toolset_config", AdminController, :show_client_toolset_config
-    put "/mcp-custom-scopes/:slug/clients/:kind/:id/toolset_config", AdminController, :update_client_toolset_config
+
+    get "/mcp-custom-scopes/:slug/clients/:kind/:id/toolset_config",
+        AdminController,
+        :show_client_toolset_config
+
+    put "/mcp-custom-scopes/:slug/clients/:kind/:id/toolset_config",
+        AdminController,
+        :update_client_toolset_config
 
     # D3: ACL group admin (F1 NoizuPromptLingua.Acl context) — group CRUD +
     # membership. DELETE groups is a soft archive; member refs are ERP refs

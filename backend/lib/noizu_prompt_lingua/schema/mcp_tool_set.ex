@@ -39,10 +39,10 @@ defmodule NoizuPromptLingua.Schema.MCPToolSet do
   @arg_keys ~w(enum_remove hide rename default description)
 
   # Settings whitelist (FR-2A-5) governs CLIENT-supplied keys. `cloned_from`
-  # (clone provenance, open question 4) and `updated_by` (in-row audit stamp)
-  # are RESERVED SYSTEM keys — written only by the MCP.ToolSets context, not
-  # validated here.
-  @settings_system_keys ~w(cloned_from updated_by)
+  # (clone provenance, open question 4), `updated_by` (in-row audit stamp) and
+  # `_audit` (bounded mutation trail, PRD-N4 §4.1) are RESERVED SYSTEM keys —
+  # written only by the MCP.ToolSets context / admin controller, not validated.
+  @settings_system_keys ~w(cloned_from updated_by _audit)
   @settings_keys ~w(allow_api_keys description_verbosity instructions)
   @verbosity ~w(full concise minimal)
 
