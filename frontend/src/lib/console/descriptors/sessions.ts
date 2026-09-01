@@ -26,7 +26,9 @@ export const sessionsDescriptor: ConsoleDescriptor<Session, SessionInput> = {
     { key: 'search', label: 'Search', type: 'search' },
     { key: 'status', label: 'Status', type: 'facet', options: STATUSES },
     { key: 'projectId', label: 'Project', type: 'facet', dynamic: true },
+    { key: 'updated_at', label: 'Updated', type: 'daterange' },
   ],
+  defaultSort: { key: 'updated_at', dir: 'desc' },
   detail: {
     sections: [
       {

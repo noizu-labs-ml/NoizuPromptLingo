@@ -36,6 +36,7 @@ export const boardsDescriptor: ConsoleDescriptor<Board, BoardInput> = {
       ],
     },
   ],
+  defaultSort: { key: 'name', dir: 'asc' },
   detail: {
     sections: [
       {

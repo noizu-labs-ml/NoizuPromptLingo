@@ -24,7 +24,11 @@ export const personasDescriptor: ConsoleDescriptor<Persona, PersonaInput> = {
     { key: 'tags', label: 'Tags', render: tagsLabel },
     { key: 'updated_at', label: 'Updated', sortable: true, align: 'right', render: 'relativeDate' },
   ],
-  filters: [{ key: 'search', label: 'Search', type: 'search' }],
+  filters: [
+    { key: 'search', label: 'Search', type: 'search' },
+    { key: 'updated_at', label: 'Updated', type: 'daterange' },
+  ],
+  defaultSort: { key: 'updated_at', dir: 'desc' },
   detail: {
     sections: [
       {

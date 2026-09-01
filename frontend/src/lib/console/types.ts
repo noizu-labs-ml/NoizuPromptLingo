@@ -65,7 +65,7 @@ export interface FacetOption {
 export interface FilterDef {
   key: string;
   label: string;
-  type: 'search' | 'facet';
+  type: 'search' | 'facet' | 'daterange';
   /** Static facet options. Omit when the options are resolved dynamically (see `dynamic`). */
   options?: FacetOption[];
   /** Marks a facet whose options the primitive must resolve at runtime (e.g. projects). */
@@ -76,6 +76,10 @@ export interface FilterDef {
    * BE must accept the array param for the key.
    */
   multi?: boolean;
+  // `type: 'daterange'`: `key` names the ROW FIELD (timestamp column) the from/to
+  // inputs filter on — NOT an api.list param. Inclusive on both ends; rows with a
+  // missing/unparseable value drop out while a bound is set. Client-side over the
+  // fetched set, same as search/sort/pagination (console scale, deterministic).
 }
 
 export type FieldType =
@@ -216,6 +220,11 @@ export interface ConsoleDescriptor<T = Record<string, unknown>, TInput = Partial
   idKey?: string;
   columns: ColumnDef<T>[];
   filters?: FilterDef[];
+  /**
+   * Ordering applied until the user clicks a column header (usually the timestamp
+   * column, newest-first). Omit = backend order, as before.
+   */
+  defaultSort?: { key: string; dir?: 'asc' | 'desc' };
   detail: { sections: DetailSection<T>[]; related?: RelatedCollection[] };
   edit: { sections: EditSection[] };
   actions?: DescriptorActions<T>;

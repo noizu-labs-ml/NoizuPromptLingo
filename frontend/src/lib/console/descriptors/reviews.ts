@@ -21,7 +21,11 @@ export const reviewsDescriptor: ConsoleDescriptor<Review, Partial<Review>> = {
     { key: 'verdict', label: 'Verdict', render: (r) => r.verdict ?? '—' },
     { key: 'updated_at', label: 'Updated', sortable: true, align: 'right', render: 'relativeDate' },
   ],
-  filters: [{ key: 'search', label: 'Search', type: 'search' }],
+  filters: [
+    { key: 'search', label: 'Search', type: 'search' },
+    { key: 'updated_at', label: 'Updated', type: 'daterange' },
+  ],
+  defaultSort: { key: 'updated_at', dir: 'desc' },
   detail: {
     sections: [
       {

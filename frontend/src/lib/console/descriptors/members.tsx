@@ -92,7 +92,9 @@ export const membersDescriptor: ConsoleDescriptor<OrgMember, Partial<OrgMember>>
     { key: 'search', label: 'Search', type: 'search' },
     // Multi-select -> ?role[]=admin&role[]=lead (ANY, OR-within) via diego's FacetMultiSelect + buildQuery.
     { key: 'role', label: 'Role', type: 'facet', multi: true, options: ROLE_OPTIONS },
+    { key: 'joined_at', label: 'Joined', type: 'daterange' },
   ],
+  defaultSort: { key: 'joined_at', dir: 'desc' },
   detail: {
     sections: [
       {

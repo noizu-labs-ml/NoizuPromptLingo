@@ -23,6 +23,41 @@ import { renderField } from '@/lib/console/render-hints';
 
 type Row = Record<string, unknown>;
 
+/** ISO-ish timestamp (2026-09-01T… or 2026-09-01) — the only shape we date-sort. */
+const DATE_LIKE = /^\d{4}-\d{2}-\d{2}/;
+
+function compareCells(a: unknown, b: unknown, dir: number): number {
+  if (a == null) return 1;
+  if (b == null) return -1;
+  if (typeof a === 'number' && typeof b === 'number') return (a - b) * dir;
+  const as = String(a);
+  const bs = String(b);
+  // ISO-8601 timestamps: compare as instants, not strings (mixed offsets/fractions).
+  if (DATE_LIKE.test(as) && DATE_LIKE.test(bs)) {
+    const at = Date.parse(as);
+    const bt = Date.parse(bs);
+    if (!Number.isNaN(at) && !Number.isNaN(bt)) return (at - bt) * dir;
+  }
+  return as.localeCompare(bs) * dir;
+}
+
+/** From/to ('YYYY-MM-DD') bounds for a daterange filter; '' = unbounded. */
+type DateRange = { from: string; to: string };
+
+const EMPTY_RANGE: DateRange = { from: '', to: '' };
+const URL_SYNC_DEBOUNCE_MS = 250;
+
+/**
+ * Initial view state from the URL query string (shareable list views). Lazy
+ * initializers run client-side only in practice — every DataTable consumer gates on
+ * the org loading spinner, so the SSR pass never renders the table — with a
+ * typeof-window guard as the hard fallback.
+ */
+function urlParams(): URLSearchParams {
+  if (typeof window === 'undefined') return new URLSearchParams();
+  return new URLSearchParams(window.location.search);
+}
+
 export interface DataTableProps<T, TInput> {
   descriptor: ConsoleDescriptor<T, TInput>;
   ctx: ConsoleContext;
@@ -72,19 +107,84 @@ export function DataTable<T, TInput>({
   density = 'comfortable',
   pageSize = 25,
 }: DataTableProps<T, TInput>) {
-  const { columns, filters, labels, idKey = 'id', actions } = descriptor;
+  const { columns, filters, labels, idKey = 'id', actions, defaultSort } = descriptor;
+
+  // Shareable views: seed search/sort/range/facets/page from the URL query string.
+  const initialParams = useRef<URLSearchParams | null>(null);
+  if (initialParams.current === null && !embedded) initialParams.current = urlParams();
+  const initial = initialParams.current;
+  const initialFacets = useMemo(() => {
+    const vals: Record<string, string | string[]> = {};
+    if (!initial) return vals;
+    for (const f of filters ?? []) {
+      if (f.type !== 'facet') continue;
+      const multi = initial.getAll(`${f.key}[]`);
+      if (multi.length > 0) vals[f.key] = multi;
+      else {
+        const single = initial.get(f.key);
+        if (single) vals[f.key] = single;
+      }
+    }
+    return vals;
+  }, [filters, initial]);
+  const initNum = (key: string) => {
+    const n = Number(initial?.get(key));
+    return Number.isFinite(n) && n !== 0 ? n : null;
+  };
 
   const [rows, setRows] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(() => initial?.get('q') ?? '');
   // Facet value is a string (single-select) or string[] (multi-select).
-  const [facets, setFacets] = useState<Record<string, string | string[]>>({});
-  const [sortKey, setSortKey] = useState<string | null>(null);
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
-  const [page, setPage] = useState(0);
+  const [facets, setFacets] = useState<Record<string, string | string[]>>(initialFacets);
+  const [range, setRange] = useState<DateRange>(() => ({
+    from: initial?.get('from') ?? '',
+    to: initial?.get('to') ?? '',
+  }));
+  const [sortKey, setSortKey] = useState<string | null>(
+    () => initial?.get('sort') ?? defaultSort?.key ?? null,
+  );
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>(() => {
+    const d = initial?.get('dir');
+    if (d === 'asc' || d === 'desc') return d;
+    return defaultSort?.dir ?? 'asc';
+  });
+  const [page, setPage] = useState(() => Math.max(0, (initNum('page') ?? 1) - 1));
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [activeRow, setActiveRow] = useState(0);
+
+  // The daterange filter's row field (timestamp column), if the descriptor declares one.
+  const dateKey = useMemo(
+    () => filters?.find((f) => f.type === 'daterange')?.key ?? null,
+    [filters],
+  );
+
+  // URL sync — write the view state back to the query string (replaceState, no
+  // history spam; debounced so typing doesn't thrash). Embedded mini-tables are
+  // fixed-scope and don't sync.
+  useEffect(() => {
+    if (embedded || typeof window === 'undefined') return;
+    const t = setTimeout(() => {
+      const sp = new URLSearchParams();
+      if (query.trim()) sp.set('q', query.trim());
+      if (sortKey) {
+        sp.set('sort', sortKey);
+        sp.set('dir', sortDir);
+      }
+      if (range.from) sp.set('from', range.from);
+      if (range.to) sp.set('to', range.to);
+      for (const [k, v] of Object.entries(facets)) {
+        if (Array.isArray(v)) {
+          if (v.length > 0) for (const val of v) sp.append(`${k}[]`, val);
+        } else if (v) sp.set(k, v);
+      }
+      if (page > 0) sp.set('page', String(page + 1));
+      const qs = sp.toString();
+      window.history.replaceState(null, '', `${window.location.pathname}${qs ? `?${qs}` : ''}`);
+    }, URL_SYNC_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [embedded, query, sortKey, sortDir, range, facets, page]);
 
   const rowId = useCallback((row: T) => String((row as Row)[idKey]), [idKey]);
 
@@ -119,7 +219,13 @@ export function DataTable<T, TInput>({
   }, [descriptor.api, ctx.orgId, facets, scope, refreshKey, labels.plural]);
 
   // Reset paging/active row only when the dataset SCOPE changes — not on a refresh-in-place.
+  // Skip the mount run: the URL query string may legitimately restore a page > 1.
+  const mounted = useRef(false);
   useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true;
+      return;
+    }
     setPage(0);
     setActiveRow(0);
   }, [ctx.orgId, facets, scope]);
@@ -132,18 +238,30 @@ export function DataTable<T, TInput>({
     );
   }, [rows, query, columns]);
 
-  const sorted = useMemo(() => {
-    if (!sortKey) return searched;
-    const dir = sortDir === 'asc' ? 1 : -1;
-    return [...searched].sort((a, b) => {
-      const av = cell(a as Row, sortKey);
-      const bv = cell(b as Row, sortKey);
-      if (av == null) return 1;
-      if (bv == null) return -1;
-      if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir;
-      return String(av).localeCompare(String(bv)) * dir;
+  // Date-range filter (inclusive on both ends) on the descriptor's timestamp field.
+  // Rows missing the value (or unparseable) drop out while any bound is set.
+  const ranged = useMemo(() => {
+    if (!dateKey || (!range.from && !range.to)) return searched;
+    const fromTs = range.from ? new Date(`${range.from}T00:00:00`).getTime() : null;
+    const toTs = range.to ? new Date(`${range.to}T23:59:59.999`).getTime() : null;
+    return searched.filter((r) => {
+      const v = cell(r as Row, dateKey);
+      if (v == null || v === '') return false;
+      const ts = new Date(String(v)).getTime();
+      if (Number.isNaN(ts)) return false;
+      if (fromTs != null && ts < fromTs) return false;
+      if (toTs != null && ts > toTs) return false;
+      return true;
     });
-  }, [searched, sortKey, sortDir]);
+  }, [searched, dateKey, range]);
+
+  const sorted = useMemo(() => {
+    if (!sortKey) return ranged;
+    const dir = sortDir === 'asc' ? 1 : -1;
+    return [...ranged].sort((a, b) =>
+      compareCells(cell(a as Row, sortKey), cell(b as Row, sortKey), dir),
+    );
+  }, [ranged, sortKey, sortDir]);
 
   const pageCount = Math.max(1, Math.ceil(sorted.length / pageSize));
   const pageRows = embedded ? sorted : sorted.slice(page * pageSize, page * pageSize + pageSize);
@@ -187,6 +305,24 @@ export function DataTable<T, TInput>({
 
   const bulkEnabled = !embedded && (actions?.bulkActions?.length ?? 0) > 0;
 
+  // Reset affordance: visible only while something is filtered/sorted off-default.
+  const controlsActive =
+    query.trim() !== '' ||
+    range.from !== '' ||
+    range.to !== '' ||
+    Object.values(facets).some((v) => (Array.isArray(v) ? v.length > 0 : !!v)) ||
+    (defaultSort
+      ? sortKey !== defaultSort.key || sortDir !== (defaultSort.dir ?? 'asc')
+      : sortKey !== null);
+
+  function resetControls() {
+    setQuery('');
+    setRange(EMPTY_RANGE);
+    setFacets({});
+    setSortKey(defaultSort?.key ?? null);
+    setSortDir(defaultSort?.dir ?? 'asc');
+  }
+
   function renderCell(col: ColumnDef<T>, row: T): ReactNode {
     return renderField(col.render, col.key, row);
   }
@@ -218,6 +354,29 @@ export function DataTable<T, TInput>({
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                 />
+              );
+            }
+            if (f.type === 'daterange') {
+              return (
+                <div key={f.key} className="console-filters__daterange">
+                  <input
+                    type="date"
+                    aria-label={`${f.label} from`}
+                    title={`${f.label} from`}
+                    value={range.from}
+                    max={range.to || undefined}
+                    onChange={(e) => setRange((r) => ({ ...r, from: e.target.value }))}
+                  />
+                  <span aria-hidden className="console-filters__daterange-sep">–</span>
+                  <input
+                    type="date"
+                    aria-label={`${f.label} to`}
+                    title={`${f.label} to`}
+                    value={range.to}
+                    min={range.from || undefined}
+                    onChange={(e) => setRange((r) => ({ ...r, to: e.target.value }))}
+                  />
+                </div>
               );
             }
             // dynamic facets take their options from the page-injected facetOptions (Mei #2).
@@ -253,6 +412,11 @@ export function DataTable<T, TInput>({
               </label>
             );
           })}
+          {controlsActive && (
+            <button type="button" className="console-filters__reset" onClick={resetControls}>
+              Reset
+            </button>
+          )}
         </div>
       )}
 

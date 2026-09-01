@@ -42,7 +42,9 @@ export const artifactsDescriptor: ConsoleDescriptor<Artifact, ArtifactFormInput>
     { key: 'search', label: 'Search', type: 'search' },
     { key: 'kind', label: 'Kind', type: 'facet', options: KIND_OPTIONS },
     { key: 'projectId', label: 'Project', type: 'facet', dynamic: true },
+    { key: 'updated_at', label: 'Updated', type: 'daterange' },
   ],
+  defaultSort: { key: 'updated_at', dir: 'desc' },
   detail: {
     sections: [
       {
