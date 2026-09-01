@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/context/auth";
 import { OrgProvider } from "@/context/org";
+import { StarredProjectsProvider } from "@/context/starred";
 import { SidebarProvider } from "@/context/sidebar";
 import { Navbar } from "@/components/navbar";
 import { AnalyticsProvider } from "@/components/analytics-provider";
@@ -63,6 +64,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <OtelProvider>
           <AuthProvider>
             <OrgProvider>
+              <StarredProjectsProvider>
               <CookieConsentProvider>
                 <AnalyticsProvider>
                   <SidebarProvider>
@@ -71,6 +73,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   </SidebarProvider>
                 </AnalyticsProvider>
               </CookieConsentProvider>
+              </StarredProjectsProvider>
             </OrgProvider>
           </AuthProvider>
         </OtelProvider>

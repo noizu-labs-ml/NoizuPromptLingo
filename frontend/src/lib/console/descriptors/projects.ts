@@ -2,7 +2,9 @@
 // REST gate: api.listProjects/getProject/createProject/updateProject/deleteProject
 // all exist -> fully wirable now (no MCP-only gap). Status changes via the dedicated
 // archive/unarchive endpoints (surfaced as row actions, not a free-text edit field).
+import { createElement } from 'react';
 import { api, type Project, type ProjectInput } from '@/lib/api';
+import { StarToggle } from '@/components/star-toggle';
 import type { ConsoleDescriptor } from '../types';
 
 export const projectsDescriptor: ConsoleDescriptor<Project, ProjectInput> = {
@@ -10,6 +12,9 @@ export const projectsDescriptor: ConsoleDescriptor<Project, ProjectInput> = {
   labels: { singular: 'Project', plural: 'Projects' },
   route: '/app/:org/projects',
   columns: [
+    // Viewer-level star (localStorage preference); toggle cell reads the
+    // StarredProjects context at render time, so the descriptor stays static.
+    { key: 'starred', label: '★', width: '2.5rem', render: (p) => createElement(StarToggle, { projectId: p.id }) },
     { key: 'name', label: 'Name', primary: true, sortable: true, width: '30%' },
     { key: 'slug', label: 'Slug', render: 'slugChip' },
     { key: 'status', label: 'Status', sortable: true, render: (p) => p.status ?? 'active' },
