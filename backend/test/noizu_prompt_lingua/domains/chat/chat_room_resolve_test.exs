@@ -11,6 +11,11 @@ defmodule NoizuPromptLingua.Domains.Chat.RoomResolveTest do
   alias NoizuPromptLingua.Domains.Chat
 
   setup do
+    # The TRP ETS cache (`[:orgs, :list]`, 30s TTL) may hold an org list from
+    # an earlier test that predates our seeded stub orgs — bust it so slug
+    # resolution sees this test's inventory (TestStub.reset does not bust it).
+    NoizuPromptLingua.TRP.Cache.clear()
+
     org_id = insert_org()
     other_org_id = insert_org()
 
