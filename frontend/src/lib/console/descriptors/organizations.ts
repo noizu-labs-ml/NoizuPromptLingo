@@ -26,6 +26,7 @@ export const organizationsDescriptor: ConsoleDescriptor<Organization, Organizati
     { key: 'owner', label: 'Owner', render: (o) => o.owner ?? '—' },
   ],
   filters: [{ key: 'search', label: 'Search', type: 'search' }],
+  defaultSort: { key: 'name', dir: 'asc' },
   detail: {
     sections: [
       {

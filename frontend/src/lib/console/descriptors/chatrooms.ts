@@ -20,7 +20,9 @@ export const chatroomsDescriptor: ConsoleDescriptor<ChatRoom, ChatRoomInput> = {
   filters: [
     { key: 'search', label: 'Search', type: 'search' },
     { key: 'projectId', label: 'Project', type: 'facet', dynamic: true },
+    { key: 'inserted_at', label: 'Created', type: 'daterange' },
   ],
+  defaultSort: { key: 'inserted_at', dir: 'desc' },
   detail: {
     sections: [
       {

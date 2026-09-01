@@ -27,7 +27,9 @@ export const projectsDescriptor: ConsoleDescriptor<Project, ProjectInput> = {
         { value: 'archived', label: 'Archived' },
       ],
     },
+    { key: 'updated_at', label: 'Updated', type: 'daterange' },
   ],
+  defaultSort: { key: 'updated_at', dir: 'desc' },
   detail: {
     sections: [
       {

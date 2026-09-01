@@ -1951,6 +1951,13 @@ button.chat-room-header__slug:focus-visible { outline: 2px solid var(--field-foc
 .console-filters__search:focus-visible,
 .console-filters__facet select:focus-visible { outline: 2px solid var(--field-focus-border, var(--brand-blue, #1d4e5f)); outline-offset: 1px; }
 .console-filters__facet select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; font: inherit; background: var(--surface, #fff); color: var(--color-text); }
+/* Date-range filter (from/to date inputs, inclusive both ends) */
+.console-filters__daterange { display: inline-flex; align-items: center; gap: 4px; }
+.console-filters__daterange input[type='date'] { padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; font: inherit; background: var(--surface, #fff); color: var(--color-text); }
+.console-filters__daterange input[type='date']:focus-visible { outline: 2px solid var(--field-focus-border, var(--brand-blue, #1d4e5f)); outline-offset: 1px; }
+.console-filters__daterange-sep { color: var(--text-secondary, #777); }
+.console-filters__reset { padding: 6px 10px; border: 0; background: none; font: inherit; font-size: var(--font-size-sm, 0.875rem); color: var(--brand-blue, #1d4e5f); cursor: pointer; }
+.console-filters__reset:focus-visible { outline: 2px solid var(--field-focus-border, var(--brand-blue, #1d4e5f)); outline-offset: 1px; border-radius: 6px; }
 /* Multi-select facet (3c2d6bbe): checklist popover */
 .console-multifacet { position: relative; display: inline-flex; }
 .console-multifacet__trigger { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; font: inherit; background: var(--surface, #fff); color: var(--color-text); cursor: pointer; }

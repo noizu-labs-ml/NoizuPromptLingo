@@ -34,7 +34,9 @@ export const ticketsDescriptor: ConsoleDescriptor<Ticket, TicketInput> = {
     { key: 'priority', label: 'Priority', type: 'facet', options: PRIORITIES },
     { key: 'ticketType', label: 'Type', type: 'facet', dynamic: true, multi: true },
     { key: 'projectId', label: 'Project', type: 'facet', dynamic: true },
+    { key: 'updated_at', label: 'Updated', type: 'daterange' },
   ],
+  defaultSort: { key: 'updated_at', dir: 'desc' },
   detail: {
     sections: [
       {
