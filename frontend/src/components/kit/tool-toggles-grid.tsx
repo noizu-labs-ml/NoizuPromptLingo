@@ -1,5 +1,6 @@
 'use client';
 
+import { useId } from 'react';
 import type { EffectiveToolState, ToolSection } from '@/types/tool-state';
 
 interface ToolTogglesGridProps {
@@ -19,6 +20,11 @@ interface ToolTogglesGridProps {
  * override/temporal fields pass through untouched.
  */
 export default function ToolTogglesGrid({ sections, onChange, readOnly = false }: ToolTogglesGridProps) {
+  // DOM ids are namespaced by useId + positional indexes — section names and
+  // tool ids may contain spaces/colons or collide across sections, so they
+  // never appear in generated ids (labels carry the readable text).
+  const uid = useId();
+
   function patchTool(sectionName: string, toolId: string, patch: Partial<EffectiveToolState>) {
     onChange(
       sections.map((s) =>
@@ -46,7 +52,7 @@ export default function ToolTogglesGrid({ sections, onChange, readOnly = false }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }} role="group" aria-label="Tool toggles">
-      {sections.map((section) => {
+      {sections.map((section, sectionIdx) => {
         const allEnabled = section.tools.length > 0 && section.tools.every((e) => e.state.enabled);
         const allVisible = section.tools.length > 0 && section.tools.every((e) => e.state.visible);
         return (
@@ -78,14 +84,14 @@ export default function ToolTogglesGrid({ sections, onChange, readOnly = false }
                 </span>
               </span>
               <Toggle
-                id={`ttg-${section.name}-enabled`}
+                id={`${uid}-s${sectionIdx}-enabled`}
                 label="Enabled"
                 checked={allEnabled}
                 disabled={readOnly}
                 onChange={(v) => cascade(section, () => ({ enabled: v }))}
               />
               <Toggle
-                id={`ttg-${section.name}-visible`}
+                id={`${uid}-s${sectionIdx}-visible`}
                 label="Visible"
                 checked={allVisible}
                 disabled={readOnly}
@@ -102,7 +108,7 @@ export default function ToolTogglesGrid({ sections, onChange, readOnly = false }
                 padding: 10,
               }}
             >
-              {section.tools.map((entry) => {
+              {section.tools.map((entry, toolIdx) => {
                 const toolLabel = entry.tool.label ?? entry.tool.id;
                 return (
                   <div
@@ -133,14 +139,14 @@ export default function ToolTogglesGrid({ sections, onChange, readOnly = false }
                       {toolLabel}
                     </span>
                     <Toggle
-                      id={`ttg-${section.name}-${entry.tool.id}-enabled`}
+                      id={`${uid}-s${sectionIdx}-t${toolIdx}-enabled`}
                       label="On"
                       checked={entry.state.enabled}
                       disabled={readOnly}
                       onChange={(v) => patchTool(section.name, entry.tool.id, { enabled: v })}
                     />
                     <Toggle
-                      id={`ttg-${section.name}-${entry.tool.id}-visible`}
+                      id={`${uid}-s${sectionIdx}-t${toolIdx}-visible`}
                       label="Show"
                       checked={entry.state.visible}
                       disabled={readOnly}

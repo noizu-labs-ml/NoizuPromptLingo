@@ -28,10 +28,12 @@ import { canonicalToolName, normalizeConfigToolKeys } from '@/lib/tool-overrides
 // and group members carry the {ref, ref_string, expires_at} jsonb+string
 // serialization. The kit's EntityRef-flavored contract in
 // @/types/tool-state serves the F4 ACLEditor only, which today is fed
-// empty ACL state (rule CRUD endpoints are out of D3 scope).
+// empty ACL state (rule CRUD endpoints are out of D3 scope). Wire names are
+// suffixed *Wire to avoid colliding with the kit's AclRule/AclGroup/AclState;
+// converters between the vocabularies live in @/lib/acl-convert.
 
-/** Mirrors kit ACLEditor AclRule (subject/resource are opaque ERP ref strings). */
-export interface AclRule {
+/** Backend ACL rule payload (subject/resource are opaque ERP ref strings). */
+export interface AclRuleWire {
   id: string;
   subject: string;
   resource: string;
@@ -46,8 +48,8 @@ export interface AclGroupMember {
   expires_at: string | null;
 }
 
-/** Mirrors kit ACLEditor AclGroup, with real backend membership. */
-export interface AclGroup {
+/** Backend ACL group payload, with real backend membership. */
+export interface AclGroupWire {
   id: string;
   name: string;
   description?: string | null;
@@ -55,9 +57,9 @@ export interface AclGroup {
   members: AclGroupMember[];
 }
 
-export interface AclState {
-  rules: AclRule[];
-  groups: AclGroup[];
+export interface AclStateWire {
+  rules: AclRuleWire[];
+  groups: AclGroupWire[];
 }
 
 export type ClientKind = 'api_key' | 'oauth_client';
@@ -88,7 +90,7 @@ export interface ClientPermissions {
   /** Tool restrict config — same jsonb shape as scope config ({groups:{gid:{tools:{name:{...}}}}}). */
   toolsetConfig: McpCustomScopeConfig;
   tempWindows: TempWindows;
-  acl: AclState;
+  acl: AclStateWire;
   /** Names of ACL permission groups this client belongs to. */
   permissionGroups: string[];
 }
@@ -220,14 +222,14 @@ export async function putClientToolsetConfig(
 }
 
 /** GET /admin/acl/groups — active groups with members. */
-export async function fetchAclGroups(): Promise<AclGroup[]> {
-  const res = await request<{ groups: AclGroup[] }>('/api/v1/admin/acl/groups');
+export async function fetchAclGroups(): Promise<AclGroupWire[]> {
+  const res = await request<{ groups: AclGroupWire[] }>('/api/v1/admin/acl/groups');
   return res.groups;
 }
 
 /** POST /admin/acl/groups. */
-export async function createAclGroup(name: string, description?: string): Promise<AclGroup> {
-  const res = await request<{ group: AclGroup }>('/api/v1/admin/acl/groups', {
+export async function createAclGroup(name: string, description?: string): Promise<AclGroupWire> {
+  const res = await request<{ group: AclGroupWire }>('/api/v1/admin/acl/groups', {
     method: 'POST',
     body: JSON.stringify({ group: { name, description } }),
   });

@@ -3,18 +3,21 @@
 import { useId, useState } from 'react';
 import { TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { kitBtnSm, kitFieldLabel, kitInput } from './shared';
+import { newRowId } from './ids';
+import {
+  addGroupMember,
+  addRule as addRuleToState,
+  patchResource,
+  patchRule as patchRuleInState,
+  removeGroupMember,
+  removeRule as removeRuleFromState,
+} from './acl-state';
 import type { AclEffect, AclGroup, AclRule, AclState, EntityRef } from '@/types/tool-state';
-
-export type { AclEffect, AclGroup, AclRule, AclState };
 
 /** Human label for a ref in aria-labels / chips: "label (kind:id)" or "kind:id". */
 export function refLabel(r: EntityRef): string {
   const base = `${r.kind}:${r.id}`;
   return r.label ? `${r.label} (${base})` : base;
-}
-
-function sameRef(a: EntityRef, b: EntityRef): boolean {
-  return a.kind === b.kind && a.id === b.id;
 }
 
 /** Parse "kind:id" (or bare "id" → kind "any") into an EntityRef. */
@@ -38,12 +41,6 @@ interface ACLEditorProps {
   /** Allowed scope labels (free-form when omitted). */
   scopeOptions?: string[];
   readOnly?: boolean;
-}
-
-let seq = 0;
-function localId() {
-  seq += 1;
-  return `acl-${Date.now()}-${seq}`;
 }
 
 /** Deny rules sort before allow rules for display (stable within effect). */
@@ -78,30 +75,16 @@ export default function ACLEditor({
   const resourceListId = `${uid}-resource-suggestions`;
   const kindListId = `${uid}-kind-suggestions`;
 
-  function updateRules(next: AclRule[]) {
-    onChange({ rules: next, groups });
-  }
-
   function updateGroups(next: AclGroup[]) {
     onChange({ rules, groups: next });
   }
 
   function addRule() {
-    updateRules([
-      ...rules,
-      {
-        id: localId(),
-        subject: { kind: 'any', id: '' },
-        resource: null,
-        effect: 'deny',
-        scope: scopeOptions[0] ?? 'read',
-        priority: 0,
-      },
-    ]);
+    onChange(addRuleToState(value, scopeOptions[0] ?? 'read'));
   }
 
   function patchRule(id: string, patch: Partial<AclRule>) {
-    updateRules(rules.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+    onChange(patchRuleInState(value, id, patch));
   }
 
   const kindSuggestions = [
@@ -198,11 +181,7 @@ export default function ACLEditor({
                       readOnly={readOnly}
                       placeholder="kind"
                       onChange={(e) =>
-                        patchRule(rule.id, {
-                          resource: e.target.value || rule.resource?.id
-                            ? { kind: e.target.value, id: rule.resource?.id ?? '' }
-                            : null,
-                        })
+                        patchRule(rule.id, { resource: patchResource(rule, { kind: e.target.value }).resource })
                       }
                       style={{ ...kitInput, width: 84, fontFamily: 'monospace' }}
                     />
@@ -214,11 +193,7 @@ export default function ACLEditor({
                       readOnly={readOnly}
                       placeholder="entity id"
                       onChange={(e) =>
-                        patchRule(rule.id, {
-                          resource: e.target.value || rule.resource?.kind
-                            ? { kind: rule.resource?.kind ?? '', id: e.target.value }
-                            : null,
-                        })
+                        patchRule(rule.id, { resource: patchResource(rule, { id: e.target.value }).resource })
                       }
                       style={{ ...kitInput, width: '100%', fontFamily: 'monospace' }}
                     />
@@ -267,7 +242,7 @@ export default function ACLEditor({
                 {!readOnly ? (
                   <button
                     type="button"
-                    onClick={() => updateRules(rules.filter((r) => r.id !== rule.id))}
+                    onClick={() => onChange(removeRuleFromState(value, rule.id))}
                     style={{ ...kitBtnSm, border: 0, background: 'transparent', color: 'var(--red, #ef4444)', paddingBottom: 4 }}
                     aria-label={`Delete ${rule.effect} rule for ${refLabel(rule.subject)}`}
                   >
@@ -302,7 +277,7 @@ export default function ACLEditor({
           {!readOnly ? (
             <button
               type="button"
-              onClick={() => updateGroups([...groups, { id: localId(), name: `group-${groups.length + 1}`, members: [] }])}
+              onClick={() => updateGroups([...groups, { id: newRowId('acl'), name: `group-${groups.length + 1}`, members: [] }])}
               style={kitBtnSm}
             >
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
@@ -376,11 +351,7 @@ export default function ACLEditor({
                             aria-label={`Remove member ${refLabel(m)} from group ${group.name}`}
                             onClick={() =>
                               updateGroups(
-                                groups.map((g) =>
-                                  g.id === group.id
-                                    ? { ...g, members: g.members.filter((x) => !sameRef(x, m)) }
-                                    : g,
-                                ),
+                                groups.map((g) => (g.id === group.id ? removeGroupMember(g, m) : g)),
                               )
                             }
                             style={{ border: 0, background: 'transparent', cursor: 'pointer', color: 'var(--text-3)', padding: 0 }}
@@ -404,13 +375,7 @@ export default function ACLEditor({
                           e.preventDefault();
                           const member = parseRef(newGroupMembers[group.id] ?? '');
                           if (!member) return;
-                          updateGroups(
-                            groups.map((g) =>
-                              g.id === group.id && !g.members.some((x) => sameRef(x, member))
-                                ? { ...g, members: [...g.members, member] }
-                                : g,
-                            ),
-                          );
+                          updateGroups(groups.map((g) => (g.id === group.id ? addGroupMember(g, member) : g)));
                           setNewGroupMembers((prev) => ({ ...prev, [group.id]: '' }));
                         }
                       }}
@@ -421,13 +386,7 @@ export default function ACLEditor({
                       onClick={() => {
                         const member = parseRef(newGroupMembers[group.id] ?? '');
                         if (!member) return;
-                        updateGroups(
-                          groups.map((g) =>
-                            g.id === group.id && !g.members.some((x) => sameRef(x, member))
-                              ? { ...g, members: [...g.members, member] }
-                              : g,
-                          ),
-                        );
+                        updateGroups(groups.map((g) => (g.id === group.id ? addGroupMember(g, member) : g)));
                         setNewGroupMembers((prev) => ({ ...prev, [group.id]: '' }));
                       }}
                       style={kitBtnSm}

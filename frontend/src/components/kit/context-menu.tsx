@@ -187,14 +187,7 @@ export default function ContextMenu({
       e.preventDefault();
       const dir = e.key === 'ArrowDown' ? 1 : -1;
       if (submenuOpen) {
-        setActiveSubIdx((cur) => {
-          let idx = cur;
-          for (let i = 0; i < subs.length; i++) {
-            idx = (idx + dir + subs.length) % subs.length;
-            if (!subs[idx].disabled) break;
-          }
-          return idx;
-        });
+        setActiveSubIdx((cur) => nextEnabled(subs, cur, dir));
       } else {
         setActiveIdx((cur) => nextEnabled(items, cur, dir));
         setOpenSubmenuIdx(null);
