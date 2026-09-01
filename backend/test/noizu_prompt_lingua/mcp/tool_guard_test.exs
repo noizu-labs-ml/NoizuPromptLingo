@@ -180,5 +180,25 @@ defmodule NoizuPromptLingua.MCP.ToolGuardTest do
       s = %{name: "Meta.Tool", meta: %{authz: %{required_role: :member, resource: :organization}}}
       assert ToolGuard.before_call(s, %{organization: org.id}, ctx(owner.id)) == :ok
     end
+
+    test "atom-keyed keyword authz WITHOUT :sensitivity does not raise (B2 regression)" do
+      # Exact production shape (f015c5bb-B2): Key_* tools declare atom-keyed keyword
+      # blobs with no :sensitivity; the string-key fallback used to raise
+      # FunctionClauseError from Keyword.get's is_atom guard.
+      owner = mk_user()
+      enforce()
+      s = spec([action: "keys:create", required_role: :owner, resource: :global])
+      assert ToolGuard.before_call(s, %{}, ctx(owner.id)) == :ok
+    end
+
+    test "string-keyed keyword authz is read without raising" do
+      owner = mk_user()
+      enforce()
+
+      s =
+        spec([{"action", "keys:create"}, {"required_role", "owner"}, {"resource", "global"}])
+
+      assert ToolGuard.before_call(s, %{}, ctx(owner.id)) == :ok
+    end
   end
 end

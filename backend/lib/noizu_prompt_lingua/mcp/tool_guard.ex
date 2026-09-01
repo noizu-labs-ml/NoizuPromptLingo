@@ -229,8 +229,8 @@ defmodule NoizuPromptLingua.MCP.ToolGuard do
         client_id: claims["client_id"],
         grant_id: claims["grant_id"],
         resource: claims["aud"] || claims["resource"],
-        action: authz[:action] || authz["action"],
-        tool: authz[:action] || authz["action"],
+        action: meta_get(authz, :action),
+        tool: meta_get(authz, :action),
         required_role: required_role(authz)
       }
 
@@ -394,7 +394,29 @@ defmodule NoizuPromptLingua.MCP.ToolGuard do
   defp field(m, key) when is_map(m), do: Map.get(m, key) || Map.get(m, to_string(key))
   defp field(_, _), do: nil
 
-  defp meta_get(kw, key) when is_list(kw), do: Keyword.get(kw, key)
+  # Keyword.get/3 has an is_atom(key) guard — a string key raises FunctionClauseError
+  # (f015c5bb-B2: crashed every tool whose authz blob lacked :sensitivity). Normalize
+  # both key styles here so callers never have to care whether meta uses atoms/strings.
+  defp meta_get(kw, key) when is_list(kw) and is_atom(key) do
+    case Keyword.get(kw, key) do
+      nil -> list_lookup(kw, key)
+      v -> v
+    end
+  end
+
+  defp meta_get(kw, key) when is_list(kw), do: list_lookup(kw, key)
+
+  # Tolerate string-keyed tuples mixed into a keyword-ish list.
+  defp list_lookup(kw, key) do
+    want = to_string(key)
+
+    Enum.find_value(kw, fn
+      {k, v} when is_atom(k) -> if to_string(k) == want, do: v
+      {k, v} when is_binary(k) -> if k == want, do: v
+      _ -> nil
+    end)
+  end
+
   defp meta_get(m, key) when is_map(m), do: Map.get(m, key) || Map.get(m, to_string(key))
   defp meta_get(_, _), do: nil
 end
