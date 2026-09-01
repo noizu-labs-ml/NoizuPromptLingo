@@ -44,8 +44,16 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.backend.env.secretName }}
                   key: DATABASE_URL
-            {{- /* pm_core DB access REMOVED at W8 activation (2026-09-01): NPL is
-                   API-only over the TRP shared-key plane (docs/pm-core-cutover.md). */}}
+            {{- /* pm_core env RESTORED 2026-09-01: the pinned image (sha-9952a10)
+                   predates the W4 runtime change and hard-requires this var
+                   (runtime.exs "Shared PM data has no legacy mode"). Vestigial
+                   once a post-cutover image rolls; W10 decides removal.
+                   Value syncs from Infisical /apps/pm-core into pm-core-secrets. */}}
+            - name: PM_CORE_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: pm-core-secrets
+                  key: PM_CORE_DATABASE_URL
             - name: SECRET_KEY_BASE
               valueFrom:
                 secretKeyRef:
