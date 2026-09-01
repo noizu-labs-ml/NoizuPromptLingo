@@ -12,6 +12,14 @@ defmodule NoizuPromptLingua.MCP.SessionManifest do
   resolved map (or with no flags) is `enabled: true, visible: true,
   expires_at: nil`.
 
+  Universe (N1 manifest parity): a scope-bound ctx (assigns
+  `custom_scope_slug`) enumerates EXACTLY what the custom endpoint serves —
+  `NoizuPromptLingua.MCP.Custom.custom_specs/1` — so the manifest can never
+  advertise a tool the endpoint does not include (the 14-vs-270 incident
+  class). The root-aggregate ctx keeps the full-catalog enumeration. Every
+  entry carries `included: true` ("in the endpoint's include set"); client/ACL
+  layers flip `enabled`/`visible` but never shrink the universe.
+
   Tool names are emitted in the canonical underscore form (§4) — dotted
   registered names (e.g. `Session.Create`) are folded via
   `NoizuPromptLingua.MCP.ToolNames.canonical/1` when that module is present
@@ -20,6 +28,8 @@ defmodule NoizuPromptLingua.MCP.SessionManifest do
   """
 
   alias Noizu.MCP.Server.Features.Tools
+  alias NoizuPromptLingua.MCP.Custom
+  alias NoizuPromptLingua.MCP.EffectiveToolset
   alias NoizuPromptLingua.MCPServers
 
   @manifest_tool "Session_Manifest"
@@ -27,7 +37,7 @@ defmodule NoizuPromptLingua.MCP.SessionManifest do
   @doc """
   Build the manifest for the calling ctx.
 
-      %{tools: [%{name, group, enabled, visible, expires_at}], generated_at}
+      %{tools: [%{name, group, enabled, visible, expires_at, included}], generated_at}
   """
   def generate(ctx, at \\ DateTime.utc_now()) do
     states = effective_states(ctx, at)
@@ -44,7 +54,8 @@ defmodule NoizuPromptLingua.MCP.SessionManifest do
           group: group_id,
           enabled: Map.get(state, :enabled, true),
           visible: Map.get(state, :visible, true),
-          expires_at: Map.get(state, :expires_at)
+          expires_at: Map.get(state, :expires_at),
+          included: true
         }
       end)
       |> Enum.uniq_by(& &1.name)
@@ -65,20 +76,39 @@ defmodule NoizuPromptLingua.MCP.SessionManifest do
 
   # ---- registered method enumeration -----------------------------------------
 
-  # Every server in the MCPServers catalog (root = the bare-host aggregate
-  # server), expanded to concrete tool specs. Returns `{group_id, spec}` pairs;
-  # `group_id` is the owning MCP group (`sessions`, `tickets`, ...), `nil`
-  # resolving tools (root-only Discovery/NPL) fall back to `"root"`.
-  defp registered_specs(_ctx) do
-    Enum.flat_map(servers(), fn {group_id, server_mod} ->
-      specs = expand(server_mod)
+  # Scope-bound ctx (`/custom/:slug/mcp`): the universe is EXACTLY the custom
+  # endpoint's include set — `NoizuPromptLingua.MCP.Custom.custom_specs/1` — so
+  # manifest and endpoint cannot drift (parity by construction; the endpoint
+  # serves catalog_specs = custom_specs + Discovery/NPL, and the scope's tools
+  # are what manifest consumers must see). Root-aggregate ctx keeps the
+  # full-catalog walk: root + every MCPServers group, expanded to concrete tool
+  # specs with absent => enabled + visible defaults. Entries carry
+  # `included: true`: the client/ACL layers flip flags, they never shrink the
+  # universe. Returns `{group_id, spec}` pairs; `group_id` is the owning MCP
+  # group (`sessions`, `tickets`, ...), nil-resolving tools fall back to
+  # `"root"`.
+  defp registered_specs(ctx) do
+    if scope_bound?(ctx) do
+      Custom.custom_specs(ctx)
+      |> Enum.map(fn spec -> {group_for(spec.module, "root"), spec} end)
+    else
+      Enum.flat_map(servers(), fn {group_id, server_mod} ->
+        specs = expand(server_mod)
 
-      Enum.map(specs, fn spec ->
-        {group_for(spec.module, group_id), spec}
+        Enum.map(specs, fn spec ->
+          {group_for(spec.module, group_id), spec}
+        end)
       end)
-    end)
+    end
   rescue
     _ -> []
+  end
+
+  defp scope_bound?(ctx) do
+    case assigns(ctx)[:custom_scope_slug] || assigns(ctx)["custom_scope_slug"] do
+      slug when is_binary(slug) and slug != "" -> true
+      _ -> false
+    end
   end
 
   defp servers do
@@ -150,40 +180,17 @@ defmodule NoizuPromptLingua.MCP.SessionManifest do
   end
 
   @doc """
-  The calling client per §2: `%{id, kind: :api_key | :oauth_client, toolset_config}`.
-  API keys carry their stored `toolset_config`; OAuth clients (and anonymous /
-  system principals) have none yet (W8 wires per-client `toolset_config`).
+  The calling client per §2, resolved by `EffectiveToolset.client_for_ctx/1`:
+  `%{id, kind: :api_key | :oauth_client, toolset_config}` with the client's
+  stored `toolset_config` actually loaded (W8: OAuth clients ride the same
+  cascade as API keys), or nil when the request carries neither an active API
+  key nor an active OAuth client (ungated / system principal).
   """
-  def client_for(ctx) do
-    claims = claims(ctx)
+  def client_for(ctx), do: EffectiveToolset.client_for_ctx(ctx)
 
-    case claims["api_key_id"] do
-      api_key_id when is_binary(api_key_id) ->
-        %{
-          id: api_key_id,
-          kind: :api_key,
-          toolset_config: toolset_config(api_key_id)
-        }
+  defp claims(ctx),
+    do: get_in(ctx, [Access.key(:assigns, %{}), Access.key(:auth_claims, %{})]) || %{}
 
-      _ ->
-        %{
-          id: claims["oauth_client_id"] || claims["sub"],
-          kind: :oauth_client,
-          toolset_config: nil
-        }
-    end
-  end
-
-  defp toolset_config(api_key_id) do
-    case NoizuPromptLingua.Repo.get(NoizuPromptLingua.Schema.McpApiKey, api_key_id) do
-      %{toolset_config: config} when is_map(config) -> config
-      _ -> nil
-    end
-  rescue
-    _ -> nil
-  end
-
-  defp claims(ctx), do: get_in(ctx, [Access.key(:assigns, %{}), Access.key(:auth_claims, %{})]) || %{}
   defp assigns(ctx), do: Map.get(ctx || %{}, :assigns) || %{}
 
   @doc "The canonical name of this manifest tool itself."

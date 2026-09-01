@@ -1376,12 +1376,19 @@ defmodule NoizuPromptLinguaWeb.AdminController do
          {:ok, normalized} <- normalize_toolset_config(cfg) do
       changeset =
         case client do
-          %McpApiKey{} = key -> McpApiKey.toolset_changeset(key, %{"toolset_config" => normalized})
-          %OAuthClient{} = oc -> OAuthClient.changeset(oc, %{"toolset_config" => normalized})
+          %McpApiKey{} = key ->
+            McpApiKey.toolset_changeset(key, %{"toolset_config" => normalized})
+
+          %OAuthClient{} = oc ->
+            OAuthClient.changeset(oc, %{"toolset_config" => normalized})
         end
 
       case NoizuPromptLingua.Repo.update(changeset) do
         {:ok, updated} ->
+          # This admin writer bypasses the context helpers, so fire the
+          # invalidation + tools/list_changed broadcast here (N1 manifest
+          # parity) — best-effort, never fails the write.
+          NoizuPromptLingua.MCP.Server.notify_toolset_changed()
           conn |> put_status(:ok) |> json(%{toolset_config: updated.toolset_config || %{}})
 
         {:error, %Ecto.Changeset{} = cs} ->
@@ -1404,13 +1411,17 @@ defmodule NoizuPromptLinguaWeb.AdminController do
 
   defp fetch_client(kind, id) when is_binary(id) do
     case @client_kinds[kind] do
-      :api_key -> NoizuPromptLingua.Repo.get(McpApiKey, id)
+      :api_key ->
+        NoizuPromptLingua.Repo.get(McpApiKey, id)
+
       # The W7 editor route may carry either the row uuid or the public
       # client_id string (DCR identifier).
       :oauth_client ->
         NoizuPromptLingua.Repo.get(OAuthClient, id) ||
           NoizuPromptLingua.Repo.one(from c in OAuthClient, where: c.client_id == ^id)
-      _ -> nil
+
+      _ ->
+        nil
     end
   end
 
@@ -1503,7 +1514,8 @@ defmodule NoizuPromptLinguaWeb.AdminController do
         with {:ok, flags} <- bool_fields(entry, ["disabled", "hidden"]),
              {:ok, overrides} <- string_fields(entry, ["name_override", "description_override"]),
              {:ok, window} <- window_fields(entry) do
-          {:ok, flags |> Map.merge(overrides) |> Window.normalize_entry(entry) |> Map.merge(window)}
+          {:ok,
+           flags |> Map.merge(overrides) |> Window.normalize_entry(entry) |> Map.merge(window)}
         end
     end
   end
@@ -1564,7 +1576,9 @@ defmodule NoizuPromptLinguaWeb.AdminController do
   end
 
   def create_acl_group(conn, %{"group" => attrs}) do
-    case Acl.create_group(filter_nils(%{"name" => attrs["name"], "description" => attrs["description"]})) do
+    case Acl.create_group(
+           filter_nils(%{"name" => attrs["name"], "description" => attrs["description"]})
+         ) do
       {:ok, group} ->
         conn |> put_status(:created) |> json(%{group: acl_group_json(group, [])})
 

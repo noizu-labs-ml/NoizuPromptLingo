@@ -831,9 +831,11 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
   end
 
   # Scope rows feed the EffectiveToolset cascade (template / scope configs) via
-  # the ToolsetCache — drop the cache whenever a scope write lands.
+  # the ToolsetCache — drop the cache whenever a scope write lands. The cache
+  # bump + tools/list_changed broadcast are ONE best-effort step: connected
+  # clients re-list before serving a stale include set (N1 manifest parity).
   defp bump_cache_on_ok({:ok, _} = ok) do
-    NoizuPromptLingua.MCP.ToolsetCache.bump()
+    NoizuPromptLingua.MCP.Server.notify_toolset_changed()
     ok
   end
 

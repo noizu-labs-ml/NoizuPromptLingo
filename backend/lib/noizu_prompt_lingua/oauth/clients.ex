@@ -62,9 +62,11 @@ defmodule NoizuPromptLingua.OAuth.Clients do
   end
 
   # Cached OAuth clients (ToolsetCache) feed the EffectiveToolset cascade —
-  # drop the cache whenever a client's config/status write lands.
+  # drop the cache whenever a client's config/status write lands. The cache
+  # bump + tools/list_changed broadcast are ONE best-effort step (N1 manifest
+  # parity): connected clients re-list before serving stale narrowing flags.
   defp tap_ok_bump_cache({:ok, _} = ok) do
-    NoizuPromptLingua.MCP.ToolsetCache.bump()
+    NoizuPromptLingua.MCP.Server.notify_toolset_changed()
     ok
   end
 
@@ -83,7 +85,10 @@ defmodule NoizuPromptLingua.OAuth.Clients do
 
     with :ok <- validate_redirects(redirect_uris) do
       client_id = "dcr_" <> random_id(16)
-      auth_method = attrs["token_endpoint_auth_method"] || attrs[:token_endpoint_auth_method] || "none"
+
+      auth_method =
+        attrs["token_endpoint_auth_method"] || attrs[:token_endpoint_auth_method] || "none"
+
       {secret, secret_hash} = maybe_secret(auth_method)
 
       cs =
