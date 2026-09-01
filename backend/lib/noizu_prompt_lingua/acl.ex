@@ -36,6 +36,9 @@ defmodule NoizuPromptLingua.Acl do
   @action_wildcard Rule.action_wildcard()
   @max_group_depth 16
 
+  @doc "Group-expansion depth cap — exposed so callers/tests can derive limits."
+  def max_group_depth, do: @max_group_depth
+
   # ──────────────────────────────────────────────────────────────────
   # Resolution
   # ──────────────────────────────────────────────────────────────────
@@ -50,6 +53,8 @@ defmodule NoizuPromptLingua.Acl do
 
   Returns `{:allow, rule | :default}` / `{:deny, rule | :default}`.
   """
+  # Resource is normalized once here (the public boundary); the helpers below
+  # expect canonical refs and never re-normalize.
   def resolve(subject_ref, action, resource_ref, opts \\ []) do
     subjects = subject_candidates(subject_ref, opts)
     resource = normalize(resource_ref)
@@ -72,66 +77,30 @@ defmodule NoizuPromptLingua.Acl do
     rules = applicable_rules(subjects, action, resource, Keyword.get(opts, :scope))
     Resolver.explain(rules, subjects, action, resource, opts)
   end
-
   @doc """
   Normalize any accepted reference form into a canonical `{:ref, Type, id}`
-  record (or `nil` when unparseable):
+  record (or `nil` when unparseable). Thin wrapper over `ERPRef.cast/1`, which
+  is the system-wide normalization boundary (resolver + changesets share it):
 
     * `{:ref, Type, id}` records / bare tuples (incl. `:any` wildcards)
     * entity structs / wrapped refs (via the ERP protocol)
-    * JSONB maps `%{"type" => "Some.Entity", "id" => "…"}`
-    * sref strings — `"ref.<Type>.<id>"` or `"<Type>.<id>"`, where the type
-      segment names a loaded module (or the `"any"` wildcard) and the id is
-      the final dot-separated segment
+    * JSONB maps `%{"type" => "Some.Entity", "id" => "…"}` (atom keys too)
+    * sref strings — `"ref.<Type>.<id>"` or `"<Type>.<id>"`, where the type is
+      the longest dot-joined prefix naming a loaded module (or the `"any"`
+      wildcard) and the id is the remaining dot-joined segments (ids may
+      contain dots)
 
-  All Acl query entry points run their ref inputs through this first, so
-  callers may pass refs in any supported shape without hitting Ecto dump
-  errors on raw strings/maps.
+  All Acl entry points accept refs in any supported shape without hitting
+  Ecto dump errors on raw strings/maps.
   """
   def normalize(nil), do: nil
 
-  def normalize(R.ref() = ref), do: cast_ref(ref)
-
-  def normalize(%{} = map) do
-    with type when is_binary(type) <- map_type(map),
-         id when not is_nil(id) <- map_id(map),
-         {:ok, kind} <- ERPRef.string_to_kind(type) do
-      R.ref(module: kind, id: normalize_id(id))
-    else
-      _ -> nil
-    end
-  end
-
-  def normalize(sref) when is_binary(sref) do
-    case sref |> String.trim_leading("ref.") |> String.split(".") do
-      [_ | _] = parts ->
-        {type_parts, [id]} = Enum.split(parts, -1)
-        normalize(%{"type" => Enum.join(type_parts, "."), "id" => id})
-
-      _ ->
-        nil
-    end
-  end
-
-  def normalize(value), do: cast_ref(value)
-
-  defp cast_ref(ref) do
-    case ERPRef.cast(ref) do
+  def normalize(value) do
+    case ERPRef.cast(value) do
       {:ok, R.ref() = canonical} -> canonical
       _ -> nil
     end
   end
-
-  defp map_type(%{"type" => t}), do: t
-  defp map_type(%{type: t}), do: t
-  defp map_type(_), do: nil
-
-  defp map_id(%{"id" => i}), do: i
-  defp map_id(%{id: i}), do: i
-  defp map_id(_), do: nil
-
-  defp normalize_id("any"), do: :any
-  defp normalize_id(id), do: id
 
   @doc """
   The subject itself plus every group ref it reaches through
@@ -152,19 +121,21 @@ defmodule NoizuPromptLingua.Acl do
 
   defp do_expand([], _visited, _at, acc), do: acc
 
+  # `direct_group_refs/2` returns canonical `g.ref` records (loaded through
+  # ERPRef), so no re-normalization is needed here.
   defp do_expand(frontier, visited, at, acc) do
     next =
       frontier
       |> Enum.flat_map(&direct_group_refs(&1, at))
       |> Enum.uniq()
-      |> Enum.reject(&MapSet.member?(visited, normalize(&1)))
+      |> Enum.reject(&MapSet.member?(visited, &1))
 
     # Runaway-graph guard — cap mid-frontier: keep the newest discoveries up
     # to the remaining budget, drop the oldest overflow, keep expanding.
     budget = max(@max_group_depth - MapSet.size(visited), 0)
     next = if length(next) > budget, do: Enum.slice(next, length(next) - budget, budget), else: next
 
-    visited = MapSet.union(visited, MapSet.new(Enum.map(next, &normalize/1)))
+    visited = MapSet.union(visited, MapSet.new(next))
 
     do_expand(next, visited, at, acc ++ next)
   end
@@ -182,9 +153,11 @@ defmodule NoizuPromptLingua.Acl do
     |> Enum.reject(&is_nil/1)
   end
 
+  # `resource_ref` arrives canonical (normalized at the resolve/explain
+  # boundary) — no re-normalization here.
   defp applicable_rules(subjects, action, resource_ref, scope) do
     subject_dyn = subject_dyn(subjects)
-    resource_dyn = resource_dyn(normalize(resource_ref))
+    resource_dyn = resource_dyn(resource_ref)
 
     scope_dyn =
       if scope do
@@ -231,13 +204,10 @@ defmodule NoizuPromptLingua.Acl do
     end)
   end
 
-  defp kind_str(ref) do
-    case normalize(ref) do
-      R.ref(module: :any) -> "any"
-      R.ref(module: m, id: _) -> ERPRef.kind_to_string(m)
-      _ -> "any"
-    end
-  end
+  # Canonical refs only — callers normalize before reaching here.
+  defp kind_str(R.ref(module: :any)), do: "any"
+  defp kind_str(R.ref(module: m, id: _)), do: ERPRef.kind_to_string(m)
+  defp kind_str(_), do: "any"
 
   # ──────────────────────────────────────────────────────────────────
   # Groups
@@ -271,8 +241,8 @@ defmodule NoizuPromptLingua.Acl do
   # ──────────────────────────────────────────────────────────────────
 
   @doc """
-  Add a member (any ERP ref) to a group. Opts: `:expires_at` (DateTime —
-  membership stops resolving after it).
+  Add a member (any ERP ref — record, sref string, or JSONB map) to a group.
+  Opts: `:expires_at` (DateTime — membership stops resolving after it).
 
   Groups may be identified by struct, uuid, or name.
   """
@@ -282,11 +252,17 @@ defmodule NoizuPromptLingua.Acl do
         {:error, :not_found}
 
       group ->
-        attrs =
-          %{group_id: group.id, member_ref: normalize(member_ref)}
-          |> maybe_put(:expires_at, Keyword.get(opts, :expires_at))
+        case normalize(member_ref) do
+          nil ->
+            {:error, :invalid_member_ref}
 
-        %GroupMember{} |> GroupMember.changeset(attrs) |> Repo.insert()
+          member ->
+            attrs =
+              %{group_id: group.id, member_ref: member}
+              |> maybe_put(:expires_at, Keyword.get(opts, :expires_at))
+
+            %GroupMember{} |> GroupMember.changeset(attrs) |> Repo.insert()
+        end
     end
   end
 

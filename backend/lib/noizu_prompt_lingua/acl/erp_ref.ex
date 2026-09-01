@@ -49,7 +49,103 @@ defmodule NoizuPromptLingua.Acl.ERPRef do
     end
   end
 
+  # JSONB map forms — `{"type": "…", "id": "…"}` or `%{type: "…", id: "…"}` —
+  # delegate to load semantics (kind restored via string_to_kind, `"any"` id
+  # becomes the :any wildcard).
+  def cast(%{} = map) do
+    with t when is_binary(t) <- map_type(map),
+         i when not is_nil(i) <- map_id(map),
+         {:ok, kind} <- string_to_kind(t) do
+      {:ok, R.ref(module: kind, id: cast_id(i))}
+    else
+      _ -> :error
+    end
+  end
+
+  # sref strings — `"ref.<Type>.<id>"` or `"<Type>.<id>"`. The type is the
+  # longest dot-joined prefix of the segments that names a loaded module (so
+  # dotted entity modules like `NoizuPromptLingua.Users.User` work and any
+  # remaining segments join into the id — ids may contain dots). Unparseable
+  # input (no resolvable module prefix, empty segments, missing id) is :error.
+  def cast(sref) when is_binary(sref) do
+    case parse_sref(sref) do
+      {t, id} ->
+        with {:ok, kind} <- string_to_kind(t) do
+          {:ok, R.ref(module: kind, id: cast_id(id))}
+        else
+          _ -> :error
+        end
+
+      nil ->
+        :error
+    end
+  end
+
   def cast(_), do: :error
+
+  # Single `ref.` prefix strip (repeated prefixes leave a `ref` type segment
+  # that simply fails to resolve).
+  defp parse_sref(sref) do
+    body =
+      case sref do
+        "ref." <> rest -> rest
+        _ -> sref
+      end
+
+    case String.split(body, ".") do
+      [] -> nil
+      parts ->
+        if Enum.any?(parts, &(&1 == "")) do
+          nil
+        else
+          longest_module_prefix(parts)
+        end
+    end
+  end
+
+  # Longest dot-joined prefix of `parts` that names a loaded module (or the
+  # `:any` wildcard); returns `{type, id}` with the remainder joined by dots,
+  # or nil when none resolves. Requiring a loaded module keeps the permissive
+  # bare-atom fallback in string_to_kind/1 from matching common words.
+  defp longest_module_prefix(parts) do
+    parts
+    |> Enum.scan(fn seg, acc -> acc <> "." <> seg end)
+    |> Enum.reverse()
+    |> Enum.reduce_while(nil, fn type, _acc ->
+      case string_to_kind(type) do
+        {:ok, kind} ->
+          if kind == @wildcard or loaded_module?(kind) do
+            taken = length(String.split(type, "."))
+            id = Enum.drop(parts, taken) |> Enum.join(".")
+
+            # All segments consumed = type with no id → invalid; do NOT
+            # fall through to a shorter (parent-module) prefix.
+            {:halt, if(id == "", do: nil, else: {type, id})}
+          else
+            {:cont, nil}
+          end
+
+        :error ->
+          {:cont, nil}
+      end
+    end)
+  end
+
+  defp loaded_module?(kind) do
+    is_atom(kind) and kind != nil and match?({:module, _}, Code.ensure_loaded(kind))
+  end
+
+  defp map_type(%{"type" => t}), do: t
+  defp map_type(%{type: t}), do: t
+  defp map_type(_), do: nil
+
+  defp map_id(%{"id" => i}), do: i
+  defp map_id(%{id: i}), do: i
+  defp map_id(_), do: nil
+
+  defp cast_id(@wildcard), do: @wildcard
+  defp cast_id("any"), do: @wildcard
+  defp cast_id(i), do: i
 
   # ──────────────────────────────────────────────────────────────────
   # dump — ref record → jsonb map

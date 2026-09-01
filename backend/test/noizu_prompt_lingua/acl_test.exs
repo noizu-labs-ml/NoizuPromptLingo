@@ -11,6 +11,7 @@ defmodule NoizuPromptLingua.AclTest do
   alias Noizu.EntityReference.Records, as: R
 
   alias NoizuPromptLingua.Acl
+  alias NoizuPromptLingua.Acl.ERPRef
 
   @user_kind NoizuPromptLingua.Users.User
   @project_kind NoizuPromptLingua.Projects.Project
@@ -81,6 +82,25 @@ defmodule NoizuPromptLingua.AclTest do
 
       assert [] = Acl.groups_for(ref)
       assert [^ref] = Acl.subject_candidates(ref)
+    end
+
+    test "membership write paths accept raw sref strings" do
+      group = group!("raw")
+      id = uid()
+      sref = "ref.#{@user_kind}.#{id}"
+      expected = R.ref(module: @user_kind, id: id)
+
+      assert {:ok, member} = Acl.add_member(group, sref)
+      assert member.member_ref == expected
+
+      assert {:ok, 1} = Acl.remove_member(group, sref)
+    end
+
+    test "unparseable member refs return symmetric errors" do
+      group = group!("bad")
+
+      assert {:error, :invalid_member_ref} = Acl.add_member(group, "not a ref")
+      assert {:error, :not_found} = Acl.remove_member(group, "not a ref")
     end
   end
 
@@ -212,6 +232,55 @@ defmodule NoizuPromptLingua.AclTest do
       assert Acl.allowed?(user, "project.read", nil)
     end
 
+    test "kind-wildcard rule deliberately does NOT match a nil-resource request" do
+      user = user_ref()
+      rule!(user, R.ref(module: @project_kind, id: :any), "project.read", "allow")
+
+      # matches every project…
+      assert Acl.allowed?(user, "project.read", project_ref())
+      # …but a nil resource is resource-agnostic, and only NULL resource_ref
+      # rules or the {"any","any"} global wildcard apply to it.
+      assert {:deny, :default} = Acl.resolve(user, "project.read", nil)
+    end
+
+    test "two-group cycle terminates and resolves rules on either group" do
+      user = user_ref()
+      project = project_ref()
+
+      a = group!("cyc-a")
+      b = group!("cyc-b")
+
+      member!(a, user)
+      member!(b, a.ref)
+      member!(a, b.ref)
+
+      candidates = Acl.subject_candidates(user)
+      assert user in candidates
+      assert a.ref in candidates
+      assert b.ref in candidates
+
+      rule!(b.ref, project, "project.read", "allow")
+      assert Acl.allowed?(user, "project.read", project)
+      assert {:deny, :default} = Acl.resolve(user_ref(), "project.read", project)
+    end
+
+    test "rule write paths accept raw sref/map inputs" do
+      id = uid()
+      subject = R.ref(module: @user_kind, id: id)
+      project = project_ref()
+
+      # create_rule with raw sref strings
+      assert {:ok, _rule} =
+               Acl.create_rule(%{
+                 subject_ref: "ref.#{@user_kind}.#{id}",
+                 resource_ref: "ref.#{@project_kind}.#{elem(project, 2)}",
+                 action: "project.read",
+                 effect: "allow"
+               })
+
+      assert Acl.allowed?(subject, "project.read", project)
+    end
+
     test "sref/map inputs normalize before queries" do
       id = uid()
       subject = R.ref(module: @user_kind, id: id)
@@ -251,19 +320,55 @@ defmodule NoizuPromptLingua.AclTest do
       assert Acl.normalize(nil) == nil
       assert Acl.normalize("ref.unknown-kind.x") == nil
     end
+
+    test "sref ids may contain dots (first module prefix is the type)" do
+      assert Acl.normalize("ref.#{@project_kind}.abc.def") ==
+               R.ref(module: @project_kind, id: "abc.def")
+
+      assert Acl.normalize("ref.#{@user_kind}.a.b.c") ==
+               R.ref(module: @user_kind, id: "a.b.c")
+    end
+
+    test "repeated ref. prefixes do not double-strip" do
+      assert Acl.normalize("ref.ref.#{@user_kind}.abc") == nil
+    end
+
+    test "empty segments and missing ids are rejected" do
+      assert Acl.normalize("") == nil
+      assert Acl.normalize("ref.") == nil
+      assert Acl.normalize("ref.#{@user_kind}") == nil
+      assert Acl.normalize("ref.#{@user_kind}.") == nil
+      assert Acl.normalize("ref..abc") == nil
+      assert Acl.normalize("ref.#{@user_kind}..abc") == nil
+    end
+
+    test "ERPRef.cast accepts the same shapes" do
+      id = uid()
+      ref = R.ref(module: @user_kind, id: id)
+
+      assert ERPRef.cast("ref.#{@user_kind}.#{id}") == {:ok, ref}
+      assert ERPRef.cast(%{"type" => "#{@user_kind}", "id" => id}) == {:ok, ref}
+      assert ERPRef.cast(%{type: "#{@user_kind}", id: id}) == {:ok, ref}
+      assert ERPRef.cast("ref.any.any") == {:ok, R.ref(module: :any, id: :any)}
+      assert ERPRef.cast("garbage") == :error
+      assert ERPRef.cast("ref.nope.kind.x") == :error
+      assert ERPRef.cast(nil) == {:ok, nil}
+    end
   end
 
   describe "frontier cap (runaway-graph guard)" do
     test "over-limit frontier is trimmed, not discarded" do
       user = user_ref()
+      cap = Acl.max_group_depth()
 
       # subject directly in > cap groups — old code discarded the entire
-      # frontier (candidates = subject only); capped expansion keeps 15 of 20.
-      groups = Enum.map(1..20, fn i -> group!("cap-#{i}") end)
+      # frontier (candidates = subject only); capped expansion keeps cap-1
+      # of the newest group refs, so candidates = cap.
+      groups = Enum.map(1..(cap + 4), fn i -> group!("cap-#{i}") end)
       Enum.each(groups, &member!(&1, user))
 
       candidates = Acl.subject_candidates(user)
-      assert length(candidates) == 16
+      assert length(candidates) == cap
       assert user in candidates
       assert Enum.any?(candidates, &(&1 != user))
       # cycle guard still intact
