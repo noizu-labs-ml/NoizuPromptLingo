@@ -17,8 +17,24 @@ defmodule NoizuPromptLingua.MCP.Organizations.Tools.OrganizationGet do
     ref = Args.get(args, :organization)
 
     case Resolve.organization(ref) do
-      nil -> {:error, "Organization '#{ref}' not found"}
-      org -> {:ok, %{id: org.id, name: org.name, slug: org.slug, settings: org.settings}}
+      nil ->
+        {:error, "Organization '#{ref}' not found"}
+
+      org ->
+        # Post-TRP-cutover (W4) orgs are `Shapes.organization` maps
+        # (id/slug/name/role/owner); the legacy pm_core schema's `settings`
+        # map has no TRP shared-key counterpart (spec §4.1), so the key is
+        # preserved with a %{} default instead of dropped — the MCP response
+        # shape stays stable and dot-access never crashes on the new shape.
+        {:ok,
+         %{
+           id: org.id,
+           name: org.name,
+           slug: org.slug,
+           settings: Map.get(org, :settings, %{}),
+           role: Map.get(org, :role),
+           owner: Map.get(org, :owner)
+         }}
     end
   end
 end
