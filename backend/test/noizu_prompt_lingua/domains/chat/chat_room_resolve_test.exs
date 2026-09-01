@@ -28,21 +28,19 @@ defmodule NoizuPromptLingua.Domains.Chat.RoomResolveTest do
   end
 
   # ── fixtures (raw SQL; we only need real org rows) ──
-  # Org rows are dual-written: `Resolve.organization_id` resolves slugs via the
-  # shared pm_core DB (Redis-cached), while chat rooms/organizations live on the
-  # app DB — the same UUID must exist in both.
+  # Pre-cutover this dual-wrote the shared pm_core DB too (slug resolution
+  # read from Noizu.PM.Repo); post-TRP-cutover `resolve_room/2` resolves
+  # slugs purely against the app DB, so only the app-DB org row is needed.
 
   defp insert_org do
     uuid = Ecto.UUID.generate()
     slug = "resolverg-#{System.unique_integer([:positive])}"
 
-    for repo <- [Noizu.PM.Repo, Repo] do
-      repo.query!(
-        "INSERT INTO organizations (id, slug, name, inserted_at, updated_at) " <>
-          "VALUES ($1, $2, $3, now(), now())",
-        [Ecto.UUID.dump!(uuid), slug, "Room Resolve Test Org"]
-      )
-    end
+    Repo.query!(
+      "INSERT INTO organizations (id, slug, name, inserted_at, updated_at) " <>
+        "VALUES ($1, $2, $3, now(), now())",
+      [Ecto.UUID.dump!(uuid), slug, "Room Resolve Test Org"]
+    )
 
     uuid
   end

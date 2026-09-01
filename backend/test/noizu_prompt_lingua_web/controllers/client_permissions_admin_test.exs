@@ -187,7 +187,9 @@ defmodule NoizuPromptLinguaWeb.ClientPermissionsAdminTest do
 
     fetched = (conn |> get(url) |> json_response(200))["toolset_config"]
     assert fetched["groups"]["sessions"]["tools"]["Session_List"]["enable_for_hours"] == 3
-    assert fetched["groups"]["sessions"]["tools"]["Session_List"]["enabled_at"]
+    # Windows are anchored by `set_at` since the F3 anchor migration
+    # (legacy `enabled_at` is read-only fallback, never stamped on write).
+    assert fetched["groups"]["sessions"]["tools"]["Session_List"]["set_at"]
 
     # Round-trip write of exactly what GET returned is accepted (no unknown-field 422).
     round = conn |> put(url, %{toolset_config: fetched}) |> json_response(200)

@@ -79,7 +79,10 @@ jobs:
       # :memory hits live Weaviate (Cloudflare-Access-authed; unauthed in CI) —
       # excluded in CI; run locally with Weaviate access to exercise it.
       # Redis-tagged tests run: a redis service container is provided above.
-      - run: mix test --exclude memory
+      # :live_trp (ContractLiveTest) hits a real TRP deployment via
+      # TRP_LIVE_CONTRACT_URL/KEY — CI has neither; excluded here, run at
+      # activation per the module doc.
+      - run: mix test --exclude memory --exclude live_trp
 
   test-frontend:
     # Smoke only: npm ci + tsc. Not a full Next build and not Cypress.
