@@ -281,3 +281,180 @@ export async function removeAclGroupMember(
     body: JSON.stringify({ member: refString(kind, clientId) }),
   });
 }
+
+// ---------------------------------------------------------------------------
+// MCP tool sets (PRD-N4 §4.1, N4a) — org-admin CRUD against
+// /api/v1/organizations/:org_id/tool-sets. The validate dry-run endpoint is
+// N4b (gated on lib PRD-3) and deliberately has no client fn yet.
+// ---------------------------------------------------------------------------
+
+export type ToolSetShape = 'org' | 'project' | 'group';
+export type DescriptionVerbosity = 'full' | 'concise' | 'minimal';
+
+/** Closed-vocabulary tool-set config (PRD-N2 §4.1 jsonb shape). */
+export interface ToolSetConfig {
+  groups?: Record<string, ToolSetGroupConfig>;
+}
+
+export interface ToolSetGroupConfig {
+  enabled?: boolean;
+  tools?: Record<string, ToolSetToolConfig>;
+}
+
+export interface ToolSetToolConfig {
+  enabled?: boolean;
+  name?: string;
+  description?: string;
+  args?: Record<string, ToolSetArgConfig>;
+}
+
+export interface ToolSetArgConfig {
+  enum_remove?: (string | number | boolean)[];
+  hide?: boolean;
+  rename?: string;
+  default?: string | number | boolean;
+  description?: string;
+}
+
+export interface ToolSetSettings {
+  allow_api_keys?: boolean;
+  description_verbosity?: DescriptionVerbosity;
+  instructions?: string;
+}
+
+/** A built-in capability profile, from the index `profiles` list (read-only). */
+export interface ToolSetProfileView {
+  slug: string;
+  display_name: string;
+  description: string | null;
+  groups: string[];
+  group_count: number;
+  tool_count: number;
+  cloneable: boolean;
+  editable: boolean;
+  is_profile: boolean;
+  is_active: boolean;
+}
+
+export interface ToolSetPreviewGroup {
+  enabled: boolean;
+  tool_count: number;
+  overridden_tools: number;
+  override_ops: number;
+}
+
+/** Structural preview from `show` — registry counts + override-op census. */
+export interface ToolSetStructuralPreview {
+  groups: Record<string, ToolSetPreviewGroup>;
+  total_override_ops: number;
+}
+
+export interface ToolSetAuditEntry {
+  at: string;
+  actor?: string | null;
+  action: string;
+}
+
+export interface ToolSetView {
+  id: string;
+  slug: string;
+  display_name: string;
+  description: string | null;
+  shape: ToolSetShape;
+  project_id: string | null;
+  group_id: string | null;
+  source: string;
+  source_profile: string | null;
+  is_active: boolean;
+  expires_at: string | null;
+  config_digest: string | null;
+  member_count: number | null;
+  settings: ToolSetSettings;
+  updated_by: string | null;
+  updated_at: string | null;
+  urls: { mcp: string | null; admin: string | null };
+  audit?: ToolSetAuditEntry[];
+  preview?: ToolSetStructuralPreview;
+  config?: ToolSetConfig;
+}
+
+export interface ToolSetIndex {
+  profiles: ToolSetProfileView[];
+  sets: ToolSetView[];
+}
+
+/** Attrs accepted by create/clone; update allows the same minus identity. */
+export interface ToolSetAttrs {
+  slug?: string;
+  display_name?: string;
+  description?: string;
+  project_id?: string;
+  group_id?: string;
+  config?: ToolSetConfig;
+  settings?: ToolSetSettings;
+}
+
+/** GET /api/v1/organizations/:org_id/tool-sets — profiles + org sets. */
+export async function listToolSets(orgId: string): Promise<ToolSetIndex> {
+  const res = await request<{ profiles: ToolSetProfileView[]; sets: ToolSetView[] }>(
+    `/api/v1/organizations/${encodeURIComponent(orgId)}/tool-sets`,
+  );
+  return { profiles: res.profiles ?? [], sets: res.sets ?? [] };
+}
+
+/**
+ * GET .../tool-sets/:slug — a set (with structural preview + config) or a
+ * built-in profile slug (read-only view).
+ */
+export async function getToolSet(
+  orgId: string,
+  slug: string,
+): Promise<{ tool_set?: ToolSetView; profile?: ToolSetProfileView }> {
+  return request<{ tool_set?: ToolSetView; profile?: ToolSetProfileView }>(
+    `/api/v1/organizations/${encodeURIComponent(orgId)}/tool-sets/${encodeURIComponent(slug)}`,
+  );
+}
+
+/** POST .../tool-sets — create a custom set; 422 surfaces changeset errors. */
+export async function createToolSet(orgId: string, attrs: ToolSetAttrs): Promise<ToolSetView> {
+  const res = await request<{ tool_set: ToolSetView }>(
+    `/api/v1/organizations/${encodeURIComponent(orgId)}/tool-sets`,
+    { method: 'POST', body: JSON.stringify({ tool_set: attrs }) },
+  );
+  return res.tool_set;
+}
+
+/** PATCH .../tool-sets/:slug — partial update of display fields/config/settings. */
+export async function updateToolSet(
+  orgId: string,
+  slug: string,
+  attrs: Partial<ToolSetAttrs> & { is_active?: boolean },
+): Promise<ToolSetView> {
+  const res = await request<{ tool_set: ToolSetView }>(
+    `/api/v1/organizations/${encodeURIComponent(orgId)}/tool-sets/${encodeURIComponent(slug)}`,
+    { method: 'PATCH', body: JSON.stringify({ tool_set: attrs }) },
+  );
+  return res.tool_set;
+}
+
+/** POST .../tool-sets/:slug/deactivate — soft-kill (idempotent). */
+export async function deactivateToolSet(orgId: string, slug: string): Promise<ToolSetView> {
+  const res = await request<{ tool_set: ToolSetView }>(
+    `/api/v1/organizations/${encodeURIComponent(orgId)}/tool-sets/${encodeURIComponent(slug)}/deactivate`,
+    { method: 'POST' },
+  );
+  return res.tool_set;
+}
+
+/** POST .../tool-sets/clone — clone a profile or set slug into a new set. */
+export async function cloneToolSet(
+  orgId: string,
+  source: string,
+  attrs: ToolSetAttrs = {},
+): Promise<ToolSetView> {
+  const res = await request<{ tool_set: ToolSetView }>(
+    `/api/v1/organizations/${encodeURIComponent(orgId)}/tool-sets/clone`,
+    { method: 'POST', body: JSON.stringify({ source, tool_set: attrs }) },
+  );
+  return res.tool_set;
+}

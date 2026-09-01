@@ -107,7 +107,7 @@ defmodule NoizuPromptLingua.MCP.ToolSets do
         |> Map.merge(%{
           "source" => "clone",
           "source_profile" => source,
-          "settings" => %{}
+          "settings" => Map.merge(caller_settings(attrs), %{})
         })
         |> create_from_clone(opts, source)
     end
@@ -119,7 +119,7 @@ defmodule NoizuPromptLingua.MCP.ToolSets do
     |> Map.merge(%{
       "source" => "clone",
       "source_profile" => nil,
-      "settings" => %{"cloned_from" => source.slug}
+      "settings" => Map.merge(caller_settings(attrs), %{"cloned_from" => source.slug})
     })
     |> create_from_clone(opts, source.slug)
   end
@@ -157,6 +157,16 @@ defmodule NoizuPromptLingua.MCP.ToolSets do
     }
   end
 
+  # Caller-supplied settings (N4a in-row audit seeds `_audit`) merged UNDER the
+  # clone-provenance keys, which always win.
+  defp caller_settings(attrs) do
+    attrs
+    |> Map.new(fn {k, v} -> {to_string(k), v} end)
+    |> Map.get("settings")
+    |> Kernel.||(%{})
+    |> stringify_map()
+  end
+
   # First free "<base>-copy" / "<base>-copy-N" slug within the org.
   defp suggest_slug(nil, _base), do: nil
 
@@ -192,17 +202,31 @@ defmodule NoizuPromptLingua.MCP.ToolSets do
     |> MapSet.new()
   end
 
-  @doc "Active sets for an org, every audience shape, oldest first."
-  def list_for_org(org_id) when is_binary(org_id) do
-    Repo.all(
-      from(s in MCPToolSet,
-        where: s.organization_id == ^org_id and s.is_active == true,
-        order_by: [asc: s.inserted_at, asc: s.slug]
-      )
-    )
+  @doc """
+  Sets for an org, every audience shape, oldest first. Active-only by default
+  (the request path's universe); `opts[:include_inactive]` adds deactivated
+  rows — the admin index needs those (FR-4-3: deactivated sets remain listable).
+  """
+  def list_for_org(org_id, opts \\ [])
+
+  def list_for_org(org_id, opts) when is_binary(org_id) do
+    query =
+      if Keyword.get(opts, :include_inactive, false) do
+        from(s in MCPToolSet,
+          where: s.organization_id == ^org_id,
+          order_by: [asc: s.inserted_at, asc: s.slug]
+        )
+      else
+        from(s in MCPToolSet,
+          where: s.organization_id == ^org_id and s.is_active == true,
+          order_by: [asc: s.inserted_at, asc: s.slug]
+        )
+      end
+
+    Repo.all(query)
   end
 
-  def list_for_org(_), do: []
+  def list_for_org(_, _), do: []
 
   def get(id) when is_binary(id), do: Repo.get(MCPToolSet, id)
   def get(_), do: nil

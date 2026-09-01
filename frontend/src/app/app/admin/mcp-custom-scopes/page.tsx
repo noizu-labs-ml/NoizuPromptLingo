@@ -2,7 +2,7 @@
 
 import { Fragment, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import {
   api,
@@ -34,6 +34,14 @@ import {
   type ScopeClient,
 } from '@/lib/acl-api';
 import { wireGroupHasMember } from '@/lib/acl-convert';
+import { useOrg } from '@/context/org';
+import {
+  cloneToolSet,
+  deactivateToolSet,
+  listToolSets,
+  updateToolSet,
+  type ToolSetIndex,
+} from '@/lib/acl-api';
 import McpEndpointSetupPopunder from '@/components/mcp-endpoint-setup-popunder';
 import { ToolOverrideFields } from '@/components/kit/tool-overrides-editor';
 import {
@@ -1033,6 +1041,8 @@ function AdminMcpCustomScopesInner() {
           </section>
         )}
 
+        <ToolSetsSection />
+
         <SlideOverSidebar
           open={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
@@ -1056,5 +1066,203 @@ function AdminMcpCustomScopesInner() {
         )}
       </main>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// N4a — Tool-Sets section (PRD-N4 §4.2): built-in profiles (read-only,
+// cloneable) next to the org's durable tool sets. Sibling section to Scopes;
+// editing happens on the kind=tool-set config page.
+// ---------------------------------------------------------------------------
+
+function shapeBadge(shape: string) {
+  return (
+    <span
+      style={{
+        fontSize: 10,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+        border: '1px solid var(--border)',
+        borderRadius: 999,
+        padding: '1px 8px',
+        color: 'var(--text-2)',
+      }}
+    >
+      {shape}
+    </span>
+  );
+}
+
+function ToolSetsSection() {
+  const router = useRouter();
+  const { currentOrg, organizations, switchOrg } = useOrg();
+  const orgId = currentOrg?.id ?? null;
+  const [index, setIndex] = useState<ToolSetIndex | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const load = useCallback(async () => {
+    if (!orgId) return;
+    setLoading(true);
+    try {
+      setIndex(await listToolSets(orgId));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to load tool sets');
+    } finally {
+      setLoading(false);
+    }
+  }, [orgId]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  async function clone(source: string) {
+    if (!orgId) return;
+    try {
+      const created = await cloneToolSet(orgId, source);
+      toast.success(`Cloned to "${created.slug}"`);
+      router.push(`/app/admin/mcp-config/tool-set/${encodeURIComponent(created.slug)}`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Clone failed');
+    }
+  }
+
+  async function deactivate(slug: string) {
+    if (!orgId) return;
+    try {
+      await deactivateToolSet(orgId, slug);
+      toast.success(`Tool set "${slug}" deactivated`);
+      void load();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Deactivate failed');
+    }
+  }
+
+  async function reactivate(slug: string) {
+    if (!orgId) return;
+    try {
+      await updateToolSet(orgId, slug, { is_active: true });
+      toast.success(`Tool set "${slug}" re-activated`);
+      void load();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Re-activate failed');
+    }
+  }
+
+  return (
+    <section className="dash-panel">
+      <div className="dash-panel__head">
+        <h2 className="dash-panel__title">
+          Tool Sets
+          {organizations.length > 1 && (
+            <select
+              aria-label="Organization"
+              value={orgId ?? ''}
+              onChange={(e) => switchOrg(e.target.value)}
+              style={{ marginLeft: 10, fontSize: 12 }}
+            >
+              {organizations.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.name ?? o.slug}
+                </option>
+              ))}
+            </select>
+          )}
+        </h2>
+        <Link className="sg-btn sg-btn--outline sg-btn--sm" href="/app/admin/mcp-config/tool-set/new">
+          New tool set
+        </Link>
+      </div>
+      <p className="sg-page-intro">
+        Built-in capability profiles are read-only — clone one to customize. Org tool sets drive the
+        serving path once the tool-set gateway lands.
+      </p>
+
+      {!orgId ? (
+        <p className="sg-page-intro">Select an organization to manage tool sets.</p>
+      ) : loading && !index ? (
+        <p className="sg-page-intro">Loading…</p>
+      ) : (
+        <>
+          <h3 style={{ margin: '0.75rem 0 0.5rem', fontSize: 12, fontWeight: 700, color: 'var(--text-2)' }}>
+            Built-in profiles
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {(index?.profiles ?? []).map((p) => (
+              <div
+                key={p.slug}
+                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 8, background: 'var(--bg-3)' }}
+              >
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600 }}>
+                    {p.display_name} <span className="font-mono" style={{ fontSize: 11, color: 'var(--text-3)' }}>{p.slug}</span>
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-2)' }}>{p.description}</div>
+                </div>
+                <span className="dash-badge">{p.group_count} groups</span>
+                <span className="dash-badge">{p.tool_count} tools</span>
+                <button type="button" className="sg-btn sg-btn--outline sg-btn--sm" onClick={() => clone(p.slug)}>
+                  Clone
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <h3 style={{ margin: '1rem 0 0.5rem', fontSize: 12, fontWeight: 700, color: 'var(--text-2)' }}>
+            Org tool sets
+          </h3>
+          {(index?.sets ?? []).length === 0 ? (
+            <p className="sg-page-intro">No tool sets yet — clone a profile or create a new one.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {(index?.sets ?? []).map((s) => (
+                <div
+                  key={s.id}
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 8, opacity: s.is_active ? 1 : 0.6 }}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>
+                      {s.display_name}
+                      <span className="font-mono" style={{ fontSize: 11, color: 'var(--text-3)', marginLeft: 6 }}>{s.slug}</span>
+                      {!s.is_active && (
+                        <span style={{ fontSize: 10, color: 'var(--text-3)', marginLeft: 6 }}>(deactivated)</span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--text-2)' }}>
+                      {s.source === 'clone' && s.source_profile ? `clone of ${s.source_profile}` : s.source}
+                      {s.member_count !== null ? ` · ${s.member_count} members` : ''}
+                    </div>
+                  </div>
+                  {shapeBadge(s.shape)}
+                  {s.config_digest && (
+                    <span className="font-mono" style={{ fontSize: 10, color: 'var(--text-3)' }} title="config digest">
+                      {s.config_digest.slice(0, 8)}
+                    </span>
+                  )}
+                  <Link
+                    className="sg-btn sg-btn--outline sg-btn--sm"
+                    href={`/app/admin/mcp-config/tool-set/${encodeURIComponent(s.slug)}`}
+                  >
+                    Edit
+                  </Link>
+                  <button type="button" className="sg-btn sg-btn--outline sg-btn--sm" onClick={() => clone(s.slug)}>
+                    Clone
+                  </button>
+                  {s.is_active ? (
+                    <button type="button" className="sg-btn sg-btn--danger sg-btn--sm" onClick={() => deactivate(s.slug)}>
+                      Deactivate
+                    </button>
+                  ) : (
+                    <button type="button" className="sg-btn sg-btn--outline sg-btn--sm" onClick={() => reactivate(s.slug)}>
+                      Re-activate
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </section>
   );
 }
