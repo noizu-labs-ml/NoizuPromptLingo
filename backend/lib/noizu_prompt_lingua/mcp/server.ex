@@ -36,6 +36,9 @@ defmodule NoizuPromptLingua.MCP.Server do
 
   alias Noizu.MCP.Server.Features.Pagination
   alias Noizu.MCP.Server.Features.Tools
+  alias NoizuPromptLingua.MCPServers
+
+  require Logger
 
   @doc """
   Shared `handle_list_tools` implementation: expand the server's tool set
@@ -59,5 +62,47 @@ defmodule NoizuPromptLingua.MCP.Server do
     |> Enum.reject(& &1.hidden)
     |> Enum.map(& &1.definition)
     |> Pagination.paginate(cursor)
+  end
+
+  @doc """
+  Write-path invalidation for toolset-affecting writes (custom-scope
+  create/update/delete, API-key toolset/status writes, OAuth-client
+  toolset_config/revoke): bump the `ToolsetCache` generation AND broadcast
+  `notifications/tools/list_changed` to every connected session on every NPL
+  MCP server (root aggregate, the custom-scope endpoint, and all group
+  servers — `notify_changed/1` is generated per server module by the
+  `use Noizu.MCP.Server` macro, so the broadcast fans out over the catalog).
+
+  This is the FINAL home of the notify call sites (N1 parity workstream):
+  best-effort by contract — a server whose session registry is down is logged
+  and skipped, never fails the write that triggered it.
+  """
+  def notify_toolset_changed do
+    NoizuPromptLingua.MCP.ToolsetCache.bump()
+
+    for mod <- server_modules() do
+      try do
+        if Code.ensure_loaded?(mod) and function_exported?(mod, :notify_changed, 1) do
+          mod.notify_changed(:tools)
+        end
+      rescue
+        e ->
+          Logger.warning(
+            "[MCP.Server] notify_changed(:tools) failed for #{inspect(mod)}: #{Exception.message(e)}"
+          )
+      end
+    end
+
+    :ok
+  end
+
+  defp server_modules do
+    [NoizuPromptLingua.MCP, NoizuPromptLingua.MCP.Custom] ++
+      Enum.flat_map(MCPServers.all(), fn %{id: id} ->
+        case MCPServers.server_module(id) do
+          nil -> []
+          mod -> [mod]
+        end
+      end)
   end
 end

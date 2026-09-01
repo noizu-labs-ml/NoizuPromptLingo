@@ -55,7 +55,9 @@ defmodule NoizuPromptLingua.MCPApiKeys do
   defp maybe_put_expires_at(attrs, %DateTime{} = dt), do: Map.put(attrs, :expires_at, dt)
 
   defp maybe_put_toolset(attrs, nil), do: attrs
-  defp maybe_put_toolset(attrs, config), do: Map.put(attrs, :toolset_config, normalize_toolset(config))
+
+  defp maybe_put_toolset(attrs, config),
+    do: Map.put(attrs, :toolset_config, normalize_toolset(config))
 
   @doc """
   Normalize a toolset config to the canonical shape (string keys, known groups
@@ -205,7 +207,6 @@ defmodule NoizuPromptLingua.MCPApiKeys do
     KeySchema |> order_by([k], desc: k.inserted_at) |> NoizuPromptLingua.Repo.all()
   end
 
-
   @doc """
   Parses an optional `expires_at` request param into `{:ok, %DateTime{} | nil}`
   for `generate_api_key/3`, or `:error` if it's present but not a valid,
@@ -279,9 +280,11 @@ defmodule NoizuPromptLingua.MCPApiKeys do
   end
 
   # Cached keys (ToolsetCache) feed the EffectiveToolset cascade — drop the
-  # cache whenever a key's status/toolset write lands.
+  # cache whenever a key's status/toolset write lands. The cache bump +
+  # tools/list_changed broadcast are ONE best-effort step (N1 manifest parity):
+  # connected clients re-list before serving stale key flags.
   defp bump_cache_on_ok({:ok, _} = ok) do
-    NoizuPromptLingua.MCP.ToolsetCache.bump()
+    NoizuPromptLingua.MCP.Server.notify_toolset_changed()
     ok
   end
 

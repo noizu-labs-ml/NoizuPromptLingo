@@ -847,6 +847,8 @@ function AdminMcpCustomScopesInner() {
             <h3 style={{ margin: '0 0 0.5rem', fontSize: 13, fontWeight: 700 }}>Restrict tools</h3>
             <span className="sg-field__hint" style={{ display: 'block', marginBottom: '0.5rem' }}>
               Per-client overrides layer on top of the scope config (absent = enabled + visible).
+              Narrowing only — clients never ADD tools to an endpoint. Edit the scope&apos;s
+              include-set to add groups.
             </span>
             <ToolTogglesGrid
               sections={clientToggleGroups}
