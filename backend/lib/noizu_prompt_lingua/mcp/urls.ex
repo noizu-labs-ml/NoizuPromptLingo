@@ -33,6 +33,20 @@ defmodule NoizuPromptLingua.MCP.Urls do
   @doc "Permanent legacy alias: `/custom/:scope_slug/mcp`."
   def legacy_url(scope, opts \\ []), do: build(opts, "custom/#{slug(scope)}/mcp")
 
+  @doc """
+  Human-facing chat room URL (frontend route): `/app/:org_slug/chat/:room_id`.
+  Returns nil when the room's org slug cannot be resolved.
+  """
+  def chat_room_url(room, opts \\ []) do
+    case org_slug(room, opts) do
+      org_slug when is_binary(org_slug) and org_slug != "" ->
+        build(opts, "app/#{org_slug}/chat/#{id(room)}")
+
+      _ ->
+        nil
+    end
+  end
+
   defp build(opts, path) do
     host = opts[:host] || MCPServers.default_host()
     "https://#{host}/#{path}"
@@ -59,6 +73,14 @@ defmodule NoizuPromptLingua.MCP.Urls do
       %{"slug" => slug} when is_binary(slug) -> slug
       slug when is_binary(slug) -> slug
       _ -> raise ArgumentError, "Urls: scope slug required, got: #{inspect(scope)}"
+    end
+  end
+
+  defp id(room) do
+    case room do
+      %{id: id} when is_binary(id) -> id
+      %{"id" => id} when is_binary(id) -> id
+      _ -> raise ArgumentError, "Urls: room id required, got: #{inspect(room)}"
     end
   end
 end

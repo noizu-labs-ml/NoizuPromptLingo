@@ -18,7 +18,7 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.ListRooms do
   end
 
   alias NoizuPromptLingua.Domains.Chat
-  alias NoizuPromptLingua.MCP.{Args, Resolve}
+  alias NoizuPromptLingua.MCP.{Args, Resolve, Urls}
 
   @impl true
   def call(args, _ctx) do
@@ -42,6 +42,8 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.ListRooms do
           )
 
         rooms = Chat.list_rooms(opts)
+        # Rows are org-filtered, so one slug lookup serves every room.
+        chatroom_url = Urls.chat_room_url(List.first(rooms))
 
         {:ok,
          %{
@@ -51,6 +53,7 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.ListRooms do
                  id: r.id,
                  name: r.name,
                  slug: r.slug,
+                 chatroom_url: chatroom_url,
                  organization_id: r.organization_id,
                  project_id: r.project_id,
                  created_at: r.inserted_at
