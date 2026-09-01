@@ -36,8 +36,8 @@ ENV MIX_ENV=prod
 # Per-arch cache IDs (amd64 vs arm64 must not share _build/deps beams/erts).
 # sharing=locked: one compile at a time per cache (avoids concurrent corruption).
 COPY mix.exs mix.lock ./
-# Path-dep for shared pm_core layer (required before mix deps.get).
-COPY vendor/noizu_labs_pm vendor/noizu_labs_pm
+# Post-TRP-cutover: no vendored pm_core path dep — all shared-PM access rides
+# the TRP shared-key API (deps are plain Hex/SCM deps below).
 RUN --mount=type=cache,target=/root/.hex,sharing=locked \
     --mount=type=cache,target=/root/.cache/rebar3,sharing=locked \
     --mount=type=cache,id=npl-mcp-mix-deps-${TARGETARCH},target=/app/deps,sharing=locked \
