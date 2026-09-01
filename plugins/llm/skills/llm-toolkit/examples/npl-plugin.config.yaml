@@ -1,0 +1,60 @@
+# Example llm-toolkit services config (NPL llm plugin).
+#
+# Layered config — lowest to highest precedence:
+#   1. built-in defaults
+#   2. user config:       ~/.config/npl/npl-plugin.config.yaml
+#   3. per-project:       ./.npl/npl-plugin.config.yaml
+#
+# Place this file at either user or per-project path. Commands are relative
+# to the plugin dir (plugins/llm/); use absolute paths or `cwd` when running
+# from elsewhere.
+#
+# Services with `enabled: true` + `autostart: true` start when the
+# llm-toolkit API boots. Manage via `llm-toolkit services` (TUI) or the
+# web UI Services page.
+
+services:
+  # Plugin MCP server: doc-pointers (bin/doc-pointers-mcp → mix doc_pointers.mcp.stdio)
+  - name: doc-pointers
+    command: bin/doc-pointers-mcp
+    args: []
+    cwd: plugins/llm
+    env: {}
+    transport: stdio
+    enabled: true
+    autostart: false
+
+  # Plugin MCP server: noizu-google (bin/noizu-google-mcp → mix run --no-halt)
+  - name: noizu-google
+    command: bin/noizu-google-mcp
+    args: []
+    cwd: plugins/llm
+    env: {}
+    transport: stdio
+    enabled: true
+    autostart: false
+
+  # Plugin MCP server: dropbox (bin/dropbox-mcp → mix run --no-halt)
+  - name: dropbox
+    command: bin/dropbox-mcp
+    args: []
+    cwd: plugins/llm
+    env: {}
+    transport: stdio
+    enabled: true
+    autostart: false
+
+  # HTTP transport example:
+  # - name: coordinator
+  #   command: /usr/local/bin/coordinator
+  #   transport: http
+  #   url: http://127.0.0.1:9100/mcp
+  #   health_url: http://127.0.0.1:9100/health
+  #   enabled: true
+  #   autostart: true
+
+# Opt-in: sync service enable state into Claude MCP config files.
+# mcp_sync:
+#   targets:
+#     - path: ~/.claude.json        # Claude Code MCP config
+#     - path: plugins/llm/.mcp.json # plugin-local MCP config
