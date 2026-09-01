@@ -28,13 +28,15 @@ defmodule NoizuPromptLingua.Domains.Chat.RoomResolveTest do
   end
 
   # ── fixtures (raw SQL; we only need real org rows) ──
-  # Pre-cutover this dual-wrote the shared pm_core DB too (slug resolution
-  # read from Noizu.PM.Repo); post-TRP-cutover `resolve_room/2` resolves
-  # slugs purely against the app DB, so only the app-DB org row is needed.
+  # Post-TRP-cutover the slug→UUID resolver reads the TRP org inventory (the
+  # stub in tests — spec §4.1), so seed the stub with the same id/slug the
+  # app-DB organizations row carries; `resolve_room/2` itself is app-DB-only.
 
   defp insert_org do
     uuid = Ecto.UUID.generate()
     slug = "resolverg-#{System.unique_integer([:positive])}"
+
+    NoizuPromptLingua.TRP.TestStub.seed_org(uuid, slug)
 
     Repo.query!(
       "INSERT INTO organizations (id, slug, name, inserted_at, updated_at) " <>

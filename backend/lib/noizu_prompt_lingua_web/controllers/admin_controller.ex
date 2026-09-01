@@ -1310,7 +1310,10 @@ defmodule NoizuPromptLinguaWeb.AdminController do
 
   # "enabled_at" rides along (Window's enable_for_hours anchor, stamped on
   # write) so fetched configs round-trip through PUT without unknown-field 422s.
-  @tool_entry_keys ~w(disabled hidden name_override description_override hide_until enable_for_hours enabled_at)
+  # `set_at` is accepted on write so a GET-fetched config round-trips without a
+  # 422 (idempotency); MCP.Window re-stamps it (write contract: anchor slides
+  # to now). `enabled_at` stays for legacy pre-set_at jsonb.
+  @tool_entry_keys ~w(disabled hidden name_override description_override hide_until enable_for_hours set_at enabled_at)
 
   def list_scope_clients(conn, %{"slug" => slug}) do
     case MCPCustomScopes.get_by_slug(slug) do

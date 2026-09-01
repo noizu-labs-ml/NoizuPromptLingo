@@ -191,9 +191,19 @@ defmodule NoizuPromptLinguaWeb.ClientPermissionsAdminTest do
     # (legacy `enabled_at` is read-only fallback, never stamped on write).
     assert fetched["groups"]["sessions"]["tools"]["Session_List"]["set_at"]
 
-    # Round-trip write of exactly what GET returned is accepted (no unknown-field 422).
+    # Round-trip write of exactly what GET returned is accepted (no unknown-field
+    # 422 — `set_at` is a known entry key). Re-writing a live window re-stamps
+    # its `set_at` anchor (write contract: anchor slides to now), so compare
+    # anchors-apart and assert the round-trip is still anchored.
     round = conn |> put(url, %{toolset_config: fetched}) |> json_response(200)
-    assert round["toolset_config"] == fetched
+    {round_set_at, round_cfg} =
+      pop_in(round["toolset_config"], ["groups", "sessions", "tools", "Session_List", "set_at"])
+
+    {_fetched_set_at, fetched_cfg} =
+      pop_in(fetched, ["groups", "sessions", "tools", "Session_List", "set_at"])
+
+    assert round_cfg == fetched_cfg
+    assert round_set_at
 
     # Empty map resets to inherit-everything.
     reset = conn |> put(url, %{toolset_config: %{}}) |> json_response(200)
