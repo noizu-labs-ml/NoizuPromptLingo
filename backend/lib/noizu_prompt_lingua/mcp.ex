@@ -59,4 +59,7 @@ defmodule NoizuPromptLingua.MCP do
   tool(NoizuPromptLingua.MCP.Keys.Tools.KeyUpdate, category: "Keys")
   tool(NoizuPromptLingua.MCP.Keys.Tools.KeyClone, category: "Keys")
   tool(NoizuPromptLingua.MCP.Keys.Tools.KeyRevoke, category: "Keys")
+
+  # VFS — project-management filesystem view over the shared pm_core data layer
+  vfs(NoizuPromptLingua.MCP.VFS.PM)
 end

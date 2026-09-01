@@ -98,7 +98,7 @@ defmodule NoizuPromptLingua.MixProject do
       {:oban, "~> 2.18"},
 
       # Carried over from prior NoizuPromptLingo mix.exs
-      {:noizu_mcp, "~> 0.1.3"},
+      noizu_mcp_dep(),
       {:noizu_github, "~> 0.5.0"},
       {:jose, "~> 1.11"},
       {:yaml_elixir, "~> 2.11"},
@@ -157,6 +157,20 @@ defmodule NoizuPromptLingua.MixProject do
 
       path ->
         {:noizu_labs_pm, path: path}
+    end
+  end
+
+  # noizu_mcp resolution: hex pin "~> 0.1.3" is the declared dep. For dev work
+  # against an unreleased VFS-capable noizu_mcp, set NOIZU_MCP_DEV_PATH to a
+  # local checkout (path dep, override: true). When the VFS release lands on
+  # Hex, bump the pin below and this override becomes unnecessary.
+  defp noizu_mcp_dep do
+    case System.get_env("NOIZU_MCP_DEV_PATH") do
+      path when is_binary(path) and path != "" ->
+        {:noizu_mcp, path: path, override: true}
+
+      _ ->
+        {:noizu_mcp, "~> 0.1.3"}
     end
   end
 end
