@@ -1,12 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { toast } from 'sonner';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { MiniRealtimeVoiceWidget } from '@/components/mini-realtime-voice-widget';
+import { StarToggle } from '@/components/star-toggle';
 import { api, type Project } from '@/lib/api';
 import { useOrg, useOrgId } from '@/context/org';
+import { useStarredProjects } from '@/context/starred';
 import { DataTable } from '@/components/console/DataTable';
 import { projectsDescriptor } from '@/lib/console/descriptors/projects';
 
@@ -184,13 +187,21 @@ type ModalState = { type: 'create' } | null;
 
 export default function ProjectsPage() {
   const { orgId, slug, loading: orgLoading } = useOrgId();
-  const { currentProject, switchProject, switchOrg, refreshProjects } = useOrg();
+  const { currentProject, switchProject, switchOrg, refreshProjects, projects } = useOrg();
+  const { starred } = useStarredProjects();
   const router = useRouter();
   const [modal, setModal] = useState<ModalState>(null);
   const [archiveTarget, setArchiveTarget] = useState<Project | null>(null);
   // DataTable owns its fetch; bump this to force a refetch after a mutation.
   const [reloadKey, setReloadKey] = useState(0);
   const reload = () => setReloadKey((k) => k + 1);
+
+  // Starred strip: context projects filtered to the viewer's starred set.
+  // Starring only ADDS membership here — rows stay in the main table below.
+  const starredProjects = useMemo(
+    () => projects.filter((p) => starred.includes(p.id)),
+    [projects, starred],
+  );
 
   // Primary-click adopts the project as the active scope (its long-standing action).
   function selectProject(p: Project) {
@@ -235,6 +246,20 @@ export default function ProjectsPage() {
         <div className="projects-header">
           <h1 className="sg-page-title">Projects</h1>
         </div>
+
+        {orgId && starredProjects.length > 0 && (
+          <section className="starred-section" aria-label="Starred projects">
+            <h2 className="starred-section__title">Starred</h2>
+            <ul className="starred-section__list">
+              {starredProjects.map((p) => (
+                <li key={p.id} className="starred-chip">
+                  <StarToggle projectId={p.id} />
+                  <Link href={`/app/${slug}/projects/${p.id}`}>{p.name}</Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {!orgId ? (
           <p className="sg-page-intro">{orgLoading ? 'Loading…' : 'Select an organization to view its projects.'}</p>
