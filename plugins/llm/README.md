@@ -11,7 +11,7 @@ MCP servers (stdio wrappers in `bin/`):
 Vendored companion tools (not MCP servers):
 
 - `run-claude/` — per-directory model routing / local LLM gateway CLI
-- `llm-toolkit/` — conversation search, browse, extract CLI (`llm-toolkit`)
+- `llm-toolkit/` — conversation search, browse, extract CLI (`llm-toolkit`); also manages local MCP/daemon services via `llm-toolkit services` (config: `~/.config/npl/npl-plugin.config.yaml` + per-project `./.npl/npl-plugin.config.yaml`)
 
 Subtree remotes, squash policy, and pull recipe: [SUBTREES.md](SUBTREES.md).
 
