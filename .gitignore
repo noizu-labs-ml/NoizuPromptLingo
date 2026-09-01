@@ -29,3 +29,7 @@ plugins/llm/**/_build/
 plugins/llm/**/deps/
 plugins/llm/**/node_modules/
 plugins/llm/**/.elixir_ls/
+
+# Work journal — local only, not tracked
+journal/TODAY*
+journal/TOMORROW*
