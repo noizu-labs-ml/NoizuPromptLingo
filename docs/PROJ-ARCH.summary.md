@@ -1,75 +1,33 @@
-# Architecture Summary — NoizuPromptLingo (NPL / tobor)
+# Architecture Summary — NoizuPromptLingo
 
-Multi-tenant agent + human collaboration platform. Phoenix API/MCP backend + Next.js web app + nginx. Agents use MCP (`tobor-*`); humans use the web UI. This project *is* tobor for the monorepo’s work-session MCP.
+Condensed companion to [PROJ-ARCH.md](PROJ-ARCH.md).
 
 ## Overview
-NPL MCP is a Model Context Protocol server built on FastMCP 3.x (`>=3.0.0,<4.0.0`) using a two-tier tool pattern: 58 MCP-visible tools across 16 categories, 22 hidden tools callable via ToolCall, ~45 stubs. 80 total implemented tools. Every MCP-registered tool carries hierarchical `tags` and NPL-specific `meta` (`npl_category`, `npl_discoverable`) so 3.x-native clients can filter/group natively. FastAPI for routing (~105 REST endpoints) with a pure-ASGI fallback middleware (SSE-safe), Next.js frontend with Cypress E2E, LiteLLM proxy for LLM-powered features, PostgreSQL for persistent storage, `orchestration/` module for pipeline execution. Companion `npl_persona` CLI package for offline persona simulation.
 
-## Components
-- **Launcher** (`launcher.py`): create_app() + create_asgi_app(), CLI, Uvicorn, pure-ASGI `FrontendFallbackMiddleware`
-- **REST API Router** (`api/router.py`): All `/api/*` HTTP endpoints (~105 routes) — CRUD for tasks, artifacts, chat, sessions, instructions, projects, pipes, agents, skills, metrics, orchestration
-- **Meta Tools** (`meta_tools/`): ToolSummary, ToolSearch, ToolDefinition, ToolHelp, ToolCall — discovery layer, catalog builder, stub catalog, `mcp_discoverable` helper decorator
-- **NPL Spec** (`convention_formatter.py`): NPLSpec tool — NPL definition generation from convention YAMLs
-- **Markdown** (`markdown/`): Converter, viewer, CSS/heading/xpath filters, image descriptions
-- **NPL Parser** (`npl/`): YAML loader, syntax parser, reference resolver
-- **PM Tools** (`pm_tools/`): PRD/story/persona access — DB-backed CRUD (13 hidden) + file-based stubs (8)
-- **Instructions** (`instructions/`): Versioned instruction CRUD + embeddings (3 registered + 3 hidden + POST /api/instructions)
-- **Tool Sessions** (`tool_sessions/`): Session tracking by (project, agent, task) triple (2 registered)
-- **Artifacts** (`artifacts/`): Versioned artifact CRUD + revision history + binary upload (GET/POST /api/artifacts*)
-- **Chat** (`chat/`): Chat rooms + messages REST CRUD (GET/POST /api/chat/rooms*)
-- **Work Sessions** (`sessions/`): Generic work-session lifecycle (GET/POST /api/work-sessions*)
-- **Tasks** (`tasks/`): Task CRUD + status transitions (GET/POST/PATCH /api/tasks*)
-- **Browser** (`browser/`): ToMarkdown, Ping, Download, Screenshot, Rest, Secret, Capture, Checkpoint, Diff, Interact, Report (6 hidden + 32 stubs)
-- **Agents** (`agents/`): Agent catalog — parses agent markdown frontmatter, list/get API
-- **Pipes** (`pipes/`): Inter-agent structured YAML messaging (input/output pipes, DB-backed)
-- **Skills** (`skills/`): Skill file validation + quality scoring
-- **Orchestration** (`orchestration/`): Pattern registry, sequential pipeline with quality gates, TDD pipeline integration. REST: GET/POST /api/orchestration/{agents,runs,trigger,patterns}
-- **Structured Logging** (`structured_logging.py`): JSONL logging with severity numbers and extra attribute pass-through
-- **NPL Docs Regen** (`docs_regen.py`): Regenerate `npl/npl-full.md` from `conventions/` (CLI: `npl-docs-regen`)
-- **Storage** (`storage/`): PostgreSQL async connection pool (asyncpg)
-- **Frontend** (`frontend/`): Next.js + Tailwind, static export to `web/static/`, hybrid REST/mock API facade (`lib/api/client.ts`); Cypress E2E in `frontend/cypress/`
-- **Persona CLI** (`npl_persona/`): Offline persona simulation, journal, knowledge, teams, templates (separate package)
-- Remaining stubs: executors, scripts
+Multi-tenant platform for AI agent harnesses + human supervisors ("tobor"). Three runtime containers: nginx → Phoenix backend (:4000) + Next.js frontend (:3000), sharing Postgres (PostGIS + pgvector) and Redis. Backend exposes 20+ MCP servers on host-scoped paths plus a root aggregator at `/mcp`; every server implements the five discovery tools. Weaviate backs semantic search. A legacy Python MCP fleet (`src/npl_mcp`) remains for tooling (persona CLI, orchestration, browser tools).
+
+## Tenancy & auth
+
+Spine: Organization → Project → Session. Coarse membership (owner/admin/lead/member/viewer) + PBAC v2 (groups, JSON policies, scoped memberships, custom roles, simulator). Humans: Authentik OIDC → SSO code → Guardian JWT (invite-gated registration). Agents: minted `McpApiKey` → short-lived MCP JWT; identity resolved server-side via `ToolGuard`/`MCP.Resolve`, never caller args.
+
+## Core components
+
+nginx (reverse proxy) · Phoenix backend (domain contexts, MCP fleet, channels, Oban) · Next.js frontend (public / app / org / admin surfaces) · Liquibase (canonical schema 000–082) · MCP catalog (server routing + scope packaging) · PBAC/Authz · NPL convention engine (YAML → NPLSpec/NPLLoad) · TRP client (PM source) · Python MCP fleet (FastMCP+FastAPI) · local-mcp (stdio, local-only tools) · browser-controller (Playwright relay) · remote-access-client (frpc tunnels) · helm charts (start-app scaffold, npl-mcp production) · agents//commands//design/ (non-runtime assets)
+
+## MCP servers
+
+Required: root, sessions, organizations. Optional subdomains: projects, tickets, assets, artifacts, chat, review, wiki, github, personas, instructions, memory, markdown, notifications, pubsub, browser, customers, market, campaigns, unicode. Custom scopes at `/custom/:slug/mcp`; packaging modes default | core_custom | all_in_one.
+
+## Key decisions
+
+Elixir/Phoenix platform core with per-domain contexts · multi-server MCP on host paths from one catalog · Liquibase owns DDL (Ecto migrations minimal) · separate human (OIDC+Guardian) vs agent (key→JWT) auth · PBAC v2 with ToolGuard shadow mode · frontend API facade (mock/REST/hybrid swap) · NPL YAML conventions with layered pipeline + DSL · Python fleet kept for pipes/orchestration/persona tooling · TRP as PM source (cross-DB FKs dropped, changeset 078)
 
 ## Stack
-MCP protocol, FastMCP 3.x, FastAPI, Uvicorn, pure-ASGI middleware, SSE transport, PostgreSQL (asyncpg, port 5111), Liquibase migrations (18 changesets), LiteLLM proxy (port 4111), Next.js + Tailwind + Cypress frontend
 
-## Infrastructure
-- NPL MCP Server: port 8765 (MCP SSE + web UI)
-- LiteLLM Proxy: port 4111 (LLM routing)
-- PostgreSQL: port 5111 (database `npl`)
-- Docker Compose for PostgreSQL, Liquibase for schema (18 changesets)
-- Multi-stage `Dockerfile` (Node 22 frontend build → python:3.13-slim runtime)
-- Helm chart at `charts/npl-mcp/` for Kubernetes deployment
-- `Makefile` targets: install, serve, serve-dev, test, lint, fmt, docs-regen, fe-build, cy-open, cy-run
+Next.js 16/React 19/Tailwind v4 · Phoenix 1.8/Elixir/Bandit/Guardian/Oban · FastMCP 3.x/FastAPI/asyncpg/uv · PostgreSQL/Redis/Weaviate · Liquibase + minimal Ecto · OpenTelemetry · nginx/Docker Compose/Helm/Infisical · Node companions (local-mcp, browser-controller, remote-access-client)
 
-## Console Scripts
-- `npl-mcp` — full server (`npl_mcp.launcher:main`)
-- `npl-docs-regen` — regenerate npl-full.md (`npl_mcp.docs_regen:main`)
-- `npl-tmlanguage` — generate NPL TextMate grammar
-- `git-dump`, `git-tree` — repo dump/tree utilities
-- `2md`, `md-view`, `view-md` — markdown conversion/viewing CLIs
+## Running
 
-## Key Design Decisions
-- FastMCP 3.x with custom catalog (hidden-but-callable has no native equivalent)
-- `mcp_discoverable` helper combines `@mcp.tool` + `@discoverable` with auto-populated tags/meta
-- Pure-ASGI fallback middleware (SSE-safe, replaces BaseHTTPMiddleware)
-- REST API (~105 endpoints) parallel to MCP SSE — same DB, different access paths
-- Frontend API facade: pluggable hybrid/rest/mock impls; Cypress for E2E
-- Agent pipes: inter-agent structured YAML messaging with upsert semantics and group targeting
-- NPL convention system: YAML source of truth → parse → resolve → layout pipeline with expression DSL
-- Liquibase manages all DB tables across 18 changesets
-- Orchestration: `PipelinePattern` with `QualityGate` retry logic; pattern registry extensible to consensus/hierarchical/iterative patterns
-- Structured JSONL logging via `JsonFormatter` for service diagnostics
+`make init` → `make build` → `make run` (prod-like, nginx 8080/8095) · `make run-dev` (hot reload) · `uv run npl-mcp` (Python server :8765, LiteLLM :4111) · sandbox image · `helm/npl-mcp` (tobor.locker) · Postgres :5111
 
-## Detailed References
-- `arch/rest-api.md` — Full REST endpoint reference (~105 endpoints)
-- `arch/mcp-tools.md` — Complete per-tool reference (58 visible + 22 hidden)
-- `arch/npl-conventions.md` — Convention system architecture and expression DSL
-- `arch/agent-pipes.md` — Pipe messaging schema, targeting, and lifecycle
-- `reference/persona-cli.md` — Persona CLI package documentation
-- `arch/meta-tools.md` — Catalog architecture and LLM configuration
-- `arch/agent-orchestration.md` — TDD pipeline workflow details
-
-## Agent Orchestration
-30+ primary agents organized by role: TDD pipeline (idea-to-spec → prd-editor → tdd-tester → tdd-coder → tdd-debugger), taskers (haiku/fast/sonnet/opus/ultra), authoring (author, marketing-writer, technical-writer), analysis (winnower, gopher-scout, thinker, grader), persona (persona, persona-manager), coordination (project-coordinator, prd-manager), domain specialists (sql-architect, build-master, cpp-modernizer, perf-profiler, threat-modeler), and utilities (fim, templater, nimps, nb). 24+ additional specialist agents in `agents/additional-agents/`. Inter-agent communication via pipes module. `orchestration/` module provides pipeline execution and TDD workflow automation. Companion `npl_persona` CLI for offline persona simulation.
+→ Detail: [arch/mcp-tools.md](arch/mcp-tools.md) · [arch/rest-api.md](arch/rest-api.md) · [arch/agent-orchestration.md](arch/agent-orchestration.md) · [arch/agent-pipes.md](arch/agent-pipes.md) · [arch/npl-conventions.md](arch/npl-conventions.md) · [PROJ-SCHEMA.md](PROJ-SCHEMA.md) · [PROJ-LAYOUT.md](PROJ-LAYOUT.md)
