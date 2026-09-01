@@ -76,30 +76,6 @@ jobs:
             --username=noizu_prompt_lingua --password=npl_dev \
             --changeLogFile=changelog/db.changelog-master.yaml \
             update
-      # Shared pm_core is a SEPARATE database with its own changelog (vendored PM
-      # lib). config/test.exs binds Noizu.PM.Repo to pm_core_test; without this
-      # schema every shared-PM call raises "PM_CORE_DATABASE_URL is required".
-      # The service container only auto-creates the POSTGRES_USER db, so create
-      # pm_core_test ourselves (idempotent) — mix ecto.create only makes the
-      # app repo's noizu_prompt_lingua_test.
-      - name: Create pm_core_test database
-        env:
-          PGPASSWORD: npl_dev
-        run: >
-          psql -h localhost -U noizu_prompt_lingua -d noizu_prompt_lingua -tAc
-          "SELECT 1 FROM pg_database WHERE datname='pm_core_test'" | grep -q 1
-          ||
-          psql -h localhost -U noizu_prompt_lingua -d noizu_prompt_lingua -c "CREATE DATABASE pm_core_test"
-      - name: Apply pm_core schema (Liquibase)
-        working-directory: backend/vendor/noizu_labs_pm/db
-        run: |
-          docker run --rm --network host \
-            -v "$PWD:/liquibase/workdir" -w /liquibase/workdir \
-            liquibase/liquibase:4.29 \
-            --url="jdbc:postgresql://localhost:5432/pm_core_test" \
-            --username=noizu_prompt_lingua --password=npl_dev \
-            --changeLogFile=changelog/db.changelog-master.pm.yaml \
-            update
       # :memory hits live Weaviate (Cloudflare-Access-authed; unauthed in CI) —
       # excluded in CI; run locally with Weaviate access to exercise it.
       # Redis-tagged tests run: a redis service container is provided above.
