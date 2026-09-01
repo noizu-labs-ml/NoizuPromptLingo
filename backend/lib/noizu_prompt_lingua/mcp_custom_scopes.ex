@@ -19,6 +19,7 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
   alias NoizuPromptLingua.Repo
   alias NoizuPromptLingua.Schema.MCPCustomScope
   alias NoizuPromptLingua.MCP.Window
+  alias NoizuPromptLingua.MCP.ToolsetConfig
   alias NoizuPromptLingua.MCPServers
   alias NoizuPromptLingua.Tools.Catalog
 
@@ -49,8 +50,7 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
   @presets %{
     "basic_crud" => %{
       name: "Basic CRUD",
-      description:
-        "Sessions, organizations, projects & tickets — basic CRUD tools only.",
+      description: "Sessions, organizations, projects & tickets — basic CRUD tools only.",
       groups: ~w(sessions organizations projects tickets),
       crud_entity: %{
         "sessions" => "Session",
@@ -115,6 +115,7 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
 
       {:ok, preset} ->
         crud = Map.get(preset, :crud_entity) || %{}
+
         groups =
           Map.new(preset.groups, fn id ->
             {id, %{"tools" => preset_tools_config(id, crud)}}
@@ -158,7 +159,9 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
 
   defp basic_crud_tool?(entity, name) do
     normalized = String.replace(name, ".", "_")
-    normalized == "#{entity}_Overview" or Regex.match?(~r/^#{entity}_(Create|Get|List|Update|Delete)$/, normalized)
+
+    normalized == "#{entity}_Overview" or
+      Regex.match?(~r/^#{entity}_(Create|Get|List|Update|Delete)$/, normalized)
   end
 
   defp discovery_spec?(spec) do
@@ -850,11 +853,15 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
   supplies the confirm phrase.
 
   `opts`: `:confirm` (phrase), `:actor_id`.
+    * `:preserve_anchors` — READ-path mode (see `MCP.Window`): temporal-window
+      anchors (`set_at` / legacy `enabled_at`) are carried verbatim instead of
+      re-stamped, and no anchor is minted that the stored entry lacked. Without
+      it (write semantics) every normalization stamps a fresh `set_at`.
   """
   def normalize_config(config, kind \\ "custom", opts \\ [])
 
   def normalize_config(config, kind, opts) when is_map(config) do
-    groups = normalize_groups(config)
+    groups = normalize_groups(config, opts)
 
     %{"groups" => enforce_required(groups, kind, opts)}
     |> put_reserved_keys(config, Keyword.get(opts, :prior) || %{})
@@ -893,14 +900,14 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
   # resources/* handlers (no MCP server module maps to them).
   @non_server_groups ["components", "prompts", "resources"]
 
-  defp normalize_groups(config) do
+  defp normalize_groups(config, opts \\ []) do
     groups = Map.get(config, "groups") || Map.get(config, :groups) || %{}
 
     Enum.reduce(groups, %{}, fn {group_id, group_cfg}, acc ->
       group_id = to_string(group_id)
 
       if not is_nil(MCPServers.server_module(group_id)) or group_id in @non_server_groups do
-        Map.put(acc, group_id, normalize_group_config(group_cfg || %{}))
+        Map.put(acc, group_id, normalize_group_config(group_cfg || %{}, opts))
       else
         acc
       end
@@ -1141,7 +1148,7 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
     Map.new(map, fn {key, value} -> {to_string(key), value} end)
   end
 
-  defp normalize_group_config(config) when is_map(config) do
+  defp normalize_group_config(config, opts) when is_map(config) do
     tools = Map.get(config, "tools") || Map.get(config, :tools) || %{}
     entries = Map.get(config, "entries") || Map.get(config, :entries) || %{}
 
@@ -1151,18 +1158,18 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
       |> put_bool("hidden", Map.get(config, "hidden", Map.get(config, :hidden)))
       |> carry_audit(config)
 
-    base = Map.put(base, "tools", normalize_tools_config(tools))
+    base = Map.put(base, "tools", normalize_tools_config(tools, opts))
 
     # W4: per-entry gating for the DB-backed prompts/resources groups
     # (keyed by prompt slug / resource URI). Same flags as tools; omitted
     # when empty so normalize output for existing configs is unchanged.
-    case normalize_tools_config(entries) do
+    case normalize_tools_config(entries, opts) do
       empty when empty == %{} -> base
       entries -> Map.put(base, "entries", entries)
     end
   end
 
-  defp normalize_group_config(_), do: %{"tools" => %{}}
+  defp normalize_group_config(_, _), do: %{"tools" => %{}}
 
   # Preserve confirmed-disable audit fields across re-normalization so a stored
   # confirmation survives later edits. Only added when present (no effect on plain
@@ -1182,15 +1189,15 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
   defp maybe_put_bool(map, key, value) when is_boolean(value), do: Map.put(map, key, value)
   defp maybe_put_bool(map, _key, _value), do: map
 
-  defp normalize_tools_config(tools) when is_map(tools) do
+  defp normalize_tools_config(tools, opts) when is_map(tools) do
     Map.new(tools, fn {tool_name, cfg} ->
-      {to_string(tool_name), normalize_tool_config(cfg || %{})}
+      {to_string(tool_name), normalize_tool_config(cfg || %{}, opts)}
     end)
   end
 
-  defp normalize_tools_config(_), do: %{}
+  defp normalize_tools_config(_, _), do: %{}
 
-  defp normalize_tool_config(config) when is_map(config) do
+  defp normalize_tool_config(config, opts) when is_map(config) do
     # W9/F3/F2 fields ride the same tool entry as disabled/hidden — carried
     # through verbatim when present so persistence never strips them.
     %{}
@@ -1200,10 +1207,11 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
     # F3 temporal windows (hide_until / enable_for_hours); invalid values are
     # dropped here — strict rejection lives on the scope changeset. Window
     # owns these keys (see @entry_extra_keys) so carry never duplicates them.
-    |> Window.normalize_entry(config)
+    # :preserve_anchors (read path) rides through to Window.normalize_entry.
+    |> Window.normalize_entry(config, Keyword.take(opts, [:preserve_anchors]))
   end
 
-  defp normalize_tool_config(_), do: %{}
+  defp normalize_tool_config(_, _), do: %{}
 
   @entry_extra_keys [
     "name_override",
@@ -1223,22 +1231,16 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
   end
 
   # F2 §2.7: name/description overrides are string-only, empty string = absent,
-  # capped (name ≤ 128, description ≤ 1024). Other extra keys carried verbatim.
-  @name_override_max 128
-  @description_override_max 1024
+  # capped (name ≤ 128, description ≤ 1024) — the shared policy lives in
+  # NoizuPromptLingua.MCP.ToolsetConfig (single source of truth; the read-path
+  # overlay in EffectiveToolset applies the same rule). Other extra keys
+  # carried verbatim.
+  defp maybe_carry_entry(acc, key, value)
 
-  defp maybe_carry_entry(acc, "name_override", value),
-    do: carry_override(acc, "name_override", value, @name_override_max)
-
-  defp maybe_carry_entry(acc, "description_override", value),
-    do: carry_override(acc, "description_override", value, @description_override_max)
+  defp maybe_carry_entry(acc, key, value) when key in ["name_override", "description_override"],
+    do: ToolsetConfig.carry_override(acc, key, value)
 
   defp maybe_carry_entry(acc, key, value), do: Map.put(acc, key, value)
-
-  defp carry_override(acc, key, value, cap) when is_binary(value) and value != "",
-    do: Map.put(acc, key, String.slice(value, 0, cap))
-
-  defp carry_override(acc, _key, _value, _cap), do: acc
 
   defp put_bool(map, _key, nil), do: map
   defp put_bool(map, key, value) when is_boolean(value), do: Map.put(map, key, value)

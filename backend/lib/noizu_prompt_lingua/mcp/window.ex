@@ -11,21 +11,36 @@ defmodule NoizuPromptLingua.MCP.Window do
   never both. Absent fields mean "no window" (tool visibility is governed by the
   static `hidden`/`disabled` flags per the inverted default-visible semantics).
 
-  Anchoring: `enable_for_hours` needs a start instant. Every write that
+  Anchoring: `enable_for_hours` needs a start instant. Every WRITE that
   normalizes a window entry stamps `set_at` (UTC ISO8601, `DateTime.utc_now()`)
   and the window anchors to it — so re-setting or extending an
   `enable_for_hours` window resets its anchor (contract §3 as ratified).
+  `set_at` is stamped on `hide_until` writes too, as an AUDIT stamp only (no
+  read path consumes a `hide_until` entry's `set_at`; only the
+  `enable_for_hours` branch anchors to it).
+
   Legacy entries anchored via `enabled_at` (the pre-set_at field) still
   evaluate: `set_at` is preferred, `enabled_at` is the fallback. Hand-edited
-  jsonb with a malformed anchor is INERT — normalization re-anchors it and
-  evaluation treats the window as a no-op; it never raises.
+  jsonb with a malformed anchor is INERT — normalization re-anchors it on
+  write and evaluation treats the window as a no-op; it never raises.
+
+  READ-path normalization (`preserve_anchors: true`, threaded from
+  `EffectiveToolset.scope_config/1` → `MCPCustomScopes.normalize_config/3` →
+  `normalize_entry/3`) must NEVER re-stamp an anchor: re-stamping would
+  re-anchor the window to "now" on every read, so a live window would never
+  expire (a permanent fail-open lift of `disabled`/`hidden`). With the option,
+  a valid stored `set_at` (or legacy `enabled_at`) is carried verbatim and an
+  unanchored/malformed anchor stays unanchored (inert) — fresh stamps happen
+  on writes only.
 
   Naive-vs-UTC: naive datetime inputs (strings without an offset,
   `NaiveDateTime` structs) are interpreted as **UTC** — the repo-wide split
   precedent (cf. `chat_message.ex` microsecond/UTC notes,
   `dashboard.ex` Z-suffixed serialization).
 
-  Evaluation is consumed by `NoizuPromptLingua.MCP.EffectiveToolset` (F2):
+  Evaluation is consumed by `NoizuPromptLingua.MCP.EffectiveToolset` (F2) via
+  the combined `state/2` (one parse yields visibility, expiry, and the flag
+  lift in one pass); `evaluate/2` and `lifting?/2` remain for focused callers:
 
       {visible, expires_at} = Window.evaluate(entry, at)
 
@@ -61,7 +76,12 @@ defmodule NoizuPromptLingua.MCP.Window do
 
   @doc "Field names as stored in scope-config jsonb."
   def fields,
-    do: %{until: @until_field, hours: @hours_field, anchor: @set_at_field, legacy_anchor: @anchor_field}
+    do: %{
+      until: @until_field,
+      hours: @hours_field,
+      anchor: @set_at_field,
+      legacy_anchor: @anchor_field
+    }
 
   ## ------------------------------------------------------------------
   ## Parsing / validation
@@ -78,7 +98,7 @@ defmodule NoizuPromptLingua.MCP.Window do
   `enable_for_hours` as a positive integer (zero/negative rejected).
   """
   def parse(entry) when is_map(entry) do
-    with {:ok, hide_until} <- parse_until(raw(entry, @until_field)),
+    with {:ok, hide_until} <- parse_until(raw(entry, @until_field), @until_field),
          {:ok, hours} <- parse_hours(raw(entry, @hours_field)) do
       if hide_until && hours do
         {:error, :mutually_exclusive}
@@ -123,14 +143,24 @@ defmodule NoizuPromptLingua.MCP.Window do
     * valid `enable_for_hours` → stored as integer with a fresh `set_at`
       anchor (stamped now) — every write re-anchors, so re-setting/extending
       resets the window.
-    * `set_at` is stamped on every write that keeps a window.
+    * `set_at` is stamped on every write that keeps a window (audit stamp for
+      `hide_until` entries; the ANCHOR for `enable_for_hours` entries).
     * invalid values (unparseable datetime — including a malformed anchor,
       which must be INERT, never a raise — zero/negative/non-integer hours,
       mutually-exclusive pair) are dropped — same silent-drop policy as the
       boolean flag normalizers; strict rejection happens at the changeset.
+
+  `opts`:
+    * `:preserve_anchors` — READ-path mode (see the moduledoc): carry a valid
+      stored `set_at`/`enabled_at` verbatim instead of stamping fresh, and
+      never mint an anchor that the stored entry did not have. Defaults to
+      `false` (write semantics: stamp fresh).
   """
-  def normalize_entry(base, config) when is_map(base) and is_map(config) do
+  def normalize_entry(base, config, opts \\ [])
+
+  def normalize_entry(base, config, opts) when is_map(base) and is_map(config) do
     now = DateTime.utc_now()
+    preserve? = Keyword.get(opts, :preserve_anchors, false) == true
 
     case parse(config) do
       {:ok, %{hide_until: %DateTime{} = until}} ->
@@ -139,25 +169,23 @@ defmodule NoizuPromptLingua.MCP.Window do
         else
           base
           |> Map.put(@until_field, DateTime.to_iso8601(until))
-          |> Map.put(@set_at_field, DateTime.to_iso8601(now))
+          |> put_stamp(now, preserve?)
         end
 
       {:ok, %{enable_for_hours: hours}} when is_integer(hours) ->
         cond do
-          # set_at-era entry — write contract: every write re-stamps, so a
-          # re-set/extend slides the anchor to now.
+          # set_at-era entry. WRITE contract: every write re-stamps, so a
+          # re-set/extend slides the anchor to now. READ path (preserve?): the
+          # stored anchor is carried verbatim so the window can expire.
           anchored_by_set_at?(config) ->
             base
             |> Map.put(@hours_field, hours)
-            |> Map.put(@set_at_field, DateTime.to_iso8601(now))
+            |> put_anchor(@set_at_field, raw(config, @set_at_field), now, preserve?)
 
           # Legacy (pre-set_at) jsonb anchored via enabled_at: PRESERVE the
-          # anchor. normalize_entry also runs on the READ path
-          # (EffectiveToolset.scope_config → MCPCustomScopes.normalize_config);
-          # re-stamping set_at there would re-anchor the window to "now" on
-          # every read, so it would never expire. enabled_at remains the
-          # fallback anchor per the moduledoc; an explicit admin write merges
-          # its own window map on top and re-anchors deliberately.
+          # anchor — it is the anchor on both paths (there is nothing to
+          # re-stamp against); an explicit admin write merges its own window
+          # map on top and (absent a valid set_at) re-anchors deliberately.
           legacy_anchor?(config) ->
             base
             |> Map.put(@hours_field, hours)
@@ -165,11 +193,13 @@ defmodule NoizuPromptLingua.MCP.Window do
             # NORMALIZED entry) still finds it
             |> Map.put(@anchor_field, raw(config, @anchor_field))
 
-          # Fresh window — stamp the anchor now.
+          # Fresh window — stamp the anchor now (WRITE path only). The read
+          # path must not mint an anchor the stored entry never had: an
+          # unanchored window stays inert (never a permanent lift).
           true ->
             base
             |> Map.put(@hours_field, hours)
-            |> Map.put(@set_at_field, DateTime.to_iso8601(now))
+            |> put_stamp(now, preserve?)
         end
 
       _ ->
@@ -177,11 +207,59 @@ defmodule NoizuPromptLingua.MCP.Window do
     end
   end
 
-  def normalize_entry(base, _), do: base
+  def normalize_entry(base, _, _), do: base
 
   ## ------------------------------------------------------------------
   ## Evaluation
   ## ------------------------------------------------------------------
+
+  @doc """
+  Combined evaluation — ONE parse of the entry yields everything
+  `EffectiveToolset.build_state/2` needs (no double parse via evaluate/2 +
+  lifting?/2):
+
+      Window.state(entry, at) ::
+        {window_visible :: boolean, expires_at :: DateTime.t() | nil, lifted? :: boolean}
+
+    * `hide_until` future → `{false, hide_until, false}`.
+    * `hide_until` past → `{true, nil, false}`.
+    * `enable_for_hours` LIVE → `{true, expires_at, true}` (lifts both static
+      flags while active).
+    * `enable_for_hours` elapsed / unanchored / malformed → `{true, nil, false}`
+      (window inert; static flags govern again — windows expire out, they never
+      permanently flip state).
+    * no window → `{true, nil, false}` (inverted default-visible semantics).
+  """
+  def state(entry, %DateTime{} = at) when is_map(entry) do
+    case parse(entry) do
+      {:ok, %{hide_until: %DateTime{} = until}} ->
+        hidden? = DateTime.compare(at, until) == :lt
+        {not hidden?, if(hidden?, do: until, else: nil), false}
+
+      {:ok, %{enable_for_hours: hours}} when is_integer(hours) ->
+        case enable_expires_at(entry, hours) do
+          {:ok, expires} ->
+            if DateTime.compare(at, expires) == :lt do
+              {true, expires, true}
+            else
+              {true, nil, false}
+            end
+
+          :none ->
+            # Unanchored (or malformed-anchor) window is inert — cannot have
+            # elapsed, cannot govern. Never raises on hand-edited jsonb.
+            {true, nil, false}
+        end
+
+      _ ->
+        {true, nil, false}
+    end
+  end
+
+  # Naive `at` is treated as UTC (repo naive-vs-UTC precedent).
+  def state(entry, %NaiveDateTime{} = at), do: state(entry, DateTime.from_naive!(at, "Etc/UTC"))
+
+  def state(_, _), do: {true, nil, false}
 
   @doc "Evaluate at now (convenience)."
   def evaluate(entry), do: evaluate(entry, DateTime.utc_now())
@@ -196,43 +274,10 @@ defmodule NoizuPromptLingua.MCP.Window do
   a window (or with an inert/unanchored one) evaluate `{true, nil}` — the
   inverted default-visible semantics.
   """
-  def evaluate(entry, at)
-
-  def evaluate(entry, %DateTime{} = at) when is_map(entry) do
-    case parse(entry) do
-      {:ok, %{hide_until: %DateTime{} = until}} ->
-        hidden? = DateTime.compare(at, until) == :lt
-        {not hidden?, if(hidden?, do: until, else: nil)}
-
-      {:ok, %{enable_for_hours: hours}} when is_integer(hours) ->
-        case anchor(entry) do
-          {:ok, %DateTime{} = anchored_at} ->
-            expires = DateTime.add(anchored_at, hours * 3600, :second)
-
-            if DateTime.compare(at, expires) == :lt do
-              {true, expires}
-            else
-              # Window elapsed → inert: static flags govern again.
-              {true, nil}
-            end
-
-          _ ->
-            # Unanchored (or malformed-anchor) window is inert — cannot have
-            # elapsed, cannot govern. Never raises on hand-edited jsonb.
-            {true, nil}
-        end
-
-      _ ->
-        {true, nil}
-    end
+  def evaluate(entry, at) do
+    {visible, expires_at, _lifted?} = state(entry, at)
+    {visible, expires_at}
   end
-
-  # Naive `at` is treated as UTC (repo naive-vs-UTC precedent).
-  def evaluate(entry, %NaiveDateTime{} = at) do
-    evaluate(entry, DateTime.from_naive!(at, "Etc/UTC"))
-  end
-
-  def evaluate(_, _), do: {true, nil}
 
   @doc "Lift check at now (convenience)."
   def lifting?(entry), do: lifting?(entry, DateTime.utc_now())
@@ -242,24 +287,10 @@ defmodule NoizuPromptLingua.MCP.Window do
   while active it LIFTS BOTH static flags (`disabled` and `hidden`); elapsed,
   unanchored, malformed, or absent windows are no-ops (`false`).
   """
-  def lifting?(entry, %DateTime{} = at) when is_map(entry) do
-    case parse(entry) do
-      {:ok, %{enable_for_hours: hours}} when is_integer(hours) ->
-        case anchor(entry) do
-          {:ok, %DateTime{} = anchored_at} ->
-            expires = DateTime.add(anchored_at, hours * 3600, :second)
-            DateTime.compare(at, expires) == :lt
-
-          _ ->
-            false
-        end
-
-      _ ->
-        false
-    end
+  def lifting?(entry, at) do
+    {_visible, _expires_at, lifted?} = state(entry, at)
+    lifted?
   end
-
-  def lifting?(_, _), do: false
 
   ## ------------------------------------------------------------------
   ## Internals
@@ -269,13 +300,35 @@ defmodule NoizuPromptLingua.MCP.Window do
     Map.get(entry, key) || Map.get(entry, String.to_atom(key))
   end
 
+  # Shared expiry math for `enable_for_hours` windows (evaluate/lifting? via
+  # state/2): anchored → {:ok, expires_at}; unanchored/malformed → :none.
+  defp enable_expires_at(entry, hours) do
+    case anchor(entry) do
+      {:ok, %DateTime{} = anchored_at} -> {:ok, DateTime.add(anchored_at, hours * 3600, :second)}
+      _ -> :none
+    end
+  end
+
+  # Anchor write-back. preserve? (READ path): carry the stored anchor verbatim
+  # — re-stamping here would re-anchor the window to "now" on every read, so a
+  # live window would never expire (fail-open lift). Write path: stamp now.
+  defp put_anchor(base, field, value, _now, true), do: Map.put(base, field, value)
+
+  defp put_anchor(base, _field, _value, now, false),
+    do: Map.put(base, @set_at_field, DateTime.to_iso8601(now))
+
+  # Audit stamp (hide_until entries; unanchored fresh windows). Write path only
+  # — the read path never mints a `set_at` the stored entry did not carry.
+  defp put_stamp(base, _now, true), do: base
+  defp put_stamp(base, now, false), do: Map.put(base, @set_at_field, DateTime.to_iso8601(now))
+
   # Window anchor: `set_at` (stamped on every write) with legacy `enabled_at`
   # as fallback. A malformed value falls through to the fallback and then to
   # the inert no-op — never a raise.
   defp anchor(entry) do
-    case parse_until(raw(entry, @set_at_field)) do
+    case parse_until(raw(entry, @set_at_field), @set_at_field) do
       {:ok, %DateTime{} = dt} -> {:ok, dt}
-      _ -> parse_until(raw(entry, @anchor_field))
+      _ -> parse_until(raw(entry, @anchor_field), @anchor_field)
     end
   end
 
@@ -283,7 +336,7 @@ defmodule NoizuPromptLingua.MCP.Window do
   defp anchored_by_set_at?(entry) do
     case raw(entry, @set_at_field) do
       nil -> false
-      value -> match?({:ok, %DateTime{}}, parse_until(value))
+      value -> match?({:ok, %DateTime{}}, parse_until(value, @set_at_field))
     end
   end
 
@@ -291,21 +344,24 @@ defmodule NoizuPromptLingua.MCP.Window do
   defp legacy_anchor?(entry) do
     case raw(entry, @anchor_field) do
       nil -> false
-      value -> match?({:ok, %DateTime{}}, parse_until(value))
+      value -> match?({:ok, %DateTime{}}, parse_until(value, @anchor_field))
     end
   end
 
   defp prune?(expiry, now),
-    do: DateTime.compare(expiry, DateTime.add(now, -@prune_after_days * 86_400, :second)) == :lt
+    do: DateTime.compare(expiry, DateTime.add(now, -@prune_after_days, :day)) == :lt
 
-  defp parse_until(nil), do: {:ok, nil}
+  # `field` names the key the value was read from, so error tuples report the
+  # actual field ("hide_until", "set_at", "enabled_at") rather than a hardcoded
+  # one — surfaced verbatim by validate_entry/1.
+  defp parse_until(nil, _field), do: {:ok, nil}
 
-  defp parse_until(%DateTime{} = dt), do: {:ok, dt}
+  defp parse_until(%DateTime{} = dt, _field), do: {:ok, dt}
 
-  defp parse_until(%NaiveDateTime{} = ndt),
+  defp parse_until(%NaiveDateTime{} = ndt, _field),
     do: {:ok, DateTime.from_naive!(ndt, "Etc/UTC")}
 
-  defp parse_until(bin) when is_binary(bin) do
+  defp parse_until(bin, field) when is_binary(bin) do
     case DateTime.from_iso8601(bin) do
       {:ok, dt, _offset} ->
         {:ok, dt}
@@ -314,12 +370,12 @@ defmodule NoizuPromptLingua.MCP.Window do
         # No offset → naive ISO8601; assume UTC per repo precedent.
         case NaiveDateTime.from_iso8601(bin) do
           {:ok, ndt} -> {:ok, DateTime.from_naive!(ndt, "Etc/UTC")}
-          {:error, _} -> {:error, {:invalid_datetime, @until_field}}
+          {:error, _} -> {:error, {:invalid_datetime, field}}
         end
     end
   end
 
-  defp parse_until(_), do: {:error, {:invalid_datetime, @until_field}}
+  defp parse_until(_, field), do: {:error, {:invalid_datetime, field}}
 
   defp parse_hours(nil), do: {:ok, nil}
   defp parse_hours(h) when is_integer(h) and h > 0, do: {:ok, h}
