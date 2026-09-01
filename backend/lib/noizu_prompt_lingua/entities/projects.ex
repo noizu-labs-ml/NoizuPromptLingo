@@ -58,6 +58,21 @@ defmodule NoizuPromptLingua.Projects do
 
   def get_project(id), do: scan_orgs(fn org -> TRP.get_project(org, id) end)
 
+  @doc """
+  Project by slug within ONE org (PRD-N3 FR-3-9) — TRP shared-key backed via
+  the org's project list (the shared-key plane has no per-slug endpoint).
+  Returns the shaped row (atom keys) or nil (unknown org / project / TRP
+  error — callers 404 uniformly).
+  """
+  def get_project_by_slug(org_id, slug) when is_binary(org_id) and is_binary(slug) do
+    case TRP.list_projects(org_id) do
+      rows when is_list(rows) -> Enum.find(rows, &(&1.slug == slug))
+      _ -> nil
+    end
+  end
+
+  def get_project_by_slug(_, _), do: nil
+
   def update_project(id, attrs) do
     scan_orgs(fn org ->
       case TRP.update_project(org, id, attrs) do

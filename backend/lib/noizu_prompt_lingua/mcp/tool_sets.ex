@@ -5,14 +5,16 @@ defmodule NoizuPromptLingua.MCP.ToolSets do
   translator from the closed-vocabulary `config` jsonb to normalized override
   ops.
 
-  N2a seams (deliberately thin — both FLIP at N2b, one-line wraps):
-
-    * `get_for_request/2` returns `%MCPToolSet{} | nil`; at PRD-3 time it
-      returns the assembled lib toolset.
-    * `assemble_custom/2` returns a plain effective-view map; at N2b it builds
-      `%Noizu.MCP.Toolset.Custom{}` via `to_overrides/1`.
-    * `to_overrides/1` elements are `%{op | target | value}` maps; at N2b they
-      wrap into `%Noizu.MCP.Toolset.Override{}`.
+  N3 flip (PRD-N3 FR-3-4): `assemble_custom/2` returns the REAL
+  `%Noizu.MCP.Toolset.Custom{}` — base = `NoizuPromptLingua.MCP.UniverseToolset`
+  (plane ∪ every customizable group's tools — no single server module covers a
+  set's potential universe), `include` = the expanded allowlist universe
+  (plane ∪ enabled config groups, R2), `tools` = `to_overrides/1` wrapped into
+  `%Noizu.MCP.Toolset.Override{}` with targets flattened to base canonical
+  names (tool ops) / field atoms (arg ops, mapped through the target spec's
+  cast plan). Unknown tool/field targets degrade per D5: dropped with a
+  warning, never a 500. N2b still flips `to_overrides/1` elements to
+  `%Override{}` structs and layers in grants (weight 200).
 
   Every write fires `MCP.Server.notify_toolset_changed/0` (best-effort, N1
   wiring) so live connections re-list before serving a stale set.
@@ -22,7 +24,9 @@ defmodule NoizuPromptLingua.MCP.ToolSets do
   require Logger
 
   alias NoizuPromptLingua.MCP.Server
+  alias NoizuPromptLingua.MCP.ToolNames
   alias NoizuPromptLingua.MCP.Toolsets.Profiles
+  alias NoizuPromptLingua.MCPServers
   alias NoizuPromptLingua.Organizations.SlugBackfill
   alias NoizuPromptLingua.Repo
   alias NoizuPromptLingua.Schema.MCPToolSet
@@ -270,28 +274,204 @@ defmodule NoizuPromptLingua.MCP.ToolSets do
   def get_for_request(_, _), do: nil
 
   @doc """
-  Effective view for serving — THIN in N2a (normalized config + overrides +
-  defaulted settings); at N2b this returns `%Noizu.MCP.Toolset.Custom{}` built
-  via `to_overrides/1` (FR-2B-4). `ctx` is unused in N2a and kept for the
-  signature seam.
+  Effective view for serving — N3 REAL form (PRD-N3 FR-3-4, FR-2B-4 shape):
+  a `%Noizu.MCP.Toolset.Custom{}` the lib composes through the toolset
+  protocol. `ctx` is unused today and kept for the signature seam.
   """
   def assemble_custom(%MCPToolSet{} = tool_set, _ctx \\ nil) do
     settings = tool_set.settings || %{}
+    universe = universe_for_groups(enabled_groups(tool_set.config))
 
-    %{
-      slug: tool_set.slug,
-      display_name: tool_set.display_name || tool_set.slug,
-      source: tool_set.source,
-      source_profile: tool_set.source_profile,
-      is_active: tool_set.is_active,
-      config: tool_set.config,
-      overrides: to_overrides(tool_set.config),
-      settings: %{
-        "allow_api_keys" => Map.get(settings, "allow_api_keys", true),
-        "description_verbosity" => Map.get(settings, "description_verbosity"),
-        "instructions" => Map.get(settings, "instructions")
+    %Noizu.MCP.Toolset.Custom{
+      slug: "set:" <> tool_set.slug,
+      base: NoizuPromptLingua.MCP.UniverseToolset,
+      title: tool_set.display_name || tool_set.slug,
+      description: tool_set.description || Map.get(settings, "instructions"),
+      immutable: false,
+      include: universe.include,
+      exclude: [],
+      tools: override_map(tool_set, universe.specs),
+      metadata: %{
+        mcp_tool_set_id: tool_set.id,
+        source: tool_set.source,
+        source_profile: tool_set.source_profile,
+        allow_api_keys: Map.get(settings, "allow_api_keys", true),
+        shape: shape(tool_set)
       }
     }
+  end
+
+  @doc """
+  Audience shape of a set (FR-2A-6): `:org` | `:project` | `:group`.
+  """
+  def shape(%MCPToolSet{project_id: project_id, group_id: group_id}) do
+    cond do
+      project_id -> :project
+      group_id -> :group
+      true -> :org
+    end
+  end
+
+  @doc """
+  The plane tools + expanded group tools universe for a set/profile allowlist
+  (FR-2B-4, R2): the root aggregate's tools MINUS every customizable-group
+  tool = the always-served Discovery/NPL/overview plane; group tools come from
+  each group's server module registry. Returns
+  `%{include: [canonical_name], specs: %{canonical_name => %Spec{}}}`.
+  """
+  def universe_for_groups(group_ids) when is_list(group_ids) do
+    root_specs = expand_specs(NoizuPromptLingua.MCP)
+
+    group_specs =
+      group_ids
+      |> Enum.flat_map(fn group_id ->
+        case MCPServers.server_module(group_id) do
+          nil -> []
+          module -> expand_specs(module)
+        end
+      end)
+      |> Enum.uniq_by(& &1.definition.name)
+
+    group_names = MapSet.new(group_specs, & &1.definition.name)
+
+    plane_specs =
+      root_specs
+      |> Enum.reject(&MapSet.member?(group_names, &1.definition.name))
+      |> Enum.uniq_by(& &1.definition.name)
+
+    specs = plane_specs ++ group_specs
+
+    %{
+      include: Enum.map(specs, & &1.definition.name),
+      specs: Map.new(specs, &{&1.definition.name, &1})
+    }
+  end
+
+  def universe_for_groups(_), do: %{include: [], specs: %{}}
+
+  @doc "Include list only (`universe_for_groups/1` convenience for profiles)."
+  def universe_include(group_ids), do: universe_for_groups(group_ids).include
+
+  @doc "Config group ids participating in the allowlist (explicit `enabled: false` excludes)."
+  def enabled_groups(config) when is_map(config) do
+    config
+    |> Map.get("groups", %{})
+    |> Enum.reject(fn {_group_id, group_cfg} ->
+      is_map(group_cfg) and Map.get(group_cfg, "enabled") == false
+    end)
+    |> Enum.map(&elem(&1, 0))
+  end
+
+  def enabled_groups(_), do: []
+
+  # Expand a server module's registered tools into %Spec{} structs.
+  defp expand_specs(module) do
+    module.__mcp__(:tools)
+    |> Noizu.MCP.Server.Features.Tools.expand()
+  rescue
+    e ->
+      Logger.warning(
+        "[ToolSets] spec expansion failed for #{inspect(module)}: #{Exception.message(e)}"
+      )
+
+      []
+  end
+
+  # N2a map ops → lib %Override{} structs keyed by base canonical name.
+  # Unknown tool targets (and arg fields) are dropped with a warning (D5).
+  defp override_map(tool_set, specs_index) do
+    tool_set.config
+    |> to_overrides()
+    |> Enum.flat_map(fn op_map ->
+      case flatten_op(op_map, specs_index) do
+        {name, %Noizu.MCP.Toolset.Override{} = override} -> [{name, override}]
+        nil -> []
+      end
+    end)
+    |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
+  end
+
+  defp flatten_op(%{op: op, target: target, value: value}, specs_index)
+       when op in [:prune_enum, :hide_field, :rename_field, :pin_default, :set_arg_description] do
+    with %Noizu.MCP.Server.Tool.Spec{} = spec <- spec_for(target, specs_index),
+         field when is_atom(field) <- field_atom(spec, target.arg) do
+      {spec.definition.name,
+       struct(Noizu.MCP.Toolset.Override, op: op, target: field, value: value)}
+    else
+      _ ->
+        Logger.warning(
+          "[ToolSets] dropping arg op #{inspect(op)} for #{inspect(target.tool)}.#{inspect(target.arg)} — unknown field (D5)"
+        )
+
+        nil
+    end
+  end
+
+  defp flatten_op(%{op: op, target: target, value: value}, specs_index)
+       when op in [:set_visible, :set_callable, :set_name, :set_description, :set_title] do
+    case spec_for(target, specs_index) do
+      %Noizu.MCP.Server.Tool.Spec{} = spec ->
+        {spec.definition.name,
+         struct(Noizu.MCP.Toolset.Override, op: op, target: spec.definition.name, value: value)}
+
+      nil ->
+        Logger.warning(
+          "[ToolSets] dropping op #{inspect(op)} for unknown tool #{inspect(target.tool)} (D5)"
+        )
+
+        nil
+    end
+  end
+
+  defp flatten_op(_op, _specs_index), do: nil
+
+  defp spec_for(%{tool: tool_key}, specs_index) do
+    canonical = ToolNames.canonical(tool_key)
+
+    Map.get(specs_index, tool_key) ||
+      Enum.find(specs_index, fn {name, _spec} -> ToolNames.canonical(name) == canonical end)
+      |> case do
+        {_name, spec} -> spec
+        nil -> nil
+      end
+  end
+
+  defp spec_for(_, _), do: nil
+
+  # Map a config arg key (string) onto the spec's cast-plan field atom. The
+  # cast plan is Fields-shaped — entries may be %Field{} structs or plain
+  # %{name: atom, wire_key: ...} maps; a miss degrades per D5.
+  defp field_atom(%Noizu.MCP.Server.Tool.Spec{cast_plan: cast_plan}, arg_key)
+       when is_binary(arg_key) do
+    cast_plan
+    |> List.wrap()
+    |> Enum.find_value(fn
+      %{name: name} = field when is_atom(name) ->
+        cond do
+          Atom.to_string(name) == arg_key -> name
+          wire_key_of(field) == arg_key -> name
+          true -> nil
+        end
+
+      _ ->
+        nil
+    end)
+  end
+
+  defp field_atom(_, _), do: nil
+
+  defp wire_key_of(field) do
+    case Map.get(field, :wire_key) do
+      nil ->
+        case Map.get(field, :opts) do
+          opts when is_list(opts) -> Keyword.get(opts, :wire_key)
+          opts when is_map(opts) -> Map.get(opts, :wire_key)
+          _ -> nil
+        end
+
+      wire_key ->
+        wire_key
+    end
   end
 
   @doc """

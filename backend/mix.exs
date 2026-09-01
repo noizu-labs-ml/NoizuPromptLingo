@@ -96,7 +96,9 @@ defmodule NoizuPromptLingua.MixProject do
       {:oban, "~> 2.18"},
 
       # Carried over from prior NoizuPromptLingo mix.exs
-      {:noizu_mcp, "~> 0.1.3"},
+      # N3: path dep against the elixir-mcp PRD-3 gate pin (@ 3dc6f5d, lib .worktrees/n3-gate).
+      # Six ../ from THIS worktree's backend (INDEX §6 four-../ form is measured from a main-checkout backend).
+      {:noizu_mcp, path: "../../../../../../Libs/ai/elixir-mcp/.worktrees/n3-gate"},
       {:noizu_github, "~> 0.5.0"},
       {:jose, "~> 1.11"},
       {:yaml_elixir, "~> 2.11"},

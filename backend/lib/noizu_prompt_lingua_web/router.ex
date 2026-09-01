@@ -369,6 +369,21 @@ defmodule NoizuPromptLinguaWeb.Router do
     match :*, "/user/:slug/mcp", CustomMCPGatewayController, :handle_user
   end
 
+  # Tool-set gateway (PRD-N3): org/project/group-shaped mcp_tool_sets served
+  # through the lib protocol path (ToolSetEndpoint). Additive — placed AFTER
+  # the org-custom + user routes and BEFORE the bare /mcp catch-all (FR-3-1);
+  # both handlers 404 unless :noizu_prompt_lingua, :tool_sets_enabled.
+  scope "/", NoizuPromptLinguaWeb do
+    match :*, "/org/:org_slug/set/:set_slug/mcp", MCPSetGatewayController, :handle_org
+  end
+
+  scope "/", NoizuPromptLinguaWeb do
+    match :*,
+          "/org/:org_slug/project/:project_slug/set/:set_slug/mcp",
+          MCPSetGatewayController,
+          :handle_org_project
+  end
+
   scope "/mcp" do
     forward "/",
             Noizu.MCP.Transport.StreamableHTTP.Plug,

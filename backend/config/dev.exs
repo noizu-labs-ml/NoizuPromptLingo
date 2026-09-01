@@ -43,3 +43,7 @@ config :noizu_sendgrid,
 # Mock MCP: in dev, also write generated tool modules to disk (inspection/VCS).
 # The DB (modules_json) remains the source of truth.
 config :noizu_prompt_lingua, :mock_mcp, modules_dir: "priv/mock_mcp_modules"
+
+# PRD-N3: tool-set gateway routes serve when enabled (AC-N3-9: unset => 404;
+# dev opts in so the routes are exercisable locally).
+config :noizu_prompt_lingua, tool_sets_enabled: true

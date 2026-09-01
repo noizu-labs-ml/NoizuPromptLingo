@@ -18,17 +18,38 @@ defmodule NoizuPromptLingua.MCP.Server do
   """
 
   defmacro __using__(opts) do
-    quote do
-      # Declare handle_call_tool BEFORE `use Noizu.MCP.Server` so the library
-      # skips its default dispatch and ours runs ToolGuard first.
-      def handle_call_tool(name, args, ctx) do
-        NoizuPromptLingua.MCP.Dispatch.call(__MODULE__, name, args, ctx)
+    handlers =
+      if Keyword.has_key?(opts, :toolset) do
+        # Toolset mode (PRD-N3): serve EXCLUSIVELY through the lib protocol
+        # path — listing and dispatch both resolve the server's `toolset:` opt
+        # per request (select_toolset). No legacy Dispatch/EffectiveToolset
+        # overrides. N5 flips every server to this mode.
+        quote do
+          def handle_list_tools(cursor, ctx) do
+            Noizu.MCP.Server.Features.Tools.protocol_list(__MODULE__, cursor, ctx)
+          end
+
+          def handle_call_tool(name, args, ctx) do
+            Noizu.MCP.Server.Features.Tools.protocol_call(__MODULE__, name, args, ctx)
+          end
+        end
+      else
+        quote do
+          # Declare handle_call_tool BEFORE `use Noizu.MCP.Server` so the library
+          # skips its default dispatch and ours runs ToolGuard first.
+          def handle_call_tool(name, args, ctx) do
+            NoizuPromptLingua.MCP.Dispatch.call(__MODULE__, name, args, ctx)
+          end
+
+          # Per-key toolset-aware listing (hidden/disabled filtered by API key).
+          def handle_list_tools(cursor, ctx) do
+            NoizuPromptLingua.MCP.Server.list_tools(__MODULE__, cursor, ctx)
+          end
+        end
       end
 
-      # Per-key toolset-aware listing (hidden/disabled filtered by API key).
-      def handle_list_tools(cursor, ctx) do
-        NoizuPromptLingua.MCP.Server.list_tools(__MODULE__, cursor, ctx)
-      end
+    quote do
+      unquote(handlers)
 
       use Noizu.MCP.Server, unquote(opts)
     end
