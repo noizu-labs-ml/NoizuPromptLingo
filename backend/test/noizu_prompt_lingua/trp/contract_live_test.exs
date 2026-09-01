@@ -148,7 +148,9 @@ defmodule NoizuPromptLingua.TRP.ContractLiveTest do
     assert {:ok, %{type: %{fields: []}}} =
              Client.request(:patch, "#{tbase}/#{tid}", json: %{type: %{fields: []}})
     assert {:ok, nil} = Client.request(:delete, "#{tbase}/#{tid}")
-    assert {:ok, nil} = Client.request(:delete, "#{fbase}/#{fslug}")
+    # Definition deletes are UUID-addressed (slugs 400; only items accept
+    # human keys per spec §4.3).
+    assert {:ok, nil} = Client.request(:delete, "#{fbase}/#{fid}")
 
     fslug
   end
