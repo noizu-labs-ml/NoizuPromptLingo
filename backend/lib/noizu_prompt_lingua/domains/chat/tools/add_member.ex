@@ -27,7 +27,15 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.AddMember do
       }
 
       case Chat.add_member(attrs) do
-        {:ok, m} -> {:ok, %{id: m.id, room_id: m.room_id, persona: m.persona, role: m.role}}
+        {:ok, m} ->
+          {:ok,
+           %{
+             id: m.id,
+             room_id: m.room_id,
+             persona: m.persona,
+             role: m.role,
+             chatroom_url: NoizuPromptLingua.MCP.Urls.chat_room_url(room)
+           }}
         {:error, cs} -> {:error, "Failed: #{inspect(cs.errors)}"}
       end
     else

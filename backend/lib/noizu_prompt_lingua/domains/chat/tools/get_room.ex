@@ -27,6 +27,7 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.GetRoom do
          name: room.name,
          slug: room.slug,
          kind: room.kind,
+         chatroom_url: NoizuPromptLingua.MCP.Urls.chat_room_url(room),
          organization_id: room.organization_id,
          project_id: room.project_id,
          description: room.description,
