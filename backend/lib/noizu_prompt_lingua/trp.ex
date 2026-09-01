@@ -92,21 +92,33 @@ defmodule NoizuPromptLingua.TRP do
 
   # ── Items ─────────────────────────────────────────────────────
 
+  @doc """
+  List items. Opt `cache: false` bypasses the read-through cache — used by
+  callers that post-filter/sort client-side, where paginating a possibly-stale
+  30s shard would yield inconsistent pages (W6).
+  """
   def list_items(org_id, opts \\ []) do
-    key = [:items_list, org_id, normalize(opts)]
+    {cache?, opts} = Keyword.pop(opts, :cache, true)
 
-    cached_get(key, @entity_ttl, fn ->
-      with {:ok, json} <-
-             get("/api/v1/organizations/#{org_id}/items", query_opts(opts)) do
-        # TRP's wire order is `inserted_at asc, id asc` (spec §4.6, pinned for
-        # pagination safety); NPL re-sorts here for legacy parity — pm_core
-        # lists were `inserted_at desc` — so web/MCP consumers see the same
-        # ordering as before the cutover. NB: limit/offset still windows the
-        # TRP asc page; a deep page re-sorts only that window.
-        rows = Enum.map(unwrap_list(json, :items), &Shapes.item/1)
-        Enum.sort_by(rows, &{&1.inserted_at, &1.id}, :desc)
-      end
-    end)
+    if cache? do
+      key = [:items_list, org_id, normalize(opts)]
+      cached_get(key, @entity_ttl, fn -> fetch_items(org_id, opts) end)
+    else
+      fetch_items(org_id, opts)
+    end
+  end
+
+  defp fetch_items(org_id, opts) do
+    with {:ok, json} <-
+           get("/api/v1/organizations/#{org_id}/items", query_opts(opts)) do
+      # TRP's wire order is `inserted_at asc, id asc` (spec §4.6, pinned for
+      # pagination safety); NPL re-sorts here for legacy parity — pm_core
+      # lists were `inserted_at desc` — so web/MCP consumers see the same
+      # ordering as before the cutover. NB: limit/offset still windows the
+      # TRP asc page; a deep page re-sorts only that window.
+      rows = Enum.map(unwrap_list(json, :items), &Shapes.item/1)
+      Enum.sort_by(rows, &{&1.inserted_at, &1.id}, :desc)
+    end
   end
 
   @doc "`id_or_key` accepts a UUID or human key `PREFIX-NNN` (spec §4.3)."
@@ -129,8 +141,8 @@ defmodule NoizuPromptLingua.TRP do
   def update_item(org_id, id, attrs) do
     with {:ok, json} <-
            Client.request(:patch, "/api/v1/organizations/#{org_id}/items/#{id}",
-        json: %{item: attrs}
-      ) do
+             json: %{item: attrs}
+           ) do
       bust_items(org_id)
       {:ok, Shapes.item(unwrap_one(json, :item))}
     end

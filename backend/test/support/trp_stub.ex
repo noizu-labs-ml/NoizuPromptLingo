@@ -56,7 +56,12 @@ defmodule NoizuPromptLingua.TRP.TestStub do
         queued: queued
       })
 
-    :ets.insert(@table, {k, result.orgs, result.projects, result.items, result.types, result.fields, result.type_fields, result.queued})
+    :ets.insert(
+      @table,
+      {k, result.orgs, result.projects, result.items, result.types, result.fields,
+       result.type_fields, result.queued}
+    )
+
     result.__ret
   end
 
@@ -84,7 +89,9 @@ defmodule NoizuPromptLingua.TRP.TestStub do
       }
       |> Map.merge(Map.take(attrs, [:key_prefix]))
 
-    update(fn s -> %{s | projects: Map.put(s.projects, {org_id, id}, project)} |> Map.put(:__ret, project) end)
+    update(fn s ->
+      %{s | projects: Map.put(s.projects, {org_id, id}, project)} |> Map.put(:__ret, project)
+    end)
   end
 
   def seed_item(org_id, attrs) do
@@ -113,11 +120,14 @@ defmodule NoizuPromptLingua.TRP.TestStub do
         due_date: nil,
         estimate: nil,
         custom_fields: attrs[:custom_fields] || %{},
+        tags: attrs[:tags] || [],
         inserted_at: attrs[:inserted_at] || DateTime.utc_now(),
         updated_at: attrs[:updated_at] || DateTime.utc_now()
       }
 
-    update(fn s -> %{s | items: Map.put(s.items, {org_id, id}, item)} |> Map.put(:__ret, item) end)
+    update(fn s ->
+      %{s | items: Map.put(s.items, {org_id, id}, item)} |> Map.put(:__ret, item)
+    end)
   end
 
   def seed_type(org_id, attrs) do
@@ -138,7 +148,9 @@ defmodule NoizuPromptLingua.TRP.TestStub do
       fields: attrs[:fields] || []
     }
 
-    update(fn s -> %{s | types: Map.put(s.types, {org_id, id}, type)} |> Map.put(:__ret, type) end)
+    update(fn s ->
+      %{s | types: Map.put(s.types, {org_id, id}, type)} |> Map.put(:__ret, type)
+    end)
   end
 
   def seed_field(org_id, attrs) do
@@ -159,12 +171,16 @@ defmodule NoizuPromptLingua.TRP.TestStub do
       updated_at: DateTime.utc_now()
     }
 
-    update(fn s -> %{s | fields: Map.put(s.fields, {org_id, id}, field)} |> Map.put(:__ret, field) end)
+    update(fn s ->
+      %{s | fields: Map.put(s.fields, {org_id, id}, field)} |> Map.put(:__ret, field)
+    end)
   end
 
   @doc "Registered org id for a slug (fixture convenience)."
   def org_id_by_slug(slug) do
-    update(fn s -> Map.put(s, :__ret, Enum.find_value(s.orgs, fn {id, o} -> o.slug == slug && id end)) end)
+    update(fn s ->
+      Map.put(s, :__ret, Enum.find_value(s.orgs, fn {id, o} -> o.slug == slug && id end))
+    end)
   end
 
   @doc "Queue one synthetic response (or `{:transport, reason}`) before routing."
@@ -195,7 +211,15 @@ defmodule NoizuPromptLingua.TRP.TestStub do
         respond(next)
 
       [] ->
-        state = %{orgs: orgs, projects: projects, items: items, types: types, fields: fields, type_fields: type_fields, queued: []}
+        state = %{
+          orgs: orgs,
+          projects: projects,
+          items: items,
+          types: types,
+          fields: fields,
+          type_fields: type_fields,
+          queued: []
+        }
 
         if auth != @auth do
           respond(401, %{"error" => "unauthorized"})
@@ -299,7 +323,8 @@ defmodule NoizuPromptLingua.TRP.TestStub do
           respond(200, %{type: expand_fields(state, org_id, updated)})
         end)
 
-      {"DELETE", ["api", "v1", "organizations", org_id, "definitions", "types", id, "fields", field_id]} ->
+      {"DELETE",
+       ["api", "v1", "organizations", org_id, "definitions", "types", id, "fields", field_id]} ->
         t = state.types[{org_id, id}]
 
         mutate(t, body, fn ->
@@ -397,12 +422,40 @@ defmodule NoizuPromptLingua.TRP.TestStub do
     |> Enum.filter(fn {{o, _}, _} -> o == org_id end)
     |> Enum.map(fn {_, v} -> v end)
     |> filter_project(query)
-    |> filter_status(query)
+    |> filter_eq(query)
     |> Enum.sort_by(&{&1.inserted_at, &1.id})
+    |> apply_window(query)
   end
 
-  defp filter_status(rows, %{"status" => s}), do: Enum.filter(rows, &(&1.status == s))
-  defp filter_status(rows, _), do: rows
+  # Spec §4.3: GET items supports the scalar equality filters NPL passes
+  # through (mirrors the real server so passthrough behavior is testable).
+  defp filter_eq(rows, query) do
+    Enum.reduce([:status, :item_type, :priority, :assignee, :queue_id, :parent_id], rows, fn key,
+                                                                                             acc ->
+      case query[to_string(key)] do
+        nil -> acc
+        val -> Enum.filter(acc, &(to_string(Map.get(&1, key)) == val))
+      end
+    end)
+  end
+
+  # TRP's wire order is inserted_at asc (spec §4.6); limit/offset window it.
+  defp apply_window(rows, query) do
+    rows
+    |> Enum.drop(parse_int(query["offset"], 0))
+    |> then(
+      &if(is_nil(query["limit"]), do: &1, else: Enum.take(&1, parse_int(query["limit"], 0)))
+    )
+  end
+
+  defp parse_int(nil, default), do: default
+
+  defp parse_int(bin, _default) when is_binary(bin) do
+    case Integer.parse(bin) do
+      {n, _} -> n
+      :error -> 0
+    end
+  end
 
   defp find_by_key(items, org_id, key) do
     Enum.find_value(items, fn {{o, _}, v} -> o == org_id && v.key == key && v end)
@@ -444,7 +497,9 @@ defmodule NoizuPromptLingua.TRP.TestStub do
   end
 
   defp merge_fields(new_fields, current) do
-    Enum.map(new_fields, fn f -> %{id: f.id, required: Map.get(f, :required, false), position: Map.get(f, :position, 0)} end) ++
+    Enum.map(new_fields, fn f ->
+      %{id: f.id, required: Map.get(f, :required, false), position: Map.get(f, :position, 0)}
+    end) ++
       Enum.reject(current, fn cf -> Enum.any?(new_fields, &(&1.id == cf.id)) end)
   end
 end
