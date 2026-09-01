@@ -5,10 +5,9 @@ import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/react";
 import { Bars3Icon, MoonIcon, SunIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth";
-import { useOrg } from "@/context/org";
 import { useSidebar } from "@/context/sidebar";
 import { MobileNav } from "@/components/mobile-nav";
-import { OrgProjectSwitcher } from "@/components/org-project-switcher";
+import { OrgSelect, ProjectSelect } from "@/components/scope-select";
 
 type ColorMode = "light" | "dark";
 
@@ -36,6 +35,7 @@ function AppearanceToggle() {
   }
 
   const nextMode = mode === "dark" ? "light" : "dark";
+  const label = mounted ? (mode === "dark" ? "Dark" : "Light") : "Dark";
 
   return (
     <button
@@ -44,24 +44,19 @@ function AppearanceToggle() {
       onClick={toggleAppearance}
       aria-label={`Switch to ${nextMode} appearance`}
       aria-pressed={mounted && mode === "dark"}
-      title={`Switch to ${nextMode} appearance`}
+      title={`Appearance: ${label}`}
     >
       {mode === "dark" ? (
         <MoonIcon className="appearance-toggle__icon" aria-hidden="true" />
       ) : (
         <SunIcon className="appearance-toggle__icon" aria-hidden="true" />
       )}
-      <span className="appearance-toggle__label">Appearance</span>
-      <span className="appearance-toggle__value" aria-hidden="true">
-        {mounted ? (mode === "dark" ? "Dark" : "Light") : "Theme"}
-      </span>
     </button>
   );
 }
 
 export function Navbar() {
   const { user, loading, logout } = useAuth();
-  const { currentOrg, currentProject } = useOrg();
   const { toggle } = useSidebar();
   const displayName = user ? user.user_name || user.handle || user.email : "";
   const isAdmin = user?.role === "admin" || user?.role === "owner";
@@ -82,9 +77,14 @@ export function Navbar() {
             </button>
           )}
           <div className="sg-navbar__brand tl-brand">
-            {user ? (
-              <OrgProjectSwitcher />
-            ) : (
+            {user && (
+              <div className="sg-navbar__scope">
+                <OrgSelect />
+                <span className="sg-navbar__scope-sep" aria-hidden="true">/</span>
+                <ProjectSelect />
+              </div>
+            )}
+            {!user && (
               <svg className="tl-brand__mark" width="26" height="26" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                 <rect x="1" y="1" width="30" height="30" rx="6" stroke="var(--border-strong)" strokeWidth="2" />
                 <path d="M8 22V10L13 18L18 10V22" stroke="var(--red)" strokeWidth="2.5" fill="none" strokeLinejoin="round" strokeLinecap="round" />
@@ -93,16 +93,6 @@ export function Navbar() {
             )}
             <Link href="/" className="tl-brand__name">Tobor Locker</Link>
             <span className="tl-brand__badge">MCP</span>
-            {user && (currentProject || currentOrg) && (
-              <span
-                className="tl-brand__scope"
-                aria-label={`Active context: ${currentOrg?.name ?? "Organization"}${currentProject ? `, project ${currentProject.name}` : ""}`}
-                title="Active organization and project"
-              >
-                {currentOrg?.name}
-                {currentProject && <span className="tl-brand__scope-proj"> / {currentProject.name}</span>}
-              </span>
-            )}
           </div>
         </div>
         <div className="sg-navbar__links">

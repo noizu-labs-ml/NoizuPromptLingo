@@ -10,6 +10,7 @@ interface OrgContextType {
   currentOrg: Organization | null;
   organizations: Organization[];
   switchOrg: (orgId: string) => void;
+  clearOrg: () => void;
   refresh: (preferId?: string) => Promise<void>;
   loading: boolean;
   // Projects belonging to the current org, plus the active "scope" project.
@@ -28,6 +29,7 @@ const OrgContext = createContext<OrgContextType>({
   currentOrg: null,
   organizations: [],
   switchOrg: () => {},
+  clearOrg: () => {},
   refresh: async () => {},
   loading: true,
   projects: [],
@@ -83,6 +85,15 @@ export function OrgProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('currentOrgId', orgId);
     }
   };
+
+  // Global scope: no org, no project. Also drops the org's saved project so a
+  // later re-select starts unscoped.
+  const clearOrg = useCallback(() => {
+    if (currentOrg?.id) localStorage.removeItem(projectKey(currentOrg.id));
+    setCurrentProject(null);
+    setCurrentOrg(null);
+    localStorage.removeItem('currentOrgId');
+  }, [currentOrg?.id]);
 
   // Re-fetch the org list from the server (after create/edit/delete). When
   // `preferId` is given, select that org if present; otherwise keep the saved
@@ -150,7 +161,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
 
   return (
     <OrgContext.Provider value={{
-      currentOrg, organizations, switchOrg, refresh, loading,
+      currentOrg, organizations, switchOrg, clearOrg, refresh, loading,
       projects, projectsLoading, currentProject, switchProject, refreshProjects,
     }}>
       {children}
