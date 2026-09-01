@@ -36,6 +36,51 @@ defmodule NoizuPromptLingua.MCP.UrlsTest do
     end
   end
 
+  describe "app item urls (deep links)" do
+    test "session/ticket/artifact urls follow /app/:org/:segment/:id" do
+      assert Urls.session_url(%{id: "s-1", organization_id: "org-uuid"},
+               host: @host,
+               org_slug: "the-robot-lives"
+             ) == "https://tobor.locker/app/the-robot-lives/sessions/s-1"
+
+      assert Urls.ticket_url(%{id: "t-1", organization_id: "org-uuid"},
+               host: @host,
+               org_slug: "the-robot-lives"
+             ) == "https://tobor.locker/app/the-robot-lives/tickets/t-1"
+
+      assert Urls.artifact_url(%{id: "a-1", organization_id: "org-uuid"},
+               host: @host,
+               org_slug: "the-robot-lives"
+             ) == "https://tobor.locker/app/the-robot-lives/artifacts/a-1"
+    end
+
+    test "chat_room_url still resolves via the shared helper" do
+      assert Urls.chat_room_url(%{id: "r-1", organization_id: "org-uuid"},
+               host: @host,
+               org_slug: "the-robot-lives"
+             ) == "https://tobor.locker/app/the-robot-lives/chat/r-1"
+    end
+
+    test "item urls return nil when the org slug cannot be resolved" do
+      assert Urls.session_url(%{id: "s-1"}, host: @host) == nil
+      assert Urls.ticket_url(%{id: "t-1", organization_id: nil}, host: @host) == nil
+    end
+
+    test "session_url resolves the org slug from the DB" do
+      uniq = System.unique_integer([:positive])
+
+      org =
+        %NoizuPromptLingua.Schema.Organizations.Organization{
+          slug: "test-org-#{uniq}",
+          name: "Test Org #{uniq}"
+        }
+        |> NoizuPromptLingua.Repo.insert!()
+
+      assert Urls.session_url(%{id: "s-1", organization_id: org.id}, host: @host) ==
+               "https://tobor.locker/app/test-org-#{uniq}/sessions/s-1"
+    end
+  end
+
   describe "org slug resolution (DB)" do
     test "scope_url resolves the organization slug from organization_id" do
       uniq = System.unique_integer([:positive])

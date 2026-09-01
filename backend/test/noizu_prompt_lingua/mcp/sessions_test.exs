@@ -69,6 +69,15 @@ defmodule NoizuPromptLingua.MCP.SessionsTest do
       assert result.model == nil
       assert result.runner == nil
     end
+
+    test "returns a session_url deep link", %{org_id: org_id} do
+      assert {:ok, result} = SessionCreate.call(%{organization: org_id, title: "Linked"}, %{})
+
+      assert String.contains?(
+               result.session_url,
+               "/app/#{org_slug(org_id)}/sessions/#{result.id}"
+             )
+    end
   end
 
   describe "Session.Update MCP tool" do
@@ -96,6 +105,17 @@ defmodule NoizuPromptLingua.MCP.SessionsTest do
       assert stored.title == "Renamed"
       assert stored.model == "5.4"
       assert stored.runner == "codex"
+    end
+
+    test "returns a session_url deep link", %{org_id: org_id} do
+      {:ok, session} = Sessions.create(%{organization_id: org_id, title: "U3"})
+
+      assert {:ok, result} = SessionUpdate.call(%{session: session.id, title: "Relinked"}, %{})
+
+      assert String.contains?(
+               result.session_url,
+               "/app/#{org_slug(org_id)}/sessions/#{result.id}"
+             )
     end
   end
 
@@ -194,6 +214,10 @@ defmodule NoizuPromptLingua.MCP.SessionsTest do
 
     from(s in NoizuPromptLingua.Schema.Sessions.Session, where: s.id == ^session_id)
     |> Repo.update_all(set: [last_activity_at: dt])
+  end
+
+  defp org_slug(org_id) do
+    NoizuPromptLingua.Repo.get!(NoizuPromptLingua.Schema.Organizations.Organization, org_id).slug
   end
 
   defp insert_org do

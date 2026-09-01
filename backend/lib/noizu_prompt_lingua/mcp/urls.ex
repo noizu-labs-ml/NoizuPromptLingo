@@ -37,10 +37,21 @@ defmodule NoizuPromptLingua.MCP.Urls do
   Human-facing chat room URL (frontend route): `/app/:org_slug/chat/:room_id`.
   Returns nil when the room's org slug cannot be resolved.
   """
-  def chat_room_url(room, opts \\ []) do
-    case org_slug(room, opts) do
+  def chat_room_url(room, opts \\ []), do: app_url(opts, room, "chat")
+
+  @doc "Human-facing session URL (frontend route): `/app/:org_slug/sessions/:id`."
+  def session_url(session, opts \\ []), do: app_url(opts, session, "sessions")
+
+  @doc "Human-facing ticket URL (frontend route): `/app/:org_slug/tickets/:id`."
+  def ticket_url(ticket, opts \\ []), do: app_url(opts, ticket, "tickets")
+
+  @doc "Human-facing artifact URL (frontend route): `/app/:org_slug/artifacts/:id`."
+  def artifact_url(artifact, opts \\ []), do: app_url(opts, artifact, "artifacts")
+
+  defp app_url(opts, record, segment) do
+    case org_slug(record, opts) do
       org_slug when is_binary(org_slug) and org_slug != "" ->
-        build(opts, "app/#{org_slug}/chat/#{id(room)}")
+        build(opts, "app/#{org_slug}/#{segment}/#{id(record)}")
 
       _ ->
         nil
@@ -76,11 +87,11 @@ defmodule NoizuPromptLingua.MCP.Urls do
     end
   end
 
-  defp id(room) do
-    case room do
+  defp id(record) do
+    case record do
       %{id: id} when is_binary(id) -> id
       %{"id" => id} when is_binary(id) -> id
-      _ -> raise ArgumentError, "Urls: room id required, got: #{inspect(room)}"
+      _ -> raise ArgumentError, "Urls: record id required, got: #{inspect(record)}"
     end
   end
 end

@@ -35,7 +35,7 @@ defmodule NoizuPromptLingua.Domains.Artifacts.Tools.ArtifactCreate do
   })
 
   alias NoizuPromptLingua.Domains.Artifacts
-  alias NoizuPromptLingua.MCP.{Args, Resolve}
+  alias NoizuPromptLingua.MCP.{Args, Resolve, Urls}
 
   @impl true
   def call(args, _ctx) do
@@ -60,6 +60,7 @@ defmodule NoizuPromptLingua.Domains.Artifacts.Tools.ArtifactCreate do
           {:ok,
            %{
              id: artifact.id,
+             artifact_url: Urls.artifact_url(artifact),
              revision_id: rev.id,
              kind: artifact.kind,
              title: artifact.title,

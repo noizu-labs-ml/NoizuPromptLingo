@@ -47,6 +47,7 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.TicketUpdate do
       {:ok,
        %{
          id: ticket.id,
+         ticket_url: NoizuPromptLingua.MCP.Urls.ticket_url(ticket),
          key: ticket.key,
          title: ticket.title,
          status: ticket.status,
