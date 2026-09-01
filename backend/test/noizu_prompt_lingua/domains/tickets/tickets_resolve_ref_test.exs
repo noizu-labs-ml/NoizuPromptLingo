@@ -14,7 +14,9 @@ defmodule NoizuPromptLingua.Domains.Tickets.TicketResolveRefTest do
 
   @moduletag :db
 
-  @org_slug "acme-corp"
+  # Unique per run: the gateway/resolve path caches slug→UUID in Redis, which
+  # the sandbox does not roll back (same hazard as org_slug_length_test).
+  @org_slug "acme-corp-#{System.unique_integer([:positive])}"
 
   setup do
     NoizuPromptLingua.TRP.Cache.clear()

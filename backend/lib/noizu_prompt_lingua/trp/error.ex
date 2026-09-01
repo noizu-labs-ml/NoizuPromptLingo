@@ -28,29 +28,39 @@ defmodule NoizuPromptLingua.TRP.Error do
 
     cond do
       status == 401 ->
-        %{base | message: body["error"] || "unauthorized"}
+        %{base | message: fetch(body, "error") || "unauthorized"}
 
       status == 403 ->
         # Whitelist match — never String.to_atom/1 on wire data.
-        reason = parse_reason(body["reason"])
-        %{base | message: body["error"] || "forbidden", reason: reason}
+        reason = parse_reason(fetch(body, "reason"))
+        %{base | message: fetch(body, "error") || "forbidden", reason: reason}
 
       status == 404 ->
-        %{base | message: body["error"] || "not found"}
+        %{base | message: fetch(body, "error") || "not found"}
 
       status == 422 ->
-        %{base | message: "validation failed", errors: body["errors"] || body}
+        %{base | message: "validation failed", errors: fetch(body, "errors") || body}
 
       status == 429 ->
-        %{base | message: body["error"] || "rate_limited", retry_after: body["retry_after"]}
+        %{base | message: fetch(body, "error") || "rate_limited", retry_after: fetch(body, "retry_after")}
 
       status >= 500 ->
-        %{base | message: body["error"] || "trp_server_error"}
+        %{base | message: fetch(body, "error") || "trp_server_error"}
 
       true ->
-        %{base | message: body["error"] || "trp_error"}
+        %{base | message: fetch(body, "error") || "trp_error"}
     end
   end
+
+  # Bodies arrive either raw-string-keyed (transport JSON) or atomized
+  # (Client.decode) — read both key styles.
+  defp fetch(body, key) when is_map(body) do
+    Map.get(body, key) || Map.get(body, String.to_existing_atom(key))
+  rescue
+    ArgumentError -> Map.get(body, key)
+  end
+
+  defp fetch(_, _), do: nil
 
   defp parse_reason(r) when is_binary(r) do
     Enum.find(@known_reasons, fn a -> Atom.to_string(a) == r end)

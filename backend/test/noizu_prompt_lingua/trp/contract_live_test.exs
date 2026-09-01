@@ -45,6 +45,7 @@ defmodule NoizuPromptLingua.TRP.ContractLiveTest do
 
   # ── organizations ─────────────────────────────────────────────
 
+
   test "GET /organizations returns the scoped org list shape" do
     assert {:ok, %{organizations: [_ | _] = orgs}} = Client.request(:get, "/api/v1/organizations")
 
@@ -54,25 +55,32 @@ defmodule NoizuPromptLingua.TRP.ContractLiveTest do
   end
 
   test "GET /organizations/:id envelope" do
-    {:ok, %{organizations: [org | _]}} = Client.request(:get, "/api/v1/organizations")
+    org = scoped_org()
     assert {:ok, %{organization: %{id: id}}} = Client.request(:get, "/api/v1/organizations/#{org.id}")
     assert id == org.id
 
-    assert {:error, %Error{status: 404}} =
+    # Out-of-scope org: the key scope check denies BEFORE existence — 403 per
+    # spec §1.4 (verified live; the denial carries no existence disclosure).
+    assert {:error, %Error{status: 403}} =
              Client.request(:get, "/api/v1/organizations/#{Ecto.UUID.generate()}")
   end
 
   # ── projects ──────────────────────────────────────────────────
 
   test "projects list/create/get + pagination params accepted" do
-    {:ok, %{organizations: [org | _]}} = Client.request(:get, "/api/v1/organizations")
+    org = scoped_org()
     base = "/api/v1/organizations/#{org.id}/projects"
 
     {:ok, %{projects: _}} = Client.request(:get, base, query: [limit: 2, offset: 0])
 
     assert {:ok, %{project: %{id: pid, slug: slug}}} =
              Client.request(:post, base,
-               json: %{name: "w4-contract-#{System.unique_integer()}", slug: nil}
+               json: %{
+                 project: %{
+                   name: "w4-contract-#{System.unique_integer()}",
+                   slug: "w4c-#{System.unique_integer([:positive])}"
+                 }
+               }
              )
 
     assert {:ok, %{project: _}} = Client.request(:get, "#{base}/#{pid}")
@@ -85,13 +93,13 @@ defmodule NoizuPromptLingua.TRP.ContractLiveTest do
   # ── items ─────────────────────────────────────────────────────
 
   test "items: create → deterministic order → human-key get → patch" do
-    {:ok, %{organizations: [org | _]}} = Client.request(:get, "/api/v1/organizations")
+    org = scoped_org()
     base = "/api/v1/organizations/#{org.id}/items"
 
     title = "w4-contract-#{System.unique_integer([:positive])}"
 
     assert {:ok, %{item: %{id: iid, key: key, item_type: "task"}}} =
-             Client.request(:post, base, json: %{title: title, item_type: "task"})
+             Client.request(:post, base, json: %{item: %{title: title, item_type: "task"}})
 
     # deterministic ordering: inserted_at asc, id asc (spec §4.6)
     assert {:ok, %{items: items}} = Client.request(:get, base, query: [limit: 500])
@@ -102,17 +110,17 @@ defmodule NoizuPromptLingua.TRP.ContractLiveTest do
     assert {:ok, %{item: %{id: ^iid}}} = Client.request(:get, "#{base}/#{key}")
 
     assert {:ok, %{item: %{title: "patched"}}} =
-             Client.request(:patch, "#{base}/#{iid}", json: %{title: "patched"})
+             Client.request(:patch, "#{base}/#{iid}", json: %{item: %{title: "patched"}})
 
     _ = Client.request(:delete, "#{base}/#{iid}")
   end
 
   test "items: ticket_type-free — TRP speaks item_type only" do
-    {:ok, %{organizations: [org | _]}} = Client.request(:get, "/api/v1/organizations")
+    org = scoped_org()
     base = "/api/v1/organizations/#{org.id}/items"
 
     assert {:ok, %{item: item}} =
-             Client.request(:post, base, json: %{title: "alias-check", item_type: "task"})
+             Client.request(:post, base, json: %{item: %{title: "alias-check", item_type: "task"}})
 
     refute Map.has_key?(item, :ticket_type)
     _ = Client.request(:delete, "#{base}/#{item.id}")
@@ -121,23 +129,24 @@ defmodule NoizuPromptLingua.TRP.ContractLiveTest do
   # ── definitions ───────────────────────────────────────────────
 
   test "definitions: field + type CRUD envelope shapes" do
-    {:ok, %{organizations: [org | _]}} = Client.request(:get, "/api/v1/organizations")
+    org = scoped_org()
     fbase = "/api/v1/organizations/#{org.id}/definitions/fields"
     tbase = "/api/v1/organizations/#{org.id}/definitions/types"
     suffix = System.unique_integer([:positive])
 
     assert {:ok, %{field: %{id: fid, slug: fslug}}} =
              Client.request(:post, fbase,
-               json: %{slug: "w4f-#{suffix}", label: "W4 Field", field_type: "text"}
+               json: %{field: %{slug: "w4f-#{suffix}", label: "W4 Field", field_type: "text"}}
              )
 
     assert {:ok, %{type: %{id: tid, fields: fields}}} =
              Client.request(:post, tbase,
-               json: %{slug: "w4t-#{suffix}", name: "W4 Type", fields: [%{id: fid}]}
+               json: %{type: %{slug: "w4t-#{suffix}", name: "W4 Type", fields: [%{id: fid}]}}
              )
 
     assert [%{id: ^fid}] = fields
-    assert {:ok, %{type: %{fields: []}}} = Client.request(:patch, "#{tbase}/#{tid}", json: %{fields: []})
+    assert {:ok, %{type: %{fields: []}}} =
+             Client.request(:patch, "#{tbase}/#{tid}", json: %{type: %{fields: []}})
     assert {:ok, nil} = Client.request(:delete, "#{tbase}/#{tid}")
     assert {:ok, nil} = Client.request(:delete, "#{fbase}/#{fslug}")
 
@@ -163,6 +172,17 @@ defmodule NoizuPromptLingua.TRP.ContractLiveTest do
       {:error, %Error{status: 403, reason: :org_not_in_key_scope}} -> :ok
       {:error, %Error{status: 404}} -> :ok
       _ -> :ok
+    end
+  end
+
+  # The dual-store org: definitions FK-validate against the TRP app-DB
+  # `organizations` table, where only `the-robot-lives` exists (2026-09-01).
+  defp scoped_org do
+    {:ok, %{organizations: orgs}} = Client.request(:get, "/api/v1/organizations")
+
+    case Enum.find(orgs, &(&1.slug == "the-robot-lives")) do
+      nil -> hd(orgs)
+      org -> org
     end
   end
 end

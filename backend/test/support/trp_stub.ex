@@ -226,7 +226,7 @@ defmodule NoizuPromptLingua.TRP.TestStub do
         respond(200, %{projects: list_for(state.projects, org_id, query)})
 
       {"POST", ["api", "v1", "organizations", org_id, "projects"]} ->
-        created = seed_project(org_id, body |> atomize())
+        created = seed_project(org_id, unwrap(body, :project) |> atomize())
         respond(201, %{project: created})
 
       {"GET", ["api", "v1", "organizations", org_id, "projects", id]} ->
@@ -234,7 +234,7 @@ defmodule NoizuPromptLingua.TRP.TestStub do
 
       {"PATCH", ["api", "v1", "organizations", org_id, "projects", id]} ->
         mutate(state.projects[{org_id, id}], body, fn p ->
-          respond(200, %{project: update_seed(:projects, {org_id, id}, p, body)})
+          respond(200, %{project: update_seed(:projects, {org_id, id}, p, unwrap(body, :project))})
         end)
 
       {"DELETE", ["api", "v1", "organizations", org_id, "projects", id]} ->
@@ -244,7 +244,7 @@ defmodule NoizuPromptLingua.TRP.TestStub do
         respond(200, %{items: list_items(state.items, org_id, query)})
 
       {"POST", ["api", "v1", "organizations", org_id, "items"]} ->
-        attrs = atomize(body)
+        attrs = unwrap(body, :item) |> atomize()
         attrs = Map.put(attrs, :key, attrs[:key] || "TSK-#{System.unique_integer([:positive])}")
         created = seed_item(org_id, attrs)
         respond(201, %{item: created})
@@ -257,7 +257,7 @@ defmodule NoizuPromptLingua.TRP.TestStub do
         item = state.items[{org_id, id}] || find_by_key(state.items, org_id, id)
 
         mutate(item, body, fn ->
-          respond(200, %{item: update_seed(:items, {org_id, item.id}, item, body)})
+          respond(200, %{item: update_seed(:items, {org_id, item.id}, item, unwrap(body, :item))})
         end)
 
       {"DELETE", ["api", "v1", "organizations", org_id, "items", id]} ->
@@ -272,7 +272,7 @@ defmodule NoizuPromptLingua.TRP.TestStub do
         respond(200, %{types: rows})
 
       {"POST", ["api", "v1", "organizations", org_id, "definitions", "types"]} ->
-        created = seed_type(org_id, atomize(body))
+        created = seed_type(org_id, unwrap(body, :type) |> atomize())
         respond(201, %{type: created})
 
       {"GET", ["api", "v1", "organizations", org_id, "definitions", "types", id]} ->
@@ -282,7 +282,7 @@ defmodule NoizuPromptLingua.TRP.TestStub do
         t = state.types[{org_id, id}]
 
         mutate(t, body, fn ->
-          updated = update_seed(:types, {org_id, id}, t, body)
+          updated = update_seed(:types, {org_id, id}, t, unwrap(body, :type))
           respond(200, %{type: expand_fields(state, org_id, updated)})
         end)
 
@@ -317,7 +317,7 @@ defmodule NoizuPromptLingua.TRP.TestStub do
         respond(200, %{fields: list_for(state.fields, org_id, query)})
 
       {"POST", ["api", "v1", "organizations", org_id, "definitions", "fields"]} ->
-        created = seed_field(org_id, atomize(body))
+        created = seed_field(org_id, unwrap(body, :field) |> atomize())
         respond(201, %{field: created})
 
       {"GET", ["api", "v1", "organizations", org_id, "definitions", "fields", id]} ->
@@ -327,7 +327,7 @@ defmodule NoizuPromptLingua.TRP.TestStub do
         f = state.fields[{org_id, id}]
 
         mutate(f, body, fn ->
-          respond(200, %{field: update_seed(:fields, {org_id, id}, f, body)})
+          respond(200, %{field: update_seed(:fields, {org_id, id}, f, unwrap(body, :field))})
         end)
 
       {"DELETE", ["api", "v1", "organizations", org_id, "definitions", "fields", id]} ->
@@ -344,6 +344,16 @@ defmodule NoizuPromptLingua.TRP.TestStub do
       [p, q] -> {p, URI.decode_query(q)}
     end
   end
+
+  # Client wraps write bodies (%{item: ...} etc. — mirrors TRP controllers).
+  defp unwrap(body, key) when is_map(body) do
+    case body do
+      %{^key => inner} when is_map(inner) -> inner
+      _ -> body
+    end
+  end
+
+  defp unwrap(body, _key), do: body
 
   defp atomize(body) when is_map(body) do
     Map.new(body, fn {k, v} -> {if(is_atom(k), do: k, else: String.to_atom(k)), v} end)

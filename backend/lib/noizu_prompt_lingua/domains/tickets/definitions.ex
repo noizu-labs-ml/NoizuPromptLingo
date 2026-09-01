@@ -204,7 +204,7 @@ defmodule NoizuPromptLingua.Domains.Tickets.Definitions do
         type_def ->
           entry = %{id: field_id, required: required, position: position}
           fields = merge_type_field(type_def.type_fields, entry)
-          TRP.add_type_fields(org, type_id, fields)
+          TRP.set_type_fields(org, type_id, fields)
       end
     end)
   end

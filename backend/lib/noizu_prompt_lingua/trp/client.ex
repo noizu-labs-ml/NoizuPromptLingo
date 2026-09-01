@@ -98,13 +98,36 @@ defmodule NoizuPromptLingua.TRP.Client do
   defp decode(" "), do: nil
 
   defp decode(body) when is_binary(body) do
-    case Jason.decode(body, keys: :atoms!) do
-      {:ok, decoded} -> decoded
+    case Jason.decode(body) do
+      {:ok, decoded} -> atomize(decoded)
       _ -> nil
     end
   end
 
-  defp decode(decoded) when is_map(decoded) or is_list(decoded), do: decoded
+  defp decode(decoded) when is_map(decoded) or is_list(decoded), do: atomize(decoded)
+
+  # Recursively convert wire keys to atoms — but SAFELY: unknown keys (e.g. a
+  # new server-side field like `archived_at`) fall back to their string form
+  # instead of crashing on String.to_existing_atom or leaking atoms. Every key
+  # the client actually reads appears as a literal in this codebase, so it is
+  # always an existing atom; unread keys stay strings, harmlessly.
+  # Structs (DateTime etc.) are maps — pass them through untouched.
+  defp atomize(%_{} = struct), do: struct
+
+  defp atomize(map) when is_map(map) do
+    Map.new(map, fn {k, v} -> {safe_atom(k), atomize(v)} end)
+  end
+
+  defp atomize(list) when is_list(list), do: Enum.map(list, &atomize/1)
+  defp atomize(other), do: other
+
+  defp safe_atom(k) when is_binary(k) do
+    String.to_existing_atom(k)
+  rescue
+    ArgumentError -> k
+  end
+
+  defp safe_atom(k), do: k
 
   defp build_url(path, nil), do: path
 

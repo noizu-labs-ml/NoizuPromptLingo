@@ -72,7 +72,8 @@ defmodule NoizuPromptLingua.TRP.ServiceAuthTest do
                json: %{organization: %{slug: "acme", name: "Acme"}}
              )
 
-    assert body["organization"]["slug"] == "acme"
+    # Bodies are atomized uniformly by the client decode.
+    assert body[:organization][:slug] == "acme"
     assert ServiceAuthStub.logins() == 2
   end
 

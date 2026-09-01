@@ -61,7 +61,9 @@ defmodule NoizuPromptLingua.TRP do
 
   def create_project(org_id, attrs) do
     with {:ok, json} <-
-           Client.request(:post, "/api/v1/organizations/#{org_id}/projects", json: attrs) do
+           Client.request(:post, "/api/v1/organizations/#{org_id}/projects",
+             json: %{project: attrs}
+           ) do
       bust_projects(org_id)
       {:ok, Shapes.project(unwrap_one(json, :project))}
     end
@@ -70,7 +72,7 @@ defmodule NoizuPromptLingua.TRP do
   def update_project(org_id, id, attrs) do
     with {:ok, json} <-
            Client.request(:patch, "/api/v1/organizations/#{org_id}/projects/#{id}",
-             json: attrs
+             json: %{project: attrs}
            ) do
       bust_projects(org_id)
       {:ok, Shapes.project(unwrap_one(json, :project))}
@@ -118,7 +120,7 @@ defmodule NoizuPromptLingua.TRP do
 
   def create_item(org_id, attrs) do
     with {:ok, json} <-
-           Client.request(:post, "/api/v1/organizations/#{org_id}/items", json: attrs) do
+           Client.request(:post, "/api/v1/organizations/#{org_id}/items", json: %{item: attrs}) do
       bust_items(org_id)
       {:ok, Shapes.item(unwrap_one(json, :item))}
     end
@@ -126,7 +128,9 @@ defmodule NoizuPromptLingua.TRP do
 
   def update_item(org_id, id, attrs) do
     with {:ok, json} <-
-           Client.request(:patch, "/api/v1/organizations/#{org_id}/items/#{id}", json: attrs) do
+           Client.request(:patch, "/api/v1/organizations/#{org_id}/items/#{id}",
+        json: %{item: attrs}
+      ) do
       bust_items(org_id)
       {:ok, Shapes.item(unwrap_one(json, :item))}
     end
@@ -159,7 +163,7 @@ defmodule NoizuPromptLingua.TRP do
   def create_type(org_id, attrs) do
     with {:ok, json} <-
            Client.request(:post, "/api/v1/organizations/#{org_id}/definitions/types",
-             json: attrs
+             json: %{type: attrs}
            ) do
       bust_definitions(org_id)
       {:ok, Shapes.type_definition(unwrap_one(json, :type))}
@@ -169,7 +173,7 @@ defmodule NoizuPromptLingua.TRP do
   def update_type(org_id, id, attrs) do
     with {:ok, json} <-
            Client.request(:patch, "/api/v1/organizations/#{org_id}/definitions/types/#{id}",
-             json: attrs
+             json: %{type: attrs}
            ) do
       bust_definitions(org_id)
       {:ok, Shapes.type_definition(unwrap_one(json, :type))}
@@ -188,17 +192,13 @@ defmodule NoizuPromptLingua.TRP do
     end
   end
 
-  @doc "POST `…/types/:id/fields` — body `%{fields: [%{id, required, position}]}` per spec §4.4."
-  def add_type_fields(org_id, type_id, fields) when is_list(fields) do
-    with {:ok, json} <-
-           Client.request(
-             :post,
-             "/api/v1/organizations/#{org_id}/definitions/types/#{type_id}/fields",
-             json: %{fields: fields}
-           ) do
-      bust_definitions(org_id)
-      {:ok, json}
-    end
+  @doc """
+  REPLACE a type's field association set — `update_type` with a `fields` body
+  (spec §4.4: "replaces the full association set"). TRP's POST
+  `…/types/:id/fields` takes a single `field_id`, so bulk changes ride update.
+  """
+  def set_type_fields(org_id, type_id, fields) when is_list(fields) do
+    update_type(org_id, type_id, %{fields: fields})
   end
 
   @doc "DELETE `…/types/:id/fields/:field_id`."
@@ -243,7 +243,7 @@ defmodule NoizuPromptLingua.TRP do
   def create_field(org_id, attrs) do
     with {:ok, json} <-
            Client.request(:post, "/api/v1/organizations/#{org_id}/definitions/fields",
-             json: attrs
+             json: %{field: attrs}
            ) do
       bust_definitions(org_id)
       {:ok, Shapes.field_definition(unwrap_one(json, :field))}
@@ -253,7 +253,7 @@ defmodule NoizuPromptLingua.TRP do
   def update_field(org_id, id, attrs) do
     with {:ok, json} <-
            Client.request(:patch, "/api/v1/organizations/#{org_id}/definitions/fields/#{id}",
-             json: attrs
+             json: %{field: attrs}
            ) do
       bust_definitions(org_id)
       {:ok, Shapes.field_definition(unwrap_one(json, :field))}

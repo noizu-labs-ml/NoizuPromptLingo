@@ -182,18 +182,38 @@ defmodule NoizuPromptLingua.TRP.ServiceAuth do
 
   defp stale?(fetched_at), do: now_ms() - fetched_at > @refresh_after_ms
 
-  # Envelope decode matching NoizuPromptLingua.TRP.Client (atom keys).
+  # Envelope decode matching NoizuPromptLingua.TRP.Client: string-keyed wire
+  # data atomized safely (unknown keys keep their string form; callers use
+  # key-style-tolerant pick/2).
   defp decode(nil), do: nil
   defp decode(""), do: nil
 
   defp decode(body) when is_binary(body) do
-    case Jason.decode(body, keys: :atoms!) do
-      {:ok, decoded} -> decoded
+    case Jason.decode(body) do
+      {:ok, decoded} -> atomize(decoded)
       _ -> nil
     end
   end
 
-  defp decode(decoded) when is_map(decoded) or is_list(decoded), do: decoded
+  defp decode(decoded) when is_map(decoded) or is_list(decoded), do: atomize(decoded)
+
+  # Structs (DateTime etc.) are maps — pass them through untouched.
+  defp atomize(%_{} = struct), do: struct
+
+  defp atomize(map) when is_map(map) do
+    Map.new(map, fn {k, v} -> {safe_atom(k), atomize(v)} end)
+  end
+
+  defp atomize(list) when is_list(list), do: Enum.map(list, &atomize/1)
+  defp atomize(other), do: other
+
+  defp safe_atom(k) when is_binary(k) do
+    String.to_existing_atom(k)
+  rescue
+    ArgumentError -> k
+  end
+
+  defp safe_atom(k), do: k
 
   defp now_ms, do: System.system_time(:millisecond)
 

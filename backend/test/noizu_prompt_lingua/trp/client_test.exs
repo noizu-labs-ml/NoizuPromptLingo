@@ -49,7 +49,8 @@ defmodule NoizuPromptLingua.TRP.ClientTest do
 
     TestStub.queue_response({422, %{"errors" => %{"name" => ["can't be blank"]}}})
 
-    assert {:error, %Error{status: 422, errors: %{"name" => ["can't be blank"]}}} =
+    # Bodies are atomized uniformly (success + error envelopes).
+    assert {:error, %Error{status: 422, errors: %{name: ["can't be blank"]}}} =
              Client.request(:post, "/api/v1/organizations/o/items", json: %{})
   end
 

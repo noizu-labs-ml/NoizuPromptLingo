@@ -28,7 +28,7 @@ defmodule NoizuPromptLingua.TRP.Shapes do
       priority: json[:priority],
       assignee: json[:assignee],
       reporter: json[:reporter],
-      custom_fields: json[:custom_fields] || %{},
+      custom_fields: data_map(json[:custom_fields]),
       owner_user_id: Map.get(json, :owner_user_id),
       tags: Map.get(json, :tags) || [],
       rank: json[:rank],
@@ -106,7 +106,7 @@ defmodule NoizuPromptLingua.TRP.Shapes do
       slug: json[:slug],
       label: json[:label],
       field_type: json[:field_type],
-      options: json[:options] || %{},
+      options: data_map(json[:options]),
       default_value: json[:default_value],
       description: json[:description],
       disabled: Map.get(json, :disabled) || false,
@@ -130,7 +130,7 @@ defmodule NoizuPromptLingua.TRP.Shapes do
       description: json[:description],
       icon: json[:icon],
       color: Map.get(json, :color),
-      status_workflow: json[:status_workflow],
+      status_workflow: data_map(json[:status_workflow]),
       disabled: Map.get(json, :disabled) || false,
       deleted_at: Map.get(json, :deleted_at),
       inserted_at: json[:inserted_at],
@@ -148,4 +148,15 @@ defmodule NoizuPromptLingua.TRP.Shapes do
       }
     end)
   end
+
+  # Data-payload maps (custom_fields/options/status_workflow) carry USER-DEFINED
+  # keys — they must stay string-keyed no matter how the transport decoded them.
+  defp data_map(nil), do: %{}
+  defp data_map(m) when is_map(m) do
+    Map.new(m, fn
+      {k, v} when is_atom(k) and not is_boolean(k) -> {Atom.to_string(k), v}
+      {k, v} -> {k, v}
+    end)
+  end
+  defp data_map(other), do: other
 end

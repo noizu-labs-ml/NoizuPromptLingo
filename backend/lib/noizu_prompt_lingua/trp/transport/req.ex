@@ -10,13 +10,18 @@ defmodule NoizuPromptLingua.TRP.Transport.Req do
 
   @impl true
   def request(method, base_url, path, headers, body, opts) do
+    # NB: req >= 0.7 rejects `finch:` combined with `connect_options:` in one
+    # request, so the connect timeout is enforced by the receive timeout below
+    # (bounded overall request) rather than a separate connect option.
     req =
       Req.new(
         method: method,
         url: base_url <> path,
         headers: headers,
         finch: NoizuPromptLingua.TRP.Finch,
-        connect_options: [timeout: opts[:connect_timeout] || 5_000],
+        # Req auto-decodes JSON to STRING-keyed maps; Client.decode expects the
+        # raw body so it can atomize keys exactly as the unit-tested path does.
+        decode_body: false,
         retry: false
       )
 
