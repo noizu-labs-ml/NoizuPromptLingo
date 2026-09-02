@@ -294,4 +294,11 @@ Save shared prompt templates to `./sub-agent-prompts/{task-name}.md`. Test with 
 
 ---
 
+## Monorepo policy addendum (2026-09)
+
+- **Worktree workflow (REQUIRED)**: all work on worktrees; integration-testing consolidation branches `epic.<group>` fork from active `develop`; feature branches merge into their parent epic via squash-PR (provenance); a fully-passing epic becomes one PR for the group. See monorepo CLAUDE.md "Git Trees — Worktree Workflow".
+- Monorepo-wide ops (secrets/dc, terraform, submodules, deploy tiers, doc map incl. `docs/SUBS.md`): see `../../../CLAUDE.md` at the trl-infra root. This repo's own session-init/MCP guidance above remains authoritative for NPL work.
+
+---
+
 *End of CLAUDE.md*
