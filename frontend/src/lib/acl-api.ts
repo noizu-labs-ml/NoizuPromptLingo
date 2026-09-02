@@ -284,8 +284,8 @@ export async function removeAclGroupMember(
 
 // ---------------------------------------------------------------------------
 // MCP tool sets (PRD-N4 §4.1, N4a) — org-admin CRUD against
-// /api/v1/organizations/:org_id/tool-sets. The validate dry-run endpoint is
-// N4b (gated on lib PRD-3) and deliberately has no client fn yet.
+// /api/v1/organizations/:org_id/tool-sets. N4b adds the validate dry-run,
+// the live-catalog arg-enum seeds and the real-groups group-options feed.
 // ---------------------------------------------------------------------------
 
 export type ToolSetShape = 'org' | 'project' | 'group';
@@ -349,6 +349,57 @@ export interface ToolSetStructuralPreview {
   total_override_ops: number;
 }
 
+/** One structured Validator issue (N4b; lib issue codes, Jason-safe shapes). */
+export interface ToolSetIssue {
+  code: string;
+  message: string;
+  tool: string | null;
+  field: string | null;
+  op: string | null;
+  meta?: Record<string, unknown> | null;
+}
+
+/** validate/2 — 200 `{ok: true, warnings}` or 422 `{ok: false, issues}`. */
+export type ToolSetValidateResult =
+  | { ok: true; warnings: string[] }
+  | { ok: false; issues: ToolSetIssue[] };
+
+/** One applied layer's provenance for an effective tool entry. */
+export interface ToolSetProvenanceRow {
+  op: string;
+  field: string | null;
+  layer: string;
+  weight: number;
+}
+
+/** Effective surface per tool — the D1-correct show/preview entry (N4b). */
+export interface ToolSetEffectiveTool {
+  name: string;
+  base_name: string;
+  renamed: boolean;
+  visible: boolean;
+  callable: boolean;
+  reason: unknown;
+  pruned_args: Record<string, (string | number | boolean)[]>;
+  provenance: ToolSetProvenanceRow[];
+}
+
+export interface ToolSetEffective {
+  version: string | null;
+  tools: ToolSetEffectiveTool[];
+  issues?: ToolSetIssue[];
+}
+
+/** A selectable authz group for the group-set audience (N4b). */
+export interface ToolSetGroupOption {
+  id: string;
+  name: string;
+  display_name: string | null;
+  is_system: boolean;
+  kind: 'ladder_role' | 'custom';
+  member_count: number;
+}
+
 export interface ToolSetAuditEntry {
   at: string;
   actor?: string | null;
@@ -375,6 +426,7 @@ export interface ToolSetView {
   urls: { mcp: string | null; admin: string | null };
   audit?: ToolSetAuditEntry[];
   preview?: ToolSetStructuralPreview;
+  effective?: ToolSetEffective;
   config?: ToolSetConfig;
 }
 
@@ -457,4 +509,74 @@ export async function cloneToolSet(
     { method: 'POST', body: JSON.stringify({ source, tool_set: attrs }) },
   );
   return res.tool_set;
+}
+
+/**
+ * POST .../tool-sets/validate (N4b) — pure dry-run, NEVER persists. A 422 is
+ * a VALIDATION result (structured issues), not a transport error — surfaced
+ * as `{ok: false, issues}` rather than thrown.
+ */
+export async function validateToolSet(
+  orgId: string,
+  attrs: { config?: ToolSetConfig; settings?: ToolSetSettings },
+): Promise<ToolSetValidateResult> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+  const res = await fetch(
+    `${API_URL}/api/v1/organizations/${encodeURIComponent(orgId)}/tool-sets/validate`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ tool_set: attrs }),
+    },
+  );
+  const body = await res.json().catch(() => ({}));
+  if (res.ok) return { ok: true, warnings: body.warnings ?? [] };
+  if (body && body.ok === false && Array.isArray(body.issues)) {
+    return { ok: false, issues: body.issues as ToolSetIssue[] };
+  }
+  throw new Error(body.error || `Request failed: ${res.status}`);
+}
+
+// Session-scoped cache: enum seeds per (tool, arg) never change within a
+// session (base catalog is static for the user's org context).
+const argEnumCache = new Map<string, (string | number | boolean)[]>();
+
+/**
+ * GET .../tool-sets/arg-enum?tool=&arg= (N4b) — the base enum values of one
+ * arg from the live catalog (the prune candidates). Resolves [] for unknown
+ * tool/field or non-enum args — callers fall back to free text.
+ */
+export async function getArgEnum(
+  orgId: string,
+  tool: string,
+  arg: string,
+): Promise<(string | number | boolean)[]> {
+  const key = `${tool}:${arg}`;
+  const hit = argEnumCache.get(key);
+  if (hit) return hit;
+  try {
+    const res = await request<{ values?: (string | number | boolean)[] }>(
+      `/api/v1/organizations/${encodeURIComponent(orgId)}/tool-sets/arg-enum` +
+        `?tool=${encodeURIComponent(tool)}&arg=${encodeURIComponent(arg)}`,
+    );
+    const values = res.values ?? [];
+    argEnumCache.set(key, values);
+    return values;
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * GET .../tool-sets/group-options (N4b) — REAL authz groups alongside the 5
+ * ladder roles, labeled by `kind` with expires_at-aware member counts.
+ */
+export async function listToolSetGroupOptions(orgId: string): Promise<ToolSetGroupOption[]> {
+  const res = await request<{ groups: ToolSetGroupOption[] }>(
+    `/api/v1/organizations/${encodeURIComponent(orgId)}/tool-sets/group-options`,
+  );
+  return res.groups ?? [];
 }
