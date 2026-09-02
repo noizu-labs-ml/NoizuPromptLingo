@@ -30,7 +30,7 @@ defmodule NoizuPromptLingua.MCP.Server do
           end
 
           def handle_call_tool(name, args, ctx) do
-            Noizu.MCP.Server.Features.Tools.protocol_call(__MODULE__, name, args, ctx)
+            NoizuPromptLingua.MCP.Server.protocol_call_guarded(__MODULE__, name, args, ctx)
           end
         end
       else
@@ -60,6 +60,69 @@ defmodule NoizuPromptLingua.MCP.Server do
   alias NoizuPromptLingua.MCPServers
 
   require Logger
+
+  @doc """
+  Toolset-mode tools/call: the SAME pipeline as the lib's
+  `Noizu.MCP.Server.Features.Tools.protocol_call/4` (select_toolset → resolve →
+  invoke, with the resolve D5 rescue boundary) plus one NPL-owned addition
+  (B13): when the resolved entry's cast plan carries fields the effective
+  schema no longer advertises (i.e. `hide_field` removed them), the effective
+  schema is CLOSED with `additionalProperties: false` before invoke, so the
+  hidden key is REJECTED by the effective-schema validation instead of being
+  silently dropped (handlers would otherwise run with the field's default).
+  Entries without hidden fields keep the permissive schema (root parity —
+  unknown keys stay ignored).
+  """
+  def protocol_call_guarded(server, name, args, ctx) do
+    toolset = Tools.select_toolset(server, ctx)
+
+    case resolve_effective(toolset, name, ctx) do
+      {:ok, effective} ->
+        Noizu.MCP.Toolset.invoke(toolset, close_hidden_fields(effective), args, ctx, [])
+
+      {:error, %Noizu.MCP.Error{}} = error ->
+        error
+    end
+  end
+
+  # The lib's protocol_call rescues resolve failures into an internal error
+  # (D5: a broken toolset disables the surface, never the server) — mirrored.
+  defp resolve_effective(toolset, name, ctx) do
+    Noizu.MCP.Toolset.resolve(toolset, name, ctx, [])
+  rescue
+    e -> {:error, Noizu.MCP.Error.internal("toolset resolve failed: #{Exception.message(e)}")}
+  end
+
+  # Cast-plan keys missing from the effective schema's properties = hidden
+  # fields. Renames never read as hidden: the plan `key` stays the original
+  # and only `wire_key` moves, so the key remains advertised under its new
+  # spelling.
+  defp close_hidden_fields(%Noizu.MCP.Toolset.Effective{} = effective) do
+    entry = effective.entry
+    schema = entry.input_schema
+
+    if is_list(entry.cast_plan) and is_map(schema) and
+         MapSet.size(hidden_keys(entry.cast_plan, schema)) > 0 do
+      schema = Map.put(schema, "additionalProperties", false)
+      %{effective | entry: %{entry | input_schema: schema}}
+    else
+      effective
+    end
+  end
+
+  defp hidden_keys(cast_plan, schema) do
+    advertised = schema |> Map.get("properties", %{}) |> Map.keys() |> MapSet.new()
+
+    # Hidden = advertised under NEITHER spelling (plan `key` nor a rename's
+    # `wire_key`). A rename alone is NOT hidden: the schema property moves to
+    # `wire_key` while the plan `key` stays the original.
+    cast_plan
+    |> Enum.reject(fn entry ->
+      MapSet.member?(advertised, entry.key) or
+        (is_binary(Map.get(entry, :wire_key)) and MapSet.member?(advertised, entry.wire_key))
+    end)
+    |> MapSet.new(& &1.key)
+  end
 
   @doc """
   Shared `handle_list_tools` implementation: expand the server's tool set

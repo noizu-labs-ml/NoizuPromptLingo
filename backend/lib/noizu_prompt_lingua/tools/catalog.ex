@@ -81,6 +81,24 @@ defmodule NoizuPromptLingua.Tools.Catalog do
 
   def call_hidden_tool(name, arguments, server \\ NoizuPromptLingua.MCP, ctx \\ nil) do
     name = resolve_alias(name)
+
+    # B14: on a tool-set surface the inner universe is the RESOLVED set
+    # (select_toolset → %Toolset.Custom{}), not the endpoint's static registry
+    # (empty by design) — ToolCall answered "not found" for every tool there.
+    # The set's own ceiling still applies: effective entries only, callable
+    # only, visible tools refused (call them directly), everything else absent.
+    case Noizu.MCP.Server.Features.Tools.select_toolset(server, ctx) do
+      %Noizu.MCP.Toolset.Custom{} = selected ->
+        call_on_set(selected, name, arguments, ctx)
+
+      _ ->
+        call_on_static(name, arguments, server, ctx)
+    end
+  end
+
+  # Root/legacy path: the server's static registry (hidden tools dispatchable,
+  # MCP-visible refused, per-key KeyToolset disables honored).
+  defp call_on_static(name, arguments, server, ctx) do
     # Canonicalize specs so dotted catalog names match the canonical lookup.
     specs = NoizuPromptLingua.MCP.ToolNames.canonical_specs(specs(server, ctx))
 
@@ -109,6 +127,69 @@ defmodule NoizuPromptLingua.Tools.Catalog do
         end
     end
   end
+
+  # Set-surface path (B14): match the canonical name over the resolved set's
+  # EFFECTIVE entries (dotted wire spellings are aliases), then dispatch hidden
+  # ones through the lib pipeline so the effective schema/plan/overrides apply.
+  # Visibility/callability come pre-folded (overrides + ACL) — a non-callable
+  # entry is indistinguishable from an absent one (existence-hiding).
+  defp call_on_set(%Noizu.MCP.Toolset.Custom{} = selected, name, arguments, ctx) do
+    case effective_entry(selected, name, ctx) do
+      %{visible: true, definition: %{name: wire_name}} ->
+        {:mcp, "Tool '#{wire_name}' is MCP-visible — call it directly via MCP protocol"}
+
+      %{definition: %{name: wire_name}} ->
+        dispatch_on_set(selected, wire_name, arguments, ctx)
+
+      # Absent AND non-callable both land here — no discovery oracle.
+      nil ->
+        {:error, "Tool '#{name}' not found"}
+    end
+  end
+
+  defp effective_entry(selected, name, ctx) do
+    case Noizu.MCP.Toolset.catalog(selected, ctx, []) do
+      {:ok, entries, _version} ->
+        Enum.find(entries, fn entry ->
+          entry.callable == true and
+            NoizuPromptLingua.MCP.ToolNames.canonical(entry.definition.name) == name
+        end)
+
+      _ ->
+        nil
+    end
+  end
+
+  defp dispatch_on_set(selected, wire_name, arguments, ctx) do
+    with {:ok, effective} <- Noizu.MCP.Toolset.resolve(selected, wire_name, ctx, []) do
+      case Noizu.MCP.Toolset.invoke(selected, effective, arguments || %{}, ctx, []) do
+        %Noizu.MCP.Types.ToolResult{} = result ->
+          unwrap_tool_result(result)
+
+        {:error, %Noizu.MCP.Error{message: message}} ->
+          {:error, message}
+
+        other ->
+          other
+      end
+    end
+  end
+
+  # Map the lib's normalized result back onto ToolCall's {:ok, _}/{:error, _}
+  # contract so the outer response shape matches the static path.
+  defp unwrap_tool_result(%Noizu.MCP.Types.ToolResult{} = result) do
+    if result.is_error do
+      {:error, result_text(result)}
+    else
+      {:ok, result.structured || result_text(result)}
+    end
+  end
+
+  defp result_text(%Noizu.MCP.Types.ToolResult{content: [%{text: text} | _]})
+       when is_binary(text),
+       do: text
+
+  defp result_text(_), do: nil
 
   defp dispatch_ctx(%Noizu.MCP.Ctx{} = ctx, server), do: %{ctx | server: ctx.server || server}
   defp dispatch_ctx(_none, server), do: %Noizu.MCP.Ctx{server: server}
