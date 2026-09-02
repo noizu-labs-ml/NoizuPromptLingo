@@ -257,8 +257,13 @@ defmodule NoizuPromptLingua.TRP.TestStub do
         found(state.projects[{org_id, id}], &%{project: &1})
 
       {"PATCH", ["api", "v1", "organizations", org_id, "projects", id]} ->
-        mutate(state.projects[{org_id, id}], body, fn p ->
-          respond(200, %{project: update_seed(:projects, {org_id, id}, p, unwrap(body, :project))})
+        mutate(state.projects[{org_id, id}], body, fn ->
+          current = state.projects[{org_id, id}]
+
+          respond(
+            200,
+            %{project: update_seed(:projects, {org_id, id}, current, unwrap(body, :project))}
+          )
         end)
 
       {"DELETE", ["api", "v1", "organizations", org_id, "projects", id]} ->
