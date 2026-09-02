@@ -20,21 +20,23 @@ defmodule NoizuPromptLingua.Domains.Instructions do
     body = opts[:body] || attrs[:body] || attrs["body"] || ""
 
     Repo.transaction(fn ->
+      # Atomize first: injecting :active_version into a string-keyed map would
+      # hand Ecto mixed keys (CastError) instead of a clean changeset error.
       case %Instruction{}
-           |> Instruction.changeset(Map.put(attrs, :active_version, 1))
+           |> Instruction.changeset(normalize(attrs) |> Map.put(:active_version, 1))
            |> Repo.insert() do
         {:ok, instruction} ->
-          {:ok, _v} =
-            %InstructionVersion{}
-            |> InstructionVersion.changeset(%{
-              instruction_id: instruction.id,
-              version: 1,
-              body: body,
-              change_note: "Initial version"
-            })
-            |> Repo.insert()
-
-          instruction
+          case %InstructionVersion{}
+               |> InstructionVersion.changeset(%{
+                 instruction_id: instruction.id,
+                 version: 1,
+                 body: body,
+                 change_note: "Initial version"
+               })
+               |> Repo.insert() do
+            {:ok, _v} -> instruction
+            {:error, cs} -> Repo.rollback(cs)
+          end
 
         {:error, cs} ->
           Repo.rollback(cs)
