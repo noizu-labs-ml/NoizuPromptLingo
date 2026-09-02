@@ -39,6 +39,25 @@ NoizuPromptLingua.MCPCustomScopeTestSchema.ensure!()
 # Ensure the Liquibase 083 mcp_tool_sets table exists for the tool-sets suites.
 NoizuPromptLingua.McpToolSetTestSchema.ensure!()
 
+# Ensure the N2b provider record store (npl_mcp_toolset_store) exists for the
+# toolset provider/conformance suites — NPL-owned storage; the lib's
+# noizu_mcp_* tables are NOT created here (zero-writes guard owns that proof).
+NoizuPromptLingua.ProviderStoreTestSchema.ensure!()
+
+# The lib's persistence conformance battery (AP-8) lives in the dep's
+# test/support, which consumers never compile — load it from the RESOLVED
+# path-dep checkout when present so the ported suite can `use` it. A hex
+# noizu_mcp (post-flip) simply leaves the battery unavailable.
+case Mix.Project.deps_paths()[:noizu_mcp] do
+  nil ->
+    :ok
+
+  lib_path ->
+    battery = Path.join(lib_path, "test/support/persistence_conformance_case.ex")
+
+    if File.exists?(battery), do: Code.compile_file(battery)
+end
+
 # Ensure the W4 MCP entity tables (Liquibase 019: mcp_prompts, mcp_prompt_versions,
 # mcp_resources, mcp_resource_templates) exist for the mcp-entities suites. Idempotent.
 NoizuPromptLingua.McpEntitiesTestSchema.ensure!()
