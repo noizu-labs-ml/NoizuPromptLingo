@@ -251,6 +251,99 @@ defmodule NoizuPromptLingua.MCP.ToolSetGatewayTest do
     end
   end
 
+  describe "serving roundtrip (route-metadata enrichment)" do
+    test "tools/list serves the set catalog — resolved org id reaches the resolver", %{org: org} do
+      # Stage finding: the gateway's route metadata carried only URL slugs, so
+      # the per-request principal had set_slug but NO set_org_id and
+      # ToolsetResolver resolved :none — initialize 200 with tools: [].
+      {:ok, set} =
+        create_set(org.id, "serving-set", %{
+          "config" => %{
+            "groups" => %{
+              "markdown" => %{"enabled" => true, "tools" => %{}}
+            }
+          }
+        })
+
+      caller = key_caller(org, member?: true)
+
+      init =
+        Jason.encode!(%{
+          "jsonrpc" => "2.0",
+          "id" => 1,
+          "method" => "initialize",
+          "params" => %{
+            "protocolVersion" => "2025-06-18",
+            "capabilities" => %{},
+            "clientInfo" => %{"name" => "gateway-e2e", "version" => "1"}
+          }
+        })
+
+      conn =
+        Plug.Test.conn(:post, "/org/#{org.slug}/set/#{set.slug}/mcp", init)
+        |> Map.put(:host, @host)
+        |> Plug.Conn.put_req_header("content-type", "application/json")
+        |> Plug.Conn.put_req_header("accept", "application/json, text/event-stream")
+        |> Plug.Conn.put_req_header("authorization", "Bearer " <> caller.token)
+        |> MCPSetGatewayController.handle_org(%{"org_slug" => org.slug, "set_slug" => set.slug})
+
+      assert conn.status == 200,
+             "initialize failed: #{inspect(conn.status)} #{inspect(conn.resp_body)}"
+
+      assert [sid] = Plug.Conn.get_resp_header(conn, "mcp-session-id")
+
+      notify = %{"jsonrpc" => "2.0", "method" => "notifications/initialized"}
+
+      Plug.Test.conn(:post, "/org/#{org.slug}/set/#{set.slug}/mcp", Jason.encode!(notify))
+      |> Map.put(:host, @host)
+      |> Plug.Conn.put_req_header("content-type", "application/json")
+      |> Plug.Conn.put_req_header("accept", "application/json, text/event-stream")
+      |> Plug.Conn.put_req_header("authorization", "Bearer " <> caller.token)
+      |> Plug.Conn.put_req_header("mcp-session-id", sid)
+      |> MCPSetGatewayController.handle_org(%{"org_slug" => org.slug, "set_slug" => set.slug})
+
+      list_conn =
+        Plug.Test.conn(
+          :post,
+          "/org/#{org.slug}/set/#{set.slug}/mcp",
+          Jason.encode!(%{"jsonrpc" => "2.0", "id" => 2, "method" => "tools/list"})
+        )
+        |> Map.put(:host, @host)
+        |> Plug.Conn.put_req_header("content-type", "application/json")
+        |> Plug.Conn.put_req_header("accept", "application/json, text/event-stream")
+        |> Plug.Conn.put_req_header("authorization", "Bearer " <> caller.token)
+        |> Plug.Conn.put_req_header("mcp-session-id", sid)
+        |> MCPSetGatewayController.handle_org(%{"org_slug" => org.slug, "set_slug" => set.slug})
+
+      assert list_conn.status == 200
+
+      tools =
+        list_conn.resp_body
+        |> decode_jsonrpc_body()
+        |> Map.fetch!("result")
+        |> Map.fetch!("tools")
+
+      names = Enum.map(tools, & &1["name"])
+      assert "Markdown.Convert" in names, "expected the set catalog, got: #{inspect(names)}"
+    end
+  end
+
+  # Non-final frames upgrade the POST to SSE (`data: <json>` lines); final
+  # replies come back plain JSON. Take the frame carrying the result.
+  defp decode_jsonrpc_body("data:" <> _ = body) do
+    body
+    |> String.split("\n")
+    |> Enum.flat_map(fn line ->
+      case String.trim(line) do
+        "data:" <> json -> [Jason.decode!(json)]
+        _ -> []
+      end
+    end)
+    |> Enum.find(%{}, &Map.has_key?(&1, "result"))
+  end
+
+  defp decode_jsonrpc_body(body), do: Jason.decode!(body)
+
   test "unauthenticated request defers to the transport challenge (401, not 404)", %{org: org} do
     {:ok, set} = create_set(org.id, "anon-set")
 
