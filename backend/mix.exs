@@ -96,9 +96,12 @@ defmodule NoizuPromptLingua.MixProject do
       {:oban, "~> 2.18"},
 
       # Carried over from prior NoizuPromptLingo mix.exs
-      # N2b: path dep against the elixir-mcp PRD-4 freeze pin (@ 5f7217e, lib .worktrees/n2b-gate).
-      # Six ../ from THIS worktree's backend (INDEX §6 four-../ form is measured from a main-checkout backend).
-      {:noizu_mcp, path: "../../../../../../Libs/ai/elixir-mcp/.worktrees/n2b-gate"},
+      # N2b: noizu_mcp pinned to the PRD-4 freeze (5f7217e = merge of PR #4,
+      # persistence store; version 0.3.0, unpublished on hex — hex stops at 0.1.6).
+      # Git ref, not the old local path dep (…/Libs/ai/elixir-mcp/.worktrees/n2b-gate):
+      # the path only exists on the dev Mac and broke CI mix compile. Repo is
+      # public, so CI resolves the ref without extra credentials.
+      {:noizu_mcp, git: "https://github.com/noizu-labs-ml/elixir-mcp-lib.git", ref: "5f7217ed63a3e242a8595aa71f546c56bc1d2bef"},
       {:noizu_github, "~> 0.5.0"},
       {:jose, "~> 1.11"},
       {:yaml_elixir, "~> 2.11"},
