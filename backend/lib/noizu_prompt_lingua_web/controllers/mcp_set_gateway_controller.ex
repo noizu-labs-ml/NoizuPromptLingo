@@ -72,7 +72,10 @@ defmodule NoizuPromptLinguaWeb.MCPSetGatewayController do
   # ── gate pipeline ─────────────────────────────────────────────────────────
 
   defp gate(conn, org_slug, project_slug, set_slug, path, metadata) do
-    if Application.get_env(:noizu_prompt_lingua, :tool_sets_enabled, false) do
+    # B1: read the RESOLVED flag (config/runtime.exs, TOOL_SETS_ENABLED,
+    # default true) — the old `get_env(..., false)` default silently 404'd
+    # the set gateway in every env that did not set the flag at compile time.
+    if ToolSets.enabled?() do
       with {:ok, org_id} <- Organizations.resolve_org_id(org_slug),
            %MCPToolSet{} = tool_set <- ToolSets.get_for_request(org_id, set_slug),
            :ok <- project_gate(project_slug, tool_set, org_id) do
@@ -216,7 +219,8 @@ defmodule NoizuPromptLinguaWeb.MCPSetGatewayController do
     |> Plug.Conn.assign(:set_slug, tool_set.slug)
     |> Plug.Conn.assign(:set_org_id, org_id)
     |> Map.put(:path_info, [])
-    |> Noizu.MCP.Transport.StreamableHTTP.Plug.call(opts)
+    # Guarded mount (B4): malformed jsonrpc framing answers -32600 inline.
+    |> NoizuPromptLinguaWeb.MCP.TransportPlug.call(opts)
   end
 
   @doc "Route-coordinate stash for the MCP context (legacy introspection surface)."

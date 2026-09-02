@@ -347,9 +347,10 @@ defmodule NoizuPromptLinguaWeb.ToolSetProfilesController do
   # R8 save-time guarantee: once the serving flip is on, a config that cannot
   # compile against the live catalog is rejected at write instead of being
   # stored to D5-disable at serve time. Pre-flip (flag off) keeps the N4a
-  # structural-only changeset contract.
+  # structural-only changeset contract. B1: same resolved-flag reader as the
+  # gateway gate.
   defp reject_invalid_config(conn, config) do
-    if Application.get_env(:noizu_prompt_lingua, :tool_sets_enabled, false) do
+    if ToolSets.enabled?() do
       case ToolSets.validate_config(config) do
         {:ok, _warnings} ->
           :ok
@@ -562,7 +563,8 @@ defmodule NoizuPromptLinguaWeb.ToolSetProfilesController do
 
         %{
           version: version,
-          tools: Enum.map(entries, &effective_tool_view(&1, renames, base_index, provenance))
+          tools:
+            Enum.map(entries, &effective_tool_view(&1, custom, renames, base_index, provenance))
         }
 
       {:error, %Noizu.MCP.Error{data: %{issues: issues}}} ->
@@ -574,9 +576,12 @@ defmodule NoizuPromptLinguaWeb.ToolSetProfilesController do
     end
   end
 
-  defp effective_tool_view(entry, renames, base_index, provenance) do
+  defp effective_tool_view(entry, custom, renames, base_index, provenance) do
     name = entry.definition.name
     base_name = Map.get(renames, name, name)
+    base_spec = Map.get(base_index, base_name)
+    field_renames = field_rename_map(custom, base_name, base_spec)
+    eff_props = schema_props(entry.input_schema)
 
     provenance_rows =
       provenance
@@ -593,7 +598,9 @@ defmodule NoizuPromptLinguaWeb.ToolSetProfilesController do
       visible: entry.visible,
       callable: entry.callable,
       reason: safe(entry.reason),
-      pruned_args: pruned_args(entry, base_name, base_index),
+      pruned_args: pruned_args(base_spec, eff_props, field_renames),
+      arg_renames: field_renames,
+      hidden_args: hidden_args(base_spec, eff_props, field_renames),
       provenance: provenance_rows
     }
   end
@@ -610,32 +617,79 @@ defmodule NoizuPromptLinguaWeb.ToolSetProfilesController do
     |> Map.new()
   end
 
-  # Args whose enum the set pruned: base enum minus the effective enum, read
-  # off the schemas (rename-aware via base_name; renamed args keep their base
-  # enum row — the wire rename never changes the value space).
-  defp pruned_args(entry, base_name, base_index) do
-    case Map.fetch(base_index, base_name) do
-      {:ok, base_spec} ->
-        base_props = schema_props(base_spec.definition.input_schema)
-        eff_props = schema_props(entry.input_schema)
+  # Config `rename` ops on the tool's args → %{base_schema_key => effective
+  # wire key}. Ops carry cast-plan atoms (the serving assembly resolved them
+  # through ToolSets.field_atom/2); base schema keys resolve through the same
+  # path so the rename composes with the schema-keyed diff below. Direct
+  # key-string targets match too.
+  defp field_rename_map(_custom, _base_name, nil), do: %{}
 
-        Enum.flat_map(base_props, fn {field, prop} ->
-          with base when is_list(base) <- Map.get(prop, "enum"),
-               eff when is_list(eff) <-
-                 get_in(eff_props, [field, "enum"]) || [],
-               removed = Enum.reject(base, &(&1 in eff)),
-               true <- removed != [] do
-            [{field, removed}]
-          else
-            _ -> []
-          end
-        end)
-        |> Map.new()
+  defp field_rename_map(%Custom{tools: tools}, base_name, base_spec) do
+    key_atoms =
+      base_spec
+      |> schema_props()
+      |> Map.new(fn {key, _} -> {key, ToolSets.field_atom(base_spec, key)} end)
 
-      :error ->
-        %{}
-    end
+    tools
+    |> Map.get(base_name, [])
+    |> Enum.flat_map(fn
+      %Noizu.MCP.Toolset.Override{op: :rename_field, target: target, value: value} ->
+        for {key, atom} <- key_atoms,
+            atom == target or to_string(atom) == to_string(target) or to_string(target) == key do
+          {key, to_string(value)}
+        end
+
+      _ ->
+        []
+    end)
+    |> Map.new()
   end
+
+  # Args whose enum the set pruned: base enum minus the effective enum, read
+  # off the compose_full materialization (the entry schema — the same surface
+  # the wire serves). Rename-aware: rename_field MOVES the property key, so
+  # each base field diffs against its effective (renamed) key; the pre-fix
+  # renderer looked the base key up verbatim, missed, and reported the FULL
+  # base enum for every renamed arg. Fields GONE from the wire (hide_field)
+  # are `hidden_args/3` business — an absent arg is not an enum prune.
+  defp pruned_args(nil, _eff_props, _field_renames), do: %{}
+
+  defp pruned_args(base_spec, eff_props, field_renames) do
+    base_spec
+    |> schema_props()
+    |> Enum.flat_map(fn {field, prop} ->
+      with base when is_list(base) <- Map.get(prop, "enum"),
+           eff_key = Map.get(field_renames, field, field),
+           {:ok, eff_prop} <- Map.fetch(eff_props, eff_key),
+           eff when is_list(eff) <- Map.get(eff_prop, "enum") || [],
+           removed = Enum.reject(base, &(&1 in eff)),
+           true <- removed != [] do
+        [{field, removed}]
+      else
+        _ -> []
+      end
+    end)
+    |> Map.new()
+  end
+
+  # Base fields GONE from the effective wire schema (hide_field): their value
+  # space left the wire, so the admin sees them listed here instead of as a
+  # misleading full-enum prune.
+  defp hidden_args(nil, _eff_props, _field_renames), do: []
+
+  defp hidden_args(base_spec, eff_props, field_renames) do
+    base_spec
+    |> schema_props()
+    |> Enum.filter(fn {field, _prop} ->
+      eff_key = Map.get(field_renames, field, field)
+      not Map.has_key?(eff_props, eff_key)
+    end)
+    |> Enum.map(&elem(&1, 0))
+  end
+
+  # %Spec{} → its wire schema; a raw schema map passes through.
+  defp schema_props(%Noizu.MCP.Server.Tool.Spec{definition: definition}),
+    do: schema_props(definition.input_schema)
 
   defp schema_props(schema) when is_map(schema), do: Map.get(schema, "properties") || %{}
   defp schema_props(_), do: %{}

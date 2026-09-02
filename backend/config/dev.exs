@@ -44,6 +44,7 @@ config :noizu_sendgrid,
 # The DB (modules_json) remains the source of truth.
 config :noizu_prompt_lingua, :mock_mcp, modules_dir: "priv/mock_mcp_modules"
 
-# PRD-N3: tool-set gateway routes serve when enabled (AC-N3-9: unset => 404;
-# dev opts in so the routes are exercisable locally).
-config :noizu_prompt_lingua, tool_sets_enabled: true
+# PRD-N3: the tool-set serving flip is env-driven (TOOL_SETS_ENABLED in
+# config/runtime.exs, default true) — dev opts in through the same runtime
+# default; no compile-time flag here anymore (B1: it 404'd the set gateway in
+# every non-dev env).

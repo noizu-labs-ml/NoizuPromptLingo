@@ -64,8 +64,9 @@ defmodule NoizuPromptLinguaWeb.CustomMCPGatewayController do
         |> put_status(:moved_permanently)
         |> put_resp_header("location", location)
         |> json(%{redirect: location})
-      end
+    end
   end
+
   @doc """
   Account-level gateway path — `/user/:slug/mcp` (W2). Serves scopes whose
   `visibility` is `"account"` or `"shared"`; org-only scopes 404 (no
@@ -136,7 +137,8 @@ defmodule NoizuPromptLinguaWeb.CustomMCPGatewayController do
     |> Plug.Conn.assign(:custom_scope_slug, scope.slug)
     |> Plug.Conn.assign(:custom_scope_org_id, org_id)
     |> Map.put(:path_info, [])
-    |> Noizu.MCP.Transport.StreamableHTTP.Plug.call(opts)
+    # Guarded mount (B4): malformed jsonrpc framing answers -32600 inline.
+    |> NoizuPromptLinguaWeb.MCP.TransportPlug.call(opts)
   end
 
   def mcp_context(conn) do
