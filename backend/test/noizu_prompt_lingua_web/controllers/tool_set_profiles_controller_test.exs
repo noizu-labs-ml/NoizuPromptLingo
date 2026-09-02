@@ -11,6 +11,8 @@ defmodule NoizuPromptLinguaWeb.ToolSetProfilesControllerTest do
 
   alias NoizuPromptLingua.Authz.ScopedMemberships
   alias NoizuPromptLingua.MCP.ToolSets
+  alias NoizuPromptLingua.Repo
+  alias NoizuPromptLingua.Schema.Projects.Project
 
   @base "/api/v1/organizations"
 
@@ -100,9 +102,18 @@ defmodule NoizuPromptLinguaWeb.ToolSetProfilesControllerTest do
       |> post(base, %{tool_set: valid_attrs()})
       |> json_response(201)
 
+      # Liquibase 083 enforces mcp_tool_sets.project_id → projects(id); the
+      # project must exist in the app DB, not just be a random UUID.
+      project =
+        Repo.insert!(%Project{
+          organization_id: org_id,
+          name: "proj-set",
+          slug: "proj-set-#{System.unique_integer([:positive])}"
+        })
+
       conn
       |> post(base, %{
-        tool_set: valid_attrs(%{"slug" => "proj-set", "project_id" => Ecto.UUID.generate()})
+        tool_set: valid_attrs(%{"slug" => "proj-set", "project_id" => project.id})
       })
       |> json_response(201)
 

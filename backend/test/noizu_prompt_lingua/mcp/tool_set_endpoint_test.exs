@@ -13,6 +13,8 @@ defmodule NoizuPromptLingua.MCP.ToolSetEndpointTest do
   alias NoizuPromptLingua.MCP.ToolSetEndpoint
   alias NoizuPromptLingua.MCP.ToolSets
   alias NoizuPromptLingua.MCP.ToolsetResolver
+  alias NoizuPromptLingua.Repo
+  alias NoizuPromptLingua.Schema.Organizations.Organization
 
   @org_id Ecto.UUID.generate()
 
@@ -38,6 +40,8 @@ defmodule NoizuPromptLingua.MCP.ToolSetEndpointTest do
   }
 
   defp create_set(slug, config) do
+    ensure_org!()
+
     {:ok, set} =
       ToolSets.create(%{
         "organization_id" => @org_id,
@@ -47,6 +51,23 @@ defmodule NoizuPromptLingua.MCP.ToolSetEndpointTest do
       })
 
     set
+  end
+
+  # Liquibase 083 enforces mcp_tool_sets.organization_id → organizations(id);
+  # @org_id is a compile-time random UUID, so materialize the org row first.
+  # Sandbox-scoped: rolled back at the end of each test.
+  defp ensure_org! do
+    case Repo.get(Organization, @org_id) do
+      nil ->
+        Repo.insert!(%Organization{
+          id: @org_id,
+          name: "ToolSet Endpoint Org",
+          slug: "toolset-endpoint-org"
+        })
+
+      _org ->
+        :ok
+    end
   end
 
   defp ctx_for_claims(claims) do

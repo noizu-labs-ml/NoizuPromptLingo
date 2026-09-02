@@ -15,6 +15,7 @@ defmodule NoizuPromptLingua.MCP.ToolSetGatewayTest do
   alias NoizuPromptLingua.Schema.Authz.Group
   alias NoizuPromptLingua.Schema.McpApiKey
   alias NoizuPromptLingua.Schema.Organizations.Organization
+  alias NoizuPromptLingua.Schema.Projects.Project
   alias NoizuPromptLingua.Schema.Users.User
   alias NoizuPromptLingua.Token
   alias NoizuPromptLingua.TRP.TestStub
@@ -284,14 +285,30 @@ defmodule NoizuPromptLingua.MCP.ToolSetGatewayTest do
 
   defp seed_project(org_id, slug) do
     row = TestStub.seed_project(org_id, %{slug: slug, name: slug})
+    ensure_project_row!(org_id, row.id, slug)
     {:ok, row}
   end
 
   # A project id that belongs to NO seeded project (mismatch probe).
   defp other_project_id(org_id) do
     stray = Ecto.UUID.generate()
-    TestStub.seed_project(org_id, %{id: stray, slug: "stray-#{uniq()}"})
+    stray_slug = "stray-#{uniq()}"
+    TestStub.seed_project(org_id, %{id: stray, slug: stray_slug})
+    ensure_project_row!(org_id, stray, stray_slug)
     stray
+  end
+
+  # Liquibase 083 enforces mcp_tool_sets.project_id → projects(id); the TRP
+  # stub alone doesn't put the project in the app DB, so mirror it there.
+  # Sandbox-scoped: rolled back at the end of each test.
+  defp ensure_project_row!(org_id, id, slug) do
+    case Repo.get(Project, id) do
+      nil ->
+        Repo.insert!(%Project{id: id, organization_id: org_id, name: slug, slug: slug})
+
+      _project ->
+        :ok
+    end
   end
 
   # ── conn helpers ──────────────────────────────────────────────────────────
