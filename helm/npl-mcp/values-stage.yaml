@@ -27,7 +27,7 @@ npl-mcp:
 backend:
   image:
     repository: ops.noizu.com/npl-mcp/server
-    tag: "sha-1099652-stage" # replaced by bump-chart-stage: sha-<short>-stage
+    tag: "sha-16c8a3a-stage" # replaced by bump-chart-stage: sha-<short>-stage
     pullPolicy: IfNotPresent
   port: 4040
   # Soak auth posture: there is no stage Authentik application yet (follow-up).
@@ -93,7 +93,7 @@ liquibase:
 frontend:
   image:
     repository: ops.noizu.com/npl-mcp/frontend
-    tag: "sha-1099652-stage" # replaced by bump-chart-stage: sha-<short>-stage
+    tag: "sha-16c8a3a-stage" # replaced by bump-chart-stage: sha-<short>-stage
     pullPolicy: IfNotPresent
   port: 3000
   resources:
