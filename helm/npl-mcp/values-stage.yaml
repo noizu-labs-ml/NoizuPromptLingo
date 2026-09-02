@@ -30,14 +30,15 @@ backend:
     tag: "sha-6f9dead-stage" # replaced by bump-chart-stage: sha-<short>-stage
     pullPolicy: IfNotPresent
   port: 4040
-  # Soak auth posture: there is no stage Authentik application yet (follow-up).
-  # The chart injects OIDC_CLIENT_ID from the secret non-optionally, so
-  # npl-mcp-stage-secrets carries placeholder AUTHENTIK_* values — the app
-  # boots green, but OIDC discovery fails if anyone walks the SSO routes.
-  # Gateway soak uses API keys + server-minted MCP JWTs, which self-verify
-  # against the issuerUrl below; no Authentik round-trip involved.
+  # Soak auth posture: stage OIDC rides the SHARED Authentik instance at
+  # auth.derobot.is via the dedicated stage application/provider
+  # `tobor-locker-stage` (confidential client; redirect
+  # https://tobor-stage.noizu.com/auth/oidc/callback). The chart injects
+  # OIDC_CLIENT_ID/SECRET from npl-mcp-stage-secrets AUTHENTIK_* keys — real
+  # stage credentials, no prod values. Gateway soak still uses API keys +
+  # server-minted MCP JWTs (issuerUrl below); browser E2E walks the OIDC flow.
   oidc:
-    issuer: "https://tobor-stage.noizu.com" # placeholder — stage Authentik app is a follow-up
+    issuer: "https://auth.derobot.is/application/o/tobor-locker-stage"
   # MCP OAuth authorization-server public issuer (AS metadata + JWT iss) —
   # the stage host itself, so stage-minted tokens carry a stage issuer.
   mcp:
