@@ -46,7 +46,11 @@ defmodule NoizuPromptLingua.Domains.Dashboard do
     }
   end
 
+  # `opts[:range] || opts["range"]` crashed on the keyword form the controller
+  # passes: Access on a keyword list rejects string keys (ArgumentError). Read
+  # per-shape instead — keyword opts, string-keyed map params, or neither.
   defp normalize_range(r) when r in @valid_ranges, do: r
+
   defp normalize_range(r) when is_binary(r) do
     case Integer.parse(r) do
       {n, _} when n in @valid_ranges -> n
@@ -60,6 +64,7 @@ defmodule NoizuPromptLingua.Domains.Dashboard do
   # Access on a list with a string key raises, so gate on shape.
   defp fetch_range(opts) when is_list(opts), do: opts[:range]
   defp fetch_range(opts) when is_map(opts), do: opts[:range] || opts["range"]
+  defp fetch_range(_), do: nil
 
   defp since_datetime(days) do
     DateTime.utc_now()
@@ -167,7 +172,11 @@ defmodule NoizuPromptLingua.Domains.Dashboard do
       |> Enum.flat_map(fn schema ->
         schema
         |> where([r], r.organization_id == ^org_id)
-        |> select([r], {fragment("EXTRACT(DOW FROM ?)::int", r.inserted_at), fragment("EXTRACT(HOUR FROM ?)::int", r.inserted_at)})
+        |> select(
+          [r],
+          {fragment("EXTRACT(DOW FROM ?)::int", r.inserted_at),
+           fragment("EXTRACT(HOUR FROM ?)::int", r.inserted_at)}
+        )
         |> Repo.all()
       end)
 

@@ -159,3 +159,44 @@ defmodule NoizuPromptLinguaWeb.ChatRoomControllerTest do
     end
   end
 end
+
+defmodule NoizuPromptLinguaWeb.ChatRoomDuplicateNameTest do
+  @moduledoc """
+  Pins the probe item-7 finding (fix/error-family B7): creating two rooms with
+  the same name answers 201 BOTH times, and the slug auto-uniquifies with a
+  `-N` suffix (Chat.insert_room_with_slug retry) — no duplicate slug is ever
+  stored. Probe row 84 ("create-room-dupe" → 201) is this designed behavior,
+  not a raw-slug bug; the rooms JSON exposes `slug` so the uniquified value is
+  visible.
+  """
+
+  use NoizuPromptLinguaWeb.ConnCase
+
+  setup %{conn: conn} do
+    %{access_token: token} = setup_user_and_token()
+    auth = authenticated_conn(conn, token)
+
+    slug = "room-dupe-org-#{System.unique_integer([:positive])}"
+
+    created =
+      post(auth, "/api/v1/organizations", %{organization: %{slug: slug, name: "Room Dupe Org"}})
+
+    org_id = json_response(created, 201)["organization"]["id"]
+    base = "/api/v1/organizations/#{org_id}/chat/rooms"
+
+    {:ok, conn: auth, base: base}
+  end
+
+  test "duplicate names yield distinct slugs — never a stored duplicate", %{
+    conn: conn,
+    base: base
+  } do
+    first = json_response(post(conn, base, %{room: %{name: "Probe Room"}}), 201)["room"]
+    second = json_response(post(conn, base, %{room: %{name: "Probe Room"}}), 201)["room"]
+
+    assert first["id"] != second["id"]
+    assert first["slug"] == "probe-room"
+    assert second["slug"] != first["slug"]
+    assert second["slug"] =~ ~r/^probe-room(-\d+)?$/
+  end
+end

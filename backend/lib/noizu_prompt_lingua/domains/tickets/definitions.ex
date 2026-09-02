@@ -69,7 +69,8 @@ defmodule NoizuPromptLingua.Domains.Tickets.Definitions do
       rows when is_list(rows) ->
         rows |> filter_visible(org_id, project_id) |> Enum.sort_by(& &1.slug)
 
-      {:error, _} ->
+      # {:error, _} or the fail-soft nil — degrade to an empty set.
+      _ ->
         []
     end
   end
@@ -147,7 +148,8 @@ defmodule NoizuPromptLingua.Domains.Tickets.Definitions do
       rows when is_list(rows) ->
         rows |> filter_visible(org_id, project_id) |> reject_deleted() |> Enum.sort_by(& &1.name)
 
-      {:error, _} ->
+      # {:error, _} or the fail-soft nil — degrade to an empty set.
+      _ ->
         []
     end
   end
@@ -311,10 +313,7 @@ defmodule NoizuPromptLingua.Domains.Tickets.Definitions do
 
   defp scan_orgs(fun) do
     case TRP.list_organizations() do
-      {:error, _} = err ->
-        err
-
-      orgs ->
+      orgs when is_list(orgs) ->
         orgs
         |> Enum.reduce_while(nil, fn org, _acc ->
           case fun.(org.id) do
@@ -323,6 +322,14 @@ defmodule NoizuPromptLingua.Domains.Tickets.Definitions do
             value -> {:halt, value}
           end
         end)
+
+      {:error, _} = err ->
+        err
+
+      # TRP fail-softs to nil (404-mapped org list, or transport failure with no
+      # stale cache) — backend-down, not a crash (fix/error-family).
+      _ ->
+        {:error, :trp_not_configured}
     end
   end
 end

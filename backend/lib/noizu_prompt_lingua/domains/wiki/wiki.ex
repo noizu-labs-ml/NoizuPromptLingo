@@ -82,7 +82,10 @@ defmodule NoizuPromptLingua.Domains.Wiki do
   end
 
   def create_page(attrs) do
-    attrs = default_slug(attrs, :title)
+    attrs =
+      attrs
+      |> default_slug(:title)
+      |> default_position()
 
     %Page{}
     |> Page.changeset(attrs)
@@ -260,6 +263,26 @@ defmodule NoizuPromptLingua.Domains.Wiki do
       true -> attrs
     end
   end
+
+  # wiki_pages.position is NOT NULL (036-wiki) — a nil position used to raise a
+  # Postgrex not_null_violation 500 (stage log c6295). Default to appending at
+  # the end of the space: max(position) + 1, or 0 for the first page.
+  defp default_position(%{space_id: space_id} = attrs) when not is_nil(space_id) do
+    if is_nil(attrs[:position]) do
+      max =
+        Repo.one(
+          from p in Page,
+            where: p.space_id == ^space_id,
+            select: max(p.position)
+        ) || -1
+
+      Map.put(attrs, :position, max + 1)
+    else
+      attrs
+    end
+  end
+
+  defp default_position(attrs), do: attrs
 
   defp slugify(value) do
     value

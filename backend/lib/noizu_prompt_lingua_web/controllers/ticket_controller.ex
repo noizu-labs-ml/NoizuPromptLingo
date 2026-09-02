@@ -3,6 +3,7 @@ defmodule NoizuPromptLinguaWeb.TicketController do
 
   alias NoizuPromptLingua.Domains.Tickets
   alias NoizuPromptLingua.Authz
+  alias NoizuPromptLinguaWeb.TRPResponse
 
   # GET /api/v1/organizations/:org_id/tickets
   def index(conn, %{"org_id" => org_id} = params) do
@@ -22,8 +23,16 @@ defmodule NoizuPromptLinguaWeb.TicketController do
         |> maybe_opt(:stage_id, params["stage_id"])
         |> maybe_opt(:iteration_id, params["iteration_id"])
 
-      tickets = Tickets.list(opts)
-      json(conn, %{tickets: Enum.map(tickets, &ticket_to_json/1)})
+      # Tickets.list returns a row list or a TRP error tuple ({:error,
+      # :trp_not_configured} / {:error, %TRP.Error{}}) — render the error family,
+      # never Enum.map over a tuple (was a raw 500, c6293 stage log).
+      case Tickets.list(opts) do
+        tickets when is_list(tickets) ->
+          json(conn, %{tickets: Enum.map(tickets, &ticket_to_json/1)})
+
+        {:error, _} = err ->
+          TRPResponse.respond_error(conn, err)
+      end
     else
       err -> handle_error(conn, err)
     end
@@ -57,8 +66,12 @@ defmodule NoizuPromptLinguaWeb.TicketController do
         {:ok, ticket} ->
           conn |> put_status(:created) |> json(%{ticket: ticket_to_json(ticket)})
 
-        {:error, changeset} ->
+        {:error, %Ecto.Changeset{} = changeset} ->
           conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+
+        {:error, _} = err ->
+          # TRP error tuple — TRP-down is 503, not 500 (traverse_errors crash).
+          TRPResponse.respond_error(conn, err)
       end
     else
       err -> handle_error(conn, err)
@@ -87,11 +100,18 @@ defmodule NoizuPromptLinguaWeb.TicketController do
         {:ok, ticket} ->
           json(conn, %{ticket: ticket_to_json(ticket)})
 
+        # nil = TRP 404 in every scanned org (PMBridge first_ok exhaustion).
+        nil ->
+          conn |> put_status(:not_found) |> json(%{error: "Ticket not found"})
+
         {:error, :not_found} ->
           conn |> put_status(:not_found) |> json(%{error: "Ticket not found"})
 
-        {:error, changeset} ->
+        {:error, %Ecto.Changeset{} = changeset} ->
           conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+
+        {:error, _} = err ->
+          TRPResponse.respond_error(conn, err)
       end
     end)
   end
@@ -102,12 +122,15 @@ defmodule NoizuPromptLinguaWeb.TicketController do
 
     with {:ok, resolved_org_id} <- NoizuPromptLingua.Organizations.resolve_org_id(org_id),
          {:ok, _} <- Authz.authorize(user_id, "organization", resolved_org_id, role),
-         ticket when not is_nil(ticket) <- fetch_ticket(resolved_org_id, id),
+         # is_map (not just not-nil): TRP-backed fetches can return
+         # {:error, _} tuples, which must hit the error clauses below.
+         ticket when is_map(ticket) <- fetch_ticket(resolved_org_id, id),
          true <- ticket.organization_id == resolved_org_id do
       fun.(ticket)
     else
       nil -> conn |> put_status(:not_found) |> json(%{error: "Ticket not found"})
       false -> conn |> put_status(:not_found) |> json(%{error: "Ticket not found"})
+      {:error, _} = err -> TRPResponse.respond_error(conn, err)
       err -> handle_error(conn, err)
     end
   end
