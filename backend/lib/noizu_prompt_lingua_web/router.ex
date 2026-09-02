@@ -384,9 +384,11 @@ defmodule NoizuPromptLinguaWeb.Router do
           :handle_org_project
   end
 
+  # Root MCP mount: the lib transport behind the NPL-owned JsonRpcGuard
+  # (B4 — malformed jsonrpc versions answer -32600 instead of hanging).
   scope "/mcp" do
     forward "/",
-            Noizu.MCP.Transport.StreamableHTTP.Plug,
+            NoizuPromptLinguaWeb.MCP.TransportPlug,
             NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.MCP)
   end
 

@@ -31,7 +31,14 @@ defmodule NoizuPromptLingua.MCP.ToolSetGatewayTest do
 
     on_exit(fn -> Application.delete_env(:noizu_prompt_lingua, :tool_sets_enabled) end)
 
-    org = Repo.insert!(%Organization{name: "Gateway Org", slug: "gateway-org-#{uniq()}"})
+    # UUID-suffixed slug: localhost Redis outlives the test VM, and
+    # `resolve_org_id/1` positives cache under `org:slug:<slug>` for 1h — a
+    # repeated cross-run slug resolves to the previous run's rolled-back org.
+    org =
+      Repo.insert!(%Organization{
+        name: "Gateway Org",
+        slug: "gateway-org-#{Ecto.UUID.generate()}"
+      })
 
     # resolve_org_id/1 consults the TRP shared-key plane (the org inventory):
     # the stub must know the org or every lookup 404s. Bust the 30s org-list
@@ -42,9 +49,9 @@ defmodule NoizuPromptLingua.MCP.ToolSetGatewayTest do
     %{org: org}
   end
 
-  describe "flag (AC-N3-9)" do
+  describe "flag (AC-N3-9 via the TOOL_SETS_ENABLED kill switch)" do
     @tag :flag_off
-    test "tool_sets_enabled false ⇒ 404", %{org: org} do
+    test "tool_sets_enabled false (kill switch) ⇒ 404", %{org: org} do
       Application.put_env(:noizu_prompt_lingua, :tool_sets_enabled, false)
       {:ok, set} = create_set(org.id, "flagged-set")
 
@@ -54,12 +61,31 @@ defmodule NoizuPromptLingua.MCP.ToolSetGatewayTest do
     end
 
     @tag :flag_unset
-    test "flag unset ⇒ 404 (default)", %{org: org} do
+    test "flag unset ⇒ 404 in TEST (runtime.exs default-true never evaluates here)", %{
+      org: org
+    } do
       Application.delete_env(:noizu_prompt_lingua, :tool_sets_enabled)
       {:ok, set} = create_set(org.id, "unset-flag-set")
 
       conn = call_org(anonymous_conn(), org.slug, set.slug)
       assert conn.status == 404
+    end
+
+    test "enabled?/0 is the single resolved-flag reader the gates share", %{org: org} do
+      Application.put_env(:noizu_prompt_lingua, :tool_sets_enabled, true)
+      assert ToolSets.enabled?() == true
+
+      Application.delete_env(:noizu_prompt_lingua, :tool_sets_enabled)
+      assert ToolSets.enabled?() == false
+
+      # B1: non-test envs resolve the flag in config/runtime.exs —
+      # TOOL_SETS_ENABLED unset ⇒ true (serving), "false"/"0"/"no" ⇒ kill
+      # switch (this 404). The old compile-time default of false left the set
+      # gateway 404ing in every env that never set the flag (stage outage).
+      {:ok, set} = create_set(org.id, "resolved-flag-set")
+      conn = call_org(anonymous_conn(), org.slug, set.slug)
+      assert conn.status == 404
+      assert body(conn) == @not_found
     end
   end
 

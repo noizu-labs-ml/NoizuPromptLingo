@@ -316,6 +316,85 @@ defmodule NoizuPromptLinguaWeb.ToolSetProfilesValidateTest do
       assert "html" not in wire_convert.input_schema["properties"]["type"]["enum"]
     end
 
+    test "pruned_args is rename-aware; arg_renames + hidden_args expose the wire (preview-prune defect)",
+         %{
+           conn: conn,
+           base: base,
+           org_id: org_id
+         } do
+      # The stage-probe shape: enum_remove + rename on the SAME enum arg, plus
+      # a hidden arg. Pre-fix the preview keyed the effective enum by the BASE
+      # name, missed the renamed property, and reported the FULL base enum.
+      config =
+        put_in(
+          @valid_config,
+          ["groups", "markdown", "tools", "Markdown.Convert"],
+          %{
+            "args" => %{
+              "type" => %{"enum_remove" => ["html", "url"], "rename" => "kind"},
+              "source" => %{"hide" => true}
+            }
+          }
+        )
+
+      body =
+        conn
+        |> post(base, %{tool_set: valid_attrs(%{"slug" => "prune-aware", "config" => config})})
+        |> json_response(201)
+
+      slug = body["tool_set"]["slug"]
+
+      %{"tool_set" => tool_set} = conn |> get("#{base}/#{slug}") |> json_response(200)
+      tool = Enum.find(tool_set["effective"]["tools"], &(&1["base_name"] == "Markdown.Convert"))
+
+      # base enum minus effective enum — the removed values only (order-insensitive).
+      assert Enum.sort(tool["pruned_args"]["type"]) == ["html", "url"]
+
+      # The renamed arg carries its effective wire name.
+      assert tool["arg_renames"] == %{"type" => "kind"}
+
+      # The hidden arg is GONE from the wire — listed, not enum-mangled.
+      assert tool["hidden_args"] == ["source"]
+
+      # D1 cross-check: the wire serves exactly this surface.
+      {:ok, wire_tools, _cursor} =
+        ToolSetEndpoint.handle_list_tools(nil, ctx_for_set(slug, org_id))
+
+      wire_convert = Enum.find(wire_tools, &(&1.name == "Markdown.Convert"))
+      props = wire_convert.input_schema["properties"]
+
+      assert Map.has_key?(props, "kind")
+      refute Map.has_key?(props, "type")
+      refute Map.has_key?(props, "source")
+      assert MapSet.new(props["kind"]["enum"]) == MapSet.new(["auto", "markdown"])
+    end
+
+    test "hide_field on an enum arg lists it in hidden_args, not as a full-enum prune", %{
+      conn: conn,
+      base: base
+    } do
+      config =
+        put_in(
+          @valid_config,
+          ["groups", "markdown", "tools", "Markdown.Convert"],
+          %{"args" => %{"type" => %{"hide" => true}}}
+        )
+
+      body =
+        conn
+        |> post(base, %{tool_set: valid_attrs(%{"slug" => "hide-enum", "config" => config})})
+        |> json_response(201)
+
+      slug = body["tool_set"]["slug"]
+
+      %{"tool_set" => tool_set} = conn |> get("#{base}/#{slug}") |> json_response(200)
+      tool = Enum.find(tool_set["effective"]["tools"], &(&1["base_name"] == "Markdown.Convert"))
+
+      assert tool["hidden_args"] == ["type"]
+      assert tool["pruned_args"] == %{}
+      assert tool["arg_renames"] == %{}
+    end
+
     test "disabled tool renders visible/callable false", %{conn: conn, base: base} do
       # NOTE: pop_in here hands back {popped_value, map} — the map is SECOND.
       {_, config} =

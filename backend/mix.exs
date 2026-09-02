@@ -10,7 +10,15 @@ defmodule NoizuPromptLingua.MixProject do
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       deps: deps(),
-      listeners: [Phoenix.CodeReloader]
+      listeners: [Phoenix.CodeReloader],
+      # Coverage (excoveralls; dev/test only — see deps)
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.html": :test,
+        "coveralls.json": :test
+      ]
     ]
   end
 
@@ -116,7 +124,10 @@ defmodule NoizuPromptLingua.MixProject do
       {:logger_json, "~> 6.0"},
 
       # Test
-      {:junit_formatter, "~> 3.4", only: [:test]}
+      {:junit_formatter, "~> 3.4", only: [:test]},
+      # Line coverage tooling — dev/test only, never a runtime dep.
+      # `mix coveralls.json` → cover/excoveralls.json; `mix test --cover` also works.
+      {:excoveralls, "~> 0.18", only: [:dev, :test], runtime: false}
     ]
   end
 

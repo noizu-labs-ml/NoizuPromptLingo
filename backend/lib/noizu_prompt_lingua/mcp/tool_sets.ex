@@ -496,6 +496,18 @@ defmodule NoizuPromptLingua.MCP.ToolSets do
   @doc "Include list only (`universe_for_groups/1` convenience for profiles)."
   def universe_include(group_ids), do: universe_for_groups(group_ids).include
 
+  @doc """
+  The serving flip (PRD-N3, AC-N3-9): the resolved
+  `:noizu_prompt_lingua, :tool_sets_enabled` application env. Non-test envs
+  get it from config/runtime.exs (`TOOL_SETS_ENABLED`, default true —
+  "false"/"0"/"no" is the kill switch); tests pin it via `Application.put_env`.
+  false ⇒ the set gateways 404 (one shared body, no oracle) and save-time
+  config validation downgrades to the N2a structural-only changeset. The B1
+  fix routes every flag check through THIS reader so the resolved value (env
+  default included) is the single source of truth.
+  """
+  def enabled?, do: Application.get_env(:noizu_prompt_lingua, :tool_sets_enabled, false)
+
   @doc "Config group ids participating in the allowlist (explicit `enabled: false` excludes)."
   def enabled_groups(config) when is_map(config) do
     config
@@ -584,9 +596,11 @@ defmodule NoizuPromptLingua.MCP.ToolSets do
 
   # Map a config arg key (string) onto the spec's cast-plan field atom. The
   # cast plan is Fields-shaped — entries may be %Field{} structs or plain
-  # %{name: atom, wire_key: ...} maps; a miss degrades per D5.
-  defp field_atom(%Noizu.MCP.Server.Tool.Spec{cast_plan: cast_plan}, arg_key)
-       when is_binary(arg_key) do
+  # %{name: atom, wire_key: ...} maps; a miss degrades per D5. Public: the
+  # admin effective-preview resolves base schema keys against the same cast
+  # plan the serving assembly used (rename-aware pruned-arg diffing).
+  def field_atom(%Noizu.MCP.Server.Tool.Spec{cast_plan: cast_plan}, arg_key)
+      when is_binary(arg_key) do
     cast_plan
     |> List.wrap()
     |> Enum.find_value(fn
@@ -602,7 +616,7 @@ defmodule NoizuPromptLingua.MCP.ToolSets do
     end)
   end
 
-  defp field_atom(_, _), do: nil
+  def field_atom(_, _), do: nil
 
   defp wire_key_of(field) do
     case Map.get(field, :wire_key) do
