@@ -24,7 +24,7 @@ defmodule NoizuPromptLingua.Domains.Dashboard do
   - `:range` — 7 | 14 | 30 calendar days for daily series (default 14)
   """
   def stats(org_id, opts \\ []) when is_binary(org_id) do
-    range = normalize_range(opts[:range] || opts["range"])
+    range = normalize_range(fetch_range(opts))
     since = since_datetime(range)
     week_since = since_datetime(28)
 
@@ -55,6 +55,11 @@ defmodule NoizuPromptLingua.Domains.Dashboard do
   end
 
   defp normalize_range(_), do: @default_range
+
+  # opts may be a keyword list (atom keys) or a plain map (string "range");
+  # Access on a list with a string key raises, so gate on shape.
+  defp fetch_range(opts) when is_list(opts), do: opts[:range]
+  defp fetch_range(opts) when is_map(opts), do: opts[:range] || opts["range"]
 
   defp since_datetime(days) do
     DateTime.utc_now()
