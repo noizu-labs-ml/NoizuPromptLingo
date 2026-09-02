@@ -9,11 +9,19 @@ defmodule NoizuPromptLinguaWeb.MediaController do
     user_id = get_user_id(session)
 
     key = "uploads/#{user_id}/#{UUID.uuid4()}/#{sanitize_filename(filename)}"
-    upload_url = Storage.presigned_upload_url(key, content_type)
 
-    conn
-    |> put_status(:ok)
-    |> json(%{upload_url: upload_url, key: key})
+    case Storage.presigned_upload_url(key, content_type) do
+      {:ok, upload_url} ->
+        conn
+        |> put_status(:ok)
+        |> json(%{upload_url: upload_url, key: key})
+
+      {:error, _} ->
+        # S3/MinIO unconfigured (or failing) — degrade, don't MatchError 500.
+        conn
+        |> put_status(:service_unavailable)
+        |> json(%{error: "storage not configured"})
+    end
   end
 
   def presign(conn, _params) do
@@ -21,8 +29,15 @@ defmodule NoizuPromptLinguaWeb.MediaController do
   end
 
   def download(conn, %{"key" => key}) do
-    download_url = Storage.presigned_download_url(key)
-    conn |> put_status(:ok) |> json(%{download_url: download_url})
+    case Storage.presigned_download_url(key) do
+      {:ok, download_url} ->
+        conn |> put_status(:ok) |> json(%{download_url: download_url})
+
+      {:error, _} ->
+        conn
+        |> put_status(:service_unavailable)
+        |> json(%{error: "storage not configured"})
+    end
   end
 
   defp get_user_id(session) do

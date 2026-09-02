@@ -53,26 +53,35 @@ defmodule NoizuPromptLingua.Domains.Browser do
   def capture_screenshot(org_ref, params \\ %{}) do
     with_org(org_ref, fn org_id ->
       key = "browser/#{org_id}/#{Ecto.UUID.generate()}.png"
-      put_url = Storage.presigned_upload_url(key, "image/png")
-      cmd = %{action: "screenshot", params: Map.merge(params, %{upload_url: put_url, key: key})}
 
-      case Relay.dispatch(org_id, cmd, 30_000) do
-        {:ok, %{"key" => ^key} = data} ->
-          persist(org_id, key, "image", "png", @screenshot_owner, %{
-            "source" => "browser.screenshot",
-            "width" => data["width"],
-            "height" => data["height"]
-          })
+      case Storage.presigned_upload_url(key, "image/png") do
+        {:ok, put_url} ->
+          cmd = %{
+            action: "screenshot",
+            params: Map.merge(params, %{upload_url: put_url, key: key})
+          }
 
-        {:ok, %{"image" => b64} = data} ->
-          # Controller couldn't upload — return the base64 inline instead.
-          {:ok, %{image: b64, width: data["width"], height: data["height"], stored: false}}
+          case Relay.dispatch(org_id, cmd, 30_000) do
+            {:ok, %{"key" => ^key} = data} ->
+              persist(org_id, key, "image", "png", @screenshot_owner, %{
+                "source" => "browser.screenshot",
+                "width" => data["width"],
+                "height" => data["height"]
+              })
 
-        {:ok, data} ->
-          {:ok, data}
+            {:ok, %{"image" => b64} = data} ->
+              # Controller couldn't upload — return the base64 inline instead.
+              {:ok, %{image: b64, width: data["width"], height: data["height"], stored: false}}
 
-        other ->
-          translate(other)
+            {:ok, data} ->
+              {:ok, data}
+
+            other ->
+              translate(other)
+          end
+
+        {:error, _} ->
+          {:error, "object storage is not configured"}
       end
     end)
   end
@@ -91,25 +100,30 @@ defmodule NoizuPromptLingua.Domains.Browser do
   def record_stop(org_ref) do
     with_org(org_ref, fn org_id ->
       key = "browser/#{org_id}/#{Ecto.UUID.generate()}.webm"
-      put_url = Storage.presigned_upload_url(key, "video/webm")
 
-      cmd = %{
-        action: "record_stop",
-        params: %{upload_url: put_url, key: key, content_type: "video/webm"}
-      }
+      case Storage.presigned_upload_url(key, "video/webm") do
+        {:ok, put_url} ->
+          cmd = %{
+            action: "record_stop",
+            params: %{upload_url: put_url, key: key, content_type: "video/webm"}
+          }
 
-      case Relay.dispatch(org_id, cmd, 60_000) do
-        {:ok, %{"key" => ^key} = data} ->
-          persist(org_id, key, "video", "webm", @video_owner, %{
-            "source" => "browser.video",
-            "duration_ms" => data["duration_ms"]
-          })
+          case Relay.dispatch(org_id, cmd, 60_000) do
+            {:ok, %{"key" => ^key} = data} ->
+              persist(org_id, key, "video", "webm", @video_owner, %{
+                "source" => "browser.video",
+                "duration_ms" => data["duration_ms"]
+              })
 
-        {:ok, data} ->
-          {:ok, data}
+            {:ok, data} ->
+              {:ok, data}
 
-        other ->
-          translate(other)
+            other ->
+              translate(other)
+          end
+
+        {:error, _} ->
+          {:error, "object storage is not configured"}
       end
     end)
   end

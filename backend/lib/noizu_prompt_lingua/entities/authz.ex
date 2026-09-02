@@ -84,6 +84,14 @@ defmodule NoizuPromptLingua.Authz do
     end
   end
 
+  @doc """
+  Explain a permission decision. Policy documents OVERLAY the role ladder:
+  an explicit policy allow/deny wins, but an IMPLICIT policy deny (no statement
+  matched) defers to the role ladder — the same engine `check_permission/4`
+  uses — so the two endpoints can never diverge (fix/error-family ruling for
+  the check:true / explain:implicit_deny probe split). When the ladder allows,
+  the reason is `:role_allow`.
+  """
   def explain_permission(user_id, resource_type, resource_id, action) do
     role = get_user_role(user_id, resource_type, resource_id)
 
@@ -92,14 +100,31 @@ defmodule NoizuPromptLingua.Authz do
     else
       policies = get_effective_policies(user_id, resource_type, resource_id)
 
-      NoizuPromptLingua.Authz.PolicyEvaluator.evaluate(
-        policies,
-        action,
-        resource_type,
-        resource_id,
-        role,
-        %{user_id: user_id}
-      )
+      # PolicyEvaluator reads `get_in(policy, ["policy_document", "statements"])`
+      # — string keys — while the select above yields atom-keyed rows, so every
+      # statement used to be invisible (permanent implicit_deny; probe row 344).
+      # Re-key the envelope before evaluating.
+      documents = Enum.map(policies, fn p -> %{"policy_document" => p.policy_document} end)
+
+      result =
+        NoizuPromptLingua.Authz.PolicyEvaluator.evaluate(
+          documents,
+          action,
+          resource_type,
+          resource_id,
+          role,
+          %{user_id: user_id}
+        )
+
+      case result do
+        %{reason: :implicit_deny} ->
+          allowed = check_permission(user_id, resource_type, resource_id, action)
+          reason = if allowed, do: :role_allow, else: :implicit_deny
+          %{result | allowed: allowed, reason: reason}
+
+        other ->
+          other
+      end
     end
   end
 
