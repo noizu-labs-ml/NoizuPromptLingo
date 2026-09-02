@@ -44,30 +44,34 @@ defmodule NoizuPromptLingua.Domains.Tickets.Definitions do
   @doc "Get a field definition by id. Org is resolved from the TRP key scope."
   def get_field(id), do: scan_orgs(fn org -> TRP.get_field(org, id) end)
 
+  # NB: the 404 -> :not_found fold must happen AFTER scan_orgs, not per-org:
+  # scan_orgs only continues on the raw 404 tuple, so converting inside the
+  # closure halts the walk at the first org and makes id-only accessors
+  # order-dependent (they fail whenever the row lives in a later org).
+
+  @doc "Update a field definition by id; org resolved from the TRP key scope."
   def update_field(id, attrs) do
-    with_scanned_org(fn org ->
-      case TRP.update_field(org, id, body(attrs)) do
-        {:error, %NoizuPromptLingua.TRP.Error{status: 404}} -> {:error, :not_found}
-        other -> other
-      end
-    end)
+    with_scanned_org(fn org -> TRP.update_field(org, id, body(attrs)) end)
+    |> fold_404()
   end
 
   def delete_field(id) do
-    with_scanned_org(fn org ->
-      case TRP.delete_field(org, id) do
-        {:ok, _} -> {:ok, nil}
-        {:error, :not_found} -> {:error, :not_found}
-        {:error, _} = err -> err
-      end
-    end)
+    with_scanned_org(fn org -> TRP.delete_field(org, id) end)
+    |> fold_404()
   end
 
   @doc "All field definitions visible in a context (global ∪ org ∪ project), including disabled tombstones."
   def list_fields(org_id, project_id \\ nil) do
-    case TRP.list_fields(org_id, project_id) do
+    # NB: no `project_id` query to TRP — the server-side filter is strict, which
+    # would drop the global/org rows this context must still see. fetch the
+    # whole org bucket and let filter_visible re-scope it (it already does).
+    case TRP.list_fields(org_id) do
       rows when is_list(rows) ->
         rows |> filter_visible(org_id, project_id) |> Enum.sort_by(& &1.slug)
+
+      # TRP folds 404s to nil (facade contract) — degrade exactly like an error.
+      nil ->
+        []
 
       {:error, _} ->
         []
@@ -122,30 +126,25 @@ defmodule NoizuPromptLingua.Domains.Tickets.Definitions do
   def get_type(id), do: scan_orgs(fn org -> TRP.get_type(org, id) end)
 
   def update_type(id, attrs) do
-    with_scanned_org(fn org ->
-      case TRP.update_type(org, id, body(attrs)) do
-        {:error, %NoizuPromptLingua.TRP.Error{status: 404}} -> {:error, :not_found}
-        other -> other
-      end
-    end)
+    with_scanned_org(fn org -> TRP.update_type(org, id, body(attrs)) end)
+    |> fold_404()
   end
 
   @doc "Soft delete via TRP (deleted_at). `{:error, :not_found}` when absent."
   def delete_type(id) do
-    with_scanned_org(fn org ->
-      case TRP.delete_type(org, id) do
-        {:ok, _} -> {:ok, nil}
-        {:error, :not_found} -> {:error, :not_found}
-        {:error, _} = err -> err
-      end
-    end)
+    with_scanned_org(fn org -> TRP.delete_type(org, id) end)
+    |> fold_404()
   end
 
   @doc "All type definitions visible in a context, including disabled tombstones."
   def list_types(org_id, project_id \\ nil) do
-    case TRP.list_types(org_id, project_id) do
+    # Same no-server-project-filter + nil-degrade reasoning as list_fields/2.
+    case TRP.list_types(org_id) do
       rows when is_list(rows) ->
         rows |> filter_visible(org_id, project_id) |> reject_deleted() |> Enum.sort_by(& &1.name)
+
+      nil ->
+        []
 
       {:error, _} ->
         []
@@ -195,8 +194,9 @@ defmodule NoizuPromptLingua.Domains.Tickets.Definitions do
 
     with_scanned_org(fn org ->
       case TRP.get_type(org, type_id) do
+        # nil (404-folded or absent) must KEEP the org scan going
         nil ->
-          {:error, :not_found}
+          nil
 
         {:error, _} = err ->
           err
@@ -207,16 +207,43 @@ defmodule NoizuPromptLingua.Domains.Tickets.Definitions do
           TRP.set_type_fields(org, type_id, fields)
       end
     end)
+    |> fold_404()
   end
 
+  # Read-modify-write via get_type + set_type_fields (NOT TRP.remove_type_field):
+  # that endpoint folds its 404 to {:error, :not_found} / a bare {:ok, 0} before
+  # the org scan can continue, making id-only removal order-dependent. Going
+  # through get_type (nil on 404) keeps the scan walking until the type is found.
   def remove_field_from_type(type_id, field_id) do
     with_scanned_org(fn org ->
-      case TRP.remove_type_field(org, type_id, field_id) do
-        {:ok, _} -> {:ok, 1}
-        {:error, :not_found} -> {:ok, 0}
-        {:error, _} = err -> err
+      case TRP.get_type(org, type_id) do
+        nil ->
+          nil
+
+        {:error, _} = err ->
+          err
+
+        type_def ->
+          remaining =
+            Enum.reject(type_def.type_fields, &(&1.ticket_field_definition.id == field_id))
+
+          if length(remaining) == length(type_def.type_fields) do
+            # type found, field not attached
+            {:ok, 0}
+          else
+            entries =
+              Enum.map(remaining, fn tf ->
+                %{id: tf.ticket_field_definition.id, required: tf.required, position: tf.position}
+              end)
+
+            case TRP.set_type_fields(org, type_id, entries) do
+              {:ok, _} -> {:ok, 1}
+              {:error, _} = err -> err
+            end
+          end
       end
     end)
+    |> fold_404_or_zero()
   end
 
   @doc "Assigned fields for a (preloaded) type definition, sorted by position."
@@ -319,10 +346,25 @@ defmodule NoizuPromptLingua.Domains.Tickets.Definitions do
         |> Enum.reduce_while(nil, fn org, _acc ->
           case fun.(org.id) do
             nil -> {:cont, nil}
+            # "absent in this org": raw 404 tuples (read/update paths) AND the
+            # folded {:error, :not_found} (TRP delete paths fold before we see
+            # them). Either way the row may still live in a LATER org.
             {:error, %NoizuPromptLingua.TRP.Error{status: 404}} -> {:cont, nil}
+            {:error, :not_found} -> {:cont, nil}
             value -> {:halt, value}
           end
         end)
     end
   end
+
+  # Post-scan fold: a 404 tuple (or an exhausted nil scan) means the row was
+  # absent across every org in the key scope.
+  defp fold_404({:error, %NoizuPromptLingua.TRP.Error{status: 404}}), do: {:error, :not_found}
+  defp fold_404(nil), do: {:error, :not_found}
+  defp fold_404(other), do: other
+
+  # remove_field_from_type variant: an absent TYPE still means zero removals.
+  defp fold_404_or_zero({:error, %NoizuPromptLingua.TRP.Error{status: 404}}), do: {:ok, 0}
+  defp fold_404_or_zero(nil), do: {:ok, 0}
+  defp fold_404_or_zero(other), do: other
 end
