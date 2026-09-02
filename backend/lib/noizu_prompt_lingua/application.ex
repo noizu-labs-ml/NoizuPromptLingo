@@ -48,6 +48,11 @@ defmodule NoizuPromptLingua.Application do
           NoizuPromptLingua.MCP.Projects,
           NoizuPromptLingua.MCP.Clients,
           NoizuPromptLingua.MCP.Sessions,
+          # N3 set-gateway endpoint: serving supervisor family (Registry /
+          # TaskSupervisor / SessionSupervisor / EventStore). Omitted pre-B1,
+          # every set-gateway initialize 500'd on `no process` once the flag
+          # let requests through the gates.
+          NoizuPromptLingua.MCP.ToolSetEndpoint,
           # MCP servers ported from the legacy project (artifacts / chat / review)
           NoizuPromptLingua.Domains.Artifacts.MCP,
           NoizuPromptLingua.Domains.Chat.MCP,
