@@ -210,6 +210,13 @@ defmodule NoizuPromptLinguaWeb.MCPSetGatewayController do
   defp serve(conn, tool_set, path, org_id, metadata) do
     resource = "https://#{conn.host}#{path}"
 
+    # Route-claims enrichment (stage set-gate fix): the URL slugs alone reach
+    # the metadata — the RESOLVED org id is only known here, after the gates.
+    # `ToolsetResolver` reads `set_org_id` off the per-request principal
+    # metadata (never session assigns, FR-3-3); without it every tools/list
+    # resolved :none and the gateway served an EMPTY catalog.
+    metadata = Map.put(metadata, "set_org_id", org_id)
+
     opts =
       MCPConfig.plug_opts_for_tool_set(ToolSetEndpoint, resource, path, metadata)
       |> Keyword.put(:context, {__MODULE__, :mcp_context})
