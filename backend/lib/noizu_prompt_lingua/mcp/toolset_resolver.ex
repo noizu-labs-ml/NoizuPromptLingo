@@ -78,28 +78,15 @@ defmodule NoizuPromptLingua.MCP.ToolsetResolver do
   end
 
   defp resolve_profile(slug) do
-    case Profiles.get(slug) do
+    case Profiles.custom(slug) do
       nil ->
         Logger.warning("[ToolsetResolver] unknown profile #{inspect(slug)} — :none (D5)")
         :none
 
-      profile ->
-        groups = profile.groups || []
-
-        %Custom{
-          slug: "profile:#{slug}",
-          base: NoizuPromptLingua.MCP.UniverseToolset,
-          title: title(profile),
-          description: nil,
-          immutable: true,
-          include: ToolSets.universe_include(groups),
-          tools: %{},
-          metadata: %{profile: slug}
-        }
+      %Custom{} = custom ->
+        # N2b: the shared immutable-profile builder (FR-2B-4) — same shape
+        # the provider's "toolsets" projection serves.
+        custom
     end
-  end
-
-  defp title(profile) do
-    Map.get(profile, :title) || Map.get(profile, :slug) || "profile"
   end
 end

@@ -8,10 +8,11 @@ defmodule NoizuPromptLingua.MCP.ToolSetEndpoint do
   protocol path (`protocol_list`/`protocol_call`). Serves all three set
   shapes (org / project / group) through `NoizuPromptLinguaWeb.MCPSetGatewayController`.
 
-  `providers:` (persistence + ACL wiring) arrive with N2b — at N3 the lib ACL
-  layer is inert without a registered provider (lib PRD-2 §4.6 "no provider,
-  inert"), so the endpoint serves the static/pass composition; N2b adds
-  `acl: NoizuPromptLingua.MCP.AclProvider` here.
+  `providers:` (N2b): the persistence + ACL seam is wired —
+  `NoizuPromptLingua.MCP.ToolsetProvider` (NPL-owned storage; the lib tables
+  stay empty, Decision 2) and `NoizuPromptLingua.MCP.AclProvider` (always-answers
+  ACL over `NoizuPromptLingua.Acl.resolve/4`). At N3 the ACL layer was inert
+  without a registered provider (lib PRD-2 §4.6 "no provider, inert").
 
   `toolset_cache` honors NPL's 45s policy (PRD-N3 open question 4 — the lib
   opt accepts `[ttl: ms]`).
@@ -54,5 +55,9 @@ defmodule NoizuPromptLingua.MCP.ToolSetEndpoint do
     instructions: "Tool set gateway endpoint (per-set surface).",
     toolset: {NoizuPromptLingua.MCP.ToolsetResolver, :resolve, []},
     principal: {NoizuPromptLingua.MCP.PrincipalMapper, :from_claims, []},
+    providers: [
+      persistence: NoizuPromptLingua.MCP.ToolsetProvider,
+      acl: NoizuPromptLingua.MCP.AclProvider
+    ],
     toolset_cache: [ttl: 45_000]
 end
