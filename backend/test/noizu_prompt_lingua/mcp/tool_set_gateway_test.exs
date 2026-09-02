@@ -238,6 +238,19 @@ defmodule NoizuPromptLingua.MCP.ToolSetGatewayTest do
     end
   end
 
+  describe "serving supervision (B1 last-mile)" do
+    test "the set endpoint's supervisor family is running (initialize cannot no-process 500)" do
+      # The gateway serve path starts sessions under
+      # Module.concat(ToolSetEndpoint, SessionSupervisor) (lib transport). The
+      # module was missing from the application tree, so every initialize that
+      # got past the (newly fixed) B1 gates 500'd on `no process`.
+      assert Process.whereis(NoizuPromptLingua.MCP.ToolSetEndpoint.SessionSupervisor),
+             "ToolSetEndpoint.SessionSupervisor must be in the supervision tree"
+
+      assert Process.whereis(NoizuPromptLingua.MCP.ToolSetEndpoint.Registry)
+    end
+  end
+
   test "unauthenticated request defers to the transport challenge (401, not 404)", %{org: org} do
     {:ok, set} = create_set(org.id, "anon-set")
 
