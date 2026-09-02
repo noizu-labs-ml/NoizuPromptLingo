@@ -198,7 +198,7 @@ defmodule NoizuPromptLinguaWeb.ToolSetProfilesControllerTest do
   end
 
   describe "show" do
-    test "returns the row with structural preview + audit trail", %{conn: conn, base: base} do
+    test "returns the row with the N4b effective preview + audit trail", %{conn: conn, base: base} do
       body = conn |> post(base, %{tool_set: valid_attrs()}) |> json_response(201)
       slug = body["tool_set"]["slug"]
 
@@ -206,11 +206,10 @@ defmodule NoizuPromptLinguaWeb.ToolSetProfilesControllerTest do
         conn |> get("#{base}/#{slug}") |> json_response(200)
 
       assert tool_set["slug"] == slug
-      preview = tool_set["preview"]
-      assert preview["groups"]["tickets"]["tool_count"] > 0
-      assert preview["groups"]["tickets"]["overridden_tools"] == 1
-      assert preview["groups"]["tickets"]["override_ops"] == 1
-      assert preview["total_override_ops"] == 1
+      # N4b: the D1-correct effective preview replaced the structural census.
+      effective = tool_set["effective"]
+      assert is_binary(effective["version"])
+      assert length(effective["tools"]) > 0
       assert [%{"action" => "create"}] = tool_set["audit"]
     end
 

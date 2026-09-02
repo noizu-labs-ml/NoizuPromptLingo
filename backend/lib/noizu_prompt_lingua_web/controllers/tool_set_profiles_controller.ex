@@ -1,15 +1,16 @@
 defmodule NoizuPromptLinguaWeb.ToolSetProfilesController do
   @moduledoc """
-  Org-admin management for MCP tool sets (PRD-N4 §4.1, N4a scope): list the 5
-  built-in profiles (read-only DATA, R1) next to the org's own sets, and
-  create / update / deactivate / clone sets through `MCP.ToolSets`.
+  Org-admin management for MCP tool sets (PRD-N4 §4.1): list the 5 built-in
+  profiles (read-only DATA, R1) next to the org's own sets, and create /
+  update / deactivate / clone sets through `MCP.ToolSets`.
 
-  Contract-first on pinned hex noizu_mcp 0.1.5 — no lib calls. Structural
-  validation only (the N2a changeset is the single authority, FR-4-3); the
-  validate dry-run + effective-catalog preview are N4b (gated on lib PRD-3).
-
-    # N4b: dry-run Validator.compile/3 seam — `POST .../tool-sets/validate`
-    # (candidate config → issues) lands with the PRD-3 gate.
+  N4b (PRD-3 gate): `validate/2` dry-runs a candidate config through
+  `Noizu.MCP.Toolset.Validator.compile/3` against the LIVE catalog (pure —
+  never persists), `show/2` carries the D1-correct `effective` preview (the
+  serving pipeline's `compose_full` over `ToolSets.assemble_custom/2`), and
+  create/update REJECT configs that cannot compile once the serving flip is
+  on (`:tool_sets_enabled` — R8 save-time guarantee). `group_options/2` and
+  `arg_enum/2` back the frontend's group selector and enum-prune picker.
 
   Every mutation records in-row provenance under `settings["_audit"]`
   (bounded, last 20 — the `MCPCustomScopes.carry_audit` precedent; NPL has no
@@ -20,7 +21,12 @@ defmodule NoizuPromptLinguaWeb.ToolSetProfilesController do
 
   require Logger
 
+  alias Noizu.MCP.Ctx
+  alias Noizu.MCP.Toolset.Custom
+  alias Noizu.MCP.Toolset.Validator
+  alias NoizuPromptLingua.Authz.Groups
   alias NoizuPromptLingua.Guardian
+  alias NoizuPromptLingua.MCP.ToolSetEndpoint
   alias NoizuPromptLingua.MCP.ToolSets
   alias NoizuPromptLingua.MCP.Toolsets.Profiles
   alias NoizuPromptLingua.MCPServers
@@ -55,18 +61,23 @@ defmodule NoizuPromptLinguaWeb.ToolSetProfilesController do
 
   @doc """
   GET .../tool-sets/:slug — resolves built-in profile slugs to their read-only
-  view (with a structural preview over the registry) and anything else to the
-  org's row (404 for foreign slugs — no cross-org read, FR-4-1).
+  view and anything else to the org's row (404 for foreign slugs — no
+  cross-org read, FR-4-1). Both carry `effective`: the D1-correct preview —
+  the serving pipeline's own compose (`Custom.compose_full/3` over the
+  assembled `%Toolset.Custom{}`), per-tool effective name / visibility /
+  pruned-arg summaries / provenance layer ids (FR-4-7). The admin sees exactly
+  what a caller gets, never a parallel renderer.
   """
   def show(conn, %{"org_id" => org_id, "slug" => slug}) do
-    counts = group_tool_counts()
-
     cond do
       profile = Profiles.get(slug) ->
+        profile_config = %{"groups" => Map.new(profile.groups, &{&1, %{"enabled" => true}})}
+
         view =
           profile
-          |> profile_view(counts)
-          |> Map.put(:preview, profile_preview(profile, counts))
+          |> profile_view(group_tool_counts())
+          |> Map.put(:preview, profile_preview(profile, group_tool_counts()))
+          |> Map.put(:effective, effective_preview(Profiles.custom(profile), profile_config))
 
         json(conn, %{profile: view})
 
@@ -74,7 +85,10 @@ defmodule NoizuPromptLinguaWeb.ToolSetProfilesController do
         view =
           tool_set
           |> set_view(with_audit: true)
-          |> Map.put(:preview, structural_preview(tool_set, counts))
+          |> Map.put(
+            :effective,
+            effective_preview(ToolSets.assemble_custom(tool_set), tool_set.config)
+          )
           # The edit form needs the full config; the list view carries only the
           # digest.
           |> Map.put(:config, tool_set.config)
@@ -103,17 +117,24 @@ defmodule NoizuPromptLinguaWeb.ToolSetProfilesController do
 
     settings = audit_settings(%{}, Map.get(body, "settings"), "create", actor_id)
 
-    case ToolSets.create(Map.put(attrs, "settings", settings), actor_id: actor_id) do
-      {:ok, tool_set} ->
-        audit_log("create", tool_set.slug, actor_id, "ok")
+    case reject_invalid_config(conn, attrs["config"]) do
+      :ok ->
+        case ToolSets.create(Map.put(attrs, "settings", settings), actor_id: actor_id) do
+          {:ok, tool_set} ->
+            audit_log("create", tool_set.slug, actor_id, "ok")
 
-        conn
-        |> put_status(:created)
-        |> json(%{tool_set: set_view(tool_set, with_audit: true)})
+            conn
+            |> put_status(:created)
+            |> json(%{tool_set: set_view(tool_set, with_audit: true)})
 
-      {:error, %Ecto.Changeset{} = cs} ->
+          {:error, %Ecto.Changeset{} = cs} ->
+            audit_log("create", attrs["slug"] || attrs["display_name"], actor_id, "error")
+            changeset_error(conn, cs)
+        end
+
+      {:error, conn} ->
         audit_log("create", attrs["slug"] || attrs["display_name"], actor_id, "error")
-        changeset_error(conn, cs)
+        conn
     end
   end
 
@@ -141,19 +162,33 @@ defmodule NoizuPromptLinguaWeb.ToolSetProfilesController do
       if submitted == %{} do
         json(conn, %{tool_set: set_view(tool_set)})
       else
-        attrs = Map.delete(submitted, "settings")
+        case reject_invalid_config(conn, Map.get(submitted, "config")) do
+          :ok ->
+            attrs = Map.delete(submitted, "settings")
 
-        settings =
-          audit_settings(tool_set.settings, Map.get(submitted, "settings"), "update", actor_id)
+            settings =
+              audit_settings(
+                tool_set.settings,
+                Map.get(submitted, "settings"),
+                "update",
+                actor_id
+              )
 
-        case ToolSets.update(tool_set, Map.put(attrs, "settings", settings), actor_id: actor_id) do
-          {:ok, updated} ->
-            audit_log("update", updated.slug, actor_id, "ok")
-            json(conn, %{tool_set: set_view(updated, with_audit: true)})
+            case ToolSets.update(tool_set, Map.put(attrs, "settings", settings),
+                   actor_id: actor_id
+                 ) do
+              {:ok, updated} ->
+                audit_log("update", updated.slug, actor_id, "ok")
+                json(conn, %{tool_set: set_view(updated, with_audit: true)})
 
-          {:error, %Ecto.Changeset{} = cs} ->
+              {:error, %Ecto.Changeset{} = cs} ->
+                audit_log("update", slug, actor_id, "error")
+                changeset_error(conn, cs)
+            end
+
+          {:error, conn} ->
             audit_log("update", slug, actor_id, "error")
-            changeset_error(conn, cs)
+            conn
         end
       end
     else
@@ -231,6 +266,106 @@ defmodule NoizuPromptLinguaWeb.ToolSetProfilesController do
       end
     else
       {:error, :not_found} -> not_found(conn, "source tool set not found")
+    end
+  end
+
+  @doc """
+  POST .../tool-sets/validate — N4b dry-run (FR-4-6): compile the candidate
+  config through `Noizu.MCP.Toolset.Validator.compile/3` against the live
+  catalog. Pure — NEVER persists. 200 `%{ok: true, warnings}` (non-fatal
+  notes) or 422 `%{ok: false, issues}` with structured lib-code issues.
+  Accepts the create/update body shape (inline config) so the editor can
+  validate before saving.
+  """
+  def validate(conn, params) do
+    config = set_params(params)["config"]
+
+    case ToolSets.validate_config(config) do
+      {:ok, warnings} ->
+        json(conn, %{ok: true, warnings: warnings})
+
+      {:error, issues} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{ok: false, issues: Enum.map(issues, &issue_view/1)})
+    end
+  end
+
+  @doc """
+  GET .../tool-sets/group-options — N4b group-selector completeness: REAL
+  authz groups (`groups` via `Authz.Groups`) alongside the 5 ladder roles they
+  currently are, each labeled by `kind` and carrying an expires_at-aware
+  member count (`list_for_resource/2` already excludes expired rows). R3
+  group-pinning targets custom groups; the ladder roles are named
+  distinctly so the UI can separate them.
+  """
+  def group_options(conn, %{"org_id" => org_id}) do
+    ladder = Group.role_names()
+
+    counts =
+      "organization"
+      |> ScopedMemberships.list_for_resource(org_id)
+      |> Enum.frequencies_by(& &1.role)
+
+    json(conn, %{
+      groups:
+        Enum.map(Groups.list_all(), fn group ->
+          %{
+            id: group.id,
+            name: group.name,
+            display_name: group.display_name,
+            is_system: group.is_system,
+            kind: if(group.name in ladder, do: "ladder_role", else: "custom"),
+            member_count: Map.get(counts, group.name, 0)
+          }
+        end)
+    })
+  end
+
+  @doc """
+  GET .../tool-sets/arg-enum?tool=&arg= — N4b enum-picker seeds: the base enum
+  values of one arg from the live catalog (the prune candidates).
+  """
+  def arg_enum(conn, %{"tool" => tool, "arg" => arg})
+      when is_binary(tool) and is_binary(arg) do
+    case ToolSets.arg_enum_values(tool, arg) do
+      {:ok, values} ->
+        json(conn, %{tool: tool, arg: arg, values: values})
+
+      {:error, reason} ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{error: "no enum for #{inspect(tool)}.#{inspect(arg)}", code: to_string(reason)})
+    end
+  end
+
+  def arg_enum(conn, _params),
+    do: conn |> put_status(:unprocessable_entity) |> json(%{error: "tool and arg are required"})
+
+  # ---- N4b: catalog validation (FR-4-6/7) ----
+
+  # R8 save-time guarantee: once the serving flip is on, a config that cannot
+  # compile against the live catalog is rejected at write instead of being
+  # stored to D5-disable at serve time. Pre-flip (flag off) keeps the N4a
+  # structural-only changeset contract.
+  defp reject_invalid_config(conn, config) do
+    if Application.get_env(:noizu_prompt_lingua, :tool_sets_enabled, false) do
+      case ToolSets.validate_config(config) do
+        {:ok, _warnings} ->
+          :ok
+
+        {:error, issues} ->
+          {:error,
+           conn
+           |> put_status(:unprocessable_entity)
+           |> json(%{
+             ok: false,
+             error: "config failed catalog validation",
+             issues: Enum.map(issues, &issue_view/1)
+           })}
+      end
+    else
+      :ok
     end
   end
 
@@ -405,27 +540,128 @@ defmodule NoizuPromptLinguaWeb.ToolSetProfilesController do
     end
   end
 
-  # Structural preview for a stored set: per-group registry tool counts +
-  # override-op census computed from the row's config. No lib, no catalog
-  # compile (N4b's D1-correct preview replaces this at the flip).
-  defp structural_preview(tool_set, counts) do
-    groups = Map.get(tool_set.config || %{}, "groups", %{})
+  # ── N4b effective preview (FR-4-7, D1) ──────────────────────────────────────
 
-    group_previews =
-      Map.new(groups, fn {group_id, group_cfg} ->
-        tools = Map.get(group_cfg || %{}, "tools", %{})
+  # The D1-correct view: the serving pipeline's own compose_full/3 over the
+  # assembled (or profile) toolset, with an unauthenticated ctx — no ACL pass
+  # (NPL's provider answers :allow for subjectless principals) and no grant
+  # layers, so what the admin sees is the SET's static surface; per-caller
+  # ACL/grants remain the serving path's business.
+  defp effective_preview(%Custom{} = custom, config) do
+    base_index =
+      config
+      |> ToolSets.enabled_groups()
+      |> ToolSets.universe_for_groups()
+      |> Map.get(:specs)
 
-        {group_id,
-         %{
-           enabled: Map.get(group_cfg || %{}, "enabled", true),
-           tool_count: Map.get(counts, group_id, 0),
-           overridden_tools: map_size(tools),
-           override_ops: length(ToolSets.to_overrides(%{"groups" => %{group_id => group_cfg}}))
-         }}
-      end)
+    ctx = %Ctx{server: ToolSetEndpoint, auth: nil}
 
-    %{groups: group_previews, total_override_ops: length(ToolSets.to_overrides(tool_set.config))}
+    case Custom.compose_full(custom, ctx, []) do
+      {:ok, %{entries: entries, version: version, provenance: provenance}} ->
+        renames = rename_map(custom)
+
+        %{
+          version: version,
+          tools: Enum.map(entries, &effective_tool_view(&1, renames, base_index, provenance))
+        }
+
+      {:error, %Noizu.MCP.Error{data: %{issues: issues}}} ->
+        # Invalid config serving D5-degraded — surface the lib's own issues.
+        %{version: nil, tools: [], issues: Enum.map(issues, &issue_view/1)}
+
+      {:error, %Noizu.MCP.Error{}} ->
+        %{version: nil, tools: [], issues: []}
+    end
   end
+
+  defp effective_tool_view(entry, renames, base_index, provenance) do
+    name = entry.definition.name
+    base_name = Map.get(renames, name, name)
+
+    provenance_rows =
+      provenance
+      |> Map.get(name, %{})
+      |> Enum.map(fn {{_tool, op, field}, {layer, weight}} ->
+        %{op: safe(op), field: safe(field), layer: safe(layer), weight: weight}
+      end)
+      |> Enum.sort_by(& &1.weight)
+
+    %{
+      name: name,
+      base_name: base_name,
+      renamed: name != base_name,
+      visible: entry.visible,
+      callable: entry.callable,
+      reason: safe(entry.reason),
+      pruned_args: pruned_args(entry, base_name, base_index),
+      provenance: provenance_rows
+    }
+  end
+
+  # base wire name → original base name, from the assembled static ops.
+  defp rename_map(%Custom{tools: tools}) do
+    tools
+    |> Enum.flat_map(fn {base, ops} ->
+      case Enum.find(ops, &(&1.op == :set_name)) do
+        %{value: value} when is_binary(value) and value != base -> [{value, base}]
+        _ -> []
+      end
+    end)
+    |> Map.new()
+  end
+
+  # Args whose enum the set pruned: base enum minus the effective enum, read
+  # off the schemas (rename-aware via base_name; renamed args keep their base
+  # enum row — the wire rename never changes the value space).
+  defp pruned_args(entry, base_name, base_index) do
+    case Map.fetch(base_index, base_name) do
+      {:ok, base_spec} ->
+        base_props = schema_props(base_spec.definition.input_schema)
+        eff_props = schema_props(entry.input_schema)
+
+        Enum.flat_map(base_props, fn {field, prop} ->
+          with base when is_list(base) <- Map.get(prop, "enum"),
+               eff when is_list(eff) <-
+                 get_in(eff_props, [field, "enum"]) || [],
+               removed = Enum.reject(base, &(&1 in eff)),
+               true <- removed != [] do
+            [{field, removed}]
+          else
+            _ -> []
+          end
+        end)
+        |> Map.new()
+
+      :error ->
+        %{}
+    end
+  end
+
+  defp schema_props(schema) when is_map(schema), do: Map.get(schema, "properties") || %{}
+  defp schema_props(_), do: %{}
+
+  # %Validator.Issue{} → the §4.1 JSON contract row, Jason-safe throughout.
+  defp issue_view(%Validator.Issue{} = issue) do
+    %{
+      code: safe(issue.code),
+      message: issue.message,
+      tool: safe(issue.tool),
+      field: safe(issue.field),
+      op: safe(issue.op),
+      meta: safe(issue.meta)
+    }
+  end
+
+  defp issue_view(other),
+    do: %{code: "unknown", message: safe(other), tool: nil, field: nil, op: nil, meta: nil}
+
+  # Atoms/tuples → Jason-encodable strings/lists (issues carry :atom codes and
+  # {:acl, provider}-style layer ids).
+  defp safe(v) when is_atom(v) and not is_boolean(v) and not is_nil(v), do: Atom.to_string(v)
+  defp safe(v) when is_map(v), do: Map.new(v, fn {k, x} -> {safe(k), safe(x)} end)
+  defp safe(v) when is_list(v), do: Enum.map(v, &safe/1)
+  defp safe(v) when is_tuple(v), do: Enum.map(Tuple.to_list(v), &safe/1)
+  defp safe(other), do: other
 
   defp shape_of(%MCPToolSet{group_id: gid}) when is_binary(gid), do: "group"
   defp shape_of(%MCPToolSet{project_id: pid}) when is_binary(pid), do: "project"

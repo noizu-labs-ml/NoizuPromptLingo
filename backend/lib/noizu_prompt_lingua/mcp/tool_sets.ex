@@ -16,6 +16,11 @@ defmodule NoizuPromptLingua.MCP.ToolSets do
   warning, never a 500. N2b still flips `to_overrides/1` elements to
   `%Override{}` structs and layers in grants (weight 200).
 
+  N4b adds the admin-side companions: `assemble_config_custom/2` (scratch
+  assembly from a raw config), `validate_config/1` (pure Validator.compile/3
+  dry-run against the live catalog — unknown targets are NAMED, not dropped)
+  and `arg_enum_values/2` (enum-picker seeds for the overrides editor).
+
   Every write fires `MCP.Server.notify_toolset_changed/0` (best-effort, N1
   wiring) so live connections re-list before serving a stale set.
   """
@@ -280,17 +285,12 @@ defmodule NoizuPromptLingua.MCP.ToolSets do
   """
   def assemble_custom(%MCPToolSet{} = tool_set, _ctx \\ nil) do
     settings = tool_set.settings || %{}
-    universe = universe_for_groups(enabled_groups(tool_set.config))
 
-    %Noizu.MCP.Toolset.Custom{
+    assemble_config_custom(tool_set.config,
       slug: "set:" <> tool_set.slug,
-      base: NoizuPromptLingua.MCP.UniverseToolset,
       title: tool_set.display_name || tool_set.slug,
       description: tool_set.description || Map.get(settings, "instructions"),
-      immutable: false,
-      include: universe.include,
-      exclude: [],
-      tools: override_map(tool_set, universe.specs),
+      settings: settings,
       metadata: %{
         mcp_tool_set_id: tool_set.id,
         source: tool_set.source,
@@ -298,8 +298,152 @@ defmodule NoizuPromptLingua.MCP.ToolSets do
         allow_api_keys: Map.get(settings, "allow_api_keys", true),
         shape: shape(tool_set)
       }
+    )
+  end
+
+  @doc """
+  N4b scratch assembly (PRD-N4 §4.1): the same core as `assemble_custom/2`,
+  from a raw config map — the validate dry-run's candidate toolset and the
+  show-preview's D1-correct effective view both compose from this shape
+  (UniverseToolset base, expanded allowlist universe, closed-vocabulary ops).
+  """
+  def assemble_config_custom(config, opts \\ []) do
+    settings = Keyword.get(opts, :settings) || %{}
+    universe = universe_for_groups(enabled_groups(config))
+
+    %Noizu.MCP.Toolset.Custom{
+      slug: Keyword.get(opts, :slug, "candidate"),
+      base: NoizuPromptLingua.MCP.UniverseToolset,
+      title: Keyword.get(opts, :title),
+      description: Keyword.get(opts, :description) || Map.get(settings, "instructions"),
+      immutable: false,
+      include: universe.include,
+      exclude: [],
+      tools: override_map(config, universe.specs),
+      metadata: Keyword.get(opts, :metadata) || %{}
     }
   end
+
+  @doc """
+  N4b dry-run (FR-4-6): pure catalog compile of a config map against the LIVE
+  base catalog (UniverseToolset, expanded + unfiltered — no DB, no serving
+  state). `{:ok, warnings}` | `{:error, [%Noizu.MCP.Toolset.Validator.Issue{}]}`.
+
+  Unlike `assemble_custom/2` the D5 drop does NOT run here: unknown tool/field
+  targets keep their as-written spelling so the Validator can NAME them
+  (:unknown_tool / :unknown_field). Resolvable targets map to base canonical
+  names / cast-plan field atoms exactly as the serving assembly does, so a
+  passing config is serving-shaped by construction.
+  """
+  def validate_config(config) when is_map(config) do
+    universe = universe_for_groups(enabled_groups(config))
+
+    base_entries =
+      NoizuPromptLingua.MCP.UniverseToolset.__toolset_specs__(nil, nil, [])
+      |> Enum.map(&Noizu.MCP.Toolset.Behaviour.entry_for/1)
+
+    candidate = %Noizu.MCP.Toolset.Custom{
+      slug: "validate:candidate",
+      base: NoizuPromptLingua.MCP.UniverseToolset,
+      include: universe.include,
+      exclude: [],
+      tools: validation_map(config, universe.specs)
+    }
+
+    Noizu.MCP.Toolset.Validator.compile(candidate, base_entries)
+  end
+
+  def validate_config(_), do: {:ok, []}
+
+  @doc """
+  N4b enum-picker helper: the base enum values of `tool_key`'s `arg_key` field
+  from the LIVE universe catalog (plane ∪ every customizable group) — the
+  prune candidates the admin UI offers. `{:ok, [String.t()]}` for enum fields
+  (stringified, the config jsonb's spelling); `{:error, :unknown_tool |
+  :unknown_field | :not_enum}` otherwise.
+  """
+  def arg_enum_values(tool_key, arg_key)
+      when is_binary(tool_key) and is_binary(arg_key) do
+    specs = universe_for_groups(Enum.map(MCPServers.customizable(), & &1.id)).specs
+
+    case spec_for(%{tool: tool_key}, specs) do
+      nil ->
+        {:error, :unknown_tool}
+
+      spec ->
+        case field_atom(spec, arg_key) do
+          nil ->
+            {:error, :unknown_field}
+
+          atom ->
+            # Values live on the DSL field (input_fields — the same shape the
+            # Validator reads), not on the cast-plan projection.
+            field =
+              spec.definition.input_fields
+              |> List.wrap()
+              |> Enum.find(&match?(%{name: ^atom}, &1))
+
+            case field_values(field) do
+              values when is_list(values) -> {:ok, Enum.map(values, &to_string/1)}
+              _ -> {:error, :not_enum}
+            end
+        end
+    end
+  end
+
+  def arg_enum_values(_, _), do: {:error, :unknown_tool}
+
+  defp field_values(%{opts: opts}), do: opts_values(opts)
+  defp field_values(_), do: nil
+
+  defp opts_values(opts) when is_list(opts), do: Keyword.get(opts, :values)
+  defp opts_values(opts) when is_map(opts), do: Map.get(opts, :values)
+  defp opts_values(_), do: nil
+
+  # Validation twin of override_map/2: same target resolution (aliases fold to
+  # base canonical names, args to cast-plan atoms) but unresolvable targets
+  # keep their as-written spelling — the Validator reports them, the serving
+  # assembly would silently drop them (D5).
+  defp validation_map(config, specs_index) do
+    config
+    |> to_overrides()
+    |> Enum.flat_map(&validation_op(&1, specs_index))
+    |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
+  end
+
+  defp validation_op(
+         %{op: op, target: %{tool: tool_key, arg: arg_key} = target, value: value},
+         specs_index
+       )
+       when op in [:prune_enum, :hide_field, :rename_field, :pin_default, :set_arg_description] do
+    case spec_for(target, specs_index) do
+      nil ->
+        [{tool_key, struct(Noizu.MCP.Toolset.Override, op: op, target: arg_key, value: value)}]
+
+      spec ->
+        field = field_atom(spec, arg_key) || arg_key
+
+        [
+          {spec.definition.name,
+           struct(Noizu.MCP.Toolset.Override, op: op, target: field, value: value)}
+        ]
+    end
+  end
+
+  defp validation_op(%{op: op, target: %{tool: tool_key} = target, value: value}, specs_index)
+       when op in [:set_visible, :set_callable, :set_name, :set_description, :set_title] do
+    case spec_for(target, specs_index) do
+      nil ->
+        [{tool_key, struct(Noizu.MCP.Toolset.Override, op: op, target: tool_key, value: value)}]
+
+      spec ->
+        {spec.definition.name,
+         struct(Noizu.MCP.Toolset.Override, op: op, target: spec.definition.name, value: value)}
+        |> List.wrap()
+    end
+  end
+
+  defp validation_op(_op_map, _specs_index), do: []
 
   @doc """
   Audience shape of a set (FR-2A-6): `:org` | `:project` | `:group`.
@@ -379,8 +523,8 @@ defmodule NoizuPromptLingua.MCP.ToolSets do
 
   # N2a map ops → lib %Override{} structs keyed by base canonical name.
   # Unknown tool targets (and arg fields) are dropped with a warning (D5).
-  defp override_map(tool_set, specs_index) do
-    tool_set.config
+  defp override_map(config, specs_index) do
+    config
     |> to_overrides()
     |> Enum.flat_map(fn op_map ->
       case flatten_op(op_map, specs_index) do

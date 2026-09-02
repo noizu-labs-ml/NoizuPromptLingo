@@ -480,11 +480,14 @@ defmodule NoizuPromptLinguaWeb.Router do
   # N4a: MCP tool-set admin (PRD-N4 §4.1) — built-in profiles (read-only, R1)
   # next to the org's own sets; create/update/deactivate/clone through
   # MCP.ToolSets. Org-admin gated; serving gateway lands at N3.
-  # N4b: `POST .../tool-sets/validate` (Validator.compile/3 dry-run) lands with
-  # the PRD-3 gate — see the seam marker in ToolSetProfilesController.
+  # N4b: validate dry-run (Validator.compile/3, never persists), the live
+  # catalog arg-enum seeds and the real-groups group-options feed.
   scope "/api/v1/organizations/:org_id", NoizuPromptLinguaWeb do
     pipe_through [:api, :authenticated, :org_admin]
     post "/tool-sets/clone", ToolSetProfilesController, :clone
+    post "/tool-sets/validate", ToolSetProfilesController, :validate
+    get "/tool-sets/group-options", ToolSetProfilesController, :group_options
+    get "/tool-sets/arg-enum", ToolSetProfilesController, :arg_enum
     get "/tool-sets", ToolSetProfilesController, :index
     post "/tool-sets", ToolSetProfilesController, :create
     get "/tool-sets/:slug", ToolSetProfilesController, :show
