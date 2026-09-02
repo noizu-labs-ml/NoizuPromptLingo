@@ -912,7 +912,7 @@ defmodule NoizuPromptLinguaWeb.Router do
 
     get "/comments/:comment_id/reactions", WikiController, :index_comment_reactions
     post "/comments/:comment_id/reactions", WikiController, :add_comment_reaction
-    delete "/comments/:comment_id/reactions", WikiController, :remove_comment_reactions
+    delete "/comments/:comment_id/reactions", WikiController, :remove_comment_reaction
   end
 
   # GitHub: org-scoped read/write operations (authenticated, org-member).

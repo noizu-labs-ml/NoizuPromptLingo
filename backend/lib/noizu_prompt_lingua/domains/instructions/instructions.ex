@@ -24,17 +24,19 @@ defmodule NoizuPromptLingua.Domains.Instructions do
            |> Instruction.changeset(Map.put(attrs, :active_version, 1))
            |> Repo.insert() do
         {:ok, instruction} ->
-          {:ok, _v} =
-            %InstructionVersion{}
-            |> InstructionVersion.changeset(%{
-              instruction_id: instruction.id,
-              version: 1,
-              body: body,
-              change_note: "Initial version"
-            })
-            |> Repo.insert()
-
-          instruction
+          # Roll back the whole transaction when the initial version fails
+          # (e.g. blank body) instead of crashing the caller with MatchError.
+          case %InstructionVersion{}
+               |> InstructionVersion.changeset(%{
+                 instruction_id: instruction.id,
+                 version: 1,
+                 body: body,
+                 change_note: "Initial version"
+               })
+               |> Repo.insert() do
+            {:ok, _v} -> instruction
+            {:error, cs} -> Repo.rollback(cs)
+          end
 
         {:error, cs} ->
           Repo.rollback(cs)

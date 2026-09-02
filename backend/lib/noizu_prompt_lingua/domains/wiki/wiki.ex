@@ -65,6 +65,22 @@ defmodule NoizuPromptLingua.Domains.Wiki do
 
   def get_page(id), do: Repo.get(Page, id)
 
+  @doc """
+  Next ordering position for a page within a space (max + 1; 1 when the space
+  is empty). The controller defaults page creation to this so that payloads
+  without an explicit position don't hit the column's not-null constraint.
+  """
+  def next_page_position(space_id) do
+    Page
+    |> where([p], p.space_id == ^space_id)
+    |> select([p], max(p.position))
+    |> Repo.one()
+    |> case do
+      nil -> 1
+      max -> max + 1
+    end
+  end
+
   def create_page(attrs) do
     attrs = default_slug(attrs, :title)
 
