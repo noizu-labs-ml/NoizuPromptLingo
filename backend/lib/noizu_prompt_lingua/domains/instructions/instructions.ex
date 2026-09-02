@@ -26,6 +26,8 @@ defmodule NoizuPromptLingua.Domains.Instructions do
            |> Instruction.changeset(normalize(attrs) |> Map.put(:active_version, 1))
            |> Repo.insert() do
         {:ok, instruction} ->
+          # Roll back the whole transaction when the initial version fails
+          # (e.g. blank body) instead of crashing the caller with MatchError.
           case %InstructionVersion{}
                |> InstructionVersion.changeset(%{
                  instruction_id: instruction.id,
