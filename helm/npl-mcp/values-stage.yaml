@@ -1,0 +1,140 @@
+# ── Stage (soak) values — release npl-mcp-stage, Argo app npl-mcp-stage ──────
+# Deployed from the `stage` branch (targetRevision: stage) to
+# https://tobor-stage.noizu.com in the apps namespace.
+#
+# Lane: push stage → GHA build-push-stage (sha-<short>-stage tags) →
+# bump-chart-stage bumps THIS file → ArgoCD rolls it. Prod (values.yaml /
+# npl-mcp release / tobor.locker) is a completely separate artifact set.
+#
+# Deliberately stage-only, nothing shared with prod:
+#   - TLS rides the *.noizu.com wildcard secret `noizu-com-tls` (Infisical
+#     /shared/tls, already synced to apps ns — jass/meetme/billing use it),
+#     NOT the tobor.locker prod cert (/apps/tls/toborlocker).
+#   - DB is tobor_locker_stage on app-timescaledb; env secret is
+#     npl-mcp-stage-secrets (stage-only credentials).
+#   - No prod credential references of any kind.
+replicas: 1
+domain: tobor-stage.noizu.com
+deployment:
+  # Same-pod backend+frontend: Recreate avoids doubling the Postgres
+  # connection ceiling during rolls (mirrors prod reasoning).
+  strategy:
+    type: Recreate
+npl-mcp:
+  image:
+    repository: ops.noizu.com/npl-mcp/server
+    tag: "stage-bootstrap"
+backend:
+  image:
+    repository: ops.noizu.com/npl-mcp/server
+    tag: "stage-bootstrap" # replaced by bump-chart-stage: sha-<short>-stage
+    pullPolicy: IfNotPresent
+  port: 4040
+  # Soak auth posture: there is no stage Authentik application yet (follow-up).
+  # The chart injects OIDC_CLIENT_ID from the secret non-optionally, so
+  # npl-mcp-stage-secrets carries placeholder AUTHENTIK_* values — the app
+  # boots green, but OIDC discovery fails if anyone walks the SSO routes.
+  # Gateway soak uses API keys + server-minted MCP JWTs, which self-verify
+  # against the issuerUrl below; no Authentik round-trip involved.
+  oidc:
+    issuer: "https://tobor-stage.noizu.com" # placeholder — stage Authentik app is a follow-up
+  # MCP OAuth authorization-server public issuer (AS metadata + JWT iss) —
+  # the stage host itself, so stage-minted tokens carry a stage issuer.
+  mcp:
+    issuerUrl: "https://tobor-stage.noizu.com"
+    pdpMode: local
+    apiKeyMintEnabled: true
+    elevationEnabled: true
+  resources:
+    requests:
+      cpu: "1"
+      memory: 1Gi
+    limits:
+      cpu: "6"
+      memory: 8Gi
+  probes:
+    liveness:
+      path: /health
+      initialDelaySeconds: 10
+      periodSeconds: 15
+      failureThreshold: 3
+    readiness:
+      path: /health
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      failureThreshold: 3
+  env:
+    secretName: npl-mcp-stage-secrets
+# ── Liquibase migration job: DISABLED on stage ───────────────────────────────
+# Stage schema is applied manually through the stage lane bootstrap:
+#   LIQUIBASE_CONFIG=<stage-config> liquibase-shell npl_stage -- update
+# (a fresh DB needs Ecto-at-boot before hook-order Liquibase anyway — see the
+# prod comment in values.yaml). Stanza kept for documentation/parity.
+liquibase:
+  enabled: false
+  image:
+    repository: ops.noizu.com/npl-mcp/db
+    tag: "v1.0.0"
+    pullPolicy: IfNotPresent
+  db:
+    host: app-timescaledb.apps.svc.cluster.local
+    port: 5432
+    name: tobor_locker_stage
+    user: tobor_locker_stage
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 600
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+frontend:
+  image:
+    repository: ops.noizu.com/npl-mcp/frontend
+    tag: "stage-bootstrap" # replaced by bump-chart-stage: sha-<short>-stage
+    pullPolicy: IfNotPresent
+  port: 3000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 192Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  probes:
+    liveness:
+      path: /
+      initialDelaySeconds: 10
+      periodSeconds: 15
+      failureThreshold: 3
+    readiness:
+      path: /
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      failureThreshold: 3
+ingress:
+  enabled: true
+  className: nginx
+  # Keep the Cloudflare whitelist: tobor-stage.noizu.com is a proxied CF
+  # record, so traffic arrives from CF edge IPs exactly like prod.
+  cloudflareWhitelist: true
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+tls:
+  enabled: true
+  # Shared *.noizu.com wildcard (covers tobor-stage.noizu.com) — synced to
+  # apps ns by the platform init stack from Infisical /shared/tls. Reuse the
+  # existing Secret; no per-release InfisicalSecret CRD needed.
+  secretName: noizu-com-tls
+  infisical:
+    enabled: false
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1

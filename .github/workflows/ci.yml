@@ -2,11 +2,14 @@ name: CI
 
 # Build on native amd64 (colo target), validate, push sha-tagged images, bump
 # the chart — ArgoCD (app "npl-mcp") rolls it out from main.
+# Stage lane: pushes to `stage` build sha-<short>-stage images and bump
+# values-stage.yaml — ArgoCD (app "npl-mcp-stage") rolls those to
+# tobor-stage.noizu.com. Main-gated jobs below are untouched by the stage path.
 # Pattern: therobotlearns.com/.github/workflows/ci.yml
 
 on:
   push:
-    branches: [main]
+    branches: [main, stage]
   pull_request:
 
 concurrency:
@@ -197,3 +200,85 @@ jobs:
           git commit -m "ci: deploy sha-${GITHUB_SHA::7} [skip ci]"
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
           git push origin HEAD:main
+
+  # ── Stage lane (refs/heads/stage) ─────────────────────────────────────────
+  # Mirrors build-push with a distinct `-stage` tag suffix so stage images can
+  # never collide with prod tags, and a stage NEXT_PUBLIC_API_URL. The
+  # main-gated jobs above are not modified.
+  build-push-stage:
+    needs: [test-backend, test-frontend]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/stage'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+      - name: Short SHA
+        id: sha
+        run: echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+      - name: Build & push backend
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.REGISTRY }}/npl-mcp/server:sha-${{ steps.sha.outputs.short }}-stage
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,scope=backend,mode=max
+      - name: Build & push frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          platforms: linux/amd64
+          push: true
+          build-args: |
+            NEXT_PUBLIC_API_URL=https://tobor-stage.noizu.com
+          secrets: |
+            npm_token=${{ secrets.NPM_TOKEN }}
+          tags: ${{ env.REGISTRY }}/npl-mcp/frontend:sha-${{ steps.sha.outputs.short }}-stage
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,scope=frontend,mode=max
+
+  # Stage twin of bump-chart: bumps helm/npl-mcp/values-stage.yaml (Argo app
+  # npl-mcp-stage tracks the stage branch) — never the prod values.yaml.
+  bump-chart-stage:
+    needs: build-push-stage
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Need write credentials on stage so the tag bump can push.
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ github.sha }}
+      - name: Install yq
+        # Same rationale as bump-chart: yq, not sed, so .liquibase.image.tag
+        # (manually versioned) is never clobbered.
+        run: |
+          sudo curl -fsSL -o /usr/local/bin/yq \
+            https://github.com/mikefarah/yq/releases/download/v4.44.6/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+          yq --version
+      - name: Bump image tags
+        run: |
+          SHORT=${GITHUB_SHA::7}
+          yq -i ".backend.image.tag = \"sha-${SHORT}-stage\"" helm/npl-mcp/values-stage.yaml
+          yq -i ".frontend.image.tag = \"sha-${SHORT}-stage\"" helm/npl-mcp/values-stage.yaml
+          echo "backend.image.tag=$(yq -r '.backend.image.tag' helm/npl-mcp/values-stage.yaml)"
+          echo "frontend.image.tag=$(yq -r '.frontend.image.tag' helm/npl-mcp/values-stage.yaml)"
+      - name: Commit & push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "npl-mcp-ci"
+          git config user.email "ci@noizu.com"
+          git add helm/npl-mcp/values-stage.yaml
+          git diff --cached --quiet && exit 0
+          git commit -m "ci: deploy stage sha-${GITHUB_SHA::7} [skip ci]"
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
+          git push origin HEAD:stage
