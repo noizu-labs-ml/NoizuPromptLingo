@@ -29,3 +29,4 @@ plugins/llm/**/_build/
 plugins/llm/**/deps/
 plugins/llm/**/node_modules/
 plugins/llm/**/.elixir_ls/
+frontend/cypress/screenshots/

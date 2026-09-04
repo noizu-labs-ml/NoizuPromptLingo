@@ -3,10 +3,16 @@ name: CI
 # Build on native amd64 (colo target), validate, push sha-tagged images, bump
 # the chart — ArgoCD (app "npl-mcp") rolls it out from main.
 # Pattern: therobotlearns.com/.github/workflows/ci.yml
+#
+# Push triggers: `stage` drives the stage lane (build-push-stage /
+# bump-chart-stage — its jobs are refs/heads/stage-gated); the 7e70c1194
+# e2e-stage-lane merge accidentally dropped it from this list while keeping
+# the jobs. `feat/tool-sets-integration` gates the integration merge through
+# the test jobs only — every image-build job stays ref-gated (main / stage).
 
 on:
   push:
-    branches: [main]
+    branches: [main, stage, feat/tool-sets-integration]
   pull_request:
 
 concurrency:
