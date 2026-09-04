@@ -57,10 +57,18 @@ defmodule NoizuPromptLinguaWeb.OrganizationController do
          {:ok, _membership} <-
            NoizuPromptLingua.Authz.authorize(user.id, "organization", org_id, "viewer"),
          {:ok, org} <- Organizations.get_organization(org_id, Noizu.Context.system()) do
+      # The Noizu entity returned by get_organization has no :key_prefix field
+      # (the write-path schema does) — Map.get keeps org show from raising a
+      # KeyError 500 (cov-w5a bugfix).
       conn
       |> put_status(:ok)
       |> json(%{
-        organization: %{id: org.id, slug: org.slug, name: org.name, key_prefix: org.key_prefix}
+        organization: %{
+          id: org.id,
+          slug: org.slug,
+          name: org.name,
+          key_prefix: Map.get(org, :key_prefix)
+        }
       })
     else
       {:error, :not_found} ->
