@@ -48,7 +48,7 @@ defmodule NoizuPromptLingua.Domains.Tickets.TicketsResidualTest do
   end
 
   test "set_type_fields surfaces TRP errors during the type-field write" do
-    org_id = TestStub.seed_org(Ecto.UUID.generate(), "w4d-tickets-3")
+    TestStub.seed_org(Ecto.UUID.generate(), "w4d-tickets-3")
     type_id = Ecto.UUID.generate()
     field_id = Ecto.UUID.generate()
 
