@@ -564,7 +564,13 @@ defmodule NoizuPromptLinguaWeb.ToolSetProfilesController do
         %{
           version: version,
           tools:
-            Enum.map(entries, &effective_tool_view(&1, custom, renames, base_index, provenance))
+            Enum.map(entries, &effective_tool_view(&1, custom, renames, base_index, provenance)),
+          # Parity headline (B18): the wire serves only the visible+callable
+          # slice; the rest are listed for admin diagnosis with their reasons.
+          # Per-caller ACL/grants can narrow the served slice further on the
+          # serving path — that remains the wire's business (D1).
+          served: Enum.count(entries, &(&1.visible and &1.callable)),
+          unserved: Enum.count(entries, &not(&1.visible and &1.callable))
         }
 
       {:error, %Noizu.MCP.Error{data: %{issues: issues}}} ->

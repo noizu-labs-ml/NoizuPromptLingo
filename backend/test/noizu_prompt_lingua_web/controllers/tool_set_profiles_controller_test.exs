@@ -222,6 +222,17 @@ defmodule NoizuPromptLinguaWeb.ToolSetProfilesControllerTest do
       assert is_binary(effective["version"])
       assert length(effective["tools"]) > 0
       assert [%{"action" => "create"}] = tool_set["audit"]
+
+      # B18 parity headline: the preview lists every composed entry, but the
+      # wire serves only the visible+callable slice — surface the counts so
+      # the admin delta is explicit instead of a silent tools/list mismatch.
+      served =
+        Enum.count(effective["tools"], fn tool ->
+          tool["visible"] and tool["callable"]
+        end)
+
+      assert effective["served"] == served
+      assert effective["unserved"] == length(effective["tools"]) - served
     end
 
     test "profile slugs resolve to the read-only profile view + preview", %{

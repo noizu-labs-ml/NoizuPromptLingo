@@ -445,6 +445,13 @@ defmodule NoizuPromptLinguaWeb.SSOControllerTest do
         # Collision on the picked port: recurse with a new draw.
         :erlang.garbage_collect()
         start_oidc_stack()
+
+      {:error, {:shutdown, {:failed_to_start_child, :listener, {:error, :eaddrinuse}}}} ->
+        # Same collision, wrapped: Bandit sometimes surfaces the listener's
+        # :eaddrinuse through its supervisor-child shutdown tuple (seen on
+        # CI) — retry instead of crashing the test.
+        :erlang.garbage_collect()
+        start_oidc_stack()
     end
   end
 
