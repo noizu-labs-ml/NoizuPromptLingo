@@ -23,6 +23,8 @@ defmodule NoizuPromptLingua.Domains.Personas do
   def get(id), do: Repo.get(Persona, id)
 
   @doc "Resolve an id or (org-scoped) slug to a persona."
+  def resolve(_org_id, nil), do: nil
+
   def resolve(org_id, id_or_slug) do
     case NoizuPromptLingua.UUID.cast(id_or_slug) do
       {:ok, uuid} ->

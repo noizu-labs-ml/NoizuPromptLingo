@@ -335,6 +335,11 @@ defmodule NoizuPromptLingua.Domains.Chat do
   end
 
   # Replies to a message (threaded), oldest-first (read order within a thread).
+  # A nil parent id lists nothing — Ecto rejects `== ^nil` (use is_nil/1), and
+  # callers reaching here with nil mean "no thread", not "all roots"
+  # (ForwardReplies 500'd on a root message; ticket 998061d9).
+  def list_replies(nil), do: []
+
   def list_replies(message_id) do
     ChatMessage
     |> where([m], m.parent_message_id == ^message_id)

@@ -4,30 +4,46 @@ defmodule NoizuPromptLinguaWeb.CustomRoleController do
   alias NoizuPromptLingua.Schema.Organizations.CustomRole, as: RoleSchema
   alias NoizuPromptLingua.Schema.Organizations.CustomRolePermission, as: PermSchema
   alias NoizuPromptLingua.Authz
+  alias NoizuPromptLingua.Organizations
 
   import Ecto.Query
 
-  def index(conn, %{"org_id" => org_id}) do
-    user_id = get_user_id(conn)
-
-    case Authz.authorize(user_id, "organization", org_id, "viewer") do
-      {:ok, _} ->
-        roles =
-          NoizuPromptLingua.Repo.all(
-            from r in RoleSchema, where: r.organization_id == ^org_id and r.is_active == true
-          )
-
-        json(conn, %{roles: Enum.map(roles, &role_to_json/1)})
-
-      {:error, _} ->
-        conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
+  # The :org_id path segment may be a slug or a UUID — resolve BEFORE any
+  # Authz/schema query, which all expect the UUID (a raw slug is a
+  # QueryCastException 500; ticket 1bd065df). Unknown org folds to 404.
+  defp resolve_org(org_ref) do
+    case Organizations.resolve_org_id(org_ref) do
+      {:ok, org_id} -> {:ok, org_id}
+      _ -> {:error, :org_not_found}
     end
   end
 
-  def create(conn, %{"org_id" => org_id, "role" => role_params}) do
+  defp org_not_found(conn) do
+    conn |> put_status(:not_found) |> json(%{error: "Organization not found"})
+  end
+
+  def index(conn, %{"org_id" => org_ref}) do
     user_id = get_user_id(conn)
 
-    if Authz.check_permission(user_id, "organization", org_id, "organization:manage_settings") do
+    with {:ok, org_id} <- resolve_org(org_ref),
+         :ok <- require_viewer(user_id, org_id) do
+      roles =
+        NoizuPromptLingua.Repo.all(
+          from r in RoleSchema, where: r.organization_id == ^org_id and r.is_active == true
+        )
+
+      json(conn, %{roles: Enum.map(roles, &role_to_json/1)})
+    else
+      {:error, :org_not_found} -> org_not_found(conn)
+      :error -> conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
+    end
+  end
+
+  def create(conn, %{"org_id" => org_ref, "role" => role_params}) do
+    user_id = get_user_id(conn)
+
+    with {:ok, org_id} <- resolve_org(org_ref),
+         :ok <- require_settings_manager(user_id, org_id) do
       attrs = Map.put(role_params, "organization_id", org_id)
 
       case %RoleSchema{} |> RoleSchema.changeset(attrs) |> NoizuPromptLingua.Repo.insert() do
@@ -38,39 +54,41 @@ defmodule NoizuPromptLinguaWeb.CustomRoleController do
           conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
       end
     else
-      conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
+      {:error, :org_not_found} -> org_not_found(conn)
+      :error -> conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
     end
   end
 
-  def show(conn, %{"org_id" => org_id, "id" => role_id}) do
+  def show(conn, %{"org_id" => org_ref, "id" => role_id}) do
     user_id = get_user_id(conn)
 
-    case Authz.authorize(user_id, "organization", org_id, "viewer") do
-      {:ok, _} ->
-        case NoizuPromptLingua.Repo.one(
-               from r in RoleSchema, where: r.id == ^role_id and r.organization_id == ^org_id
-             ) do
-          nil ->
-            conn |> put_status(:not_found) |> json(%{error: "Role not found"})
+    with {:ok, org_id} <- resolve_org(org_ref),
+         :ok <- require_viewer(user_id, org_id) do
+      case NoizuPromptLingua.Repo.one(
+             from r in RoleSchema, where: r.id == ^role_id and r.organization_id == ^org_id
+           ) do
+        nil ->
+          conn |> put_status(:not_found) |> json(%{error: "Role not found"})
 
-          role ->
-            permissions =
-              NoizuPromptLingua.Repo.all(
-                from p in PermSchema, where: p.role_id == ^role_id, select: p.permission
-              )
+        role ->
+          permissions =
+            NoizuPromptLingua.Repo.all(
+              from p in PermSchema, where: p.role_id == ^role_id, select: p.permission
+            )
 
-            json(conn, %{role: Map.put(role_to_json(role), :permissions, permissions)})
-        end
-
-      {:error, _} ->
-        conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
+          json(conn, %{role: Map.put(role_to_json(role), :permissions, permissions)})
+      end
+    else
+      {:error, :org_not_found} -> org_not_found(conn)
+      :error -> conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
     end
   end
 
-  def update(conn, %{"org_id" => org_id, "id" => role_id, "role" => role_params}) do
+  def update(conn, %{"org_id" => org_ref, "id" => role_id, "role" => role_params}) do
     user_id = get_user_id(conn)
 
-    if Authz.check_permission(user_id, "organization", org_id, "organization:manage_settings") do
+    with {:ok, org_id} <- resolve_org(org_ref),
+         :ok <- require_settings_manager(user_id, org_id) do
       case NoizuPromptLingua.Repo.one(
              from r in RoleSchema, where: r.id == ^role_id and r.organization_id == ^org_id
            ) do
@@ -89,14 +107,16 @@ defmodule NoizuPromptLinguaWeb.CustomRoleController do
           end
       end
     else
-      conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
+      {:error, :org_not_found} -> org_not_found(conn)
+      :error -> conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
     end
   end
 
-  def delete(conn, %{"org_id" => org_id, "id" => role_id}) do
+  def delete(conn, %{"org_id" => org_ref, "id" => role_id}) do
     user_id = get_user_id(conn)
 
-    if Authz.check_permission(user_id, "organization", org_id, "organization:manage_settings") do
+    with {:ok, org_id} <- resolve_org(org_ref),
+         :ok <- require_settings_manager(user_id, org_id) do
       case NoizuPromptLingua.Repo.one(
              from r in RoleSchema, where: r.id == ^role_id and r.organization_id == ^org_id
            ) do
@@ -117,14 +137,16 @@ defmodule NoizuPromptLinguaWeb.CustomRoleController do
           end
       end
     else
-      conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
+      {:error, :org_not_found} -> org_not_found(conn)
+      :error -> conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
     end
   end
 
-  def add_permission(conn, %{"org_id" => org_id, "role_id" => role_id, "permission" => permission}) do
+  def add_permission(conn, %{"org_id" => org_ref, "role_id" => role_id, "permission" => permission}) do
     user_id = get_user_id(conn)
 
-    if Authz.check_permission(user_id, "organization", org_id, "organization:manage_settings") do
+    with {:ok, org_id} <- resolve_org(org_ref),
+         :ok <- require_settings_manager(user_id, org_id) do
       case %PermSchema{}
            |> PermSchema.changeset(%{role_id: role_id, permission: permission})
            |> NoizuPromptLingua.Repo.insert() do
@@ -140,18 +162,20 @@ defmodule NoizuPromptLinguaWeb.CustomRoleController do
           conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
       end
     else
-      conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
+      {:error, :org_not_found} -> org_not_found(conn)
+      :error -> conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
     end
   end
 
   def remove_permission(conn, %{
-        "org_id" => org_id,
+        "org_id" => org_ref,
         "role_id" => role_id,
         "permission_id" => perm_id
       }) do
     user_id = get_user_id(conn)
 
-    if Authz.check_permission(user_id, "organization", org_id, "organization:manage_settings") do
+    with {:ok, org_id} <- resolve_org(org_ref),
+         :ok <- require_settings_manager(user_id, org_id) do
       case NoizuPromptLingua.Repo.one(
              from p in PermSchema, where: p.id == ^perm_id and p.role_id == ^role_id
            ) do
@@ -163,7 +187,25 @@ defmodule NoizuPromptLinguaWeb.CustomRoleController do
           json(conn, %{message: "Permission removed"})
       end
     else
-      conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
+      {:error, :org_not_found} -> org_not_found(conn)
+      :error -> conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
+    end
+  end
+
+  # Same folds the actions used to get from Authz directly: viewer-minimum for
+  # reads, the manage_settings floor for writes — keyed on the RESOLVED uuid.
+  defp require_viewer(user_id, org_id) do
+    case Authz.authorize(user_id, "organization", org_id, "viewer") do
+      {:ok, _} -> :ok
+      _ -> :error
+    end
+  end
+
+  defp require_settings_manager(user_id, org_id) do
+    if Authz.check_permission(user_id, "organization", org_id, "organization:manage_settings") do
+      :ok
+    else
+      :error
     end
   end
 

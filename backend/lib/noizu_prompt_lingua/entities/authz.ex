@@ -39,14 +39,62 @@ defmodule NoizuPromptLingua.Authz do
     {{:contains, "manage_members"}, "admin"}
   ]
 
+  @doc """
+  Rank-gated permission check with a narrow policy overlay (ticket 72048c5d):
+  an EXPLICIT DENY in an effective policy document blocks regardless of the
+  role ladder (deny wins); an IMPLICIT policy deny (no statement matched)
+  defers to the ladder, and explicit allow remains ladder-governed (a separate
+  reviewed change) — so this stays consistent with `explain_permission/4`.
+  The policy documents are consulted only when the ladder already allows, so
+  the deny path adds a query only where it can change the verdict.
+  """
   def check_permission(user_id, resource_type, resource_id, action) do
     case get_user_role(user_id, resource_type, resource_id) do
       nil ->
         false
 
       role ->
-        required = required_role_for(action)
-        rank(role) <= rank(required)
+        ladder_allowed? = rank(role) <= rank(required_role_for(action))
+
+        if ladder_allowed? and
+             explicit_policy_deny?(
+               user_id,
+               resource_type,
+               resource_id,
+               action,
+               role
+             ) do
+          false
+        else
+          ladder_allowed?
+        end
+    end
+  end
+
+  # Deny-wins consult (ticket 72048c5d): evaluate the caller's effective policy
+  # documents and report whether an explicit DENY statement matched. Only the
+  # matched-deny verdict counts — implicit denies defer to the ladder. Same
+  # string-key envelope re-keying as explain_permission/4 (PolicyEvaluator
+  # reads "policy_document" => %{"statements" => ...}).
+  defp explicit_policy_deny?(user_id, resource_type, resource_id, action, role) do
+    documents =
+      get_effective_policies(user_id, resource_type, resource_id)
+      |> Enum.map(fn p -> %{"policy_document" => p.policy_document} end)
+
+    # the evaluator's action matching is string-shaped; check_permission/4
+    # accepts atom actions (e.g. :org_view)
+    action = to_string(action)
+
+    case NoizuPromptLingua.Authz.PolicyEvaluator.evaluate(
+           documents,
+           action,
+           resource_type,
+           resource_id,
+           role,
+           %{user_id: user_id}
+         ) do
+      %{reason: :explicit_deny} -> true
+      _ -> false
     end
   end
 

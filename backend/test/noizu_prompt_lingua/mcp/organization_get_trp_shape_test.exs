@@ -44,4 +44,30 @@ defmodule NoizuPromptLingua.MCP.OrganizationGetTrpShapeTest do
     assert {:error, "Organization 'nope' not found"} =
              OrganizationGet.call(%{"organization" => "nope"}, %{})
   end
+
+  test "unconfigured TRP renders the graceful error family (no crash)" do
+    # Live regression (stage, 2026-09-04): with TRP un-activated the client
+    # returns `{:error, :trp_not_configured}` where the handler expected a
+    # shaped org map — BadMapError → opaque "Tool execution failed". The
+    # handler must render the error family instead.
+    prev_trp = Application.get_env(:noizu_prompt_lingua, :trp)
+    # Empty strings defeat Config.configured? even if the host exports
+    # TRP_API_BASE_URL (the app-env value wins over the System fallback).
+    Application.put_env(:noizu_prompt_lingua, :trp, base_url: "", shared_key: "")
+    Cache.clear()
+
+    # Local row so ref resolution reaches the TRP leg instead of nil-ing out.
+    org_uuid = Ecto.UUID.generate()
+
+    %NoizuPromptLingua.Schema.Organizations.Organization{id: org_uuid, name: "trp-off", slug: "trp-off-#{System.unique_integer([:positive])}"}
+    |> NoizuPromptLingua.Repo.insert!()
+
+    try do
+      assert {:error, "PM backend not configured"} =
+               OrganizationGet.call(%{"organization" => org_uuid}, %{})
+    after
+      if prev_trp, do: Application.put_env(:noizu_prompt_lingua, :trp, prev_trp)
+      Cache.clear()
+    end
+  end
 end

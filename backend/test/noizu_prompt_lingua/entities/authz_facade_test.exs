@@ -86,6 +86,94 @@ defmodule NoizuPromptLingua.AuthzFacadeTest do
     assert {:error, :insufficient_role} = Authz.authorize(user.id, "project", rid, "admin")
   end
 
+  # ── check_permission's narrow policy overlay (ticket 72048c5d) ────────────
+
+  defp attach_group_policy!(group_name, statements) do
+    policy =
+      %Policy{
+        name: "overlay-#{System.unique_integer([:positive])}",
+        is_active: true,
+        policy_document: %{"statements" => statements}
+      }
+      |> Repo.insert!()
+
+    group = Repo.get_by!(Group, name: group_name, is_system: true)
+
+    %GroupPolicy{group_id: group.id, policy_id: policy.id, priority: 1}
+    |> Repo.insert!()
+
+    policy
+  end
+
+  test "check_permission with no policies is the pure role ladder", %{
+    user: user,
+    resource_id: rid
+  } do
+    add_membership!(user.id, rid, "member")
+
+    # member floor passes, admin floor denies — unchanged by the deny-wins fix
+    assert Authz.check_permission(user.id, "project", rid, "item.update")
+    refute Authz.check_permission(user.id, "project", rid, "item.delete")
+  end
+
+  test "check_permission: an explicit policy DENY blocks a ladder-allowed action", %{
+    user: user,
+    resource_id: rid
+  } do
+    add_membership!(user.id, rid, "member")
+    assert Authz.check_permission(user.id, "project", rid, "item.update")
+
+    attach_group_policy!("member", [
+      %{"effect" => "deny", "actions" => ["item.update"], "resources" => ["project:#{rid}"]}
+    ])
+
+    # deny wins over the ladder
+    refute Authz.check_permission(user.id, "project", rid, "item.update")
+
+    # atom actions deny too (evaluator matching is string-shaped)
+    attach_group_policy!("member", [
+      %{"effect" => "deny", "actions" => ["org_view"], "resources" => ["project:#{rid}"]}
+    ])
+
+    refute Authz.check_permission(user.id, "project", rid, :org_view)
+
+    # ...and explain agrees (same engine, no probe split)
+    assert %{allowed: false, reason: :explicit_deny} =
+             Authz.explain_permission(user.id, "project", rid, "item.update")
+  end
+
+  test "check_permission: an explicit ALLOW does not bypass the ladder", %{
+    user: user,
+    resource_id: rid
+  } do
+    add_membership!(user.id, rid, "member")
+
+    attach_group_policy!("member", [
+      %{"effect" => "allow", "actions" => ["item.delete"], "resources" => ["project:#{rid}"]}
+    ])
+
+    # explicit-allow-by-policy is out of scope for check (separate reviewed
+    # change): the admin floor still governs.
+    refute Authz.check_permission(user.id, "project", rid, "item.delete")
+  end
+
+  test "check_permission: an IMPLICIT policy deny defers to the role ladder", %{
+    user: user,
+    resource_id: rid
+  } do
+    add_membership!(user.id, rid, "member")
+
+    # a policy that matches NEITHER action — its silence is an implicit deny
+    attach_group_policy!("member", [
+      %{"effect" => "allow", "actions" => ["totally.other"], "resources" => ["project:#{rid}"]}
+    ])
+
+    assert Authz.check_permission(user.id, "project", rid, "item.update")
+
+    assert %{allowed: true, reason: :role_allow} =
+             Authz.explain_permission(user.id, "project", rid, "item.update")
+  end
+
   test "explain_permission for members vs outsiders", %{user: user, resource_id: rid} do
     # outsider shape
     explain = Authz.explain_permission(user.id, "project", rid, "item.update")

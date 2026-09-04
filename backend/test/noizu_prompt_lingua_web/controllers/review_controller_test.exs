@@ -155,4 +155,216 @@ defmodule NoizuPromptLinguaWeb.ReviewControllerTest do
              |> json_response(404)
     end
   end
+
+  # ── W5A coverage extension: index/create/show/complete + authz arms ───────
+
+  describe "GET /reviews (index)" do
+    test "lists org reviews with json shape", %{conn: conn, org_id: org_id} do
+      %{"reviews" => reviews} =
+        conn |> get("/api/v1/organizations/#{org_id}/reviews") |> json_response(200)
+
+      assert [%{"title" => "Initial", "status" => status}] = reviews
+      assert status in ["open", "in_progress"]
+      assert Map.has_key?(reviews |> hd(), "reviewer_persona")
+
+      # status filter that matches nothing still 200 w/ empty list
+      %{"reviews" => []} =
+        conn
+        |> get("/api/v1/organizations/#{org_id}/reviews", %{status: "completed"})
+        |> json_response(200)
+    end
+
+    test "unknown org -> 404; non-member -> 403", %{conn: conn, org_id: org_id} do
+      assert conn
+             |> get("/api/v1/organizations/no-such-rev-org/reviews")
+             |> json_response(404)
+             |> Map.fetch!("error") =~ "Organization not found"
+
+      %{access_token: outsider} = setup_user_and_token()
+
+      assert conn
+             |> authenticated_conn(outsider)
+             |> get("/api/v1/organizations/#{org_id}/reviews")
+             |> json_response(403)
+             |> Map.fetch!("error") =~ "Not a member"
+    end
+
+    test "viewer-role member can index but is denied member-only create",
+         %{conn: conn, org_id: org_id} do
+      # A second user whose membership is viewer-only: index (viewer) passes,
+      # create (member) hits the insufficient-role catch-all.
+      %{access_token: viewer_token, user: viewer_user} = setup_user_and_token()
+
+      {:ok, _} =
+        NoizuPromptLingua.Authz.ScopedMemberships.add_member(
+          "organization",
+          org_id,
+          viewer_user.id,
+          "viewer"
+        )
+
+      viewer_conn = authenticated_conn(conn, viewer_token)
+
+      assert %{"reviews" => _} =
+               viewer_conn
+               |> get("/api/v1/organizations/#{org_id}/reviews")
+               |> json_response(200)
+
+      assert %{"error" => "Insufficient permissions"} =
+               viewer_conn
+               |> post("/api/v1/organizations/#{org_id}/reviews", %{
+                 review: %{artifact_id: Ecto.UUID.generate(), reviewer_persona: "x", title: "T"}
+               })
+               |> json_response(403)
+    end
+  end
+
+  describe "POST /reviews (create)" do
+    test "happy path creates a review scoped to the org", %{
+      conn: conn,
+      org_id: org_id,
+      artifact: a
+    } do
+      rev = List.first(a.revisions)
+
+      body =
+        conn
+        |> post("/api/v1/organizations/#{org_id}/reviews", %{
+          review: %{
+            artifact_id: a.id,
+            revision_id: rev.id,
+            reviewer_persona: "soren-backend",
+            title: "HTTP Created"
+          }
+        })
+        |> json_response(201)
+        |> Map.fetch!("review")
+
+      assert body["title"] == "HTTP Created"
+      assert body["organization_id"] == org_id
+      assert body["artifact_id"] == a.id
+      assert body["status"] == "open"
+    end
+
+    test "artifact from another org -> 422", %{conn: conn, org_id: org_id} do
+      other =
+        post(conn, "/api/v1/organizations", %{
+          organization: %{slug: "rev-org5-#{System.unique_integer([:positive])}", name: "O5"}
+        })
+
+      other_org = json_response(other, 201)["organization"]["id"]
+
+      {:ok, foreign} =
+        Artifacts.create(%{
+          organization_id: other_org,
+          kind: "document",
+          title: "F",
+          mime_type: "text/markdown",
+          content: "b"
+        })
+
+      assert %{"error" => "Artifact does not belong to this organization"} =
+               conn
+               |> post("/api/v1/organizations/#{org_id}/reviews", %{
+                 review: %{
+                   artifact_id: foreign.id,
+                   revision_id: List.first(foreign.revisions).id,
+                   reviewer_persona: "x",
+                   title: "T"
+                 }
+               })
+               |> json_response(422)
+    end
+
+    test "missing required fields -> 422 errors", %{conn: conn, org_id: org_id} do
+      {:ok, a} =
+        Artifacts.create(%{
+          organization_id: org_id,
+          kind: "document",
+          title: "D",
+          mime_type: "text/markdown",
+          content: "b"
+        })
+
+      assert json_response(
+               post(conn, "/api/v1/organizations/#{org_id}/reviews", %{
+                 review: %{artifact_id: a.id}
+               }),
+               422
+             )
+             |> Map.has_key?("errors")
+    end
+  end
+
+  describe "GET /reviews/:id (show)" do
+    test "returns review with comments and overlays collections", %{
+      conn: conn,
+      org_id: org_id,
+      review: r
+    } do
+      body = conn |> get(path(org_id, r.id)) |> json_response(200)
+
+      assert body["review"]["id"] == r.id
+      assert body["comments"] == []
+      assert body["overlays"] == []
+    end
+
+    test "404 for missing review and cross-org review", %{conn: conn, org_id: org_id, review: r} do
+      assert %{"error" => "Review not found"} =
+               conn |> get(path(org_id, Ecto.UUID.generate())) |> json_response(404)
+
+      other =
+        post(conn, "/api/v1/organizations", %{
+          organization: %{slug: "rev-org6-#{System.unique_integer([:positive])}", name: "O6"}
+        })
+
+      other_org = json_response(other, 201)["organization"]["id"]
+
+      assert %{"error" => "Review not found"} =
+               conn |> get(path(other_org, r.id)) |> json_response(404)
+    end
+  end
+
+  describe "POST /reviews/:id/complete" do
+    test "finalizes with verdict + summary", %{conn: conn, org_id: org_id, review: r} do
+      body =
+        conn
+        |> post("/api/v1/organizations/#{org_id}/reviews/#{r.id}/complete", %{
+          "verdict" => "approved",
+          "summary" => "all good"
+        })
+        |> json_response(200)
+        |> Map.fetch!("review")
+
+      assert body["status"] == "completed"
+      assert body["verdict"] == "approved"
+      assert body["summary"] == "all good"
+    end
+
+    test "invalid verdict -> 422", %{conn: conn, org_id: org_id, review: r} do
+      assert json_response(
+               post(conn, "/api/v1/organizations/#{org_id}/reviews/#{r.id}/complete", %{
+                 "verdict" => "lgtm"
+               }),
+               422
+             )
+             |> Map.has_key?("errors")
+    end
+
+    test "cross-org complete -> 404", %{conn: conn, org_id: org_id, review: r} do
+      other =
+        post(conn, "/api/v1/organizations", %{
+          organization: %{slug: "rev-org7-#{System.unique_integer([:positive])}", name: "O7"}
+        })
+
+      other_org = json_response(other, 201)["organization"]["id"]
+
+      assert %{"error" => "Review not found"} =
+               conn
+               |> post("/api/v1/organizations/#{other_org}/reviews/#{r.id}/complete", %{
+                 "verdict" => "approved"
+               })
+               |> json_response(404)
+    end
+  end
 end

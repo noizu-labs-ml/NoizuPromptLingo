@@ -236,8 +236,7 @@ defmodule NoizuPromptLinguaWeb.ControllerTailSweepTest do
 
   describe "VoiceAssistantController" do
     test "approval_script builds the ticket draft for a member", %{conn: conn, org: org} do
-      # NB: org UUID in path — the controller feeds the raw segment into Authz
-      # (a slug here is a QueryCastException 500; flagged in the W4B report).
+      # Org UUID in path; slug paths resolve too (see the slug regression below).
       resp =
         post(conn, "/api/v1/organizations/#{org.id}/assistant/approval-script", %{
           "transcript" => "file an expense report for the team lunch"
@@ -249,10 +248,35 @@ defmodule NoizuPromptLinguaWeb.ControllerTailSweepTest do
       assert resp["execution_enabled"] == false
     end
 
+    test "approval_script resolves a SLUG org_id (was a QueryCastException 500)", %{
+      conn: conn,
+      org: org
+    } do
+      resp =
+        post(conn, "/api/v1/organizations/#{org.slug}/assistant/approval-script", %{
+          "transcript" => "file an expense report"
+        })
+        |> json_response(200)
+
+      # downstream payloads carry the RESOLVED uuid
+      assert resp["preview"]["organization"] == org.id
+    end
+
+    test "approval_script unknown org -> 404 (was 500)", %{conn: conn} do
+      conn =
+        post(
+          conn,
+          "/api/v1/organizations/tail-no-such-org-#{uniq()}/assistant/approval-script",
+          %{
+            "transcript" => "x"
+          }
+        )
+
+      assert conn.status == 404
+    end
+
     test "non-member -> 403", %{conn: conn, org: org} do
-      # A fresh session whose user holds no membership in this org. (A SLUG
-      # org_id here QueryCastException-500s instead of 403 — the controller
-      # feeds the raw path segment to Authz; flagged in the W4B report.)
+      # A fresh session whose user holds no membership in this org.
       %{access_token: t2} = setup_user_and_token()
 
       conn =
@@ -391,8 +415,7 @@ defmodule NoizuPromptLinguaWeb.ControllerTailSweepTest do
 
       {:ok, _} = ScopedMemberships.add_member("organization", org.id, user.id, "member")
 
-      # NB: org UUID in path — the controller feeds the raw segment into Authz
-      # (a slug here is a QueryCastException 500; flagged in the W4B report).
+      # Org UUID in path; slug paths resolve too (see the slug regression below).
       base = "/api/v1/organizations/#{org.id}/roles"
 
       # index (viewer is enough)
@@ -425,6 +448,28 @@ defmodule NoizuPromptLinguaWeb.ControllerTailSweepTest do
         })
 
       assert conn.status == 403
+    end
+
+    test "custom role index resolves a SLUG org_id (was a QueryCastException 500)", %{
+      conn: conn,
+      user: user
+    } do
+      org =
+        Repo.insert!(%Organization{
+          name: "Tail Slug Role Org",
+          slug: "tail-slug-role-org-" <> uniq()
+        })
+
+      {:ok, _} = ScopedMemberships.add_member("organization", org.id, user.id, "member")
+
+      assert is_map(json_response(get(conn, "/api/v1/organizations/#{org.slug}/roles"), 200))
+    end
+
+    test "custom role unknown org slug -> 404 (was 500)", %{conn: conn} do
+      conn = get(conn, "/api/v1/organizations/tail-no-such-org-#{uniq()}/roles")
+
+      assert conn.status == 404
+      assert json_response(conn, 404)["error"] =~ "Organization not found"
     end
   end
 

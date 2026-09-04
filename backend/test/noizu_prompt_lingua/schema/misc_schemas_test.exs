@@ -309,9 +309,17 @@ defmodule NoizuPromptLingua.Schema.MiscSchemasTest do
              link_type: "relates_to"
            })
 
-    # NOTE (pinned): entity_type is NOT validated against the @entity_types
-    # list — junk types pass the changeset (only link_type is inclusion-checked)
+    # entity_type is inclusion-checked over the marketing enum PLUS the
+    # Ticket.FromEntity subject vocabulary (junk now fails the changeset →
+    # 422 at the API layer; ticket ae01aad4 #5)
     assert valid?(TicketEntityLink, %{
+             ticket_id: t1,
+             entity_type: "chat_message",
+             entity_id: Ecto.UUID.generate(),
+             link_type: "references"
+           })
+
+    refute valid?(TicketEntityLink, %{
              ticket_id: t1,
              entity_type: "ufo",
              entity_id: Ecto.UUID.generate(),
