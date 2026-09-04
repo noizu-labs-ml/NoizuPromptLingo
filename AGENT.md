@@ -1,6 +1,14 @@
-# AGENT.md
+# AGENT.md — NoizuPromptLingo
 
-This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
+Guidance for **Codex**, **Grok**, **Cursor**, and other `AGENTS.md` / `AGENT.md` tools.
+
+Claude Code loads [CLAUDE.md](./CLAUDE.md). Same policy; this file is the harness-shaped sibling (numbered MUST first, markdown headings). If both this file and a parent `AGENTS.md` load, **this file wins on conflict**.
+
+## MUST (every turn)
+
+1. **PRs target `develop`.** Never merge or push `main` (CI/CD-only release path).
+
+## Identity
 
 ---
 
@@ -295,3 +303,9 @@ Save shared prompt templates to `./sub-agent-prompts/{task-name}.md`. Test with 
 ---
 
 *End of AGENTS.md*
+
+## Branch & PR Policy
+
+- Submodules sit on **`develop`** — keep your checkout on `develop`.
+- All PRs target **`develop`** (feature/bug/task branches fork from `develop`).
+- **`main` is CI/CD-only**: CI/CD automation performs all merges into `main` (release path). Never merge to or push `main` by hand.
