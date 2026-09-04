@@ -65,6 +65,12 @@ defmodule NoizuPromptLinguaWeb.MockMCPControllerTest do
           "junksrc" ->
             "defModule oops("
 
+          # F3: module-lifecycle /test — Agent.module_tests asks for a JSON
+          # array of argument objects; served off the local stub so the path
+          # never leaves the machine (CI has no provider keys).
+          "moduletest" ->
+            Jason.encode!([%{"text" => "stub"}])
+
           _ ->
             "unmatched"
         end
@@ -679,8 +685,13 @@ defmodule NoizuPromptLinguaWeb.MockMCPControllerTest do
   # ── modules (forge / review) ──────────────────────────────────────────────
 
   describe "module endpoints" do
-    setup %{conn: conn, org_id: org_id} do
-      {201, resp} = create_def(conn, org_id)
+    setup %{conn: conn, org_id: org_id, port: port} do
+      # F3: wire the module lifecycle's LLM calls to the local stub — the
+      # lifecycle /test path ran `Agent.module_tests/2` through the GenAI
+      # library default (real OpenAI) and exploded with a RequestError in CI
+      # (no provider keys there).
+      llm_id = create_llm(conn, org_id, "moduletest", port: port)
+      {201, resp} = create_def(conn, org_id, %{"active_llm_id" => llm_id})
       slug = json_response(resp, 201)["definition"]["slug"]
       {:ok, slug: slug}
     end

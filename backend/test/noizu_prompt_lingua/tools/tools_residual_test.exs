@@ -293,12 +293,21 @@ defmodule NoizuPromptLingua.Tools.ToolsResidualTest do
 
   test "WebSearch honors the provider app env" do
     prev = Application.get_env(:noizu_prompt_lingua, :web_search_provider)
+
     Application.put_env(:noizu_prompt_lingua, :web_search_provider, :searxng)
 
-    on_exit(fn ->
-      if prev, do: Application.put_env(:noizu_prompt_lingua, :web_search_provider, prev)
-    end)
-
-    assert {:error, :unknown_provider} = WebSearch.search("query")
+    # F1 (CI round-2 gate): restore SYNCHRONOUSLY and unconditionally. The old
+    # on_exit ran `if prev` — with nil prev (the normal state) the :searxng
+    # value leaked into every later suite (ControllerTailSweepTest's
+    # unconfigured-provider pin then took the configured path and saw 502).
+    try do
+      assert {:error, :unknown_provider} = WebSearch.search("query")
+    after
+      if is_nil(prev) do
+        Application.delete_env(:noizu_prompt_lingua, :web_search_provider)
+      else
+        Application.put_env(:noizu_prompt_lingua, :web_search_provider, prev)
+      end
+    end
   end
 end

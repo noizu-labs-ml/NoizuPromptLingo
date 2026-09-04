@@ -10,13 +10,15 @@ defmodule NoizuPromptLingua.MCP.MCPResidualTest do
   alias NoizuPromptLingua.MCP.SessionManifest
   alias NoizuPromptLingua.MCP.Urls
 
+  # F2 (CI round-2 gate): the old on_exit restore ran `if prev` — with the
+  # normal nil prev (the impl env is unset outside these tests) NOTHING was
+  # restored, so :effective_toolset_impl stayed poisoned (Not.A.Real.Module /
+  # RaisingEffectiveToolset) for every LATER suite; SessionManifest silently
+  # degraded to defaults and the parity suite's client-layer pin failed far
+  # from the cause. Puts now restore synchronously in an after-block, and the
+  # on_exit backstop deletes unconditionally (unset = the documented default).
   setup do
-    prev = Application.get_env(:noizu_prompt_lingua, :effective_toolset_impl)
-
-    on_exit(fn ->
-      if prev, do: Application.put_env(:noizu_prompt_lingua, :effective_toolset_impl, prev)
-    end)
-
+    on_exit(fn -> Application.delete_env(:noizu_prompt_lingua, :effective_toolset_impl) end)
     :ok
   end
 
@@ -27,19 +29,39 @@ defmodule NoizuPromptLingua.MCP.MCPResidualTest do
   end
 
   test "generate falls back to defaults when the effective-toolset impl is absent" do
+    prev = Application.get_env(:noizu_prompt_lingua, :effective_toolset_impl)
     Application.put_env(:noizu_prompt_lingua, :effective_toolset_impl, Not.A.Real.Module)
 
-    %{tools: tools} = SessionManifest.generate(%Noizu.MCP.Ctx{server: NoizuPromptLingua.MCP})
-    assert tools != []
-    assert Enum.all?(tools, &(&1.included == true and &1.enabled == true and &1.visible == true))
+    try do
+      %{tools: tools} = SessionManifest.generate(%Noizu.MCP.Ctx{server: NoizuPromptLingua.MCP})
+      assert tools != []
+
+      assert Enum.all?(
+               tools,
+               &(&1.included == true and &1.enabled == true and &1.visible == true)
+             )
+    after
+      restore_impl_env(prev)
+    end
   end
 
   test "generate survives an impl whose resolve/4 raises" do
+    prev = Application.get_env(:noizu_prompt_lingua, :effective_toolset_impl)
     Application.put_env(:noizu_prompt_lingua, :effective_toolset_impl, RaisingEffectiveToolset)
 
-    %{tools: tools} = SessionManifest.generate(%Noizu.MCP.Ctx{server: NoizuPromptLingua.MCP})
-    assert tools != []
+    try do
+      %{tools: tools} = SessionManifest.generate(%Noizu.MCP.Ctx{server: NoizuPromptLingua.MCP})
+      assert tools != []
+    after
+      restore_impl_env(prev)
+    end
   end
+
+  defp restore_impl_env(nil),
+    do: Application.delete_env(:noizu_prompt_lingua, :effective_toolset_impl)
+
+  defp restore_impl_env(prev),
+    do: Application.put_env(:noizu_prompt_lingua, :effective_toolset_impl, prev)
 
   test "scope-bound ctx with an unknown scope degrades to an empty universe" do
     %{tools: tools} =
