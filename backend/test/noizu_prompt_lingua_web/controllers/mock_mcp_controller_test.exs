@@ -797,11 +797,19 @@ defmodule NoizuPromptLinguaWeb.MockMCPControllerTest do
 
       base = "#{@base}/#{org_id}/mock-mcp/#{slug}/modules/ping"
 
-      assert %{"module" => %{"status" => "approved"}} =
-               json_response(post(conn, base <> "/approve"), 200)
+      # approve + test re-compile the stored module; silence the compiler's
+      # expected redefinition warning for the pair of calls.
+      Code.compiler_options(ignore_module_conflict: true)
 
-      out = json_response(post(conn, base <> "/test"), 200)
-      assert is_list(out["results"])
+      try do
+        assert %{"module" => %{"status" => "approved"}} =
+                 json_response(post(conn, base <> "/approve"), 200)
+
+        out = json_response(post(conn, base <> "/test"), 200)
+        assert is_list(out["results"])
+      after
+        Code.compiler_options(ignore_module_conflict: false)
+      end
 
       assert %{"ok" => true} = json_response(delete(conn, base), 200)
 

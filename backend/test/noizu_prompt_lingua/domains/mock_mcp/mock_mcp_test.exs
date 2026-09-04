@@ -182,4 +182,100 @@ defmodule NoizuPromptLingua.Domains.MockMCPTest do
       assert log.latency_ms == 42
     end
   end
+
+  # ── surface schema persistence + module lifecycle + provisioning ─────────
+
+  describe "set_surface/2 with a backing schema" do
+    test "persists schema_json for the provisioner", %{org_id: org_id} do
+      {:ok, def_} = MockMCP.create(valid_attrs(org_id))
+
+      surface = %{
+        "tools" => [%{"name" => "t1"}],
+        "schema" => %{"postgres" => ["CREATE TABLE t (id int)"], "weaviate" => []}
+      }
+
+      assert {:ok, updated} = MockMCP.set_surface(def_.id, surface)
+      assert updated.schema_json == %{"postgres" => ["CREATE TABLE t (id int)"], "weaviate" => []}
+    end
+
+    test "surface without a schema leaves schema_json untouched", %{org_id: org_id} do
+      {:ok, def_} = MockMCP.create(valid_attrs(org_id))
+
+      assert {:ok, updated} = MockMCP.set_surface(def_.id, %{"tools" => []})
+      assert updated.schema_json == nil
+    end
+  end
+
+  describe "module entries" do
+    test "put_module/get_module/delete_module round trip", %{org_id: org_id} do
+      {:ok, def_} = MockMCP.create(valid_attrs(org_id))
+
+      entry = %{"tool" => "ping", "status" => "draft", "source" => ":ok"}
+
+      assert {:error, :not_found} = MockMCP.put_module(Ecto.UUID.generate(), entry)
+
+      assert {:ok, _} = MockMCP.put_module(def_.id, entry)
+      assert %{"tool" => "ping"} = MockMCP.get_module(MockMCP.get(def_.id), "ping")
+      assert MockMCP.get_module(MockMCP.get(def_.id), "ghost") == nil
+
+      # put replaces by tool name, preserving other entries
+      assert {:ok, _} = MockMCP.put_module(def_.id, %{"tool" => "pong", "status" => "draft"})
+      assert {:ok, _} = MockMCP.put_module(def_.id, %{"tool" => "ping", "status" => "approved"})
+
+      updated = MockMCP.get(def_.id)
+      assert length(updated.modules_json) == 2
+      assert %{"status" => "approved"} = MockMCP.get_module(updated, "ping")
+
+      assert {:ok, _} = MockMCP.delete_module(def_.id, "ping")
+      assert MockMCP.get_module(MockMCP.get(def_.id), "ping") == nil
+      assert {:error, :not_found} = MockMCP.delete_module("no-such-slug", "ping")
+    end
+  end
+
+  describe "schema_name/1" do
+    test "cleans a slug into a safe schema identifier" do
+      # NOTE: punctuation becomes a separator, so a trailing bang yields a
+      # trailing underscore — pinned current behavior.
+      assert MockMCP.schema_name("Team A!") == "mockmcp_team_a_"
+      assert MockMCP.schema_name("weather") == "mockmcp_weather"
+    end
+  end
+
+  describe "provision_db/1" do
+    setup %{org_id: org_id} do
+      {:ok, def_} = MockMCP.create(valid_attrs(org_id))
+      {:ok, def_: def_}
+    end
+
+    test "unknown slug -> {:error, :not_found}" do
+      assert {:error, :not_found} = MockMCP.provision_db("no-such-slug")
+    end
+
+    test "provisions a schema and is idempotent", %{def_: def_} do
+      assert {:ok, provisioned} = MockMCP.provision_db(def_.id)
+      assert provisioned.db_provisioned
+      assert provisioned.db_name == MockMCP.schema_name(def_.slug)
+
+      # second call short-circuits on db_provisioned
+      assert {:ok, again} = MockMCP.provision_db(provisioned.slug)
+      assert again.id == provisioned.id
+    end
+
+    test "broken design DDL -> {:error, ...} and no provisioning flag", %{org_id: org_id} do
+      {:ok, def_} =
+        MockMCP.create(
+          valid_attrs(org_id, %{schema_json: %{"postgres" => ["CREATE TABLE oops("]}})
+        )
+
+      assert {:error, reason} = MockMCP.provision_db(def_.id)
+      assert reason =~ "schema DDL failed"
+
+      refute MockMCP.get(def_.id).db_provisioned
+    end
+
+    test "provisions cleanly with no designed schema at all", %{def_: def_} do
+      assert {:ok, provisioned} = MockMCP.provision_db(def_.id)
+      assert provisioned.db_provisioned
+    end
+  end
 end
