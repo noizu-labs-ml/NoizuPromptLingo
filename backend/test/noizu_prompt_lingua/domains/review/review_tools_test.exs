@@ -32,8 +32,6 @@ defmodule NoizuPromptLingua.Domains.Review.ToolsTest do
     {:ok, org_id: org_id, org_slug: org_slug, artifact_id: artifact_id, revision_id: revision_id}
   end
 
-  defp uniq(suffix), do: "#{suffix}-#{System.unique_integer([:positive])}"
-
   defp create_review(org_slug, artifact_id, revision_id) do
     {:ok, %{id: id}} =
       ReviewCreate.call(

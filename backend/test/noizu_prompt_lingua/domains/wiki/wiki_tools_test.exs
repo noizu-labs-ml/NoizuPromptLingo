@@ -193,7 +193,7 @@ defmodule NoizuPromptLingua.Domains.Wiki.ToolsTest do
     space_id = create_space(org_slug)
     create_page(org_slug, space_id)
 
-    assert {:ok, %{tools: _} = overview} = Overview.call(%{"organization" => org_slug}, %{})
+    assert {:ok, %{tools: _}} = Overview.call(%{"organization" => org_slug}, %{})
   end
 
   defp insert_org do

@@ -122,7 +122,7 @@ defmodule NoizuPromptLingua.Domains.ReviewsTest do
     assert counts["open"] >= 1
   end
 
-  test "create requires organization, artifact, revision and reviewer_persona", %{org_id: org_id} do
+  test "create requires organization, artifact, revision and reviewer_persona", %{org_id: _org_id} do
     assert {:error, cs} = Reviews.create(%{title: "incomplete"})
     for field <- [:organization_id, :artifact_id, :revision_id, :reviewer_persona] do
       assert Keyword.has_key?(cs.errors, field)

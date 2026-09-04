@@ -29,7 +29,7 @@ defmodule NoizuPromptLingua.Domains.Personas.ToolsTest do
 
   defp uniq(suffix), do: "#{suffix}-#{System.unique_integer([:positive])}"
 
-  defp create_persona(org_slug, name \\ "P") do
+  defp create_persona(org_slug, name) do
     slug = uniq("pers")
 
     {:ok, %{id: id}} =
