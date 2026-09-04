@@ -50,7 +50,13 @@ defmodule NoizuPromptLingua.Domains.Wiki.ToolsTest do
 
     {:ok, %{id: id}} =
       PageCreate.call(
-        %{"organization" => org_slug, "space" => space_id, "slug" => slug, "title" => "Home", "body" => "hello"},
+        %{
+          "organization" => org_slug,
+          "space" => space_id,
+          "slug" => slug,
+          "title" => "Home",
+          "body" => "hello"
+        },
         %{}
       )
 
@@ -63,7 +69,10 @@ defmodule NoizuPromptLingua.Domains.Wiki.ToolsTest do
     slug = uniq("space")
 
     assert {:ok, %{id: id, slug: ^slug, name: "Handbook"}} =
-             SpaceCreate.call(%{"organization" => org_slug, "slug" => slug, "name" => "Handbook"}, %{})
+             SpaceCreate.call(
+               %{"organization" => org_slug, "slug" => slug, "name" => "Handbook"},
+               %{}
+             )
 
     assert {:ok, %{id: ^id}} = SpaceGet.call(%{"space" => id}, %{})
     assert {:ok, %{id: ^id}} = SpaceUpdate.call(%{"space" => id, "name" => "Handbook v2"}, %{})
@@ -79,19 +88,33 @@ defmodule NoizuPromptLingua.Domains.Wiki.ToolsTest do
 
     assert {:ok, %{id: id, slug: ^slug, title: "Home"}} =
              PageCreate.call(
-               %{"organization" => org_slug, "space" => space_id, "slug" => slug, "title" => "Home", "body" => "hello"},
+               %{
+                 "organization" => org_slug,
+                 "space" => space_id,
+                 "slug" => slug,
+                 "title" => "Home",
+                 "body" => "hello"
+               },
                %{}
              )
 
     assert {:error, "Space '" <> _} =
              PageCreate.call(
-               %{"organization" => org_slug, "space" => Ecto.UUID.generate(), "slug" => uniq("x"), "title" => "X"},
+               %{
+                 "organization" => org_slug,
+                 "space" => Ecto.UUID.generate(),
+                 "slug" => uniq("x"),
+                 "title" => "X"
+               },
                %{}
              )
 
     assert {:ok, %{id: ^id}} = PageGet.call(%{"page" => id}, %{})
     assert {:ok, %{id: ^id}} = PageUpdate.call(%{"page" => id, "title" => "Home v2"}, %{})
-    assert {:ok, %{pages: [_]}} = PageList.call(%{"organization" => org_slug, "space" => space_id}, %{})
+
+    assert {:ok, %{pages: [_]}} =
+             PageList.call(%{"organization" => org_slug, "space" => space_id}, %{})
+
     assert {:ok, %{deleted: true}} = PageDelete.call(%{"page" => id}, %{})
 
     missing = Ecto.UUID.generate()
@@ -106,7 +129,10 @@ defmodule NoizuPromptLingua.Domains.Wiki.ToolsTest do
     page_id = create_page(org_slug, space_id)
 
     assert {:ok, %{id: comment_id}} =
-             CommentCreate.call(%{"page" => page_id, "body" => "nice page", "author" => "ana"}, %{})
+             CommentCreate.call(
+               %{"page" => page_id, "body" => "nice page", "author" => "ana"},
+               %{}
+             )
 
     assert {:ok, %{comments: [_]}} = CommentList.call(%{"page" => page_id}, %{})
     assert {:ok, %{deleted: true}} = CommentDelete.call(%{"comment" => comment_id}, %{})
@@ -138,12 +164,27 @@ defmodule NoizuPromptLingua.Domains.Wiki.ToolsTest do
     space_id = create_space(org_slug)
     page_id = create_page(org_slug, space_id)
 
-    assert {:ok, _} = ReactionAdd.call(%{"target_type" => "page", "target" => page_id, "emoji" => "👍", "actor" => "ana"}, %{})
-    assert {:ok, %{reactions: [_]}} = ReactionList.call(%{"target_type" => "page", "target" => page_id}, %{})
-    assert {:ok, _} = ReactionRemove.call(%{"target_type" => "page", "target" => page_id, "emoji" => "👍", "actor" => "ana"}, %{})
+    assert {:ok, _} =
+             ReactionAdd.call(
+               %{"target_type" => "page", "target" => page_id, "emoji" => "👍", "actor" => "ana"},
+               %{}
+             )
+
+    assert {:ok, %{reactions: [_]}} =
+             ReactionList.call(%{"target_type" => "page", "target" => page_id}, %{})
+
+    assert {:ok, _} =
+             ReactionRemove.call(
+               %{"target_type" => "page", "target" => page_id, "emoji" => "👍", "actor" => "ana"},
+               %{}
+             )
 
     # Unknown target type is rejected
-    assert {:error, _} = ReactionAdd.call(%{"target_type" => "planet", "target" => page_id, "emoji" => "x"}, %{})
+    assert {:error, _} =
+             ReactionAdd.call(
+               %{"target_type" => "planet", "target" => page_id, "emoji" => "x"},
+               %{}
+             )
   end
 
   # ── Overview ───────────────────────────────────────────────────────

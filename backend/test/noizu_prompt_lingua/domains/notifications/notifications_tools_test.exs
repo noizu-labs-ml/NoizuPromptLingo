@@ -3,6 +3,7 @@ defmodule NoizuPromptLingua.Domains.Notifications.ToolsTest do
   @moduletag :db
 
   alias NoizuPromptLingua.Domains.Notifications
+
   alias NoizuPromptLingua.Domains.Notifications.Tools.{
     Ack,
     Clear,
@@ -89,7 +90,12 @@ defmodule NoizuPromptLingua.Domains.Notifications.ToolsTest do
 
     assert {:ok, %{kind: "ping"}} =
              Notify.call(
-               %{"organization" => org_slug, "sender" => "a", "recipient" => unique("p"), "ping" => true},
+               %{
+                 "organization" => org_slug,
+                 "sender" => "a",
+                 "recipient" => unique("p"),
+                 "ping" => true
+               },
                %{}
              )
 
@@ -104,11 +110,20 @@ defmodule NoizuPromptLingua.Domains.Notifications.ToolsTest do
                %{}
              )
 
-    assert {:error, "No recipients resolved — provide recipient/recipients or a group with members"} =
+    assert {:error,
+            "No recipients resolved — provide recipient/recipients or a group with members"} =
              Notify.call(%{"organization" => org_slug, "sender" => "a", "body" => "hi"}, %{})
 
     assert {:error, "Organization 'nope-missing' not found"} =
-             Notify.call(%{"organization" => "nope-missing", "sender" => "a", "recipient" => "b", "body" => "hi"}, %{})
+             Notify.call(
+               %{
+                 "organization" => "nope-missing",
+                 "sender" => "a",
+                 "recipient" => "b",
+                 "body" => "hi"
+               },
+               %{}
+             )
   end
 
   # ── FollowUp ───────────────────────────────────────────────────────
@@ -146,7 +161,12 @@ defmodule NoizuPromptLingua.Domains.Notifications.ToolsTest do
 
     assert {:error, "`at` is not a valid ISO-8601 instant"} =
              FollowUp.call(
-               %{"organization" => org_slug, "sender" => "s", "body" => "x", "at" => "not-a-date"},
+               %{
+                 "organization" => org_slug,
+                 "sender" => "s",
+                 "body" => "x",
+                 "at" => "not-a-date"
+               },
                %{}
              )
 
@@ -154,7 +174,10 @@ defmodule NoizuPromptLingua.Domains.Notifications.ToolsTest do
              FollowUp.call(%{"organization" => org_slug, "sender" => "s", "body" => "x"}, %{})
 
     assert {:error, "Organization 'nope-2' not found"} =
-             FollowUp.call(%{"organization" => "nope-2", "sender" => "s", "body" => "x", "in_minutes" => 1}, %{})
+             FollowUp.call(
+               %{"organization" => "nope-2", "sender" => "s", "body" => "x", "in_minutes" => 1},
+               %{}
+             )
   end
 
   # ── Share ──────────────────────────────────────────────────────────
@@ -162,7 +185,8 @@ defmodule NoizuPromptLingua.Domains.Notifications.ToolsTest do
   test "Share to a dm records the notification and skips attachment", %{org_slug: org_slug} do
     target = unique("dm-target")
 
-    assert {:ok, %{shared: "artifact", target_type: "dm", notified: [^target], attachment_id: nil}} =
+    assert {:ok,
+            %{shared: "artifact", target_type: "dm", notified: [^target], attachment_id: nil}} =
              Share.call(
                %{
                  "organization" => org_slug,
@@ -178,26 +202,46 @@ defmodule NoizuPromptLingua.Domains.Notifications.ToolsTest do
   end
 
   test "Share validation errors", %{org_slug: org_slug} do
-    base = %{"organization" => org_slug, "sender" => "alice", "subject_id" => Ecto.UUID.generate()}
+    base = %{
+      "organization" => org_slug,
+      "sender" => "alice",
+      "subject_id" => Ecto.UUID.generate()
+    }
 
-    assert {:error, "subject_type must be one of: artifact, chat_message, chat_room, asset, wiki_page"} =
-             Share.call(Map.merge(base, %{"subject_type" => "nope", "target_type" => "dm", "target" => "x"}), %{})
+    assert {:error,
+            "subject_type must be one of: artifact, chat_message, chat_room, asset, wiki_page"} =
+             Share.call(
+               Map.merge(base, %{"subject_type" => "nope", "target_type" => "dm", "target" => "x"}),
+               %{}
+             )
 
     assert {:error, "target_type must be one of: chat_room, thread, dm"} =
              Share.call(
-               Map.merge(base, %{"subject_type" => "artifact", "target_type" => "carrier_pigeon", "target" => "x"}),
+               Map.merge(base, %{
+                 "subject_type" => "artifact",
+                 "target_type" => "carrier_pigeon",
+                 "target" => "x"
+               }),
                %{}
              )
 
     assert {:error, "Target 'missing-room' not found"} =
              Share.call(
-               Map.merge(base, %{"subject_type" => "artifact", "target_type" => "chat_room", "target" => "missing-room"}),
+               Map.merge(base, %{
+                 "subject_type" => "artifact",
+                 "target_type" => "chat_room",
+                 "target" => "missing-room"
+               }),
                %{}
              )
 
     assert {:error, "Target 'missing-msg' not found"} =
              Share.call(
-               Map.merge(base, %{"subject_type" => "artifact", "target_type" => "thread", "target" => "missing-msg"}),
+               Map.merge(base, %{
+                 "subject_type" => "artifact",
+                 "target_type" => "thread",
+                 "target" => "missing-msg"
+               }),
                %{}
              )
 
@@ -274,7 +318,12 @@ defmodule NoizuPromptLingua.Domains.Notifications.ToolsTest do
 
   test "Format.prepare resolves the org and builds opts", %{org_id: org_id, org_slug: org_slug} do
     assert {:ok, ^org_id, "bob", opts} =
-             Format.prepare(%{"organization" => org_slug, "recipient" => "bob", "max" => 5, "kinds" => ["dm"]})
+             Format.prepare(%{
+               "organization" => org_slug,
+               "recipient" => "bob",
+               "max" => 5,
+               "kinds" => ["dm"]
+             })
 
     assert opts[:max] == 5
     assert opts[:kinds] == ["dm"]
@@ -320,7 +369,10 @@ defmodule NoizuPromptLingua.Domains.Notifications.ToolsTest do
 
   # ── Get / Poll / Mark* / Ack / Clear / Overview ────────────────────
 
-  test "Get returns delivered notifications for a fresh recipient", %{org_id: org_id, org_slug: org_slug} do
+  test "Get returns delivered notifications for a fresh recipient", %{
+    org_id: org_id,
+    org_slug: org_slug
+  } do
     recipient = unique("getter")
     notify_one(org_id, recipient)
 
@@ -330,21 +382,33 @@ defmodule NoizuPromptLingua.Domains.Notifications.ToolsTest do
     assert n.body == "hello #{recipient}"
   end
 
-  test "Poll returns a batch and Mark*/Ack/Clear update state", %{org_id: org_id, org_slug: org_slug} do
+  test "Poll returns a batch and Mark*/Ack/Clear update state", %{
+    org_id: org_id,
+    org_slug: org_slug
+  } do
     recipient = unique("poller")
     n = notify_one(org_id, recipient)
 
-    assert {:ok, %{count: 1}} = Poll.call(%{"organization" => org_slug, "recipient" => recipient}, %{})
+    assert {:ok, %{count: 1}} =
+             Poll.call(%{"organization" => org_slug, "recipient" => recipient}, %{})
 
-    assert {:ok, %{marked_read: 1}} = MarkRead.call(%{"organization" => org_slug, "recipient" => recipient}, %{})
+    assert {:ok, %{marked_read: 1}} =
+             MarkRead.call(%{"organization" => org_slug, "recipient" => recipient}, %{})
 
     assert {:ok, %{marked_seen: 1}} =
-             MarkSeen.call(%{"organization" => org_slug, "recipient" => recipient, "ids" => [n.id]}, %{})
+             MarkSeen.call(
+               %{"organization" => org_slug, "recipient" => recipient, "ids" => [n.id]},
+               %{}
+             )
 
-    assert {:ok, %{acked: 1}} = Ack.call(%{"organization" => org_slug, "recipient" => recipient}, %{})
+    assert {:ok, %{acked: 1}} =
+             Ack.call(%{"organization" => org_slug, "recipient" => recipient}, %{})
 
     assert {:ok, %{cleared: 1}} =
-             Clear.call(%{"organization" => org_slug, "recipient" => recipient, "ids" => [n.id]}, %{})
+             Clear.call(
+               %{"organization" => org_slug, "recipient" => recipient, "ids" => [n.id]},
+               %{}
+             )
 
     assert {:error, "Organization 'nope-5' not found"} =
              MarkRead.call(%{"organization" => "nope-5", "recipient" => "x"}, %{})

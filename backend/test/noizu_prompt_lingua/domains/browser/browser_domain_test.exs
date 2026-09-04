@@ -55,7 +55,10 @@ defmodule NoizuPromptLingua.Domains.Browser.BrowserTest do
     eventually_false(fn -> Browser.connected?(org_id) end)
   end
 
-  test "run/3 resolves the org and dispatches to the controller", %{org_id: org_id, org_slug: org_slug} do
+  test "run/3 resolves the org and dispatches to the controller", %{
+    org_id: org_id,
+    org_slug: org_slug
+  } do
     pid = fake_controller(org_id, {:ok, %{"url" => "https://example.com"}})
 
     assert {:ok, %{"url" => "https://example.com"}} =
@@ -86,7 +89,10 @@ defmodule NoizuPromptLingua.Domains.Browser.BrowserTest do
     # Controller that never answers
     deaf = spawn(fn -> Process.sleep(5_000) end)
     :ok = Relay.register(org_id, deaf)
-    assert {:error, "browser controller timed out after 20ms"} = Browser.run(org_slug, "navigate", %{}, 20)
+
+    assert {:error, "browser controller timed out after 20ms"} =
+             Browser.run(org_slug, "navigate", %{}, 20)
+
     Process.exit(deaf, :kill)
 
     assert org_id != nil
@@ -98,7 +104,10 @@ defmodule NoizuPromptLingua.Domains.Browser.BrowserTest do
     assert {:error, "object storage is not configured"} = Browser.capture_screenshot(org_slug)
   end
 
-  test "record_start flows through the relay; record_stop needs storage", %{org_id: org_id, org_slug: org_slug} do
+  test "record_start flows through the relay; record_stop needs storage", %{
+    org_id: org_id,
+    org_slug: org_slug
+  } do
     assert {:error, "no local browser controller connected for this organization"} =
              Browser.record_start(org_slug)
 

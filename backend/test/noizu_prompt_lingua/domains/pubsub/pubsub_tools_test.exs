@@ -23,7 +23,9 @@ defmodule NoizuPromptLingua.Domains.PubSub.ToolsTest do
 
   defp uniq(suffix), do: "#{suffix}-#{System.unique_integer([:positive])}"
 
-  test "publish auto-creates the channel and fetch_channel returns the message", %{org_slug: org_slug} do
+  test "publish auto-creates the channel and fetch_channel returns the message", %{
+    org_slug: org_slug
+  } do
     channel = uniq("chan")
 
     assert {:ok, %{channel: %{slug: ^channel}, message: %{id: msg_id, sender: "ci-bot"}}} =
@@ -50,23 +52,43 @@ defmodule NoizuPromptLingua.Domains.PubSub.ToolsTest do
 
     {:ok, _} =
       Publish.call(
-        %{"organization" => org_slug, "channel" => channel, "name" => "Ops", "sender" => "s", "body" => "b"},
+        %{
+          "organization" => org_slug,
+          "channel" => channel,
+          "name" => "Ops",
+          "sender" => "s",
+          "body" => "b"
+        },
         %{}
       )
 
     assert {:ok, %{persona: ^persona, following: true}} =
-             Follow.call(%{"organization" => org_slug, "channel" => channel, "persona" => persona}, %{})
+             Follow.call(
+               %{"organization" => org_slug, "channel" => channel, "persona" => persona},
+               %{}
+             )
 
     assert {:ok, %{persona: ^persona, last_acked_seq: _}} =
-             Ack.call(%{"organization" => org_slug, "channel" => channel, "persona" => persona}, %{})
+             Ack.call(
+               %{"organization" => org_slug, "channel" => channel, "persona" => persona},
+               %{}
+             )
 
     assert {:ok, _} =
-             Unfollow.call(%{"organization" => org_slug, "channel" => channel, "persona" => persona}, %{})
+             Unfollow.call(
+               %{"organization" => org_slug, "channel" => channel, "persona" => persona},
+               %{}
+             )
 
     # Ack without following errors
     other = uniq("other")
 
-    assert {:error, msg} = Ack.call(%{"organization" => org_slug, "channel" => channel, "persona" => other}, %{})
+    assert {:error, msg} =
+             Ack.call(
+               %{"organization" => org_slug, "channel" => channel, "persona" => other},
+               %{}
+             )
+
     assert msg == "Persona '#{other}' is not following this channel"
   end
 
@@ -76,11 +98,18 @@ defmodule NoizuPromptLingua.Domains.PubSub.ToolsTest do
 
     {:ok, _} =
       Publish.call(
-        %{"organization" => org_slug, "channel" => channel, "name" => "News", "sender" => "s", "body" => "hi"},
+        %{
+          "organization" => org_slug,
+          "channel" => channel,
+          "name" => "News",
+          "sender" => "s",
+          "body" => "hi"
+        },
         %{}
       )
 
-    {:ok, _} = Follow.call(%{"organization" => org_slug, "channel" => channel, "persona" => persona}, %{})
+    {:ok, _} =
+      Follow.call(%{"organization" => org_slug, "channel" => channel, "persona" => persona}, %{})
 
     result = FetchAll.call(%{"organization" => org_slug, "persona" => persona}, %{})
 
@@ -101,9 +130,13 @@ defmodule NoizuPromptLingua.Domains.PubSub.ToolsTest do
              FetchChannel.call(%{"organization" => org_slug, "channel" => "ghost-chan"}, %{})
 
     assert {:error, "Channel 'ghost-chan' not found"} =
-             Follow.call(%{"organization" => org_slug, "channel" => "ghost-chan", "persona" => "p"}, %{})
+             Follow.call(
+               %{"organization" => org_slug, "channel" => "ghost-chan", "persona" => "p"},
+               %{}
+             )
 
-    assert {:error, "Organization 'ghost' not found"} = Overview.call(%{"organization" => "ghost"}, %{})
+    assert {:error, "Organization 'ghost' not found"} =
+             Overview.call(%{"organization" => "ghost"}, %{})
   end
 
   test "Overview lists channels", %{org_slug: org_slug} do

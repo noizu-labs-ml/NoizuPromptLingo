@@ -9,7 +9,10 @@ defmodule NoizuPromptLingua.Domains.RemoteAccessTest do
     {:ok, org_id: insert_org(), user_id: Ecto.UUID.generate()}
   end
 
-  test "claim / re-claim / name-taken / revoke / not-found lifecycle", %{org_id: org_id, user_id: user_id} do
+  test "claim / re-claim / name-taken / revoke / not-found lifecycle", %{
+    org_id: org_id,
+    user_id: user_id
+  } do
     assert {:ok, tunnel, raw_token} = RemoteAccess.claim_tunnel(user_id, org_id, "My-Tunnel ")
     assert tunnel.name == "my-tunnel"
     assert tunnel.status == "active"
@@ -22,7 +25,8 @@ defmodule NoizuPromptLingua.Domains.RemoteAccessTest do
     assert raw2 != raw_token
 
     # Another user cannot take the name
-    assert {:error, :name_taken} = RemoteAccess.claim_tunnel(Ecto.UUID.generate(), org_id, "my-tunnel")
+    assert {:error, :name_taken} =
+             RemoteAccess.claim_tunnel(Ecto.UUID.generate(), org_id, "my-tunnel")
 
     assert [claimed] = RemoteAccess.list_tunnels(user_id, org_id)
     assert claimed.id == tunnel.id

@@ -46,7 +46,8 @@ defmodule NoizuPromptLingua.Domains.Assets.ToolsTest do
   test "asset create / list / update / archive lifecycle", %{org_slug: org_slug} do
     slug = uniq("asset")
 
-    assert {:ok, %{id: id, slug: ^slug, title: "Hero Banner", asset_type: "image", status: "draft"}} =
+    assert {:ok,
+            %{id: id, slug: ^slug, title: "Hero Banner", asset_type: "image", status: "draft"}} =
              AssetCreate.call(
                %{
                  "organization" => org_slug,
@@ -65,7 +66,9 @@ defmodule NoizuPromptLingua.Domains.Assets.ToolsTest do
              AssetUpdate.call(%{"asset" => id, "title" => "Hero v2"}, %{})
 
     assert {:ok, %{id: ^id, status: "archived"}} = AssetArchive.call(%{"asset" => id}, %{})
-    assert {:error, "Asset not found"} = AssetArchive.call(%{"asset" => Ecto.UUID.generate()}, %{})
+
+    assert {:error, "Asset not found"} =
+             AssetArchive.call(%{"asset" => Ecto.UUID.generate()}, %{})
   end
 
   test "outputs + history for an entry are empty by default", %{org_slug: org_slug} do
@@ -76,7 +79,9 @@ defmodule NoizuPromptLingua.Domains.Assets.ToolsTest do
     assert Enum.any?(history, &(&1.action == "created"))
   end
 
-  test "generate without a provider fails gracefully; publish validates state", %{org_slug: org_slug} do
+  test "generate without a provider fails gracefully; publish validates state", %{
+    org_slug: org_slug
+  } do
     id = create_asset(org_slug)
 
     result = AssetGenerate.call(%{"entry_id" => id, "llm_generate" => false}, %{})
@@ -88,7 +93,9 @@ defmodule NoizuPromptLingua.Domains.Assets.ToolsTest do
     end
 
     assert {:ok, %{id: ^id, status: "published"}} = AssetPublish.call(%{"asset" => id}, %{})
-    assert {:error, "Asset not found"} = AssetPublish.call(%{"asset" => Ecto.UUID.generate()}, %{})
+
+    assert {:error, "Asset not found"} =
+             AssetPublish.call(%{"asset" => Ecto.UUID.generate()}, %{})
   end
 
   defp insert_org do

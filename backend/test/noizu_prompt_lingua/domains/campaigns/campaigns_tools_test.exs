@@ -59,7 +59,12 @@ defmodule NoizuPromptLingua.Domains.Campaigns.ToolsTest do
 
     assert {:ok, %{id: id, slug: ^slug, name: "Launch", channel: "ppc", status: "draft"}} =
              CampaignCreate.call(
-               %{"organization" => org_slug, "slug" => slug, "name" => "Launch", "channel" => "ppc"},
+               %{
+                 "organization" => org_slug,
+                 "slug" => slug,
+                 "name" => "Launch",
+                 "channel" => "ppc"
+               },
                %{}
              )
 
@@ -94,7 +99,10 @@ defmodule NoizuPromptLingua.Domains.Campaigns.ToolsTest do
 
     assert {:ok, %{id: ^group_id}} = AdGroupGet.call(%{"id" => group_id}, %{})
     assert {:ok, %{ad_groups: [_]}} = AdGroupList.call(%{"campaign_id" => campaign_id}, %{})
-    assert {:ok, %{id: ^group_id}} = AdGroupUpdate.call(%{"id" => group_id, "name" => "Brand v2"}, %{})
+
+    assert {:ok, %{id: ^group_id}} =
+             AdGroupUpdate.call(%{"id" => group_id, "name" => "Brand v2"}, %{})
+
     assert {:error, "Ad group not found"} = AdGroupGet.call(%{"id" => Ecto.UUID.generate()}, %{})
 
     assert {:ok, %{id: copy_id, status: "draft"}} =
@@ -109,7 +117,9 @@ defmodule NoizuPromptLingua.Domains.Campaigns.ToolsTest do
     assert {:ok, %{ad_copies: copies}} = AdCopyList.call(%{"campaign_id" => campaign_id}, %{})
     assert length(copies) == 1
 
-    assert {:ok, %{id: ^copy_id, status: "approved"}} = AdCopyApprove.call(%{"id" => copy_id}, %{})
+    assert {:ok, %{id: ^copy_id, status: "approved"}} =
+             AdCopyApprove.call(%{"id" => copy_id}, %{})
+
     assert {:ok, %{id: ^copy_id, status: "rejected"}} = AdCopyReject.call(%{"id" => copy_id}, %{})
     assert {:error, "Ad copy not found"} = AdCopyGet.call(%{"id" => Ecto.UUID.generate()}, %{})
   end
@@ -149,9 +159,14 @@ defmodule NoizuPromptLingua.Domains.Campaigns.ToolsTest do
                %{}
              )
 
-    assert {:ok, %{id: ^id}} = LandingPageGet.call(%{"organization" => org_slug, "id" => slug}, %{})
-    assert {:ok, %{id: ^id, title: "Home v2"}} = LandingPageUpdate.call(%{"id" => id, "title" => "Home v2"}, %{})
+    assert {:ok, %{id: ^id}} =
+             LandingPageGet.call(%{"organization" => org_slug, "id" => slug}, %{})
+
+    assert {:ok, %{id: ^id, title: "Home v2"}} =
+             LandingPageUpdate.call(%{"id" => id, "title" => "Home v2"}, %{})
+
     assert {:ok, %{landing_pages: [_]}} = LandingPageList.call(%{"organization" => org_slug}, %{})
+
     assert {:error, "Landing page 'ghost' not found"} =
              LandingPageGet.call(%{"organization" => org_slug, "id" => "ghost"}, %{})
 
@@ -175,9 +190,12 @@ defmodule NoizuPromptLingua.Domains.Campaigns.ToolsTest do
                %{}
              )
 
-    assert {:ok, %{id: ^id}} = DomainNameGet.call(%{"organization" => org_slug, "id" => slug}, %{})
+    assert {:ok, %{id: ^id}} =
+             DomainNameGet.call(%{"organization" => org_slug, "id" => slug}, %{})
+
     assert {:ok, %{id: ^id}} = DomainNameUpdate.call(%{"id" => id, "status" => "registered"}, %{})
     assert {:ok, %{domain_names: [_]}} = DomainNameList.call(%{"organization" => org_slug}, %{})
+
     assert {:error, "Domain name 'ghost' not found"} =
              DomainNameGet.call(%{"organization" => org_slug, "id" => "ghost"}, %{})
   end
@@ -192,11 +210,19 @@ defmodule NoizuPromptLingua.Domains.Campaigns.ToolsTest do
     assert {:ok, %{campaign_count: 0}} = Overview.call(%{"organization" => "nope"}, %{})
 
     assert {:error, "Organization 'nope' not found"} =
-             CampaignCreate.call(%{"organization" => "nope", "slug" => "s", "name" => "n", "channel" => "ppc"}, %{})
+             CampaignCreate.call(
+               %{"organization" => "nope", "slug" => "s", "name" => "n", "channel" => "ppc"},
+               %{}
+             )
 
-    assert {:error, "Organization not found"} = CampaignList.call(%{"organization" => "nope"}, %{})
-    assert {:error, "Organization not found"} = LandingPageList.call(%{"organization" => "nope"}, %{})
-    assert {:error, "Organization not found"} = DomainNameList.call(%{"organization" => "nope"}, %{})
+    assert {:error, "Organization not found"} =
+             CampaignList.call(%{"organization" => "nope"}, %{})
+
+    assert {:error, "Organization not found"} =
+             LandingPageList.call(%{"organization" => "nope"}, %{})
+
+    assert {:error, "Organization not found"} =
+             DomainNameList.call(%{"organization" => "nope"}, %{})
   end
 
   # ── helpers ────────────────────────────────────────────────────────

@@ -53,7 +53,9 @@ defmodule NoizuPromptLingua.Domains.Market.ToolsTest do
     assert {:ok, %{id: ^id, status: "archived"}} =
              CompetitorUpdate.call(%{"id" => id, "status" => "archived"}, %{})
 
-    assert {:ok, %{competitors: list} = m} = CompetitorList.call(%{"organization" => org_slug}, %{})
+    assert {:ok, %{competitors: list} = m} =
+             CompetitorList.call(%{"organization" => org_slug}, %{})
+
     assert is_list(list) and length(list) == 1
     assert is_map(m)
 
@@ -156,7 +158,9 @@ defmodule NoizuPromptLingua.Domains.Market.ToolsTest do
     assert {:error, "Organization 'nope' not found"} =
              CompetitorCreate.call(%{"organization" => "nope", "slug" => "s", "name" => "n"}, %{})
 
-    assert {:error, "Organization not found"} = CompetitorList.call(%{"organization" => "nope"}, %{})
+    assert {:error, "Organization not found"} =
+             CompetitorList.call(%{"organization" => "nope"}, %{})
+
     assert {:error, "Organization not found"} = KeywordList.call(%{"organization" => "nope"}, %{})
     assert {:error, "Organization not found"} = ReportList.call(%{"organization" => "nope"}, %{})
 

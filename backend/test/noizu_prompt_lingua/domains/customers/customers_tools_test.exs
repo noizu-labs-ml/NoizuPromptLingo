@@ -34,9 +34,13 @@ defmodule NoizuPromptLingua.Domains.Customers.ToolsTest do
     slug = uniq("seg")
 
     assert {:ok, %{id: seg_id, slug: ^slug, name: "Enterprise"}} =
-             SegmentCreate.call(%{"organization" => org_slug, "slug" => slug, "name" => "Enterprise"}, %{})
+             SegmentCreate.call(
+               %{"organization" => org_slug, "slug" => slug, "name" => "Enterprise"},
+               %{}
+             )
 
-    assert {:ok, %{id: ^seg_id}} = SegmentGet.call(%{"organization" => org_slug, "id" => slug}, %{})
+    assert {:ok, %{id: ^seg_id}} =
+             SegmentGet.call(%{"organization" => org_slug, "id" => slug}, %{})
 
     assert {:ok, %{id: ^seg_id}} = SegmentUpdate.call(%{"id" => seg_id, "name" => "Ent v2"}, %{})
 
@@ -70,7 +74,8 @@ defmodule NoizuPromptLingua.Domains.Customers.ToolsTest do
     assert {:ok, %{id: ^id, name: "Ops Olga II"}} =
              PersonaUpdate.call(%{"id" => id, "name" => "Ops Olga II"}, %{})
 
-    assert {:ok, %{count: 1, personas: [_]}} = PersonaList.call(%{"organization" => org_slug}, %{})
+    assert {:ok, %{count: 1, personas: [_]}} =
+             PersonaList.call(%{"organization" => org_slug}, %{})
 
     assert {:error, "Customer persona 'ghost' not found"} =
              PersonaGet.call(%{"organization" => org_slug, "id" => "ghost"}, %{})

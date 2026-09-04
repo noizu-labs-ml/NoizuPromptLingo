@@ -35,6 +35,7 @@ defmodule NoizuPromptLingua.Domains.Memory.ToolsTest do
     assert is_binary(pid)
 
     {:ok, cs} = NoizuPromptLingua.Domains.Memory.Agents.register(org, :team_member)
+
     assert {:ok, %{scope_type: :team_member}} =
              Scope.resolve(%{
                "organization" => to_string(org),
@@ -145,7 +146,8 @@ defmodule NoizuPromptLingua.Domains.Memory.ToolsTest do
     assert mid == mem_id
     assert is_number(w1)
 
-    assert {:ok, %{decay_weight: _}} = Denforce.call(Map.merge(scope_args, %{"memory_id" => mem_id}), %{})
+    assert {:ok, %{decay_weight: _}} =
+             Denforce.call(Map.merge(scope_args, %{"memory_id" => mem_id}), %{})
 
     assert {:error, "memory not found in this scope"} =
              Reinforce.call(Map.merge(scope_args, %{"memory_id" => Ecto.UUID.generate()}), %{})
@@ -162,7 +164,10 @@ defmodule NoizuPromptLingua.Domains.Memory.ToolsTest do
     }
 
     {:ok, %{id: mem_id}} =
-      Remember.call(Map.merge(scope_args, %{"content" => "w4c-assoc-#{System.unique_integer([:positive])}"}), %{})
+      Remember.call(
+        Map.merge(scope_args, %{"content" => "w4c-assoc-#{System.unique_integer([:positive])}"}),
+        %{}
+      )
 
     eventually(fn -> recall_hit?(scope_args, "w4c-assoc") end)
 
