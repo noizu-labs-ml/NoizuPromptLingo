@@ -157,6 +157,34 @@ defmodule NoizuPromptLinguaWeb.RemoteAccessTunnelsTest do
     assert json_response(conn, 403)["error"] =~ "editor role required"
   end
 
+  test "create: viewer -> 403 (gate floors at member, was any-membership)", %{
+    conn: conn
+  } do
+    %{org: org} = seed_org(uniq())
+    %{token: token} = mcp_caller(org, "viewer")
+
+    conn =
+      conn
+      |> mcp_conn(token)
+      |> post(@base, %{"name" => "tunnel-viewer-#{uniq()}", "organization" => org.slug})
+
+    assert conn.status == 403
+    assert json_response(conn, 403)["error"] =~ "editor role required"
+  end
+
+  test "create: plain member passes the gate (201)", %{conn: conn} do
+    %{org: org} = seed_org(uniq())
+    %{token: token} = mcp_caller(org, "member")
+
+    resp =
+      conn
+      |> mcp_conn(token)
+      |> post(@base, %{"name" => "tunnel-member-#{uniq()}", "organization" => org.slug})
+      |> json_response(201)
+
+    assert resp["tunnel_token"]
+  end
+
   test "create: no bearer -> 401", %{conn: conn, org: org} do
     conn = post(conn, @base, %{"name" => "tunnel-anon", "organization" => org.slug})
 
@@ -283,7 +311,7 @@ defmodule NoizuPromptLinguaWeb.RemoteAccessTunnelsTest do
 
   # HS256 MCP JWT over a REAL active MCPApiKey row — the identity the tunnel
   # CRUD gates trust (same recipe as the tool-set gateway suite).
-  defp mcp_caller(org \\ nil) do
+  defp mcp_caller(org \\ nil, role \\ "member") do
     n = uniq()
 
     user =
@@ -306,7 +334,7 @@ defmodule NoizuPromptLinguaWeb.RemoteAccessTunnelsTest do
         status: "active"
       })
 
-    if org, do: member!(org, user.id)
+    if org, do: member!(org, user.id, role)
 
     {:ok, token, _exp} =
       Token.mint(%{id: user.id, email: user.email, name: user.user_name}, %{id: key.id},
@@ -316,11 +344,12 @@ defmodule NoizuPromptLinguaWeb.RemoteAccessTunnelsTest do
     %{token: token, user: user}
   end
 
-  # The `with_editor/3` gate maps onto the ordinal Authz ladder (where no
-  # "editor" rung exists — any membership clears it), but a non-member still
-  # fails closed with 403.
-  defp member!(org, user_id) do
-    {:ok, _} = ScopedMemberships.add_member("organization", org.id, user_id, "member")
+  # The `with_editor/3` gate floors at "member" on the ordinal Authz ladder
+  # (the scoped-membership world has no "editor" rung — authorizing "editor"
+  # ranked the required role at 99 and cleared ANY membership, viewers
+  # included; ticket 1bd065df). A non-member still fails closed with 403.
+  defp member!(org, user_id, role) do
+    {:ok, _} = ScopedMemberships.add_member("organization", org.id, user_id, role)
     :ok
   end
 end

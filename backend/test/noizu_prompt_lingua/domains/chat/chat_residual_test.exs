@@ -124,15 +124,22 @@ defmodule NoizuPromptLingua.Domains.Chat.ChatResidualTest do
   test "ForwardReplies on a root message", %{room: room} do
     {:ok, msg} = Chat.send_message(%{room_id: room.id, content: "root", sender: "a"})
 
-    # NB: list_replies/1 currently raises on nil parent_message_id (chat.ex:340) —
-    # reported to Loom as a W4-D bug. Once fixed, this tool should return
-    # {:error, "No replies to forward under that message"} here.
-    assert_raise(ArgumentError, fn ->
-      Chat.Tools.ForwardReplies.call(
-        %{room_id: room.id, message_id: msg.id, target: "other-room"},
-        %{}
-      )
-    end)
+    # list_replies/1 no longer raises on a nil parent id (chat.ex — the
+    # `== ^nil` ArgumentError 500'd ForwardReplies on root messages; fixed in
+    # the ticket-batch sweep): an unbound parent folds to the no-replies error.
+    assert {:error, "No replies to forward under that message"} =
+             Chat.Tools.ForwardReplies.call(
+               %{room_id: room.id, message_id: msg.id, target: "other-room"},
+               %{}
+             )
+  end
+
+  test "list_replies/1 with a nil parent id lists nothing (no raise)", %{room: room} do
+    {:ok, _root} = Chat.send_message(%{room_id: room.id, content: "root", sender: "a"})
+
+    # nil means "no thread", not "all roots" — a root exists in the room and
+    # must NOT be matched.
+    assert Chat.list_replies(nil) == []
   end
 
   # ── scheduling guards ────────────────────────────────────────────

@@ -161,6 +161,10 @@ defmodule NoizuPromptLinguaWeb.RemoteAccessController do
 
   # ── auth helpers ───────────────────────────────────────────────────────────
 
+  # The scoped-membership ladder (role_name_enum) has no "editor" rung, so
+  # authorizing "editor" ranked the required role at 99 and cleared ANY
+  # membership — viewers included (ticket 1bd065df). Tunnel editors are
+  # ≥ member; gate on the member floor.
   defp with_editor(conn, org_ref, fun) do
     with_mcp_user(conn, fn user_id ->
       case Resolve.organization_id(org_ref) do
@@ -168,7 +172,7 @@ defmodule NoizuPromptLinguaWeb.RemoteAccessController do
           conn |> put_status(:not_found) |> json(%{error: "organization '#{org_ref}' not found"})
 
         org_id ->
-          case Organizations.authorize(user_id, org_id, "editor") do
+          case Organizations.authorize(user_id, org_id, "member") do
             {:ok, _} -> fun.(user_id, org_id)
             _ -> forbidden(conn, "editor role required for this organization")
           end

@@ -47,10 +47,10 @@ defmodule NoizuPromptLingua.UsersMediaSessionsTest do
       id: Ecto.UUID.generate(),
       user: {:ref, NoizuPromptLingua.Users.User, user.id},
       media: {:ref, NoizuPromptLingua.Media.Asset, asset.id},
-      # NOTE (pinned bug): the Ecto.Enum here declares [:profile, :cover,
-      # :gallery, :other], but the DB column uses the shared media_type_enum
-      # (image/video/audio/document/other) — every value except "other"
-      # fails on insert. :other is the only round-trippable value; flagged.
+      # media_type uses the shared media_type_enum vocabulary
+      # (image/video/audio/document/other) — it used to declare
+      # [:profile, :cover, :gallery, :other], so every value except "other"
+      # failed on insert (ticket ae01aad4 #1, fixed).
       media_type: :other,
       settings: %{"alt" => "pic"}
     }
@@ -93,6 +93,38 @@ defmodule NoizuPromptLingua.UsersMediaSessionsTest do
     assert cs.changes.media_type == :other
     assert cs.changes.settings == %{"a" => 1}
     refute Map.has_key?(cs.changes, :junk)
+  end
+
+  test "every media_type enum value round-trips the shared media_type_enum column", %{
+    user: user,
+    asset: asset
+  } do
+    alias NoizuPromptLingua.Users.Media
+
+    # The Ecto.Enum must accept exactly the DB column's vocabulary — one
+    # insert+reload per value (ticket ae01aad4 #1 regression: only :other
+    # inserted while :image/:video/:audio/:document raised).
+    for value <- ~w(image video audio document other)a do
+      entity = %NoizuPromptLingua.Users.Media.Asset{
+        id: Ecto.UUID.generate(),
+        user: {:ref, NoizuPromptLingua.Users.User, user.id},
+        media: {:ref, NoizuPromptLingua.Media.Asset, asset.id},
+        media_type: value
+      }
+
+      assert {:ok, created} = Media.create(entity, @ctx), "failed for #{inspect(value)}"
+      assert {:ok, reloaded} = Media.get_user_media(created.id, @ctx)
+      assert reloaded.media_type == value
+    end
+
+    # the superseded profile/cover/gallery vocabulary is rejected client-side
+    refute %NoizuPromptLingua.Schema.Users.Media.Asset{}
+           |> NoizuPromptLingua.Schema.Users.Media.Asset.changeset(%{
+             user_id: user.id,
+             media_id: asset.id,
+             media_type: :profile
+           })
+           |> Map.get(:valid?)
   end
 
   # ── Users.Sessions ───────────────────────────────────────────────

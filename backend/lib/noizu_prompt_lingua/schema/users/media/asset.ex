@@ -10,7 +10,10 @@ defmodule NoizuPromptLingua.Schema.Users.Media.Asset do
     belongs_to :description, NoizuPromptLingua.Schema.Versioned.Descriptions.Description,
       type: Ecto.UUID
 
-    field :media_type, Ecto.Enum, values: [:profile, :cover, :gallery, :other]
+    # Must match the shared media_type_enum column (image/video/audio/document/
+    # other) — the former [:profile, :cover, :gallery, :other] vocabulary only
+    # ever inserted :other (ticket ae01aad4 #1).
+    field :media_type, Ecto.Enum, values: [:image, :video, :audio, :document, :other]
     field :settings, :map
     field :deleted_at, :utc_datetime_usec
     timestamps(type: :utc_datetime_usec)
