@@ -62,6 +62,35 @@ defmodule NoizuPromptLinguaWeb.MCPConfig do
   end
 
   @doc """
+  Plug opts for the VFS WebSocket transport (`Noizu.MCP.Transport.VFSWS`)
+  mounted at `/vfs` (Wave 0 substrate).
+
+  Same `DualTokenVerifier` bearer pipeline as the MCP surface: the upgrade is
+  rejected 401 without a valid token, and the in-band `vfs/auth` handshake
+  (first frame) binds the verified claims to the connection `Ctx`. The
+  transport consumes only `server:`, `auth:`, and `context:` — StreamableHTTP
+  opts like `:origins` / `:resource_metadata` do not apply.
+  """
+  def vfs_plug_opts do
+    # Keyword.put prepends, so probe :verifier by key, never by position.
+    auth =
+      case Keyword.get(auth_opts(), :verifier) do
+        nil -> []
+        verifier -> [verifier: verifier]
+      end
+
+    [
+      server: NoizuPromptLingua.MCP.VFSServer,
+      # Phoenix's `forward "/vfs", VFSWS` strips the matched prefix, so the
+      # plug sees path_info == [] — mount it at "/" (direct-Bandit mounts pass
+      # their own :path).
+      path: "/",
+      auth: auth,
+      context: {NoizuPromptLingua.MCP.VFS.Principal, :context_assigns}
+    ]
+  end
+
+  @doc """
   Plug opts for a tool-set gateway route (PRD-N3 FR-3-3): the verifier is
   wrapped in `NoizuPromptLingua.MCP.RouteClaimsVerifier` so the route's set
   coordinates (`route_metadata`, string-keyed) ride the verified claims into
