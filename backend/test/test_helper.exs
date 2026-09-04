@@ -158,6 +158,13 @@ NoizuPromptLingua.Domains.Memory.VectorStore.ensure_class()
 
 Ecto.Adapters.SQL.Sandbox.mode(NoizuPromptLingua.Repo, :manual)
 
+# Host-env scrub: WebSearch/WebSearch-backed tests pin the "unconfigured provider"
+# contract (:not_configured → 503) on JINA_API_KEY being unset. If the launching
+# shell's direnv exports it, those tests take the configured path, attempt a REAL
+# s.jina.ai call and surface 502 instead (observed on the round-2 _merged2 gate,
+# 2026-09-04). Tests must be hermetic against host env leakage.
+System.delete_env("JINA_API_KEY")
+
 # W4 cutover: route the TRP client at the in-memory stub transport. base_url/key
 # are set so Config.configured?/0 is true; the stub never touches the network.
 Application.put_env(:noizu_prompt_lingua, :trp,
