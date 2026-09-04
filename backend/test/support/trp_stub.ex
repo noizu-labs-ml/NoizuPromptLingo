@@ -257,20 +257,12 @@ defmodule NoizuPromptLingua.TRP.TestStub do
         found(state.projects[{org_id, id}], &%{project: &1})
 
       {"PATCH", ["api", "v1", "organizations", org_id, "projects", id]} ->
-        # mutate/3 invokes its continuation with arity 0, so a `fn p ->` here
-        # raised BadArityError on every found-project PATCH. (cov-w2d)
         mutate(state.projects[{org_id, id}], body, fn ->
+          current = state.projects[{org_id, id}]
+
           respond(
             200,
-            %{
-              project:
-                update_seed(
-                  :projects,
-                  {org_id, id},
-                  state.projects[{org_id, id}],
-                  unwrap(body, :project)
-                )
-            }
+            %{project: update_seed(:projects, {org_id, id}, current, unwrap(body, :project))}
           )
         end)
 

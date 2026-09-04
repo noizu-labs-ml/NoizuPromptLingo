@@ -66,9 +66,9 @@ defmodule NoizuPromptLingua.MCPApiKeysTest do
     {:ok, key, _raw} = MCPApiKeys.generate_api_key(user.id, "upd")
 
     {:ok, updated} =
-      MCPApiKeys.update(key, %{toolset_config: %{"groups" => %{"projects" => %{"hidden" => true}}}},
-        owner_id: user.id
-      )
+      MCPApiKeys.update(
+        key,
+        %{toolset_config: %{"groups" => %{"projects" => %{"hidden" => true}}}}, owner_id: user.id)
 
     assert updated.toolset_config["groups"]["projects"]["hidden"] == true
 
@@ -95,7 +95,9 @@ defmodule NoizuPromptLingua.MCPApiKeysTest do
   test "clone carries toolset config and produces a fresh secret", %{user: user} do
     {:ok, source, raw_source} =
       MCPApiKeys.generate_api_key(user.id, "orig",
-        toolset_config: %{"groups" => %{"tickets" => %{"tools" => %{"Ticket.Get" => %{"disabled" => true}}}}}
+        toolset_config: %{
+          "groups" => %{"tickets" => %{"tools" => %{"Ticket.Get" => %{"disabled" => true}}}}
+        }
       )
 
     {:ok, clone, raw_clone} = MCPApiKeys.clone(source, user_id: user.id, label: "clone")
