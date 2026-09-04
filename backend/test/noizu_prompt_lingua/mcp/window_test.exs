@@ -336,7 +336,11 @@ defmodule NoizuPromptLingua.MCP.WindowTest do
     end
 
     test "future hide_until is kept" do
-      normalized = Window.normalize_entry(%{}, %{"hide_until" => @future})
+      normalized =
+        Window.normalize_entry(%{}, %{
+          "hide_until" => DateTime.add(DateTime.utc_now(), 86_400, :second)
+        })
+
       assert is_binary(normalized["hide_until"])
     end
   end

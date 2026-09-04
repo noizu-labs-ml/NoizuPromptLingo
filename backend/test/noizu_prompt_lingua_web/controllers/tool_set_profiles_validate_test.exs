@@ -269,9 +269,14 @@ defmodule NoizuPromptLinguaWeb.ToolSetProfilesValidateTest do
       base: base,
       org_id: org_id
     } do
+      # B15 plane ruling: root-plane hidden tools (mcp_overview) no longer ride
+      # set universes — the flagged hidden entry here is a hidden GROUP tool
+      # (Project.Create) from an enabled group instead.
+      config = put_in(@valid_config, ["groups", "projects"], %{"enabled" => true})
+
       body =
         conn
-        |> post(base, %{tool_set: valid_attrs(%{"config" => @valid_config})})
+        |> post(base, %{tool_set: valid_attrs(%{"config" => config})})
         |> json_response(201)
 
       slug = body["tool_set"]["slug"]

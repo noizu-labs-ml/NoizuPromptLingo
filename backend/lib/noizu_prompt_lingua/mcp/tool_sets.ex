@@ -456,15 +456,76 @@ defmodule NoizuPromptLingua.MCP.ToolSets do
     end
   end
 
+  # Discovery/meta + read-only basics. The read basics ride the plane even
+  # though they are registered on group server modules — the plane resolves
+  # their specs across the root aggregate AND every customizable group.
+  @set_plane_names [
+    "ToolCall",
+    "ToolDefinition",
+    "ToolHelp",
+    "ToolSearch",
+    "ToolSummary",
+    "NPLLoad",
+    "NPLSpec",
+    "Organization.Get",
+    "Organization.Overview",
+    "Session.Get",
+    "Session_Manifest",
+    "Notifications.Get"
+  ]
+
   @doc """
-  The plane tools + expanded group tools universe for a set/profile allowlist
-  (FR-2B-4, R2): the root aggregate's tools MINUS every customizable-group
-  tool = the always-served Discovery/NPL/overview plane; group tools come from
-  each group's server module registry. Returns
+  The always-served set plane (B15 ruling): DISCOVERY + READ BASICS only.
+  Every other root tool — Key_*, browser, web_search, mcp_overview, … — is
+  EXCLUDED from set universes and arrives only through a set's enabled config
+  groups. Names are base canonical (`definition.name`) spellings, verified
+  against the live catalog: group-registered read basics keep their dotted
+  form (`Organization.Get`), `Session_Manifest` is registered underscore.
+  """
+  def set_plane_names do
+    @set_plane_names
+  end
+
+  @doc """
+  The plane + expanded group tools universe for a set/profile allowlist
+  (FR-2B-4, R2 as amended by the B15 ruling): the SET PLANE (discovery/meta +
+  read-only basics — `set_plane_names/0`) plus each enabled group's server
+  module registry. Key_* and all other root tools are NOT plane members —
+  everything beyond the plane comes ONLY from the include list. Returns
   `%{include: [canonical_name], specs: %{canonical_name => %Spec{}}}`.
   """
   def universe_for_groups(group_ids) when is_list(group_ids) do
-    root_specs = expand_specs(NoizuPromptLingua.MCP)
+    specs = universe_specs(group_ids)
+
+    %{
+      include: Enum.map(specs, & &1.definition.name),
+      specs: Map.new(specs, &{&1.definition.name, &1})
+    }
+  end
+
+  def universe_for_groups(_), do: %{include: [], specs: %{}}
+
+  # Ordered spec list behind `universe_for_groups/1`: fixed plane first (specs
+  # resolved across the root aggregate AND every customizable group — the read
+  # basics live on group modules), then each enabled group's tools. Shared by
+  # the allowlist/include expansion and the `UniverseToolset` base surface so
+  # both halves of a set universe slice the SAME narrowing plane.
+  def universe_specs(group_ids) when is_list(group_ids) do
+    catalog_specs =
+      expand_specs(NoizuPromptLingua.MCP)
+      |> Enum.concat(
+        Enum.flat_map(MCPServers.customizable(), fn %{id: id} ->
+          case MCPServers.server_module(id) do
+            nil -> []
+            module -> expand_specs(module)
+          end
+        end)
+      )
+      |> Enum.uniq_by(& &1.definition.name)
+
+    plane_names = MapSet.new(@set_plane_names)
+
+    plane_specs = Enum.filter(catalog_specs, &MapSet.member?(plane_names, &1.definition.name))
 
     group_specs =
       group_ids
@@ -476,22 +537,10 @@ defmodule NoizuPromptLingua.MCP.ToolSets do
       end)
       |> Enum.uniq_by(& &1.definition.name)
 
-    group_names = MapSet.new(group_specs, & &1.definition.name)
-
-    plane_specs =
-      root_specs
-      |> Enum.reject(&MapSet.member?(group_names, &1.definition.name))
-      |> Enum.uniq_by(& &1.definition.name)
-
-    specs = plane_specs ++ group_specs
-
-    %{
-      include: Enum.map(specs, & &1.definition.name),
-      specs: Map.new(specs, &{&1.definition.name, &1})
-    }
+    (plane_specs ++ group_specs) |> Enum.uniq_by(& &1.definition.name)
   end
 
-  def universe_for_groups(_), do: %{include: [], specs: %{}}
+  def universe_specs(_), do: []
 
   @doc "Include list only (`universe_for_groups/1` convenience for profiles)."
   def universe_include(group_ids), do: universe_for_groups(group_ids).include
