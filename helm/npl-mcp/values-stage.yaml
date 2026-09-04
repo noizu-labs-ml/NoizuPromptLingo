@@ -27,7 +27,7 @@ npl-mcp:
 backend:
   image:
     repository: ops.noizu.com/npl-mcp/server
-    tag: "sha-83ae959-stage" # replaced by bump-chart-stage: sha-<short>-stage
+    tag: "sha-4275f83-stage" # replaced by bump-chart-stage: sha-<short>-stage
     pullPolicy: IfNotPresent
   port: 4040
   # Soak auth posture: stage OIDC rides the SHARED Authentik instance at
@@ -94,7 +94,7 @@ liquibase:
 frontend:
   image:
     repository: ops.noizu.com/npl-mcp/frontend
-    tag: "sha-83ae959-stage" # replaced by bump-chart-stage: sha-<short>-stage
+    tag: "sha-4275f83-stage" # replaced by bump-chart-stage: sha-<short>-stage
     pullPolicy: IfNotPresent
   port: 3000
   resources:
