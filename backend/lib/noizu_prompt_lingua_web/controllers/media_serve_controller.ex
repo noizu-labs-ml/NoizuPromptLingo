@@ -66,11 +66,17 @@ defmodule NoizuPromptLinguaWeb.MediaServeController do
 
   defp serve_original(conn, media) do
     if media.visibility == "public" do
-      url = NoizuPromptLingua.Storage.presigned_download_url(media.file)
+      case NoizuPromptLingua.Storage.presigned_download_url(media.file) do
+        {:ok, url} ->
+          conn
+          |> put_resp_header("cache-control", "public, max-age=3600")
+          |> redirect(external: url)
 
-      conn
-      |> put_resp_header("cache-control", "public, max-age=3600")
-      |> redirect(external: url)
+        {:error, _} ->
+          conn
+          |> put_status(:service_unavailable)
+          |> json(%{error: "storage not configured"})
+      end
     else
       case Media.fetch_from_s3(media.file) do
         {:ok, binary} ->
@@ -91,11 +97,17 @@ defmodule NoizuPromptLinguaWeb.MediaServeController do
     case Media.get_or_create_variant(media, transform_params) do
       {:ok, variant_key, content_type} ->
         if media.visibility == "public" do
-          url = NoizuPromptLingua.Storage.presigned_download_url(variant_key)
+          case NoizuPromptLingua.Storage.presigned_download_url(variant_key) do
+            {:ok, url} ->
+              conn
+              |> put_resp_header("cache-control", "public, max-age=31536000, immutable")
+              |> redirect(external: url)
 
-          conn
-          |> put_resp_header("cache-control", "public, max-age=31536000, immutable")
-          |> redirect(external: url)
+            {:error, _} ->
+              conn
+              |> put_status(:service_unavailable)
+              |> json(%{error: "storage not configured"})
+          end
         else
           case Media.fetch_from_s3(variant_key) do
             {:ok, binary} ->

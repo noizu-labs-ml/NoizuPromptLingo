@@ -148,7 +148,7 @@ defmodule NoizuPromptLinguaWeb.MCPSetGatewayController do
     end
   end
 
-  defp member_ref(%{"api_key_id" => key_id}) when is_binary(key_id) do
+  defp member_ref(%{"api_key_id" => key_id}) when is_binary(key_id) and key_id != "" do
     # The key's OWNER (Schema.MCPApiKey belongs_to :user) is the gating
     # identity — DB-resolved, never a client-supplied claim.
     case active_key_user(key_id) do
@@ -157,8 +157,17 @@ defmodule NoizuPromptLinguaWeb.MCPSetGatewayController do
     end
   end
 
-  defp member_ref(%{"sub" => sub}) when is_binary(sub) and sub != "",
-    do: %{type: :user, id: sub}
+  # OAuth identity: canonical user ref (strips the "user:" prefix OAuth tokens
+  # carry; svc:/client: subs are not users ⇒ no identity ⇒ 404). Passing the
+  # raw `sub` through never matched a membership row, so OAuth-only callers
+  # were 404'd off set gateways they belonged to. Mirrors
+  # CustomMCPGatewayController.member_ref/1.
+  defp member_ref(claims) do
+    case NoizuPromptLingua.MCP.Resolve.normalize_user_id(claims) do
+      nil -> nil
+      user_id -> %{type: :user, id: user_id}
+    end
+  end
 
   defp member_ref(_), do: nil
 

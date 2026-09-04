@@ -34,7 +34,7 @@ defmodule NoizuPromptLingua.Domains.Markdown do
   """
   def convert(source, opts \\ []) when is_binary(source) do
     case resolve_type(source, opts[:type] || :auto) do
-      :url -> convert_url(source, opts)
+      :url -> convert_url(String.trim(source), opts)
       :html -> {:ok, %{markdown: html_to_markdown(source), source_type: :html, via: :floki}}
       :markdown -> {:ok, %{markdown: source, source_type: :markdown, via: :passthrough}}
     end
@@ -333,7 +333,9 @@ defmodule NoizuPromptLingua.Domains.Markdown do
 
     cond do
       Regex.match?(~r/^h[1-6]$/i, filter) ->
-        section.level == filter |> String.trim_leading("hH") |> String.to_integer()
+        # trim_leading(filter, "hH") trims the literal "hH" prefix, not the
+        # char set — slice the digit the regex guarantees instead.
+        section.level == filter |> String.slice(1, 1) |> String.to_integer()
 
       String.contains?(filter, ">") ->
         target = filter |> String.split(">") |> List.last() |> String.trim()

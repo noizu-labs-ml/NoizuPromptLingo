@@ -16,6 +16,7 @@ defmodule NoizuPromptLingua.Github.Client do
   """
 
   alias NoizuPromptLingua.Schema.GithubRepo
+  alias NoizuPromptLingua.Schema.GithubToken
   alias Noizu.Github.Api.{Repos, Pulls, Issues, Git}
 
   @type repo_ref :: String.t() | Ecto.UUID.t()
@@ -101,12 +102,17 @@ defmodule NoizuPromptLingua.Github.Client do
          Enum.map(filtered, fn repo ->
            repo
            |> struct_to_map()
+           # Drop __meta__ and associations: none are JSON-encodable.
+           |> Map.drop([:__meta__, :organization, :token])
            |> Map.put(:token_preview, mask_token(repo.token))
          end)
      }}
   end
 
   defp mask_token(nil), do: nil
+
+  # list_repos preloads the token association; unwrap to the raw string.
+  defp mask_token(%GithubToken{token: token}), do: mask_token(token)
 
   defp mask_token(token) when is_binary(token) do
     len = byte_size(token)

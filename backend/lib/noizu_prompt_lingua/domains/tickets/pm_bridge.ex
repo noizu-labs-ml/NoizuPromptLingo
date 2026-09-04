@@ -279,6 +279,10 @@ defmodule NoizuPromptLingua.Domains.Tickets.PMBridge do
     case TRP.list_organizations() do
       list when is_list(list) -> Enum.map(list, & &1.id)
       {:error, _} = err -> err
+      # TRP fail-softs to nil (404-mapped org list, or transport failure with no
+      # stale cache) — surface backend-down instead of crashing the callers'
+      # case/reduce with a CaseClauseError 500 (fix/error-family).
+      _ -> {:error, :trp_not_configured}
     end
   end
 

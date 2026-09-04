@@ -65,8 +65,27 @@ defmodule NoizuPromptLingua.Domains.Wiki do
 
   def get_page(id), do: Repo.get(Page, id)
 
+  @doc """
+  Next ordering position for a page within a space (max + 1; 1 when the space
+  is empty). The controller defaults page creation to this so that payloads
+  without an explicit position don't hit the column's not-null constraint.
+  """
+  def next_page_position(space_id) do
+    Page
+    |> where([p], p.space_id == ^space_id)
+    |> select([p], max(p.position))
+    |> Repo.one()
+    |> case do
+      nil -> 1
+      max -> max + 1
+    end
+  end
+
   def create_page(attrs) do
-    attrs = default_slug(attrs, :title)
+    attrs =
+      attrs
+      |> default_slug(:title)
+      |> default_position()
 
     %Page{}
     |> Page.changeset(attrs)
@@ -244,6 +263,26 @@ defmodule NoizuPromptLingua.Domains.Wiki do
       true -> attrs
     end
   end
+
+  # wiki_pages.position is NOT NULL (036-wiki) — a nil position used to raise a
+  # Postgrex not_null_violation 500 (stage log c6295). Default to appending at
+  # the end of the space: max(position) + 1, or 0 for the first page.
+  defp default_position(%{space_id: space_id} = attrs) when not is_nil(space_id) do
+    if is_nil(attrs[:position]) do
+      max =
+        Repo.one(
+          from p in Page,
+            where: p.space_id == ^space_id,
+            select: max(p.position)
+        ) || -1
+
+      Map.put(attrs, :position, max + 1)
+    else
+      attrs
+    end
+  end
+
+  defp default_position(attrs), do: attrs
 
   defp slugify(value) do
     value

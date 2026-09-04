@@ -1,3 +1,31 @@
+# ── Measurement-integrity guards (coverage campaign) ─────────────────────────
+# 1) Tests/coverage MUST run under MIX_ENV=test. In :dev the Endpoint compiles in
+#    Phoenix.CodeReloader (`if code_reloading?` in lib/noizu_prompt_lingua_web/endpoint.ex),
+#    so every request runs reload! → MixListener.purge/1 (+ a dev recompile). A module
+#    purged mid-suite reloads from its plain on-disk beam: tests stay green, but :cover
+#    records nothing — silent exact-zero coverage for every module whose tests ran after
+#    the reload. (:cover.analyse can also return {:error, :not_cover_compiled}, which
+#    crashes ExCoveralls.Stats at the {:ok, lines} match.) Note `MIX_ENV=dev mix coveralls`
+#    overrides coveralls' @preferred_cli_env, so guard here rather than trusting task
+#    defaults.
+unless Mix.env() == :test do
+  raise """
+  Refusing to run: tests/coverage must run under MIX_ENV=test (got #{Mix.env()}).
+  :dev compiles the code-reloader plug into the Endpoint; a mid-suite reload
+  executes purged modules from their plain beams and silently zeroes coverage.
+  Recipe: scripts/coverage.sh (or `unset MIX_ENV; mix coveralls.json`).
+  """
+end
+
+# 2) Belt-and-braces: the Mix compiler listener lets a running dev server notice
+#    compiles from OTHER OS processes and purge invalidated modules. It has no
+#    legitimate purpose in a test run, and purging any ExCoveralls-instrumented
+#    module destroys its coverage data. Stop it if Mix started it during compile.
+if Code.ensure_loaded?(Phoenix.CodeReloader.MixListener) and
+     Process.whereis(Phoenix.CodeReloader.MixListener) do
+  GenServer.stop(Phoenix.CodeReloader.MixListener, :normal)
+end
+
 ExUnit.start()
 
 # Apply the memory-engine schema (Liquibase 045–050) to the test DB so the memory suite is

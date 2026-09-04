@@ -3,6 +3,7 @@ defmodule NoizuPromptLinguaWeb.TypeDefinitionController do
 
   alias NoizuPromptLingua.Domains.Tickets.Definitions
   alias NoizuPromptLingua.Authz
+  alias NoizuPromptLinguaWeb.TRPResponse
 
   # GET /api/v1/organizations/:org_id/ticket-type-definitions[?project_id=]
   def index(conn, %{"org_id" => org_id} = params) do
@@ -30,8 +31,14 @@ defmodule NoizuPromptLinguaWeb.TypeDefinitionController do
             |> put_status(:created)
             |> json(%{type_definition: detail_json(Definitions.get_type(type_def.id))})
 
-          {:error, changeset} ->
+          {:error, %Ecto.Changeset{} = changeset} ->
             conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+
+          {:error, _} = err ->
+            # Definitions now returns {:error, %TRP.Error{}} (422 validation) /
+            # {:error, :trp_not_configured} — render, don't fall through to a
+            # CaseClauseError 500 (stage log c6168).
+            TRPResponse.respond_error(conn, err)
         end
       else
         {:error, :project_not_in_org} ->
@@ -52,6 +59,7 @@ defmodule NoizuPromptLinguaWeb.TypeDefinitionController do
     with_org(conn, org_id, "viewer", fn _resolved_org_id ->
       case Definitions.get_type(id) do
         nil -> conn |> put_status(:not_found) |> json(%{error: "Type not found"})
+        {:error, _} = err -> TRPResponse.respond_error(conn, err)
         type_def -> json(conn, %{type_definition: detail_json(type_def)})
       end
     end)
@@ -65,8 +73,11 @@ defmodule NoizuPromptLinguaWeb.TypeDefinitionController do
           if is_list(params["fields"]), do: replace_fields(id, params["fields"])
           json(conn, %{type_definition: detail_json(Definitions.get_type(id))})
 
-        {:error, changeset} ->
+        {:error, %Ecto.Changeset{} = changeset} ->
           conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+
+        {:error, _} = err ->
+          TRPResponse.respond_error(conn, err)
       end
     end)
   end
@@ -77,6 +88,7 @@ defmodule NoizuPromptLinguaWeb.TypeDefinitionController do
       case Definitions.delete_type(id) do
         {:ok, _} -> json(conn, %{message: "Type deleted"})
         {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Type not found"})
+        {:error, _} = err -> TRPResponse.respond_error(conn, err)
       end
     end)
   end
@@ -86,6 +98,9 @@ defmodule NoizuPromptLinguaWeb.TypeDefinitionController do
       case Definitions.get_type(id) do
         nil ->
           conn |> put_status(:not_found) |> json(%{error: "Type not found"})
+
+        {:error, _} = err ->
+          TRPResponse.respond_error(conn, err)
 
         %{organization_id: ^resolved_org_id} = type_def ->
           fun.(type_def)

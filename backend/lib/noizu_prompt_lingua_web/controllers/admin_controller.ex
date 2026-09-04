@@ -1415,10 +1415,13 @@ defmodule NoizuPromptLinguaWeb.AdminController do
         NoizuPromptLingua.Repo.get(McpApiKey, id)
 
       # The W7 editor route may carry either the row uuid or the public
-      # client_id string (DCR identifier).
+      # client_id string (DCR identifier). Repo.get/3 raises on a non-uuid id,
+      # so the uuid lookup is guarded and the client_id lookup is the fallback.
       :oauth_client ->
-        NoizuPromptLingua.Repo.get(OAuthClient, id) ||
-          NoizuPromptLingua.Repo.one(from c in OAuthClient, where: c.client_id == ^id)
+        case Ecto.UUID.cast(id) do
+          {:ok, uuid} -> NoizuPromptLingua.Repo.get(OAuthClient, uuid)
+          :error -> nil
+        end || NoizuPromptLingua.Repo.one(from c in OAuthClient, where: c.client_id == ^id)
 
       _ ->
         nil

@@ -5,8 +5,10 @@ defmodule NoizuPromptLinguaWeb.RemoteAccessController do
   Tunnel CRUD is authenticated with an **MCP JWT** (same Bearer token the
   browser-controller uses), and gated on the caller being an editor of the org.
   `frp_auth/2` is the unauthenticated-from-the-user callback the `frps` server
-  invokes; it is secured by the per-claim tunnel token (and an optional shared
-  secret), never by the user's session.
+  invokes; it is secured by the per-claim tunnel token and a REQUIRED shared
+  secret, never by the user's session. Both gates FAIL CLOSED: an unconfigured
+  secret admits no tunnels, and ops this deployment does not understand are
+  rejected rather than allowed.
   """
   use NoizuPromptLinguaWeb, :controller
 
@@ -87,10 +89,22 @@ defmodule NoizuPromptLinguaWeb.RemoteAccessController do
   # ── frps server-plugin callback ────────────────────────────────────────────
 
   def frp_auth(conn, params) do
-    if frp_secret_ok?(conn) do
-      handle_frp_op(conn, params["op"], params["content"] || %{})
-    else
-      conn |> put_status(:unauthorized) |> json(%{reject: true, reject_reason: "bad frp secret"})
+    case frp_secret_state(conn) do
+      :ok ->
+        handle_frp_op(conn, params["op"], params["content"] || %{})
+
+      # Presented secret does not match the configured one — challenge.
+      :mismatch ->
+        conn
+        |> put_status(:unauthorized)
+        |> json(%{reject: true, reject_reason: "bad frp secret"})
+
+      # Fail closed: with the shared secret unconfigured (nil/"") there is no
+      # gate at all — admit nothing rather than everything.
+      :unconfigured ->
+        conn
+        |> put_status(:forbidden)
+        |> json(%{reject: true, reject_reason: "frp secret not configured"})
     end
   end
 
@@ -110,8 +124,13 @@ defmodule NoizuPromptLinguaWeb.RemoteAccessController do
     allow(conn)
   end
 
-  # Unknown op we were not configured for — don't block.
-  defp handle_frp_op(conn, _op, _content), do: allow(conn)
+  # Fail closed: only the ops this deployment understands pass through — an
+  # unrecognised op must never be admitted by default.
+  defp handle_frp_op(conn, _op, _content) do
+    conn
+    |> put_status(:forbidden)
+    |> json(%{reject: true, reject_reason: "unknown op"})
+  end
 
   defp decide(conn, :ok), do: allow(conn)
 
@@ -122,20 +141,21 @@ defmodule NoizuPromptLinguaWeb.RemoteAccessController do
 
   defp meta_token(content), do: get_in(content, ["metas", "token"])
 
-  defp frp_secret_ok?(conn) do
+  # Fail closed: an unconfigured (nil/"" — i.e. misconfigured) secret admits
+  # NOTHING; the secret is mandatory for every frps callback.
+  defp frp_secret_state(conn) do
     case System.get_env("REMOTE_ACCESS_FRP_SECRET") do
-      nil ->
-        true
-
-      "" ->
-        true
-
-      secret ->
+      secret when is_binary(secret) and secret != "" ->
         presented =
           conn.query_params["secret"] ||
             Plug.Conn.get_req_header(conn, "x-frp-secret") |> List.first()
 
-        Plug.Crypto.secure_compare(to_string(presented), secret)
+        if is_binary(presented) and Plug.Crypto.secure_compare(presented, secret),
+          do: :ok,
+          else: :mismatch
+
+      _ ->
+        :unconfigured
     end
   end
 

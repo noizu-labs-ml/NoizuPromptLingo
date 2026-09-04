@@ -4,6 +4,7 @@ defmodule NoizuPromptLinguaWeb.FieldDefinitionController do
   alias NoizuPromptLingua.Domains.Tickets.Definitions
   alias NoizuPromptLingua.Schema.TicketFieldDefinition
   alias NoizuPromptLingua.Authz
+  alias NoizuPromptLinguaWeb.TRPResponse
 
   # GET /api/v1/organizations/:org_id/ticket-field-definitions[?project_id=]
   # Returns every field visible in the (org, project) context — global,
@@ -31,6 +32,9 @@ defmodule NoizuPromptLinguaWeb.FieldDefinitionController do
         nil ->
           conn |> put_status(:not_found) |> json(%{error: "Field not found"})
 
+        {:error, _} = err ->
+          TRPResponse.respond_error(conn, err)
+
         %{organization_id: nil} = field ->
           json(conn, %{field_definition: field_to_json(field)})
 
@@ -56,8 +60,14 @@ defmodule NoizuPromptLinguaWeb.FieldDefinitionController do
           {:ok, field} ->
             conn |> put_status(:created) |> json(%{field_definition: field_to_json(field)})
 
-          {:error, changeset} ->
+          {:error, %Ecto.Changeset{} = changeset} ->
             conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+
+          {:error, _} = err ->
+            # Definitions returns {:error, %TRP.Error{}} / {:error,
+            # :trp_not_configured} — render the typed family, don't crash the
+            # case with a FunctionClauseError 500 (stage log c6304).
+            TRPResponse.respond_error(conn, err)
         end
       else
         {:error, :project_not_in_org} ->
@@ -80,8 +90,11 @@ defmodule NoizuPromptLinguaWeb.FieldDefinitionController do
         {:ok, field} ->
           json(conn, %{field_definition: field_to_json(field)})
 
-        {:error, changeset} ->
+        {:error, %Ecto.Changeset{} = changeset} ->
           conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+
+        {:error, _} = err ->
+          TRPResponse.respond_error(conn, err)
       end
     end)
   end
@@ -95,6 +108,9 @@ defmodule NoizuPromptLinguaWeb.FieldDefinitionController do
 
         {:error, :not_found} ->
           conn |> put_status(:not_found) |> json(%{error: "Field not found"})
+
+        {:error, _} = err ->
+          TRPResponse.respond_error(conn, err)
       end
     end)
   end
@@ -106,6 +122,9 @@ defmodule NoizuPromptLinguaWeb.FieldDefinitionController do
       case Definitions.get_field(id) do
         nil ->
           conn |> put_status(:not_found) |> json(%{error: "Field not found"})
+
+        {:error, _} = err ->
+          TRPResponse.respond_error(conn, err)
 
         %{organization_id: ^resolved_org_id} = field ->
           fun.(field)
