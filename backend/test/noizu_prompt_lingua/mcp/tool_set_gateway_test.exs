@@ -203,6 +203,35 @@ defmodule NoizuPromptLingua.MCP.ToolSetGatewayTest do
       assert_gates_passed(result)
     end
 
+    test "org-set OAuth caller (member, sub=user:<uuid>) passes the gates", %{org: org} do
+      # Regression: member_ref/1 forwarded the raw "user:"-prefixed sub, so no
+      # membership row ever matched and OAuth-only callers were 404'd off set
+      # gateways they belonged to. Now canonicalized like the legacy gateway.
+      {:ok, set} = create_set(org.id, "org-set-oauth")
+      caller = oauth_caller(org, member?: true)
+
+      result = call_org(authenticated_conn(caller.token), org.slug, set.slug)
+      assert_gates_passed(result)
+    end
+
+    test "org-set OAuth caller who is not a member ⇒ 404", %{org: org} do
+      {:ok, set} = create_set(org.id, "org-set-oauth-out")
+      caller = oauth_caller(org, member?: false)
+
+      conn = call_org(authenticated_conn(caller.token), org.slug, set.slug)
+      assert conn.status == 404
+      assert body(conn) == @not_found
+    end
+
+    test "non-user principal (svc: sub) ⇒ 404 — no identity, same body", %{org: org} do
+      {:ok, set} = create_set(org.id, "org-set-svc")
+      caller = oauth_caller(org, member?: true, sub: "svc:robot-1")
+
+      conn = call_org(authenticated_conn(caller.token), org.slug, set.slug)
+      assert conn.status == 404
+      assert body(conn) == @not_found
+    end
+
     test "group-set: member of the org but NOT the set's group ⇒ 404", %{org: org} do
       role_group = member_group()
       {:ok, set} = create_set(org.id, "group-set", %{"group_id" => role_group.id})
@@ -407,6 +436,47 @@ defmodule NoizuPromptLingua.MCP.ToolSetGatewayTest do
       )
 
     %{user: user, key: key, token: token}
+  end
+
+  # OAuth identity: RS256 bearer minted the way OAuth.TokenService.mint_tokens
+  # does — "user:"-prefixed sub, no api_key_id (cf. custom_mcp_gateway_org_authz
+  # test's oauth_caller; `:sub` override mints a non-user principal).
+  defp oauth_caller(org, opts) do
+    user = create_user()
+
+    if Keyword.get(opts, :member?, false) do
+      {:ok, _} = ScopedMemberships.add_member("organization", org.id, user.id, "member")
+    end
+
+    now = System.system_time(:second)
+    entry = NoizuPromptLingua.OAuth.Jwks.signing_entry()
+
+    sub = Keyword.get(opts, :sub, "user:#{user.id}")
+
+    claims =
+      %{
+        "sub" => sub,
+        "email" => user.email,
+        "name" => user.user_name,
+        "iss" => NoizuPromptLingua.OAuth.AuthorizationServer.issuer_url(),
+        "iat" => now,
+        "exp" => now + 3600,
+        "client_id" => "set-gateway-test",
+        "scope" => "mcp",
+        "token_version" => 2,
+        "token_use" => "access"
+      }
+
+    # A non-user principal (svc:/client:) carries no user_id claim — the claim
+    # resolver would otherwise canonicalize through it.
+    claims =
+      if String.starts_with?(sub, "user:"), do: Map.put(claims, "user_id", user.id), else: claims
+
+    {_, token} =
+      JOSE.JWT.sign(entry.jwk, %{"alg" => entry.alg, "kid" => entry.kid, "typ" => "JWT"}, claims)
+      |> JOSE.JWS.compact()
+
+    %{user: user, token: token}
   end
 
   # The role group rows (owner/admin/lead/member/viewer) are seeded by

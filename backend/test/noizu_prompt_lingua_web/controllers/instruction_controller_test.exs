@@ -391,4 +391,34 @@ defmodule NoizuPromptLinguaWeb.InstructionControllerTest do
       assert rendered["body"] == "static body"
     end
   end
+
+  # ── Non-numeric version params (regression: "abc" hit String.to_integer/1
+  #    and escaped as an ArgumentError 500; it is a client error → 422) ──────
+
+  describe "non-numeric version params" do
+    test "GET /:id?version=abc is 422, not 500", %{auth: auth, org_id: org_id} do
+      id = create_instruction(auth, org_id, %{slug: "qa-ver-abc"})
+
+      assert %{"errors" => %{"version" => ["is invalid"]}} =
+               auth |> get(base(org_id, "/#{id}?version=abc")) |> json_response(422)
+    end
+
+    test "POST active-version with a non-numeric version is 422", %{auth: auth, org_id: org_id} do
+      id = create_instruction(auth, org_id, %{slug: "qa-av-abc"})
+
+      assert %{"errors" => %{"version" => ["is invalid"]}} =
+               auth
+               |> post(base(org_id, "/#{id}/active-version"), %{version: "abc"})
+               |> json_response(422)
+    end
+
+    test "POST render with a non-numeric version is 422", %{auth: auth, org_id: org_id} do
+      id = create_instruction(auth, org_id, %{slug: "qa-render-abc"})
+
+      assert %{"errors" => %{"version" => ["is invalid"]}} =
+               auth
+               |> post(base(org_id, "/#{id}/render"), %{version: "abc"})
+               |> json_response(422)
+    end
+  end
 end

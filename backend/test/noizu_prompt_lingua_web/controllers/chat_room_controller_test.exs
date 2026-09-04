@@ -199,4 +199,24 @@ defmodule NoizuPromptLinguaWeb.ChatRoomDuplicateNameTest do
     assert second["slug"] != first["slug"]
     assert second["slug"] =~ ~r/^probe-room(-\d+)?$/
   end
+
+  # ── Missing-body fallbacks (regression: body-less POST /chat/rooms hit the
+  #    FunctionClauseError → 500; missing required params are client errors
+  #    → 422, matching the update/create_message fallbacks) ─────────────────
+
+  describe "missing-body fallbacks" do
+    test "POST rooms with no room body -> 422, not 500", %{conn: conn, base: base} do
+      assert %{"errors" => %{"room" => ["can't be blank"]}} =
+               post(conn, base, %{})
+               |> json_response(422)
+    end
+
+    # The router only routes this action with org_id present (path segment), so
+    # this exercises the defensive clause via direct dispatch.
+    test "GET rooms without org_id -> 422, not 500", %{conn: conn} do
+      conn = NoizuPromptLinguaWeb.ChatController.index(conn, %{})
+      assert conn.status == 422
+      assert %{"errors" => %{"org_id" => ["can't be blank"]}} = json_response(conn, 422)
+    end
+  end
 end
