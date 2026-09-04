@@ -144,7 +144,10 @@ defmodule NoizuPromptLingua.Entities.EntitiesResidualTest do
 
     uid = user.id
     slug = "w4d-org-fail-#{System.unique_integer([:positive])}"
-    {:ok, org} = Organizations.create_organization_with_owner(%{slug: slug, name: "W4D Org 2"}, uid)
+
+    {:ok, org} =
+      Organizations.create_organization_with_owner(%{slug: slug, name: "W4D Org 2"}, uid)
+
     assert org.slug == slug
   end
 
@@ -154,7 +157,10 @@ defmodule NoizuPromptLingua.Entities.EntitiesResidualTest do
     slug = "w4d-org-del-#{System.unique_integer([:positive])}"
 
     org =
-      Repo.insert!(%NoizuPromptLingua.Schema.Organizations.Organization{name: "Del Org", slug: slug})
+      Repo.insert!(%NoizuPromptLingua.Schema.Organizations.Organization{
+        name: "Del Org",
+        slug: slug
+      })
 
     assert Repo.get(NoizuPromptLingua.Schema.Organizations.Organization, org.id)
   end
@@ -248,7 +254,14 @@ defmodule NoizuPromptLingua.Entities.EntitiesResidualTest do
     |> Repo.insert!()
 
     assert NoizuPromptLingua.Authz.ScopedMemberships.active_member?("project", rid, uid, [])
-    refute NoizuPromptLingua.Authz.ScopedMemberships.active_member?("project", rid, Ecto.UUID.generate(), [])
+
+    refute NoizuPromptLingua.Authz.ScopedMemberships.active_member?(
+             "project",
+             rid,
+             Ecto.UUID.generate(),
+             []
+           )
+
     refute NoizuPromptLingua.Authz.ScopedMemberships.active_member?(:weird, :shape, :here, [])
   end
 
@@ -282,7 +295,9 @@ defmodule NoizuPromptLingua.Entities.EntitiesResidualTest do
   # ── MCP API keys: id-based miss folds ────────────────────────────
 
   test "mcp api key operations fold unknown ids" do
-    assert {:error, :not_found} = MCPApiKeys.update(Ecto.UUID.generate(), %{status: "revived"}, [])
+    assert {:error, :not_found} =
+             MCPApiKeys.update(Ecto.UUID.generate(), %{status: "revived"}, [])
+
     assert {:error, :not_found} = MCPApiKeys.clone(Ecto.UUID.generate(), %{})
     assert {:error, :not_found} = MCPApiKeys.copy_toolset_from(Ecto.UUID.generate(), "other")
   end

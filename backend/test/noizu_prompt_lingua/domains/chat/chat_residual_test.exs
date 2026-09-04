@@ -103,7 +103,10 @@ defmodule NoizuPromptLingua.Domains.Chat.ChatResidualTest do
     assert msg =~ "Organization 'junk-org' not found"
 
     assert {:error, msg} =
-             Chat.Tools.CreateRoom.call(%{name: "X", organization: "junk-org", project: "nope"}, %{})
+             Chat.Tools.CreateRoom.call(
+               %{name: "X", organization: "junk-org", project: "nope"},
+               %{}
+             )
 
     assert msg =~ "not found"
   end

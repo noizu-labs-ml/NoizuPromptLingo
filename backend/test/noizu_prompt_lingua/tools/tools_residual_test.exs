@@ -248,7 +248,11 @@ defmodule NoizuPromptLingua.Tools.ToolsResidualTest do
   test "NPLLoad loads an expression with layout + skip options" do
     assert {:ok, result} =
              NPLLoad.call(
-               %{"expression" => "syntax", "layout" => "classic", "skip" => ["syntax#placeholder"]},
+               %{
+                 "expression" => "syntax",
+                 "layout" => "classic",
+                 "skip" => ["syntax#placeholder"]
+               },
                @ctx
              )
 
@@ -290,6 +294,7 @@ defmodule NoizuPromptLingua.Tools.ToolsResidualTest do
   test "WebSearch honors the provider app env" do
     prev = Application.get_env(:noizu_prompt_lingua, :web_search_provider)
     Application.put_env(:noizu_prompt_lingua, :web_search_provider, :searxng)
+
     on_exit(fn ->
       if prev, do: Application.put_env(:noizu_prompt_lingua, :web_search_provider, prev)
     end)

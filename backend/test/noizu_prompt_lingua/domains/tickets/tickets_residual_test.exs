@@ -54,7 +54,10 @@ defmodule NoizuPromptLingua.Domains.Tickets.TicketsResidualTest do
 
     # get_type found, then the write fails
     TestStub.queue_response({200, %{"type" => %{"id" => type_id, "slug" => "bug"}}})
-    TestStub.queue_response({200, %{"type" => %{"id" => type_id, "slug" => "bug", "type_fields" => []}}})
+
+    TestStub.queue_response(
+      {200, %{"type" => %{"id" => type_id, "slug" => "bug", "type_fields" => []}}}
+    )
 
     TestStub.queue_response({500, %{"error" => "boom"}})
     TestStub.queue_response({500, %{"error" => "boom"}})
@@ -79,7 +82,9 @@ defmodule NoizuPromptLingua.Domains.Tickets.TicketsResidualTest do
   # ── QueueGet tool ────────────────────────────────────────────────
 
   test "Queue.Get reports missing boards and unresolvable scopes" do
-    assert {:error, msg} = NoizuPromptLingua.Domains.Tickets.Tools.QueueGet.call(%{slug: "nope"}, %{})
+    assert {:error, msg} =
+             NoizuPromptLingua.Domains.Tickets.Tools.QueueGet.call(%{slug: "nope"}, %{})
+
     assert msg =~ "not found"
 
     assert {:error, msg} =
@@ -271,7 +276,10 @@ defmodule NoizuPromptLingua.Domains.Tickets.TicketsResidualTest do
              )
   end
 
-  test "Ticket.FromEntity folds org/project resolution misses", %{org_id: org_id, other_org_id: other_org_id} do
+  test "Ticket.FromEntity folds org/project resolution misses", %{
+    org_id: org_id,
+    other_org_id: other_org_id
+  } do
     tool = NoizuPromptLingua.Domains.Tickets.Tools.TicketFromEntity
 
     assert {:error, msg} =
@@ -281,7 +289,12 @@ defmodule NoizuPromptLingua.Domains.Tickets.TicketsResidualTest do
 
     assert {:error, msg} =
              tool.call(
-               %{organization: "w4d-tickets", project: "nope-project", subject_type: "note", subject_id: "n1"},
+               %{
+                 organization: "w4d-tickets",
+                 project: "nope-project",
+                 subject_type: "note",
+                 subject_id: "n1"
+               },
                %{}
              )
 
@@ -292,7 +305,12 @@ defmodule NoizuPromptLingua.Domains.Tickets.TicketsResidualTest do
     # a project from another org is invisible inside this org's scope
     assert {:error, msg} =
              tool.call(
-               %{organization: "w4d-tickets", project: "other-project", subject_type: "note", subject_id: "n1"},
+               %{
+                 organization: "w4d-tickets",
+                 project: "other-project",
+                 subject_type: "note",
+                 subject_id: "n1"
+               },
                %{}
              )
 
@@ -325,7 +343,10 @@ defmodule NoizuPromptLingua.Domains.Tickets.TicketsResidualTest do
              NoizuPromptLingua.Domains.Tickets.Tools.Overview.call(%{}, %{})
 
     assert {:ok, %{status_counts: _}} =
-             NoizuPromptLingua.Domains.Tickets.Tools.Overview.call(%{organization: "w4d-tickets"}, %{})
+             NoizuPromptLingua.Domains.Tickets.Tools.Overview.call(
+               %{organization: "w4d-tickets"},
+               %{}
+             )
   end
 
   # ── Tickets context: human-key guard ─────────────────────────────
@@ -403,7 +424,9 @@ defmodule NoizuPromptLingua.Domains.Tickets.TicketsResidualTest do
     assert {:error, _} = PMBridge.create(%{organization_id: org_id, title: "Nope"})
 
     for _ <- 1..3, do: TestStub.queue_response({500, %{"error" => "boom"}})
-    assert {:error, _} = PMBridge.create(%{organization_id: org_id, title: "Nope2", ticket_type: "bug"})
+
+    assert {:error, _} =
+             PMBridge.create(%{organization_id: org_id, title: "Nope2", ticket_type: "bug"})
 
     {:ok, ticket} = PMBridge.create(%{organization_id: org_id, title: "Keep"})
 

@@ -50,7 +50,8 @@ defmodule NoizuPromptLingua.TRP.TRPResidualTest do
   test "429 chain exhausts retries and surfaces the last raw error" do
     # retry_after 0 → no sleep; the 429 branch has no attempts guard, so four
     # queued 429s drive attempts_left to 0 and the raw passthrough clause runs.
-    for _ <- 1..4, do: TestStub.queue_response({429, %{"error" => "rate_limited", "retry_after" => 0}})
+    for _ <- 1..4,
+        do: TestStub.queue_response({429, %{"error" => "rate_limited", "retry_after" => 0}})
 
     assert {:error, %Error{status: 429}} = Client.request(:get, "/api/v1/organizations")
   end
@@ -203,7 +204,8 @@ defmodule NoizuPromptLingua.TRP.TRPResidualTest do
   test "stale token rotates via refresh and stores the new access" do
     stale_at = System.system_time(:millisecond) - 51 * 60 * 1000
 
-    :ets.insert(:noizu_trp_service_auth,
+    :ets.insert(
+      :noizu_trp_service_auth,
       {:auth, %{access: "jwt_stale", refresh: "r1", fetched_at: stale_at}}
     )
 
@@ -214,7 +216,8 @@ defmodule NoizuPromptLingua.TRP.TRPResidualTest do
     JwtStub.set_refresh({200, %{"unexpected" => "shape"}})
     stale_at = System.system_time(:millisecond) - 51 * 60 * 1000
 
-    :ets.insert(:noizu_trp_service_auth,
+    :ets.insert(
+      :noizu_trp_service_auth,
       {:auth, %{access: "jwt_stale", refresh: "r1", fetched_at: stale_at}}
     )
 
@@ -226,7 +229,8 @@ defmodule NoizuPromptLingua.TRP.TRPResidualTest do
     JwtStub.set_refresh({401, %{"error" => "revoked"}})
     stale_at = System.system_time(:millisecond) - 51 * 60 * 1000
 
-    :ets.insert(:noizu_trp_service_auth,
+    :ets.insert(
+      :noizu_trp_service_auth,
       {:auth, %{access: "jwt_stale", refresh: "r1", fetched_at: stale_at}}
     )
 
@@ -278,7 +282,11 @@ defmodule NoizuPromptLingua.TRP.JwtStub do
   @impl true
   def request(:post, _base, "/api/v1/auth/login", _h, _body, _o) do
     scripted(& &1.login, fn ->
-      {:ok, 200, %{"access_token" => "jwt_access_#{System.unique_integer([:positive])}", "refresh_token" => "jwt_refresh"}}
+      {:ok, 200,
+       %{
+         "access_token" => "jwt_access_#{System.unique_integer([:positive])}",
+         "refresh_token" => "jwt_refresh"
+       }}
     end)
   end
 

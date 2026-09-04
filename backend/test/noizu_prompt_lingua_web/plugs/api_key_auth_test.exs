@@ -153,6 +153,7 @@ defmodule NoizuPromptLinguaWeb.Plugs.ApiKeyAuthTest do
 
   test "falls through when no keys are configured" do
     user = seed_service_user()
+
     Application.put_env(:noizu_prompt_lingua, :api_key_auth,
       keys: [],
       service_user_id: user.id

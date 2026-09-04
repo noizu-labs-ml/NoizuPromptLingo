@@ -70,7 +70,11 @@ defmodule NoizuPromptLinguaWeb.Plugs.AuthzGuardsPlugsTest do
   # ── RequirePermission ────────────────────────────────────────────
 
   test "RequirePermission 401s without a signed-in principal" do
-    conn = RequirePermission.call(build_conn() |> fetch_query_params(), RequirePermission.init(permission: "ticket_view"))
+    conn =
+      RequirePermission.call(
+        build_conn() |> fetch_query_params(),
+        RequirePermission.init(permission: "ticket_view")
+      )
 
     assert conn.halted
     assert conn.status == 401
@@ -238,7 +242,12 @@ defmodule NoizuPromptLinguaWeb.Plugs.AuthzGuardsPlugsTest do
   end
 
   test "RequireRole 403s non-members and under-ranked members distinctly" do
-    org = Repo.insert!(%Organization{name: "guard-org", slug: "guard-org-#{System.unique_integer([:positive])}"})
+    org =
+      Repo.insert!(%Organization{
+        name: "guard-org",
+        slug: "guard-org-#{System.unique_integer([:positive])}"
+      })
+
     member = insert_user!()
     viewer = insert_user!()
 
