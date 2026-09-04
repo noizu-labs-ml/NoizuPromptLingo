@@ -49,6 +49,11 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.FieldDefinitionUpdate do
           {:ok,
            %{id: field.id, slug: field.slug, label: field.label, field_type: field.field_type}}
 
+        # update_field may resolve :not_found after the key-scope org walk;
+        # it is an atom, not a changeset — inspecting `.errors` would crash.
+        {:error, :not_found} ->
+          {:error, "Field '#{slug}' not found"}
+
         {:error, changeset} ->
           {:error, "Failed: #{inspect(changeset.errors)}"}
       end
