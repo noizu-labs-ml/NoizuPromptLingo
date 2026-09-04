@@ -15,6 +15,9 @@ defmodule NoizuPromptLingua.MCP.ToolSetInvokeRegressionTest do
     * B14 — ToolCall on a set surface resolves the SAME set universe:
       listed tools delegate cleanly (MCP-visible refusal), hidden universe
       tools dispatch, tools outside the set stay not-found (ceiling).
+    * B15 plane ruling — the always-served set plane is DISCOVERY + READ
+      BASICS only; Key_* and all other root-plane tools are neither listed
+      nor callable on a set surface.
   """
 
   alias Noizu.MCP.Ctx
@@ -219,19 +222,79 @@ defmodule NoizuPromptLingua.MCP.ToolSetInvokeRegressionTest do
     assert {:error, "Tool 'Wiki_List' not found"} = tool_call_via_meta(ctx, "Wiki_List")
   end
 
-  test "B14: ToolCall dispatches a hidden universe tool through the lib pipeline" do
-    create_set("b14-dispatch", @toolcall_config)
+  test "B14: ToolCall dispatches a hidden tool from an ENABLED group through the lib pipeline" do
+    config = %{
+      "groups" => %{
+        "organizations" => %{"enabled" => true},
+        "sessions" => %{"enabled" => true}
+      }
+    }
+
+    create_set("b14-dispatch", config)
     ctx = ctx_for_set("b14-dispatch")
 
-    # The additive universe carries spec-HIDDEN root-plane tools on every set
-    # (Organization.Create rides along — see probe D-set/B15) and ToolCall is
-    # the ONLY door to them. Empty args flow through the lib invoke pipeline,
-    # which rejects them against the EFFECTIVE schema — deterministic dispatch
+    # Organization.Create is spec-hidden (ToolCall's whole purpose) and its
+    # group is enabled: empty args flow through the lib invoke pipeline, which
+    # rejects them against the EFFECTIVE schema — deterministic dispatch
     # proof (validator message, no DB), not "not found", not "MCP-visible".
     assert {:error, message} = tool_call_via_meta(ctx, "Organization_Create")
     refute message =~ "not found"
     refute message =~ "MCP-visible"
     assert message =~ "Invalid arguments for tool Organization.Create"
+  end
+
+  # ── B15 plane ruling — the set plane is discovery + read basics only ──────
+
+  @plane_names [
+    "ToolCall",
+    "ToolDefinition",
+    "ToolHelp",
+    "ToolSearch",
+    "ToolSummary",
+    "NPLLoad",
+    "NPLSpec",
+    "Organization.Get",
+    "Organization.Overview",
+    "Session.Get",
+    "Session_Manifest",
+    "Notifications.Get"
+  ]
+
+  test "B15: an empty-group set lists EXACTLY the discovery + read-basics plane" do
+    create_set("b15-floor", %{"groups" => %{}})
+    ctx = ctx_for_set("b15-floor")
+
+    assert {:ok, tools, _cursor} = ToolSetEndpoint.handle_list_tools(nil, ctx)
+    names = Enum.map(tools, & &1.name) |> Enum.sort()
+    assert names == Enum.sort(@plane_names)
+  end
+
+  test "B15: Key_* are neither listed NOR callable on a set (plane exclusion)" do
+    create_set("b15-keys", @toolcall_config)
+    ctx = ctx_for_set("b15-keys")
+
+    assert {:ok, tools, _cursor} = ToolSetEndpoint.handle_list_tools(nil, ctx)
+    names = Enum.map(tools, & &1.name)
+    refute "Key_List" in names
+    refute "Key_Create" in names
+
+    assert {:error, "Tool 'Key_List' not found"} = tool_call_via_meta(ctx, "Key_List")
+
+    # Direct (non-meta) calls hit the same wall at resolve — identical
+    # unknown-tool error, no oracle between absent and excluded.
+    assert {:error, %Noizu.MCP.Error{reason: :invalid_params}} =
+             ToolSetEndpoint.handle_call_tool("Key_Create", %{"label" => "x"}, ctx)
+  end
+
+  test "B15: root-plane extras (mcp_overview) are excluded from set universes" do
+    create_set("b15-overview", @toolcall_config)
+    ctx = ctx_for_set("b15-overview")
+
+    assert {:ok, tools, _cursor} = ToolSetEndpoint.handle_list_tools(nil, ctx)
+    refute "mcp_overview" in Enum.map(tools, & &1.name)
+
+    assert {:error, "Tool 'Organization_Create' not found"} =
+             tool_call_via_meta(ctx, "Organization_Create")
   end
 
   # ── helpers ───────────────────────────────────────────────────────────────
