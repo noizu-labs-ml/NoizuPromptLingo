@@ -256,12 +256,17 @@ defmodule NoizuPromptLingua.Organizations do
     key_prefix = String.slice(raw_token, 0, 8)
     token_hash = Bcrypt.hash_pwd_salt(raw_token)
 
+    # Normalize caller keys to strings BEFORE merging the system keys: a mixed
+    # atom/string map raises Ecto.CastError in Changeset.cast/2, so merging
+    # atom-keyed %{token_hash: …} into string-keyed caller attrs crashed.
+    attrs = Map.new(attrs, fn {k, v} -> {to_string(k), v} end)
+
     result =
       %InviteTokenSchema{}
       |> InviteTokenSchema.changeset(
         Map.merge(attrs, %{
-          token_hash: token_hash,
-          key_prefix: key_prefix
+          "token_hash" => token_hash,
+          "key_prefix" => key_prefix
         })
       )
       |> NoizuPromptLingua.Repo.insert()
