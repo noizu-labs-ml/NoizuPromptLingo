@@ -27,14 +27,14 @@ defmodule NoizuPromptLingua.Domains.Github.Tools.PullMerge do
     repo_ref = Args.get(args, :repo)
     pull_number = Args.get(args, :pull_number)
 
+    # Map.new/1 first: the literal was a keyword list, and Map.take/2 requires a
+    # map — as written these tools raised BadMapError on every call (cov/w5b).
     body =
-      Map.take(
-        [
-          commit_title: Args.get(args, :commit_title),
-          merge_method: Args.get(args, :merge_method)
-        ],
-        [:commit_title, :merge_method]
+      Map.new(
+        commit_title: Args.get(args, :commit_title),
+        merge_method: Args.get(args, :merge_method)
       )
+      |> Map.take([:commit_title, :merge_method])
       |> Enum.filter(fn {_, v} -> v != nil end)
       |> Enum.into(%{})
 

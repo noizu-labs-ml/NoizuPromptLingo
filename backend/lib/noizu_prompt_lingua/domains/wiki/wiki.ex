@@ -179,24 +179,51 @@ defmodule NoizuPromptLingua.Domains.Wiki do
 
   @doc "Idempotent: re-adding the same (target, emoji, actor) returns the existing row."
   def add_reaction(attrs) do
-    %Reaction{}
-    |> Reaction.changeset(attrs)
-    |> Repo.insert(
-      on_conflict: :nothing,
-      conflict_target: [:target_type, :target_id, :emoji, :actor]
-    )
-    |> case do
-      {:ok, %Reaction{id: nil}} ->
-        {:ok,
-         Repo.get_by(Reaction,
-           target_type: attrs[:target_type] || attrs["target_type"],
-           target_id: attrs[:target_id] || attrs["target_id"],
-           emoji: attrs[:emoji] || attrs["emoji"],
-           actor: attrs[:actor] || attrs["actor"]
-         )}
+    key = fn field -> attrs[field] || attrs[to_string(field)] end
 
-      other ->
-        other
+    # Pre-check first: Ecto pre-generates binary_id pks client-side, so with
+    # ON CONFLICT DO NOTHING a conflicting insert still returns {:ok, struct}
+    # carrying its phantom client-generated id — the old `id: nil` re-fetch arm
+    # could never match and callers got an id that does not exist (cov/w5b).
+    # Skipped when any key component is nil — those fall through to the
+    # changeset (which rejects them with the original 422 semantics).
+    existing =
+      with tt when not is_nil(tt) <- key.(:target_type),
+           tid when not is_nil(tid) <- key.(:target_id),
+           emoji when not is_nil(emoji) <- key.(:emoji),
+           actor when not is_nil(actor) <- key.(:actor),
+           %Reaction{} = row <-
+             Repo.get_by(Reaction, target_type: tt, target_id: tid, emoji: emoji, actor: actor) do
+        row
+      else
+        _ -> nil
+      end
+
+    case existing do
+      %Reaction{} ->
+        {:ok, existing}
+
+      nil ->
+        %Reaction{}
+        |> Reaction.changeset(attrs)
+        |> Repo.insert(
+          on_conflict: :nothing,
+          conflict_target: [:target_type, :target_id, :emoji, :actor]
+        )
+        |> case do
+          # Lost a race: the row appeared between the check and the insert.
+          {:ok, _} ->
+            {:ok,
+             Repo.get_by(Reaction,
+               target_type: key.(:target_type),
+               target_id: key.(:target_id),
+               emoji: key.(:emoji),
+               actor: key.(:actor)
+             )}
+
+          other ->
+            other
+        end
     end
     |> tap(&dispatch_reaction/1)
   end
