@@ -324,7 +324,11 @@ defmodule NoizuPromptLingua.MCP.WindowTest do
     end
 
     test "hide_until expired within 7d is kept (inert at evaluation)" do
-      recent = DateTime.add(@now, -3 * 86_400, :second)
+      # Anchor to the live clock: normalize_entry/2 prunes against
+      # DateTime.utc_now(), so a fixture derived from the frozen @now module
+      # attribute ages past the 7d prune boundary as real time advances
+      # (this flipped red on 2026-09-04, 7d after the @now-era fixture date).
+      recent = DateTime.add(DateTime.utc_now(), -3 * 86_400, :second)
 
       normalized = Window.normalize_entry(%{}, %{"hide_until" => recent})
       assert is_binary(normalized["hide_until"])
