@@ -5,11 +5,13 @@ name: CI
 # Stage lane: pushes to `stage` build sha-<short>-stage images and bump
 # values-stage.yaml — ArgoCD (app "npl-mcp-stage") rolls those to
 # tobor-stage.noizu.com. Main-gated jobs below are untouched by the stage path.
+# `feat/tool-sets-integration` pushes gate the integration merge through the
+# test jobs only — every image-build job stays ref-gated (main / stage).
 # Pattern: therobotlearns.com/.github/workflows/ci.yml
 
 on:
   push:
-    branches: [main, stage]
+    branches: [main, stage, feat/tool-sets-integration]
   pull_request:
 
 concurrency:
