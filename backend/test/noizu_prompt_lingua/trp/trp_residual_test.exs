@@ -335,5 +335,8 @@ defmodule NoizuPromptLingua.TRP.JwtStub do
     :ok
   end
 
-  defp state, do: Process.get(:w4d_jwt_stub) || %{login: nil, refresh: nil}
+  # Fallback carries the FULL state shape: entities_residual_test triggers the
+  # transport from its own process (no reset/0 ran there), and a stale two-key
+  # fallback crashed pop_authed/0 on a missing :authed key. (merge round 2)
+  defp state, do: Process.get(:w4d_jwt_stub) || %{login: nil, refresh: nil, authed: []}
 end
