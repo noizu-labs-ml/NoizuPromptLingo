@@ -100,7 +100,10 @@ defmodule NoizuPromptLingua.Domains.Campaigns.ToolsTest do
     assert {:ok, %{id: copy_id, status: "draft"}} =
              AdCopyCreate.call(%{"campaign_id" => campaign_id, "body" => "Buy stuff"}, %{})
 
-    assert {:error, "Campaign not found"} = AdCopyCreate.call(%{"campaign_id" => Ecto.UUID.generate()}, %{})
+    missing2 = Ecto.UUID.generate()
+
+    assert {:error, msg2} = AdCopyCreate.call(%{"campaign_id" => missing2}, %{})
+    assert msg2 == "Campaign '#{missing2}' not found"
 
     assert {:ok, %{id: ^copy_id}} = AdCopyGet.call(%{"id" => copy_id}, %{})
     assert {:ok, %{ad_copies: copies}} = AdCopyList.call(%{"campaign_id" => campaign_id}, %{})
