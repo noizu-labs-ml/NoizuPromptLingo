@@ -2,15 +2,19 @@ defmodule NoizuPromptLingua.MCP.VFS.Root do
   @moduledoc """
   The real VFS backend behind NPL's composed Router (Wave 0 substrate).
 
-  Namespace (MCP-VFS-GROUP-MOUNTS.md §1.1/§3.6) — read-only over the meta
-  plane; per-group subtrees are documented insertion points that raise
-  `:enoent` until their Wave 1+ backends land:
+  Namespace (MCP-VFS-GROUP-MOUNTS.md §1.1/§3.6) — the meta plane is read-only;
+  per-group subtrees dispatch to their Wave backends (`@group_backends`), and
+  unmapped groups keep the Wave 0 overview placeholder that raises `:enoent`
+  deeper:
 
       /                       → "etc" (lib control tree) + "tobor"
       /tobor                  → one dir per org visible to the principal
       /tobor/{org}/_meta      → whoami.json · toolsets.json · groups/
       /tobor/{org}/_meta/groups/{group}.json   ← catalog descriptor + gate state
-      /tobor/{org}/{group}/overview.md         ← per-group Overview placeholder
+      /tobor/{org}/{group}/overview.md         ← per-group Overview (backend-owned
+                                                 for mapped groups, placeholder
+                                                 otherwise)
+      /tobor/{org}/wiki/…                      ← Wave 1: NoizuPromptLingua.MCP.VFS.Wiki
 
   ## Gating (§1.3)
 
@@ -24,16 +28,17 @@ defmodule NoizuPromptLingua.MCP.VFS.Root do
     * `_meta` is always served to an org-visible principal — it IS the
       per-principal discovery plane (`whoami`, effective toolset, gates).
 
-  ## Read-only
+  ## Read-only meta plane, writable group subtrees
 
-  Only `stat/2`, `list/3`, and `read/2` are implemented; `write/3`,
-  `create/3`, and `remove/2` fall through to the behaviour's `:enosys`
-  defaults. (The composed Router still advertises `vfs_write` on the wire —
-  the lib derives capability flags from the composed module, which implements
-  the full callback set for the `/etc/dev` control plane, and that plane is
-  genuinely writable unless the server opts into `vfs_readonly`.) Group
-  backends attach their own mutators in later waves behind the Router's
-  prefix dispatch.
+  The meta plane implements only `stat/2`, `list/3`, and `read/2`. Mapped
+  groups additionally receive `write/3`, `create/3`, `remove/2`, and
+  `search/3` through `with_group_backend/3` (org+group gated before the
+  backend re-checks the gate itself); unmapped groups fall back to the
+  behaviour's `:enosys` defaults. (The composed Router still advertises
+  `vfs_write` on the wire — the lib derives capability flags from the
+  composed module, which implements the full callback set for the `/etc/dev`
+  control plane, and that plane is genuinely writable unless the server opts
+  into `vfs_readonly`.)
   """
 
   use Noizu.MCP.VFS
@@ -42,6 +47,14 @@ defmodule NoizuPromptLingua.MCP.VFS.Root do
   alias NoizuPromptLingua.MCP.EffectiveToolset
   alias NoizuPromptLingua.MCP.VFS.Principal
   alias NoizuPromptLingua.MCPServers
+
+  # Wave 1+ group backends. A group mapped here owns its ENTIRE subtree —
+  # stat/list/read AND write/create/remove/search dispatch to the backend
+  # (which renders its own overview.md furniture); unmapped groups keep the
+  # Wave 0 read-only overview placeholder.
+  @group_backends %{
+    "wiki" => NoizuPromptLingua.MCP.VFS.Wiki
+  }
 
   @orgs_root "tobor"
   @meta "_meta"
@@ -97,8 +110,17 @@ defmodule NoizuPromptLingua.MCP.VFS.Root do
     end)
   end
 
-  # Per-group subtree: Wave 0 serves only the Overview placeholder; everything
-  # deeper is the documented insertion point for the group's backend.
+  # Mapped group subtree: the backend owns everything beneath (and including)
+  # the group node, gated by the same org+group pass as the meta plane.
+  defp stat_segments([@orgs_root, org, group | rest], ctx)
+       when is_map_key(@group_backends, group) do
+    require_org_and_group(ctx, org, group, fn _gate ->
+      @group_backends[group].stat("/" <> Enum.join([@orgs_root, org, group | rest], "/"), ctx)
+    end)
+  end
+
+  # Per-group subtree: unmapped groups serve only the Overview placeholder;
+  # everything deeper is the documented insertion point for their backend.
   defp stat_segments([@orgs_root, org, group], ctx) do
     require_org_and_group(ctx, org, group, fn gate ->
       {:ok, dir_node()}
@@ -119,18 +141,37 @@ defmodule NoizuPromptLingua.MCP.VFS.Root do
 
   @impl true
   def list(path, cursor, ctx) do
-    with {:ok, segments} <- split_segments(path),
-         {:ok, entries} <- list_segments(segments, ctx) do
-      case cursor do
-        nil -> {:ok, entries, nil}
-        # Wave 0 listings are bounded by the catalog/org count; a cursor can
-        # only be a stale or foreign continuation — reject it rather than
-        # mis-paginate. (Group backends adopt the lib Pagination helper in
-        # later waves when listings grow.)
-        "" -> {:ok, entries, nil}
-        _ -> {:error, Noizu.MCP.Error.invalid_params("invalid cursor")}
+    with {:ok, segments} <- split_segments(path) do
+      case segments do
+        [@orgs_root, org, group | rest] when is_map_key(@group_backends, group) ->
+          list_group(org, group, rest, cursor, ctx)
+
+        _ ->
+          with {:ok, entries} <- list_segments(segments, ctx) do
+            case cursor do
+              nil -> {:ok, entries, nil}
+              # Wave 0 listings are bounded by the catalog/org count; a cursor
+              # can only be a stale or foreign continuation — reject it rather
+              # than mis-paginate. (Mapped groups delegate cursoring to their
+              # backend, which adopts the lib Pagination helper.)
+              "" -> {:ok, entries, nil}
+              _ -> {:error, Noizu.MCP.Error.invalid_params("invalid cursor")}
+            end
+          end
       end
     end
+  end
+
+  # Mapped groups own their listings (cursor included); the backend renders
+  # the group's overview.md node itself, so nothing is appended here.
+  defp list_group(org, group, rest, cursor, ctx) do
+    require_org_and_group(ctx, org, group, fn _gate ->
+      @group_backends[group].list(
+        "/" <> Enum.join([@orgs_root, org, group | rest], "/"),
+        cursor,
+        ctx
+      )
+    end)
   end
 
   defp list_segments([], _ctx), do: {:ok, [dir_entry(@orgs_root)]}
@@ -198,6 +239,15 @@ defmodule NoizuPromptLingua.MCP.VFS.Root do
     end
   end
 
+  # Mapped groups own their subtree reads, the group node included (a dir
+  # read surfaces :eisdir from the backend).
+  defp read_segments([@orgs_root, org, group | rest], ctx)
+       when is_map_key(@group_backends, group) do
+    require_org_and_group(ctx, org, group, fn _gate ->
+      @group_backends[group].read("/" <> Enum.join([@orgs_root, org, group | rest], "/"), ctx)
+    end)
+  end
+
   defp read_segments([@orgs_root, org, @meta, "whoami.json"], ctx) do
     require_org(ctx, org, fn -> {:ok, Jason.encode!(whoami(ctx)), version()} end)
   end
@@ -221,6 +271,40 @@ defmodule NoizuPromptLingua.MCP.VFS.Root do
 
   defp read_segments([@orgs_root, _org, @meta], _ctx), do: {:error, :eisdir}
   defp read_segments(_, _ctx), do: {:error, :enoent}
+
+  # ── mutations + search: prefix dispatch to group backends ─────────────────
+
+  # The Root meta plane stays read-only; mapped group backends carry their own
+  # mutators (gate-checked per op), unmapped groups keep the behaviour default.
+  @impl true
+  def write(path, data, ctx),
+    do: with_group_backend(path, ctx, fn b, p -> b.write(p, data, ctx) end)
+
+  @impl true
+  def create(path, data, ctx),
+    do: with_group_backend(path, ctx, fn b, p -> b.create(p, data, ctx) end)
+
+  @impl true
+  def remove(path, ctx), do: with_group_backend(path, ctx, fn b, p -> b.remove(p, ctx) end)
+
+  @impl true
+  def search(path, query, ctx),
+    do: with_group_backend(path, ctx, fn b, p -> b.search(p, query, ctx) end)
+
+  defp with_group_backend(path, ctx, fun) do
+    with {:ok, segments} <- split_segments(path) do
+      case segments do
+        [@orgs_root, org, group | rest] when is_map_key(@group_backends, group) ->
+          require_org_and_group(ctx, org, group, fn _gate ->
+            full = "/" <> Enum.join([@orgs_root, org, group | rest], "/")
+            fun.(@group_backends[group], full)
+          end)
+
+        _ ->
+          {:error, :enosys}
+      end
+    end
+  end
 
   # ── payloads ──────────────────────────────────────────────────────────────
 
