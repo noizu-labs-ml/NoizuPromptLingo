@@ -120,7 +120,7 @@ defmodule NoizuPromptLingua.MixProject do
       # StreamableHTTP plug SSE fix). The hex release is that exact source
       # packaged; parity was verified by the full-suite flip gate before this
       # pin landed.
-      {:noizu_mcp, "~> 0.3.0"},
+      {:noizu_mcp, "~> 0.3.1"},
       # VFS Wave 0 conformance harness: Mint WebSocket test client driving the
       # VFSWS transport through a real Bandit listener (same pattern as the
       # lib's transport suite).
