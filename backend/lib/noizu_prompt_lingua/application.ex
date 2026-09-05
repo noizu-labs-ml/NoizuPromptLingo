@@ -74,6 +74,11 @@ defmodule NoizuPromptLingua.Application do
           NoizuPromptLingua.Domains.Market.MCP,
           NoizuPromptLingua.Domains.Campaigns.MCP,
           NoizuPromptLingua.Domains.UnicodeCodex.MCP,
+          # VFS Wave 0 substrate: the dedicated fs server (composed Router backend)
+          # plus the lib's VFS pubsub hub (explicit supervisor — watch/subscribe
+          # for the VFSWS mount transport degrades to no-op without it).
+          NoizuPromptLingua.MCP.VFSServer,
+          Noizu.MCP.Server.VFSPubSub,
           # Browser relay: correlates Browser.* tool calls with the local controller.
           NoizuPromptLingua.Domains.Browser.Relay,
           NoizuPromptLinguaWeb.Endpoint
