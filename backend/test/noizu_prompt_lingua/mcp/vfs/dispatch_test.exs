@@ -34,7 +34,9 @@ defmodule NoizuPromptLingua.MCP.VFS.DispatchTest do
           "artifacts" => %{},
           "instructions" => %{},
           "unicode" => %{},
-          "wiki" => %{}
+          "wiki" => %{},
+          # Gated but unmapped — exercises the Wave 0 placeholder surface.
+          "assets" => %{}
         }
       })
 
@@ -74,7 +76,7 @@ defmodule NoizuPromptLingua.MCP.VFS.DispatchTest do
   end
 
   test "registered subtrees serve backend content through Root", %{org: org, ctx: ctx} do
-    for group <- ["artifacts", "instructions", "unicode"] do
+    for group <- ["artifacts", "instructions", "unicode", "wiki"] do
       assert {:ok, dir} = VFS.stat(Root, "/tobor/#{org.slug}/#{group}", ctx)
       assert dir.type == :dir
 
@@ -84,10 +86,15 @@ defmodule NoizuPromptLingua.MCP.VFS.DispatchTest do
       refute md =~ "Wave 0 placeholder"
     end
 
-    # Placeholder groups keep the Wave 0 surface verbatim.
-    assert {:ok, md, _} = VFS.read(Root, "/tobor/#{org.slug}/wiki/overview.md", ctx)
+    # The wiki overview carries the backend's own furniture.
+    assert {:ok, wiki_md, _} = VFS.read(Root, "/tobor/#{org.slug}/wiki/overview.md", ctx)
+    assert wiki_md =~ "# Wiki"
+
+    # Placeholder groups keep the Wave 0 surface verbatim. (wiki is a mapped
+    # backend now — assets is the gated-but-unmapped example.)
+    assert {:ok, md, _} = VFS.read(Root, "/tobor/#{org.slug}/assets/overview.md", ctx)
     assert md =~ "Wave 0 placeholder"
-    assert {:error, :enoent} = VFS.read(Root, "/tobor/#{org.slug}/wiki/deeper.md", ctx)
+    assert {:error, :enoent} = VFS.read(Root, "/tobor/#{org.slug}/assets/deeper.md", ctx)
   end
 
   test "mutations dispatch to backends; placeholders stay :enosys", %{org: org, ctx: ctx} do
@@ -99,8 +106,9 @@ defmodule NoizuPromptLingua.MCP.VFS.DispatchTest do
     assert {:error, :enosys} =
              VFS.create(Root, "/tobor/#{org.slug}/unicode/plane-0/U+0041.json", "{}", ctx)
 
-    # Placeholder: wiki has no mutators yet.
-    assert {:error, :enosys} = VFS.create(Root, "/tobor/#{org.slug}/wiki/page.md", "x", ctx)
+    # Placeholder: assets is gated but unmapped (:enosys defaults). wiki is a
+    # mapped backend now and dispatches its own mutators.
+    assert {:error, :enosys} = VFS.create(Root, "/tobor/#{org.slug}/assets/page.md", "x", ctx)
 
     # Meta plane stays read-only.
     assert {:error, :enosys} = VFS.write(Root, "/tobor/#{org.slug}/_meta/whoami.json", "x", ctx)

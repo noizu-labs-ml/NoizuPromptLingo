@@ -166,12 +166,13 @@ defmodule NoizuPromptLingua.MCP.VFS.RootTest do
   end
 
   test "read/4 serves group overviews (placeholder vs mapped backend)", %{slug: slug} do
-    # Unmapped group: the Wave 0 Overview placeholder.
-    ctx = key_ctx(%{"groups" => %{"wiki" => %{}, "tickets" => %{}}})
+    # Unmapped group: the Wave 0 Overview placeholder. (tickets is a mapped
+    # backend now — assets is the gated-but-unmapped example.)
+    ctx = key_ctx(%{"groups" => %{"wiki" => %{}, "assets" => %{}}})
 
-    {:ok, tickets_md, _} = VFS.read(Root, tobor(slug) <> "/tickets/overview.md", ctx)
-    assert tickets_md =~ "wave"
-    assert tickets_md =~ "placeholder"
+    {:ok, assets_md, _} = VFS.read(Root, tobor(slug) <> "/assets/overview.md", ctx)
+    assert assets_md =~ "wave"
+    assert assets_md =~ "placeholder"
 
     # Mapped group (wiki): the backend renders its own Overview furniture.
     {:ok, wiki_md, _} = VFS.read(Root, tobor(slug) <> "/wiki/overview.md", ctx)
@@ -186,15 +187,26 @@ defmodule NoizuPromptLingua.MCP.VFS.RootTest do
 
   # ── write family: read-only backend ───────────────────────────────────────
 
-  test "mutating ops stay :enosys on the meta plane and unmapped groups", %{slug: slug, ctx: ctx} do
-    assert {:error, :enosys} = VFS.write(Root, tobor(slug) <> "/_meta/whoami.json", "x", ctx)
-    # tickets has no Wave backend yet — the behaviour default applies.
-    assert {:error, :enosys} = VFS.create(Root, tobor(slug) <> "/tickets/page.md", "x", ctx)
-    assert {:error, :enosys} = VFS.remove(Root, tobor(slug) <> "/tickets/overview.md", ctx)
+  test "mutating ops stay :enosys on the meta plane and unmapped groups", %{slug: slug} do
+    # assets is gated but unmapped — the behaviour default applies. (tickets is
+    # a mapped backend now and dispatches to the real Tickets backend.)
+    assets_ctx = key_ctx(%{"groups" => %{"assets" => %{}}})
+
+    assert {:error, :enosys} =
+             VFS.create(Root, tobor(slug) <> "/assets/page.md", "x", assets_ctx)
+
+    assert {:error, :enosys} =
+             VFS.remove(Root, tobor(slug) <> "/assets/overview.md", assets_ctx)
+
+    # Meta plane stays read-only.
+    assert {:error, :enosys} =
+             VFS.write(Root, tobor(slug) <> "/_meta/whoami.json", "x", assets_ctx)
+
     # Wiki furniture is not writable either (mapped group, read-only node).
-    assert {:error, :enosys} = VFS.write(Root, tobor(slug) <> "/wiki/overview.md", "x", ctx)
+    wiki_ctx = key_ctx(%{"groups" => %{"wiki" => %{}}})
+    assert {:error, :enosys} = VFS.write(Root, tobor(slug) <> "/wiki/overview.md", "x", wiki_ctx)
     # Group subtrees are backend-owned; unknown wiki paths raise :enoent.
-    assert {:error, :enoent} = VFS.read(Root, tobor(slug) <> "/wiki/deeper.md", ctx)
+    assert {:error, :enoent} = VFS.read(Root, tobor(slug) <> "/wiki/deeper.md", wiki_ctx)
   end
 
   test "search is :enosys and xattr defaults to a map", %{slug: slug, ctx: ctx} do
