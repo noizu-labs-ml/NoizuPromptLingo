@@ -62,6 +62,7 @@ defmodule NoizuPromptLingua.Domains.Notifications.ShareFoldsTest do
     missing = Ecto.UUID.generate()
     a = args(%{"organization" => org.id, "target_type" => "thread", "target" => missing})
 
-    assert {:error, "Target '#{missing}' not found"} = Share.call(a, %{})
+    assert {:error, msg} = Share.call(a, %{})
+    assert msg == "Target '#{missing}' not found"
   end
 end

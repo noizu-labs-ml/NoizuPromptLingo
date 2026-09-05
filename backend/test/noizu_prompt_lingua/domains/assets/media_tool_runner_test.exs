@@ -22,7 +22,7 @@ defmodule NoizuPromptLingua.Domains.Assets.MediaToolRunnerTest do
   end
 
   defp script!(dir, body) do
-    path = Path.join(dir, "fake-tool.sh")
+    path = Path.join(dir, ".fake-tool.sh")
     File.write!(path, "#!/bin/sh\n#{body}\n")
     File.chmod!(path, 0o755)
     path
@@ -58,7 +58,7 @@ defmodule NoizuPromptLingua.Domains.Assets.MediaToolRunnerTest do
     on_exit(fn -> Application.delete_env(:noizu_prompt_lingua, :media_tool_bin) end)
 
     assert {:ok, %{output_path: out, mime: "image/png"}} =
-             MediaToolRunner.CLI.run(prompt!(dir), dir)
+             MediaToolRunner.CLI.run(prompt!(dir), dir, [])
 
     assert String.ends_with?(out, "out.png")
   end
@@ -69,7 +69,7 @@ defmodule NoizuPromptLingua.Domains.Assets.MediaToolRunnerTest do
 
     on_exit(fn -> Application.delete_env(:noizu_prompt_lingua, :media_tool_bin) end)
 
-    assert {:error, {:exit, 3}} = MediaToolRunner.CLI.run(prompt!(dir), dir)
+    assert {:error, {:exit, 3}} = MediaToolRunner.CLI.run(prompt!(dir), dir, [])
   end
 
   test "CLI: clean exit with no produced file → {:error, :no_output}", %{dir: dir} do
@@ -78,7 +78,7 @@ defmodule NoizuPromptLingua.Domains.Assets.MediaToolRunnerTest do
 
     on_exit(fn -> Application.delete_env(:noizu_prompt_lingua, :media_tool_bin) end)
 
-    assert {:error, :no_output} = MediaToolRunner.CLI.run(prompt!(dir), dir)
+    assert {:error, :no_output} = MediaToolRunner.CLI.run(prompt!(dir), dir, [])
   end
 
   test "CLI: missing binary degrades to {:error, {:exception, _}}", %{dir: dir} do
@@ -86,7 +86,7 @@ defmodule NoizuPromptLingua.Domains.Assets.MediaToolRunnerTest do
 
     on_exit(fn -> Application.delete_env(:noizu_prompt_lingua, :media_tool_bin) end)
 
-    assert {:error, {:exception, _}} = MediaToolRunner.CLI.run(prompt!(dir), dir)
+    assert {:error, {:exception, _}} = MediaToolRunner.CLI.run(prompt!(dir), dir, [])
   end
 
   test "CLI: hidden, candidate, directory, and prompt entries are skipped", %{dir: dir} do
@@ -101,7 +101,7 @@ defmodule NoizuPromptLingua.Domains.Assets.MediaToolRunnerTest do
     on_exit(fn -> Application.delete_env(:noizu_prompt_lingua, :media_tool_bin) end)
 
     assert {:ok, %{output_path: out, mime: "video/webm"}} =
-             MediaToolRunner.CLI.run(prompt!(dir), dir)
+             MediaToolRunner.CLI.run(prompt!(dir), dir, [])
 
     assert String.ends_with?(out, "out.webm")
   end
@@ -113,6 +113,6 @@ defmodule NoizuPromptLingua.Domains.Assets.MediaToolRunnerTest do
     on_exit(fn -> Application.delete_env(:noizu_prompt_lingua, :media_tool_bin) end)
 
     assert {:ok, %{mime: "application/octet-stream"}} =
-             MediaToolRunner.CLI.run(prompt!(dir), dir)
+             MediaToolRunner.CLI.run(prompt!(dir), dir, [])
   end
 end
