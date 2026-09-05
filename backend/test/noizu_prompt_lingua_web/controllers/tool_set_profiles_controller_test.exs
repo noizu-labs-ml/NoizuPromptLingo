@@ -11,6 +11,8 @@ defmodule NoizuPromptLinguaWeb.ToolSetProfilesControllerTest do
 
   alias NoizuPromptLingua.Authz.ScopedMemberships
   alias NoizuPromptLingua.MCP.ToolSets
+  alias NoizuPromptLingua.Repo
+  alias NoizuPromptLingua.Schema.Projects.Project
 
   @base "/api/v1/organizations"
 
@@ -100,9 +102,18 @@ defmodule NoizuPromptLinguaWeb.ToolSetProfilesControllerTest do
       |> post(base, %{tool_set: valid_attrs()})
       |> json_response(201)
 
+      # Liquibase 083 enforces mcp_tool_sets.project_id → projects(id); the
+      # project must exist in the app DB, not just be a random UUID.
+      project =
+        Repo.insert!(%Project{
+          organization_id: org_id,
+          name: "proj-set",
+          slug: "proj-set-#{System.unique_integer([:positive])}"
+        })
+
       conn
       |> post(base, %{
-        tool_set: valid_attrs(%{"slug" => "proj-set", "project_id" => Ecto.UUID.generate()})
+        tool_set: valid_attrs(%{"slug" => "proj-set", "project_id" => project.id})
       })
       |> json_response(201)
 
@@ -198,7 +209,7 @@ defmodule NoizuPromptLinguaWeb.ToolSetProfilesControllerTest do
   end
 
   describe "show" do
-    test "returns the row with structural preview + audit trail", %{conn: conn, base: base} do
+    test "returns the row with the N4b effective preview + audit trail", %{conn: conn, base: base} do
       body = conn |> post(base, %{tool_set: valid_attrs()}) |> json_response(201)
       slug = body["tool_set"]["slug"]
 
@@ -206,12 +217,22 @@ defmodule NoizuPromptLinguaWeb.ToolSetProfilesControllerTest do
         conn |> get("#{base}/#{slug}") |> json_response(200)
 
       assert tool_set["slug"] == slug
-      preview = tool_set["preview"]
-      assert preview["groups"]["tickets"]["tool_count"] > 0
-      assert preview["groups"]["tickets"]["overridden_tools"] == 1
-      assert preview["groups"]["tickets"]["override_ops"] == 1
-      assert preview["total_override_ops"] == 1
+      # N4b: the D1-correct effective preview replaced the structural census.
+      effective = tool_set["effective"]
+      assert is_binary(effective["version"])
+      assert length(effective["tools"]) > 0
       assert [%{"action" => "create"}] = tool_set["audit"]
+
+      # B18 parity headline: the preview lists every composed entry, but the
+      # wire serves only the visible+callable slice — surface the counts so
+      # the admin delta is explicit instead of a silent tools/list mismatch.
+      served =
+        Enum.count(effective["tools"], fn tool ->
+          tool["visible"] and tool["callable"]
+        end)
+
+      assert effective["served"] == served
+      assert effective["unserved"] == length(effective["tools"]) - served
     end
 
     test "profile slugs resolve to the read-only profile view + preview", %{

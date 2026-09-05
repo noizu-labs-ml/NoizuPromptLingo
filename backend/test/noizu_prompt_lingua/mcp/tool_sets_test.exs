@@ -581,24 +581,39 @@ defmodule NoizuPromptLingua.MCP.ToolSetsTest do
     end
   end
 
-  # ---- assemble_custom (N2a thin seam) ----
+  # ---- assemble_custom (N3: the real %Toolset.Custom{} — flipped from the
+  # N2a thin map per PRD-N3 FR-3-4) ----
 
   describe "assemble_custom/2" do
-    test "returns the effective view with defaulted settings", %{org_id: org_id} do
+    test "returns the assembled lib toolset with defaulted settings", %{org_id: org_id} do
       {:ok, set} =
         ToolSets.create(
           base_attrs(org_id, slug: "assembled", config: @valid_config)
           |> Map.put("settings", %{"instructions" => "hi"})
         )
 
-      view = ToolSets.assemble_custom(set)
+      custom = ToolSets.assemble_custom(set)
 
-      assert view.slug == "assembled"
-      assert view.source == "custom"
-      assert view.config == @valid_config
-      assert view.overrides == ToolSets.to_overrides(@valid_config)
-      assert view.settings["allow_api_keys"] == true
-      assert view.settings["instructions"] == "hi"
+      assert %Noizu.MCP.Toolset.Custom{} = custom
+      assert custom.slug == "set:assembled"
+      assert custom.base == NoizuPromptLingua.MCP.UniverseToolset
+      assert custom.title == "Test Set"
+      assert custom.metadata.source == "custom"
+      assert custom.metadata.allow_api_keys == true
+      # settings.instructions backs the description when no description column
+      assert custom.description in ["hi", "Test Set"]
+
+      # ops from the config wrap into lib %Override{} keyed by base canonical
+      # name — fixture tool names that aren't in the live catalog degrade per
+      # D5 (dropped + warned), so the map may be empty here
+      assert is_map(custom.tools)
+
+      assert Enum.all?(Map.values(custom.tools), fn ops ->
+               Enum.all?(ops, &match?(%Noizu.MCP.Toolset.Override{}, &1))
+             end)
+
+      # the include universe covers the plane plus every enabled config group
+      assert is_list(custom.include)
     end
   end
 

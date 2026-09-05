@@ -167,9 +167,21 @@ defmodule NoizuPromptLingua.OAuth.Clients do
     |> OAuthClient.changeset(%{toolset_config: normalized})
     |> Repo.update()
     |> tap_ok_bump_cache()
+    |> tap_negotiations(normalized)
   end
 
   def update_toolset_config(_, _), do: {:error, :invalid_client}
+
+  # N2b ToolGuard re-homing prep (PRD-N2): destructive tools named in a
+  # consent narrowing get a pending negotiation record (elevation metadata)
+  # through the N2b provider. Best-effort inside the writer — a negotiation
+  # write can never fail the consent write.
+  defp tap_negotiations({:ok, client} = ok, normalized) do
+    NoizuPromptLingua.MCP.ToolsetNegotiations.record_client_consent(client, normalized)
+    ok
+  end
+
+  defp tap_negotiations(other, _normalized), do: other
 
   def create_first_party!(attrs) do
     client_id = attrs[:client_id] || "fp_" <> random_id(8)

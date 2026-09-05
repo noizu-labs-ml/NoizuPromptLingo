@@ -34,6 +34,38 @@ defmodule NoizuPromptLingua.MCP.Urls do
   def legacy_url(scope, opts \\ []), do: build(opts, "custom/#{slug(scope)}/mcp")
 
   @doc """
+  Machine URL for an org / group set (PRD-N3 FR-3-10):
+  `<base>/org/:org_slug/set/:set_slug/mcp` — byte-identical to the wire route.
+  """
+  def set_url(set_or_slug, org, opts \\ []) do
+    build(opts, "org/#{org_slug_value(org)}/set/#{slug(set_or_slug)}/mcp")
+  end
+
+  @doc """
+  Machine URL for a project set: `<base>/org/:org_slug/project/:project_slug/set/:set_slug/mcp`.
+  """
+  def set_project_url(set_or_slug, org, project, opts \\ []) do
+    build(
+      opts,
+      "org/#{org_slug_value(org)}/project/#{project_slug_value(project)}/set/#{slug(set_or_slug)}/mcp"
+    )
+  end
+
+  @doc """
+  Human-facing tool-set admin URL (R4): `/app/:org_slug/settings/tool-sets/:slug`.
+  """
+  def tool_set_admin_url(org_slug, set_slug, opts \\ []) when is_binary(org_slug) do
+    build(opts, "app/#{org_slug}/settings/tool-sets/#{slug(set_slug)}")
+  end
+
+  defp org_slug_value(%Organization{slug: slug}) when is_binary(slug) and slug != "", do: slug
+  defp org_slug_value(%{slug: slug}) when is_binary(slug), do: slug
+  defp org_slug_value(slug) when is_binary(slug), do: slug
+
+  defp project_slug_value(%{slug: slug}) when is_binary(slug), do: slug
+  defp project_slug_value(slug) when is_binary(slug), do: slug
+
+  @doc """
   Human-facing chat room URL (frontend route): `/app/:org_slug/chat/:room_id`.
   Returns nil when the room's org slug cannot be resolved.
   """

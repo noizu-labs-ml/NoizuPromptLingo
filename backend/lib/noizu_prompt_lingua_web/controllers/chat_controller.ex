@@ -22,6 +22,10 @@ defmodule NoizuPromptLinguaWeb.ChatController do
     end
   end
 
+  # Missing-`org_id` fallback (house pattern): org_id normally arrives via the
+  # path, but a call that lacks it must 422 rather than FunctionClauseError-500.
+  def index(conn, _params), do: missing_field(conn, "org_id")
+
   # POST /api/v1/organizations/:org_id/chat/rooms
   def create(conn, %{"org_id" => org_id, "room" => room_params}) do
     user_id = get_user_id(conn)
@@ -48,6 +52,11 @@ defmodule NoizuPromptLinguaWeb.ChatController do
       err -> handle_error(conn, err)
     end
   end
+
+  # Missing-`room` body fallback: without it a body-less POST fails to match the
+  # head above (FunctionClauseError -> 500). A missing required field is a
+  # client error -> 422 (house pattern, cf. create_message).
+  def create(conn, _params), do: missing_field(conn, "room")
 
   # GET /api/v1/organizations/:org_id/chat/rooms/:id
   # :id may be a room UUID or a slug.

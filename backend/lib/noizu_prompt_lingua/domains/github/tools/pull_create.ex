@@ -24,16 +24,16 @@ defmodule NoizuPromptLingua.Domains.Github.Tools.PullCreate do
     org_id = Resolve.organization_id(Args.get(args, :organization))
     repo_ref = Args.get(args, :repo)
 
+    # Map.new/1 first: the literal was a keyword list, and Map.take/2 requires a
+    # map — as written these tools raised BadMapError on every call (cov/w5b).
     body =
-      Map.take(
-        [
-          title: Args.get(args, :title),
-          body: Args.get(args, :body),
-          head: Args.get(args, :head),
-          base: Args.get(args, :base)
-        ],
-        [:title, :body, :head, :base]
+      Map.new(
+        title: Args.get(args, :title),
+        body: Args.get(args, :body),
+        head: Args.get(args, :head),
+        base: Args.get(args, :base)
       )
+      |> Map.take([:title, :body, :head, :base])
       |> Enum.filter(fn {_, v} -> v != nil end)
       |> Enum.into(%{})
 

@@ -1,3 +1,31 @@
+# ── Measurement-integrity guards (coverage campaign) ─────────────────────────
+# 1) Tests/coverage MUST run under MIX_ENV=test. In :dev the Endpoint compiles in
+#    Phoenix.CodeReloader (`if code_reloading?` in lib/noizu_prompt_lingua_web/endpoint.ex),
+#    so every request runs reload! → MixListener.purge/1 (+ a dev recompile). A module
+#    purged mid-suite reloads from its plain on-disk beam: tests stay green, but :cover
+#    records nothing — silent exact-zero coverage for every module whose tests ran after
+#    the reload. (:cover.analyse can also return {:error, :not_cover_compiled}, which
+#    crashes ExCoveralls.Stats at the {:ok, lines} match.) Note `MIX_ENV=dev mix coveralls`
+#    overrides coveralls' @preferred_cli_env, so guard here rather than trusting task
+#    defaults.
+unless Mix.env() == :test do
+  raise """
+  Refusing to run: tests/coverage must run under MIX_ENV=test (got #{Mix.env()}).
+  :dev compiles the code-reloader plug into the Endpoint; a mid-suite reload
+  executes purged modules from their plain beams and silently zeroes coverage.
+  Recipe: scripts/coverage.sh (or `unset MIX_ENV; mix coveralls.json`).
+  """
+end
+
+# 2) Belt-and-braces: the Mix compiler listener lets a running dev server notice
+#    compiles from OTHER OS processes and purge invalidated modules. It has no
+#    legitimate purpose in a test run, and purging any ExCoveralls-instrumented
+#    module destroys its coverage data. Stop it if Mix started it during compile.
+if Code.ensure_loaded?(Phoenix.CodeReloader.MixListener) and
+     Process.whereis(Phoenix.CodeReloader.MixListener) do
+  GenServer.stop(Phoenix.CodeReloader.MixListener, :normal)
+end
+
 ExUnit.start()
 
 # Apply the memory-engine schema (Liquibase 045–050) to the test DB so the memory suite is
@@ -38,6 +66,25 @@ NoizuPromptLingua.MCPCustomScopeTestSchema.ensure!()
 
 # Ensure the Liquibase 083 mcp_tool_sets table exists for the tool-sets suites.
 NoizuPromptLingua.McpToolSetTestSchema.ensure!()
+
+# Ensure the N2b provider record store (npl_mcp_toolset_store) exists for the
+# toolset provider/conformance suites — NPL-owned storage; the lib's
+# noizu_mcp_* tables are NOT created here (zero-writes guard owns that proof).
+NoizuPromptLingua.ProviderStoreTestSchema.ensure!()
+
+# The lib's persistence conformance battery (AP-8) lives in the dep's
+# test/support, which consumers never compile — load it from the RESOLVED
+# path-dep checkout when present so the ported suite can `use` it. A hex
+# noizu_mcp (post-flip) simply leaves the battery unavailable.
+case Mix.Project.deps_paths()[:noizu_mcp] do
+  nil ->
+    :ok
+
+  lib_path ->
+    battery = Path.join(lib_path, "test/support/persistence_conformance_case.ex")
+
+    if File.exists?(battery), do: Code.compile_file(battery)
+end
 
 # Ensure the W4 MCP entity tables (Liquibase 019: mcp_prompts, mcp_prompt_versions,
 # mcp_resources, mcp_resource_templates) exist for the mcp-entities suites. Idempotent.
@@ -110,6 +157,13 @@ NoizuPromptLingua.Domains.Memory.VectorStore.delete_class()
 NoizuPromptLingua.Domains.Memory.VectorStore.ensure_class()
 
 Ecto.Adapters.SQL.Sandbox.mode(NoizuPromptLingua.Repo, :manual)
+
+# Host-env scrub: WebSearch/WebSearch-backed tests pin the "unconfigured provider"
+# contract (:not_configured → 503) on JINA_API_KEY being unset. If the launching
+# shell's direnv exports it, those tests take the configured path, attempt a REAL
+# s.jina.ai call and surface 502 instead (observed on the round-2 _merged2 gate,
+# 2026-09-04). Tests must be hermetic against host env leakage.
+System.delete_env("JINA_API_KEY")
 
 # W4 cutover: route the TRP client at the in-memory stub transport. base_url/key
 # are set so Config.configured?/0 is true; the stub never touches the network.

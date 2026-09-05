@@ -20,6 +20,17 @@ defmodule NoizuPromptLingua.MCP.Organizations.Tools.OrganizationGet do
       nil ->
         {:error, "Organization '#{ref}' not found"}
 
+      # TRP degrades as error tuples (un-activated deploys: {:error,
+      # :trp_not_configured}; transport failures: {:error, {:transport, _}}).
+      # Those must render the graceful error family (same phrasing as the REST
+      # side's TRP response helper), not crash — a crash surfaces as the opaque
+      # "Tool execution failed" wrapper (seen live on stage, 2026-09-04).
+      {:error, :trp_not_configured} ->
+        {:error, "PM backend not configured"}
+
+      {:error, _reason} ->
+        {:error, "PM backend unavailable"}
+
       org ->
         # Post-TRP-cutover (W4) orgs are `Shapes.organization` maps
         # (id/slug/name/role/owner); the legacy pm_core schema's `settings`

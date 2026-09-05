@@ -16,6 +16,7 @@ defmodule NoizuPromptLingua.Github.Client do
   """
 
   alias NoizuPromptLingua.Schema.GithubRepo
+  alias NoizuPromptLingua.Schema.GithubToken
   alias Noizu.Github.Api.{Repos, Pulls, Issues, Git}
 
   @type repo_ref :: String.t() | Ecto.UUID.t()
@@ -66,6 +67,12 @@ defmodule NoizuPromptLingua.Github.Client do
       {:ok, map} when is_map(map) ->
         {:ok, struct_to_map(map)}
 
+      {:ok, items} when is_list(items) ->
+        # Generated Collection models decode lists into model structs (often
+        # with nested structs) — flatten deeply so the controller can
+        # Jason-encode the result (cov-w5a bugfix: list endpoints 500'd).
+        {:ok, Enum.map(items, &struct_to_map/1)}
+
       {:error, %Finch.Response{status: status, body: body}} ->
         {:error, {:github, status, body}}
 
@@ -75,10 +82,19 @@ defmodule NoizuPromptLingua.Github.Client do
   end
 
   defp struct_to_map(struct) when is_struct(struct) do
-    Map.from_struct(struct)
+    struct |> Map.from_struct() |> deep_to_plain()
   end
 
   defp struct_to_map(other), do: other
+
+  # Recursively flatten nested structs; Jason cannot encode dep structs
+  # (%{} patterns DO match structs, so the struct clause must come first —
+  # Enum/Map.new on a struct raises Protocol.UndefinedError).
+  defp deep_to_plain(%_struct_name{} = struct), do: struct |> Map.from_struct() |> deep_to_plain()
+
+  defp deep_to_plain(list) when is_list(list), do: Enum.map(list, &deep_to_plain/1)
+  defp deep_to_plain(%{} = map), do: Map.new(map, fn {k, v} -> {k, deep_to_plain(v)} end)
+  defp deep_to_plain(other), do: other
 
   # ── Repos (organization-scoped) ───────────────────────────────────────────
 
@@ -101,12 +117,17 @@ defmodule NoizuPromptLingua.Github.Client do
          Enum.map(filtered, fn repo ->
            repo
            |> struct_to_map()
+           # Drop __meta__ and associations: none are JSON-encodable.
+           |> Map.drop([:__meta__, :organization, :token])
            |> Map.put(:token_preview, mask_token(repo.token))
          end)
      }}
   end
 
   defp mask_token(nil), do: nil
+
+  # list_repos preloads the token association; unwrap to the raw string.
+  defp mask_token(%GithubToken{token: token}), do: mask_token(token)
 
   defp mask_token(token) when is_binary(token) do
     len = byte_size(token)

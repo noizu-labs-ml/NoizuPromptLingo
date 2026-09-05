@@ -25,8 +25,15 @@ defmodule NoizuPromptLingua.Domains.Reviews do
         {:error, :not_found}
 
       review ->
+        # Normalize incoming keys to strings: the HTTP layer passes
+        # Map.take(params, ["summary", "verdict"]) (string keys) while the
+        # completion status below is merged in as a string too — mixing the two
+        # made Ecto.CastError blow up every controller-driven complete call
+        # (cov-w5a bugfix).
+        attrs = Map.new(attrs, fn {k, v} -> {to_string(k), v} end)
+
         review
-        |> Review.changeset(Map.merge(attrs, %{status: "completed"}))
+        |> Review.changeset(Map.merge(attrs, %{"status" => "completed"}))
         |> Repo.update()
     end
   end

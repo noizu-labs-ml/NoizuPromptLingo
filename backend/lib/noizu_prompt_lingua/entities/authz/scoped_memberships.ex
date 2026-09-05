@@ -209,6 +209,46 @@ defmodule NoizuPromptLingua.Authz.ScopedMemberships do
     |> NoizuPromptLingua.Repo.all()
   end
 
+  # ── Active-membership probe (PRD-N3 §4.6 / FR-3-8) ──────────────
+
+  @doc """
+  True iff the user (or persona) holds an ACTIVE membership — `expires_at` nil
+  or in the future — on the resource. `ref` is `%{type: :user | :persona, id:
+  uuid}` (or a bare user id). `opts[:group_id]` additionally binds the
+  membership's role group (the group-set audience gate: the caller's
+  membership must carry the set's group).
+
+  Read-only boolean probe for the tool-set gateway's 404-no-leak audience
+  gate; absent rows ⇒ false.
+  """
+  def active_member?(resource_type, resource_id, ref, opts \\ [])
+
+  def active_member?(resource_type, resource_id, %{type: type, id: member_id}, opts)
+      when type in [:user, :persona] and is_binary(member_id) do
+    query =
+      from(sm in Schema,
+        where: sm.resource_type == ^resource_type,
+        where: sm.resource_id == ^resource_id,
+        where: sm.member_type == ^Atom.to_string(type),
+        where: sm.member_id == ^member_id,
+        where: is_nil(sm.expires_at) or sm.expires_at > ^DateTime.utc_now()
+      )
+
+    query =
+      case Keyword.get(opts, :group_id) do
+        nil -> query
+        group_id -> from(sm in query, where: sm.group_id == ^group_id)
+      end
+
+    NoizuPromptLingua.Repo.exists?(query)
+  end
+
+  def active_member?(resource_type, resource_id, member_id, opts) when is_binary(member_id) do
+    active_member?(resource_type, resource_id, %{type: :user, id: member_id}, opts)
+  end
+
+  def active_member?(_, _, _, _), do: false
+
   # ── Internals ─────────────────────────────────────────────────
 
   defp role_group(role) when role in @member_roles do

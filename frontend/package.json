@@ -10,6 +10,8 @@
     "regen": "rm -rf .cache && npm run generate-css",
     "test:e2e": "playwright test",
     "test:e2e:install": "playwright install chromium",
+    "e2e:stage:login": "node e2e/scripts/stage-login.mjs",
+    "e2e:stage": "node e2e/scripts/stage-login.mjs && E2E_STORAGE_STATE=\"$PWD/e2e/.auth/state.json\" playwright test",
     "test:contracts": "node --import tsx --test src/components/app-shell.contract.test.ts src/lib/pm/trp-board-embed.test.ts src/lib/mcp-setup.test.ts src/components/mcp-oauth-setup.contract.test.ts src/lib/tool-overrides.test.ts src/components/kit/acl-editor.contract.test.ts src/components/kit/acl-state.test.ts",
     "test:e2e:authentik": "cypress run --browser chrome --config-file cypress.authentik.config.ts --spec 'cypress/e2e/auth/login-authentik.cy.ts'"
   },

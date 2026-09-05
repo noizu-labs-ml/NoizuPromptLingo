@@ -13,12 +13,16 @@ defmodule NoizuPromptLingua.MCP.Toolsets.Profiles do
 
   N2a ships profiles as DATA only. N2b (gated on lib PRD-3/PRD-4) adds
   `custom/1`, which turns a profile into an immutable
-  `%Noizu.MCP.Toolset.Custom{}` — the seam is deliberately not built here.
+  `%Noizu.MCP.Toolset.Custom{}` (FR-2B-4, Decision 4: `immutable: true`,
+  `tools: %{}` — slicing only, no ops; grants/negotiations never mutate it,
+  PRD-3 §4.1, while ACL still applies).
 
   The `browser` group participates in `full` (it is in `customizable()`) but
   carries no capability-profile annotation, so it appears only in `full`.
   """
 
+  alias Noizu.MCP.Toolset.Custom
+  alias NoizuPromptLingua.MCP.ToolSets
   alias NoizuPromptLingua.MCPServers
 
   @profile_slugs ~w(full agent-ops pm-dev content comms)
@@ -162,4 +166,31 @@ defmodule NoizuPromptLingua.MCP.Toolsets.Profiles do
 
     if group_id in customizable_ids(), do: slugs, else: []
   end
+
+  @doc """
+  The profile as an IMMUTABLE, protocol-dispatchable `%Noizu.MCP.Toolset.Custom{}`
+  (FR-2B-4): `slug: "profile:<slug>"`, base = the root aggregate
+  (`UniverseToolset` — no single server module covers a profile's universe),
+  `include` = the expanded universe allowlist, `tools: %{}` (Decision 4:
+  slicing only — profiles carry NO override ops, so grant layers skip them
+  while the ACL layer still applies). Accepts the `get/1` DATA map or a slug.
+  """
+  def custom(slug) when slug in @profile_slugs do
+    profile = get(slug)
+
+    %Custom{
+      slug: "profile:#{profile.slug}",
+      base: NoizuPromptLingua.MCP.UniverseToolset,
+      title: profile.label,
+      description: profile.description,
+      immutable: true,
+      include: ToolSets.universe_include(profile.groups),
+      exclude: [],
+      tools: %{},
+      metadata: %{profile: profile.slug}
+    }
+  end
+
+  def custom(%{slug: slug}), do: custom(slug)
+  def custom(_), do: nil
 end

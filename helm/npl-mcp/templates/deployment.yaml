@@ -44,16 +44,22 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.backend.env.secretName }}
                   key: DATABASE_URL
-            {{- /* pm_core env RESTORED 2026-09-01: the pinned image (sha-9952a10)
-                   predates the W4 runtime change and hard-requires this var
-                   (runtime.exs "Shared PM data has no legacy mode"). Vestigial
-                   once a post-cutover image rolls; W10 decides removal.
-                   Value syncs from Infisical /apps/pm-core into pm-core-secrets. */}}
+            {{- /* Shared pm_core — always-on mode (docs/pm-core-cutover.md).
+                   Renders nothing unless values define a pmCore stanza; the
+                   post-cutover image (sha-8f80d1f) no longer requires
+                   PM_CORE_DATABASE_URL. Restore path: set pmCore.secretName
+                   + pmCore.databaseUrlKey in values. */}}
+            {{- if .Values.pmCore }}
+            - name: PM_CORE_ENABLED
+              value: {{ if hasKey .Values.pmCore "enabled" }}{{ .Values.pmCore.enabled | quote }}{{ else }}"true"{{ end }}
+            {{- if and .Values.pmCore.secretName .Values.pmCore.databaseUrlKey }}
             - name: PM_CORE_DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: pm-core-secrets
-                  key: PM_CORE_DATABASE_URL
+                  name: {{ .Values.pmCore.secretName | quote }}
+                  key: {{ .Values.pmCore.databaseUrlKey | quote }}
+            {{- end }}
+            {{- end }}
             - name: SECRET_KEY_BASE
               valueFrom:
                 secretKeyRef:

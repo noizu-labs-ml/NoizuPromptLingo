@@ -44,6 +44,28 @@ describe("Landing page (stubbed)", () => {
       .and("contain", "2 months free at launch");
   });
 
+  it("shows the active promo band without the count when counters are null (untracked/unlimited)", () => {
+    // Live-stage contract: promo_active:true with null cap/remaining (and null
+    // beta counters) must render the active band — no meter, no "N of M" —
+    // and keep the form in normal (non-waitlist) mode.
+    cy.intercept("POST", "**/api/v1/public/marketing/signup", { fixture: "landing/signup-promo.json" }).as("signup");
+    visitLanding("status-promo-unlimited");
+
+    cy.get('[data-cy="promo-band"]').should("be.visible").and("contain", "2 months free");
+    cy.get('[data-cy="promo-band"]').should("not.contain", "founding spots left");
+    cy.get('[data-cy="promo-meter"]').should("not.exist");
+    cy.get('[data-cy="promo-spots"]').should("not.exist");
+
+    cy.get('[data-cy="signup-form"]').should("have.attr", "data-cy-mode", "signup");
+    cy.get('[data-cy="signup-email"]').first().type("unlimited@example.com");
+    cy.get('[data-cy="signup-submit"]').first().click();
+
+    cy.wait("@signup").its("request.body").should("deep.include", { email: "unlimited@example.com" });
+    cy.get('[data-cy="signup-success"]')
+      .should("be.visible")
+      .and("have.attr", "data-cy-outcome", "promo_awarded");
+  });
+
   it("flips the copy when the founding offer is exhausted", () => {
     visitLanding("status-exhausted");
 

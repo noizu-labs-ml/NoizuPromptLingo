@@ -65,8 +65,30 @@ defmodule NoizuPromptLingua.Domains.Wiki do
 
   def get_page(id), do: Repo.get(Page, id)
 
+  def get_page_by_slug(space_id, slug),
+    do: Repo.get_by(Page, space_id: space_id, slug: slug)
+
+  @doc """
+  Next ordering position for a page within a space (max + 1; 1 when the space
+  is empty). The controller defaults page creation to this so that payloads
+  without an explicit position don't hit the column's not-null constraint.
+  """
+  def next_page_position(space_id) do
+    Page
+    |> where([p], p.space_id == ^space_id)
+    |> select([p], max(p.position))
+    |> Repo.one()
+    |> case do
+      nil -> 1
+      max -> max + 1
+    end
+  end
+
   def create_page(attrs) do
-    attrs = default_slug(attrs, :title)
+    attrs =
+      attrs
+      |> default_slug(:title)
+      |> default_position()
 
     %Page{}
     |> Page.changeset(attrs)
@@ -160,24 +182,51 @@ defmodule NoizuPromptLingua.Domains.Wiki do
 
   @doc "Idempotent: re-adding the same (target, emoji, actor) returns the existing row."
   def add_reaction(attrs) do
-    %Reaction{}
-    |> Reaction.changeset(attrs)
-    |> Repo.insert(
-      on_conflict: :nothing,
-      conflict_target: [:target_type, :target_id, :emoji, :actor]
-    )
-    |> case do
-      {:ok, %Reaction{id: nil}} ->
-        {:ok,
-         Repo.get_by(Reaction,
-           target_type: attrs[:target_type] || attrs["target_type"],
-           target_id: attrs[:target_id] || attrs["target_id"],
-           emoji: attrs[:emoji] || attrs["emoji"],
-           actor: attrs[:actor] || attrs["actor"]
-         )}
+    key = fn field -> attrs[field] || attrs[to_string(field)] end
 
-      other ->
-        other
+    # Pre-check first: Ecto pre-generates binary_id pks client-side, so with
+    # ON CONFLICT DO NOTHING a conflicting insert still returns {:ok, struct}
+    # carrying its phantom client-generated id — the old `id: nil` re-fetch arm
+    # could never match and callers got an id that does not exist (cov/w5b).
+    # Skipped when any key component is nil — those fall through to the
+    # changeset (which rejects them with the original 422 semantics).
+    existing =
+      with tt when not is_nil(tt) <- key.(:target_type),
+           tid when not is_nil(tid) <- key.(:target_id),
+           emoji when not is_nil(emoji) <- key.(:emoji),
+           actor when not is_nil(actor) <- key.(:actor),
+           %Reaction{} = row <-
+             Repo.get_by(Reaction, target_type: tt, target_id: tid, emoji: emoji, actor: actor) do
+        row
+      else
+        _ -> nil
+      end
+
+    case existing do
+      %Reaction{} ->
+        {:ok, existing}
+
+      nil ->
+        %Reaction{}
+        |> Reaction.changeset(attrs)
+        |> Repo.insert(
+          on_conflict: :nothing,
+          conflict_target: [:target_type, :target_id, :emoji, :actor]
+        )
+        |> case do
+          # Lost a race: the row appeared between the check and the insert.
+          {:ok, _} ->
+            {:ok,
+             Repo.get_by(Reaction,
+               target_type: key.(:target_type),
+               target_id: key.(:target_id),
+               emoji: key.(:emoji),
+               actor: key.(:actor)
+             )}
+
+          other ->
+            other
+        end
     end
     |> tap(&dispatch_reaction/1)
   end
@@ -244,6 +293,26 @@ defmodule NoizuPromptLingua.Domains.Wiki do
       true -> attrs
     end
   end
+
+  # wiki_pages.position is NOT NULL (036-wiki) — a nil position used to raise a
+  # Postgrex not_null_violation 500 (stage log c6295). Default to appending at
+  # the end of the space: max(position) + 1, or 0 for the first page.
+  defp default_position(%{space_id: space_id} = attrs) when not is_nil(space_id) do
+    if is_nil(attrs[:position]) do
+      max =
+        Repo.one(
+          from p in Page,
+            where: p.space_id == ^space_id,
+            select: max(p.position)
+        ) || -1
+
+      Map.put(attrs, :position, max + 1)
+    else
+      attrs
+    end
+  end
+
+  defp default_position(attrs), do: attrs
 
   defp slugify(value) do
     value

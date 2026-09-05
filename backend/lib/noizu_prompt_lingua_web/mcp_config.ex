@@ -32,7 +32,8 @@ defmodule NoizuPromptLinguaWeb.MCPConfig do
 
     resource_metadata =
       Keyword.get(oauth, :resource_metadata_url) ||
-        if issuer_url, do: "#{String.trim_trailing(issuer_url, "/")}/.well-known/oauth-protected-resource"
+        if issuer_url,
+          do: "#{String.trim_trailing(issuer_url, "/")}/.well-known/oauth-protected-resource"
 
     verifier_opts =
       Keyword.merge(
@@ -58,6 +59,71 @@ defmodule NoizuPromptLinguaWeb.MCPConfig do
   def plug_opts(server, extra_verifier_opts \\ [], auth_overrides \\ []) do
     auth = auth_opts(extra_verifier_opts) |> Keyword.merge(auth_overrides)
     [server: server, origins: :any, auth: auth]
+  end
+
+  @doc """
+  Plug opts for the VFS WebSocket transport (`Noizu.MCP.Transport.VFSWS`)
+  mounted at `/vfs` (Wave 0 substrate).
+
+  Same `DualTokenVerifier` bearer pipeline as the MCP surface: the upgrade is
+  rejected 401 without a valid token, and the in-band `vfs/auth` handshake
+  (first frame) binds the verified claims to the connection `Ctx`. The
+  transport consumes only `server:`, `auth:`, and `context:` — StreamableHTTP
+  opts like `:origins` / `:resource_metadata` do not apply.
+  """
+  def vfs_plug_opts do
+    # Keyword.put prepends, so probe :verifier by key, never by position.
+    auth =
+      case Keyword.get(auth_opts(), :verifier) do
+        nil -> []
+        verifier -> [verifier: verifier]
+      end
+
+    [
+      server: NoizuPromptLingua.MCP.VFSServer,
+      # Phoenix's `forward "/vfs", VFSWS` strips the matched prefix, so the
+      # plug sees path_info == [] — mount it at "/" (direct-Bandit mounts pass
+      # their own :path).
+      path: "/",
+      auth: auth,
+      context: {NoizuPromptLingua.MCP.VFS.Principal, :context_assigns}
+    ]
+  end
+
+  @doc """
+  Plug opts for a tool-set gateway route (PRD-N3 FR-3-3): the verifier is
+  wrapped in `NoizuPromptLingua.MCP.RouteClaimsVerifier` so the route's set
+  coordinates (`route_metadata`, string-keyed) ride the verified claims into
+  `Principal.metadata` — the only set-coordinate source the toolset resolver
+  reads. A fresh wrapper tuple is built PER REQUEST (the metadata binds to
+  that request's route params).
+  """
+  def plug_opts_for_tool_set(server, resource, path, route_metadata)
+      when is_binary(resource) and is_binary(path) and is_map(route_metadata) do
+    auth =
+      auth_opts(expected_audience: resource)
+      |> Keyword.update!(:verifier, fn
+        {_verifier, vopts} ->
+          # The original verifier's opts carry forward; the wrapper is
+          # RouteClaimsVerifier by design (route metadata enrichment).
+          {NoizuPromptLingua.MCP.RouteClaimsVerifier, vopts ++ [route_metadata: route_metadata]}
+
+        other ->
+          other
+      end)
+      |> Keyword.put(
+        :resource_metadata,
+        resource_metadata_url_for_path(host_from(resource), path)
+      )
+
+    [server: server, origins: :any, auth: auth]
+  end
+
+  defp host_from(resource) do
+    case URI.parse(resource) do
+      %URI{host: host} when is_binary(host) and host != "" -> host
+      _ -> ""
+    end
   end
 
   @doc """

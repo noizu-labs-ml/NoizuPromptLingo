@@ -87,7 +87,16 @@ defmodule NoizuPromptLingua.Authz.Pdp.Local do
   defp to_resource_type(t) when is_atom(t), do: t
   defp to_resource_type("organization"), do: :organization
   defp to_resource_type("project"), do: :project
-  defp to_resource_type(t) when is_binary(t), do: String.to_existing_atom(t)
+
+  # Unknown binary resource types must not crash the PDP (String.to_existing_atom
+  # raises on unseen atoms); falling back to the organization axis makes the
+  # subsequent authorize lookup fail closed with :not_a_member.
+  defp to_resource_type(t) when is_binary(t) do
+    String.to_existing_atom(t)
+  rescue
+    ArgumentError -> :organization
+  end
+
   defp to_resource_type(_), do: :organization
 
   defp to_role(r) when is_atom(r), do: r

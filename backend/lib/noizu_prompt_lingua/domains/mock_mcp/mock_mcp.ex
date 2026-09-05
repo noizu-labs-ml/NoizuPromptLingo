@@ -262,7 +262,18 @@ defmodule NoizuPromptLingua.Domains.MockMCP do
 
         Repo.transaction(fn ->
           Ecto.Adapters.SQL.query!(Repo, ~s(SET LOCAL search_path TO "#{safe}"), [])
-          Enum.each(stmts, fn sql -> Ecto.Adapters.SQL.query!(Repo, sql, []) end)
+
+          # BUGFIX (cov-w4a): this used `query!/1` whose raise escaped the
+          # transaction, making the `{:error, "schema DDL failed: ..."} wrap
+          # below unreachable — bad agent-authored DDL crashed the request
+          # instead of surfacing as an error. Roll back non-bang failures so
+          # the intended wrap fires.
+          Enum.each(stmts, fn sql ->
+            case Ecto.Adapters.SQL.query(Repo, sql, []) do
+              {:ok, _result} -> :ok
+              {:error, e} -> Repo.rollback(e)
+            end
+          end)
         end)
         |> case do
           {:ok, _} -> :ok

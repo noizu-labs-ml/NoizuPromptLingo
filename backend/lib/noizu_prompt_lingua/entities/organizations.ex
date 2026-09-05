@@ -60,13 +60,32 @@ defmodule NoizuPromptLingua.Organizations do
     end
   end
 
-  @doc "Looks up an org UUID by slug. `slug` is citext (case-insensitive)."
+  @doc """
+  Looks up an org UUID by slug. `slug` is citext (case-insensitive).
+
+  Resolution is LOCAL-first (B2): the app-DB `organizations` row is the
+  org-slug source of truth for URL addressing (see `get_slug_by_id/1`), and
+  orgs are created locally even when TRP provisioning fails or TRP is not
+  configured (`create_organization_with_owner/2`) — a TRP-only lookup 404'd
+  every such org's /org/<slug>/… gateways. The TRP shared-key plane stays a
+  FALLBACK for orgs the TRP side knows that were never mirrored locally.
+  Negative results are returned uncached (`NoizuPromptLingua.Cache.fetch/3`
+  stores only successes), so a local row created after a miss resolves on the
+  next request.
+  """
   def get_id_by_slug(slug) do
-    # TRP shared-key list IS the org inventory for this key (spec §4.1); cached 30s.
+    case NoizuPromptLingua.Repo.one(
+           from(o in Schema, where: o.slug == ^slug, select: o.id, limit: 1)
+         ) do
+      nil -> trp_id_by_slug(slug)
+      id -> id
+    end
+  end
+
+  defp trp_id_by_slug(slug) do
     case NoizuPromptLingua.TRP.find_organization_by_slug(slug) do
       %{id: id} -> id
-      nil -> nil
-      {:error, _} -> nil
+      _ -> nil
     end
   end
 
@@ -154,9 +173,18 @@ defmodule NoizuPromptLingua.Organizations do
          |> Schema.changeset(attrs)
          |> NoizuPromptLingua.Repo.insert() do
       {:ok, org} ->
-        case NoizuPromptLingua.Authz.ScopedMemberships.add_member("organization", org.id, user_id, "owner", user_id) do
+        case NoizuPromptLingua.Authz.ScopedMemberships.add_member(
+               "organization",
+               org.id,
+               user_id,
+               "owner",
+               user_id
+             ) do
           {:ok, _} ->
-            case NoizuPromptLingua.TRP.Provisioning.provision_org(%{slug: org.slug, name: org.name}) do
+            case NoizuPromptLingua.TRP.Provisioning.provision_org(%{
+                   slug: org.slug,
+                   name: org.name
+                 }) do
               {:ok, _trp_org} ->
                 :ok
 
@@ -186,33 +214,33 @@ defmodule NoizuPromptLingua.Organizations do
     # of the former UNION is gone. The app-DB side keeps session/me + the org
     # switcher working; W8/W9 must decide whether memberships move to TRP.
     from(sm in ScopedMembershipSchema,
-        join: o in Schema,
-        on: o.id == sm.resource_id,
-        join: g in NoizuPromptLingua.Schema.Authz.Group,
-        on: g.id == sm.group_id,
-        left_join: og in NoizuPromptLingua.Schema.Authz.Group,
-        on: og.name == "owner",
-        left_join: osm in ScopedMembershipSchema,
-        on:
-          osm.resource_id == o.id and osm.resource_type == "organization" and
-            osm.member_type == "user" and osm.group_id == og.id,
-        left_join: ou in NoizuPromptLingua.Schema.Users.User,
-        on: ou.id == osm.member_id,
-        where:
-          sm.member_type == "user" and sm.member_id == ^user_id and
-            sm.resource_type == "organization",
-        where: is_nil(sm.expires_at) or sm.expires_at > ^DateTime.utc_now(),
-        group_by: [o.id, o.slug, o.name, g.name],
-        select: %{
-          id: o.id,
-          slug: o.slug,
-          name: o.name,
-          role: g.name,
-          effective_role: g.name,
-          owner: fragment("max(coalesce(?, ?, ?))", ou.user_name, ou.handle, ou.email)
-        }
-      )
-      |> NoizuPromptLingua.Repo.all()
+      join: o in Schema,
+      on: o.id == sm.resource_id,
+      join: g in NoizuPromptLingua.Schema.Authz.Group,
+      on: g.id == sm.group_id,
+      left_join: og in NoizuPromptLingua.Schema.Authz.Group,
+      on: og.name == "owner",
+      left_join: osm in ScopedMembershipSchema,
+      on:
+        osm.resource_id == o.id and osm.resource_type == "organization" and
+          osm.member_type == "user" and osm.group_id == og.id,
+      left_join: ou in NoizuPromptLingua.Schema.Users.User,
+      on: ou.id == osm.member_id,
+      where:
+        sm.member_type == "user" and sm.member_id == ^user_id and
+          sm.resource_type == "organization",
+      where: is_nil(sm.expires_at) or sm.expires_at > ^DateTime.utc_now(),
+      group_by: [o.id, o.slug, o.name, g.name],
+      select: %{
+        id: o.id,
+        slug: o.slug,
+        name: o.name,
+        role: g.name,
+        effective_role: g.name,
+        owner: fragment("max(coalesce(?, ?, ?))", ou.user_name, ou.handle, ou.email)
+      }
+    )
+    |> NoizuPromptLingua.Repo.all()
   end
 
   def authorize(user_id, organization_id, required_role) do
@@ -228,12 +256,17 @@ defmodule NoizuPromptLingua.Organizations do
     key_prefix = String.slice(raw_token, 0, 8)
     token_hash = Bcrypt.hash_pwd_salt(raw_token)
 
+    # Normalize caller keys to strings BEFORE merging the system keys: a mixed
+    # atom/string map raises Ecto.CastError in Changeset.cast/2, so merging
+    # atom-keyed %{token_hash: …} into string-keyed caller attrs crashed.
+    attrs = Map.new(attrs, fn {k, v} -> {to_string(k), v} end)
+
     result =
       %InviteTokenSchema{}
       |> InviteTokenSchema.changeset(
         Map.merge(attrs, %{
-          token_hash: token_hash,
-          key_prefix: key_prefix
+          "token_hash" => token_hash,
+          "key_prefix" => key_prefix
         })
       )
       |> NoizuPromptLingua.Repo.insert()
