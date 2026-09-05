@@ -56,6 +56,7 @@ defmodule NoizuPromptLingua.MCP.VFS.Root do
   # placeholder surface. Group backends register here — one map entry each,
   # the documented insertion point.
   @group_backends %{
+    "wiki" => NoizuPromptLingua.MCP.VFS.Wiki
     "artifacts" => NoizuPromptLingua.MCP.VFS.Artifacts,
     "campaigns" => NoizuPromptLingua.MCP.VFS.Campaigns,
     "chat" => NoizuPromptLingua.MCP.VFS.Chat,

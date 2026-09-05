@@ -165,10 +165,18 @@ defmodule NoizuPromptLingua.MCP.VFS.RootTest do
     assert {:error, :enoent} = VFS.read(Root, tobor(slug) <> "/_meta/groups/tickets.json", ctx)
   end
 
-  test "read/4 serves the per-group overview placeholder", %{slug: slug, ctx: ctx} do
-    {:ok, md, _} = VFS.read(Root, tobor(slug) <> "/wiki/overview.md", ctx)
-    assert md =~ "Wiki"
-    assert md =~ "wave"
+  test "read/4 serves group overviews (placeholder vs mapped backend)", %{slug: slug} do
+    # Unmapped group: the Wave 0 Overview placeholder.
+    ctx = key_ctx(%{"groups" => %{"wiki" => %{}, "tickets" => %{}}})
+
+    {:ok, tickets_md, _} = VFS.read(Root, tobor(slug) <> "/tickets/overview.md", ctx)
+    assert tickets_md =~ "wave"
+    assert tickets_md =~ "placeholder"
+
+    # Mapped group (wiki): the backend renders its own Overview furniture.
+    {:ok, wiki_md, _} = VFS.read(Root, tobor(slug) <> "/wiki/overview.md", ctx)
+    assert wiki_md =~ "Wiki"
+    assert wiki_md =~ "spaces:"
   end
 
   test "read/4 on a dir is :eisdir, on a missing path :enoent", %{slug: slug, ctx: ctx} do
@@ -178,11 +186,14 @@ defmodule NoizuPromptLingua.MCP.VFS.RootTest do
 
   # ── write family: read-only backend ───────────────────────────────────────
 
-  test "mutating ops are :enosys (Wave 0 read-only meta plane)", %{slug: slug, ctx: ctx} do
+  test "mutating ops stay :enosys on the meta plane and unmapped groups", %{slug: slug, ctx: ctx} do
     assert {:error, :enosys} = VFS.write(Root, tobor(slug) <> "/_meta/whoami.json", "x", ctx)
-    assert {:error, :enosys} = VFS.create(Root, tobor(slug) <> "/wiki/page.md", "x", ctx)
-    assert {:error, :enosys} = VFS.remove(Root, tobor(slug) <> "/wiki/overview.md", ctx)
-    # Group subtrees are documented insertion points; reads raise :enoent.
+    # tickets has no Wave backend yet — the behaviour default applies.
+    assert {:error, :enosys} = VFS.create(Root, tobor(slug) <> "/tickets/page.md", "x", ctx)
+    assert {:error, :enosys} = VFS.remove(Root, tobor(slug) <> "/tickets/overview.md", ctx)
+    # Wiki furniture is not writable either (mapped group, read-only node).
+    assert {:error, :enosys} = VFS.write(Root, tobor(slug) <> "/wiki/overview.md", "x", ctx)
+    # Group subtrees are backend-owned; unknown wiki paths raise :enoent.
     assert {:error, :enoent} = VFS.read(Root, tobor(slug) <> "/wiki/deeper.md", ctx)
   end
 
