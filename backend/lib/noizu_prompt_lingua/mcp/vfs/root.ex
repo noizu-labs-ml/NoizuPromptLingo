@@ -57,7 +57,10 @@ defmodule NoizuPromptLingua.MCP.VFS.Root do
   # the documented insertion point.
   @group_backends %{
     "artifacts" => NoizuPromptLingua.MCP.VFS.Artifacts,
+    "campaigns" => NoizuPromptLingua.MCP.VFS.Campaigns,
+    "customers" => NoizuPromptLingua.MCP.VFS.Customers,
     "instructions" => NoizuPromptLingua.MCP.VFS.Instructions,
+    "market" => NoizuPromptLingua.MCP.VFS.Market,
     "memory" => NoizuPromptLingua.MCP.VFS.Memory,
     "notifications" => NoizuPromptLingua.MCP.VFS.Notifications,
     "pubsub" => NoizuPromptLingua.MCP.VFS.PubSub,
