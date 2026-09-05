@@ -12,7 +12,14 @@ defmodule NoizuPromptLingua.MixProject do
       deps: deps(),
       listeners: [Phoenix.CodeReloader],
       # Coverage (excoveralls; dev/test only — see deps)
-      test_coverage: [tool: ExCoveralls],
+      test_coverage: [tool: ExCoveralls]
+    ]
+  end
+
+  # Replaces the removed `:preferred_cli_env` project keyword (deprecated in
+  # Elixir 1.17, removed in 1.19 — silences the per-run CI warning).
+  def cli do
+    [
       preferred_cli_env: [
         coveralls: :test,
         "coveralls.detail": :test,
