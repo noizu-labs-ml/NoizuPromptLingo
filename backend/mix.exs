@@ -24,7 +24,10 @@ defmodule NoizuPromptLingua.MixProject do
         coveralls: :test,
         "coveralls.detail": :test,
         "coveralls.html": :test,
-        "coveralls.json": :test
+        "coveralls.json": :test,
+        # The smoke alias must not leak dev.exs config (tobor_locker user) into
+        # the run — aliases keep the ambient MIX_ENV otherwise.
+        smoke: :test
       ]
     ]
   end
@@ -147,6 +150,36 @@ defmodule NoizuPromptLingua.MixProject do
         "ecto.create --quiet",
         "ecto.migrate --quiet",
         "test"
+      ],
+      # CI push-gate subset: curated HERMETIC suites only (no Weaviate / TRP /
+      # LLM-provider-key / external-network dependencies). Fast (~minutes) and
+      # green on stock runners; the full suite stays available via
+      # `mix test` locally and the workflow_dispatch exhaustive CI job.
+      # Adding a suite here = a promise it passes on a bare runner; validate
+      # with: env -u OPENAI_API_KEY -u TRP_API_BASE_URL -u TRP_SHARED_KEY mix smoke
+      smoke: [
+        "ecto.create --quiet",
+        "ecto.migrate --quiet",
+        # One `test` invocation — alias list entries are separate tasks, so the
+        # curated paths must ride the same string.
+        "test --exclude memory --exclude live_trp " <>
+          # mcp core: rename/cast regression, manifest parity, guards, resolvers
+          "test/noizu_prompt_lingua/mcp/tool_set_invoke_regression_test.exs " <>
+          "test/noizu_prompt_lingua/mcp/session_manifest_parity_test.exs " <>
+          "test/noizu_prompt_lingua/mcp/session_manifest_test.exs " <>
+          "test/noizu_prompt_lingua/mcp/tool_guard_branches_test.exs " <>
+          "test/noizu_prompt_lingua/mcp/window_endpoint_resolver_branches_test.exs " <>
+          "test/noizu_prompt_lingua/mcp/negotiations_provider_branches_test.exs " <>
+          # stable controller sweeps
+          "test/noizu_prompt_lingua_web/controllers/remote_access_tunnels_test.exs " <>
+          "test/noizu_prompt_lingua_web/controllers/media_controllers_test.exs " <>
+          "test/noizu_prompt_lingua_web/controllers/controller_tail_sweep_test.exs " <>
+          # auth / sso
+          "test/noizu_prompt_lingua/auth/sso_test.exs " <>
+          "test/noizu_prompt_lingua_web/controllers/sso_controller_test.exs " <>
+          "test/noizu_prompt_lingua_web/controllers/auth_controller_test.exs " <>
+          "test/noizu_prompt_lingua_web/controllers/oauth_controller_test.exs " <>
+          "test/noizu_prompt_lingua_web/controllers/oauth_consent_test.exs"
       ]
     ]
   end
