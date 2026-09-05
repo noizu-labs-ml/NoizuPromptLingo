@@ -114,7 +114,7 @@ defmodule NoizuPromptLingua.MixProject do
       {:oban, "~> 2.18"},
 
       # Carried over from prior NoizuPromptLingo mix.exs
-      # noizu_mcp: hex 0.3.0 (published 2026-09-05). Previously pinned to the
+      # noizu_mcp: hex (0.3.1 line — VFSWS keepalive + disconnect hardening). The
       # PRD-4 freeze git ref (5f7217e, then origin/main c1fe6a63 — same 0.3.0
       # VFS surface: behaviour, Control, VFSWS, PubSub, Features.VFS plus the
       # StreamableHTTP plug SSE fix). The hex release is that exact source
