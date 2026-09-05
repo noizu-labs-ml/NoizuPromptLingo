@@ -119,7 +119,17 @@ defmodule NoizuPromptLingua.MixProject do
       # Git ref, not the old local path dep (…/Libs/ai/elixir-mcp/.worktrees/n2b-gate):
       # the path only exists on the dev Mac and broke CI mix compile. Repo is
       # public, so CI resolves the ref without extra credentials.
-      {:noizu_mcp, git: "https://github.com/noizu-labs-ml/elixir-mcp-lib.git", ref: "5f7217ed63a3e242a8595aa71f546c56bc1d2bef"},
+      # VFS Wave 0: bumped to origin/main c1fe6a63 — same 0.3.0 VFS surface this
+      # branch was already compiled against (behaviour, Control, VFSWS, PubSub,
+      # Features.VFS are identical 5f7217e..c1fe6a6) plus the StreamableHTTP
+      # plug SSE fix; makes the working-tree dep state the canonical lock.
+      {:noizu_mcp,
+       git: "https://github.com/noizu-labs-ml/elixir-mcp-lib.git",
+       ref: "c1fe6a63cd054edf6a15742da10155bed19b07e7"},
+      # VFS Wave 0 conformance harness: Mint WebSocket test client driving the
+      # VFSWS transport through a real Bandit listener (same pattern as the
+      # lib's transport suite).
+      {:mint_web_socket, "~> 1.0", only: :test},
       {:noizu_github, "~> 0.5.0"},
       {:jose, "~> 1.11"},
       {:yaml_elixir, "~> 2.11"},
@@ -183,5 +193,4 @@ defmodule NoizuPromptLingua.MixProject do
       ]
     ]
   end
-
 end
