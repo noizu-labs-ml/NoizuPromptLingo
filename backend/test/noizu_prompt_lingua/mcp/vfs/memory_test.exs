@@ -140,7 +140,10 @@ defmodule NoizuPromptLingua.MCP.VFS.MemoryTest do
     assert doc["mood"]["valence"] == 0.5
 
     assert {:ok, entries, nil} = VFS.list(Root, "#{base(org)}/raven/journal", nil, ctx)
-    assert Enum.sort(Enum.map(entries, & &1.name)) == ["#{id1}.json", "#{id2}.json"]
+    # Sort BOTH sides — UUID ids have no ordering relationship to create order,
+    # and a one-sided sort flips this 50% of the time (full-suite flake 09-05).
+    assert Enum.sort(Enum.map(entries, & &1.name)) ==
+             Enum.sort(["#{id1}.json", "#{id2}.json"])
 
     # The literal weego resolves to the org's registered weego identity.
     register!(org, ctx, "kilo", "weego")
