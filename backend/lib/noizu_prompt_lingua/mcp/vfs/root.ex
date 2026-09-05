@@ -58,6 +58,9 @@ defmodule NoizuPromptLingua.MCP.VFS.Root do
   @group_backends %{
     "artifacts" => NoizuPromptLingua.MCP.VFS.Artifacts,
     "instructions" => NoizuPromptLingua.MCP.VFS.Instructions,
+    "memory" => NoizuPromptLingua.MCP.VFS.Memory,
+    "notifications" => NoizuPromptLingua.MCP.VFS.Notifications,
+    "pubsub" => NoizuPromptLingua.MCP.VFS.PubSub,
     "unicode" => NoizuPromptLingua.MCP.VFS.Unicode
   }
 
