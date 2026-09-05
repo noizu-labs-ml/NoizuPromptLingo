@@ -392,6 +392,17 @@ defmodule NoizuPromptLinguaWeb.Router do
             NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.MCP)
   end
 
+  # VFS Wave 0 substrate: the WebSocket VFS transport at /vfs, backed by the
+  # composed NoizuPromptLingua.MCP.VFS.Router (org-scoped namespace + _meta
+  # plane + /etc/dev control tree). Same bearer pipeline as the MCP surface;
+  # `mcp-mount --url wss://<host>/vfs --token T --mount DIR [--ro]`. Host-less
+  # scope on purpose: the mount endpoint answers on the apex host AND on any
+  # subdomain (fs.<host>/vfs) — the wildcard ingress catch-all already routes
+  # both to the backend.
+  scope "/" do
+    forward "/vfs", Noizu.MCP.Transport.VFSWS, NoizuPromptLinguaWeb.MCPConfig.vfs_plug_opts()
+  end
+
   # Authentik (OIDC) is the ONLY supported auth method — no alternatives.
   # Email/password, magic-link, OTP, password-reset, email-verification, and
   # social-provider routes are intentionally disabled (the Authentik IdP owns

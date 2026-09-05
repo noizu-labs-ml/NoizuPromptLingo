@@ -58,6 +58,10 @@ defmodule NoizuPromptLingua.Domains.Artifacts do
     create_revision(artifact_id, content, note, next_num)
   end
 
+  def get_revision(artifact_id, revision_number) do
+    Repo.get_by(ArtifactRevision, artifact_id: artifact_id, revision_number: revision_number)
+  end
+
   def list_revisions(artifact_id, opts \\ []) do
     ArtifactRevision
     |> where([r], r.artifact_id == ^artifact_id)

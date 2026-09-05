@@ -203,3 +203,17 @@ config :noizu_prompt_lingua, :feature_flags, %{
 config :noizu_prompt_lingua, NoizuPromptLinguaWeb.Gettext, default_locale: "en"
 
 import_config "#{config_env()}.exs"
+
+# ── VFS (Wave 0 substrate) ─────────────────────────────────────────────────
+# Compile-time kill switch honored by Noizu.MCP.VFS.Control via the VFSServer
+# `vfs_readonly:` opt: with it true, EVERY write through the composed backend
+# (the /etc/dev control tree included) returns :erofs.
+config :noizu_prompt_lingua, :vfs, readonly: false
+
+# P1 workaround (design §6): the lib's VFS read cache keys entries
+# {backend, kind, path} — identity-blind — while NPL's VFS serves per-principal
+# trees, so cached successes could cross-contaminate principals within the TTL.
+# The read cache stays OFF until the lib ships per-identity keys or the
+# `__mcp_vfs__(:cacheable)` opt-out; the Wave 0 meta plane is tiny, so this
+# costs nothing today.
+config :noizu_mcp, vfs_cache_enabled: false
