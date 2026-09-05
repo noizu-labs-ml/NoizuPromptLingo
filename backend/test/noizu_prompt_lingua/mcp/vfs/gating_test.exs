@@ -135,12 +135,12 @@ defmodule NoizuPromptLingua.MCP.VFS.GatingTest do
     ctx = key_ctx(%{"groups" => %{"wiki" => %{}}})
 
     assert {:ok, orgs, nil} = VFS.list(Root, "/tobor", nil, ctx)
-    assert Enum.map(orgs, & &1.name) == [a, b]
+    assert Enum.map(orgs, & &1.name) == ["_npl", a, b]
 
     # TRP unreachable/empty ⇒ an empty mount root, never an error.
     TestStub.reset()
     TrpCache.clear()
-    assert {:ok, [], nil} = VFS.list(Root, "/tobor", nil, ctx)
+    assert {:ok, [%{name: "_npl"}], nil} = VFS.list(Root, "/tobor", nil, ctx)
     assert {:error, :enoent} = VFS.stat(Root, "/tobor/#{a}", ctx)
   end
 

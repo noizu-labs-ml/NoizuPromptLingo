@@ -111,7 +111,8 @@ defmodule NoizuPromptLingua.MCP.VFS.RootTest do
     assert Enum.any?(entries, &match?(%{name: "tobor", type: :dir}, &1))
 
     assert {:ok, orgs, nil} = VFS.list(Root, "/tobor", nil, ctx)
-    assert [%{name: ^slug, type: :dir}] = orgs
+    # `_npl` (global reference plane, §2.23) sorts before the org slugs.
+    assert [%{name: "_npl", type: :dir}, %{name: ^slug, type: :dir}] = orgs
 
     assert {:ok, org_entries, nil} = VFS.list(Root, tobor(slug), nil, ctx)
     assert Enum.any?(org_entries, &match?(%{name: "_meta", type: :dir}, &1))
