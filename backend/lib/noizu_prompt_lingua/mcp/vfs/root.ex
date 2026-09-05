@@ -58,12 +58,16 @@ defmodule NoizuPromptLingua.MCP.VFS.Root do
   @group_backends %{
     "artifacts" => NoizuPromptLingua.MCP.VFS.Artifacts,
     "campaigns" => NoizuPromptLingua.MCP.VFS.Campaigns,
+    "chat" => NoizuPromptLingua.MCP.VFS.Chat,
     "customers" => NoizuPromptLingua.MCP.VFS.Customers,
     "instructions" => NoizuPromptLingua.MCP.VFS.Instructions,
     "market" => NoizuPromptLingua.MCP.VFS.Market,
     "memory" => NoizuPromptLingua.MCP.VFS.Memory,
     "notifications" => NoizuPromptLingua.MCP.VFS.Notifications,
     "pubsub" => NoizuPromptLingua.MCP.VFS.PubSub,
+    "review" => NoizuPromptLingua.MCP.VFS.Review,
+    "sessions" => NoizuPromptLingua.MCP.VFS.Sessions,
+    "tickets" => NoizuPromptLingua.MCP.VFS.Tickets,
     "unicode" => NoizuPromptLingua.MCP.VFS.Unicode
   }
 
