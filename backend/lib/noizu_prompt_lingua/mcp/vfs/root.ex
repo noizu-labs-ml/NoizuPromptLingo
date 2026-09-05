@@ -24,16 +24,16 @@ defmodule NoizuPromptLingua.MCP.VFS.Root do
     * `_meta` is always served to an org-visible principal — it IS the
       per-principal discovery plane (`whoami`, effective toolset, gates).
 
-  ## Read-only
+  ## Read-only meta plane, Wave 1 group dispatch
 
-  Only `stat/2`, `list/3`, and `read/2` are implemented; `write/3`,
-  `create/3`, and `remove/2` fall through to the behaviour's `:enosys`
-  defaults. (The composed Router still advertises `vfs_write` on the wire —
-  the lib derives capability flags from the composed module, which implements
-  the full callback set for the `/etc/dev` control plane, and that plane is
-  genuinely writable unless the server opts into `vfs_readonly`.) Group
-  backends attach their own mutators in later waves behind the Router's
-  prefix dispatch.
+  The meta plane itself stays read-only (`_meta` writes are `:enosys`). Group
+  subtrees whose backend has landed (`@group_backends`) delegate every op —
+  including their mutators — to that backend (design §1.2 prefix dispatch);
+  unregistered groups keep the Wave 0 placeholder surface and `:enosys`
+  mutations. (The composed Router advertises `vfs_write` on the wire either
+  way — the lib derives capability flags from the composed `Control` module,
+  whose `/etc/dev` plane is genuinely writable unless the server opts into
+  `vfs_readonly`.)
   """
 
   use Noizu.MCP.VFS
@@ -46,8 +46,24 @@ defmodule NoizuPromptLingua.MCP.VFS.Root do
   @orgs_root "tobor"
   @meta "_meta"
   @groups_dir "groups"
+  @npl_plane "_npl"
 
   @meta_files ["whoami.json", "toolsets.json"]
+
+  # Wave 1 prefix dispatch (design §1.2): per-group subtrees whose backend has
+  # landed delegate verbatim to that backend (full absolute paths; the backend
+  # enforces its own §1.3 gates). Unregistered groups keep the Wave 0
+  # placeholder surface. Group backends register here — one map entry each,
+  # the documented insertion point.
+  @group_backends %{
+    "artifacts" => NoizuPromptLingua.MCP.VFS.Artifacts,
+    "instructions" => NoizuPromptLingua.MCP.VFS.Instructions,
+    "unicode" => NoizuPromptLingua.MCP.VFS.Unicode
+  }
+
+  defp group_backend(group), do: Map.get(@group_backends, group)
+  defp dispatch(backend, op, args), do: apply(backend, op, args)
+  defp vpath(segments), do: "/" <> Enum.join(segments, "/")
 
   # ── path model ────────────────────────────────────────────────────────────
 
@@ -76,6 +92,12 @@ defmodule NoizuPromptLingua.MCP.VFS.Root do
 
   defp stat_segments([@orgs_root], _ctx), do: {:ok, dir_node()}
 
+  # `_npl` root plane (§2.23): global reference, outside every org. Must sit
+  # above the `{org}` clause — `_npl` is not an org slug.
+  defp stat_segments([@orgs_root, @npl_plane | rest], ctx) do
+    dispatch(NoizuPromptLingua.MCP.VFS.NPL, :stat, [vpath([@orgs_root, @npl_plane | rest]), ctx])
+  end
+
   defp stat_segments([@orgs_root, org], ctx),
     do: if(Principal.org_visible?(ctx, org), do: {:ok, dir_node()}, else: {:error, :enoent})
 
@@ -97,49 +119,69 @@ defmodule NoizuPromptLingua.MCP.VFS.Root do
     end)
   end
 
-  # Per-group subtree: Wave 0 serves only the Overview placeholder; everything
-  # deeper is the documented insertion point for the group's backend.
-  defp stat_segments([@orgs_root, org, group], ctx) do
+  # Per-group subtree: registered backends take the whole prefix; everything
+  # else keeps the Wave 0 Overview placeholder.
+  defp stat_segments([@orgs_root, org, group | rest], ctx) when group != @meta do
+    case group_backend(group) do
+      nil ->
+        placeholder_stat(org, group, rest, ctx)
+
+      backend ->
+        dispatch(backend, :stat, [vpath([@orgs_root, org, group | rest]), ctx])
+    end
+  end
+
+  defp stat_segments([@orgs_root, _org, _group, _deeper | _], _ctx), do: {:error, :enoent}
+  defp stat_segments(_, _ctx), do: {:error, :enoent}
+
+  # Wave 0 placeholder surface for groups whose backend has not landed.
+  defp placeholder_stat(org, group, [], ctx) do
     require_org_and_group(ctx, org, group, fn gate ->
       {:ok, dir_node()}
       |> tap_writable(gate)
     end)
   end
 
-  defp stat_segments([@orgs_root, org, group, "overview.md"], ctx) do
+  defp placeholder_stat(org, group, ["overview.md"], ctx) do
     require_org_and_group(ctx, org, group, fn gate ->
       {:ok, %{file_node(byte_size(overview_md(group))) | writable: gate.writable}}
     end)
   end
 
-  defp stat_segments([@orgs_root, _org, _group, _deeper | _], _ctx), do: {:error, :enoent}
-  defp stat_segments(_, _ctx), do: {:error, :enoent}
+  defp placeholder_stat(_org, _group, _rest, _ctx), do: {:error, :enoent}
 
   # ── list/3 ────────────────────────────────────────────────────────────────
 
   @impl true
   def list(path, cursor, ctx) do
-    with {:ok, segments} <- split_segments(path),
-         {:ok, entries} <- list_segments(segments, ctx) do
-      case cursor do
-        nil -> {:ok, entries, nil}
-        # Wave 0 listings are bounded by the catalog/org count; a cursor can
-        # only be a stale or foreign continuation — reject it rather than
-        # mis-paginate. (Group backends adopt the lib Pagination helper in
-        # later waves when listings grow.)
-        "" -> {:ok, entries, nil}
-        _ -> {:error, Noizu.MCP.Error.invalid_params("invalid cursor")}
-      end
+    with {:ok, segments} <- split_segments(path) do
+      list_segments(segments, cursor, ctx)
     end
   end
 
-  defp list_segments([], _ctx), do: {:ok, [dir_entry(@orgs_root)]}
+  # Bounded (meta/org) listings: a cursor can only be a stale or foreign
+  # continuation — reject it rather than mis-paginate. Registered group
+  # backends and `_npl` manage their own cursor policy.
 
-  defp list_segments([@orgs_root], ctx) do
-    {:ok, Enum.map(Principal.view(ctx).orgs, &dir_entry/1)}
+  defp list_segments([], cursor, _ctx), do: bounded({:ok, [dir_entry(@orgs_root)]}, cursor)
+
+  defp list_segments([@orgs_root], cursor, ctx) do
+    bounded(
+      {:ok, [dir_entry(@npl_plane) | Enum.map(Principal.view(ctx).orgs, &dir_entry/1)]},
+      cursor
+    )
   end
 
-  defp list_segments([@orgs_root, org], ctx) do
+  # `_npl` root plane (§2.23) — above the `{org}` clause (`_npl` is not an org).
+  defp list_segments([@orgs_root, @npl_plane | rest], cursor, ctx) do
+    dispatch(NoizuPromptLingua.MCP.VFS.NPL, :list, [
+      vpath([@orgs_root, @npl_plane | rest]),
+      cursor,
+      ctx
+    ])
+  end
+
+  defp list_segments([@orgs_root, org], cursor, ctx) do
     require_org(ctx, org, fn ->
       gates = Principal.groups(ctx)
 
@@ -151,17 +193,17 @@ defmodule NoizuPromptLingua.MCP.VFS.Root do
         |> Enum.map(fn {gid, _} -> dir_entry(gid) end)
         |> Enum.sort_by(& &1.name)
 
-      {:ok, [meta | group_dirs]}
+      bounded({:ok, [meta | group_dirs]}, cursor)
     end)
   end
 
-  defp list_segments([@orgs_root, org, @meta], ctx) do
+  defp list_segments([@orgs_root, org, @meta], cursor, ctx) do
     require_org(ctx, org, fn ->
-      {:ok, file_entries(@meta_files) ++ [dir_entry(@groups_dir)]}
+      bounded({:ok, file_entries(@meta_files) ++ [dir_entry(@groups_dir)]}, cursor)
     end)
   end
 
-  defp list_segments([@orgs_root, org, @meta, @groups_dir], ctx) do
+  defp list_segments([@orgs_root, org, @meta, @groups_dir], cursor, ctx) do
     require_org(ctx, org, fn ->
       gates = Principal.groups(ctx)
 
@@ -171,23 +213,43 @@ defmodule NoizuPromptLingua.MCP.VFS.Root do
         |> Enum.map(fn {gid, _} -> file_entry(gid <> ".json") end)
         |> Enum.sort_by(& &1.name)
 
-      {:ok, entries}
+      bounded({:ok, entries}, cursor)
     end)
   end
 
-  defp list_segments([@orgs_root, org, group], ctx) do
-    require_org_and_group(ctx, org, group, fn _gate -> {:ok, [file_entry("overview.md")]} end)
+  defp list_segments([@orgs_root, org, group | rest], cursor, ctx) when group != @meta do
+    case group_backend(group) do
+      nil ->
+        placeholder_list(org, group, rest, cursor, ctx)
+
+      backend ->
+        dispatch(backend, :list, [vpath([@orgs_root, org, group | rest]), cursor, ctx])
+    end
   end
 
-  defp list_segments([@orgs_root, _org, @meta, file], _ctx) when file in @meta_files,
+  defp list_segments([@orgs_root, _org, @meta, file], _cursor, _ctx) when file in @meta_files,
     do: {:error, :enotdir}
 
-  defp list_segments([@orgs_root, _org, @meta, @groups_dir, _descriptor], _ctx),
+  defp list_segments([@orgs_root, _org, @meta, @groups_dir, _descriptor], _cursor, _ctx),
     do: {:error, :enotdir}
 
-  defp list_segments([@orgs_root, _org, _group, "overview.md"], _ctx), do: {:error, :enotdir}
+  defp list_segments(_, _cursor, _ctx), do: {:error, :enoent}
 
-  defp list_segments(_, _ctx), do: {:error, :enoent}
+  defp placeholder_list(org, group, [], _cursor, ctx) do
+    require_org_and_group(ctx, org, group, fn _gate ->
+      bounded({:ok, [file_entry("overview.md")]}, nil)
+    end)
+  end
+
+  defp placeholder_list(_org, _group, ["overview.md"], _cursor, _ctx), do: {:error, :enotdir}
+  defp placeholder_list(_org, _group, _rest, _cursor, _ctx), do: {:error, :enoent}
+
+  defp bounded(result, cursor)
+  defp bounded({:ok, entries}, nil), do: {:ok, entries, nil}
+  defp bounded({:ok, entries}, ""), do: {:ok, entries, nil}
+
+  defp bounded({:ok, _entries}, _cursor),
+    do: {:error, Noizu.MCP.Error.invalid_params("invalid cursor")}
 
   # ── read/2 ────────────────────────────────────────────────────────────────
 
@@ -215,12 +277,117 @@ defmodule NoizuPromptLingua.MCP.VFS.Root do
     end)
   end
 
-  defp read_segments([@orgs_root, org, group, "overview.md"], ctx) do
-    require_org_and_group(ctx, org, group, fn _gate -> {:ok, overview_md(group), version()} end)
+  defp read_segments([@orgs_root, @npl_plane | rest], ctx) do
+    dispatch(NoizuPromptLingua.MCP.VFS.NPL, :read, [vpath([@orgs_root, @npl_plane | rest]), ctx])
+  end
+
+  defp read_segments([@orgs_root, org, group | rest], ctx) when group != @meta do
+    case group_backend(group) do
+      nil ->
+        placeholder_read(org, group, rest, ctx)
+
+      backend ->
+        dispatch(backend, :read, [vpath([@orgs_root, org, group | rest]), ctx])
+    end
   end
 
   defp read_segments([@orgs_root, _org, @meta], _ctx), do: {:error, :eisdir}
   defp read_segments(_, _ctx), do: {:error, :enoent}
+
+  defp placeholder_read(org, group, ["overview.md"], ctx) do
+    require_org_and_group(ctx, org, group, fn _gate -> {:ok, overview_md(group), version()} end)
+  end
+
+  defp placeholder_read(_org, _group, _rest, _ctx), do: {:error, :enoent}
+
+  # ── write / create / remove / search (Wave 1 dispatch) ────────────────────
+  #
+  # The meta plane stays read-only; `_npl` and unregistered groups delegate to
+  # their backend's behaviour defaults / return :enosys directly.
+
+  @impl true
+  def write(path, data, ctx) do
+    with {:ok, segments} <- split_segments(path) do
+      write_segments(segments, data, ctx)
+    end
+  end
+
+  defp write_segments([@orgs_root, @npl_plane | _rest] = segments, data, ctx) do
+    dispatch(NoizuPromptLingua.MCP.VFS.NPL, :write, [vpath(segments), data, ctx])
+  end
+
+  defp write_segments([@orgs_root, _org, group | _rest] = segments, data, ctx)
+       when group != @meta do
+    case group_backend(group) do
+      nil -> {:error, :enosys}
+      backend -> dispatch(backend, :write, [vpath(segments), data, ctx])
+    end
+  end
+
+  defp write_segments(_segments, _data, _ctx), do: {:error, :enosys}
+
+  @impl true
+  def create(path, data, ctx) do
+    with {:ok, segments} <- split_segments(path) do
+      create_segments(segments, data, ctx)
+    end
+  end
+
+  defp create_segments([@orgs_root, @npl_plane | _rest] = segments, data, ctx) do
+    dispatch(NoizuPromptLingua.MCP.VFS.NPL, :create, [vpath(segments), data, ctx])
+  end
+
+  defp create_segments([@orgs_root, _org, group | _rest] = segments, data, ctx)
+       when group != @meta do
+    case group_backend(group) do
+      nil -> {:error, :enosys}
+      backend -> dispatch(backend, :create, [vpath(segments), data, ctx])
+    end
+  end
+
+  defp create_segments(_segments, _data, _ctx), do: {:error, :enosys}
+
+  @impl true
+  def remove(path, ctx) do
+    with {:ok, segments} <- split_segments(path) do
+      remove_segments(segments, ctx)
+    end
+  end
+
+  defp remove_segments([@orgs_root, @npl_plane | _rest] = segments, ctx) do
+    dispatch(NoizuPromptLingua.MCP.VFS.NPL, :remove, [vpath(segments), ctx])
+  end
+
+  defp remove_segments([@orgs_root, _org, group | _rest] = segments, ctx)
+       when group != @meta do
+    case group_backend(group) do
+      nil -> {:error, :enosys}
+      backend -> dispatch(backend, :remove, [vpath(segments), ctx])
+    end
+  end
+
+  defp remove_segments(_segments, _ctx), do: {:error, :enosys}
+
+  @impl true
+  def search(root, query, ctx) do
+    with {:ok, segments} <- split_segments(root) do
+      search_segments(segments, query, ctx)
+    end
+  end
+
+  defp search_segments([@orgs_root, @npl_plane | _rest] = segments, query, ctx) do
+    dispatch(NoizuPromptLingua.MCP.VFS.NPL, :search, [vpath(segments), query, ctx])
+  end
+
+  defp search_segments([@orgs_root, _org, group | _rest] = segments, query, ctx)
+       when group != @meta do
+    case group_backend(group) do
+      nil -> {:error, :enosys}
+      backend -> dispatch(backend, :search, [vpath(segments), query, ctx])
+    end
+  end
+
+  defp search_segments(_segments, _query, _ctx), do: {:error, :enosys}
 
   # ── payloads ──────────────────────────────────────────────────────────────
 
