@@ -184,8 +184,22 @@ defmodule NoizuPromptLingua.Domains.Memory.Recall do
     cond do
       Embeddings.configured?() and VectorStore.configured?() ->
         case Embeddings.embed_one(query) do
-          {:ok, qvec} -> weaviate_lists(qvec, scope)
-          _ -> [lexical_list(query, scope)]
+          {:ok, qvec} ->
+            lists = weaviate_lists(qvec, scope)
+
+            # Weaviate configured but unreachable (CI runners / degraded
+            # cluster): every search errors and collapses to empty ids. Don't
+            # serve zero semantic signal — append the lexical arm (the
+            # pg_trgm fallback this module's docs promise). No-op when
+            # Weaviate returns real hits.
+            if Enum.any?(lists, fn {_weight, _source, ids} -> ids != [] end) do
+              lists
+            else
+              [lexical_list(query, scope) | lists]
+            end
+
+          _ ->
+            [lexical_list(query, scope)]
         end
 
       true ->

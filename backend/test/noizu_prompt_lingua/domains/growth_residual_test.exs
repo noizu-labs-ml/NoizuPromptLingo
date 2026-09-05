@@ -39,6 +39,46 @@ defmodule NoizuPromptLingua.Domains.GrowthResidualTest do
 
   defp uniq(suffix), do: "#{suffix}-#{System.unique_integer([:positive])}"
 
+  # Minimal OpenAI-compatible stub (house Bandit pattern, cf. ContentGeneratorTest):
+  # serves one fixed keyword-JSON completion so the LLM-backed paths are HERMETIC —
+  # no provider key / network on the host (the pre-fix tests silently depended on a
+  # direnv-exported OPENAI_API_KEY and real api.openai.com access, failing CI).
+  defmodule StubLLM do
+    @keyword_json """
+    [{"term": "ci cd tooling", "intent": "informational", "volume": 120, "difficulty": 25, "cpc": 1.5}]
+    """
+
+    def init(opts), do: opts
+
+    def call(conn, _opts) do
+      conn
+      |> Plug.Conn.put_resp_content_type("application/json")
+      |> Plug.Conn.resp(
+        200,
+        Jason.encode!(%{"choices" => [%{"message" => %{"content" => @keyword_json}}]})
+      )
+    end
+  end
+
+  # Ephemeral-port Bandit server + the OPENAI_API_KEY the provider resolver
+  # requires before the endpoint is ever consulted. Returns the stub base URL.
+  defp start_llm_stub do
+    System.put_env("OPENAI_API_KEY", "test-key")
+    on_exit(fn -> System.delete_env("OPENAI_API_KEY") end)
+
+    {:ok, sock} = :gen_tcp.listen(0, ip: {127, 0, 0, 1})
+    {:ok, port} = :inet.port(sock)
+    :gen_tcp.close(sock)
+
+    {:ok, pid} = Bandit.start_link(plug: StubLLM, scheme: :http, ip: {127, 0, 0, 1}, port: port)
+
+    on_exit(fn ->
+      if Process.alive?(pid), do: Process.exit(pid, :shutdown)
+    end)
+
+    "http://127.0.0.1:#{port}"
+  end
+
   defp insert_org do
     %{rows: [[raw]]} =
       Repo.query!(
@@ -101,10 +141,14 @@ defmodule NoizuPromptLingua.Domains.GrowthResidualTest do
 
   test "keyword research passes the LLM error through" do
     org_id = insert_org()
+    base = start_llm_stub()
 
-    # The LLM layer has a deterministic test fallback: research parses + bulk-inserts offline.
-    result = Market.research_keywords(org_id, nil, "ci cd tooling")
-    assert match?({:ok, _}, result)
+    # Happy path through the stubbed completion: parses + bulk-inserts.
+    assert {:ok, [_ | _]} = Market.research_keywords(org_id, nil, "ci cd tooling", endpoint: base)
+
+    # Error passthrough: an unreachable endpoint surfaces the transport error.
+    assert {:error, {:request_failed, _}} =
+             Market.research_keywords(org_id, nil, "retry topic", endpoint: "http://127.0.0.1:1")
   end
 
   test "competitor tool happy path, org arm, and changeset arm", %{org_slug: org_slug} do
@@ -167,8 +211,14 @@ defmodule NoizuPromptLingua.Domains.GrowthResidualTest do
     {:ok, p} =
       Customers.create_persona(%{organization_id: org_id, slug: uniq("draft"), name: "Draft"})
 
-    # The LLM layer has a deterministic test fallback, so drafting succeeds offline.
-    assert {:ok, _} = Customers.draft_persona(p.id)
+    base = start_llm_stub()
+
+    # Happy path through the stubbed completion: persists the persona artifact.
+    assert {:ok, _} = Customers.draft_persona(p.id, endpoint: base)
+
+    # Error passthrough: transport failure surfaces verbatim.
+    assert {:error, {:request_failed, _}} =
+             Customers.draft_persona(p.id, endpoint: "http://127.0.0.1:1")
   end
 
   test "persona + segment tool arms", %{org_slug: org_slug} do
