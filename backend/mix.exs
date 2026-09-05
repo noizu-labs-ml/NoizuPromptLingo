@@ -104,18 +104,13 @@ defmodule NoizuPromptLingua.MixProject do
       {:oban, "~> 2.18"},
 
       # Carried over from prior NoizuPromptLingo mix.exs
-      # N2b: noizu_mcp pinned to the PRD-4 freeze (5f7217e = merge of PR #4,
-      # persistence store; version 0.3.0, unpublished on hex — hex stops at 0.1.6).
-      # Git ref, not the old local path dep (…/Libs/ai/elixir-mcp/.worktrees/n2b-gate):
-      # the path only exists on the dev Mac and broke CI mix compile. Repo is
-      # public, so CI resolves the ref without extra credentials.
-      # VFS Wave 0: bumped to origin/main c1fe6a63 — same 0.3.0 VFS surface this
-      # branch was already compiled against (behaviour, Control, VFSWS, PubSub,
-      # Features.VFS are identical 5f7217e..c1fe6a6) plus the StreamableHTTP
-      # plug SSE fix; makes the working-tree dep state the canonical lock.
-      {:noizu_mcp,
-       git: "https://github.com/noizu-labs-ml/elixir-mcp-lib.git",
-       ref: "c1fe6a63cd054edf6a15742da10155bed19b07e7"},
+      # noizu_mcp: hex 0.3.0 (published 2026-09-05). Previously pinned to the
+      # PRD-4 freeze git ref (5f7217e, then origin/main c1fe6a63 — same 0.3.0
+      # VFS surface: behaviour, Control, VFSWS, PubSub, Features.VFS plus the
+      # StreamableHTTP plug SSE fix). The hex release is that exact source
+      # packaged; parity was verified by the full-suite flip gate before this
+      # pin landed.
+      {:noizu_mcp, "~> 0.3.0"},
       # VFS Wave 0 conformance harness: Mint WebSocket test client driving the
       # VFSWS transport through a real Bandit listener (same pattern as the
       # lib's transport suite).
