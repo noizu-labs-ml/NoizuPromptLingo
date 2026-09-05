@@ -227,3 +227,9 @@ The following custom skills remain available via `/command`:
 - `/task-wizard` — Task CLI management guide
 - `/update-arch-doc` — `docs/PROJ-ARCH.md` maintenance (< 300 lines, extract to `arch/`)
 - `/update-layout-doc` — `docs/PROJ-LAYOUT.md` maintenance (< 150 lines, extract to `layout/`)
+
+## Branch & PR Policy
+
+- Submodules sit on **`develop`** — keep your checkout on `develop`.
+- All PRs target **`develop`** (feature/bug/task branches fork from `develop`).
+- **`main` is CI/CD-only**: CI/CD automation performs all merges into `main` (release path). Never merge to or push `main` by hand.

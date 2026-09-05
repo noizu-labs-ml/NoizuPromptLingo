@@ -1,5 +1,6 @@
 # work trees
 staging/
+vendor/
 
 start-app*tar.gz
 # Generated secrets
