@@ -149,6 +149,16 @@ epics:
       - US-405
       - US-406
       - US-407
+  - name: UX Foundations
+    stories:
+      - US-501
+      - US-502
+      - US-503
+      - US-504
+      - US-505
+      - US-506
+      - US-507
+      - US-508
 stories:
   - id: US-001
     title: Create a new work session scoped to an org/project
@@ -1120,3 +1130,75 @@ stories:
     priority: should-have
     complexity: M
     file: US-407-db-query-audit-and-pool-observability.md
+  - id: US-501
+    title: Reach any destination or action from a keyboard command palette
+    personas:
+      - P-001
+      - P-003
+    epic: UX Foundations
+    priority: must-have
+    complexity: M
+    file: US-501-command-palette.md
+  - id: US-502
+    title: Search across tools, tickets, wiki, instructions, and files from one results page
+    personas:
+      - P-001
+      - P-007
+    epic: UX Foundations
+    priority: must-have
+    complexity: M
+    file: US-502-global-search-results-page.md
+  - id: US-503
+    title: Know where I am from breadcrumbs derived from the URL and entity titles
+    personas:
+      - P-001
+      - P-008
+    epic: UX Foundations
+    priority: must-have
+    complexity: S
+    file: US-503-breadcrumbs-from-url-and-entity-titles.md
+  - id: US-504
+    title: Emit task-event and notification records so the inbox and activity feed have content
+    personas:
+      - P-003
+      - P-006
+    epic: UX Foundations
+    priority: must-have
+    complexity: L
+    file: US-504-activity-feed-event-producers.md
+  - id: US-505
+    title: Block a suspended account on every request and explain it on one page
+    personas:
+      - P-004
+      - P-006
+    epic: UX Foundations
+    priority: must-have
+    complexity: M
+    file: US-505-suspended-account-blocking-page.md
+  - id: US-506
+    title: Render permission denials through one component that never leaks scope names
+    personas:
+      - P-007
+      - P-006
+    epic: UX Foundations
+    priority: must-have
+    complexity: M
+    file: US-506-permission-state-component.md
+  - id: US-507
+    title: Follow a first-run checklist on org home from key to MCP connection to first session
+    personas:
+      - P-008
+      - P-004
+    epic: UX Foundations
+    priority: should-have
+    complexity: S
+    file: US-507-first-run-checklist-org-home.md
+  - id: US-508
+    title: See the active tenant scope on every Data and Files screen
+    personas:
+      - P-004
+      - P-006
+    epic: UX Foundations
+    priority: must-have
+    complexity: S
+    file: US-508-tenant-scope-chip-data-files.md

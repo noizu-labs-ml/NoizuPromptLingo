@@ -185,6 +185,11 @@ here.
   legible trend.
 - **Fair representation:** yes — the no-sidebar mechanic and bento
   composition are unambiguous and match the direction's intent well.
+- **Regenerated:** yes, after locking both D4 prompts to an identical,
+  explicit 8-label top bar (Home, Work, Chat, Knowledge, Files, Data,
+  Integrations, Settings). Top-bar labels now render exactly as
+  specified, in the correct order, with Home active — consistent with
+  the paired `settings-keys.png` regenerate below.
 
 ### D4 — `settings-keys.png`
 - **Right:** the key-vault mechanics are all there — masked keys with
@@ -202,5 +207,10 @@ here.
   should not be trusted as evidence of D4's actual primary-nav wording;
   a regenerate with a more constrained nav-label instruction is advised
   before using this shot to argue the direction on its chrome alone.
+- **Regenerated:** yes, after locking both D4 prompts to an identical,
+  explicit 8-label top bar. Top-bar labels now render exactly as
+  Home/Work/Chat/Knowledge/Files/Data/Integrations/Settings, in the
+  correct order, with Settings active — matching `home-bento.png`
+  label-for-label, so cross-screen shell consistency now holds.
 
 **Decision pending: see UX-PLAN.md §8 D4.**

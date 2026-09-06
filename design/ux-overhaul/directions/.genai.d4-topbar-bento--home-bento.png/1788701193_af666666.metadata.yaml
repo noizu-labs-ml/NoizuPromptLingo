@@ -1,0 +1,36 @@
+service: gemini
+model: gemini-3.1-flash-image
+timestamp: 1788701205
+prompt: |
+  A 16:9 high-fidelity UI mockup of NoizuPromptLingo's org Home screen,
+  testing the TOP-BAR-ONLY + BENTO shell direction — NO left sidebar of
+  any kind.
+  
+  TOP BAR (full width, panel tone #0d1117, persistent, no sidebar below
+  it anywhere): far left an org switcher ("Acme Robotics ▾") next to a
+  small wordmark "NPL"; center-left a horizontal row of EXACTLY EIGHT
+  primary destination LINKS as text (not icons), in this EXACT order
+  and with this EXACT spelling — no synonyms, no rewording, no
+  additional or substitute labels: "Home", "Work", "Chat", "Knowledge",
+  "Files", "Data", "Integrations", "Settings". "Home" is the active
+  item (green underline). The eight labels must be spelled exactly as
+  listed; no other nav labels. Far right: a search affordance
+  ("/ search") with a visible "/" keyboard-shortcut hint, a
+  notification bell with a green unread badge "5", and a user avatar.
+  
+  BELOW THE TOP BAR, full-width BENTO GRID (the entire home screen is this
+  grid, no side rails): an uneven mosaic of tiles on raised tone (#161b22),
+  4px radius, flat, hairline borders only. A large hero tile "Continue
+  where you left off" showing a session card ("sess-7f21 — Refactor auth
+  middleware", mono duration "running · 14m"). A medium tile "Work" with
+  mono stat rows ("27 open tickets", "6 boards"). A medium tile "Chat"
+  showing 2 recent room previews with unread green dots. A tall tile
+  "Notifications" listing 4 compact inbox rows with mono timestamps. A
+  small tile "Files" showing a mount name and a green "connected" pill. A
+  small tile "Data" showing a tenant scope chip and a mini sparkline-style
+  row of mono query-count numbers. A wide bottom tile "First-run
+  checklist" with 4 checklist rows, 2 checked in green.
+  
+  Use realistic, specific product content throughout — never lorem ipsum.
+negative: |
+  watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, neon glow, bloom, CRT scanlines, gradient background, pure-black OLED background, pure-white surfaces, warm amber/gold dominant palette, light-mode canvas

@@ -21,11 +21,15 @@ prompt:
 
         TOP BAR (full width, panel tone #0d1117, persistent, no sidebar below
         it anywhere): far left an org switcher ("Acme Robotics ▾") next to a
-        small wordmark "NPL"; center-left a horizontal row of primary
-        destination LINKS as text (not icons) — "Home" (active, green
-        underline), "Work", "Chat", "Knowledge", "Files", "Data",
-        "Integrations", "Settings"; far right a search affordance ("/ search"),
-        a notification bell with a green unread badge "5", and a user avatar.
+        small wordmark "NPL"; center-left a horizontal row of EXACTLY EIGHT
+        primary destination LINKS as text (not icons), in this EXACT order
+        and with this EXACT spelling — no synonyms, no rewording, no
+        additional or substitute labels: "Home", "Work", "Chat", "Knowledge",
+        "Files", "Data", "Integrations", "Settings". "Home" is the active
+        item (green underline). The eight labels must be spelled exactly as
+        listed; no other nav labels. Far right: a search affordance
+        ("/ search") with a visible "/" keyboard-shortcut hint, a
+        notification bell with a green unread badge "5", and a user avatar.
 
         BELOW THE TOP BAR, full-width BENTO GRID (the entire home screen is this
         grid, no side rails): an uneven mosaic of tiles on raised tone (#161b22),
@@ -64,7 +68,8 @@ provider_options:
 eval:
   pass_threshold: 0.72
   criteria:
-    relevance: {weight: 3, description: "Shows a full-width persistent top bar with org switcher, horizontal text destination links (Home active), search, notifications, and user menu, with NO sidebar anywhere, and a full-width uneven bento grid of home tiles (continue-session hero, work stats, chat, notifications, files, data, checklist)"}
+    relevance: {weight: 3, description: "Shows a full-width persistent top bar with org switcher, and exactly the eight horizontal text destination links Home, Work, Chat, Knowledge, Files, Data, Integrations, Settings in that exact order and spelling (Home active), search, notifications, and user menu, with NO sidebar anywhere, and a full-width uneven bento grid of home tiles (continue-session hero, work stats, chat, notifications, files, data, checklist)"}
+    consistent_top_bar: {weight: 2, description: "Top bar nav labels exactly match the eight specified labels and order, identical in structure to the paired settings-keys shot"}
     theme_fidelity: {weight: 3, description: "Dark-native Nocturne canvas (#010409/#0d1117), single phosphor-green #3fb950 signal, link cyan #58a6ff, amber #d29922 used sparingly, mono-first counts/timestamps/ids in JetBrains Mono, 4px radius, flat surface-step elevation, no shadow/glow/gradient"}
     composition: {weight: 2, description: "Top bar reads clearly as the only navigation chrome, bento tiles vary in size and form a legible mosaic, hero tile is visually dominant"}
     technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
@@ -74,5 +79,6 @@ eval:
     - "wireframe-level fidelity instead of high-fidelity mockup"
     - "neon glow, bloom, or gradient wash"
     - "light-mode or warm/gold dominant canvas instead of dark-native Nocturne"
+    - "nav labels differ from the eight specified"
 
 tags: [ux-overhaul, npl-nocturne, NoizuPromptLingo, shell-direction, direction-4]

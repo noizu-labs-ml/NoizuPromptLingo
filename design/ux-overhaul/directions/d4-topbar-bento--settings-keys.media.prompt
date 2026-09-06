@@ -18,9 +18,17 @@ prompt:
         A 16:9 high-fidelity UI mockup of NoizuPromptLingo's Settings / Key Vault
         screen, testing the TOP-BAR-ONLY shell direction — NO left sidebar.
 
-        TOP BAR (identical structure to the home shot): org switcher + wordmark
-        at left, horizontal text links with "Settings" active (green underline),
-        search/notifications/avatar at right.
+        TOP BAR (IDENTICAL structure and IDENTICAL labels to the paired home
+        shot): far left an org switcher ("Acme Robotics ▾") next to a small
+        wordmark "NPL"; center-left a horizontal row of EXACTLY EIGHT primary
+        destination LINKS as text (not icons), in this EXACT order and with
+        this EXACT spelling — no synonyms, no rewording, no additional or
+        substitute labels: "Home", "Work", "Chat", "Knowledge", "Files",
+        "Data", "Integrations", "Settings". "Settings" is the active item
+        (green underline). The eight labels must be spelled exactly as
+        listed; no other nav labels. Far right: a search affordance
+        ("/ search") with a visible "/" keyboard-shortcut hint, a
+        notification bell with a green unread badge, and a user avatar.
 
         BELOW THE TOP BAR, a SECONDARY IN-PAGE TAB ROW (since there's no
         sidebar, settings sub-sections are horizontal tabs just under the
@@ -65,7 +73,8 @@ provider_options:
 eval:
   pass_threshold: 0.72
   criteria:
-    relevance: {weight: 3, description: "Shows the same sidebar-free top bar with Settings active, a secondary in-page tab row with Keys active, a key vault list with masked keys, rotate/revoke actions, a reveal-once fresh key with an amber warning note, and an invite-cap progress meter tile"}
+    relevance: {weight: 3, description: "Shows the same sidebar-free top bar with exactly the eight labels Home, Work, Chat, Knowledge, Files, Data, Integrations, Settings in that exact order and spelling (Settings active), a secondary in-page tab row with Keys active, a key vault list with masked keys, rotate/revoke actions, a reveal-once fresh key with an amber warning note, and an invite-cap progress meter tile"}
+    consistent_top_bar: {weight: 2, description: "Top bar nav labels exactly match the eight specified labels and order, identical in structure to the paired home-bento shot"}
     theme_fidelity: {weight: 3, description: "Dark-native Nocturne canvas (#010409/#0d1117), single phosphor-green #3fb950 signal, link cyan #58a6ff, amber #d29922 used sparingly, mono-first counts/timestamps/ids in JetBrains Mono, 4px radius, flat surface-step elevation, no shadow/glow/gradient"}
     composition: {weight: 2, description: "No sidebar anywhere, clear two-tier navigation (top bar + in-page tabs), key list and invite meter read as distinct bento-style tiles"}
     technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
@@ -75,5 +84,6 @@ eval:
     - "wireframe-level fidelity instead of high-fidelity mockup"
     - "neon glow, bloom, or gradient wash"
     - "light-mode or warm/gold dominant canvas instead of dark-native Nocturne"
+    - "nav labels differ from the eight specified"
 
 tags: [ux-overhaul, npl-nocturne, NoizuPromptLingo, shell-direction, direction-4]

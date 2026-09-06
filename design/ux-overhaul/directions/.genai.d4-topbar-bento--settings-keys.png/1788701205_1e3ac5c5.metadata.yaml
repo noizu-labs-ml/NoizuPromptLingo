@@ -1,0 +1,41 @@
+service: gemini
+model: gemini-3.1-flash-image
+timestamp: 1788701219
+prompt: |
+  A 16:9 high-fidelity UI mockup of NoizuPromptLingo's Settings / Key Vault
+  screen, testing the TOP-BAR-ONLY shell direction — NO left sidebar.
+  
+  TOP BAR (IDENTICAL structure and IDENTICAL labels to the paired home
+  shot): far left an org switcher ("Acme Robotics ▾") next to a small
+  wordmark "NPL"; center-left a horizontal row of EXACTLY EIGHT primary
+  destination LINKS as text (not icons), in this EXACT order and with
+  this EXACT spelling — no synonyms, no rewording, no additional or
+  substitute labels: "Home", "Work", "Chat", "Knowledge", "Files",
+  "Data", "Integrations", "Settings". "Settings" is the active item
+  (green underline). The eight labels must be spelled exactly as
+  listed; no other nav labels. Far right: a search affordance
+  ("/ search") with a visible "/" keyboard-shortcut hint, a
+  notification bell with a green unread badge, and a user avatar.
+  
+  BELOW THE TOP BAR, a SECONDARY IN-PAGE TAB ROW (since there's no
+  sidebar, settings sub-sections are horizontal tabs just under the
+  header): "General", "Members", "Roles", "Scopes", "Notifications",
+  "Keys" (active, green underline), "Danger zone".
+  
+  MAIN CONTENT (bento-flavored: a few distinct panel tiles, not one dense
+  form): a page title "Key Vault" with a "Generate new key" button
+  (green fill, 4px radius). A KEY LIST tile — table-like rows with
+  hairline separators: key name ("CI deploy key", "MCP integration key",
+  "Backup automation"), a masked mono key preview ("npl_live_••••8f2a"),
+  a "Rotate" cyan text action, a "Revoke" coral text action, and a
+  mono "Last used" relative timestamp per row. One row shows a fresh key
+  with a "Reveal once" green button instead of a masked preview and a
+  small warning note "This key will not be shown again" in amber text.
+  
+  A separate smaller tile: an INVITE CAP METER — a horizontal progress
+  bar (green fill up to ~70%) labeled "Seats used: 14 / 20", with a
+  muted caption "6 invites remaining this billing cycle".
+  
+  Use realistic, specific product content throughout — never lorem ipsum.
+negative: |
+  watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, neon glow, bloom, CRT scanlines, gradient background, pure-black OLED background, pure-white surfaces, warm amber/gold dominant palette, light-mode canvas
