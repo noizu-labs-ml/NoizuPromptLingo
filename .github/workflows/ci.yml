@@ -8,6 +8,12 @@ name: CI
 # `feat/tool-sets-integration` pushes gate the integration merge through the
 # test jobs only — every image-build job stays ref-gated (main / stage).
 # Pattern: therobotlearns.com/.github/workflows/ci.yml
+#
+# Push triggers: `stage` drives the stage lane (build-push-stage /
+# bump-chart-stage — its jobs are refs/heads/stage-gated); the 7e70c1194
+# e2e-stage-lane merge accidentally dropped it from this list while keeping
+# the jobs. `feat/tool-sets-integration` gates the integration merge through
+# the test jobs only — every image-build job stays ref-gated (main / stage).
 
 on:
   push:
