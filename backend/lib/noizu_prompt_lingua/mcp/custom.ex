@@ -81,7 +81,10 @@ defmodule NoizuPromptLingua.MCP.Custom do
   end
 
   # NPL load/spec live on the root aggregator, not a selectable group. Include
-  # them on the default all-in-one package so one endpoint covers the daily set.
+  # them on the default all-in-one package and the restricted core variant (plus
+  # clones of either template) so one endpoint covers the daily set — core
+  # endpoints still need the loaders for NPL-syntax prompts even though their
+  # group surface is restricted.
   @npl_tools [
     {NoizuPromptLingua.Tools.NPLLoad, [category: "NPL"]},
     {NoizuPromptLingua.Tools.NPLSpec, [category: "NPL"]}
@@ -95,8 +98,10 @@ defmodule NoizuPromptLingua.MCP.Custom do
     with slug when is_binary(slug) <- scope_slug(ctx),
          scope when not is_nil(scope) <- MCPCustomScopes.get_by_slug(slug) do
       scope.kind == "all_in_one" or
+        scope.kind == "core_variant" or
         scope.slug == MCPCustomScopes.default_package_slug() or
         scope.source_template_slug == MCPCustomScopes.default_package_slug() or
+        scope.source_template_slug == MCPCustomScopes.core_variant_slug() or
         scope.name == MCPCustomScopes.account_default_name() or
         not is_nil(scope.user_id) or
         not is_nil(scope.organization_id)
