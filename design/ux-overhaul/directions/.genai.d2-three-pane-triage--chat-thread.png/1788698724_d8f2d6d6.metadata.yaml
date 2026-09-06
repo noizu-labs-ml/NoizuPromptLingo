@@ -1,0 +1,36 @@
+service: gemini
+model: gemini-3.1-flash-image
+timestamp: 1788698737
+prompt: |
+  A 16:9 high-fidelity UI mockup of NoizuPromptLingo's Chat screen, testing
+  the THREE-PANE TRIAGE shell direction: rooms | messages | thread panel.
+  
+  LEFT NAV COLUMN (narrow, ~180px, labeled, persistent): same nav as
+  other shots, with "Chat" active (bold + green left edge) expanded
+  beneath it into a ROOMS sub-list: "#platform-eng" (selected, unread
+  bold), "#agent-ops", "#design-review", "#random" — each with a small
+  mono unread count badge except the selected room.
+  
+  MIDDLE MESSAGES PANE (panel tone, dominant width): header
+  "#platform-eng" with a small "12 members" mono label and a pin icon
+  with count "3". Below, a vertical message list: avatar + name + mono
+  timestamp, message text bubbles WITHOUT heavy card chrome (flat, just
+  hairline-separated), realistic content ("Deploy for sha-302be2c is
+  green ✅", "Can someone review NPL-482 before EOD?", "Scheduling the
+  retro for Thursday 10am"). One message near the bottom shows a small
+  "Scheduled · sends in 2h14m" mono chip instead of a timestamp (a
+  composed-but-not-yet-sent scheduled message). A message compose bar at
+  the very bottom with a text input, a schedule-send clock icon, and a
+  send button.
+  
+  RIGHT THREAD PANEL (raised tone #161b22, narrower than messages pane):
+  header "Thread" with a small "Pinned" section listing 3 compact pinned-
+  message rows (sender + truncated text + mono timestamp), then a
+  divider, then the open thread itself — a root message and 2 reply rows
+  indented beneath it with connecting hairline, avatars, and mono
+  timestamps. A small mute toggle ("🔕 Mute thread") sits near the top
+  of the panel, muted styling.
+  
+  Use realistic, specific product content throughout — never lorem ipsum.
+negative: |
+  watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, neon glow, bloom, CRT scanlines, gradient background, pure-black OLED background, pure-white surfaces, warm amber/gold dominant palette, light-mode canvas

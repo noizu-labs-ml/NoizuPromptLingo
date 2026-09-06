@@ -1,0 +1,78 @@
+schema: "0.4"
+id: npl-ux-d4-topbar-bento-home-bento
+type: image
+quality: high
+
+# Direction D4: top-bar only + bento home — screen: org home as a bento grid of section tiles
+# Nocturne palette (exact hexes, dark-native canvas — never pure #000/#fff): canvas #010409, panel #0d1117, raised #161b22, border #21262d, primary text #e6edf3 (soft off-white ink), secondary text #909dab, muted text #6e7681, signal green (live/primary accent) #3fb950, link cyan (navigation) #58a6ff, amber (rare warning) #d29922, error coral #f85149. Type: Inter for UI/labels, JetBrains Mono (co-equal voice) for counts, timestamps, ids, code, SQL, paths. Shape: flat surfaces separated by lightness steps only, 4px radius, no drop shadows, no glow, no gradients, no neon bloom, no OLED pitch-black, no pure-white surfaces.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity dark-native app UI
+    for NoizuPromptLingo. This direction has NO SIDEBAR AT ALL: navigation lives
+    entirely in a persistent TOP BAR (org switcher, primary destinations as
+    horizontal tabs/links, search, notifications, user menu). Section landing
+    pages and the home screen are BENTO grids of tiles. Render as a real product
+    screenshot, never a wireframe.
+  text: |
+        A 16:9 high-fidelity UI mockup of NoizuPromptLingo's org Home screen,
+        testing the TOP-BAR-ONLY + BENTO shell direction — NO left sidebar of
+        any kind.
+
+        TOP BAR (full width, panel tone #0d1117, persistent, no sidebar below
+        it anywhere): far left an org switcher ("Acme Robotics ▾") next to a
+        small wordmark "NPL"; center-left a horizontal row of primary
+        destination LINKS as text (not icons) — "Home" (active, green
+        underline), "Work", "Chat", "Knowledge", "Files", "Data",
+        "Integrations", "Settings"; far right a search affordance ("/ search"),
+        a notification bell with a green unread badge "5", and a user avatar.
+
+        BELOW THE TOP BAR, full-width BENTO GRID (the entire home screen is this
+        grid, no side rails): an uneven mosaic of tiles on raised tone (#161b22),
+        4px radius, flat, hairline borders only. A large hero tile "Continue
+        where you left off" showing a session card ("sess-7f21 — Refactor auth
+        middleware", mono duration "running · 14m"). A medium tile "Work" with
+        mono stat rows ("27 open tickets", "6 boards"). A medium tile "Chat"
+        showing 2 recent room previews with unread green dots. A tall tile
+        "Notifications" listing 4 compact inbox rows with mono timestamps. A
+        small tile "Files" showing a mount name and a green "connected" pill. A
+        small tile "Data" showing a tenant scope chip and a mini sparkline-style
+        row of mono query-count numbers. A wide bottom tile "First-run
+        checklist" with 4 checklist rows, 2 checked in green.
+
+        Use realistic, specific product content throughout — never lorem ipsum.
+
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, neon glow, bloom, CRT scanlines, gradient background, pure-black OLED background, pure-white surfaces, warm amber/gold dominant palette, light-mode canvas"
+
+attachments:
+  - path: _nocturne-palette.png
+    role: reference
+    description: "Locked Nocturne palette swatches (bg, surface, border, text, muted, accent, success, danger) with hex labels — match these exact colors, do not reinterpret."
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+service: gemini
+provider_options:
+  generate_content_model: gemini-2.5-flash-image
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Shows a full-width persistent top bar with org switcher, horizontal text destination links (Home active), search, notifications, and user menu, with NO sidebar anywhere, and a full-width uneven bento grid of home tiles (continue-session hero, work stats, chat, notifications, files, data, checklist)"}
+    theme_fidelity: {weight: 3, description: "Dark-native Nocturne canvas (#010409/#0d1117), single phosphor-green #3fb950 signal, link cyan #58a6ff, amber #d29922 used sparingly, mono-first counts/timestamps/ids in JetBrains Mono, 4px radius, flat surface-step elevation, no shadow/glow/gradient"}
+    composition: {weight: 2, description: "Top bar reads clearly as the only navigation chrome, bento tiles vary in size and form a legible mosaic, hero tile is visually dominant"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+    - "neon glow, bloom, or gradient wash"
+    - "light-mode or warm/gold dominant canvas instead of dark-native Nocturne"
+
+tags: [ux-overhaul, npl-nocturne, NoizuPromptLingo, shell-direction, direction-4]

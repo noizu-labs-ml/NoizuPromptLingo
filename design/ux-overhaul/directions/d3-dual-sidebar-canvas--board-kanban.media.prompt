@@ -1,0 +1,84 @@
+schema: "0.4"
+id: npl-ux-d3-dual-sidebar-canvas-board-kanban
+type: image
+quality: high
+
+# Direction D3: dual sidebar + wide canvas — screen: 4-stage kanban board with per-column load-more, keyboard-move hint, aria toast
+# Nocturne palette (exact hexes, dark-native canvas — never pure #000/#fff): canvas #010409, panel #0d1117, raised #161b22, border #21262d, primary text #e6edf3 (soft off-white ink), secondary text #909dab, muted text #6e7681, signal green (live/primary accent) #3fb950, link cyan (navigation) #58a6ff, amber (rare warning) #d29922, error coral #f85149. Type: Inter for UI/labels, JetBrains Mono (co-equal voice) for counts, timestamps, ids, code, SQL, paths. Shape: flat surfaces separated by lightness steps only, 4px radius, no drop shadows, no glow, no gradients, no neon bloom, no OLED pitch-black, no pure-white surfaces.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity dark-native app UI
+    for NoizuPromptLingo. This direction is a DUAL-SIDEBAR + WIDE CANVAS shell: a
+    240px left nav sidebar (with labels) and a 320px right inspector sidebar,
+    flanking a wide central canvas meant for dense data-console or board work.
+    Render as a real product screenshot, never a wireframe.
+  text: |
+        A 16:9 high-fidelity UI mockup of NoizuPromptLingo's Board (kanban)
+        screen, testing the DUAL-SIDEBAR + CANVAS shell direction.
+
+        LEFT SIDEBAR (240px, labeled, panel tone #0d1117): nav header "Acme
+        Robotics ▾", labeled list with "Work" active/expanded showing "Sessions",
+        "Boards" (selected, bold + green edge), "Tickets", "Reviews", and below
+        that a small BOARD LIST: "Platform Q3 (selected)", "Design Review",
+        "Bug Triage".
+
+        CENTER CANVAS (dominant, wide): a 4-COLUMN KANBAN BOARD, columns "Backlog",
+        "In Progress", "In Review", "Done" — each column header shows a mono
+        count chip. Cards are flat, hairline-bordered, 4px radius, no drop
+        shadow: each card shows a ticket id in mono ("NPL-482"), a short title
+        ("VFS live-update badges"), a small assignee avatar, and a type/priority
+        chip. "In Progress" has 4 cards; the bottom of that column shows a
+        "Load 12 more ▾" affordance in cyan text (per-column pagination). One
+        card in "In Review" is being keyboard-moved: it shows a subtle green
+        outline/highlight and a small floating hint near it reading
+        "← → to move columns · enter to drop" in muted mono text.
+
+        BOTTOM-RIGHT OF CANVAS (overlay, not sidebar): a small TOAST notification
+        — a compact raised pill near the bottom edge reading "Moved NPL-479 to
+        In Review" with a small green check glyph, representing an aria-live
+        announcement made visible.
+
+        RIGHT SIDEBAR (320px, raised tone #161b22): a CARD INSPECTOR for a
+        selected card — title field, mono ticket id, a status dropdown showing
+        "In Review", assignee row with avatar + name, a small "Linked PRs"
+        section listing one mono repo/PR reference, and a description text
+        block with 3 short lines of realistic engineering text (not lorem
+        ipsum).
+
+        Use realistic, specific product content throughout — never lorem ipsum.
+
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, neon glow, bloom, CRT scanlines, gradient background, pure-black OLED background, pure-white surfaces, warm amber/gold dominant palette, light-mode canvas"
+
+attachments:
+  - path: _nocturne-palette.png
+    role: reference
+    description: "Locked Nocturne palette swatches (bg, surface, border, text, muted, accent, success, danger) with hex labels — match these exact colors, do not reinterpret."
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+service: gemini
+provider_options:
+  generate_content_model: gemini-2.5-flash-image
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Shows a left board-picker sidebar, a 4-column kanban canvas with per-column load-more affordances, a card highlighted for keyboard-move with a directional hint, a bottom toast announcing a move, and a right card-inspector sidebar"}
+    theme_fidelity: {weight: 3, description: "Dark-native Nocturne canvas (#010409/#0d1117), single phosphor-green #3fb950 signal, link cyan #58a6ff, amber #d29922 used sparingly, mono-first counts/timestamps/ids in JetBrains Mono, 4px radius, flat surface-step elevation, no shadow/glow/gradient"}
+    composition: {weight: 2, description: "Clear 240px | wide canvas | 320px proportions, four kanban columns evenly spaced and readable, toast and keyboard hint visible but not dominant"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+    - "neon glow, bloom, or gradient wash"
+    - "light-mode or warm/gold dominant canvas instead of dark-native Nocturne"
+
+tags: [ux-overhaul, npl-nocturne, NoizuPromptLingo, shell-direction, direction-3]

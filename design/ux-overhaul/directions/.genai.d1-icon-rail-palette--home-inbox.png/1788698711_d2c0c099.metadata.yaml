@@ -1,0 +1,47 @@
+service: gemini
+model: gemini-3.1-flash-image
+timestamp: 1788698724
+prompt: |
+  A 16:9 high-fidelity UI mockup of NoizuPromptLingo's org Home screen,
+  testing the ICON-RAIL + COMMAND-PALETTE shell direction, with the ⌘K
+  command palette open as a centered overlay.
+  
+  LEFT: a narrow 56px-wide icon-only rail on the darkest canvas (#010409).
+  At the very top, an org switcher: a small square org avatar ("NZ") with a
+  tiny chevron. Below it, 8 stacked destination icons with no labels (home,
+  work/sessions, chat, knowledge, files, data, integrations, settings) —
+  the Home icon is active, marked only by a 2px signal-green (#3fb950) left
+  edge and a brighter icon, no filled background. A collapse/expand chevron
+  sits at the rail's bottom edge.
+  
+  TOP: a slim breadcrumb bar on panel tone (#0d1117) reading
+  "NoizuPromptLingo / Acme Robotics / Home", a global search affordance
+  showing "/" to search, a notification bell with a small green unread
+  badge "3", and a user avatar at the far right.
+  
+  CENTER (behind/around the overlay): an org dashboard in BENTO layout —
+  an uneven grid of cards: "Active Sessions" (mono count "14"), "Open
+  Tickets" ("27"), "Chat Rooms" ("6"), a taller "Recent Artifacts" card
+  listing 3 mono file-like names ("spec-auth-flow.md", "vfs-mount.schema.json",
+  "board-kanban-review.md"), and a "First-run checklist" card with 3
+  checklist rows (two checked green, one open).
+  
+  RIGHT-ADJACENT pane, partially visible behind the overlay: a NOTIFICATION
+  INBOX list — rows with a small type glyph, a bold subject line ("Ticket
+  NPL-482 moved to Review", "Session sess-7f21 completed", "You were
+  mentioned in #platform-chat"), a mono relative timestamp ("2m", "18m",
+  "1h"), unread rows marked with a small green dot.
+  
+  OVERLAY (dominant, centered, floating raised panel #161b22, 4px radius,
+  thin border, no shadow-heavy glow — just a subtle dim scrim behind it):
+  the ⌘K command palette. A search input at top with placeholder text
+  "Jump to session, ticket, file, or run a command…" and a blinking-style
+  cursor. Below it, grouped results: a "Recent" group (mono session id
+  "sess-7f21", ticket "NPL-482 — VFS live-update badges"), a "Files" group
+  (mono path "/mounts/prod-db/schema/users.sql"), and a "Commands" group
+  ("Create ticket", "Switch organization"). One result row is highlighted
+  with a subtle raised tone and a link-cyan (#58a6ff) label.
+  
+  Use realistic, specific product content throughout — never lorem ipsum.
+negative: |
+  watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, neon glow, bloom, CRT scanlines, gradient background, pure-black OLED background, pure-white surfaces, warm amber/gold dominant palette, light-mode canvas

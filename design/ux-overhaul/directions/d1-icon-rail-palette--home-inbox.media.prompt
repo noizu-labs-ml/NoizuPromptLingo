@@ -1,0 +1,94 @@
+schema: "0.4"
+id: npl-ux-d1-icon-rail-palette-home-inbox
+type: image
+quality: high
+
+# Direction D1: icon-rail + command palette — screen: home dashboard with notification inbox pane, palette overlay open
+# Nocturne palette (exact hexes, dark-native canvas — never pure #000/#fff): canvas #010409, panel #0d1117, raised #161b22, border #21262d, primary text #e6edf3 (soft off-white ink), secondary text #909dab, muted text #6e7681, signal green (live/primary accent) #3fb950, link cyan (navigation) #58a6ff, amber (rare warning) #d29922, error coral #f85149. Type: Inter for UI/labels, JetBrains Mono (co-equal voice) for counts, timestamps, ids, code, SQL, paths. Shape: flat surfaces separated by lightness steps only, 4px radius, no drop shadows, no glow, no gradients, no neon bloom, no OLED pitch-black, no pure-white surfaces.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity dark-native app UI
+    for NoizuPromptLingo, a prompt-definition-language + MCP toolchain for agent
+    engineers. This direction is a collapsible 56px ICON RAIL with a command
+    palette overlay and top breadcrumbs. The rail is icon-only (labels appear on
+    hover/expand, not shown expanded here); an org switcher sits at the very top
+    of the rail above the destination icons. Render as a real product screenshot,
+    never a wireframe.
+  text: |
+        A 16:9 high-fidelity UI mockup of NoizuPromptLingo's org Home screen,
+        testing the ICON-RAIL + COMMAND-PALETTE shell direction, with the ⌘K
+        command palette open as a centered overlay.
+
+        LEFT: a narrow 56px-wide icon-only rail on the darkest canvas (#010409).
+        At the very top, an org switcher: a small square org avatar ("NZ") with a
+        tiny chevron. Below it, 8 stacked destination icons with no labels (home,
+        work/sessions, chat, knowledge, files, data, integrations, settings) —
+        the Home icon is active, marked only by a 2px signal-green (#3fb950) left
+        edge and a brighter icon, no filled background. A collapse/expand chevron
+        sits at the rail's bottom edge.
+
+        TOP: a slim breadcrumb bar on panel tone (#0d1117) reading
+        "NoizuPromptLingo / Acme Robotics / Home", a global search affordance
+        showing "/" to search, a notification bell with a small green unread
+        badge "3", and a user avatar at the far right.
+
+        CENTER (behind/around the overlay): an org dashboard in BENTO layout —
+        an uneven grid of cards: "Active Sessions" (mono count "14"), "Open
+        Tickets" ("27"), "Chat Rooms" ("6"), a taller "Recent Artifacts" card
+        listing 3 mono file-like names ("spec-auth-flow.md", "vfs-mount.schema.json",
+        "board-kanban-review.md"), and a "First-run checklist" card with 3
+        checklist rows (two checked green, one open).
+
+        RIGHT-ADJACENT pane, partially visible behind the overlay: a NOTIFICATION
+        INBOX list — rows with a small type glyph, a bold subject line ("Ticket
+        NPL-482 moved to Review", "Session sess-7f21 completed", "You were
+        mentioned in #platform-chat"), a mono relative timestamp ("2m", "18m",
+        "1h"), unread rows marked with a small green dot.
+
+        OVERLAY (dominant, centered, floating raised panel #161b22, 4px radius,
+        thin border, no shadow-heavy glow — just a subtle dim scrim behind it):
+        the ⌘K command palette. A search input at top with placeholder text
+        "Jump to session, ticket, file, or run a command…" and a blinking-style
+        cursor. Below it, grouped results: a "Recent" group (mono session id
+        "sess-7f21", ticket "NPL-482 — VFS live-update badges"), a "Files" group
+        (mono path "/mounts/prod-db/schema/users.sql"), and a "Commands" group
+        ("Create ticket", "Switch organization"). One result row is highlighted
+        with a subtle raised tone and a link-cyan (#58a6ff) label.
+
+        Use realistic, specific product content throughout — never lorem ipsum.
+
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, neon glow, bloom, CRT scanlines, gradient background, pure-black OLED background, pure-white surfaces, warm amber/gold dominant palette, light-mode canvas"
+
+attachments:
+  - path: _nocturne-palette.png
+    role: reference
+    description: "Locked Nocturne palette swatches (bg, surface, border, text, muted, accent, success, danger) with hex labels — match these exact colors, do not reinterpret."
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+service: gemini
+provider_options:
+  generate_content_model: gemini-2.5-flash-image
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Shows a 56px icon-only rail with org switcher at top and active-item green edge, top breadcrumb bar, a bento-layout home dashboard, a notification inbox pane, and a centered ⌘K command-palette overlay with grouped, realistic results"}
+    theme_fidelity: {weight: 3, description: "Dark-native Nocturne canvas (#010409/#0d1117), single phosphor-green #3fb950 signal, link cyan #58a6ff, amber #d29922 used sparingly, mono-first counts/timestamps/ids in JetBrains Mono, 4px radius, flat surface-step elevation, no shadow/glow/gradient"}
+    composition: {weight: 2, description: "Rail collapsed to icons only, overlay clearly floats above dimmed background content, bento grid reads at a glance, palette rows show clear grouping and a highlighted result"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+    - "neon glow, bloom, or gradient wash"
+    - "light-mode or warm/gold dominant canvas instead of dark-native Nocturne"
+
+tags: [ux-overhaul, npl-nocturne, NoizuPromptLingo, shell-direction, direction-1]

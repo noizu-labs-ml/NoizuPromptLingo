@@ -1,0 +1,227 @@
+/* Barebones wireframe styling. Grayscale, borders only, no color, no icons. */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  font-family: ui-monospace, "SF Mono", "Menlo", "Consolas", monospace;
+  color: #111;
+  background: #fff;
+}
+
+a {
+  color: #111;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  background: #fff;
+  border: 1px solid #111;
+  padding: 0.25rem 0.5rem;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th,
+td {
+  border: 1px solid #111;
+  padding: 0.25rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.state {
+  border: 1px dashed #111;
+  padding: 0.25rem 0.5rem;
+  display: inline-block;
+  margin: 0.5rem 0;
+  font-size: 0.8rem;
+}
+
+.shell {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  grid-template-rows: 48px 1fr;
+  grid-template-areas:
+    "rail topbar"
+    "rail main";
+  min-height: 100vh;
+}
+
+.shell.with-inspector {
+  grid-template-columns: 220px 1fr 260px;
+  grid-template-areas:
+    "rail topbar topbar"
+    "rail main inspector";
+}
+
+.rail {
+  grid-area: rail;
+  border-right: 1px solid #111;
+  padding: 0.5rem;
+}
+
+.topbar {
+  grid-area: topbar;
+  border-bottom: 1px solid #111;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.main {
+  grid-area: main;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+.inspector {
+  grid-area: inspector;
+  border-left: 1px solid #111;
+  padding: 0.5rem;
+}
+
+.rail nav ul,
+.rail ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.rail li {
+  margin-bottom: 0.25rem;
+}
+
+.rail a[aria-current="page"] {
+  border: 1px solid #111;
+  padding: 0.15rem 0.35rem;
+  display: inline-block;
+}
+
+.bento {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.bento > div {
+  border: 1px solid #111;
+  padding: 0.75rem;
+}
+
+.board {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(220px, 1fr);
+  gap: 0.75rem;
+  overflow-x: auto;
+}
+
+.board-stage {
+  border: 1px solid #111;
+  padding: 0.5rem;
+}
+
+.board-card {
+  border: 1px dashed #111;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.tree {
+  list-style: none;
+  padding-left: 0.75rem;
+  margin: 0;
+}
+
+.tree li {
+  margin: 0.15rem 0;
+}
+
+.chip {
+  border: 1px solid #111;
+  padding: 0.05rem 0.4rem;
+  font-size: 0.75rem;
+  display: inline-block;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.three-pane {
+  display: grid;
+  grid-template-columns: 200px 1fr 260px;
+  gap: 0;
+  border: 1px solid #111;
+  min-height: 400px;
+}
+
+.three-pane > div {
+  border-right: 1px solid #111;
+  padding: 0.5rem;
+  overflow-x: auto;
+}
+
+.three-pane > div:last-child {
+  border-right: none;
+}
+
+.skeleton-line {
+  border: 1px dashed #111;
+  height: 1rem;
+  margin: 0.35rem 0;
+  background: repeating-linear-gradient(45deg, #fff, #fff 6px, #eee 6px, #eee 12px);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.dialog-panel {
+  width: min(560px, 90vw);
+  padding: 1rem;
+}
+
+.toast {
+  border: 1px solid #111;
+  padding: 0.5rem 0.75rem;
+  display: inline-flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+footer.meta {
+  font-size: 0.75rem;
+  border-top: 1px dashed #111;
+  padding-top: 0.5rem;
+  margin-top: 1rem;
+}

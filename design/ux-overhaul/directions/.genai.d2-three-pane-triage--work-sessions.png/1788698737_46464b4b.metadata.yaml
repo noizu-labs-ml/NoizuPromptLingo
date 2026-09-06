@@ -1,0 +1,39 @@
+service: gemini
+model: gemini-3.1-flash-image
+timestamp: 1788698747
+prompt: |
+  A 16:9 high-fidelity UI mockup of NoizuPromptLingo's Work / Sessions
+  screen, testing the THREE-PANE TRIAGE shell direction.
+  
+  LEFT NAV COLUMN (narrow, ~180px, panel tone #0d1117, WITH text labels,
+  persistent — not icon-only): an org switcher row at top ("Acme Robotics
+  ▾"), then labeled nav rows "Home", "Work" (active, bold text + 2px
+  signal-green left edge, expanded to show sub-items "Sessions" [selected],
+  "Boards", "Tickets", "Reviews"), "Chat", "Knowledge", "Files", "Data",
+  "Integrations", "Settings".
+  
+  MIDDLE LIST PANE (panel tone, ~420px, hairline-separated rows, no
+  vertical grid lines): a header "Sessions" with a status filter chip
+  row ("Active", "Completed", "Failed" — Active selected in green-tinted
+  pill) and a mono result count "42 sessions". Below, a dense list of
+  session rows: a small status dot (green=running, muted=completed, coral
+  #f85149=failed), a session title in primary text ("Refactor auth
+  middleware", "Backfill ticket embeddings", "VFS mount smoke test"), a
+  mono session id ("sess-7f21"), and a mono relative timestamp right-
+  aligned. ONE row is SELECTED — a distinct raised background fill,
+  clearly highlighted against the rest, roughly 4th from top. A tiny
+  keyboard hint pinned near the list header reads "j/k to navigate ·
+  enter to open" in muted mono text.
+  
+  RIGHT DETAIL PANE (dominant, wide, raised tone #161b22): the selected
+  session's detail view for "sess-7f21 — Refactor auth middleware". A tab
+  row: "Overview" (active, green underline), "Events", "Tools",
+  "Artifacts". Below the tabs: a status summary row (green "running" pill,
+  mono duration "14m32s", project link in cyan "platform-api"), then a
+  dense event/tool-call timeline with mono timestamps, tool names
+  ("read_file", "apply_patch", "run_tests") and short outcomes, ending in
+  a still-streaming last row with a subtle pulsing green indicator.
+  
+  Use realistic, specific product content throughout — never lorem ipsum.
+negative: |
+  watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, neon glow, bloom, CRT scanlines, gradient background, pure-black OLED background, pure-white surfaces, warm amber/gold dominant palette, light-mode canvas

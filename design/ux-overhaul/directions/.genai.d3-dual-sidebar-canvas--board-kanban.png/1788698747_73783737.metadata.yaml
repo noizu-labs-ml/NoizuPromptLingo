@@ -1,0 +1,39 @@
+service: gemini
+model: gemini-3.1-flash-image
+timestamp: 1788698760
+prompt: |
+  A 16:9 high-fidelity UI mockup of NoizuPromptLingo's Board (kanban)
+  screen, testing the DUAL-SIDEBAR + CANVAS shell direction.
+  
+  LEFT SIDEBAR (240px, labeled, panel tone #0d1117): nav header "Acme
+  Robotics ▾", labeled list with "Work" active/expanded showing "Sessions",
+  "Boards" (selected, bold + green edge), "Tickets", "Reviews", and below
+  that a small BOARD LIST: "Platform Q3 (selected)", "Design Review",
+  "Bug Triage".
+  
+  CENTER CANVAS (dominant, wide): a 4-COLUMN KANBAN BOARD, columns "Backlog",
+  "In Progress", "In Review", "Done" — each column header shows a mono
+  count chip. Cards are flat, hairline-bordered, 4px radius, no drop
+  shadow: each card shows a ticket id in mono ("NPL-482"), a short title
+  ("VFS live-update badges"), a small assignee avatar, and a type/priority
+  chip. "In Progress" has 4 cards; the bottom of that column shows a
+  "Load 12 more ▾" affordance in cyan text (per-column pagination). One
+  card in "In Review" is being keyboard-moved: it shows a subtle green
+  outline/highlight and a small floating hint near it reading
+  "← → to move columns · enter to drop" in muted mono text.
+  
+  BOTTOM-RIGHT OF CANVAS (overlay, not sidebar): a small TOAST notification
+  — a compact raised pill near the bottom edge reading "Moved NPL-479 to
+  In Review" with a small green check glyph, representing an aria-live
+  announcement made visible.
+  
+  RIGHT SIDEBAR (320px, raised tone #161b22): a CARD INSPECTOR for a
+  selected card — title field, mono ticket id, a status dropdown showing
+  "In Review", assignee row with avatar + name, a small "Linked PRs"
+  section listing one mono repo/PR reference, and a description text
+  block with 3 short lines of realistic engineering text (not lorem
+  ipsum).
+  
+  Use realistic, specific product content throughout — never lorem ipsum.
+negative: |
+  watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, neon glow, bloom, CRT scanlines, gradient background, pure-black OLED background, pure-white surfaces, warm amber/gold dominant palette, light-mode canvas

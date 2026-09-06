@@ -1,0 +1,85 @@
+schema: "0.4"
+id: npl-ux-d2-three-pane-triage-work-sessions
+type: image
+quality: high
+
+# Direction D2: persistent three-pane triage — screen: sessions list with session detail tabs
+# Nocturne palette (exact hexes, dark-native canvas — never pure #000/#fff): canvas #010409, panel #0d1117, raised #161b22, border #21262d, primary text #e6edf3 (soft off-white ink), secondary text #909dab, muted text #6e7681, signal green (live/primary accent) #3fb950, link cyan (navigation) #58a6ff, amber (rare warning) #d29922, error coral #f85149. Type: Inter for UI/labels, JetBrains Mono (co-equal voice) for counts, timestamps, ids, code, SQL, paths. Shape: flat surfaces separated by lightness steps only, 4px radius, no drop shadows, no glow, no gradients, no neon bloom, no OLED pitch-black, no pure-white surfaces.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity dark-native app UI
+    for NoizuPromptLingo. This direction is a PERSISTENT THREE-PANE TRIAGE shell:
+    a narrow always-visible nav column (with labels, not icon-only), a middle LIST
+    pane, and a right DETAIL pane — an email/ticketing-triage layout optimized for
+    fast list traversal (j/k keyboard navigation hinted in the UI). Render as a
+    real product screenshot, never a wireframe.
+  text: |
+        A 16:9 high-fidelity UI mockup of NoizuPromptLingo's Work / Sessions
+        screen, testing the THREE-PANE TRIAGE shell direction.
+
+        LEFT NAV COLUMN (narrow, ~180px, panel tone #0d1117, WITH text labels,
+        persistent — not icon-only): an org switcher row at top ("Acme Robotics
+        ▾"), then labeled nav rows "Home", "Work" (active, bold text + 2px
+        signal-green left edge, expanded to show sub-items "Sessions" [selected],
+        "Boards", "Tickets", "Reviews"), "Chat", "Knowledge", "Files", "Data",
+        "Integrations", "Settings".
+
+        MIDDLE LIST PANE (panel tone, ~420px, hairline-separated rows, no
+        vertical grid lines): a header "Sessions" with a status filter chip
+        row ("Active", "Completed", "Failed" — Active selected in green-tinted
+        pill) and a mono result count "42 sessions". Below, a dense list of
+        session rows: a small status dot (green=running, muted=completed, coral
+        #f85149=failed), a session title in primary text ("Refactor auth
+        middleware", "Backfill ticket embeddings", "VFS mount smoke test"), a
+        mono session id ("sess-7f21"), and a mono relative timestamp right-
+        aligned. ONE row is SELECTED — a distinct raised background fill,
+        clearly highlighted against the rest, roughly 4th from top. A tiny
+        keyboard hint pinned near the list header reads "j/k to navigate ·
+        enter to open" in muted mono text.
+
+        RIGHT DETAIL PANE (dominant, wide, raised tone #161b22): the selected
+        session's detail view for "sess-7f21 — Refactor auth middleware". A tab
+        row: "Overview" (active, green underline), "Events", "Tools",
+        "Artifacts". Below the tabs: a status summary row (green "running" pill,
+        mono duration "14m32s", project link in cyan "platform-api"), then a
+        dense event/tool-call timeline with mono timestamps, tool names
+        ("read_file", "apply_patch", "run_tests") and short outcomes, ending in
+        a still-streaming last row with a subtle pulsing green indicator.
+
+        Use realistic, specific product content throughout — never lorem ipsum.
+
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, neon glow, bloom, CRT scanlines, gradient background, pure-black OLED background, pure-white surfaces, warm amber/gold dominant palette, light-mode canvas"
+
+attachments:
+  - path: _nocturne-palette.png
+    role: reference
+    description: "Locked Nocturne palette swatches (bg, surface, border, text, muted, accent, success, danger) with hex labels — match these exact colors, do not reinterpret."
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+service: gemini
+provider_options:
+  generate_content_model: gemini-2.5-flash-image
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Shows a persistent labeled left nav with Work expanded to Sessions, a middle sessions list with status filter chips, a j/k keyboard-nav hint, one clearly highlighted selected row, and a right detail pane with tabs (Overview/Events/Tools/Artifacts) and a live event timeline"}
+    theme_fidelity: {weight: 3, description: "Dark-native Nocturne canvas (#010409/#0d1117), single phosphor-green #3fb950 signal, link cyan #58a6ff, amber #d29922 used sparingly, mono-first counts/timestamps/ids in JetBrains Mono, 4px radius, flat surface-step elevation, no shadow/glow/gradient"}
+    composition: {weight: 2, description: "Three clearly bounded vertical panes of increasing width left-to-right, selected list row visually distinct, detail pane reads as the primary focus"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+    - "neon glow, bloom, or gradient wash"
+    - "light-mode or warm/gold dominant canvas instead of dark-native Nocturne"
+
+tags: [ux-overhaul, npl-nocturne, NoizuPromptLingo, shell-direction, direction-2]

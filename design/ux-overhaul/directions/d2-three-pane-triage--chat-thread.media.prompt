@@ -1,0 +1,82 @@
+schema: "0.4"
+id: npl-ux-d2-three-pane-triage-chat-thread
+type: image
+quality: high
+
+# Direction D2: persistent three-pane triage — screen: chat rooms, messages, thread panel with pins & scheduled send
+# Nocturne palette (exact hexes, dark-native canvas — never pure #000/#fff): canvas #010409, panel #0d1117, raised #161b22, border #21262d, primary text #e6edf3 (soft off-white ink), secondary text #909dab, muted text #6e7681, signal green (live/primary accent) #3fb950, link cyan (navigation) #58a6ff, amber (rare warning) #d29922, error coral #f85149. Type: Inter for UI/labels, JetBrains Mono (co-equal voice) for counts, timestamps, ids, code, SQL, paths. Shape: flat surfaces separated by lightness steps only, 4px radius, no drop shadows, no glow, no gradients, no neon bloom, no OLED pitch-black, no pure-white surfaces.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity dark-native app UI
+    for NoizuPromptLingo. This direction is a PERSISTENT THREE-PANE TRIAGE shell:
+    a narrow always-visible nav column (with labels, not icon-only), a middle LIST
+    pane, and a right DETAIL pane — an email/ticketing-triage layout optimized for
+    fast list traversal (j/k keyboard navigation hinted in the UI). Render as a
+    real product screenshot, never a wireframe.
+  text: |
+        A 16:9 high-fidelity UI mockup of NoizuPromptLingo's Chat screen, testing
+        the THREE-PANE TRIAGE shell direction: rooms | messages | thread panel.
+
+        LEFT NAV COLUMN (narrow, ~180px, labeled, persistent): same nav as
+        other shots, with "Chat" active (bold + green left edge) expanded
+        beneath it into a ROOMS sub-list: "#platform-eng" (selected, unread
+        bold), "#agent-ops", "#design-review", "#random" — each with a small
+        mono unread count badge except the selected room.
+
+        MIDDLE MESSAGES PANE (panel tone, dominant width): header
+        "#platform-eng" with a small "12 members" mono label and a pin icon
+        with count "3". Below, a vertical message list: avatar + name + mono
+        timestamp, message text bubbles WITHOUT heavy card chrome (flat, just
+        hairline-separated), realistic content ("Deploy for sha-302be2c is
+        green ✅", "Can someone review NPL-482 before EOD?", "Scheduling the
+        retro for Thursday 10am"). One message near the bottom shows a small
+        "Scheduled · sends in 2h14m" mono chip instead of a timestamp (a
+        composed-but-not-yet-sent scheduled message). A message compose bar at
+        the very bottom with a text input, a schedule-send clock icon, and a
+        send button.
+
+        RIGHT THREAD PANEL (raised tone #161b22, narrower than messages pane):
+        header "Thread" with a small "Pinned" section listing 3 compact pinned-
+        message rows (sender + truncated text + mono timestamp), then a
+        divider, then the open thread itself — a root message and 2 reply rows
+        indented beneath it with connecting hairline, avatars, and mono
+        timestamps. A small mute toggle ("🔕 Mute thread") sits near the top
+        of the panel, muted styling.
+
+        Use realistic, specific product content throughout — never lorem ipsum.
+
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, neon glow, bloom, CRT scanlines, gradient background, pure-black OLED background, pure-white surfaces, warm amber/gold dominant palette, light-mode canvas"
+
+attachments:
+  - path: _nocturne-palette.png
+    role: reference
+    description: "Locked Nocturne palette swatches (bg, surface, border, text, muted, accent, success, danger) with hex labels — match these exact colors, do not reinterpret."
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+service: gemini
+provider_options:
+  generate_content_model: gemini-2.5-flash-image
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Shows persistent labeled nav with Chat expanded to a rooms list, a middle message stream with a scheduled-send chip and compose bar, and a right thread panel showing pinned messages, a threaded reply chain, and a mute toggle"}
+    theme_fidelity: {weight: 3, description: "Dark-native Nocturne canvas (#010409/#0d1117), single phosphor-green #3fb950 signal, link cyan #58a6ff, amber #d29922 used sparingly, mono-first counts/timestamps/ids in JetBrains Mono, 4px radius, flat surface-step elevation, no shadow/glow/gradient"}
+    composition: {weight: 2, description: "Three clear vertical panes, rooms list narrow, messages pane dominant, thread panel distinctly a supporting rail on the right"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+    - "neon glow, bloom, or gradient wash"
+    - "light-mode or warm/gold dominant canvas instead of dark-native Nocturne"
+
+tags: [ux-overhaul, npl-nocturne, NoizuPromptLingo, shell-direction, direction-2]

@@ -1,0 +1,41 @@
+service: gemini
+model: gemini-3.1-flash-image
+timestamp: 1788698773
+prompt: |
+  A 16:9 high-fidelity UI mockup of NoizuPromptLingo's Data screen, testing
+  the DUAL-SIDEBAR + CANVAS shell direction: schema tree (240px) | SQL
+  console (wide canvas) | inspector (320px).
+  
+  LEFT SIDEBAR (240px, labeled, panel tone #0d1117): nav header "Acme
+  Robotics ▾", labeled destination list with "Data" active (green left
+  edge, bold), and below it a SCHEMA TREE: a service picker "prod-db
+  (postgres) ▾", then expandable schema nodes "public" expanded showing
+  tables "users", "sessions" (selected/highlighted), "tickets",
+  "artifacts", each with a small row-count mono hint ("14,203 rows").
+  
+  TOP OF CANVAS: a TENANT SCOPE CHIP — a small pill reading "scope:
+  org:acme-robotics" in cyan-on-raised styling, pinned near the console
+  header, unmissable. Directly below it, a horizontal WRITE-APPROVAL
+  BANNER on amber-tinted background (#d29922 accent, not filling the
+  whole banner — thin left edge + icon) reading "Write statements require
+  approval — this console is read-only by default."
+  
+  CENTER CANVAS (dominant, ~wide): a MONOSPACE SQL EDITOR pane (JetBrains
+  Mono, syntax-colored using only theme colors) with realistic content:
+  "SELECT id, status, started_at\nFROM sessions\nWHERE status = 'running'\nORDER
+  BY started_at DESC\nLIMIT 50;" and a green "Run" button with a small
+  ⌘⏎ hint. BELOW the editor, a RESULTS GRID (dense data table, hairline
+  row separators, mono cell values): columns "id", "status", "started_at"
+  — status column values color-coded (green "running", muted "completed").
+  A results footer shows "50 rows · 82ms" in mono muted text.
+  
+  RIGHT SIDEBAR (320px, raised tone #161b22): an INSPECTOR panel for the
+  selected "sessions" table — column list with types ("id · uuid", "status
+  · text", "started_at · timestamptz", "org_id · uuid, fk → orgs.id"),
+  a small "Indexes" section (2 mono index names), and an "Audit" mini-
+  panel showing the last 2 query log rows with mono timestamps and
+  truncated query text.
+  
+  Use realistic, specific product content throughout — never lorem ipsum.
+negative: |
+  watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, neon glow, bloom, CRT scanlines, gradient background, pure-black OLED background, pure-white surfaces, warm amber/gold dominant palette, light-mode canvas

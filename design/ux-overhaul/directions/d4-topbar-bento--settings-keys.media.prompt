@@ -1,0 +1,79 @@
+schema: "0.4"
+id: npl-ux-d4-topbar-bento-settings-keys
+type: image
+quality: high
+
+# Direction D4: top-bar only + bento home — screen: org settings key vault, reveal-once/rotate/last-used rows, invite cap meter
+# Nocturne palette (exact hexes, dark-native canvas — never pure #000/#fff): canvas #010409, panel #0d1117, raised #161b22, border #21262d, primary text #e6edf3 (soft off-white ink), secondary text #909dab, muted text #6e7681, signal green (live/primary accent) #3fb950, link cyan (navigation) #58a6ff, amber (rare warning) #d29922, error coral #f85149. Type: Inter for UI/labels, JetBrains Mono (co-equal voice) for counts, timestamps, ids, code, SQL, paths. Shape: flat surfaces separated by lightness steps only, 4px radius, no drop shadows, no glow, no gradients, no neon bloom, no OLED pitch-black, no pure-white surfaces.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity dark-native app UI
+    for NoizuPromptLingo. This direction has NO SIDEBAR AT ALL: navigation lives
+    entirely in a persistent TOP BAR (org switcher, primary destinations as
+    horizontal tabs/links, search, notifications, user menu). Section landing
+    pages and the home screen are BENTO grids of tiles. Render as a real product
+    screenshot, never a wireframe.
+  text: |
+        A 16:9 high-fidelity UI mockup of NoizuPromptLingo's Settings / Key Vault
+        screen, testing the TOP-BAR-ONLY shell direction — NO left sidebar.
+
+        TOP BAR (identical structure to the home shot): org switcher + wordmark
+        at left, horizontal text links with "Settings" active (green underline),
+        search/notifications/avatar at right.
+
+        BELOW THE TOP BAR, a SECONDARY IN-PAGE TAB ROW (since there's no
+        sidebar, settings sub-sections are horizontal tabs just under the
+        header): "General", "Members", "Roles", "Scopes", "Notifications",
+        "Keys" (active, green underline), "Danger zone".
+
+        MAIN CONTENT (bento-flavored: a few distinct panel tiles, not one dense
+        form): a page title "Key Vault" with a "Generate new key" button
+        (green fill, 4px radius). A KEY LIST tile — table-like rows with
+        hairline separators: key name ("CI deploy key", "MCP integration key",
+        "Backup automation"), a masked mono key preview ("npl_live_••••8f2a"),
+        a "Rotate" cyan text action, a "Revoke" coral text action, and a
+        mono "Last used" relative timestamp per row. One row shows a fresh key
+        with a "Reveal once" green button instead of a masked preview and a
+        small warning note "This key will not be shown again" in amber text.
+
+        A separate smaller tile: an INVITE CAP METER — a horizontal progress
+        bar (green fill up to ~70%) labeled "Seats used: 14 / 20", with a
+        muted caption "6 invites remaining this billing cycle".
+
+        Use realistic, specific product content throughout — never lorem ipsum.
+
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, neon glow, bloom, CRT scanlines, gradient background, pure-black OLED background, pure-white surfaces, warm amber/gold dominant palette, light-mode canvas"
+
+attachments:
+  - path: _nocturne-palette.png
+    role: reference
+    description: "Locked Nocturne palette swatches (bg, surface, border, text, muted, accent, success, danger) with hex labels — match these exact colors, do not reinterpret."
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+service: gemini
+provider_options:
+  generate_content_model: gemini-2.5-flash-image
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Shows the same sidebar-free top bar with Settings active, a secondary in-page tab row with Keys active, a key vault list with masked keys, rotate/revoke actions, a reveal-once fresh key with an amber warning note, and an invite-cap progress meter tile"}
+    theme_fidelity: {weight: 3, description: "Dark-native Nocturne canvas (#010409/#0d1117), single phosphor-green #3fb950 signal, link cyan #58a6ff, amber #d29922 used sparingly, mono-first counts/timestamps/ids in JetBrains Mono, 4px radius, flat surface-step elevation, no shadow/glow/gradient"}
+    composition: {weight: 2, description: "No sidebar anywhere, clear two-tier navigation (top bar + in-page tabs), key list and invite meter read as distinct bento-style tiles"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+    - "neon glow, bloom, or gradient wash"
+    - "light-mode or warm/gold dominant canvas instead of dark-native Nocturne"
+
+tags: [ux-overhaul, npl-nocturne, NoizuPromptLingo, shell-direction, direction-4]

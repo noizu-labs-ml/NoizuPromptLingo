@@ -1,0 +1,86 @@
+schema: "0.4"
+id: npl-ux-d3-dual-sidebar-canvas-data-console
+type: image
+quality: high
+
+# Direction D3: dual sidebar + wide canvas — screen: schema tree, SQL console, results grid, tenant scope chip, write-approval banner
+# Nocturne palette (exact hexes, dark-native canvas — never pure #000/#fff): canvas #010409, panel #0d1117, raised #161b22, border #21262d, primary text #e6edf3 (soft off-white ink), secondary text #909dab, muted text #6e7681, signal green (live/primary accent) #3fb950, link cyan (navigation) #58a6ff, amber (rare warning) #d29922, error coral #f85149. Type: Inter for UI/labels, JetBrains Mono (co-equal voice) for counts, timestamps, ids, code, SQL, paths. Shape: flat surfaces separated by lightness steps only, 4px radius, no drop shadows, no glow, no gradients, no neon bloom, no OLED pitch-black, no pure-white surfaces.
+
+prompt:
+  system: |
+    You are a senior product designer rendering a high-fidelity dark-native app UI
+    for NoizuPromptLingo. This direction is a DUAL-SIDEBAR + WIDE CANVAS shell: a
+    240px left nav sidebar (with labels) and a 320px right inspector sidebar,
+    flanking a wide central canvas meant for dense data-console or board work.
+    Render as a real product screenshot, never a wireframe.
+  text: |
+        A 16:9 high-fidelity UI mockup of NoizuPromptLingo's Data screen, testing
+        the DUAL-SIDEBAR + CANVAS shell direction: schema tree (240px) | SQL
+        console (wide canvas) | inspector (320px).
+
+        LEFT SIDEBAR (240px, labeled, panel tone #0d1117): nav header "Acme
+        Robotics ▾", labeled destination list with "Data" active (green left
+        edge, bold), and below it a SCHEMA TREE: a service picker "prod-db
+        (postgres) ▾", then expandable schema nodes "public" expanded showing
+        tables "users", "sessions" (selected/highlighted), "tickets",
+        "artifacts", each with a small row-count mono hint ("14,203 rows").
+
+        TOP OF CANVAS: a TENANT SCOPE CHIP — a small pill reading "scope:
+        org:acme-robotics" in cyan-on-raised styling, pinned near the console
+        header, unmissable. Directly below it, a horizontal WRITE-APPROVAL
+        BANNER on amber-tinted background (#d29922 accent, not filling the
+        whole banner — thin left edge + icon) reading "Write statements require
+        approval — this console is read-only by default."
+
+        CENTER CANVAS (dominant, ~wide): a MONOSPACE SQL EDITOR pane (JetBrains
+        Mono, syntax-colored using only theme colors) with realistic content:
+        "SELECT id, status, started_at\nFROM sessions\nWHERE status = 'running'\nORDER
+        BY started_at DESC\nLIMIT 50;" and a green "Run" button with a small
+        ⌘⏎ hint. BELOW the editor, a RESULTS GRID (dense data table, hairline
+        row separators, mono cell values): columns "id", "status", "started_at"
+        — status column values color-coded (green "running", muted "completed").
+        A results footer shows "50 rows · 82ms" in mono muted text.
+
+        RIGHT SIDEBAR (320px, raised tone #161b22): an INSPECTOR panel for the
+        selected "sessions" table — column list with types ("id · uuid", "status
+        · text", "started_at · timestamptz", "org_id · uuid, fk → orgs.id"),
+        a small "Indexes" section (2 mono index names), and an "Audit" mini-
+        panel showing the last 2 query log rows with mono timestamps and
+        truncated query text.
+
+        Use realistic, specific product content throughout — never lorem ipsum.
+
+  negative: "watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, neon glow, bloom, CRT scanlines, gradient background, pure-black OLED background, pure-white surfaces, warm amber/gold dominant palette, light-mode canvas"
+
+attachments:
+  - path: _nocturne-palette.png
+    role: reference
+    description: "Locked Nocturne palette swatches (bg, surface, border, text, muted, accent, success, danger) with hex labels — match these exact colors, do not reinterpret."
+
+output:
+  formats:
+    - format: png
+  dimensions:
+    width: 1920
+    height: 1080
+    aspect_ratio: "16:9"
+
+service: gemini
+provider_options:
+  generate_content_model: gemini-2.5-flash-image
+
+eval:
+  pass_threshold: 0.72
+  criteria:
+    relevance: {weight: 3, description: "Shows a left schema-tree sidebar with an expanded table list, a tenant-scope chip, a write-requires-approval banner, a central monospace SQL editor with a run button feeding a results data grid, and a right inspector sidebar with column types, indexes, and audit rows"}
+    theme_fidelity: {weight: 3, description: "Dark-native Nocturne canvas (#010409/#0d1117), single phosphor-green #3fb950 signal, link cyan #58a6ff, amber #d29922 used sparingly, mono-first counts/timestamps/ids in JetBrains Mono, 4px radius, flat surface-step elevation, no shadow/glow/gradient"}
+    composition: {weight: 2, description: "Clear 240px | wide canvas | 320px proportions, scope chip and approval banner unmissable at the top of the canvas, editor-above-grid split reads as one console"}
+    technical: {weight: 2, description: "Sharp, correct 16:9 aspect, no artifacts"}
+  reject_if:
+    - "lorem ipsum or placeholder text visible"
+    - "watermark or signature visible"
+    - "wireframe-level fidelity instead of high-fidelity mockup"
+    - "neon glow, bloom, or gradient wash"
+    - "light-mode or warm/gold dominant canvas instead of dark-native Nocturne"
+
+tags: [ux-overhaul, npl-nocturne, NoizuPromptLingo, shell-direction, direction-3]

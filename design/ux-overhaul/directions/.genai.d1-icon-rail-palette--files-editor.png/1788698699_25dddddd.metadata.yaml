@@ -1,0 +1,41 @@
+service: gemini
+model: gemini-3.1-flash-image
+timestamp: 1788698711
+prompt: |
+  A 16:9 high-fidelity UI mockup of NoizuPromptLingo's Files (VFS) screen,
+  testing the ICON-RAIL shell direction: tree | editor | inspector.
+  
+  LEFT: the same 56px icon-only rail as the home shot — org switcher
+  avatar at top, 8 icon destinations, the Files icon active with a 2px
+  signal-green left edge.
+  
+  TOP: breadcrumb bar reading "NoizuPromptLingo / Acme Robotics / Files /
+  prod-db-mount / schema / users.sql", with a small green "connected"
+  status pill near the mount name.
+  
+  Next to the rail, a narrower FILE TREE column (panel tone #0d1117):
+  a mount picker dropdown "prod-db-mount ▾" at top, then an indented tree
+  — folders "schema/", "migrations/", "seeds/" and files "users.sql"
+  (selected, highlighted row), "sessions.sql", "tickets.sql",
+  "audit_log.sql" — each with a small file-type glyph in mono-adjacent
+  styling.
+  
+  CENTER: a wide CODE EDITOR pane on the darkest canvas, monospace
+  JetBrains Mono SQL content with line numbers, syntax-colored keywords
+  using ONLY the theme palette (signal green for a couple of keywords,
+  cyan for identifiers, muted grey for comments) — realistic SQL like
+  "CREATE TABLE users (\n  id BIGSERIAL PRIMARY KEY,\n  email TEXT NOT
+  NULL UNIQUE,\n  created_at TIMESTAMPTZ DEFAULT now()\n);". A thin
+  top editor tab bar shows "users.sql ●" (unsaved dot) and a small LIVE
+  badge — a pill with a pulsing green dot and text "LIVE" — indicating a
+  real-time update channel is connected.
+  
+  RIGHT: an INSPECTOR panel (raised tone #161b22) showing file metadata:
+  "Path" (mono), "Size" ("4.2 KB"), "Last revised" (mono timestamp),
+  "Revised by" (avatar + name), and a scope/permission chip reading
+  "write: org-admin" in muted styling, plus a small "History" list of 3
+  mono revision entries.
+  
+  Use realistic, specific product content throughout — never lorem ipsum.
+negative: |
+  watermark, signature, lorem ipsum placeholder text, low-fidelity wireframe, monitor/device photograph framing, blurry, distorted UI, neon glow, bloom, CRT scanlines, gradient background, pure-black OLED background, pure-white surfaces, warm amber/gold dominant palette, light-mode canvas
