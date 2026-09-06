@@ -1,11 +1,16 @@
 defmodule NoizuPromptLingua.MCP.EffectiveToolsetTest do
   use NoizuPromptLingua.DataCase
 
+  require Noizu.EntityReference.Records
+
   alias Noizu.MCP.Ctx
+  alias Noizu.EntityReference.Records, as: R
+  alias NoizuPromptLingua.Acl
   alias NoizuPromptLingua.MCP.EffectiveToolset
   alias NoizuPromptLingua.MCP.KeyToolsets
   alias NoizuPromptLingua.MCPApiKeys
   alias NoizuPromptLingua.MCPCustomScopes
+  alias NoizuPromptLingua.Schema.McpTool
 
   @tool "Ticket.List"
   # F5: resolve/2 output is keyed canonical underscore
@@ -691,6 +696,145 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetTest do
       entry = get_in(scope.config, ["groups", @group, "tools", @tool])
       assert String.length(entry["name_override"]) == 128
       assert String.length(entry["description_override"]) == 1024
+    end
+  end
+
+  # ── alacarte: the ?t= URL tool-selection layer ───────────────────────────────
+
+  describe "url toolset param layer" do
+    # Compiled param layer (UrlToolsetParam output shape): re-enable @tool.
+    @param_reenable %{
+      "groups" => %{@group => %{"tools" => %{@tool_canonical => %{"disabled" => false, "hidden" => false}}}}
+    }
+
+    defp ctx_with_param(assigns_extra) do
+      base = key_ctx(scope_config(%{}))
+      %Ctx{base | assigns: Map.merge(base.assigns, assigns_extra)}
+    end
+
+    test "param beats scope disabled (resolution + ToolGuard ctx path)" do
+      create_scope(
+        "acme",
+        scope_config(%{@group => %{"tools" => %{@tool => %{"disabled" => true}}}})
+      )
+
+      scope = MCPCustomScopes.get_by_slug("acme")
+      client = %{id: :url_toolset_param, kind: :url_param, toolset_config: @param_reenable}
+
+      state = EffectiveToolset.state(@group, @tool, scope, client)
+      assert state.enabled and state.visible
+
+      ctx = ctx_with_param(%{custom_scope_slug: "acme", toolset_param_cfg: @param_reenable})
+
+      flags = KeyToolsets.state(@group, @tool, ctx)
+      refute flags.disabled
+      refute flags.hidden
+    end
+
+    test "param beats client key flags (union merge, param wins per key)" do
+      create_scope("acme", scope_config(%{@group => %{"tools" => %{}}}))
+
+      # stored key config disables @tool at the group level; the param re-enables it
+      %Ctx{assigns: base_assigns} = key_ctx(scope_config(%{@group => %{"disabled" => true}}))
+
+      ctx = %Noizu.MCP.Ctx{
+        server: NoizuPromptLingua.MCP,
+        assigns:
+          base_assigns
+          |> Map.put(:toolset_param_cfg, @param_reenable)
+          |> Map.put(:custom_scope_slug, "acme")
+      }
+
+      flags = KeyToolsets.state(@group, @tool, ctx)
+      refute flags.disabled
+      refute flags.hidden
+
+      # without the param layer the stored key disable holds
+      %Ctx{assigns: plain} = key_ctx(scope_config(%{@group => %{"disabled" => true}}))
+
+      plain_ctx = %Noizu.MCP.Ctx{
+        server: NoizuPromptLingua.MCP,
+        assigns: Map.put(plain, :custom_scope_slug, "acme")
+      }
+
+      assert KeyToolsets.state(@group, @tool, plain_ctx).disabled
+    end
+
+    test "white-list entry for a tool absent from the stored client config survives (union, not overlay)" do
+      create_scope("acme", scope_config(%{@group => %{"tools" => %{}}}))
+      scope = MCPCustomScopes.get_by_slug("acme")
+
+      merged =
+        EffectiveToolset.client_with_param(ctx_with_param(%{toolset_param_cfg: @param_reenable}), scope)
+
+      tools = get_in(merged.toolset_config, ["groups", @group, "tools"])
+      assert Map.has_key?(tools, @tool_canonical)
+
+      # param wins per key over the stored client's hidden flag
+      state = EffectiveToolset.state(@group, @tool, scope, merged)
+      assert state.visible and state.enabled
+    end
+
+    test "param cannot widen the include set (scope groups govern)" do
+      create_scope("acme", scope_config(%{"sessions" => %{"tools" => %{}}}))
+
+      param_layer = %{
+        "groups" => %{"organizations" => %{"tools" => %{"Organization_List" => %{}}}}
+      }
+
+      scope = MCPCustomScopes.get_by_slug("acme")
+
+      client =
+        EffectiveToolset.client_with_param(ctx_with_param(%{toolset_param_cfg: param_layer}), scope)
+
+      states = EffectiveToolset.resolve(scope, client, nil)
+      assert Map.has_key?(states, "Session_Create")
+      refute Map.has_key?(states, "Organization_List")
+    end
+
+    test "nil scope drops the param (never widens a root universe)" do
+      ctx = ctx_with_param(%{toolset_param_cfg: @param_reenable})
+      client = EffectiveToolset.client_with_param(ctx, nil)
+      assert client == EffectiveToolset.client_for_ctx(ctx)
+    end
+
+    test "param_only_client carries ONLY the param layer (catalog contract)" do
+      ctx = ctx_with_param(%{toolset_param_cfg: @param_reenable})
+      client = EffectiveToolset.param_only_client(ctx)
+      assert client.toolset_config == @param_reenable
+
+      # no param → nil (the stored client layer stays out of catalog_specs)
+      assert EffectiveToolset.param_only_client(key_ctx(scope_config(%{}))) == nil
+    end
+
+    test "ACL stays final over the param layer (deny hides + disables a param-enabled tool)" do
+      create_scope("acme", scope_config(%{@group => %{"tools" => %{@tool => %{"disabled" => true}}}}))
+      scope = MCPCustomScopes.get_by_slug("acme")
+
+      user_id = Ecto.UUID.generate()
+      user_ref = R.ref(module: NoizuPromptLingua.Users.User, id: user_id)
+
+      {:ok, _} =
+        Acl.create_rule(%{
+          subject_ref: user_ref,
+          resource_ref: R.ref(module: McpTool, id: @tool_canonical),
+          action: "mcp.tool",
+          effect: "deny"
+        })
+
+      client = %{id: :url_toolset_param, kind: :url_param, toolset_config: @param_reenable}
+
+      # without ACL: the param re-enables the scope-disabled tool
+      assert EffectiveToolset.state(@group, @tool, scope, client).enabled
+
+      # with the denied user: ACL has the final word
+      state = EffectiveToolset.state(@group, @tool, scope, client, user_ref, DateTime.utc_now())
+      refute state.enabled
+      refute state.visible
+
+      # and resolve/4 agrees (listing path)
+      states = EffectiveToolset.resolve(scope, client, user_ref)
+      refute EffectiveToolset.lookup(states, @tool).visible
     end
   end
 end

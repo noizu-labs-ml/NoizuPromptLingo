@@ -39,9 +39,14 @@ defmodule NoizuPromptLingua.MCP.Custom do
   def custom_specs(ctx) do
     with slug when is_binary(slug) <- scope_slug(ctx),
          scope when not is_nil(scope) <- MCPCustomScopes.get_by_slug(slug) do
-      # Effective state for the scope layer (client layer is applied later by
-      # MCP.Server.list_tools via KeyToolsets/EffectiveToolset with the ctx).
-      states = EffectiveToolset.resolve(scope, nil, nil)
+      # Effective state for the scope layer merged with the `?t=` URL
+      # tool-selection layer (alacarte) — PARAM ONLY: the stored client layer
+      # stays out of catalog_specs per contract (key-disabled tools remain
+      # catalog-visible; ToolGuard denies at call time). Required here (not
+      # just in the server pipeline): group_specs/3 pre-drops disabled specs,
+      # so a white-list re-enable must already be reflected in these states or
+      # the tool vanishes from BOTH listing and dispatch.
+      states = EffectiveToolset.resolve(scope, EffectiveToolset.param_only_client(ctx), nil)
 
       scope.config
       |> MCPCustomScopes.normalize_config(scope.kind)

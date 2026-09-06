@@ -39,3 +39,4 @@ frontend/cypress/screenshots/
 
 # Canonical worktree placement
 .claude/worktrees/
+backend/_build
