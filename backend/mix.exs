@@ -184,6 +184,11 @@ defmodule NoizuPromptLingua.MixProject do
           "test/noizu_prompt_lingua_web/controllers/sso_controller_test.exs " <>
           "test/noizu_prompt_lingua_web/controllers/auth_controller_test.exs " <>
           "test/noizu_prompt_lingua_web/controllers/oauth_controller_test.exs " <>
+          # endpoint UX overhaul (PRD-020): clone, wizard, tool proposals, scopes
+        "test/noizu_prompt_lingua/mcp/tool_proposer_test.exs " <>
+          "test/noizu_prompt_lingua_web/controllers/mcp_endpoints_controller_test.exs " <>
+          "test/noizu_prompt_lingua_web/controllers/mcp_custom_scope_controller_test.exs " <>
+          "test/noizu_prompt_lingua/mcp/custom_scope_test.exs " <>
           "test/noizu_prompt_lingua_web/controllers/oauth_consent_test.exs"
       ]
     ]
