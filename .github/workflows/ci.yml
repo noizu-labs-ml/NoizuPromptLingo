@@ -1,7 +1,10 @@
 name: CI
 
-# Build on native amd64 (colo target), validate, push sha-tagged images, bump
-# the chart — ArgoCD (app "npl-mcp") rolls it out from main.
+# Build on native amd64 (colo target): image builds start immediately on push
+# (parallel to the test jobs) and publish candidate `-rc` tags; once tests
+# pass, a promote job re-tags the candidates to the final sha tags (no
+# rebuild) and the chart bump follows — ArgoCD (app "npl-mcp") rolls it out
+# from main.
 # Stage lane: pushes to `stage` build sha-<short>-stage images and bump
 # values-stage.yaml — ArgoCD (app "npl-mcp-stage") rolls those to
 # tobor-stage.noizu.com. Main-gated jobs below are untouched by the stage path.
@@ -205,8 +208,10 @@ jobs:
           grep -q 'output: "standalone"' next.config.ts
       - run: npx tsc --noEmit
 
+  # Candidate build: no `needs` — starts immediately on push, parallel to the
+  # test jobs, publishing `sha-<short>-rc` candidate tags. promote-release
+  # re-tags them to the final sha tags only after tests pass.
   build-push:
-    needs: [test-backend, test-frontend]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
@@ -226,7 +231,7 @@ jobs:
           context: backend
           platforms: linux/amd64
           push: true
-          tags: ${{ env.REGISTRY }}/npl-mcp/server:sha-${{ steps.sha.outputs.short }}
+          tags: ${{ env.REGISTRY }}/npl-mcp/server:sha-${{ steps.sha.outputs.short }}-rc
           cache-from: type=gha,scope=backend
           cache-to: type=gha,scope=backend,mode=max
       - name: Build & push frontend
@@ -239,12 +244,41 @@ jobs:
             NEXT_PUBLIC_API_URL=https://tobor.locker
           secrets: |
             npm_token=${{ secrets.NPM_TOKEN }}
-          tags: ${{ env.REGISTRY }}/npl-mcp/frontend:sha-${{ steps.sha.outputs.short }}
+          tags: ${{ env.REGISTRY }}/npl-mcp/frontend:sha-${{ steps.sha.outputs.short }}-rc
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,scope=frontend,mode=max
 
+  # Promotion gate: runs only when the test jobs AND the candidate builds
+  # succeeded (same ref gate as build-push). Re-tags the -rc candidates to
+  # the final sha tags via buildx imagetools — a manifest-level re-tag, no
+  # rebuild; the image digest is unchanged.
+  promote-release:
+    needs: [test-backend, test-frontend, build-push]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+      - name: Short SHA
+        id: sha
+        run: echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+      - name: Promote backend image (sha-<short>-rc → sha-<short>)
+        run: |
+          docker buildx imagetools create \
+            -t ${{ env.REGISTRY }}/npl-mcp/server:sha-${{ steps.sha.outputs.short }} \
+            ${{ env.REGISTRY }}/npl-mcp/server:sha-${{ steps.sha.outputs.short }}-rc
+      - name: Promote frontend image (sha-<short>-rc → sha-<short>)
+        run: |
+          docker buildx imagetools create \
+            -t ${{ env.REGISTRY }}/npl-mcp/frontend:sha-${{ steps.sha.outputs.short }} \
+            ${{ env.REGISTRY }}/npl-mcp/frontend:sha-${{ steps.sha.outputs.short }}-rc
+
   bump-chart:
-    needs: build-push
+    needs: promote-release
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -287,8 +321,10 @@ jobs:
   # Mirrors build-push with a distinct `-stage` tag suffix so stage images can
   # never collide with prod tags, and a stage NEXT_PUBLIC_API_URL. The
   # main-gated jobs above are not modified.
+  # Stage twin of build-push: candidate builds start immediately on push and
+  # publish `sha-<short>-stage-rc` tags; promote-release-stage re-tags them
+  # to the final `-stage` tags once tests pass.
   build-push-stage:
-    needs: [test-backend, test-frontend]
     if: github.event_name == 'push' && github.ref == 'refs/heads/stage'
     runs-on: ubuntu-latest
     steps:
@@ -308,7 +344,7 @@ jobs:
           context: backend
           platforms: linux/amd64
           push: true
-          tags: ${{ env.REGISTRY }}/npl-mcp/server:sha-${{ steps.sha.outputs.short }}-stage
+          tags: ${{ env.REGISTRY }}/npl-mcp/server:sha-${{ steps.sha.outputs.short }}-stage-rc
           cache-from: type=gha,scope=backend
           cache-to: type=gha,scope=backend,mode=max
       - name: Build & push frontend
@@ -321,14 +357,42 @@ jobs:
             NEXT_PUBLIC_API_URL=https://tobor-stage.noizu.com
           secrets: |
             npm_token=${{ secrets.NPM_TOKEN }}
-          tags: ${{ env.REGISTRY }}/npl-mcp/frontend:sha-${{ steps.sha.outputs.short }}-stage
+          tags: ${{ env.REGISTRY }}/npl-mcp/frontend:sha-${{ steps.sha.outputs.short }}-stage-rc
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,scope=frontend,mode=max
+
+  # Stage twin of promote-release: re-tags the -stage-rc candidates to the
+  # final -stage tags once the test jobs pass (same ref gate as
+  # build-push-stage). Manifest-level re-tag, no rebuild.
+  promote-release-stage:
+    needs: [test-backend, test-frontend, build-push-stage]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/stage'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+      - name: Short SHA
+        id: sha
+        run: echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+      - name: Promote backend image (sha-<short>-stage-rc → sha-<short>-stage)
+        run: |
+          docker buildx imagetools create \
+            -t ${{ env.REGISTRY }}/npl-mcp/server:sha-${{ steps.sha.outputs.short }}-stage \
+            ${{ env.REGISTRY }}/npl-mcp/server:sha-${{ steps.sha.outputs.short }}-stage-rc
+      - name: Promote frontend image (sha-<short>-stage-rc → sha-<short>-stage)
+        run: |
+          docker buildx imagetools create \
+            -t ${{ env.REGISTRY }}/npl-mcp/frontend:sha-${{ steps.sha.outputs.short }}-stage \
+            ${{ env.REGISTRY }}/npl-mcp/frontend:sha-${{ steps.sha.outputs.short }}-stage-rc
 
   # Stage twin of bump-chart: bumps helm/npl-mcp/values-stage.yaml (Argo app
   # npl-mcp-stage tracks the stage branch) — never the prod values.yaml.
   bump-chart-stage:
-    needs: build-push-stage
+    needs: promote-release-stage
     runs-on: ubuntu-latest
     permissions:
       contents: write
