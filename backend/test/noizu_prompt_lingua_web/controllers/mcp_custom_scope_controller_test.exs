@@ -105,4 +105,102 @@ defmodule NoizuPromptLinguaWeb.MCPCustomScopeControllerTest do
     missing = post(conn, "/api/v1/admin/mcp-custom-scopes/nope/clone") |> json_response(404)
     assert missing["error"] =~ "not found"
   end
+
+  # ── alacarte WP1/WP4: display passthrough + clone inheritance ────────────────
+
+  describe "display styling config (alacarte)" do
+    @display %{"image" => "abc123shortid", "emoji" => "🚀", "color" => "#ff8800"}
+
+    test "admin create + update round-trip display; group-only updates keep it", %{conn: conn} do
+      created =
+        post(conn, "/api/v1/admin/mcp-custom-scopes", %{
+          scope: %{
+            slug: "display-admin",
+            name: "Display Admin",
+            config: %{groups: %{sessions: %{}}, display: @display}
+          }
+        })
+        |> json_response(201)
+
+      assert created["scope"]["config"]["display"] == @display
+
+      # a groups-only update must not drop the stored display (prior carry)
+      updated =
+        patch(conn, "/api/v1/admin/mcp-custom-scopes/display-admin", %{
+          scope: %{config: %{groups: %{tickets: %{}}}}
+        })
+        |> json_response(200)
+
+      assert updated["scope"]["config"]["display"] == @display
+      assert Map.has_key?(updated["scope"]["config"]["groups"], "tickets")
+
+      # a new display replaces it
+      replaced =
+        patch(conn, "/api/v1/admin/mcp-custom-scopes/display-admin", %{
+          scope: %{config: %{display: %{"emoji" => "🎯", "color" => "#f80"}}}
+        })
+        |> json_response(200)
+
+      assert replaced["scope"]["config"]["display"] == %{"emoji" => "🎯", "color" => "#f80"}
+    end
+
+    test "display sanitization: non-conforming fields dropped, conforming kept", %{conn: conn} do
+      created =
+        post(conn, "/api/v1/admin/mcp-custom-scopes", %{
+          scope: %{
+            slug: "display-sanitize",
+            name: "Display Sanitize",
+            config: %{
+              groups: %{sessions: %{}},
+              display: %{
+                image: String.duplicate("a", 513),
+                emoji: "🚀",
+                color: "not-a-color",
+                bogus: "x"
+              }
+            }
+          }
+        })
+        |> json_response(201)
+
+      assert created["scope"]["config"]["display"] == %{"emoji" => "🚀"}
+    end
+
+    test "clone inherits the source display", %{conn: conn} do
+      post(conn, "/api/v1/admin/mcp-custom-scopes", %{
+        scope: %{
+          slug: "display-src",
+          name: "Display Source",
+          config: %{groups: %{sessions: %{}}, display: @display}
+        }
+      })
+      |> json_response(201)
+
+      clone =
+        post(conn, "/api/v1/admin/mcp-custom-scopes/display-src/clone", %{
+          scope: %{slug: "display-clone", name: "Display Clone"}
+        })
+        |> json_response(201)
+
+      assert clone["scope"]["config"]["display"] == @display
+    end
+
+    test "user default endpoint round-trips display through its config", %{conn: conn} do
+      # seed the user's default endpoint (cloned from the tobor template)
+      shown = conn |> get("/api/v1/auth/mcp/default-endpoint") |> json_response(200)
+      assert shown["scope"]["slug"]
+
+      updated =
+        patch(conn, "/api/v1/auth/mcp/default-endpoint", %{
+          config: %{groups: %{sessions: %{}}, display: %{"emoji" => "🎯", "color" => "#f80"}}
+        })
+        |> json_response(200)
+
+      assert updated["scope"]["config"]["display"] == %{"emoji" => "🎯", "color" => "#f80"}
+
+      # persisted — a re-fetch shows the stored display
+      fetched = conn |> get("/api/v1/auth/mcp/default-endpoint") |> json_response(200)
+      assert fetched["scope"]["config"]["display"] == %{"emoji" => "🎯", "color" => "#f80"}
+    end
+  end
 end

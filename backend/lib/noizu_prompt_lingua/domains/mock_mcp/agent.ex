@@ -482,7 +482,10 @@ defmodule NoizuPromptLingua.Domains.MockMCP.Agent do
 
   # ── Inference plumbing (genai or direct HTTP for custom endpoints) ──
 
-  defp run(messages, opts) do
+  # Public so other LLM seams (PRD-020 ToolProposer default runner) reuse the
+  # exact MockMCP precedent: genai pipeline, or the direct-HTTP custom-endpoint
+  # variant, driven by provider/model/endpoint/api_key opts.
+  def run(messages, opts) do
     endpoint = blank_to_nil(opts[:endpoint])
     if endpoint, do: run_http(messages, opts, endpoint), else: run_genai(messages, opts)
   end

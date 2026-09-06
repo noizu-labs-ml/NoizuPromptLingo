@@ -39,9 +39,14 @@ defmodule NoizuPromptLingua.MCP.Custom do
   def custom_specs(ctx) do
     with slug when is_binary(slug) <- scope_slug(ctx),
          scope when not is_nil(scope) <- MCPCustomScopes.get_by_slug(slug) do
-      # Effective state for the scope layer (client layer is applied later by
-      # MCP.Server.list_tools via KeyToolsets/EffectiveToolset with the ctx).
-      states = EffectiveToolset.resolve(scope, nil, nil)
+      # Effective state for the scope layer merged with the `?t=` URL
+      # tool-selection layer (alacarte) — PARAM ONLY: the stored client layer
+      # stays out of catalog_specs per contract (key-disabled tools remain
+      # catalog-visible; ToolGuard denies at call time). Required here (not
+      # just in the server pipeline): group_specs/3 pre-drops disabled specs,
+      # so a white-list re-enable must already be reflected in these states or
+      # the tool vanishes from BOTH listing and dispatch.
+      states = EffectiveToolset.resolve(scope, EffectiveToolset.param_only_client(ctx), nil)
 
       scope.config
       |> MCPCustomScopes.normalize_config(scope.kind)
@@ -76,7 +81,10 @@ defmodule NoizuPromptLingua.MCP.Custom do
   end
 
   # NPL load/spec live on the root aggregator, not a selectable group. Include
-  # them on the default all-in-one package so one endpoint covers the daily set.
+  # them on the default all-in-one package and the restricted core variant (plus
+  # clones of either template) so one endpoint covers the daily set — core
+  # endpoints still need the loaders for NPL-syntax prompts even though their
+  # group surface is restricted.
   @npl_tools [
     {NoizuPromptLingua.Tools.NPLLoad, [category: "NPL"]},
     {NoizuPromptLingua.Tools.NPLSpec, [category: "NPL"]}
@@ -90,8 +98,10 @@ defmodule NoizuPromptLingua.MCP.Custom do
     with slug when is_binary(slug) <- scope_slug(ctx),
          scope when not is_nil(scope) <- MCPCustomScopes.get_by_slug(slug) do
       scope.kind == "all_in_one" or
+        scope.kind == "core_variant" or
         scope.slug == MCPCustomScopes.default_package_slug() or
         scope.source_template_slug == MCPCustomScopes.default_package_slug() or
+        scope.source_template_slug == MCPCustomScopes.core_variant_slug() or
         scope.name == MCPCustomScopes.account_default_name() or
         not is_nil(scope.user_id) or
         not is_nil(scope.organization_id)

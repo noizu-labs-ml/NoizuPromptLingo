@@ -337,6 +337,18 @@ export interface McpCustomGroup {
   tools: McpCustomTool[];
 }
 
+// Alacarte endpoint display metadata — the reserved `display` key inside the
+// config jsonb (sanitized server-side; write paths must send it nested in
+// config or the backend normalize drops it).
+export interface McpScopeDisplay {
+  /** Media `short_id` (api.uploadEndpointImage) or an absolute http(s) URL. */
+  image?: string;
+  /** Short fallback glyph rendered on the color backdrop (≤4 chars). */
+  emoji?: string;
+  /** CSS color (hex or name) — backdrop for the emoji/initial thumb. */
+  color?: string;
+}
+
 export interface McpCustomScopeConfig {
   groups: Record<string, {
     disabled?: boolean;
@@ -354,6 +366,7 @@ export interface McpCustomScopeConfig {
       enabled_at?: string;
     }>;
   }>;
+  display?: McpScopeDisplay;
 }
 
 export interface McpCustomScope {
@@ -379,6 +392,32 @@ export interface McpEndpointsResponse {
   templates: McpCustomScope[];
   endpoints: McpCustomScope[];
   default_scope: McpCustomScope | null;
+}
+
+// ── PRD-020 FR-8: endpoint wizard API contracts ──
+
+export interface ClarifyQuestion {
+  id: string;
+  prompt: string;
+  kind: 'single' | 'multi' | 'text';
+  options?: string[];
+}
+
+export interface ProposedTool {
+  name: string;
+  group: string;
+  rationale: string;
+}
+
+export type ProposeToolsResponse =
+  | { status: 'questions'; questions: ClarifyQuestion[] }
+  | { status: 'proposal'; tools: ProposedTool[]; summary: string }
+  | { status: 'llm_unavailable' };
+
+export interface SlugAvailabilityResponse {
+  available: boolean;
+  reason?: 'taken' | 'reserved' | 'invalid';
+  suggestion?: string;
 }
 
 export interface McpCustomScopeInput {
@@ -1598,6 +1637,11 @@ function buildQuery(params: Record<string, string | string[] | number | undefine
   return s ? `?${s}` : '';
 }
 
+// Endpoint display images (alacarte): client-side caps only — the media
+// domain enforces no size limit of its own.
+export const ENDPOINT_IMAGE_MAX_BYTES = 2 * 1024 * 1024;
+export const ENDPOINT_IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
+
 export const api = {
   login(email: string, password: string) {
     return request<AuthResponse>("/api/v1/auth/login", {
@@ -1766,6 +1810,62 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ key }),
     });
+  },
+
+  // ── Alacarte endpoint display images: presign → S3 PUT → register. ──
+
+  registerMedia(input: {
+    key: string;
+    filename: string;
+    visibility: "private" | "org";
+    organization_id?: string;
+    content_type?: string;
+  }) {
+    return request<{ short_id: string }>("/api/v1/media/register", {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+  },
+
+  /**
+   * Validate → presign → PUT bytes → register; returns the media `short_id`
+   * for config.display.image. Size/type caps are client-side only (the media
+   * domain has no server-side limit). Org-owned endpoints register "org"
+   * visibility so every org member's `<img>` render resolves; personal ones
+   * stay "private".
+   */
+  async uploadEndpointImage(
+    file: File,
+    owner?: { organizationId?: string | null } | null,
+  ): Promise<string> {
+    if (file.size > ENDPOINT_IMAGE_MAX_BYTES) {
+      throw new Error("Image must be 2 MB or smaller");
+    }
+    if (!ENDPOINT_IMAGE_TYPES.includes(file.type)) {
+      throw new Error("Use a PNG, JPEG, WebP, or GIF image");
+    }
+    const presign = await request<{ upload_url: string; key: string }>("/api/v1/media/presign", {
+      method: "POST",
+      body: JSON.stringify({ filename: file.name, content_type: file.type }),
+    });
+    const put = await fetch(presign.upload_url, {
+      method: "PUT",
+      body: file,
+      headers: { "Content-Type": file.type },
+    });
+    if (!put.ok) throw new Error(`Image upload failed (${put.status})`);
+    const organizationId = owner?.organizationId || undefined;
+    const registered = await request<{ short_id: string }>("/api/v1/media/register", {
+      method: "POST",
+      body: JSON.stringify({
+        key: presign.key,
+        filename: file.name,
+        visibility: organizationId ? "org" : "private",
+        ...(organizationId ? { organization_id: organizationId } : {}),
+        content_type: file.type,
+      }),
+    });
+    return registered.short_id;
   },
 
   adminListUsers(page = 1, perPage = 50) {
@@ -2751,6 +2851,8 @@ export const api = {
     source_slug?: string;
     name?: string;
     description?: string;
+    slug?: string;
+    config?: McpCustomScopeConfig;
     organization_id?: string;
     use?: boolean;
   }) {
@@ -2790,6 +2892,27 @@ export const api = {
     return request<{ ok: boolean; id: string }>(`/api/v1/auth/mcp/endpoints/${id}`, {
       method: "DELETE",
     });
+  },
+
+  // ── PRD-020 FR-8: wizard proposal + inline slug availability. ──
+  // propose-tools failures are HTTP 200 {"status":"llm_unavailable"} (D3), so
+  // the wizard can route straight to the manual picker without error handling.
+
+  proposeEndpointTools(input: {
+    name?: string;
+    description: string;
+    answers?: { question_id: string; answer: string }[];
+  }): Promise<ProposeToolsResponse> {
+    return request<ProposeToolsResponse>("/api/v1/auth/mcp/endpoints/propose-tools", {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+  },
+
+  checkSlugAvailable(slug: string): Promise<SlugAvailabilityResponse> {
+    return request<SlugAvailabilityResponse>(
+      `/api/v1/auth/mcp/endpoints/slug-available?slug=${encodeURIComponent(slug)}`,
+    );
   },
 
   // ── OAuth MCP pairing grants (Phase 4). ──

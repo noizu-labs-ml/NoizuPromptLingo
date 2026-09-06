@@ -43,6 +43,8 @@ import {
   type ToolSetIndex,
 } from '@/lib/acl-api';
 import McpEndpointSetupPopunder from '@/components/mcp-endpoint-setup-popunder';
+import DisplayFieldset from '@/components/mcp-config/display-fieldset';
+import ToolsetUrlBuilder from '@/components/mcp-config/toolset-url-builder';
 import { ToolOverrideFields } from '@/components/kit/tool-overrides-editor';
 import {
   applyOverridePatch,
@@ -77,7 +79,11 @@ function slugify(value: string) {
 }
 
 function normalizeConfig(config?: McpCustomScopeConfig | null): McpCustomScopeConfig {
-  return { groups: { ...(config?.groups ?? {}) } };
+  return {
+    // Reserved `display` key (alacarte endpoint identity) rides along.
+    ...(config?.display ? { display: config.display } : {}),
+    groups: { ...(config?.groups ?? {}) },
+  };
 }
 
 function blankForm(): ScopeForm {
@@ -124,6 +130,8 @@ function nextConfig(
   update: (draft: McpCustomScopeConfig) => void,
 ) {
   const draft: McpCustomScopeConfig = {
+    // Reserved `display` key rides along while groups are cloned.
+    ...(config.display ? { display: config.display } : {}),
     groups: Object.fromEntries(
       Object.entries(config.groups ?? {}).map(([groupId, group]) => [
         groupId,
@@ -170,6 +178,8 @@ function AdminMcpCustomScopesInner() {
   const [tempTool, setTempTool] = useState('');
   const [newGroupName, setNewGroupName] = useState('');
   const [setupScope, setSetupScope] = useState<McpCustomScope | null>(null);
+  // Alacarte: per-row ?t= tool-selection URL builder (core included).
+  const [builderScope, setBuilderScope] = useState<McpCustomScope | null>(null);
 
   const selectedScope = useMemo(
     () => scopes.find((s) => s.slug === form.originalSlug) ?? null,
@@ -483,6 +493,7 @@ function AdminMcpCustomScopesInner() {
         disabled: saving,
       },
       { id: 'setup', label: 'Setup MCP' },
+      { id: 'toolset-url', label: 'Tool selection URL' },
       { id: 'delete', label: 'Delete', destructive: true, disabled: isDefault },
     ];
   }
@@ -492,6 +503,7 @@ function AdminMcpCustomScopesInner() {
     else if (id === 'rename') renameScope(scope);
     else if (id === 'clone') cloneScope(scope);
     else if (id === 'setup') setSetupScope(scope);
+    else if (id === 'toolset-url') setBuilderScope(scope);
     else if (id === 'delete') remove(scope);
   }
 
@@ -673,6 +685,25 @@ function AdminMcpCustomScopesInner() {
           value={form.description}
           onChange={(e) => setForm((current) => ({ ...current, description: e.target.value }))}
           rows={3}
+        />
+      </div>
+
+      {/* Alacarte: display metadata — the reserved config.display key. Saved
+          with the payload (config rides through normalizeConfigToolKeys, which
+          preserves display). Org-owned scopes register org-visible uploads. */}
+      <div>
+        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Display (optional)</div>
+        <DisplayFieldset
+          value={form.config.display ?? null}
+          ownerOrgId={selectedScope?.organization_id ?? null}
+          onChange={(next) =>
+            setForm((current) => {
+              const config: McpCustomScopeConfig = { ...current.config };
+              if (next) config.display = next;
+              else delete config.display;
+              return { ...current, config };
+            })
+          }
         />
       </div>
 
@@ -1062,6 +1093,13 @@ function AdminMcpCustomScopesInner() {
             onClose={() => setSetupScope(null)}
             scope={setupScope}
             mcpUrl={stubScopeUrl(setupScope)}
+          />
+        )}
+
+        {builderScope && (
+          <ToolsetUrlBuilder
+            slug={builderScope.slug}
+            onClose={() => setBuilderScope(null)}
           />
         )}
       </main>

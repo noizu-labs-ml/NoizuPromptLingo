@@ -33,3 +33,7 @@ export type { TempWindow } from './temp-window-editor';
 
 export { default as TabbedPopunder } from './tabbed-popunder';
 export type { TabbedPopunderTab } from './tabbed-popunder';
+
+// PRD-020 FR-5: domain-neutral controlled wizard stepper (US-107).
+export { default as WizardStepper } from './wizard-stepper';
+export type { WizardStepperProps, WizardStepDef } from './wizard-stepper';
