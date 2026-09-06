@@ -1,4 +1,4 @@
-# Backend Domains — changesets 011–082
+# Backend Domains — changesets 011–084
 
 Authoritative source: `backend/db/changelog/` (Liquibase, applied via `make migrate` / liquibase-shell). Changesets 000–010 (core identity) are documented in [core-identity.md](core-identity.md).
 
@@ -34,11 +34,12 @@ Authoritative source: `backend/db/changelog/` (Liquibase, applied via `make migr
 | Notifications | 064 | chat_notifications |
 | PubSub | 065, 066 | npl_pubsub_channels, npl_pubsub_messages, npl_pubsub_follows; watch filters |
 | Unicode codex | 070 | unicode_elements, unicode_element_relations, unicode_element_usages, unicode_special_usages |
-| MCP platform | 070a, 071, 073, 075, 076, 080 | mcp_custom_scopes, mcp_pairing_grants, mcp_tool_vectors, scope packaging, mcp_overviews, account default, mcp_endpoint_templates, mcp_api_keys + toolsets |
+| MCP platform | 070a, 071, 073, 075, 076, 080, 083 | mcp_custom_scopes, mcp_pairing_grants, mcp_tool_vectors, scope packaging, mcp_overviews, account default, mcp_endpoint_templates, mcp_api_keys, mcp_tool_sets (DB-backed custom tool sets; toolset_negotiations / npl_mcp_toolset_store pending DDL — "flip train") |
 | OAuth AS | 074 | oauth_clients, oauth_authorization_codes, oauth_refresh_tokens |
 | Marketing | 077 | marketing signups |
 | PM split | 078 | cross-DB FK drops (PM data moved to TRP) |
 | Org slugs | 082 | org slug uniqueness |
+| Browser capture resource types | 084 | resource_type_enum += browser_screenshot, browser_video (guarded enum re-type: scoped_memberships.resource_type, media.owner_type) |
 
 ## Table Inventory (all backend tables)
 
@@ -54,7 +55,7 @@ Personas/memory: personas, persona_journal_entries, persona_knowledge_entries, m
 
 Market/customers: customers, customer_personas, customer_segments, market_reports, competitors, keywords, landing_pages, ad_copies, ad_groups, campaigns, llm_models, media_provider_configs
 
-MCP platform: mcp_api_keys, mcp_custom_scopes, mcp_pairing_grants, mcp_tool_vectors, mcp_overviews, mcp_endpoint_templates, oauth_clients, oauth_authorization_codes, oauth_refresh_tokens
+MCP platform: mcp_api_keys, mcp_custom_scopes, mcp_pairing_grants, mcp_tool_vectors, mcp_overviews, mcp_endpoint_templates, mcp_tool_sets, oauth_clients, oauth_authorization_codes, oauth_refresh_tokens
 
 GitHub: github_tokens, github_repos
 

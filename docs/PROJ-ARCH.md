@@ -70,8 +70,9 @@ graph TB
 | **nginx** | `nginx/` | Reverse proxy: `/api/*`, `/auth/*`, `/socket`, `/health` → backend; rest → frontend |
 | **backend** (`:noizu_prompt_lingua`) | `backend/` | Phoenix 1.8 JSON API, MCP fleet, channels, Oban jobs, domain contexts |
 | **frontend** | `frontend/` | Next.js App Router — public, `/app/*` dashboard, `/app/[orgId]/*` org surfaces, `/app/admin/*` |
-| **Liquibase** | `backend/db/` | Canonical schema changelogs `000`–`082`; runs as migrate container/Job before app |
+| **Liquibase** | `backend/db/` | Canonical schema changelogs `000`–`084`; runs as migrate container/Job before app |
 | **MCP catalog** (`MCPServers`) | `backend/lib/.../mcp*` | Single source of truth for subdomain MCP servers + custom-scope packaging |
+| **MCP toolsets + VFS** | `backend/lib/.../mcp/{toolsets,vfs}/` | DB-backed custom tool sets (`mcp_tool_sets`: profiles, include lists, consent-gated destructive tools) + VFS mount exposing domains as a tool-backed filesystem |
 | **PBAC / Authz** | `backend/lib/.../{acl,authz}/` | Groups, policies, scoped memberships; `ToolGuard` shadow/enforce on MCP tools |
 | **NPL engine** | `conventions/`, `backend/lib/.../npl/`, `src/npl_mcp/npl/` | Convention load/spec generation from YAML corpus |
 | **TRP client** | `backend/lib/.../trp/` | therobotplans (PM source) integration: transport, provisioning, service auth |
@@ -90,6 +91,8 @@ graph TB
 ### MCP servers (catalog)
 
 Required: **root**, **sessions**, **organizations**. Optional subdomain servers: projects, tickets, assets, artifacts, chat, review, wiki, github, personas, instructions, memory, markdown, notifications, pubsub, browser, customers, market, campaigns, unicode. Custom include-scopes served at `/custom/:slug/mcp`. Packaging modes: `default` | `core_custom` | `all_in_one`.
+
+On top of the catalog, **custom tool sets** (`mcp_tool_sets`, changeset 083) assemble per-org/project/group tool surfaces from catalog groups, with five reserved capability profiles (`full`, `agent-ops`, `pm-dev`, `content`, `comms`) and consent negotiations gating destructive tools. A **VFS mount** (`VFSServer` over `Noizu.MCP.VFS`) exposes the same domain contexts as a tool-backed virtual filesystem at `/tobor/{org}/…`, with per-principal `_meta` discovery (`whoami.json`, `toolsets.json`).
 
 ### Frontend surfaces
 
@@ -144,6 +147,7 @@ Liquibase is canonical (`backend/db/changelog/`); the Python fleet has its own L
 
 - **Elixir/Phoenix as the platform core**: domain contexts give each product area (tickets, chat, memory, …) a schema+context boundary; MCP servers and REST are thin faces over the same contexts
 - **Multi-server MCP on host-scoped paths**: per-domain servers with identical discovery tools; one catalog (`MCPServers`) drives routing, packaging, and custom scopes
+- **DB-backed tool sets + VFS surface**: custom tool sets (`mcp_tool_sets`) composed from catalog groups via capability profiles and include lists, consent-gated destructive tools, plus a `/tobor/{org}/…` VFS view over the same domain contexts
 - **Liquibase owns the schema**: Ecto migrations deliberately minimal (oban, MCP key/scope bits); `db/changelog` is the single source of DDL
 - **Separate human vs agent auth**: OIDC+Guardian for browsers; mints → short-lived MCP JWT for agents; server-side identity resolution via ToolGuard
 - **PBAC v2 over role enums**: groups, JSON policies, scoped memberships, custom roles, policy simulator; `ToolGuard` shadow mode precedes enforcement

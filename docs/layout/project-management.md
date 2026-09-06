@@ -22,10 +22,10 @@ project-management/
 │   ├── index.yaml                      #   Master story index (single source of truth)
 │   ├── README.md                       #   User story conventions
 │   ├── advanced-loading-extension.yaml #   Extended loading stories
-│   ├── US-001-*.md through US-232-*.md #   150+ individual stories
+│   ├── US-001-*.md onward              #   260+ individual story files (index.yaml authoritative)
 │   └── index.yaml.backup              #   Index backup
 ├── PRDs/                               # Product requirement documents
-│   ├── index.yaml                      #   PRD index
+│   ├── INDEX-NPL.md · index.yaml       #   PRD indexes (markdown + YAML)
 │   ├── PRD-001-database-infrastructure/#   Database infrastructure
 │   ├── PRD-002-artifact-management/    #   Artifact management
 │   ├── PRD-003-review-system/          #   Review system
@@ -43,8 +43,15 @@ project-management/
 │   ├── PRD-015-npl-loading-extension/  #   NPL loading extension
 │   ├── PRD-016-skill-validator-tool/   #   Skill validator
 │   ├── PRD-017-markdown-tools/        #   Markdown tools
-│   ├── PRD-017-pm-mcp-tools/          #   PM MCP tools
+│   ├── PRD-018-pm-mcp-tools/           #   PM MCP tools
+│   ├── PRD-019-tobor-locker-ux-overhaul.md  #   Tobor locker UX overhaul (single doc)
+│   ├── PRD-N1…N6-*.md                  #   Overhaul series: parity, storage providers, gateway auth,
+│   │                                   #     admin UI, adoption flip, hardening
 │   └── archive/                        #   Archived/superseded PRDs
+├── reviews/                            # Story implementation reviews (260+ files)
+├── screens/                            # Screens extracted from user stories
+├── components/                         # Reusable UI components extracted from stories
+├── roadmap/                            # Roadmap planning notes
 ├── TODO/                               # Backlog items
 │   └── jina.md
 ├── personas.md                         # Persona overview

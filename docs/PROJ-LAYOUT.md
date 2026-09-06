@@ -4,11 +4,12 @@ Multi-tenant agent/human collaboration platform ("tobor"): **Elixir Phoenix API*
 
 ```
 NoizuPromptLingo/
-├── backend/                        # Elixir Phoenix API (Ecto, MCP endpoint, Guardian auth, TRP client) → [layout/backend.md](layout/backend.md)
+├── backend/                        # Elixir Phoenix API (Ecto, MCP servers + toolsets/VFS, Guardian auth, TRP client) → [layout/backend.md](layout/backend.md)
 ├── src/                            # Python MCP packages → [layout/src.md](layout/src.md)
-│   ├── npl_mcp/                    #   Main NPL MCP package (FastAPI + FastMCP: agents, artifacts, browser tools, chat,
-│   │                               #     instructions, markdown, meta_tools, npl parser, orchestration, pipes, pm_tools,
-│   │                               #     sessions, skills, storage (asyncpg), tasks, tool_sessions, web, launcher.py)
+│   ├── npl_mcp/                    #   Main NPL MCP package (FastAPI + FastMCP: agents, api, artifacts, browser tools, chat,
+│   │                               #     executors, instructions, markdown, meta_tools, npl parser, orchestration, pipes,
+│   │                               #     pm_tools, scripts, sessions, skills, storage (asyncpg), tasks, tool_sessions,
+│   │                               #     web, launcher.py)
 │   ├── npl_persona/                #   Persona simulation CLI (analysis, journal, knowledge, teams, templates)
 │   └── mcp.py                      #   Minimal FastMCP hello-world server
 ├── frontend/                       # Next.js web UI (React/TypeScript/Tailwind)
@@ -28,8 +29,8 @@ NoizuPromptLingo/
 │   ├── PROJ-LAYOUT.md              #   This file (+ .summary.md)
 │   ├── PROJ-ARCH.md                #   Architecture (+ .summary.md)
 │   ├── PROJ-SCHEMA.md              #   Schema doc (+ .summary.md)
-│   └── PROJ-STATUS.md · features-grid.md · REMOTE-ACCESS-TUNNEL-DESIGN.md · winnower-design.md
-├── project-management/             # Planning & specs → [layout/project-management.md](layout/project-management.md)
+│   └── PROJ-STATUS.md · FEATURE-PARITY-AUDIT.md · features-grid.md · REMOTE-ACCESS-TUNNEL-DESIGN.md · winnower-design.md
+├── project-management/             # Planning & specs (personas, stories, PRDs, reviews, screens, components) → [layout/project-management.md](layout/project-management.md)
 ├── conventions/                    # NPL convention YAML (source of truth for NPLSpec + NPLLoad):
 │                                   #   syntax, declarations, directives, prefixes, prompt-sections,
 │                                   #   special-sections, pumps, npl.yaml
@@ -50,22 +51,23 @@ NoizuPromptLingo/
 │   ├── docker-compose.dev.yaml · .override.yaml · .ci.yaml · .sandbox.yaml
 │   ├── Dockerfile · Dockerfile.sandbox
 │   └── Makefile                    # Build/task automation (init, build, run, migrate, regen, sandbox targets)
-├── liquibase/                      # DB migrations (changelogs/ 001–018+, liquibase.properties.example)
+├── liquibase/                      # DB migrations — Python MCP DB (changelogs/ 001–019, liquibase.properties.example)
 ├── tools/                          # Utility scripts (git_tree/git_dump, markdown, validators/, lib/)
 ├── plugins/llm/                    # Squash-vendored local MCP servers (doc-pointers, Google, Dropbox, run-claude)
 ├── scripts/                        # Operational scripts (gen-env.sh, remote-access cert minting, port-forward)
 ├── gh-pages                        # GitHub Pages submodule (static site, branch: gh-pages)
 ├── .claude/ · .agents/ · .codex/   # Agent harness configs (agents/, commands/, skills symlinks)
 ├── .claude-plugin/ · .grok-plugin/ # Plugin marketplace manifests (Claude / Grok)
+├── .github/workflows/ci.yml        # CI workflow
 ├── .dockerignore · .gitignore · .gitmodules
 ├── .mise.toml · .python-version · .tool-versions   # mise + Python 3.13 toolchain
 ├── .env.example                    # Env template → copy to .env (root), backend/.env, frontend/.env via `make init`
 ├── .env                            # Generated env file (gitignored)
 ├── AGENTS.md · CLAUDE.md           # Agent instructions (Codex mirror / Claude Code)
 ├── INSTALL.md · INTEGRATION-NOTES.md · RESUME.md · README.md
-├── pyproject.toml · uv.lock        # Python package + lock (console scripts: npl-mcp, npl-docs-regen)
+├── pyproject.toml · uv.lock        # Python package + lock (console scripts — see table below)
 ├── package-lock.json               # Root Node lock
-├── debug-command.sh · ignore.test-it.md · wip.json · LICENSE
+├── debug-command.sh · ignore.test-it.md · work-overhaul.md · wip.json · LICENSE
 └── staging/                        # Local worktrees (gitignored, not part of repo)
 ```
 
@@ -84,6 +86,12 @@ NoizuPromptLingo/
 |--------|--------|-------------|
 | `npl-mcp` | `npl_mcp.launcher:main` | Run the full NPL MCP server |
 | `npl-docs-regen` | `npl_mcp.docs_regen:main` | Regenerate `npl/npl-full.md` from `conventions/` |
+| `npl-tmlanguage` | `npl_mcp.scripts.tmlanguage:main` | Generate TextMate grammar for NPL syntax |
+| `git-dump` | `tools.git_dump:main` | Dump repo file contents (LLM context packaging) |
+| `git-tree` | `tools.git_tree:main` | Print tracked-file tree |
+| `2md` | `tools.convert_to_markdown:main` | Convert documents to markdown |
+| `md-view` | `tools.md_view:main` | Filtered markdown viewer |
+| `view-md` | `tools.view_md:main` | Markdown viewer (alternate entry) |
 
 ## Configuration Files Requiring Setup
 

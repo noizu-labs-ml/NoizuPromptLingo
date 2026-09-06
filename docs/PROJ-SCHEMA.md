@@ -4,7 +4,7 @@ Persistence reference for the whole project. NPL has **two separate PostgreSQL s
 
 | Store | Owner | Migrations | Docs |
 |-------|-------|-----------|------|
-| Backend DB | Elixir Phoenix API (`:noizu_prompt_lingua`) | `backend/db/changelog/` (Liquibase 000–082) + minimal Ecto migrations | [schema/backend-domains.md](schema/backend-domains.md), [schema/core-identity.md](schema/core-identity.md) |
+| Backend DB | Elixir Phoenix API (`:noizu_prompt_lingua`) | `backend/db/changelog/` (Liquibase 000–084) + minimal Ecto migrations | [schema/backend-domains.md](schema/backend-domains.md), [schema/core-identity.md](schema/core-identity.md) |
 | Python MCP DB | `src/npl_mcp` (asyncpg) | `liquibase/changelogs/` (changesets 001–019) | [schema/instructions.md](schema/instructions.md), [schema/npl-content.md](schema/npl-content.md), [schema/project-management.md](schema/project-management.md) |
 | Redis | Backend cache/PubSub | — | [schema/config-artifacts.md](schema/config-artifacts.md) |
 | Weaviate (optional) | Memory embeddings (`NplMemory` class) | — | [schema/config-artifacts.md](schema/config-artifacts.md) |
@@ -247,7 +247,7 @@ Schema from `liquibase/changelogs/changeset-001…019` (all tables prefixed `npl
 | Range | Content |
 |-------|---------|
 | 000–010 | Extensions, enums, seed helper, versioned entities, auth, media, users, orgs, invites → [schema/core-identity.md](schema/core-identity.md) |
-| 011–082 | Webhooks, admin flag, PBAC/ACL, projects, sessions, GitHub, artifacts, chat, reviews, tickets, boards, mock-MCP, personas, instructions, agent pipes, remote access, memory, customers, market, campaigns, LLM models, media providers, pubsub, unicode codex, MCP platform, OAuth AS, marketing → [schema/backend-domains.md](schema/backend-domains.md) |
+| 011–084 | Webhooks, admin flag, PBAC/ACL, projects, sessions, GitHub, artifacts, chat, reviews, tickets, boards, mock-MCP, personas, instructions, agent pipes, remote access, memory, customers, market, campaigns, LLM models, media providers, pubsub, unicode codex, MCP platform, OAuth AS, marketing, org slugs (082), MCP tool sets (083), browser capture resource types (084) → [schema/backend-domains.md](schema/backend-domains.md) |
 
 ### Python MCP (`liquibase/changelogs/`)
 
