@@ -59,7 +59,11 @@ defmodule NoizuPromptLingua.MCP.OrganizationGetTrpShapeTest do
     # Local row so ref resolution reaches the TRP leg instead of nil-ing out.
     org_uuid = Ecto.UUID.generate()
 
-    %NoizuPromptLingua.Schema.Organizations.Organization{id: org_uuid, name: "trp-off", slug: "trp-off-#{System.unique_integer([:positive])}"}
+    %NoizuPromptLingua.Schema.Organizations.Organization{
+      id: org_uuid,
+      name: "trp-off",
+      slug: "trp-off-#{System.unique_integer([:positive])}"
+    }
     |> NoizuPromptLingua.Repo.insert!()
 
     try do

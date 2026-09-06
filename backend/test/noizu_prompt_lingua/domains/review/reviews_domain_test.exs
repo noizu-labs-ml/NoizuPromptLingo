@@ -6,7 +6,10 @@ defmodule NoizuPromptLingua.Domains.ReviewsTest do
 
   setup do
     org_id = insert_org()
-    {:ok, artifact} = Artifacts.create(%{organization_id: org_id, kind: "document", title: "Doc", content: "v1"})
+
+    {:ok, artifact} =
+      Artifacts.create(%{organization_id: org_id, kind: "document", title: "Doc", content: "v1"})
+
     {artifact, rev} = {artifact, artifact.revisions |> hd()}
     {:ok, org_id: org_id, artifact_id: artifact.id, revision_id: rev.id}
   end
@@ -46,7 +49,9 @@ defmodule NoizuPromptLingua.Domains.ReviewsTest do
   } do
     {:ok, review} = Reviews.create(review_attrs(org_id, artifact_id, revision_id))
 
-    {:ok, updated} = Reviews.update(review.id, %{title: "Renamed", verdict: "approved", artifact_id: "tampered"})
+    {:ok, updated} =
+      Reviews.update(review.id, %{title: "Renamed", verdict: "approved", artifact_id: "tampered"})
+
     assert updated.title == "Renamed"
     assert updated.verdict == "approved"
     assert updated.artifact_id == artifact_id
@@ -78,8 +83,11 @@ defmodule NoizuPromptLingua.Domains.ReviewsTest do
   } do
     {:ok, review} = Reviews.create(review_attrs(org_id, artifact_id, revision_id))
 
-    {:ok, o1} = Reviews.add_overlay(%{review_id: review.id, x: 1, y: 2, comment: "first", persona: "p1"})
-    {:ok, _} = Reviews.add_overlay(%{review_id: review.id, x: 3, y: 4, comment: "second", persona: "p2"})
+    {:ok, o1} =
+      Reviews.add_overlay(%{review_id: review.id, x: 1, y: 2, comment: "first", persona: "p1"})
+
+    {:ok, _} =
+      Reviews.add_overlay(%{review_id: review.id, x: 3, y: 4, comment: "second", persona: "p2"})
 
     assert [%{comment: "first"}, %{comment: "second"}] = Reviews.list_overlays(review.id)
     assert o1.review_id == review.id
@@ -96,14 +104,25 @@ defmodule NoizuPromptLingua.Domains.ReviewsTest do
     revision_id: revision_id
   } do
     {:ok, open} = Reviews.create(review_attrs(org_id, artifact_id, revision_id))
-    {:ok, other_artifact} = Artifacts.create(%{organization_id: org_id, kind: "document", title: "Doc2", content: "v"})
+
+    {:ok, other_artifact} =
+      Artifacts.create(%{organization_id: org_id, kind: "document", title: "Doc2", content: "v"})
+
     other_rev = hd(other_artifact.revisions)
 
     {:ok, done} = Reviews.create(review_attrs(org_id, artifact_id, other_rev.id))
     {:ok, _} = Reviews.complete(done.id)
 
     other_org = insert_org()
-    {:ok, other_artifact2} = Artifacts.create(%{organization_id: other_org, kind: "document", title: "Other Org Doc", content: "v"})
+
+    {:ok, other_artifact2} =
+      Artifacts.create(%{
+        organization_id: other_org,
+        kind: "document",
+        title: "Other Org Doc",
+        content: "v"
+      })
+
     other_rev2 = hd(other_artifact2.revisions)
     {:ok, _} = Reviews.create(review_attrs(other_org, other_artifact2.id, other_rev2.id))
 
@@ -124,6 +143,7 @@ defmodule NoizuPromptLingua.Domains.ReviewsTest do
 
   test "create requires organization, artifact, revision and reviewer_persona", %{org_id: _org_id} do
     assert {:error, cs} = Reviews.create(%{title: "incomplete"})
+
     for field <- [:organization_id, :artifact_id, :revision_id, :reviewer_persona] do
       assert Keyword.has_key?(cs.errors, field)
     end

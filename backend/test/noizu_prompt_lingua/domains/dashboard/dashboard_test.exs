@@ -42,7 +42,9 @@ defmodule NoizuPromptLingua.Domains.DashboardTest do
   end
 
   defp artifact!(org, attrs) do
-    Repo.insert!(struct!(Artifact, Map.merge(%{organization_id: org, title: "a"}, Map.new(attrs))))
+    Repo.insert!(
+      struct!(Artifact, Map.merge(%{organization_id: org, title: "a"}, Map.new(attrs)))
+    )
   end
 
   defp chat_room!(org, attrs) do
@@ -101,24 +103,32 @@ defmodule NoizuPromptLingua.Domains.DashboardTest do
     ticket!(org, status: "open", inserted_at: @today_sec, updated_at: @today_sec)
     review!(org, status: "open", inserted_at: @today_sec, updated_at: @today_sec)
 
-    review!(org, status: "in_progress",
-            inserted_at: @today_pm_sec, updated_at: @today_pm_sec)
+    review!(org, status: "in_progress", inserted_at: @today_pm_sec, updated_at: @today_pm_sec)
 
     project!(org, inserted_at: @today, updated_at: @today)
 
     # Older rows — outside the default daily window where noted.
     session!(org, status: "active", inserted_at: @yesterday, updated_at: @yesterday)
-    ticket!(org, status: "blocked",
-            inserted_at: @three_days_ago_sec, updated_at: @three_days_ago_sec)
 
-    ticket!(org, status: "in_review",
-            inserted_at: @three_days_ago_sec, updated_at: @three_days_ago_sec)
+    ticket!(org,
+      status: "blocked",
+      inserted_at: @three_days_ago_sec,
+      updated_at: @three_days_ago_sec
+    )
 
-    review!(org, status: "done",
-            inserted_at: @three_days_ago_sec, updated_at: @three_days_ago_sec)
+    ticket!(org,
+      status: "in_review",
+      inserted_at: @three_days_ago_sec,
+      updated_at: @three_days_ago_sec
+    )
 
-    session!(org, status: "archived",
-             inserted_at: @forty_days_ago, updated_at: @forty_days_ago)
+    review!(org,
+      status: "done",
+      inserted_at: @three_days_ago_sec,
+      updated_at: @three_days_ago_sec
+    )
+
+    session!(org, status: "archived", inserted_at: @forty_days_ago, updated_at: @forty_days_ago)
   end
 
   describe "stats/2" do
@@ -170,7 +180,7 @@ defmodule NoizuPromptLingua.Domains.DashboardTest do
       # at 10:00/15:00 → buckets 2 and 3 of today's row.
       heatmap = stats.heatmap
       assert length(heatmap) == 7
-      assert Enum.all?(heatmap, &length(&1) == 6)
+      assert Enum.all?(heatmap, &(length(&1) == 6))
 
       pg_dow =
         @today
@@ -202,6 +212,7 @@ defmodule NoizuPromptLingua.Domains.DashboardTest do
                Enum.at(stats.recent, 0).at,
                Date.to_iso8601(DateTime.to_date(@today_pm)) <> "T15:00:00"
              )
+
       assert Enum.all?(stats.recent, fn r ->
                r.type in ~w(project session artifact review ticket) and is_binary(r.title)
              end)

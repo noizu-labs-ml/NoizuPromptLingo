@@ -53,7 +53,10 @@ defmodule NoizuPromptLingua.Domains.Personas.ToolsTest do
     assert is_list(journal) and is_list(kb)
 
     assert {:ok, %{id: ^id, name: "Ava II"}} =
-             PersonaUpdate.call(%{"organization" => org_slug, "persona" => slug, "name" => "Ava II"}, %{})
+             PersonaUpdate.call(
+               %{"organization" => org_slug, "persona" => slug, "name" => "Ava II"},
+               %{}
+             )
 
     assert {:ok, %{count: 1, personas: [_]}} =
              PersonaList.call(%{"organization" => org_slug}, %{})
@@ -63,7 +66,9 @@ defmodule NoizuPromptLingua.Domains.Personas.ToolsTest do
 
     missing_get = Ecto.UUID.generate()
 
-    assert {:error, msg_get} = PersonaGet.call(%{"organization" => org_slug, "persona" => missing_get}, %{})
+    assert {:error, msg_get} =
+             PersonaGet.call(%{"organization" => org_slug, "persona" => missing_get}, %{})
+
     assert msg_get == "Persona '#{missing_get}' not found"
   end
 
@@ -72,7 +77,12 @@ defmodule NoizuPromptLingua.Domains.Personas.ToolsTest do
 
     assert {:ok, %{id: _entry_id, category: "work_log"}} =
              JournalAdd.call(
-               %{"organization" => org_slug, "persona" => slug, "body" => "shipped it", "category" => "work_log"},
+               %{
+                 "organization" => org_slug,
+                 "persona" => slug,
+                 "body" => "shipped it",
+                 "category" => "work_log"
+               },
                %{}
              )
 
@@ -80,7 +90,10 @@ defmodule NoizuPromptLingua.Domains.Personas.ToolsTest do
              JournalList.call(%{"organization" => org_slug, "persona" => slug}, %{})
 
     missing = Ecto.UUID.generate()
-    assert {:error, msg} = JournalList.call(%{"organization" => org_slug, "persona" => missing}, %{})
+
+    assert {:error, msg} =
+             JournalList.call(%{"organization" => org_slug, "persona" => missing}, %{})
+
     assert msg == "Persona '#{missing}' not found"
 
     assert is_binary(id)
@@ -91,12 +104,21 @@ defmodule NoizuPromptLingua.Domains.Personas.ToolsTest do
 
     assert {:ok, %{id: entry_id, slug: "kb-1", title: "KB One"}} =
              KnowledgeAdd.call(
-               %{"organization" => org_slug, "persona" => slug, "slug" => "kb-1", "title" => "KB One", "body" => "b"},
+               %{
+                 "organization" => org_slug,
+                 "persona" => slug,
+                 "slug" => "kb-1",
+                 "title" => "KB One",
+                 "body" => "b"
+               },
                %{}
              )
 
     assert {:ok, %{id: ^entry_id}} =
-             KnowledgeGet.call(%{"organization" => org_slug, "persona" => slug, "entry" => "kb-1"}, %{})
+             KnowledgeGet.call(
+               %{"organization" => org_slug, "persona" => slug, "entry" => "kb-1"},
+               %{}
+             )
 
     assert {:ok, %{id: ^entry_id, title: "KB One v2"}} =
              KnowledgeUpdate.call(%{"id" => entry_id, "title" => "KB One v2"}, %{})
@@ -105,15 +127,23 @@ defmodule NoizuPromptLingua.Domains.Personas.ToolsTest do
              KnowledgeList.call(%{"organization" => org_slug, "persona" => slug}, %{})
 
     assert {:ok, %{deleted: true}} = KnowledgeDelete.call(%{"id" => entry_id}, %{})
-    assert {:error, "Knowledge entry not found"} = KnowledgeDelete.call(%{"id" => Ecto.UUID.generate()}, %{})
+
     assert {:error, "Knowledge entry not found"} =
-             KnowledgeGet.call(%{"organization" => org_slug, "persona" => slug, "entry" => "kb-missing"}, %{})
+             KnowledgeDelete.call(%{"id" => Ecto.UUID.generate()}, %{})
+
+    assert {:error, "Knowledge entry not found"} =
+             KnowledgeGet.call(
+               %{"organization" => org_slug, "persona" => slug, "entry" => "kb-missing"},
+               %{}
+             )
 
     assert is_binary(id)
   end
 
   test "Overview reports persona count and never errors on unknown orgs", %{org_slug: org_slug} do
-    assert {:ok, %{persona_count: 0, tools: tools}} = Overview.call(%{"organization" => org_slug}, %{})
+    assert {:ok, %{persona_count: 0, tools: tools}} =
+             Overview.call(%{"organization" => org_slug}, %{})
+
     assert is_map(tools)
     assert {:ok, %{persona_count: 0}} = Overview.call(%{"organization" => "nope"}, %{})
   end

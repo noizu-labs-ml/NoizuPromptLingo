@@ -102,7 +102,9 @@ defmodule NoizuPromptLingua.Domains.Assets.ContentGeneratorTest do
       # Type unknown to FIM maps -> empty context; unknown provider -> localhost
       # fallback; the refused connection error propagates as request_failed.
       yaml = "type: unknown-type\nprompt:\n  text: hi\n"
-      assert {:error, {:request_failed, _}} = ContentGenerator.generate(yaml, endpoint: dead_url())
+
+      assert {:error, {:request_failed, _}} =
+               ContentGenerator.generate(yaml, endpoint: dead_url())
     end
   end
 
@@ -116,7 +118,10 @@ defmodule NoizuPromptLingua.Domains.Assets.ContentGeneratorTest do
       opts = [provider: "local-model", endpoint: base <> "/echo", model: "llama-local"]
 
       assert {:ok, content} = ContentGenerator.generate(yaml, opts)
-      assert %{"body" => body, "authorization" => nil, "x_api_key" => nil} = Jason.decode!(content)
+
+      assert %{"body" => body, "authorization" => nil, "x_api_key" => nil} =
+               Jason.decode!(content)
+
       assert body["model"] == "llama-local"
     end
 

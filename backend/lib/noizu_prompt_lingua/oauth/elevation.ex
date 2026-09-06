@@ -58,7 +58,9 @@ defmodule NoizuPromptLingua.OAuth.Elevation do
     now = System.system_time(:second)
 
     case :ets.lookup(@table, txn) do
-      [{^txn, %{expires_at: exp} = entry}] when exp > now -> {:ok, entry}
+      [{^txn, %{expires_at: exp} = entry}] when exp > now ->
+        {:ok, entry}
+
       [{^txn, _}] ->
         :ets.delete(@table, txn)
         {:error, :expired}
@@ -167,7 +169,9 @@ defmodule NoizuPromptLingua.OAuth.Elevation do
   def verify_for_tool(_, _, _), do: {:error, :invalid_elevation}
 
   def args_hash(args) when is_map(args) do
-    :crypto.hash(:sha256, Jason.encode!(args)) |> Base.encode16(case: :lower) |> binary_part(0, 16)
+    :crypto.hash(:sha256, Jason.encode!(args))
+    |> Base.encode16(case: :lower)
+    |> binary_part(0, 16)
   end
 
   def args_hash(_), do: nil

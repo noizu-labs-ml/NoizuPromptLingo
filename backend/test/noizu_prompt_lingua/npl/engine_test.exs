@@ -364,13 +364,14 @@ defmodule NoizuPromptLingua.NPL.EngineTest do
 
   defp expression(additions, subtractions \\ []) do
     %Parser.Expression{
-      additions: Enum.map(additions, fn
-        {section, component} ->
-          %Parser.Component{section: section, component: component, priority_max: nil}
+      additions:
+        Enum.map(additions, fn
+          {section, component} ->
+            %Parser.Component{section: section, component: component, priority_max: nil}
 
-        section ->
-          %Parser.Component{section: section, component: nil, priority_max: nil}
-      end),
+          section ->
+            %Parser.Component{section: section, component: nil, priority_max: nil}
+        end),
       subtractions:
         Enum.map(subtractions, fn {section, component} ->
           %Parser.Component{section: section, component: component, priority_max: nil}

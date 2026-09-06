@@ -47,7 +47,9 @@ defmodule NoizuPromptLingua.OAuth.ConsentManifestTest do
         "allow_tool" => %{"chat" => %{"Chat_Send" => "on"}}
       }
 
-      assert ConsentManifest.narrowing(@sections, params)["groups"]["chat"] == %{"disabled" => true}
+      assert ConsentManifest.narrowing(@sections, params)["groups"]["chat"] == %{
+               "disabled" => true
+             }
     end
 
     test "tolerates non-map params (absent nesting)" do

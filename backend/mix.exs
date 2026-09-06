@@ -167,19 +167,19 @@ defmodule NoizuPromptLingua.MixProject do
         "ecto.migrate --quiet",
         # One `test` invocation — alias list entries are separate tasks, so the
         # curated paths must ride the same string.
+        # mcp core: rename/cast regression, manifest parity, guards, resolvers
+        # stable controller sweeps
+        # auth / sso
         "test --exclude memory --exclude live_trp " <>
-          # mcp core: rename/cast regression, manifest parity, guards, resolvers
           "test/noizu_prompt_lingua/mcp/tool_set_invoke_regression_test.exs " <>
           "test/noizu_prompt_lingua/mcp/session_manifest_parity_test.exs " <>
           "test/noizu_prompt_lingua/mcp/session_manifest_test.exs " <>
           "test/noizu_prompt_lingua/mcp/tool_guard_branches_test.exs " <>
           "test/noizu_prompt_lingua/mcp/window_endpoint_resolver_branches_test.exs " <>
           "test/noizu_prompt_lingua/mcp/negotiations_provider_branches_test.exs " <>
-          # stable controller sweeps
           "test/noizu_prompt_lingua_web/controllers/remote_access_tunnels_test.exs " <>
           "test/noizu_prompt_lingua_web/controllers/media_controllers_test.exs " <>
           "test/noizu_prompt_lingua_web/controllers/controller_tail_sweep_test.exs " <>
-          # auth / sso
           "test/noizu_prompt_lingua/auth/sso_test.exs " <>
           "test/noizu_prompt_lingua_web/controllers/sso_controller_test.exs " <>
           "test/noizu_prompt_lingua_web/controllers/auth_controller_test.exs " <>

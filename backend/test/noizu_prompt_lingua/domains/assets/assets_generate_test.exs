@@ -52,7 +52,8 @@ defmodule NoizuPromptLingua.Domains.AssetsGenerateTest do
     Application.put_env(:noizu_prompt_lingua, :media_tool_runner, NoProviderStub)
 
     on_exit(fn ->
-      if prev, do: Application.put_env(:noizu_prompt_lingua, :media_tool_runner, prev),
+      if prev,
+        do: Application.put_env(:noizu_prompt_lingua, :media_tool_runner, prev),
         else: Application.delete_env(:noizu_prompt_lingua, :media_tool_runner)
     end)
 

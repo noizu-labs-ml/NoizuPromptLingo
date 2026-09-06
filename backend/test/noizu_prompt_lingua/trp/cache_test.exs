@@ -71,7 +71,7 @@ defmodule NoizuPromptLingua.TRP.CacheTest do
     assert {:error, :boom} = Cache.cached_get([:err], 60_000, fn -> {:error, :boom} end)
 
     # nil is not cached
-    assert nil == Cache.cached_get([:nil], 60_000, fn -> nil end)
-    assert nil == Cache.cached_get([:nil], 60_000, fn -> nil end)
+    assert nil == Cache.cached_get([nil], 60_000, fn -> nil end)
+    assert nil == Cache.cached_get([nil], 60_000, fn -> nil end)
   end
 end

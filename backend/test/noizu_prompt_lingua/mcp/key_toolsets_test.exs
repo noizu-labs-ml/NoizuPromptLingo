@@ -181,6 +181,7 @@ defmodule NoizuPromptLingua.MCP.KeyToolsetsTest do
       # plane registered on every domain server stays.
       kept_sessions = KeyToolsets.apply_hidden(sessions_specs, ctx, "sessions")
       assert kept_sessions != []
+
       assert Enum.all?(kept_sessions, fn spec ->
                spec.definition.meta && spec.definition.meta["category"] in ["Discovery", "NPL"]
              end)

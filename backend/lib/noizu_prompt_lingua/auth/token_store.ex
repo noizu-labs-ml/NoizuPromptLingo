@@ -13,7 +13,9 @@ defmodule NoizuPromptLingua.Auth.TokenStore do
 
   def store_refresh_jti(jti) when is_binary(jti) do
     case NoizuPromptLingua.Redis.set("refresh_jti:#{jti}", "1", ex: @refresh_ttl) do
-      {:ok, _} -> :ok
+      {:ok, _} ->
+        :ok
+
       other ->
         Logger.warning("[TokenStore] failed to persist refresh jti: #{inspect(other)}")
         :ok

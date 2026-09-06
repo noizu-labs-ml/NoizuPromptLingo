@@ -110,7 +110,11 @@ defmodule NoizuPromptLingua.MCP.VFS.RootUnionSmokeTest do
              VFS.read(Root, base(slug, "instructions") <> "/smoke-inst/versions/v1.md", ctx)
   end
 
-  test "unicode: reference plane reads; mutations are :enosys", %{slug: slug, org_id: org_id, ctx: ctx} do
+  test "unicode: reference plane reads; mutations are :enosys", %{
+    slug: slug,
+    org_id: org_id,
+    ctx: ctx
+  } do
     # The unicode tree is generated from UnicodeCodex rows — seed one element.
     {:ok, _} =
       NoizuPromptLingua.Domains.UnicodeCodex.upsert_element(%{
@@ -175,9 +179,18 @@ defmodule NoizuPromptLingua.MCP.VFS.RootUnionSmokeTest do
     assert %{"kind" => "team_member"} = Jason.decode!(body)
   end
 
-  test "notifications: notify create mounts + doc reads back", %{slug: slug, handle: handle, ctx: ctx} do
+  test "notifications: notify create mounts + doc reads back", %{
+    slug: slug,
+    handle: handle,
+    ctx: ctx
+  } do
     assert {:ok, node} =
-             VFS.create(Root, base(slug, "notifications") <> "/#{handle}/tell.json", "hello me", ctx)
+             VFS.create(
+               Root,
+               base(slug, "notifications") <> "/#{handle}/tell.json",
+               "hello me",
+               ctx
+             )
 
     assert is_binary(id = node.xattrs["id"])
 
@@ -197,7 +210,12 @@ defmodule NoizuPromptLingua.MCP.VFS.RootUnionSmokeTest do
       })
 
     assert {:ok, _} =
-             VFS.create(Root, base(slug, "pubsub") <> "/alerts/messages/smoke-hello.json", "first body", ctx)
+             VFS.create(
+               Root,
+               base(slug, "pubsub") <> "/alerts/messages/smoke-hello.json",
+               "first body",
+               ctx
+             )
 
     # Publishes land under server-assigned feed names, served as event docs.
     assert {:ok, entries, nil} =
@@ -227,7 +245,11 @@ defmodule NoizuPromptLingua.MCP.VFS.RootUnionSmokeTest do
     assert %{"title" => "Smoke ticket"} = Jason.decode!(body)
   end
 
-  test "review: review a seeded artifact + record reads back", %{slug: slug, org_id: org_id, ctx: ctx} do
+  test "review: review a seeded artifact + record reads back", %{
+    slug: slug,
+    org_id: org_id,
+    ctx: ctx
+  } do
     {:ok, artifact} =
       NoizuPromptLingua.Domains.Artifacts.create(%{
         organization_id: org_id,

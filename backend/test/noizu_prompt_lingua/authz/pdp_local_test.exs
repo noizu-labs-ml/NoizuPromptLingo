@@ -217,7 +217,12 @@ defmodule NoizuPromptLingua.Authz.Pdp.LocalTest do
 
   test "non-binary user_id denies :no_identity" do
     assert {:error, :no_identity} =
-             Local.check(%{user_id: 12_345, resource_type: :project, resource_id: "x", required_role: :viewer})
+             Local.check(%{
+               user_id: 12_345,
+               resource_type: :project,
+               resource_id: "x",
+               required_role: :viewer
+             })
   end
 
   defp register_client(name) do

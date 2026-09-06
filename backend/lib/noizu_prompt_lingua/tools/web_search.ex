@@ -33,7 +33,9 @@ defmodule NoizuPromptLingua.Tools.WebSearch do
 
   def search(query, opts) do
     limit = opts |> Keyword.get(:limit, @default_limit) |> min(@max_limit) |> max(1)
-    provider = opts[:provider] || Application.get_env(:noizu_prompt_lingua, :web_search_provider, :jina)
+
+    provider =
+      opts[:provider] || Application.get_env(:noizu_prompt_lingua, :web_search_provider, :jina)
 
     do_search(provider, query, limit)
   end

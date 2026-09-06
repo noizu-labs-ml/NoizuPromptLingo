@@ -67,8 +67,12 @@ defmodule NoizuPromptLingua.Domains.ArtifactsTest do
   end
 
   test "list filters by org / kind / project / title search with pagination", %{org_id: org_id} do
-    {:ok, doc} = Artifacts.create(artifact_attrs(org_id, %{content: "c", title: "Design Doc Alpha"}))
-    {:ok, _} = Artifacts.create(artifact_attrs(org_id, %{content: "c", kind: "image", title: "Sketch"}))
+    {:ok, doc} =
+      Artifacts.create(artifact_attrs(org_id, %{content: "c", title: "Design Doc Alpha"}))
+
+    {:ok, _} =
+      Artifacts.create(artifact_attrs(org_id, %{content: "c", kind: "image", title: "Sketch"}))
+
     other = insert_org()
     {:ok, _} = Artifacts.create(artifact_attrs(other, %{content: "c"}))
 
@@ -76,7 +80,9 @@ defmodule NoizuPromptLingua.Domains.ArtifactsTest do
     assert [%{id: id}] = Artifacts.list(organization_id: org_id, kind: "document")
     assert id == doc.id
 
-    assert [%{title: "Design Doc Alpha"}] = Artifacts.list(organization_id: org_id, search: "design doc")
+    assert [%{title: "Design Doc Alpha"}] =
+             Artifacts.list(organization_id: org_id, search: "design doc")
+
     assert Artifacts.list(organization_id: org_id, search: "does-not-match") == []
 
     assert length(Artifacts.list(organization_id: org_id, limit: 1, offset: 1)) == 1

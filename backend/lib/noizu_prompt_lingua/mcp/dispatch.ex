@@ -30,7 +30,8 @@ defmodule NoizuPromptLingua.MCP.Dispatch do
           :ok ->
             run_spec(spec, args || %{}, ctx)
 
-          {:error, %{code: code, reason: reason, elevation_uri: uri} = meta} when is_binary(uri) ->
+          {:error, %{code: code, reason: reason, elevation_uri: uri} = meta}
+          when is_binary(uri) ->
             # Phase 4 step-up: surface elevation URI for HITL approval.
             ToolResult.error(
               Jason.encode!(%{

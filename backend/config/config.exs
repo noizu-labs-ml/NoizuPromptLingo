@@ -57,16 +57,13 @@ config :noizu_prompt_lingua, NoizuPromptLingua.Guardian,
   secret_key: "dev-secret-key-change-in-production"
 
 # MCP three-axis PDP (Phase 3). :local uses Ecto + Authz; :spicedb needs SPICEDB_*.
-config :noizu_prompt_lingua, :mcp_pdp,
-  mode: :local
+config :noizu_prompt_lingua, :mcp_pdp, mode: :local
 
 # Phase 4: legacy API-key mint (set mint_enabled: false to force OAuth-only).
-config :noizu_prompt_lingua, :mcp_legacy_api_keys,
-  mint_enabled: true
+config :noizu_prompt_lingua, :mcp_legacy_api_keys, mint_enabled: true
 
 # Phase 4: destructive tool step-up elevation.
-config :noizu_prompt_lingua, :mcp_elevation,
-  enabled: true
+config :noizu_prompt_lingua, :mcp_elevation, enabled: true
 
 # Compile-time env, read at runtime by NoizuPromptLingua.OAuth.Jwks to decide
 # whether an ephemeral JWT signing key is tolerable (it never is in prod).

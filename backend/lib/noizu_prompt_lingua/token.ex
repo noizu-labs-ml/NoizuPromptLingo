@@ -52,7 +52,8 @@ defmodule NoizuPromptLingua.Token do
     {:ok, token, DateTime.from_unix!(exp)}
   end
 
-  def issuer, do: Application.get_env(:noizu_prompt_lingua, :mcp_oauth, []) |> Keyword.get(:issuer, @issuer)
+  def issuer,
+    do: Application.get_env(:noizu_prompt_lingua, :mcp_oauth, []) |> Keyword.get(:issuer, @issuer)
 
   def default_ttl_seconds, do: configured_ttl()
 

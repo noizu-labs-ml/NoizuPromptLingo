@@ -142,7 +142,11 @@ defmodule NoizuPromptLinguaWeb.CustomRoleController do
     end
   end
 
-  def add_permission(conn, %{"org_id" => org_ref, "role_id" => role_id, "permission" => permission}) do
+  def add_permission(conn, %{
+        "org_id" => org_ref,
+        "role_id" => role_id,
+        "permission" => permission
+      }) do
     user_id = get_user_id(conn)
 
     with {:ok, org_id} <- resolve_org(org_ref),

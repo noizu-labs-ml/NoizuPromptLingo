@@ -99,7 +99,9 @@ defmodule NoizuPromptLinguaWeb.AuthController do
       {:ok, packaging} ->
         opts = packaging_opts(conn, params)
         servers = NoizuPromptLingua.MCPServers.for_host(host, packaging, opts)
-        ala_carte = if packaging == :setup, do: NoizuPromptLingua.MCPServers.ala_carte(host), else: []
+
+        ala_carte =
+          if packaging == :setup, do: NoizuPromptLingua.MCPServers.ala_carte(host), else: []
 
         default_scope =
           if packaging == :setup do
@@ -116,7 +118,9 @@ defmodule NoizuPromptLinguaWeb.AuthController do
 
         mcp_url =
           case default_scope do
-            %{url: url} when is_binary(url) -> url
+            %{url: url} when is_binary(url) ->
+              url
+
             _ ->
               case List.first(servers) do
                 %{url: url} when packaging == :setup and is_binary(url) -> url
@@ -182,7 +186,9 @@ defmodule NoizuPromptLinguaWeb.AuthController do
           {:ok, updated} ->
             conn
             |> put_status(:ok)
-            |> json(%{scope: NoizuPromptLingua.MCPCustomScopes.scope_json(updated, mcp_host(conn))})
+            |> json(%{
+              scope: NoizuPromptLingua.MCPCustomScopes.scope_json(updated, mcp_host(conn))
+            })
 
           {:error, :confirmation_required, groups} ->
             conn
@@ -348,48 +354,48 @@ defmodule NoizuPromptLinguaWeb.AuthController do
   end
 
   defp do_create_mcp_setup_key(conn, params, key_params, user) do
-      label = Map.get(key_params, "label") || Map.get(params, "label") || "default"
-      resource = params["resource"] || params["aud"] || key_params["resource"]
+    label = Map.get(key_params, "label") || Map.get(params, "label") || "default"
+    resource = params["resource"] || params["aud"] || key_params["resource"]
 
-      case MCPApiKeys.parse_expires_at(Map.get(key_params, "expires_at") || params["expires_at"]) do
-        {:ok, expires_at} ->
-          case MCPApiKeys.generate_api_key(user.id, label, expires_at: expires_at) do
-            {:ok, key, raw_key} ->
-              mcp_user = %{id: user.id, email: user.email, name: user.user_name}
+    case MCPApiKeys.parse_expires_at(Map.get(key_params, "expires_at") || params["expires_at"]) do
+      {:ok, expires_at} ->
+        case MCPApiKeys.generate_api_key(user.id, label, expires_at: expires_at) do
+          {:ok, key, raw_key} ->
+            mcp_user = %{id: user.id, email: user.email, name: user.user_name}
 
-              mint_opts =
-                if is_binary(resource) and resource != "" do
-                  [resource: resource]
-                else
-                  []
-                end
+            mint_opts =
+              if is_binary(resource) and resource != "" do
+                [resource: resource]
+              else
+                []
+              end
 
-              {:ok, token, expires_at_tok} =
-                NoizuPromptLingua.Token.mint(mcp_user, key, mint_opts)
+            {:ok, token, expires_at_tok} =
+              NoizuPromptLingua.Token.mint(mcp_user, key, mint_opts)
 
-              conn
-              |> put_status(:created)
-              |> json(%{
-                key: mcp_key_json(key),
-                raw_key: raw_key,
-                token: token,
-                expires_at: DateTime.to_iso8601(expires_at_tok),
-                token_type: "Bearer",
-                expires_in: max(DateTime.diff(expires_at_tok, DateTime.utc_now()), 0)
-              })
+            conn
+            |> put_status(:created)
+            |> json(%{
+              key: mcp_key_json(key),
+              raw_key: raw_key,
+              token: token,
+              expires_at: DateTime.to_iso8601(expires_at_tok),
+              token_type: "Bearer",
+              expires_in: max(DateTime.diff(expires_at_tok, DateTime.utc_now()), 0)
+            })
 
-            {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
-              conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+          {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
+            conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
 
-            {:error, reason} ->
-              conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
-          end
+          {:error, reason} ->
+            conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
+        end
 
-        :error ->
-          conn
-          |> put_status(:unprocessable_entity)
-          |> json(%{error: "expires_at must be a future ISO8601 timestamp"})
-      end
+      :error ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{error: "expires_at must be a future ISO8601 timestamp"})
+    end
   end
 
   defp resolve_setup_user(conn) do

@@ -7,6 +7,7 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.AddMember do
 
   input do
     field :room_id, :string, required: true, description: "Room slug or UUID (slug preferred)"
+
     field :organization, :string,
       description: "Org slug or UUID (required when room is addressed by slug)"
 
@@ -36,7 +37,9 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.AddMember do
              role: m.role,
              chatroom_url: NoizuPromptLingua.MCP.Urls.chat_room_url(room)
            }}
-        {:error, cs} -> {:error, "Failed: #{inspect(cs.errors)}"}
+
+        {:error, cs} ->
+          {:error, "Failed: #{inspect(cs.errors)}"}
       end
     else
       {:error, :organization_required} ->

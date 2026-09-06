@@ -108,6 +108,7 @@ defmodule NoizuPromptLingua.TRP.ServiceAuthTest do
   test "provision_org rejects non-binary attrs" do
     assert {:error, :invalid_org_attrs} = Provisioning.provision_org(%{slug: nil, name: "X"})
   end
+
   defp pick_slug(map) when is_map(map), do: Map.get(map, "slug") || Map.get(map, :slug)
 end
 
@@ -146,7 +147,10 @@ defmodule ServiceAuthStub do
       bump_logins()
 
       {:ok, 200,
-       %{"access_token" => "jwt_access_" <> Integer.to_string(state().logins), "refresh_token" => "jwt_refresh"}}
+       %{
+         "access_token" => "jwt_access_" <> Integer.to_string(state().logins),
+         "refresh_token" => "jwt_refresh"
+       }}
     else
       {:ok, 401, %{"error" => "unauthorized"}}
     end
@@ -165,7 +169,11 @@ defmodule ServiceAuthStub do
 
       method == :post and path == "/api/v1/organizations" and is_map(body) ->
         org = body[:organization]
-        {:ok, 201, %{"organization" => %{"id" => "trp-org-uuid", "slug" => org[:slug], "name" => org[:name]}}}
+
+        {:ok, 201,
+         %{
+           "organization" => %{"id" => "trp-org-uuid", "slug" => org[:slug], "name" => org[:name]}
+         }}
 
       true ->
         {:ok, 404, %{"error" => "Not found"}}

@@ -121,7 +121,12 @@ defmodule NoizuPromptLingua.Domains.Marketing.Signups do
           else
             case insert(email, "waitlist", false, true, metadata) do
               {:ok, _row} ->
-                %{accepted: true, waitlisted: true, promo_awarded: false, promo_remaining: promo_left}
+                %{
+                  accepted: true,
+                  waitlisted: true,
+                  promo_awarded: false,
+                  promo_remaining: promo_left
+                }
 
               {:error, changeset} ->
                 Repo.rollback(changeset)

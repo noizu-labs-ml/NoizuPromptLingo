@@ -78,11 +78,11 @@ defmodule Noizu.MCP.Fixtures.RawSchema do
     name: "raw_schema",
     description: "Uses a raw JSON Schema"
 
-  input_schema %{
+  input_schema(%{
     "type" => "object",
     "properties" => %{"query" => %{"type" => "string", "minLength" => 2}},
     "required" => ["query"]
-  }
+  })
 
   @impl true
   def call(%{"query" => query}, _ctx), do: {:ok, "raw:#{query}"}
@@ -248,8 +248,8 @@ defmodule Noizu.MCP.Fixtures.CodeReviewPrompt do
     description: "Review code for quality issues"
 
   arguments do
-    arg :code, required: true, description: "The code to review"
-    arg :style, description: "Review style", complete: ["strict", "friendly"]
+    arg(:code, required: true, description: "The code to review")
+    arg(:style, description: "Review style", complete: ["strict", "friendly"])
   end
 
   @impl true
@@ -272,7 +272,7 @@ defmodule Noizu.MCP.Fixtures.DynamicPrompt do
     description: "Prompt with dynamic completion"
 
   arguments do
-    arg :branch, description: "Git branch"
+    arg(:branch, description: "Git branch")
   end
 
   @impl true
@@ -397,9 +397,9 @@ defmodule Noizu.MCP.Fixtures.KitServer do
     version: "1.0.0",
     instructions: "Server for toolkit tests."
 
-  tool Noizu.MCP.Fixtures.Kit
-  tool Noizu.MCP.Fixtures.Echo
-  tool Noizu.MCP.Server.Tools.Catalog, hidden: true
+  tool(Noizu.MCP.Fixtures.Kit)
+  tool(Noizu.MCP.Fixtures.Echo)
+  tool(Noizu.MCP.Server.Tools.Catalog, hidden: true)
 end
 
 defmodule Noizu.MCP.Fixtures.Server do
@@ -409,25 +409,25 @@ defmodule Noizu.MCP.Fixtures.Server do
     version: "1.0.0",
     instructions: "Fixture server for tests."
 
-  tool Noizu.MCP.Fixtures.Echo
-  tool Noizu.MCP.Fixtures.Weather
-  tool Noizu.MCP.Fixtures.Slow
-  tool Noizu.MCP.Fixtures.Crash
-  tool Noizu.MCP.Fixtures.Fail
-  tool Noizu.MCP.Fixtures.RawSchema
-  tool Noizu.MCP.Fixtures.Echo, name: "echo_alias", description: "Echo under another name"
+  tool(Noizu.MCP.Fixtures.Echo)
+  tool(Noizu.MCP.Fixtures.Weather)
+  tool(Noizu.MCP.Fixtures.Slow)
+  tool(Noizu.MCP.Fixtures.Crash)
+  tool(Noizu.MCP.Fixtures.Fail)
+  tool(Noizu.MCP.Fixtures.RawSchema)
+  tool(Noizu.MCP.Fixtures.Echo, name: "echo_alias", description: "Echo under another name")
 
-  tool Noizu.MCP.Fixtures.Consult
-  tool Noizu.MCP.Fixtures.AskApproval
-  tool Noizu.MCP.Fixtures.WhereAmI
-  tool Noizu.MCP.Fixtures.WhoAmI
+  tool(Noizu.MCP.Fixtures.Consult)
+  tool(Noizu.MCP.Fixtures.AskApproval)
+  tool(Noizu.MCP.Fixtures.WhereAmI)
+  tool(Noizu.MCP.Fixtures.WhoAmI)
 
-  resource Noizu.MCP.Fixtures.ConfigResource
-  resource Noizu.MCP.Fixtures.LogoResource
-  resource_template Noizu.MCP.Fixtures.TableSchema
+  resource(Noizu.MCP.Fixtures.ConfigResource)
+  resource(Noizu.MCP.Fixtures.LogoResource)
+  resource_template(Noizu.MCP.Fixtures.TableSchema)
 
-  prompt Noizu.MCP.Fixtures.CodeReviewPrompt
-  prompt Noizu.MCP.Fixtures.DynamicPrompt
+  prompt(Noizu.MCP.Fixtures.CodeReviewPrompt)
+  prompt(Noizu.MCP.Fixtures.DynamicPrompt)
 
   @impl Noizu.MCP.Server
   # ⟦𓐃𓁚𓉦𓍍⟧ init :: auto-generated pointer for public function init
@@ -542,7 +542,7 @@ defmodule Noizu.MCP.Fixtures.VerboseServer do
     version: "1.0.0",
     default_verbosity: 1
 
-  tool Noizu.MCP.Fixtures.VerboseTool
+  tool(Noizu.MCP.Fixtures.VerboseTool)
 end
 
 defmodule Noizu.MCP.Fixtures.RunnerServer do
@@ -553,7 +553,7 @@ defmodule Noizu.MCP.Fixtures.RunnerServer do
     name: "runner_fixture",
     version: "1.0.0"
 
-  tool Noizu.MCP.Fixtures.RunnerTool
+  tool(Noizu.MCP.Fixtures.RunnerTool)
 
   @impl Noizu.MCP.Server
   def init(ctx, _init_params) do
@@ -599,18 +599,18 @@ defmodule Noizu.MCP.Fixtures.HiddenServer do
     version: "1.0.0",
     instructions: "Server for hidden-item tests."
 
-  tool Noizu.MCP.Fixtures.Echo
-  tool Noizu.MCP.Fixtures.HiddenTool
-  tool Noizu.MCP.Server.Tools.Catalog, hidden: true
+  tool(Noizu.MCP.Fixtures.Echo)
+  tool(Noizu.MCP.Fixtures.HiddenTool)
+  tool(Noizu.MCP.Server.Tools.Catalog, hidden: true)
 
-  prompt Noizu.MCP.Fixtures.CodeReviewPrompt
-  prompt Noizu.MCP.Fixtures.HiddenPrompt
+  prompt(Noizu.MCP.Fixtures.CodeReviewPrompt)
+  prompt(Noizu.MCP.Fixtures.HiddenPrompt)
 
-  resource Noizu.MCP.Fixtures.ConfigResource
-  resource Noizu.MCP.Fixtures.HiddenResource
+  resource(Noizu.MCP.Fixtures.ConfigResource)
+  resource(Noizu.MCP.Fixtures.HiddenResource)
 
-  resource_template Noizu.MCP.Fixtures.TableSchema
-  resource_template Noizu.MCP.Fixtures.HiddenTemplate
+  resource_template(Noizu.MCP.Fixtures.TableSchema)
+  resource_template(Noizu.MCP.Fixtures.HiddenTemplate)
 end
 
 defmodule Noizu.MCP.Fixtures.EvalTool do
@@ -675,10 +675,10 @@ defmodule Noizu.MCP.Fixtures.EvalServer do
   @moduledoc false
   use Noizu.MCP.Server, name: "eval_fixture", version: "1.0.0"
 
-  tool Noizu.MCP.Fixtures.EvalTool
-  tool Noizu.MCP.Fixtures.EvalKit
+  tool(Noizu.MCP.Fixtures.EvalTool)
+  tool(Noizu.MCP.Fixtures.EvalKit)
   # A tool with no evals — Eval.list/1 must omit it.
-  tool Noizu.MCP.Fixtures.Echo
+  tool(Noizu.MCP.Fixtures.Echo)
 end
 
 defmodule Noizu.MCP.Fixtures.StructToolset do
@@ -739,7 +739,7 @@ defmodule Noizu.MCP.Fixtures.HostOverrideServer do
     Noizu.MCP.Server.Features.Tools.dispatch(__mcp__(:tools), name, args, ctx)
   end
 
-  tool Noizu.MCP.Fixtures.Echo
+  tool(Noizu.MCP.Fixtures.Echo)
 end
 
 defmodule Noizu.MCP.Fixtures.NotAToolset do
@@ -756,7 +756,7 @@ defmodule Noizu.MCP.Fixtures.UncallableServer do
   # omit it while the static expansion still shows it.
   use Noizu.MCP.Server, name: "uncallable", version: "1.0.0"
 
-  tool Noizu.MCP.Fixtures.Echo
+  tool(Noizu.MCP.Fixtures.Echo)
 
   def __toolset_specs__(_toolset, _ctx, _opts) do
     {:ok, demoted} =

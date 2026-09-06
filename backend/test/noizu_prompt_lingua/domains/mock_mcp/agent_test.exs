@@ -410,7 +410,9 @@ defmodule NoizuPromptLingua.Domains.MockMCP.AgentTest do
       Agent.generate_module(
         "server purpose",
         %{"name" => "tz", "inputSchema" => %{"type" => "object"}},
-        Z, endpoint: ep(stub, "srcshape"))
+        Z,
+        endpoint: ep(stub, "srcshape")
+      )
 
       {_, body} = MockMCPStub.last_request(stub, "srcshape")
       system = Jason.decode!(body)["messages"] |> hd() |> Map.get("content")

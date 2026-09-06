@@ -68,7 +68,9 @@ defmodule NoizuPromptLingua.MCPApiKeysTest do
     {:ok, updated} =
       MCPApiKeys.update(
         key,
-        %{toolset_config: %{"groups" => %{"projects" => %{"hidden" => true}}}}, owner_id: user.id)
+        %{toolset_config: %{"groups" => %{"projects" => %{"hidden" => true}}}},
+        owner_id: user.id
+      )
 
     assert updated.toolset_config["groups"]["projects"]["hidden"] == true
 

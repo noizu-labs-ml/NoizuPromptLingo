@@ -213,7 +213,12 @@ defmodule NoizuPromptLingua.MCP.VFS.SessionsTest do
     assert dir.writable == false
 
     assert {:error, :eacces} =
-             VFS.create(Sessions, "/tobor/#{org.slug}/sessions/s1/record.json", ~s({"title":"x"}), ctx)
+             VFS.create(
+               Sessions,
+               "/tobor/#{org.slug}/sessions/s1/record.json",
+               ~s({"title":"x"}),
+               ctx
+             )
   end
 
   # ── readdir pagination (§3.2) ─────────────────────────────────────────────

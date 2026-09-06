@@ -93,7 +93,9 @@ defmodule NoizuPromptLingua.Acl.ERPRef do
       end
 
     case String.split(body, ".") do
-      [] -> nil
+      [] ->
+        nil
+
       parts ->
         if Enum.any?(parts, &(&1 == "")) do
           nil
@@ -191,7 +193,10 @@ defmodule NoizuPromptLingua.Acl.ERPRef do
 
   @doc "The stored type string for a kind/module (wildcard aware)."
   def kind_to_string(@wildcard), do: "any"
-  def kind_to_string(m) when is_atom(m), do: m |> Atom.to_string() |> String.trim_leading("Elixir.")
+
+  def kind_to_string(m) when is_atom(m),
+    do: m |> Atom.to_string() |> String.trim_leading("Elixir.")
+
   def kind_to_string(m) when is_binary(m), do: m
 
   @doc """

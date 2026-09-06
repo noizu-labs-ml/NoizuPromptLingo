@@ -207,11 +207,17 @@ defmodule NoizuPromptLingua.MCP.ToolGuard do
     assigns = (is_map(ctx) && Map.get(ctx, :assigns)) || %{}
 
     cond do
-      is_binary(assigns[:elevation_token]) -> assigns[:elevation_token]
-      is_binary(assigns["elevation_token"]) -> assigns["elevation_token"]
+      is_binary(assigns[:elevation_token]) ->
+        assigns[:elevation_token]
+
+      is_binary(assigns["elevation_token"]) ->
+        assigns["elevation_token"]
+
       is_map(assigns[:auth_claims]) && assigns[:auth_claims]["elevation"] ->
         assigns[:auth_claims]["elevation"]
-      true -> nil
+
+      true ->
+        nil
     end
   end
 

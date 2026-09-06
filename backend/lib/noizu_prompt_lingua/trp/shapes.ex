@@ -152,11 +152,13 @@ defmodule NoizuPromptLingua.TRP.Shapes do
   # Data-payload maps (custom_fields/options/status_workflow) carry USER-DEFINED
   # keys — they must stay string-keyed no matter how the transport decoded them.
   defp data_map(nil), do: %{}
+
   defp data_map(m) when is_map(m) do
     Map.new(m, fn
       {k, v} when is_atom(k) and not is_boolean(k) -> {Atom.to_string(k), v}
       {k, v} -> {k, v}
     end)
   end
+
   defp data_map(other), do: other
 end

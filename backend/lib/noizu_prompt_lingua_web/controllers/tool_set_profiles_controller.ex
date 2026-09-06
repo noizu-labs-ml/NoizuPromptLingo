@@ -570,7 +570,7 @@ defmodule NoizuPromptLinguaWeb.ToolSetProfilesController do
           # Per-caller ACL/grants can narrow the served slice further on the
           # serving path — that remains the wire's business (D1).
           served: Enum.count(entries, &(&1.visible and &1.callable)),
-          unserved: Enum.count(entries, &not(&1.visible and &1.callable))
+          unserved: Enum.count(entries, &(not (&1.visible and &1.callable)))
         }
 
       {:error, %Noizu.MCP.Error{data: %{issues: issues}}} ->

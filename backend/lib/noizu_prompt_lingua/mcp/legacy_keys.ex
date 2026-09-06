@@ -26,7 +26,8 @@ defmodule NoizuPromptLingua.MCP.LegacyKeys do
       error: "api_key_mint_disabled",
       error_description:
         "Legacy MCP API key minting is disabled. Connect via OAuth 2.1 (DCR + PKCE).",
-      oauth_authorization_server: "#{String.trim_trailing(issuer, "/")}/.well-known/oauth-authorization-server",
+      oauth_authorization_server:
+        "#{String.trim_trailing(issuer, "/")}/.well-known/oauth-authorization-server",
       mcp_url: "#{String.trim_trailing(issuer, "/")}/mcp",
       documentation: "backend/docs/mcp-oauth-connector-checklist.md"
     }

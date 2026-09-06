@@ -3,6 +3,7 @@ defmodule NoizuPromptLingua.Domains.Review.ToolsTest do
   @moduletag :db
 
   alias NoizuPromptLingua.Domains.Artifacts.Tools.{ArtifactCreate}
+
   alias NoizuPromptLingua.Domains.Review.Tools.{
     Overview,
     ReviewAttach,
@@ -25,7 +26,12 @@ defmodule NoizuPromptLingua.Domains.Review.ToolsTest do
 
     {:ok, %{id: artifact_id, revision_id: revision_id}} =
       ArtifactCreate.call(
-        %{"organization" => org_slug, "title" => title, "kind" => "document", "content" => "body"},
+        %{
+          "organization" => org_slug,
+          "title" => title,
+          "kind" => "document",
+          "content" => "body"
+        },
         %{}
       )
 
@@ -75,19 +81,34 @@ defmodule NoizuPromptLingua.Domains.Review.ToolsTest do
 
     assert {:ok, %{id: overlay_id, x: 1}} =
              ReviewOverlay.call(
-               %{"review_id" => id, "x" => 1, "y" => 2, "comment" => "spacing", "persona" => "ana"},
+               %{
+                 "review_id" => id,
+                 "x" => 1,
+                 "y" => 2,
+                 "comment" => "spacing",
+                 "persona" => "ana"
+               },
                %{}
              )
 
-    assert {:ok, %{id: ^id, comments: [_], overlays: [_]}} = ReviewGet.call(%{"review_id" => id}, %{})
+    assert {:ok, %{id: ^id, comments: [_], overlays: [_]}} =
+             ReviewGet.call(%{"review_id" => id}, %{})
+
     assert is_binary(comment_id) and is_binary(overlay_id)
 
     assert {:ok, %{id: ^id, status: "completed"}} = ReviewComplete.call(%{"review_id" => id}, %{})
-    assert {:error, "Review not found"} = ReviewComplete.call(%{"review_id" => Ecto.UUID.generate()}, %{})
-    assert {:error, "Review not found"} = ReviewGet.call(%{"review_id" => Ecto.UUID.generate()}, %{})
+
+    assert {:error, "Review not found"} =
+             ReviewComplete.call(%{"review_id" => Ecto.UUID.generate()}, %{})
+
+    assert {:error, "Review not found"} =
+             ReviewGet.call(%{"review_id" => Ecto.UUID.generate()}, %{})
   end
 
-  test "review create verifies artifact ownership", %{org_slug: org_slug, revision_id: revision_id} do
+  test "review create verifies artifact ownership", %{
+    org_slug: org_slug,
+    revision_id: revision_id
+  } do
     other_org = insert_org()
     other_slug = Repo.get!(Organization, other_org).slug
 
@@ -113,7 +134,11 @@ defmodule NoizuPromptLingua.Domains.Review.ToolsTest do
     assert {:error, _} = result
   end
 
-  test "review attach and compile paths", %{org_slug: org_slug, artifact_id: artifact_id, revision_id: revision_id} do
+  test "review attach and compile paths", %{
+    org_slug: org_slug,
+    artifact_id: artifact_id,
+    revision_id: revision_id
+  } do
     id = create_review(org_slug, artifact_id, revision_id)
 
     attach_result =
@@ -139,7 +164,11 @@ defmodule NoizuPromptLingua.Domains.Review.ToolsTest do
     end
   end
 
-  test "Overview aggregates status counts", %{org_slug: org_slug, artifact_id: artifact_id, revision_id: revision_id} do
+  test "Overview aggregates status counts", %{
+    org_slug: org_slug,
+    artifact_id: artifact_id,
+    revision_id: revision_id
+  } do
     create_review(org_slug, artifact_id, revision_id)
     assert {:ok, %{status_counts: counts}} = Overview.call(%{}, %{})
     assert counts["open"] >= 1

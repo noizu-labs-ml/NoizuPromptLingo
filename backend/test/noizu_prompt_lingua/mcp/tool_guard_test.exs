@@ -187,7 +187,7 @@ defmodule NoizuPromptLingua.MCP.ToolGuardTest do
       # FunctionClauseError from Keyword.get's is_atom guard.
       owner = mk_user()
       enforce()
-      s = spec([action: "keys:create", required_role: :owner, resource: :global])
+      s = spec(action: "keys:create", required_role: :owner, resource: :global)
       assert ToolGuard.before_call(s, %{}, ctx(owner.id)) == :ok
     end
 
