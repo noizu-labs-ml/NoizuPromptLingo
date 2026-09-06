@@ -69,8 +69,12 @@ defmodule NoizuPromptLinguaWeb.CustomMCPGatewayControllerTest do
   test "resolve_scope/3: unknown slug is not_found on both routes" do
     controller = NoizuPromptLinguaWeb.CustomMCPGatewayController
 
-    assert {:error, :not_found} = controller.resolve_scope(build_conn(), :user, %{"slug" => "ghost"})
-    assert {:error, :not_found} = controller.resolve_scope(build_conn(), :legacy, %{"slug" => "ghost"})
+    assert {:error, :not_found} =
+             controller.resolve_scope(build_conn(), :user, %{"slug" => "ghost"})
+
+    assert {:error, :not_found} =
+             controller.resolve_scope(build_conn(), :legacy, %{"slug" => "ghost"})
+
     assert {:error, :not_found} = controller.resolve_scope(build_conn(), :legacy, %{})
   end
 end

@@ -203,7 +203,6 @@ defmodule NoizuPromptLingua.OAuth.Jwks do
     |> Enum.flat_map(&parse_retired_entry(&1, alg))
   end
 
-
   defp parse_retired(_, _alg), do: []
 
   # Raw PEMs are themselves multi-line, so newline is only a separator for
@@ -323,9 +322,14 @@ defmodule NoizuPromptLingua.OAuth.Jwks do
 
   defp allow_ephemeral? do
     cond do
-      System.get_env("MCP_ALLOW_EPHEMERAL_JWT_KEY") in ["true", "1"] -> true
-      Application.get_env(:noizu_prompt_lingua, :mcp_oauth, [])[:allow_ephemeral_key] == true -> true
-      true -> Application.get_env(:noizu_prompt_lingua, :env) != :prod
+      System.get_env("MCP_ALLOW_EPHEMERAL_JWT_KEY") in ["true", "1"] ->
+        true
+
+      Application.get_env(:noizu_prompt_lingua, :mcp_oauth, [])[:allow_ephemeral_key] == true ->
+        true
+
+      true ->
+        Application.get_env(:noizu_prompt_lingua, :env) != :prod
     end
   end
 end

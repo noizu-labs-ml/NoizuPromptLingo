@@ -84,6 +84,7 @@ defmodule NoizuPromptLinguaWeb.MCPCustomScopeControllerTest do
     # description/kind/config fall back to the source
     assert clone["scope"]["description"] == "before clone"
     assert clone["scope"]["source_template_slug"] == "clone-src"
+
     assert clone["scope"]["config"]["groups"]["sessions"]["tools"]["Session.Create"]["disabled"] ==
              true
 

@@ -146,7 +146,11 @@ defmodule NoizuPromptLingua.MCP.CrudDefaultsTest do
 
   test "scope_json surfaces visibility" do
     {:ok, scope} =
-      MCPCustomScopes.create(%{"slug" => "vis-json", "name" => "Vis Json", "visibility" => "shared"})
+      MCPCustomScopes.create(%{
+        "slug" => "vis-json",
+        "name" => "Vis Json",
+        "visibility" => "shared"
+      })
 
     assert MCPCustomScopes.scope_json(scope)[:visibility] == "shared"
   end

@@ -82,7 +82,10 @@ defmodule NoizuPromptLinguaWeb.MembershipController do
       {:error, :not_found} ->
         conn |> put_status(:not_found) |> json(%{error: "Member not found"})
 
-      {:error, :sole_owner} ->
+      # ScopedMemberships flags the final owner as :last_owner; both spellings
+      # mean the same guard (cov-w5a bugfix: :last_owner fell through to a
+      # CaseClauseError 500 instead of the owner-protection 403).
+      {:error, reason} when reason in [:sole_owner, :last_owner] ->
         conn |> put_status(:forbidden) |> json(%{error: "Cannot remove the owner"})
     end
   end

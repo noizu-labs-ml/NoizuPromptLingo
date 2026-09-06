@@ -84,9 +84,19 @@ defmodule NoizuPromptLingua.Domains.MockMCP.WeaviateStore do
       properties: properties
     }
 
+    # BUGFIX (cov-w4a): noizu_weaviate.api_call returns `{:ok, %Finch.Response{}}`
+    # (holding the raw non-2xx response) when Weaviate answers with an HTTP
+    # error — that used to match `{:ok, _}` and report success. Match the struct
+    # explicitly so error responses surface as `{:error, _}`.
     case call(:post, "v1/schema", body) do
-      {:ok, _} -> :ok
-      other -> log_err("create_class #{cls}", other)
+      {:ok, %Finch.Response{status: status}} ->
+        log_err("create_class #{cls}", {:http_error, status})
+
+      {:ok, _} ->
+        :ok
+
+      other ->
+        log_err("create_class #{cls}", other)
     end
   end
 
@@ -133,10 +143,21 @@ defmodule NoizuPromptLingua.Domains.MockMCP.WeaviateStore do
         vector: vec
       }
 
+      # BUGFIX (cov-w4a): same %Finch.Response{} guard as `create_class/2` —
+      # non-2xx object writes used to fall into `{:ok, %{id: nil}}` and read as
+      # success. HTTP error statuses now surface as `{:error, _}`.
       case call(:post, "v1/objects", body) do
-        {:ok, %{id: id}} -> {:ok, %{id: id}}
-        {:ok, _} -> {:ok, %{id: nil}}
-        other -> {:error, err_msg(other)}
+        {:ok, %{id: id}} ->
+          {:ok, %{id: id}}
+
+        {:ok, %Finch.Response{status: status}} ->
+          {:error, err_msg({:http_error, status})}
+
+        {:ok, _} ->
+          {:ok, %{id: nil}}
+
+        other ->
+          {:error, err_msg(other)}
       end
     end
   end

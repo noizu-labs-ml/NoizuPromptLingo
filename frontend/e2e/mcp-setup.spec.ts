@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { dismissConsent } from "./helpers";
 
 /**
  * E2E for the MCP client setup page (/app/mcp-keys):
@@ -19,6 +20,7 @@ const AUTH_ENV_PATTERN = /[A-Z][A-Z0-9_]*_AUTH_TOKEN/;
 
 async function gotoMcpKeys(page: Page) {
   await page.goto(MCP_KEYS_PATH);
+  await dismissConsent(page);
   await expect(page.getByRole("heading", { name: "MCP client setup" })).toBeVisible();
 }
 
@@ -77,8 +79,10 @@ test.describe("MCP setup page", () => {
   test("OAuth Default tab include editor persists a per-tool toggle", async ({ page }) => {
     await gotoMcpKeys(page);
 
-    // Default MCP tab is the default tab of the OAuth panel.
-    const editorHeading = page.getByText("Included services", { exact: true });
+    // Default MCP tab is the default tab of the OAuth panel. After a save the
+    // page can render more than one "Included services" block (one per saved
+    // endpoint) — pin to the first.
+    const editorHeading = page.getByText("Included services", { exact: true }).first();
     await expect(editorHeading).toBeVisible();
 
     // Expand the first group that has an expand chevron.
@@ -86,29 +90,47 @@ test.describe("MCP setup page", () => {
     await expandBtn.click();
 
     // First per-tool checkbox inside the expanded list.
-    const toolLabel = page.locator("label[title]").filter({ has: page.locator('input[type="checkbox"]') }).first();
+    // The include checkbox's <label> wraps the mono tool-name span (the row
+    // div carries the title tooltip now — label[title] no longer matches).
+    const toolLabel = page.locator("label", { has: page.locator("span.font-mono") }).first();
     const toolCheckbox = toolLabel.locator('input[type="checkbox"]');
     await expect(toolCheckbox).toBeVisible();
-    await expect(toolCheckbox).toBeChecked();
 
-    await toolCheckbox.uncheck();
+    // IDEMPOTENT: flip from whatever state a previous run left behind, verify
+    // the flip persisted across reload, then flip back and save — the spec
+    // must not permanently mutate the endpoint's catalog.
+    const initial = await toolCheckbox.isChecked();
 
-    const saveBtn = page.getByRole("button", { name: /^Save \(\d+\)$/ });
+    if (initial) {
+      await toolCheckbox.uncheck();
+    } else {
+      await toolCheckbox.check();
+    }
+
+    const saveBtn = page.getByRole("button", { name: /^Save \(\d+\)$/ }).first();
     await saveBtn.click();
     // Toast confirmation or button returning to idle either way signals completion.
     await expect(page.getByText("Included services updated")).toBeVisible({ timeout: 10_000 });
 
-    // Reload and confirm the tool stayed disabled.
+    // Reload and confirm the flipped state persisted.
     await page.reload();
     await expect(editorHeading).toBeVisible();
     const expandBtn2 = page.getByRole("button", { name: /^Toggle tools for / }).first();
     await expandBtn2.click();
     const toolCheckbox2 = page
-      .locator("label[title]")
-      .filter({ has: page.locator('input[type="checkbox"]') })
+      .locator("label", { has: page.locator("span.font-mono") })
       .first()
       .locator('input[type="checkbox"]');
     await expect(toolCheckbox2).toBeVisible();
-    await expect(toolCheckbox2).not.toBeChecked();
+    await expect(toolCheckbox2).toBeChecked({ checked: !initial });
+
+    // Restore the original state so reruns start clean.
+    if (initial) {
+      await toolCheckbox2.check();
+    } else {
+      await toolCheckbox2.uncheck();
+    }
+    await page.getByRole("button", { name: /^Save \(\d+\)$/ }).first().click();
+    await expect(page.getByText("Included services updated")).toBeVisible({ timeout: 10_000 });
   });
 });

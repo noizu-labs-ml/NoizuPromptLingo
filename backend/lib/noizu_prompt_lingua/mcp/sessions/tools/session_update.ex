@@ -9,7 +9,7 @@ defmodule NoizuPromptLingua.MCP.Sessions.Tools.SessionUpdate do
     hidden: false,
     category: "Sessions"
 
-  alias NoizuPromptLingua.MCP.{Args, Resolve}
+  alias NoizuPromptLingua.MCP.{Args, Resolve, Urls}
 
   input do
     field :session, :string, required: true, description: "Session UUID"
@@ -51,6 +51,7 @@ defmodule NoizuPromptLingua.MCP.Sessions.Tools.SessionUpdate do
               {:ok,
                %{
                  id: updated.id,
+                 session_url: Urls.session_url(updated),
                  title: updated.title,
                  status: updated.status,
                  organization_id: updated.organization_id,

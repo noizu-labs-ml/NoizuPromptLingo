@@ -1,0 +1,35 @@
+databaseChangeLog:
+  # Browser captures store media rows with owner_type 'browser_screenshot' /
+  # 'browser_video', but resource_type_enum (media.owner_type's type) predates
+  # them — inserts and the captures listing both raised Postgrex 22P02 → 500.
+  # One ADD VALUE per changeSet: ALTER TYPE ... ADD VALUE cannot run inside a
+  # transaction, and Liquibase wraps each changeSet in one. Ecto twin:
+  # 20260902000000_browser_capture_resource_types.exs.
+  - changeSet:
+      id: 084-add-browser-screenshot-resource-type
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: ALTER TYPE resource_type_enum ADD VALUE IF NOT EXISTS 'browser_screenshot';
+      rollback:
+        - sql:
+            # Postgres cannot remove an enum value; recreate the type on rollback.
+            sql: |
+              ALTER TYPE resource_type_enum RENAME TO resource_type_enum_old;
+              CREATE TYPE resource_type_enum AS ENUM ('organization', 'project', 'github_repo');
+              ALTER TABLE scoped_memberships ALTER COLUMN resource_type TYPE resource_type_enum
+                USING resource_type::text::resource_type_enum;
+              ALTER TABLE media ALTER COLUMN owner_type TYPE resource_type_enum
+                USING owner_type::text::resource_type_enum;
+              DROP TYPE resource_type_enum_old;
+
+  - changeSet:
+      id: 084-add-browser-video-resource-type
+      author: tobor-locker
+      changes:
+        - sql:
+            sql: ALTER TYPE resource_type_enum ADD VALUE IF NOT EXISTS 'browser_video';
+      rollback:
+        - sql:
+            # Handled by the sibling changeSet's rollback (single type rebuild).
+            sql: SELECT 1;

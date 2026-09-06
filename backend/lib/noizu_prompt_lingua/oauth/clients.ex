@@ -62,9 +62,11 @@ defmodule NoizuPromptLingua.OAuth.Clients do
   end
 
   # Cached OAuth clients (ToolsetCache) feed the EffectiveToolset cascade —
-  # drop the cache whenever a client's config/status write lands.
+  # drop the cache whenever a client's config/status write lands. The cache
+  # bump + tools/list_changed broadcast are ONE best-effort step (N1 manifest
+  # parity): connected clients re-list before serving stale narrowing flags.
   defp tap_ok_bump_cache({:ok, _} = ok) do
-    NoizuPromptLingua.MCP.ToolsetCache.bump()
+    NoizuPromptLingua.MCP.Server.notify_toolset_changed()
     ok
   end
 
@@ -83,7 +85,10 @@ defmodule NoizuPromptLingua.OAuth.Clients do
 
     with :ok <- validate_redirects(redirect_uris) do
       client_id = "dcr_" <> random_id(16)
-      auth_method = attrs["token_endpoint_auth_method"] || attrs[:token_endpoint_auth_method] || "none"
+
+      auth_method =
+        attrs["token_endpoint_auth_method"] || attrs[:token_endpoint_auth_method] || "none"
+
       {secret, secret_hash} = maybe_secret(auth_method)
 
       cs =
@@ -162,9 +167,21 @@ defmodule NoizuPromptLingua.OAuth.Clients do
     |> OAuthClient.changeset(%{toolset_config: normalized})
     |> Repo.update()
     |> tap_ok_bump_cache()
+    |> tap_negotiations(normalized)
   end
 
   def update_toolset_config(_, _), do: {:error, :invalid_client}
+
+  # N2b ToolGuard re-homing prep (PRD-N2): destructive tools named in a
+  # consent narrowing get a pending negotiation record (elevation metadata)
+  # through the N2b provider. Best-effort inside the writer — a negotiation
+  # write can never fail the consent write.
+  defp tap_negotiations({:ok, client} = ok, normalized) do
+    NoizuPromptLingua.MCP.ToolsetNegotiations.record_client_consent(client, normalized)
+    ok
+  end
+
+  defp tap_negotiations(other, _normalized), do: other
 
   def create_first_party!(attrs) do
     client_id = attrs[:client_id] || "fp_" <> random_id(8)

@@ -26,14 +26,18 @@ defmodule NoizuPromptLingua.MCP.SessionManifestTest do
     assert %DateTime{} = generated_at
     assert tools != []
 
-    # No dotted names ever escape (§4); each entry carries the §5 shape.
+    # No dotted names ever escape (§4); each entry carries the §5 shape
+    # (+ the N1 `included` flag).
     for tool <- tools do
       refute String.contains?(tool.name, ".")
       assert is_binary(tool.group) or is_nil(tool.group)
+
       assert MapSet.subset?(
                MapSet.new(Map.keys(tool)),
-               MapSet.new([:name, :group, :enabled, :visible, :expires_at])
+               MapSet.new([:name, :group, :enabled, :visible, :expires_at, :included])
              )
+
+      assert tool.included == true
     end
 
     names = Enum.map(tools, & &1.name)
@@ -91,9 +95,9 @@ defmodule NoizuPromptLingua.MCP.SessionManifestTest do
       EffectiveToolsetStub.set(%{})
       _ = Manifest.call(%{}, bare_ctx())
 
-      # No api_key_id claim → oauth-style client, no toolset config.
-      client = EffectiveToolsetStub.last_client()
-      assert client == %{id: nil, kind: :oauth_client, toolset_config: nil}
+      # No api_key_id / client_id claim => client_for_ctx resolves nil (ungated,
+      # system principal) — N1: client_for/1 delegates to client_for_ctx/1.
+      assert EffectiveToolsetStub.last_client() == nil
     end
   end
 
@@ -130,6 +134,7 @@ defmodule NoizuPromptLingua.MCP.SessionManifestTest do
       # Missing group re-added with the manifest seed; sessions gains the tool.
       assert Map.has_key?(groups["pubsub"]["tools"], @manifest) or
                Map.has_key?(groups["sessions"]["tools"], @manifest)
+
       assert Map.has_key?(groups["sessions"]["tools"], @manifest)
 
       # An explicit owner override on the manifest tool survives the heal.

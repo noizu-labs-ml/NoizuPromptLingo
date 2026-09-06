@@ -8,7 +8,7 @@ defmodule NoizuPromptLingua.MCP.Sessions.Tools.SessionCreate do
     hidden: false,
     category: "Sessions"
 
-  alias NoizuPromptLingua.MCP.{Args, Resolve}
+  alias NoizuPromptLingua.MCP.{Args, Resolve, Urls}
 
   input do
     field :organization, :string,
@@ -57,6 +57,7 @@ defmodule NoizuPromptLingua.MCP.Sessions.Tools.SessionCreate do
           {:ok,
            %{
              id: session.id,
+             session_url: Urls.session_url(session),
              title: session.title,
              status: session.status,
              organization_id: session.organization_id,

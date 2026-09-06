@@ -241,6 +241,24 @@ if config_env() == :prod or config_env() == :dev do
 
   config :noizu_prompt_lingua, :mcp_elevation, enabled: elev_enabled
 
+  # ── Tool-set serving flip (PRD-N3): env-driven kill switch ──────
+  # Gates the /org/:org/set/:set/mcp + project-set gateways AND the R8
+  # save-time catalog validation. TOOL_SETS_ENABLED is unset-tolerant with
+  # default TRUE — the set gateway is live in every non-test env. An explicit
+  # "false" / "0" / "no" is the kill switch (gateways 404, validation
+  # downgrades to the N2a structural-only changeset). This replaces the old
+  # compile-time default of false (set only in dev.exs) that 404'd the whole
+  # surface in prod/stage (B1): AC-N3-9's "unset ⇒ 404" is satisfied through
+  # the kill-switch path instead. Tests pin the flag via Application.put_env;
+  # this block never runs in :test.
+  tool_sets_enabled =
+    case System.get_env("TOOL_SETS_ENABLED") do
+      v when v in ["false", "0", "no"] -> false
+      _ -> true
+    end
+
+  config :noizu_prompt_lingua, tool_sets_enabled: tool_sets_enabled
+
   # Where the SPA lives. After OIDC the backend 302s the browser here; if this
   # is nil/empty the redirect becomes a relative path against the backend host,
   # and the browser lands on Phoenix for frontend routes like

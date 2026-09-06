@@ -7,7 +7,10 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.TicketGet do
     annotations: [read_only_hint: true]
 
   input do
-    field :ticket_id, :string, required: true, description: "Ticket UUID or human key (PREFIX-NNN)"
+    field :ticket_id, :string,
+      required: true,
+      description: "Ticket UUID or human key (PREFIX-NNN)"
+
     field :organization, :string,
       description: "Org slug or UUID (required when ticket_id is a human key)"
   end

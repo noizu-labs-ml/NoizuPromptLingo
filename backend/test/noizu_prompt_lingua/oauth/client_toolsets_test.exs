@@ -52,9 +52,21 @@ defmodule NoizuPromptLingua.OAuth.ClientToolsetsTest do
 
   defp specs do
     [
-      %{definition: %{name: "Chat_Send", meta: %{}}, module: NoizuPromptLingua.MCP.Sessions, hidden: false},
-      %{definition: %{name: "Chat_List", meta: %{}}, module: NoizuPromptLingua.MCP.Sessions, hidden: false},
-      %{definition: %{name: "Session_Create", meta: %{}}, module: NoizuPromptLingua.MCP.Sessions, hidden: false}
+      %{
+        definition: %{name: "Chat_Send", meta: %{}},
+        module: NoizuPromptLingua.MCP.Sessions,
+        hidden: false
+      },
+      %{
+        definition: %{name: "Chat_List", meta: %{}},
+        module: NoizuPromptLingua.MCP.Sessions,
+        hidden: false
+      },
+      %{
+        definition: %{name: "Session_Create", meta: %{}},
+        module: NoizuPromptLingua.MCP.Sessions,
+        hidden: false
+      }
     ]
   end
 
@@ -104,7 +116,9 @@ defmodule NoizuPromptLingua.OAuth.ClientToolsetsTest do
     end
 
     test "ctx without client_id (api-key / system principal) is ungated" do
-      assert EffectiveToolset.client_for_ctx(%{assigns: %{auth_claims: %{"api_key_id" => "k"}}}) == nil
+      assert EffectiveToolset.client_for_ctx(%{assigns: %{auth_claims: %{"api_key_id" => "k"}}}) ==
+               nil
+
       assert EffectiveToolset.client_for_ctx(%{assigns: %{}}) == nil
     end
 
@@ -122,7 +136,10 @@ defmodule NoizuPromptLingua.OAuth.ClientToolsetsTest do
              }
 
       reloaded = Clients.get_active(client.client_id)
-      assert reloaded.toolset_config["groups"]["chat"]["tools"]["Chat_List"] == %{"disabled" => true}
+
+      assert reloaded.toolset_config["groups"]["chat"]["tools"]["Chat_List"] == %{
+               "disabled" => true
+             }
     end
 
     test "flags resolve with KeyToolsets semantics (tool beats absent; absent = allowed)", %{

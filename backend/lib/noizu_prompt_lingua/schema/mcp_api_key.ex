@@ -57,4 +57,3 @@ defmodule NoizuPromptLingua.Schema.McpApiKey do
     |> validate_inclusion(:status, ["active", "revoked"])
   end
 end
-

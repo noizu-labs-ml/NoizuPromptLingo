@@ -106,14 +106,17 @@ defmodule NoizuPromptLingua.Domains.MockMCP.ModuleRuntime do
     if erl in @forbidden_erl, do: {node, [":#{erl}.*" | acc]}, else: {node, acc}
   end
 
+  # Bare alias reference used as a value (e.g. passing `System` around).
+  # MUST precede the bare-call clause below: an `__aliases__` node is itself a
+  # 3-tuple {atom, meta, list}, so the generic {atom, _, list} match would
+  # otherwise shadow this clause entirely and let alias-as-value through.
+  defp visit({:__aliases__, _, [root | _]} = node, acc) when is_atom(root) do
+    if root in @forbidden_aliases, do: {node, ["#{root}" | acc]}, else: {node, acc}
+  end
+
   # Bare reserved call:  apply(...), spawn(...), send(...)
   defp visit({name, _, args} = node, acc) when is_atom(name) and is_list(args) do
     if name in @forbidden_bare, do: {node, ["#{name}/#{length(args)}" | acc]}, else: {node, acc}
-  end
-
-  # Bare alias reference used as a value (e.g. passing `System` around).
-  defp visit({:__aliases__, _, [root | _]} = node, acc) when is_atom(root) do
-    if root in @forbidden_aliases, do: {node, ["#{root}" | acc]}, else: {node, acc}
   end
 
   defp visit(node, acc), do: {node, acc}

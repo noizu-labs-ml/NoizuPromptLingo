@@ -34,13 +34,56 @@ defmodule NoizuPromptLingua.MCP.Urls do
   def legacy_url(scope, opts \\ []), do: build(opts, "custom/#{slug(scope)}/mcp")
 
   @doc """
+  Machine URL for an org / group set (PRD-N3 FR-3-10):
+  `<base>/org/:org_slug/set/:set_slug/mcp` — byte-identical to the wire route.
+  """
+  def set_url(set_or_slug, org, opts \\ []) do
+    build(opts, "org/#{org_slug_value(org)}/set/#{slug(set_or_slug)}/mcp")
+  end
+
+  @doc """
+  Machine URL for a project set: `<base>/org/:org_slug/project/:project_slug/set/:set_slug/mcp`.
+  """
+  def set_project_url(set_or_slug, org, project, opts \\ []) do
+    build(
+      opts,
+      "org/#{org_slug_value(org)}/project/#{project_slug_value(project)}/set/#{slug(set_or_slug)}/mcp"
+    )
+  end
+
+  @doc """
+  Human-facing tool-set admin URL (R4): `/app/:org_slug/settings/tool-sets/:slug`.
+  """
+  def tool_set_admin_url(org_slug, set_slug, opts \\ []) when is_binary(org_slug) do
+    build(opts, "app/#{org_slug}/settings/tool-sets/#{slug(set_slug)}")
+  end
+
+  defp org_slug_value(%Organization{slug: slug}) when is_binary(slug) and slug != "", do: slug
+  defp org_slug_value(%{slug: slug}) when is_binary(slug), do: slug
+  defp org_slug_value(slug) when is_binary(slug), do: slug
+
+  defp project_slug_value(%{slug: slug}) when is_binary(slug), do: slug
+  defp project_slug_value(slug) when is_binary(slug), do: slug
+
+  @doc """
   Human-facing chat room URL (frontend route): `/app/:org_slug/chat/:room_id`.
   Returns nil when the room's org slug cannot be resolved.
   """
-  def chat_room_url(room, opts \\ []) do
-    case org_slug(room, opts) do
+  def chat_room_url(room, opts \\ []), do: app_url(opts, room, "chat")
+
+  @doc "Human-facing session URL (frontend route): `/app/:org_slug/sessions/:id`."
+  def session_url(session, opts \\ []), do: app_url(opts, session, "sessions")
+
+  @doc "Human-facing ticket URL (frontend route): `/app/:org_slug/tickets/:id`."
+  def ticket_url(ticket, opts \\ []), do: app_url(opts, ticket, "tickets")
+
+  @doc "Human-facing artifact URL (frontend route): `/app/:org_slug/artifacts/:id`."
+  def artifact_url(artifact, opts \\ []), do: app_url(opts, artifact, "artifacts")
+
+  defp app_url(opts, record, segment) do
+    case org_slug(record, opts) do
       org_slug when is_binary(org_slug) and org_slug != "" ->
-        build(opts, "app/#{org_slug}/chat/#{id(room)}")
+        build(opts, "app/#{org_slug}/#{segment}/#{id(record)}")
 
       _ ->
         nil
@@ -76,11 +119,11 @@ defmodule NoizuPromptLingua.MCP.Urls do
     end
   end
 
-  defp id(room) do
-    case room do
+  defp id(record) do
+    case record do
       %{id: id} when is_binary(id) -> id
       %{"id" => id} when is_binary(id) -> id
-      _ -> raise ArgumentError, "Urls: room id required, got: #{inspect(room)}"
+      _ -> raise ArgumentError, "Urls: record id required, got: #{inspect(record)}"
     end
   end
 end

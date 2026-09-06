@@ -14,6 +14,7 @@ defmodule NoizuPromptLingua.MCP.LegacyKeysTest do
     previous = Application.get_env(:noizu_prompt_lingua, :mcp_legacy_api_keys)
 
     Application.put_env(:noizu_prompt_lingua, :mcp_legacy_api_keys, mint_enabled: false)
+
     on_exit(fn ->
       if previous,
         do: Application.put_env(:noizu_prompt_lingua, :mcp_legacy_api_keys, previous),

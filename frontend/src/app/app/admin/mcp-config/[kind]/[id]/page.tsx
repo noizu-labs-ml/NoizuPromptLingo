@@ -12,6 +12,7 @@ import ClientPermissionsEditor, {
 } from '@/components/mcp-config/ClientPermissionsEditor';
 import { putClientToolsetConfig } from '@/lib/acl-api';
 import { canonicalToolName } from '@/lib/tool-overrides';
+import ToolSetEditor from '@/components/mcp-config/ToolSetEditor';
 
 // W7 — per-item client permission editor for the MCP Config hub.
 //   /app/admin/mcp-config/api-key/:id      → legacy API key (row uuid)
@@ -28,10 +29,22 @@ type ClientKind = 'api-key' | 'oauth-client';
 
 const KINDS: ClientKind[] = ['api-key', 'oauth-client'];
 
+/**
+ * N4a: `kind=tool-set` branches to the dedicated tool-set editor before any
+ * client-permissions state loads; the remaining kinds keep the original body.
+ */
 export default function ClientPermissionsPage() {
   const params = useParams<{ kind: string; id: string }>();
-  const kind = (params?.kind ?? '') as ClientKind;
+  const kind = params?.kind ?? '';
   const id = decodeURIComponent(params?.id ?? '');
+
+  if (kind === 'tool-set') {
+    return <ToolSetEditor slug={id} />;
+  }
+  return <ClientPermissionsInner kind={kind as ClientKind} id={id} />;
+}
+
+function ClientPermissionsInner({ kind, id }: { kind: ClientKind; id: string }) {
   const validKind = KINDS.includes(kind);
 
   const [catalog, setCatalog] = useState<ClientPermissionsCatalogGroup[]>([]);

@@ -35,9 +35,7 @@ defmodule NoizuPromptLingua.TRP.ClientTest do
   end
 
   test "403 reason code maps to a known atom" do
-    TestStub.queue_response(
-      {403, %{"error" => "forbidden", "reason" => "org_not_in_key_scope"}}
-    )
+    TestStub.queue_response({403, %{"error" => "forbidden", "reason" => "org_not_in_key_scope"}})
 
     assert {:error, %Error{status: 403, reason: :org_not_in_key_scope}} =
              Client.request(:get, "/api/v1/organizations")

@@ -281,3 +281,302 @@ export async function removeAclGroupMember(
     body: JSON.stringify({ member: refString(kind, clientId) }),
   });
 }
+
+// ---------------------------------------------------------------------------
+// MCP tool sets (PRD-N4 §4.1, N4a) — org-admin CRUD against
+// /api/v1/organizations/:org_id/tool-sets. N4b adds the validate dry-run,
+// the live-catalog arg-enum seeds and the real-groups group-options feed.
+// ---------------------------------------------------------------------------
+
+export type ToolSetShape = 'org' | 'project' | 'group';
+export type DescriptionVerbosity = 'full' | 'concise' | 'minimal';
+
+/** Closed-vocabulary tool-set config (PRD-N2 §4.1 jsonb shape). */
+export interface ToolSetConfig {
+  groups?: Record<string, ToolSetGroupConfig>;
+}
+
+export interface ToolSetGroupConfig {
+  enabled?: boolean;
+  tools?: Record<string, ToolSetToolConfig>;
+}
+
+export interface ToolSetToolConfig {
+  enabled?: boolean;
+  name?: string;
+  description?: string;
+  args?: Record<string, ToolSetArgConfig>;
+}
+
+export interface ToolSetArgConfig {
+  enum_remove?: (string | number | boolean)[];
+  hide?: boolean;
+  rename?: string;
+  default?: string | number | boolean;
+  description?: string;
+}
+
+export interface ToolSetSettings {
+  allow_api_keys?: boolean;
+  description_verbosity?: DescriptionVerbosity;
+  instructions?: string;
+}
+
+/** A built-in capability profile, from the index `profiles` list (read-only). */
+export interface ToolSetProfileView {
+  slug: string;
+  display_name: string;
+  description: string | null;
+  groups: string[];
+  group_count: number;
+  tool_count: number;
+  cloneable: boolean;
+  editable: boolean;
+  is_profile: boolean;
+  is_active: boolean;
+}
+
+export interface ToolSetPreviewGroup {
+  enabled: boolean;
+  tool_count: number;
+  overridden_tools: number;
+  override_ops: number;
+}
+
+/** Structural preview from `show` — registry counts + override-op census. */
+export interface ToolSetStructuralPreview {
+  groups: Record<string, ToolSetPreviewGroup>;
+  total_override_ops: number;
+}
+
+/** One structured Validator issue (N4b; lib issue codes, Jason-safe shapes). */
+export interface ToolSetIssue {
+  code: string;
+  message: string;
+  tool: string | null;
+  field: string | null;
+  op: string | null;
+  meta?: Record<string, unknown> | null;
+}
+
+/** validate/2 — 200 `{ok: true, warnings}` or 422 `{ok: false, issues}`. */
+export type ToolSetValidateResult =
+  | { ok: true; warnings: string[] }
+  | { ok: false; issues: ToolSetIssue[] };
+
+/** One applied layer's provenance for an effective tool entry. */
+export interface ToolSetProvenanceRow {
+  op: string;
+  field: string | null;
+  layer: string;
+  weight: number;
+}
+
+/** Effective surface per tool — the D1-correct show/preview entry (N4b). */
+export interface ToolSetEffectiveTool {
+  name: string;
+  base_name: string;
+  renamed: boolean;
+  visible: boolean;
+  callable: boolean;
+  reason: unknown;
+  pruned_args: Record<string, (string | number | boolean)[]>;
+  provenance: ToolSetProvenanceRow[];
+}
+
+export interface ToolSetEffective {
+  version: string | null;
+  tools: ToolSetEffectiveTool[];
+  issues?: ToolSetIssue[];
+}
+
+/** A selectable authz group for the group-set audience (N4b). */
+export interface ToolSetGroupOption {
+  id: string;
+  name: string;
+  display_name: string | null;
+  is_system: boolean;
+  kind: 'ladder_role' | 'custom';
+  member_count: number;
+}
+
+export interface ToolSetAuditEntry {
+  at: string;
+  actor?: string | null;
+  action: string;
+}
+
+export interface ToolSetView {
+  id: string;
+  slug: string;
+  display_name: string;
+  description: string | null;
+  shape: ToolSetShape;
+  project_id: string | null;
+  group_id: string | null;
+  source: string;
+  source_profile: string | null;
+  is_active: boolean;
+  expires_at: string | null;
+  config_digest: string | null;
+  member_count: number | null;
+  settings: ToolSetSettings;
+  updated_by: string | null;
+  updated_at: string | null;
+  urls: { mcp: string | null; admin: string | null };
+  audit?: ToolSetAuditEntry[];
+  preview?: ToolSetStructuralPreview;
+  effective?: ToolSetEffective;
+  config?: ToolSetConfig;
+}
+
+export interface ToolSetIndex {
+  profiles: ToolSetProfileView[];
+  sets: ToolSetView[];
+}
+
+/** Attrs accepted by create/clone; update allows the same minus identity. */
+export interface ToolSetAttrs {
+  slug?: string;
+  display_name?: string;
+  description?: string;
+  project_id?: string;
+  group_id?: string;
+  config?: ToolSetConfig;
+  settings?: ToolSetSettings;
+}
+
+/** GET /api/v1/organizations/:org_id/tool-sets — profiles + org sets. */
+export async function listToolSets(orgId: string): Promise<ToolSetIndex> {
+  const res = await request<{ profiles: ToolSetProfileView[]; sets: ToolSetView[] }>(
+    `/api/v1/organizations/${encodeURIComponent(orgId)}/tool-sets`,
+  );
+  return { profiles: res.profiles ?? [], sets: res.sets ?? [] };
+}
+
+/**
+ * GET .../tool-sets/:slug — a set (with structural preview + config) or a
+ * built-in profile slug (read-only view).
+ */
+export async function getToolSet(
+  orgId: string,
+  slug: string,
+): Promise<{ tool_set?: ToolSetView; profile?: ToolSetProfileView }> {
+  return request<{ tool_set?: ToolSetView; profile?: ToolSetProfileView }>(
+    `/api/v1/organizations/${encodeURIComponent(orgId)}/tool-sets/${encodeURIComponent(slug)}`,
+  );
+}
+
+/** POST .../tool-sets — create a custom set; 422 surfaces changeset errors. */
+export async function createToolSet(orgId: string, attrs: ToolSetAttrs): Promise<ToolSetView> {
+  const res = await request<{ tool_set: ToolSetView }>(
+    `/api/v1/organizations/${encodeURIComponent(orgId)}/tool-sets`,
+    { method: 'POST', body: JSON.stringify({ tool_set: attrs }) },
+  );
+  return res.tool_set;
+}
+
+/** PATCH .../tool-sets/:slug — partial update of display fields/config/settings. */
+export async function updateToolSet(
+  orgId: string,
+  slug: string,
+  attrs: Partial<ToolSetAttrs> & { is_active?: boolean },
+): Promise<ToolSetView> {
+  const res = await request<{ tool_set: ToolSetView }>(
+    `/api/v1/organizations/${encodeURIComponent(orgId)}/tool-sets/${encodeURIComponent(slug)}`,
+    { method: 'PATCH', body: JSON.stringify({ tool_set: attrs }) },
+  );
+  return res.tool_set;
+}
+
+/** POST .../tool-sets/:slug/deactivate — soft-kill (idempotent). */
+export async function deactivateToolSet(orgId: string, slug: string): Promise<ToolSetView> {
+  const res = await request<{ tool_set: ToolSetView }>(
+    `/api/v1/organizations/${encodeURIComponent(orgId)}/tool-sets/${encodeURIComponent(slug)}/deactivate`,
+    { method: 'POST' },
+  );
+  return res.tool_set;
+}
+
+/** POST .../tool-sets/clone — clone a profile or set slug into a new set. */
+export async function cloneToolSet(
+  orgId: string,
+  source: string,
+  attrs: ToolSetAttrs = {},
+): Promise<ToolSetView> {
+  const res = await request<{ tool_set: ToolSetView }>(
+    `/api/v1/organizations/${encodeURIComponent(orgId)}/tool-sets/clone`,
+    { method: 'POST', body: JSON.stringify({ source, tool_set: attrs }) },
+  );
+  return res.tool_set;
+}
+
+/**
+ * POST .../tool-sets/validate (N4b) — pure dry-run, NEVER persists. A 422 is
+ * a VALIDATION result (structured issues), not a transport error — surfaced
+ * as `{ok: false, issues}` rather than thrown.
+ */
+export async function validateToolSet(
+  orgId: string,
+  attrs: { config?: ToolSetConfig; settings?: ToolSetSettings },
+): Promise<ToolSetValidateResult> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+  const res = await fetch(
+    `${API_URL}/api/v1/organizations/${encodeURIComponent(orgId)}/tool-sets/validate`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ tool_set: attrs }),
+    },
+  );
+  const body = await res.json().catch(() => ({}));
+  if (res.ok) return { ok: true, warnings: body.warnings ?? [] };
+  if (body && body.ok === false && Array.isArray(body.issues)) {
+    return { ok: false, issues: body.issues as ToolSetIssue[] };
+  }
+  throw new Error(body.error || `Request failed: ${res.status}`);
+}
+
+// Session-scoped cache: enum seeds per (tool, arg) never change within a
+// session (base catalog is static for the user's org context).
+const argEnumCache = new Map<string, (string | number | boolean)[]>();
+
+/**
+ * GET .../tool-sets/arg-enum?tool=&arg= (N4b) — the base enum values of one
+ * arg from the live catalog (the prune candidates). Resolves [] for unknown
+ * tool/field or non-enum args — callers fall back to free text.
+ */
+export async function getArgEnum(
+  orgId: string,
+  tool: string,
+  arg: string,
+): Promise<(string | number | boolean)[]> {
+  const key = `${tool}:${arg}`;
+  const hit = argEnumCache.get(key);
+  if (hit) return hit;
+  try {
+    const res = await request<{ values?: (string | number | boolean)[] }>(
+      `/api/v1/organizations/${encodeURIComponent(orgId)}/tool-sets/arg-enum` +
+        `?tool=${encodeURIComponent(tool)}&arg=${encodeURIComponent(arg)}`,
+    );
+    const values = res.values ?? [];
+    argEnumCache.set(key, values);
+    return values;
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * GET .../tool-sets/group-options (N4b) — REAL authz groups alongside the 5
+ * ladder roles, labeled by `kind` with expires_at-aware member counts.
+ */
+export async function listToolSetGroupOptions(orgId: string): Promise<ToolSetGroupOption[]> {
+  const res = await request<{ groups: ToolSetGroupOption[] }>(
+    `/api/v1/organizations/${encodeURIComponent(orgId)}/tool-sets/group-options`,
+  );
+  return res.groups ?? [];
+}

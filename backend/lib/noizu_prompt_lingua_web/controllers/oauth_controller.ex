@@ -40,7 +40,11 @@ defmodule NoizuPromptLinguaWeb.OAuthController do
          client when not is_nil(client) <- Clients.get_active(params["client_id"]),
          true <- RedirectPolicy.registered?(client.redirect_uris, params["redirect_uri"]),
          true <- "authorization_code" in client.grant_types,
-         true <- Pkce.valid_challenge?(params["code_challenge_method"] || "S256", params["code_challenge"]) do
+         true <-
+           Pkce.valid_challenge?(
+             params["code_challenge_method"] || "S256",
+             params["code_challenge"]
+           ) do
       case current_oauth_user(conn) do
         nil ->
           conn
@@ -76,7 +80,10 @@ defmodule NoizuPromptLinguaWeb.OAuthController do
       nil ->
         conn
         |> put_resp_content_type("text/html")
-        |> send_resp(401, html_page("Sign in required", "<p>Please <a href=\"/auth/oidc\">sign in</a>.</p>"))
+        |> send_resp(
+          401,
+          html_page("Sign in required", "<p>Please <a href=\"/auth/oidc\">sign in</a>.</p>")
+        )
 
       user ->
         stored = get_session(conn, :oauth_pending) || %{}
@@ -249,13 +256,19 @@ defmodule NoizuPromptLinguaWeb.OAuthController do
             else
               conn
               |> put_resp_content_type("text/html")
-              |> send_resp(403, html_page("Forbidden", "<p>This elevation request is not for your account.</p>"))
+              |> send_resp(
+                403,
+                html_page("Forbidden", "<p>This elevation request is not for your account.</p>")
+              )
             end
 
           {:error, _} ->
             conn
             |> put_resp_content_type("text/html")
-            |> send_resp(404, html_page("Expired", "<p>This elevation request expired or was already used.</p>"))
+            |> send_resp(
+              404,
+              html_page("Expired", "<p>This elevation request expired or was already used.</p>")
+            )
         end
     end
   end
@@ -263,7 +276,10 @@ defmodule NoizuPromptLinguaWeb.OAuthController do
   def elevate_show(conn, _params) do
     conn
     |> put_resp_content_type("text/html")
-    |> send_resp(400, html_page("Missing txn", "<p>Elevation requires a <code>txn</code> query parameter.</p>"))
+    |> send_resp(
+      400,
+      html_page("Missing txn", "<p>Elevation requires a <code>txn</code> query parameter.</p>")
+    )
   end
 
   def elevate_submit(conn, %{"txn" => txn, "decision" => decision}) do
@@ -296,9 +312,13 @@ defmodule NoizuPromptLinguaWeb.OAuthController do
           end
         else
           _ = Elevation.get_txn(txn)
+
           conn
           |> put_resp_content_type("text/html")
-          |> send_resp(200, html_page("Denied", "<p>Elevation denied. The client will not receive a token.</p>"))
+          |> send_resp(
+            200,
+            html_page("Denied", "<p>Elevation denied. The client will not receive a token.</p>")
+          )
         end
     end
   end
@@ -385,7 +405,12 @@ defmodule NoizuPromptLinguaWeb.OAuthController do
   # The user narrows by unchecking; required core groups render locked.
   defp consent_manifest_html(sections) do
     rows =
-      Enum.map_join(sections, "\n", fn %{group: gid, label: label, required: required?, tools: tools} ->
+      Enum.map_join(sections, "\n", fn %{
+                                         group: gid,
+                                         label: label,
+                                         required: required?,
+                                         tools: tools
+                                       } ->
         """
         <fieldset class="consent-section">
           <legend>
@@ -437,7 +462,10 @@ defmodule NoizuPromptLinguaWeb.OAuthController do
 
       {:error, reason} ->
         require Logger
-        Logger.warning("[OAuth] toolset narrowing not persisted for #{client.client_id}: #{inspect(reason)}")
+
+        Logger.warning(
+          "[OAuth] toolset narrowing not persisted for #{client.client_id}: #{inspect(reason)}"
+        )
 
         :ok
     end

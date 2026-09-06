@@ -39,7 +39,8 @@ defmodule NoizuPromptLingua.TRP.IntegrationTest do
 
   test "ticket update write-busts: fresh read reflects the change immediately", %{org_id: org} do
     {:ok, t} = Tickets.create(%{organization_id: org, title: "before"})
-    assert Tickets.get(t.id).title == "before" # populate cache
+    # populate cache
+    assert Tickets.get(t.id).title == "before"
 
     {:ok, _} = Tickets.update(t.id, %{title: "after"})
     assert Tickets.get(t.id).title == "after"
@@ -87,9 +88,13 @@ defmodule NoizuPromptLingua.TRP.IntegrationTest do
       |> Map.fetch!(:id)
 
     assert {:ok, org} =
-             Organizations.create_organization_with_owner(%{slug: "local-org", name: "Local"}, uid)
+             Organizations.create_organization_with_owner(
+               %{slug: "local-org", name: "Local"},
+               uid
+             )
 
     assert org.slug == "local-org"
+
     assert NoizuPromptLingua.Repo.get_by(NoizuPromptLingua.Schema.Authz.ScopedMembership,
              resource_type: "organization",
              resource_id: org.id,
@@ -206,7 +211,9 @@ defmodule NoizuPromptLingua.TRP.IntegrationTest do
     refute Authz.check_permission(uid, "organization", org, "project:delete")
     assert {:ok, %{role: "member"}} = Authz.authorize(uid, "organization", org, "viewer")
     assert {:error, :insufficient_role} = Authz.authorize(uid, "organization", org, "admin")
-    assert {:error, :not_a_member} = Authz.authorize(Ecto.UUID.generate(), "organization", org, "viewer")
+
+    assert {:error, :not_a_member} =
+             Authz.authorize(Ecto.UUID.generate(), "organization", org, "viewer")
   end
 
   test "sole-owner guard: last owner cannot be demoted or removed", %{org_id: org} do

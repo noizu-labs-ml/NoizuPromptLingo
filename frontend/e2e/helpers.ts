@@ -25,8 +25,26 @@ export const sel = {
   reactionOption: '[role="menuitemcheckbox"]',
 } as const;
 
+/**
+ * The deployed app fronts pages with a cookie-consent dialog that intercepts
+ * pointer events; every click-dependent spec must dismiss it first. The dialog
+ * mounts after first paint, so WAIT for it (bounded) instead of probing once.
+ * No-op when it never renders (local builds / consent already stored).
+ */
+export async function dismissConsent(page: Page) {
+  const accept = page.getByRole("button", { name: "Accept all" });
+  try {
+    await accept.waitFor({ state: "visible", timeout: 5_000 });
+  } catch {
+    return; // dialog never mounted — nothing to dismiss
+  }
+  await accept.click();
+  await expect(accept).toBeHidden();
+}
+
 /** Open a room and wait for the thread to be present. */
 export async function gotoRoom(page: Page, url = roomUrl()) {
   await page.goto(url);
+  await dismissConsent(page);
   await expect(page.locator(sel.thread)).toBeVisible();
 }

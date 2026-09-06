@@ -17,22 +17,28 @@ const INCLUDED = [
  * `status` is fetched client-side from the public marketing endpoint; when it
  * is null (loading, or the endpoint is down) the section degrades to plain
  * cap-free pricing and the form still works.
+ *
+ * Null counters mean "untracked" — a live promo with no cap set (or no count
+ * wired up) renders as active/unlimited: the band shows without the meter and
+ * the "N of M" count. `promo_remaining: 0` still means exhausted.
  */
 export function PricingSection({ status }: { status: MarketingStatus | null }) {
   const promoAvailable =
     status !== null &&
     status.promo_active &&
-    status.promo_remaining !== null &&
-    status.promo_remaining > 0;
+    (status.promo_remaining === null || status.promo_remaining > 0);
 
   const promoExhausted =
     status !== null &&
     status.promo_active &&
-    status.promo_remaining !== null &&
     status.promo_remaining === 0;
 
+  // No remaining/cap numbers to show — active band without the meter/count.
+  const promoUnlimited = promoAvailable &&
+    (status!.promo_remaining === null || status!.promo_cap === null);
+
   const meterPercent =
-    promoAvailable && status!.promo_cap! > 0
+    promoAvailable && !promoUnlimited && status!.promo_cap! > 0
       ? Math.round((status!.promo_remaining! / status!.promo_cap!) * 100)
       : null;
 
@@ -58,17 +64,29 @@ export function PricingSection({ status }: { status: MarketingStatus | null }) {
         {promoAvailable && (
           <div className="tl-promo" data-cy="promo-band">
             <p className="tl-promo__title">
-              First {status!.promo_cap} subscribers get <strong>2 months free</strong>.
+              {promoUnlimited ? (
+                <>
+                  Founding offer on now — get <strong>2 months free</strong>.
+                </>
+              ) : (
+                <>
+                  First {status!.promo_cap} subscribers get <strong>2 months free</strong>.
+                </>
+              )}
             </p>
-            <div className="tl-promo__meter" data-cy="promo-meter" role="meter"
-              aria-valuemin={0} aria-valuemax={status!.promo_cap!} aria-valuenow={status!.promo_remaining!}
-              aria-label="Founding spots remaining">
-              <div className="tl-promo__bar" style={{ width: `${meterPercent}%` }} />
-            </div>
-            <p className="tl-promo__spots" data-cy="promo-spots">
-              <span className="tl-promo__count">{status!.promo_remaining}</span> of{" "}
-              {status!.promo_cap} founding spots left
-            </p>
+            {meterPercent !== null && (
+              <>
+                <div className="tl-promo__meter" data-cy="promo-meter" role="meter"
+                  aria-valuemin={0} aria-valuemax={status!.promo_cap!} aria-valuenow={status!.promo_remaining!}
+                  aria-label="Founding spots remaining">
+                  <div className="tl-promo__bar" style={{ width: `${meterPercent}%` }} />
+                </div>
+                <p className="tl-promo__spots" data-cy="promo-spots">
+                  <span className="tl-promo__count">{status!.promo_remaining}</span> of{" "}
+                  {status!.promo_cap} founding spots left
+                </p>
+              </>
+            )}
           </div>
         )}
         {promoExhausted && (

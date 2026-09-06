@@ -50,6 +50,7 @@ defmodule NoizuPromptLinguaWeb.ClientPermissionsAdminTest do
 
     assert plain |> get("/api/v1/admin/mcp-custom-scopes/any/clients") |> response(403)
     assert plain |> get("/api/v1/admin/acl/groups") |> response(403)
+
     assert plain
            |> put("/api/v1/admin/mcp-custom-scopes/any/clients/api_key/none/toolset_config", %{
              toolset_config: %{}
@@ -90,7 +91,9 @@ defmodule NoizuPromptLinguaWeb.ClientPermissionsAdminTest do
   test "PUT normalizes dotted keys to canonical underscore and persists", %{conn: conn} do
     create_scope(conn, "d3-toolset")
     api_key = create_api_key(setup_user_and_token().user.id, "normalizer")
-    url = "/api/v1/admin/mcp-custom-scopes/d3-toolset/clients/api_key/#{api_key.id}/toolset_config"
+
+    url =
+      "/api/v1/admin/mcp-custom-scopes/d3-toolset/clients/api_key/#{api_key.id}/toolset_config"
 
     body =
       conn
@@ -121,7 +124,9 @@ defmodule NoizuPromptLinguaWeb.ClientPermissionsAdminTest do
   test "PUT validates windows + override fields and rejects junk", %{conn: conn} do
     create_scope(conn, "d3-validate")
     api_key = create_api_key(setup_user_and_token().user.id, "validator")
-    url = "/api/v1/admin/mcp-custom-scopes/d3-validate/clients/api_key/#{api_key.id}/toolset_config"
+
+    url =
+      "/api/v1/admin/mcp-custom-scopes/d3-validate/clients/api_key/#{api_key.id}/toolset_config"
 
     valid = %{
       toolset_config: %{
@@ -162,7 +167,9 @@ defmodule NoizuPromptLinguaWeb.ClientPermissionsAdminTest do
              toolset_config: %{
                groups: %{
                  sessions: %{
-                   tools: %{"Session_List" => %{hide_until: "2030-01-01T00:00:00Z", enable_for_hours: 2}}
+                   tools: %{
+                     "Session_List" => %{hide_until: "2030-01-01T00:00:00Z", enable_for_hours: 2}
+                   }
                  }
                }
              }
@@ -170,18 +177,30 @@ defmodule NoizuPromptLinguaWeb.ClientPermissionsAdminTest do
            |> json_response(422)
 
     # Bad kinds / unknown clients 404.
-    assert conn |> get("/api/v1/admin/mcp-custom-scopes/d3-validate/clients/widget/xyz/toolset_config") |> response(404)
-    assert conn |> put("/api/v1/admin/mcp-custom-scopes/d3-validate/clients/api_key/00000000-0000-0000-0000-000000000000/toolset_config", %{toolset_config: %{}}) |> response(404)
+    assert conn
+           |> get("/api/v1/admin/mcp-custom-scopes/d3-validate/clients/widget/xyz/toolset_config")
+           |> response(404)
+
+    assert conn
+           |> put(
+             "/api/v1/admin/mcp-custom-scopes/d3-validate/clients/api_key/00000000-0000-0000-0000-000000000000/toolset_config",
+             %{toolset_config: %{}}
+           )
+           |> response(404)
   end
 
   test "PUT accepts fetched config back (enabled_at round-trip) and empty resets", %{conn: conn} do
     create_scope(conn, "d3-roundtrip")
     api_key = create_api_key(setup_user_and_token().user.id, "roundtrip")
-    url = "/api/v1/admin/mcp-custom-scopes/d3-roundtrip/clients/api_key/#{api_key.id}/toolset_config"
+
+    url =
+      "/api/v1/admin/mcp-custom-scopes/d3-roundtrip/clients/api_key/#{api_key.id}/toolset_config"
 
     conn
     |> put(url, %{
-      toolset_config: %{groups: %{sessions: %{tools: %{"Session_List" => %{enable_for_hours: 3}}}}}
+      toolset_config: %{
+        groups: %{sessions: %{tools: %{"Session_List" => %{enable_for_hours: 3}}}}
+      }
     })
     |> json_response(200)
 
@@ -196,6 +215,7 @@ defmodule NoizuPromptLinguaWeb.ClientPermissionsAdminTest do
     # its `set_at` anchor (write contract: anchor slides to now), so compare
     # anchors-apart and assert the round-trip is still anchored.
     round = conn |> put(url, %{toolset_config: fetched}) |> json_response(200)
+
     {round_set_at, round_cfg} =
       pop_in(round["toolset_config"], ["groups", "sessions", "tools", "Session_List", "set_at"])
 
@@ -213,11 +233,15 @@ defmodule NoizuPromptLinguaWeb.ClientPermissionsAdminTest do
   test "oauth client toolset_config persists on the oauth_clients row", %{conn: conn} do
     create_scope(conn, "d3-oauth")
     oauth = create_oauth_client("OAuth Normalizer")
-    url = "/api/v1/admin/mcp-custom-scopes/d3-oauth/clients/oauth_client/#{oauth.id}/toolset_config"
+
+    url =
+      "/api/v1/admin/mcp-custom-scopes/d3-oauth/clients/oauth_client/#{oauth.id}/toolset_config"
 
     body =
       conn
-      |> put(url, %{toolset_config: %{groups: %{tickets: %{tools: %{"Ticket.List" => %{disabled: true}}}}}})
+      |> put(url, %{
+        toolset_config: %{groups: %{tickets: %{tools: %{"Ticket.List" => %{disabled: true}}}}}
+      })
       |> json_response(200)
 
     assert body["toolset_config"]["groups"]["tickets"]["tools"]["Ticket_List"]["disabled"] == true
@@ -233,7 +257,9 @@ defmodule NoizuPromptLinguaWeb.ClientPermissionsAdminTest do
 
     created =
       conn
-      |> post("/api/v1/admin/acl/groups", %{group: %{name: unique_name("d3-crud"), description: "ops"}})
+      |> post("/api/v1/admin/acl/groups", %{
+        group: %{name: unique_name("d3-crud"), description: "ops"}
+      })
       |> json_response(201)
 
     assert %{"group" => %{"id" => group_id, "status" => "active"}} = created

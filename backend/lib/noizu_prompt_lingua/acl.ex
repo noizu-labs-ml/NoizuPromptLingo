@@ -77,6 +77,7 @@ defmodule NoizuPromptLingua.Acl do
     rules = applicable_rules(subjects, action, resource, Keyword.get(opts, :scope))
     Resolver.explain(rules, subjects, action, resource, opts)
   end
+
   @doc """
   Normalize any accepted reference form into a canonical `{:ref, Type, id}`
   record (or `nil` when unparseable). Thin wrapper over `ERPRef.cast/1`, which
@@ -133,7 +134,9 @@ defmodule NoizuPromptLingua.Acl do
     # Runaway-graph guard — cap mid-frontier: keep the newest discoveries up
     # to the remaining budget, drop the oldest overflow, keep expanding.
     budget = max(@max_group_depth - MapSet.size(visited), 0)
-    next = if length(next) > budget, do: Enum.slice(next, length(next) - budget, budget), else: next
+
+    next =
+      if length(next) > budget, do: Enum.slice(next, length(next) - budget, budget), else: next
 
     visited = MapSet.union(visited, MapSet.new(next))
 
@@ -191,7 +194,12 @@ defmodule NoizuPromptLingua.Acl do
     dynamic(
       [r],
       r.resource_ref == ^resource or
-        fragment("?->>'type' = ? and ?->>'id' = 'any'", r.resource_ref, ^kind_str(resource), r.resource_ref) or
+        fragment(
+          "?->>'type' = ? and ?->>'id' = 'any'",
+          r.resource_ref,
+          ^kind_str(resource),
+          r.resource_ref
+        ) or
         fragment("?->>'type' = 'any' and ?->>'id' = 'any'", r.resource_ref, r.resource_ref)
     )
   end
@@ -320,6 +328,7 @@ defmodule NoizuPromptLingua.Acl do
   end
 
   defp resolve_group(%Group{} = group), do: group
+
   defp resolve_group(id_or_name) when is_binary(id_or_name),
     do: get_group(id_or_name) || get_group_by_name(id_or_name)
 

@@ -38,7 +38,8 @@ defmodule NoizuPromptLingua.OAuth.TokenExchange do
         client_id: client.client_id,
         resource: resource,
         scope: params["scope"] || subject_claims["scope"] || "mcp",
-        grant_id: subject_claims["grant_id"] || lookup_grant_id(user.id, client.client_id, resource),
+        grant_id:
+          subject_claims["grant_id"] || lookup_grant_id(user.id, client.client_id, resource),
         act: act
       })
     else

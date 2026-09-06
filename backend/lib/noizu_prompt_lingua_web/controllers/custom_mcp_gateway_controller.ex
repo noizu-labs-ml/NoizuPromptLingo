@@ -3,7 +3,11 @@ defmodule NoizuPromptLinguaWeb.CustomMCPGatewayController do
 
   alias NoizuPromptLingua.MCPCustomScopes
   alias NoizuPromptLingua.Organizations
+  alias NoizuPromptLingua.Repo
   alias NoizuPromptLingua.Schema.MCPCustomScope
+  alias NoizuPromptLingua.Schema.McpApiKey
+  alias NoizuPromptLingua.Authz.ScopedMemberships
+  alias NoizuPromptLinguaWeb.MCPConfig
 
   @doc """
   Org-addressed (canonical) entry: /org/<org_slug>/custom/<slug>/mcp.
@@ -11,12 +15,21 @@ defmodule NoizuPromptLinguaWeb.CustomMCPGatewayController do
   Resolves the org by slug (UUID-or-slug resolver with the Redis-backed slug
   cache), then resolves the scope by (org_id, slug) so a slug can never be
   served outside its owning org.
+
+  Member-gated (mirror of `MCPSetGatewayController`'s audience gate): the
+  caller's identity — the MCP key's owner or the OAuth `sub` — must hold an
+  ACTIVE membership in the resolved org. Any gate miss ⇒ 404, indistinguishable
+  from an unknown slug (no existence leak). A missing/unverifiable bearer is
+  NOT a gate miss: it defers to the transport plug's 401 challenge, which
+  leaks nothing either.
   """
   def handle_org(conn, %{"org_slug" => org_slug, "slug" => slug}) do
+    path = "/org/#{org_slug}/custom/#{slug}/mcp"
+
     with {:ok, org_id} <- Organizations.resolve_org_id(org_slug),
-         %MCPCustomScope{} = scope <-
-           MCPCustomScopes.get_by_org_and_slug(org_id, slug) do
-      serve(conn, scope, "/org/#{org_slug}/custom/#{scope.slug}/mcp", org_id)
+         %MCPCustomScope{} = scope <- MCPCustomScopes.get_by_org_and_slug(org_id, slug),
+         :ok <- membership_gate(conn, org_id, path) do
+      serve(conn, scope, path, org_id)
     else
       _ ->
         not_found(conn)
@@ -64,8 +77,9 @@ defmodule NoizuPromptLinguaWeb.CustomMCPGatewayController do
         |> put_status(:moved_permanently)
         |> put_resp_header("location", location)
         |> json(%{redirect: location})
-      end
+    end
   end
+
   @doc """
   Account-level gateway path — `/user/:slug/mcp` (W2). Serves scopes whose
   `visibility` is `"account"` or `"shared"`; org-only scopes 404 (no
@@ -109,6 +123,88 @@ defmodule NoizuPromptLinguaWeb.CustomMCPGatewayController do
 
   defp account_visible?(scope), do: MCPCustomScope.visibility(scope) in ~w(account shared)
 
+  # ── org-addressed membership gate (mirror of MCPSetGatewayController) ──────
+
+  defp membership_gate(conn, org_id, path) do
+    case verified_claims(conn, path) do
+      {:ok, claims} ->
+        case member_ref(claims) do
+          nil ->
+            {:gate_miss, :no_identity}
+
+          ref ->
+            if ScopedMemberships.active_member?("organization", org_id, ref),
+              do: :ok,
+              else: {:gate_miss, :not_member}
+        end
+
+      # No/invalid bearer: defer to the transport plug's RFC 6750 challenge.
+      _ ->
+        :ok
+    end
+  end
+
+  # The key's OWNER (Schema.MCPApiKey belongs_to :user) is the gating identity —
+  # DB-resolved, never a client-supplied claim.
+  defp member_ref(%{"api_key_id" => key_id}) when is_binary(key_id) and key_id != "" do
+    case active_key_user(key_id) do
+      nil -> nil
+      user_id -> %{type: :user, id: user_id}
+    end
+  end
+
+  # OAuth identity: canonical user ref (strips the "user:" prefix OAuth tokens
+  # carry; svc:/client: subs are not users ⇒ no identity ⇒ 404).
+  defp member_ref(claims) do
+    case NoizuPromptLingua.MCP.Resolve.normalize_user_id(claims) do
+      nil -> nil
+      user_id -> %{type: :user, id: user_id}
+    end
+  end
+
+  defp active_key_user(key_id) do
+    case Repo.get(McpApiKey, key_id) do
+      %McpApiKey{status: "active", user_id: user_id} when is_binary(user_id) -> user_id
+      _ -> nil
+    end
+  end
+
+  # Controller-level identity verification (same opts the transport plug uses)
+  # so gating runs BEFORE the transport session.
+  defp verified_claims(conn, path) do
+    case bearer_token(conn) do
+      nil ->
+        {:error, :no_token}
+
+      token ->
+        resource = "https://#{conn.host}#{path}"
+
+        case MCPConfig.auth_opts(expected_audience: resource)[:verifier] do
+          {NoizuPromptLingua.MCP.DualTokenVerifier, vopts} ->
+            NoizuPromptLingua.MCP.DualTokenVerifier.verify(token, conn_info(conn), vopts)
+
+          _ ->
+            {:error, :verifier_unavailable}
+        end
+    end
+  end
+
+  defp bearer_token(conn) do
+    case Enum.find(conn.req_headers, fn {h, _} -> h in ["authorization", "Authorization"] end) do
+      {_, value} ->
+        case String.split(value, " ", parts: 2) do
+          ["Bearer" <> _, token] -> String.trim(token)
+          _ -> nil
+        end
+
+      nil ->
+        nil
+    end
+  end
+
+  defp conn_info(conn),
+    do: %{method: conn.method, peer: conn.remote_ip, headers: conn.req_headers}
+
   defp not_found(conn) do
     conn
     |> put_status(:not_found)
@@ -136,7 +232,8 @@ defmodule NoizuPromptLinguaWeb.CustomMCPGatewayController do
     |> Plug.Conn.assign(:custom_scope_slug, scope.slug)
     |> Plug.Conn.assign(:custom_scope_org_id, org_id)
     |> Map.put(:path_info, [])
-    |> Noizu.MCP.Transport.StreamableHTTP.Plug.call(opts)
+    # Guarded mount (B4): malformed jsonrpc framing answers -32600 inline.
+    |> NoizuPromptLinguaWeb.MCP.TransportPlug.call(opts)
   end
 
   def mcp_context(conn) do

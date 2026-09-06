@@ -41,7 +41,7 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.TicketCreate do
   })
 
   alias NoizuPromptLingua.Domains.Tickets
-  alias NoizuPromptLingua.MCP.{Args, Resolve}
+  alias NoizuPromptLingua.MCP.{Args, Resolve, Urls}
 
   @impl true
   def call(args, _ctx) do
@@ -64,6 +64,7 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.TicketCreate do
           {:ok,
            %{
              id: ticket.id,
+             ticket_url: Urls.ticket_url(ticket),
              title: ticket.title,
              ticket_type: ticket.ticket_type,
              status: ticket.status,
