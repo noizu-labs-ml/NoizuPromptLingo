@@ -1,5 +1,6 @@
 # work trees
 staging/
+vendor/
 
 start-app*tar.gz
 # Generated secrets
@@ -35,3 +36,6 @@ journal/TODAY*
 journal/TOMORROW*
 
 frontend/cypress/screenshots/
+
+# Canonical worktree placement
+.claude/worktrees/

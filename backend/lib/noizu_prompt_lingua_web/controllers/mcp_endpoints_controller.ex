@@ -8,6 +8,15 @@ defmodule NoizuPromptLinguaWeb.McpEndpointsController do
   alias NoizuPromptLingua.Guardian
   alias NoizuPromptLingua.Organizations
   alias NoizuPromptLingua.MCPCustomScopes
+  alias NoizuPromptLingua.MCP.ToolProposer
+
+  # PRD-020 FR-2 request limits — enforced BEFORE any LLM call (422, never 5xx).
+  @slug_format ~r/^[a-z0-9][a-z0-9-]{0,62}$/
+  @max_name_length 120
+  @max_description_length 2_000
+  @max_answer_length 1_000
+  @max_question_id_length 64
+  @max_answers 8
 
   def index(conn, _params) do
     case current_user_id(conn) do
@@ -216,6 +225,207 @@ defmodule NoizuPromptLinguaWeb.McpEndpointsController do
     end
   end
 
+  # ── PRD-020: propose-tools (FR-2/FR-3) ──────────────────────────────────────
+
+  @doc """
+  LLM tool proposals for the creation wizard. Flat body (NOT endpoint-wrapped):
+  `{"name"?, "description", "answers"?}`. Structural/size violations are 422
+  before the LLM is ever called; every LLM-path failure is HTTP 200
+  `{"status": "llm_unavailable"}` so the client falls back to the manual picker.
+  """
+  @spec propose_tools(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def propose_tools(conn, params) do
+    with {:ok, _user_id} <- require_user(conn),
+         {:ok, input} <- validate_propose_params(params) do
+      case ToolProposer.propose(input.name, input.description, input.answers, []) do
+        {:ok, {:questions, questions}} ->
+          conn
+          |> put_status(:ok)
+          |> json(%{status: "questions", questions: Enum.map(questions, &question_json/1)})
+
+        {:ok, {:proposal, %{tools: tools, summary: summary}}} ->
+          conn
+          |> put_status(:ok)
+          |> json(%{status: "proposal", summary: summary, tools: Enum.map(tools, &tool_json/1)})
+
+        {:error, :llm_unavailable} ->
+          conn |> put_status(:ok) |> json(%{status: "llm_unavailable"})
+      end
+    else
+      {:error, :unauthorized} ->
+        unauthorized(conn)
+
+      {:error, errors} when is_map(errors) ->
+        conn |> put_status(:unprocessable_entity) |> json(%{errors: errors})
+    end
+  end
+
+  defp validate_propose_params(params) do
+    name = param(params, "name")
+    description = param(params, "description")
+    answers = fetch_key(params, "answers") || []
+
+    errors =
+      %{}
+      |> maybe_name_error(name)
+      |> maybe_description_error(description)
+      |> maybe_answers_error(answers)
+
+    if errors == %{} do
+      {:ok, %{name: clean_name(name), description: description, answers: answers}}
+    else
+      {:error, errors}
+    end
+  end
+
+  defp maybe_name_error(errors, name) do
+    cond do
+      is_nil(name) or name == "" ->
+        errors
+
+      not is_binary(name) or String.length(name) > @max_name_length ->
+        Map.put(errors, "name", ["should be at most #{@max_name_length} character(s)"])
+
+      true ->
+        errors
+    end
+  end
+
+  defp maybe_description_error(errors, description) do
+    cond do
+      not is_binary(description) or String.trim(description) == "" ->
+        Map.put(errors, "description", ["is required"])
+
+      String.length(description) > @max_description_length ->
+        Map.put(errors, "description", ["should be at most #{@max_description_length} character(s)"])
+
+      true ->
+        errors
+    end
+  end
+
+  defp maybe_answers_error(errors, answers) do
+    cond do
+      not is_list(answers) ->
+        Map.put(errors, "answers", ["must be a list"])
+
+      length(answers) > @max_answers ->
+        Map.put(errors, "answers", ["should have at most #{@max_answers} item(s)"])
+
+      Enum.any?(answers, &invalid_answer_entry?/1) ->
+        Map.put(errors, "answers", ["invalid answer entries"])
+
+      true ->
+        errors
+    end
+  end
+
+  # Size limits only (FR-2). FORMAT-malformed question_ids are NOT rejected
+  # here — they are dropped silently downstream (ToolProposer).
+  defp invalid_answer_entry?(entry) when is_map(entry) do
+    question_id = fetch_key(entry, "question_id")
+    answer = fetch_key(entry, "answer")
+
+    oversize?(question_id, @max_question_id_length) or
+      not is_binary(answer) or
+      String.length(answer) > @max_answer_length
+  end
+
+  defp invalid_answer_entry?(_), do: true
+
+  defp oversize?(value, max) when is_binary(value), do: String.length(value) > max
+  defp oversize?(nil, _max), do: false
+  defp oversize?(_, _max), do: true
+
+  defp clean_name(name) when is_binary(name) do
+    trimmed = String.trim(name)
+    if trimmed == "", do: nil, else: trimmed
+  end
+
+  defp clean_name(_), do: nil
+
+  defp question_json(q) do
+    base = %{id: q.id, prompt: q.prompt, kind: Atom.to_string(q.kind)}
+
+    if Map.has_key?(q, :options) do
+      Map.put(base, :options, Map.fetch!(q, :options))
+    else
+      base
+    end
+  end
+
+  defp tool_json(t), do: %{name: t.name, group: t.group, rationale: t.rationale}
+
+  # ── PRD-020: slug-available (FR-1) ──────────────────────────────────────────
+
+  @doc """
+  Cheap inline slug availability check for the wizard/clone dialog. Evaluated
+  in order: invalid (regex) -> reserved (tobor/core) -> taken -> available.
+  Suggestions are deterministic `<slug>-2..-9`, clamped to 63 chars.
+  """
+  @spec slug_available(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def slug_available(conn, params) do
+    with {:ok, _user_id} <- require_user(conn) do
+      slug = param(params, "slug")
+
+      if is_binary(slug) and String.trim(slug) != "" do
+        json(conn, slug_verdict(slug |> String.trim() |> String.downcase()))
+      else
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{errors: %{slug: ["is required"]}})
+      end
+    else
+      {:error, :unauthorized} -> unauthorized(conn)
+    end
+  end
+
+  defp slug_verdict(slug) do
+    cond do
+      not Regex.match?(@slug_format, slug) ->
+        %{available: false, reason: "invalid"}
+
+      slug in MCPCustomScopes.reserved_slugs() ->
+        slug_unavailable("reserved", slug)
+
+      not is_nil(MCPCustomScopes.get_by_slug(slug)) ->
+        slug_unavailable("taken", slug)
+
+      true ->
+        %{available: true}
+    end
+  end
+
+  defp slug_unavailable(reason, slug) do
+    base = %{available: false, reason: reason}
+
+    case slug_suggestion(slug) do
+      nil -> base
+      suggestion -> Map.put(base, :suggestion, suggestion)
+    end
+  end
+
+  # First free `<slug>-2..-9` clamped to 63 chars: must be valid, unreserved,
+  # and untaken. `suggestion` is omitted when no candidate qualifies.
+  defp slug_suggestion(slug) do
+    Enum.find(2..9, fn n ->
+      candidate = String.slice("#{slug}-#{n}", 0, 63)
+
+      Regex.match?(@slug_format, candidate) and
+        candidate not in MCPCustomScopes.reserved_slugs() and
+        is_nil(MCPCustomScopes.get_by_slug(candidate))
+    end)
+    |> case do
+      nil -> nil
+      n -> String.slice("#{slug}-#{n}", 0, 63)
+    end
+  end
+
+  defp fetch_key(map, key) when is_map(map),
+    do: Map.get(map, key) || Map.get(map, String.to_atom(key))
+
+  defp fetch_key(_map, _key), do: nil
+
   defp maybe_set_default(_user_id, scope, false), do: {:ok, scope}
 
   defp maybe_set_default(user_id, scope, true),
@@ -289,7 +499,7 @@ defmodule NoizuPromptLinguaWeb.McpEndpointsController do
   defp copy_attrs(params) do
     params
     |> endpoint_params()
-    |> Map.take(["name", "description", "slug"])
+    |> Map.take(["name", "description", "slug", "config"])
     |> Enum.reject(fn {_k, v} -> v in [nil, ""] end)
     |> Map.new()
   end

@@ -8,6 +8,8 @@ import {
   type McpCustomScope,
 } from '@/lib/api';
 import McpIncludeEditor from '@/components/mcp-include-editor';
+import EndpointWizard from '@/components/mcp-config/endpoint-wizard';
+import type { WizardSource } from '@/components/mcp-config/endpoint-wizard-state';
 
 interface McpEndpointManagerProps {
   templates: McpCustomScope[];
@@ -16,6 +18,10 @@ interface McpEndpointManagerProps {
   catalog: McpCustomGroup[];
   onSelect: (scope: McpCustomScope) => void;
   onChange: (next: { templates: McpCustomScope[]; endpoints: McpCustomScope[]; selected: McpCustomScope }) => void;
+}
+
+interface WizardSession {
+  source: (WizardSource & { name: string; description: string }) | null;
 }
 
 function ownerLabel(scope: McpCustomScope) {
@@ -39,6 +45,8 @@ export default function McpEndpointManager({
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
   const [name, setName] = useState(selected?.name ?? '');
+  // PRD-020 FR-4/FR-6: wizard entry points — null = closed; source = clone mode.
+  const [wizard, setWizard] = useState<WizardSession | null>(null);
 
   useEffect(() => {
     setName(selected?.name ?? '');
@@ -101,6 +109,49 @@ export default function McpEndpointManager({
     } finally {
       setBusy(false);
     }
+  }
+
+  // PRD-020 FR-4: Clone affordance (templates + own endpoints + org endpoints
+  // where editable) opens the shared wizard prefilled from the source — name =
+  // "Copy of <source.name>"; submit sends source_slug (templates) or source_id
+  // (own) and the config carries over verbatim via MCPCustomScopes.copy/2.
+  function openClone() {
+    if (!current) return;
+    const isTemplate = current.owner_kind === 'template' || (!current.user_id && !current.organization_id);
+    setWizard({
+      source: {
+        id: isTemplate ? undefined : current.id,
+        slug: current.slug,
+        kind: isTemplate ? 'template' : 'own',
+        name: `Copy of ${current.name}`,
+        description: current.description ?? '',
+      },
+    });
+  }
+
+  function openWizard() {
+    setWizard({ source: null });
+  }
+
+  async function wizardCreated(endpoint: McpCustomScope) {
+    toast.success('Endpoint created');
+    try {
+      const res = await api.listMcpEndpoints();
+      onChange({
+        templates: res.templates ?? [],
+        endpoints: res.endpoints ?? [],
+        selected: endpoint,
+      });
+    } catch {
+      // Refresh failed; still surface the new row locally.
+      onChange({
+        templates,
+        endpoints: [endpoint, ...endpoints.filter((s) => s.id !== endpoint.id)],
+        selected: endpoint,
+      });
+    }
+    onSelect(endpoint);
+    setName(endpoint.name);
   }
 
   async function useEndpoint() {
@@ -174,6 +225,12 @@ export default function McpEndpointManager({
         cloned from the standard template. Choose one, edit what it includes, or
         copy it. Setup commands below use the selected URL.
       </p>
+
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+        <button type="button" className="sg-btn sg-btn--black sg-btn--sm" onClick={openWizard}>
+          New endpoint (wizard)
+        </button>
+      </div>
 
       <div className="sg-field" style={{ marginBottom: 12 }}>
         <label htmlFor="mcp-endpoint-select">Endpoint</label>
@@ -261,6 +318,16 @@ export default function McpEndpointManager({
             <button type="button" className="sg-btn sg-btn--black sg-btn--sm" onClick={copyEndpoint} disabled={busy}>
               Copy endpoint
             </button>
+            {/* FR-4: Clone affordance on templates and own/org-editable rows.
+                Templates were previously a read-only dead end ("copy it to edit"). */}
+            <button
+              type="button"
+              className="sg-btn sg-btn--outline sg-btn--sm"
+              onClick={openClone}
+              disabled={busy || (!!current && current.owner_kind === 'organization' && !editable)}
+            >
+              Clone
+            </button>
             {!current.is_default || current.owner_kind !== 'user' ? (
               <button type="button" className="sg-btn sg-btn--outline sg-btn--sm" onClick={useEndpoint} disabled={busy}>
                 Use as my default
@@ -287,6 +354,14 @@ export default function McpEndpointManager({
       ) : (
         <p className="sg-page-intro">Loading standard Tobor Locker endpoint…</p>
       )}
+
+      <EndpointWizard
+        open={wizard !== null}
+        catalog={catalog}
+        cloneSource={wizard?.source ?? null}
+        onClose={() => setWizard(null)}
+        onCreated={wizardCreated}
+      />
     </section>
   );
 }
