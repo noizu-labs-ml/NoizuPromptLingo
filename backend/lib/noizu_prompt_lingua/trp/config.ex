@@ -12,11 +12,12 @@ defmodule NoizuPromptLingua.TRP.Config do
   """
 
   def base_url do
-    env(:base_url) || System.get_env("TRP_API_BASE_URL")
-    |> case do
-      url when is_binary(url) -> String.replace_trailing(url, "/", "")
-      other -> other
-    end
+    env(:base_url) ||
+      System.get_env("TRP_API_BASE_URL")
+      |> case do
+        url when is_binary(url) -> String.replace_trailing(url, "/", "")
+        other -> other
+      end
   end
 
   def shared_key, do: env(:shared_key) || System.get_env("TRP_SHARED_KEY")

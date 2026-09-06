@@ -6,7 +6,10 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.TicketComment do
     category: "Tickets"
 
   input do
-    field :ticket_id, :string, required: true, description: "Ticket UUID or human key (PREFIX-NNN)"
+    field :ticket_id, :string,
+      required: true,
+      description: "Ticket UUID or human key (PREFIX-NNN)"
+
     field :organization, :string,
       description: "Org slug or UUID (required when ticket_id is a human key)"
 
@@ -54,7 +57,8 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.TicketComment do
 
           case Comment.add("ticket", ticket.id, attrs) do
             {:ok, comment} ->
-              {:ok, %{id: comment.id, ticket_id: ticket.id, key: ticket.key, content: comment.content}}
+              {:ok,
+               %{id: comment.id, ticket_id: ticket.id, key: ticket.key, content: comment.content}}
 
             {:error, changeset} ->
               {:error, "Failed: #{inspect(changeset.errors)}"}

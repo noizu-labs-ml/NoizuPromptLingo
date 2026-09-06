@@ -62,7 +62,12 @@ defmodule NoizuPromptLingua.Domains.InstructionsTest do
 
       {:ok, b} =
         Instructions.create(
-          %{"organization_id" => org.id, "slug" => "body-string", "title" => "T", "body" => "string body"},
+          %{
+            "organization_id" => org.id,
+            "slug" => "body-string",
+            "title" => "T",
+            "body" => "string body"
+          },
           []
         )
 

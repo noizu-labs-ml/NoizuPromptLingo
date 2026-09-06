@@ -81,6 +81,9 @@ defmodule NoizuPromptLingua.Application do
           Noizu.MCP.Server.VFSPubSub,
           # Browser relay: correlates Browser.* tool calls with the local controller.
           NoizuPromptLingua.Domains.Browser.Relay,
+          # VFS Wave 4 job-dir runner (§3.8): submit bookkeeping + shim pool.
+          {Task.Supervisor, name: NoizuPromptLingua.MCP.VFS.Jobs.RunnerSup},
+          NoizuPromptLingua.MCP.VFS.Jobs,
           NoizuPromptLinguaWeb.Endpoint
         ]
 

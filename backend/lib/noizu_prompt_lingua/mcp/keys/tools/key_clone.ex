@@ -41,11 +41,12 @@ defmodule NoizuPromptLingua.MCP.Keys.Tools.KeyClone do
              user_id: user_id,
              label: Args.get(args, :label)
            ) do
-      {:ok, %{
-        key: MCPApiKeys.mask(key),
-        raw_key: raw,
-        notice: "Store this raw key now — it is never shown again."
-      }}
+      {:ok,
+       %{
+         key: MCPApiKeys.mask(key),
+         raw_key: raw,
+         notice: "Store this raw key now — it is never shown again."
+       }}
     else
       nil -> {:error, "authentication required"}
       _other -> {:error, "source key not found (or not yours)"}

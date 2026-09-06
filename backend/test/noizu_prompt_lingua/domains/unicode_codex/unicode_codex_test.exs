@@ -139,7 +139,8 @@ defmodule NoizuPromptLingua.Domains.UnicodeCodexTest do
       slug = unique("blank")
       upsert_element!(slug: slug, title: "Global #{slug}")
 
-      assert %{count: 1} = UnicodeCodex.list_elements(organization_id: "", project_id: "", q: slug)
+      assert %{count: 1} =
+               UnicodeCodex.list_elements(organization_id: "", project_id: "", q: slug)
 
       # and an org row is invisible under a blank org id
       upsert_element!(slug: slug, scope: "organization", organization_id: org.id, title: "Org")
@@ -180,6 +181,7 @@ defmodule NoizuPromptLingua.Domains.UnicodeCodexTest do
       slug = unique("layered2")
       upsert_element!(slug: slug, title: "Global")
       upsert_element!(slug: slug, scope: "organization", organization_id: org.id, title: "Org")
+
       upsert_element!(
         slug: slug,
         scope: "project",
@@ -392,6 +394,7 @@ defmodule NoizuPromptLingua.Domains.UnicodeCodexTest do
       global = upsert_element!(slug: slug, title: "Global")
       UnicodeCodex.replace_element_usages(global, [usage.slug], nil, nil)
       upsert_element!(slug: slug, scope: "organization", organization_id: org.id, title: "Org")
+
       upsert_element!(
         slug: slug,
         scope: "project",
@@ -451,7 +454,13 @@ defmodule NoizuPromptLingua.Domains.UnicodeCodexTest do
 
       upsert_usage!(slug: "#{prefix}-b", title: "beta", flags: ["core"])
       upsert_usage!(slug: "#{prefix}-a", title: "Alpha", topics: ["syntax"])
-      upsert_usage!(slug: "#{prefix}-o", scope: "organization", organization_id: org.id, title: "org-only")
+
+      upsert_usage!(
+        slug: "#{prefix}-o",
+        scope: "organization",
+        organization_id: org.id,
+        title: "org-only"
+      )
 
       assert %{count: 2, special_usages: usages} = UnicodeCodex.list_special_usages(q: prefix)
       assert Enum.map(usages, & &1.slug) == ["#{prefix}-a", "#{prefix}-b"]
@@ -711,7 +720,9 @@ defmodule NoizuPromptLingua.Domains.UnicodeCodexTest do
       element = upsert_element!(slug: unique("ru-dup"), title: "Dup")
       usage = upsert_usage!(slug: unique("ru-dup-u"), title: "DupU")
 
-      assert :ok = UnicodeCodex.replace_element_usages(element, [usage.slug, usage.slug], nil, nil)
+      assert :ok =
+               UnicodeCodex.replace_element_usages(element, [usage.slug, usage.slug], nil, nil)
+
       assert refreshed_usages!(element) == [usage.slug]
     end
 
@@ -744,8 +755,21 @@ defmodule NoizuPromptLingua.Domains.UnicodeCodexTest do
       t1 = upsert_element!(slug: unique("rr-t1"), title: "T1")
       t2 = upsert_element!(slug: unique("rr-t2"), title: "T2")
 
-      :ok = UnicodeCodex.replace_element_relations(element, [%{"type" => "same-topic", "target" => t1.slug}], nil, nil)
-      :ok = UnicodeCodex.replace_element_relations(element, [%{"type" => "variant-of", "target" => t2.slug}], nil, nil)
+      :ok =
+        UnicodeCodex.replace_element_relations(
+          element,
+          [%{"type" => "same-topic", "target" => t1.slug}],
+          nil,
+          nil
+        )
+
+      :ok =
+        UnicodeCodex.replace_element_relations(
+          element,
+          [%{"type" => "variant-of", "target" => t2.slug}],
+          nil,
+          nil
+        )
 
       assert {:ok, %{element: detail, layers: _}} = UnicodeCodex.get_element(element.slug)
       assert [%{relation_type: "variant-of"}] = detail.relations
@@ -754,7 +778,10 @@ defmodule NoizuPromptLingua.Domains.UnicodeCodexTest do
       :ok =
         UnicodeCodex.replace_element_relations(
           element,
-          [%{"type" => "variant-of", "target" => t2.slug}, %{"type" => "variant-of", "target" => t2.slug}],
+          [
+            %{"type" => "variant-of", "target" => t2.slug},
+            %{"type" => "variant-of", "target" => t2.slug}
+          ],
           nil,
           nil
         )
@@ -870,7 +897,9 @@ defmodule NoizuPromptLingua.Domains.UnicodeCodexTest do
       slug = unique("lay")
 
       global = upsert_element!(slug: slug, title: "G")
-      org_row = upsert_element!(slug: slug, scope: "organization", organization_id: org.id, title: "O")
+
+      org_row =
+        upsert_element!(slug: slug, scope: "organization", organization_id: org.id, title: "O")
 
       project_row =
         upsert_element!(

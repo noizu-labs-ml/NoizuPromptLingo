@@ -57,18 +57,24 @@ defmodule NoizuPromptLingua.MCP.VFS.Root do
   # the documented insertion point.
   @group_backends %{
     "artifacts" => NoizuPromptLingua.MCP.VFS.Artifacts,
+    "browser" => NoizuPromptLingua.MCP.VFS.Browser,
     "campaigns" => NoizuPromptLingua.MCP.VFS.Campaigns,
     "chat" => NoizuPromptLingua.MCP.VFS.Chat,
+    "clients" => NoizuPromptLingua.MCP.VFS.Clients,
     "customers" => NoizuPromptLingua.MCP.VFS.Customers,
+    "github" => NoizuPromptLingua.MCP.VFS.Github,
     "instructions" => NoizuPromptLingua.MCP.VFS.Instructions,
     "market" => NoizuPromptLingua.MCP.VFS.Market,
+    "markdown" => NoizuPromptLingua.MCP.VFS.Markdown,
     "memory" => NoizuPromptLingua.MCP.VFS.Memory,
     "notifications" => NoizuPromptLingua.MCP.VFS.Notifications,
+    "projects" => NoizuPromptLingua.MCP.VFS.Projects,
     "pubsub" => NoizuPromptLingua.MCP.VFS.PubSub,
     "review" => NoizuPromptLingua.MCP.VFS.Review,
     "sessions" => NoizuPromptLingua.MCP.VFS.Sessions,
     "tickets" => NoizuPromptLingua.MCP.VFS.Tickets,
-    "unicode" => NoizuPromptLingua.MCP.VFS.Unicode
+    "unicode" => NoizuPromptLingua.MCP.VFS.Unicode,
+    "wiki" => NoizuPromptLingua.MCP.VFS.Wiki
   }
 
   defp group_backend(group), do: Map.get(@group_backends, group)

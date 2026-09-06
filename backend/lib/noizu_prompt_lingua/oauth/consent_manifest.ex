@@ -78,8 +78,13 @@ defmodule NoizuPromptLingua.OAuth.ConsentManifest do
             blocked = Enum.reject(tools, &(Map.get(group_tools, &1) == "on"))
 
             case blocked do
-              [] -> acc
-              blocked -> Map.put(acc, group_id, %{"tools" => Map.new(blocked, &{&1, %{"disabled" => true}})})
+              [] ->
+                acc
+
+              blocked ->
+                Map.put(acc, group_id, %{
+                  "tools" => Map.new(blocked, &{&1, %{"disabled" => true}})
+                })
             end
         end
       end)

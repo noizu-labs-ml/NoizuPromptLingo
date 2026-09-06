@@ -72,7 +72,8 @@ defmodule NoizuPromptLingua.MCP.VFS.ClientsTest do
     )
   end
 
-  defp record_path(org_slug, client_slug), do: "/tobor/#{org_slug}/clients/#{client_slug}/record.json"
+  defp record_path(org_slug, client_slug),
+    do: "/tobor/#{org_slug}/clients/#{client_slug}/record.json"
 
   defp create_client(ctx, org, slug, extra \\ %{}) do
     body =
@@ -101,9 +102,15 @@ defmodule NoizuPromptLingua.MCP.VFS.ClientsTest do
     assert doc["slug"] == slug and doc["status"] == "active"
 
     assert {:ok, _} =
-             VFS.write(Clients, path, ~s({"name":"Acme Renamed","default_hourly_rate_cents":150}), ctx)
+             VFS.write(
+               Clients,
+               path,
+               ~s({"name":"Acme Renamed","default_hourly_rate_cents":150}),
+               ctx
+             )
 
     {:ok, body, _} = VFS.read(Clients, path, ctx)
+
     assert {:ok, %{"name" => "Acme Renamed", "default_hourly_rate_cents" => 150}} =
              Jason.decode(body)
   end
@@ -120,7 +127,9 @@ defmodule NoizuPromptLingua.MCP.VFS.ClientsTest do
     assert {:error, :enoent} = VFS.stat(Clients, "/tobor/#{org.slug}/clients", member)
     assert {:error, :enoent} = VFS.stat(Clients, record_path(org.slug, slug), member)
     assert {:error, :enoent} = VFS.read(Clients, record_path(org.slug, slug), member)
-    assert {:error, :enoent} = VFS.write(Clients, record_path(org.slug, slug), ~s({"name":"x"}), member)
+
+    assert {:error, :enoent} =
+             VFS.write(Clients, record_path(org.slug, slug), ~s({"name":"x"}), member)
   end
 
   test "custom-scope (non-root-plane) key is hidden even for an admin" do

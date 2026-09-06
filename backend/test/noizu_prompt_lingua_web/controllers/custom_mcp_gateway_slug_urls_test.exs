@@ -38,7 +38,9 @@ defmodule NoizuPromptLinguaWeb.CustomMCPGatewaySlugUrlsTest do
 
     on_exit(fn ->
       if prev_cfg, do: Application.put_env(:noizu_prompt_lingua, :trp, prev_cfg)
-      if prev_transport, do: Application.put_env(:noizu_prompt_lingua, :trp_transport, prev_transport)
+
+      if prev_transport,
+        do: Application.put_env(:noizu_prompt_lingua, :trp_transport, prev_transport)
     end)
 
     %{uniq: uniq, org_a: nil, org_b: nil}
@@ -159,9 +161,14 @@ defmodule NoizuPromptLinguaWeb.CustomMCPGatewaySlugUrlsTest do
     |> Ecto.Changeset.change(%{slug: slug, name: "W1 Org #{slug}"})
     |> NoizuPromptLingua.Repo.insert()
     |> then(fn
-      {:ok, org} -> org
+      {:ok, org} ->
+        org
+
       # Unique-violation on a re-run — the existing row is equally valid.
-      {:error, _} -> NoizuPromptLingua.Repo.get_by!(NoizuPromptLingua.Schema.Organizations.Organization, slug: slug)
+      {:error, _} ->
+        NoizuPromptLingua.Repo.get_by!(NoizuPromptLingua.Schema.Organizations.Organization,
+          slug: slug
+        )
     end)
     |> tap(&NoizuPromptLingua.TRP.TestStub.seed_org(&1.id, slug))
   end

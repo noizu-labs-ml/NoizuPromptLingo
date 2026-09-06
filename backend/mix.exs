@@ -12,12 +12,22 @@ defmodule NoizuPromptLingua.MixProject do
       deps: deps(),
       listeners: [Phoenix.CodeReloader],
       # Coverage (excoveralls; dev/test only — see deps)
-      test_coverage: [tool: ExCoveralls],
+      test_coverage: [tool: ExCoveralls]
+    ]
+  end
+
+  # Replaces the removed `:preferred_cli_env` project keyword (deprecated in
+  # Elixir 1.17, removed in 1.19 — silences the per-run CI warning).
+  def cli do
+    [
       preferred_cli_env: [
         coveralls: :test,
         "coveralls.detail": :test,
         "coveralls.html": :test,
-        "coveralls.json": :test
+        "coveralls.json": :test,
+        # The smoke alias must not leak dev.exs config (tobor_locker user) into
+        # the run — aliases keep the ambient MIX_ENV otherwise.
+        smoke: :test
       ]
     ]
   end
@@ -104,18 +114,13 @@ defmodule NoizuPromptLingua.MixProject do
       {:oban, "~> 2.18"},
 
       # Carried over from prior NoizuPromptLingo mix.exs
-      # N2b: noizu_mcp pinned to the PRD-4 freeze (5f7217e = merge of PR #4,
-      # persistence store; version 0.3.0, unpublished on hex — hex stops at 0.1.6).
-      # Git ref, not the old local path dep (…/Libs/ai/elixir-mcp/.worktrees/n2b-gate):
-      # the path only exists on the dev Mac and broke CI mix compile. Repo is
-      # public, so CI resolves the ref without extra credentials.
-      # VFS Wave 0: bumped to origin/main c1fe6a63 — same 0.3.0 VFS surface this
-      # branch was already compiled against (behaviour, Control, VFSWS, PubSub,
-      # Features.VFS are identical 5f7217e..c1fe6a6) plus the StreamableHTTP
-      # plug SSE fix; makes the working-tree dep state the canonical lock.
-      {:noizu_mcp,
-       git: "https://github.com/noizu-labs-ml/elixir-mcp-lib.git",
-       ref: "c1fe6a63cd054edf6a15742da10155bed19b07e7"},
+      # noizu_mcp: hex (0.3.1 line — VFSWS keepalive + disconnect hardening). The
+      # PRD-4 freeze git ref (5f7217e, then origin/main c1fe6a63 — same 0.3.0
+      # VFS surface: behaviour, Control, VFSWS, PubSub, Features.VFS plus the
+      # StreamableHTTP plug SSE fix). The hex release is that exact source
+      # packaged; parity was verified by the full-suite flip gate before this
+      # pin landed.
+      {:noizu_mcp, "~> 0.3.1"},
       # VFS Wave 0 conformance harness: Mint WebSocket test client driving the
       # VFSWS transport through a real Bandit listener (same pattern as the
       # lib's transport suite).
@@ -150,6 +155,36 @@ defmodule NoizuPromptLingua.MixProject do
         "ecto.create --quiet",
         "ecto.migrate --quiet",
         "test"
+      ],
+      # CI push-gate subset: curated HERMETIC suites only (no Weaviate / TRP /
+      # LLM-provider-key / external-network dependencies). Fast (~minutes) and
+      # green on stock runners; the full suite stays available via
+      # `mix test` locally and the workflow_dispatch exhaustive CI job.
+      # Adding a suite here = a promise it passes on a bare runner; validate
+      # with: env -u OPENAI_API_KEY -u TRP_API_BASE_URL -u TRP_SHARED_KEY mix smoke
+      smoke: [
+        "ecto.create --quiet",
+        "ecto.migrate --quiet",
+        # One `test` invocation — alias list entries are separate tasks, so the
+        # curated paths must ride the same string.
+        # mcp core: rename/cast regression, manifest parity, guards, resolvers
+        # stable controller sweeps
+        # auth / sso
+        "test --exclude memory --exclude live_trp " <>
+          "test/noizu_prompt_lingua/mcp/tool_set_invoke_regression_test.exs " <>
+          "test/noizu_prompt_lingua/mcp/session_manifest_parity_test.exs " <>
+          "test/noizu_prompt_lingua/mcp/session_manifest_test.exs " <>
+          "test/noizu_prompt_lingua/mcp/tool_guard_branches_test.exs " <>
+          "test/noizu_prompt_lingua/mcp/window_endpoint_resolver_branches_test.exs " <>
+          "test/noizu_prompt_lingua/mcp/negotiations_provider_branches_test.exs " <>
+          "test/noizu_prompt_lingua_web/controllers/remote_access_tunnels_test.exs " <>
+          "test/noizu_prompt_lingua_web/controllers/media_controllers_test.exs " <>
+          "test/noizu_prompt_lingua_web/controllers/controller_tail_sweep_test.exs " <>
+          "test/noizu_prompt_lingua/auth/sso_test.exs " <>
+          "test/noizu_prompt_lingua_web/controllers/sso_controller_test.exs " <>
+          "test/noizu_prompt_lingua_web/controllers/auth_controller_test.exs " <>
+          "test/noizu_prompt_lingua_web/controllers/oauth_controller_test.exs " <>
+          "test/noizu_prompt_lingua_web/controllers/oauth_consent_test.exs"
       ]
     ]
   end

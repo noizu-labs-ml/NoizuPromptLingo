@@ -65,6 +65,9 @@ defmodule NoizuPromptLingua.Domains.Wiki do
 
   def get_page(id), do: Repo.get(Page, id)
 
+  def get_page_by_slug(space_id, slug),
+    do: Repo.get_by(Page, space_id: space_id, slug: slug)
+
   @doc """
   Next ordering position for a page within a space (max + 1; 1 when the space
   is empty). The controller defaults page creation to this so that payloads

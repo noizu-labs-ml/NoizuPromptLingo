@@ -41,7 +41,16 @@ defmodule NoizuPromptLingua.Schema.Acl.Rule do
 
   def changeset(rule, attrs) do
     rule
-    |> cast(attrs, [:subject_ref, :resource_ref, :action, :effect, :scope, :priority, :status, :metadata])
+    |> cast(attrs, [
+      :subject_ref,
+      :resource_ref,
+      :action,
+      :effect,
+      :scope,
+      :priority,
+      :status,
+      :metadata
+    ])
     |> validate_required([:subject_ref, :resource_ref, :action, :effect])
     |> validate_inclusion(:effect, @effects)
     |> validate_inclusion(:status, @statuses)

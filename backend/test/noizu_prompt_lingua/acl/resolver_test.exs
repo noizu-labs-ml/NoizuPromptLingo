@@ -156,7 +156,12 @@ defmodule NoizuPromptLingua.Acl.ResolverTest do
       assert Resolver.allowed?(rules, [@user], "project.read", @other_wiki)
 
       assert {:deny, :default} =
-               Resolver.evaluate(rules, [@user], "project.read", R.ref(module: NoizuPromptLingua.Organizations.Organization, id: @wid))
+               Resolver.evaluate(
+                 rules,
+                 [@user],
+                 "project.read",
+                 R.ref(module: NoizuPromptLingua.Organizations.Organization, id: @wid)
+               )
     end
 
     test "global wildcard rule matches every resource" do
@@ -173,7 +178,10 @@ defmodule NoizuPromptLingua.Acl.ResolverTest do
     test "scope filtering" do
       rules = [rule(scope: "mcp")]
       assert Resolver.allowed?(rules, [@user], "project.read", @wiki, scope: "mcp")
-      assert {:deny, :default} = Resolver.evaluate(rules, [@user], "project.read", @wiki, scope: "wiki")
+
+      assert {:deny, :default} =
+               Resolver.evaluate(rules, [@user], "project.read", @wiki, scope: "wiki")
+
       # nil-scope requests see only nil-scope rules
       assert {:deny, :default} = Resolver.evaluate(rules, [@user], "project.read", @wiki)
       global = [rule(scope: nil)]

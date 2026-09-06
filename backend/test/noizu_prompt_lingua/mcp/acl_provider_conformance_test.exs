@@ -183,7 +183,9 @@ defmodule NoizuPromptLingua.MCP.AclProviderConformanceTest do
           principal,
           [tool_res("Ticket_List"), tool_res("Chat_Send")],
           :call,
-          %{}, scope_id: scope.id)
+          %{},
+          scope_id: scope.id
+        )
 
       assert verdicts == %{"Ticket_List" => :deny, "Chat_Send" => :deny}
     end

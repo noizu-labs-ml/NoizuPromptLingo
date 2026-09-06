@@ -122,9 +122,13 @@ defmodule NoizuPromptLinguaWeb.ComponentControllerTest do
 
       conn = conn |> key_conn(raw) |> get("/api/v1/components/#{@component}/bundle")
 
-      assert response(conn, 200) == File.read!(Path.join(Application.app_dir(
-               :noizu_prompt_lingua
-             ), @bundle_path))
+      assert response(conn, 200) ==
+               File.read!(
+                 Path.join(
+                   Application.app_dir(:noizu_prompt_lingua),
+                   @bundle_path
+                 )
+               )
 
       assert get_resp_header(conn, "content-type") |> List.first() =~ "text/javascript"
       assert get_resp_header(conn, "cache-control") == ["public, max-age=31536000, immutable"]
@@ -190,7 +194,10 @@ defmodule NoizuPromptLinguaWeb.ComponentControllerTest do
       slug = "embed-org-#{System.unique_integer([:positive])}"
 
       org_id =
-        json_response(post(conn, "/api/v1/organizations", %{organization: %{slug: slug, name: "Embed Org"}}), 201)[
+        json_response(
+          post(conn, "/api/v1/organizations", %{organization: %{slug: slug, name: "Embed Org"}}),
+          201
+        )[
           "organization"
         ]["id"]
 
@@ -222,7 +229,10 @@ defmodule NoizuPromptLinguaWeb.ComponentControllerTest do
       slug = "embed-other-#{System.unique_integer([:positive])}"
 
       org_id =
-        json_response(post(conn, "/api/v1/organizations", %{organization: %{slug: slug, name: "Other Org"}}), 201)[
+        json_response(
+          post(conn, "/api/v1/organizations", %{organization: %{slug: slug, name: "Other Org"}}),
+          201
+        )[
           "organization"
         ]["id"]
 

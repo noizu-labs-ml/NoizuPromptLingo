@@ -11,11 +11,21 @@ defmodule NoizuPromptLingua.Authz.PolicyEvaluatorTest do
   end
 
   defp allow(actions, resources, conditions \\ %{}) do
-    %{"effect" => "allow", "actions" => actions, "resources" => resources, "conditions" => conditions}
+    %{
+      "effect" => "allow",
+      "actions" => actions,
+      "resources" => resources,
+      "conditions" => conditions
+    }
   end
 
   defp deny(actions, resources, conditions \\ %{}) do
-    %{"effect" => "deny", "actions" => actions, "resources" => resources, "conditions" => conditions}
+    %{
+      "effect" => "deny",
+      "actions" => actions,
+      "resources" => resources,
+      "conditions" => conditions
+    }
   end
 
   # Standard request shape: viewer role on project "111" (global-layer analog).
@@ -109,7 +119,11 @@ defmodule NoizuPromptLingua.Authz.PolicyEvaluatorTest do
     end
 
     test "unknown effect values are ignored (no silent allow)" do
-      weird = %{"effect" => "audit", "actions" => ["project:read"], "resources" => ["project:111"]}
+      weird = %{
+        "effect" => "audit",
+        "actions" => ["project:read"],
+        "resources" => ["project:111"]
+      }
 
       missing = %{"actions" => ["project:read"], "resources" => ["project:111"]}
 
@@ -198,6 +212,7 @@ defmodule NoizuPromptLingua.Authz.PolicyEvaluatorTest do
     test "${resource_type} and ${resource_id} interpolate into the URN" do
       stmt = allow(["project:read"], ["${resource_type}:${resource_id}"])
       assert %{allowed: true} = eval([policy([stmt])])
+
       assert %{allowed: false} =
                eval([policy([allow(["project:read"], ["${resource_type}:999"])])])
     end
@@ -270,33 +285,51 @@ defmodule NoizuPromptLingua.Authz.PolicyEvaluatorTest do
   describe "condition operators" do
     test "StringEquals with a scalar" do
       c = %{"StringEquals" => %{"tier" => "pro"}}
-      assert %{allowed: true} = eval([policy([allow(["project:read"], ["*"], c)])], context: %{tier: "pro"})
-      assert %{allowed: false} = eval([policy([allow(["project:read"], ["*"], c)])], context: %{tier: "free"})
+
+      assert %{allowed: true} =
+               eval([policy([allow(["project:read"], ["*"], c)])], context: %{tier: "pro"})
+
+      assert %{allowed: false} =
+               eval([policy([allow(["project:read"], ["*"], c)])], context: %{tier: "free"})
     end
 
     test "StringEquals with a list is membership" do
       c = %{"StringEquals" => %{"tier" => ["pro", "enterprise"]}}
-      assert %{allowed: true} = eval([policy([allow(["*"], ["*"], c)])], context: %{tier: "enterprise"})
-      assert %{allowed: false} = eval([policy([allow(["*"], ["*"], c)])], context: %{tier: "free"})
+
+      assert %{allowed: true} =
+               eval([policy([allow(["*"], ["*"], c)])], context: %{tier: "enterprise"})
+
+      assert %{allowed: false} =
+               eval([policy([allow(["*"], ["*"], c)])], context: %{tier: "free"})
     end
 
     test "StringNotEquals denies on equality, allows otherwise" do
       c = %{"StringNotEquals" => %{"tier" => "banned"}}
       assert %{allowed: true} = eval([policy([allow(["*"], ["*"], c)])], context: %{tier: "pro"})
-      assert %{allowed: false} = eval([policy([allow(["*"], ["*"], c)])], context: %{tier: "banned"})
+
+      assert %{allowed: false} =
+               eval([policy([allow(["*"], ["*"], c)])], context: %{tier: "banned"})
+
       assert %{allowed: true} = eval([policy([allow(["*"], ["*"], c)])], context: %{})
     end
 
     test "StringNotEquals with a list excludes members" do
       c = %{"StringNotEquals" => %{"tier" => ["banned", "suspended"]}}
-      assert %{allowed: false} = eval([policy([allow(["*"], ["*"], c)])], context: %{tier: "suspended"})
+
+      assert %{allowed: false} =
+               eval([policy([allow(["*"], ["*"], c)])], context: %{tier: "suspended"})
+
       assert %{allowed: true} = eval([policy([allow(["*"], ["*"], c)])], context: %{tier: "pro"})
     end
 
     test "StringLike applies wildcards to the context value" do
       c = %{"StringLike" => %{"email" => "*@noizu.com"}}
-      assert %{allowed: true} = eval([policy([allow(["*"], ["*"], c)])], context: %{email: "keith@noizu.com"})
-      assert %{allowed: false} = eval([policy([allow(["*"], ["*"], c)])], context: %{email: "keith@example.com"})
+
+      assert %{allowed: true} =
+               eval([policy([allow(["*"], ["*"], c)])], context: %{email: "keith@noizu.com"})
+
+      assert %{allowed: false} =
+               eval([policy([allow(["*"], ["*"], c)])], context: %{email: "keith@example.com"})
     end
 
     test "StringLike accepts a list of patterns and requires binary actuals" do
@@ -308,7 +341,10 @@ defmodule NoizuPromptLingua.Authz.PolicyEvaluatorTest do
     test "NumericEquals compares across ints, floats, and numeric strings" do
       c = %{"NumericEquals" => %{"level" => 10}}
       assert %{allowed: true} = eval([policy([allow(["*"], ["*"], c)])], context: %{level: 10})
-      assert %{allowed: true} = eval([policy([allow(["*"], ["*"], c)])], context: %{level: "10.0"})
+
+      assert %{allowed: true} =
+               eval([policy([allow(["*"], ["*"], c)])], context: %{level: "10.0"})
+
       assert %{allowed: false} = eval([policy([allow(["*"], ["*"], c)])], context: %{level: 9})
     end
 
@@ -317,7 +353,9 @@ defmodule NoizuPromptLingua.Authz.PolicyEvaluatorTest do
       assert %{allowed: true} = eval([policy([allow(["*"], ["*"], c)])], context: %{level: "abc"})
 
       lt = %{"NumericLessThan" => %{"level" => 1}}
-      assert %{allowed: true} = eval([policy([allow(["*"], ["*"], lt)])], context: %{level: "junk"})
+
+      assert %{allowed: true} =
+               eval([policy([allow(["*"], ["*"], lt)])], context: %{level: "junk"})
     end
 
     test "NumericLessThan / NumericGreaterThan are strict" do
@@ -335,27 +373,41 @@ defmodule NoizuPromptLingua.Authz.PolicyEvaluatorTest do
       gt = %{"DateGreaterThan" => %{"now" => "2025-01-01T00:00:00Z"}}
 
       assert %{allowed: true} =
-               eval([policy([allow(["*"], ["*"], lt)])], context: %{"now" => "2025-06-01T00:00:00Z"})
+               eval([policy([allow(["*"], ["*"], lt)])],
+                 context: %{"now" => "2025-06-01T00:00:00Z"}
+               )
 
       assert %{allowed: false} =
-               eval([policy([allow(["*"], ["*"], lt)])], context: %{"now" => "2026-06-01T00:00:00Z"})
+               eval([policy([allow(["*"], ["*"], lt)])],
+                 context: %{"now" => "2026-06-01T00:00:00Z"}
+               )
 
       assert %{allowed: true} =
-               eval([policy([allow(["*"], ["*"], gt)])], context: %{"now" => "2025-06-01T00:00:00Z"})
+               eval([policy([allow(["*"], ["*"], gt)])],
+                 context: %{"now" => "2025-06-01T00:00:00Z"}
+               )
 
       assert %{allowed: false} =
-               eval([policy([allow(["*"], ["*"], gt)])], context: %{"now" => "2024-06-01T00:00:00Z"})
+               eval([policy([allow(["*"], ["*"], gt)])],
+                 context: %{"now" => "2024-06-01T00:00:00Z"}
+               )
     end
 
     test "equal dates satisfy neither DateLessThan nor DateGreaterThan" do
       c = %{"DateLessThan" => %{"at" => "2026-01-01T00:00:00Z"}}
+
       assert %{allowed: false} =
-               eval([policy([allow(["*"], ["*"], c)])], context: %{"at" => "2026-01-01T00:00:00Z"})
+               eval([policy([allow(["*"], ["*"], c)])],
+                 context: %{"at" => "2026-01-01T00:00:00Z"}
+               )
     end
 
     test "malformed dates fail closed" do
       c = %{"DateLessThan" => %{"at" => "2026-01-01T00:00:00Z"}}
-      assert %{allowed: false} = eval([policy([allow(["*"], ["*"], c)])], context: %{"at" => "not-a-date"})
+
+      assert %{allowed: false} =
+               eval([policy([allow(["*"], ["*"], c)])], context: %{"at" => "not-a-date"})
+
       assert %{allowed: false} = eval([policy([allow(["*"], ["*"], c)])], context: %{at: 12})
     end
 
@@ -381,31 +433,51 @@ defmodule NoizuPromptLingua.Authz.PolicyEvaluatorTest do
 
     test "IpAddress matches within CIDR, including /0 and /32 bounds" do
       c = %{"IpAddress" => %{"ip" => "10.0.0.0/8"}}
-      assert %{allowed: true} = eval([policy([allow(["*"], ["*"], c)])], context: %{ip: "10.1.2.3"})
-      assert %{allowed: false} = eval([policy([allow(["*"], ["*"], c)])], context: %{ip: "11.0.0.1"})
+
+      assert %{allowed: true} =
+               eval([policy([allow(["*"], ["*"], c)])], context: %{ip: "10.1.2.3"})
+
+      assert %{allowed: false} =
+               eval([policy([allow(["*"], ["*"], c)])], context: %{ip: "11.0.0.1"})
 
       zero = %{"IpAddress" => %{"ip" => "0.0.0.0/0"}}
-      assert %{allowed: true} = eval([policy([allow(["*"], ["*"], zero)])], context: %{ip: "203.0.113.9"})
+
+      assert %{allowed: true} =
+               eval([policy([allow(["*"], ["*"], zero)])], context: %{ip: "203.0.113.9"})
 
       host = %{"IpAddress" => %{"ip" => "10.1.2.3/32"}}
-      assert %{allowed: true} = eval([policy([allow(["*"], ["*"], host)])], context: %{ip: "10.1.2.3"})
-      assert %{allowed: false} = eval([policy([allow(["*"], ["*"], host)])], context: %{ip: "10.1.2.4"})
+
+      assert %{allowed: true} =
+               eval([policy([allow(["*"], ["*"], host)])], context: %{ip: "10.1.2.3"})
+
+      assert %{allowed: false} =
+               eval([policy([allow(["*"], ["*"], host)])], context: %{ip: "10.1.2.4"})
     end
 
     test "IpAddress accepts a CIDR list and rejects malformed input closed" do
       c = %{"IpAddress" => %{"ip" => ["10.0.0.0/8", "192.168.0.0/16"]}}
-      assert %{allowed: true} = eval([policy([allow(["*"], ["*"], c)])], context: %{ip: "192.168.5.5"})
 
-      assert %{allowed: false} = eval([policy([allow(["*"], ["*"], c)])], context: %{ip: "not-an-ip"})
-      assert %{allowed: false} = eval([policy([allow(["*"], ["*"], c)])], context: %{ip: "10.1.2.3/999"})
+      assert %{allowed: true} =
+               eval([policy([allow(["*"], ["*"], c)])], context: %{ip: "192.168.5.5"})
+
+      assert %{allowed: false} =
+               eval([policy([allow(["*"], ["*"], c)])], context: %{ip: "not-an-ip"})
+
+      assert %{allowed: false} =
+               eval([policy([allow(["*"], ["*"], c)])], context: %{ip: "10.1.2.3/999"})
+
       # IPv6 actuals are not supported by the v4 matcher — fail closed.
       assert %{allowed: false} = eval([policy([allow(["*"], ["*"], c)])], context: %{ip: "::1"})
     end
 
     test "NotIpAddress inverts the CIDR check" do
       c = %{"NotIpAddress" => %{"ip" => "10.0.0.0/8"}}
-      assert %{allowed: true} = eval([policy([allow(["*"], ["*"], c)])], context: %{ip: "11.0.0.1"})
-      assert %{allowed: false} = eval([policy([allow(["*"], ["*"], c)])], context: %{ip: "10.0.0.1"})
+
+      assert %{allowed: true} =
+               eval([policy([allow(["*"], ["*"], c)])], context: %{ip: "11.0.0.1"})
+
+      assert %{allowed: false} =
+               eval([policy([allow(["*"], ["*"], c)])], context: %{ip: "10.0.0.1"})
     end
 
     test "unknown operators fail closed" do
@@ -436,7 +508,9 @@ defmodule NoizuPromptLingua.Authz.PolicyEvaluatorTest do
 
     test "string-keyed contexts are honored when no atom key exists" do
       c = %{"StringEquals" => %{"tier" => "pro"}}
-      assert %{allowed: true} = eval([policy([allow(["*"], ["*"], c)])], context: %{"tier" => "pro"})
+
+      assert %{allowed: true} =
+               eval([policy([allow(["*"], ["*"], c)])], context: %{"tier" => "pro"})
     end
 
     test "atom keys win over string keys when both are present" do

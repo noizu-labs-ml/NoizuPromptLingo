@@ -42,7 +42,12 @@ defmodule NoizuPromptLingua.MCP.Keys.Tools.KeyCreate do
   def call(args, ctx) do
     with user_id when is_binary(user_id) <- Resolve.current_user_id(ctx),
          {:ok, key, raw} <- create_key(user_id, args) do
-      {:ok, %{key: MCPApiKeys.mask(key), raw_key: raw, notice: "Store this raw key now — it is never shown again."}}
+      {:ok,
+       %{
+         key: MCPApiKeys.mask(key),
+         raw_key: raw,
+         notice: "Store this raw key now — it is never shown again."
+       }}
     else
       nil -> {:error, "authentication required"}
       {:error, %Ecto.Changeset{} = cs} -> {:error, format_errors(cs)}

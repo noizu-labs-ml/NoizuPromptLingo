@@ -13,8 +13,7 @@ defmodule NoizuPromptLingua.MCP.Projects.Tools.ProjectCreate do
     field :slug, :string, required: true, description: "Unique URL slug (within the org)"
     field :description, :string, description: "Project description"
 
-    field :client, :string,
-      description: "Optional client slug or UUID under the organization"
+    field :client, :string, description: "Optional client slug or UUID under the organization"
 
     field :owner_id, :string,
       description: "Owner user UUID (defaults to the authenticated caller)"

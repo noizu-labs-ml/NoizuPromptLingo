@@ -19,7 +19,8 @@ defmodule NoizuPromptLingua.MCP.VFS.CRMDispatchTest do
   alias NoizuPromptLingua.TRP.Cache, as: TrpCache
   alias NoizuPromptLingua.TRP.TestStub
 
-  @groups ["customers", "market", "campaigns"]
+  @groups ["customers", "market", "campaigns", "assets"]
+  @registered ["customers", "market", "campaigns"]
 
   setup do
     TrpCache.clear()
@@ -68,13 +69,19 @@ defmodule NoizuPromptLingua.MCP.VFS.CRMDispatchTest do
     org: org,
     ctx: ctx
   } do
-    for group <- @groups do
+    # @groups includes assets (gated but UNMAPPED — placeholder surface), so
+    # the backend-content loop covers only the registered CRM groups.
+    for group <- @registered do
       assert {:ok, dir} = VFS.stat(Root, "/tobor/#{org.slug}/#{group}", ctx)
       assert dir.type == :dir
 
       assert {:ok, md, _} = VFS.read(Root, "/tobor/#{org.slug}/#{group}/overview.md", ctx)
       refute md =~ "Wave 0 placeholder"
     end
+
+    # The unmapped group keeps the Wave 0 placeholder overview.
+    assert {:ok, md, _} = VFS.read(Root, "/tobor/#{org.slug}/assets/overview.md", ctx)
+    assert md =~ "Wave 0 placeholder"
   end
 
   test "mutations dispatch to the CRM backends", %{org: org, ctx: ctx} do
@@ -87,8 +94,9 @@ defmodule NoizuPromptLingua.MCP.VFS.CRMDispatchTest do
     assert {:error, :eio} =
              VFS.create(Root, "/tobor/#{org.slug}/campaigns/campaigns/nochan", "{}", ctx)
 
-    # Unregistered groups keep the :enosys placeholder surface.
-    assert {:error, :enosys} = VFS.create(Root, "/tobor/#{org.slug}/wiki/x", "y", ctx)
+    # Unregistered groups keep the :enosys placeholder surface. (wiki is a
+    # mapped backend now — assets is the gated-but-unmapped example.)
+    assert {:error, :enosys} = VFS.create(Root, "/tobor/#{org.slug}/assets/x", "y", ctx)
 
     # Dot segments refused everywhere.
     assert {:error, :enoent} =

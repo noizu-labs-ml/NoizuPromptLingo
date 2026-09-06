@@ -185,7 +185,10 @@ defmodule NoizuPromptLingua.NPL.DefinitionFormatterTest do
       {:ok, defn} = Definition.new(@real_dir)
 
       text =
-        Definition.format(defn, components: ["syntax:qualifier"], rendered: ["syntax:placeholder"])
+        Definition.format(defn,
+          components: ["syntax:qualifier"],
+          rendered: ["syntax:placeholder"]
+        )
 
       assert text =~ "Qualifier"
       refute text =~ ~r/#### .*[Pp]laceholder/
@@ -212,7 +215,10 @@ defmodule NoizuPromptLingua.NPL.DefinitionFormatterTest do
 
     test "dep-graph loading tolerates conventions whose yaml file is missing" do
       dir =
-        fixture_dir(%{"npl.yaml" => "/npl:\n  version: 1.0\n  section_order:\n    components:\n      - syntax\n"})
+        fixture_dir(%{
+          "npl.yaml" =>
+            "/npl:\n  version: 1.0\n  section_order:\n    components:\n      - syntax\n"
+        })
 
       {:ok, defn} = Definition.new(dir)
 
@@ -229,10 +235,12 @@ defmodule NoizuPromptLingua.NPL.DefinitionFormatterTest do
       # directives.table-formatting at priority 3 requires it cross-convention,
       # so the dep walk raises placeholder's priority.
       text =
-        Definition.format(defn, components: [
-          "syntax:placeholder",
-          %{spec: "directives:table-formatting", component_priority: 3, example_priority: 0}
-        ])
+        Definition.format(defn,
+          components: [
+            "syntax:placeholder",
+            %{spec: "directives:table-formatting", component_priority: 3, example_priority: 0}
+          ]
+        )
 
       assert text =~ "Table Formatting"
       assert text =~ ~r/#### .*[Pp]laceholder/
@@ -271,11 +279,13 @@ defmodule NoizuPromptLingua.NPL.DefinitionFormatterTest do
       {:ok, defn} = Definition.new(@real_dir)
 
       text =
-        Definition.format(defn, components: [
-          "syntax:qualifier",
-          %{spec: "syntax:qualifier", component_priority: 2, example_priority: 1},
-          %{spec: "syntax:placeholder", component_priority: 0, example_priority: 0}
-        ])
+        Definition.format(defn,
+          components: [
+            "syntax:qualifier",
+            %{spec: "syntax:qualifier", component_priority: 2, example_priority: 1},
+            %{spec: "syntax:placeholder", component_priority: 0, example_priority: 0}
+          ]
+        )
 
       # both components rendered (merge, not overwrite)
       assert text =~ "Qualifier"

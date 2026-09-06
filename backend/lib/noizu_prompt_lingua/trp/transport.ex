@@ -7,7 +7,14 @@ defmodule NoizuPromptLingua.TRP.Transport do
   `Application.put_env(:noizu_prompt_lingua, :trp_transport, StubModule)`.
   """
 
-  @callback request(method :: atom(), base_url :: String.t(), path :: String.t(), headers :: [{String.t(), String.t()}], body :: nil | map() | binary(), opts :: keyword()) ::
+  @callback request(
+              method :: atom(),
+              base_url :: String.t(),
+              path :: String.t(),
+              headers :: [{String.t(), String.t()}],
+              body :: nil | map() | binary(),
+              opts :: keyword()
+            ) ::
               {:ok, status :: pos_integer(), body :: binary() | nil}
               | {:error, term()}
 end

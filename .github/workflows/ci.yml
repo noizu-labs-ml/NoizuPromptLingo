@@ -13,6 +13,9 @@ on:
   push:
     branches: [main, stage, feat/tool-sets-integration]
   pull_request:
+  # Manual "exhaustive" full-suite run (test-backend-exhaustive below); the
+  # push gate runs only the curated smoke subset.
+  workflow_dispatch: {}
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -71,6 +74,77 @@ jobs:
       # Liquibase owns the base schema; Ecto migrations are supplementary.
       # MIX_ENV=test so ecto.create makes noizu_prompt_lingua_test — the DB the
       # changelog is applied against (see backend/config/test.exs).
+      - run: MIX_ENV=test mix ecto.create --quiet
+      - name: Apply base schema (Liquibase)
+        run: |
+          docker run --rm --network host \
+            -v "$PWD/db:/liquibase/workdir" -w /liquibase/workdir \
+            liquibase/liquibase:4.29 \
+            --url="jdbc:postgresql://localhost:5432/noizu_prompt_lingua_test" \
+            --username=noizu_prompt_lingua --password=npl_dev \
+            --changeLogFile=changelog/db.changelog-master.yaml \
+            update
+      # PUSH GATE = smoke subset (mix smoke, ~20s of tests): curated hermetic
+      # suites only — no Weaviate / TRP / LLM-provider-key / external-network
+      # dependencies. The full exhaustive suite runs via workflow_dispatch
+      # (test-backend-exhaustive) and locally (`mix test`); it IS currently
+      # green in CI too (sha af2683bfe), but the gate stays fast so a
+      # host-dependent test can never block a stage deploy again.
+      # MIX_ENV is pinned because aliases do not inherit `mix test`'s builtin
+      # test-env default (without it dev.exs' tobor_locker user leaks in).
+      - run: MIX_ENV=test mix smoke
+
+  test-backend-exhaustive:
+    # Manual full-suite run: `gh workflow run ci.yml` (Actions → CI → Run
+    # workflow). Same env as the smoke gate — must stay green via test-level
+    # hermetic hardening, never env-dependent passes. Not a push gate; no job
+    # depends on it.
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest # amd64
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        # timescaledb-ha bundles postgis + pgvector, matching prod
+        # (app-timescaledb); plain postgres:16 lacks the vector extension
+        # and fails changelog 000-extensions.
+        image: timescale/timescaledb-ha:pg16
+        env:
+          POSTGRES_USER: noizu_prompt_lingua
+          POSTGRES_PASSWORD: npl_dev
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U noizu_prompt_lingua"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        # TokenStore refresh-JTIs, Notifications delivery rate-limit, chat
+        # presence etc. talk to Redis at runtime even under --exclude redis
+        # (config default redis://localhost:6379/0 — see backend/config.exs).
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.19.5"
+          otp-version: "28"
+      - uses: actions/cache@v4
+        with:
+          path: |
+            backend/deps
+            backend/_build
+          key: mix-${{ runner.os }}-${{ hashFiles('backend/mix.lock') }}
+          restore-keys: mix-${{ runner.os }}-
+      - run: mix deps.get
+      - run: mix compile
       - run: MIX_ENV=test mix ecto.create --quiet
       - name: Apply base schema (Liquibase)
         run: |

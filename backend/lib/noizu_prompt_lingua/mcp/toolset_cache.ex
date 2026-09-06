@@ -44,7 +44,12 @@ defmodule NoizuPromptLingua.MCP.ToolsetCache do
             value
           else
             {cur_gen, cur_entries} = :persistent_term.get(@key, {0, %{}})
-            :persistent_term.put(@key, {cur_gen, Map.put(cur_entries, {kind, id}, {cur_gen, now + ttl_ms(), value})})
+
+            :persistent_term.put(
+              @key,
+              {cur_gen, Map.put(cur_entries, {kind, id}, {cur_gen, now + ttl_ms(), value})}
+            )
+
             value
           end
       end

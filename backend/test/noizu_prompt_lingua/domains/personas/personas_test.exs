@@ -105,8 +105,11 @@ defmodule NoizuPromptLingua.Domains.PersonasTest do
     assert id == in_proj.id
 
     # Effective list = project + org-level (tagged persona has no project either)
-    effective = Personas.list(organization_id: org_id, project_id: project_id, include_org_level: true)
+    effective =
+      Personas.list(organization_id: org_id, project_id: project_id, include_org_level: true)
+
     assert length(effective) == 3
+
     assert Enum.sort(Enum.map(effective, & &1.id)) ==
              Enum.sort([in_proj.id, org_level.id, tagged.id])
 
@@ -174,7 +177,9 @@ defmodule NoizuPromptLingua.Domains.PersonasTest do
     {:ok, other} = Personas.create(persona_attrs(org_id))
 
     {:ok, k} = Personas.add_knowledge(p.id, %{slug: "kb-1", title: "KB One", body: "b1"})
-    assert {:ok, _} = Personas.add_knowledge(other.id, %{slug: "kb-1", title: "Other", body: "b2"})
+
+    assert {:ok, _} =
+             Personas.add_knowledge(other.id, %{slug: "kb-1", title: "Other", body: "b2"})
 
     assert {:ok, k2} = Personas.update_knowledge(k.id, %{title: "KB One Updated"})
     assert k2.title == "KB One Updated"
@@ -188,7 +193,9 @@ defmodule NoizuPromptLingua.Domains.PersonasTest do
     assert id == k.id
 
     # Tag filter
-    {:ok, _} = Personas.add_knowledge(p.id, %{slug: "kb-2", title: "Two", body: "b", tags: ["ref"]})
+    {:ok, _} =
+      Personas.add_knowledge(p.id, %{slug: "kb-2", title: "Two", body: "b", tags: ["ref"]})
+
     assert [%{slug: "kb-2"}] = Personas.list_knowledge(p.id, tag: "ref")
 
     assert {:ok, _} = Personas.delete_knowledge(k.id)

@@ -38,12 +38,19 @@ defmodule NoizuPromptLingua.Domains.Artifacts.ToolsTest do
     id
   end
 
-  test "artifact create / get / add_revision / list_revisions / get_binary / list", %{org_slug: org_slug} do
+  test "artifact create / get / add_revision / list_revisions / get_binary / list", %{
+    org_slug: org_slug
+  } do
     title = uniq("Spec")
 
     assert {:ok, %{id: id, revision_id: rev1}} =
              ArtifactCreate.call(
-               %{"organization" => org_slug, "title" => title, "kind" => "document", "content" => "v1 body"},
+               %{
+                 "organization" => org_slug,
+                 "title" => title,
+                 "kind" => "document",
+                 "content" => "v1 body"
+               },
                %{}
              )
 
@@ -51,22 +58,32 @@ defmodule NoizuPromptLingua.Domains.Artifacts.ToolsTest do
              ArtifactGet.call(%{"artifact_id" => id}, %{})
 
     assert {:ok, %{revision_id: rev2}} =
-             ArtifactAddRevision.call(%{"artifact_id" => id, "content" => "v2 body", "note" => "tweak"}, %{})
+             ArtifactAddRevision.call(
+               %{"artifact_id" => id, "content" => "v2 body", "note" => "tweak"},
+               %{}
+             )
 
     assert {:ok, %{artifact_id: ^id, count: 2, revisions: revisions}} =
              ArtifactListRevisions.call(%{"artifact_id" => id}, %{})
 
     assert length(revisions) == 2
 
-    assert {:ok, %{content_base64: content_b64}} = ArtifactGetBinary.call(%{"artifact_id" => id, "revision_id" => rev2}, %{})
+    assert {:ok, %{content_base64: content_b64}} =
+             ArtifactGetBinary.call(%{"artifact_id" => id, "revision_id" => rev2}, %{})
+
     assert Base.decode64!(content_b64) =~ "v2 body"
 
-    assert {:ok, %{artifacts: arts, count: 1}} = ArtifactList.call(%{"organization" => org_slug}, %{})
+    assert {:ok, %{artifacts: arts, count: 1}} =
+             ArtifactList.call(%{"organization" => org_slug}, %{})
+
     assert hd(arts).id == id
 
     # Pinned revision fetch + not-found paths
-    assert {:ok, %{revision: %{id: ^rev1}}} = ArtifactGet.call(%{"artifact_id" => id, "revision_id" => rev1}, %{})
-    assert {:error, "Revision not found"} = ArtifactGet.call(%{"artifact_id" => id, "revision_id" => Ecto.UUID.generate()}, %{})
+    assert {:ok, %{revision: %{id: ^rev1}}} =
+             ArtifactGet.call(%{"artifact_id" => id, "revision_id" => rev1}, %{})
+
+    assert {:error, "Revision not found"} =
+             ArtifactGet.call(%{"artifact_id" => id, "revision_id" => Ecto.UUID.generate()}, %{})
 
     missing = Ecto.UUID.generate()
     assert {:error, msg} = ArtifactGet.call(%{"artifact_id" => missing}, %{})

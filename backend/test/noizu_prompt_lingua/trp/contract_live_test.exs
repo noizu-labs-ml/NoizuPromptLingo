@@ -33,7 +33,9 @@ defmodule NoizuPromptLingua.TRP.ContractLiveTest do
 
       on_exit(fn ->
         if prev_cfg, do: Application.put_env(:noizu_prompt_lingua, :trp, prev_cfg)
-        if prev_transport, do: Application.put_env(:noizu_prompt_lingua, :trp_transport, prev_transport)
+
+        if prev_transport,
+          do: Application.put_env(:noizu_prompt_lingua, :trp_transport, prev_transport)
       end)
 
       :ok
@@ -45,7 +47,6 @@ defmodule NoizuPromptLingua.TRP.ContractLiveTest do
 
   # ── organizations ─────────────────────────────────────────────
 
-
   test "GET /organizations returns the scoped org list shape" do
     assert {:ok, %{organizations: [_ | _] = orgs}} = Client.request(:get, "/api/v1/organizations")
 
@@ -56,7 +57,10 @@ defmodule NoizuPromptLingua.TRP.ContractLiveTest do
 
   test "GET /organizations/:id envelope" do
     org = scoped_org()
-    assert {:ok, %{organization: %{id: id}}} = Client.request(:get, "/api/v1/organizations/#{org.id}")
+
+    assert {:ok, %{organization: %{id: id}}} =
+             Client.request(:get, "/api/v1/organizations/#{org.id}")
+
     assert id == org.id
 
     # Out-of-scope org: the key scope check denies BEFORE existence — 403 per
@@ -120,7 +124,9 @@ defmodule NoizuPromptLingua.TRP.ContractLiveTest do
     base = "/api/v1/organizations/#{org.id}/items"
 
     assert {:ok, %{item: item}} =
-             Client.request(:post, base, json: %{item: %{title: "alias-check", item_type: "task"}})
+             Client.request(:post, base,
+               json: %{item: %{title: "alias-check", item_type: "task"}}
+             )
 
     refute Map.has_key?(item, :ticket_type)
     _ = Client.request(:delete, "#{base}/#{item.id}")
@@ -145,8 +151,10 @@ defmodule NoizuPromptLingua.TRP.ContractLiveTest do
              )
 
     assert [%{id: ^fid}] = fields
+
     assert {:ok, %{type: %{fields: []}}} =
              Client.request(:patch, "#{tbase}/#{tid}", json: %{type: %{fields: []}})
+
     assert {:ok, nil} = Client.request(:delete, "#{tbase}/#{tid}")
     # Definition deletes are UUID-addressed (slugs 400; only items accept
     # human keys per spec §4.3).
@@ -159,7 +167,11 @@ defmodule NoizuPromptLingua.TRP.ContractLiveTest do
 
   test "bad key → generic 401; rate limit envelope carries retry_after" do
     prev = Application.get_env(:noizu_prompt_lingua, :trp)
-    Application.put_env(:noizu_prompt_lingua, :trp, base_url: prev[:base_url], shared_key: "trp_sk_bogus")
+
+    Application.put_env(:noizu_prompt_lingua, :trp,
+      base_url: prev[:base_url],
+      shared_key: "trp_sk_bogus"
+    )
 
     assert {:error, %Error{status: 401}} = Client.request(:get, "/api/v1/organizations")
     Application.put_env(:noizu_prompt_lingua, :trp, prev)

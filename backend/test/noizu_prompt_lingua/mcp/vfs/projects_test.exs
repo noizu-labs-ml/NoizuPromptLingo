@@ -80,7 +80,9 @@ defmodule NoizuPromptLingua.MCP.VFS.ProjectsTest do
     assert {:ok, entries, nil} = VFS.list(Projects, "/tobor/#{org.slug}/projects", nil, ctx)
     assert Enum.any?(entries, &match?(%{name: ^slug, type: :dir}, &1))
 
-    assert {:ok, entries, nil} = VFS.list(Projects, "/tobor/#{org.slug}/projects/#{slug}", nil, ctx)
+    assert {:ok, entries, nil} =
+             VFS.list(Projects, "/tobor/#{org.slug}/projects/#{slug}", nil, ctx)
+
     assert Enum.map(entries, & &1.name) == ["record.json"]
 
     assert {:ok, node} = VFS.stat(Projects, record_path(org.slug, slug), ctx)

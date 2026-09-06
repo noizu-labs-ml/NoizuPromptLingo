@@ -6,6 +6,7 @@ defmodule NoizuPromptLingua.MCP.KeysToolsTest do
   alias Noizu.MCP.Ctx
   alias NoizuPromptLingua.MCPApiKeys
   alias NoizuPromptLingua.MCPCustomScopes
+
   alias NoizuPromptLingua.MCP.Keys.Tools.{
     KeyClone,
     KeyCreate,
@@ -107,7 +108,9 @@ defmodule NoizuPromptLingua.MCP.KeysToolsTest do
         %{
           "key" => key_id,
           "label" => "renamed",
-          "toolset_config" => %{"groups" => %{"tickets" => %{"tools" => %{"Ticket.Get" => %{"hidden" => true}}}}}
+          "toolset_config" => %{
+            "groups" => %{"tickets" => %{"tools" => %{"Ticket.Get" => %{"hidden" => true}}}}
+          }
         },
         ctx
       )

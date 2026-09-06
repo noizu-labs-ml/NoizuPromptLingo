@@ -28,7 +28,9 @@ defmodule NoizuPromptLinguaWeb.Plugs.McpHostRedirect do
 
     if mcp_subdomain?(host) and not skip?(conn.request_path) do
       target = "https://#{apex_host()}#{conn.request_path}"
-      target = if conn.query_string in [nil, ""], do: target, else: target <> "?" <> conn.query_string
+
+      target =
+        if conn.query_string in [nil, ""], do: target, else: target <> "?" <> conn.query_string
 
       conn
       |> put_resp_header("cache-control", "private, no-store, max-age=0")
@@ -40,7 +42,9 @@ defmodule NoizuPromptLinguaWeb.Plugs.McpHostRedirect do
   end
 
   defp skip?(path) do
-    Enum.any?(@skip_prefixes, fn prefix -> path == prefix or String.starts_with?(path, prefix <> "/") end)
+    Enum.any?(@skip_prefixes, fn prefix ->
+      path == prefix or String.starts_with?(path, prefix <> "/")
+    end)
   end
 
   defp mcp_subdomain?(host) do
