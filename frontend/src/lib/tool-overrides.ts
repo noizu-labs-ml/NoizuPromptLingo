@@ -73,6 +73,9 @@ function pruneEntry(entry: ScopeToolEntry): ScopeToolEntry | undefined {
 
 function cloneConfig(config: McpCustomScopeConfig): McpCustomScopeConfig {
   return {
+    // Reserved `display` key rides along untouched — these helpers only ever
+    // touch `groups`.
+    ...(config.display ? { display: config.display } : {}),
     groups: Object.fromEntries(
       Object.entries(config.groups ?? {}).map(([groupId, group]) => [
         groupId,

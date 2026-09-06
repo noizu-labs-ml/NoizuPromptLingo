@@ -18,6 +18,7 @@
 import type {
   ClarifyQuestion,
   McpCustomScopeConfig,
+  McpScopeDisplay,
   ProposedTool,
   SlugAvailabilityResponse,
 } from '@/lib/api';
@@ -50,6 +51,8 @@ export interface EndpointWizardState {
   proposalSummary: string | null;
   status: 'idle' | 'loading-questions' | 'loading-proposal' | 'fallback' | 'submitting';
   error: string | null;
+  // Alacarte: optional display metadata (config.display) collected on step 1.
+  display: McpScopeDisplay | null;
 }
 
 export type WizardAction =
@@ -75,7 +78,11 @@ export type WizardAction =
   // loading-proposal / submitting / idle) for spinner + cancel affordances.
   | { type: 'status'; value: EndpointWizardState['status'] }
   // Implementation-added: proposal round landed — delegates to applyProposal.
-  | { type: 'proposal_received'; tools: ProposedTool[]; summary: string };
+  | { type: 'proposal_received'; tools: ProposedTool[]; summary: string }
+  // Implementation-added (alacarte): step-1 display metadata (config.display);
+  // null clears it. Clone mode ignores display — the copy carries the source
+  // config (display included) verbatim server-side.
+  | { type: 'set_display'; value: McpScopeDisplay | null };
 
 const LLM_UNAVAILABLE_MESSAGE =
   'LLM-powered suggestions are unavailable. Pick tools manually — nothing you entered was lost.';
@@ -94,6 +101,7 @@ export function initialWizardState(): EndpointWizardState {
     proposalSummary: null,
     status: 'idle',
     error: null,
+    display: null,
   };
 }
 
@@ -125,6 +133,9 @@ export function reduceWizard(state: EndpointWizardState, action: WizardAction): 
 
     case 'set_description':
       return { ...state, description: action.value };
+
+    case 'set_display':
+      return { ...state, display: action.value };
 
     case 'set_slug':
       // First manual keystroke permanently stops derivation.

@@ -44,6 +44,8 @@ const initialState = (overrides: Partial<EndpointWizardState> = {}): EndpointWiz
   proposalSummary: null,
   status: 'idle',
   error: null,
+  // Alacarte step-1 display metadata (implementation-added field).
+  display: null,
   ...overrides,
 });
 

@@ -9,6 +9,7 @@ import {
 } from '@/lib/api';
 import McpIncludeEditor from '@/components/mcp-include-editor';
 import EndpointWizard from '@/components/mcp-config/endpoint-wizard';
+import McpEndpointList from '@/components/mcp-endpoint-list';
 import type { WizardSource } from '@/components/mcp-config/endpoint-wizard-state';
 
 interface McpEndpointManagerProps {
@@ -232,47 +233,17 @@ export default function McpEndpointManager({
         </button>
       </div>
 
-      <div className="sg-field" style={{ marginBottom: 12 }}>
-        <label htmlFor="mcp-endpoint-select">Endpoint</label>
-        <select
-          id="mcp-endpoint-select"
-          value={current?.id ?? ''}
-          onChange={(e) => {
-            const next = all.find((s) => s.id === e.target.value);
-            if (!next) return;
-            onSelect(next);
-            setName(next.name);
-          }}
-        >
-          {endpoints.length > 0 ? (
-            <optgroup label="Your endpoints">
-              {endpoints.filter((s) => s.owner_kind !== 'organization').map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}{s.is_default ? ' (default)' : ''} — /custom/{s.slug}/mcp
-                </option>
-              ))}
-            </optgroup>
-          ) : null}
-          {endpoints.some((s) => s.owner_kind === 'organization') ? (
-            <optgroup label="Organization">
-              {endpoints.filter((s) => s.owner_kind === 'organization').map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name} — /custom/{s.slug}/mcp
-                </option>
-              ))}
-            </optgroup>
-          ) : null}
-          {templates.length > 0 ? (
-            <optgroup label="Standard templates">
-              {templates.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}{s.slug === 'tobor' ? ' (standard)' : ''} — /custom/{s.slug}/mcp
-                </option>
-              ))}
-            </optgroup>
-          ) : null}
-        </select>
-      </div>
+      {/* Alacarte: visual picker (display thumb / emoji / color) replaces the
+          native select; groupings + selection semantics unchanged. */}
+      <McpEndpointList
+        templates={templates}
+        endpoints={endpoints}
+        selectedId={current?.id ?? null}
+        onSelect={(next) => {
+          onSelect(next);
+          setName(next.name);
+        }}
+      />
 
       {current ? (
         <>

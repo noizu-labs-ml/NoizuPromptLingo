@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { WizardStepper, type WizardStepDef } from '@/components/kit';
 import ToolPicker from '@/components/mcp-config/tool-picker';
+import DisplayFieldset from '@/components/mcp-config/display-fieldset';
 import {
   initialWizardState,
   proposalToConfig,
@@ -266,7 +267,14 @@ export default function EndpointWizard({
             ? { ...base, source_slug: source.slug }
             : { ...base, source_id: source?.id };
       } else {
-        input = { ...base, config: proposalToConfig(state.selections) };
+        const config = proposalToConfig(state.selections);
+        // Display rides inside the config jsonb (reserved key) so the create
+        // payload carries it in one place. Clone mode sends no config — the
+        // copy inherits the source's config (display included) verbatim.
+        input = {
+          ...base,
+          config: state.display ? { ...config, display: state.display } : config,
+        };
       }
 
       const res = await api.createMcpEndpoint(input);
@@ -307,6 +315,20 @@ export default function EndpointWizard({
             placeholder="What should this endpoint be able to do?"
           />
         </div>
+
+        {/* Alacarte: optional display metadata — stored as config.display.
+            Clone mode omits it: the copy inherits the source config (display
+            included) verbatim server-side. */}
+        {state.mode === 'create' ? (
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Display (optional)</div>
+            <DisplayFieldset
+              value={state.display}
+              onChange={(next) => dispatch({ type: 'set_display', value: next })}
+              idPrefix="wizard-display"
+            />
+          </div>
+        ) : null}
 
         <div className="sg-field">
           <label htmlFor="wizard-slug">Slug</label>
