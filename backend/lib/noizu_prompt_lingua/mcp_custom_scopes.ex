@@ -93,6 +93,12 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
   @doc "Slug of the global default package every account is offered."
   def default_package_slug, do: @default_package_slug
 
+  # PRD-020 FR-1: built-in template slugs can never be claimed by new endpoints.
+  @reserved_slugs [@default_package_slug, @core_variant_slug]
+
+  @doc "Slugs reserved for built-in packages (tobor, core); unavailable to new endpoints."
+  def reserved_slugs, do: @reserved_slugs
+
   @doc "Display name of the per-account default custom endpoint."
   def account_default_name, do: @account_default_name
 
@@ -610,7 +616,10 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
       "is_default" => is_default,
       "source_template_slug" =>
         Map.get(attrs, "source_template_slug") || source.source_template_slug || source.slug,
-      "config" => %{"groups" => groups_from(source)}
+      # PRD-020 FR-4: explicit caller-supplied config (wizard path, US-111)
+      # replaces the source groups wholesale; absent config keeps today's
+      # byte-identical groups_from(source) carry-over.
+      "config" => Map.get(attrs, "config") || %{"groups" => groups_from(source)}
     })
   end
 

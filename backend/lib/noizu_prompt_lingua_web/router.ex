@@ -469,6 +469,10 @@ defmodule NoizuPromptLinguaWeb.Router do
     patch "/auth/mcp/default-endpoint", AuthController, :update_default_mcp
     get "/auth/mcp/endpoints", McpEndpointsController, :index
     post "/auth/mcp/endpoints", McpEndpointsController, :create
+    # PRD-020 FR-1: literal-segment routes MUST precede `get .../:id`, else
+    # slug-available dies as Ecto.Query.CastError (":id" captures the segment).
+    get "/auth/mcp/endpoints/slug-available", McpEndpointsController, :slug_available
+    post "/auth/mcp/endpoints/propose-tools", McpEndpointsController, :propose_tools
     get "/auth/mcp/endpoints/:id", McpEndpointsController, :show
     patch "/auth/mcp/endpoints/:id", McpEndpointsController, :update
     delete "/auth/mcp/endpoints/:id", McpEndpointsController, :delete

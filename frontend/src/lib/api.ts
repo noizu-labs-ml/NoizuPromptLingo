@@ -381,6 +381,32 @@ export interface McpEndpointsResponse {
   default_scope: McpCustomScope | null;
 }
 
+// ── PRD-020 FR-8: endpoint wizard API contracts ──
+
+export interface ClarifyQuestion {
+  id: string;
+  prompt: string;
+  kind: 'single' | 'multi' | 'text';
+  options?: string[];
+}
+
+export interface ProposedTool {
+  name: string;
+  group: string;
+  rationale: string;
+}
+
+export type ProposeToolsResponse =
+  | { status: 'questions'; questions: ClarifyQuestion[] }
+  | { status: 'proposal'; tools: ProposedTool[]; summary: string }
+  | { status: 'llm_unavailable' };
+
+export interface SlugAvailabilityResponse {
+  available: boolean;
+  reason?: 'taken' | 'reserved' | 'invalid';
+  suggestion?: string;
+}
+
 export interface McpCustomScopeInput {
   slug?: string;
   name: string;
@@ -2751,6 +2777,8 @@ export const api = {
     source_slug?: string;
     name?: string;
     description?: string;
+    slug?: string;
+    config?: McpCustomScopeConfig;
     organization_id?: string;
     use?: boolean;
   }) {
@@ -2790,6 +2818,27 @@ export const api = {
     return request<{ ok: boolean; id: string }>(`/api/v1/auth/mcp/endpoints/${id}`, {
       method: "DELETE",
     });
+  },
+
+  // ── PRD-020 FR-8: wizard proposal + inline slug availability. ──
+  // propose-tools failures are HTTP 200 {"status":"llm_unavailable"} (D3), so
+  // the wizard can route straight to the manual picker without error handling.
+
+  proposeEndpointTools(input: {
+    name?: string;
+    description: string;
+    answers?: { question_id: string; answer: string }[];
+  }): Promise<ProposeToolsResponse> {
+    return request<ProposeToolsResponse>("/api/v1/auth/mcp/endpoints/propose-tools", {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+  },
+
+  checkSlugAvailable(slug: string): Promise<SlugAvailabilityResponse> {
+    return request<SlugAvailabilityResponse>(
+      `/api/v1/auth/mcp/endpoints/slug-available?slug=${encodeURIComponent(slug)}`,
+    );
   },
 
   // ── OAuth MCP pairing grants (Phase 4). ──
