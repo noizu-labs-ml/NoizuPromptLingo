@@ -355,6 +355,96 @@ defmodule NoizuPromptLingua.MCP.CustomScopeTest do
     end
   end
 
+  # ── core endpoints carry the minimal NPL loader pair (root-plane, not a
+  #    selectable group) — restricted group surface stays restricted ──────────
+
+  describe "core variant NPL loaders" do
+    test "the core endpoint lists NPLLoad/NPLSpec" do
+      core = MCPCustomScopes.get_core_variant()
+      names = tool_specs(core.slug) |> Enum.map(& &1.definition.name)
+
+      assert "NPLLoad" in names
+      assert "NPLSpec" in names
+      # loaders ride along; the restricted group surface is unchanged
+      # (catalog-level names are dotted; Session_Manifest is underscore-native)
+      assert "Session.Create" in names
+      refute "Session.Archive" in names
+    end
+
+    test "clones of core keep the loaders (lineage, not kind)" do
+      _core = MCPCustomScopes.get_core_variant()
+
+      {:ok, clone} =
+        MCPCustomScopes.copy("core", %{"slug" => "core-npl-clone", "name" => "Clone"})
+
+      # copy/2 defaults kind to "custom" — the core lineage is what carries them
+      assert clone.kind == "custom"
+
+      names = tool_specs("core-npl-clone") |> Enum.map(& &1.definition.name)
+      assert "NPLLoad" in names
+      assert "NPLSpec" in names
+    end
+
+    test "tobor-lineage clones are unchanged: still list the loaders" do
+      {:ok, _} =
+        MCPCustomScopes.create(%{
+          "slug" => "tobor-npl-clone",
+          "name" => "Tobor Clone",
+          "source_template_slug" => MCPCustomScopes.default_package_slug(),
+          "config" => %{"groups" => %{"sessions" => %{}}}
+        })
+
+      names = tool_specs("tobor-npl-clone") |> Enum.map(& &1.definition.name)
+      assert "NPLLoad" in names
+      assert "NPLSpec" in names
+    end
+
+    test "plain custom scopes without core/tobor lineage do not list the loaders" do
+      {:ok, _} =
+        MCPCustomScopes.create(%{
+          "slug" => "npl-less",
+          "name" => "No Loaders",
+          "config" => %{"groups" => %{"sessions" => %{}}}
+        })
+
+      names = tool_specs("npl-less") |> Enum.map(& &1.definition.name)
+      refute "NPLLoad" in names
+      refute "NPLSpec" in names
+    end
+
+    test "NPLLoad dispatches on the core endpoint" do
+      _core = MCPCustomScopes.get_core_variant()
+
+      # success path returns a bare ToolResult (Dispatch convention)
+      result =
+        NoizuPromptLingua.MCP.Dispatch.call(
+          Custom,
+          "NPLLoad",
+          %{"expression" => "syntax"},
+          ctx(MCPCustomScopes.core_variant_slug())
+        )
+
+      assert %Noizu.MCP.Types.ToolResult{} = result
+      refute result.is_error
+
+      # and the same dispatch is refused on a scope without the loaders
+      {:ok, _} =
+        MCPCustomScopes.create(%{
+          "slug" => "npl-less-dispatch",
+          "name" => "No Loaders Dispatch",
+          "config" => %{"groups" => %{"sessions" => %{}}}
+        })
+
+      assert {:error, _} =
+               NoizuPromptLingua.MCP.Dispatch.call(
+                 Custom,
+                 "NPLLoad",
+                 %{"expression" => "syntax"},
+                 ctx("npl-less-dispatch")
+               )
+    end
+  end
+
   # ── alacarte WP2: core/full presets ──────────────────────────────────────────
 
   describe "core/full presets" do

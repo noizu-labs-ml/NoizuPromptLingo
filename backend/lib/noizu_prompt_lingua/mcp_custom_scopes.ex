@@ -93,8 +93,8 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
   }
 
   # Global all-in-one package every account/org is cloned from. NPL load/spec
-  # tools are attached by MCP.Custom for all_in_one scopes and tobor clones
-  # (not a selectable group).
+  # tools are attached by MCP.Custom for all_in_one scopes, tobor clones, and
+  # core variants / core clones (not a selectable group).
   @default_package_slug "tobor"
   @account_default_name "Tobor Locker"
   @legacy_account_default_name "default-mcp"
@@ -123,6 +123,9 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
 
   @doc "Slug of the global default package every account is offered."
   def default_package_slug, do: @default_package_slug
+
+  @doc "Slug of the global `core` core-variant template."
+  def core_variant_slug, do: @core_variant_slug
 
   # PRD-020 FR-1: built-in template slugs can never be claimed by new endpoints.
   @reserved_slugs [@default_package_slug, @core_variant_slug]
