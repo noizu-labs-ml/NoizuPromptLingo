@@ -1,3 +1,7 @@
+.coverage
+tmp/ 
+.tmp/
+
 # work trees
 staging/
 vendor/
