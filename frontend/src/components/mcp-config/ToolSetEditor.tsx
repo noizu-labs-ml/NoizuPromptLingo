@@ -1,15 +1,19 @@
 'use client';
 
 /**
- * N4a — `kind=tool-set` detail page for /app/admin/mcp-config (PRD-N4 §4.2).
+ * N4a/N4b — `kind=tool-set` detail page for /app/admin/mcp-config (PRD-N4 §4.2).
  *
  * Create/edit form for a durable MCP tool set: identity, audience shape
  * (org/project/group — fixed at creation per the N2a changeset), settings
  * (allow_api_keys, description_verbosity, instructions), and the group-include
  * + closed-vocabulary overrides editor (`ToolSetOverridesEditor`).
  *
- * Built-in profile slugs render read-only with a Clone action (R1). The
- * validate dry-run button is disabled until N4b lands the backend endpoint.
+ * Built-in profile slugs render read-only with a Clone action (R1). N4b: the
+ * Validate button dry-runs the draft through the backend (`validate/2`,
+ * issues grouped by severity), the saved set's `effective` preview renders
+ * the D1-correct live-catalog surface, the group selector lists REAL authz
+ * groups (ladder roles labeled distinctly), and enum pruning picks from
+ * live enum values (`arg-enum` seeds, session-cached).
  */
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -21,21 +25,24 @@ import {
   cloneToolSet,
   createToolSet,
   deactivateToolSet,
+  getArgEnum,
   getToolSet,
+  listToolSetGroupOptions,
   updateToolSet,
+  validateToolSet,
   type DescriptionVerbosity,
   type ToolSetConfig,
+  type ToolSetEffective,
+  type ToolSetGroupOption,
+  type ToolSetIssue,
   type ToolSetProfileView,
   type ToolSetSettings,
   type ToolSetShape,
+  type ToolSetValidateResult,
   type ToolSetView,
 } from '@/lib/acl-api';
 import { ToolSetOverridesEditor } from '@/components/kit/tool-overrides-editor';
 import { useOrg } from '@/context/org';
-
-// Authz role groups are global (role_name_enum) — a group-set audience picks
-// one of these; custom roles beyond the enum are a future surface.
-const GROUP_ROLES = ['owner', 'admin', 'lead', 'member', 'viewer'] as const;
 
 interface ToolSetFormState {
   slug: string;
@@ -72,6 +79,9 @@ export default function ToolSetEditor({ slug }: { slug: string }) {
   const [profile, setProfile] = useState<ToolSetProfileView | null>(null);
   const [view, setView] = useState<ToolSetView | null>(null);
   const [catalog, setCatalog] = useState<McpCustomGroup[]>([]);
+  const [groupOptions, setGroupOptions] = useState<ToolSetGroupOption[]>([]);
+  const [validation, setValidation] = useState<ToolSetValidateResult | null>(null);
+  const [validating, setValidating] = useState(false);
   const [form, setForm] = useState<ToolSetFormState>(blankForm);
 
   const patch = (p: Partial<ToolSetFormState>) => setForm((cur) => ({ ...cur, ...p }));
@@ -79,6 +89,7 @@ export default function ToolSetEditor({ slug }: { slug: string }) {
   const load = useCallback(async () => {
     if (!orgId) return;
     setLoading(true);
+    setValidation(null);
     try {
       if (isNew) {
         setProfile(null);
@@ -111,8 +122,12 @@ export default function ToolSetEditor({ slug }: { slug: string }) {
           toast.error('Tool set not found');
         }
       }
-      const cat = await api.adminMcpCustomScopeCatalog();
+      const [cat, options] = await Promise.all([
+        api.adminMcpCustomScopeCatalog(),
+        listToolSetGroupOptions(orgId),
+      ]);
       setCatalog(cat.groups ?? []);
+      setGroupOptions(options);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to load tool set');
     } finally {
@@ -196,6 +211,28 @@ export default function ToolSetEditor({ slug }: { slug: string }) {
     }
   }
 
+  // N4b: pure dry-run of the DRAFT config — never persists, so it is safe to
+  // run on the create form too. Issues render grouped by severity below.
+  async function doValidate() {
+    if (!orgId || validating) return;
+    setValidating(true);
+    try {
+      const result = await validateToolSet(orgId, { config: form.config, settings: form.settings });
+      setValidation(result);
+      if (result.ok) {
+        toast.success(
+          result.warnings.length > 0
+            ? `Valid, with ${result.warnings.length} warning(s)`
+            : 'Config validates cleanly',
+        );
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Validate failed');
+    } finally {
+      setValidating(false);
+    }
+  }
+
   if (!orgId) {
     return (
       <section className="dash-panel">
@@ -266,10 +303,10 @@ export default function ToolSetEditor({ slug }: { slug: string }) {
           <button
             type="button"
             className="sg-btn sg-btn--outline sg-btn--sm"
-            disabled
-            title="Validate dry-run ships with N4b (pending backend)"
+            disabled={validating}
+            onClick={doValidate}
           >
-            Validate (pending N4b)
+            {validating ? 'Validating...' : 'Validate'}
           </button>
         </div>
       </div>
@@ -281,12 +318,22 @@ export default function ToolSetEditor({ slug }: { slug: string }) {
           {view && !view.is_active && (
             <p className="sg-field__hint">This tool set is deactivated — it is hidden from the serving path.</p>
           )}
-          {view && view.preview && (
+          {view && view.effective && (
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <span className="dash-badge">{Object.keys(view.preview.groups).length} groups included</span>
-              <span className="dash-badge">{view.preview.total_override_ops} override ops</span>
+              <span className="dash-badge">{view.effective.tools.length} tools served</span>
+              {view.effective.version && (
+                <span className="dash-badge" title="live catalog version">
+                  v {view.effective.version}
+                </span>
+              )}
               {view.member_count !== null && <span className="dash-badge">{view.member_count} members</span>}
             </div>
+          )}
+
+          {validation && <ValidationPanel result={validation} />}
+
+          {view && view.effective && view.effective.tools.length > 0 && (
+            <EffectivePreview effective={view.effective} />
           )}
 
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
@@ -349,17 +396,23 @@ export default function ToolSetEditor({ slug }: { slug: string }) {
             )}
             {isNew && form.shape === 'group' && (
               <div style={{ marginTop: 6 }}>
-                <label htmlFor="ts-group">Group (role)</label>
+                <label htmlFor="ts-group">Group</label>
                 <select id="ts-group" value={form.group_id} onChange={(e) => patch({ group_id: e.target.value })}>
                   <option value="">— select group —</option>
-                  {GROUP_ROLES.map((r) => (
-                    <option key={r} value={r}>
-                      {r}
-                    </option>
-                  ))}
+                  {groupOptions
+                    .slice()
+                    .sort((a, b) => (a.kind === b.kind ? a.name.localeCompare(b.name) : a.kind === 'ladder_role' ? -1 : 1))
+                    .map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.kind === 'ladder_role' ? `Role: ${g.name}` : `Group: ${g.display_name || g.name}`}
+                        {g.member_count > 0 ? ` (${g.member_count} members)` : ''}
+                      </option>
+                    ))}
                 </select>
                 <span className="sg-field__hint">
-                  Group sets use the role group id; members carrying the role in this org get access.
+                  Ladder roles are the built-in org roles; custom groups are real authz groups —
+                  members carrying the role/group in this org get access. Member counts exclude
+                  expired memberships.
                 </span>
               </div>
             )}
@@ -413,6 +466,7 @@ export default function ToolSetEditor({ slug }: { slug: string }) {
               groups={catalog.map((g) => ({ group: g.id, label: g.label, tools: g.tools }))}
               value={form.config}
               onChange={(next) => patch({ config: next })}
+              argEnum={(tool, arg) => getArgEnum(orgId, tool, arg)}
             />
           </section>
 
@@ -440,6 +494,172 @@ export default function ToolSetEditor({ slug }: { slug: string }) {
           </div>
         </div>
       )}
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// N4b — validate dry-run results (grouped by severity) + the D1-correct
+// effective preview ("what will this set serve").
+// ---------------------------------------------------------------------------
+
+function ValidationPanel({ result }: { result: ToolSetValidateResult }) {
+  if (result.ok) {
+    return (
+      <section
+        aria-label="Validation result"
+        style={{ border: '1px solid var(--border)', borderRadius: 8, padding: '0.875rem' }}
+      >
+        <h3 style={{ margin: '0 0 0.5rem', fontSize: 13, fontWeight: 700 }}>
+          Validation: <span style={{ color: 'var(--accent)' }}>valid</span>
+        </h3>
+        {result.warnings.length === 0 ? (
+          <p className="sg-field__hint" style={{ margin: 0 }}>
+            No issues.
+          </p>
+        ) : (
+          <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: 11, color: 'var(--text-2)' }}>
+            {result.warnings.map((w, i) => (
+              <li key={i}>{w}</li>
+            ))}
+          </ul>
+        )}
+      </section>
+    );
+  }
+
+  return (
+    <section
+      aria-label="Validation result"
+      style={{ border: '1px solid var(--border)', borderRadius: 8, padding: '0.875rem' }}
+    >
+      <h3 style={{ margin: '0 0 0.5rem', fontSize: 13, fontWeight: 700, color: 'var(--danger, #b91c1c)' }}>
+        Validation: {result.issues.length} issue(s)
+      </h3>
+      <IssueList issues={result.issues} />
+    </section>
+  );
+}
+
+function IssueList({ issues }: { issues: ToolSetIssue[] }) {
+  return (
+    <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: 11 }}>
+      {issues.map((issue, i) => (
+        <li key={`${issue.code}-${issue.tool ?? ''}-${issue.field ?? ''}-${i}`}>
+          <span className="font-mono">{issue.code}</span>
+          {issue.tool ? (
+            <>
+              {' '}
+              on <span className="font-mono">{issue.tool}</span>
+            </>
+          ) : null}
+          {issue.field ? (
+            <>
+              .
+              <span className="font-mono">{issue.field}</span>
+            </>
+          ) : null}
+          {': '}
+          {issue.message}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function EffectivePreview({ effective }: { effective: ToolSetEffective }) {
+  return (
+    <section style={{ border: '1px solid var(--border)', borderRadius: 8, padding: '0.875rem' }}>
+      <h3 style={{ margin: '0 0 0.5rem', fontSize: 13, fontWeight: 700 }}>Effective surface (live catalog)</h3>
+      {effective.issues && effective.issues.length > 0 && (
+        <div style={{ marginBottom: 8 }}>
+          <IssueList issues={effective.issues} />
+        </div>
+      )}
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+          <thead>
+            <tr style={{ textAlign: 'left', color: 'var(--text-2)', borderBottom: '1px solid var(--border)' }}>
+              <th style={{ padding: '4px 8px' }}>Serves as</th>
+              <th style={{ padding: '4px 8px' }}>Base tool</th>
+              <th style={{ padding: '4px 8px' }}>State</th>
+              <th style={{ padding: '4px 8px' }}>Pruned args</th>
+              <th style={{ padding: '4px 8px' }}>Provenance</th>
+            </tr>
+          </thead>
+          <tbody>
+            {effective.tools.map((tool) => (
+              <tr key={tool.name} style={{ borderBottom: '1px solid var(--border)' }}>
+                <td className="font-mono" style={{ padding: '4px 8px' }}>
+                  {tool.name}
+                  {tool.renamed && (
+                    <span className="dash-badge" style={{ marginLeft: 6 }}>
+                      renamed
+                    </span>
+                  )}
+                </td>
+                <td className="font-mono" style={{ padding: '4px 8px', color: 'var(--text-2)' }}>
+                  {tool.base_name}
+                </td>
+                <td style={{ padding: '4px 8px' }}>
+                  {tool.visible ? (
+                    <span className="dash-badge">visible</span>
+                  ) : (
+                    <span className="dash-badge" style={{ opacity: 0.6 }}>
+                      hidden
+                    </span>
+                  )}
+                  {tool.callable ? (
+                    <span className="dash-badge" style={{ marginLeft: 4 }}>
+                      callable
+                    </span>
+                  ) : (
+                    <span className="dash-badge" style={{ marginLeft: 4, opacity: 0.6 }}>
+                      not callable
+                    </span>
+                  )}
+                  {tool.reason ? (
+                    <span title={String(tool.reason)} style={{ marginLeft: 4, color: 'var(--text-3)' }}>
+                      ({String(tool.reason)})
+                    </span>
+                  ) : null}
+                </td>
+                <td style={{ padding: '4px 8px' }}>
+                  {Object.keys(tool.pruned_args).length === 0
+                    ? '—'
+                    : Object.entries(tool.pruned_args).map(([arg, removed]) => (
+                        <div key={arg}>
+                          <span className="font-mono">{arg}</span>: −
+                          {removed.map((v) => String(v)).join(', ')}
+                        </div>
+                      ))}
+                </td>
+                <td style={{ padding: '4px 8px', color: 'var(--text-3)' }}>
+                  {tool.provenance.length === 0
+                    ? '—'
+                    : tool.provenance.map((row, i) => (
+                        <div key={i} title={`${row.layer} @ weight ${row.weight}`}>
+                          <span className="font-mono">{row.op}</span>
+                          {row.field ? (
+                            <>
+                              .
+                              <span className="font-mono">{row.field}</span>
+                            </>
+                          ) : null}
+                          {' ← '}
+                          {row.layer}
+                        </div>
+                      ))}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="sg-field__hint" style={{ margin: '0.5rem 0 0' }}>
+        Composed through the same serving pipeline a caller hits — visibility, renames, prunes and
+        provenance are exactly what tools/list serves.
+      </p>
     </section>
   );
 }

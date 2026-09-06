@@ -7,6 +7,7 @@ defmodule NoizuPromptLingua.Domains.Chat.Tools.SendMessage do
 
   input do
     field :room_id, :string, required: true, description: "Room slug or UUID (slug preferred)"
+
     field :organization, :string,
       description: "Org slug or UUID (required when room is addressed by slug)"
 

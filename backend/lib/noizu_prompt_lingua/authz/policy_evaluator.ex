@@ -26,9 +26,7 @@ defmodule NoizuPromptLingua.Authz.PolicyEvaluator do
 
     {allows, denies} =
       policies
-      |> Enum.flat_map(fn policy ->
-        get_in(policy, ["policy_document", "statements"]) || []
-      end)
+      |> Enum.flat_map(&policy_statements/1)
       |> Enum.reduce({[], []}, fn statement, {allows, denies} ->
         if matches_statement?(statement, action, resource_urn, substitutions, context) do
           case statement["effect"] do
@@ -52,6 +50,21 @@ defmodule NoizuPromptLingua.Authz.PolicyEvaluator do
         %{allowed: false, reason: :implicit_deny, matching_statements: []}
     end
   end
+
+  # Policies arrive in two shapes: string-keyed wrappers (JSON-loaded policy
+  # documents, the validated storage shape) and atom-keyed wrappers (Ecto
+  # selects in Authz.get_effective_policies/3 and Groups build
+  # %{policy_document: doc, ...}). Accept both so explain paths see real
+  # statements; anything malformed contributes none (deny-by-default).
+  defp policy_statements(%{"policy_document" => %{"statements" => statements}})
+       when is_list(statements),
+       do: statements
+
+  defp policy_statements(%{policy_document: %{"statements" => statements}})
+       when is_list(statements),
+       do: statements
+
+  defp policy_statements(_), do: []
 
   defp matches_statement?(statement, action, resource_urn, substitutions, context) do
     actions = statement["actions"] || []

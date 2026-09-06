@@ -74,7 +74,8 @@ defmodule NoizuPromptLinguaWeb.McpEndpointsController do
         owner_attrs
         |> Map.merge(copy_attrs(params))
 
-      use_as_default = truthy?(param(params, "use")) and is_nil(Map.get(owner_attrs, "organization_id"))
+      use_as_default =
+        truthy?(param(params, "use")) and is_nil(Map.get(owner_attrs, "organization_id"))
 
       case MCPCustomScopes.copy(source, attrs) do
         {:ok, scope} ->
@@ -104,7 +105,11 @@ defmodule NoizuPromptLinguaWeb.McpEndpointsController do
          :ok <- writable(editable),
          {:ok, updated} <- apply_update(scope, params, user_id) do
       {:ok, updated} =
-        maybe_set_default(user_id, updated, truthy?(param(params, "use")) and scope.user_id == user_id)
+        maybe_set_default(
+          user_id,
+          updated,
+          truthy?(param(params, "use")) and scope.user_id == user_id
+        )
 
       conn
       |> put_status(:ok)
@@ -113,10 +118,18 @@ defmodule NoizuPromptLinguaWeb.McpEndpointsController do
         scope: decorate(updated, mcp_host(conn), owner_kind_for(updated), true)
       })
     else
-      {:error, :unauthorized} -> unauthorized(conn)
-      {:error, :not_found} -> not_found(conn)
-      {:error, :forbidden} -> forbidden(conn)
-      {:error, :readonly} -> forbidden(conn, "this endpoint is read-only; copy it to edit")
+      {:error, :unauthorized} ->
+        unauthorized(conn)
+
+      {:error, :not_found} ->
+        not_found(conn)
+
+      {:error, :forbidden} ->
+        forbidden(conn)
+
+      {:error, :readonly} ->
+        forbidden(conn, "this endpoint is read-only; copy it to edit")
+
       {:error, :confirmation_required, groups} ->
         conn
         |> put_status(:unprocessable_entity)
@@ -204,7 +217,9 @@ defmodule NoizuPromptLinguaWeb.McpEndpointsController do
   end
 
   defp maybe_set_default(_user_id, scope, false), do: {:ok, scope}
-  defp maybe_set_default(user_id, scope, true), do: MCPCustomScopes.set_account_default(user_id, scope)
+
+  defp maybe_set_default(user_id, scope, true),
+    do: MCPCustomScopes.set_account_default(user_id, scope)
 
   defp resolve_source(params) do
     attrs = endpoint_params(params)
@@ -386,9 +401,14 @@ defmodule NoizuPromptLinguaWeb.McpEndpointsController do
     end
   end
 
-  defp unauthorized(conn), do: conn |> put_status(:unauthorized) |> json(%{error: "authentication required"})
-  defp not_found(conn, msg \\ "endpoint not found"), do: conn |> put_status(:not_found) |> json(%{error: msg})
-  defp forbidden(conn, msg \\ "forbidden"), do: conn |> put_status(:forbidden) |> json(%{error: msg})
+  defp unauthorized(conn),
+    do: conn |> put_status(:unauthorized) |> json(%{error: "authentication required"})
+
+  defp not_found(conn, msg \\ "endpoint not found"),
+    do: conn |> put_status(:not_found) |> json(%{error: msg})
+
+  defp forbidden(conn, msg \\ "forbidden"),
+    do: conn |> put_status(:forbidden) |> json(%{error: msg})
 
   defp changeset_error(conn, cs) do
     conn

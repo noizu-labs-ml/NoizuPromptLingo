@@ -190,5 +190,192 @@ defmodule NoizuPromptLinguaWeb.ArtifactControllerTest do
       assert body["content"] == "v1 body"
       assert body["revision_number"] == 1
     end
+
+    test "404 for missing artifact and for cross-org artifact (IDOR guard)", %{
+      conn: conn,
+      org_id: org_id
+    } do
+      assert %{"error" => "Artifact not found"} =
+               json_response(
+                 get(conn, "/api/v1/organizations/#{org_id}/artifacts/#{Ecto.UUID.generate()}"),
+                 404
+               )
+
+      other =
+        post(conn, "/api/v1/organizations", %{
+          organization: %{slug: "artifact-org4-#{System.unique_integer([:positive])}", name: "O4"}
+        })
+
+      other_org = json_response(other, 201)["organization"]["id"]
+
+      {:ok, foreign} =
+        Artifacts.create(%{
+          organization_id: other_org,
+          kind: "document",
+          title: "Foreign",
+          mime_type: "text/markdown",
+          content: "x"
+        })
+
+      assert %{"error" => "Artifact not found"} =
+               json_response(
+                 get(conn, "/api/v1/organizations/#{org_id}/artifacts/#{foreign.id}"),
+                 404
+               )
+    end
+  end
+
+  # ── W5A coverage extension: index + create arms ───────────────────────────
+
+  describe "GET /artifacts (index)" do
+    test "lists org artifacts with viewer access", %{conn: conn, org_id: org_id, artifact: a} do
+      %{"artifacts" => artifacts} =
+        json_response(get(conn, "/api/v1/organizations/#{org_id}/artifacts"), 200)
+
+      assert [%{"id" => id, "kind" => "document", "mime_type" => "text/markdown"}] = artifacts
+      assert id == a.id
+    end
+
+    test "kind and search filters narrow the list", %{conn: conn, org_id: org_id, artifact: a} do
+      %{"artifacts" => [only]} =
+        json_response(
+          get(conn, "/api/v1/organizations/#{org_id}/artifacts", %{kind: "document"}),
+          200
+        )
+
+      assert only["id"] == a.id
+
+      %{"artifacts" => []} =
+        json_response(
+          get(conn, "/api/v1/organizations/#{org_id}/artifacts", %{kind: "spreadsheet"}),
+          200
+        )
+
+      %{"artifacts" => [found]} =
+        json_response(
+          get(conn, "/api/v1/organizations/#{org_id}/artifacts", %{search: "Doc"}),
+          200
+        )
+
+      assert found["id"] == a.id
+
+      %{"artifacts" => []} =
+        json_response(
+          get(conn, "/api/v1/organizations/#{org_id}/artifacts", %{search: "zebra"}),
+          200
+        )
+    end
+
+    test "unknown org -> 404; non-member -> 403", %{conn: conn, org_id: org_id} do
+      assert %{"error" => "Organization not found"} =
+               json_response(get(conn, "/api/v1/organizations/no-such-art-org/artifacts"), 404)
+
+      %{access_token: outsider} = setup_user_and_token()
+
+      assert %{"error" => "Not a member of this organization"} =
+               json_response(
+                 conn
+                 |> authenticated_conn(outsider)
+                 |> get("/api/v1/organizations/#{org_id}/artifacts"),
+                 403
+               )
+    end
+
+    test "viewer-role member can index but is denied member-only create", %{
+      conn: conn,
+      org_id: org_id
+    } do
+      %{access_token: viewer_token, user: viewer_user} = setup_user_and_token()
+
+      {:ok, _} =
+        NoizuPromptLingua.Authz.ScopedMemberships.add_member(
+          "organization",
+          org_id,
+          viewer_user.id,
+          "viewer"
+        )
+
+      viewer_conn = authenticated_conn(conn, viewer_token)
+
+      assert %{"artifacts" => _} =
+               json_response(
+                 get(viewer_conn, "/api/v1/organizations/#{org_id}/artifacts"),
+                 200
+               )
+
+      assert %{"error" => "Insufficient permissions"} =
+               json_response(
+                 post(viewer_conn, "/api/v1/organizations/#{org_id}/artifacts", %{
+                   artifact: %{
+                     kind: "document",
+                     title: "T",
+                     mime_type: "text/plain",
+                     content: "c"
+                   }
+                 }),
+                 403
+               )
+    end
+  end
+
+  describe "POST /artifacts (create)" do
+    test "happy path returns artifact with initial revision_id", %{conn: conn, org_id: org_id} do
+      body =
+        json_response(
+          post(conn, "/api/v1/organizations/#{org_id}/artifacts", %{
+            artifact: %{
+              kind: "document",
+              title: "HTTP Artifact",
+              mime_type: "text/markdown",
+              content: "hello"
+            }
+          }),
+          201
+        )["artifact"]
+
+      assert body["title"] == "HTTP Artifact"
+      assert body["organization_id"] == org_id
+      assert body["revision_id"]
+    end
+
+    test "missing required fields -> 422", %{conn: conn, org_id: org_id} do
+      assert json_response(
+               post(conn, "/api/v1/organizations/#{org_id}/artifacts", %{
+                 artifact: %{kind: "document"}
+               }),
+               422
+             )
+             |> Map.has_key?("errors")
+    end
+
+    test "project_id outside the org -> 422", %{conn: conn, org_id: org_id} do
+      assert %{"error" => "Project does not belong to this organization"} =
+               json_response(
+                 post(conn, "/api/v1/organizations/#{org_id}/artifacts", %{
+                   artifact: %{
+                     kind: "document",
+                     title: "T",
+                     mime_type: "text/plain",
+                     content: "c",
+                     project_id: Ecto.UUID.generate()
+                   }
+                 }),
+                 422
+               )
+    end
+  end
+
+  describe "POST /artifacts/:id/revisions on a missing artifact" do
+    test "404", %{conn: conn, org_id: org_id} do
+      assert %{"error" => "Artifact not found"} =
+               json_response(
+                 post(
+                   conn,
+                   "/api/v1/organizations/#{org_id}/artifacts/#{Ecto.UUID.generate()}/revisions",
+                   %{content: "x"}
+                 ),
+                 404
+               )
+    end
   end
 end

@@ -153,6 +153,7 @@ defmodule NoizuPromptLingua.OAuth.JwksAndTokenTest do
       {:ok, old_token, _} = Token.mint(user, key)
 
       Jwks.reset!()
+
       put_oauth_cfg(
         private_key_pem: generate_pem(),
         kid: "mcp-1",
@@ -170,12 +171,10 @@ defmodule NoizuPromptLingua.OAuth.JwksAndTokenTest do
                DualTokenVerifier.verify(
                  old_token,
                  %{method: "POST", peer: nil, headers: []},
-                 [
-                   secret: fn -> "unused-hmac-secret-for-rs256-path!!!!!!!!!!!!!!!!" end,
-                   issuer: Token.issuer(),
-                   validate_api_key: fn _ -> true end,
-                   require_aud: false
-                 ]
+                 secret: fn -> "unused-hmac-secret-for-rs256-path!!!!!!!!!!!!!!!!" end,
+                 issuer: Token.issuer(),
+                 validate_api_key: fn _ -> true end,
+                 require_aud: false
                )
     end
 
@@ -196,12 +195,10 @@ defmodule NoizuPromptLingua.OAuth.JwksAndTokenTest do
                DualTokenVerifier.verify(
                  old_token,
                  %{method: "POST", peer: nil, headers: []},
-                 [
-                   secret: fn -> "unused-hmac-secret-for-rs256-path!!!!!!!!!!!!!!!!" end,
-                   issuer: Token.issuer(),
-                   validate_api_key: fn _ -> true end,
-                   require_aud: false
-                 ]
+                 secret: fn -> "unused-hmac-secret-for-rs256-path!!!!!!!!!!!!!!!!" end,
+                 issuer: Token.issuer(),
+                 validate_api_key: fn _ -> true end,
+                 require_aud: false
                )
     end
   end
@@ -223,6 +220,7 @@ defmodule NoizuPromptLingua.OAuth.JwksAndTokenTest do
       assert is_binary(header["kid"])
 
       entry = Jwks.signing_entry()
+
       {true, %JOSE.JWT{fields: claims}, _} =
         JOSE.JWT.verify_strict(JOSE.JWK.to_public(entry.jwk), ["RS256"], token)
 
@@ -241,6 +239,7 @@ defmodule NoizuPromptLingua.OAuth.JwksAndTokenTest do
       {:ok, token, _} = Token.mint(user, key, resource: resource)
 
       entry = Jwks.signing_entry()
+
       {true, %JOSE.JWT{fields: claims}, _} =
         JOSE.JWT.verify_strict(JOSE.JWK.to_public(entry.jwk), ["RS256"], token)
 
@@ -283,7 +282,11 @@ defmodule NoizuPromptLingua.OAuth.JwksAndTokenTest do
       {:ok, token, _} = Token.mint(user, key)
 
       assert {:ok, claims} =
-               DualTokenVerifier.verify(token, %{method: "POST", peer: nil, headers: []}, verifier_opts())
+               DualTokenVerifier.verify(
+                 token,
+                 %{method: "POST", peer: nil, headers: []},
+                 verifier_opts()
+               )
 
       assert claims["api_key_id"] == key.id
     end
@@ -423,5 +426,4 @@ defmodule NoizuPromptLingua.OAuth.JwksAndTokenTest do
 
     Application.put_env(:noizu_prompt_lingua, :mcp_oauth, cleaned)
   end
-
 end

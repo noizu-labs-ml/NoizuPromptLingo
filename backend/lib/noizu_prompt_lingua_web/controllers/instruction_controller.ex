@@ -46,14 +46,21 @@ defmodule NoizuPromptLinguaWeb.InstructionController do
   # GET /api/v1/organizations/:org_id/instructions/:id
   def show(conn, %{"org_id" => org_id, "id" => id} = params) do
     with_owned(conn, org_id, id, "viewer", fn i ->
-      ver = Instructions.get_version(i.id, parse_version(params["version"]))
+      case parse_version(params["version"]) do
+        :invalid ->
+          invalid_version(conn)
 
-      json(conn, %{
-        instruction: instruction_json(i),
-        version: ver && ver.version,
-        body: ver && ver.body,
-        versions: Enum.map(Instructions.list_versions(i.id), &version_json(&1, i.active_version))
-      })
+        ver ->
+          v = Instructions.get_version(i.id, ver)
+
+          json(conn, %{
+            instruction: instruction_json(i),
+            version: v && v.version,
+            body: v && v.body,
+            versions:
+              Enum.map(Instructions.list_versions(i.id), &version_json(&1, i.active_version))
+          })
+      end
     end)
   end
 
@@ -98,15 +105,21 @@ defmodule NoizuPromptLinguaWeb.InstructionController do
   # POST /api/v1/organizations/:org_id/instructions/:instruction_id/active-version
   def set_active_version(conn, %{"org_id" => org_id, "instruction_id" => id, "version" => version}) do
     with_owned(conn, org_id, id, "member", fn _i ->
-      case Instructions.set_active_version(id, parse_version(version)) do
-        {:ok, i} ->
-          json(conn, %{instruction: instruction_json(i)})
+      case parse_version(version) do
+        :invalid ->
+          invalid_version(conn)
 
-        {:error, :not_found} ->
-          conn |> put_status(:not_found) |> json(%{error: "Version not found"})
+        ver ->
+          case Instructions.set_active_version(id, ver) do
+            {:ok, i} ->
+              json(conn, %{instruction: instruction_json(i)})
 
-        {:error, cs} ->
-          conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+            {:error, :not_found} ->
+              conn |> put_status(:not_found) |> json(%{error: "Version not found"})
+
+            {:error, cs} ->
+              conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(cs)})
+          end
       end
     end)
   end
@@ -114,19 +127,25 @@ defmodule NoizuPromptLinguaWeb.InstructionController do
   # POST /api/v1/organizations/:org_id/instructions/:instruction_id/render
   def render_instruction(conn, %{"org_id" => org_id, "instruction_id" => id} = params) do
     with_owned(conn, org_id, id, "viewer", fn i ->
-      opts = if v = parse_version(params["version"]), do: [version: v], else: []
+      case parse_version(params["version"]) do
+        :invalid ->
+          invalid_version(conn)
 
-      case Instructions.render(i, params["params"] || %{}, opts) do
-        {:ok, rendered} ->
-          json(conn, %{rendered: rendered})
+        ver ->
+          opts = if ver, do: [version: ver], else: []
 
-        {:error, :version_not_found} ->
-          conn |> put_status(:not_found) |> json(%{error: "Version not found"})
+          case Instructions.render(i, params["params"] || %{}, opts) do
+            {:ok, rendered} ->
+              json(conn, %{rendered: rendered})
 
-        {:error, {:missing_params, missing}} ->
-          conn
-          |> put_status(:unprocessable_entity)
-          |> json(%{error: "Missing required params", missing: missing})
+            {:error, :version_not_found} ->
+              conn |> put_status(:not_found) |> json(%{error: "Version not found"})
+
+            {:error, {:missing_params, missing}} ->
+              conn
+              |> put_status(:unprocessable_entity)
+              |> json(%{error: "Missing required params", missing: missing})
+          end
       end
     end)
   end
@@ -167,7 +186,22 @@ defmodule NoizuPromptLinguaWeb.InstructionController do
   defp parse_version(nil), do: nil
   defp parse_version(""), do: nil
   defp parse_version(v) when is_integer(v), do: v
-  defp parse_version(v) when is_binary(v), do: String.to_integer(v)
+
+  defp parse_version(v) when is_binary(v) do
+    case Integer.parse(v) do
+      {int, ""} ->
+        int
+
+      # Non-numeric ?version= ("abc") is a client error — 422 below — not an
+      # ArgumentError 500 from String.to_integer/1.
+      _ ->
+        :invalid
+    end
+  end
+
+  defp invalid_version(conn) do
+    conn |> put_status(:unprocessable_entity) |> json(%{errors: %{version: ["is invalid"]}})
+  end
 
   defp validate_project(nil, _org_id), do: {:ok, nil}
   defp validate_project("", _org_id), do: {:ok, nil}

@@ -98,4 +98,25 @@ defmodule NoizuPromptLingua.MCP.UrlsTest do
                "https://tobor.locker/org/test-org-#{uniq}/custom/my-slug/mcp"
     end
   end
+
+  describe "tool-set urls (PRD-N3 FR-3-10)" do
+    test "set_url is the org-addressed machine route" do
+      assert Urls.set_url("md-set", "the-org", host: @host) ==
+               "https://tobor.locker/org/the-org/set/md-set/mcp"
+
+      # org record form works too
+      assert Urls.set_url(%{slug: "md-set"}, %{slug: "the-org"}, host: @host) ==
+               "https://tobor.locker/org/the-org/set/md-set/mcp"
+    end
+
+    test "set_project_url is the project-addressed machine route" do
+      assert Urls.set_project_url("md-set", "the-org", "proj-a", host: @host) ==
+               "https://tobor.locker/org/the-org/project/proj-a/set/md-set/mcp"
+    end
+
+    test "tool_set_admin_url is the human settings route" do
+      assert Urls.tool_set_admin_url("the-org", "md-set", host: @host) ==
+               "https://tobor.locker/app/the-org/settings/tool-sets/md-set"
+    end
+  end
 end

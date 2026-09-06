@@ -25,6 +25,7 @@ defmodule NoizuPromptLinguaWeb.WellKnownControllerTest do
 
   test "path-scoped metadata describes the endpoint it is asked about", %{conn: conn} do
     conn = get(conn, "/.well-known/oauth-protected-resource/custom/abc123/mcp")
+
     assert %{"resource" => resource, "authorization_servers" => [_ | _]} =
              json_response(conn, 200)
 

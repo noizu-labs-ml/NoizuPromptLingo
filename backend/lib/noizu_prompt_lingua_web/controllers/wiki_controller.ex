@@ -102,7 +102,9 @@ defmodule NoizuPromptLinguaWeb.WikiController do
         slug: attrs["slug"],
         title: attrs["title"],
         content: attrs["content"],
-        position: attrs["position"]
+        # wiki_pages.position is not-null with no changeset default; without
+        # this, payloads without an explicit position crash the insert.
+        position: attrs["position"] || Wiki.next_page_position(space.id)
       }
 
       case Wiki.create_page(params) do

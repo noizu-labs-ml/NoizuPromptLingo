@@ -20,7 +20,12 @@ defmodule NoizuPromptLinguaWeb.MarketingControllerTest do
     # Sandbox isolation rolls these away per-test; reset the singleton row to
     # defaults so each test starts from a known state.
     Signups.get_settings!()
-    |> Ecto.Changeset.change(beta_signup_cap: nil, promo_cap: nil, signups_open: true, promo_active: true)
+    |> Ecto.Changeset.change(
+      beta_signup_cap: nil,
+      promo_cap: nil,
+      signups_open: true,
+      promo_active: true
+    )
     |> Repo.update!()
 
     :ok
@@ -57,7 +62,10 @@ defmodule NoizuPromptLinguaWeb.MarketingControllerTest do
     test "accepts an email and awards the founding promo while slots remain", %{conn: conn} do
       body =
         conn
-        |> post("/api/v1/public/marketing/signup", %{email: "  Founding@Example.COM ", source: "landing"})
+        |> post("/api/v1/public/marketing/signup", %{
+          email: "  Founding@Example.COM ",
+          source: "landing"
+        })
         |> json_response(201)
 
       assert body["accepted"] == true
@@ -75,13 +83,17 @@ defmodule NoizuPromptLinguaWeb.MarketingControllerTest do
       Signups.update_settings(%{promo_cap: 1})
 
       first =
-        conn |> post("/api/v1/public/marketing/signup", %{email: "promo-one@example.com"}) |> json_response(201)
+        conn
+        |> post("/api/v1/public/marketing/signup", %{email: "promo-one@example.com"})
+        |> json_response(201)
 
       assert first["promo_awarded"] == true
       assert first["promo_remaining"] == 0
 
       second =
-        conn |> post("/api/v1/public/marketing/signup", %{email: "promo-two@example.com"}) |> json_response(201)
+        conn
+        |> post("/api/v1/public/marketing/signup", %{email: "promo-two@example.com"})
+        |> json_response(201)
 
       # Still accepted (beta has no cap) but no promo.
       assert second["promo_awarded"] == false
@@ -91,7 +103,9 @@ defmodule NoizuPromptLinguaWeb.MarketingControllerTest do
     test "beta cap exhaustion waitlists instead of rejecting", %{conn: conn} do
       Signups.update_settings(%{beta_signup_cap: 1})
 
-      conn |> post("/api/v1/public/marketing/signup", %{email: "beta-one@example.com"}) |> json_response(201)
+      conn
+      |> post("/api/v1/public/marketing/signup", %{email: "beta-one@example.com"})
+      |> json_response(201)
 
       body =
         conn
@@ -119,7 +133,10 @@ defmodule NoizuPromptLinguaWeb.MarketingControllerTest do
     end
 
     test "rejects malformed emails with 422", %{conn: conn} do
-      conn |> post("/api/v1/public/marketing/signup", %{email: "not-an-email"}) |> json_response(422)
+      conn
+      |> post("/api/v1/public/marketing/signup", %{email: "not-an-email"})
+      |> json_response(422)
+
       conn |> post("/api/v1/public/marketing/signup", %{email: ""}) |> json_response(422)
     end
   end
@@ -131,7 +148,10 @@ defmodule NoizuPromptLinguaWeb.MarketingControllerTest do
     end
 
     test "non-admin gets 403", %{token: token} do
-      conn = Phoenix.ConnTest.build_conn() |> Plug.Conn.put_req_header("authorization", "Bearer #{token}")
+      conn =
+        Phoenix.ConnTest.build_conn()
+        |> Plug.Conn.put_req_header("authorization", "Bearer #{token}")
+
       assert conn |> get("/api/v1/admin/marketing/settings") |> json_response(403)
     end
 
@@ -144,7 +164,9 @@ defmodule NoizuPromptLinguaWeb.MarketingControllerTest do
 
       updated =
         conn
-        |> put("/api/v1/admin/marketing/settings", %{settings: %{beta_signup_cap: 25, promo_cap: "", signups_open: false}})
+        |> put("/api/v1/admin/marketing/settings", %{
+          settings: %{beta_signup_cap: 25, promo_cap: "", signups_open: false}
+        })
         |> json_response(200)
 
       # Empty string clears an optional cap (NULL = unlimited).
@@ -164,7 +186,9 @@ defmodule NoizuPromptLinguaWeb.MarketingControllerTest do
       assert length(body["signups"]) == 2
 
       waitlisted =
-        conn |> get("/api/v1/admin/marketing/signups", %{waitlisted: "true"}) |> json_response(200)
+        conn
+        |> get("/api/v1/admin/marketing/signups", %{waitlisted: "true"})
+        |> json_response(200)
 
       assert waitlisted["total"] == 1
       assert hd(waitlisted["signups"])["email"] == "listed-b@example.com"

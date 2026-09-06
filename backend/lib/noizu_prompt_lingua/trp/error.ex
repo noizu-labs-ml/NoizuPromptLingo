@@ -42,7 +42,11 @@ defmodule NoizuPromptLingua.TRP.Error do
         %{base | message: "validation failed", errors: fetch(body, "errors") || body}
 
       status == 429 ->
-        %{base | message: fetch(body, "error") || "rate_limited", retry_after: fetch(body, "retry_after")}
+        %{
+          base
+          | message: fetch(body, "error") || "rate_limited",
+            retry_after: fetch(body, "retry_after")
+        }
 
       status >= 500 ->
         %{base | message: fetch(body, "error") || "trp_server_error"}

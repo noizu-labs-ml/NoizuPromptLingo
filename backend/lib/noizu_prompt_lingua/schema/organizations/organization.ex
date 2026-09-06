@@ -19,7 +19,13 @@ defmodule NoizuPromptLingua.Schema.Organizations.Organization do
     |> validate_format(:key_prefix, ~r/^[A-Z0-9]{2,16}$/,
       message: "must be 2-16 uppercase letters/digits"
     )
-    |> unique_constraint(:slug)
+    # Slug uniqueness is enforced under TWO names depending on the provisioning
+    # path: the 009 base table's `UNIQUE` constraint (PG auto-name
+    # `organizations_slug_key`, Liquibase/stage) and the 082 named index
+    # (`idx_organizations_slug`, Ecto/prod). Declare both so a violation maps to
+    # a changeset error instead of raising Ecto.ConstraintError → 500.
+    |> unique_constraint(:slug, name: :organizations_slug_key)
+    |> unique_constraint(:slug, name: :idx_organizations_slug)
     |> unique_constraint(:key_prefix, name: :idx_organizations_key_prefix)
   end
 end

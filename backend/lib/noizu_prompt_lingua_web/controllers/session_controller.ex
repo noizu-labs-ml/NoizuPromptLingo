@@ -87,12 +87,16 @@ defmodule NoizuPromptLinguaWeb.SessionController do
          session when not is_nil(session) <- Sessions.get_session(id),
          true <- session.organization_id == resolved_org_id || :wrong_org,
          {:ok, project_id} <- validate_project(Map.get(attrs, "project_id"), resolved_org_id) do
-      attrs =
+      # Normalize to atom keys: Sessions.update_session stamps
+      # :last_activity_at (atom) onto this map, and Ecto.cast raises
+      # Ecto.CastError on maps with mixed key types.
+      patch =
         attrs
         |> Map.take(["title", "description", "status"])
-        |> maybe_put("project_id", Map.has_key?(attrs, "project_id"), project_id)
+        |> Map.new(fn {k, v} -> {String.to_existing_atom(k), v} end)
+        |> maybe_put(:project_id, Map.has_key?(attrs, "project_id"), project_id)
 
-      case Sessions.update_session(id, attrs) do
+      case Sessions.update_session(id, patch) do
         {:ok, session} ->
           json(conn, %{session: session_to_json(session)})
 

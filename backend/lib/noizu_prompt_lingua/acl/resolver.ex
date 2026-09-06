@@ -113,7 +113,9 @@ defmodule NoizuPromptLingua.Acl.Resolver do
     end
   end
 
-  defp action_match?(%{action: a}, action) when is_binary(a), do: a == action or a == @action_wildcard
+  defp action_match?(%{action: a}, action) when is_binary(a),
+    do: a == action or a == @action_wildcard
+
   defp action_match?(_, _), do: false
 
   @doc """

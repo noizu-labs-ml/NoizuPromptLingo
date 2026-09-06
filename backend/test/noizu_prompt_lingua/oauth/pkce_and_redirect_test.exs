@@ -19,9 +19,7 @@ defmodule NoizuPromptLingua.OAuth.PkceAndRedirectTest do
 
   describe "RedirectPolicy" do
     test "allows Claude, ChatGPT, and loopback" do
-      assert RedirectPolicy.allowed_for_registration?(
-               "https://claude.ai/api/mcp/auth_callback"
-             )
+      assert RedirectPolicy.allowed_for_registration?("https://claude.ai/api/mcp/auth_callback")
 
       assert RedirectPolicy.allowed_for_registration?("https://chatgpt.com/connector/oauth")
       assert RedirectPolicy.allowed_for_registration?("http://127.0.0.1:8910/callback")

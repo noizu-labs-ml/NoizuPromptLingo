@@ -8,7 +8,10 @@ defmodule NoizuPromptLingua.Domains.Tickets.Tools.TicketUpdate do
   input_schema(%{
     "type" => "object",
     "properties" => %{
-      "ticket_id" => %{"type" => "string", "description" => "Ticket UUID or human key (PREFIX-NNN)"},
+      "ticket_id" => %{
+        "type" => "string",
+        "description" => "Ticket UUID or human key (PREFIX-NNN)"
+      },
       "organization" => %{
         "type" => "string",
         "description" => "Org slug or UUID (required when ticket_id is a human key)"

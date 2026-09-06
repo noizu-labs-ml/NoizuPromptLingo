@@ -67,4 +67,3 @@ defmodule NoizuPromptLinguaWeb.WellKnownController do
     |> Keyword.get(:public_scheme, "https")
   end
 end
-

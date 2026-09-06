@@ -14,6 +14,16 @@ defmodule NoizuPromptLingua.Schema.TicketEntityLink do
   @entity_types ~w(customer_persona customer_segment campaign ad_group ad_copy
                    keyword competitor market_report landing_page domain_name)
 
+  # Ticket.FromEntity links via Links.link_entity/4 with a subject_type
+  # (its documented vocabulary) — legitimate entity types beyond the
+  # marketing enum above.
+  @from_entity_subject_types ~w(chat_message wiki_page artifact asset review)
+
+  # Junk entity_types are rejected (422 at the API layer, ticket ae01aad4 #5);
+  # the table stays polymorphic across the two vocabularies (no DB FK on
+  # entity_id — the calling layer still validates the target exists).
+  @valid_entity_types @entity_types ++ @from_entity_subject_types
+
   @link_types ~w(relates_to targets derived_from addresses blocks references)
 
   schema "ticket_entity_links" do
@@ -30,10 +40,7 @@ defmodule NoizuPromptLingua.Schema.TicketEntityLink do
     link
     |> cast(attrs, [:ticket_id, :entity_type, :entity_id, :link_type, :metadata])
     |> validate_required([:ticket_id, :entity_type, :entity_id, :link_type])
-    # entity_type is intentionally unvalidated: the table is polymorphic by design
-    # (no DB FK on entity_id; the calling layer validates the target exists) —
-    # Ticket.FromEntity links to arbitrary subject types (chat_message, wiki_page, ...),
-    # not just the marketing enum.
+    |> validate_inclusion(:entity_type, @valid_entity_types)
     |> validate_inclusion(:link_type, @link_types)
     |> foreign_key_constraint(:ticket_id)
     |> unique_constraint([:ticket_id, :entity_type, :entity_id, :link_type],
@@ -42,5 +49,6 @@ defmodule NoizuPromptLingua.Schema.TicketEntityLink do
   end
 
   def entity_types, do: @entity_types
+  def from_entity_subject_types, do: @from_entity_subject_types
   def link_types, do: @link_types
 end

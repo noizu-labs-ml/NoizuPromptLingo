@@ -369,10 +369,38 @@ defmodule NoizuPromptLinguaWeb.Router do
     match :*, "/user/:slug/mcp", CustomMCPGatewayController, :handle_user
   end
 
+  # Tool-set gateway (PRD-N3): org/project/group-shaped mcp_tool_sets served
+  # through the lib protocol path (ToolSetEndpoint). Additive — placed AFTER
+  # the org-custom + user routes and BEFORE the bare /mcp catch-all (FR-3-1);
+  # both handlers 404 unless :noizu_prompt_lingua, :tool_sets_enabled.
+  scope "/", NoizuPromptLinguaWeb do
+    match :*, "/org/:org_slug/set/:set_slug/mcp", MCPSetGatewayController, :handle_org
+  end
+
+  scope "/", NoizuPromptLinguaWeb do
+    match :*,
+          "/org/:org_slug/project/:project_slug/set/:set_slug/mcp",
+          MCPSetGatewayController,
+          :handle_org_project
+  end
+
+  # Root MCP mount: the lib transport behind the NPL-owned JsonRpcGuard
+  # (B4 — malformed jsonrpc versions answer -32600 instead of hanging).
   scope "/mcp" do
     forward "/",
-            Noizu.MCP.Transport.StreamableHTTP.Plug,
+            NoizuPromptLinguaWeb.MCP.TransportPlug,
             NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.MCP)
+  end
+
+  # VFS Wave 0 substrate: the WebSocket VFS transport at /vfs, backed by the
+  # composed NoizuPromptLingua.MCP.VFS.Router (org-scoped namespace + _meta
+  # plane + /etc/dev control tree). Same bearer pipeline as the MCP surface;
+  # `mcp-mount --url wss://<host>/vfs --token T --mount DIR [--ro]`. Host-less
+  # scope on purpose: the mount endpoint answers on the apex host AND on any
+  # subdomain (fs.<host>/vfs) — the wildcard ingress catch-all already routes
+  # both to the backend.
+  scope "/" do
+    forward "/vfs", Noizu.MCP.Transport.VFSWS, NoizuPromptLinguaWeb.MCPConfig.vfs_plug_opts()
   end
 
   # Authentik (OIDC) is the ONLY supported auth method — no alternatives.
@@ -465,11 +493,14 @@ defmodule NoizuPromptLinguaWeb.Router do
   # N4a: MCP tool-set admin (PRD-N4 §4.1) — built-in profiles (read-only, R1)
   # next to the org's own sets; create/update/deactivate/clone through
   # MCP.ToolSets. Org-admin gated; serving gateway lands at N3.
-  # N4b: `POST .../tool-sets/validate` (Validator.compile/3 dry-run) lands with
-  # the PRD-3 gate — see the seam marker in ToolSetProfilesController.
+  # N4b: validate dry-run (Validator.compile/3, never persists), the live
+  # catalog arg-enum seeds and the real-groups group-options feed.
   scope "/api/v1/organizations/:org_id", NoizuPromptLinguaWeb do
     pipe_through [:api, :authenticated, :org_admin]
     post "/tool-sets/clone", ToolSetProfilesController, :clone
+    post "/tool-sets/validate", ToolSetProfilesController, :validate
+    get "/tool-sets/group-options", ToolSetProfilesController, :group_options
+    get "/tool-sets/arg-enum", ToolSetProfilesController, :arg_enum
     get "/tool-sets", ToolSetProfilesController, :index
     post "/tool-sets", ToolSetProfilesController, :create
     get "/tool-sets/:slug", ToolSetProfilesController, :show
@@ -892,7 +923,7 @@ defmodule NoizuPromptLinguaWeb.Router do
 
     get "/comments/:comment_id/reactions", WikiController, :index_comment_reactions
     post "/comments/:comment_id/reactions", WikiController, :add_comment_reaction
-    delete "/comments/:comment_id/reactions", WikiController, :remove_comment_reactions
+    delete "/comments/:comment_id/reactions", WikiController, :remove_comment_reaction
   end
 
   # GitHub: org-scoped read/write operations (authenticated, org-member).

@@ -169,6 +169,16 @@ spec:
                 name: {{ include "npl-mcp.fullname" . }}
                 port:
                   name: http
+          # VFS Wave 0: WebSocket VFS transport (mcp-mount --url wss://<host>/vfs).
+          # Additive — same TLS/service as the MCP surface. Long-lived WS: the
+          # 86400s read/send timeouts set above apply (same as /mcp + /socket).
+          - path: /vfs
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "npl-mcp.fullname" . }}
+                port:
+                  name: mcp
           - path: /api/
             pathType: Prefix
             backend:

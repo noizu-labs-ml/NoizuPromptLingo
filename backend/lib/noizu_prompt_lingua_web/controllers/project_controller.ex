@@ -50,8 +50,10 @@ defmodule NoizuPromptLinguaWeb.ProjectController do
           {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
             conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
 
+          # TRP errors (%TRP.Error{}) don't implement String.Chars — to_string/1
+          # crashes; render the exception message / inspect form instead. (cov-w2d)
           {:error, reason} ->
-            conn |> put_status(:unprocessable_entity) |> json(%{error: to_string(reason)})
+            conn |> put_status(:unprocessable_entity) |> json(%{error: error_text(reason)})
         end
       else
         conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
@@ -86,8 +88,10 @@ defmodule NoizuPromptLinguaWeb.ProjectController do
         {:error, :not_found} ->
           conn |> put_status(:not_found) |> json(%{error: "Project not found"})
 
-        {:error, changeset} ->
-          conn |> put_status(:unprocessable_entity) |> json(%{errors: format_errors(changeset)})
+        # TRP-plane errors (%TRP.Error{}) are not changesets — without this
+        # clause they fall into format_errors/1 and crash -> 500. (cov-w2d)
+        {:error, reason} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{error: error_text(reason)})
       end
     else
       conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
@@ -120,6 +124,11 @@ defmodule NoizuPromptLinguaWeb.ProjectController do
 
         {:error, :not_found} ->
           conn |> put_status(:not_found) |> json(%{error: "Project not found"})
+
+        # TRP shared-key plane has no archive surface (W0 spec gap); without this
+        # clause the tuple crashes the case -> 500. (cov-w2d)
+        {:error, reason} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{error: error_text(reason)})
       end
     else
       conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
@@ -136,6 +145,10 @@ defmodule NoizuPromptLinguaWeb.ProjectController do
 
         {:error, :not_found} ->
           conn |> put_status(:not_found) |> json(%{error: "Project not found"})
+
+        # TRP shared-key plane has no unarchive surface (W0 spec gap). (cov-w2d)
+        {:error, reason} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{error: error_text(reason)})
       end
     else
       conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
@@ -190,7 +203,20 @@ defmodule NoizuPromptLinguaWeb.ProjectController do
       else
         case ScopedMemberships.update_role("project", project_id, member_user_id, role) do
           {:ok, result} ->
-            json(conn, %{membership: result})
+            # ScopedMembership is an Ecto struct with no Jason.Encoder derive —
+            # encoding it raw 500s; flatten to plain fields. (cov-w2d)
+            json(conn, %{
+              membership: %{
+                id: result.id,
+                resource_type: result.resource_type,
+                resource_id: result.resource_id,
+                member_type: result.member_type,
+                member_id: result.member_id,
+                group_id: result.group_id,
+                expires_at: result.expires_at,
+                added_by: result.added_by
+              }
+            })
 
           {:error, :not_found} ->
             conn |> put_status(:not_found) |> json(%{error: "Member not found"})
@@ -212,7 +238,9 @@ defmodule NoizuPromptLinguaWeb.ProjectController do
         {:ok, _} ->
           json(conn, %{message: "Member removed"})
 
-        {:error, :sole_owner} ->
+        # ScopedMemberships returns :last_owner (the controller documented
+        # :sole_owner) — either atom must map to 400, not a crash. (cov-w2d)
+        {:error, tag} when tag in [:sole_owner, :last_owner] ->
           conn |> put_status(:bad_request) |> json(%{error: "Cannot remove the sole owner"})
 
         {:error, :not_found} ->
@@ -230,7 +258,8 @@ defmodule NoizuPromptLinguaWeb.ProjectController do
       {:ok, _} ->
         json(conn, %{message: "Left project"})
 
-      {:error, :sole_owner} ->
+      # :last_owner is what ScopedMemberships actually returns. (cov-w2d)
+      {:error, tag} when tag in [:sole_owner, :last_owner] ->
         conn
         |> put_status(:bad_request)
         |> json(%{error: "Cannot leave as sole owner. Transfer ownership first."})
@@ -263,6 +292,12 @@ defmodule NoizuPromptLinguaWeb.ProjectController do
       updated_at: project.updated_at
     }
   end
+
+  defp error_text(reason) when is_binary(reason), do: reason
+
+  defp error_text(reason) when is_atom(reason), do: Atom.to_string(reason)
+
+  defp error_text(reason), do: Exception.message(reason) || inspect(reason)
 
   defp format_errors(changeset) do
     Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->

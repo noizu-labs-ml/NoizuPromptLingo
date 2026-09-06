@@ -2,46 +2,62 @@ defmodule NoizuPromptLinguaWeb.VoiceAssistantController do
   use NoizuPromptLinguaWeb, :controller
 
   alias NoizuPromptLingua.Authz
+  alias NoizuPromptLingua.Organizations
 
-  def approval_script(conn, %{"org_id" => org_id} = params) do
+  # The :org_id path segment may be a slug or a UUID — resolve BEFORE Authz,
+  # which expects the UUID (a raw slug is a QueryCastException 500; ticket
+  # 1bd065df). Unknown org folds to 404.
+  def approval_script(conn, %{"org_id" => org_ref} = params) do
     user_id = get_user_id(conn)
 
-    case Authz.authorize(user_id, "organization", org_id, "viewer") do
-      {:ok, _} ->
-        transcript = params["transcript"] || ""
-        title = normalize_title(params["title"], transcript)
-        ticket_type = normalize_ticket_type(params["ticket_type"])
-        description = normalize_description(params["description"], transcript)
-        project_id = clean_optional(params["project_id"])
+    with {:ok, org_id} <- resolve_org(org_ref) do
+      case Authz.authorize(user_id, "organization", org_id, "viewer") do
+        {:ok, _} ->
+          transcript = params["transcript"] || ""
+          title = normalize_title(params["title"], transcript)
+          ticket_type = normalize_ticket_type(params["ticket_type"])
+          description = normalize_description(params["description"], transcript)
+          project_id = clean_optional(params["project_id"])
 
-        script =
-          build_ticket_create_script(%{
-            "organization" => org_id,
-            "project_id" => project_id,
-            "title" => title,
-            "ticket_type" => ticket_type,
-            "description" => description
+          script =
+            build_ticket_create_script(%{
+              "organization" => org_id,
+              "project_id" => project_id,
+              "title" => title,
+              "ticket_type" => ticket_type,
+              "description" => description
+            })
+
+          json(conn, %{
+            approval_script: script,
+            execution_enabled: false,
+            preview: %{
+              endpoint: "tobor-tickets",
+              command: "Ticket.Create",
+              organization: org_id,
+              project_id: project_id,
+              title: title,
+              ticket_type: ticket_type,
+              description: description
+            }
           })
 
-        json(conn, %{
-          approval_script: script,
-          execution_enabled: false,
-          preview: %{
-            endpoint: "tobor-tickets",
-            command: "Ticket.Create",
-            organization: org_id,
-            project_id: project_id,
-            title: title,
-            ticket_type: ticket_type,
-            description: description
-          }
-        })
+        {:error, :not_a_member} ->
+          conn |> put_status(:forbidden) |> json(%{error: "Not a member of this organization"})
 
-      {:error, :not_a_member} ->
-        conn |> put_status(:forbidden) |> json(%{error: "Not a member of this organization"})
+        {:error, _} ->
+          conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
+      end
+    else
+      {:error, :org_not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Organization not found"})
+    end
+  end
 
-      {:error, _} ->
-        conn |> put_status(:forbidden) |> json(%{error: "Insufficient permissions"})
+  defp resolve_org(org_ref) do
+    case Organizations.resolve_org_id(org_ref) do
+      {:ok, org_id} -> {:ok, org_id}
+      _ -> {:error, :org_not_found}
     end
   end
 

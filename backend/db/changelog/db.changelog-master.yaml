@@ -253,3 +253,6 @@ databaseChangeLog:
   - include:
       file: 083-mcp-tool-sets.yaml
       relativeToChangelogFile: true
+  - include:
+      file: 084-browser-capture-resource-types.yaml
+      relativeToChangelogFile: true

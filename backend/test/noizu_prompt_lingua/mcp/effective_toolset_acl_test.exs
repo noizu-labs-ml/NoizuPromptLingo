@@ -85,7 +85,12 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetAclTest do
     end
 
     test "user with NO rules is a no-op (critical invariant)" do
-      scope = create_scope("acme", scope_config(%{@group => %{"tools" => %{@tool => %{"hidden" => true}}}}))
+      scope =
+        create_scope(
+          "acme",
+          scope_config(%{@group => %{"tools" => %{@tool => %{"hidden" => true}}}})
+        )
+
       state = lookup(scope, nil, user_ref())
 
       refute state.visible
@@ -99,7 +104,10 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetAclTest do
             NoizuPromptLingua.Domains.Tickets.MCP.__mcp__(:tools)
             |> Noizu.MCP.Server.Features.Tools.expand()
             |> Enum.reject(&EffectiveToolset.ungated_category?(&1)) do
-        refute EffectiveToolset.lookup(EffectiveToolset.resolve(scope, nil, user_ref()), spec.definition.name).enabled
+        refute EffectiveToolset.lookup(
+                 EffectiveToolset.resolve(scope, nil, user_ref()),
+                 spec.definition.name
+               ).enabled
       end
     end
   end
@@ -111,7 +119,9 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetAclTest do
       scope =
         create_scope(
           "acme",
-          scope_config(%{@group => %{"tools" => %{@tool => %{"disabled" => false, "hidden" => false}}}})
+          scope_config(%{
+            @group => %{"tools" => %{@tool => %{"disabled" => false, "hidden" => false}}}
+          })
         )
 
       denied_user = user_ref()
@@ -126,7 +136,12 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetAclTest do
     end
 
     test "explicit allow does NOT override config disabled" do
-      scope = create_scope("acme", scope_config(%{@group => %{"tools" => %{@tool => %{"disabled" => true}}}}))
+      scope =
+        create_scope(
+          "acme",
+          scope_config(%{@group => %{"tools" => %{@tool => %{"disabled" => true}}}})
+        )
+
       rule!(user_ref(), tool_ref(), "allow")
 
       state = lookup(scope, nil, user_ref())

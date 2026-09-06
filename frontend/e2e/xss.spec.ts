@@ -18,11 +18,15 @@ test.describe("xss-inert render", () => {
     });
 
     await gotoRoom(page);
-    const payload = `<script>window.__xss=1;alert('xss')</script>`;
+    // Per-run nonce: the stage room is long-lived and older runs' payloads
+    // accumulate — a bare hasText("<script>") resolves to N messages and
+    // trips strict mode. The nonce pins the locator to THIS run's message.
+    const nonce = Date.now();
+    const payload = `<script>window.__xss=1;alert('xss')/*${nonce}*/</script>`;
     await page.locator(sel.composerInput).fill(payload);
     await page.locator(sel.composerSubmit).click();
 
-    const node = page.locator(sel.message).filter({ hasText: "<script>" });
+    const node = page.locator(sel.message).filter({ hasText: `${nonce}` });
     await expect(node).toBeVisible();
     // it must be TEXT, not a live <script> element inside the body
     await expect(node.locator("script")).toHaveCount(0);
@@ -37,11 +41,12 @@ test.describe("xss-inert render", () => {
     });
 
     await gotoRoom(page);
-    const payload = `<img src=x onerror="console.log('__img_xss')">`;
+    const nonce = Date.now();
+    const payload = `<img src=x-${nonce} onerror="console.log('__img_xss')">`;
     await page.locator(sel.composerInput).fill(payload);
     await page.locator(sel.composerSubmit).click();
 
-    const node = page.locator(sel.message).filter({ hasText: "<img" });
+    const node = page.locator(sel.message).filter({ hasText: `x-${nonce}` });
     await expect(node).toBeVisible();
     await expect(node.locator("img")).toHaveCount(0); // rendered as text, no live <img>
     expect(errored).toBe(false);

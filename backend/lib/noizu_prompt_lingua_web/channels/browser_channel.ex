@@ -25,7 +25,10 @@ defmodule NoizuPromptLinguaWeb.BrowserChannel do
   def join("browser:" <> org_id, _params, socket) do
     user_id = socket.assigns.user_id
 
-    case NoizuPromptLingua.Organizations.authorize(user_id, org_id, "editor") do
+    # Same floor as the tunnel CRUD gate: the scoped-membership ladder has no
+    # "editor" rung, so "editor" cleared ANY membership (ticket 1bd065df).
+    # Browser-relay operators are ≥ member.
+    case NoizuPromptLingua.Organizations.authorize(user_id, org_id, "member") do
       {:ok, _membership} ->
         :ok = Relay.register(org_id, self())
         {:ok, assign(socket, :org_id, org_id)}

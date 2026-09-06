@@ -216,7 +216,6 @@ defmodule NoizuPromptLinguaWeb.SSOController do
     end
   end
 
-
   defp redirect_with_error(conn, error) do
     redirect(conn, external: "#{frontend_url()}/auth/sso-callback?error=#{error}")
   end

@@ -57,16 +57,13 @@ config :noizu_prompt_lingua, NoizuPromptLingua.Guardian,
   secret_key: "dev-secret-key-change-in-production"
 
 # MCP three-axis PDP (Phase 3). :local uses Ecto + Authz; :spicedb needs SPICEDB_*.
-config :noizu_prompt_lingua, :mcp_pdp,
-  mode: :local
+config :noizu_prompt_lingua, :mcp_pdp, mode: :local
 
 # Phase 4: legacy API-key mint (set mint_enabled: false to force OAuth-only).
-config :noizu_prompt_lingua, :mcp_legacy_api_keys,
-  mint_enabled: true
+config :noizu_prompt_lingua, :mcp_legacy_api_keys, mint_enabled: true
 
 # Phase 4: destructive tool step-up elevation.
-config :noizu_prompt_lingua, :mcp_elevation,
-  enabled: true
+config :noizu_prompt_lingua, :mcp_elevation, enabled: true
 
 # Compile-time env, read at runtime by NoizuPromptLingua.OAuth.Jwks to decide
 # whether an ephemeral JWT signing key is tolerable (it never is in prod).
@@ -203,3 +200,17 @@ config :noizu_prompt_lingua, :feature_flags, %{
 config :noizu_prompt_lingua, NoizuPromptLinguaWeb.Gettext, default_locale: "en"
 
 import_config "#{config_env()}.exs"
+
+# ── VFS (Wave 0 substrate) ─────────────────────────────────────────────────
+# Compile-time kill switch honored by Noizu.MCP.VFS.Control via the VFSServer
+# `vfs_readonly:` opt: with it true, EVERY write through the composed backend
+# (the /etc/dev control tree included) returns :erofs.
+config :noizu_prompt_lingua, :vfs, readonly: false
+
+# P1 workaround (design §6): the lib's VFS read cache keys entries
+# {backend, kind, path} — identity-blind — while NPL's VFS serves per-principal
+# trees, so cached successes could cross-contaminate principals within the TTL.
+# The read cache stays OFF until the lib ships per-identity keys or the
+# `__mcp_vfs__(:cacheable)` opt-out; the Wave 0 meta plane is tiny, so this
+# costs nothing today.
+config :noizu_mcp, vfs_cache_enabled: false

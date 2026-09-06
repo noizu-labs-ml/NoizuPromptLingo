@@ -30,9 +30,10 @@ defmodule NoizuPromptLingua.Domains.Github.ToolsInvalidCallerTest do
   # already handled it. All reach the invalid-uuid branch before any GitHub
   # client call, so no network is involved.
   #
-  # IssueCreate, PullCreate and PullMerge are deliberately absent: they cannot
-  # reach argument validation at all. See the `Map.take/2` describe block.
   @tools_returning_invalid_uuid [
+    Tools.IssueCreate,
+    Tools.PullCreate,
+    Tools.PullMerge,
     Tools.BranchCreate,
     Tools.BranchGet,
     Tools.BranchList,
@@ -42,14 +43,6 @@ defmodule NoizuPromptLingua.Domains.Github.ToolsInvalidCallerTest do
     Tools.PullComment,
     Tools.PullGet,
     Tools.PullList
-  ]
-
-  # Separate, older defect, found by this file and NOT fixed here — fixing it
-  # is outside the scope this test was written for.
-  @tools_broken_before_validation [
-    Tools.IssueCreate,
-    Tools.PullCreate,
-    Tools.PullMerge
   ]
 
   # A caller id that is not a 36-character UUID, in the shapes a client can
@@ -82,40 +75,11 @@ defmodule NoizuPromptLingua.Domains.Github.ToolsInvalidCallerTest do
     end
   end
 
-  describe "Map.take/2 on a keyword list — a separate, older defect" do
-    # These three build their request body with
-    #
-    #     Map.take([title: ..., body: ...], [:title, :body])
-    #
-    # but the first argument is a keyword *list*, and Map.take/2 requires a
-    # map. It raises BadMapError unconditionally, on every call, with any
-    # arguments — the line runs before the `case` that validates anything. So
-    # these three tools cannot succeed and never could; nothing had ever called
-    # them, which is why it went unnoticed until this file did.
-    #
-    # Pinned rather than fixed: this is not the unreachable-clause bug, and
-    # fixing it was not in scope. The assertion is deliberately a statement of
-    # what is broken. When someone fixes it — `Enum.filter` the keyword list
-    # directly, or wrap it in `Map.new/1` first — this test will fail, which is
-    # the intended signal to move the module into
-    # @tools_returning_invalid_uuid above.
-    for tool <- @tools_broken_before_validation do
-      @tool tool
-
-      test "#{inspect(tool)} raises BadMapError before it can validate anything" do
-        args = %{
-          caller_user_id: Ecto.UUID.generate(),
-          organization: "no-such-org-#{System.unique_integer([:positive])}",
-          repo: "owner/name",
-          title: "t",
-          body: "b",
-          pull_number: 1
-        }
-
-        assert_raise BadMapError, fn -> @tool.call(args, nil) end
-      end
-    end
-  end
+  # The Map.take/2-on-a-keyword-list defect this file found in IssueCreate,
+  # PullCreate and PullMerge (BadMapError on every call, before any validation)
+  # is now FIXED: all three wrap the literal in `Map.new/1` before `Map.take/2`,
+  # and have been moved into @tools_returning_invalid_uuid above — exactly the
+  # migration this file's pinned-failure contract asked for.
 
   describe "the org branch still works — the fix did not swallow it" do
     test "a valid caller uuid with an unresolvable org reports the org, not the uuid" do

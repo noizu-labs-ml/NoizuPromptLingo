@@ -318,6 +318,12 @@ interface ToolSetOverridesEditorProps {
   /** Emits the full next config (pure controlled). */
   onChange: (next: ToolSetConfig) => void;
   readOnly?: boolean;
+  /**
+   * N4b live-enum seeds: resolve the base enum values of (toolKey, arg) —
+   * `arg-enum` endpoint fetch, session-cached by the caller. Absent or empty
+   * results fall back to the free-text input.
+   */
+  argEnum?: (toolKey: string, arg: string) => Promise<(string | number | boolean)[]>;
 }
 
 /** Drop keys whose value is absent/empty so stored configs stay minimal. */
@@ -371,15 +377,21 @@ export function ToolSetOverrideFields({
   onEntry,
   readOnly = false,
   idPrefix,
+  argEnum,
 }: {
   tool: ToolOverridesTool;
   entry: ToolSetToolConfig;
   onEntry: (next: ToolSetToolConfig) => void;
   readOnly?: boolean;
   idPrefix: string;
+  argEnum?: (toolKey: string, arg: string) => Promise<(string | number | boolean)[]>;
 }) {
   const [newArg, setNewArg] = useState('');
   const [newEnum, setNewEnum] = useState('');
+  // Live-enum candidates per arg (undefined = not fetched yet). N4b: the
+  // enum_remove free-text input upgrades to a picker seeded from the base
+  // catalog once values arrive; non-enum args fall back to free text.
+  const [enumOptions, setEnumOptions] = useState<Record<string, (string | number | boolean)[]>>({});
   const knownArgs = tool.parameters ?? [];
   const argCfg = entry.args ?? {};
   const extraArgs = Object.keys(argCfg).filter((arg) => !knownArgs.some((p) => p.name === arg));
@@ -392,13 +404,20 @@ export function ToolSetOverrideFields({
     onEntry(Object.keys(args).length === 0 ? { ...entry, args: undefined } : { ...entry, args });
   }
 
-  function addEnumValue(arg: string) {
-    const value = newEnum.trim();
+  function addEnumValue(arg: string, raw?: string) {
+    const value = (raw ?? newEnum).trim();
     if (!value) return;
     const current = argCfg[arg]?.enum_remove ?? [];
     if (current.some((v) => String(v) === value)) return;
     updateArgs(patchArg(argCfg, arg, { enum_remove: [...current, value] }));
     setNewEnum('');
+  }
+
+  async function ensureEnum(arg: string) {
+    if (!argEnum || enumOptions[arg] !== undefined) return;
+    setEnumOptions((cur) => ({ ...cur, [arg]: [] })); // placeholder: no double fetch
+    const values = await argEnum(canonicalToolName(tool.name), arg);
+    setEnumOptions((cur) => ({ ...cur, [arg]: values }));
   }
 
   return (
@@ -525,29 +544,16 @@ export function ToolSetOverrideFields({
                   </div>
                 )}
                 {!readOnly && (
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <input
-                      aria-label={`Enum value to remove from ${arg.name} of ${tool.name}`}
-                      value={newEnum}
-                      placeholder="enum value to remove"
-                      onChange={(e) => setNewEnum(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          addEnumValue(arg.name);
-                        }
-                      }}
-                      style={{ flex: 1, fontFamily: 'monospace', fontSize: 11 }}
-                    />
-                    <button
-                      type="button"
-                      className="sg-btn sg-btn--outline sg-btn--sm"
-                      disabled={!newEnum.trim()}
-                      onClick={() => addEnumValue(arg.name)}
-                    >
-                      Remove value
-                    </button>
-                  </div>
+                  <EnumRemovePicker
+                    toolName={tool.name}
+                    argName={arg.name}
+                    candidates={enumOptions[arg.name]}
+                    removed={(cfg.enum_remove ?? []).map(String)}
+                    pendingValue={newEnum}
+                    onPendingValue={setNewEnum}
+                    onFocus={() => void ensureEnum(arg.name)}
+                    onAdd={(value) => addEnumValue(arg.name, value)}
+                  />
                 )}
               </div>
             );
@@ -592,6 +598,7 @@ export function ToolSetOverridesEditor({
   value,
   onChange,
   readOnly = false,
+  argEnum,
 }: ToolSetOverridesEditorProps) {
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const groupsCfg = value.groups ?? {};
@@ -724,6 +731,7 @@ export function ToolSetOverridesEditor({
                             entry={entry}
                             onEntry={(next) => updateTool(group.group, toolKey, next)}
                             readOnly={readOnly}
+                            argEnum={argEnum}
                           />
                         </div>
                       )}
@@ -736,5 +744,99 @@ export function ToolSetOverridesEditor({
         );
       })}
     </div>
+  );
+}
+
+/**
+ * N4b — the enum_remove control: a live-enum picker seeded from the base
+ * catalog (candidates = the arg's current enum values, minus already-pruned
+ * ones) once the seeds arrive, free text before that and whenever the arg has
+ * no live enum (unknown tool/field, non-enum arg) — the closed vocabulary is
+ * never blocked by a catalog miss.
+ */
+function EnumRemovePicker({
+  toolName,
+  argName,
+  candidates,
+  removed,
+  pendingValue,
+  onPendingValue,
+  onFocus,
+  onAdd,
+}: {
+  toolName: string;
+  argName: string;
+  /** undefined = not fetched yet; [] = fetched, no live enum. */
+  candidates: (string | number | boolean)[] | undefined;
+  /** Already-pruned values (as configured) — excluded from the picker. */
+  removed: string[];
+  pendingValue: string;
+  onPendingValue: (value: string) => void;
+  onFocus: () => void;
+  onAdd: (value: string) => void;
+}) {
+  const label = `Enum value to remove from ${argName} of ${toolName}`;
+
+  if (candidates === undefined || candidates.length === 0) {
+    // Free text: before the seeds arrive (fetch fires on first focus) and as
+    // the fallback for args without a live enum.
+    return (
+      <div style={{ display: 'flex', gap: 6 }}>
+        <input
+          aria-label={label}
+          value={pendingValue}
+          placeholder={
+            candidates === undefined
+              ? 'enum value to remove (live enum on focus)'
+              : 'no live enum values — enter free text'
+          }
+          onFocus={onFocus}
+          onChange={(e) => onPendingValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              onAdd(pendingValue.trim());
+            }
+          }}
+          style={{ flex: 1, fontFamily: 'monospace', fontSize: 11 }}
+        />
+        <button
+          type="button"
+          className="sg-btn sg-btn--outline sg-btn--sm"
+          disabled={!pendingValue.trim()}
+          onClick={() => onAdd(pendingValue.trim())}
+        >
+          Remove value
+        </button>
+      </div>
+    );
+  }
+
+  const remaining = candidates.filter((v) => !removed.includes(String(v)));
+
+  if (remaining.length === 0) {
+    return (
+      <span style={{ fontSize: 10, color: 'var(--text-3)' }}>
+        All live enum values are already pruned.
+      </span>
+    );
+  }
+
+  return (
+    <select
+      aria-label={label}
+      value=""
+      onChange={(e) => {
+        if (e.target.value !== '') onAdd(e.target.value);
+      }}
+      style={{ flex: 1, fontSize: 11, fontFamily: 'monospace' }}
+    >
+      <option value="">— pick a live enum value to prune —</option>
+      {remaining.map((v) => (
+        <option key={String(v)} value={String(v)}>
+          {String(v)}
+        </option>
+      ))}
+    </select>
   );
 }

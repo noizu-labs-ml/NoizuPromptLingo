@@ -39,7 +39,10 @@ defmodule NoizuPromptLingua.Authz.Pdp.SpiceDB do
   defp check_remote(endpoint, req) do
     # Minimal CheckPermission via REST (SpiceDB HTTP gateway) — subject/user.
     # Full bulk checks for three axes when catalog tuples are seeded.
-    with :ok <- NoizuPromptLingua.Authz.Pdp.Local.check(Map.take(req, [:client_id, :grant_id, :user_id, :resource])),
+    with :ok <-
+           NoizuPromptLingua.Authz.Pdp.Local.check(
+             Map.take(req, [:client_id, :grant_id, :user_id, :resource])
+           ),
          :ok <- maybe_remote_tool_check(endpoint, req) do
       :ok
     end
@@ -74,7 +77,8 @@ defmodule NoizuPromptLingua.Authz.Pdp.SpiceDB do
         if token, do: [{"authorization", "Bearer #{token}"}], else: []
 
     case http_post(url, body, headers) do
-      {:ok, %{"permissionship" => p}} when p in ["PERMISSIONSHIP_HAS_PERMISSION", "has_permission"] ->
+      {:ok, %{"permissionship" => p}}
+      when p in ["PERMISSIONSHIP_HAS_PERMISSION", "has_permission"] ->
         :ok
 
       {:ok, %{"permissionship" => _}} ->

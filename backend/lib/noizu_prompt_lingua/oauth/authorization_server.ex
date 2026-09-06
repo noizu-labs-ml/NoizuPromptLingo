@@ -27,7 +27,11 @@ defmodule NoizuPromptLingua.OAuth.AuthorizationServer do
         "urn:ietf:params:oauth:grant-type:token-exchange"
       ],
       "code_challenge_methods_supported" => ["S256"],
-      "token_endpoint_auth_methods_supported" => ["none", "client_secret_post", "client_secret_basic"],
+      "token_endpoint_auth_methods_supported" => [
+        "none",
+        "client_secret_post",
+        "client_secret_basic"
+      ],
       "scopes_supported" => ["openid", "mcp", "offline_access"],
       "subject_types_supported" => ["public"],
       "service_documentation" => "#{base}/",

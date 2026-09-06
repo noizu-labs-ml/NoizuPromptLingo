@@ -49,7 +49,9 @@ defmodule NoizuPromptLingua.MCP.ToolNamesTest do
 
     test "canonical_spec rewrites spec definition names; already-canonical untouched" do
       dotted_spec = %{definition: %{name: "Session.Create", other: 1}, hidden: false}
-      assert %{definition: %{name: "Session_Create", other: 1}} = ToolNames.canonical_spec(dotted_spec)
+
+      assert %{definition: %{name: "Session_Create", other: 1}} =
+               ToolNames.canonical_spec(dotted_spec)
 
       canonical_spec = %{definition: %{name: "Session_Create"}, hidden: false}
       assert ToolNames.canonical_spec(canonical_spec) == canonical_spec
@@ -78,7 +80,7 @@ defmodule NoizuPromptLingua.MCP.ToolNamesTest do
 
       assert "Session_Create" in listed
       assert "Session_Get" in listed
-      assert Enum.all?(listed, &not String.contains?(&1, "."))
+      assert Enum.all?(listed, &(not String.contains?(&1, ".")))
     end
   end
 

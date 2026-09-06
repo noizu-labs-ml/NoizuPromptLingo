@@ -2,6 +2,11 @@ name: CI
 
 # Build on native amd64 (colo target), validate, push sha-tagged images, bump
 # the chart — ArgoCD (app "npl-mcp") rolls it out from main.
+# Stage lane: pushes to `stage` build sha-<short>-stage images and bump
+# values-stage.yaml — ArgoCD (app "npl-mcp-stage") rolls those to
+# tobor-stage.noizu.com. Main-gated jobs below are untouched by the stage path.
+# `feat/tool-sets-integration` pushes gate the integration merge through the
+# test jobs only — every image-build job stays ref-gated (main / stage).
 # Pattern: therobotlearns.com/.github/workflows/ci.yml
 #
 # Push triggers: `stage` drives the stage lane (build-push-stage /
@@ -14,6 +19,9 @@ on:
   push:
     branches: [main, stage, feat/tool-sets-integration]
   pull_request:
+  # Manual "exhaustive" full-suite run (test-backend-exhaustive below); the
+  # push gate runs only the curated smoke subset.
+  workflow_dispatch: {}
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -72,6 +80,77 @@ jobs:
       # Liquibase owns the base schema; Ecto migrations are supplementary.
       # MIX_ENV=test so ecto.create makes noizu_prompt_lingua_test — the DB the
       # changelog is applied against (see backend/config/test.exs).
+      - run: MIX_ENV=test mix ecto.create --quiet
+      - name: Apply base schema (Liquibase)
+        run: |
+          docker run --rm --network host \
+            -v "$PWD/db:/liquibase/workdir" -w /liquibase/workdir \
+            liquibase/liquibase:4.29 \
+            --url="jdbc:postgresql://localhost:5432/noizu_prompt_lingua_test" \
+            --username=noizu_prompt_lingua --password=npl_dev \
+            --changeLogFile=changelog/db.changelog-master.yaml \
+            update
+      # PUSH GATE = smoke subset (mix smoke, ~20s of tests): curated hermetic
+      # suites only — no Weaviate / TRP / LLM-provider-key / external-network
+      # dependencies. The full exhaustive suite runs via workflow_dispatch
+      # (test-backend-exhaustive) and locally (`mix test`); it IS currently
+      # green in CI too (sha af2683bfe), but the gate stays fast so a
+      # host-dependent test can never block a stage deploy again.
+      # MIX_ENV is pinned because aliases do not inherit `mix test`'s builtin
+      # test-env default (without it dev.exs' tobor_locker user leaks in).
+      - run: MIX_ENV=test mix smoke
+
+  test-backend-exhaustive:
+    # Manual full-suite run: `gh workflow run ci.yml` (Actions → CI → Run
+    # workflow). Same env as the smoke gate — must stay green via test-level
+    # hermetic hardening, never env-dependent passes. Not a push gate; no job
+    # depends on it.
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest # amd64
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        # timescaledb-ha bundles postgis + pgvector, matching prod
+        # (app-timescaledb); plain postgres:16 lacks the vector extension
+        # and fails changelog 000-extensions.
+        image: timescale/timescaledb-ha:pg16
+        env:
+          POSTGRES_USER: noizu_prompt_lingua
+          POSTGRES_PASSWORD: npl_dev
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U noizu_prompt_lingua"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        # TokenStore refresh-JTIs, Notifications delivery rate-limit, chat
+        # presence etc. talk to Redis at runtime even under --exclude redis
+        # (config default redis://localhost:6379/0 — see backend/config.exs).
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.19.5"
+          otp-version: "28"
+      - uses: actions/cache@v4
+        with:
+          path: |
+            backend/deps
+            backend/_build
+          key: mix-${{ runner.os }}-${{ hashFiles('backend/mix.lock') }}
+          restore-keys: mix-${{ runner.os }}-
+      - run: mix deps.get
+      - run: mix compile
       - run: MIX_ENV=test mix ecto.create --quiet
       - name: Apply base schema (Liquibase)
         run: |
@@ -203,3 +282,85 @@ jobs:
           git commit -m "ci: deploy sha-${GITHUB_SHA::7} [skip ci]"
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
           git push origin HEAD:main
+
+  # ── Stage lane (refs/heads/stage) ─────────────────────────────────────────
+  # Mirrors build-push with a distinct `-stage` tag suffix so stage images can
+  # never collide with prod tags, and a stage NEXT_PUBLIC_API_URL. The
+  # main-gated jobs above are not modified.
+  build-push-stage:
+    needs: [test-backend, test-frontend]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/stage'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+      - name: Short SHA
+        id: sha
+        run: echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+      - name: Build & push backend
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.REGISTRY }}/npl-mcp/server:sha-${{ steps.sha.outputs.short }}-stage
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,scope=backend,mode=max
+      - name: Build & push frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          platforms: linux/amd64
+          push: true
+          build-args: |
+            NEXT_PUBLIC_API_URL=https://tobor-stage.noizu.com
+          secrets: |
+            npm_token=${{ secrets.NPM_TOKEN }}
+          tags: ${{ env.REGISTRY }}/npl-mcp/frontend:sha-${{ steps.sha.outputs.short }}-stage
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,scope=frontend,mode=max
+
+  # Stage twin of bump-chart: bumps helm/npl-mcp/values-stage.yaml (Argo app
+  # npl-mcp-stage tracks the stage branch) — never the prod values.yaml.
+  bump-chart-stage:
+    needs: build-push-stage
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Need write credentials on stage so the tag bump can push.
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ github.sha }}
+      - name: Install yq
+        # Same rationale as bump-chart: yq, not sed, so .liquibase.image.tag
+        # (manually versioned) is never clobbered.
+        run: |
+          sudo curl -fsSL -o /usr/local/bin/yq \
+            https://github.com/mikefarah/yq/releases/download/v4.44.6/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+          yq --version
+      - name: Bump image tags
+        run: |
+          SHORT=${GITHUB_SHA::7}
+          yq -i ".backend.image.tag = \"sha-${SHORT}-stage\"" helm/npl-mcp/values-stage.yaml
+          yq -i ".frontend.image.tag = \"sha-${SHORT}-stage\"" helm/npl-mcp/values-stage.yaml
+          echo "backend.image.tag=$(yq -r '.backend.image.tag' helm/npl-mcp/values-stage.yaml)"
+          echo "frontend.image.tag=$(yq -r '.frontend.image.tag' helm/npl-mcp/values-stage.yaml)"
+      - name: Commit & push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "npl-mcp-ci"
+          git config user.email "ci@noizu.com"
+          git add helm/npl-mcp/values-stage.yaml
+          git diff --cached --quiet && exit 0
+          git commit -m "ci: deploy stage sha-${GITHUB_SHA::7} [skip ci]"
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
+          git push origin HEAD:stage

@@ -21,6 +21,7 @@ defmodule NoizuPromptLingua.Domains.MarketingContent do
     * `:system`       — optional system prompt prepended as guidance
     * `:provider`     — override LLM provider (openai, anthropic, z.ai, local)
     * `:model`        — override LLM model
+    * `:endpoint`     — override LLM endpoint URL (Bandit-stub seam for tests)
     * `:llm_generate` — set false to skip the LLM and echo the prompt (default true)
     * `:format`       — output format hint (text, markdown, html); default "markdown"
   """
@@ -29,7 +30,12 @@ defmodule NoizuPromptLingua.Domains.MarketingContent do
       {:ok, prompt_text}
     else
       prompt_yaml = build_prompt_yaml(prompt_text, opts)
-      ContentGenerator.generate(prompt_yaml, provider: opts[:provider], model: opts[:model])
+
+      ContentGenerator.generate(prompt_yaml,
+        provider: opts[:provider],
+        model: opts[:model],
+        endpoint: opts[:endpoint]
+      )
     end
   end
 

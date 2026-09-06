@@ -215,11 +215,21 @@ defmodule NoizuPromptLingua.Auth.SSO do
         conflict_target: :email
       )
 
+    # On an email conflict the INSERT is a no-op, but the binary_id was
+    # generated client-side — `inserted` then carries a phantom id that was
+    # never persisted, and linking the SSO credential to it would FK-fail.
+    # Only trust `inserted` when the row actually landed; otherwise reclaim
+    # the pre-existing account.
     user =
       cond do
-        is_binary(inserted.id) -> inserted
-        is_binary(email) -> NoizuPromptLingua.Repo.get_by!(UserSchema, email: email)
-        true -> inserted
+        is_binary(inserted.id) and NoizuPromptLingua.Repo.get(UserSchema, inserted.id) != nil ->
+          inserted
+
+        is_binary(email) ->
+          NoizuPromptLingua.Repo.get_by!(UserSchema, email: email)
+
+        true ->
+          inserted
       end
 
     ensure_sso_credential(user, provider_id, provider_type, sso_attrs)
