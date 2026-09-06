@@ -12,15 +12,15 @@ Spine: Organization → Project → Session. Coarse membership (owner/admin/lead
 
 ## Core components
 
-nginx (reverse proxy) · Phoenix backend (domain contexts, MCP fleet, channels, Oban) · Next.js frontend (public / app / org / admin surfaces) · Liquibase (canonical schema 000–082) · MCP catalog (server routing + scope packaging) · PBAC/Authz · NPL convention engine (YAML → NPLSpec/NPLLoad) · TRP client (PM source) · Python MCP fleet (FastMCP+FastAPI) · local-mcp (stdio, local-only tools) · browser-controller (Playwright relay) · remote-access-client (frpc tunnels) · helm charts (start-app scaffold, npl-mcp production) · agents//commands//design/ (non-runtime assets)
+nginx (reverse proxy) · Phoenix backend (domain contexts, MCP fleet, channels, Oban) · Next.js frontend (public / app / org / admin surfaces) · Liquibase (canonical schema 000–084) · MCP catalog (server routing + scope packaging) · MCP toolsets/VFS (custom tool sets with profiles + consent elevation; `/tobor/{org}/…` VFS mount) · PBAC/Authz · NPL convention engine (YAML → NPLSpec/NPLLoad) · TRP client (PM source) · Python MCP fleet (FastMCP+FastAPI) · local-mcp (stdio, local-only tools) · browser-controller (Playwright relay) · remote-access-client (frpc tunnels) · helm charts (start-app scaffold, npl-mcp production) · agents//commands//design/ (non-runtime assets)
 
 ## MCP servers
 
-Required: root, sessions, organizations. Optional subdomains: projects, tickets, assets, artifacts, chat, review, wiki, github, personas, instructions, memory, markdown, notifications, pubsub, browser, customers, market, campaigns, unicode. Custom scopes at `/custom/:slug/mcp`; packaging modes default | core_custom | all_in_one.
+Required: root, sessions, organizations. Optional subdomains: projects, tickets, assets, artifacts, chat, review, wiki, github, personas, instructions, memory, markdown, notifications, pubsub, browser, customers, market, campaigns, unicode. Custom scopes at `/custom/:slug/mcp`; packaging modes default | core_custom | all_in_one. Custom tool sets (`mcp_tool_sets`: capability profiles, include lists, consent-gated destructive tools) and a `/tobor/{org}/…` VFS mount layer on top of the catalog.
 
 ## Key decisions
 
-Elixir/Phoenix platform core with per-domain contexts · multi-server MCP on host paths from one catalog · Liquibase owns DDL (Ecto migrations minimal) · separate human (OIDC+Guardian) vs agent (key→JWT) auth · PBAC v2 with ToolGuard shadow mode · frontend API facade (mock/REST/hybrid swap) · NPL YAML conventions with layered pipeline + DSL · Python fleet kept for pipes/orchestration/persona tooling · TRP as PM source (cross-DB FKs dropped, changeset 078)
+Elixir/Phoenix platform core with per-domain contexts · multi-server MCP on host paths from one catalog · DB-backed custom tool sets + VFS over the same domain contexts · Liquibase owns DDL (Ecto migrations minimal) · separate human (OIDC+Guardian) vs agent (key→JWT) auth · PBAC v2 with ToolGuard shadow mode · frontend API facade (mock/REST/hybrid swap) · NPL YAML conventions with layered pipeline + DSL · Python fleet kept for pipes/orchestration/persona tooling · TRP as PM source (cross-DB FKs dropped, changeset 078)
 
 ## Stack
 

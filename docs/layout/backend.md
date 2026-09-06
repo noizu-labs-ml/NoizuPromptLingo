@@ -11,7 +11,7 @@ backend/
 │   │   ├── schema/                     # Shared embedded schemas
 │   │   ├── services/                   # Cross-cutting services (attach, comment, watch)
 │   │   ├── acl/ · auth/ · authz/       # Access control, Guardian auth, policy layer
-│   │   ├── mcp/                        # MCP server implementation (tools, prompts, resources, sockets, custom scopes, endpoint templates)
+│   │   ├── mcp/                        # MCP server implementation (tools, prompts, resources, sockets, custom scopes, endpoint templates, toolsets, VFS resources)
 │   │   ├── trp/                        # TRP (therobotplans) client: transport, provisioning, service auth, cache
 │   │   ├── github/                     # GitHub App integration
 │   │   ├── media/                      # Media handling

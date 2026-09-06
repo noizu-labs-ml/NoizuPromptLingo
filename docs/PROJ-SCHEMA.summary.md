@@ -6,7 +6,7 @@ Two separate PostgreSQL schemas + auxiliary stores. Detail: [PROJ-SCHEMA.md](PRO
 
 | Store | Migrations | Detail |
 |-------|-----------|--------|
-| Backend DB (Elixir `:noizu_prompt_lingua`) | `backend/db/changelog/` Liquibase 000–082 + minimal Ecto migrations | [schema/backend-domains.md](schema/backend-domains.md), [schema/core-identity.md](schema/core-identity.md) |
+| Backend DB (Elixir `:noizu_prompt_lingua`) | `backend/db/changelog/` Liquibase 000–084 + minimal Ecto migrations | [schema/backend-domains.md](schema/backend-domains.md), [schema/core-identity.md](schema/core-identity.md) |
 | Python MCP DB (`src/npl_mcp`, asyncpg) | `liquibase/changelogs/` changesets 001–019 | [schema/instructions.md](schema/instructions.md), [schema/npl-content.md](schema/npl-content.md), [schema/project-management.md](schema/project-management.md) |
 | Redis (cache/PubSub), Weaviate (memory, optional) | — | [schema/config-artifacts.md](schema/config-artifacts.md) |
 
@@ -23,7 +23,7 @@ Mock MCP (039, 057–058): mock_mcp_definitions, mock_mcp_llms, mock_mcp_call_lo
 Personas (041, 056): personas, persona_journal_entries, persona_knowledge_entries
 Memory (045–049): memories, memory_compartments, memory_quarantine, memory_agent_state, memory_recall_log, association_edges; agent_call_signs (050)
 Customers (059), Market (060–063): customers + segments/personas, market_reports, competitors, keywords, landing_pages, ad_copies, ad_groups, campaigns, llm_models, media_provider_configs
-MCP platform (070a–080): mcp_api_keys, mcp_custom_scopes, mcp_pairing_grants, mcp_tool_vectors, mcp_overviews, mcp_endpoint_templates; OAuth AS (074): oauth_clients, oauth_authorization_codes, oauth_refresh_tokens
+MCP platform (070a–080, 083): mcp_api_keys, mcp_custom_scopes, mcp_pairing_grants, mcp_tool_vectors, mcp_overviews, mcp_endpoint_templates, mcp_tool_sets; browser capture resource types (084): resource_type_enum += browser_screenshot/browser_video; OAuth AS (074): oauth_clients, oauth_authorization_codes, oauth_refresh_tokens
 GitHub (027–029): github_tokens, github_repos; Remote access (044): remote_access_tunnels
 Assets (040): asset_entries, asset_outputs, asset_entry_history; Unicode codex (070): unicode_elements + relations/usages
 Cross-cutting (030, 064–066): npl_attachments, npl_comments, npl_reactions, npl_watches, npl_notifications, npl_pubsub_channels/messages/follows
