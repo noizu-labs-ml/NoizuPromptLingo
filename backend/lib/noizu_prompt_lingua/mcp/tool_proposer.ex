@@ -27,6 +27,7 @@ defmodule NoizuPromptLingua.MCP.ToolProposer do
   alias NoizuPromptLingua.Domains.MCPOverview.Store
   alias NoizuPromptLingua.Domains.MockMCP.Agent
   alias NoizuPromptLingua.MCPCustomScopes
+  alias NoizuPromptLingua.MCPServers
   alias NoizuPromptLingua.MCP.ToolNames
   alias NoizuPromptLingua.Tools.Catalog
 
@@ -111,23 +112,17 @@ defmodule NoizuPromptLingua.MCP.ToolProposer do
   # ── Ask path ────────────────────────────────────────────────────────────────
 
   defp ask_once(messages, prefix, opts) do
-    case call_runner(messages, opts) do
-      {:ok, payload} ->
-        case classify(payload) do
-          {:questions, raw} ->
-            case build_questions(raw, prefix, opts) do
-              [] -> {:error, :llm_unavailable}
-              questions -> {:ok, {:questions, questions}}
-            end
-
-          {:proposal, %{summary: summary, tools: raw}} ->
-            finish_proposal(summary, raw)
-
-          :invalid ->
-            {:error, :llm_unavailable}
+    case classify(call_runner(messages, opts)) do
+      {:questions, raw} ->
+        case build_questions(raw, prefix, opts) do
+          [] -> {:error, :llm_unavailable}
+          questions -> {:ok, {:questions, questions}}
         end
 
-      _other ->
+      {:proposal, %{summary: summary, tools: raw}} ->
+        finish_proposal(summary, raw)
+
+      :invalid ->
         {:error, :llm_unavailable}
     end
   end
@@ -137,23 +132,22 @@ defmodule NoizuPromptLingua.MCP.ToolProposer do
   defp force_proposal(name, description, answers, shortlist, opts) do
     messages = build_messages(:force_proposal, name, description, answers, shortlist, "r2")
 
-    with {:ok, payload} <- call_runner(messages, opts),
-         {:proposal, %{summary: summary, tools: raw}} <- classify(payload) do
+    with {:proposal, %{summary: summary, tools: raw}} <-
+           classify(call_runner(messages, opts)) do
       finish_proposal(summary, raw)
     else
       {:questions, _} ->
-        strict =
-          build_messages(:strict_proposal, name, description, answers, shortlist, "r2")
+        strict = build_messages(:strict_proposal, name, description, answers, shortlist, "r2")
 
-        with {:ok, payload2} <- call_runner(strict, opts),
-             {:proposal, %{summary: summary2, tools: raw2}} <- classify(payload2) do
+        with {:proposal, %{summary: summary2, tools: raw2}} <-
+               classify(call_runner(strict, opts)) do
           finish_proposal(summary2, raw2)
         else
           _ -> {:error, :llm_unavailable}
         end
 
-    _ ->
-      {:error, :llm_unavailable}
+      _ ->
+        {:error, :llm_unavailable}
     end
   end
 
@@ -269,8 +263,18 @@ defmodule NoizuPromptLingua.MCP.ToolProposer do
     |> Map.new()
   end
 
+  # Universe = union of `Tools.Catalog.build/1` over each customizable group's
+  # server module (the same per-server catalogs membership is built from). The
+  # ROOT registry alone is NOT the universe — it carries only the root-plane
+  # subset (~35 tools) and would wrongly drop ~230 real group tools.
   defp universe_names do
-    Catalog.build()
+    MCPServers.customizable()
+    |> Enum.flat_map(fn server ->
+      case MCPServers.server_module(server.id) do
+        nil -> []
+        module -> Catalog.build(module)
+      end
+    end)
     |> Enum.map(& &1.name)
     |> MapSet.new()
   end
@@ -416,6 +420,8 @@ defmodule NoizuPromptLingua.MCP.ToolProposer do
 
   # The runner runs in a task so the `:timeout` (default 8s, NFR-2) maps a
   # hung LLM onto the llm_unavailable path instead of blocking the request.
+  # NOTE: the result (including any exit-mapped timeout) flows to `classify/1`
+  # UNWRAPPED — classify consumes the runner-result tuple directly.
   defp call_runner(messages, opts) do
     {mod, fun} = resolve_runner(opts)
     runner_opts = Keyword.take(opts, [:provider, :model, :endpoint, :api_key])
@@ -435,9 +441,11 @@ defmodule NoizuPromptLingua.MCP.ToolProposer do
   # Accepted LLM payloads (stub contract / FR-2):
   #   {"questions": [{"prompt", "kind", "options"?}]}
   #   {"summary", "tools": [{"name", "rationale"}]}
-  # Anything else — including a payload whose only extra is a "group" key on a
-  # tool — is normalized here; unknown keys (bogus group included) are simply
-  # never read, so they cannot leak into the response.
+  # Consumes the RUNNER RESULT tuple (`{:ok, text} | {:error, term()}`) —
+  # runner errors, timeouts, and unparseable/shape-invalid payloads all
+  # collapse to :invalid, which the callers map to {:error, :llm_unavailable}.
+  # A "group" key on a tool is simply never read, so an LLM-supplied group
+  # cannot leak into the response.
   defp classify({:ok, text}) when is_binary(text) do
     case text |> strip_fences() |> Jason.decode() do
       {:ok, %{"questions" => questions}} when is_list(questions) ->
@@ -452,7 +460,7 @@ defmodule NoizuPromptLingua.MCP.ToolProposer do
     end
   end
 
-  defp classify(_), do: :invalid
+  defp classify(_result), do: :invalid
 
   defp strip_fences(text) do
     text = String.trim(text)

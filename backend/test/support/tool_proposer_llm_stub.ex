@@ -32,9 +32,32 @@ defmodule NoizuPromptLingua.TestSupport.ToolProposerLLMStub do
 
   use Agent
 
+  # Unique id per start: `start_supervised!` children live until TEST end, so
+  # re-entrant starts within one test must not collide on the child spec id
+  # (Supervisor rejects duplicates BEFORE start_link/1 runs). The name
+  # collision is then handled idempotently in start_link/1.
+  def child_spec(opts) do
+    %{
+      id: {__MODULE__, System.unique_integer([:positive])},
+      start: {__MODULE__, :start_link, [opts]},
+      restart: :temporary
+    }
+  end
+
   def start_link(opts) do
     script = Keyword.get(opts, :script, [])
-    Agent.start_link(fn -> {script, []} end, name: __MODULE__)
+
+    case Agent.start_link(fn -> {script, []} end, name: __MODULE__) do
+      {:ok, _} = ok ->
+        ok
+
+      # `start_supervised!` children live until TEST end, so re-entrant starts
+      # within one test (e.g. the multi-case loop) collide on the module name.
+      # Reuse the running agent: swap in the fresh script, keep call history.
+      {:error, {:already_started, pid}} ->
+        set_script(script)
+        {:ok, pid}
+    end
   end
 
   @doc "Runner contract entry point: `apply(mod, fun, [messages, opts])`."
