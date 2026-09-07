@@ -68,15 +68,15 @@ defmodule NoizuPromptLinguaWeb.ToolSetProfilesControllerTest do
   # ---- AC-N4-2: index composition ----
 
   describe "index" do
-    test "lists the 5 built-in profiles from DATA, read-only + cloneable", %{
+    test "lists the built-in profiles from DATA, read-only + cloneable", %{
       conn: conn,
       base: base
     } do
       %{"profiles" => profiles} = conn |> get(base) |> json_response(200)
 
-      assert length(profiles) == 5
+      assert length(profiles) == 6
       slugs = Enum.map(profiles, & &1["slug"])
-      assert slugs == ~w(full agent-ops pm-dev content comms)
+      assert slugs == ~w(full agent-ops pm-dev content comms core)
 
       full = Enum.find(profiles, &(&1["slug"] == "full"))
       assert full["cloneable"] == true
@@ -85,6 +85,11 @@ defmodule NoizuPromptLinguaWeb.ToolSetProfilesControllerTest do
       assert full["group_count"] == 21
       assert length(full["groups"]) == 21
       assert full["tool_count"] > 0
+
+      # The restricted policy profile: 3 groups, only its 7 essential tools.
+      core = Enum.find(profiles, &(&1["slug"] == "core"))
+      assert core["group_count"] == 3
+      assert core["tool_count"] == 7
     end
 
     test "lists org sets with shape and live member_count for group sets", %{
@@ -244,6 +249,18 @@ defmodule NoizuPromptLinguaWeb.ToolSetProfilesControllerTest do
       assert profile["is_profile"] == true
       assert profile["group_count"] == 21
       assert profile["preview"]["groups"]["tickets"]["overridden_tools"] == 0
+
+      # The policy profile previews its restricted clone starter: only the
+      # essentials enabled per group, the rest stamped disabled.
+      %{"profile" => core} = conn |> get("#{base}/core") |> json_response(200)
+
+      assert core["group_count"] == 3
+      assert core["tool_count"] == 7
+
+      orgs = core["preview"]["groups"]["organizations"]
+      assert orgs["tool_count"] == 2
+      assert orgs["overridden_tools"] > 0
+      assert orgs["override_ops"] == orgs["overridden_tools"] * 2
     end
 
     test "unknown slug -> 404", %{conn: conn, base: base} do
