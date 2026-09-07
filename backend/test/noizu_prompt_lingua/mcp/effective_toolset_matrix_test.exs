@@ -9,14 +9,20 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetMatrixTest do
 
   use NoizuPromptLingua.DataCase
 
+  require Noizu.EntityReference.Records
+
   alias Noizu.MCP.Ctx
   alias Noizu.MCP.Server.Features.Tools
+  alias Noizu.EntityReference.Records, as: R
+  alias NoizuPromptLingua.Acl
   alias NoizuPromptLingua.MCP.EffectiveToolset
   alias NoizuPromptLingua.MCP.KeyToolsets
   alias NoizuPromptLingua.MCP.ToolNames
+  alias NoizuPromptLingua.MCP.UrlToolsetParam
   alias NoizuPromptLingua.MCPApiKeys
   alias NoizuPromptLingua.MCPCustomScopes
   alias NoizuPromptLingua.MCPServers
+  alias NoizuPromptLingua.Schema.McpTool
 
   @group "tickets"
   @tool_hidden "Ticket.List"
@@ -369,5 +375,94 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolsetMatrixTest do
       )
 
     scope
+  end
+
+  # ── alacarte ?t= param layer golden vectors ─────────────────────────────────
+
+  describe "param layer (alacarte ?t=)" do
+    # Scope: Ticket_Get stored-disabled; everything else stored-enabled.
+    defp param_scope(slug) do
+      create_scope(slug, %{
+        "groups" => %{@group => %{"tools" => %{@tool_plain => %{"disabled" => true}}}}
+      })
+    end
+
+    defp param_ctx(slug, spec, scope) do
+      assert {:ok, layer} = UrlToolsetParam.compile(spec, scope)
+
+      %Ctx{
+        server: NoizuPromptLingua.MCP,
+        assigns: %{custom_scope_slug: slug, toolset_param_cfg: layer}
+      }
+    end
+
+    test "white-list golden vector: selected listed + callable, unlisted dead" do
+      scope = param_scope("param-mx-wl")
+      ctx = param_ctx("param-mx-wl", %{"white-list" => %{"Ticket_List" => true}}, scope)
+
+      states = EffectiveToolset.resolve(scope, EffectiveToolset.param_only_client(ctx), nil)
+
+      listed = EffectiveToolset.lookup(states, @tool_hidden)
+      assert listed.enabled and listed.visible
+
+      # stored-disabled + absent-from-set: doubly dead
+      refute EffectiveToolset.lookup(states, @tool_plain).enabled
+
+      # include set is still the scope's group set
+      for name <- Map.keys(states) do
+        assert ToolNames.dotted(name) |> String.starts_with?("Ticket.")
+      end
+
+      # dispatch-level (ToolGuard) agrees with the listing decision
+      refute KeyToolsets.state(@group, @tool_hidden, ctx).disabled
+      assert KeyToolsets.state(@group, @tool_plain, ctx).disabled
+    end
+
+    test "default:true + black-list golden vector: stored set minus blacklisted" do
+      scope = param_scope("param-mx-bl")
+
+      spec = %{"default" => true, "black-list" => %{"Ticket_Overview" => true}}
+      ctx = param_ctx("param-mx-bl", spec, scope)
+
+      states = EffectiveToolset.resolve(scope, EffectiveToolset.param_only_client(ctx), nil)
+
+      refute EffectiveToolset.lookup(states, "Ticket_Overview").enabled
+      assert EffectiveToolset.lookup(states, @tool_hidden).enabled
+      # stored-disabled stays disabled (default:true preserves the stored set)
+      refute EffectiveToolset.lookup(states, @tool_plain).enabled
+    end
+
+    test "tools-map visible re-enable golden vector (no white-list)" do
+      scope = param_scope("param-mx-tools")
+
+      spec = %{"tools" => %{@tool_plain => %{"visible" => true}}}
+      ctx = param_ctx("param-mx-tools", spec, scope)
+
+      states = EffectiveToolset.resolve(scope, EffectiveToolset.param_only_client(ctx), nil)
+      assert EffectiveToolset.lookup(states, @tool_plain).enabled
+    end
+
+    test "ACL stays final: deny beats a param-enabled tool" do
+      scope = param_scope("param-mx-acl")
+
+      ctx = param_ctx("param-mx-acl", %{"white-list" => %{"Ticket_List" => true}}, scope)
+
+      user_id = Ecto.UUID.generate()
+      user_ref = R.ref(module: NoizuPromptLingua.Users.User, id: user_id)
+
+      {:ok, _} =
+        Acl.create_rule(%{
+          subject_ref: user_ref,
+          resource_ref: R.ref(module: McpTool, id: "Ticket_List"),
+          action: "mcp.tool",
+          effect: "deny"
+        })
+
+      states = EffectiveToolset.resolve(scope, EffectiveToolset.param_only_client(ctx), user_ref)
+
+      # the white-list re-enabled Ticket_List, but the ACL deny hides + disables
+      refute EffectiveToolset.lookup(states, @tool_hidden).enabled
+      refute EffectiveToolset.lookup(states, @tool_hidden).visible
+    end
   end
 end

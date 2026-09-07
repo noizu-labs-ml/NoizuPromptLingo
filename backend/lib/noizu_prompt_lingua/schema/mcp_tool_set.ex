@@ -11,7 +11,7 @@ defmodule NoizuPromptLingua.Schema.MCPToolSet do
     * group-set   — `group_id` set (an authz `groups` row id), `project_id` nil
 
   `(organization_id, slug)` is one org-wide namespace across all shapes (R4).
-  The 5 profile slugs (`Toolsets.Profiles.slugs/0`) plus `"root"` are reserved —
+  The profile slugs (`Toolsets.Profiles.slugs/0`) plus `"root"` are reserved —
   profiles are virtual and must never be shadowable by a row (FR-2A-9).
 
   `config` is validated STRUCTURALLY in N2a: unknown keys anywhere in the tree

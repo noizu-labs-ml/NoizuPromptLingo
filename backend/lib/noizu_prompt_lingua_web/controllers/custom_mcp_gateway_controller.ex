@@ -2,6 +2,7 @@ defmodule NoizuPromptLinguaWeb.CustomMCPGatewayController do
   use NoizuPromptLinguaWeb, :controller
 
   alias NoizuPromptLingua.MCPCustomScopes
+  alias NoizuPromptLingua.MCP.UrlToolsetParam
   alias NoizuPromptLingua.Organizations
   alias NoizuPromptLingua.Repo
   alias NoizuPromptLingua.Schema.MCPCustomScope
@@ -212,36 +213,81 @@ defmodule NoizuPromptLinguaWeb.CustomMCPGatewayController do
   end
 
   defp serve(conn, scope, path, org_id) do
-    resource = "https://#{conn.host}#{path}"
+    # Alacarte: `?t=` (base64url JSON tool selection) is decoded + compiled
+    # BEFORE the transport plug — a bad parameter fails closed with a 400
+    # instead of opening a session. Initialize freezes the compiled layer into
+    # the session assigns (mcp_context/1): session snapshot semantics —
+    # changing `?t=` requires reconnect. The legacy 301 preserves the query.
+    case toolset_param(conn, scope) do
+      {:ok, param_cfg} ->
+        resource = "https://#{conn.host}#{path}"
 
-    # This endpoint audience-binds to its own URL, so its 401 challenge must
-    # advertise its own RFC 9728 document -- the root one declares
-    # `<host>/mcp`, and a client honouring that would come back with a token
-    # bound to the wrong resource.
-    opts =
-      NoizuPromptLinguaWeb.MCPConfig.plug_opts(
-        NoizuPromptLingua.MCP.Custom,
-        [expected_audience: resource],
-        resource_metadata:
-          NoizuPromptLinguaWeb.MCPConfig.resource_metadata_url_for_path(conn.host, path)
-      )
-      |> Keyword.put(:context, {__MODULE__, :mcp_context})
-      |> Noizu.MCP.Transport.StreamableHTTP.Plug.init()
+        # This endpoint audience-binds to its own URL, so its 401 challenge must
+        # advertise its own RFC 9728 document -- the root one declares
+        # `<host>/mcp`, and a client honouring that would come back with a token
+        # bound to the wrong resource.
+        opts =
+          NoizuPromptLinguaWeb.MCPConfig.plug_opts(
+            NoizuPromptLingua.MCP.Custom,
+            [expected_audience: resource],
+            resource_metadata:
+              NoizuPromptLinguaWeb.MCPConfig.resource_metadata_url_for_path(conn.host, path)
+          )
+          |> Keyword.put(:context, {__MODULE__, :mcp_context})
+          |> Noizu.MCP.Transport.StreamableHTTP.Plug.init()
 
-    conn
-    |> Plug.Conn.assign(:custom_scope_slug, scope.slug)
-    |> Plug.Conn.assign(:custom_scope_org_id, org_id)
-    |> Map.put(:path_info, [])
-    # Guarded mount (B4): malformed jsonrpc framing answers -32600 inline.
-    |> NoizuPromptLinguaWeb.MCP.TransportPlug.call(opts)
+        conn
+        |> Plug.Conn.assign(:custom_scope_slug, scope.slug)
+        |> Plug.Conn.assign(:custom_scope_org_id, org_id)
+        |> Plug.Conn.assign(:toolset_param_cfg, param_cfg)
+        |> Map.put(:path_info, [])
+        # Guarded mount (B4): malformed jsonrpc framing answers -32600 inline.
+        |> NoizuPromptLinguaWeb.MCP.TransportPlug.call(opts)
+
+      {:error, reason} ->
+        conn
+        |> put_status(:bad_request)
+        |> json(%{"error" => "invalid tool selection parameter", "detail" => param_detail(reason)})
+    end
   end
 
+  defp toolset_param(conn, scope) do
+    case UrlToolsetParam.decode(raw_toolset_param(conn)) do
+      :absent ->
+        {:ok, nil}
+
+      {:ok, spec} ->
+        case UrlToolsetParam.compile(spec, scope) do
+          {:ok, layer} -> {:ok, layer}
+          {:error, reason} -> {:error, reason}
+        end
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  defp raw_toolset_param(conn) do
+    conn = Plug.Conn.fetch_query_params(conn)
+    Map.get(conn.query_params, "t")
+  end
+
+  defp param_detail({:invalid_shape, msg}) when is_binary(msg), do: msg
+  defp param_detail({:unknown_preset, slug}), do: "unknown preset: #{slug}"
+  defp param_detail(reason) when is_atom(reason), do: Atom.to_string(reason)
+
   def mcp_context(conn) do
-    base = %{custom_scope_slug: conn.assigns[:custom_scope_slug]}
+    base =
+      %{custom_scope_slug: conn.assigns[:custom_scope_slug]}
+      |> maybe_put_param_cfg(conn.assigns[:toolset_param_cfg])
 
     case conn.assigns[:custom_scope_org_id] do
       nil -> base
       org_id -> Map.put(base, :custom_scope_org_id, org_id)
     end
   end
+
+  # No-param requests keep a byte-identical ctx (the param layer is absent).
+  defp maybe_put_param_cfg(base, nil), do: base
+  defp maybe_put_param_cfg(base, cfg), do: Map.put(base, :toolset_param_cfg, cfg)
 end

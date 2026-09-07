@@ -417,8 +417,10 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
   DB reads); ACL resolves once for the scope verdict + once per tool deny.
   """
   def apply_to_specs(specs, ctx, group_id \\ nil) when is_list(specs) do
-    client = client_for_ctx(ctx)
     scope = scope_from_ctx(ctx)
+    # The `?t=` param layer (when present) merges into the client layer here —
+    # the listing seam of the alacarte URL tool selection.
+    client = client_with_param(ctx, scope)
     user_ref = user_for_ctx(ctx)
 
     if client == nil and scope == nil do
@@ -463,6 +465,74 @@ defmodule NoizuPromptLingua.MCP.EffectiveToolset do
     do: spec.definition && spec.definition.meta && spec.definition.meta["category"]
 
   # ── ctx plumbing ───────────────────────────────────────────────────────────
+
+  @doc """
+  The calling client WITH the URL tool-selection layer (`?t=` alacarte param)
+  merged in. The compiled param layer rides the session assigns
+  (`:toolset_param_cfg` — snapshotted at initialize by the gateway's
+  `mcp_context/1`) and is UNION-merged into the stored client config
+  (`merge_additive/2` — never `overlay/2`, which would drop white-list entries
+  for tools the stored config doesn't mention). `scope` bounds the param: with
+  no scope the param is dropped, so it can never widen a root/unscoped
+  universe. Returns the plain client when there is no param layer.
+  """
+  def client_with_param(ctx, nil), do: client_for_ctx(ctx)
+
+  def client_with_param(ctx, _scope) do
+    client = client_for_ctx(ctx)
+
+    case param_layer(ctx) do
+      nil -> client
+      layer -> merge_param(client, layer)
+    end
+  end
+
+  @doc """
+  The URL tool-selection layer ALONE as a client (`?t=` alacarte param), or nil
+  when the session carries no param. Used where the stored client layer must
+  stay OUT per the catalog contract — `MCP.Custom.catalog_specs/1` pre-drops
+  disabled specs, and key-disabled tools must remain catalog-visible so
+  ToolGuard denies them with a precise reason instead of "Unknown tool" — while
+  the param layer MUST reach that pre-drop (a white-list re-enable that missed
+  it would vanish from both listing and dispatch).
+  """
+  def param_only_client(ctx) do
+    case param_layer(ctx) do
+      nil -> nil
+      layer -> %{id: :url_toolset_param, kind: :url_param, toolset_config: layer}
+    end
+  end
+
+  defp param_layer(ctx) do
+    assigns = get_in(ctx, [Access.key(:assigns, %{})]) || %{}
+    assigns[:toolset_param_cfg] || assigns["toolset_param_cfg"]
+  end
+
+  defp merge_param(nil, layer),
+    do: %{id: :url_toolset_param, kind: :url_param, toolset_config: layer}
+
+  defp merge_param(client, layer),
+    do: %{client | toolset_config: merge_additive(client.toolset_config, layer)}
+
+  # UNION-merge the param layer INTO the stored client config: groups and tool
+  # maps merge additively (the param layer may name tools the stored config
+  # never mentions — a white-list entry for an absent tool must survive the
+  # merge), with the param layer winning per key.
+  defp merge_additive(base, layer) when is_map(base) do
+    base_groups = Map.get(normalize_config(base), "groups") || %{}
+    layer_groups = Map.get(normalize_config(layer), "groups") || %{}
+
+    merged =
+      Map.merge(base_groups, layer_groups, fn _gid, base_group, layer_group ->
+        Map.merge(base_group, layer_group, fn _tool, base_tool, layer_tool ->
+          Map.merge(base_tool, layer_tool)
+        end)
+      end)
+
+    Map.put(base, "groups", merged)
+  end
+
+  defp merge_additive(_base, layer), do: layer
 
   @doc """
   The calling client resolved from `ctx.assigns.auth_claims`, cached via

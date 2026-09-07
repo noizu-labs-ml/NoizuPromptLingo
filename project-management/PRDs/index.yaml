@@ -246,6 +246,23 @@ prds:
     test_coverage: contract tests added
     notes: Nocturne/Minimal shell refresh; existing routes remain unchanged.
 
+  - id: PRD-020
+    title: MCP Endpoint UX Overhaul
+    file: PRD-020-mcp-endpoint-ux-overhaul.md
+    status: approved
+    version: 1.0
+    tools: []
+    user_stories: [US-105, US-106, US-107, US-108, US-109, US-110, US-111, US-112, US-113, US-114]
+    personas: [P-009, P-001, P-006]
+    database_tables: [mcp_custom_scopes, mcp_tool_vectors]
+    web_routes:
+      - GET /api/v1/auth/mcp/endpoints
+      - POST /api/v1/auth/mcp/endpoints
+      - POST /api/v1/auth/mcp/endpoints/propose-tools
+      - GET /api/v1/auth/mcp/endpoints/slug-available
+    test_coverage: pending (AT-1..AT-10 defined in PRD)
+    notes: Clone + 3-step creation wizard + manual picker + slug check over mcp_custom_scopes; no DB schema changes; mcp_tool_sets out of scope.
+
 tool_to_prd_mapping:
   # PRD-002: Artifact Management
   create_artifact: PRD-002
@@ -471,6 +488,18 @@ us_to_prd_mapping:
   US-230: [PRD-018]
   US-231: [PRD-018]
   US-232: [PRD-018]
+
+  # PRD-020: MCP Endpoint UX Overhaul
+  US-105: [PRD-020]
+  US-106: [PRD-020]
+  US-107: [PRD-020]
+  US-108: [PRD-020]
+  US-109: [PRD-020]
+  US-110: [PRD-020]
+  US-111: [PRD-020]
+  US-112: [PRD-020]
+  US-113: [PRD-020]
+  US-114: [PRD-020]
 
 statistics:
   total_prds: 18

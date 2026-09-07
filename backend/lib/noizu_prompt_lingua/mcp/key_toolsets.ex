@@ -59,12 +59,16 @@ defmodule NoizuPromptLingua.MCP.KeyToolsets do
       directly unless also disabled.
   """
   def state(group_id, tool_name, ctx) when is_binary(group_id) and is_binary(tool_name) do
+    scope = EffectiveToolset.scope_from_ctx(ctx)
+
     ts =
       EffectiveToolset.state(
         group_id,
         tool_name,
-        EffectiveToolset.scope_from_ctx(ctx),
-        EffectiveToolset.client_for_ctx(ctx),
+        scope,
+        # The `?t=` param layer (when present) merges into the client layer —
+        # the execution seam of the alacarte URL tool selection (ToolGuard).
+        EffectiveToolset.client_with_param(ctx, scope),
         EffectiveToolset.user_for_ctx(ctx),
         DateTime.utc_now()
       )

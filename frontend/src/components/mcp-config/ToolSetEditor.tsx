@@ -76,6 +76,7 @@ export default function ToolSetEditor({ slug }: { slug: string }) {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [notFound, setNotFound] = useState(false);
   const [profile, setProfile] = useState<ToolSetProfileView | null>(null);
   const [view, setView] = useState<ToolSetView | null>(null);
   const [catalog, setCatalog] = useState<McpCustomGroup[]>([]);
@@ -90,6 +91,7 @@ export default function ToolSetEditor({ slug }: { slug: string }) {
     if (!orgId) return;
     setLoading(true);
     setValidation(null);
+    setNotFound(false);
     try {
       if (isNew) {
         setProfile(null);
@@ -119,7 +121,9 @@ export default function ToolSetEditor({ slug }: { slug: string }) {
             },
           });
         } else {
-          toast.error('Tool set not found');
+          // Inline not-found state (WP5): a stale link used to toast and then
+          // drop the user on a blank create form.
+          setNotFound(true);
         }
       }
       const [cat, options] = await Promise.all([
@@ -272,8 +276,27 @@ export default function ToolSetEditor({ slug }: { slug: string }) {
           ))}
         </div>
         <div className="modal-actions" style={{ marginTop: '1rem' }}>
-          <Link className="sg-btn sg-btn--outline" href="/app/admin/mcp-custom-scopes">
-            Back
+          <Link className="sg-btn sg-btn--outline" href="/app/admin/tool-sets">
+            ← Tool sets
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
+  // WP5: a stale/deleted slug renders an inline not-found panel with a way
+  // back — it used to toast and drop the user on a blank create form.
+  if (!loading && notFound) {
+    return (
+      <section className="dash-panel">
+        <h2 className="dash-panel__title">Tool set not found</h2>
+        <p className="sg-page-intro">
+          No built-in profile or org tool set matches{' '}
+          <span className="font-mono">{slug}</span>.
+        </p>
+        <div className="modal-actions">
+          <Link className="sg-btn sg-btn--outline" href="/app/admin/tool-sets">
+            ← Tool sets
           </Link>
         </div>
       </section>
@@ -485,8 +508,8 @@ export default function ToolSetEditor({ slug }: { slug: string }) {
           )}
 
           <div className="modal-actions">
-            <Link className="sg-btn sg-btn--outline" href="/app/admin/mcp-custom-scopes">
-              Cancel
+            <Link className="sg-btn sg-btn--outline" href="/app/admin/tool-sets">
+              ← Tool sets
             </Link>
             <button type="button" className="sg-btn sg-btn--black" disabled={saving} onClick={save}>
               {saving ? 'Saving...' : isNew ? 'Create Tool Set' : 'Save Tool Set'}

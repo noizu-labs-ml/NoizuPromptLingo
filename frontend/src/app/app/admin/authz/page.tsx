@@ -43,7 +43,6 @@ export default function AdminAuthzPage() {
 
   // Server config from the backend (host-derived, never hardcoded).
   const [servers, setServers] = useState<McpServerConfig[]>([]);
-  const [alaCarte, setAlaCarte] = useState<McpServerConfig[]>([]);
   const [defaultScope, setDefaultScope] = useState<McpCustomScope | null>(null);
 
   // Paste-an-existing-key flow (non-destructive token mint for the selected user).
@@ -87,7 +86,6 @@ export default function AdminAuthzPage() {
       .then((res) => {
         setDefaultScope(res.scope);
         setServers(res.servers ?? []);
-        setAlaCarte(res.ala_carte ?? []);
       })
       .catch(() => { /* non-fatal */ });
   }, [userId]);
@@ -375,7 +373,6 @@ export default function AdminAuthzPage() {
                 token={tokens[setupKey].token}
                 keyLabel={key?.label ?? 'pasted key'}
                 servers={servers}
-                alaCarte={alaCarte}
                 defaultScope={defaultScope}
                 onClose={() => setSetupKey(null)}
               />

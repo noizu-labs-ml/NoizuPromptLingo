@@ -1,7 +1,3 @@
-.coverage
-tmp/ 
-.tmp/
-
 # work trees
 staging/
 vendor/
@@ -34,7 +30,13 @@ plugins/llm/**/_build/
 plugins/llm/**/deps/
 plugins/llm/**/node_modules/
 plugins/llm/**/.elixir_ls/
+
+# Work journal — local only, not tracked
+journal/TODAY*
+journal/TOMORROW*
+
 frontend/cypress/screenshots/
 
 # Canonical worktree placement
 .claude/worktrees/
+backend/_build

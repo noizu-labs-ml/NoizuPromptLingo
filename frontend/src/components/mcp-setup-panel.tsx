@@ -1,13 +1,12 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import { api, type McpCustomGroup, type McpCustomScope, type McpServerConfig } from '@/lib/api';
 import { DEFAULT_MCP_AUTH_ENV_VAR, mcpCliServerName } from '@/lib/mcp-setup';
 import McpIncludeEditor from '@/components/mcp-include-editor';
+import { ClipboardButton } from '@/components/kit';
 
 type McpClient = 'claude' | 'codex' | 'grok' | 'desktop' | 'cursor' | 'vscode';
-type SetupTab = 'default' | 'alacarte';
 
 interface McpSetupPanelProps {
   token: string; // The MCP JWT token
@@ -15,7 +14,6 @@ interface McpSetupPanelProps {
   // Env var the token is exported as (org-scoped; see mcpAuthEnvVar).
   authEnvName?: string;
   servers: McpServerConfig[]; // Default grouped endpoint(s)
-  alaCarte?: McpServerConfig[]; // Optional individual subdomain endpoints
   defaultScope?: McpCustomScope | null;
   endpoints?: McpCustomScope[];
   templates?: McpCustomScope[];
@@ -62,7 +60,6 @@ export default function McpSetupPanel({
   keyLabel,
   authEnvName = DEFAULT_MCP_AUTH_ENV_VAR,
   servers,
-  alaCarte = [],
   defaultScope = null,
   endpoints = [],
   templates = [],
@@ -73,14 +70,6 @@ export default function McpSetupPanel({
   onClose,
 }: McpSetupPanelProps) {
   const [client, setClient] = useState<McpClient>('claude');
-  const [tab, setTab] = useState<SetupTab>('default');
-  const [enabled, setEnabled] = useState<Record<string, boolean>>(() => {
-    const state: Record<string, boolean> = {};
-    servers.forEach((s) => { state[s.id] = true; });
-    alaCarte.forEach((s) => { state[s.id] = false; });
-    return state;
-  });
-  const [copiedCmd, setCopiedCmd] = useState<string | null>(null);
 
   const selectable = useMemo(() => {
     const seen = new Set<string>();
@@ -107,19 +96,6 @@ export default function McpSetupPanel({
       }]
     : servers;
 
-  const endpointCatalog = tab === 'alacarte' ? [...defaultServers, ...alaCarte] : defaultServers;
-
-  function isEnabled(id: string) {
-    if (tab === 'default') return enabled[id] !== false;
-    return !!enabled[id];
-  }
-
-  function toggle(id: string) {
-    const server = endpointCatalog.find((s) => s.id === id);
-    if (server?.required) return;
-    setEnabled((prev) => ({ ...prev, [id]: !isEnabled(id) }));
-  }
-
   function getCommandLine(server: McpServerConfig) {
     const name = mcpCliServerName(server.id);
     if (client === 'codex') {
@@ -133,7 +109,7 @@ export default function McpSetupPanel({
   }
 
   function buildConfigSnippet() {
-    const enabledServers = endpointCatalog.filter((s) => isEnabled(s.id));
+    const enabledServers = defaultServers;
     const dest =
       client === 'desktop' ? '# claude_desktop_config.json'
         : client === 'vscode' ? '# .vscode/mcp.json'
@@ -167,24 +143,13 @@ export default function McpSetupPanel({
       `export ${authEnvName}=${token}`,
       '',
     ];
-    endpointCatalog.filter((s) => isEnabled(s.id)).forEach((s) => {
+    defaultServers.forEach((s) => {
       lines.push(getCommandLine(s));
     });
     return lines.join('\n');
   }
 
-  async function copyScript() {
-    try {
-      await navigator.clipboard.writeText(buildScript());
-      setCopiedCmd('script');
-      setTimeout(() => setCopiedCmd(null), 2000);
-      toast.success('Copied to clipboard');
-    } catch {
-      toast.error('Copy failed — select and copy manually');
-    }
-  }
-
-  const activeCount = endpointCatalog.filter((s) => isEnabled(s.id)).length;
+  const activeCount = defaultServers.length;
   const rootServer = servers.find((s) => s.default) ?? servers.find((s) => s.id === 'root') ?? servers[0];
   const oauthMcpUrl = defaultScope?.url ?? rootServer?.url ?? 'https://tobor.locker/custom/tobor/mcp';
 
@@ -297,29 +262,7 @@ export default function McpSetupPanel({
         </p>
       )}
 
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
-        {([
-          { id: 'default' as const, label: 'Default MCP' },
-          { id: 'alacarte' as const, label: 'À la carte (old flow)' },
-        ]).map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => setTab(t.id)}
-            style={{
-              ...btnSm,
-              ...(tab === t.id
-                ? { background: 'var(--accent)', color: 'white', borderColor: 'var(--accent)' }
-                : {}),
-            }}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {tab === 'default' && (
-        <div style={{ marginBottom: 16 }}>
+      <div style={{ marginBottom: 16 }}>
           {selectable.length > 0 ? (
             <div className="sg-field" style={{ marginBottom: 12 }}>
               <label htmlFor="mcp-setup-endpoint">Custom endpoint</label>
@@ -347,8 +290,7 @@ export default function McpSetupPanel({
                 <span className="font-mono" style={{ color: 'var(--text-1)' }}>{activeScope.slug}</span>
               </>
             ) : null}
-            . This command registers that single URL. Use the À la carte tab
-            for the old per-subdomain flow.
+            . This command registers that single URL.
           </div>
           {activeScope && catalog.length > 0 ? (
             <McpIncludeEditor
@@ -360,82 +302,25 @@ export default function McpSetupPanel({
               onSaved={(scope) => onEndpointChange?.(scope)}
             />
           ) : null}
-        </div>
-      )}
-
-      {tab === 'alacarte' && (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-          gap: 6,
-          marginBottom: 16,
-        }}>
-          <div style={{ gridColumn: '1 / -1', fontSize: 11, color: 'var(--text-3)', marginBottom: 4 }}>
-            Old flow — each selected subdomain is its own <span className="font-mono">mcp add</span>.
-            Prefer the Default MCP tab (one Tobor Locker URL) unless you need a split catalog.
-          </div>
-          {endpointCatalog.map((s) => (
-            <label
-              key={s.id}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '6px 10px',
-                borderRadius: 6,
-                background: isEnabled(s.id) ? 'var(--accent-dim)' : 'var(--bg-3)',
-                border: `1px solid ${isEnabled(s.id) ? 'var(--accent)' : 'var(--border)'}`,
-                cursor: s.required ? 'default' : 'pointer',
-                fontSize: 12,
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={isEnabled(s.id)}
-                onChange={() => toggle(s.id)}
-                disabled={s.required}
-                style={{ accentColor: 'var(--accent)' }}
-              />
-              <div>
-                <div style={{
-                  fontWeight: 500,
-                  color: isEnabled(s.id) ? 'var(--text-0)' : 'var(--text-3)',
-                }}>
-                  {s.label}
-                  {s.default && (
-                    <span style={{ fontSize: 9, color: 'var(--text-3)', marginLeft: 4 }}>
-                      default
-                    </span>
-                  )}
-                  {s.required && (
-                    <span style={{ fontSize: 9, color: 'var(--text-3)', marginLeft: 4 }}>
-                      required
-                    </span>
-                  )}
-                </div>
-                <div style={{ fontSize: 10, color: 'var(--text-3)' }}>{s.desc}</div>
-              </div>
-            </label>
-          ))}
-        </div>
-      )}
+      </div>
 
       <div style={{ position: 'relative' }}>
-        <button
-          onClick={copyScript}
+        <ClipboardButton
+          text={buildScript()}
+          label={`Copy (${activeCount})`}
           style={{
             ...btnSm,
             position: 'absolute',
             top: 8,
             right: 8,
             zIndex: 1,
-            ...(copiedCmd === 'script'
-              ? { background: 'var(--green-dim)', color: 'var(--green)', borderColor: 'var(--green)' }
-              : {}),
           }}
-        >
-          {copiedCmd === 'script' ? 'Copied!' : `Copy (${activeCount})`}
-        </button>
+          copiedStyle={{
+            background: 'var(--green-dim)',
+            color: 'var(--green)',
+            borderColor: 'var(--green)',
+          }}
+        />
         {rawKey ? (
           <div className="authz-reveal" style={{ marginBottom: 12 }}>
             <div className="authz-reveal__label">Raw API key (shown once)</div>

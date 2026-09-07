@@ -13,6 +13,19 @@ const frontendRoot = path.resolve(__dirname);
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // MCP management UX cleanup: user MCP management consolidated into
+  // /app/mcp-setup; admin OAuth clients folded into the MCP Config hub.
+  // permanent:false — revocable if we reconsider the IA.
+  async redirects() {
+    return [
+      { source: "/app/mcp-keys", destination: "/app/mcp-setup", permanent: false },
+      {
+        source: "/app/admin/oauth-clients",
+        destination: "/app/admin/mcp-config?tab=oauth-clients",
+        permanent: false,
+      },
+    ];
+  },
   // Pin tracing/turbopack to this package. Building from the monorepo
   // otherwise infers /Users/.../Noizu as the workspace root (multiple lockfiles).
   outputFileTracingRoot: frontendRoot,

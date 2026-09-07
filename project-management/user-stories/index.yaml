@@ -131,24 +131,18 @@ epics:
       - US-102
       - US-103
       - US-104
-  - name: Virtual File System
+  - name: MCP Endpoint UX Overhaul
     stories:
-      - US-301
-      - US-302
-      - US-303
-      - US-304
-      - US-305
-      - US-306
-      - US-307
-  - name: Database Access Services
-    stories:
-      - US-401
-      - US-402
-      - US-403
-      - US-404
-      - US-405
-      - US-406
-      - US-407
+      - US-105
+      - US-106
+      - US-107
+      - US-108
+      - US-109
+      - US-110
+      - US-111
+      - US-112
+      - US-113
+      - US-114
 stories:
   - id: US-001
     title: Create a new work session scoped to an org/project
@@ -998,125 +992,91 @@ stories:
     priority: could-have
     complexity: M
     file: US-104-outbound-webhook-ticket-state-change.md
-  - id: US-301
-    title: Operate platform data through the VFS file tree over the VFSWS transport
+  - id: US-105
+    title: Clone a built-in template from the user-facing endpoint manager
     personas:
+      - P-009
       - P-001
-      - P-002
-    epic: Virtual File System
+    epic: MCP Endpoint UX Overhaul
     priority: must-have
     complexity: M
-    file: US-301-operate-platform-vfs-tree-over-vfsws.md
-  - id: US-302
-    title: Complete the vfs/auth handshake and token lifecycle including re-auth and revocation
+    file: US-105-clone-builtin-template-from-endpoint-manager.md
+  - id: US-106
+    title: Clone an existing own endpoint with its tool configuration
     personas:
-      - P-002
-      - P-006
-    epic: Virtual File System
-    priority: must-have
-    complexity: M
-    file: US-302-vfs-auth-handshake-token-lifecycle.md
-  - id: US-303
-    title: Enforce per-operation vfs/read and vfs/write scope on every VFS operation
-    personas:
-      - P-006
-      - P-002
-    epic: Virtual File System
+      - P-009
+      - P-001
+    epic: MCP Endpoint UX Overhaul
     priority: must-have
     complexity: S
-    file: US-303-enforce-per-operation-vfs-scope.md
-  - id: US-304
-    title: Activate the VFS write path for writable mounts
+    file: US-106-clone-own-endpoint.md
+  - id: US-107
+    title: Reusable wizard/stepper component in the frontend kit
     personas:
-      - P-002
-    epic: Virtual File System
-    priority: should-have
-    complexity: L
-    file: US-304-activate-vfs-write-path.md
-  - id: US-305
-    title: Receive VFS pubsub change notifications on an open VFSWS connection
-    personas:
+      - P-009
       - P-001
-      - P-002
-    epic: Virtual File System
-    priority: should-have
-    complexity: M
-    file: US-305-vfs-pubsub-change-notifications.md
-  - id: US-306
-    title: Activate and conformance-test all per-domain VFS mounts
-    personas:
-      - P-003
-      - P-006
-    epic: Virtual File System
-    priority: should-have
-    complexity: M
-    file: US-306-activate-and-conformance-test-domain-mounts.md
-  - id: US-307
-    title: Document the VFS substrate in PROJ-ARCH, PROJ-LAYOUT, and PROJ-SCHEMA
-    personas:
-      - P-003
-      - P-007
-    epic: Virtual File System
-    priority: could-have
-    complexity: S
-    file: US-307-document-vfs-in-project-docs.md
-  - id: US-401
-    title: Query the platform database read-only through an MCP tool
-    personas:
-      - P-001
-      - P-002
-    epic: Database Access Services
+    epic: MCP Endpoint UX Overhaul
     priority: must-have
     complexity: M
-    file: US-401-read-only-sql-query-mcp-tool.md
-  - id: US-402
-    title: Introspect the Liquibase-managed schema from an MCP tool
+    file: US-107-wizard-stepper-kit-component.md
+  - id: US-108
+    title: 'Creation wizard step 1: name, description, and auto-slug'
     personas:
-      - P-002
-    epic: Database Access Services
+      - P-009
+    epic: MCP Endpoint UX Overhaul
     priority: must-have
     complexity: S
-    file: US-402-schema-introspection-mcp-tool.md
-  - id: US-403
-    title: Scope DB tool results to the caller org/project tenant
+    file: US-108-wizard-step1-name-description-slug.md
+  - id: US-109
+    title: Backend propose-tools API for endpoint creation
     personas:
-      - P-004
-      - P-006
-    epic: Database Access Services
+      - P-009
+      - P-001
+    epic: MCP Endpoint UX Overhaul
     priority: must-have
     complexity: L
-    file: US-403-tenant-scoped-db-tool-results.md
-  - id: US-404
-    title: Provision least-privilege scoped DB credentials via Infisical for DB-access services
+    file: US-109-propose-tools-api.md
+  - id: US-110
+    title: 'Creation wizard step 2: LLM clarifying questions'
     personas:
-      - P-006
-    epic: Database Access Services
+      - P-009
+    epic: MCP Endpoint UX Overhaul
     priority: must-have
     complexity: M
-    file: US-404-least-privilege-db-credentials-infisical.md
-  - id: US-405
-    title: Gate database writes behind explicit approval
+    file: US-110-wizard-step2-clarifying-questions.md
+  - id: US-111
+    title: 'Creation wizard step 3: review proposed tools, toggle, and create'
     personas:
-      - P-003
-      - P-006
-    epic: Database Access Services
+      - P-009
+      - P-001
+    epic: MCP Endpoint UX Overhaul
+    priority: must-have
+    complexity: M
+    file: US-111-wizard-step3-review-proposed-tools-create.md
+  - id: US-112
+    title: Manual tool picker with LLM-unavailable fallback
+    personas:
+      - P-009
+      - P-001
+    epic: MCP Endpoint UX Overhaul
+    priority: must-have
+    complexity: M
+    file: US-112-manual-tool-picker-llm-fallback.md
+  - id: US-113
+    title: Slug availability check endpoint for inline validation
+    personas:
+      - P-009
+      - P-001
+    epic: MCP Endpoint UX Overhaul
     priority: should-have
-    complexity: L
-    file: US-405-approval-gated-db-writes.md
-  - id: US-406
-    title: Search knowledge and memory via pgvector similarity from MCP
+    complexity: S
+    file: US-113-slug-availability-check-endpoint.md
+  - id: US-114
+    title: Admin editor reuses clone flow, wizard, and tool picker
     personas:
-      - P-002
-    epic: Database Access Services
+      - P-006
+      - P-009
+    epic: MCP Endpoint UX Overhaul
     priority: should-have
     complexity: M
-    file: US-406-pgvector-similarity-search-mcp.md
-  - id: US-407
-    title: Audit DB tool queries and expose connection-pool observability
-    personas:
-      - P-006
-      - P-003
-    epic: Database Access Services
-    priority: should-have
-    complexity: M
-    file: US-407-db-query-audit-and-pool-observability.md
+    file: US-114-admin-reuse-of-wizard-and-picker.md

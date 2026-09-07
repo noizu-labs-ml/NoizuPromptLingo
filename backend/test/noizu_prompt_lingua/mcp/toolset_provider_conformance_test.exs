@@ -173,12 +173,19 @@ defmodule NoizuPromptLingua.MCP.ToolsetProviderConformanceTest do
   end
 
   describe "toolsets projections (PRD-5 §4.1 row 1)" do
-    test "get resolves the 5 virtual profiles as immutable records" do
+    test "get resolves the virtual profiles as immutable records" do
       for slug <- Profiles.slugs() do
         assert {:ok, %Custom{} = custom} = ToolsetProvider.get("toolsets", slug, [])
         assert custom.immutable == true
         assert custom.slug == "profile:#{slug}"
-        assert custom.tools == %{}
+
+        if slug == "core" do
+          # The policy profile carries its restricted allowlist as static ops.
+          refute custom.tools == %{}
+        else
+          # Group-grain profiles are slicing-only.
+          assert custom.tools == %{}
+        end
       end
     end
 

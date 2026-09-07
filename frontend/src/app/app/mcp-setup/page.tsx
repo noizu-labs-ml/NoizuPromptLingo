@@ -11,9 +11,11 @@ import {
   type McpCustomGroup,
   type McpCustomScope,
 } from '@/lib/api';
-import McpSetupPanel from '@/components/mcp-setup-panel';
-import McpOauthSetup from '@/components/mcp-oauth-setup';
 import McpEndpointManager from '@/components/mcp-endpoint-manager';
+import McpSetupPanel from '@/components/mcp-setup-panel';
+import ConnectInstructions from '@/components/mcp/connect-instructions';
+import ConnectionsList from '@/components/mcp/connections-list';
+import { ClipboardButton, ConfirmDialog, CopyField } from '@/components/kit';
 import { useOrg } from '@/context/org';
 import { mcpAuthEnvVar } from '@/lib/mcp-setup';
 
@@ -26,36 +28,53 @@ codex mcp add noizu-local -- node "$PWD/dist/index.js"
 # Grok
 grok mcp add noizu-local -- node "$PWD/dist/index.js"`;
 
-export default function McpKeysPage() {
-  const [keys, setKeys] = useState<McpApiKey[]>([]);
-  const [connections, setConnections] = useState<McpOAuthConnection[]>([]);
-  // Tokens keyed by api key id (not prefix) — stable across renders.
-  const [tokens, setTokens] = useState<Record<string, McpTokenResponse>>({});
-  const [newKey, setNewKey] = useState<{ id: string; raw_key: string } | null>(null);
-  const [label, setLabel] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [copied, setCopied] = useState<string | null>(null);
-  const [setupKey, setSetupKey] = useState<string | null>(null);
-
-  // Server config (fetched once from backend so the setup panel never hardcodes a host).
-  const [servers, setServers] = useState<McpServerConfig[]>([]);
-  const [alaCarte, setAlaCarte] = useState<McpServerConfig[]>([]);
-  const [catalog, setCatalog] = useState<McpCustomGroup[]>([]);
-  const [defaultScope, setDefaultScope] = useState<McpCustomScope | null>(null);
+/**
+ * The one user MCP management surface (/app/mcp-setup — /app/mcp-keys
+ * redirects here): Endpoints (McpEndpointManager), Connect
+ * (ConnectInstructions + Local Tools MCP), Connected clients
+ * (ConnectionsList), and the legacy API keys section.
+ */
+export default function McpSetupPage() {
+  // Endpoints — McpEndpointManager owns the picker, wizard and include editor.
   const [templates, setTemplates] = useState<McpCustomScope[]>([]);
   const [endpoints, setEndpoints] = useState<McpCustomScope[]>([]);
+  const [catalog, setCatalog] = useState<McpCustomGroup[]>([]);
+  const [defaultScope, setDefaultScope] = useState<McpCustomScope | null>(null);
+  // Server config for the per-key setup panel (fetched so no hardcoded host).
+  const [servers, setServers] = useState<McpServerConfig[]>([]);
+
+  // Connect URLs for the selected endpoint.
   const [oauthMcpUrl, setOauthMcpUrl] = useState('https://tobor.locker/mcp');
   const [oauthIssuer, setOauthIssuer] = useState('https://tobor.locker');
   const [asMetadataUrl, setAsMetadataUrl] = useState(
     'https://tobor.locker/.well-known/oauth-authorization-server'
   );
+
+  // OAuth connections.
+  const [connections, setConnections] = useState<McpOAuthConnection[]>([]);
+  const [connectionsLoading, setConnectionsLoading] = useState(true);
+  const [connectionsError, setConnectionsError] = useState<string | null>(null);
+
+  // API keys. Tokens keyed by api key id (not prefix) — stable across renders.
+  const [keys, setKeys] = useState<McpApiKey[]>([]);
+  const [keysLoading, setKeysLoading] = useState(true);
+  const [keysError, setKeysError] = useState<string | null>(null);
+  const [tokens, setTokens] = useState<Record<string, McpTokenResponse>>({});
+  const [newKey, setNewKey] = useState<{ id: string; raw_key: string } | null>(null);
+  const [label, setLabel] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [setupKey, setSetupKey] = useState<string | null>(null);
+  // Key id pending revocation (drives the ConfirmDialog).
+  const [revokeKeyId, setRevokeKeyId] = useState<string | null>(null);
+
+  // Tri-state: `true` until the config resolves `legacy_api_key_mint_enabled`.
   const [legacyMintEnabled, setLegacyMintEnabled] = useState(true);
-  // The setup panel only renders when servers.length > 0; if the catalog fetch
-  // fails we surface the error here instead of letting the section vanish silently.
+  // A failed catalog fetch would otherwise leave the setup panel hidden with
+  // no indication of why — surface it explicitly.
   const [configError, setConfigError] = useState<string | null>(null);
 
-  // Paste-an-existing-key flow: lets a logged-in user recover setup access for a
-  // key whose raw value they still hold, without recreating it.
+  // Paste-an-existing-key flow: lets a logged-in user recover setup access for
+  // a key whose raw value they still hold, without recreating it.
   const [pastedKey, setPastedKey] = useState("");
   const [minting, setMinting] = useState(false);
 
@@ -65,21 +84,28 @@ export default function McpKeysPage() {
   const authEnvName = mcpAuthEnvVar(organizations[0]?.slug);
 
   const fetchKeys = useCallback(async () => {
+    setKeysLoading(true);
     try {
       const data = await api.listMcpKeys();
       setKeys(data.keys || []);
+      setKeysError(null);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to load keys");
+      setKeysError(err instanceof Error ? err.message : "Failed to load keys");
+    } finally {
+      setKeysLoading(false);
     }
   }, []);
 
   const fetchConnections = useCallback(async () => {
+    setConnectionsLoading(true);
     try {
       const data = await api.listMcpConnections();
       setConnections(data.connections || []);
-    } catch {
-      // Endpoint may 404 on older deploys — ignore
-      setConnections([]);
+      setConnectionsError(null);
+    } catch (err) {
+      setConnectionsError(err instanceof Error ? err.message : "Failed to load connections");
+    } finally {
+      setConnectionsLoading(false);
     }
   }, []);
 
@@ -90,7 +116,6 @@ export default function McpKeysPage() {
       .mcpConfig({ packaging: "setup" })
       .then((cfg) => {
         setServers(cfg.servers);
-        setAlaCarte(cfg.ala_carte ?? []);
         if (cfg.default_scope) setDefaultScope(cfg.default_scope);
         api.listMcpEndpoints().then((res) => {
           setTemplates(res.templates ?? []);
@@ -117,8 +142,6 @@ export default function McpKeysPage() {
         setConfigError(null);
       })
       .catch((err) => {
-        // A failed catalog fetch would otherwise leave servers empty and the
-        // setup panel hidden with no indication of why — surface it explicitly.
         console.error("Failed to load MCP server config:", err);
         setConfigError(err instanceof Error ? err.message : "Unknown error");
       });
@@ -147,7 +170,7 @@ export default function McpKeysPage() {
 
   async function createKey(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
+    setCreating(true);
     setNewKey(null);
 
     try {
@@ -166,7 +189,7 @@ export default function McpKeysPage() {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create key");
     } finally {
-      setLoading(false);
+      setCreating(false);
     }
   }
 
@@ -177,8 +200,8 @@ export default function McpKeysPage() {
     setMinting(true);
     try {
       const tokenRes = await api.mintMcpTokenAuthenticated(raw);
-      // The backend verifies the key belongs to the caller; match it to a known key
-      // by refetching so we can attach the token to the right row.
+      // The backend verifies the key belongs to the caller; match it to a known
+      // key by refetching so we can attach the token to the right row.
       await fetchKeys();
       // We don't know which key id the pasted key maps to from the response, so
       // stash the token under a synthetic id and surface it in the setup panel.
@@ -193,8 +216,9 @@ export default function McpKeysPage() {
     }
   }
 
+  // Runs behind the ConfirmDialog; throwing keeps the dialog open for retry
+  // while the inline error panel explains the failure.
   async function revokeKey(id: string) {
-    if (!confirm("Revoke this MCP key? Clients using it will lose access immediately.")) return;
     try {
       await api.revokeMcpKey(id);
       setTokens((prev) => {
@@ -206,29 +230,20 @@ export default function McpKeysPage() {
       await fetchKeys();
       toast.success("Key revoked");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to revoke key");
+      setKeysError(err instanceof Error ? err.message : "Failed to revoke key");
+      throw err;
     }
   }
 
   async function revokeConnection(grantId: string) {
-    if (!confirm("Revoke this OAuth connection? Connected clients must re-authorize.")) return;
     try {
       await api.revokeMcpConnection(grantId);
       await fetchConnections();
       toast.success("Connection revoked");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to revoke connection");
+      setConnectionsError(err instanceof Error ? err.message : "Failed to revoke connection");
+      throw err;
     }
-  }
-
-  function copyText(text: string, id: string) {
-    navigator.clipboard.writeText(text)
-      .then(() => {
-        setCopied(id);
-        setTimeout(() => setCopied(null), 2000);
-        toast.success("Copied to clipboard");
-      })
-      .catch(() => toast.error("Copy failed — select and copy manually"));
   }
 
   function timeAgo(dt?: string | null) {
@@ -254,11 +269,12 @@ export default function McpKeysPage() {
             </>
           ) : null}
           . Every user and organization gets one from that template. Choose it,
-          edit what it includes, or copy it. <strong>OAuth is preferred</strong> —
+          edit what it includes, or copy it below. <strong>OAuth is preferred</strong> —
           hosted clients invent their own <code className="font-mono">client_id</code> via
-          Dynamic Client Registration. The À la carte tab is the old per-subdomain flow.
+          Dynamic Client Registration.
         </p>
 
+        {/* Endpoints */}
         <McpEndpointManager
           templates={templates}
           endpoints={endpoints}
@@ -272,54 +288,14 @@ export default function McpKeysPage() {
           }}
         />
 
-        <McpOauthSetup
+        {/* Connect */}
+        <ConnectInstructions
           mcpUrl={oauthMcpUrl}
           asMetadataUrl={asMetadataUrl}
           issuer={oauthIssuer}
-          servers={servers}
-          alaCarte={alaCarte}
-          catalog={catalog}
-          defaultScope={defaultScope}
-          onDefaultScopeChange={applyScope}
+          scopeSlug={defaultScope?.slug ?? null}
+          authEnvName={authEnvName}
         />
-
-        <section className="dash-panel" style={{ marginTop: 'var(--space-4)' }}>
-          <div className="dash-panel__head">
-            <h2 className="dash-panel__title">Your OAuth connections</h2>
-            <span className="dash-badge">{connections.length}</span>
-          </div>
-          <p className="sg-page-intro" style={{ marginBottom: 12 }}>
-            After you click <strong>Allow</strong> for a connector, a pairing grant appears here.
-            Each row is a client (e.g. Claude) allowed to call a specific MCP resource.
-            Revoke to cut off that client immediately (refresh tokens stop working).
-          </p>
-          {connections.length === 0 ? (
-            <p className="sg-page-intro">
-              No connections yet — complete a connector setup above. Nothing to copy; the grant is
-              created automatically after consent.
-            </p>
-          ) : (
-            <ul className="admin-table-wrap">
-              {connections.map((c) => (
-                <li key={c.grant_id} className="gh-row">
-                  <div className="gh-row__main">
-                    <div className="gh-row__title font-mono">{c.client_id}</div>
-                    <div className="gh-row__sub font-mono">{c.resource}</div>
-                    <span className="gh-row__sub">
-                      {c.scope} · grant {c.grant_id}
-                    </span>
-                  </div>
-                  <button
-                    className="sg-btn sg-btn--outline sg-btn--sm"
-                    onClick={() => revokeConnection(c.grant_id)}
-                  >
-                    Revoke
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
 
         {/* Local Tools MCP — an optional, self-hosted MCP for filesystem/git
             tools that can't run in the cloud. Download + install instructions. */}
@@ -349,18 +325,29 @@ export default function McpKeysPage() {
             Download noizu-local-mcp.tar.gz
           </a>
 
-          <div className="authz-reveal" style={{ marginTop: 16 }}>
-            <div className="authz-reveal__label">Install &amp; connect:</div>
-            <div className="authz-reveal__row">
-              <code className="authz-reveal__key font-mono" style={{ whiteSpace: 'pre-wrap' }}>{LOCAL_MCP_INSTALL}</code>
-              <button
-                className="sg-btn sg-btn--outline sg-btn--sm"
-                onClick={() => copyText(LOCAL_MCP_INSTALL, "local-mcp-install")}>
-                {copied === "local-mcp-install" ? "Copied!" : "Copy"}
-              </button>
-            </div>
+          <div style={{ marginTop: 16 }}>
+            <CopyField
+              label="Install & connect:"
+              value={LOCAL_MCP_INSTALL}
+              preWrap
+              copyLabel="Copy install commands"
+            />
           </div>
         </section>
+
+        {/* Connected clients */}
+        <ConnectionsList
+          connections={connections}
+          loading={connectionsLoading}
+          error={connectionsError}
+          onRevoke={revokeConnection}
+          emptyHint={
+            <>
+              No connections yet — complete a connector setup above. Nothing to copy; the grant is
+              created automatically after consent.
+            </>
+          }
+        />
 
         {legacyMintEnabled ? (
           <>
@@ -394,8 +381,8 @@ export default function McpKeysPage() {
                   placeholder="Label (e.g. ci-bot, local-dev)"
                   aria-label="Key label"
                 />
-                <button className="sg-btn sg-btn--black sg-btn--sm" type="submit" disabled={loading}>
-                  {loading ? "Generating…" : "Generate key & add command"}
+                <button className="sg-btn sg-btn--black sg-btn--sm" type="submit" disabled={creating}>
+                  {creating ? "Generating…" : "Generate key & add command"}
                 </button>
               </form>
               <form className="gh-add-form" onSubmit={mintFromPaste} style={{ marginTop: 12 }}>
@@ -425,14 +412,16 @@ export default function McpKeysPage() {
           </section>
         )}
 
-        {/* Keys list */}
+        {/* Your Keys */}
         <section className="dash-panel" style={{ marginTop: 'var(--space-4)' }}>
           <div className="dash-panel__head">
             <h2 className="dash-panel__title">Your Keys</h2>
             <span className="dash-badge">{keys.length}</span>
           </div>
 
-          {keys.length === 0 ? (
+          {keysLoading ? (
+            <p className="sg-page-intro">Loading keys…</p>
+          ) : keys.length === 0 ? (
             <p className="sg-page-intro">No MCP keys yet. Create one to get started.</p>
           ) : (
             <ul className="admin-table-wrap">
@@ -463,19 +452,23 @@ export default function McpKeysPage() {
                           >
                             Setup
                           </button>
-                          <button
+                          <ClipboardButton
+                            text={tokens[k.id].token}
+                            label="Copy Token"
+                            ariaLabel={`Copy token for ${k.label}`}
                             className="sg-btn sg-btn--outline sg-btn--sm"
-                            onClick={() => copyText(tokens[k.id].token, `token-${k.id}`)}
-                          >
-                            {copied === `token-${k.id}` ? "Copied!" : "Copy Token"}
-                          </button>
+                          />
                         </>
                       )}
                       {k.status === "active" && !hasToken && (
                         <span className="gh-row__sub">paste raw key above to mint a token</span>
                       )}
                       {k.status === "active" && (
-                        <button className="sg-btn sg-btn--danger sg-btn--sm" onClick={() => revokeKey(k.id)}>
+                        <button
+                          className="sg-btn sg-btn--danger sg-btn--sm"
+                          aria-label={`Revoke key ${k.label}`}
+                          onClick={() => setRevokeKeyId(k.id)}
+                        >
                           Revoke
                         </button>
                       )}
@@ -487,20 +480,20 @@ export default function McpKeysPage() {
           )}
         </section>
 
+        {/* Inline error panels — no toast-only failure states. */}
+        {keysError && (
+          <ErrorPanel
+            title="API keys unavailable"
+            body="The keys list failed to load, so existing keys cannot be shown or revoked. Reload the page to retry."
+            detail={keysError}
+          />
+        )}
         {configError && (
-          <section className="dash-panel" style={{ marginTop: 'var(--space-4)' }}>
-            <div className="dash-panel__head">
-              <h2 className="dash-panel__title">MCP Setup Unavailable</h2>
-            </div>
-            <p className="sg-page-intro">
-              The MCP server catalog failed to load, so one-click setup commands
-              cannot be shown. You can still create keys and mint tokens above;
-              reload the page to retry.
-            </p>
-            {configError !== "Unknown error" && (
-              <p className="gh-row__sub font-mono">{configError}</p>
-            )}
-          </section>
+          <ErrorPanel
+            title="MCP Setup Unavailable"
+            body="The MCP server catalog failed to load, so one-click setup commands cannot be shown. Key management above still works; reload the page to retry."
+            detail={configError}
+          />
         )}
 
         {/* Setup panel for a key with a minted token */}
@@ -513,7 +506,6 @@ export default function McpKeysPage() {
                 keyLabel={key?.label ?? "pasted key"}
                 authEnvName={authEnvName}
                 servers={servers}
-                alaCarte={alaCarte}
                 defaultScope={defaultScope}
                 endpoints={endpoints}
                 templates={templates}
@@ -529,7 +521,35 @@ export default function McpKeysPage() {
             );
           })()
         )}
+
+        <ConfirmDialog
+          open={revokeKeyId !== null}
+          onClose={() => setRevokeKeyId(null)}
+          title="Revoke API key?"
+          destructive
+          confirmLabel="Revoke"
+          onConfirm={async () => {
+            if (revokeKeyId) await revokeKey(revokeKeyId);
+          }}
+        >
+          Revoke this MCP key? Clients using it will lose access immediately.
+        </ConfirmDialog>
       </main>
     </div>
+  );
+}
+
+/** Inline fetch-failure panel replacing the old toast-only error paths. */
+function ErrorPanel({ title, body, detail }: { title: string; body: string; detail?: string | null }) {
+  return (
+    <section className="dash-panel" style={{ marginTop: 'var(--space-4)' }}>
+      <div className="dash-panel__head">
+        <h2 className="dash-panel__title">{title}</h2>
+      </div>
+      <p className="sg-page-intro">{body}</p>
+      {detail && detail !== "Unknown error" ? (
+        <p className="gh-row__sub font-mono">{detail}</p>
+      ) : null}
+    </section>
   );
 }
