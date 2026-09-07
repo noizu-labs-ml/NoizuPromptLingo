@@ -151,7 +151,7 @@ export default function McpSetupPanel({
 
   const activeCount = defaultServers.length;
   const rootServer = servers.find((s) => s.default) ?? servers.find((s) => s.id === 'root') ?? servers[0];
-  const oauthMcpUrl = defaultScope?.url ?? rootServer?.url ?? 'https://tobor.locker/custom/tobor/mcp';
+  const oauthMcpUrl = defaultScope?.url ?? rootServer?.url ?? 'https://promptlingo.dev/mcp';
 
   return (
     <div style={{

@@ -1,7 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="NPL MCP">
-  <rect width="64" height="64" rx="14" fill="#0f172a"/>
-  <path d="M14 45V19h7l13 17V19h8v26h-7L22 28v17z" fill="#f8fafc"/>
-  <path d="M45 22h5v8h-5zm0 12h5v8h-5z" fill="#f5d90a"/>
-  <path d="M50 26h6v12h-6" fill="none" stroke="#38bdf8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="15" cy="15" r="4" fill="#38bdf8"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Prompt Lingo">
+  <rect width="64" height="64" rx="12" fill="#111111"/>
+  <path d="M16 48V16h24" fill="none" stroke="#f4efe6" stroke-width="5" stroke-linecap="square"/>
+  <path d="M48 16v32H24" fill="none" stroke="#c23b22" stroke-width="5" stroke-linecap="square"/>
 </svg>

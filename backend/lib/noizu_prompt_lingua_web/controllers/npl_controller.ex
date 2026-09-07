@@ -9,6 +9,7 @@ defmodule NoizuPromptLinguaWeb.NPLController do
 
   use NoizuPromptLinguaWeb, :controller
 
+  alias NoizuPromptLingua.NPL.Loader
   alias NoizuPromptLingua.NPL.Reader
 
   # GET /api/v1/npl/sections
@@ -45,6 +46,21 @@ defmodule NoizuPromptLinguaWeb.NPLController do
         conn
         |> put_status(:not_found)
         |> json(%{error: "Convention '#{slug}' not found in section '#{section}'"})
+
+      {:error, reason} ->
+        conn |> put_status(:internal_server_error) |> json(%{error: reason})
+    end
+  end
+
+  # GET /api/v1/npl/gallery
+  #
+  # Public landing payload: each convention section plus the same generated
+  # markdown the admin "Generate NPL spec" panel produces for that section
+  # (NPLLoad expression = the section slug).
+  def gallery(conn, _params) do
+    case Reader.sections() do
+      {:ok, sections} ->
+        json(conn, %{sections: Enum.map(sections, &with_sample/1)})
 
       {:error, reason} ->
         conn |> put_status(:internal_server_error) |> json(%{error: reason})
@@ -119,4 +135,14 @@ defmodule NoizuPromptLinguaWeb.NPLController do
   end
 
   defp normalize_specs(_), do: []
+
+  defp with_sample(section) do
+    sample =
+      case Loader.load(section.section, layout: :grouped) do
+        {:ok, markdown} -> markdown
+        {:error, _} -> ""
+      end
+
+    Map.put(section, :sample, sample)
+  end
 end

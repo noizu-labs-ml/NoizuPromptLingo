@@ -4,8 +4,11 @@ defmodule NoizuPromptLinguaWeb.OAuthController do
   @moduledoc """
   OAuth 2.1 Authorization Server endpoints for MCP connectors.
 
-  - `GET  /oauth/authorize` — auth code + PKCE (+ consent)
-  - `POST /oauth/consent` — approve/deny
+  `/oauth/authorize` issues a **site-approval** code with no user login.
+  The access token's `sub` is `site:npl` (`site_approved: true`).
+
+  - `GET  /oauth/authorize` — auth code + PKCE (auto site-approval)
+  - `POST /oauth/consent` — leftover consent path (unused by authorize)
   - `POST /oauth/token` — authorization_code | refresh_token
   - `POST /oauth/register` — RFC 7591 DCR (minimal)
   - `POST /oauth/revoke` — RFC 7009
@@ -45,24 +48,10 @@ defmodule NoizuPromptLinguaWeb.OAuthController do
              params["code_challenge_method"] || "S256",
              params["code_challenge"]
            ) do
-      case current_oauth_user(conn) do
-        nil ->
-          conn
-          |> put_session(:oauth_authorize_params, sanitize_params(params))
-          |> put_session(:oauth_return_to, "/oauth/authorize")
-          |> redirect(to: "/auth/oidc")
-
-        user ->
-          resource = params["resource"] || default_resource()
-          existing = Grants.find_active(user.id, client.client_id, resource)
-
-          if existing && params["prompt"] != "consent" do
-            # Silent re-auth when standing consent exists
-            finish_authorize(conn, user, client, params, existing)
-          else
-            render_consent(conn, user, client, params, resource)
-          end
-      end
+      # NPL MCP OAuth is a site-approval handshake, not a user login.
+      # Clients that insist on OAuth (Claude Code, Cursor, …) complete PKCE
+      # and receive a token whose only claim is "approved for this site."
+      finish_site_authorize(conn, client, params)
     else
       nil ->
         oauth_error(conn, params, "invalid_client", "Unknown client_id")
@@ -356,6 +345,28 @@ defmodule NoizuPromptLinguaWeb.OAuthController do
         scope: params["scope"] || grant.scope || "mcp",
         code_challenge: params["code_challenge"],
         grant_id: grant.grant_id
+      })
+
+    conn
+    |> delete_session(:oauth_authorize_params)
+    |> redirect(
+      external: build_redirect(params["redirect_uri"], code: code, state: params["state"])
+    )
+  end
+
+  defp finish_site_authorize(conn, client, params) do
+    resource = params["resource"] || default_resource()
+    scope = params["scope"] || "npl"
+
+    code =
+      TokenService.issue_code!(%{
+        client_id: client.client_id,
+        user_id: nil,
+        redirect_uri: params["redirect_uri"],
+        resource: resource,
+        scope: scope,
+        code_challenge: params["code_challenge"],
+        grant_id: nil
       })
 
     conn

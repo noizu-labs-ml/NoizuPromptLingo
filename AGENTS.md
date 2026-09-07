@@ -157,9 +157,7 @@ Relationship metadata lives in YAML index files, NOT markdown:
 
 ## MCP Tool Discovery
 
-This server uses a **meta-discovery pattern**. 5 Discovery tools are always visible: `ToolSummary`, `ToolSearch`, `ToolDefinition`, `ToolHelp`, and `ToolCall`. All ~125 catalog tools are discoverable via these tools.
-
-**Use `ToolCall` to invoke any catalog tool by name** (e.g. `ToolCall(tool="Ping", arguments={"url": "https://example.com"})`).
+This server is the **NPL syntax MCP**. Two tools are visible: `NPLLoad` and `NPLSpec`. No authentication is required. Agent-kit work tools (sessions, tickets, chat) live in a separate repo.
 
 ---
 

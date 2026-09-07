@@ -37,7 +37,6 @@ defmodule NoizuPromptLingua.Schema.OAuthAuthorizationCode do
     |> validate_required([
       :code_hash,
       :client_id,
-      :user_id,
       :redirect_uri,
       :code_challenge,
       :expires_at

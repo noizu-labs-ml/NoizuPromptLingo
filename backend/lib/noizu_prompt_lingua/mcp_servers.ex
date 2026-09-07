@@ -13,7 +13,12 @@ defmodule NoizuPromptLingua.MCPServers do
 
   # %{id: label/required/desc}. `id` doubles as the subdomain label (except root).
   @servers [
-    %{id: "root", label: "Root MCP", required: true, desc: "Core tools, NPL, discovery"},
+    %{
+      id: "root",
+      label: "NPL Syntax",
+      required: true,
+      desc: "Public NPLLoad + NPLSpec — Noizu Prompt Lingo conventions"
+    },
     %{id: "sessions", label: "Sessions", required: true, desc: "Session management"},
     %{
       id: "organizations",

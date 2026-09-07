@@ -59,6 +59,6 @@ defmodule NoizuPromptLinguaWeb.Plugs.McpHostRedirect do
         url when is_list(url) -> get_in(url, [:url, :host])
         %{url: %{host: host}} when is_binary(host) -> host
         _ -> nil
-      end || "tobor.locker"
+      end || "promptlingo.dev"
   end
 end

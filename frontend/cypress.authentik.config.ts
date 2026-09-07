@@ -7,7 +7,7 @@ import { defineConfig } from "cypress";
  */
 export default defineConfig({
   e2e: {
-    baseUrl: process.env.CYPRESS_BASE_URL || "https://tobor.locker",
+    baseUrl: process.env.CYPRESS_BASE_URL || "https://promptlingo.dev",
     specPattern: "cypress/e2e/auth/**/*.cy.{ts,tsx}",
     supportFile: "cypress/support/e2e.ts",
     chromeWebSecurity: false,

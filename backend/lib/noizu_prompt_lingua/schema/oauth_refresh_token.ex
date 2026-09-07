@@ -27,7 +27,7 @@ defmodule NoizuPromptLingua.Schema.OAuthRefreshToken do
       :expires_at,
       :revoked_at
     ])
-    |> validate_required([:token_hash, :client_id, :user_id, :expires_at])
+    |> validate_required([:token_hash, :client_id, :expires_at])
     |> unique_constraint(:token_hash)
   end
 end
