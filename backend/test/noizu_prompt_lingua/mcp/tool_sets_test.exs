@@ -77,8 +77,8 @@ defmodule NoizuPromptLingua.MCP.ToolSetsTest do
       assert "can't be blank" in errors_on(changeset, :slug)
     end
 
-    test "rejects the 5 profile slugs and root as reserved", %{org_id: org_id} do
-      for slug <- ["full", "agent-ops", "pm-dev", "content", "comms", "root"] do
+    test "rejects the profile slugs and root as reserved", %{org_id: org_id} do
+      for slug <- ["full", "agent-ops", "pm-dev", "content", "comms", "core", "root"] do
         changeset = MCPToolSet.changeset(%MCPToolSet{}, base_attrs(org_id, slug: slug))
         refute changeset.valid?, "expected #{inspect(slug)} to be reserved"
         assert "is reserved" in errors_on(changeset, :slug)
@@ -470,6 +470,43 @@ defmodule NoizuPromptLingua.MCP.ToolSetsTest do
 
       {:ok, third} = ToolSets.clone("pm-dev", %{"organization_id" => org_id})
       assert third.slug == "pm-dev-copy-3"
+    end
+
+    test "from the core profile: restricted allowlist config, provenance, auto slug", %{
+      org_id: org_id
+    } do
+      {:ok, clone} = ToolSets.clone("core", %{"organization_id" => org_id})
+
+      assert clone.source == "clone"
+      assert clone.source_profile == "core"
+      assert clone.slug == "core-copy"
+
+      groups = clone.config["groups"]
+
+      assert MapSet.new(Map.keys(groups)) ==
+               MapSet.new(NoizuPromptLingua.MCP.Toolsets.Profiles.groups_for("core"))
+
+      # The restricted policy mirrors the core-variant seed: essentials keep
+      # the default (enabled) entry, every other live catalog tool in the
+      # group is stamped disabled.
+      policy = %{
+        "organizations" => ~w(Organization_Overview Organization_Get),
+        "projects" => ~w(Project_Overview Project_Get),
+        "sessions" => ~w(Session_Create Session_Overview Session_Manifest)
+      }
+
+      for {group_id, essential} <- policy do
+        group = groups[group_id]
+        assert group["enabled"] == true
+
+        for {name, cfg} <- group["tools"] do
+          if name in essential do
+            assert cfg == %{}, "expected #{name} enabled"
+          else
+            assert cfg == %{"enabled" => false}, "expected #{name} stamped disabled"
+          end
+        end
+      end
     end
 
     test "from a set: config deep-copied, provenance in settings.cloned_from, independent", %{
