@@ -195,10 +195,14 @@ spec:
     - hosts:
         - {{ .Values.domain }}
         - "*.{{ .Values.domain }}"
-        {{- range .Values.ingress.extraHosts }}
+      secretName: {{ .Values.tls.secretName }}
+    {{- range .Values.ingress.extraTls }}
+    - hosts:
+        {{- range .hosts }}
         - {{ . }}
         {{- end }}
-      secretName: {{ .Values.tls.secretName }}
+      secretName: {{ .secretName }}
+    {{- end }}
   {{- end }}
   rules:
     # ── Apex domain + ingress.extraHosts (identical routing: backend path

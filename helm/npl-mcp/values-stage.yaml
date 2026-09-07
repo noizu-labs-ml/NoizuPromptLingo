@@ -121,6 +121,7 @@ ingress:
   # Opt out of the prod extraHosts list (values.yaml adds
   # agent-kit.therobot.institute) — stage serves only the stage host.
   extraHosts: []
+  extraTls: []
   # Keep the Cloudflare whitelist: tobor-stage.noizu.com is a proxied CF
   # record, so traffic arrives from CF edge IPs exactly like prod.
   cloudflareWhitelist: true

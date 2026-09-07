@@ -123,9 +123,18 @@ ingress:
     # proxy buffer for auth headers/cookies on tobor.locker.
     nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
   # Extra hostnames served with the EXACT apex routing (same backend/SPA
-  # path split); each also gets a TLS entry under tls.secretName.
+  # path split). ROUTING-ONLY — TLS for these hosts comes via extraTls below
+  # (CF Origin CA certs are zone-bound; no single secret can cover both
+  # tobor.locker and the therobot.institute zone).
   extraHosts:
     - agent-kit.therobot.institute
+  # TLS entries for extraHosts hosts the apex tls.secretName can't cover —
+  # one block per zone-bound cert. therobotinstitute-tls: CF Origin CA wildcard
+  # *.therobot.institute + apex, synced to apps ns.
+  extraTls:
+    - hosts:
+        - agent-kit.therobot.institute
+      secretName: therobotinstitute-tls
 tls:
   enabled: true
   secretName: toborlocker-tls
