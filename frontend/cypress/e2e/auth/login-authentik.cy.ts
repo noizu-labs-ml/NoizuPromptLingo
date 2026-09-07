@@ -1,5 +1,5 @@
 /**
- * Authentik OIDC login smoke — NoizuPromptLingo (tobor.locker)
+ * Authentik OIDC login smoke — NoizuPromptLingo (promptlingo.dev)
  * Shared helpers: Portfolio/shared/cypress-authentik
  *
  * Requires CYPRESS_AUTHENTIK_PASSWORD (never commit).

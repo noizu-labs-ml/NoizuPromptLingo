@@ -217,7 +217,7 @@ defmodule NoizuPromptLinguaWeb.OAuthControllerTest do
   end
 
   describe "GET /oauth/authorize signed-out" do
-    test "no session defers to OIDC and stashes authorize params", %{
+    test "issues a site-approval code without OIDC", %{
       conn: conn,
       client: client,
       challenge: challenge
@@ -228,12 +228,39 @@ defmodule NoizuPromptLinguaWeb.OAuthControllerTest do
         |> get("/oauth/authorize", authorize_params(client, challenge))
 
       assert conn.status == 302
-      assert conn.resp_body =~ "/auth/oidc"
+      refute conn.resp_body =~ "/auth/oidc"
+      assert conn.resp_body =~ "code="
+      assert conn.resp_body =~ "state=st-ctl"
+    end
 
-      stashed = get_session(conn, :oauth_authorize_params)
-      assert stashed["client_id"] == client.client_id
-      assert stashed["code_challenge"] == challenge
-      assert stashed["state"] == "st-ctl"
+    test "token exchange of the site code yields a site_approved access token", %{
+      conn: conn,
+      client: client,
+      challenge: challenge,
+      verifier: verifier
+    } do
+      conn =
+        conn
+        |> Plug.Test.init_test_session(%{})
+        |> get("/oauth/authorize", authorize_params(client, challenge))
+
+      assert conn.status == 302
+      location = Plug.Conn.get_resp_header(conn, "location") |> List.first()
+      %{"code" => code} = URI.decode_query(URI.parse(location).query)
+
+      conn =
+        token_request(build_conn(), %{
+          "grant_type" => "authorization_code",
+          "code" => code,
+          "redirect_uri" => @redirect_uri,
+          "client_id" => client.client_id,
+          "code_verifier" => verifier
+        })
+
+      assert %{"access_token" => token, "token_type" => "Bearer"} = json_response(conn, 200)
+      %JOSE.JWT{fields: claims} = JOSE.JWT.peek_payload(token)
+      assert claims["sub"] == "site:npl"
+      assert claims["site_approved"] == true
     end
   end
 
@@ -251,8 +278,9 @@ defmodule NoizuPromptLinguaWeb.OAuthControllerTest do
         |> signed_in(user)
         |> get("/oauth/authorize", authorize_params(client, challenge, %{"prompt" => "consent"}))
 
-      assert conn.status == 200
-      assert conn.resp_body =~ "Requested tool access"
+      assert conn.status == 302
+      assert conn.resp_body =~ "code="
+      refute conn.resp_body =~ "Requested tool access"
     end
 
     test "client lacking the code grant -> false arm (external error redirect)", %{

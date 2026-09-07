@@ -53,7 +53,6 @@ NoizuPromptLingo/
 │   └── Makefile                    # Build/task automation (init, build, run, migrate, regen, sandbox targets)
 ├── liquibase/                      # DB migrations — Python MCP DB (changelogs/ 001–019, liquibase.properties.example)
 ├── tools/                          # Utility scripts (git_tree/git_dump, markdown, validators/, lib/)
-├── plugins/llm/                    # Squash-vendored local MCP servers (doc-pointers, Google, Dropbox, run-claude)
 ├── scripts/                        # Operational scripts (gen-env.sh, remote-access cert minting, port-forward)
 ├── gh-pages                        # GitHub Pages submodule (static site, branch: gh-pages)
 ├── .claude/ · .agents/ · .codex/   # Agent harness configs (agents/, commands/, skills symlinks)

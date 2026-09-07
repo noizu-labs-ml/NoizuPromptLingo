@@ -28,7 +28,6 @@ NoizuPromptLingo/
 ├── sandbox/                # Sandbox image support (supervisord, Samba)
 ├── liquibase/              # Database migrations — Python MCP DB (Liquibase changesets 001–019)
 ├── tools/                  # Utility scripts (git, markdown, validators)
-├── plugins/llm/            # Squash-vendored local LLM MCP plugins (doc-pointers, Google, Dropbox, run-claude)
 ├── scripts/                # Operational scripts (gen-env, remote-access certs, port-forward)
 ├── gh-pages                # GitHub Pages submodule
 ├── .claude/ · .agents/ · .codex/            # Agent harness configs

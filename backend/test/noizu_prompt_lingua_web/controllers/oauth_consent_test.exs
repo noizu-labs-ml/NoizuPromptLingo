@@ -103,13 +103,9 @@ defmodule NoizuPromptLinguaWeb.OAuthConsentTest do
         |> signed_in(user)
         |> get("/oauth/authorize", authorize_params(client, challenge))
 
-      assert conn.status == 200
-      assert conn.resp_body =~ "Requested tool access"
-      assert conn.resp_body =~ "allow_group["
-      assert conn.resp_body =~ "allow_tool["
-      # Toggles render pre-checked to the client's request.
-      assert conn.resp_body =~ "checked data-group"
-      assert conn.resp_body =~ "value=\"on\" checked"
+      assert conn.status == 302
+      assert conn.resp_body =~ "code="
+      refute conn.resp_body =~ "Requested tool access"
     end
   end
 

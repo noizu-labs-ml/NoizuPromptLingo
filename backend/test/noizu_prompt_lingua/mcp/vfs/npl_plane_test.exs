@@ -1,11 +1,13 @@
 defmodule NoizuPromptLingua.MCP.VFS.NPLPlaneTest do
   @moduledoc """
   Wave 1 battery for the `_npl` root plane (design §2.23): conventions/*.yaml
-  as read-only files + spec.md rendered through the NPLSpec path.
+  as read-only files, sections/*.md as grouped NPLLoad markdown, and spec.md
+  rendered through the NPLSpec path.
 
-  Covers: tree shape, real conventions content, spec rendering, read-only
-  enforcement, traversal guards, the bounded-listing cursor policy, and the
-  no-gating rule (global reference serves any authenticated connection).
+  Covers: tree shape, real conventions content, section markdown, spec
+  rendering, read-only enforcement, traversal guards, the bounded-listing
+  cursor policy, and the no-gating rule (global reference serves a bare
+  principal).
   """
 
   use NoizuPromptLingua.DataCase, async: false
@@ -35,16 +37,19 @@ defmodule NoizuPromptLingua.MCP.VFS.NPLPlaneTest do
     }
   end
 
-  test "the plane maps conventions/ and spec.md" do
+  test "the plane maps conventions/, sections/, and spec.md" do
     ctx = anon_ctx()
 
     assert {:ok, dir} = VFS.stat(Root, @base, ctx)
     assert dir.type == :dir
 
     assert {:ok, entries, nil} = VFS.list(Root, @base, nil, ctx)
-    assert Enum.map(entries, & &1.name) == ["conventions", "spec.md"]
+    assert Enum.map(entries, & &1.name) == ["conventions", "sections", "spec.md"]
 
     assert {:ok, dir} = VFS.stat(Root, "#{@base}/conventions", ctx)
+    assert dir.type == :dir
+
+    assert {:ok, dir} = VFS.stat(Root, "#{@base}/sections", ctx)
     assert dir.type == :dir
 
     assert {:ok, node} = VFS.stat(Root, "#{@base}/spec.md", ctx)
@@ -76,6 +81,28 @@ defmodule NoizuPromptLingua.MCP.VFS.NPLPlaneTest do
     assert {:error, :enoent} = VFS.stat(Root, "#{@base}/conventions/nope.yaml", ctx)
   end
 
+  test "sections/ lists readable markdown per on-disk YAML, not missing files" do
+    ctx = anon_ctx()
+
+    {:ok, entries, nil} = VFS.list(Root, "#{@base}/sections", nil, ctx)
+    names = Enum.map(entries, & &1.name)
+    assert "syntax.md" in names
+    assert "pumps.md" in names
+    refute "fences.md" in names
+    assert Enum.all?(names, &String.ends_with?(&1, ".md"))
+
+    {:ok, body, _} = VFS.read(Root, "#{@base}/sections/syntax.md", ctx)
+    assert body =~ "## Syntax"
+    assert {:ok, node} = VFS.stat(Root, "#{@base}/sections/syntax.md", ctx)
+    assert node.type == :file and node.size == byte_size(body)
+
+    assert {:error, :enoent} = VFS.read(Root, "#{@base}/sections/nope.md", ctx)
+    assert {:error, :enoent} = VFS.stat(Root, "#{@base}/sections/fences.md", ctx)
+    assert {:error, :enoent} = VFS.read(Root, "#{@base}/sections/../../etc/passwd", ctx)
+    assert {:error, :eisdir} = VFS.read(Root, "#{@base}/sections", ctx)
+    assert {:error, :enotdir} = VFS.list(Root, "#{@base}/sections/syntax.md", nil, ctx)
+  end
+
   test "spec.md renders the full NPL spec through the NPLSpec path" do
     ctx = anon_ctx()
 
@@ -90,6 +117,7 @@ defmodule NoizuPromptLingua.MCP.VFS.NPLPlaneTest do
     ctx = anon_ctx()
 
     assert {:error, :enosys} = VFS.write(Root, "#{@base}/spec.md", "x", ctx)
+    assert {:error, :enosys} = VFS.write(Root, "#{@base}/sections/syntax.md", "x", ctx)
     assert {:error, :enosys} = VFS.write(Root, "#{@base}/conventions/syntax.yaml", "x", ctx)
     assert {:error, :enosys} = VFS.create(Root, "#{@base}/conventions/new.yaml", "x", ctx)
     assert {:error, :enosys} = VFS.remove(Root, "#{@base}/conventions/syntax.yaml", ctx)

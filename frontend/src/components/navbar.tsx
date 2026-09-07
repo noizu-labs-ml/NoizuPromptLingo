@@ -86,13 +86,12 @@ export function Navbar() {
             )}
             {!user && (
               <svg className="tl-brand__mark" width="26" height="26" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <rect x="1" y="1" width="30" height="30" rx="6" stroke="var(--border-strong)" strokeWidth="2" />
-                <path d="M8 22V10L13 18L18 10V22" stroke="var(--red)" strokeWidth="2.5" fill="none" strokeLinejoin="round" strokeLinecap="round" />
-                <circle cx="24" cy="21" r="2.5" fill="var(--blue)" />
+                <path d="M8 24V8h10" stroke="var(--text)" strokeWidth="2.4" strokeLinecap="square" />
+                <path d="M24 8v16H14" stroke="var(--red, #c23b22)" strokeWidth="2.4" strokeLinecap="square" />
               </svg>
             )}
-            <Link href="/" className="tl-brand__name">Tobor Locker</Link>
-            <span className="tl-brand__badge">MCP</span>
+            <Link href="/" className="tl-brand__name">Noizu Prompt Lingo</Link>
+            <span className="tl-brand__badge">NPL</span>
           </div>
         </div>
         <div className="sg-navbar__links">
