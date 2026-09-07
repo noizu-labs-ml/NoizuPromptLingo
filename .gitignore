@@ -40,3 +40,8 @@ frontend/cypress/screenshots/
 # Canonical worktree placement
 .claude/worktrees/
 backend/_build
+
+# Local agent/release scratch
+.tmp/
+.coverage
+.sp_files.txt
