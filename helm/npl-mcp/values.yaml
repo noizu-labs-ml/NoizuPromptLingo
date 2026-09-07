@@ -122,6 +122,10 @@ ingress:
     # Carried over from the retired platform/tobor-locker TF module — larger
     # proxy buffer for auth headers/cookies on tobor.locker.
     nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+  # Extra hostnames served with the EXACT apex routing (same backend/SPA
+  # path split); each also gets a TLS entry under tls.secretName.
+  extraHosts:
+    - agent-kit.therobot.institute
 tls:
   enabled: true
   secretName: toborlocker-tls

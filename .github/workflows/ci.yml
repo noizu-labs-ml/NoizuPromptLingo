@@ -9,7 +9,7 @@ name: CI
 # values-stage.yaml — ArgoCD (app "npl-mcp-stage") rolls those to
 # tobor-stage.noizu.com. Main-gated jobs below are untouched by the stage path.
 # `feat/tool-sets-integration` pushes gate the integration merge through the
-# test jobs only — every image-build job stays ref-gated (main / stage).
+# test jobs only — every image-build job stays ref-gated (main / develop / stage).
 # Pattern: therobotlearns.com/.github/workflows/ci.yml
 #
 # Push triggers: `stage` drives the stage lane (build-push-stage /
@@ -20,7 +20,9 @@ name: CI
 
 on:
   push:
-    branches: [main, stage, feat/tool-sets-integration]
+    # `develop` runs the same prod lane as `main` (build-promote-bump), with
+    # the bump job pushing its commit back to the triggering branch.
+    branches: [main, develop, stage, feat/tool-sets-integration]
   pull_request:
   # Manual "exhaustive" full-suite run (test-backend-exhaustive below); the
   # push gate runs only the curated smoke subset.
@@ -211,8 +213,10 @@ jobs:
   # Candidate build: no `needs` — starts immediately on push, parallel to the
   # test jobs, publishing `sha-<short>-rc` candidate tags. promote-release
   # re-tags them to the final sha tags only after tests pass.
+  # Prod lane runs on main AND develop (same tags, same values bump; the
+  # bump job returns its commit to whichever branch triggered it).
   build-push:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -254,7 +258,7 @@ jobs:
   # rebuild; the image digest is unchanged.
   promote-release:
     needs: [test-backend, test-frontend, build-push]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
     runs-on: ubuntu-latest
     steps:
       - uses: docker/setup-buildx-action@v3
@@ -285,7 +289,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # Need write credentials on main so the tag bump can push.
+          # Write credentials so the tag bump can push back to the branch that
+          # triggered the run (main or develop — github.ref_name).
           token: ${{ secrets.GITHUB_TOKEN }}
           ref: ${{ github.sha }}
       - name: Install yq
@@ -315,7 +320,9 @@ jobs:
           git diff --cached --quiet && exit 0
           git commit -m "ci: deploy sha-${GITHUB_SHA::7} [skip ci]"
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
-          git push origin HEAD:main
+          # Push the bump back to the branch that triggered the run (main on
+          # main pushes, develop on develop pushes) — never the other one.
+          git push origin HEAD:${{ github.ref_name }}
 
   # ── Stage lane (refs/heads/stage) ─────────────────────────────────────────
   # Mirrors build-push with a distinct `-stage` tag suffix so stage images can
