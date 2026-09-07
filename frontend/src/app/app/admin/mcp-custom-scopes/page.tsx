@@ -2,7 +2,7 @@
 
 import { Fragment, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import {
   api,
@@ -12,8 +12,10 @@ import {
   type McpCustomTool,
 } from '@/lib/api';
 import {
+  ConfirmDialog,
   ContextMenu,
   SlideOverSidebar,
+  TabbedPopunder,
   ToolTogglesGrid,
   TempWindowEditor,
   type ContextMenuItem,
@@ -34,15 +36,8 @@ import {
   type ScopeClient,
 } from '@/lib/acl-api';
 import { wireGroupHasMember } from '@/lib/acl-convert';
-import { useOrg } from '@/context/org';
-import {
-  cloneToolSet,
-  deactivateToolSet,
-  listToolSets,
-  updateToolSet,
-  type ToolSetIndex,
-} from '@/lib/acl-api';
-import McpEndpointSetupPopunder from '@/components/mcp-endpoint-setup-popunder';
+import ConnectInstructions from '@/components/mcp/connect-instructions';
+import { EndpointThumb } from '@/components/mcp-endpoint-list';
 import DisplayFieldset from '@/components/mcp-config/display-fieldset';
 import ToolsetUrlBuilder from '@/components/mcp-config/toolset-url-builder';
 import { ToolOverrideFields } from '@/components/kit/tool-overrides-editor';
@@ -178,6 +173,8 @@ function AdminMcpCustomScopesInner() {
   const [tempTool, setTempTool] = useState('');
   const [newGroupName, setNewGroupName] = useState('');
   const [setupScope, setSetupScope] = useState<McpCustomScope | null>(null);
+  // WP5: delete goes through ConfirmDialog (was window.confirm).
+  const [pendingDelete, setPendingDelete] = useState<McpCustomScope | null>(null);
   // Alacarte: per-row ?t= tool-selection URL builder (core included).
   const [builderScope, setBuilderScope] = useState<McpCustomScope | null>(null);
 
@@ -370,12 +367,16 @@ function AdminMcpCustomScopesInner() {
     }
   }
 
-  async function remove(scope: McpCustomScope) {
+  function requestRemove(scope: McpCustomScope) {
     if (scope.slug === DEFAULT_SLUG) {
       toast.error('The default Tobor Locker package cannot be deleted');
       return;
     }
-    if (!confirm(`Delete ${scope.name}?`)) return;
+    setPendingDelete(scope);
+  }
+
+  /** ConfirmDialog onConfirm — rethrows so the dialog stays open for retry. */
+  async function destroyScope(scope: McpCustomScope) {
     try {
       await api.adminDeleteMcpCustomScope(scope.slug);
       setScopes((prev) => prev.filter((s) => s.id !== scope.id));
@@ -386,71 +387,53 @@ function AdminMcpCustomScopesInner() {
       toast.success('Scope deleted');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Delete failed');
+      throw err;
     }
   }
 
-  async function renameScope(scope: McpCustomScope) {
-    const name = prompt('Rename scope', scope.name);
-    if (name === null) return;
-    const trimmed = name.trim();
-    if (!trimmed) {
-      toast.error('Name is required');
-      return;
-    }
-    try {
-      const res = await api.adminUpdateMcpCustomScope(scope.slug, { name: trimmed });
-      setScopes((prev) => [res.scope, ...prev.filter((s) => s.id !== res.scope.id)]);
-      if (form.originalSlug === scope.slug) setForm(formFromScope(res.scope));
-      toast.success('Scope renamed');
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Rename failed');
-    }
-  }
-
-  async function cloneScope(scope: McpCustomScope) {
+  // One copy path shared by the row menu ("Clone endpoint") and the editor's
+  // "Copy endpoint" button: duplicates a saved scope under a `-copy` slug.
+  // Row use opens the editor on the fresh copy; the editor button stays put.
+  async function createScopeCopy(
+    source: Pick<McpCustomScope, 'slug' | 'name'> &
+      Partial<Pick<McpCustomScope, 'description' | 'kind' | 'config'>>,
+    opts: { openEditor?: boolean } = {},
+  ) {
     setSaving(true);
     try {
       const res = await api.adminCreateMcpCustomScope({
-        slug: slugify(`${scope.slug}-clone`),
-        name: `${scope.name} clone`,
-        description: scope.description ?? '',
-        kind: scope.kind === 'all_in_one' ? 'custom' : scope.kind || 'custom',
-        config: normalizeConfig(scope.config),
+        slug: slugify(`${source.slug}-copy`),
+        name: `${source.name} copy`,
+        description: source.description ?? '',
+        kind: source.kind === 'all_in_one' ? 'custom' : source.kind || 'custom',
+        config: normalizeConfig(source.config),
       });
       setScopes((prev) => [res.scope, ...prev.filter((s) => s.id !== res.scope.id)]);
       setForm(formFromScope(res.scope));
-      setSidebarOpen(true);
-      setActiveTab('edit');
-      toast.success('Cloned to a new endpoint');
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Clone failed');
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function duplicate() {
-    if (!form.originalSlug) {
-      toast.error('Save the endpoint before copying it');
-      return;
-    }
-    setSaving(true);
-    try {
-      const res = await api.adminCreateMcpCustomScope({
-        slug: slugify(`${form.slug}-copy`),
-        name: `${form.name} copy`,
-        description: form.description.trim(),
-        kind: form.kind === 'all_in_one' ? 'custom' : form.kind || 'custom',
-        config: form.config,
-      });
-      setScopes((prev) => [res.scope, ...prev.filter((s) => s.id !== res.scope.id)]);
-      setForm(formFromScope(res.scope));
+      if (opts.openEditor) {
+        setSidebarOpen(true);
+        setActiveTab('edit');
+      }
       toast.success('Copied to a new endpoint');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Copy failed');
     } finally {
       setSaving(false);
     }
+  }
+
+  function copyCurrent() {
+    if (!form.originalSlug) {
+      toast.error('Save the endpoint before copying it');
+      return;
+    }
+    void createScopeCopy({
+      slug: form.slug,
+      name: form.name,
+      description: form.description.trim(),
+      kind: form.kind,
+      config: form.config,
+    });
   }
 
   async function copy(text?: string | null) {
@@ -485,9 +468,8 @@ function AdminMcpCustomScopesInner() {
     const isDefault = scope.slug === DEFAULT_SLUG;
     return [
       { id: 'open-settings', label: 'Open settings' },
-      { id: 'rename', label: 'Rename', disabled: isDefault },
       {
-        id: 'clone',
+        id: 'copy',
         label: 'Clone endpoint',
         separatorBefore: true,
         disabled: saving,
@@ -500,11 +482,10 @@ function AdminMcpCustomScopesInner() {
 
   function onScopeMenu(scope: McpCustomScope, id: string) {
     if (id === 'open-settings') openSettings(scope);
-    else if (id === 'rename') renameScope(scope);
-    else if (id === 'clone') cloneScope(scope);
+    else if (id === 'copy') void createScopeCopy(scope, { openEditor: true });
     else if (id === 'setup') setSetupScope(scope);
     else if (id === 'toolset-url') setBuilderScope(scope);
-    else if (id === 'delete') remove(scope);
+    else if (id === 'delete') requestRemove(scope);
   }
 
   // ── W6: Manage Clients editors ──
@@ -832,13 +813,13 @@ function AdminMcpCustomScopesInner() {
 
       {form.originalSlug && form.originalSlug !== DEFAULT_SLUG && (
         <div style={{ display: 'flex', gap: 8 }}>
-          <button type="button" className="sg-btn sg-btn--outline sg-btn--sm" onClick={duplicate} disabled={saving}>
+          <button type="button" className="sg-btn sg-btn--outline sg-btn--sm" onClick={copyCurrent} disabled={saving}>
             Copy endpoint
           </button>
           <button
             type="button"
             className="sg-btn sg-btn--danger sg-btn--sm"
-            onClick={() => selectedScope && remove(selectedScope)}
+            onClick={() => selectedScope && requestRemove(selectedScope)}
           >
             Delete
           </button>
@@ -1020,7 +1001,7 @@ function AdminMcpCustomScopesInner() {
           templates here; people can copy and edit their own instances from
           MCP client setup. Click a scope to select it, double-click to toggle
           its settings sidebar, right-click for actions.{' '}
-          <Link href="/app/admin">Back to Admin</Link>
+          <Link href="/app/admin/mcp-config?tab=endpoints">← MCP Config</Link>
         </p>
 
         {loading ? (
@@ -1044,35 +1025,76 @@ function AdminMcpCustomScopesInner() {
               <p className="sg-page-intro">No custom scopes yet.</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {scopes.map((scope) => (
-                  <ContextMenu
-                    key={scope.id}
-                    items={scopeMenuItems(scope)}
-                    onSelect={(id: string) => onScopeMenu(scope, id)}
-                    menuLabel={`Scope ${scope.name} actions`}
-                  >
-                    <button
-                      className={`sg-btn ${form.originalSlug === scope.slug ? 'sg-btn--black' : 'sg-btn--outline'}`}
-                      style={{ justifyContent: 'flex-start', textAlign: 'left', width: '100%' }}
-                      onClick={() => setForm(formFromScope(scope))}
-                      onDoubleClick={() => toggleSettings(scope)}
+                {scopes.map((scope) => {
+                  const selected = form.originalSlug === scope.slug;
+                  return (
+                    <ContextMenu
+                      key={scope.id}
+                      items={scopeMenuItems(scope)}
+                      onSelect={(id: string) => onScopeMenu(scope, id)}
+                      menuLabel={`Scope ${scope.name} actions`}
                     >
-                      <span>
-                        <span style={{ display: 'block', fontWeight: 600 }}>
-                          {scope.name}
-                          {scope.slug === DEFAULT_SLUG ? ' (default)' : ''}
+                      <button
+                        type="button"
+                        aria-pressed={selected}
+                        onClick={() => setForm(formFromScope(scope))}
+                        onDoubleClick={() => toggleSettings(scope)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 12,
+                          width: '100%',
+                          textAlign: 'left',
+                          padding: '8px 10px',
+                          borderRadius: 10,
+                          border: `1px solid ${selected ? 'var(--accent)' : 'var(--border)'}`,
+                          background: selected ? 'var(--accent-dim, var(--bg-3, #fafafa))' : 'transparent',
+                          cursor: 'pointer',
+                          color: 'inherit',
+                          font: 'inherit',
+                        }}
+                      >
+                        {/* Admin parity with the user endpoint picker: the
+                            alacarte display image/emoji/color is visible here. */}
+                        <EndpointThumb scope={scope} />
+                        <span style={{ minWidth: 0, flex: 1 }}>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                            <span
+                              style={{
+                                fontWeight: 600,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {scope.name}
+                            </span>
+                            {scope.slug === DEFAULT_SLUG && <span className="dash-badge">default</span>}
+                            {scope.kind === 'all_in_one' && <span className="dash-badge">all-in-one</span>}
+                            {scope.kind === 'core_variant' && <span className="dash-badge">core variant</span>}
+                          </span>
+                          <span
+                            className="font-mono"
+                            style={{
+                              display: 'block',
+                              fontSize: 12,
+                              color: 'var(--text-3)',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            /custom/{scope.slug}/mcp
+                          </span>
                         </span>
-                        <span className="font-mono" style={{ display: 'block', fontSize: 12 }}>{scope.slug}</span>
-                      </span>
-                    </button>
-                  </ContextMenu>
-                ))}
+                      </button>
+                    </ContextMenu>
+                  );
+                })}
               </div>
             )}
           </section>
         )}
-
-        <ToolSetsSection />
 
         <SlideOverSidebar
           open={sidebarOpen}
@@ -1087,12 +1109,36 @@ function AdminMcpCustomScopesInner() {
           ]}
         />
 
+        <ConfirmDialog
+          open={!!pendingDelete}
+          onClose={() => setPendingDelete(null)}
+          title={pendingDelete ? `Delete ${pendingDelete.name}?` : 'Delete scope?'}
+          destructive
+          confirmLabel="Delete"
+          onConfirm={() => (pendingDelete ? destroyScope(pendingDelete) : Promise.resolve())}
+        >
+          The endpoint and its config will be removed.
+        </ConfirmDialog>
+
         {setupScope && (
-          <McpEndpointSetupPopunder
+          <TabbedPopunder
             open
             onClose={() => setSetupScope(null)}
-            scope={setupScope}
-            mcpUrl={stubScopeUrl(setupScope)}
+            title={`Setup MCP — ${setupScope.name}`}
+            maxWidth={720}
+            tabs={[
+              {
+                id: 'connect',
+                label: 'Connect',
+                render: () => (
+                  <ConnectInstructions
+                    mcpUrl={stubScopeUrl(setupScope)}
+                    scopeSlug={setupScope.slug}
+                  />
+                ),
+              },
+            ]}
+            initialTabId="connect"
           />
         )}
 
@@ -1107,200 +1153,3 @@ function AdminMcpCustomScopesInner() {
   );
 }
 
-// ---------------------------------------------------------------------------
-// N4a — Tool-Sets section (PRD-N4 §4.2): built-in profiles (read-only,
-// cloneable) next to the org's durable tool sets. Sibling section to Scopes;
-// editing happens on the kind=tool-set config page.
-// ---------------------------------------------------------------------------
-
-function shapeBadge(shape: string) {
-  return (
-    <span
-      style={{
-        fontSize: 10,
-        textTransform: 'uppercase',
-        letterSpacing: 0.5,
-        border: '1px solid var(--border)',
-        borderRadius: 999,
-        padding: '1px 8px',
-        color: 'var(--text-2)',
-      }}
-    >
-      {shape}
-    </span>
-  );
-}
-
-function ToolSetsSection() {
-  const router = useRouter();
-  const { currentOrg, organizations, switchOrg } = useOrg();
-  const orgId = currentOrg?.id ?? null;
-  const [index, setIndex] = useState<ToolSetIndex | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  const load = useCallback(async () => {
-    if (!orgId) return;
-    setLoading(true);
-    try {
-      setIndex(await listToolSets(orgId));
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Failed to load tool sets');
-    } finally {
-      setLoading(false);
-    }
-  }, [orgId]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  async function clone(source: string) {
-    if (!orgId) return;
-    try {
-      const created = await cloneToolSet(orgId, source);
-      toast.success(`Cloned to "${created.slug}"`);
-      router.push(`/app/admin/mcp-config/tool-set/${encodeURIComponent(created.slug)}`);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Clone failed');
-    }
-  }
-
-  async function deactivate(slug: string) {
-    if (!orgId) return;
-    try {
-      await deactivateToolSet(orgId, slug);
-      toast.success(`Tool set "${slug}" deactivated`);
-      void load();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Deactivate failed');
-    }
-  }
-
-  async function reactivate(slug: string) {
-    if (!orgId) return;
-    try {
-      await updateToolSet(orgId, slug, { is_active: true });
-      toast.success(`Tool set "${slug}" re-activated`);
-      void load();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Re-activate failed');
-    }
-  }
-
-  return (
-    <section className="dash-panel">
-      <div className="dash-panel__head">
-        <h2 className="dash-panel__title">
-          Tool Sets
-          {organizations.length > 1 && (
-            <select
-              aria-label="Organization"
-              value={orgId ?? ''}
-              onChange={(e) => switchOrg(e.target.value)}
-              style={{ marginLeft: 10, fontSize: 12 }}
-            >
-              {organizations.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.name ?? o.slug}
-                </option>
-              ))}
-            </select>
-          )}
-        </h2>
-        <Link className="sg-btn sg-btn--outline sg-btn--sm" href="/app/admin/mcp-config/tool-set/new">
-          New tool set
-        </Link>
-      </div>
-      <p className="sg-page-intro">
-        Built-in capability profiles are read-only — clone one to customize. Org tool sets drive the
-        serving path once the tool-set gateway lands.
-      </p>
-
-      {!orgId ? (
-        <p className="sg-page-intro">Select an organization to manage tool sets.</p>
-      ) : loading && !index ? (
-        <p className="sg-page-intro">Loading…</p>
-      ) : (
-        <>
-          <h3 style={{ margin: '0.75rem 0 0.5rem', fontSize: 12, fontWeight: 700, color: 'var(--text-2)' }}>
-            Built-in profiles
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {(index?.profiles ?? []).map((p) => (
-              <div
-                key={p.slug}
-                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 8, background: 'var(--bg-3)' }}
-              >
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600 }}>
-                    {p.display_name} <span className="font-mono" style={{ fontSize: 11, color: 'var(--text-3)' }}>{p.slug}</span>
-                  </div>
-                  <div style={{ fontSize: 11, color: 'var(--text-2)' }}>{p.description}</div>
-                </div>
-                <span className="dash-badge">{p.group_count} groups</span>
-                <span className="dash-badge">{p.tool_count} tools</span>
-                <button type="button" className="sg-btn sg-btn--outline sg-btn--sm" onClick={() => clone(p.slug)}>
-                  Clone
-                </button>
-              </div>
-            ))}
-          </div>
-
-          <h3 style={{ margin: '1rem 0 0.5rem', fontSize: 12, fontWeight: 700, color: 'var(--text-2)' }}>
-            Org tool sets
-          </h3>
-          {(index?.sets ?? []).length === 0 ? (
-            <p className="sg-page-intro">No tool sets yet — clone a profile or create a new one.</p>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {(index?.sets ?? []).map((s) => (
-                <div
-                  key={s.id}
-                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 8, opacity: s.is_active ? 1 : 0.6 }}
-                >
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>
-                      {s.display_name}
-                      <span className="font-mono" style={{ fontSize: 11, color: 'var(--text-3)', marginLeft: 6 }}>{s.slug}</span>
-                      {!s.is_active && (
-                        <span style={{ fontSize: 10, color: 'var(--text-3)', marginLeft: 6 }}>(deactivated)</span>
-                      )}
-                    </div>
-                    <div style={{ fontSize: 11, color: 'var(--text-2)' }}>
-                      {s.source === 'clone' && s.source_profile ? `clone of ${s.source_profile}` : s.source}
-                      {s.member_count !== null ? ` · ${s.member_count} members` : ''}
-                    </div>
-                  </div>
-                  {shapeBadge(s.shape)}
-                  {s.config_digest && (
-                    <span className="font-mono" style={{ fontSize: 10, color: 'var(--text-3)' }} title="config digest">
-                      {s.config_digest.slice(0, 8)}
-                    </span>
-                  )}
-                  <Link
-                    className="sg-btn sg-btn--outline sg-btn--sm"
-                    href={`/app/admin/mcp-config/tool-set/${encodeURIComponent(s.slug)}`}
-                  >
-                    Edit
-                  </Link>
-                  <button type="button" className="sg-btn sg-btn--outline sg-btn--sm" onClick={() => clone(s.slug)}>
-                    Clone
-                  </button>
-                  {s.is_active ? (
-                    <button type="button" className="sg-btn sg-btn--danger sg-btn--sm" onClick={() => deactivate(s.slug)}>
-                      Deactivate
-                    </button>
-                  ) : (
-                    <button type="button" className="sg-btn sg-btn--outline sg-btn--sm" onClick={() => reactivate(s.slug)}>
-                      Re-activate
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </>
-      )}
-    </section>
-  );
-}

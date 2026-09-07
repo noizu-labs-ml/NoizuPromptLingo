@@ -37,3 +37,12 @@ export type { TabbedPopunderTab } from './tabbed-popunder';
 // PRD-020 FR-5: domain-neutral controlled wizard stepper (US-107).
 export { default as WizardStepper } from './wizard-stepper';
 export type { WizardStepperProps, WizardStepDef } from './wizard-stepper';
+
+// Clipboard primitives (CopyField / ClipboardButton / useCopied) — the one
+// copied-flash implementation for the MCP surfaces.
+export { ClipboardButton, CopyField, useCopied } from './clipboard';
+export type { ClipboardButtonProps, CopyFieldProps } from './clipboard';
+
+// Confirmation modal replacing window.confirm/prompt (revoke/delete sites).
+export { default as ConfirmDialog } from './confirm-dialog';
+export type { ConfirmDialogProps } from './confirm-dialog';
