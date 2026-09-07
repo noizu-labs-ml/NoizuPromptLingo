@@ -86,8 +86,11 @@ function ClientPermissionsInner({ kind, id }: { kind: ClientKind; id: string }) 
           );
           if (!cancelled && match) setDisplayName(match.client_name);
         } else {
-          // adminListMcpKeys is user-scoped; a key-by-id lookup arrives with the
-          // F2/W6 persistence API. Route id is a usable label until then.
+          // TODO(admin-api): admin key-by-id name lookup gap — adminListMcpKeys
+          // is user-scoped, so the frontend cannot resolve an api key id to its
+          // label; a key-by-id lookup must arrive with the F2/W6 persistence
+          // API (frontend-only fix impossible). Route id is a usable label
+          // until then.
           setDisplayName((current) => current || id);
         }
       } catch {
@@ -150,7 +153,7 @@ function ClientPermissionsInner({ kind, id }: { kind: ClientKind; id: string }) 
           <p className="sg-page-intro">
             Expected <span className="font-mono">api-key</span> or{' '}
             <span className="font-mono">oauth-client</span>.{' '}
-            <Link href="/app/admin/mcp-config">Back to MCP Config</Link>
+            <Link href="/app/admin/mcp-config">← MCP Config</Link>
           </p>
         </main>
       </div>
@@ -175,7 +178,7 @@ function ClientPermissionsInner({ kind, id }: { kind: ClientKind; id: string }) 
         </h1>
         <p className="sg-page-intro">
           Tool toggles and access windows for this client (ACL rules arrive with the rules API).{' '}
-          <Link href="/app/admin/mcp-config">Back to MCP Config</Link>
+          <Link href="/app/admin/mcp-config">← MCP Config</Link>
         </p>
 
         <ClientPermissionsEditor
@@ -188,7 +191,7 @@ function ClientPermissionsInner({ kind, id }: { kind: ClientKind; id: string }) 
 
         <div className="modal-actions">
           <Link className="sg-btn sg-btn--outline" href="/app/admin/mcp-config">
-            Cancel
+            ← MCP Config
           </Link>
           <button type="button" className="sg-btn sg-btn--black" onClick={save} disabled={saving}>
             {saving ? 'Saving…' : 'Save'}

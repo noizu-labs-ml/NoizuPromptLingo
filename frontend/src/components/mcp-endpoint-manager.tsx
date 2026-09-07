@@ -10,6 +10,7 @@ import {
 import McpIncludeEditor from '@/components/mcp-include-editor';
 import EndpointWizard from '@/components/mcp-config/endpoint-wizard';
 import McpEndpointList from '@/components/mcp-endpoint-list';
+import { ConfirmDialog, CopyField } from '@/components/kit';
 import type { WizardSource } from '@/components/mcp-config/endpoint-wizard-state';
 
 interface McpEndpointManagerProps {
@@ -44,7 +45,7 @@ export default function McpEndpointManager({
   onChange,
 }: McpEndpointManagerProps) {
   const [busy, setBusy] = useState(false);
-  const [copied, setCopied] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [name, setName] = useState(selected?.name ?? '');
   // PRD-020 FR-4/FR-6: wizard entry points — null = closed; source = clone mode.
   const [wizard, setWizard] = useState<WizardSession | null>(null);
@@ -67,17 +68,6 @@ export default function McpEndpointManager({
   const current = selected && all.find((s) => s.id === selected.id) ? selected : all[0] ?? null;
   const editable = !!current?.editable;
   const url = current?.url ?? '';
-
-  async function copyText(text: string, id: string) {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(id);
-      setTimeout(() => setCopied(null), 2000);
-      toast.success('Copied');
-    } catch {
-      toast.error('Copy failed — select and copy manually');
-    }
-  }
 
   function replaceScope(updated: McpCustomScope) {
     const nextTemplates = templates.map((s) => (s.id === updated.id ? { ...s, ...updated } : s));
@@ -195,7 +185,6 @@ export default function McpEndpointManager({
 
   async function remove() {
     if (!current || !editable || current.is_default) return;
-    if (!confirm(`Delete ${current.name}? Clients using this URL will stop seeing these tools.`)) return;
     setBusy(true);
     try {
       await api.deleteMcpEndpoint(current.id);
@@ -271,23 +260,13 @@ export default function McpEndpointManager({
             </div>
           ) : null}
 
-          <div className="authz-reveal" style={{ marginBottom: 12 }}>
-            <div className="authz-reveal__label">MCP URL</div>
-            <div className="authz-reveal__row">
-              <code className="authz-reveal__key font-mono">{url}</code>
-              <button
-                type="button"
-                className="sg-btn sg-btn--outline sg-btn--sm"
-                onClick={() => copyText(url, 'url')}
-              >
-                {copied === 'url' ? 'Copied!' : 'Copy'}
-              </button>
-            </div>
+          <div style={{ marginBottom: 12 }}>
+            <CopyField label="MCP URL" value={url} />
           </div>
 
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
             <button type="button" className="sg-btn sg-btn--black sg-btn--sm" onClick={copyEndpoint} disabled={busy}>
-              Copy endpoint
+              Save a copy
             </button>
             {/* FR-4: Clone affordance on templates and own/org-editable rows.
                 Templates were previously a read-only dead end ("copy it to edit"). */}
@@ -297,7 +276,7 @@ export default function McpEndpointManager({
               onClick={openClone}
               disabled={busy || (!!current && current.owner_kind === 'organization' && !editable)}
             >
-              Clone
+              Clone to edit
             </button>
             {!current.is_default || current.owner_kind !== 'user' ? (
               <button type="button" className="sg-btn sg-btn--outline sg-btn--sm" onClick={useEndpoint} disabled={busy}>
@@ -305,7 +284,13 @@ export default function McpEndpointManager({
               </button>
             ) : null}
             {editable && !current.is_default ? (
-              <button type="button" className="sg-btn sg-btn--danger sg-btn--sm" onClick={remove} disabled={busy}>
+              <button
+                type="button"
+                className="sg-btn sg-btn--danger sg-btn--sm"
+                aria-label={`Delete copy ${current.name}`}
+                onClick={() => setConfirmDelete(true)}
+                disabled={busy}
+              >
                 Delete copy
               </button>
             ) : null}
@@ -325,6 +310,17 @@ export default function McpEndpointManager({
       ) : (
         <p className="sg-page-intro">Loading standard Tobor Locker endpoint…</p>
       )}
+
+      <ConfirmDialog
+        open={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        title={`Delete ${current?.name ?? 'endpoint'}?`}
+        destructive
+        confirmLabel="Delete"
+        onConfirm={remove}
+      >
+        Clients using this URL will stop seeing these tools.
+      </ConfirmDialog>
 
       <EndpointWizard
         open={wizard !== null}
