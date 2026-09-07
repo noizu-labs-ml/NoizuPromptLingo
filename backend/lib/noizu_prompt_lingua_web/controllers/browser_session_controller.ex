@@ -4,7 +4,7 @@ defmodule NoizuPromptLinguaWeb.BrowserSessionController do
   @moduledoc """
   One-liner launcher for the local browser controller.
 
-      curl -fsSL https://tobor.locker/browser-sessions | bash
+      curl -fsSL https://promptlingo.dev/browser-sessions | bash
 
   `install/2` returns a self-contained bash script (with this deployment's host
   baked in) that downloads + builds the controller into `~/.noizu/browser-controller`
@@ -72,7 +72,7 @@ defmodule NoizuPromptLinguaWeb.BrowserSessionController do
       _ ->
         Application.get_env(:noizu_prompt_lingua, :frontend_url)
         |> host_from_url()
-        |> Kernel.||("tobor.locker")
+        |> Kernel.||("promptlingo.dev")
     end
   end
 

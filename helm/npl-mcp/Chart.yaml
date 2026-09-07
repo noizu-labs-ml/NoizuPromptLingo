@@ -1,6 +1,6 @@
 apiVersion: v2
 name: npl-mcp
-description: "NPL MCP — Noizu Prompt Lingua Elixir MCP server + Next.js frontend for tobor.locker"
+description: "NPL MCP — Noizu Prompt Lingua Elixir MCP server + Next.js frontend for promptlingo.dev"
 version: 0.1.0
 appVersion: "0.1.0"
 type: application

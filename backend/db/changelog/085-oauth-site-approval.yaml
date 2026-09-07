@@ -1,0 +1,23 @@
+databaseChangeLog:
+  - changeSet:
+      id: 085-oauth-site-approval-nullable-user
+      author: loom
+      comment: >
+        Site-approval OAuth for the public NPL syntax MCP issues codes and
+        refresh tokens with no user identity (sub=site:npl).
+      changes:
+        - sql:
+            sql: |
+              ALTER TABLE oauth_authorization_codes
+                ALTER COLUMN user_id DROP NOT NULL;
+              ALTER TABLE oauth_refresh_tokens
+                ALTER COLUMN user_id DROP NOT NULL;
+      rollback:
+        - sql:
+            sql: |
+              DELETE FROM oauth_authorization_codes WHERE user_id IS NULL;
+              DELETE FROM oauth_refresh_tokens WHERE user_id IS NULL;
+              ALTER TABLE oauth_authorization_codes
+                ALTER COLUMN user_id SET NOT NULL;
+              ALTER TABLE oauth_refresh_tokens
+                ALTER COLUMN user_id SET NOT NULL;

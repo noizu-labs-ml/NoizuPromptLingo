@@ -1,5 +1,5 @@
 replicas: 1
-domain: tobor.locker
+domain: promptlingo.dev
 deployment:
   # The backend and frontend run in the same pod. RollingUpdate briefly starts a
   # second backend, which can exhaust the shared Postgres connection ceiling.
@@ -20,10 +20,12 @@ backend:
   # slash — runtime.exs appends "/.well-known/openid-configuration". client id/
   # secret are sourced from the npl-mcp-secrets AUTHENTIK_* keys.
   oidc:
+    # Same Authentik app until a promptlingo-specific client is minted.
+    # Add https://promptlingo.dev/auth/oidc/callback to that app's redirect URIs.
     issuer: "https://auth.derobot.is/application/o/tobor-locker"
   # MCP OAuth authorization-server public issuer (AS metadata + JWT iss).
   mcp:
-    issuerUrl: "https://tobor.locker"
+    issuerUrl: "https://promptlingo.dev"
     # Phase 3 PDP: local | spicedb | disabled
     pdpMode: local
     # Phase 4: set false to retire legacy API-key create/mint (OAuth-only).
@@ -119,12 +121,13 @@ ingress:
   className: nginx
   cloudflareWhitelist: true
   annotations:
-    # Carried over from the retired platform/tobor-locker TF module — larger
-    # proxy buffer for auth headers/cookies on tobor.locker.
     nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+  extraHosts:
+    - www.promptlingo.dev
+  extraTls: []
 tls:
   enabled: true
-  secretName: toborlocker-tls
+  secretName: promptlingo-dev-tls
   infisical:
     enabled: true
     hostAPI: https://infisical.noizu.com/api
@@ -133,9 +136,9 @@ tls:
     secretNamespace: infra
     projectSlug: k8-infra
     envSlug: prod
-    secretsPath: /apps/tls/toborlocker
-    crtKey: TOBORLOCKER_TLS_CRT
-    keyKey: TOBORLOCKER_TLS_KEY
+    secretsPath: /apps/tls/promptlingo
+    crtKey: PROMPTLINGO_TLS_CRT
+    keyKey: PROMPTLINGO_TLS_KEY
 autoscaling:
   enabled: false
   minReplicas: 1

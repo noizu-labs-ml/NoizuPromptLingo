@@ -1048,6 +1048,7 @@ export interface NplSection {
   description: string;
   component_count: number;
   category_count: number;
+  sample?: string;
 }
 
 export interface NplConventionSummary {
@@ -3086,6 +3087,10 @@ export const api = {
   // ── NPL conventions reference data (read-only) ──
   listNplSections() {
     return request<{ sections: NplSection[] }>("/api/v1/npl/sections");
+  },
+
+  nplGallery() {
+    return request<{ sections: NplSection[] }>("/api/v1/npl/gallery");
   },
 
   listNplConventions(section?: string) {

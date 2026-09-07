@@ -32,7 +32,7 @@ defmodule NoizuPromptLingua.OAuth.AuthorizationServer do
         "client_secret_post",
         "client_secret_basic"
       ],
-      "scopes_supported" => ["openid", "mcp", "offline_access"],
+      "scopes_supported" => ["openid", "mcp", "npl", "offline_access"],
       "subject_types_supported" => ["public"],
       "service_documentation" => "#{base}/",
       "ui_locales_supported" => ["en"]
@@ -54,12 +54,12 @@ defmodule NoizuPromptLingua.OAuth.AuthorizationServer do
         url
         |> String.replace_trailing("/", "")
         |> then(fn u ->
-          # frontend may be same host as API on tobor.locker
+          # frontend may be same host as API on promptlingo.dev
           u
         end)
 
       _ ->
-        "https://tobor.locker"
+        "https://promptlingo.dev"
     end
   end
 end

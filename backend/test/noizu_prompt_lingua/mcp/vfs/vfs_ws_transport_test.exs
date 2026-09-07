@@ -5,15 +5,13 @@ defmodule NoizuPromptLingua.MCP.VFS.VFSWSTransportTest do
   through a real Bandit listener, driven by the same Mint.WebSocket client
   pattern as the lib's transport suite.
 
-  Covers the substrate contract an in-process test can't see: bearer
-  enforcement on the upgrade (401 without/with-bad token), the `vfs/auth`
-  handshake binding the verified claims to the connection identity, and
-  per-operation gating enforced end-to-end (`vfs/write` on the read-only
-  Wave 0 backend, `:enoent` for excluded subtrees).
+  Covers the substrate contract an in-process test can't see: public upgrade
+  (no bearer), the `vfs/auth` handshake (empty claims when auth is nil), the
+  `_npl` markdown corpus, and per-operation gating (`vfs/write` on the
+  read-only Wave 0 backend, `:enoent` for org subtrees of a bare principal).
 
-  Note the double bind on this transport: the Bearer token authenticates the
-  UPGRADE, then the first frame (`vfs/auth` carrying the same token) binds the
-  claims — operations before `vfs/auth` close the connection.
+  First frame must still be `vfs/auth`; operations before it close the
+  connection.
   """
 
   use NoizuPromptLingua.DataCase, async: false
@@ -100,87 +98,64 @@ defmodule NoizuPromptLingua.MCP.VFS.VFSWSTransportTest do
     {:ok, token, %{user: user, key: key}}
   end
 
-  defp auth_header(nil), do: []
   defp auth_header(token), do: [{"authorization", "Bearer " <> token}]
 
-  # ── upgrade-time auth ─────────────────────────────────────────────────────
+  # ── upgrade-time auth (public `_npl` corpus) ──────────────────────────────
 
-  test "upgrade without a bearer token is rejected 401", %{port: port} do
-    assert {:error, :not_upgraded, 401} = WSClient.connect(port, @path, [])
+  test "upgrade without a bearer token is allowed", %{port: port} do
+    assert {:ok, _client} = WSClient.connect(port, @path, [])
   end
 
-  test "upgrade with a bad token is rejected 401", %{port: port} do
-    assert {:error, :not_upgraded, 401} =
-             WSClient.connect(port, @path, auth_header("not-a-real-token"))
+  test "upgrade with a junk bearer is allowed while VFS auth is nil", %{port: port} do
+    assert {:ok, _client} = WSClient.connect(port, @path, auth_header("not-a-real-token"))
   end
 
   # ── handshake + ops ───────────────────────────────────────────────────────
 
-  test "vfs/auth binds the connection; ops serve the principal's tree", %{
-    port: port,
-    slug: slug,
-    token: token
-  } do
-    assert {:ok, client} = WSClient.connect(port, @path, auth_header(token))
+  test "vfs/auth binds the connection; ops serve the public _npl tree", %{port: port} do
+    assert {:ok, client} = WSClient.connect(port, @path, [])
 
-    # First frame MUST be vfs/auth; the handshake response carries the
-    # connection's session id.
     assert {:ok, client, %{"result" => %{"authenticated" => true, "session_id" => sid}}} =
-             WSClient.request(client, "vfs/auth", %{"token" => token}, 1)
+             WSClient.request(client, "vfs/auth", %{"token" => ""}, 1)
 
     assert is_binary(sid)
 
-    # vfs/stat on the meta plane.
-    assert {:ok, client, %{"result" => %{"type" => "file", "size" => size}}} =
-             WSClient.request(
-               client,
-               "vfs/stat",
-               %{"path" => "/tobor/#{slug}/_meta/whoami.json"},
-               2
-             )
+    assert {:ok, client, %{"result" => %{"entries" => root}}} =
+             WSClient.request(client, "vfs/list", %{"path" => "/tobor"}, 2)
 
-    assert size > 0
+    assert "_npl" in Enum.map(root, & &1["name"])
 
-    # vfs/list of the org root shows only the gated entries.
-    assert {:ok, client, %{"result" => %{"entries" => entries}}} =
-             WSClient.request(client, "vfs/list", %{"path" => "/tobor/#{slug}"}, 3)
+    assert {:ok, client, %{"result" => %{"entries" => npl}}} =
+             WSClient.request(client, "vfs/list", %{"path" => "/tobor/_npl"}, 3)
 
-    names = Enum.map(entries, & &1["name"])
-    assert "_meta" in names
-    assert "wiki" in names
-    refute "chat" in names
+    assert Enum.map(npl, & &1["name"]) == ["conventions", "sections", "spec.md"]
 
-    # vfs/read round-trips JSON content.
-    assert {:ok, client, %{"result" => %{"content" => content, "version" => version}}} =
-             WSClient.read(client, "/tobor/#{slug}/_meta/whoami.json", 4)
+    assert {:ok, client, %{"result" => %{"content" => body, "version" => version}}} =
+             WSClient.read(client, "/tobor/_npl/sections/syntax.md", 4)
 
-    assert {:ok, whoami} = Jason.decode(content)
-    assert whoami["orgs"] == [slug]
+    assert body =~ "## Syntax"
     assert is_integer(version) and version > 0
 
-    # vfs/write: read-only Wave 0 backend — the wire maps :enosys to -32046.
     assert {:ok, client, %{"error" => %{"code" => -32046, "data" => %{"errno_atom" => "enosys"}}}} =
              WSClient.request(
                client,
                "vfs/write",
-               %{"path" => "/tobor/#{slug}/_meta/whoami.json", "data" => "hax"},
+               %{"path" => "/tobor/_npl/spec.md", "data" => "hax"},
                5
              )
 
-    # Excluded group subtree: :enoent → resource_not_found -32002.
-    assert {:ok, _client,
+    assert {:ok, client,
             %{"error" => %{"code" => -32002, "data" => %{"errno_atom" => "enoent"}}}} =
-             WSClient.request(client, "vfs/stat", %{"path" => "/tobor/#{slug}/chat"}, 6)
+             WSClient.request(client, "vfs/stat", %{"path" => "/tobor/no-such-org"}, 6)
 
-    # /etc/dev is composed in on the wire too.
     assert {:ok, _client, %{"result" => %{"entries" => etc}}} =
              WSClient.request(client, "vfs/list", %{"path" => "/etc/dev"}, 7)
 
     assert Enum.map(etc, & &1["name"]) == ["cache", "config", "runtime", "tools"]
   end
 
-  test "operations before vfs/auth close the connection", %{port: port, token: token} do
-    assert {:ok, client} = WSClient.connect(port, @path, auth_header(token))
+  test "operations before vfs/auth close the connection", %{port: port} do
+    assert {:ok, client} = WSClient.connect(port, @path, [])
 
     # The close is preceded by the -32001 error frame.
     assert {:ok, client, %{"error" => %{"code" => -32001}}} =
@@ -189,17 +164,17 @@ defmodule NoizuPromptLingua.MCP.VFS.VFSWSTransportTest do
     assert {:closed, _client, _code} = WSClient.recv(client)
   end
 
-  test "vfs/subscribe registers against the pubsub hub", %{port: port, slug: slug, token: token} do
-    assert {:ok, client} = WSClient.connect(port, @path, auth_header(token))
+  test "vfs/subscribe registers against the pubsub hub", %{port: port} do
+    assert {:ok, client} = WSClient.connect(port, @path, [])
 
     {:ok, client, %{"id" => 1}} =
-      WSClient.request(client, "vfs/auth", %{"token" => token}, 1)
+      WSClient.request(client, "vfs/auth", %{"token" => ""}, 1)
 
     assert {:ok, _client, %{"result" => %{"subscribed" => true}}} =
-             WSClient.request(client, "vfs/subscribe", %{"paths" => ["/tobor/#{slug}"]}, 2)
+             WSClient.request(client, "vfs/subscribe", %{"paths" => ["/tobor/_npl"]}, 2)
 
     assert {:ok, _client, %{"result" => %{"unsubscribed" => true}}} =
-             WSClient.request(client, "vfs/unsubscribe", %{"paths" => ["/tobor/#{slug}"]}, 3)
+             WSClient.request(client, "vfs/unsubscribe", %{"paths" => ["/tobor/_npl"]}, 3)
   end
 
   # ── Mint.WebSocket test client (lib test-suite pattern) ───────────────────

@@ -1,8 +1,8 @@
 /**
  * Controller configuration, resolved from CLI flags then environment variables.
  *
- *   --api / BROWSER_CONTROLLER_API     cloud API base (https://tobor.locker)
- *   --url / BROWSER_CONTROLLER_URL     cloud socket URL (wss://tobor.locker/socket)
+ *   --api / BROWSER_CONTROLLER_API     cloud API base (https://agent-kit.therobot.institute)
+ *   --url / BROWSER_CONTROLLER_URL     cloud socket URL (wss://agent-kit.therobot.institute/socket)
  *   --token / BROWSER_CONTROLLER_TOKEN MCP JWT (minted from an MCP API key)
  *   --org / BROWSER_CONTROLLER_ORG     organization id (UUID)
  *   --headed / BROWSER_CONTROLLER_HEADED  launch a visible browser (default headless)
@@ -42,12 +42,12 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): Config {
   const apiBase = (
     (args.api as string) ||
     process.env.BROWSER_CONTROLLER_API ||
-    "https://tobor.locker"
+    "https://agent-kit.therobot.institute"
   ).replace(/\/+$/, "");
   const url =
     (args.url as string) ||
     process.env.BROWSER_CONTROLLER_URL ||
-    "wss://tobor.locker/socket";
+    "wss://agent-kit.therobot.institute/socket";
   const token =
     (args.token as string) || process.env.BROWSER_CONTROLLER_TOKEN || "";
   const orgId =

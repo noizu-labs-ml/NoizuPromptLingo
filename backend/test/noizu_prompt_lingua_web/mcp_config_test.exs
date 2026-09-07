@@ -2,7 +2,7 @@ defmodule NoizuPromptLinguaWeb.MCPConfigTest do
   @moduledoc """
   MCPConfig — auth/plug option assembly for StreamableHTTP MCP mounts:
   verifier wiring, RFC 9728 resource metadata, tool-set route wrapper, and
-  subdomain audience pinning (including the tobor.locker default host).
+  subdomain audience pinning (including the promptlingo.dev default host).
   """
   use ExUnit.Case, async: false
 
@@ -80,6 +80,14 @@ defmodule NoizuPromptLinguaWeb.MCPConfigTest do
     assert vopts[:require_aud] == true
   end
 
+  test "plug_opts_public has no required auth" do
+    opts = MCPConfig.plug_opts_public(:npl)
+    assert opts[:server] == :npl
+    assert opts[:origins] == :any
+    assert opts[:cors] == true
+    assert opts[:auth] == nil
+  end
+
   test "plug_opts_for_tool_set wraps the verifier with route claims" do
     auth =
       MCPConfig.plug_opts_for_tool_set(:srv, "https://gw.test/mcp", "/mcp/tools", %{
@@ -112,12 +120,12 @@ defmodule NoizuPromptLinguaWeb.MCPConfigTest do
     assert vopts[:expected_audience] == "https://sessions.example.test/mcp"
   end
 
-  test "subdomain without any host config falls back to tobor.locker" do
+  test "subdomain without any host config falls back to promptlingo.dev" do
     Application.delete_env(:noizu_prompt_lingua, :mcp_oauth)
     Application.delete_env(:noizu_prompt_lingua, :frontend_url)
 
     assert MCPConfig.resource_url_for_subdomain("sessions") ==
-             "https://sessions.tobor.locker/mcp"
+             "https://sessions.promptlingo.dev/mcp"
   end
 
   test "public_scheme override flows into resource URLs" do

@@ -4,7 +4,7 @@
 #
 # Lane: push stage → GHA build-push-stage (sha-<short>-stage tags) →
 # bump-chart-stage bumps THIS file → ArgoCD rolls it. Prod (values.yaml /
-# npl-mcp release / tobor.locker) is a completely separate artifact set.
+# npl-mcp release / promptlingo.dev) is a completely separate artifact set.
 #
 # Deliberately stage-only, nothing shared with prod:
 #   - TLS rides the *.noizu.com wildcard secret `noizu-com-tls` (Infisical
@@ -123,6 +123,8 @@ ingress:
   cloudflareWhitelist: true
   annotations:
     nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+  extraHosts: []
+  extraTls: []
 tls:
   enabled: true
   # Shared *.noizu.com wildcard (covers tobor-stage.noizu.com) — synced to
