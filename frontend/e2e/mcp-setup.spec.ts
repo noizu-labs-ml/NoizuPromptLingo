@@ -2,7 +2,8 @@ import { test, expect, type Page } from "@playwright/test";
 import { dismissConsent } from "./helpers";
 
 /**
- * E2E for the MCP client setup page (/app/mcp-keys):
+ * E2E for the MCP client setup page (/app/mcp-setup — /app/mcp-keys
+ * redirects here):
  *  1. OAuth install snippets for Claude Code, Claude Desktop, Codex toml,
  *     Cursor, VS Code Copilot, and Grok — URL/OAuth only, no bearer.
  *  2. Nowhere on the page may a script export the legacy bare AUTH_TOKEN name.
@@ -13,7 +14,7 @@ import { dismissConsent } from "./helpers";
  * otherwise the setup project skips and these never execute authenticated.
  */
 
-const MCP_KEYS_PATH = "/app/mcp-keys";
+const MCP_KEYS_PATH = "/app/mcp-setup";
 
 // Any org-scoped env var name (e.g. NOIZU_LABS_AUTH_TOKEN) or the fallback.
 const AUTH_ENV_PATTERN = /[A-Z][A-Z0-9_]*_AUTH_TOKEN/;

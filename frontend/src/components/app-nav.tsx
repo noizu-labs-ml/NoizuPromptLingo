@@ -29,7 +29,6 @@ import {
   CpuChipIcon,
   FilmIcon,
   BuildingOfficeIcon,
-  LinkIcon,
   WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
 import { useOrg } from '@/context/org';
@@ -121,7 +120,7 @@ const NAV_SECTIONS: NavSectionDef[] = [
       { href: '/browser', Icon: WindowIcon, label: 'Browser', orgScoped: true },
       { href: '/github', Icon: CodeBracketIcon, label: 'GitHub', orgScoped: true },
       { href: '/mock-mcp', Icon: BeakerIcon, label: 'Mock MCP', orgScoped: true },
-      { href: '/app/mcp-keys', Icon: KeyIcon, label: 'MCP clients' },
+      { href: '/app/mcp-setup', Icon: KeyIcon, label: 'MCP' },
     ],
   },
   {
@@ -147,7 +146,6 @@ const NAV_SECTIONS: NavSectionDef[] = [
       { href: '/app/admin/llm-models', Icon: CpuChipIcon, label: 'LLM Catalog', admin: true },
       { href: '/app/admin/media-providers', Icon: FilmIcon, label: 'Media Providers', admin: true },
       { href: '/app/admin/authz', Icon: KeyIcon, label: 'API Keys', admin: true },
-      { href: '/app/admin/oauth-clients', Icon: LinkIcon, label: 'OAuth Clients', admin: true },
       { href: '/app/admin/mcp-config', Icon: WrenchScrewdriverIcon, label: 'MCP Config', admin: true },
     ],
   },
