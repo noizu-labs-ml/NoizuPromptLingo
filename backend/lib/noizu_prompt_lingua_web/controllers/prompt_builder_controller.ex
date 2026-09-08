@@ -53,7 +53,9 @@ defmodule NoizuPromptLinguaWeb.PromptBuilderController do
         |> json(%{error: "The model didn't return a valid NPL prompt for that. Try rephrasing as a prompt description."})
 
       {:error, {:generator, _reason}} ->
-        conn |> put_status(:bad_gateway) |> json(%{error: "The prompt compiler is unavailable right now. Try again shortly."})
+        conn
+        |> put_status(:service_unavailable)
+        |> json(%{error: "The prompt compiler is unavailable right now. Try again shortly."})
 
       {:error, {:rate_limited, retry_after}} ->
         conn

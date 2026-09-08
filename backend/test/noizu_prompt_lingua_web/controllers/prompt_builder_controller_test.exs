@@ -176,4 +176,31 @@ defmodule NoizuPromptLinguaWeb.PromptBuilderControllerTest do
     |> Ecto.Changeset.change(requests_per_minute: n)
     |> Repo.update!()
   end
+
+  # ── adapter-failure regression (live-smoke bug) ────────────────────────
+  # A broken/misconfigured adapter must 503 (or 422 via the fail-closed judge),
+  # never 500. The original bug: Generator.impl/0 fell back to a non-existent
+  # bare `LLM` alias → UndefinedFunctionError → 500 on every /build.
+
+  test "broken adapter → 503, not 500", %{conn: _conn} do
+    original = Application.get_env(:noizu_prompt_lingua, :prompt_builder)
+
+    Application.put_env(:noizu_prompt_lingua, :prompt_builder,
+      generator: NoizuPromptLingua.PromptBuilder.Generator.DoesNotExist
+    )
+
+    try do
+      conn =
+        build_conn()
+        |> post("#{@base}/build", %{"description" => "Build a prompt for X", "session_id" => "broken-adapter"})
+
+      # The fail-closed judge crashes first → 422; a crash on the build call
+      # itself → 503. Either way: never a 500.
+      assert conn.status in [422, 503]
+    after
+      if original,
+        do: Application.put_env(:noizu_prompt_lingua, :prompt_builder, original),
+        else: Application.delete_env(:noizu_prompt_lingua, :prompt_builder)
+    end
+  end
 end

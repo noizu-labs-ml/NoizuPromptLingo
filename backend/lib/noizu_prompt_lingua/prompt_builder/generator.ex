@@ -14,10 +14,19 @@ defmodule NoizuPromptLingua.PromptBuilder.Generator do
   @spec impl() :: module()
   def impl do
     cfg = Application.get_env(:noizu_prompt_lingua, :prompt_builder, [])
-    cfg[:generator] || LLM
+    # __MODULE__.LLM, NOT the bare alias: `LLM` here compiles before the nested
+    # defmodule registers the alias, which produced a non-existent `Elixir.LLM`
+    # and 500s on the first real call (found in live smoke).
+    cfg[:generator] || __MODULE__.LLM
   end
 
-  def complete(system, user, opts \\ []), do: impl().complete(system, user, opts)
+  def complete(system, user, opts \\ []) do
+    # Adapter crashes (config errors, missing provider modules, key issues) must
+    # degrade to {:error, _} — the controller maps this to 503, never a 500.
+    impl().complete(system, user, opts)
+  rescue
+    e -> {:error, {:adapter_crash, Exception.message(e)}}
+  end
 
   defmodule LLM do
     @moduledoc """
@@ -68,24 +77,20 @@ defmodule NoizuPromptLingua.PromptBuilder.Generator do
 
     defp resolve_model(_provider, model), do: GenAI.Provider.OpenAI.Models.model(model)
 
-    # Same completion-shape handling as MCPOverview.Generator.LLM.
+    # GenAI returns structs (ChatCompletion/Choice/Usage) that do NOT implement
+    # the Access behaviour — pattern-match fields, never `struct[:field]`.
     defp extract_text(%{choices: [choice | _]}) do
-      case choice[:message] || Map.get(choice, :message) do
-        %{content: content} when is_binary(content) -> content
-        %{content: content} when is_list(content) -> Enum.join(content, " ")
+      case choice do
+        %{message: %{content: content}} when is_binary(content) -> content
+        %{message: %{content: content}} when is_list(content) -> Enum.join(content, " ")
         _ -> nil
       end
     end
 
     defp extract_text(_), do: nil
 
-    defp extract_usage(completion) when is_map(completion) do
-      usage = completion[:usage] || Map.get(completion, :usage) || %{}
-
-      tokens_in = usage[:prompt_tokens] || Map.get(usage, :prompt_tokens)
-      tokens_out = usage[:completion_tokens] || Map.get(usage, :completion_tokens)
-
-      {tokens_in || 0, tokens_out || 0}
+    defp extract_usage(%{usage: usage}) when is_map(usage) do
+      {Map.get(usage, :prompt_tokens) || 0, Map.get(usage, :completion_tokens) || 0}
     end
 
     defp extract_usage(_), do: {0, 0}

@@ -97,4 +97,20 @@ defmodule NoizuPromptLingua.PromptBuilder.GuardrailsTest do
   test "retry_system_suffix instructs prompt-only output" do
     assert Guardrails.retry_system_suffix() =~ "ONLY the NPL prompt text"
   end
+
+  test "judge adapter crash fails closed (no raise to 422 upstream)" do
+    original = Application.get_env(:noizu_prompt_lingua, :prompt_builder)
+
+    Application.put_env(:noizu_prompt_lingua, :prompt_builder,
+      generator: NoizuPromptLingua.PromptBuilder.Generator.DoesNotExist
+    )
+
+    try do
+      assert {:error, {:judge_failed, _}} = Guardrails.is_prompt_request?("Build a reviewer prompt")
+    after
+      if original,
+        do: Application.put_env(:noizu_prompt_lingua, :prompt_builder, original),
+        else: Application.delete_env(:noizu_prompt_lingua, :prompt_builder)
+    end
+  end
 end
