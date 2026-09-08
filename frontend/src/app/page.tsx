@@ -400,6 +400,33 @@ function Landing({ sections }: { sections: GallerySection[] }) {
         </div>
       </section>
 
+      <section className="tl-section" aria-labelledby="keyboard-title">
+        <h2 className="tl-section__title" id="keyboard-title">
+          Get the NPL Keyboard
+        </h2>
+        <p className="tl-section__lede">
+          The NPL Keyboard puts the full Noizu Prompt Lingua catalog — syntax, unicode glyphs,
+          agent directives — behind a system-wide hotkey on macOS. Try it right here in the
+          browser: the web edition lets you browse the catalog and build finished NPL prompts from
+          a plain-language description.
+        </p>
+        <ul className="tl-checklist">
+          <li>NPL syntax palette with fuzzy search — ⌜NPL@1.0⌝ frames, directives, personas</li>
+          <li>Unicode + NPL emoji quick-pick with usage descriptions</li>
+          <li>Web Prompt Builder: describe what you want, get a composed NPL prompt</li>
+        </ul>
+        <div>
+          <a href="/keyboard" className="sg-btn sg-btn--black">
+            Open the web keyboard
+          </a>
+          <p className="tl-section__note">
+            macOS app: from the agent-kit repo root —{" "}
+            <code>cd tools/npl-keyboard &amp;&amp; make install-osx</code>. Tagged release zips are
+            planned.
+          </p>
+        </div>
+      </section>
+
       <section className="tl-final">
         <h2 className="tl-final__title">Load the conventions</h2>
         <p className="tl-final__sub">

@@ -128,17 +128,41 @@ Review for: correctness, security, edge cases, improvements, completeness. Alway
 
 ---
 
+## Stack Overview
+
+The product is a **three-container stack**: **Next.js 15** frontend (`frontend/`), **Phoenix 1.8** (Elixir) API backend (`backend/`) serving the NPLLoad/NPLSpec MCP at `/mcp` and REST at `/api/v1/npl/*`, and an **nginx** reverse proxy — sharing **Postgres** (PostGIS, pgvector) and **Redis**. Schema is Liquibase-canonical (`liquibase/`) + Ecto app-level; deployment is CI-driven to Kubernetes via the Helm chart in `helm/`.
+
+A secondary Python toolchain (`src/npl_mcp`, uv-managed) provides local/regen tooling — most notably `npl-docs-regen`, which regenerates `npl/npl-full.md` from `conventions/*.yaml`.
+
 ## Common Development Commands
+
+Primary (Docker Compose stack — see Makefile):
 
 | Goal | Command |
 |------|---------|
-| Sync dependencies | `uv sync` |
-| Run full NPL MCP server | `uv run -m npl_mcp.launcher` |
-| Run unit tests | `uv run -m pytest` |
-| Run single test file | `uv run -m pytest path/to/test_file.py` |
-| Lint | `uvx ruff check src` |
-| Format | `uvx ruff format src` |
-| Build wheel | `uv build` |
+| Generate .env files | `make init` |
+| Build all images (backend/frontend/nginx) | `make build` |
+| Start the stack (nginx on :8080) | `make run` |
+| Dev mode (hot reload, foreground) | `make run-dev` |
+| Dev mode (detached) | `make run-dev-d` |
+| Tail dev logs / tear down dev | `make logs-dev` / `make stop-dev` |
+| Run Liquibase migrations | `make migrate` |
+| Show pending changesets | `make migrate-status` |
+| Roll back last changeset | `make migrate-rollback` |
+| Migrations + seeds | `make dev-setup` |
+| IEx shell in backend container | `make dev-shell-backend` |
+| Regenerate design-system CSS | `make regen` |
+| Lint / package / publish Helm chart | `make helm-lint` / `make helm-package` / `make helm-publish` |
+
+Secondary (Python tooling in `src/npl_mcp`, uv-managed):
+
+```bash
+uv sync                      # sync Python deps
+uv run npl-mcp               # run the legacy standalone Python MCP server
+uv run -m pytest             # Python test suite (tests/)
+uvx ruff check src           # lint
+uvx ruff format src          # format
+```
 
 ---
 
@@ -210,24 +234,28 @@ NPLSpec(components=[ComponentSpec(spec="syntax#placeholder")])  # subset
 `npl/npl-full.md` is a **generated artifact** rendered from `conventions/*.yaml` via `NPLSpec`:
 
 ```bash
-uv run npl-docs-regen              # regenerate in place
-uv run npl-docs-regen --check      # CI/pre-commit guard (exit 1 if stale)
-uv run npl-docs-regen --stdout     # preview without writing
+uv run npl-docs-regen            # regenerate in place
+uv run npl-docs-regen --check    # exit non-zero if the file is stale (pre-commit guard)
+uv run npl-docs-regen --stdout   # preview without writing
 ```
 
 ---
 
 ## High-Level Architecture
 
-- **Entry point**: `src/npl_mcp/launcher.py` - creates FastMCP instance, registers tools, starts FastAPI + Uvicorn
-- **`storage/`** - PostgreSQL async wrapper (asyncpg)
-- **`artifacts/`** - versioned artifact management (stubs)
-- **`chat/`, `sessions/`, `tasks/`** - chat rooms, sessions, task queues (stubs)
-- **`browser/`** - ToMarkdown, Ping, Download, Screenshot, Rest, Secret
-- **`meta_tools/`** - ToolSummary, ToolSearch, ToolDefinition, ToolHelp, ToolCall
-- **`pm_tools/`** - PRD/story/persona tools
-- **`instructions/`** - versioned instruction documents with embeddings
-- **`tool_sessions/`** - session tracking by (project, agent, task)
+Primary stack (Phoenix + Next.js, per `README.md` and `docs/PROJ-ARCH.md`):
+
+- **`frontend/`** — Next.js 15 public landing + signed-in conventions admin (Authentik OIDC for sign-in only; MCP endpoint itself is open)
+- **`backend/`** — Phoenix 1.8 (Elixir): NPLLoad/NPLSpec MCP at `/mcp`, REST `/api/v1/npl/*`, optional PKCE OAuth issuing site-approval tokens (`sub=site:npl`), Weaviate-backed semantic MCP tool search
+- **`nginx/`** — reverse proxy (frontend at `/`, backend at `/api/*` and `/mcp`)
+- **`liquibase/`** — canonical schema changelogs; `backend/db` for Ecto/liquibase wiring
+- **`helm/`** — Kubernetes chart; CI-driven deploys, secrets via Infisical
+
+Secondary Python tooling (`src/npl_mcp/` — legacy standalone MCP + local regen tooling):
+
+- **`launcher.py`** — FastMCP instance, FastAPI + Uvicorn entry point (`uv run npl-mcp`)
+- **`docs_regen.py`** — regenerates `npl/npl-full.md` from `conventions/*.yaml`
+- Additional stub modules (`storage/`, `chat/`, `sessions/`, `tasks/`, `meta_tools/`, `pm_tools/`, `instructions/`, `tool_sessions/`) belong to the legacy Python server, superseded by the Phoenix backend + agent-kit-mcp.
 
 ---
 
@@ -264,13 +292,21 @@ See [docs/arch/agent-orchestration.md](docs/arch/agent-orchestration.md) for det
 
 ## Testing
 
+Phoenix backend (ExUnit):
+
+```bash
+cd backend && mix test        # All tests
+```
+
+Python tooling (`src/npl_mcp`, `tests/`):
+
 ```bash
 uv run -m pytest              # All tests
 uv run -m pytest -x           # Stop on first failure
 uv run -m pytest --lf         # Rerun last failed
 ```
 
-TDD cycle: Red (failing test) -> Green (minimal code) -> Refactor. Run full suite before commits.
+TDD cycle: Red (failing test) -> Green (minimal code) -> Refactor. Run relevant suite before commits.
 
 ---
 
@@ -289,8 +325,12 @@ Save shared prompt templates to `./sub-agent-prompts/{task-name}.md`. Test with 
 
 ## Key Project Files
 
-- `pyproject.toml` - package definition, dependencies, `npl-mcp` console script
-- `src/npl_mcp/launcher.py` - CLI entry point (PID, singleton, Uvicorn, tool registrations)
+- `Makefile` - primary build/run/deploy targets (Docker Compose stack, Liquibase, Helm)
+- `conventions/*.yaml` - single source of truth for NPL syntax sections
+- `backend/` - Phoenix app (`noizu_prompt_lingua`)
+- `frontend/` - Next.js app
+- `pyproject.toml` - Python tooling definition (`npl-mcp`, `npl-docs-regen` console scripts)
+- `src/npl_mcp/launcher.py` - legacy Python MCP entry point
 
 ---
 

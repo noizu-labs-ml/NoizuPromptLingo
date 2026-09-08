@@ -53,3 +53,9 @@ databaseChangeLog:
   - include:
       file: changelogs/changeset-019.mcp-entities.yaml
       relativeToChangelogFile: false
+  - include:
+      file: changelogs/changeset-089.prompt-builder.yaml
+      relativeToChangelogFile: false
+  - include:
+      file: changelogs/changeset-090.prompt-logs-and-showcase.yaml
+      relativeToChangelogFile: false
