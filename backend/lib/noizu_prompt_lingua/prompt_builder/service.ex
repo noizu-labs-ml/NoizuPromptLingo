@@ -117,7 +117,7 @@ defmodule NoizuPromptLingua.PromptBuilder.Service do
           {:error, {:generator, reason}, %{tokens_in: 0, tokens_out: 0}}
       end
 
-    settle(key, config, attempt, est)
+    settle(key, config, attempt, est, description, context)
   end
 
   defp generate(user_prompt, config, retry_suffix) do
@@ -127,7 +127,7 @@ defmodule NoizuPromptLingua.PromptBuilder.Service do
     )
   end
 
-  defp settle(key, config, attempt, est) do
+  defp settle(key, config, attempt, est, description \\ nil, context \\ nil) do
     case attempt do
       {:ok, usage, prompt} ->
         cost = est_cost(config, usage.tokens_in, usage.tokens_out)
@@ -135,6 +135,14 @@ defmodule NoizuPromptLingua.PromptBuilder.Service do
         Limiter.charge(key, est, usage.tokens_in + usage.tokens_out)
 
         PromptBuilder.record(key,
+          tokens_in: usage.tokens_in,
+          tokens_out: usage.tokens_out,
+          cost: cost
+        )
+
+        # Accepted builds are logged (consent notice in the builder UI): the
+        # fine-tuning corpus + showcase source. Rejections stay count-only.
+        PromptBuilder.log_prompt(key, description, context, prompt,
           tokens_in: usage.tokens_in,
           tokens_out: usage.tokens_out,
           cost: cost

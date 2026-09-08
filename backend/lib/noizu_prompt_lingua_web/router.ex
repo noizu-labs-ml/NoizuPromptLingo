@@ -90,6 +90,7 @@ defmodule NoizuPromptLinguaWeb.Router do
     pipe_through :api
     post "/build", PromptBuilderController, :build
     get "/status", PromptBuilderController, :status
+    get "/showcase", PromptBuilderController, :showcase_index
   end
 
   # MCP OAuth discovery (JWKS, AS metadata, protected-resource metadata).
@@ -353,6 +354,7 @@ defmodule NoizuPromptLinguaWeb.Router do
     # Prompt Builder config (rate limits, budget cap, per-token pricing).
     get "/prompt-builder/config", PromptBuilderController, :admin_show
     put "/prompt-builder/config", PromptBuilderController, :admin_update
+    post "/prompt-builder/showcase/process", PromptBuilderController, :showcase_process
     get "/users", AdminController, :list_users
     get "/users/:id", AdminController, :show_user
     patch "/users/:id", AdminController, :update_user

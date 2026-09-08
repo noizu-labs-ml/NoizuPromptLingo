@@ -13,6 +13,12 @@ defmodule NoizuPromptLinguaWeb.PromptBuilderController do
   Rejections: 422 with a friendly message for non-prompt-construction input or
   rejected output; 429 (with reset hints) for rate/budget limits; 503 when an
   admin disabled the builder.
+
+  LOGGING CONSENT: accepted builds are persisted to prompt_logs (the fine-tuning
+  corpus + public showcase source). The builder UI shows the notice —
+  "Prompts you submit are logged and may be used for fine-tuning, evaluation,
+  and as public showcase examples." — and /api/prompt-builder/status carries it
+  for API consumers.
   """
 
   alias NoizuPromptLingua.PromptBuilder
@@ -85,7 +91,9 @@ defmodule NoizuPromptLinguaWeb.PromptBuilderController do
       requests_per_minute: config.requests_per_minute,
       daily_cost_cap_usd: Decimal.to_string(config.daily_cost_cap_usd),
       daily_cost_remaining_usd: Decimal.to_string(remaining),
-      resets_at: DateTime.to_iso8601(PromptBuilder.budget_resets_at())
+      resets_at: DateTime.to_iso8601(PromptBuilder.budget_resets_at()),
+      notice:
+        "Prompts you submit are logged and may be used for fine-tuning, evaluation, and as public showcase examples."
     })
   end
 
@@ -100,6 +108,64 @@ defmodule NoizuPromptLinguaWeb.PromptBuilderController do
 
   # Admin surface: GET/PUT /api/admin/prompt-builder/config (the admin UI page
   # is a follow-up; ops can also use PROMPT_BUILDER_* env or direct SQL).
+
+  # GET /api/prompt-builder/showcase — public gallery data (OP vs NPL entries).
+  def showcase_index(conn, params) do
+    entries = PromptBuilder.Showcase.list_entries(limit: parse_limit(params["limit"]))
+
+    json(conn, %{
+      entries: Enum.map(entries, &showcase_view/1),
+      notice:
+        "Showcase entries are built from logged (consented) builder prompts. " <>
+          "Prompts you submit are logged and may be used for fine-tuning, evaluation, and as public showcase examples."
+    })
+  end
+
+  # POST /api/v1/admin/prompt-builder/showcase/process — run a showcase batch
+  # over pending logged prompts (system budget, never user quota).
+  def showcase_process(conn, params) do
+    limit = parse_limit(params["limit"]) |> min(50)
+
+    case PromptBuilder.Showcase.process_batch(limit) do
+      {:ok, stats} ->
+        json(conn, Map.merge(stats, %{pending: PromptBuilder.Showcase.pending_count()}))
+
+      {:error, reason} ->
+        conn |> put_status(422) |> json(%{error: inspect(reason)})
+    end
+  end
+
+  defp parse_limit(nil), do: 5
+
+  defp parse_limit(raw) when is_binary(raw) do
+    case Integer.parse(raw) do
+      {n, _} -> max(1, min(n, 100))
+      :error -> 5
+    end
+  end
+
+  defp parse_limit(n) when is_integer(n), do: max(1, min(n, 100))
+
+  defp showcase_view(e) do
+    %{
+      id: e.id,
+      log_id: e.log_id,
+      original_prompt: e.original_prompt,
+      original_output: e.original_output,
+      npl_prompt: e.npl_prompt,
+      npl_output: e.npl_output,
+      score_original: e.score_original,
+      score_npl: e.score_npl,
+      winner: e.winner,
+      context_sizes: %{
+        original: %{chars: e.ctx_original_chars, tokens: e.ctx_original_tokens},
+        npl: %{chars: e.ctx_npl_chars, tokens: e.ctx_npl_tokens}
+      },
+      rubric: e.rubric,
+      difference_analysis: e.difference_analysis,
+      inserted_at: e.inserted_at
+    }
+  end
 
   # ── admin: GET config ──
   def admin_show(conn, _params) do
@@ -141,7 +207,8 @@ defmodule NoizuPromptLinguaWeb.PromptBuilderController do
       daily_cost_cap_usd: Decimal.to_string(config.daily_cost_cap_usd),
       input_price_per_1k_usd: Decimal.to_string(config.input_price_per_1k_usd),
       output_price_per_1k_usd: Decimal.to_string(config.output_price_per_1k_usd),
-      max_input_chars: config.max_input_chars
+      max_input_chars: config.max_input_chars,
+      showcase_daily_cost_cap_usd: Decimal.to_string(config.showcase_daily_cost_cap_usd)
     }
   end
 end

@@ -143,3 +143,36 @@ export async function fetchUnicodeDb(): Promise<CatalogEntry[]> {
   const data = await res.json();
   return (data.entries ?? []) as CatalogEntry[];
 }
+
+// ── Showcase gallery (public OP-vs-NPL entries) ──
+
+export interface ShowcaseContextSizes {
+  original: { chars: number | null; tokens: number | null };
+  npl: { chars: number | null; tokens: number | null };
+}
+
+export interface ShowcaseEntry {
+  id: string;
+  original_prompt: string;
+  original_output: string | null;
+  npl_prompt: string | null;
+  npl_output: string | null;
+  score_original: number | null;
+  score_npl: number | null;
+  winner: "original" | "npl" | "tie" | null;
+  context_sizes: ShowcaseContextSizes;
+  rubric: Record<string, Record<string, number>> | null;
+  difference_analysis: string | null;
+  inserted_at: string;
+}
+
+export interface ShowcaseResponse {
+  entries: ShowcaseEntry[];
+  notice: string;
+}
+
+export async function fetchShowcase(limit = 50): Promise<ShowcaseResponse> {
+  const res = await fetch(`${API_URL}/api/prompt-builder/showcase?limit=${limit}`);
+  if (!res.ok) throw new PromptBuilderError(res.status, "Showcase unavailable.");
+  return res.json();
+}

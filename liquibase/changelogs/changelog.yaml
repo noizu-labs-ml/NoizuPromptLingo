@@ -56,3 +56,6 @@ databaseChangeLog:
   - include:
       file: changelogs/changeset-020.prompt-builder.yaml
       relativeToChangelogFile: false
+  - include:
+      file: changelogs/changeset-021.prompt-logs-and-showcase.yaml
+      relativeToChangelogFile: false

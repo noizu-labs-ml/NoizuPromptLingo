@@ -30,6 +30,9 @@ defmodule NoizuPromptLingua.Schema.PromptBuilderConfig do
 
     field :max_input_chars, :integer, default: 4_000
 
+    # Separate SYSTEM budget for showcase batch runs — never billed to users.
+    field :showcase_daily_cost_cap_usd, :decimal, default: Decimal.new("5.00")
+
     timestamps(type: :utc_datetime)
   end
 
@@ -45,7 +48,8 @@ defmodule NoizuPromptLingua.Schema.PromptBuilderConfig do
       :daily_cost_cap_usd,
       :input_price_per_1k_usd,
       :output_price_per_1k_usd,
-      :max_input_chars
+      :max_input_chars,
+      :showcase_daily_cost_cap_usd
     ])
     |> validate_required([:provider, :model])
     |> validate_number(:requests_per_minute, greater_than: 0, less_than_or_equal_to: 120)
@@ -55,5 +59,6 @@ defmodule NoizuPromptLingua.Schema.PromptBuilderConfig do
     |> validate_number(:input_price_per_1k_usd, greater_than_or_equal_to: 0)
     |> validate_number(:output_price_per_1k_usd, greater_than_or_equal_to: 0)
     |> validate_number(:max_input_chars, greater_than: 0, less_than_or_equal_to: 32_000)
+    |> validate_number(:showcase_daily_cost_cap_usd, greater_than: 0)
   end
 end

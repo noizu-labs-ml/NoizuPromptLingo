@@ -203,4 +203,44 @@ defmodule NoizuPromptLinguaWeb.PromptBuilderControllerTest do
         else: Application.delete_env(:noizu_prompt_lingua, :prompt_builder)
     end
   end
+
+  # ── showcase gallery + consent ─────────────────────────────────────────
+
+  test "showcase gallery renders from seeded entries and hides failures", %{conn: conn} do
+    log = %NoizuPromptLingua.Schema.PromptLog{}
+    |> NoizuPromptLingua.Schema.PromptLog.changeset(%{key_hash: "k1", description: "desc", prompt: "p"})
+    |> Repo.insert!()
+
+    _ok =
+      %NoizuPromptLingua.Schema.ShowcaseEntry{}
+      |> NoizuPromptLingua.Schema.ShowcaseEntry.changeset(%{
+        log_id: log.id,
+        original_prompt: "A reviewer prompt",
+        original_output: "plain out",
+        npl_prompt: "⌜NPL@1.0⌝ x ⌞NPL@1.0⌟",
+        npl_output: "npl out",
+        score_original: 60,
+        score_npl: 85,
+        winner: "npl",
+        ctx_original_chars: 17,
+        ctx_original_tokens: 5,
+        ctx_npl_chars: 140,
+        ctx_npl_tokens: 35,
+        difference_analysis: "added structure"
+      })
+      |> Repo.insert!()
+
+    conn = get(conn, "#{@base}/showcase")
+    %{"entries" => [entry], "notice" => notice} = json_response(conn, 200)
+    assert entry["score_npl"] == 85
+    assert entry["winner"] == "npl"
+    assert entry["context_sizes"]["npl"]["tokens"]
+    assert notice =~ "logged"
+  end
+
+  test "status carries the logging-consent notice", %{conn: conn} do
+    conn = get(conn, "#{@base}/status")
+    assert %{"notice" => notice} = json_response(conn, 200)
+    assert notice =~ "logged"
+  end
 end

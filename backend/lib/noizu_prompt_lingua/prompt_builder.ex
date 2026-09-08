@@ -24,7 +24,8 @@ defmodule NoizuPromptLingua.PromptBuilder do
     {:daily_cost_cap_usd, :decimal, "PROMPT_BUILDER_DAILY_CAP_USD"},
     {:input_price_per_1k_usd, :decimal, "PROMPT_BUILDER_INPUT_PRICE_PER_1K"},
     {:output_price_per_1k_usd, :decimal, "PROMPT_BUILDER_OUTPUT_PRICE_PER_1K"},
-    {:max_input_chars, :int, "PROMPT_BUILDER_MAX_INPUT_CHARS"}
+    {:max_input_chars, :int, "PROMPT_BUILDER_MAX_INPUT_CHARS"},
+    {:showcase_daily_cost_cap_usd, :decimal, "PROMPT_BUILDER_SHOWCASE_DAILY_CAP_USD"}
   ]
 
   @doc "Effective config: DB row with PROMPT_BUILDER_* env overrides applied."
@@ -141,6 +142,26 @@ defmodule NoizuPromptLingua.PromptBuilder do
   def budget_resets_at do
     now = DateTime.utc_now()
     DateTime.new!(Date.add(now |> DateTime.to_date(), 1), ~T[00:00:00], "Etc/UTC")
+  end
+
+  @doc """
+  Persist an ACCEPTED build (consented via the builder UI notice). Rejections
+  are never logged with content.
+  """
+  @spec log_prompt(String.t(), String.t(), String.t() | nil, String.t(), keyword()) ::
+          {:ok, NoizuPromptLingua.Schema.PromptLog.t()} | {:error, term()}
+  def log_prompt(key_hash, description, context, prompt, opts \\ []) do
+    %NoizuPromptLingua.Schema.PromptLog{}
+    |> NoizuPromptLingua.Schema.PromptLog.changeset(%{
+      key_hash: key_hash,
+      description: description,
+      context: context,
+      prompt: prompt,
+      tokens_in: Keyword.get(opts, :tokens_in, 0),
+      tokens_out: Keyword.get(opts, :tokens_out, 0),
+      est_cost_usd: Keyword.get(opts, :cost, Decimal.new(0))
+    })
+    |> Repo.insert()
   end
 
   @doc "chars/4 estimate when the provider doesn't return usage counts."

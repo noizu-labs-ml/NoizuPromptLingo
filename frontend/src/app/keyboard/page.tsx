@@ -58,7 +58,8 @@ export default function KeyboardPage() {
           <a className="text-blue-600 underline" href="/#get-the-keyboard">
             see Get the NPL Keyboard
           </a>
-          .
+          . See the results in the{" "}
+          <a className="text-blue-600 underline" href="/showcase">NPL Showcase</a>.
         </p>
       </header>
 
@@ -183,6 +184,10 @@ function BuilderPane({
           {busy ? "Building…" : "Build NPL prompt"}
         </button>
 
+        <p className="mt-3 text-xs text-slate-400">
+          Prompts you submit are logged and may be used for fine-tuning, evaluation, and as public
+          showcase examples.
+        </p>
         {status && (
           <p className="mt-3 text-xs text-slate-400">
             {status.enabled

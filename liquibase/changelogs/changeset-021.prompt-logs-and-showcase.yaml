@@ -1,0 +1,164 @@
+databaseChangeLog:
+  # Prompt logging (accepted builds, consent notice in UI) + showcase entries
+  # (OP-vs-NPL eval) + separate system budget for showcase runs. Twin of
+  # priv/repo/migrations/20260908010000_prompt_logs_and_showcase.exs.
+  - changeSet:
+      id: 021-prompt-logs-and-showcase
+      author: system
+      changes:
+        - createTable:
+            tableName: prompt_logs
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: key_hash
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: context
+                  type: text
+              - column:
+                  name: prompt
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: tokens_in
+                  type: integer
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: tokens_out
+                  type: integer
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: est_cost_usd
+                  type: decimal(12,6)
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: showcase_status
+                  type: varchar(32)
+                  defaultValue: 'pending'
+                  constraints:
+                    nullable: false
+              - column:
+                  name: inserted_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_prompt_logs_key_hash
+            tableName: prompt_logs
+            columns:
+              - column:
+                  name: key_hash
+        - createIndex:
+            indexName: idx_prompt_logs_showcase_status
+            tableName: prompt_logs
+            columns:
+              - column:
+                  name: showcase_status
+        - createTable:
+            tableName: showcase_entries
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: log_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: original_prompt
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: original_output
+                  type: text
+              - column:
+                  name: npl_prompt
+                  type: text
+              - column:
+                  name: npl_output
+                  type: text
+              - column:
+                  name: score_original
+                  type: integer
+              - column:
+                  name: score_npl
+                  type: integer
+              - column:
+                  name: winner
+                  type: varchar(16)
+              - column:
+                  name: ctx_original_chars
+                  type: integer
+              - column:
+                  name: ctx_original_tokens
+                  type: integer
+              - column:
+                  name: ctx_npl_chars
+                  type: integer
+              - column:
+                  name: ctx_npl_tokens
+                  type: integer
+              - column:
+                  name: rubric
+                  type: jsonb
+              - column:
+                  name: difference_analysis
+                  type: text
+              - column:
+                  name: error
+                  type: text
+              - column:
+                  name: inserted_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            constraintName: uq_showcase_entries_log
+            tableName: showcase_entries
+            columnNames: log_id
+        - addColumn:
+            tableName: prompt_builder_configs
+            columns:
+              - column:
+                  name: showcase_daily_cost_cap_usd
+                  type: decimal(12,6)
+                  defaultValueNumeric: 5.0
+                  constraints:
+                    nullable: false
