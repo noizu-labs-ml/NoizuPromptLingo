@@ -48,3 +48,7 @@ config :noizu_prompt_lingua, :assets_genai_media, false
 # scope/key/client row would leak across tests. Cache-specific tests opt in
 # via NoizuPromptLingua.MCP.ToolsetCache.enable/0 + flush/0.
 config :noizu_prompt_lingua, :mcp_toolset_cache_enabled, false
+
+# Prompt Builder: Stub generator in tests — no real provider calls; suites
+# script replies via Process.put(:pb_stub_replies, [{:text, ...} | ...]).
+config :noizu_prompt_lingua, :prompt_builder, generator: NoizuPromptLingua.PromptBuilder.Generator.Stub

@@ -2394,3 +2394,11 @@ button.chat-room-header__slug:focus-visible { outline: 2px solid var(--field-foc
 }
 .starred-chip a { color: var(--text, #111827); text-decoration: none; }
 .starred-chip a:hover { text-decoration: underline; }
+
+/* NPL Keyboard landing section */
+.tl-checklist { display: flex; flex-direction: column; gap: var(--space-1, 8px); color: var(--text-secondary); font-size: var(--font-size-md, 16px); padding-left: 20px; }
+.tl-btn { display: inline-flex; align-items: center; gap: 8px; border-radius: 8px; padding: 10px 20px; font-size: var(--font-size-md, 16px); font-weight: 600; text-decoration: none; border: 1px solid transparent; }
+.tl-btn--primary { background: var(--accent, #2563eb); color: #fff; }
+.tl-btn--primary:hover { filter: brightness(1.08); }
+.tl-section__note { font-size: 13px; color: var(--text-tertiary, #94a3b8); margin-top: var(--space-2, 16px); }
+.tl-section__note code { background: var(--surface-alt, #f1f5f9); padding: 2px 6px; border-radius: 4px; }
