@@ -3,7 +3,7 @@ databaseChangeLog:
   # + per-key/day usage accumulator. Twin of priv/repo/migrations/
   # 20260908000000_prompt_builder.exs.
   - changeSet:
-      id: 020-prompt-builder
+      id: 089-prompt-builder
       author: system
       changes:
         - createTable:

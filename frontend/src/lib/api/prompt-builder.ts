@@ -1,4 +1,7 @@
-import { API_URL } from "./transport";
+// Same-origin convention (see ../api.ts) — inlined so this module stays
+// fork-portable (agent-kit's split api/transport layout doesn't exist here).
+const API_URL =
+  typeof window !== "undefined" ? "" : process.env.NEXT_PUBLIC_API_URL || "";
 
 // ── Web NPL Prompt Builder (public /keyboard page) ──
 // Uses raw fetch (not transport.request) because the build endpoint's error

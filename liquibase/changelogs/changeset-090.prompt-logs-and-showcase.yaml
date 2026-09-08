@@ -3,7 +3,7 @@ databaseChangeLog:
   # (OP-vs-NPL eval) + separate system budget for showcase runs. Twin of
   # priv/repo/migrations/20260908010000_prompt_logs_and_showcase.exs.
   - changeSet:
-      id: 021-prompt-logs-and-showcase
+      id: 090-prompt-logs-and-showcase
       author: system
       changes:
         - createTable:
