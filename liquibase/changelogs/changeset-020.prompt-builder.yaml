@@ -1,0 +1,153 @@
+databaseChangeLog:
+  # Web NPL Prompt Builder: singleton config (rate limits, budget caps, pricing)
+  # + per-key/day usage accumulator. Twin of priv/repo/migrations/
+  # 20260908000000_prompt_builder.exs.
+  - changeSet:
+      id: 020-prompt-builder
+      author: system
+      changes:
+        - createTable:
+            tableName: prompt_builder_configs
+            columns:
+              - column:
+                  name: id
+                  type: varchar(255)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: enabled
+                  type: boolean
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: provider
+                  type: varchar(255)
+                  defaultValue: 'groq'
+                  constraints:
+                    nullable: false
+              - column:
+                  name: model
+                  type: varchar(255)
+                  defaultValue: 'openai/gpt-oss-120b'
+                  constraints:
+                    nullable: false
+              - column:
+                  name: requests_per_minute
+                  type: integer
+                  defaultValueNumeric: 6
+                  constraints:
+                    nullable: false
+              - column:
+                  name: tokens_per_minute
+                  type: integer
+                  defaultValueNumeric: 6000
+                  constraints:
+                    nullable: false
+              - column:
+                  name: tokens_per_hour
+                  type: integer
+                  defaultValueNumeric: 40000
+                  constraints:
+                    nullable: false
+              - column:
+                  name: daily_cost_cap_usd
+                  type: decimal(12,6)
+                  defaultValueNumeric: 1.0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: input_price_per_1k_usd
+                  type: decimal(12,6)
+                  defaultValueNumeric: 0.0002
+                  constraints:
+                    nullable: false
+              - column:
+                  name: output_price_per_1k_usd
+                  type: decimal(12,6)
+                  defaultValueNumeric: 0.0006
+                  constraints:
+                    nullable: false
+              - column:
+                  name: max_input_chars
+                  type: integer
+                  defaultValueNumeric: 4000
+                  constraints:
+                    nullable: false
+              - column:
+                  name: inserted_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+        - sql:
+            sql: INSERT INTO prompt_builder_configs (id, inserted_at, updated_at) VALUES ('default', NOW(), NOW())
+        - createTable:
+            tableName: prompt_builder_usage
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: key_hash
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: day
+                  type: date
+                  constraints:
+                    nullable: false
+              - column:
+                  name: request_count
+                  type: integer
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: rejected_count
+                  type: integer
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: tokens_in
+                  type: integer
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: tokens_out
+                  type: integer
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: est_cost_usd
+                  type: decimal(12,6)
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: inserted_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            constraintName: uq_prompt_builder_usage_key_day
+            tableName: prompt_builder_usage
+            columnNames: key_hash, day
