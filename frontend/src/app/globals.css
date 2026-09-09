@@ -1,5 +1,6 @@
+@layer theme, base, components, design-system, utilities;
 @import "tailwindcss";
-@import "./design-system.generated.css";
+@import "./design-system.generated.css" layer(design-system);
 
 /* Scan styleguide package components for Tailwind utility classes */
 @source "../../node_modules/@noizu/styleguide/dist/engine-src";
@@ -59,6 +60,17 @@ html[data-design-theme="style-guide"] {
   --size-action: 40px;
   --size-icon-sm: 18px;
   --size-dot: 6px;
+}
+
+/* Re-assert Tailwind v4 default radius tokens: the generated design-system theme
+   hijacks this namespace with %-based values (blob bug on raw-Tailwind pages).
+   Unlayered + later = wins the custom-property cascade over layer(design-system). */
+html[data-design-theme="style-guide"] {
+  --radius-none: 0;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
 }
 
 /* Shared shell dimensions and state timing. */
