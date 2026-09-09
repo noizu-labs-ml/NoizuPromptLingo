@@ -136,7 +136,8 @@ export async function fetchCategories(): Promise<CategoryDef[]> {
   const res = await fetch("/npl-keyboard/category-registry.json");
   if (!res.ok) return [];
   const data = await res.json();
-  return Array.isArray(data) ? data : (data.categories ?? []);
+  const raw = Array.isArray(data) ? data : (data.categories ?? []);
+  return Array.isArray(raw) ? raw : Object.values(raw);
 }
 
 export async function fetchUnicodeDb(): Promise<CatalogEntry[]> {
