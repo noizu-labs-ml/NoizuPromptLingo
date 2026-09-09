@@ -26,6 +26,17 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // /keyboard uses server actions; stale prerendered HTML (s-maxage=1y) from
+  // old tabs posts dead action IDs after redeploys ("Failed to find Server
+  // Action"). Serve it uncacheable.
+  async headers() {
+    return [
+      {
+        source: "/keyboard",
+        headers: [{ key: "Cache-Control", value: "no-store, must-revalidate" }],
+      },
+    ];
+  },
   // Pin tracing/turbopack to this package. Building from the monorepo
   // otherwise infers /Users/.../Noizu as the workspace root (multiple lockfiles).
   outputFileTracingRoot: frontendRoot,
