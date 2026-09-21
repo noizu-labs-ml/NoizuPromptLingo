@@ -116,6 +116,18 @@ frontend:
       initialDelaySeconds: 5
       periodSeconds: 10
       failureThreshold: 3
+# ── Client analytics (frontend) ───────────────────────────────────────────────
+# Empty measurementId = analytics disabled: docker-entrypoint.sh writes an empty
+# GA_MEASUREMENT_ID into /__env.js, google-analytics.ts short-circuits, and no
+# gtag script or googletagmanager.com request is ever emitted. Set a real
+# G-XXXXXXXXXX here (or via --set) to switch it on.
+analytics:
+  ga:
+    measurementId: ""
+  posthog:
+    key: ""
+    host: "https://us.i.posthog.com"
+
 ingress:
   enabled: true
   className: nginx

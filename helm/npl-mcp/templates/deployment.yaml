@@ -309,6 +309,22 @@ spec:
                   name: {{ .Values.backend.env.secretName }}
                   key: TRP_EMBED_API_KEY
                   optional: true
+            # --- Client analytics ---
+            # docker-entrypoint.sh serialises these into /__env.js -> window.__ENV.
+            # Rendered only when set, so the default deploy ships no measurement
+            # id, no gtag bootstrap and no googletagmanager.com request.
+            {{- with (.Values.analytics | default dict) }}
+            {{- if (.ga | default dict).measurementId }}
+            - name: GA_MEASUREMENT_ID
+              value: {{ .ga.measurementId | quote }}
+            {{- end }}
+            {{- if (.posthog | default dict).key }}
+            - name: POSTHOG_KEY
+              value: {{ .posthog.key | quote }}
+            - name: POSTHOG_HOST
+              value: {{ .posthog.host | quote }}
+            {{- end }}
+            {{- end }}
           livenessProbe:
             httpGet:
               path: {{ .Values.frontend.probes.liveness.path }}
