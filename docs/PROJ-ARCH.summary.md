@@ -12,7 +12,7 @@ Public MCP: no auth. Optional OAuth issues a site-approval token (`sub=site:npl`
 
 ## Core components
 
-nginx (reverse proxy) · Phoenix backend (domain contexts, MCP fleet, channels, Oban) · Next.js frontend (public / app / org / admin surfaces) · Liquibase (canonical schema 000–084) · MCP catalog (server routing + scope packaging) · MCP toolsets/VFS (custom tool sets with profiles + consent elevation; `/tobor/{org}/…` VFS mount) · PBAC/Authz · NPL convention engine (YAML → NPLSpec/NPLLoad) · TRP client (PM source) · Python MCP fleet (FastMCP+FastAPI) · local-mcp (stdio, local-only tools) · browser-controller (Playwright relay) · remote-access-client (frpc tunnels) · helm charts (start-app scaffold, npl-mcp production) · agents//commands//design/ (non-runtime assets)
+nginx (reverse proxy) · Phoenix backend (syntax MCP `/mcp`, public VFS `/vfs`, channels, Oban) · Next.js frontend (evangelist landing / conventions admin / showcase / keyboard) · Liquibase (canonical schema 000–085) · MCP catalog (root-only NPLLoad/NPLSpec; subdomain fleet definitions inherited — served by agent-kit-mcp) · public VFS (`_npl` corpus as browsable markdown via `mcp-mount`; local FUSE via `mcp-fuse`) · MCP toolsets/VFS (leftover admin surfaces: custom tool sets with profiles + consent elevation) · PBAC/Authz · NPL convention engine (YAML → NPLSpec/NPLLoad) · TRP client (PM source) · Python MCP fleet (FastMCP+FastAPI) · local-mcp (stdio, local-only tools) · browser-controller (Playwright relay) · remote-access-client (frpc tunnels) · helm charts (start-app scaffold, npl-mcp production) · agents//commands//design/ (non-runtime assets)
 
 ## MCP servers
 
@@ -20,7 +20,7 @@ Public root `/mcp` serves `NPLLoad` and `NPLSpec` only (no bearer required; opti
 
 ## Key decisions
 
-Elixir/Phoenix platform core with per-domain contexts · multi-server MCP on host paths from one catalog · DB-backed custom tool sets + VFS over the same domain contexts · Liquibase owns DDL (Ecto migrations minimal) · separate human (OIDC+Guardian) vs agent (key→JWT) auth · PBAC v2 with ToolGuard shadow mode · frontend API facade (mock/REST/hybrid swap) · NPL YAML conventions with layered pipeline + DSL · Python fleet kept for pipes/orchestration/persona tooling · TRP as PM source (cross-DB FKs dropped, changeset 078)
+Elixir/Phoenix platform core with per-domain contexts · syntax-only pivot (PR #63): public MCP = NPLLoad/NPLSpec, work fleet in agent-kit-mcp, corpus mounted as public VFS · multi-server MCP on host paths from one catalog (inherited) · DB-backed custom tool sets (leftover admin) · Liquibase owns DDL (Ecto migrations minimal) · open MCP endpoint; optional OAuth site-approval token, humans OIDC+Guardian · PBAC v2 with ToolGuard shadow mode · frontend API facade (mock/REST/hybrid swap) · NPL YAML conventions with layered pipeline + DSL · Python fleet kept for pipes/orchestration/persona tooling · TRP as PM source (cross-DB FKs dropped, changeset 078)
 
 ## Stack
 
