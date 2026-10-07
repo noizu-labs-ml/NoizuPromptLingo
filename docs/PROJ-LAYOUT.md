@@ -24,7 +24,7 @@ NoizuPromptLingo/
 ├── local-mcp/                      # TypeScript local MCP helper (tools/, lib/)
 ├── tests/                          # Python test suites → [layout/tests.md](layout/tests.md)
 ├── docs/                           # Documentation → [layout/docs.md](layout/docs.md)
-│   ├── arch/ · schema/ · layout/ · agents/ · claude/ · reference/ · testing/
+│   ├── arch/ · schema/ · layout/ · agents/ · claude/ · reference/ · testing/ · howto/
 │   ├── pending/ · prior-version/
 │   ├── PROJ-LAYOUT.md              #   This file (+ .summary.md)
 │   ├── PROJ-ARCH.md                #   Architecture (+ .summary.md)
@@ -51,9 +51,10 @@ NoizuPromptLingo/
 │   ├── docker-compose.dev.yaml · .override.yaml · .ci.yaml · .sandbox.yaml
 │   ├── Dockerfile · Dockerfile.sandbox
 │   └── Makefile                    # Build/task automation (init, build, run, migrate, regen, sandbox targets)
-├── liquibase/                      # DB migrations — Python MCP DB (changelogs/ 001–019, liquibase.properties.example)
+├── liquibase/                      # DB migrations — Python MCP DB (changelogs/ 001–019 + 089–090; 005 gap; liquibase.properties.example)
 ├── tools/                          # Utility scripts (git_tree/git_dump, markdown, validators/, lib/)
 ├── scripts/                        # Operational scripts (gen-env.sh, remote-access cert minting, port-forward)
+├── marketing/                      # Marketing copy (promptlingo/positioning.md)
 ├── gh-pages                        # GitHub Pages submodule (static site, branch: gh-pages)
 ├── .claude/ · .agents/ · .codex/   # Agent harness configs (agents/, commands/, skills symlinks)
 ├── .claude-plugin/ · .grok-plugin/ # Plugin marketplace manifests (Claude / Grok)

@@ -1,4 +1,4 @@
-# Backend Domains — changesets 011–084
+# Backend Domains — changesets 011–085
 
 Authoritative source: `backend/db/changelog/` (Liquibase, applied via `make migrate` / liquibase-shell). Changesets 000–010 (core identity) are documented in [core-identity.md](core-identity.md).
 
@@ -40,6 +40,7 @@ Authoritative source: `backend/db/changelog/` (Liquibase, applied via `make migr
 | PM split | 078 | cross-DB FK drops (PM data moved to TRP) |
 | Org slugs | 082 | org slug uniqueness |
 | Browser capture resource types | 084 | resource_type_enum += browser_screenshot, browser_video (guarded enum re-type: scoped_memberships.resource_type, media.owner_type) |
+| OAuth site-approval | 085 | oauth tables: user made nullable for site-approval principals (`sub=site:npl`) — raw SQL alters |
 
 ## Table Inventory (all backend tables)
 

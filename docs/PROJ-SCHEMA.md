@@ -4,8 +4,8 @@ Persistence reference for the whole project. NPL has **two separate PostgreSQL s
 
 | Store | Owner | Migrations | Docs |
 |-------|-------|-----------|------|
-| Backend DB | Elixir Phoenix API (`:noizu_prompt_lingua`) | `backend/db/changelog/` (Liquibase 000–084) + minimal Ecto migrations | [schema/backend-domains.md](schema/backend-domains.md), [schema/core-identity.md](schema/core-identity.md) |
-| Python MCP DB | `src/npl_mcp` (asyncpg) | `liquibase/changelogs/` (changesets 001–019) | [schema/instructions.md](schema/instructions.md), [schema/npl-content.md](schema/npl-content.md), [schema/project-management.md](schema/project-management.md) |
+| Backend DB | Elixir Phoenix API (`:noizu_prompt_lingua`) | `backend/db/changelog/` (Liquibase 000–085) + minimal Ecto migrations | [schema/backend-domains.md](schema/backend-domains.md), [schema/core-identity.md](schema/core-identity.md) |
+| Python MCP DB | `src/npl_mcp` (asyncpg) | `liquibase/changelogs/` (changesets 001–019 + 089–090) | [schema/instructions.md](schema/instructions.md), [schema/npl-content.md](schema/npl-content.md), [schema/project-management.md](schema/project-management.md) |
 | Redis | Backend cache/PubSub | — | [schema/config-artifacts.md](schema/config-artifacts.md) |
 | Weaviate (optional) | Memory embeddings (`NplMemory` class) | — | [schema/config-artifacts.md](schema/config-artifacts.md) |
 
@@ -223,7 +223,7 @@ organizations ||--o{ invite_tokens : "scoped to"
 
 ## Python MCP DB — table inventory
 
-Schema from `liquibase/changelogs/changeset-001…019` (all tables prefixed `npl_`):
+Schema from `liquibase/changelogs/changeset-001…019, 089–090` (all tables prefixed `npl_` except the prompt-builder/showcase set):
 
 | Domain | Tables |
 |--------|--------|
@@ -237,6 +237,7 @@ Schema from `liquibase/changelogs/changeset-001…019` (all tables prefixed `npl
 | Agents | npl_agent_groups, npl_agent_group_members, npl_agent_pipe_entries |
 | Ops | npl_secrets, npl_tool_calls, npl_tool_errors, npl_llm_calls, npl_reviews, npl_inline_comments |
 | MCP server entities | mcp_prompts, mcp_prompt_versions, mcp_resources, mcp_resource_templates (changeset-019) |
+| Prompt builder / showcase | prompt_builder_configs, prompt_builder_usage, prompt_logs, showcase_entries (changesets 089–090; unprefixed) |
 
 **Conventions**: UUID PKs (`gen_random_uuid()`), `TIMESTAMP`/`TIMESTAMPTZ` with `NOW()` defaults, `updated_at` (never `modified_at`), soft-delete `deleted_at` where applicable. Managed by Liquibase YAML (`liquibase/changelogs/`, config in `liquibase/liquibase.properties`).
 
@@ -247,7 +248,7 @@ Schema from `liquibase/changelogs/changeset-001…019` (all tables prefixed `npl
 | Range | Content |
 |-------|---------|
 | 000–010 | Extensions, enums, seed helper, versioned entities, auth, media, users, orgs, invites → [schema/core-identity.md](schema/core-identity.md) |
-| 011–084 | Webhooks, admin flag, PBAC/ACL, projects, sessions, GitHub, artifacts, chat, reviews, tickets, boards, mock-MCP, personas, instructions, agent pipes, remote access, memory, customers, market, campaigns, LLM models, media providers, pubsub, unicode codex, MCP platform, OAuth AS, marketing, org slugs (082), MCP tool sets (083), browser capture resource types (084) → [schema/backend-domains.md](schema/backend-domains.md) |
+| 011–085 | Webhooks, admin flag, PBAC/ACL, projects, sessions, GitHub, artifacts, chat, reviews, tickets, boards, mock-MCP, personas, instructions, agent pipes, remote access, memory, customers, market, campaigns, LLM models, media providers, pubsub, unicode codex, MCP platform, OAuth AS, marketing, org slugs (082), MCP tool sets (083), browser capture resource types (084), oauth site-approval user nullable (085) → [schema/backend-domains.md](schema/backend-domains.md) |
 
 ### Python MCP (`liquibase/changelogs/`)
 
@@ -260,6 +261,8 @@ Schema from `liquibase/changelogs/changeset-001…019` (all tables prefixed `npl
 | 011–013 | artifacts, generic sessions, chat |
 | 014–018 | artifact binary, agent pipes, taskers, enhanced managers, metrics |
 | 019 | MCP entities (prompts/resources/templates) |
+| 089 | Prompt builder (prompt_builder_configs, prompt_builder_usage) |
+| 090 | Prompt logs + showcase (prompt_logs, showcase_entries) |
 
 ## Ecto migrations
 

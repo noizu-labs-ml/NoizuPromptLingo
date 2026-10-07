@@ -13,7 +13,7 @@ NoizuPromptLingo/
 ├── remote-access-client/   # TypeScript remote-access tunnel client
 ├── local-mcp/              # TypeScript local MCP helper
 ├── tests/                  # Python test suites (conftest.py + 40+ test files)
-├── docs/                   # PROJ-ARCH/LAYOUT/SCHEMA + arch/, schema/, layout/, agents/, claude/, reference/, testing/, pending/, prior-version/
+├── docs/                   # PROJ-ARCH/LAYOUT/SCHEMA + arch/, schema/, layout/, agents/, claude/, reference/, testing/, howto/, pending/, prior-version/
 ├── project-management/     # Personas, user stories, PRDs, implementation reviews, screens, components, roadmap + index.yaml files
 ├── conventions/            # NPL convention YAML definitions (source of truth for NPLSpec/NPLLoad)
 ├── npl/                    # Generated NPL artifacts (npl-full.md)
@@ -26,9 +26,10 @@ NoizuPromptLingo/
 ├── docker/                 # Docker config (PostgreSQL init)
 ├── nginx/                  # Reverse proxy config + image
 ├── sandbox/                # Sandbox image support (supervisord, Samba)
-├── liquibase/              # Database migrations — Python MCP DB (Liquibase changesets 001–019)
+├── liquibase/              # Database migrations — Python MCP DB (Liquibase changesets 001–019 + 089–090)
 ├── tools/                  # Utility scripts (git, markdown, validators)
 ├── scripts/                # Operational scripts (gen-env, remote-access certs, port-forward)
+├── marketing/              # Marketing copy (promptlingo positioning)
 ├── gh-pages                # GitHub Pages submodule
 ├── .claude/ · .agents/ · .codex/            # Agent harness configs
 ├── .claude-plugin/ · .grok-plugin/          # Plugin marketplace manifests
