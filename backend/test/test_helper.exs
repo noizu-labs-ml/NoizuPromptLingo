@@ -26,6 +26,15 @@ if Code.ensure_loaded?(Phoenix.CodeReloader.MixListener) and
   GenServer.stop(Phoenix.CodeReloader.MixListener, :normal)
 end
 
+# Build the sref -> entity handler table once, before any test runs. It is
+# built lazily on first sref lookup (seconds cold: it loads every app module);
+# before noizu_labs_entities 0.3.4, callers racing that build got `%{}`, so a
+# Guardian subject (`ref.session.…`) 401'd. Fail fast if it is incomplete.
+:ok = NoizuPromptLingua.EntityRepo.warm_sref_handlers()
+
+Map.has_key?(NoizuPromptLingua.EntityRepo.sref_handlers(), "session") ||
+  raise "sref handler table is missing \"session\": #{inspect(Map.keys(NoizuPromptLingua.EntityRepo.sref_handlers()))}"
+
 ExUnit.start()
 
 # Apply the memory-engine schema (Liquibase 045–050) to the test DB so the memory suite is

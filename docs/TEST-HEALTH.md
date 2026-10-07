@@ -49,6 +49,13 @@ tests 9.0–16.7s (bcrypt `log_rounds: 4`; was 25.6s), `--cover` instrumentation
 | Python `tests/` (40 pytest files, legacy `src/npl_mcp` tooling) | coverage gap | No CI job; legacy server superseded by the Phoenix backend |
 | Smoke run is ~88% sync (14.8s of 16.7s) | sync-only | Test step is no longer the critical-path driver; not worth the async flake hunt this pass |
 
+Entity UID collisions / sref race: none outstanding. `noizu_labs_entities` 0.3.4 mints ids with the library
+default `Noizu.Entity.UID.Default` (no app-level `:uid_provider`).
+`backend/test/noizu_prompt_lingua/entities/entity_uid_concurrency_test.exs` creates 50 versioned strings
+concurrently and asserts unique ids that round-trip (`fetched.id == created.id`, all listed). It fails with the old
+`{ms, 0}` stub. `test/test_helper.exs` warms the sref handler table (`EntityRepo.warm_sref_handlers/0`) before the
+suite, and `Application.start/2` does the same at boot.
+
 ## Nightly
 `ci.yml` `schedule: "23 7 * * *"` (main): `test-backend` + `test-frontend` (warm main-ref
 mix/npm caches), `test-backend-exhaustive` (full suite + full-pass coverage artifact),
