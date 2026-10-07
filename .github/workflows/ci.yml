@@ -89,7 +89,9 @@ jobs:
       # Saved every run (sha suffix) so _build/test tracks the latest source:
       # the exact lock-hash key never re-saved after its first hit, so a stale
       # _build forced a near-full recompile on every run.
-      - uses: actions/cache@v4
+      # PRs restore only; develop/main pushes and the nightly schedule save.
+      - uses: actions/cache/restore@v4
+        id: mix-cache
         with:
           path: |
             backend/deps
@@ -134,6 +136,13 @@ jobs:
           name: coverage-smoke
           path: backend/smoke-coverage.txt
           if-no-files-found: ignore
+      - uses: actions/cache/save@v4
+        if: steps.mix-cache.outputs.cache-hit != 'true' && github.event_name != 'pull_request'
+        with:
+          path: |
+            backend/deps
+            backend/_build
+          key: ${{ steps.mix-cache.outputs.cache-primary-key }}
 
   test-backend-exhaustive:
     # Manual full-suite run: `gh workflow run ci.yml` (Actions → CI → Run
