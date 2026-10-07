@@ -5,7 +5,7 @@ defmodule NoizuPromptLingua.MixProject do
     [
       app: :noizu_prompt_lingua,
       version: "0.1.0",
-      elixir: "~> 1.15",
+      elixir: "~> 1.18",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
@@ -83,8 +83,7 @@ defmodule NoizuPromptLingua.MixProject do
       {:noizu_weaviate, "~> 0.2.0"},
 
       # GenAI
-      # 0.3.9 is on develop (Qwen media + OpenRouter); Hex still at 0.3.5.
-      {:genai, "~> 0.3.9", github: "noizu-labs-ml/genai", branch: "develop"},
+      {:genai, "~> 0.4.0"},
       # {:ex_llama, "~> 0.2.0"},
 
       # Routing
@@ -120,7 +119,7 @@ defmodule NoizuPromptLingua.MixProject do
       # StreamableHTTP plug SSE fix). The hex release is that exact source
       # packaged; parity was verified by the full-suite flip gate before this
       # pin landed.
-      {:noizu_mcp, "~> 0.3.1"},
+      {:noizu_mcp, "~> 0.5.0"},
       # VFS Wave 0 conformance harness: Mint WebSocket test client driving the
       # VFSWS transport through a real Bandit listener (same pattern as the
       # lib's transport suite).
