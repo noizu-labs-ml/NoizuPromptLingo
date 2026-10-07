@@ -75,6 +75,15 @@ questions: [list] | null     # If needs_clarification
 4. **Error Cases**: Expected failure modes and error messages
 5. **Integration Points**: Mock boundaries, verify interactions
 
+### Verification Runs (subset-only policy)
+
+The project has high coverage; full-suite runs cost hours and add no signal for incremental work. When running tests to verify test syntax, red status, or a refinement:
+
+1. **Run ONLY the affected files**: new/modified test files plus the existing test files that cover the touched modules.
+2. **Never invoke the whole suite**: no bare `mix test` / `uv run -m pytest` / full `npm test`. If a runner requires a file list (e.g. frontend `test:contracts` enumerates files in `package.json`), add only the new files to that list.
+3. **Named-file pattern (this repo)**: backend `cd backend && mix test <file1> <file2>…`; frontend `cd frontend && npm run test:contracts`.
+4. **Full runs belong to CI** — never compensate for uncertainty by widening the run.
+
 ### Test Structure
 
 ```
@@ -206,7 +215,7 @@ describe('FeatureUnderTest', () => {
 
 ## Constraints
 
-- Does NOT run tests (that's TDD Debugger's job)
+- Does NOT run the full test suite (subset-only verification runs allowed; see Verification Runs)
 - Does NOT implement production code
 - Does NOT modify PRD documents
 - MUST maintain test isolation

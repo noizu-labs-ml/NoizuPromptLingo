@@ -256,3 +256,6 @@ databaseChangeLog:
   - include:
       file: 084-browser-capture-resource-types.yaml
       relativeToChangelogFile: true
+  - include:
+      file: 085-oauth-site-approval.yaml
+      relativeToChangelogFile: true

@@ -83,6 +83,16 @@ defmodule NoizuPromptLinguaWeb.Router do
     get "/browser-sessions", BrowserSessionController, :install
   end
 
+  # Web NPL Prompt Builder (public /keyboard page backing API). Public by
+  # design — every caller is keyed by client IP + opaque client session id and
+  # capped by the admin-editable rate/budget config (see PromptBuilder).
+  scope "/api/prompt-builder", NoizuPromptLinguaWeb do
+    pipe_through :api
+    post "/build", PromptBuilderController, :build
+    get "/status", PromptBuilderController, :status
+    get "/showcase", PromptBuilderController, :showcase_index
+  end
+
   # MCP OAuth discovery (JWKS, AS metadata, protected-resource metadata).
   scope "/.well-known", NoizuPromptLinguaWeb do
     pipe_through :api
@@ -127,209 +137,6 @@ defmodule NoizuPromptLinguaWeb.Router do
     pipe_through [:api, :mcp_key_required]
     get "/", ComponentController, :index
     get "/:name/bundle", ComponentController, :bundle
-  end
-
-  # MCP servers (Streamable HTTP), routed by subdomain — each domain is served
-  # at `<domain>.<host>/mcp` (e.g. sessions.tobor.locker/mcp). The `host:`
-  # prefix match (trailing dot) matches any host beginning with that label.
-  # The root aggregator (all domains + Discovery) is served at the bare host
-  # under `/mcp`. Requests must present a Bearer MCP JWT (see MCPConfig).
-  scope "/", host: "organizations." do
-    forward "/mcp",
-            Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
-              NoizuPromptLingua.MCP.Organizations,
-              "organizations"
-            )
-  end
-
-  scope "/", host: "projects." do
-    forward "/mcp",
-            Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
-              NoizuPromptLingua.MCP.Projects,
-              "projects"
-            )
-  end
-
-  scope "/", host: "clients." do
-    forward "/mcp",
-            Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
-              NoizuPromptLingua.MCP.Clients,
-              "clients"
-            )
-  end
-
-  scope "/", host: "sessions." do
-    forward "/mcp",
-            Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
-              NoizuPromptLingua.MCP.Sessions,
-              "sessions"
-            )
-  end
-
-  scope "/", host: "artifacts." do
-    forward "/mcp",
-            Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
-              NoizuPromptLingua.Domains.Artifacts.MCP,
-              "artifacts"
-            )
-  end
-
-  scope "/", host: "chat." do
-    forward "/mcp",
-            Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
-              NoizuPromptLingua.Domains.Chat.MCP,
-              "chat"
-            )
-  end
-
-  scope "/", host: "review." do
-    forward "/mcp",
-            Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
-              NoizuPromptLingua.Domains.Review.MCP,
-              "review"
-            )
-  end
-
-  scope "/", host: "tickets." do
-    forward "/mcp",
-            Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
-              NoizuPromptLingua.Domains.Tickets.MCP,
-              "tickets"
-            )
-  end
-
-  scope "/", host: "assets." do
-    forward "/mcp",
-            Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
-              NoizuPromptLingua.Domains.Assets.MCP,
-              "assets"
-            )
-  end
-
-  scope "/", host: "wiki." do
-    forward "/mcp",
-            Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
-              NoizuPromptLingua.Domains.Wiki.MCP,
-              "wiki"
-            )
-  end
-
-  scope "/", host: "github." do
-    forward "/mcp",
-            Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
-              NoizuPromptLingua.Domains.Github.MCP,
-              "github"
-            )
-  end
-
-  scope "/", host: "personas." do
-    forward "/mcp",
-            Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
-              NoizuPromptLingua.Domains.Personas.MCP,
-              "personas"
-            )
-  end
-
-  scope "/", host: "instructions." do
-    forward "/mcp",
-            Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
-              NoizuPromptLingua.Domains.Instructions.MCP,
-              "instructions"
-            )
-  end
-
-  scope "/", host: "memory." do
-    forward "/mcp",
-            Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
-              NoizuPromptLingua.Domains.Memory.MCP,
-              "memory"
-            )
-  end
-
-  scope "/", host: "markdown." do
-    forward "/mcp",
-            Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
-              NoizuPromptLingua.Domains.Markdown.MCP,
-              "markdown"
-            )
-  end
-
-  scope "/", host: "notifications." do
-    forward "/mcp",
-            Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
-              NoizuPromptLingua.Domains.Notifications.MCP,
-              "notifications"
-            )
-  end
-
-  scope "/", host: "pubsub." do
-    forward "/mcp",
-            Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
-              NoizuPromptLingua.Domains.PubSub.MCP,
-              "pubsub"
-            )
-  end
-
-  scope "/", host: "browser." do
-    forward "/mcp",
-            Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
-              NoizuPromptLingua.Domains.Browser.MCP,
-              "browser"
-            )
-  end
-
-  scope "/", host: "customers." do
-    forward "/mcp",
-            Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
-              NoizuPromptLingua.Domains.Customers.MCP,
-              "customers"
-            )
-  end
-
-  scope "/", host: "market." do
-    forward "/mcp",
-            Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
-              NoizuPromptLingua.Domains.Market.MCP,
-              "market"
-            )
-  end
-
-  scope "/", host: "campaigns." do
-    forward "/mcp",
-            Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
-              NoizuPromptLingua.Domains.Campaigns.MCP,
-              "campaigns"
-            )
-  end
-
-  scope "/", host: "unicode." do
-    forward "/mcp",
-            Noizu.MCP.Transport.StreamableHTTP.Plug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts_for_subdomain(
-              NoizuPromptLingua.Domains.UnicodeCodex.MCP,
-              "unicode"
-            )
   end
 
   # Dynamic mock-MCP gateway. Each mock MCP (defined + activated via the
@@ -384,12 +191,12 @@ defmodule NoizuPromptLinguaWeb.Router do
           :handle_org_project
   end
 
-  # Root MCP mount: the lib transport behind the NPL-owned JsonRpcGuard
-  # (B4 — malformed jsonrpc versions answer -32600 instead of hanging).
+  # Public NPL syntax MCP. No bearer required; OAuth site-approval tokens are
+  # accepted when presented (see TransportPlug).
   scope "/mcp" do
     forward "/",
             NoizuPromptLinguaWeb.MCP.TransportPlug,
-            NoizuPromptLinguaWeb.MCPConfig.plug_opts(NoizuPromptLingua.MCP)
+            NoizuPromptLinguaWeb.MCPConfig.plug_opts_public(NoizuPromptLingua.MCP)
   end
 
   # VFS Wave 0 substrate: the WebSocket VFS transport at /vfs, backed by the
@@ -469,6 +276,10 @@ defmodule NoizuPromptLinguaWeb.Router do
     patch "/auth/mcp/default-endpoint", AuthController, :update_default_mcp
     get "/auth/mcp/endpoints", McpEndpointsController, :index
     post "/auth/mcp/endpoints", McpEndpointsController, :create
+    # PRD-020 FR-1: literal-segment routes MUST precede `get .../:id`, else
+    # slug-available dies as Ecto.Query.CastError (":id" captures the segment).
+    get "/auth/mcp/endpoints/slug-available", McpEndpointsController, :slug_available
+    post "/auth/mcp/endpoints/propose-tools", McpEndpointsController, :propose_tools
     get "/auth/mcp/endpoints/:id", McpEndpointsController, :show
     patch "/auth/mcp/endpoints/:id", McpEndpointsController, :update
     delete "/auth/mcp/endpoints/:id", McpEndpointsController, :delete
@@ -540,6 +351,10 @@ defmodule NoizuPromptLinguaWeb.Router do
 
   scope "/api/v1/admin", NoizuPromptLinguaWeb do
     pipe_through [:api, :authenticated, :admin]
+    # Prompt Builder config (rate limits, budget cap, per-token pricing).
+    get "/prompt-builder/config", PromptBuilderController, :admin_show
+    put "/prompt-builder/config", PromptBuilderController, :admin_update
+    post "/prompt-builder/showcase/process", PromptBuilderController, :showcase_process
     get "/users", AdminController, :list_users
     get "/users/:id", AdminController, :show_user
     patch "/users/:id", AdminController, :update_user
@@ -978,10 +793,11 @@ defmodule NoizuPromptLinguaWeb.Router do
     delete "/users/:user_id/policies/:policy_id", PolicyController, :detach_from_user
   end
 
-  # NPL conventions reference data (read-only, any authenticated viewer)
+  # NPL conventions reference data (public, read-only YAML)
   scope "/api/v1/npl", NoizuPromptLinguaWeb do
-    pipe_through [:api, :authenticated]
+    pipe_through [:api]
 
+    get "/gallery", NPLController, :gallery
     get "/sections", NPLController, :index_sections
     get "/conventions", NPLController, :index_conventions
     get "/conventions/:section/:slug", NPLController, :show_convention

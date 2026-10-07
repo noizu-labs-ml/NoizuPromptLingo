@@ -73,7 +73,7 @@ config :noizu_prompt_lingua, env: config_env()
 config :noizu_prompt_lingua, :mcp_oauth,
   # Legacy short JWT iss (API-key path) + full AS issuer URL for OAuth tokens.
   issuer: "tobor-locker",
-  issuer_url: "https://tobor.locker",
+  issuer_url: "https://promptlingo.dev",
   # API-key minted tokens (Phase 0).
   access_token_ttl_seconds: 7 * 24 * 3600,
   # OAuth user-grade access tokens (authorization_code / refresh).

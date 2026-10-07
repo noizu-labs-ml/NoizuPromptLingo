@@ -1,3 +1,156 @@
+{{- /* Apex-style HTTP routing: backend (mcp) path split with the SPA
+catch-all. Shared by the apex domain and every ingress.extraHosts entry. */}}
+{{- define "npl-mcp.apexHttp" -}}
+http:
+  paths:
+    - path: /mcp
+      pathType: Prefix
+      backend:
+        service:
+          name: {{ include "npl-mcp.fullname" . }}
+          port:
+            name: mcp
+    - path: /sse
+      pathType: Prefix
+      backend:
+        service:
+          name: {{ include "npl-mcp.fullname" . }}
+          port:
+            name: mcp
+    - path: /socket
+      pathType: Prefix
+      backend:
+        service:
+          name: {{ include "npl-mcp.fullname" . }}
+          port:
+            name: mcp
+    - path: /browser-sessions
+      pathType: Prefix
+      backend:
+        service:
+          name: {{ include "npl-mcp.fullname" . }}
+          port:
+            name: mcp
+    - path: /health
+      pathType: Prefix
+      backend:
+        service:
+          name: {{ include "npl-mcp.fullname" . }}
+          port:
+            name: mcp
+    - path: /.well-known/oauth-authorization-server
+      pathType: Prefix
+      backend:
+        service:
+          name: {{ include "npl-mcp.fullname" . }}
+          port:
+            name: mcp
+    - path: /.well-known/oauth-protected-resource
+      pathType: Prefix
+      backend:
+        service:
+          name: {{ include "npl-mcp.fullname" . }}
+          port:
+            name: mcp
+    - path: /.well-known/jwks.json
+      pathType: Exact
+      backend:
+        service:
+          name: {{ include "npl-mcp.fullname" . }}
+          port:
+            name: mcp
+    - path: /oauth
+      pathType: Prefix
+      backend:
+        service:
+          name: {{ include "npl-mcp.fullname" . }}
+          port:
+            name: mcp
+    - path: /auth/oidc
+      pathType: Prefix
+      backend:
+        service:
+          name: {{ include "npl-mcp.fullname" . }}
+          port:
+            name: mcp
+    - path: /auth/sso-callback
+      pathType: Exact
+      backend:
+        service:
+          name: {{ include "npl-mcp.fullname" . }}
+          port:
+            name: http
+    - path: /auth/register
+      pathType: Exact
+      backend:
+        service:
+          name: {{ include "npl-mcp.fullname" . }}
+          port:
+            name: http
+    - path: /custom
+      pathType: Prefix
+      backend:
+        service:
+          name: {{ include "npl-mcp.fullname" . }}
+          port:
+            name: mcp
+    - path: /org
+      pathType: Prefix
+      backend:
+        service:
+          name: {{ include "npl-mcp.fullname" . }}
+          port:
+            name: mcp
+    - path: /user
+      pathType: Prefix
+      backend:
+        service:
+          name: {{ include "npl-mcp.fullname" . }}
+          port:
+            name: mcp
+    - path: /api/auth
+      pathType: Prefix
+      backend:
+        service:
+          name: {{ include "npl-mcp.fullname" . }}
+          port:
+            name: http
+    - path: /api/keys
+      pathType: Prefix
+      backend:
+        service:
+          name: {{ include "npl-mcp.fullname" . }}
+          port:
+            name: http
+    - path: /api/mcp-token
+      pathType: Prefix
+      backend:
+        service:
+          name: {{ include "npl-mcp.fullname" . }}
+          port:
+            name: http
+    - path: /vfs
+      pathType: Prefix
+      backend:
+        service:
+          name: {{ include "npl-mcp.fullname" . }}
+          port:
+            name: mcp
+    - path: /api/
+      pathType: Prefix
+      backend:
+        service:
+          name: {{ include "npl-mcp.fullname" . }}
+          port:
+            name: mcp
+    - path: /
+      pathType: Prefix
+      backend:
+        service:
+          name: {{ include "npl-mcp.fullname" . }}
+          port:
+            name: http
+{{- end }}
 {{- if .Values.ingress.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -25,175 +178,19 @@ spec:
         - {{ .Values.domain }}
         - "*.{{ .Values.domain }}"
       secretName: {{ .Values.tls.secretName }}
+    {{- range (.Values.ingress.extraTls | default list) }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
   {{- end }}
   rules:
-    # ── Root domain ──
-    - host: {{ .Values.domain }}
-      http:
-        paths:
-          - path: /mcp
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ include "npl-mcp.fullname" . }}
-                port:
-                  name: mcp
-          - path: /sse
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ include "npl-mcp.fullname" . }}
-                port:
-                  name: mcp
-          # Phoenix UserSocket (WebSocket) — the local browser-controller and
-          # org channels connect to wss://<host>/socket. Must hit the backend,
-          # not the SPA catch-all (which fails the WS upgrade / 404s).
-          - path: /socket
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ include "npl-mcp.fullname" . }}
-                port:
-                  name: mcp
-          # `curl https://<host>/browser-sessions | bash` launcher (backend).
-          - path: /browser-sessions
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ include "npl-mcp.fullname" . }}
-                port:
-                  name: mcp
-          - path: /health
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ include "npl-mcp.fullname" . }}
-                port:
-                  name: mcp
-          # MCP OAuth AS discovery + authorize/consent (must hit Phoenix, not SPA).
-          - path: /.well-known/oauth-authorization-server
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ include "npl-mcp.fullname" . }}
-                port:
-                  name: mcp
-          - path: /.well-known/oauth-protected-resource
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ include "npl-mcp.fullname" . }}
-                port:
-                  name: mcp
-          - path: /.well-known/jwks.json
-            pathType: Exact
-            backend:
-              service:
-                name: {{ include "npl-mcp.fullname" . }}
-                port:
-                  name: mcp
-          - path: /oauth
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ include "npl-mcp.fullname" . }}
-                port:
-                  name: mcp
-          # Authentik OIDC redirect flow (SSOController :oidc_init / :oidc_callback)
-          # lives on the Phoenix backend at /auth/oidc — must not fall through to
-          # the SPA catch-all (which 404s).
-          - path: /auth/oidc
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ include "npl-mcp.fullname" . }}
-                port:
-                  name: mcp
-          # SPA finishes the hand-off. Exact so it never hits Phoenix.
-          - path: /auth/sso-callback
-            pathType: Exact
-            backend:
-              service:
-                name: {{ include "npl-mcp.fullname" . }}
-                port:
-                  name: http
-          - path: /auth/register
-            pathType: Exact
-            backend:
-              service:
-                name: {{ include "npl-mcp.fullname" . }}
-                port:
-                  name: http
-          # Grouped custom MCP scopes: /custom/<slug>/mcp
-          - path: /custom
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ include "npl-mcp.fullname" . }}
-                port:
-                  name: mcp
-          # W1 org-scoped custom MCP scopes: /org/<org_slug>/custom/<slug>/mcp
-          - path: /org
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ include "npl-mcp.fullname" . }}
-                port:
-                  name: mcp
-          # W2 account-scoped custom MCP scopes: /user/<slug>/mcp
-          - path: /user
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ include "npl-mcp.fullname" . }}
-                port:
-                  name: mcp
-          - path: /api/auth
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ include "npl-mcp.fullname" . }}
-                port:
-                  name: http
-          - path: /api/keys
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ include "npl-mcp.fullname" . }}
-                port:
-                  name: http
-          - path: /api/mcp-token
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ include "npl-mcp.fullname" . }}
-                port:
-                  name: http
-          # VFS Wave 0: WebSocket VFS transport (mcp-mount --url wss://<host>/vfs).
-          # Additive — same TLS/service as the MCP surface. Long-lived WS: the
-          # 86400s read/send timeouts set above apply (same as /mcp + /socket).
-          - path: /vfs
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ include "npl-mcp.fullname" . }}
-                port:
-                  name: mcp
-          - path: /api/
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ include "npl-mcp.fullname" . }}
-                port:
-                  name: mcp
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ include "npl-mcp.fullname" . }}
-                port:
-                  name: http
-    # ── Wildcard subdomains — all MCP traffic to backend ──
+    {{- range $host := prepend (default list .Values.ingress.extraHosts) .Values.domain }}
+    - host: {{ $host }}
+      {{- include "npl-mcp.apexHttp" $ | nindent 6 }}
+    {{- end }}
     - host: "*.{{ .Values.domain }}"
       http:
         paths:
@@ -225,9 +222,6 @@ spec:
                 name: {{ include "npl-mcp.fullname" . }}
                 port:
                   name: mcp
-          # Browser GETs on wiki./tickets./… used to hit the SPA. Host-only
-          # cookies made that look like a logged-out app. Phoenix redirects
-          # non-MCP paths to the apex host (tobor.locker).
           - path: /
             pathType: Prefix
             backend:

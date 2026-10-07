@@ -38,6 +38,21 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
   # intentionally omitted here (see report follow-ups).
   @core_variant_groups ~w(sessions projects organizations)
 
+  # Restricted-core policy (alacarte): the tools a `core_variant` package keeps
+  # ENABLED per group (canonical underscore names). Everything else in the
+  # group's live catalog is seeded/healed `disabled: true`. Session_Manifest is
+  # exempt — it is the client's own state report and stays enabled everywhere
+  # (W5 contract).
+  @core_variant_policy %{
+    "organizations" => ~w(Organization_Overview Organization_Get),
+    "projects" => ~w(Project_Overview Project_Get),
+    "sessions" => ~w(Session_Create Session_Overview)
+  }
+
+  # Every selectable group id (21 today) — the "full" preset's surface. Derived
+  # from the live catalog so the preset tracks `MCPServers.@servers` drift.
+  @full_preset_groups Enum.map(MCPServers.customizable(), & &1.id)
+
   # W2 scope sharing. Canonical storage is the config jsonb key `"visibility"`;
   # the schema surfaces it via `MCPCustomScope.visibility/1` (virtual field).
   @visibilities ~w(org account shared)
@@ -47,6 +62,10 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
   # only `<Entity>_Overview` + `<Entity>_(Create|Get|List|Update|Delete)` stay
   # enabled — everything else in the group is seeded disabled. Groups without a
   # `:crud_entity` keep current behavior (all tools enabled).
+  # `:tools` presets ("core"/"full", alacarte) carry an explicit ALLOW-MAP of
+  # enabled tools per group (`:all` = every catalog tool); everything else in
+  # the group is seeded disabled. Shared expansion for the URL tool-selection
+  # param lives in `preset_tool_sets/1`.
   @presets %{
     "basic_crud" => %{
       name: "Basic CRUD",
@@ -58,12 +77,24 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
         "projects" => "Project",
         "tickets" => "Ticket"
       }
+    },
+    "core" => %{
+      name: "Core",
+      description: "Core variant — essential sessions, projects & organizations tools only.",
+      groups: @core_variant_groups,
+      tools: @core_variant_policy
+    },
+    "full" => %{
+      name: "Full",
+      description: "Every customizable group with every tool enabled.",
+      groups: @full_preset_groups,
+      tools: Map.new(@full_preset_groups, fn id -> {id, :all} end)
     }
   }
 
   # Global all-in-one package every account/org is cloned from. NPL load/spec
-  # tools are attached by MCP.Custom for all_in_one scopes and tobor clones
-  # (not a selectable group).
+  # tools are attached by MCP.Custom for all_in_one scopes, tobor clones, and
+  # core variants / core clones (not a selectable group).
   @default_package_slug "tobor"
   @account_default_name "Tobor Locker"
   @legacy_account_default_name "default-mcp"
@@ -93,6 +124,15 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
   @doc "Slug of the global default package every account is offered."
   def default_package_slug, do: @default_package_slug
 
+  @doc "Slug of the global `core` core-variant template."
+  def core_variant_slug, do: @core_variant_slug
+
+  # PRD-020 FR-1: built-in template slugs can never be claimed by new endpoints.
+  @reserved_slugs [@default_package_slug, @core_variant_slug]
+
+  @doc "Slugs reserved for built-in packages (tobor, core); unavailable to new endpoints."
+  def reserved_slugs, do: @reserved_slugs
+
   @doc "Display name of the per-account default custom endpoint."
   def account_default_name, do: @account_default_name
 
@@ -104,9 +144,10 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
 
   @doc """
   Config seed for a named preset, or `nil` when unknown. For CRUD-preset groups
-  the seed disables every non-CRUD tool (keys follow the live catalog's emitted
-  tool-name form, so downstream disabled lookups match whatever the server
-  currently emits); unknown groups seed plain group configs.
+  and `:tools` allow-map presets the seed disables every tool outside the
+  preset's enabled set (keys follow the live catalog's emitted tool-name form,
+  so downstream disabled lookups match whatever the server currently emits);
+  unknown groups seed plain group configs.
   """
   def preset_config(slug) when is_binary(slug) do
     case Map.fetch(@presets, slug) do
@@ -115,10 +156,11 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
 
       {:ok, preset} ->
         crud = Map.get(preset, :crud_entity) || %{}
+        allow = Map.get(preset, :tools)
 
         groups =
           Map.new(preset.groups, fn id ->
-            {id, %{"tools" => preset_tools_config(id, crud)}}
+            {id, %{"tools" => preset_tools_config(id, crud, allow)}}
           end)
 
         %{"groups" => groups}
@@ -127,7 +169,106 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
 
   def preset_config(_), do: nil
 
-  defp preset_tools_config(group_id, crud) do
+  @doc """
+  Enabled tool names for a named preset — `{:ok, MapSet.t(String.t())}` of
+  canonical underscore names across every group the preset covers, or
+  `:unknown_preset`. The shared expansion used by config seeding
+  (`preset_config/1`) and the `NoizuPromptLingua.MCP.UrlToolsetParam`
+  white-list compile. The always-on `Session_Manifest` is included wherever
+  the sessions catalog exposes it; Discovery tools are excluded (same
+  rejection as the toolset layer's include set).
+  """
+  @spec preset_tool_sets(String.t()) :: {:ok, MapSet.t(String.t())} | :unknown_preset
+  def preset_tool_sets(slug) when is_binary(slug) do
+    case Map.fetch(@presets, slug) do
+      :error ->
+        :unknown_preset
+
+      {:ok, preset} ->
+        allow = Map.get(preset, :tools)
+        crud = Map.get(preset, :crud_entity) || %{}
+
+        tools =
+          Enum.flat_map(preset.groups, fn group_id ->
+            cond do
+              essential = allow && Map.get(allow, group_id) ->
+                names =
+                  catalog_tool_names(group_id)
+                  |> Enum.filter(&(&1 == @manifest_tool or essential == :all or &1 in essential))
+
+                if group_id == "sessions" and @manifest_tool not in names do
+                  names ++ [@manifest_tool]
+                else
+                  names
+                end
+
+              entity = Map.get(crud, group_id) ->
+                catalog_tool_names(group_id)
+                |> Enum.filter(&(basic_crud_tool?(entity, &1) or &1 == @manifest_tool))
+
+              true ->
+                catalog_tool_names(group_id)
+            end
+          end)
+
+        {:ok, MapSet.new(tools)}
+    end
+  end
+
+  def preset_tool_sets(_), do: :unknown_preset
+
+  # Live catalog tool names for a group, canonical underscore form, Discovery
+  # excluded (same rejection as the toolset layer's include set).
+  defp catalog_tool_names(group_id) do
+    case MCPServers.server_module(group_id) do
+      module when is_atom(module) and not is_nil(module) ->
+        module.__mcp__(:tools)
+        |> Noizu.MCP.Server.Features.Tools.expand()
+        |> Enum.reject(&discovery_spec?/1)
+        |> Enum.map(&NoizuPromptLingua.MCP.ToolNames.canonical(&1.definition.name))
+        |> Enum.uniq()
+
+      _ ->
+        []
+    end
+  end
+
+  # Allow-map presets ("core"/"full"): the map lists the enabled tools per group
+  # (`:all` = everything); every other catalog tool is stamped disabled.
+  # Session_Manifest is exempt (kept enabled, explicit entry in sessions).
+  # Stamp keys are canonical (the allow-map constants are canonical).
+  defp preset_tools_config(group_id, _crud, allow) when is_map(allow) do
+    case Map.get(allow, group_id) do
+      nil ->
+        %{}
+
+      essential ->
+        group_id
+        |> MCPServers.server_module()
+        |> case do
+          nil ->
+            %{}
+
+          module ->
+            module.__mcp__(:tools)
+            |> Noizu.MCP.Server.Features.Tools.expand()
+            |> Enum.reject(&discovery_spec?/1)
+            |> Enum.flat_map(fn spec ->
+              name = NoizuPromptLingua.MCP.ToolNames.canonical(spec.definition.name)
+
+              if name == @manifest_tool or essential == :all or name in essential,
+                do: [],
+                else: [{name, %{"disabled" => true}}]
+            end)
+            |> Map.new()
+            |> then(fn tools ->
+              if group_id == "sessions", do: Map.put_new(tools, @manifest_tool, %{}), else: tools
+            end)
+        end
+    end
+  end
+
+  defp preset_tools_config(group_id, crud, _allow) do
     case Map.fetch(crud, group_id) do
       :error ->
         %{}
@@ -610,7 +751,12 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
       "is_default" => is_default,
       "source_template_slug" =>
         Map.get(attrs, "source_template_slug") || source.source_template_slug || source.slug,
-      "config" => %{"groups" => groups_from(source)}
+      # PRD-020 FR-4: explicit caller-supplied config (wizard path, US-111)
+      # replaces the source groups wholesale; absent config keeps today's
+      # byte-identical groups_from(source) carry-over — plus the source's
+      # display identity (alacarte WP4; visibility/segment stay per-clone
+      # decisions).
+      "config" => Map.get(attrs, "config") || inherited_config(source)
     })
   end
 
@@ -666,6 +812,23 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
 
   defp groups_from(_), do: Map.new(@default_package_groups, fn id -> {id, group_seed(id)} end)
 
+  # Clone-time config carry-over: the source's groups plus its display
+  # identity (sanitized — an invalid display never blocks a clone).
+  defp inherited_config(source) do
+    config = %{"groups" => groups_from(source)}
+
+    case source && source.config && get_key(source.config, "display") do
+      nil ->
+        config
+
+      display ->
+        case sanitize_display(display) do
+          display when display != %{} -> Map.put(config, "display", display)
+          _ -> config
+        end
+    end
+  end
+
   # Additive-only: the sessions group always carries the (unrestricted)
   # manifest tool entry. An explicit owner override for `Session_Manifest`
   # (disabled/hidden) is already present in the tools map and never clobbered.
@@ -709,11 +872,15 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
   @doc """
   Get-or-create the default `"core"` core-variant scope (global/org-less). Idempotent.
   Included in `core+custom` packaging output.
+
+  The seed is RESTRICTED: a catalog walk stamps `disabled: true` on every tool
+  outside `@core_variant_policy` (Session_Manifest exempt). An existing global
+  row is repaired in place via `heal_core_variant/1`.
   """
   def get_core_variant(_opts \\ []) do
     case get_by_slug(@core_variant_slug) do
       nil ->
-        groups = Map.new(@core_variant_groups, fn id -> {id, group_seed(id)} end)
+        groups = Map.new(@core_variant_groups, fn id -> {id, core_variant_group_seed(id)} end)
 
         attrs = %{
           "slug" => @core_variant_slug,
@@ -730,7 +897,104 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
         end
 
       scope ->
-        scope
+        heal_core_variant(scope)
+    end
+  end
+
+  @doc "The restricted-core enable policy (`%{group_id => canonical tool names}`)."
+  def core_variant_policy, do: @core_variant_policy
+
+  # Fresh group config for a core-variant group: every catalog tool NOT in the
+  # restricted policy (and not the exempt manifest) is seeded disabled.
+  defp core_variant_group_seed(group_id) do
+    essential = Map.get(@core_variant_policy, group_id, [])
+
+    tools =
+      catalog_tool_names(group_id)
+      |> Map.new(fn name ->
+        if name == @manifest_tool or name in essential,
+          do: {name, %{}},
+          else: {name, %{"disabled" => true}}
+      end)
+
+    tools = if group_id == "sessions", do: Map.put_new(tools, @manifest_tool, %{}), else: tools
+    %{"tools" => tools}
+  end
+
+  # Repair drift on the stored global `core` row (mirror of
+  # `heal_default_package/1`): union-merge any missing core-variant groups
+  # (seeded restricted), stamp the restricted policy's `disabled: true` on
+  # non-essential tools, and CLEAR stray disables on essential tools (and the
+  # always-on `Session_Manifest`). Policy-only — never removes a group and
+  # leaves group-level flags (a deliberate group disable) alone. User clones of
+  # core keep their frozen configs — this heals the global template row ONLY.
+  # Idempotent; persists only when something actually changed, and on update
+  # failure the healed config is still returned so the caller sees the intended
+  # tool set.
+  def heal_core_variant(%MCPCustomScope{} = scope) do
+    groups = normalize_groups(scope.config || %{})
+
+    healed =
+      Enum.reduce(@core_variant_groups, groups, fn id, acc ->
+        case Map.get(acc, id) do
+          nil -> Map.put(acc, id, core_variant_group_seed(id))
+          gc -> Map.put(acc, id, heal_core_variant_group(id, gc))
+        end
+      end)
+
+    if healed == groups do
+      scope
+    else
+      config = Map.put(scope.config || %{}, "groups", healed)
+
+      case update(scope, %{"config" => config}) do
+        {:ok, updated} -> updated
+        _ -> %{scope | config: config}
+      end
+    end
+  end
+
+  defp heal_core_variant_group(group_id, gc) do
+    essential = Map.get(@core_variant_policy, group_id, [])
+    tools = Map.get(gc, "tools") || %{}
+
+    healed =
+      catalog_tool_names(group_id)
+      |> Enum.reduce(tools, fn name, acc ->
+        heal_core_tool(acc, name, name in essential or name == @manifest_tool)
+      end)
+
+    healed =
+      if group_id == "sessions", do: Map.put_new(healed, @manifest_tool, %{}), else: healed
+
+    Map.put(gc, "tools", healed)
+  end
+
+  # Stamp the policy disable on a non-essential tool; clear a stray disable on
+  # an essential one. Writes canonical keys; a legacy dotted key (if present) is
+  # repaired in place; other flags on the entry are preserved.
+  defp heal_core_tool(tools, name, essential?) do
+    dotted = NoizuPromptLingua.MCP.ToolNames.dotted(name)
+
+    {key, entry} =
+      cond do
+        Map.has_key?(tools, name) -> {name, Map.get(tools, name) || %{}}
+        dotted != name and Map.has_key?(tools, dotted) -> {dotted, Map.get(tools, dotted) || %{}}
+        true -> {name, %{}}
+      end
+
+    cond do
+      essential? and Map.get(entry, "disabled") == true ->
+        Map.put(tools, key, Map.delete(entry, "disabled"))
+
+      essential? ->
+        tools
+
+      Map.get(entry, "disabled") == true ->
+        tools
+
+      true ->
+        Map.put(tools, key, Map.put(entry, "disabled", true))
     end
   end
 
@@ -878,11 +1142,96 @@ defmodule NoizuPromptLingua.MCPCustomScopes do
   #     Carried verbatim (from the incoming config, falling back to `prior` so a
   #     group-only edit keeps the stored mode); invalid values are carried too so
   #     the schema's config validation rejects them rather than silently dropping.
+  #   * `display` — endpoint visual identity (alacarte): {image, emoji, color},
+  #     sanitized per field (non-conforming fields dropped); absent carries prior.
   defp put_reserved_keys(normalized, config, prior) do
+    config = sanitize_display_config(config)
+    prior = sanitize_display_config(prior)
+
     normalized
     |> maybe_put_reserved("segment", config, prior, &is_boolean/1)
     |> maybe_put_reserved("visibility", config, prior, fn _ -> true end)
+    |> maybe_put_reserved("display", config, prior, &valid_display?/1)
   end
+
+  # Sanitize the `display` reserved key in a config map before reservation:
+  # only {image, emoji, color} survive, each validated; a display that
+  # sanitizes to nothing is REMOVED, so the reservation falls back to prior
+  # (absent carries prior — an empty or fully-invalid display never clears a
+  # stored one).
+  defp sanitize_display_config(config) when is_map(config) do
+    case get_key(config, "display") do
+      nil ->
+        config
+
+      display ->
+        case sanitize_display(display) do
+          display when display != %{} -> Map.put(config, "display", display)
+          _ -> drop_display_key(config)
+        end
+    end
+  end
+
+  defp sanitize_display_config(config), do: config
+
+  defp drop_display_key(config) do
+    config
+    |> Enum.reject(fn {key, _} -> to_string(key) == "display" end)
+    |> Map.new()
+  end
+
+  # `image` = media short_id/URL ≤512 chars; `emoji` = ≤16 graphemes;
+  # `color` = hex3/6/8 or a CSS named color.
+  @display_hex ~r/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/
+
+  # CSS Color Module level-3/4 extended (148) named colors, lowercase.
+  @css_colors ~w(
+    aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue
+    blueviolet brown burlywood cadetblue chartreuse chocolate coral cornflowerblue
+    cornsilk crimson cyan darkblue darkcyan darkgoldenrod darkgray darkgreen darkgrey
+    darkkhaki darkmagenta darkolivegreen darkorange darkorchid darkred darksalmon
+    darkseagreen darkslateblue darkslategray darkslategrey darkturquoise darkviolet
+    deeppink deepskyblue dimgray dimgrey dodgerblue firebrick floralwhite forestgreen
+    fuchsia gainsboro ghostwhite gold goldenrod gray green greenyellow grey honeydew
+    hotpink indianred indigo ivory khaki lavender lavenderblush lawngreen lemonchiffon
+    lightblue lightcoral lightcyan lightgoldenrodyellow lightgray lightgreen lightgrey
+    lightpink lightsalmon lightseagreen lightskyblue lightslategray lightslategrey
+    lightsteelblue lightyellow lime limegreen linen magenta maroon mediumaquamarine
+    mediumblue mediumorchid mediumpurple mediumseagreen mediumslateblue mediumspringgreen
+    mediumturquoise mediumvioletred midnightblue mintcream mistyrose moccasin navajowhite
+    navy oldlace olive olivedrab orange orangered orchid palegoldenrod palegreen
+    paleturquoise palevioletred papayawhip peachpuff peru pink plum powderblue purple
+    rebeccapurple red rosybrown royalblue saddlebrown salmon sandybrown seagreen seashell
+    sienna silver skyblue slateblue slategray slategrey snow springgreen steelblue tan
+    teal thistle tomato turquoise violet wheat white whitesmoke yellow yellowgreen
+  )
+
+  defp sanitize_display(display) when is_map(display) do
+    %{}
+    |> maybe_put_display("image", display, &(is_binary(&1) and String.length(&1) <= 512))
+    |> maybe_put_display("emoji", display, &(is_binary(&1) and String.length(&1) <= 16))
+    |> maybe_put_display("color", display, &valid_display_color?/1)
+  end
+
+  defp sanitize_display(_), do: nil
+
+  defp maybe_put_display(map, key, display, valid?) do
+    case get_key(display, key) do
+      value when is_binary(value) ->
+        if valid?.(value), do: Map.put(map, key, value), else: map
+
+      _ ->
+        map
+    end
+  end
+
+  defp valid_display_color?(value) when is_binary(value),
+    do: Regex.match?(@display_hex, value) or value in @css_colors
+
+  defp valid_display_color?(_), do: false
+
+  # display passes reservation only when something survived sanitization
+  defp valid_display?(display), do: is_map(display) and map_size(display) > 0
 
   defp maybe_put_reserved(map, key, config, prior, valid?) do
     value =

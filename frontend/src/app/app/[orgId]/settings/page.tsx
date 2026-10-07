@@ -82,7 +82,7 @@ export default function OrgSettingsPage() {
             Connect Claude.ai, ChatGPT, and CLI agents to Tobor Locker via OAuth (no static OAuth
             secret to copy). Legacy API keys live on the same page for older CLIs.
           </p>
-          <Link className="sg-btn sg-btn--black sg-btn--sm" href="/app/mcp-keys">
+          <Link className="sg-btn sg-btn--black sg-btn--sm" href="/app/mcp-setup">
             Open MCP client setup
           </Link>
         </section>

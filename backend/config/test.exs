@@ -29,6 +29,11 @@ config :noizu_prompt_lingua, NoizuPromptLinguaWeb.Endpoint,
 config :noizu_sendgrid,
   sandbox_enable: true
 
+# Cheap hashes in test: OAuth client secrets, MCP API keys and org tokens are
+# bcrypt-hashed on create/verify; the default 12 rounds (~250ms/hash) dominates
+# suites that mint them. Production cost is unaffected (runtime/prod config).
+config :bcrypt_elixir, log_rounds: 4
+
 config :logger, level: :warning
 
 config :phoenix, :plug_init_mode, :runtime
@@ -48,3 +53,7 @@ config :noizu_prompt_lingua, :assets_genai_media, false
 # scope/key/client row would leak across tests. Cache-specific tests opt in
 # via NoizuPromptLingua.MCP.ToolsetCache.enable/0 + flush/0.
 config :noizu_prompt_lingua, :mcp_toolset_cache_enabled, false
+
+# Prompt Builder: Stub generator in tests — no real provider calls; suites
+# script replies via Process.put(:pb_stub_replies, [{:text, ...} | ...]).
+config :noizu_prompt_lingua, :prompt_builder, generator: NoizuPromptLingua.PromptBuilder.Generator.Stub

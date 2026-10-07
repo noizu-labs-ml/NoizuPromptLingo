@@ -5,7 +5,7 @@
  *   --port / REMOTE_ACCESS_PORT       local port to expose (3000)
  *   --token / REMOTE_ACCESS_TOKEN     MCP JWT (minted from an MCP API key)
  *   --org / REMOTE_ACCESS_ORG         organization id (UUID)
- *   --api / REMOTE_ACCESS_API         NPL API base (https://tobor.locker)
+ *   --api / REMOTE_ACCESS_API         harness API base (https://agent-kit.therobot.institute)
  *   --server / REMOTE_ACCESS_SERVER   frps control host (tunnel.noizu.com)
  *   --server-port / REMOTE_ACCESS_SERVER_PORT  frps control port (7000)
  *   --local-ip / REMOTE_ACCESS_LOCAL_IP        local bind ip (127.0.0.1)
@@ -51,7 +51,7 @@ export function loadConfig(argv: string[] = process.argv.slice(2)): Config {
   const api =
     (args.api as string) ||
     process.env.REMOTE_ACCESS_API ||
-    "https://tobor.locker";
+    "https://agent-kit.therobot.institute";
   const server =
     (args.server as string) ||
     process.env.REMOTE_ACCESS_SERVER ||

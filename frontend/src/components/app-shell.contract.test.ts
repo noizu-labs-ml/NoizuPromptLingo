@@ -58,7 +58,7 @@ test('navigation retains task-oriented groups and established destinations', () 
     '/browser',
     '/github',
     '/mock-mcp',
-    '/app/mcp-keys',
+    '/app/mcp-setup',
     '/ticket-types',
     '/ticket-fields',
     '/settings',
@@ -69,7 +69,6 @@ test('navigation retains task-oriented groups and established destinations', () 
     '/app/admin/llm-models',
     '/app/admin/media-providers',
     '/app/admin/authz',
-    '/app/admin/oauth-clients',
   ]) {
     contract(appNav, new RegExp(`href: ['"]${href.replaceAll('/', '\\/')}['"]`), `route changed or missing: ${href}`);
   }

@@ -13,6 +13,30 @@ const frontendRoot = path.resolve(__dirname);
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // MCP management UX cleanup: user MCP management consolidated into
+  // /app/mcp-setup; admin OAuth clients folded into the MCP Config hub.
+  // permanent:false — revocable if we reconsider the IA.
+  async redirects() {
+    return [
+      { source: "/app/mcp-keys", destination: "/app/mcp-setup", permanent: false },
+      {
+        source: "/app/admin/oauth-clients",
+        destination: "/app/admin/mcp-config?tab=oauth-clients",
+        permanent: false,
+      },
+    ];
+  },
+  // /keyboard uses server actions; stale prerendered HTML (s-maxage=1y) from
+  // old tabs posts dead action IDs after redeploys ("Failed to find Server
+  // Action"). Serve it uncacheable.
+  async headers() {
+    return [
+      {
+        source: "/keyboard",
+        headers: [{ key: "Cache-Control", value: "no-store, must-revalidate" }],
+      },
+    ];
+  },
   // Pin tracing/turbopack to this package. Building from the monorepo
   // otherwise infers /Users/.../Noizu as the workspace root (multiple lockfiles).
   outputFileTracingRoot: frontendRoot,

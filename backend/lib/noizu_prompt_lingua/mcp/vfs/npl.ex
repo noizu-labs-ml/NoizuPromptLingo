@@ -6,6 +6,8 @@ defmodule NoizuPromptLingua.MCP.VFS.NPL do
       /tobor/_npl                           → the plane root
       /tobor/_npl/conventions/              → the conventions/*.yaml source of truth
       /tobor/_npl/conventions/{section}.yaml → raw YAML, read-only
+      /tobor/_npl/sections/                 → NPLLoad markdown per section
+      /tobor/_npl/sections/{section}.md     → grouped NPLLoad(section)
       /tobor/_npl/spec.md                   → the rendered full spec (NPLSpec path)
 
   ## Decisions & conventions
@@ -36,7 +38,8 @@ defmodule NoizuPromptLingua.MCP.VFS.NPL do
 
   @plane "_npl"
   @tobor "tobor"
-  @sections_dir "conventions"
+  @yaml_dir "conventions"
+  @md_dir "sections"
   @spec_file "spec.md"
 
   # ── stat/2 ────────────────────────────────────────────────────────────────
@@ -49,12 +52,22 @@ defmodule NoizuPromptLingua.MCP.VFS.NPL do
   end
 
   defp stat_rest([]), do: {:ok, Scope.dir_node()}
-  defp stat_rest([@sections_dir]), do: {:ok, Scope.dir_node()}
+  defp stat_rest([@yaml_dir]), do: {:ok, Scope.dir_node()}
+  defp stat_rest([@md_dir]), do: {:ok, Scope.dir_node()}
 
-  defp stat_rest([@sections_dir, filename]) do
+  defp stat_rest([@yaml_dir, filename]) do
     with {:ok, yaml_files} <- yaml_files(),
          true <- filename in yaml_files do
       {:ok, Scope.file_node(size_of(Path.join(NPL.conventions_dir(), filename)))}
+    else
+      _fallback -> {:error, :enoent}
+    end
+  end
+
+  defp stat_rest([@md_dir, filename]) do
+    with {:ok, section} <- md_section(filename),
+         {:ok, body} <- section_md(section) do
+      {:ok, Scope.file_node(byte_size(body))}
     else
       _fallback -> {:error, :enoent}
     end
@@ -79,16 +92,33 @@ defmodule NoizuPromptLingua.MCP.VFS.NPL do
   end
 
   defp list_rest([]) do
-    {:ok, [Scope.dir_entry(@sections_dir), Scope.file_entry(@spec_file)], nil}
+    {:ok,
+     [
+       Scope.dir_entry(@yaml_dir),
+       Scope.dir_entry(@md_dir),
+       Scope.file_entry(@spec_file)
+     ], nil}
   end
 
-  defp list_rest([@sections_dir]) do
+  defp list_rest([@yaml_dir]) do
     with {:ok, yaml_files} <- yaml_files() do
       {:ok, Scope.file_entries(Enum.sort(yaml_files)), nil}
     end
   end
 
-  defp list_rest([@sections_dir, _filename]), do: {:error, :enotdir}
+  defp list_rest([@md_dir]) do
+    dir = NPL.conventions_dir()
+
+    names =
+      NPL.valid_sections()
+      |> Enum.filter(&File.exists?(Path.join(dir, &1 <> ".yaml")))
+      |> Enum.map(&(&1 <> ".md"))
+
+    {:ok, Scope.file_entries(names), nil}
+  end
+
+  defp list_rest([@yaml_dir, _filename]), do: {:error, :enotdir}
+  defp list_rest([@md_dir, _filename]), do: {:error, :enotdir}
   defp list_rest([@spec_file]), do: {:error, :enotdir}
   defp list_rest(_rest), do: {:error, :enoent}
 
@@ -102,13 +132,23 @@ defmodule NoizuPromptLingua.MCP.VFS.NPL do
   end
 
   defp read_rest([]), do: {:error, :eisdir}
-  defp read_rest([@sections_dir]), do: {:error, :eisdir}
+  defp read_rest([@yaml_dir]), do: {:error, :eisdir}
+  defp read_rest([@md_dir]), do: {:error, :eisdir}
 
-  defp read_rest([@sections_dir, filename]) do
+  defp read_rest([@yaml_dir, filename]) do
     with {:ok, yaml_files} <- yaml_files(),
          true <- filename in yaml_files,
          {:ok, content} <- File.read(Path.join(NPL.conventions_dir(), filename)) do
       {:ok, content, Scope.version()}
+    else
+      _fallback -> {:error, :enoent}
+    end
+  end
+
+  defp read_rest([@md_dir, filename]) do
+    with {:ok, section} <- md_section(filename),
+         {:ok, body} <- section_md(section) do
+      {:ok, body, Scope.version()}
     else
       _fallback -> {:error, :enoent}
     end
@@ -165,6 +205,23 @@ defmodule NoizuPromptLingua.MCP.VFS.NPL do
            NoizuPromptLingua.NPL.Definition.format(defn, flags: %{concise: true, xml: false}) do
       {:ok, spec}
     else
+      _ -> {:error, :eio}
+    end
+  end
+
+  defp md_section(filename) do
+    section = String.replace_suffix(filename, ".md", "")
+
+    if filename != section and section in NPL.valid_sections() do
+      {:ok, section}
+    else
+      {:error, :enoent}
+    end
+  end
+
+  defp section_md(section) do
+    case NoizuPromptLingua.NPL.Loader.load(section, layout: :grouped) do
+      {:ok, body} when is_binary(body) -> {:ok, body}
       _ -> {:error, :eio}
     end
   end

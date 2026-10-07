@@ -1,5 +1,5 @@
 replicas: 1
-domain: tobor.locker
+domain: promptlingo.dev
 deployment:
   # The backend and frontend run in the same pod. RollingUpdate briefly starts a
   # second backend, which can exhaust the shared Postgres connection ceiling.
@@ -13,16 +13,19 @@ backend:
   image:
     repository: ops.noizu.com/npl-mcp/server
     tag: "sha-5441c35"
+    tag: "sha-dcb9222"
     pullPolicy: IfNotPresent
   port: 4040
   # Authentik OIDC redirect flow (SSOController). issuer must NOT have a trailing
   # slash — runtime.exs appends "/.well-known/openid-configuration". client id/
   # secret are sourced from the npl-mcp-secrets AUTHENTIK_* keys.
   oidc:
+    # Same Authentik app until a promptlingo-specific client is minted.
+    # Add https://promptlingo.dev/auth/oidc/callback to that app's redirect URIs.
     issuer: "https://auth.derobot.is/application/o/tobor-locker"
   # MCP OAuth authorization-server public issuer (AS metadata + JWT iss).
   mcp:
-    issuerUrl: "https://tobor.locker"
+    issuerUrl: "https://promptlingo.dev"
     # Phase 3 PDP: local | spicedb | disabled
     pdpMode: local
     # Phase 4: set false to retire legacy API-key create/mint (OAuth-only).
@@ -92,6 +95,7 @@ frontend:
   image:
     repository: ops.noizu.com/npl-mcp/frontend
     tag: "sha-5441c35"
+    tag: "sha-dcb9222"
     pullPolicy: IfNotPresent
   port: 3000
   resources:
@@ -112,17 +116,29 @@ frontend:
       initialDelaySeconds: 5
       periodSeconds: 10
       failureThreshold: 3
+# ── Client analytics (frontend) ───────────────────────────────────────────────
+# Empty measurementId = analytics disabled: docker-entrypoint.sh writes an empty
+# GA_MEASUREMENT_ID into /__env.js, google-analytics.ts short-circuits, and no
+# gtag script or googletagmanager.com request is ever emitted. Set a real
+# G-XXXXXXXXXX here (or via --set) to switch it on.
+analytics:
+  ga:
+    measurementId: ""
+  posthog:
+    key: ""
+    host: "https://us.i.posthog.com"
 ingress:
   enabled: true
   className: nginx
   cloudflareWhitelist: true
   annotations:
-    # Carried over from the retired platform/tobor-locker TF module — larger
-    # proxy buffer for auth headers/cookies on tobor.locker.
     nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+  extraHosts:
+    - www.promptlingo.dev
+  extraTls: []
 tls:
   enabled: true
-  secretName: toborlocker-tls
+  secretName: promptlingo-dev-tls
   infisical:
     enabled: true
     hostAPI: https://infisical.noizu.com/api
@@ -131,9 +147,9 @@ tls:
     secretNamespace: infra
     projectSlug: k8-infra
     envSlug: prod
-    secretsPath: /apps/tls/toborlocker
-    crtKey: TOBORLOCKER_TLS_CRT
-    keyKey: TOBORLOCKER_TLS_KEY
+    secretsPath: /apps/tls/promptlingo
+    crtKey: PROMPTLINGO_TLS_CRT
+    keyKey: PROMPTLINGO_TLS_KEY
 autoscaling:
   enabled: false
   minReplicas: 1

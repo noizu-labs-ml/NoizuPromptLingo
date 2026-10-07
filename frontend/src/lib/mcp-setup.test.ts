@@ -8,6 +8,7 @@ import {
   mcpOauthHint,
   mcpOauthServerName,
   mcpOauthSnippet,
+  toolSelectionUrl,
   type McpOauthClient,
 } from './mcp-setup';
 
@@ -81,4 +82,15 @@ test('every OAuth client has a dedicated snippet builder', () => {
   for (const id of ids) {
     assert.ok(mcpOauthSnippet(id, NAME, URL).includes(NAME));
   }
+});
+
+// ── Alacarte WP5: ?t= tool-selection URLs ride the same snippet path ─────────
+
+test('a tool-selection URL is a plain MCP URL plus a url-safe ?t= token', () => {
+  const selectionUrl = toolSelectionUrl(URL, { "white-list": ['Ticket_Create'] });
+  assert.match(selectionUrl, /^https:\/\/tobor\.locker\/custom\/tobor\/mcp\?t=[A-Za-z0-9_-]+$/);
+  const snippet = mcpOauthSnippet('claude-code', NAME, selectionUrl);
+  assert.match(snippet, /t=[A-Za-z0-9_-]+/);
+  const token = selectionUrl.split('?t=')[1];
+  assert.ok(token && !/[+/=]/.test(token), 'token stays URL-path/query safe');
 });

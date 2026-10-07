@@ -95,7 +95,9 @@ src/
 │   │
 │   ├── storage/                    #   PostgreSQL async wrapper (asyncpg)
 │   │   ├── __init__.py
-│   │   └── pool.py                 #     Connection pool singleton
+│   │   ├── pool.py                 #     Connection pool singleton
+│   │   ├── error_log.py            #     Tool-error logging (npl_tool_errors)
+│   │   └── metrics.py              #     Call metrics (npl_llm_calls)
 │   │
 │   ├── web/                        #   Web interface
 │   │   ├── static/                 #     Built frontend assets (gitignored)

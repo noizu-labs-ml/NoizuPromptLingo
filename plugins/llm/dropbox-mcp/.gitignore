@@ -1,9 +1,0 @@
-/_build/
-/deps/
-erl_crash.dump
-.elixir-ls/
-*.ez
-.DS_Store
-.env
-.envrc
-.env.*

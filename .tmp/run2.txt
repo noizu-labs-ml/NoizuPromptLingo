@@ -1,0 +1,122 @@
+06:00:09.893 [warning] API ERROR: 
+ {:ok, %Finch.Response{status: 404, body: "", headers: [{"date", "Sun, 06 Sep 2026 23:00:10 GMT"}, {"content-length", "0"}, {"connection", "keep-alive"}, {"access-control-allow-headers", "Content-Type, Authorization, Batch, X-Openai-Api-Key, X-Openai-Organization, X-Openai-Baseurl, X-Anyscale-Baseurl, X-Anyscale-Api-Key, X-Cohere-Api-Key, X-Cohere-Baseurl, X-Huggingface-Api-Key, X-Azure-Api-Key, X-Azure-Deployment-Id, X-Azure-Resource-Name, X-Azure-Concurrency, X-Azure-Block-Size, X-Google-Api-Key, X-Google-Vertex-Api-Key, X-Google-Studio-Api-Key, X-Goog-Api-Key, X-Goog-Vertex-Api-Key, X-Goog-Studio-Api-Key, X-Palm-Api-Key, X-Jinaai-Api-Key, X-Aws-Access-Key, X-Aws-Secret-Key, X-Voyageai-Baseurl, X-Voyageai-Api-Key, X-Mistral-Baseurl, X-Mistral-Api-Key, X-Anthropic-Baseurl, X-Anthropic-Api-Key, X-Databricks-Endpoint, X-Databricks-Token, X-Databricks-User-Agent, X-Friendli-Token, X-Friendli-Baseurl, X-Weaviate-Api-Key, X-Weaviate-Cluster-Url, X-Nvidia-Api-Key, X-Nvidia-Baseurl, X-ContextualAI-Baseurl, X-ContextualAI-Api-Key"}, {"access-control-allow-methods", "*"}, {"access-control-allow-origin", "*"}, {"vary", "Origin"}, {"strict-transport-security", "max-age=31536000; includeSubDomains"}, {"cf-cache-status", "DYNAMIC"}, {"server-timing", "cfCacheStatus;desc=\"DYNAMIC\""}, {"server-timing", "cfEdge;dur=20,cfOrigin;dur=63"}, {"report-to", "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=KW8f3a4SHJ3TJVqFYcbmveTk0eRCwJqlaWrYZasSv%2FjhzeyXYclG2OQGKrElk2SKgjIBY0aJsVVcQBxsthL2yJeABH8z%2B%2BKH7TjwylRBhkMksyxnSW40yjBzqyHqeRB2Htci7qM%3D\"}]}"}, {"nel", "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}"}, {"server", "cloudflare"}, {"cf-ray", "a371169a4c5ca2b3-LAX"}, {"alt-svc", "h3=\":443\"; ma=86400"}], trailers: []}}
+Running ExUnit with seed: 452626, max_cases: 20
+Excluding tags: [live_trp: true]
+
+..........
+
+  1) test compile/1 precedence: white-list defines the enable set snake_case aliases compile to the IDENTICAL layer (golden vector) (NoizuPromptLingua.MCP.UrlToolsetParamTest)
+     test/noizu_prompt_lingua/mcp/url_toolset_param_test.exs:185
+     Assertion with == failed
+     code:  assert snake == kebab
+     left:  %{
+              "groups" => %{
+                "sessions" => %{
+                  "tools" => %{
+                    "Session_Archive" => %{},
+                    "Session_Create" => %{},
+                    "Session_Get" => %{},
+                    "Session_List" => %{},
+                    "Session_Manifest" => %{},
+                    "Session_Overview" => %{},
+                    "Session_Update" => %{}
+                  }
+                },
+                "tickets" => %{
+                  "tools" => %{
+                    "Ticket_Attach" => %{},
+                    "Ticket_Comment" => %{},
+                    "Ticket_Create" => %{},
+                    "Ticket_Definition_Create" => %{},
+                    "Ticket_Definition_Delete" => %{},
+                    "Ticket_Definition_Get" => %{},
+                    "Ticket_Definition_Update" => %{},
+                    "Ticket_Feed" => %{},
+                    "Ticket_Field_Definition_Create" => %{},
+                    "Ticket_Field_Definition_Delete" => %{},
+                    "Ticket_Field_Definition_Update" => %{},
+                    "Ticket_FromEntity" => %{},
+                    "Ticket_Get" => %{},
+                    "Ticket_Link" => %{},
+                    "Ticket_LinkEntity" => %{},
+                    "Ticket_List" => %{},
+                    "Ticket_Overview" => %{},
+                    "Ticket_Queue_Create" => %{},
+                    "Ticket_Queue_Feed" => %{},
+                    "Ticket_Queue_Get" => %{},
+                    "Ticket_Queue_List" => %{},
+                    "Ticket_Unlink" => %{},
+                    "Ticket_UnlinkEntity" => %{},
+                    "Ticket_Update" => %{},
+                    "Ticket_Watch" => %{}
+                  }
+                }
+              }
+            }
+     right: %{
+              "groups" => %{
+                "sessions" => %{
+                  "tools" => %{
+                    "Session_Archive" => %{"disabled" => true},
+                    "Session_Create" => %{"disabled" => true},
+                    "Session_Get" => %{"disabled" => true},
+                    "Session_List" => %{
+                      "disabled" => false,
+                      "hidden" => false
+                    },
+                    "Session_Manifest" => %{"disabled" => true},
+                    "Session_Overview" => %{"disabled" => true},
+                    "Session_Update" => %{"disabled" => true}
+                  }
+                },
+                "tickets" => %{
+                  "tools" => %{
+                    "Ticket_Attach" => %{"disabled" => true},
+                    "Ticket_Comment" => %{"disabled" => true},
+                    "Ticket_Create" => %{"disabled" => true},
+                    "Ticket_Definition_Create" => %{
+                      "disabled" => true
+                    },
+                    "Ticket_Definition_Delete" => %{
+                      "disabled" => true
+                    },
+                    "Ticket_Definition_Get" => %{"disabled" => true},
+                    "Ticket_Definition_Update" => %{
+                      "disabled" => true
+                    },
+                    "Ticket_Feed" => %{"disabled" => true},
+                    "Ticket_Field_Definition_Create" => %{
+                      "disabled" => true
+                    },
+                    "Ticket_Field_Definition_Delete" => %{
+                      "disabled" => true
+                    },
+                    "Ticket_Field_Definition_Update" => %{
+                      "disabled" => true
+                    },
+                    "Ticket_FromEntity" => %{"disabled" => true},
+                    "Ticket_Get" => %{"disabled" => true},
+                    "Ticket_Link" => %{"disabled" => true},
+                    "Ticket_LinkEntity" => %{"disabled" => true},
+                    "Ticket_List" => %{"disabled" => true},
+                    "Ticket_Overview" => %{"disabled" => true},
+                    "Ticket_Queue_Create" => %{"disabled" => true},
+                    "Ticket_Queue_Feed" => %{"disabled" => true},
+                    "Ticket_Queue_Get" => %{"disabled" => true},
+                    "Ticket_Queue_List" => %{"disabled" => true},
+                    "Ticket_Unlink" => %{"disabled" => true},
+                    "Ticket_UnlinkEntity" => %{"disabled" => true},
+                    "Ticket_Update" => %{"disabled" => true},
+                    "Ticket_Watch" => %{"disabled" => true}
+                  }
+                }
+              }
+            }
+     stacktrace:
+       test/noizu_prompt_lingua/mcp/url_toolset_param_test.exs:188: (test)
+
+.................................................................................................................
+Finished in 3.4 seconds (0.4s async, 2.9s sync)
+
+Result: 123/124 passed
+Failed: 1 test

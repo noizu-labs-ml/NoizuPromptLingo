@@ -1,25 +1,46 @@
 name: CI
 
-# Build on native amd64 (colo target), validate, push sha-tagged images, bump
-# the chart — ArgoCD (app "npl-mcp") rolls it out from main.
+# Build on native amd64 (colo target): image builds start immediately on push
+# (parallel to the test jobs) and publish candidate `-rc` tags; once tests
+# pass, a promote job re-tags the candidates to the final sha tags (no
+# rebuild) and the chart bump follows — ArgoCD (app "npl-mcp") rolls it out
+# from main.
 # Stage lane: pushes to `stage` build sha-<short>-stage images and bump
 # values-stage.yaml — ArgoCD (app "npl-mcp-stage") rolls those to
 # tobor-stage.noizu.com. Main-gated jobs below are untouched by the stage path.
 # `feat/tool-sets-integration` pushes gate the integration merge through the
 # test jobs only — every image-build job stays ref-gated (main / stage).
 # Pattern: therobotlearns.com/.github/workflows/ci.yml
+#
+# Push triggers: `stage` drives the stage lane (build-push-stage /
+# bump-chart-stage — its jobs are refs/heads/stage-gated); the 7e70c1194
+# e2e-stage-lane merge accidentally dropped it from this list while keeping
+# the jobs. `feat/tool-sets-integration` gates the integration merge through
+# the test jobs only — every image-build job stays ref-gated (main / stage).
 
 on:
   push:
-    branches: [main, stage, feat/tool-sets-integration]
+    # develop: test jobs only (no image job is develop-gated) — seeds
+    # develop-ref mix/npm caches that feature-PR runs can restore (PR-ref
+    # caches are invisible to sibling PRs).
+    branches: [main, develop, stage, feat/tool-sets-integration]
   pull_request:
   # Manual "exhaustive" full-suite run (test-backend-exhaustive below); the
   # push gate runs only the curated smoke subset.
   workflow_dispatch: {}
+  # Nightly on the default branch (main): exhaustive full suite (regression +
+  # full-pass coverage report) and cache warming. GHA evicts caches unused for
+  # 7 days and main only reads main-ref caches, so releases weeks apart built
+  # cold; the nightly keeps main's mix/npm/buildx caches alive. Every image
+  # push / chart bump job stays gated on `github.event_name == 'push'`.
+  schedule:
+    - cron: "23 7 * * *"
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # Cancel superseded PR runs only — never a main/stage push (those carry the
+  # build-promote-bump release lane).
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   REGISTRY: ops.noizu.com
@@ -27,6 +48,8 @@ env:
 jobs:
   test-backend:
     runs-on: ubuntu-latest # amd64
+    env:
+      MIX_ENV: test
     defaults:
       run:
         working-directory: backend
@@ -59,22 +82,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: erlef/setup-beam@v1
+        id: beam
         with:
           elixir-version: "1.19.5"
           otp-version: "28"
-      - uses: actions/cache@v4
+      # Saved every run (sha suffix) so _build/test tracks the latest source:
+      # the exact lock-hash key never re-saved after its first hit, so a stale
+      # _build forced a near-full recompile on every run.
+      # PRs restore only; develop/main pushes and the nightly schedule save.
+      - uses: actions/cache/restore@v4
+        id: mix-cache
         with:
           path: |
             backend/deps
             backend/_build
-          key: mix-${{ runner.os }}-${{ hashFiles('backend/mix.lock') }}
-          restore-keys: mix-${{ runner.os }}-
+          key: mix-${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-${{ hashFiles('backend/mix.lock') }}-${{ github.sha }}
+          restore-keys: |
+            mix-${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-${{ hashFiles('backend/mix.lock') }}-
+            mix-${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-
       - run: mix deps.get
+      # Compile once, in the test env the suite runs in (a bare `mix compile`
+      # built :dev — unused — and ecto.create then recompiled everything for
+      # :test: ~170s + ~170s cold).
       - run: mix compile
       # Liquibase owns the base schema; Ecto migrations are supplementary.
       # MIX_ENV=test so ecto.create makes noizu_prompt_lingua_test — the DB the
       # changelog is applied against (see backend/config/test.exs).
-      - run: MIX_ENV=test mix ecto.create --quiet
+      - run: mix ecto.create --quiet
       - name: Apply base schema (Liquibase)
         run: |
           docker run --rm --network host \
@@ -92,15 +126,33 @@ jobs:
       # host-dependent test can never block a stage deploy again.
       # MIX_ENV is pinned because aliases do not inherit `mix test`'s builtin
       # test-env default (without it dev.exs' tobor_locker user leaks in).
-      - run: MIX_ENV=test mix smoke
+      # --cover: ExCoveralls summary + coverage gate (backend/coveralls.json
+      # minimum_coverage). Alias args append to the alias' last task (`test`).
+      - run: mix smoke --cover 2>&1 | tee smoke-coverage.txt
+        shell: bash -o pipefail {0}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-smoke
+          path: backend/smoke-coverage.txt
+          if-no-files-found: ignore
+      - uses: actions/cache/save@v4
+        if: steps.mix-cache.outputs.cache-hit != 'true' && github.event_name != 'pull_request'
+        with:
+          path: |
+            backend/deps
+            backend/_build
+          key: ${{ steps.mix-cache.outputs.cache-primary-key }}
 
   test-backend-exhaustive:
     # Manual full-suite run: `gh workflow run ci.yml` (Actions → CI → Run
     # workflow). Same env as the smoke gate — must stay green via test-level
     # hermetic hardening, never env-dependent passes. Not a push gate; no job
     # depends on it.
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     runs-on: ubuntu-latest # amd64
+    env:
+      MIX_ENV: test
     defaults:
       run:
         working-directory: backend
@@ -133,19 +185,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: erlef/setup-beam@v1
+        id: beam
         with:
           elixir-version: "1.19.5"
           otp-version: "28"
+      # Saved every run (sha suffix) so _build/test tracks the latest source:
+      # the exact lock-hash key never re-saved after its first hit, so a stale
+      # _build forced a near-full recompile on every run.
       - uses: actions/cache@v4
         with:
           path: |
             backend/deps
             backend/_build
-          key: mix-${{ runner.os }}-${{ hashFiles('backend/mix.lock') }}
-          restore-keys: mix-${{ runner.os }}-
+          key: mix-${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-${{ hashFiles('backend/mix.lock') }}-${{ github.sha }}
+          restore-keys: |
+            mix-${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-${{ hashFiles('backend/mix.lock') }}-
+            mix-${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-
       - run: mix deps.get
+      # Compile once, in the test env the suite runs in (a bare `mix compile`
+      # built :dev — unused — and ecto.create then recompiled everything for
+      # :test: ~170s + ~170s cold).
       - run: mix compile
-      - run: MIX_ENV=test mix ecto.create --quiet
+      - run: mix ecto.create --quiet
       - name: Apply base schema (Liquibase)
         run: |
           docker run --rm --network host \
@@ -161,7 +222,14 @@ jobs:
       # :live_trp (ContractLiveTest) hits a real TRP deployment via
       # TRP_LIVE_CONTRACT_URL/KEY — CI has neither; excluded here, run at
       # activation per the module doc.
-      - run: mix test --exclude memory --exclude live_trp
+      - run: mix test --exclude memory --exclude live_trp --cover 2>&1 | tee full-coverage.txt
+        shell: bash -o pipefail {0}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-full
+          path: backend/full-coverage.txt
+          if-no-files-found: ignore
 
   test-frontend:
     # Smoke only: npm ci + tsc. Not a full Next build and not Cypress.
@@ -199,10 +267,17 @@ jobs:
           grep -q 'output: "standalone"' next.config.ts
       - run: npx tsc --noEmit
 
+  # Candidate build: no `needs` — starts immediately on push, parallel to the
+  # test jobs, publishing `sha-<short>-rc` candidate tags. promote-release
+  # re-tags them to the final sha tags only after tests pass.
   build-push:
-    needs: [test-backend, test-frontend]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - { image: backend, repo: server }
+          - { image: frontend, repo: frontend }
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
@@ -214,31 +289,76 @@ jobs:
       - name: Short SHA
         id: sha
         run: echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
-      - name: Build & push backend
+      # One matrix leg per image: the two builds run on separate runners in
+      # parallel (they ran back-to-back: cold ~253s + ~170s). Same job name,
+      # `if:` and downstream `needs:`; the gha cache scopes are unchanged.
+      - name: Build & push ${{ matrix.image }}
         uses: docker/build-push-action@v6
         with:
-          context: backend
+          context: ${{ matrix.image }}
           platforms: linux/amd64
           push: true
-          tags: ${{ env.REGISTRY }}/npl-mcp/server:sha-${{ steps.sha.outputs.short }}
-          cache-from: type=gha,scope=backend
-          cache-to: type=gha,scope=backend,mode=max
-      - name: Build & push frontend
+          build-args: ${{ matrix.image == 'frontend' && 'NEXT_PUBLIC_API_URL=https://promptlingo.dev' || '' }}
+          secrets: ${{ matrix.image == 'frontend' && format('npm_token={0}', secrets.NPM_TOKEN) || '' }}
+          tags: ${{ env.REGISTRY }}/npl-mcp/${{ matrix.repo }}:sha-${{ steps.sha.outputs.short }}-rc
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,scope=${{ matrix.image }},mode=max
+
+  # Nightly build-only cache warmer (schedule runs on main): same gha scopes
+  # and build inputs as build-push, `push: false`, no load — keeps main-ref
+  # buildx caches alive between releases (gaps of 7–12 days evicted them, so
+  # the 2026-09-21 release built cold: 452s vs 100s warm). Pushes nothing.
+  warm-docker-cache:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        image: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build ${{ matrix.image }} (cache only)
         uses: docker/build-push-action@v6
         with:
-          context: frontend
+          context: ${{ matrix.image }}
           platforms: linux/amd64
-          push: true
-          build-args: |
-            NEXT_PUBLIC_API_URL=https://tobor.locker
-          secrets: |
-            npm_token=${{ secrets.NPM_TOKEN }}
-          tags: ${{ env.REGISTRY }}/npl-mcp/frontend:sha-${{ steps.sha.outputs.short }}
-          cache-from: type=gha,scope=frontend
-          cache-to: type=gha,scope=frontend,mode=max
+          push: false
+          build-args: ${{ matrix.image == 'frontend' && 'NEXT_PUBLIC_API_URL=https://promptlingo.dev' || '' }}
+          secrets: ${{ matrix.image == 'frontend' && format('npm_token={0}', secrets.NPM_TOKEN) || '' }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,scope=${{ matrix.image }},mode=max
+
+  # Promotion gate: runs only when the test jobs AND the candidate builds
+  # succeeded (same ref gate as build-push). Re-tags the -rc candidates to
+  # the final sha tags via buildx imagetools — a manifest-level re-tag, no
+  # rebuild; the image digest is unchanged.
+  promote-release:
+    needs: [test-backend, test-frontend, build-push]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+      - name: Short SHA
+        id: sha
+        run: echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+      - name: Promote backend image (sha-<short>-rc → sha-<short>)
+        run: |
+          docker buildx imagetools create \
+            -t ${{ env.REGISTRY }}/npl-mcp/server:sha-${{ steps.sha.outputs.short }} \
+            ${{ env.REGISTRY }}/npl-mcp/server:sha-${{ steps.sha.outputs.short }}-rc
+      - name: Promote frontend image (sha-<short>-rc → sha-<short>)
+        run: |
+          docker buildx imagetools create \
+            -t ${{ env.REGISTRY }}/npl-mcp/frontend:sha-${{ steps.sha.outputs.short }} \
+            ${{ env.REGISTRY }}/npl-mcp/frontend:sha-${{ steps.sha.outputs.short }}-rc
 
   bump-chart:
-    needs: build-push
+    needs: promote-release
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -281,10 +401,17 @@ jobs:
   # Mirrors build-push with a distinct `-stage` tag suffix so stage images can
   # never collide with prod tags, and a stage NEXT_PUBLIC_API_URL. The
   # main-gated jobs above are not modified.
+  # Stage twin of build-push: candidate builds start immediately on push and
+  # publish `sha-<short>-stage-rc` tags; promote-release-stage re-tags them
+  # to the final `-stage` tags once tests pass.
   build-push-stage:
-    needs: [test-backend, test-frontend]
     if: github.event_name == 'push' && github.ref == 'refs/heads/stage'
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - { image: backend, repo: server }
+          - { image: frontend, repo: frontend }
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
@@ -296,33 +423,53 @@ jobs:
       - name: Short SHA
         id: sha
         run: echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
-      - name: Build & push backend
+      # One matrix leg per image: the two builds run on separate runners in
+      # parallel (they ran back-to-back: cold ~253s + ~170s). Same job name,
+      # `if:` and downstream `needs:`; the gha cache scopes are unchanged.
+      - name: Build & push ${{ matrix.image }}
         uses: docker/build-push-action@v6
         with:
-          context: backend
+          context: ${{ matrix.image }}
           platforms: linux/amd64
           push: true
-          tags: ${{ env.REGISTRY }}/npl-mcp/server:sha-${{ steps.sha.outputs.short }}-stage
-          cache-from: type=gha,scope=backend
-          cache-to: type=gha,scope=backend,mode=max
-      - name: Build & push frontend
-        uses: docker/build-push-action@v6
+          build-args: ${{ matrix.image == 'frontend' && 'NEXT_PUBLIC_API_URL=https://tobor-stage.noizu.com' || '' }}
+          secrets: ${{ matrix.image == 'frontend' && format('npm_token={0}', secrets.NPM_TOKEN) || '' }}
+          tags: ${{ env.REGISTRY }}/npl-mcp/${{ matrix.repo }}:sha-${{ steps.sha.outputs.short }}-stage-rc
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,scope=${{ matrix.image }},mode=max
+
+  # Stage twin of promote-release: re-tags the -stage-rc candidates to the
+  # final -stage tags once the test jobs pass (same ref gate as
+  # build-push-stage). Manifest-level re-tag, no rebuild.
+  promote-release-stage:
+    needs: [test-backend, test-frontend, build-push-stage]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/stage'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
         with:
-          context: frontend
-          platforms: linux/amd64
-          push: true
-          build-args: |
-            NEXT_PUBLIC_API_URL=https://tobor-stage.noizu.com
-          secrets: |
-            npm_token=${{ secrets.NPM_TOKEN }}
-          tags: ${{ env.REGISTRY }}/npl-mcp/frontend:sha-${{ steps.sha.outputs.short }}-stage
-          cache-from: type=gha,scope=frontend
-          cache-to: type=gha,scope=frontend,mode=max
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+      - name: Short SHA
+        id: sha
+        run: echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+      - name: Promote backend image (sha-<short>-stage-rc → sha-<short>-stage)
+        run: |
+          docker buildx imagetools create \
+            -t ${{ env.REGISTRY }}/npl-mcp/server:sha-${{ steps.sha.outputs.short }}-stage \
+            ${{ env.REGISTRY }}/npl-mcp/server:sha-${{ steps.sha.outputs.short }}-stage-rc
+      - name: Promote frontend image (sha-<short>-stage-rc → sha-<short>-stage)
+        run: |
+          docker buildx imagetools create \
+            -t ${{ env.REGISTRY }}/npl-mcp/frontend:sha-${{ steps.sha.outputs.short }}-stage \
+            ${{ env.REGISTRY }}/npl-mcp/frontend:sha-${{ steps.sha.outputs.short }}-stage-rc
 
   # Stage twin of bump-chart: bumps helm/npl-mcp/values-stage.yaml (Argo app
   # npl-mcp-stage tracks the stage branch) — never the prod values.yaml.
   bump-chart-stage:
-    needs: build-push-stage
+    needs: promote-release-stage
     runs-on: ubuntu-latest
     permissions:
       contents: write

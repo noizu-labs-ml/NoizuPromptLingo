@@ -74,6 +74,8 @@ defmodule NoizuPromptLingua.OAuthTestSchema do
       "CREATE UNIQUE INDEX IF NOT EXISTS idx_oauth_auth_codes_hash ON oauth_authorization_codes (code_hash)"
     )
 
+    Repo.query!("ALTER TABLE oauth_authorization_codes ALTER COLUMN user_id DROP NOT NULL")
+
     Repo.query!("""
     CREATE TABLE IF NOT EXISTS oauth_refresh_tokens (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -93,6 +95,8 @@ defmodule NoizuPromptLingua.OAuthTestSchema do
     Repo.query!(
       "CREATE UNIQUE INDEX IF NOT EXISTS idx_oauth_refresh_tokens_hash ON oauth_refresh_tokens (token_hash)"
     )
+
+    Repo.query!("ALTER TABLE oauth_refresh_tokens ALTER COLUMN user_id DROP NOT NULL")
 
     :ok
   end

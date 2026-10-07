@@ -33,18 +33,18 @@ defmodule NoizuPromptLingua.Tools.ToolsResidualTest do
 
   # ── ToolCall ─────────────────────────────────────────────────────
 
-  test "ToolCall dispatches a hidden tool and returns its result" do
-    assert {:ok, result} =
+  test "ToolCall errors when the hidden-tool dispatcher has nothing registered" do
+    assert {:error, reason} =
              ToolCall.call(%{"tool" => "mcp_overview", "arguments" => %{task: "overview"}}, @ctx)
 
-    assert result.overview_md =~ "MCP Overview"
+    assert reason =~ "not found"
   end
 
   test "ToolCall folds dotted spellings through the alias resolver" do
-    assert {:ok, result} =
+    assert {:error, reason} =
              ToolCall.call(%{"tool" => "mcp.overview", "arguments" => %{task: "overview"}}, @ctx)
 
-    assert result.overview_md =~ "MCP Overview"
+    assert reason =~ "not found"
   end
 
   test "ToolCall refuses MCP-visible tools with an mcp hint", %{catalog: catalog} do
@@ -74,16 +74,16 @@ defmodule NoizuPromptLingua.Tools.ToolsResidualTest do
   end
 
   test "ToolSummary drills into a category, its missing variant, and multi-filters" do
-    {:ok, direct} = ToolSummary.call(%{"filter" => "Discovery"}, @ctx)
-    assert direct.category == "Discovery"
+    {:ok, direct} = ToolSummary.call(%{"filter" => "NPL"}, @ctx)
+    assert direct.category == "NPL"
     assert direct.tool_count > 0
     assert is_list(direct.tools)
 
     {:ok, missing} = ToolSummary.call(%{"filter" => "NoSuchCategory"}, @ctx)
     assert missing.error =~ "not found"
 
-    {:ok, multi} = ToolSummary.call(%{"filter" => "Discovery, NoSuchCategory"}, @ctx)
-    assert [%{category: "Discovery"}, %{error: _}] = multi.results
+    {:ok, multi} = ToolSummary.call(%{"filter" => "NPL, NoSuchCategory"}, @ctx)
+    assert [%{category: "NPL"}, %{error: _}] = multi.results
   end
 
   test "ToolSummary resolves Category#Tool paths with dotted aliases", %{catalog: catalog} do

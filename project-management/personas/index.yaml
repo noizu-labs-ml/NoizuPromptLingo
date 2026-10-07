@@ -39,3 +39,8 @@ personas:
     archetype: "The Evaluating Newcomer"
     segment: "edge-case"
     file: P-008-evaluating-newcomer.md
+  - id: P-009
+    name: Quinn Harper
+    archetype: The Endpoint Composer
+    segment: primary
+    file: P-009-endpoint-composer.md

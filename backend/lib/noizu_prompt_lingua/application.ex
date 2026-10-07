@@ -1,6 +1,7 @@
 defmodule NoizuPromptLingua.Application do
   @moduledoc false
   use Application
+  require Logger
 
   @impl true
   def start(_type, _args) do
@@ -88,7 +89,19 @@ defmodule NoizuPromptLingua.Application do
         ]
 
     opts = [strategy: :one_for_one, name: NoizuPromptLingua.Supervisor]
-    Supervisor.start_link(children, opts)
+
+    with {:ok, _} = started <- Supervisor.start_link(children, opts) do
+      warm_sref_handlers()
+      started
+    end
+  end
+
+  # Build the sref -> entity handler table at boot instead of on the first
+  # request (seconds cold). Failure only logs: lookups still build it lazily.
+  defp warm_sref_handlers() do
+    NoizuPromptLingua.EntityRepo.warm_sref_handlers()
+  rescue
+    e -> Logger.warning("sref handler warm-up failed: #{Exception.message(e)}")
   end
 
   @impl true

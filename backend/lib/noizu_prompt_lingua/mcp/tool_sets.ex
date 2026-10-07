@@ -90,9 +90,11 @@ defmodule NoizuPromptLingua.MCP.ToolSets do
   @doc """
   Clone a profile slug or an existing set into a new, fully editable row.
 
-    * from a profile — `source: "clone"`, `source_profile` = the slug, and a
-      deep-copied allowlist config `%{"groups" => %{g => %{"enabled" => true}}}`
-      over the profile's expanded groups (FR-2A-7).
+    * from a profile — `source: "clone"`, `source_profile` = the slug, and the
+      profile's allowlist config (`Profiles.clone_config/1`) deep-copied over
+      its expanded groups (FR-2A-7) — group-grain for the capability profiles;
+      for `core`, per-tool `"enabled" => false` stamps outside its restricted
+      allowlist.
     * from a set — `source: "clone"` with the set's config deep-copied and
       provenance in `settings.cloned_from` (open question 4; `source_profile`
       stays nil).
@@ -109,10 +111,8 @@ defmodule NoizuPromptLingua.MCP.ToolSets do
         {:error, :unknown_profile}
 
       profile ->
-        config = %{"groups" => Map.new(profile.groups, fn g -> {g, %{"enabled" => true}} end)}
-
         source
-        |> clone_attrs(attrs, config)
+        |> clone_attrs(attrs, Profiles.clone_config(source))
         |> Map.merge(%{
           "source" => "clone",
           "source_profile" => source,
@@ -316,7 +316,7 @@ defmodule NoizuPromptLingua.MCP.ToolSets do
       base: NoizuPromptLingua.MCP.UniverseToolset,
       title: Keyword.get(opts, :title),
       description: Keyword.get(opts, :description) || Map.get(settings, "instructions"),
-      immutable: false,
+      immutable: Keyword.get(opts, :immutable, false),
       include: universe.include,
       exclude: [],
       tools: override_map(config, universe.specs),

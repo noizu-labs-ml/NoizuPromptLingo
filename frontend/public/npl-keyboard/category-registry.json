@@ -1,0 +1,221 @@
+{
+  "_comment": "Category metadata. Keys: catalog categories (markup, npl-syntax, npl-emoji, emoji) and Unicode browse groups (mirrors tools/gen-unicode-json.py group_for). title renders in grid section headers; color = hex RRGGBB rendered with opacity; tags = suggested filter tags for the section.",
+  "categories": {
+    "markup": {
+      "title": "NPL XHTML",
+      "description": "NPL XHTML flavor: <npl-*> blocks, pumps, sections, declarations.",
+      "color": "0A84FF",
+      "tags": [
+        "xhtml",
+        "pump",
+        "section",
+        "declaration"
+      ]
+    },
+    "npl-syntax": {
+      "title": "NPL Unicode",
+      "description": "NPL Unicode flavor: ⌜⌝ corner blocks, ⟪⟫ directives, ➤ prefixes, inline syntax.",
+      "color": "7C5CFF",
+      "tags": [
+        "unicode",
+        "corner",
+        "directive",
+        "prefix",
+        "core"
+      ]
+    },
+    "npl-emoji": {
+      "title": "NPL Emoji",
+      "description": "NPL semantic emoji tokens.",
+      "color": "FFD60A",
+      "tags": [
+        "emoji",
+        "semantic"
+      ]
+    },
+    "emoji": {
+      "title": "Emojis",
+      "description": "Pictographic and semantic emoji (curated set and NPL emoji tokens).",
+      "color": "FF9F0A",
+      "tags": [
+        "emoji",
+        "pictograph",
+        "semantic"
+      ]
+    },
+    "letters": {
+      "title": "Letters",
+      "description": "Alphabetic scripts and letterlike symbols.",
+      "color": "0A84FF",
+      "tags": [
+        "letters",
+        "script"
+      ]
+    },
+    "numbers": {
+      "title": "Numbers",
+      "description": "Digits and numeric forms.",
+      "color": "30D158",
+      "tags": [
+        "numbers"
+      ]
+    },
+    "punctuation": {
+      "title": "Punctuation",
+      "description": "Punctuation marks.",
+      "color": "98989D",
+      "tags": [
+        "punctuation"
+      ]
+    },
+    "brackets": {
+      "title": "Brackets & Delimiters",
+      "description": "Paired delimiters: (), [], {}, quotes, corner brackets.",
+      "color": "64D2FF",
+      "tags": [
+        "bracket",
+        "paired"
+      ]
+    },
+    "currency": {
+      "title": "Currency",
+      "description": "Currency symbols.",
+      "color": "30D158",
+      "tags": [
+        "currency",
+        "money"
+      ]
+    },
+    "math": {
+      "title": "Math",
+      "description": "Mathematical operators and relations.",
+      "color": "0A84FF",
+      "tags": [
+        "math",
+        "operator"
+      ]
+    },
+    "arrows": {
+      "title": "Arrows",
+      "description": "Arrow glyphs in all directions.",
+      "color": "64D2FF",
+      "tags": [
+        "arrow"
+      ]
+    },
+    "symbols": {
+      "title": "Symbols",
+      "description": "Miscellaneous and technical symbols.",
+      "color": "98989D",
+      "tags": [
+        "symbol"
+      ]
+    },
+    "marks": {
+      "title": "Marks",
+      "description": "Combining diacritical marks.",
+      "color": "BF5AF2",
+      "tags": [
+        "combining",
+        "diacritic"
+      ]
+    },
+    "other": {
+      "title": "Other",
+      "description": "Everything not covered by a browse group.",
+      "color": "98989D",
+      "tags": []
+    },
+    "syntax": {
+      "title": "Syntax",
+      "description": "Inline NPL building blocks: placeholders, in-fill, literal, omission, qualifiers.",
+      "color": "0A84FF",
+      "tags": [
+        "core",
+        "inline"
+      ]
+    },
+    "logic": {
+      "title": "Logic & Flow",
+      "description": "Handlebars-style conditional and iteration control.",
+      "color": "5E5CE6",
+      "tags": [
+        "logic",
+        "handlebars"
+      ]
+    },
+    "declarations": {
+      "title": "Declarations",
+      "description": "Framework version boundaries and extensions, both flavors.",
+      "color": "7C5CFF",
+      "tags": [
+        "framework",
+        "declaration"
+      ]
+    },
+    "agents": {
+      "title": "Agents",
+      "description": "Agent definitions and extensions (persona/tool/service).",
+      "color": "BF5AF2",
+      "tags": [
+        "agent"
+      ]
+    },
+    "pumps": {
+      "title": "Pumps",
+      "description": "Cognitive output blocks: intent, poa, cot, reflection, critique, vos, ...",
+      "color": "FF9F0A",
+      "tags": [
+        "pump"
+      ]
+    },
+    "directives": {
+      "title": "Directives",
+      "description": "Bracketed instruction/control directives.",
+      "color": "FF375F",
+      "tags": [
+        "directive"
+      ]
+    },
+    "prefixes": {
+      "title": "Prefixes",
+      "description": "Emoji arrow response-mode prefixes.",
+      "color": "34C759",
+      "tags": [
+        "prefix"
+      ]
+    },
+    "sections": {
+      "title": "Sections",
+      "description": "Typed prompt sections and containers.",
+      "color": "64D2FF",
+      "tags": [
+        "section"
+      ]
+    },
+    "fences": {
+      "title": "Fences",
+      "description": "Fenced code-block containers.",
+      "color": "30D158",
+      "tags": [
+        "fence"
+      ]
+    },
+    "special": {
+      "title": "Special",
+      "description": "Immutable/secure blocks, runtime flags, named templates.",
+      "color": "FF6482",
+      "tags": [
+        "special"
+      ]
+    },
+    "emoji-curated": {
+      "title": "Curated Emoji",
+      "description": "General-purpose curated emoji.",
+      "color": "30D158",
+      "tags": [
+        "emoji"
+      ]
+    }
+  }
+}

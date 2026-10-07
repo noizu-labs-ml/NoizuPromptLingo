@@ -4,7 +4,10 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: "*",
-      disallow: "/",
+      allow: "/",
+      disallow: ["/app/", "/login", "/api/"],
     },
+    sitemap: "https://promptlingo.dev/site.xml",
+    host: "https://promptlingo.dev",
   };
 }

@@ -1,36 +1,86 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/kit';
 import { api, type OAuthClient, type McpCustomScope } from '@/lib/api';
 
 // W7 — single Admin → MCP Config entry grouping OAuth Clients, API Keys
-// (legacy-vs-OAuth subtabs) and Custom MCP Endpoints, and surfacing the
-// previously buried OAuth scopes page (/app/admin/mcp-custom-scopes).
+// (legacy-vs-OAuth subtabs), custom MCP Endpoints, and Tool Sets. Tabs are
+// URL-synced (?tab=…) so hub views deep-link; /app/admin/oauth-clients
+// redirects here with ?tab=oauth-clients.
 
-type MainTab = 'keys' | 'oauth-clients' | 'endpoints';
+type MainTab = 'keys' | 'oauth-clients' | 'endpoints' | 'tool-sets';
 type KeysSubTab = 'oauth' | 'legacy';
 
+const MAIN_TABS: { id: MainTab; label: string }[] = [
+  { id: 'keys', label: 'API Keys' },
+  { id: 'oauth-clients', label: 'OAuth Clients' },
+  { id: 'endpoints', label: 'Custom MCP Endpoints' },
+  { id: 'tool-sets', label: 'Tool Sets' },
+];
+
+function parseTab(raw: string | null): MainTab {
+  return MAIN_TABS.some((t) => t.id === raw) ? (raw as MainTab) : 'keys';
+}
+
+// Absorbed from /app/admin/oauth-clients (folded into this hub).
+function timeAgo(dt?: string | null) {
+  if (!dt) return 'unknown';
+  const diff = Date.now() - new Date(dt).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
 export default function AdminMcpConfigPage() {
-  const [tab, setTab] = useState<MainTab>('keys');
+  // Next 16 CSR bailout: useSearchParams requires a Suspense boundary
+  // (precedent: /app/admin/mcp-custom-scopes).
+  return (
+    <Suspense
+      fallback={
+        <div className="content">
+          <main>
+            <p className="sg-page-intro">Loading…</p>
+          </main>
+        </div>
+      }
+    >
+      <AdminMcpConfigInner />
+    </Suspense>
+  );
+}
+
+function AdminMcpConfigInner() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const tab = parseTab(searchParams.get('tab'));
   const [keysSubTab, setKeysSubTab] = useState<KeysSubTab>('oauth');
 
-  // Legacy mint gate (precedent: /app/mcp-keys legacy_api_key_mint_enabled).
+  // Legacy mint gate (precedent: /app/mcp-setup legacy_api_key_mint_enabled).
   const [legacyMintEnabled, setLegacyMintEnabled] = useState<boolean | null>(null);
 
   const [clients, setClients] = useState<OAuthClient[]>([]);
   const [scopes, setScopes] = useState<McpCustomScope[]>([]);
   const [loadingClients, setLoadingClients] = useState(true);
   const [loadingScopes, setLoadingScopes] = useState(true);
+  const [clientsError, setClientsError] = useState<string | null>(null);
+  const [scopesError, setScopesError] = useState<string | null>(null);
+  const [pendingRevoke, setPendingRevoke] = useState<string | null>(null);
 
   const loadClients = useCallback(async () => {
     setLoadingClients(true);
+    setClientsError(null);
     try {
       const res = await api.adminListOAuthClients();
       setClients(res.clients ?? []);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to load OAuth clients');
+      setClientsError(err instanceof Error ? err.message : 'Failed to load OAuth clients');
     } finally {
       setLoadingClients(false);
     }
@@ -38,11 +88,12 @@ export default function AdminMcpConfigPage() {
 
   const loadScopes = useCallback(async () => {
     setLoadingScopes(true);
+    setScopesError(null);
     try {
       const res = await api.adminListMcpCustomScopes();
       setScopes(res.scopes ?? []);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to load MCP endpoints');
+      setScopesError(err instanceof Error ? err.message : 'Failed to load MCP endpoints');
     } finally {
       setLoadingScopes(false);
     }
@@ -58,34 +109,38 @@ export default function AdminMcpConfigPage() {
   }, [loadClients, loadScopes]);
 
   async function revokeClient(clientId: string) {
-    if (!confirm('Revoke this OAuth client? Its pairing grants and refresh tokens are revoked immediately.')) return;
     try {
       const { client } = await api.adminRevokeOAuthClient(clientId);
       setClients((prev) => prev.map((c) => (c.client_id === clientId ? client : c)));
       toast.success('Client revoked');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to revoke client');
+      // Rethrow so ConfirmDialog stays open for retry; toast carries the reason.
+      throw err;
     }
   }
 
-  const mainTabs: { id: MainTab; label: string }[] = [
-    { id: 'keys', label: 'API Keys' },
-    { id: 'oauth-clients', label: 'OAuth Clients' },
-    { id: 'endpoints', label: 'Custom MCP Endpoints' },
-  ];
+  function setTab(next: MainTab) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (next === 'keys') params.delete('tab');
+    else params.set('tab', next);
+    const qs = params.toString();
+    router.replace(qs ? `/app/admin/mcp-config?${qs}` : '/app/admin/mcp-config', {
+      scroll: false,
+    });
+  }
 
   return (
     <div className="content">
       <main>
         <h1 className="sg-page-title">MCP Config</h1>
         <p className="sg-page-intro">
-          One place for MCP client configuration: API keys, OAuth clients, and the custom MCP
-          endpoints (scopes) they connect to.{' '}
-          <Link href="/app/admin">Back to Admin</Link>
+          One place for MCP client configuration: API keys, OAuth clients, custom MCP endpoints
+          (scopes), and tool sets. <Link href="/app/admin">Back to Admin</Link>
         </p>
 
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: 'var(--space-4) 0' }}>
-          {mainTabs.map((t) => (
+          {MAIN_TABS.map((t) => (
             <button
               key={t.id}
               type="button"
@@ -131,7 +186,7 @@ export default function AdminMcpConfigPage() {
                   client.
                 </p>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <Link className="sg-btn sg-btn--black sg-btn--sm" href="/app/mcp-keys">
+                  <Link className="sg-btn sg-btn--black sg-btn--sm" href="/app/mcp-setup">
                     Open MCP client setup
                   </Link>
                   <button
@@ -162,7 +217,7 @@ export default function AdminMcpConfigPage() {
                       <Link className="sg-btn sg-btn--black sg-btn--sm" href="/app/admin/authz">
                         Mint / revoke API keys (admin)
                       </Link>
-                      <Link className="sg-btn sg-btn--outline sg-btn--sm" href="/app/mcp-keys">
+                      <Link className="sg-btn sg-btn--outline sg-btn--sm" href="/app/mcp-setup">
                         Your keys &amp; setup commands
                       </Link>
                     </div>
@@ -176,7 +231,7 @@ export default function AdminMcpConfigPage() {
                       New API key minting is turned off. Use OAuth custom connectors. Existing
                       keys can still be revoked from{' '}
                       <Link href="/app/admin/authz">admin key management</Link> or{' '}
-                      <Link href="/app/mcp-keys">your key list</Link>.
+                      <Link href="/app/mcp-setup">your key list</Link>.
                     </p>
                   </>
                 )}
@@ -198,10 +253,19 @@ export default function AdminMcpConfigPage() {
               and refresh tokens.
             </p>
 
+            {clientsError && (
+              <div className="sg-error sg-error--block">
+                {clientsError}{' '}
+                <button type="button" className="sg-btn sg-btn--outline sg-btn--sm" onClick={loadClients}>
+                  Retry
+                </button>
+              </div>
+            )}
+
             {loadingClients ? (
               <p className="sg-page-intro">Loading…</p>
             ) : clients.length === 0 ? (
-              <p className="sg-page-intro">No OAuth clients registered.</p>
+              <p className="sg-page-intro">No OAuth clients yet.</p>
             ) : (
               <ul className="admin-table-wrap">
                 {clients.map((c) => (
@@ -213,9 +277,13 @@ export default function AdminMcpConfigPage() {
                         {c.token_endpoint_auth_method === 'none' ? 'public' : 'confidential'}
                         {c.is_first_party ? ' · first-party' : ''}
                       </span>
+                      <span className="gh-row__sub font-mono">
+                        {c.redirect_uris.length > 0 ? c.redirect_uris.join(', ') : 'no redirect URIs'}
+                      </span>
                       <span className="gh-row__sub">
                         {c.grant_count} active grant{c.grant_count === 1 ? '' : 's'}
                       </span>
+                      <span className="gh-row__sub">registered {timeAgo(c.inserted_at)}</span>
                       <span className={`gh-grant__level gh-grant__level--${c.status === 'active' ? 'member' : 'viewer'}`}>
                         {c.status}
                       </span>
@@ -236,8 +304,9 @@ export default function AdminMcpConfigPage() {
                             Scopes
                           </Link>
                           <button
+                            type="button"
                             className="sg-btn sg-btn--danger sg-btn--sm"
-                            onClick={() => revokeClient(c.client_id)}
+                            onClick={() => setPendingRevoke(c.client_id)}
                           >
                             Revoke
                           </button>
@@ -263,6 +332,15 @@ export default function AdminMcpConfigPage() {
               Edit scope packages, tool defaults, and visibility on the scopes page — the
               full editor now also lives one click away instead of buried under Admin.
             </p>
+
+            {scopesError && (
+              <div className="sg-error sg-error--block">
+                {scopesError}{' '}
+                <button type="button" className="sg-btn sg-btn--outline sg-btn--sm" onClick={loadScopes}>
+                  Retry
+                </button>
+              </div>
+            )}
 
             {loadingScopes ? (
               <p className="sg-page-intro">Loading…</p>
@@ -299,6 +377,66 @@ export default function AdminMcpConfigPage() {
             </div>
           </section>
         )}
+
+        {/* ------------------------------------------------ Tool Sets ------ */}
+        {tab === 'tool-sets' && (
+          <section className="dash-panel">
+            <div className="dash-panel__head">
+              <h2 className="dash-panel__title">Tool sets</h2>
+            </div>
+            <p className="sg-page-intro" style={{ marginBottom: 12 }}>
+              Tool sets bundle groups of MCP tools into named packages that custom endpoints
+              (scopes) and per-client permissions can reference. Built-in profiles ship with
+              the platform; org tool sets are composed, cloned, and deactivated by admins.
+            </p>
+
+            <ul className="admin-table-wrap">
+              <li className="gh-row">
+                <div className="gh-row__main">
+                  <div className="gh-row__title">Built-in profiles</div>
+                  <div className="gh-row__sub">
+                    Starter packages — like the restricted “core” set — maintained centrally so
+                    every account works out of the box.
+                  </div>
+                </div>
+                <Link className="sg-btn sg-btn--outline sg-btn--sm" href="/app/admin/tool-sets">
+                  View
+                </Link>
+              </li>
+              <li className="gh-row">
+                <div className="gh-row__main">
+                  <div className="gh-row__title">Org tool sets</div>
+                  <div className="gh-row__sub">
+                    Shared tool packages for your organization — create, edit, clone, or
+                    deactivate them from the tool-sets page.
+                  </div>
+                </div>
+                <Link className="sg-btn sg-btn--outline sg-btn--sm" href="/app/admin/tool-sets">
+                  Manage
+                </Link>
+              </li>
+            </ul>
+
+            <div style={{ marginTop: 12 }}>
+              <Link className="sg-btn sg-btn--black sg-btn--sm" href="/app/admin/tool-sets">
+                Manage tool sets
+              </Link>
+            </div>
+          </section>
+        )}
+
+        <ConfirmDialog
+          open={pendingRevoke !== null}
+          onClose={() => setPendingRevoke(null)}
+          title="Revoke OAuth client?"
+          destructive
+          confirmLabel="Revoke"
+          onConfirm={async () => {
+            if (pendingRevoke) await revokeClient(pendingRevoke);
+          }}
+        >
+          This revokes the client&apos;s pairing grants and refresh tokens immediately.
+        </ConfirmDialog>
       </main>
     </div>
   );

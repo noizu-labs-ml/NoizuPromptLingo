@@ -49,10 +49,9 @@ defmodule NoizuPromptLingua.OAuth.TokenService do
          :ok <- validate_code(code_row, client.client_id, redirect_uri),
          :ok <- Pkce.verify_s256(verifier, code_row.code_challenge),
          :ok <- consume_code(code_row),
-         resource <- params["resource"] || code_row.resource,
-         {:ok, user} <- get_user(code_row.user_id) do
-      mint_tokens(%{
-        user: user,
+         resource <- params["resource"] || code_row.resource do
+      mint_for_principal(%{
+        user_id: code_row.user_id,
         client_id: client.client_id,
         resource: resource,
         scope: code_row.scope,
@@ -71,13 +70,12 @@ defmodule NoizuPromptLingua.OAuth.TokenService do
          :ok <- require_grant_type(client, "refresh_token"),
          raw when is_binary(raw) <- params["refresh_token"],
          %OAuthRefreshToken{} = row <- get_refresh(raw),
-         :ok <- validate_refresh(row, client.client_id),
-         {:ok, user} <- get_user(row.user_id) do
+         :ok <- validate_refresh(row, client.client_id) do
       # Rotate refresh token
       revoke_refresh(row)
 
-      mint_tokens(%{
-        user: user,
+      mint_for_principal(%{
+        user_id: row.user_id,
         client_id: client.client_id,
         resource: params["resource"] || row.resource,
         scope: row.scope,
@@ -116,6 +114,75 @@ defmodule NoizuPromptLingua.OAuth.TokenService do
 
         :ok
     end
+  end
+
+  defp mint_for_principal(%{user_id: nil} = ctx) do
+    mint_site_tokens(ctx)
+  end
+
+  defp mint_for_principal(%{user_id: user_id} = ctx) do
+    with {:ok, user} <- get_user(user_id) do
+      mint_tokens(Map.put(ctx, :user, user))
+    end
+  end
+
+  @doc """
+  Site-approval access token for the public NPL syntax MCP.
+
+  No user identity: `sub` is `site:npl` and `site_approved` is true. Issued
+  when a client completes OAuth against this host without signing in.
+  """
+  def mint_site_tokens(%{client_id: client_id} = ctx) do
+    resource = Map.get(ctx, :resource)
+    scope = Map.get(ctx, :scope) || "npl"
+    grant_id = Map.get(ctx, :grant_id)
+
+    access_ttl = access_ttl_seconds()
+    now = System.system_time(:second)
+    exp = now + access_ttl
+
+    claims =
+      %{
+        "sub" => "site:npl",
+        "iss" => AuthorizationServer.issuer_url(),
+        "iat" => now,
+        "exp" => exp,
+        "client_id" => client_id,
+        "scope" => scope,
+        "token_version" => 2,
+        "token_use" => "access",
+        "site_approved" => true
+      }
+      |> maybe_put("aud", resource)
+      |> maybe_put("grant_id", grant_id)
+
+    entry = Jwks.signing_entry()
+    header = %{"alg" => entry.alg, "kid" => entry.kid, "typ" => "JWT"}
+    {_, access_token} = JOSE.JWT.sign(entry.jwk, header, claims) |> JOSE.JWS.compact()
+
+    raw_refresh = "rt_" <> random_id(32)
+    now_dt = DateTime.utc_now() |> DateTime.truncate(:microsecond)
+
+    %OAuthRefreshToken{}
+    |> OAuthRefreshToken.changeset(%{
+      token_hash: hash(raw_refresh),
+      client_id: client_id,
+      user_id: nil,
+      grant_id: grant_id,
+      resource: resource,
+      scope: scope,
+      expires_at: DateTime.add(now_dt, @refresh_ttl, :second)
+    })
+    |> Repo.insert!()
+
+    {:ok,
+     %{
+       access_token: access_token,
+       token_type: "Bearer",
+       expires_in: access_ttl,
+       refresh_token: raw_refresh,
+       scope: scope
+     }}
   end
 
   def mint_tokens(%{user: user, client_id: client_id} = ctx) do

@@ -1,0 +1,2880 @@
+    warning: the following clause will never match:
+
+        {:error, :project_not_in_org} ->
+
+    it is expected to match on type:
+
+        dynamic(
+          ({:error, :project_not_found} and not {:ok, term()}) or ({:org, term()} and not {:org, not nil})
+        )
+
+    type warning found at:
+    │
+ 68 │       {:error, :project_not_in_org} ->
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/domains/market/tools/competitor_create.ex:68: NoizuPromptLingua.Domains.Market.Tools.CompetitorCreate.call/2
+
+    warning: the following clause will never match:
+
+        {:error, :project_not_in_org} ->
+
+    it is expected to match on type:
+
+        dynamic(
+          ({:error, :project_not_found} and not {:ok, term(), term()} and not {:ok, term()}) or
+            ({:error, :org_not_found} and not {:ok, term(), term()})
+        )
+
+    type warning found at:
+    │
+ 39 │       {:error, :project_not_in_org} -> {:error, "Project does not belong to organization"}
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/domains/unicode_codex/tools/overview.ex:39: NoizuPromptLingua.Domains.UnicodeCodex.Tools.Overview.call/2
+
+    warning: got "@impl true" for function init/1 but no behaviour was declared
+    │
+ 31 │   def init(opts), do: opts
+    │   ~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua_web/plugs/api_key_auth.ex:31: NoizuPromptLinguaWeb.Plugs.ApiKeyAuth (module)
+
+    warning: got "@impl true" for function call/2 but no behaviour was declared
+    │
+ 34 │   def call(conn, _opts) do
+    │   ~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua_web/plugs/api_key_auth.ex:34: NoizuPromptLinguaWeb.Plugs.ApiKeyAuth (module)
+
+    warning: the following clause will never match:
+
+        {:error, :project_not_in_org} ->
+
+    it is expected to match on type:
+
+        dynamic(
+          ({:error, :project_not_found} and not {:ok, term()}) or ({:org, term()} and not {:org, not nil})
+        )
+
+    type warning found at:
+    │
+ 60 │       {:error, :project_not_in_org} ->
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/domains/chat/tools/create_room.ex:60: NoizuPromptLingua.Domains.Chat.Tools.CreateRoom.call/2
+
+    warning: the following clause is redundant:
+
+        error ->
+
+    previous clauses have already matched on the following types:
+
+        :error
+
+    where "error" was given the type:
+
+        # type: dynamic(:error)
+        # from: lib/noizu_prompt_lingua/domains/github/tools/repo_list.ex:36:11
+        error
+
+    type warning found at:
+    │
+ 36 │           error -> error
+    │                 ~
+    │
+    └─ lib/noizu_prompt_lingua/domains/github/tools/repo_list.ex:36:17: NoizuPromptLingua.Domains.Github.Tools.RepoList.call/2
+
+    warning: the following clause will never match:
+
+        {:error, :project_not_in_org} ->
+
+    it is expected to match on type:
+
+        dynamic(
+          ({:error, :project_not_found} and not {:ok, term()}) or ({:org, term()} and not {:org, not nil})
+        )
+
+    type warning found at:
+    │
+ 60 │       {:error, :project_not_in_org} ->
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/domains/campaigns/tools/domain_name_create.ex:60: NoizuPromptLingua.Domains.Campaigns.Tools.DomainNameCreate.call/2
+
+     warning: the following clause is redundant:
+
+         defp member_ref(_)
+
+     it has type:
+
+         dynamic()
+
+     previous clauses have already matched on the following types:
+
+         term()
+
+     │
+ 172 │   defp member_ref(_), do: nil
+     │        ~
+     │
+     └─ lib/noizu_prompt_lingua_web/controllers/mcp_set_gateway_controller.ex:172:8: NoizuPromptLinguaWeb.MCPSetGatewayController.member_ref/1
+
+    warning: the following clause is redundant:
+
+        {{:ok, _}, {:error, reason}} ->
+
+    previous clauses have already matched on the following types:
+
+        {{:ok, binary()}, {:ok, not nil}}
+        {{:ok, binary()}, {:error, :org_not_found}}
+
+    where "reason" was given the type:
+
+        # type: dynamic(:org_not_found)
+        # from: lib/noizu_prompt_lingua/domains/github/tools/pull_comment.ex
+        {{:ok, _}, {:error, reason}}
+
+    type warning found at:
+    │
+ 34 │       {{:ok, _}, {:error, reason}} ->
+    │                                    ~
+    │
+    └─ lib/noizu_prompt_lingua/domains/github/tools/pull_comment.ex:34:36: NoizuPromptLingua.Domains.Github.Tools.PullComment.call/2
+
+    warning: the following clause is redundant:
+
+        {{:ok, _}, {:error, reason}} ->
+
+    previous clauses have already matched on the following types:
+
+        {{:ok, binary()}, {:ok, not nil}}
+        {{:ok, binary()}, {:error, :org_not_found}}
+
+    where "reason" was given the type:
+
+        # type: dynamic(:org_not_found)
+        # from: lib/noizu_prompt_lingua/domains/github/tools/issue_get.ex
+        {{:ok, _}, {:error, reason}}
+
+    type warning found at:
+    │
+ 29 │       {{:ok, _}, {:error, reason}} -> {:error, reason}
+    │                                    ~
+    │
+    └─ lib/noizu_prompt_lingua/domains/github/tools/issue_get.ex:29:36: NoizuPromptLingua.Domains.Github.Tools.IssueGet.call/2
+
+    warning: the following clause will never match:
+
+        {:error, :project_not_in_org} ->
+
+    because it attempts to match on the result of:
+
+        NoizuPromptLingua.MCP.Resolve.scope(
+          NoizuPromptLingua.MCP.Args.get(args, :organization),
+          NoizuPromptLingua.MCP.Args.get(args, :project)
+        )
+
+    which has type:
+
+        dynamic(
+          ({:error, :project_not_found} and not {:ok, term()}) or {:error, :org_not_found} or
+            {:ok, nil, nil} or {:ok, not nil, term()}
+        )
+
+    type warning found at:
+    │
+ 61 │       {:error, :project_not_in_org} ->
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/domains/instructions/tools/instruction_create.ex:61: NoizuPromptLingua.Domains.Instructions.Tools.InstructionCreate.call/2
+
+    warning: the following clause will never match:
+
+        {:error, :project_not_in_org} ->
+
+    it is expected to match on type:
+
+        dynamic(
+          ({:error, :project_not_found} and not {:ok, term(), term()} and not {:ok, term()}) or
+            ({:error, :not_found} and not {:ok, %{element: term(), layers: term()}}) or
+            ({:error, :org_not_found} and not {:ok, term(), term()})
+        )
+
+    type warning found at:
+    │
+ 38 │       {:error, :project_not_in_org} -> {:error, "Project does not belong to organization"}
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/domains/unicode_codex/tools/get.ex:38: NoizuPromptLingua.Domains.UnicodeCodex.Tools.Get.call/2
+
+    warning: incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/versioned/descriptions/description.ex:19
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Versioned.Descriptions.Description{})
+        # from: lib/noizu_prompt_lingua/entities/versioned/descriptions/description.ex:19
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/versioned/descriptions/description.ex:19
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/versioned/descriptions/description.ex:19
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 19 │   jason_encoder()
+    │   ~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/versioned/descriptions/description.ex:19: Jason.Encoder.NoizuPromptLingua.Versioned.Descriptions.Description.encode/2
+
+    warning: function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Descriptions.Description)
+    │
+ 12 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/versioned/descriptions/description.ex:12: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Descriptions.Description (module)
+
+    warning: function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Descriptions.Description)
+    │
+ 12 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/versioned/descriptions/description.ex:12: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Descriptions.Description (module)
+
+     warning: variable "opts" is unused (if the variable is not meant to be used, prefix it with an underscore)
+     │
+ 156 │   def get_branch(call_user_id, org_id, repo_ref, branch_name, opts \\ []) do
+     │                                                               ~~~~
+     │
+     └─ lib/noizu_prompt_lingua/github/client.ex:156:63: NoizuPromptLingua.Github.Client.get_branch/5
+
+     warning: variable "opts" is unused (if the variable is not meant to be used, prefix it with an underscore)
+     │
+ 168 │   def create_branch(call_user_id, org_id, repo_ref, branch_name, from_sha, opts \\ []) do
+     │                                                                            ~~~~
+     │
+     └─ lib/noizu_prompt_lingua/github/client.ex:168:76: NoizuPromptLingua.Github.Client.create_branch/6
+
+     warning: variable "opts" is unused (if the variable is not meant to be used, prefix it with an underscore)
+     │
+ 198 │   def get_pull(call_user_id, org_id, repo_ref, pull_number, opts \\ []) do
+     │                                                             ~~~~
+     │
+     └─ lib/noizu_prompt_lingua/github/client.ex:198:61: NoizuPromptLingua.Github.Client.get_pull/5
+
+     warning: variable "opts" is unused (if the variable is not meant to be used, prefix it with an underscore)
+     │
+ 209 │   def create_pull(call_user_id, org_id, repo_ref, body, opts \\ []) do
+     │                                                         ~~~~
+     │
+     └─ lib/noizu_prompt_lingua/github/client.ex:209:57: NoizuPromptLingua.Github.Client.create_pull/5
+
+     warning: variable "opts" is unused (if the variable is not meant to be used, prefix it with an underscore)
+     │
+ 220 │   def merge_pull(call_user_id, org_id, repo_ref, pull_number, body, opts \\ []) do
+     │                                                                     ~~~~
+     │
+     └─ lib/noizu_prompt_lingua/github/client.ex:220:69: NoizuPromptLingua.Github.Client.merge_pull/6
+
+     warning: variable "opts" is unused (if the variable is not meant to be used, prefix it with an underscore)
+     │
+ 289 │   def get_issue(call_user_id, org_id, repo_ref, issue_number, opts \\ []) do
+     │                                                               ~~~~
+     │
+     └─ lib/noizu_prompt_lingua/github/client.ex:289:63: NoizuPromptLingua.Github.Client.get_issue/5
+
+    warning: the following clause will never match:
+
+        {:error, :project_not_in_org} ->
+
+    it is expected to match on type:
+
+        dynamic(
+          ({:error, :project_not_found} and not {:ok, term()}) or ({:org, term()} and not {:org, not nil})
+        )
+
+    type warning found at:
+    │
+ 77 │       {:error, :project_not_in_org} ->
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/domains/market/tools/keyword_create.ex:77: NoizuPromptLingua.Domains.Market.Tools.KeywordCreate.call/2
+
+     warning: the following clause cannot match because the previous clauses already matched all possible values:
+
+         error ->
+
+     it attempts to match on the result of:
+
+         resolve_entity(org, subtree, key)
+
+     which has the already matched type:
+
+         dynamic({:error, :enoent} or {:ok, not nil})
+
+     where "error" was given the type:
+
+         # type: dynamic({:error, :enoent} or {:ok, not nil})
+         # from: lib/noizu_prompt_lingua/mcp/vfs/market.ex:397:7
+         error
+
+     type warning found at:
+     │
+ 397 │       error -> error
+     │             ~
+     │
+     └─ lib/noizu_prompt_lingua/mcp/vfs/market.ex:397:13: NoizuPromptLingua.MCP.VFS.Market.collision_ok/3
+
+    warning: function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Credentials.UserCredential)
+    │
+ 11 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/credentials/user_credential.ex:11: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Credentials.UserCredential (module)
+
+    warning: function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Credentials.UserCredential)
+    │
+ 11 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/credentials/user_credential.ex:11: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Credentials.UserCredential (module)
+
+    warning: incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/users/credentials/user_credential.ex:34
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Users.Credentials.UserCredential{})
+        # from: lib/noizu_prompt_lingua/entities/users/credentials/user_credential.ex:34
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/users/credentials/user_credential.ex:34
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/users/credentials/user_credential.ex:34
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 34 │   jason_encoder()
+    │   ~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/credentials/user_credential.ex:34: Jason.Encoder.NoizuPromptLingua.Users.Credentials.UserCredential.encode/2
+
+    warning: clauses with the same name and arity (number of arguments) should be grouped together, "def revoke_client/1" was previously defined (lib/noizu_prompt_lingua/oauth/clients.ex:41)
+    │
+ 75 │   def revoke_client(_), do: {:error, :not_found}
+    │       ~
+    │
+    └─ lib/noizu_prompt_lingua/oauth/clients.ex:75:7
+
+     warning: variable "key" is unused (if the variable is not meant to be used, prefix it with an underscore)
+     │
+ 463 │       key ->
+     │       ~
+     │
+     └─ lib/noizu_prompt_lingua_web/controllers/auth_controller.ex:463:7: NoizuPromptLinguaWeb.AuthController.revoke_mcp_key/2
+
+    warning: incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/organizations/invite_token.ex:30
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Organizations.InviteToken{})
+        # from: lib/noizu_prompt_lingua/entities/organizations/invite_token.ex:30
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/organizations/invite_token.ex:30
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/organizations/invite_token.ex:30
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 30 │   jason_encoder()
+    │   ~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/organizations/invite_token.ex:30: Jason.Encoder.NoizuPromptLingua.Organizations.InviteToken.encode/2
+
+    warning: function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.InviteToken)
+    │
+ 12 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/organizations/invite_token.ex:12: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.InviteToken (module)
+
+    warning: function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.InviteToken)
+    │
+ 12 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/organizations/invite_token.ex:12: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.InviteToken (module)
+
+    warning: this clause of defp scope_error/1 is never used (or it will always fail/warn when invoked)
+    │
+ 73 │   defp scope_error(:project_not_in_org), do: "Project does not belong to this organization"
+    │        ~
+    │
+    └─ lib/noizu_prompt_lingua/domains/tickets/tools/field_definition_create.ex:73:8: NoizuPromptLingua.Domains.Tickets.Tools.FieldDefinitionCreate.scope_error/1
+
+     warning: the following clause cannot match because the previous clauses already matched all possible values:
+
+         error ->
+
+     it attempts to match on the result of:
+
+         resolve_entity(org, subtree, key)
+
+     which has the already matched type:
+
+         dynamic({:error, :enoent} or {:ok, not nil})
+
+     where "error" was given the type:
+
+         # type: dynamic({:error, :enoent} or {:ok, not nil})
+         # from: lib/noizu_prompt_lingua/mcp/vfs/campaigns.ex:598:7
+         error
+
+     type warning found at:
+     │
+ 598 │       error -> error
+     │             ~
+     │
+     └─ lib/noizu_prompt_lingua/mcp/vfs/campaigns.ex:598:13: NoizuPromptLingua.MCP.VFS.Campaigns.collision_ok/3
+
+     warning: the following clause will never match:
+
+         {:ok, project} ->
+
+     because it attempts to match on the result of:
+
+         NoizuPromptLingua.Projects.archive(project_id)
+
+     which has type:
+
+         dynamic({:error, :trp_unsupported_shared_key})
+
+     type warning found at:
+     │
+ 122 │         {:ok, project} ->
+     │         ~~~~~~~~~~~~~~~~~
+     │
+     └─ lib/noizu_prompt_lingua_web/controllers/project_controller.ex:122: NoizuPromptLinguaWeb.ProjectController.archive/2
+
+     warning: the following clause will never match:
+
+         {:error, :not_found} ->
+
+     because it attempts to match on the result of:
+
+         NoizuPromptLingua.Projects.archive(project_id)
+
+     which has type:
+
+         dynamic({:error, :trp_unsupported_shared_key})
+
+     type warning found at:
+     │
+ 125 │         {:error, :not_found} ->
+     │         ~~~~~~~~~~~~~~~~~~~~~~~
+     │
+     └─ lib/noizu_prompt_lingua_web/controllers/project_controller.ex:125: NoizuPromptLinguaWeb.ProjectController.archive/2
+
+     warning: the following clause will never match:
+
+         {:ok, project} ->
+
+     because it attempts to match on the result of:
+
+         NoizuPromptLingua.Projects.unarchive(project_id)
+
+     which has type:
+
+         dynamic({:error, :trp_unsupported_shared_key})
+
+     type warning found at:
+     │
+ 143 │         {:ok, project} ->
+     │         ~~~~~~~~~~~~~~~~~
+     │
+     └─ lib/noizu_prompt_lingua_web/controllers/project_controller.ex:143: NoizuPromptLinguaWeb.ProjectController.unarchive/2
+
+     warning: the following clause will never match:
+
+         {:error, :not_found} ->
+
+     because it attempts to match on the result of:
+
+         NoizuPromptLingua.Projects.unarchive(project_id)
+
+     which has type:
+
+         dynamic({:error, :trp_unsupported_shared_key})
+
+     type warning found at:
+     │
+ 146 │         {:error, :not_found} ->
+     │         ~~~~~~~~~~~~~~~~~~~~~~~
+     │
+     └─ lib/noizu_prompt_lingua_web/controllers/project_controller.ex:146: NoizuPromptLinguaWeb.ProjectController.unarchive/2
+
+     warning: the right-hand side of || will never be executed:
+
+         Exception.message(reason) || ...
+
+     because the left-hand side always evaluates to:
+
+         binary()
+
+     where "reason" was given the type:
+
+         # type: dynamic(not atom() and not binary())
+         # from: lib/noizu_prompt_lingua_web/controllers/project_controller.ex:300:19
+         reason
+
+     type warning found at:
+     │
+ 300 │   defp error_text(reason), do: Exception.message(reason) || inspect(reason)
+     │   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     │
+     └─ lib/noizu_prompt_lingua_web/controllers/project_controller.ex:300: NoizuPromptLinguaWeb.ProjectController.error_text/1
+
+     warning: variable "org_id" is unused (if the variable is not meant to be used, prefix it with an underscore)
+     │
+ 115 │   defp resolve_target(org_id, project_id, "thread", message_id) do
+     │                       ~~~~~~
+     │
+     └─ lib/noizu_prompt_lingua/domains/notifications/tools/share.ex:115:23: NoizuPromptLingua.Domains.Notifications.Tools.Share.resolve_target/4
+
+     warning: variable "project_id" is unused (if the variable is not meant to be used, prefix it with an underscore)
+     │
+ 115 │   defp resolve_target(org_id, project_id, "thread", message_id) do
+     │                               ~~~~~~~~~~
+     │
+     └─ lib/noizu_prompt_lingua/domains/notifications/tools/share.ex:115:31: NoizuPromptLingua.Domains.Notifications.Tools.Share.resolve_target/4
+
+    warning: the following clause will never match:
+
+        {:scope, {:error, :project_not_in_org}} ->
+
+    it is expected to match on type:
+
+        dynamic(
+          ({:scope,
+            ({:error, :project_not_found} and not {:ok, term()}) or {:error, :org_not_found} or
+              {:ok, nil, nil} or {:ok, not nil, term()}} and not {:scope, {:ok, term(), term()}}) or
+            ({:source, boolean()} and not {:source, true}) or
+            ({:target,
+              {:error, :not_found or :unknown_target_type} or
+                {:ok, {:dm, binary()} or {:room, term(), not false and not nil}}} and
+               not {:target, {:ok, {:dm, binary()} or {:room, term(), not false and not nil}}})
+        )
+
+    type warning found at:
+    │
+ 93 │       {:scope, {:error, :project_not_in_org}} ->
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/domains/notifications/tools/share.ex:93: NoizuPromptLingua.Domains.Notifications.Tools.Share.call/2
+
+    warning: the following clause will never match:
+
+        {:error, :project_not_in_org} ->
+
+    it is expected to match on type:
+
+        dynamic(
+          ({:error, :project_not_found} and not {:ok, term()}) or ({:org, term()} and not {:org, not nil})
+        )
+
+    type warning found at:
+    │
+ 66 │       {:error, :project_not_in_org} ->
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/domains/market/tools/keyword_research.ex:66: NoizuPromptLingua.Domains.Market.Tools.KeywordResearch.call/2
+
+    warning: the following clause will never match:
+
+        {:error, :project_not_in_org} ->
+
+    it is expected to match on type:
+
+        dynamic(
+          ({:error, :project_not_found} and not {:ok, term(), term()} and not {:ok, term()}) or
+            ({:error, :not_found} and
+               not {:ok,
+                %{
+                  layers: term(),
+                  special_usage: %{
+                    description: term(),
+                    flags: not false and not nil,
+                    id: term(),
+                    name: term(),
+                    organization_id: term(),
+                    overrides: term(),
+                    project_id: term(),
+                    references: not false and not nil,
+                    scope: term(),
+                    shadowed_by:
+                      %{
+                        id: term(),
+                        organization_id: term(),
+                        project_id: term(),
+                        scope: term(),
+                        slug: term()
+                      } or nil,
+                    slug: term(),
+                    title: term(),
+                    topics: not false and not nil
+                  }
+                }}) or ({:error, :org_not_found} and not {:ok, term(), term()})
+        )
+
+    type warning found at:
+    │
+ 35 │       {:error, :project_not_in_org} -> {:error, "Project does not belong to organization"}
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/domains/unicode_codex/tools/special_usage_get.ex:35: NoizuPromptLingua.Domains.UnicodeCodex.Tools.SpecialUsageGet.call/2
+
+    warning: the following clause will never match:
+
+        {:error, :project_not_in_org} ->
+
+    it is expected to match on type:
+
+        dynamic(
+          ({:error, :project_not_found} and not {:ok, term()}) or ({:org, term()} and not {:org, not nil})
+        )
+
+    type warning found at:
+    │
+ 55 │       {:error, :project_not_in_org} ->
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/domains/wiki/tools/space_create.ex:55: NoizuPromptLingua.Domains.Wiki.Tools.SpaceCreate.call/2
+
+    warning: the following clause will never match:
+
+        {:error, :project_not_in_org} ->
+
+    it is expected to match on type:
+
+        dynamic(
+          ({:error, :project_not_found} and not {:ok, term()}) or ({:org, term()} and not {:org, not nil})
+        )
+
+    type warning found at:
+    │
+ 66 │       {:error, :project_not_in_org} ->
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/domains/customers/tools/segment_create.ex:66: NoizuPromptLingua.Domains.Customers.Tools.SegmentCreate.call/2
+
+    warning: incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/sessions/session.ex:30
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Sessions.Session{})
+        # from: lib/noizu_prompt_lingua/entities/sessions/session.ex:30
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/sessions/session.ex:30
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/sessions/session.ex:30
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 30 │   jason_encoder()
+    │   ~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/sessions/session.ex:30: Jason.Encoder.NoizuPromptLingua.Sessions.Session.encode/2
+
+    warning: function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Sessions.Session)
+    │
+ 10 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/sessions/session.ex:10: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Sessions.Session (module)
+
+    warning: function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Sessions.Session)
+    │
+ 10 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/sessions/session.ex:10: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Sessions.Session (module)
+
+    warning: incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/organizations/organization.ex:20
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Organizations.Organization{})
+        # from: lib/noizu_prompt_lingua/entities/organizations/organization.ex:20
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/organizations/organization.ex:20
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/organizations/organization.ex:20
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 20 │   jason_encoder()
+    │   ~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/organizations/organization.ex:20: Jason.Encoder.NoizuPromptLingua.Organizations.Organization.encode/2
+
+    warning: function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.Organization)
+    │
+ 12 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/organizations/organization.ex:12: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.Organization (module)
+
+    warning: function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.Organization)
+    │
+ 12 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/organizations/organization.ex:12: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.Organization (module)
+
+    warning: the following clause cannot match because the previous clauses already matched all possible values:
+
+        _ ->
+
+    it attempts to match on the result of:
+
+        cast(v)
+
+    which has the already matched type:
+
+        dynamic({:ok, term()})
+
+    type warning found at:
+    │
+ 26 │       _ -> raise ArgumentError, "Unsupported: #{inspect(v)}"
+    │         ~
+    │
+    └─ lib/supports/ecto/serialized_term.ex:26:9: NoizuPromptLingua.Ecto.SerializedTerm.cast!/1
+
+    warning: the following clause will never match:
+
+        :error ->
+
+    because it attempts to match on the result of:
+
+        load(value)
+
+    which has type:
+
+        dynamic({:error, :not_valid_base64} or {:ok, term()})
+
+    type warning found at:
+    │
+ 57 │       :error ->
+    │       ~~~~~~~~~
+    │
+    └─ lib/supports/ecto/serialized_term.ex:57: NoizuPromptLingua.Ecto.SerializedTerm.load!/1
+
+    warning: the following clause will never match:
+
+        {:error, reason} ->
+
+    because it attempts to match on the result of:
+
+        NoizuPromptLingua.Domains.Markdown.view(markdown, opts)
+
+    which has type:
+
+        dynamic({:ok, %{markdown: term(), matched: term()}})
+
+    type warning found at:
+    │
+ 39 │       {:error, reason} -> {:error, reason}
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/domains/markdown/tools/view.ex:39: NoizuPromptLingua.Domains.Markdown.Tools.View.call/2
+
+    warning: the following clause is redundant:
+
+        {{:ok, _}, {:error, reason}} ->
+
+    previous clauses have already matched on the following types:
+
+        {{:ok, binary()}, {:ok, not nil}}
+        {{:ok, binary()}, {:error, :org_not_found}}
+
+    where "reason" was given the type:
+
+        # type: dynamic(:org_not_found)
+        # from: lib/noizu_prompt_lingua/domains/github/tools/issue_comment.ex
+        {{:ok, _}, {:error, reason}}
+
+    type warning found at:
+    │
+ 34 │       {{:ok, _}, {:error, reason}} ->
+    │                                    ~
+    │
+    └─ lib/noizu_prompt_lingua/domains/github/tools/issue_comment.ex:34:36: NoizuPromptLingua.Domains.Github.Tools.IssueComment.call/2
+
+    warning: NoizuPromptLingua.Versioned.Names.change_versioned_name/2 is undefined or private. Did you mean:
+
+        * get_versioned_name/2
+        * get_versioned_name/3
+
+    │
+ 55 │                   NoizuPromptLingua.Versioned.Names.change_versioned_name(user.name.data, value)
+    │                                                     ~
+    │
+    └─ lib/noizu_prompt_lingua/entities/users.ex:55:53: NoizuPromptLingua.Users.change_user/2
+
+    warning: NoizuPromptLingua.Versioned.Names.change_versioned_name/2 is undefined or private. Did you mean:
+
+        * get_versioned_name/2
+        * get_versioned_name/3
+
+    │
+ 61 │                   NoizuPromptLingua.Versioned.Names.change_versioned_name(
+    │                                                     ~
+    │
+    └─ lib/noizu_prompt_lingua/entities/users.ex:61:53: NoizuPromptLingua.Users.change_user/2
+
+    warning: the following clause will never match:
+
+        {:error, :project_not_in_org} ->
+
+    it is expected to match on type:
+
+        dynamic(
+          ({:error, :project_not_found} and not {:ok, term(), term()} and not {:ok, term()}) or
+            ({:error, :org_not_found} and not {:ok, term(), term()})
+        )
+
+    type warning found at:
+    │
+ 39 │       {:error, :project_not_in_org} -> {:error, "Project does not belong to organization"}
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/domains/unicode_codex/tools/special_usage_list.ex:39: NoizuPromptLingua.Domains.UnicodeCodex.Tools.SpecialUsageList.call/2
+
+     warning: variable "body" is unused (if the variable is not meant to be used, prefix it with an underscore)
+     │
+ 109 │   defp require_body(kind, body) when kind in ["ping", "pong"], do: :ok
+     │                           ~~~~
+     │
+     └─ lib/noizu_prompt_lingua/domains/notifications/tools/notify.ex:109:27: NoizuPromptLingua.Domains.Notifications.Tools.Notify.require_body/2
+
+    warning: the following clause will never match:
+
+        {:scope, {:error, :project_not_in_org}} ->
+
+    it is expected to match on type:
+
+        dynamic(
+          ({:scope,
+            ({:error, :project_not_found} and not {:ok, term()}) or {:error, :org_not_found} or
+              {:ok, nil, nil} or {:ok, not nil, term()}} and not {:scope, {:ok, term(), term()}}) or
+            {:error, :body_required or :too_long}
+        )
+
+    type warning found at:
+    │
+ 98 │       {:scope, {:error, :project_not_in_org}} ->
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/domains/notifications/tools/notify.ex:98: NoizuPromptLingua.Domains.Notifications.Tools.Notify.call/2
+
+    warning: the following clause will never match:
+
+        {:error, :project_not_in_org} ->
+
+    because it attempts to match on the result of:
+
+        NoizuPromptLingua.MCP.Resolve.scope(
+          NoizuPromptLingua.MCP.Args.get(args, :organization),
+          NoizuPromptLingua.MCP.Args.get(args, :project)
+        )
+
+    which has type:
+
+        dynamic(
+          ({:error, :project_not_found} and not {:ok, term()}) or {:error, :org_not_found} or
+            {:ok, nil, nil} or {:ok, not nil, term()}
+        )
+
+    type warning found at:
+    │
+ 65 │       {:error, :project_not_in_org} ->
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/domains/personas/tools/persona_create.ex:65: NoizuPromptLingua.Domains.Personas.Tools.PersonaCreate.call/2
+
+    warning: the following clause will never match:
+
+        {:error, :project_not_in_org} ->
+
+    because it attempts to match on the result of:
+
+        NoizuPromptLingua.MCP.Resolve.scope(
+          NoizuPromptLingua.MCP.Args.get(args, :organization),
+          NoizuPromptLingua.MCP.Args.get(args, :project)
+        )
+
+    which has type:
+
+        dynamic(
+          ({:error, :project_not_found} and not {:ok, term()}) or {:error, :org_not_found} or
+            {:ok, nil, nil} or {:ok, not nil, term()}
+        )
+
+    type warning found at:
+    │
+ 64 │       {:error, :project_not_in_org} ->
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/domains/tickets/tools/queue_create.ex:64: NoizuPromptLingua.Domains.Tickets.Tools.QueueCreate.call/2
+
+    warning: the following clause is redundant:
+
+        {{:ok, _}, {:error, reason}} ->
+
+    previous clauses have already matched on the following types:
+
+        {{:ok, binary()}, {:ok, not nil}}
+        {{:ok, binary()}, {:error, :org_not_found}}
+
+    where "reason" was given the type:
+
+        # type: dynamic(:org_not_found)
+        # from: lib/noizu_prompt_lingua/domains/github/tools/issue_create.ex
+        {{:ok, _}, {:error, reason}}
+
+    type warning found at:
+    │
+ 46 │       {{:ok, _}, {:error, reason}} -> {:error, reason}
+    │                                    ~
+    │
+    └─ lib/noizu_prompt_lingua/domains/github/tools/issue_create.ex:46:36: NoizuPromptLingua.Domains.Github.Tools.IssueCreate.call/2
+
+    warning: incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/organizations/membership.ex:24
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Organizations.Membership{})
+        # from: lib/noizu_prompt_lingua/entities/organizations/membership.ex:24
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/organizations/membership.ex:24
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/organizations/membership.ex:24
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 24 │   jason_encoder()
+    │   ~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/organizations/membership.ex:24: Jason.Encoder.NoizuPromptLingua.Organizations.Membership.encode/2
+
+    warning: function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.Membership)
+    │
+ 12 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/organizations/membership.ex:12: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.Membership (module)
+
+    warning: function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.Membership)
+    │
+ 12 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/organizations/membership.ex:12: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Organizations.Membership (module)
+
+    warning: unused require Logger
+    │
+ 19 │   require Logger
+    │   ~
+    │
+    └─ lib/noizu_prompt_lingua/domains/markdown/markdown.ex:19:3
+
+    warning: incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/authz/scoped_memberships/scoped_membership.ex:25
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Authz.ScopedMemberships.ScopedMembership{})
+        # from: lib/noizu_prompt_lingua/entities/authz/scoped_memberships/scoped_membership.ex:25
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/authz/scoped_memberships/scoped_membership.ex:25
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/authz/scoped_memberships/scoped_membership.ex:25
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 25 │   jason_encoder()
+    │   ~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/authz/scoped_memberships/scoped_membership.ex:25: Jason.Encoder.NoizuPromptLingua.Authz.ScopedMemberships.ScopedMembership.encode/2
+
+    warning: function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.ScopedMemberships.ScopedMembership)
+    │
+ 10 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/authz/scoped_memberships/scoped_membership.ex:10: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.ScopedMemberships.ScopedMembership (module)
+
+    warning: function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.ScopedMemberships.ScopedMembership)
+    │
+ 10 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/authz/scoped_memberships/scoped_membership.ex:10: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.ScopedMemberships.ScopedMembership (module)
+
+    warning: incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/authz/policies/policy.ex:20
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Authz.Policies.Policy{})
+        # from: lib/noizu_prompt_lingua/entities/authz/policies/policy.ex:20
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/authz/policies/policy.ex:20
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/authz/policies/policy.ex:20
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 20 │   jason_encoder()
+    │   ~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/authz/policies/policy.ex:20: Jason.Encoder.NoizuPromptLingua.Authz.Policies.Policy.encode/2
+
+    warning: function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.Policies.Policy)
+    │
+ 10 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/authz/policies/policy.ex:10: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.Policies.Policy (module)
+
+    warning: function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.Policies.Policy)
+    │
+ 10 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/authz/policies/policy.ex:10: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.Policies.Policy (module)
+
+    warning: variable "json_format" is unused (if the variable is not meant to be used, prefix it with an underscore)
+    │
+  6 │     json_format = user_settings[:json_format] || :default
+    │     ~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/protocols/erp.ex:6:5: Jason.Encoder.Tuple.encode/2
+
+    warning: variable "json_format" is unused (if the variable is not meant to be used, prefix it with an underscore)
+    │
+ 26 │     json_format = user_settings[:json_format] || :default
+    │     ~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/protocols/erp.ex:26:5: Jason.Encoder.Tuple.encode/2
+
+    warning: incompatible types given to Jason.Encode.string/2:
+
+        Jason.Encode.string(
+          sref,
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        term(), {(none() -> term()), term()}
+
+    where "opts" was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/protocols/erp.ex:5:54
+        {_, _, user_settings} = opts
+
+    where "sref" was given the type:
+
+        # type: dynamic()
+        # from: lib/noizu_prompt_lingua/protocols/erp.ex:8:22
+        {:ok, sref} <- Noizu.EntityReference.Protocol.sref(s)
+
+    type warning found at:
+    │
+ 10 │       |> Jason.Encode.string(opts)
+    │                       ~
+    │
+    └─ lib/noizu_prompt_lingua/protocols/erp.ex:10:23: Jason.Encoder.Tuple.encode/2
+
+    warning: incompatible types given to Jason.Encode.string/2:
+
+        Jason.Encode.string(
+          sref,
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        term(), {(none() -> term()), term()}
+
+    where "opts" was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/protocols/erp.ex:25:54
+        {_, _, user_settings} = opts
+
+    where "sref" was given the type:
+
+        # type: dynamic()
+        # from: lib/noizu_prompt_lingua/protocols/erp.ex:28:22
+        {:ok, sref} <- Noizu.EntityReference.Protocol.sref(s)
+
+    type warning found at:
+    │
+ 30 │       |> Jason.Encode.string(opts)
+    │                       ~
+    │
+    └─ lib/noizu_prompt_lingua/protocols/erp.ex:30:23: Jason.Encoder.Tuple.encode/2
+
+    warning: incompatible types given to Jason.Encode.string/2:
+
+        Jason.Encode.string(
+          <<inspect(s)::binary>>,
+          opts
+        )
+
+    given types:
+
+        binary(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        term(), {(none() -> term()), term()}
+
+    where "opts" was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/protocols/erp.ex:36:27
+        {_, _, _} = opts
+
+    where "s" was given the type:
+
+        # type: dynamic({...} and not {:ref, term(), term()})
+        # from: lib/noizu_prompt_lingua/protocols/erp.ex:36:14
+        s
+
+    type warning found at:
+    │
+ 38 │     |> Jason.Encode.string(opts)
+    │                     ~
+    │
+    └─ lib/noizu_prompt_lingua/protocols/erp.ex:38:21: Jason.Encoder.Tuple.encode/2
+
+    warning: the following clause is redundant:
+
+        def encode({:ref, _, _} = s, {_, _, user_settings} = opts)
+
+    it has type:
+
+        dynamic({:ref, term(), term()}), dynamic({term(), term(), term()})
+
+    previous clauses have already matched on the following types:
+
+        {:ref, term(), term()}, {term(), term(), term()}
+        {:ref, term(), term()}, {term(), term()}
+
+    │
+ 25 │   def encode({:ref, _, _} = s, {_, _, user_settings} = opts) do
+    │       ~
+    │
+    └─ lib/noizu_prompt_lingua/protocols/erp.ex:25:7: Jason.Encoder.Tuple.encode/2
+
+    warning: incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/authz/groups/group.ex:19
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Authz.Groups.Group{})
+        # from: lib/noizu_prompt_lingua/entities/authz/groups/group.ex:19
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/authz/groups/group.ex:19
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/authz/groups/group.ex:19
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 19 │   jason_encoder()
+    │   ~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/authz/groups/group.ex:19: Jason.Encoder.NoizuPromptLingua.Authz.Groups.Group.encode/2
+
+    warning: function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.Groups.Group)
+    │
+ 10 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/authz/groups/group.ex:10: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.Groups.Group (module)
+
+    warning: function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.Groups.Group)
+    │
+ 10 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/authz/groups/group.ex:10: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Authz.Groups.Group (module)
+
+    warning: the following clause is redundant:
+
+        {{:ok, _}, {:error, reason}} ->
+
+    previous clauses have already matched on the following types:
+
+        {{:ok, binary()}, {:ok, not nil}}
+        {{:ok, binary()}, {:error, :org_not_found}}
+
+    where "reason" was given the type:
+
+        # type: dynamic(:org_not_found)
+        # from: lib/noizu_prompt_lingua/domains/github/tools/pull_create.ex
+        {{:ok, _}, {:error, reason}}
+
+    type warning found at:
+    │
+ 43 │       {{:ok, _}, {:error, reason}} -> {:error, reason}
+    │                                    ~
+    │
+    └─ lib/noizu_prompt_lingua/domains/github/tools/pull_create.ex:43:36: NoizuPromptLingua.Domains.Github.Tools.PullCreate.call/2
+
+    warning: the following clause will never match:
+
+        {:error, reason} ->
+
+    because it attempts to match on the result of:
+
+        NoizuPromptLingua.NPL.Reader.sections()
+
+    which has type:
+
+        dynamic({:ok, term()})
+
+    type warning found at:
+    │
+ 20 │       {:error, reason} ->
+    │       ~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua_web/controllers/npl_controller.ex:20: NoizuPromptLinguaWeb.NPLController.index_sections/2
+
+    warning: the following clause will never match:
+
+        {:error, reason} ->
+
+    because it attempts to match on the result of:
+
+        NoizuPromptLingua.NPL.Reader.components(section)
+
+    which has type:
+
+        dynamic({:ok, term()})
+
+    type warning found at:
+    │
+ 33 │       {:error, reason} ->
+    │       ~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua_web/controllers/npl_controller.ex:33: NoizuPromptLinguaWeb.NPLController.index_conventions/2
+
+    warning: the right-hand side of || will always execute:
+
+        components == [] && nil
+
+    because the left-hand side always evaluates to:
+
+        dynamic(false or nil)
+
+    where "x" (context Kernel) was given the type:
+
+        # type: dynamic(false or nil)
+        # from: lib/noizu_prompt_lingua_web/controllers/npl_controller.ex:90
+        x
+
+    type warning found at:
+    │
+ 90 │       components: (components == [] && nil) || components,
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua_web/controllers/npl_controller.ex:90: NoizuPromptLinguaWeb.NPLController.spec_opts_from_params/1
+
+    warning: the right-hand side of || will always execute:
+
+        rendered == [] && nil
+
+    because the left-hand side always evaluates to:
+
+        dynamic(false or nil)
+
+    where "x" (context Kernel) was given the type:
+
+        # type: dynamic(false or nil)
+        # from: lib/noizu_prompt_lingua_web/controllers/npl_controller.ex:91
+        x
+
+    type warning found at:
+    │
+ 91 │       rendered: (rendered == [] && nil) || rendered,
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua_web/controllers/npl_controller.ex:91: NoizuPromptLinguaWeb.NPLController.spec_opts_from_params/1
+
+    warning: incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/projects/project.ex:26
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Projects.Project{})
+        # from: lib/noizu_prompt_lingua/entities/projects/project.ex:26
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/projects/project.ex:26
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/projects/project.ex:26
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 26 │   jason_encoder()
+    │   ~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/projects/project.ex:26: Jason.Encoder.NoizuPromptLingua.Projects.Project.encode/2
+
+    warning: function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Projects.Project)
+    │
+ 10 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/projects/project.ex:10: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Projects.Project (module)
+
+    warning: function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Projects.Project)
+    │
+ 10 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/projects/project.ex:10: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Projects.Project (module)
+
+    warning: unused import Plug.Conn
+    │
+  3 │   import Plug.Conn
+    │   ~
+    │
+    └─ lib/noizu_prompt_lingua_web/plugs/otel_logger_metadata.ex:3:3
+
+    warning: unused require Logger
+    │
+  4 │   require Logger
+    │   ~
+    │
+    └─ lib/noizu_prompt_lingua_web/plugs/otel_logger_metadata.ex:4:3
+
+    warning: the following clause will never match:
+
+        {:error, :project_not_in_org} ->
+
+    it is expected to match on type:
+
+        dynamic(
+          ({:error, :project_not_found} and not {:ok, term()}) or ({:org, term()} and not {:org, not nil})
+        )
+
+    type warning found at:
+    │
+ 82 │       {:error, :project_not_in_org} ->
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/domains/tickets/tools/ticket_from_entity.ex:82: NoizuPromptLingua.Domains.Tickets.Tools.TicketFromEntity.call/2
+
+    warning: function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Auth.Providers.Provider)
+    │
+ 12 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/auth/providers/provider.ex:12: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Auth.Providers.Provider (module)
+
+    warning: function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Auth.Providers.Provider)
+    │
+ 12 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/auth/providers/provider.ex:12: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Auth.Providers.Provider (module)
+
+    warning: incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/auth/providers/provider.ex:20
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Auth.Providers.Provider{})
+        # from: lib/noizu_prompt_lingua/entities/auth/providers/provider.ex:20
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/auth/providers/provider.ex:20
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/auth/providers/provider.ex:20
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 20 │   jason_encoder()
+    │   ~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/auth/providers/provider.ex:20: Jason.Encoder.NoizuPromptLingua.Auth.Providers.Provider.encode/2
+
+    warning: function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Names.Name)
+    │
+  9 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/versioned/names/name.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Names.Name (module)
+
+    warning: function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Names.Name)
+    │
+  9 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/versioned/names/name.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Names.Name (module)
+
+    warning: incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/versioned/names/name.ex:17
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Versioned.Names.Name{})
+        # from: lib/noizu_prompt_lingua/entities/versioned/names/name.ex:17
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/versioned/names/name.ex:17
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/versioned/names/name.ex:17
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 17 │   jason_encoder()
+    │   ~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/versioned/names/name.ex:17: Jason.Encoder.NoizuPromptLingua.Versioned.Names.Name.encode/2
+
+    warning: the following clause will never match:
+
+        {:error, :project_not_in_org} ->
+
+    because it attempts to match on the result of:
+
+        NoizuPromptLingua.MCP.Resolve.scope(
+          NoizuPromptLingua.MCP.Args.get(args, :organization),
+          NoizuPromptLingua.MCP.Args.get(args, :project)
+        )
+
+    which has type:
+
+        dynamic(
+          ({:error, :project_not_found} and not {:ok, term()}) or {:error, :org_not_found} or
+            {:ok, nil, nil} or {:ok, not nil, term()}
+        )
+
+    type warning found at:
+    │
+ 66 │       {:error, :project_not_in_org} ->
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/domains/assets/tools/asset_create.ex:66: NoizuPromptLingua.Domains.Assets.Tools.AssetCreate.call/2
+
+    warning: the following clause will never match:
+
+        {:error, :project_not_in_org} ->
+
+    it is expected to match on type:
+
+        dynamic(
+          ({:error, :project_not_found} and not {:ok, term()}) or ({:org, term()} and not {:org, not nil})
+        )
+
+    type warning found at:
+    │
+ 86 │       {:error, :project_not_in_org} ->
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/domains/customers/tools/persona_create.ex:86: NoizuPromptLingua.Domains.Customers.Tools.PersonaCreate.call/2
+
+    warning: the following clause is redundant:
+
+        {{:ok, _}, {:error, reason}} ->
+
+    previous clauses have already matched on the following types:
+
+        {{:ok, binary()}, {:ok, not nil}}
+        {{:ok, binary()}, {:error, :org_not_found}}
+
+    where "reason" was given the type:
+
+        # type: dynamic(:org_not_found)
+        # from: lib/noizu_prompt_lingua/domains/github/tools/branch_list.ex
+        {{:ok, _}, {:error, reason}}
+
+    type warning found at:
+    │
+ 33 │       {{:ok, _}, {:error, reason}} -> {:error, reason}
+    │                                    ~
+    │
+    └─ lib/noizu_prompt_lingua/domains/github/tools/branch_list.ex:33:36: NoizuPromptLingua.Domains.Github.Tools.BranchList.call/2
+
+    warning: the following clause is redundant:
+
+        {{:ok, _}, {:error, reason}} ->
+
+    previous clauses have already matched on the following types:
+
+        {{:ok, binary()}, {:ok, not nil}}
+        {{:ok, binary()}, {:error, :org_not_found}}
+
+    where "reason" was given the type:
+
+        # type: dynamic(:org_not_found)
+        # from: lib/noizu_prompt_lingua/domains/github/tools/pull_merge.ex
+        {{:ok, _}, {:error, reason}}
+
+    type warning found at:
+    │
+ 48 │       {{:ok, _}, {:error, reason}} ->
+    │                                    ~
+    │
+    └─ lib/noizu_prompt_lingua/domains/github/tools/pull_merge.ex:48:36: NoizuPromptLingua.Domains.Github.Tools.PullMerge.call/2
+
+    warning: the following clause will never match:
+
+        false ->
+
+    it is expected to match on type:
+
+        dynamic(
+          ({:error, :not_found} and not {:ok, %{..., expires_at: term()}}) or
+            {:error, :expired or :forbidden}
+        )
+
+    type warning found at:
+    │
+ 86 │       false -> {:error, :forbidden}
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/oauth/elevation.ex:86: NoizuPromptLingua.OAuth.Elevation.approve!/2
+
+    warning: the following clause will never match:
+
+        {:scope, {:error, :project_not_in_org}} ->
+
+    it is expected to match on type:
+
+        dynamic(
+          ({:scope,
+            ({:error, :project_not_found} and not {:ok, term()}) or {:error, :org_not_found} or
+              {:ok, nil, nil} or {:ok, not nil, term()}} and not {:scope, {:ok, term(), term()}}) or
+            ({:when, {:error, :bad_at or :no_duration} or {:ok, %DateTime{}}} and
+               not {:when, {:ok, %DateTime{}}})
+        )
+
+    type warning found at:
+    │
+ 78 │       {:scope, {:error, :project_not_in_org}} ->
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/domains/notifications/tools/follow_up.ex:78: NoizuPromptLingua.Domains.Notifications.Tools.FollowUp.call/2
+
+     warning: the following clause cannot match because the previous clauses already matched all possible values:
+
+         error ->
+
+     it attempts to match on the result of:
+
+         resolve_entity(org, subtree, key)
+
+     which has the already matched type:
+
+         dynamic({:error, :enoent} or {:ok, not nil})
+
+     where "error" was given the type:
+
+         # type: dynamic({:error, :enoent} or {:ok, not nil})
+         # from: lib/noizu_prompt_lingua/mcp/vfs/customers.ex:474:7
+         error
+
+     type warning found at:
+     │
+ 474 │       error -> error
+     │             ~
+     │
+     └─ lib/noizu_prompt_lingua/mcp/vfs/customers.ex:474:13: NoizuPromptLingua.MCP.VFS.Customers.collision_ok/3
+
+    warning: the following clause will never match:
+
+        {:error, :project_not_in_org} ->
+
+    it is expected to match on type:
+
+        dynamic(
+          ({:error, :project_not_found} and not {:ok, term()}) or ({:org, term()} and not {:org, not nil})
+        )
+
+    type warning found at:
+    │
+ 68 │       {:error, :project_not_in_org} ->
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/domains/market/tools/report_create.ex:68: NoizuPromptLingua.Domains.Market.Tools.ReportCreate.call/2
+
+    warning: the following clause will never match:
+
+        {:error, :project_not_in_org} ->
+
+    it is expected to match on type:
+
+        dynamic(
+          ({:error, :project_not_found} and not {:ok, term()}) or ({:org, term()} and not {:org, not nil})
+        )
+
+    type warning found at:
+    │
+ 82 │       {:error, :project_not_in_org} ->
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/domains/artifacts/tools/artifact_create.ex:82: NoizuPromptLingua.Domains.Artifacts.Tools.ArtifactCreate.call/2
+
+    warning: the following clause will never match:
+
+        {:error, :project_not_in_org} ->
+
+    it is expected to match on type:
+
+        dynamic(
+          ({:error, :project_not_found} and not {:ok, term()}) or ({:org, term()} and not {:org, not nil})
+        )
+
+    type warning found at:
+    │
+ 56 │       {:error, :project_not_in_org} ->
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/domains/campaigns/tools/landing_page_create.ex:56: NoizuPromptLingua.Domains.Campaigns.Tools.LandingPageCreate.call/2
+
+    warning: the following clause will never match:
+
+        {:error, :project_not_in_org} ->
+
+    it is expected to match on type:
+
+        dynamic(
+          ({:error, :project_not_found} and not {:ok, term()}) or ({:org, term()} and not {:org, not nil})
+        )
+
+    type warning found at:
+    │
+ 76 │       {:error, :project_not_in_org} ->
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/domains/campaigns/tools/campaign_create.ex:76: NoizuPromptLingua.Domains.Campaigns.Tools.CampaignCreate.call/2
+
+     warning: the following conditional expression:
+
+         is_map(config)
+
+     will always evaluate to:
+
+         dynamic(true)
+
+     where "config" was given the type:
+
+         # type: dynamic(map())
+         # from: lib/noizu_prompt_lingua/mcp/url_toolset_param.ex:360:20
+         {config, kind} = {scope_config_of(scope), scope_kind(scope)}
+
+     type warning found at:
+     │
+ 364 │         MCPCustomScopes.normalize_config(if(is_map(config), do: config, else: %{}), kind)
+     │         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     │
+     └─ lib/noizu_prompt_lingua/mcp/url_toolset_param.ex:364: NoizuPromptLingua.MCP.UrlToolsetParam.compile_context/1
+
+    warning: the following clause is redundant:
+
+        {{:ok, _}, {:error, reason}} ->
+
+    previous clauses have already matched on the following types:
+
+        {{:ok, binary()}, {:ok, not nil}}
+        {{:ok, binary()}, {:error, :org_not_found}}
+
+    where "reason" was given the type:
+
+        # type: dynamic(:org_not_found)
+        # from: lib/noizu_prompt_lingua/domains/github/tools/branch_get.ex
+        {{:ok, _}, {:error, reason}}
+
+    type warning found at:
+    │
+ 29 │       {{:ok, _}, {:error, reason}} -> {:error, reason}
+    │                                    ~
+    │
+    └─ lib/noizu_prompt_lingua/domains/github/tools/branch_get.ex:29:36: NoizuPromptLingua.Domains.Github.Tools.BranchGet.call/2
+
+    warning: incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/media/asset.ex:30
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Media.Asset{})
+        # from: lib/noizu_prompt_lingua/entities/media/asset.ex:30
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/media/asset.ex:30
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/media/asset.ex:30
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 30 │   jason_encoder()
+    │   ~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/media/asset.ex:30: Jason.Encoder.NoizuPromptLingua.Media.Asset.encode/2
+
+    warning: function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Media.Asset)
+    │
+  9 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/media/asset.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Media.Asset (module)
+
+    warning: function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Media.Asset)
+    │
+  9 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/media/asset.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Media.Asset (module)
+
+    warning: incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/versioned/strings/string.ex:18
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Versioned.Strings.String{})
+        # from: lib/noizu_prompt_lingua/entities/versioned/strings/string.ex:18
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/versioned/strings/string.ex:18
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/versioned/strings/string.ex:18
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 18 │   jason_encoder()
+    │   ~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/versioned/strings/string.ex:18: Jason.Encoder.NoizuPromptLingua.Versioned.Strings.String.encode/2
+
+    warning: function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Strings.String)
+    │
+ 12 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/versioned/strings/string.ex:12: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Strings.String (module)
+
+    warning: function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Strings.String)
+    │
+ 12 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/versioned/strings/string.ex:12: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Versioned.Strings.String (module)
+
+    warning: the following clause will never match:
+
+        {:error, changeset}
+            when is_map(changeset) and (is_atom(Ecto.Changeset) or :fail) and
+                   is_map_key(changeset, :__struct__) and
+                   :erlang.map_get(:__struct__, changeset) == Ecto.Changeset ->
+
+    it is expected to match on type:
+
+        dynamic(
+          {:error, binary()} and
+            not {:ok,
+             %{bio: term()} or %{bio: term(), email: term()} or
+               %{bio: term(), email: term(), role: :other or :user} or
+               %{bio: term(), email: term(), role: :other or :user, user_name: term()} or
+               %{bio: term(), email: term(), user_name: term()} or %{bio: term(), role: :other or :user} or
+               %{bio: term(), role: :other or :user, user_name: term()} or
+               %{bio: term(), user_name: term()} or %{email: term()} or
+               %{email: term(), role: :other or :user} or
+               %{email: term(), role: :other or :user, user_name: term()} or
+               %{email: term(), user_name: term()} or %{role: :other or :user} or
+               %{role: :other or :user, user_name: term()} or %{user_name: term()} or empty_map()} and
+            not {:ok, term()}
+        )
+
+    where "changeset" was given the types:
+
+        # type: map()
+        # from: lib/noizu_prompt_lingua_web/controllers/user_controller.ex:25
+        is_map(changeset)
+
+        # type: %{..., __struct__: term()}
+        # from: lib/noizu_prompt_lingua_web/controllers/user_controller.ex:25
+        is_map_key(changeset, :__struct__)
+
+        # type: %{..., __struct__: Ecto.Changeset}
+        # from: lib/noizu_prompt_lingua_web/controllers/user_controller.ex:25
+        :erlang.map_get(:__struct__, changeset)
+
+    type warning found at:
+    │
+ 25 │       {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua_web/controllers/user_controller.ex:25: NoizuPromptLinguaWeb.UserController.update/2
+
+    warning: the following clause is redundant:
+
+        {{:ok, _}, {:error, reason}} ->
+
+    previous clauses have already matched on the following types:
+
+        {{:ok, binary()}, {:ok, not nil}}
+        {{:ok, binary()}, {:error, :org_not_found}}
+
+    where "reason" was given the type:
+
+        # type: dynamic(:org_not_found)
+        # from: lib/noizu_prompt_lingua/domains/github/tools/issue_list.ex
+        {{:ok, _}, {:error, reason}}
+
+    type warning found at:
+    │
+ 41 │       {{:ok, _}, {:error, reason}} -> {:error, reason}
+    │                                    ~
+    │
+    └─ lib/noizu_prompt_lingua/domains/github/tools/issue_list.ex:41:36: NoizuPromptLingua.Domains.Github.Tools.IssueList.call/2
+
+    warning: the following clause will never match:
+
+        {:error, :project_not_in_org} ->
+
+    because it attempts to match on the result of:
+
+        NoizuPromptLingua.MCP.Resolve.scope(
+          NoizuPromptLingua.MCP.Args.get(args, :organization),
+          NoizuPromptLingua.MCP.Args.get(args, :project)
+        )
+
+    which has type:
+
+        dynamic(
+          ({:error, :project_not_found} and not {:ok, term()}) or {:error, :org_not_found} or
+            {:ok, nil, nil} or {:ok, not nil, term()}
+        )
+
+    type warning found at:
+    │
+ 93 │       {:error, :project_not_in_org} ->
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/domains/tickets/tools/definition_create.ex:93: NoizuPromptLingua.Domains.Tickets.Tools.DefinitionCreate.call/2
+
+    warning: function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.User)
+    │
+  9 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/user.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.User (module)
+
+    warning: function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.User)
+    │
+  9 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/user.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.User (module)
+
+    warning: incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/users/user.ex:31
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Users.User{})
+        # from: lib/noizu_prompt_lingua/entities/users/user.ex:31
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/users/user.ex:31
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/users/user.ex:31
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 31 │   jason_encoder()
+    │   ~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/user.ex:31: Jason.Encoder.NoizuPromptLingua.Users.User.encode/2
+
+     warning: variable "v" is unused (if the variable is not meant to be used, prefix it with an underscore)
+     │
+ 423 │     |> Enum.filter(fn {{o, _}, v} -> o == org_id end)
+     │                                ~
+     │
+     └─ test/support/trp_stub.ex:423:32: NoizuPromptLingua.TRP.TestStub.list_for/3
+
+     warning: def publish_version/3 has multiple clauses and also declares default values. In such cases, the default values should be defined in a header. Instead of:
+
+         def foo(:first_clause, b \\ :default) do ... end
+         def foo(:second_clause, b) do ... end
+
+     one should write:
+
+         def foo(a, b \\ :default)
+         def foo(:first_clause, b) do ... end
+         def foo(:second_clause, b) do ... end
+
+     the previous clause is defined on line 111
+
+     │
+ 140 │   def publish_version(slug, template, change_note) when is_binary(slug) do
+     │       ~
+     │
+     └─ lib/noizu_prompt_lingua/mcp_prompts.ex:140:7
+
+    warning: the following clause will never match:
+
+        {:error, :project_not_in_org} ->
+
+    it is expected to match on type:
+
+        dynamic(
+          ({:error, :project_not_found} and not {:ok, term(), term()} and not {:ok, term()}) or
+            ({:error, :org_not_found} and not {:ok, term(), term()})
+        )
+
+    type warning found at:
+    │
+ 55 │       {:error, :project_not_in_org} -> {:error, "Project does not belong to organization"}
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/domains/unicode_codex/tools/search.ex:55: NoizuPromptLingua.Domains.UnicodeCodex.Tools.Search.call/2
+
+     warning: redefining @doc attribute previously set at line 322
+     │
+ 327 │   @doc "Notification ids of still-unread rows matching a dedup_key for a recipient."
+     │   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     │
+     └─ lib/noizu_prompt_lingua/domains/notifications/notifications.ex:327: NoizuPromptLingua.Domains.Notifications (module)
+
+    warning: the following clause will never match:
+
+        {:error, :project_not_in_org} ->
+
+    it is expected to match on type:
+
+        dynamic(
+          ({:error, :project_not_found} and not {:ok, term()}) or ({:org, term()} and not {:org, not nil}) or
+            {:error, :artifact_not_found or :artifact_not_in_org}
+        )
+
+    type warning found at:
+    │
+ 64 │       {:error, :project_not_in_org} ->
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/domains/review/tools/review_create.ex:64: NoizuPromptLingua.Domains.Review.Tools.ReviewCreate.call/2
+
+     warning: variable "user" is unused (if the variable is not meant to be used, prefix it with an underscore)
+     │
+ 276 │       {user, org} ->
+     │        ~
+     │
+     └─ lib/noizu_prompt_lingua_web/controllers/github_controller.ex:276:8: NoizuPromptLinguaWeb.GithubController.handle_github_call/5
+
+    warning: the following clause cannot match because the previous clauses already matched all possible values:
+
+        error ->
+
+    it attempts to match on the result of:
+
+        NoizuPromptLingua.Github.Client.list_repos(user, org)
+
+    which has the already matched type:
+
+        dynamic({:ok, %{count: integer(), repos: term()}})
+
+    where "error" was given the type:
+
+        # type: dynamic({:ok, %{count: integer(), repos: term()}})
+        # from: lib/noizu_prompt_lingua_web/controllers/github_controller.ex:71:11
+        error
+
+    type warning found at:
+    │
+ 71 │           error -> handle_error(conn, error)
+    │                 ~
+    │
+    └─ lib/noizu_prompt_lingua_web/controllers/github_controller.ex:71:17: NoizuPromptLinguaWeb.GithubController.index/2
+
+     warning: clauses with the same name and arity (number of arguments) should be grouped together, "defp meta_get/2" was previously defined (lib/noizu_prompt_lingua/mcp/tool_guard.ex:406)
+     │
+ 426 │   defp meta_get(m, key) when is_map(m), do: Map.get(m, key) || Map.get(m, to_string(key))
+     │        ~
+     │
+     └─ lib/noizu_prompt_lingua/mcp/tool_guard.ex:426:8
+
+    warning: the following clause will never match:
+
+        {:error, :project_not_in_org} ->
+
+    it is expected to match on type:
+
+        dynamic(
+          ({:error, :project_not_found} and not {:ok, term()}) or ({:org, term()} and not {:org, not nil})
+        )
+
+    type warning found at:
+    │
+ 87 │       {:error, :project_not_in_org} ->
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/domains/tickets/tools/ticket_create.ex:87: NoizuPromptLingua.Domains.Tickets.Tools.TicketCreate.call/2
+
+    warning: function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Sessions.UserSession)
+    │
+ 12 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/sessions/user_session.ex:12: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Sessions.UserSession (module)
+
+    warning: function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Sessions.UserSession)
+    │
+ 12 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/sessions/user_session.ex:12: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Sessions.UserSession (module)
+
+    warning: incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/users/sessions/user_session.ex:29
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Users.Sessions.UserSession{})
+        # from: lib/noizu_prompt_lingua/entities/users/sessions/user_session.ex:29
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/users/sessions/user_session.ex:29
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/users/sessions/user_session.ex:29
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 29 │   jason_encoder()
+    │   ~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/sessions/user_session.ex:29: Jason.Encoder.NoizuPromptLingua.Users.Sessions.UserSession.encode/2
+
+    warning: the following clause is redundant:
+
+        {{:ok, _}, {:error, reason}} ->
+
+    previous clauses have already matched on the following types:
+
+        {{:ok, binary()}, {:ok, not nil}}
+        {{:ok, binary()}, {:error, :org_not_found}}
+
+    where "reason" was given the type:
+
+        # type: dynamic(:org_not_found)
+        # from: lib/noizu_prompt_lingua/domains/github/tools/pull_get.ex
+        {{:ok, _}, {:error, reason}}
+
+    type warning found at:
+    │
+ 29 │       {{:ok, _}, {:error, reason}} -> {:error, reason}
+    │                                    ~
+    │
+    └─ lib/noizu_prompt_lingua/domains/github/tools/pull_get.ex:29:36: NoizuPromptLingua.Domains.Github.Tools.PullGet.call/2
+
+    warning: the following clause will never match:
+
+        {:error, :project_not_in_org} ->
+
+    it is expected to match on type:
+
+        dynamic(
+          ({:error, :not_found} and
+             not {:ok,
+              %{count: integer(), relations: term()} or %{element: not %{..., id: term()}, layers: term()}} and
+             not {:ok, %{..., element: %{..., id: term()}}}) or
+            ({:error, :project_not_found} and not {:ok, term(), term()} and not {:ok, term()}) or
+            ({:error, :org_not_found} and not {:ok, term(), term()})
+        )
+
+    type warning found at:
+    │
+ 35 │       {:error, :project_not_in_org} -> {:error, "Project does not belong to organization"}
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/domains/unicode_codex/tools/related.ex:35: NoizuPromptLingua.Domains.UnicodeCodex.Tools.Related.call/2
+
+     warning: variable "scope" is unused (if the variable is not meant to be used, prefix it with an underscore)
+     │
+ 347 │   defp read_node([space_slug], scope) do
+     │                                ~~~~~
+     │
+     └─ lib/noizu_prompt_lingua/mcp/vfs/wiki.ex:347:32: NoizuPromptLingua.MCP.VFS.Wiki.read_node/2
+
+      warning: the right-hand side of || will never be executed:
+
+          att.url || ...
+
+      because the left-hand side always evaluates to:
+
+          binary()
+
+      where "att" was given the types:
+
+          # type: dynamic(%{..., url: term()})
+          # from: lib/noizu_prompt_lingua/mcp/vfs/wiki.ex:1101:14
+          att.url
+
+          # type: dynamic(%{..., url: binary()})
+          # from: lib/noizu_prompt_lingua/mcp/vfs/wiki.ex:1101:14
+          att.url
+
+      type warning found at:
+      │
+ 1105 │           _ -> att.url || ""
+      │           ~~~~~~~~~~~~~~~~~~
+      │
+      └─ lib/noizu_prompt_lingua/mcp/vfs/wiki.ex:1105: NoizuPromptLingua.MCP.VFS.Wiki.attachment_content/1
+
+    warning: the following clause is redundant:
+
+        {{:ok, _}, {:error, reason}} ->
+
+    previous clauses have already matched on the following types:
+
+        {{:ok, binary()}, {:ok, not nil}}
+        {{:ok, binary()}, {:error, :org_not_found}}
+
+    where "reason" was given the type:
+
+        # type: dynamic(:org_not_found)
+        # from: lib/noizu_prompt_lingua/domains/github/tools/pull_list.ex
+        {{:ok, _}, {:error, reason}}
+
+    type warning found at:
+    │
+ 41 │       {{:ok, _}, {:error, reason}} -> {:error, reason}
+    │                                    ~
+    │
+    └─ lib/noizu_prompt_lingua/domains/github/tools/pull_list.ex:41:36: NoizuPromptLingua.Domains.Github.Tools.PullList.call/2
+
+    warning: variable "raw_body" is unused (if the variable is not meant to be used, prefix it with an underscore)
+    │
+ 63 │       {:ok, status, raw_body} when status == 401 and left > 0 ->
+    │                     ~
+    │
+    └─ lib/noizu_prompt_lingua/trp/service_auth.ex:63:21: NoizuPromptLingua.TRP.ServiceAuth.do_request/5
+
+    warning: function field_as_record/5 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Media.Asset)
+    │
+  9 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/media/asset.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Media.Asset (module)
+
+    warning: function field_from_record/6 required by protocol Noizu.Entity.Store.Ecto.Entity.FieldProtocol is not implemented (in module Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Media.Asset)
+    │
+  9 │   def_entity do
+    │   ~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/media/asset.ex:9: Noizu.Entity.Store.Ecto.Entity.FieldProtocol.NoizuPromptLingua.Users.Media.Asset (module)
+
+    warning: incompatible types given to Jason.Encode.map/2:
+
+        Jason.Encode.map(
+          Noizu.Entity.Json.Protocol.prep(s, settings, user_settings[:context], user_settings[:settings]),
+          opts
+        )
+
+    given types:
+
+        dynamic(), -dynamic({term(), term(), term()})-
+
+    but expected one of:
+
+        map(), {term(), term()}
+
+    where "opts" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic({term(), term(), term()})
+        # from: lib/noizu_prompt_lingua/entities/users/media/asset.ex:29
+        {_, _, user_settings} = opts
+
+    where "s" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(%NoizuPromptLingua.Users.Media.Asset{})
+        # from: lib/noizu_prompt_lingua/entities/users/media/asset.ex:29
+        s
+
+    where "settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(not false and not nil)
+        # from: lib/noizu_prompt_lingua/entities/users/media/asset.ex:29
+        settings =
+          cond do
+            ...
+          end
+
+    where "user_settings" (context Noizu.Entity.Macros) was given the type:
+
+        # type: dynamic(
+          %{..., __struct__: atom()} or nil or empty_list() or non_empty_list(term(), term()) or
+            non_struct_map()
+        )
+        # from: lib/noizu_prompt_lingua/entities/users/media/asset.ex:29
+        user_settings[:json_format]
+
+    type warning found at:
+    │
+ 29 │   jason_encoder()
+    │   ~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/entities/users/media/asset.ex:29: Jason.Encoder.NoizuPromptLingua.Users.Media.Asset.encode/2
+
+     warning: the following clause cannot match because the previous clauses already matched all possible values:
+
+         {:error, _} = err ->
+
+     it attempts to match on the result of:
+
+         project_in_org(ref, org.id)
+
+     which has the already matched type:
+
+         dynamic({:error, :project_not_found} or {:ok, term()})
+
+     where "err" was given the type:
+
+         # type: dynamic({:error, :project_not_found})
+         # from: lib/noizu_prompt_lingua/mcp/resolve.ex:143:21
+         {:error, _} = err
+
+     type warning found at:
+     │
+ 143 │         {:error, _} = err -> {:halt, err}
+     │                           ~
+     │
+     └─ lib/noizu_prompt_lingua/mcp/resolve.ex:143:27: NoizuPromptLingua.MCP.Resolve.project_across_scope/1
+
+     warning: the following conditional expression will always succeed:
+
+         is_binary(source)
+
+     because it evaluates to:
+
+         dynamic(true)
+
+     where "source" was given the type:
+
+         # type: binary()
+         # from: lib/noizu_prompt_lingua_web/controllers/tool_set_profiles_controller.ex:391:11
+         is_binary(source)
+
+     type warning found at:
+     │
+ 394 │       is_binary(source) and not is_nil(Profiles.get(source)) ->
+     │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     │
+     └─ lib/noizu_prompt_lingua_web/controllers/tool_set_profiles_controller.ex:394: NoizuPromptLinguaWeb.ToolSetProfilesController.resolve_source/2
+
+      warning: clauses with the same name and arity (number of arguments) should be grouped together, "def delete/1" was previously defined (lib/noizu_prompt_lingua/mcp_custom_scopes.ex:1049)
+      │
+ 1080 │   def delete(slug) when is_binary(slug) do
+      │       ~
+      │
+      └─ lib/noizu_prompt_lingua/mcp_custom_scopes.ex:1080:7
+
+    warning: module attribute @visibilities was set but never used
+    │
+ 54 │   @visibilities ~w(org account shared)
+    │   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/mcp_custom_scopes.ex:54: NoizuPromptLingua.MCPCustomScopes (module)
+
+      warning: this clause of defp apply_preset/1 is never used (or it will always fail/warn when invoked)
+      │
+ 1468 │   defp apply_preset(_), do: %{}
+      │        ~
+      │
+      └─ lib/noizu_prompt_lingua/mcp_custom_scopes.ex:1468:8: NoizuPromptLingua.MCPCustomScopes.apply_preset/1
+
+    warning: the following clause will never match:
+
+        {:client, :not_found} ->
+
+    it is expected to match on type:
+
+        dynamic(
+          ({:org, term()} and not {:org, not nil}) or ({:owner, not false} and not {:owner, binary()})
+        )
+
+    type warning found at:
+    │
+ 59 │       {:client, :not_found} -> {:error, "Client '#{client_ref}' not found in organization"}
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/noizu_prompt_lingua/mcp/projects/tools/project_create.ex:59: NoizuPromptLingua.MCP.Projects.Tools.ProjectCreate.call/2
+
+** (MatchError) no match of right hand side value:
+
+    {:error,
+     #Ecto.Changeset<
+       action: :insert,
+       changes: %{
+         name: "Dbg",
+         config: %{
+           "groups" => %{
+             "tickets" => %{"tools" => %{"Ticket.Get" => %{"disabled" => true}}}
+           }
+         },
+         kind: "custom",
+         is_default: false,
+         slug: "dbg-param"
+       },
+       errors: [
+         slug: {"has already been taken",
+          [constraint: :unique, constraint_name: "uq_mcp_custom_scopes_slug"]}
+       ],
+       data: #NoizuPromptLingua.Schema.MCPCustomScope<>,
+       valid?: false,
+       ...
+     >}
+
+    /Users/keithbrings/Work/Space/Noizu/Portfolio/Apps/AI/NoizuPromptLingo/.claude/worktrees/alacarte-mcp/.tmp/debug_param.exs:6: (file)
+    (elixir 1.20.1) lib/code.ex:1639: Code.require_file/2

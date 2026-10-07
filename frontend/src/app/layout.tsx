@@ -16,11 +16,28 @@ export function generateMetadata(): Metadata {
   // (that field is for the styleguide page, e.g. "Style Guide — Base Theme").
   return {
     title: {
-      default: "NoizuPromptLingo",
-      template: "NoizuPromptLingo - %s",
+      default: "Prompt Lingo — syntax for prompts that stay sharp",
+      template: "Prompt Lingo - %s",
     },
     description:
-      "Tobor Locker — MCP-native work infrastructure for AI agents. Durable artifacts, tickets, sessions, wiki, chat, review, and memory for Claude Code, Codex, and any MCP client.",
+      "Noizu Prompt Lingo is an open convention language — placeholders, pumps, directives — that agents load over a public MCP. No account. MIT-licensed.",
+    metadataBase: new URL("https://promptlingo.dev"),
+    openGraph: {
+      title: "Prompt Lingo — syntax for prompts that stay sharp",
+      description:
+        "Open prompt conventions with examples and a public MCP. Star the repo, load NPLLoad.",
+      url: "https://promptlingo.dev",
+      siteName: "Prompt Lingo",
+      type: "website",
+      images: [{ url: "/brand/og.jpg", width: 1600, height: 900, alt: "Prompt Lingo — typesetter’s desk" }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "Prompt Lingo — syntax for prompts that stay sharp",
+      description:
+        "Open prompt conventions with examples and a public MCP. Star the repo, load NPLLoad.",
+      images: ["/brand/og.jpg"],
+    },
     icons: {
       icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
       shortcut: [{ url: "/favicon.svg", type: "image/svg+xml" }],

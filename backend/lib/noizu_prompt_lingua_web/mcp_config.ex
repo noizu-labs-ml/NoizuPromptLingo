@@ -3,8 +3,8 @@ defmodule NoizuPromptLinguaWeb.MCPConfig do
   Shared options for mounting MCP servers via
   `Noizu.MCP.Transport.StreamableHTTP.Plug`.
 
-  Requests must present a Bearer MCP JWT (minted at `POST /api/mcp/token` from
-  an active MCP API key, or later via OAuth). `DualTokenVerifier` accepts:
+  The public NPL syntax MCP (`plug_opts_public/1`) does not require a bearer.
+  When a client does present a token, `DualTokenVerifier` accepts:
 
   - Phase 0+ RS256 (JWKS) tokens with optional `aud`
   - Legacy HS256 compound JWTs (`api_key_id` + shared secret)
@@ -62,30 +62,32 @@ defmodule NoizuPromptLinguaWeb.MCPConfig do
   end
 
   @doc """
+  Public NPL syntax MCP: no required bearer. Clients may still complete
+  OAuth and send a site-approval token; `TransportPlug` verifies it when
+  present. CORS is on so browser MCP hosts can read discovery headers.
+  """
+  def plug_opts_public(server) do
+    [server: server, origins: :any, cors: true, auth: nil]
+  end
+
+  @doc """
   Plug opts for the VFS WebSocket transport (`Noizu.MCP.Transport.VFSWS`)
   mounted at `/vfs` (Wave 0 substrate).
 
-  Same `DualTokenVerifier` bearer pipeline as the MCP surface: the upgrade is
-  rejected 401 without a valid token, and the in-band `vfs/auth` handshake
-  (first frame) binds the verified claims to the connection `Ctx`. The
-  transport consumes only `server:`, `auth:`, and `context:` — StreamableHTTP
-  opts like `:origins` / `:resource_metadata` do not apply.
+  Public, like the syntax MCP: no bearer required. `VFSWS.authenticate(conn, nil)`
+  allows the upgrade; `vfs/auth` with any/empty token binds empty claims.
+  `_npl` is ungated docs; other group subtrees fail closed for a bare principal.
+  Clients may still send a DualTokenVerifier bearer — ignored while `auth` is
+  nil (site-approval is enough for MCP; VFS browse is the markdown corpus).
   """
   def vfs_plug_opts do
-    # Keyword.put prepends, so probe :verifier by key, never by position.
-    auth =
-      case Keyword.get(auth_opts(), :verifier) do
-        nil -> []
-        verifier -> [verifier: verifier]
-      end
-
     [
       server: NoizuPromptLingua.MCP.VFSServer,
       # Phoenix's `forward "/vfs", VFSWS` strips the matched prefix, so the
       # plug sees path_info == [] — mount it at "/" (direct-Bandit mounts pass
       # their own :path).
       path: "/",
-      auth: auth,
+      auth: nil,
       context: {NoizuPromptLingua.MCP.VFS.Principal, :context_assigns}
     ]
   end
@@ -192,7 +194,7 @@ defmodule NoizuPromptLinguaWeb.MCPConfig do
         end
 
       true ->
-        "tobor.locker"
+        "promptlingo.dev"
     end
   end
 end

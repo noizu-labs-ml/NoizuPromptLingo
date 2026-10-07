@@ -1,0 +1,125 @@
+{
+  "_comment": "Tag registry for the NPL Keyboard. Key = normalized tag (trim + lowercase). Entries not listed here get an auto-assigned color and no description; add curated rows as needed. Color = hex RRGGBB; UI renders it with opacity as chip/header tint.",
+  "tags": {
+    "pump": {
+      "description": "Cognitive output block an agent emits (intent, reflection, mood, ...).",
+      "color": "7C5CFF"
+    },
+    "core": {
+      "description": "Foundational NPL inline syntax (placeholders, in-fill, literal, omission).",
+      "color": "0A84FF"
+    },
+    "prefix": {
+      "description": "Emoji+arrow response-mode indicator (e.g. 🖥️➤).",
+      "color": "34C759"
+    },
+    "section": {
+      "description": "Tagged content container (<npl-prompt-section type=...>).",
+      "color": "FF9F0A"
+    },
+    "directive": {
+      "description": "⟪…⟫ bracketed instruction for output formatting or control.",
+      "color": "FF375F"
+    },
+    "logic": {
+      "description": "Formal/symbolic logic constructs (proof, quantifiers, handlebars).",
+      "color": "5E5CE6"
+    },
+    "fence": {
+      "description": "Fenced code-block container (```alg, ```proof, ...).",
+      "color": "30D158"
+    },
+    "placeholder": {
+      "description": "Substitution slot for variable or generated content.",
+      "color": "64D2FF"
+    },
+    "agent": {
+      "description": "Agent declaration/extension machinery.",
+      "color": "BF5AF2"
+    },
+    "xhtml": {
+      "description": "NPL XHTML flavor (<npl-*> tags).",
+      "color": "98989D"
+    },
+    "framework": {
+      "description": "NPL version boundaries and framework extensions.",
+      "color": "0A84FF"
+    },
+    "declaration": {
+      "description": "Immutable declaration block (framework or agent).",
+      "color": "5E5CE6"
+    },
+    "reasoning": {
+      "description": "Visible reasoning machinery (CoT, pumps, logic).",
+      "color": "FF9F0A"
+    },
+    "intent": {
+      "description": "Goal / scope / assumption machinery.",
+      "color": "FF375F"
+    },
+    "reflection": {
+      "description": "Post-hoc self-assessment blocks.",
+      "color": "30D158"
+    },
+    "thought": {
+      "description": "Associative inner-monologue bubbles.",
+      "color": "64D2FF"
+    },
+    "mood": {
+      "description": "Affective state declaration.",
+      "color": "FF9F0A"
+    },
+    "template": {
+      "description": "Reusable output pattern with substitution.",
+      "color": "7C5CFF"
+    },
+    "handlebars": {
+      "description": "{{if}}/{{foreach}}/{{unless}} control flow.",
+      "color": "BF5AF2"
+    },
+    "infill": {
+      "description": "[...] generate-here markers.",
+      "color": "64D2FF"
+    },
+    "qualifier": {
+      "description": "Pipe guidance appended to placeholders/in-fill.",
+      "color": "98989D"
+    },
+    "omission": {
+      "description": "[___] elided-content marker.",
+      "color": "98989D"
+    },
+    "literal": {
+      "description": "Verbatim output delimiters ⟬…⟭.",
+      "color": "30D158"
+    },
+    "block": {
+      "description": "Open/close paired container.",
+      "color": "0A84FF"
+    },
+    "flags": {
+      "description": "Runtime behavior modifiers.",
+      "color": "FF375F"
+    },
+    "secure": {
+      "description": "Immutable, highest-precedence instruction block.",
+      "color": "FF375F"
+    },
+    "emoji": {
+      "description": "Emoji characters.",
+      "color": "FF9F0A"
+    },
+    "math": {
+      "description": "Mathematical symbols and operators.",
+      "color": "0A84FF"
+    },
+    "arrow": {
+      "description": "Arrow glyphs.",
+      "color": "64D2FF"
+    },
+    "bracket": {
+      "description": "Paired delimiters.",
+      "color": "98989D"
+    }
+  }
+}

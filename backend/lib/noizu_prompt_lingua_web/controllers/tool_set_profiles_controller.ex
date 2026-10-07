@@ -71,7 +71,7 @@ defmodule NoizuPromptLinguaWeb.ToolSetProfilesController do
   def show(conn, %{"org_id" => org_id, "slug" => slug}) do
     cond do
       profile = Profiles.get(slug) ->
-        profile_config = %{"groups" => Map.new(profile.groups, &{&1, %{"enabled" => true}})}
+        profile_config = Profiles.clone_config(slug)
 
         view =
           profile
@@ -482,7 +482,7 @@ defmodule NoizuPromptLinguaWeb.ToolSetProfilesController do
       description: profile.description,
       groups: profile.groups,
       group_count: length(profile.groups),
-      tool_count: profile.groups |> Enum.map(&Map.get(counts, &1, 0)) |> Enum.sum(),
+      tool_count: enabled_tool_count(profile, counts),
       cloneable: true,
       editable: false,
       is_profile: true,
@@ -490,21 +490,55 @@ defmodule NoizuPromptLinguaWeb.ToolSetProfilesController do
     }
   end
 
+  # Policy profiles (core) resolve to ONLY their allowlisted tools per group;
+  # group-grain profiles resolve to every catalog tool in their groups.
+  defp enabled_tool_count(%{tools: nil, groups: groups}, counts) do
+    groups |> Enum.map(&Map.get(counts, &1, 0)) |> Enum.sum()
+  end
+
+  defp enabled_tool_count(%{tools: policy}, _counts) when is_map(policy) do
+    policy |> Map.values() |> Enum.map(&length/1) |> Enum.sum()
+  end
+
   # Structural preview over the registry for a profile: what a clone would
   # start from. NOT an effective-catalog preview — that is N4b (D1).
   defp profile_preview(profile, counts) do
+    policy = Map.get(profile, :tools) || %{}
+
+    groups =
+      Map.new(profile.groups, fn group_id ->
+        case Map.fetch(policy, group_id) do
+          {:ok, essential} -> {group_id, allowlist_group_view(group_id, essential, counts)}
+          :error -> {group_id, full_group_view(group_id, counts)}
+        end
+      end)
+
     %{
-      groups:
-        Map.new(profile.groups, fn group_id ->
-          {group_id,
-           %{
-             enabled: true,
-             tool_count: Map.get(counts, group_id, 0),
-             overridden_tools: 0,
-             override_ops: 0
-           }}
-        end),
-      total_override_ops: 0
+      groups: groups,
+      total_override_ops: groups |> Map.values() |> Enum.map(& &1.override_ops) |> Enum.sum()
+    }
+  end
+
+  defp full_group_view(group_id, counts) do
+    %{
+      enabled: true,
+      tool_count: Map.get(counts, group_id, 0),
+      overridden_tools: 0,
+      override_ops: 0
+    }
+  end
+
+  # A policy group's clone starter: essentials enabled, the rest stamped
+  # `enabled: false` (⇒ :set_visible + :set_callable, 2 ops each).
+  defp allowlist_group_view(group_id, essential, counts) do
+    enabled = length(essential)
+    disabled = max(Map.get(counts, group_id, 0) - enabled, 0)
+
+    %{
+      enabled: true,
+      tool_count: enabled,
+      overridden_tools: disabled,
+      override_ops: disabled * 2
     }
   end
 

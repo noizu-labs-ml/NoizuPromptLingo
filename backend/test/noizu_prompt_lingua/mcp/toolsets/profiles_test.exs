@@ -1,9 +1,9 @@
 defmodule NoizuPromptLingua.MCP.Toolsets.ProfilesTest do
   @moduledoc """
-  N2a profiles-as-data matrix (PRD-N2 AC-2A-7): the 5 profile slugs, expanded
-  group lists vs. the MCPServers registry, annotation-registry inverse
-  consistency, and the compile-time registry validation (negative compile-check
-  via `Code.compile_string`).
+  N2a profiles-as-data matrix (PRD-N2 AC-2A-7): the built-in profile slugs,
+  expanded group lists vs. the MCPServers registry, annotation-registry inverse
+  consistency, the core restricted per-tool policy, and the compile-time
+  registry validation (negative compile-check via `Code.compile_string`).
 
   No DB — the registry is pure code (Decision 4).
   """
@@ -24,8 +24,8 @@ defmodule NoizuPromptLingua.MCP.Toolsets.ProfilesTest do
   }
 
   describe "slugs" do
-    test "the 5 canonical slugs in order" do
-      assert Profiles.slugs() == ["full", "agent-ops", "pm-dev", "content", "comms"]
+    test "the canonical slugs in order" do
+      assert Profiles.slugs() == ["full", "agent-ops", "pm-dev", "content", "comms", "core"]
     end
 
     test "get/1 returns DATA for each slug and nil for unknown" do
@@ -75,6 +75,86 @@ defmodule NoizuPromptLingua.MCP.Toolsets.ProfilesTest do
 
       for slug <- @r1 |> Map.keys() do
         refute "browser" in Profiles.groups_for(slug)
+      end
+    end
+  end
+
+  describe "core policy profile (restricted starter surface)" do
+    @core_policy %{
+      "organizations" => ~w(Organization_Overview Organization_Get),
+      "projects" => ~w(Project_Overview Project_Get),
+      "sessions" => ~w(Session_Create Session_Overview Session_Manifest)
+    }
+
+    test "core is a reserved slug expanding to exactly the three restricted groups" do
+      assert "core" in Profiles.slugs()
+      assert Enum.sort(Profiles.groups_for("core")) == ~w(organizations projects sessions)
+
+      # Member of `full`'s universe, and every group resolves in the registry
+      # (the shared slugs-loop assertion covers this too — kept local for the
+      # failure message).
+      for group_id <- Profiles.groups_for("core") do
+        assert group_id in @customizable_ids
+        assert "core" in Profiles.groups_for_tool(group_id)
+      end
+    end
+
+    test "core carries the 7-tool allowlist; every other profile is group-grain" do
+      assert Profiles.get("core").tools == @core_policy
+      assert @core_policy |> Map.values() |> Enum.map(&length/1) |> Enum.sum() == 7
+
+      for slug <- Profiles.slugs() -- ["core"] do
+        assert Profiles.get(slug).tools == nil, "unexpected per-tool policy on #{slug}"
+      end
+    end
+
+    test "core clone_config stamps disabled on non-essential catalog tools" do
+      config = Profiles.clone_config("core")
+
+      assert MapSet.new(Map.keys(config["groups"])) ==
+               MapSet.new(~w(organizations projects sessions))
+
+      for {group_id, essential} <- @core_policy do
+        group = config["groups"][group_id]
+        assert group["enabled"] == true
+        assert is_map(group["tools"]) and map_size(group["tools"]) > 0
+
+        for {name, cfg} <- group["tools"] do
+          if name in essential do
+            assert cfg == %{}, "expected #{name} enabled (default entry)"
+          else
+            assert cfg == %{"enabled" => false}, "expected #{name} stamped disabled"
+          end
+        end
+
+        for name <- essential do
+          assert Map.has_key?(group["tools"], name),
+                 "#{name} missing from #{group_id}'s live catalog walk"
+        end
+      end
+    end
+
+    test "group-grain clone_config stays group-grain (no per-tool stamps)" do
+      config = Profiles.clone_config("pm-dev")
+      assert MapSet.new(Map.keys(config["groups"])) == MapSet.new(Profiles.groups_for("pm-dev"))
+      assert Enum.all?(Map.values(config["groups"]), &(&1 == %{"enabled" => true}))
+    end
+
+    test "core custom/1 is immutable and carries the allowlist as static ops" do
+      custom = Profiles.custom("core")
+      assert custom.immutable
+      assert custom.slug == "profile:core"
+
+      essentials = List.flatten(Map.values(@core_policy))
+
+      refute custom.tools == %{}
+
+      for {name, ops} <- custom.tools do
+        canonical = NoizuPromptLingua.MCP.ToolNames.canonical(name)
+        refute canonical in essentials, "essential #{name} must not carry override ops"
+
+        assert Enum.sort(Enum.map(ops, & &1.op)) == [:set_callable, :set_visible]
+        assert Enum.all?(ops, &(&1.value == false))
       end
     end
   end

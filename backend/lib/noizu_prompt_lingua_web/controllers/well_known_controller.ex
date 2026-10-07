@@ -53,7 +53,7 @@ defmodule NoizuPromptLinguaWeb.WellKnownController do
     doc = %{
       "resource" => resource,
       "authorization_servers" => [base],
-      "scopes_supported" => ["mcp", "openid"],
+      "scopes_supported" => ["npl", "mcp", "openid"],
       "bearer_methods_supported" => ["header"]
     }
 
