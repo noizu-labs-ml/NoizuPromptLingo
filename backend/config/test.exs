@@ -29,6 +29,11 @@ config :noizu_prompt_lingua, NoizuPromptLinguaWeb.Endpoint,
 config :noizu_sendgrid,
   sandbox_enable: true
 
+# Cheap hashes in test: OAuth client secrets, MCP API keys and org tokens are
+# bcrypt-hashed on create/verify; the default 12 rounds (~250ms/hash) dominates
+# suites that mint them. Production cost is unaffected (runtime/prod config).
+config :bcrypt_elixir, log_rounds: 4
+
 config :logger, level: :warning
 
 config :phoenix, :plug_init_mode, :runtime
