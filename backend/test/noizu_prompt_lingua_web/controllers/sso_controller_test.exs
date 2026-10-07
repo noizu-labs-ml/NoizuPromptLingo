@@ -481,8 +481,16 @@ defmodule NoizuPromptLinguaWeb.SSOControllerTest do
     :ok
   end
 
+  # Ask the OS for a port nobody holds instead of drawing from 40000–60000,
+  # which overlaps Linux's ephemeral range (32768–60999): outbound sockets
+  # (Postgres, Redis, Finch) already sit there, and a collision surfaced as a
+  # linked Bandit listener EXIT that killed the test before the eaddrinuse
+  # retry below could match.
   defp free_port do
-    40_000 + :rand.uniform(20_000)
+    {:ok, socket} = :gen_tcp.listen(0, [])
+    {:ok, port} = :inet.port(socket)
+    :ok = :gen_tcp.close(socket)
+    port
   end
 
   defp id_token(jwk, extra_claims) do
