@@ -73,8 +73,8 @@ mail:
 sso:
   requireInvite: false
   oidc:
-    # Default OIDC issuer for portfolio services (Authentik at auth.noizu.com)
-    # Example: https://auth.noizu.com/application/o/{app-slug}/
+    # Default OIDC issuer for portfolio services (Authentik at auth.derobot.is)
+    # Example: https://auth.derobot.is/application/o/{app-slug}/
     issuer: ""
   saml:
     idpMetadataUrl: ""
