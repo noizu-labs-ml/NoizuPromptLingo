@@ -111,6 +111,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             },
           }}
         />
+        {/* Page comments (annotate.therobotlives.com): site-wide annotation
+            island. The CDN module registers <noizu-page-comments> on import
+            (idempotent defineElement, tobor-kit); the tag itself renders
+            nothing until enabled — it appends its rail/overlay layers to
+            document.body. Module scripts are deferred, so the element below
+            is upgraded after parse. */}
+        <script type="module" src="https://cdn.derobot.is/tobor-kit/latest/annotate.js" />
+        <noizu-page-comments site="prompt-lingo" api-base="https://annotate-srv.therobotlives.com" />
       </body>
     </html>
   );
