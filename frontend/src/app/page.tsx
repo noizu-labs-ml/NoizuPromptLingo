@@ -202,6 +202,9 @@ function Landing({ sections }: { sections: GallerySection[] }) {
             <a href="#examples" className="sg-btn sg-btn--outline">
               Browse examples
             </a>
+            <Link href="/reference" className="sg-btn sg-btn--outline">
+              Tag reference
+            </Link>
           </div>
           <pre className="tl-gallery__sample tl-gallery__sample--cmd" data-cy="mcp-cmd">
             <code>{addCmd}</code>
@@ -449,6 +452,7 @@ function Landing({ sections }: { sections: GallerySection[] }) {
         </p>
         <nav className="tl-footer__nav" aria-label="Footer">
           <a href="/login" className="tl-footer__link">Sign in</a>
+          <Link href="/reference" className="tl-footer__link">Reference</Link>
           <Link href="/styleguide" className="tl-footer__link">Styleguide</Link>
           <a href={REPO_URL} className="tl-footer__link" target="_blank" rel="noreferrer">GitHub</a>
         </nav>

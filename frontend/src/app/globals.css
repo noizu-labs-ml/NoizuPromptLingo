@@ -2414,3 +2414,15 @@ button.chat-room-header__slug:focus-visible { outline: 2px solid var(--field-foc
 .tl-btn--primary:hover { filter: brightness(1.08); }
 .tl-section__note { font-size: 13px; color: var(--text-tertiary, #94a3b8); margin-top: var(--space-2, 16px); }
 .tl-section__note code { background: var(--surface-alt, #f1f5f9); padding: 2px 6px; border-radius: 4px; }
+
+/* NPL tag reference (/reference, /reference/<tag>) */
+.tl-ref-tag { margin: 0; font-family: var(--font-mono, monospace); font-size: var(--font-size-2xl, 36px); font-weight: 700; letter-spacing: -0.01em; color: var(--text); }
+.tl-ref-back { color: var(--text-muted); text-decoration: none; }
+.tl-ref-back:hover { color: var(--text); }
+.tl-ref-table { width: 100%; max-width: 60rem; border-collapse: collapse; font-size: var(--font-size-sm, 13px); line-height: 1.55; }
+.tl-ref-table th, .tl-ref-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.tl-ref-table th { color: var(--text-muted); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; font-size: 11px; }
+.tl-ref-table td:first-child { white-space: nowrap; }
+.tl-ref-code { font-family: var(--font-mono, monospace); font-size: 0.92em; color: var(--text); }
+.tl-ref-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: var(--font-size-sm, 13px); color: var(--text-secondary); max-width: 70ch; }
+.tl-ref-links { display: flex; flex-wrap: wrap; gap: var(--space-2, 16px); align-items: center; }
