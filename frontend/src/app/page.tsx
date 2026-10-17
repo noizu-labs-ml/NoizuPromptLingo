@@ -8,7 +8,7 @@ import { useAuth } from "@/context/auth";
 import { api, type NplSection } from "@/lib/api";
 
 const REPO_URL = "https://github.com/noizu-labs-ml/NoizuPromptLingo";
-const AGENT_KIT_URL = "https://github.com/the-robot-lives/agent-kit-mcp";
+const AGENT_KIT_URL = "https://agentonomi.com";
 const CANONICAL_HOST = "https://promptlingo.dev";
 const CONV = `${REPO_URL}/blob/develop/conventions`;
 
@@ -108,7 +108,7 @@ const STEPS = [
   {
     n: "04",
     title: "Or browse it as files",
-    body: "Mount wss://promptlingo.dev/vfs read-only. Open tobor/_npl/sections/*.md in any editor — the same markdown the gallery renders.",
+    body: "Mount wss://promptlingo.dev/vfs read-only. Open the mounted _npl/sections/*.md files in any editor — the same markdown the gallery renders.",
   },
 ];
 
@@ -122,12 +122,13 @@ const FAQ = [
     a: "No. The syntax MCP and REST gallery are public. Clients that insist on OAuth get a site-approval token — not a user login.",
   },
   {
-    q: "Is this agent-kit / tobor?",
-    a: "No. Sessions, tickets, and chat live in agent-kit-mcp. Promptlingo.dev is the language those agents load.",
+    q: "Is this agent-kit?",
+    a: "Related but separate. agent-kit is the agent platform it runs on — sessions, tickets, and chat. Promptlingo.dev is the language those agents load.",
+    link: { label: "agent-kit on agentonomi.com →", href: AGENT_KIT_URL },
   },
   {
     q: "Can I browse it as files?",
-    a: "Yes. mcp-mount --url wss://promptlingo.dev/vfs --mount ~/npl --ro — then open tobor/_npl/sections/*.md. No token. Setup: docs/howto/vfs.md in the repo.",
+    a: "Yes. mcp-mount --url wss://promptlingo.dev/vfs --mount ~/npl --ro — then browse the mounted _npl/sections/*.md files. No token. Setup: docs/howto/vfs.md in the repo.",
   },
 ];
 
@@ -349,7 +350,7 @@ function Landing({ sections }: { sections: GallerySection[] }) {
             Browse the syntax as files
           </h2>
           <p className="tl-section__lede">
-            The VFS mounts <code>tobor/_npl</code> as YAML sources, grouped
+            The VFS mounts the <code>_npl</code> plane as YAML sources, grouped
             markdown per section, and the full <code>spec.md</code>. Same engine
             as the gallery. No token.
           </p>
@@ -384,7 +385,7 @@ function Landing({ sections }: { sections: GallerySection[] }) {
             github.com/noizu-labs-ml/NoizuPromptLingo
           </a>
           <a href={AGENT_KIT_URL} className="sg-btn sg-btn--outline" target="_blank" rel="noreferrer">
-            Agent kit (separate)
+            agent-kit (agent platform) →
           </a>
         </div>
       </section>
@@ -397,7 +398,22 @@ function Landing({ sections }: { sections: GallerySection[] }) {
           {FAQ.map((item) => (
             <details key={item.q} className="tl-faq__item">
               <summary className="tl-faq__q">{item.q}</summary>
-              <p className="tl-faq__a">{item.a}</p>
+              <p className="tl-faq__a">
+                {item.a}
+                {item.link && (
+                  <>
+                    {" "}
+                    <a
+                      className="tl-faq__link"
+                      href={item.link.href}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {item.link.label}
+                    </a>
+                  </>
+                )}
+              </p>
             </details>
           ))}
         </div>
