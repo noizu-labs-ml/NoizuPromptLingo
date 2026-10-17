@@ -141,11 +141,79 @@ export async function fetchCategories(): Promise<CategoryDef[]> {
 }
 
 export async function fetchUnicodeDb(): Promise<CatalogEntry[]> {
-  // 7.8MB — fetched lazily, only when the symbol picker opens.
+  // 8MB — fetched lazily, only when the symbol picker opens.
+  // File is the npl-keyboard export, schema v3: compact tuples
+  // chars: [codepoint, name, generalCategory, script], plus a
+  // descriptions map keyed by decimal codepoint. (An older draft of
+  // this loader expected an `entries` array that never existed, so the
+  // picker rendered an empty grid — annotate ae483b72.)
   const res = await fetch("/npl-keyboard/unicode-db.json");
   if (!res.ok) return [];
   const data = await res.json();
-  return (data.entries ?? []) as CatalogEntry[];
+  const chars: [number, string, string, string][] = data.chars ?? [];
+  const descriptions: Record<string, string> = data.descriptions ?? {};
+  return chars.map(([cp, name, gc, script]) => ({
+    id: `u${cp}`,
+    char: String.fromCodePoint(cp),
+    name,
+    description: descriptions[String(cp)],
+    category: unicodeGroup(cp, gc),
+    tags: [script],
+  }));
+}
+
+// Bucket the picker's 155k glyphs into the same group labels the
+// npl-keyboard export advertises (data.groups), derived from general
+// category + codepoint range. Arrows/Emoji are range-based because
+// Unicode general categories don't distinguish them.
+function unicodeGroup(cp: number, gc: string): string {
+  // Emoji blocks only — a bare `cp >= 0x1f000` would also swallow the CJK
+  // extension ideographs that share plane 1+.
+  if (
+    (cp >= 0x1f000 && cp <= 0x1faff) ||
+    (cp >= 0x2600 && cp <= 0x26ff) ||
+    (cp >= 0x2700 && cp <= 0x27bf)
+  ) {
+    return "Emoji";
+  }
+  if ((cp >= 0x2190 && cp <= 0x21ff) || (cp >= 0x2b00 && cp <= 0x2bff)) return "Arrows";
+  switch (gc) {
+    case "Ps":
+    case "Pe":
+    case "Pi":
+    case "Pf":
+      return "Brackets";
+    case "Po":
+    case "Pd":
+    case "Pc":
+      return "Punctuation";
+    case "Sc":
+      return "Currency";
+    case "Sm":
+      return "Math";
+    case "Mn":
+    case "Mc":
+    case "Me":
+      return "Marks";
+    case "Nd":
+    case "Nl":
+    case "No":
+      return "Numbers";
+    case "Lu":
+    case "Ll":
+    case "Lt":
+    case "Lm":
+    case "Lo":
+      return "Letters";
+    case "Zs":
+    case "Zl":
+    case "Zp":
+      return "Space";
+    case "Cf":
+      return "Format";
+    default:
+      return "Symbols"; // So, Sk
+  }
 }
 
 // ── Showcase gallery (public OP-vs-NPL entries) ──

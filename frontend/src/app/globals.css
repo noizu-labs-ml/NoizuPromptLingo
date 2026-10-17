@@ -293,6 +293,51 @@ html[data-design-theme="style-guide"].dark {
   --focus-ring: #22d3ee;
 }
 
+/* ── Page tokens (--pg-*) ──────────────────────────────────────
+   Theme-reactive primitives for pages that use Tailwind utilities
+   (/keyboard, /reference). The site defaults to dark mode (layout.tsx
+   inlines `.dark` on <html>); hardcoded light utility classes rendered
+   dark-on-dark and were unreadable (annotate 890f4529). Pages consume
+   these via bg-[var(--pg-*)] instead of fixed slate-* classes.
+   All ink/surface pairs below meet WCAG AA (≥ 4.5:1 body text,
+   ≥ 3:1 large text / UI borders). */
+html[data-design-theme="style-guide"] {
+  --pg-canvas: #f3f6f8;
+  --pg-card: #ffffff;
+  --pg-card-alt: #f1f5f9;
+  --pg-border: #cbd5e1;
+  --pg-border-soft: #e2e8f0;
+  --pg-ink: #0f172a;      /* 17.9:1 on card */
+  --pg-ink-soft: #475569; /*  7.6:1 on card */
+  --pg-ink-faint: #64748b;/*  4.8:1 on card */
+  --pg-hover: #f1f5f9;
+  --pg-active: #e2e8f0;
+  --pg-accent: #2563eb;
+  --pg-accent-ink: #ffffff;      /* 5.2:1 on accent */
+  --pg-accent-soft: #dbeafe;
+  --pg-accent-ink-strong: #1e3a8a;
+  --pg-code-bg: #f8fafc;
+  --pg-danger: #b91c1c;
+}
+html[data-design-theme="style-guide"].dark {
+  --pg-canvas: #09090b;
+  --pg-card: #14181f;
+  --pg-card-alt: #10141b;
+  --pg-border: #3d4756;
+  --pg-border-soft: #29313d;
+  --pg-ink: #e6ebf2;      /* 14.9:1 on card */
+  --pg-ink-soft: #a6b2c2; /*  8.3:1 on card */
+  --pg-ink-faint: #8693a6;/*  5.7:1 on card */
+  --pg-hover: #1b212a;
+  --pg-active: #232b37;
+  --pg-accent: #2563eb;
+  --pg-accent-ink: #ffffff;      /* 5.2:1 on accent */
+  --pg-accent-soft: #17253d;
+  --pg-accent-ink-strong: #93c5fd; /* 9.9:1 on card — accent-colored text */
+  --pg-code-bg: #10141b;
+  --pg-danger: #f87171;
+}
+
 /* ── Navbar ─── */
 .sg-navbar {
   position: sticky; top: 0; z-index: 50;
@@ -1373,6 +1418,8 @@ pre.mermaid { background: var(--surface-alt); border: 1px solid var(--border); b
 .tl-faq__q::before { content: "+ "; color: var(--red, #9a2c3f); font-family: var(--font-mono, monospace); }
 .tl-faq__item[open] .tl-faq__q::before { content: "− "; }
 .tl-faq__a { margin: var(--space-1, 8px) 0 0; font-size: var(--font-size-sm, 13px); line-height: 1.6; color: var(--text-secondary); }
+.tl-faq__link { color: var(--link, var(--brand-blue)); text-decoration: underline; text-underline-offset: 2px; }
+.tl-faq__link:hover { color: var(--text); }
 
 /* Footer */
 .tl-footer {
@@ -2426,3 +2473,55 @@ button.chat-room-header__slug:focus-visible { outline: 2px solid var(--field-foc
 .tl-ref-code { font-family: var(--font-mono, monospace); font-size: 0.92em; color: var(--text); }
 .tl-ref-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: var(--font-size-sm, 13px); color: var(--text-secondary); max-width: 70ch; }
 .tl-ref-links { display: flex; flex-wrap: wrap; gap: var(--space-2, 16px); align-items: center; }
+
+/* ── Reference sidebar (mirrors semtext.dev's grouped tag index) ──
+   Desktop: sticky always-open rail left of the content. Mobile: the same
+   nav inside a native <details>, collapsed by default. No client JS. */
+.tl-refnav-wrap { display: grid; gap: var(--space-5, 40px); }
+.tl-refnav--mobile {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: var(--surface-alt);
+}
+.tl-refnav--desktop { display: none; }
+.tl-refnav__summary {
+  cursor: pointer; font-size: var(--font-size-sm, 13px); font-weight: 650; color: var(--text);
+  list-style: none;
+}
+.tl-refnav__summary::-webkit-details-marker { display: none; }
+.tl-refnav__summary::before { content: "≡ "; color: var(--text-muted); font-family: var(--font-mono, monospace); }
+.tl-refnav__summary:hover { color: var(--brand-blue); }
+.tl-refnav__group { margin-top: 14px; }
+.tl-refnav__heading {
+  margin: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--text-muted);
+}
+.tl-refnav__list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 2px; }
+.tl-refnav__link {
+  display: block; padding: 3px 8px; border-radius: 6px;
+  color: var(--text-secondary); text-decoration: none;
+  font-family: var(--font-mono, monospace); font-size: 12px;
+}
+.tl-refnav__link:hover { color: var(--text); background: var(--surface-alt); }
+.tl-refnav__link[aria-current="page"] { color: var(--text); background: var(--surface-alt); font-weight: 600; }
+@media (min-width: 1024px) {
+  .tl-refnav-wrap { grid-template-columns: 14rem minmax(0, 1fr); align-items: start; gap: var(--space-6, 48px); }
+  .tl-refnav--desktop {
+    display: block; position: sticky;
+    top: calc(var(--app-navbar-h, 56px) + 24px);
+    max-height: calc(100vh - var(--app-navbar-h, 56px) - 48px);
+    overflow-y: auto;
+    font-size: var(--font-size-sm, 13px);
+  }
+  .tl-refnav--mobile { display: none; }
+}
+
+/* ── Reference syntax forms / examples (richer tag pages) ── */
+.tl-ref-forms { display: flex; flex-direction: column; gap: var(--space-5, 40px); }
+.tl-ref-form { min-width: 0; }
+.tl-ref-form__label {
+  margin: 0 0 6px; font-size: var(--font-size-md, 16px); font-weight: 650; color: var(--text);
+  font-family: var(--font-mono, monospace);
+}
+.tl-ref-form__note { margin: 0 0 10px; font-size: var(--font-size-sm, 13px); color: var(--text-secondary); max-width: 70ch; }

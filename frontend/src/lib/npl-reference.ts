@@ -15,6 +15,23 @@ export type NplRefChild = {
   desc: string;
 };
 
+// Alternate concrete syntaxes for the same element — NPL elements have an
+// HTML/XHTML tag form and a plain-markdown corner-bracket form. Sourced
+// from the Syntax blocks in npl/npl-full.md (generated from
+// conventions/*.yaml).
+export type NplSyntaxForm = {
+  label: string;
+  note?: string;
+  code: string;
+};
+
+// Worked examples from the conventions YAML (categories[].examples[].thread).
+export type NplRefExample = {
+  name: string;
+  brief: string;
+  code: string;
+};
+
 export type NplRefEntry = {
   tag: string;
   name: string;
@@ -23,6 +40,8 @@ export type NplRefEntry = {
   body: string[];
   attributes: NplRefAttr[];
   children?: NplRefChild[];
+  syntaxForms?: NplSyntaxForm[];
+  examples?: NplRefExample[];
   example: string;
   source: string;
 };
@@ -46,11 +65,114 @@ export const NPL_REFERENCE: NplRefEntry[] = [
       "Version banner for an NPL rules document — the element form of ⌜NPL@x.y⌝ … ⌞NPL@x.y⌟.",
     body: [
       "Sets the immutable version boundaries a prompt operates under: everything after the declaration inherits those constraints unless a later block overrides them. A definition declaration pins a framework or agent version; an extension declaration layers additive rules onto an already-declared version without rewriting it.",
+      "Establishes immutable version boundaries and operational context for NPL prompts, enabling fine-tuned models to adhere to conventions while logically separating framework rules from prompt content. Declaration blocks set immutable version boundaries, define core syntax elements, constraints and behaviours, and provide a clear operational context for agents, extensions and runtime flags.",
+      "Every declaration has two interchangeable spellings: the HTML/XHTML element form (below, for structured prompt hosts) and the plain-markdown corner-bracket banner — ⌜NPL@0.1⌝ opens, ⌞NPL@0.1⌟ closes. Both may appear in the same document; the bracket banner is what the reference short form ⌜NPL@x.y⌝ … ⌞NPL@x.y⌟ abbreviates.",
     ],
     attributes: [
       { name: "version", required: true, desc: "Version shown in the banner mark (⌜NPL@<version>⌝)." },
-      { name: "type", desc: "definition | extension." },
+      { name: "type", desc: "npl-definition | npl-extension | agent-definition | agent-extension." },
       { name: "extend-target", desc: "On extension declarations: the vocabulary being extended." },
+    ],
+    syntaxForms: [
+      {
+        label: "HTML / XHTML element — framework definition",
+        note: "The tag carries the declaration type; the bracket banner inside it pins the version.",
+        code: `<npl-declaration type="npl-definition">
+⌜NPL@{version.major.minor}⌝
+[___]
+⌞NPL@{version.major.minor}⌟
+</npl-declaration>`,
+      },
+      {
+        label: "HTML / XHTML element — framework extension",
+        note: "Extensions inherit the base version's constraints and may add qualifiers, size-indicators, or processing flags.",
+        code: `<npl-declaration type="npl-extension">
+⌜extend:NPL@{version.major.minor}⌝
+[___]
+⌞extend:NPL@{version.major.minor}⌟
+</npl-declaration>`,
+      },
+      {
+        label: "Markdown banner — framework definition",
+        note: "The same declaration without the element wrapper, for plain-text prompts.",
+        code: `⌜NPL@{version.major.minor}⌝
+[___]
+⌞NPL@{version.major.minor}⌟`,
+      },
+      {
+        label: "Markdown banner — agent definition",
+        note: "Header fields are pipe-separated: name | type | version. type is persona (an expert or character voice), tool (a command-style utility), or service (a hosted external system such as an API or vector store).",
+        code: `⌜{agent-name}|{type}|NPL@{version.major.minor}⌝
+# {Agent Name}
+{description}
+[___|behavioral specifications]
+⌞{agent-name}⌟`,
+      },
+      {
+        label: "Markdown banner — agent extension",
+        note: "The extension inherits the base agent's type and framework version.",
+        code: `⌜extend:{agent-name}|{type}|NPL@{version.major.minor}⌝
+[___]
+⌞extend:{agent-name}⌟`,
+      },
+    ],
+    examples: [
+      {
+        name: "framework-with-extension",
+        brief: "NPL declaration with extension",
+        code: `<npl-declaration type="npl-definition">
+⌜NPL@0.1⌝
+# Core Framework Rules
+[___|Framework rules here]
+⌞NPL@0.1⌟
+</npl-declaration>
+
+<npl-declaration type="npl-extension">
+⌜extend:NPL@0.1⌝
+Add custom domain qualifiers.
+⌞extend:NPL@0.1⌟
+</npl-declaration>`,
+      },
+      {
+        name: "agent-with-extension",
+        brief: "Agent definition and extension",
+        code: `<npl-declaration type="agent-definition">
+⌜code-helper|tool|NPL@0.1⌝
+# Code Helper
+Provides code analysis and suggestions.
+⌞code-helper⌟
+</npl-declaration>
+
+<npl-declaration type="agent-extension">
+⌜extend:code-helper|tool|NPL@0.1⌝
+Adds debugging capabilities.
+⌞extend:code-helper⌟
+</npl-declaration>`,
+      },
+      {
+        name: "all-agent-types",
+        brief: "All three agent types — persona, tool, service",
+        code: `<npl-declaration type="agent-definition">
+⌜dev-expert|persona|NPL@0.1⌝
+# Dev Expert
+Senior developer persona.
+⌞dev-expert⌟
+</npl-declaration>
+
+<npl-declaration type="agent-definition">
+⌜git-cli|tool|NPL@0.1⌝
+# Git CLI
+Git command emulator.
+⌞git-cli⌟
+</npl-declaration>
+
+<npl-declaration type="agent-definition">
+⌜api-gateway|service|NPL@0.1⌝
+# API Gateway
+External API interface.
+⌞api-gateway⌟
+</npl-declaration>`,
+      },
     ],
     example: `<npl-declaration type="definition" version="0.1">
   ⌜NPL@0.1⌝
