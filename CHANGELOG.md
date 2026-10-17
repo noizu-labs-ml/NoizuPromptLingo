@@ -1,7 +1,8 @@
 # Changelog
 
 ## 2026-10-17
-- feat(frontend): add annotate page-comments widget to root layout (site-wide, prompt-lingo) (#87)
+- feat(frontend): /reference — NPL tag reference (20 npl-* tags, attributes, examples) linking to semtext.dev rendered-form pages
+- feat(frontend): add annotate page-comments widget to root layout (site-wide, prompt-lingo) (#87) → stage (#88) → main (#89)
 
 ## 2026-10-13
 - chore(auth): replace retired auth.noizu.com references with auth.derobot.is (#86)
