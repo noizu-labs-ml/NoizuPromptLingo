@@ -107,6 +107,12 @@ if otel_endpoint = System.get_env("OTEL_EXPORTER_OTLP_ENDPOINT") do
       "service.name" => System.get_env("OTEL_SERVICE_NAME") || "starter-backend",
       "service.version" => "0.1.0"
     }
+else
+  # OTel disabled (no OTLP endpoint): start the SDK with sdk_disabled so no
+  # tracer provider / span processors start. Otherwise the default batch
+  # processor exports to the OTLP default endpoint http://localhost:4318 and
+  # retries forever, spamming deploy logs with failed_connect errors.
+  config :opentelemetry, sdk_disabled: true
 end
 
 if config_env() == :prod or config_env() == :dev do
