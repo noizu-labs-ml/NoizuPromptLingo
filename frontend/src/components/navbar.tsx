@@ -8,6 +8,7 @@ import { useAuth } from "@/context/auth";
 import { useSidebar } from "@/context/sidebar";
 import { MobileNav } from "@/components/mobile-nav";
 import { OrgSelect, ProjectSelect } from "@/components/scope-select";
+import { ToborAuthTriggers } from "@/components/tobor-auth";
 
 type ColorMode = "light" | "dark";
 
@@ -124,9 +125,7 @@ export function Navbar() {
             </>
           ) : (
             <>
-              <a href="/login" className="sg-btn sg-btn--outline sg-btn--sm">
-                Sign In
-              </a>
+              <ToborAuthTriggers />
               <a href="/#pricing" className="sg-btn sg-btn--primary sg-btn--sm" data-cy="nav-get-access">
                 Get access
               </a>

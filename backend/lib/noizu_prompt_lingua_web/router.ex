@@ -210,15 +210,19 @@ defmodule NoizuPromptLinguaWeb.Router do
     forward "/vfs", Noizu.MCP.Transport.VFSWS, NoizuPromptLinguaWeb.MCPConfig.vfs_plug_opts()
   end
 
-  # Authentik (OIDC) is the ONLY supported auth method — no alternatives.
-  # Email/password, magic-link, OTP, password-reset, email-verification, and
-  # social-provider routes are intentionally disabled (the Authentik IdP owns
-  # registration, password, and email verification). The Authentik login flow
-  # lives under /auth/oidc; the SPA exchanges its session via /auth/sso/exchange.
+  # Authentik (OIDC) is the primary identity provider and owns email/password
+  # registration, password, and email verification; its login flow lives under
+  # /auth/oidc and the SPA exchanges its session via /auth/sso/exchange.
+  # Google (OIDC) and GitHub (OAuth2) one-click sign-in are additive social
+  # providers (SSOController :google_* / :github_*); magic-link/OTP and the
+  # other legacy local routes remain intentionally disabled.
   scope "/api/v1", NoizuPromptLinguaWeb do
     pipe_through [:api, :rate_limited_auth]
     post "/auth/refresh", AuthController, :refresh
     get "/auth/sso/providers", SSOController, :providers
+    # Server-advertised SSO provider config for the tobor-kit noizu-auth
+    # component (REST provider discovery: GET {api-base}/auth/config).
+    get "/auth/config", SSOController, :auth_config
     post "/auth/sso/exchange", SSOController, :exchange
     get "/auth/sso/registration", SSOController, :registration
     post "/auth/sso/register", SSOController, :register
@@ -503,8 +507,24 @@ defmodule NoizuPromptLinguaWeb.Router do
     get "/callback", SSOController, :oidc_callback
   end
 
-  # Social OAuth disabled — Authentik is the only identity provider.
-  # (Authentik is reached via the OIDC redirect flow above.)
+  # Google one-click sign-in (full OIDC — state + nonce, same shape as the
+  # Authentik flow above). Enabled only when GOOGLE_CLIENT_ID is present
+  # (runtime.exs sets :google_provider + :google_enabled).
+  scope "/auth/google", NoizuPromptLinguaWeb do
+    pipe_through [:sso_session]
+    get "/", SSOController, :google_init
+    get "/callback", SSOController, :google_callback
+  end
+
+  # GitHub one-click sign-in (plain OAuth2 — GitHub OAuth Apps have no
+  # discovery document and no id_token nonce; the callback exchanges the code
+  # and reads /user + /user/emails). Enabled only when GITHUB_CLIENT_ID is
+  # present (runtime.exs sets :github_provider + :github_enabled).
+  scope "/auth/github", NoizuPromptLinguaWeb do
+    pipe_through [:sso_session]
+    get "/", SSOController, :github_init
+    get "/callback", SSOController, :github_callback
+  end
 
   # PBAC v2: Groups & Memberships (authenticated, read-only)
   scope "/api/v1", NoizuPromptLinguaWeb do
@@ -556,16 +576,19 @@ defmodule NoizuPromptLinguaWeb.Router do
     end
   end
 
-  # W7: embedded-component data plane. The same boards/tickets listings the
-  # npl-queue-board Lit component consumes, with per-consumer MCP API key
-  # acceptance in front of the normal session/JWT pipeline (the plug is
-  # pass-through when no key is present; org-scope role checks still apply
-  # to the key owner). Declared before the general org scopes so these two
-  # GETs take the key-aware route.
+  # W7: embedded-component data plane. The boards/tickets listings the
+  # npl-queue-board Lit component consumes, plus two more reads on the same
+  # terms — the personas index and ticket show (semtext.dev live-proxy
+  # enrichment) — with per-consumer MCP API key acceptance in front of the
+  # normal session/JWT pipeline (the plug is pass-through when no key is
+  # present; org-scope role checks still apply to the key owner). Declared
+  # before the general org scopes so these GETs take the key-aware route.
   scope "/api/v1/organizations/:org_id", NoizuPromptLinguaWeb do
     pipe_through [:api, :mcp_key_optional, :authenticated]
     get "/boards", BoardController, :index
     get "/tickets", TicketController, :index
+    get "/personas", PersonaController, :index
+    get "/tickets/:id", TicketController, :show
   end
 
   # Chat, Artifacts, Reviews: bound to an organization (required); associating

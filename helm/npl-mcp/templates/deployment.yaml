@@ -142,6 +142,39 @@ spec:
                   key: AUTHENTIK_CLIENT_SECRET
             - name: OIDC_REDIRECT_URI
               value: "https://{{ .Values.domain }}/auth/oidc/callback"
+            # Google + GitHub one-click SSO (SSOController :google_* / :github_*).
+            # Optional: pods boot fine before the secrets are populated — the
+            # providers (and their sign-in buttons, served via /api/v1/auth/config)
+            # simply stay hidden until the GOOGLE_*/GITHUB_* keys exist in
+            # npl-mcp-secrets (Infisical /apps/npl-mcp).
+            - name: GOOGLE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: GOOGLE_CLIENT_ID
+                  optional: true
+            - name: GOOGLE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: GOOGLE_CLIENT_SECRET
+                  optional: true
+            - name: GOOGLE_REDIRECT_URI
+              value: "https://{{ .Values.domain }}/auth/google/callback"
+            - name: GITHUB_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: GITHUB_CLIENT_ID
+                  optional: true
+            - name: GITHUB_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.backend.env.secretName }}
+                  key: GITHUB_CLIENT_SECRET
+                  optional: true
+            - name: GITHUB_REDIRECT_URI
+              value: "https://{{ .Values.domain }}/auth/github/callback"
             # --- Fixed-key auth (service-account callers) + LLM/web-research ---
             # All optional: dark-launch safe. The app boots without them and
             # degrades gracefully (no API-key auth, no Groq, no Jina search).

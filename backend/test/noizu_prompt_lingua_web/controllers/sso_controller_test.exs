@@ -1,8 +1,8 @@
 defmodule NoizuPromptLinguaWeb.SSOOidcStub.Store do
   @moduledoc """
-  Per-test token-endpoint responses for the local OIDC stub server. Keyed by
-  the stub server's port so concurrent suites never collide; entries are
-  single-use (taken on read).
+  Per-test endpoint responses for the local OIDC/OAuth stub server. Keyed by
+  {port, path} so concurrent suites and multi-call flows (GitHub's token →
+  /user → /emails) never collide; entries are single-use (taken on read).
   """
   @table :sso_oidc_stub_responses
 
@@ -60,10 +60,10 @@ defmodule NoizuPromptLinguaWeb.SSOOidcStub do
   end
 
   def call(conn, _opts) do
-    case NoizuPromptLinguaWeb.SSOOidcStub.Store.take(conn.port) do
+    case NoizuPromptLinguaWeb.SSOOidcStub.Store.take({conn.port, hd(conn.path_info)}) do
       %{status: status, json: json} -> send_json(conn, status, json)
       %{json: json} -> send_json(conn, 200, json)
-      _ -> send_json(conn, 500, %{"error" => "no queued token response"})
+      _ -> send_json(conn, 500, %{"error" => "no queued response"})
     end
   end
 
@@ -77,15 +77,18 @@ end
 
 defmodule NoizuPromptLinguaWeb.SSOControllerTest do
   @moduledoc """
-  The SSO surface: provider discovery, the OIDC redirect flow (init + callback
-  with state/nonce handling — a forged callback must be refused before any
-  network work), the claim-code exchange, and the registration-token peek /
-  register endpoints.
+  The SSO surface: provider discovery (`/api/v1/auth/sso/providers` + the
+  tobor-kit `/api/v1/auth/config` shape), the OIDC redirect flows (Authentik
+  and Google — init + callback with state/nonce handling; a forged callback
+  must be refused before any network work), the GitHub OAuth2 flow (code
+  exchange + identity fetch), the claim-code exchange, and the
+  registration-token peek / register endpoints.
 
   Network boundary: the IdP is a local Bandit stub (see SSOOidcStub) serving
-  the discovery document, JWKS, and token endpoint; the id_token is signed
-  with a test-generated RSA key whose public half the stub serves. No real
-  outbound calls — every remote endpoint is 127.0.0.1.
+  the discovery document, JWKS, token endpoint, and (for GitHub) the /user and
+  /user/emails identity endpoints; the id_token is signed with a
+  test-generated RSA key whose public half the stub serves. No real outbound
+  calls — every remote endpoint is 127.0.0.1.
 
   Not covered by design: Samly SAML ACS (disabled at compile in tests) and
   OpenIDConnect's internal HTTP failure modes beyond a 500 token response.
@@ -136,6 +139,79 @@ defmodule NoizuPromptLinguaWeb.SSOControllerTest do
                }
       after
         Application.put_env(:noizu_prompt_lingua, :oidc_enabled, prev)
+      end
+    end
+
+    test "google and github listed only when enabled", %{conn: conn} do
+      assert json_response(get(conn, "/api/v1/auth/sso/providers"), 200) == %{"providers" => []}
+
+      prev_google = Application.get_env(:noizu_prompt_lingua, :google_enabled)
+      prev_github = Application.get_env(:noizu_prompt_lingua, :github_enabled)
+
+      Application.put_env(:noizu_prompt_lingua, :google_enabled, true)
+
+      try do
+        assert json_response(get(conn, "/api/v1/auth/sso/providers"), 200) == %{
+                 "providers" => ["google"]
+               }
+      after
+        Application.put_env(:noizu_prompt_lingua, :google_enabled, prev_google)
+      end
+
+      Application.put_env(:noizu_prompt_lingua, :google_enabled, true)
+      Application.put_env(:noizu_prompt_lingua, :github_enabled, true)
+
+      try do
+        assert json_response(get(conn, "/api/v1/auth/sso/providers"), 200) == %{
+                 "providers" => ["google", "github"]
+               }
+      after
+        Application.put_env(:noizu_prompt_lingua, :google_enabled, prev_google)
+        Application.put_env(:noizu_prompt_lingua, :github_enabled, prev_github)
+      end
+    end
+  end
+
+  # ── auth config (tobor-kit noizu-auth provider discovery) ──────────────────
+
+  describe "GET /api/v1/auth/config" do
+    test "empty providers when nothing is enabled", %{conn: conn} do
+      assert json_response(get(conn, "/api/v1/auth/config"), 200) == %{"providers" => []}
+    end
+
+    test "publishes only enabled providers with id/label/href", %{conn: conn} do
+      prev_google = Application.get_env(:noizu_prompt_lingua, :google_enabled)
+      prev_github = Application.get_env(:noizu_prompt_lingua, :github_enabled)
+
+      Application.put_env(:noizu_prompt_lingua, :google_enabled, true)
+
+      try do
+        assert json_response(get(conn, "/api/v1/auth/config"), 200) == %{
+                 "providers" => [
+                   %{
+                     "id" => "google",
+                     "label" => "Sign in with Google",
+                     "href" => "/auth/google"
+                   }
+                 ]
+               }
+      after
+        Application.put_env(:noizu_prompt_lingua, :google_enabled, prev_google)
+      end
+
+      Application.put_env(:noizu_prompt_lingua, :google_enabled, true)
+      Application.put_env(:noizu_prompt_lingua, :github_enabled, true)
+
+      try do
+        assert %{
+                 "providers" => [
+                   %{"id" => "google", "href" => "/auth/google"},
+                   %{"id" => "github", "href" => "/auth/github"}
+                 ]
+               } = json_response(get(conn, "/api/v1/auth/config"), 200)
+      after
+        Application.put_env(:noizu_prompt_lingua, :google_enabled, prev_google)
+        Application.put_env(:noizu_prompt_lingua, :github_enabled, prev_github)
       end
     end
   end
@@ -199,7 +275,7 @@ defmodule NoizuPromptLinguaWeb.SSOControllerTest do
       {:ok, _server, config, opts} = start_oidc_stack()
       put_provider_config(config)
 
-      NoizuPromptLinguaWeb.SSOOidcStub.Store.put(opts.port, %{
+      NoizuPromptLinguaWeb.SSOOidcStub.Store.put({opts.port, "token"}, %{
         status: 500,
         json: %{"error" => "boom"}
       })
@@ -220,7 +296,7 @@ defmodule NoizuPromptLinguaWeb.SSOControllerTest do
       put_provider_config(config)
 
       jwt = id_token(opts.jwk, %{"sub" => "subj-1", "email" => user.email, "nonce" => "n-123"})
-      NoizuPromptLinguaWeb.SSOOidcStub.Store.put(opts.port, token_response(jwt))
+      NoizuPromptLinguaWeb.SSOOidcStub.Store.put({opts.port, "token"}, token_response(jwt))
 
       conn =
         conn
@@ -253,7 +329,7 @@ defmodule NoizuPromptLinguaWeb.SSOControllerTest do
       email = "sso-new-#{System.unique_integer([:positive])}@example.com"
 
       jwt = id_token(opts.jwk, %{"sub" => "brand-new-sub", "email" => email, "nonce" => "n-123"})
-      NoizuPromptLinguaWeb.SSOOidcStub.Store.put(opts.port, token_response(jwt))
+      NoizuPromptLinguaWeb.SSOOidcStub.Store.put({opts.port, "token"}, token_response(jwt))
 
       conn =
         conn
@@ -277,7 +353,7 @@ defmodule NoizuPromptLinguaWeb.SSOControllerTest do
       put_provider_config(config)
 
       jwt = id_token(opts.jwk, %{"sub" => "subj-2", "email" => user.email, "nonce" => "n-123"})
-      NoizuPromptLinguaWeb.SSOOidcStub.Store.put(opts.port, token_response(jwt))
+      NoizuPromptLinguaWeb.SSOOidcStub.Store.put({opts.port, "token"}, token_response(jwt))
 
       conn =
         conn
@@ -289,6 +365,195 @@ defmodule NoizuPromptLinguaWeb.SSOControllerTest do
         |> get("/auth/oidc/callback?code=real-code&state=s-123")
 
       assert redirected_to(conn, 302) =~ ~r|^/oauth/authorize\?|
+    end
+  end
+
+  # ── Google (OIDC) ──────────────────────────────────────────────────────────
+
+  describe "GET /auth/google (init)" do
+    test "unconfigured provider redirects back with google_failed", %{conn: conn} do
+      prev = Application.get_env(:noizu_prompt_lingua, :google_provider)
+      Application.delete_env(:noizu_prompt_lingua, :google_provider)
+
+      try do
+        conn = get(conn, "/auth/google")
+        assert redirected_to(conn, 302) =~ "error=google_failed"
+      after
+        if prev, do: Application.put_env(:noizu_prompt_lingua, :google_provider, prev)
+      end
+    end
+
+    test "configured provider redirects to the IdP and stores state + nonce", %{conn: conn} do
+      {:ok, _server, config, _opts} = start_oidc_stack()
+      put_provider_config(:google_provider, config)
+
+      conn = get(conn, "/auth/google")
+      location = redirected_to(conn, 302)
+
+      assert location =~ "https://stub-idp.test/authorize"
+      assert location =~ "client_id=npl-test-client"
+
+      state = get_session(conn, :google_sso_state)
+      nonce = get_session(conn, :google_sso_nonce)
+      assert is_binary(state) and byte_size(state) > 20
+      assert is_binary(nonce) and byte_size(nonce) > 20
+      assert location =~ "state=#{state}"
+    end
+  end
+
+  describe "GET /auth/google/callback" do
+    test "missing session state -> state_mismatch, before any IdP call", %{conn: conn} do
+      conn =
+        conn
+        |> init_test_session(%{})
+        |> get("/auth/google/callback?code=abc&state=forged")
+
+      assert redirected_to(conn, 302) =~ "error=state_mismatch"
+    end
+
+    test "no code param -> google_failed", %{conn: conn} do
+      conn =
+        conn
+        |> init_test_session(%{"google_sso_state" => "s-123"})
+        |> get("/auth/google/callback?state=s-123")
+
+      assert redirected_to(conn, 302) =~ "error=google_failed"
+    end
+
+    test "full round-trip logs in an existing user and hands off a claim code", %{
+      conn: conn,
+      user: user
+    } do
+      {:ok, _server, config, opts} = start_oidc_stack()
+      put_provider_config(:google_provider, config)
+
+      jwt = id_token(opts.jwk, %{"sub" => "g-subj-1", "email" => user.email, "nonce" => "n-123"})
+      NoizuPromptLinguaWeb.SSOOidcStub.Store.put({opts.port, "token"}, token_response(jwt))
+
+      conn =
+        conn
+        |> init_test_session(%{"google_sso_state" => "s-123", "google_sso_nonce" => "n-123"})
+        |> get("/auth/google/callback?code=real-code&state=s-123")
+
+      location = redirected_to(conn, 302)
+      assert location =~ "auth/sso-callback?code="
+      assert location =~ "provider=google"
+      assert get_session(conn, :oauth_user_id) == user.id
+      assert get_session(conn, :google_sso_state) == nil
+    end
+  end
+
+  # ── GitHub (OAuth2) ────────────────────────────────────────────────────────
+
+  describe "GET /auth/github (init)" do
+    test "unconfigured provider redirects back with github_failed", %{conn: conn} do
+      prev = Application.get_env(:noizu_prompt_lingua, :github_provider)
+      Application.delete_env(:noizu_prompt_lingua, :github_provider)
+
+      try do
+        conn = get(conn, "/auth/github")
+        assert redirected_to(conn, 302) =~ "error=github_failed"
+      after
+        if prev, do: Application.put_env(:noizu_prompt_lingua, :github_provider, prev)
+      end
+    end
+
+    test "configured provider redirects to the authorize URL and stores state", %{conn: conn} do
+      {:ok, _server, config, _opts} = start_github_stack()
+      put_provider_config(:github_provider, config)
+
+      conn = get(conn, "/auth/github")
+      location = redirected_to(conn, 302)
+
+      assert location =~ "https://github.com/login/oauth/authorize"
+      assert location =~ "client_id=gh-test-client"
+      # URI.append_query encodes the scope's colon as %3A and space as +
+      # (note: =~ with a plain string is a literal substring check)
+      assert location =~ "scope=read%3Auser+user%3Aemail"
+
+      state = get_session(conn, :github_sso_state)
+      assert is_binary(state) and byte_size(state) > 20
+      assert location =~ "state=#{state}"
+    end
+  end
+
+  describe "GET /auth/github/callback" do
+    test "missing session state -> state_mismatch, before any GitHub call", %{conn: conn} do
+      conn =
+        conn
+        |> init_test_session(%{})
+        |> get("/auth/github/callback?code=abc&state=forged")
+
+      assert redirected_to(conn, 302) =~ "error=state_mismatch"
+    end
+
+    test "no code param -> github_failed", %{conn: conn} do
+      conn =
+        conn
+        |> init_test_session(%{"github_sso_state" => "s-123"})
+        |> get("/auth/github/callback?state=s-123")
+
+      assert redirected_to(conn, 302) =~ "error=github_failed"
+    end
+
+    test "full round-trip exchanges the code, reads the primary email, logs in", %{
+      conn: conn,
+      user: user
+    } do
+      {:ok, _server, config, opts} = start_github_stack()
+      put_provider_config(:github_provider, config)
+
+      NoizuPromptLinguaWeb.SSOOidcStub.Store.put({opts.port, "token"}, %{
+        json: %{"access_token" => "gho-stub-token", "token_type" => "bearer"}
+      })
+
+      NoizuPromptLinguaWeb.SSOOidcStub.Store.put({opts.port, "user"}, %{
+        json: %{"id" => 98_765, "login" => "octocat", "name" => "Octo Cat", "email" => nil}
+      })
+
+      NoizuPromptLinguaWeb.SSOOidcStub.Store.put({opts.port, "emails"}, %{
+        json: [
+          %{"email" => "secondary@example.com", "primary" => false, "verified" => true},
+          %{"email" => user.email, "primary" => true, "verified" => true}
+        ]
+      })
+
+      conn =
+        conn
+        |> init_test_session(%{"github_sso_state" => "s-123"})
+        |> get("/auth/github/callback?code=real-code&state=s-123")
+
+      location = redirected_to(conn, 302)
+      assert location =~ "auth/sso-callback?code="
+      assert location =~ "provider=github"
+      assert get_session(conn, :oauth_user_id) == user.id
+
+      # The fingerprint used the numeric GitHub id, not the email.
+      cred =
+        Repo.one(
+          from(c in NoizuPromptLingua.Schema.Users.Credentials.UserCredential,
+            where: c.user_id == ^user.id and c.fingerprint == "github:98765"
+          )
+        )
+
+      assert cred
+    end
+
+    test "failing token endpoint -> github_failed catch-all", %{conn: conn} do
+      {:ok, _server, config, opts} = start_github_stack()
+      put_provider_config(:github_provider, config)
+
+      NoizuPromptLinguaWeb.SSOOidcStub.Store.put({opts.port, "token"}, %{
+        status: 500,
+        json: %{"error" => "boom"}
+      })
+
+      conn =
+        conn
+        |> init_test_session(%{"github_sso_state" => "s-123"})
+        |> get("/auth/github/callback?code=abc&state=s-123")
+
+      assert redirected_to(conn, 302) =~ "error=github_failed"
     end
   end
 
@@ -403,12 +668,14 @@ defmodule NoizuPromptLinguaWeb.SSOControllerTest do
 
   # ── helpers ─────────────────────────────────────────────────────────────────
 
-  defp put_provider_config(config) do
-    prev = Application.get_env(:noizu_prompt_lingua, @provider_config_key)
-    Application.put_env(:noizu_prompt_lingua, @provider_config_key, config)
+  defp put_provider_config(config), do: put_provider_config(@provider_config_key, config)
+
+  defp put_provider_config(key, config) do
+    prev = Application.get_env(:noizu_prompt_lingua, key)
+    Application.put_env(:noizu_prompt_lingua, key, config)
 
     ExUnit.Callbacks.on_exit(fn ->
-      Application.put_env(:noizu_prompt_lingua, @provider_config_key, prev)
+      Application.put_env(:noizu_prompt_lingua, key, prev)
     end)
   end
 
@@ -465,6 +732,38 @@ defmodule NoizuPromptLinguaWeb.SSOControllerTest do
       response_type: "code",
       leeway: 30
     }
+  end
+
+  # GitHub stack: the same Bandit stub, no JWKS/discovery — the flat config
+  # mirrors runtime.exs' :github_provider shape with 127.0.0.1 endpoints.
+  defp start_github_stack do
+    port = free_port()
+
+    config = %{
+      client_id: "gh-test-client",
+      client_secret: "gh-test-secret",
+      redirect_uri: "http://localhost:3000/auth/github/callback",
+      authorize_url: "https://github.com/login/oauth/authorize",
+      token_url: "http://127.0.0.1:#{port}/token",
+      user_url: "http://127.0.0.1:#{port}/user",
+      emails_url: "http://127.0.0.1:#{port}/emails",
+      scope: "read:user user:email"
+    }
+
+    opts = %{port: port}
+
+    case Bandit.start_link(plug: {NoizuPromptLinguaWeb.SSOOidcStub, opts}, scheme: :http, port: port) do
+      {:ok, pid} ->
+        {:ok, pid, config, opts}
+
+      {:error, :eaddrinuse} ->
+        :erlang.garbage_collect()
+        start_github_stack()
+
+      {:error, {:shutdown, {:failed_to_start_child, :listener, {:error, :eaddrinuse}}}} ->
+        :erlang.garbage_collect()
+        start_github_stack()
+    end
   end
 
   defp ensure_oidc_processes do

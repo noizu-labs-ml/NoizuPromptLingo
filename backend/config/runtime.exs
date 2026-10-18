@@ -352,6 +352,36 @@ if config_env() == :prod or config_env() == :dev do
     config :noizu_prompt_lingua, :oidc_enabled, true
   end
 
+  # ── SSO: Google (full OIDC — same map shape as the Authentik provider) ──
+  if google_client_id = System.get_env("GOOGLE_CLIENT_ID") do
+    config :noizu_prompt_lingua, :google_provider, %{
+      discovery_document_uri: "https://accounts.google.com/.well-known/openid-configuration",
+      client_id: google_client_id,
+      client_secret: System.get_env("GOOGLE_CLIENT_SECRET"),
+      redirect_uri: System.get_env("GOOGLE_REDIRECT_URI") || "https://#{host}/auth/google/callback",
+      response_type: "code",
+      scope: "openid email profile"
+    }
+
+    config :noizu_prompt_lingua, :google_enabled, true
+  end
+
+  # ── SSO: GitHub (plain OAuth2 — no discovery document, no nonce) ────────
+  if github_client_id = System.get_env("GITHUB_CLIENT_ID") do
+    config :noizu_prompt_lingua, :github_provider, %{
+      client_id: github_client_id,
+      client_secret: System.get_env("GITHUB_CLIENT_SECRET"),
+      redirect_uri: System.get_env("GITHUB_REDIRECT_URI") || "https://#{host}/auth/github/callback",
+      authorize_url: "https://github.com/login/oauth/authorize",
+      token_url: "https://github.com/login/oauth/access_token",
+      user_url: "https://api.github.com/user",
+      emails_url: "https://api.github.com/user/emails",
+      scope: "read:user user:email"
+    }
+
+    config :noizu_prompt_lingua, :github_enabled, true
+  end
+
   # ── SSO: SAML ──────────────────────────────────────────────────
   if saml_metadata = System.get_env("SAML_IDP_METADATA_URL") do
     sp_cert = System.get_env("SAML_SP_CERT", "") |> String.replace("\\n", "\n")
