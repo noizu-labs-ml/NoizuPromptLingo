@@ -8,7 +8,7 @@ deployment:
 backend:
   image:
     repository: ops.noizu.com/npl-mcp/server
-    tag: "sha-d6c802c"
+    tag: "sha-cce3625"
     pullPolicy: IfNotPresent
   port: 4040
   # Authentik OIDC redirect flow (SSOController). issuer must NOT have a trailing
@@ -89,7 +89,7 @@ liquibase:
 frontend:
   image:
     repository: ops.noizu.com/npl-mcp/frontend
-    tag: "sha-d6c802c"
+    tag: "sha-cce3625"
     pullPolicy: IfNotPresent
   port: 3000
   resources:
