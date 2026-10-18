@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-18
+- feat(frontend): /app/<orgId>/npl-conventions is public for all orgs — proxy exempts the path from the token gate (public cache, Vary: Cookie); page already degrades gracefully for anonymous visitors (#102)
+- feat(auth): Google + GitHub SSO beside Authentik — sign-in buttons only (no local passwords), env-gated providers advertised via GET /api/v1/auth/config; navbar mounts the tobor-kit noizu-auth console (dropdown sign-in / modal signup) with plain-anchor fallback (#102)
+
 ## 2026-10-17
 - fix(frontend): /keyboard — symbol picker loads the v3 unicode-db (chars tuples + descriptions map) with group filter + search + clipboard fallback; page restyled onto --pg-* dark-mode tokens (WCAG AA); Markdown/SemText syntax toggle with insert palette (#95) → stage (#96) → main (#97)
 - fix(frontend): home copy names the agent platform agent-kit, links agentonomi.com, drops tobor from prose (#95) → stage (#96) → main (#97)
