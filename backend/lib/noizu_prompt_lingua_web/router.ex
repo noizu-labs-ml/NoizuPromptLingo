@@ -556,16 +556,19 @@ defmodule NoizuPromptLinguaWeb.Router do
     end
   end
 
-  # W7: embedded-component data plane. The same boards/tickets listings the
-  # npl-queue-board Lit component consumes, with per-consumer MCP API key
-  # acceptance in front of the normal session/JWT pipeline (the plug is
-  # pass-through when no key is present; org-scope role checks still apply
-  # to the key owner). Declared before the general org scopes so these two
-  # GETs take the key-aware route.
+  # W7: embedded-component data plane. The boards/tickets listings the
+  # npl-queue-board Lit component consumes, plus two more reads on the same
+  # terms — the personas index and ticket show (semtext.dev live-proxy
+  # enrichment) — with per-consumer MCP API key acceptance in front of the
+  # normal session/JWT pipeline (the plug is pass-through when no key is
+  # present; org-scope role checks still apply to the key owner). Declared
+  # before the general org scopes so these GETs take the key-aware route.
   scope "/api/v1/organizations/:org_id", NoizuPromptLinguaWeb do
     pipe_through [:api, :mcp_key_optional, :authenticated]
     get "/boards", BoardController, :index
     get "/tickets", TicketController, :index
+    get "/personas", PersonaController, :index
+    get "/tickets/:id", TicketController, :show
   end
 
   # Chat, Artifacts, Reviews: bound to an organization (required); associating
