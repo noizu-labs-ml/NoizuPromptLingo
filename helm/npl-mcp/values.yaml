@@ -5,14 +5,9 @@ deployment:
   # second backend, which can exhaust the shared Postgres connection ceiling.
   strategy:
     type: Recreate
-npl-mcp:
-  image:
-    repository: ops.noizu.com/npl-mcp/server
-    tag: "v1.0.34"
 backend:
   image:
     repository: ops.noizu.com/npl-mcp/server
-    tag: "sha-5441c35"
     tag: "sha-d6c802c"
     pullPolicy: IfNotPresent
   port: 4040
@@ -94,7 +89,6 @@ liquibase:
 frontend:
   image:
     repository: ops.noizu.com/npl-mcp/frontend
-    tag: "sha-5441c35"
     tag: "sha-d6c802c"
     pullPolicy: IfNotPresent
   port: 3000
