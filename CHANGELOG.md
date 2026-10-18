@@ -1,5 +1,8 @@
 # Changelog
 
+
+## 2026-10-18
+- feat(api): W7 :mcp_key_optional plane extended to personas index + ticket show — org-scoped GETs accept a valid MCP API key (owner-context 200 path), anonymous/JWT behavior unchanged (#99)
 ## 2026-10-17
 - fix(frontend): /keyboard — symbol picker loads the v3 unicode-db (chars tuples + descriptions map) with group filter + search + clipboard fallback; page restyled onto --pg-* dark-mode tokens (WCAG AA); Markdown/SemText syntax toggle with insert palette (#95) → stage (#96) → main (#97)
 - fix(frontend): home copy names the agent platform agent-kit, links agentonomi.com, drops tobor from prose (#95) → stage (#96) → main (#97)
