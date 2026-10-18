@@ -1690,6 +1690,15 @@ export const api = {
     return request<{ providers: string[] }>("/api/v1/auth/sso/providers");
   },
 
+  // Server-advertised SSO provider config for the tobor-kit noizu-auth
+  // component: providers: [{id, label, href}] — only enabled providers are
+  // returned (env-gated on the backend).
+  authConfig() {
+    return request<{ providers: { id: string; label: string; href: string }[] }>(
+      "/api/v1/auth/config",
+    );
+  },
+
   ssoExchange(code: string) {
     return request<AuthResponse>("/api/v1/auth/sso/exchange", {
       method: "POST",

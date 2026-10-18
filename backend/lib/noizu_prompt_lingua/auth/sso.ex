@@ -6,15 +6,18 @@ defmodule NoizuPromptLingua.Auth.SSO do
   alias NoizuPromptLingua.Schema.Versioned.Names.Name
   import Ecto.Query, only: [from: 2]
 
-  # Authentik is the only supported identity provider — no alternatives.
+  # Authentik remains the primary IdP (it owns email/password); Google (OIDC)
+  # and GitHub (OAuth2) are additive one-click social providers.
   @provider_map %{
-    authentik: &NoizuPromptLingua.Auth.Providers.authentik/0
+    authentik: &NoizuPromptLingua.Auth.Providers.authentik/0,
+    google: &NoizuPromptLingua.Auth.Providers.google/0,
+    github: &NoizuPromptLingua.Auth.Providers.github/0
   }
 
-  def authenticate_sso(:authentik = provider_type, attrs) do
+  def authenticate_sso(provider_type, attrs) when provider_type in [:authentik, :google, :github] do
     email = normalize_email(attrs[:email])
     provider_ref = unwrap_ref(@provider_map[provider_type].())
-    provider_id = ensure_authentik_provider(provider_ref_id(provider_ref))
+    provider_id = ensure_sso_provider(provider_ref_id(provider_ref), provider_type)
     fingerprint = sso_fingerprint(provider_type, attrs)
 
     # Identity is resolved by the linked credential (provider + external subject)
@@ -38,7 +41,7 @@ defmodule NoizuPromptLingua.Auth.SSO do
     end
   end
 
-  # No alternatives to Authentik.
+  # Anything outside @provider_map (saml, strings, …) is unsupported.
   def authenticate_sso(_provider_type, _attrs), do: {:error, :unsupported_provider}
 
   # Auth.Providers.*/0 return Entity.ref/1 results, which may be wrapped as
@@ -92,13 +95,22 @@ defmodule NoizuPromptLingua.Auth.SSO do
   end
 
   # Seeds are skipped in some deploys; the credential FK still needs the row.
-  defp ensure_authentik_provider(provider_id) when is_binary(provider_id) do
+  @provider_seeds %{
+    authentik: %{title: "Authentik", description: "Authentik OIDC SSO"},
+    google: %{title: "Google", description: "Google OIDC SSO"},
+    github: %{title: "GitHub", description: "GitHub OAuth2 SSO"}
+  }
+
+  defp ensure_sso_provider(provider_id, provider_type)
+       when is_binary(provider_id) and provider_type in [:authentik, :google, :github] do
+    seed = Map.fetch!(@provider_seeds, provider_type)
+
     unless NoizuPromptLingua.Repo.get(ProviderSchema, provider_id) do
       NoizuPromptLingua.Repo.insert!(
         %ProviderSchema{
           id: provider_id,
-          title: "Authentik",
-          description: "Authentik OIDC SSO"
+          title: seed.title,
+          description: seed.description
         },
         on_conflict: :nothing,
         conflict_target: :id
@@ -183,10 +195,10 @@ defmodule NoizuPromptLingua.Auth.SSO do
   `identity` is the (string-keyed) map produced by authenticate_sso/registration token.
   """
   def register_user(%{provider: provider, sub: sub} = identity, attrs)
-      when provider in ["authentik"] do
+      when provider in ["authentik", "google", "github"] do
     provider_type = String.to_existing_atom(provider)
     provider_ref = unwrap_ref(@provider_map[provider_type].())
-    provider_id = ensure_authentik_provider(provider_ref_id(provider_ref))
+    provider_id = ensure_sso_provider(provider_ref_id(provider_ref), provider_type)
     email = normalize_email(identity[:email])
     handle = derive_handle(email, %{sub: sub})
     sso_attrs = %{sub: sub, email: email}
