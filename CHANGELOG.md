@@ -1,6 +1,7 @@
 # Changelog
 
 ## 2026-10-18
+- feat(api): W7 :mcp_key_optional plane extended to personas index + ticket show — org-scoped GETs accept a valid MCP API key (owner-context 200 path), anonymous/JWT behavior unchanged (#99) → main (#100)
 - feat(frontend): /app/<orgId>/npl-conventions is public for all orgs — proxy exempts the path from the token gate (public cache, Vary: Cookie); page already degrades gracefully for anonymous visitors (#102)
 - feat(auth): Google + GitHub SSO beside Authentik — sign-in buttons only (no local passwords), env-gated providers advertised via GET /api/v1/auth/config; navbar mounts the tobor-kit noizu-auth console (dropdown sign-in / modal signup) with plain-anchor fallback (#102)
 
