@@ -70,4 +70,14 @@ defmodule NoizuPromptLingua.Auth.Providers do
   def authentik() do
     Entity.ref(UUID.uuid5(:oid, "NoizuPromptLingua.Schema.Auth.Providers.Provider@Authentik"))
   end
+
+  # Deterministic uuid5 refs — the same seeding pattern as authentik/0, so the
+  # provider row id is stable across deploys and environments.
+  def google() do
+    Entity.ref(UUID.uuid5(:oid, "NoizuPromptLingua.Schema.Auth.Providers.Provider@Google"))
+  end
+
+  def github() do
+    Entity.ref(UUID.uuid5(:oid, "NoizuPromptLingua.Schema.Auth.Providers.Provider@GitHub"))
+  end
 end
