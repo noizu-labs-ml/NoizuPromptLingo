@@ -1,6 +1,7 @@
 defmodule NoizuPromptLingua.Auth.SSOTest do
   @moduledoc """
-  `NoizuPromptLingua.Auth.SSO` — Authentik-only SSO plumbing:
+  `NoizuPromptLingua.Auth.SSO` — SSO plumbing for the supported providers
+  (authentik, google, github):
 
   * `authenticate_sso/2` — credential-first identity resolution
     (provider + fingerprint), email fallback for legacy/linking accounts,
@@ -24,6 +25,7 @@ defmodule NoizuPromptLingua.Auth.SSOTest do
 
   alias NoizuPromptLingua.Auth.SSO
   alias NoizuPromptLingua.Repo
+  alias NoizuPromptLingua.Schema.Auth.Providers.Provider, as: ProviderSchema
   alias NoizuPromptLingua.Schema.Users.Credentials.UserCredential, as: CredentialSchema
   alias NoizuPromptLingua.Schema.Users.Sessions.UserSession, as: SessionSchema
   alias NoizuPromptLingua.Schema.Users.User, as: UserSchema
@@ -84,7 +86,31 @@ defmodule NoizuPromptLingua.Auth.SSOTest do
   test "unsupported provider types are rejected" do
     assert SSO.authenticate_sso(:saml, %{sub: "x"}) == {:error, :unsupported_provider}
     assert SSO.authenticate_sso("authentik", %{sub: "x"}) == {:error, :unsupported_provider}
-    assert SSO.authenticate_sso(:google, %{sub: "x"}) == {:error, :unsupported_provider}
+    assert SSO.authenticate_sso(:facebook, %{sub: "x"}) == {:error, :unsupported_provider}
+  end
+
+  test "google and github identities resolve like authentik and seed their provider rows", %{
+    user: user
+  } do
+    assert {:ok, session} = SSO.authenticate_sso(:google, %{email: user.email, sub: "g-1"})
+    assert session.user_id == user.id
+    assert session.details == %{auth_method: "google"}
+
+    cred = active_credential(user.id)
+    assert cred.fingerprint == "google:g-1"
+    provider = Repo.get!(ProviderSchema, cred.auth_provider_id)
+    assert provider.title == "Google"
+
+    # A second provider links a separate credential on the same account.
+    assert {:ok, session2} = SSO.authenticate_sso(:github, %{email: user.email, sub: "gh-1"})
+    assert session2.user_id == user.id
+
+    gh_cred =
+      from(c in CredentialSchema, where: c.user_id == ^user.id and c.fingerprint == "github:gh-1")
+      |> Repo.one!()
+
+    assert Repo.get!(ProviderSchema, gh_cred.auth_provider_id).title == "GitHub"
+    assert credential_count(user.id) == 2
   end
 
   # ── authenticate_sso: email fallback creates the linked credential ────────
@@ -337,7 +363,7 @@ defmodule NoizuPromptLingua.Auth.SSOTest do
   end
 
   test "unsupported registration identities are rejected" do
-    assert SSO.register_user(%{provider: "google", sub: "x"}, %{}) ==
+    assert SSO.register_user(%{provider: "facebook", sub: "x"}, %{}) ==
              {:error, :unsupported_provider}
 
     # missing sub key → no head-clause match
@@ -346,6 +372,24 @@ defmodule NoizuPromptLingua.Auth.SSOTest do
 
     assert SSO.register_user(%{"provider" => "authentik"}, %{}) ==
              {:error, :unsupported_provider}
+  end
+
+  test "register accepts google and github identities" do
+    assert {:ok, _} =
+             SSO.register_user(%{provider: "google", sub: "g-reg", email: "guser@example.com"}, %{
+               first: "G"
+             })
+
+    g_user = Repo.get_by!(UserSchema, email: "guser@example.com")
+    assert active_credential(g_user.id).fingerprint == "google:g-reg"
+
+    assert {:ok, _} =
+             SSO.register_user(%{provider: "github", sub: "gh-reg", email: "ghuser@example.com"}, %{
+               first: "GH"
+             })
+
+    gh_user = Repo.get_by!(UserSchema, email: "ghuser@example.com")
+    assert active_credential(gh_user.id).fingerprint == "github:gh-reg"
   end
 
   # ── claim_session ─────────────────────────────────────────────────────────

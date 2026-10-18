@@ -11,6 +11,30 @@ defmodule NoizuPromptLinguaWeb.SSOController do
     providers =
       []
       |> maybe_add(:oidc_enabled, "oidc")
+      |> maybe_add(:github_enabled, "github")
+      |> maybe_add(:google_enabled, "google")
+
+    json(conn, %{providers: providers})
+  end
+
+  # Server-advertised SSO config for the tobor-kit `noizu-auth` component
+  # (REST transport fetches GET {api-base}/auth/config for provider discovery:
+  # providers: [{id, label, href}]). Only enabled providers are published —
+  # the component renders redirect buttons for exactly what the server
+  # advertises, so a disabled provider never lights up a dead button.
+  # Canonical order mirrors the tobor-kit SOCIAL_PIPES order (google before
+  # github) so server and client agree when both lists are rendered.
+  @auth_config_providers [
+    {:oidc_enabled, "oidc", "Continue with SSO", "/auth/oidc"},
+    {:google_enabled, "google", "Sign in with Google", "/auth/google"},
+    {:github_enabled, "github", "Sign in with GitHub", "/auth/github"}
+  ]
+
+  def auth_config(conn, _params) do
+    providers =
+      for {flag, id, label, href} <- @auth_config_providers,
+          Application.get_env(:noizu_prompt_lingua, flag, false) === true,
+          do: %{id: id, label: label, href: href}
 
     json(conn, %{providers: providers})
   end
@@ -96,6 +120,188 @@ defmodule NoizuPromptLinguaWeb.SSOController do
     redirect_with_error(conn, "oidc_failed")
   end
 
+  # ── Google (full OIDC, mirrors the Authentik flow above) ─────
+
+  def google_init(conn, _params) do
+    with config when is_map(config) <- provider_config_or_nil(:google_provider),
+         state = random_token(),
+         nonce = random_token(),
+         {:ok, uri} <-
+           OpenIDConnect.authorization_uri(config, config.redirect_uri, %{
+             state: state,
+             nonce: nonce
+           }) do
+      conn
+      |> put_session(:google_sso_state, state)
+      |> put_session(:google_sso_nonce, nonce)
+      |> redirect(external: uri)
+    else
+      nil ->
+        Logger.error("[SSO] Google init skipped: :google_provider is not configured")
+        redirect_with_error(conn, "google_failed")
+
+      {:error, reason} ->
+        Logger.error("[SSO] Google authorization_uri failed: #{inspect(reason)}")
+        redirect_with_error(conn, "google_failed")
+    end
+  end
+
+  def google_callback(conn, %{"code" => code} = params) do
+    expected_state = get_session(conn, :google_sso_state)
+    expected_nonce = get_session(conn, :google_sso_nonce)
+
+    conn =
+      conn
+      |> delete_session(:google_sso_state)
+      |> delete_session(:google_sso_nonce)
+
+    # State first — a forged callback costs no discovery fetch, no token call.
+    with :ok <- verify_state(expected_state, params["state"]),
+         config when is_map(config) <- provider_config_or_nil(:google_provider),
+         {:ok, tokens} <-
+           OpenIDConnect.fetch_tokens(config, %{code: code, redirect_uri: config.redirect_uri}),
+         {:ok, claims} <- OpenIDConnect.verify(config, tokens["id_token"]),
+         :ok <- verify_nonce(expected_nonce, claims["nonce"]) do
+      handle_sso_callback(conn, :google, %{
+        email: claims["email"],
+        name: %{first: claims["given_name"] || "", last: claims["family_name"] || ""},
+        sub: claims["sub"]
+      })
+    else
+      {:error, :state_mismatch} -> redirect_with_error(conn, "state_mismatch")
+      _ -> redirect_with_error(conn, "google_failed")
+    end
+  end
+
+  def google_callback(conn, _params) do
+    redirect_with_error(conn, "google_failed")
+  end
+
+  # ── GitHub (plain OAuth2 — no discovery document, no id_token nonce) ──
+
+  def github_init(conn, _params) do
+    with config when is_map(config) <- provider_config_or_nil(:github_provider),
+         state = random_token() do
+      uri =
+        config.authorize_url
+        |> URI.parse()
+        |> URI.append_query(
+          URI.encode_query(%{
+            client_id: config.client_id,
+            redirect_uri: config.redirect_uri,
+            scope: config.scope,
+            state: state
+          })
+        )
+        |> URI.to_string()
+
+      conn
+      |> put_session(:github_sso_state, state)
+      |> redirect(external: uri)
+    else
+      nil ->
+        Logger.error("[SSO] GitHub init skipped: :github_provider is not configured")
+        redirect_with_error(conn, "github_failed")
+    end
+  end
+
+  def github_callback(conn, %{"code" => code} = params) do
+    expected_state = get_session(conn, :github_sso_state)
+
+    conn = delete_session(conn, :github_sso_state)
+
+    # State first — a forged callback never reaches the token endpoint.
+    with :ok <- verify_state(expected_state, params["state"]),
+         config when is_map(config) <- provider_config_or_nil(:github_provider),
+         {:ok, access_token} <- github_exchange_code(config, code),
+         {:ok, identity} <- github_fetch_identity(config, access_token) do
+      handle_sso_callback(conn, :github, %{
+        email: identity.email,
+        name: %{first: identity.name || "", last: ""},
+        sub: identity.sub
+      })
+    else
+      {:error, :state_mismatch} -> redirect_with_error(conn, "state_mismatch")
+      _ -> redirect_with_error(conn, "github_failed")
+    end
+  end
+
+  def github_callback(conn, _params) do
+    redirect_with_error(conn, "github_failed")
+  end
+
+  # GitHub OAuth Apps answer form-encoded unless JSON is requested.
+  defp github_exchange_code(config, code) do
+    case Req.post(config.token_url,
+           headers: [{"accept", "application/json"}],
+           form: [
+             client_id: config.client_id,
+             client_secret: config.client_secret,
+             code: code,
+             redirect_uri: config.redirect_uri
+           ]
+         ) do
+      {:ok, %Req.Response{status: 200, body: %{"access_token" => token}}}
+      when is_binary(token) and token != "" ->
+        {:ok, token}
+
+      {:ok, %Req.Response{status: status, body: body}} ->
+        # Log only the provider's error fields — the body carries the token.
+        Logger.error(
+          "[SSO] GitHub token exchange failed (#{status}): #{inspect(gh_safe_body(body))}"
+        )
+
+        {:error, :github_exchange}
+
+      {:error, reason} ->
+        Logger.error("[SSO] GitHub token exchange error: #{inspect(reason)}")
+        {:error, :github_exchange}
+    end
+  end
+
+  # Identity via /user + the primary verified email from /user/emails. The
+  # numeric id is the stable subject (GitHub emails can change; the id cannot).
+  defp github_fetch_identity(config, access_token) do
+    headers = [
+      {"authorization", "Bearer #{access_token}"},
+      {"accept", "application/vnd.github+json"},
+      {"user-agent", "noizu-prompt-lingua"}
+    ]
+
+    with {:ok, %Req.Response{status: 200, body: user}} <-
+           Req.get(config.user_url, headers: headers),
+         {:ok, %Req.Response{status: 200, body: emails}} <-
+           Req.get(config.emails_url, headers: headers) do
+      primary =
+        Enum.find(emails, & &1["primary"]) || Enum.find(emails, & &1["verified"]) ||
+          List.first(emails)
+
+      {:ok,
+       %{
+         sub: to_string(user["id"]),
+         email: (primary && primary["email"]) || user["email"],
+         name: user["name"] || user["login"]
+       }}
+    else
+      {:ok, %Req.Response{status: status, body: body}} ->
+        Logger.error("[SSO] GitHub identity fetch failed (#{status}): #{inspect(gh_safe_body(body))}")
+        {:error, :github_identity}
+
+      {:error, reason} ->
+        Logger.error("[SSO] GitHub identity fetch error: #{inspect(reason)}")
+        {:error, :github_identity}
+    end
+  end
+
+  # Keep secrets out of logs: only string error fields from a provider body.
+  defp gh_safe_body(body) when is_map(body) do
+    body
+    |> Map.take(["error", "error_description", "message"])
+    |> Map.filter(fn {_k, v} -> is_binary(v) end)
+  end
+
+  defp gh_safe_body(_body), do: %{}
+
   # ── Code Exchange ────────────────────────────────────────────
 
   def exchange(conn, %{"code" => code}) do
@@ -173,6 +379,12 @@ defmodule NoizuPromptLinguaWeb.SSOController do
 
   defp oidc_config_or_nil do
     Application.get_env(:noizu_prompt_lingua, :oidc_provider)
+  end
+
+  # Generic per-provider config lookup (:google_provider / :github_provider —
+  # same shape as :oidc_provider for Google; a flat map for GitHub).
+  defp provider_config_or_nil(key) do
+    Application.get_env(:noizu_prompt_lingua, key)
   end
 
   defp handle_sso_callback(conn, provider_type, attrs) do
