@@ -2,6 +2,7 @@
 
 ## 2026-10-26
 - feat(analytics): enable GA4 gtag via chart values (`analytics.ga.measurementId: G-ZZHF0T39QD`) — PR #109
+- docs: doc-sweep (pointers-check, layout, arch, schema, threat-model) — seeded .meta/pointers.yaml with 9 entry anchors (#112); arch Elixir version corrected to ~> 1.18; schema Ecto-migration lists gained browser-capture + prompt-builder/showcase (2026-09); layout + threat-model verified current, no changes needed
 
 ## 2026-10-18
 - chore(chart): dedupe duplicate image `tag:` keys in helm/npl-mcp/values.yaml — stale sha-5441c35 lines under backend/frontend.image (each bump-chart append relied on last-key-wins) and the unused top-level npl-mcp.image stanza removed; helm template output byte-identical before/after (#105)

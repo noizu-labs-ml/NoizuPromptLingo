@@ -51,7 +51,7 @@ erDiagram
 
 ## Conventions
 
-UUID PKs · timestamptz + now() defaults · `updated_at` (never modified_at) · soft-delete `deleted_at` · Liquibase owns schema (Ecto migrations minimal: oban, MCP scopes/toolsets, SSO claims, clients) · Extensions: citext, uuid-ossp, postgis, vector, cube, pg_trgm, earthdistance
+UUID PKs · timestamptz + now() defaults · `updated_at` (never modified_at) · soft-delete `deleted_at` · Liquibase owns schema (Ecto migrations minimal: oban, MCP scopes/toolsets/entities, SSO claims, clients, prompt builder/logs/showcase) · Extensions: citext, uuid-ossp, postgis, vector, cube, pg_trgm, earthdistance
 
 ## Non-SQL artifacts
 

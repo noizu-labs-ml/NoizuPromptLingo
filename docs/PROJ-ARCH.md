@@ -163,7 +163,7 @@ Liquibase is canonical (`backend/db/changelog/`); the Python fleet has its own L
 | Layer | Choice |
 |-------|--------|
 | Frontend | Next.js 16, React 19, Tailwind v4, `@noizu/styleguide`, next-intl, Cypress + Playwright e2e |
-| Backend | Elixir ~1.15+, Phoenix 1.8, Bandit, Guardian, Ueberauth/OIDC, Oban, Hammer |
+| Backend | Elixir ~> 1.18, Phoenix 1.8, Bandit, Guardian, Ueberauth/OIDC, Oban, Hammer |
 | Python MCP | FastMCP 3.x, FastAPI, asyncpg, uv (Python 3.13) |
 | MCP (backend) | `noizu_mcp`, multi-server host routing, custom gateways |
 | Data | PostgreSQL (PostGIS, pgvector), Redis (Redix), Weaviate (`noizu_weaviate`) |
