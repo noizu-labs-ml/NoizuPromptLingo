@@ -1,4 +1,8 @@
 defmodule NoizuPromptLinguaWeb.Endpoint do
+  @moduledoc """
+  〚📦:𓱭𓋬𓄐𓓷〛 NoizuPromptLinguaWeb.Endpoint :: Phoenix endpoint: CORS, request id, telemetry, MCP host redirect, router mounting.
+  """
+
   use Phoenix.Endpoint, otp_app: :noizu_prompt_lingua
 
   socket "/socket", NoizuPromptLinguaWeb.UserSocket,

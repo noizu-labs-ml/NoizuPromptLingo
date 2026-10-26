@@ -1,5 +1,7 @@
 # NoizuPromptLingo (NPL)
 
+<!-- 〚📁:𓮩𓄰𓁜𓄦〛 README :: Repo entry doc: NPL language + public MCP (promptlingo.dev); pointers to setup and docs. -->
+
 **Repo:** https://github.com/noizu-labs-ml/NoizuPromptLingo
 
 The NPL structured prompt-engineering syntax — placeholders, intuition pumps, directives, prefixes, and tagged prompt sections — plus a public MCP that serves that corpus. This repo publishes the *language* agents load; the agent work platform (sessions, tickets, chat, wiki, memory, tobor MCP fleet) lives separately in [agent-kit-mcp](https://github.com/the-robot-lives/agent-kit-mcp).

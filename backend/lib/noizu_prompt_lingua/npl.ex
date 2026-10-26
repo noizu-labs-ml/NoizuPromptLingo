@@ -1,5 +1,7 @@
 defmodule NoizuPromptLingua.NPL do
   @moduledoc """
+  〚📦:𓸥𓳾𓳬𔑪〛 NoizuPromptLingua.NPL :: NPL convention engine base: conventions dir resolution, corpus version, section order.
+
   Noizu Prompt Lingua (NPL) - A modular, structured framework for advanced
   prompt engineering and agent simulation with context-aware loading capabilities.
 
