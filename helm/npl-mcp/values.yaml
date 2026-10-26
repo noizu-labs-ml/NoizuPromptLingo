@@ -117,7 +117,7 @@ frontend:
 # G-XXXXXXXXXX here (or via --set) to switch it on.
 analytics:
   ga:
-    measurementId: ""
+    measurementId: "G-ZZHF0T39QD"
   posthog:
     key: ""
     host: "https://us.i.posthog.com"
