@@ -1,7 +1,7 @@
 # Changelog
 
 ## 2026-10-26
-- feat(analytics): enable GA4 gtag via chart values (`analytics.ga.measurementId: G-ZZHF0T39QD`) — PR
+- feat(analytics): enable GA4 gtag via chart values (`analytics.ga.measurementId: G-ZZHF0T39QD`) — PR #109
 
 ## 2026-10-18
 - chore(chart): dedupe duplicate image `tag:` keys in helm/npl-mcp/values.yaml — stale sha-5441c35 lines under backend/frontend.image (each bump-chart append relied on last-key-wins) and the unused top-level npl-mcp.image stanza removed; helm template output byte-identical before/after (#105)
