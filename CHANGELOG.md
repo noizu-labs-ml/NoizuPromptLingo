@@ -1,5 +1,8 @@
 # Changelog
 
+## 2026-10-26
+- feat(analytics): enable GA4 gtag via chart values (`analytics.ga.measurementId: G-ZZHF0T39QD`) — PR #109
+
 ## 2026-10-18
 - chore(chart): dedupe duplicate image `tag:` keys in helm/npl-mcp/values.yaml — stale sha-5441c35 lines under backend/frontend.image (each bump-chart append relied on last-key-wins) and the unused top-level npl-mcp.image stanza removed; helm template output byte-identical before/after (#105)
 - feat(api): W7 :mcp_key_optional plane extended to personas index + ticket show — org-scoped GETs accept a valid MCP API key (owner-context 200 path), anonymous/JWT behavior unchanged (#99) → main (#100)
