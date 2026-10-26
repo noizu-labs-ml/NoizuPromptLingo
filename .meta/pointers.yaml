@@ -1,0 +1,285 @@
+---
+pointers:
+  051c466c-cca5-53c3-93b4-bea64a09af4c:
+    created_at: 2026-10-26T12:39:58.392104Z
+    description: auto-generated pointer for public function complete
+    file_path: backend/test/support/vendor/noizu_mcp/fixture_server.ex
+    function: complete
+    kind: function
+    line: 229
+    token: 𓏰𓌎𓎛𓂄
+    updated_at: 2026-10-26T12:39:58.392104Z
+  0ae72231-cb33-5f2a-86ae-87066ba52e4c:
+    created_at: 2026-10-26T12:37:47.738907Z
+    description: 'Next.js app-router root layout: providers, navbar, global + branding CSS generation.'
+    file_path: frontend/src/app/layout.tsx
+    function: layout
+    kind: file
+    line: 1
+    locations:
+      - file_path: frontend/src/app/layout.tsx
+        line: 1
+    token: 𓰀𓛼𓜦𓒼
+    updated_at: 2026-10-26T12:39:58.392120Z
+  0c03aeff-1877-5da9-81ba-d46f1f77154d:
+    created_at: 2026-10-26T12:39:58.392096Z
+    description: auto-generated pointer for public function vk_echo
+    file_path: backend/test/support/vendor/noizu_mcp/fixture_server.ex
+    function: vk_echo
+    kind: function
+    line: 485
+    token: 𓍼𓍓𓋸𓅸
+    updated_at: 2026-10-26T12:39:58.392096Z
+  110f1934-ea50-59aa-9cf2-e2d7d12180be:
+    created_at: 2026-10-26T12:39:58.392092Z
+    description: auto-generated pointer for public function kit_hidden
+    file_path: backend/test/support/vendor/noizu_mcp/fixture_server.ex
+    function: kit_hidden
+    kind: function
+    line: 381
+    token: 𓋝𓄟𓋯𓁒
+    updated_at: 2026-10-26T12:39:58.392092Z
+  1e629cfa-4fdc-5407-94a6-42c4f48d2a4e:
+    created_at: 2026-10-26T12:39:58.392037Z
+    description: auto-generated pointer for public function kit_zero
+    file_path: backend/test/support/vendor/noizu_mcp/fixture_server.ex
+    function: kit_zero
+    kind: function
+    line: 375
+    token: 𓁤𓐜𓂖𓀤
+    updated_at: 2026-10-26T12:39:58.392037Z
+  30aaf9a3-6b5b-5726-b9ef-62ba68cb84ec:
+    created_at: 2026-10-26T12:39:58.392088Z
+    description: auto-generated pointer for public function handle_list_tools
+    file_path: backend/test/support/vendor/noizu_mcp/fixture_server.ex
+    function: handle_list_tools
+    kind: function
+    line: 574
+    token: 𓊔𓏝𓉎𓃁
+    updated_at: 2026-10-26T12:39:58.392088Z
+  3266f8ba-eb49-589e-968b-a172fe205fc6:
+    created_at: 2026-10-26T12:39:58.392052Z
+    description: auto-generated pointer for public function handle_call_tool
+    file_path: backend/test/support/vendor/noizu_mcp/fixture_server.ex
+    function: handle_call_tool
+    kind: function
+    line: 580
+    token: 𓂻𓍵𓋩𓀷
+    updated_at: 2026-10-26T12:39:58.392052Z
+  358d2c2f-a30d-5b3c-8eff-e621479aeb40:
+    created_at: 2026-10-26T12:39:58.392080Z
+    description: auto-generated pointer for public function kit_min
+    file_path: backend/test/support/vendor/noizu_mcp/fixture_server.ex
+    function: kit_min
+    kind: function
+    line: 371
+    token: 𓉟𓉭𓉾𓋑
+    updated_at: 2026-10-26T12:39:58.392080Z
+  3e1fe97f-82c2-5588-b210-6b3abcacba68:
+    created_at: 2026-10-26T12:37:38.392265Z
+    description: 'Legacy standalone Python MCP entry: FastMCP + FastAPI/uvicorn server on :8765.'
+    file_path: src/npl_mcp/launcher.py
+    function: launcher
+    kind: file
+    line: 2
+    token: 𓕿𔇿𔃰𓥸
+    updated_at: 2026-10-26T12:37:38.392265Z
+  3e36ab5d-3a8c-55a0-a1c5-b17aaf9cda9a:
+    class: NoizuPromptLingua.NPL
+    created_at: 2026-10-26T12:37:32.150153Z
+    description: 'NPL convention engine base: conventions dir resolution, corpus version, section order.'
+    file_path: backend/lib/noizu_prompt_lingua/npl.ex
+    function: NoizuPromptLingua.NPL
+    kind: module
+    line: 3
+    locations:
+      - file_path: backend/lib/noizu_prompt_lingua/npl.ex
+        line: 3
+    token: 𓸥𓳾𓳬𔑪
+    updated_at: 2026-10-26T12:39:58.392132Z
+  402799bc-5f06-5d59-bad1-62b88e844096:
+    created_at: 2026-10-26T12:38:00.225361Z
+    description: 'Build/task automation: compose stack lifecycle, init/build/run/migrate/regen/sandbox targets.'
+    file_path: Makefile
+    function: Makefile
+    kind: file
+    line: 1
+    token: 𓷊𓥇𓣞𓮆
+    updated_at: 2026-10-26T12:38:00.225361Z
+  41a365e1-7481-5a62-b782-ffdfa15d6238:
+    class: NoizuPromptLingua.MCP
+    created_at: 2026-10-26T12:37:34.803829Z
+    description: 'Public NPL syntax MCP server: NPLLoad + NPLSpec tools, open (no auth required).'
+    file_path: backend/lib/noizu_prompt_lingua/mcp.ex
+    function: NoizuPromptLingua.MCP
+    kind: module
+    line: 3
+    locations:
+      - file_path: backend/lib/noizu_prompt_lingua/mcp.ex
+        line: 3
+    token: 𓷞𔈨𓻺𓟨
+    updated_at: 2026-10-26T12:39:58.392128Z
+  466989b8-6464-505e-be3c-8723b40d6617:
+    created_at: 2026-10-26T12:39:58.392100Z
+    description: auto-generated pointer for public function kit_raw
+    file_path: backend/test/support/vendor/noizu_mcp/fixture_server.ex
+    function: kit_raw
+    kind: function
+    line: 389
+    token: 𓍽𓎌𓐊𓉄
+    updated_at: 2026-10-26T12:39:58.392100Z
+  5c76740b-4472-5a09-87c8-e4f1c42801c0:
+    created_at: 2026-10-26T12:39:58.392073Z
+    description: auto-generated pointer for public function ek_echo
+    file_path: backend/test/support/vendor/noizu_mcp/fixture_server.ex
+    function: ek_echo
+    kind: function
+    line: 666
+    token: 𓆻𓌈𓐣𓈺
+    updated_at: 2026-10-26T12:39:58.392073Z
+  659386e7-4ff6-51df-9afe-bde26a57315f:
+    created_at: 2026-10-26T12:39:58.392066Z
+    description: auto-generated pointer for public function handle_notification
+    file_path: backend/test/support/vendor/noizu_mcp/fixture_server.ex
+    function: handle_notification
+    kind: function
+    line: 178
+    token: 𓄰𓁯𓊛𓏍
+    updated_at: 2026-10-26T12:39:58.392066Z
+  66c693f8-87c1-57e1-80aa-3cfc73d251dc:
+    created_at: 2026-10-26T12:39:58.392032Z
+    description: auto-generated pointer for public function list
+    file_path: backend/test/support/vendor/noizu_mcp/fixture_server.ex
+    function: list
+    kind: function
+    line: 235
+    token: 𓁡𓆨𓋘𓐪
+    updated_at: 2026-10-26T12:39:58.392032Z
+  780cbcd2-4f4c-5a41-af73-d3ec98689b5d:
+    created_at: 2026-10-26T12:39:58.392045Z
+    description: auto-generated pointer for public function get
+    file_path: backend/test/support/vendor/noizu_mcp/fixture_server.ex
+    function: get
+    kind: function
+    line: 256
+    token: 𓂞𓂔𓎤𓀕
+    updated_at: 2026-10-26T12:39:58.392045Z
+  798766b8-09eb-5173-815b-37beeb34a5e7:
+    class: NoizuPromptLinguaWeb.Endpoint
+    created_at: 2026-10-26T12:38:55.826333Z
+    description: 'Phoenix endpoint: CORS, request id, telemetry, MCP host redirect, router mounting.'
+    file_path: backend/lib/noizu_prompt_lingua_web/endpoint.ex
+    function: NoizuPromptLinguaWeb.Endpoint
+    kind: module
+    line: 3
+    locations:
+      - file_path: backend/lib/noizu_prompt_lingua_web/endpoint.ex
+        line: 3
+    token: 𓱭𓋬𓄐𓓷
+    updated_at: 2026-10-26T12:39:58.392124Z
+  861f6c60-da89-5411-acb0-c047f9f5c9cf:
+    created_at: 2026-10-26T12:37:42.267602Z
+    description: Regenerates npl/npl-full.md from conventions/*.yaml (npl-docs-regen console script).
+    file_path: src/npl_mcp/docs_regen.py
+    function: docs_regen
+    kind: file
+    line: 1
+    token: 𓏬𔌋𓩯𓭏
+    updated_at: 2026-10-26T12:37:42.267602Z
+  9c64a462-7538-54d1-aac5-08ab885e60bf:
+    created_at: 2026-10-26T12:39:58.392069Z
+    description: auto-generated pointer for public function rk_echo
+    file_path: backend/test/support/vendor/noizu_mcp/fixture_server.ex
+    function: rk_echo
+    kind: function
+    line: 533
+    token: 𓆏𓐀𓏭𓊥
+    updated_at: 2026-10-26T12:39:58.392069Z
+  a61726f5-20bc-5aa8-a1d1-afc640f7a4f0:
+    created_at: 2026-10-26T12:39:58.392108Z
+    description: auto-generated pointer for public function init
+    file_path: backend/test/support/vendor/noizu_mcp/fixture_server.ex
+    function: init
+    kind: function
+    line: 433
+    token: 𓐃𓁚𓉦𓍍
+    updated_at: 2026-10-26T12:39:58.392108Z
+  be4a103f-caa9-5553-a810-de93821da904:
+    created_at: 2026-10-26T12:39:58.392018Z
+    description: auto-generated pointer for public function handle_sampling
+    file_path: backend/test/support/vendor/noizu_mcp/fixture_server.ex
+    function: handle_sampling
+    kind: function
+    line: 158
+    token: 𓀶𓀀𓎆𓎩
+    updated_at: 2026-10-26T12:39:58.392018Z
+  ca4be744-34ae-581b-8b7d-7587c91f195c:
+    created_at: 2026-10-26T12:39:58.392059Z
+    description: auto-generated pointer for public function kit_echo
+    file_path: backend/test/support/vendor/noizu_mcp/fixture_server.ex
+    function: kit_echo
+    kind: function
+    line: 365
+    token: 𓄒𓏐𓁘𓁑
+    updated_at: 2026-10-26T12:39:58.392059Z
+  ca6eed8b-52f8-567f-a880-5dbba211aed6:
+    class: NoizuPromptLingua.Application
+    created_at: 2026-10-26T12:37:14.992965Z
+    description: 'OTP application entry: supervision tree, OpenTelemetry setup, OAuth elevation table.'
+    file_path: backend/lib/noizu_prompt_lingua/application.ex
+    function: NoizuPromptLingua.Application
+    kind: module
+    line: 3
+    locations:
+      - file_path: backend/lib/noizu_prompt_lingua/application.ex
+        line: 3
+    token: 𓺐𓷼𓺆𓭆
+    updated_at: 2026-10-26T12:39:58.392140Z
+  d9b294e0-c359-56dd-a17e-eb69ebaabd8f:
+    created_at: 2026-10-26T12:39:58.392062Z
+    description: auto-generated pointer for public function handle_elicitation
+    file_path: backend/test/support/vendor/noizu_mcp/fixture_server.ex
+    function: handle_elicitation
+    kind: function
+    line: 171
+    token: 𓄞𓆌𓐝𓄀
+    updated_at: 2026-10-26T12:39:58.392062Z
+  ef9f9ca4-210d-5fcb-a6a4-90119f4b1fbc:
+    created_at: 2026-10-26T12:39:58.392055Z
+    description: auto-generated pointer for public function read
+    file_path: backend/test/support/vendor/noizu_mcp/fixture_server.ex
+    function: read
+    kind: function
+    line: 195
+    token: 𓂿𓉃𓁙𓉣
+    updated_at: 2026-10-26T12:39:58.392055Z
+  f0f10317-b5e6-588e-a3b3-3bd60456e0b8:
+    created_at: 2026-10-26T12:39:58.392041Z
+    description: auto-generated pointer for public function ek_plain
+    file_path: backend/test/support/vendor/noizu_mcp/fixture_server.ex
+    function: ek_plain
+    kind: function
+    line: 670
+    token: 𓁦𓁛𓏀𓄣
+    updated_at: 2026-10-26T12:39:58.392041Z
+  f36039b3-5a67-5fc9-b2f3-d169eeb41f86:
+    created_at: 2026-10-26T12:38:05.507680Z
+    description: 'Repo entry doc: NPL language + public MCP (promptlingo.dev); pointers to setup and docs.'
+    file_path: README.md
+    function: README
+    kind: file
+    line: 3
+    locations:
+      - file_path: README.md
+        line: 3
+    token: 𓮩𓄰𓁜𓄦
+    updated_at: 2026-10-26T12:39:58.392115Z
+  f620cf2d-aead-53ba-bb78-ab2054decf86:
+    created_at: 2026-10-26T12:39:58.392084Z
+    description: auto-generated pointer for public function call
+    file_path: backend/test/support/vendor/noizu_mcp/fixture_server.ex
+    function: call
+    kind: function
+    line: 14
+    token: 𓉬𓊌𓏌𓀳
+    updated_at: 2026-10-26T12:39:58.392084Z
