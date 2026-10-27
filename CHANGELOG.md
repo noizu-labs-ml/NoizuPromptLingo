@@ -1,5 +1,8 @@
 # Changelog
 
+## 2026-10-28
+- docs: add AGENT-README.md (agent orientation)
+
 ## 2026-10-26
 - feat(analytics): enable GA4 gtag via chart values (`analytics.ga.measurementId: G-ZZHF0T39QD`) — PR #109
 - docs: doc-sweep (pointers-check, layout, arch, schema, threat-model) — seeded .meta/pointers.yaml with 9 entry anchors (#112); arch Elixir version corrected to ~> 1.18; schema Ecto-migration lists gained browser-capture + prompt-builder/showcase (2026-09); layout + threat-model verified current, no changes needed
