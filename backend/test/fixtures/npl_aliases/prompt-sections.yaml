@@ -1,0 +1,20 @@
+name: Fixture Prompt Sections
+slug: prompt-sections
+title: Prompt Sections
+brief: Fixture prompt-section conventions
+description: Longer prompt-section description for the alias target section.
+categories:
+- name: sections
+  title: Sections
+  description: Section components
+components:
+- name: format-prompt-section
+  priority: 0
+  friendly-name: Format Prompt Section
+  category: sections
+  slug: format-prompt-section
+  brief: Format a named prompt section.
+  syntax:
+  - name: section-block
+    syntax: "⟪⬛: name⟫ content ⟪⬛⟫"
+    description: A named prompt section

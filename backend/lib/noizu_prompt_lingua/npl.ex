@@ -1,7 +1,5 @@
 defmodule NoizuPromptLingua.NPL do
   @moduledoc """
-  〚📦:𓸥𓳾𓳬𔑪〛 NoizuPromptLingua.NPL :: NPL convention engine base: conventions dir resolution, corpus version, section order.
-
   Noizu Prompt Lingua (NPL) - A modular, structured framework for advanced
   prompt engineering and agent simulation with context-aware loading capabilities.
 
@@ -48,11 +46,30 @@ defmodule NoizuPromptLingua.NPL do
 
   @spec valid_sections() :: [String.t()]
   def valid_sections do
-    ~w(syntax declarations directives prefixes prompt-sections special-sections pumps fences)
+    ~w(syntax declarations directives prefixes prompt-sections special-sections pumps)
   end
 
-  defp load_npl_yaml do
-    npl_path = Path.join(conventions_dir(), "npl.yaml")
+  @doc """
+  Alternate section names declared in `npl.yaml` as `section_aliases`
+  (e.g. the legacy `fences` section aliasing to `prompt-sections`).
+  Reads from the given conventions dir (default: the configured one).
+  """
+  @spec section_aliases(String.t()) :: %{String.t() => String.t()}
+  def section_aliases(dir \\ conventions_dir()) do
+    case load_npl_yaml(dir) do
+      {:ok, npl} -> normalize_aliases(Map.get(npl, "section_aliases", %{}))
+      {:error, _} -> %{}
+    end
+  end
+
+  defp normalize_aliases(aliases) when is_map(aliases) do
+    Map.new(aliases, fn {k, v} -> {to_string(k), to_string(v)} end)
+  end
+
+  defp normalize_aliases(_), do: %{}
+
+  defp load_npl_yaml(dir \\ conventions_dir()) do
+    npl_path = Path.join(dir, "npl.yaml")
 
     case File.exists?(npl_path) do
       true ->

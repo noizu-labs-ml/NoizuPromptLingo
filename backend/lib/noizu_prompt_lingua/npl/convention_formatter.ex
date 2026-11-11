@@ -62,12 +62,11 @@ defmodule NoizuPromptLingua.NPL.ConventionFormatter do
     rendering_names =
       all_components
       |> Enum.filter(fn c ->
-        name = Map.get(c, "name", "")
         priority = Map.get(c, "priority", 0)
 
-        (component_names == nil or MapSet.member?(component_names, name)) and
+        (component_names == nil or requested?(c, component_names)) and
           priority <= component_priority and
-          (rendered_set == nil or not MapSet.member?(rendered_set, name))
+          (rendered_set == nil or not requested?(c, rendered_set))
       end)
       |> Enum.map(&Map.get(&1, "name", ""))
       |> MapSet.new()
@@ -96,10 +95,58 @@ defmodule NoizuPromptLingua.NPL.ConventionFormatter do
       |> Enum.reject(&(&1 == ""))
       |> Enum.join("")
 
+    # Instructional entries are only rendered when addressed by explicit id
+    # (whole-convention specs render `components:` only — token guard).
+    instructional_section =
+      if component_names == nil do
+        ""
+      else
+        data
+        |> Map.get("instructional", [])
+        |> List.wrap()
+        |> Enum.filter(fn e ->
+          requested?(e, component_names) and
+            (rendered_set == nil or not requested?(e, rendered_set))
+        end)
+        |> Enum.map(&format_instructional(&1, use_concise, h))
+        |> Enum.join("")
+      end
+
     purpose_section = if purpose != "", do: "\n```purpose\n#{purpose}\n```", else: ""
     title_header = heading(1, h)
 
-    "\n#{title_header} #{title}\n\n#{description}\n#{purpose_section}\n\n#{categories_section}\n"
+    "\n#{title_header} #{title}\n\n#{description}\n#{purpose_section}\n\n#{categories_section}#{instructional_section}\n"
+  end
+
+  # An id selects a component/instructional entry through its canonical name,
+  # its slug, or any declared `aliases:`.
+  defp requested?(entry, id_set) do
+    Enum.any?(entry_ids(entry), &MapSet.member?(id_set, &1))
+  end
+
+  defp entry_ids(entry) do
+    name = Map.get(entry, "name", "")
+    slug = Map.get(entry, "slug", name)
+
+    aliases =
+      case Map.get(entry, "aliases", []) do
+        list when is_list(list) -> list
+        _ -> []
+      end
+
+    [name, slug | aliases] |> Enum.reject(&(&1 == "")) |> Enum.uniq()
+  end
+
+  defp format_instructional(entry, use_concise, h) do
+    title = Map.get(entry, "friendly-name") || Map.get(entry, "name", "")
+    brief = String.trim(Map.get(entry, "brief", ""))
+    description = String.trim(Map.get(entry, "description", ""))
+    content = entry |> Map.get("content", "") |> to_string() |> String.trim()
+
+    body = if use_concise and brief != "", do: brief, else: description
+    header = heading(3, h)
+
+    "\n#{header} #{title}\n\n#{body}\n\n#{content}\n"
   end
 
   defp format_category(

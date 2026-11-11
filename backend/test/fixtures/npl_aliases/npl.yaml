@@ -1,0 +1,12 @@
+/npl:
+  version: "1.0"
+  description: Fixture conventions carrying wave-1 keys (section_aliases, component aliases, instructional slugs)
+  section_order:
+    components:
+      - pumps
+      - prompt-sections
+  section_aliases:
+    fences: prompt-sections
+  concepts:
+    - name: fixture-concept
+      description: A concept for the fixture spec block.
