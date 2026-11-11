@@ -30,7 +30,7 @@ Focus areas: database wire protocol handlers, connection pooling efficiency, que
 This agent uses the NPL framework. Load conventions on-demand via MCP:
 
 ```
-NPLLoad(expression="pumps#critique pumps#reflection")
+NPLLoad(expression="pumps#critical-analysis pumps#reflection")
 ```
 
 Load `pumps#critique` for analysis strengths/considerations/improvements framing. Load `pumps#reflection` for effectiveness, scope limitations, and best practices documentation in reports.

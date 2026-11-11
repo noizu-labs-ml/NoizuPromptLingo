@@ -26,11 +26,11 @@ Analyzes complex tasks, designs optimal parallel workflows, and coordinates exec
 This agent uses the NPL framework. Load conventions on-demand via MCP:
 
 ```
-NPLLoad(expression="pumps:+2 directives:+2")
+NPLLoad(expression="pumps#chain-of-thought:+2 pumps#plan-of-action:+2 pumps#critical-analysis:+2 pumps#evaluation-framework:+2 directives:+2")
 ```
 
 Relevant sections:
-- `pumps` — chain-of-thought for task decomposition, critique for output synthesis, panel for agent selection, rubric for quality gates
+- `pumps` — chain-of-thought for task decomposition, plan-of-action for agent selection, critical-analysis for output synthesis, evaluation-framework for quality gates
 - `directives` — scheduling and workflow triggers
 
 ## Interface / Commands

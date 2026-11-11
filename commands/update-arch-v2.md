@@ -15,7 +15,7 @@ Refresh and expand architecture documentation, updating stale content and expand
 Load NPL definitions before proceeding using the `NPLLoad` MCP tool:
 
 ```
-NPLLoad(expression="syntax fences directives pumps")
+NPLLoad(expression="syntax prompt-sections directives pumps")
 ```
 
 ### See Also

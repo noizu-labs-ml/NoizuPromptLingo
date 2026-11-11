@@ -10,7 +10,9 @@ defmodule NoizuPromptLingua.NPL.Definition do
     :concepts,
     :section_order,
     :dep_graph,
-    :convention_components
+    :convention_components,
+    section_aliases: %{},
+    comp_id_map: %{}
   ]
 
   @type t :: %__MODULE__{}
@@ -39,6 +41,7 @@ defmodule NoizuPromptLingua.NPL.Definition do
            description: String.trim(Map.get(npl, "description", "")),
            concepts: Map.get(npl, "concepts", []),
            section_order: get_in(npl, ["section_order", "components"]) || [],
+           section_aliases: normalize_aliases(Map.get(npl, "section_aliases", %{})),
            dep_graph: nil,
            convention_components: nil
          }}
@@ -66,13 +69,19 @@ defmodule NoizuPromptLingua.NPL.Definition do
         {"⌜NPL@#{version}⌝", "⌞NPL@#{version}⌟"}
       end
 
-    rendered_keys = if rendered, do: parse_rendered_specs(rendered), else: MapSet.new()
+    rendered_keys =
+      if rendered, do: parse_rendered_specs(rendered, defn.section_aliases), else: MapSet.new()
 
     conv_map =
       if components == nil do
         nil
       else
-        parse_component_specs(components, component_priority, example_priority)
+        parse_component_specs(
+          components,
+          component_priority,
+          example_priority,
+          defn.section_aliases
+        )
       end
 
     conv_map =
@@ -153,7 +162,10 @@ defmodule NoizuPromptLingua.NPL.Definition do
     Enum.reverse(ordered) ++ extras
   end
 
-  defp parse_component_specs(specs, default_cp, default_ep) do
+  # Spec strings use `section:ids`; resolve the section through npl.yaml's
+  # `section_aliases` (e.g. "fences:*" means "prompt-sections:*") before any
+  # file lookup so output keys stay canonical.
+  defp parse_component_specs(specs, default_cp, default_ep, aliases) do
     Enum.reduce(specs, %{}, fn spec, acc ->
       {raw, cp, ep} = extract_spec(spec, default_cp, default_ep)
       raw = String.trim(raw)
@@ -164,7 +176,7 @@ defmodule NoizuPromptLingua.NPL.Definition do
         {convention, comps} =
           if String.contains?(raw, ":") do
             [conv, comp_str] = String.split(raw, ":", parts: 2)
-            conv = String.trim(conv)
+            conv = conv |> String.trim() |> normalize_section(aliases)
             comp_str = String.trim(comp_str)
 
             if comp_str == "*" do
@@ -179,7 +191,7 @@ defmodule NoizuPromptLingua.NPL.Definition do
               {conv, comps}
             end
           else
-            {raw, nil}
+            {raw |> normalize_section(aliases), nil}
           end
 
         case Map.fetch(acc, convention) do
@@ -199,14 +211,14 @@ defmodule NoizuPromptLingua.NPL.Definition do
     end)
   end
 
-  defp parse_rendered_specs(specs) do
+  defp parse_rendered_specs(specs, aliases) do
     Enum.reduce(specs, MapSet.new(), fn spec, acc ->
       {raw, _cp, _ep} = extract_spec(spec, 0, 0)
       raw = String.trim(raw)
 
       if String.contains?(raw, ":") do
         [convention, comp_str] = String.split(raw, ":", parts: 2)
-        convention = String.trim(convention)
+        convention = convention |> String.trim() |> normalize_section(aliases)
 
         comp_str
         |> String.split(",")
@@ -236,8 +248,8 @@ defmodule NoizuPromptLingua.NPL.Definition do
   defp load_dependency_graph(%__MODULE__{dep_graph: graph} = defn) when graph != nil, do: defn
 
   defp load_dependency_graph(%__MODULE__{} = defn) do
-    {dep_graph, convention_components} =
-      Enum.reduce(defn.section_order, {%{}, %{}}, fn conv_name, {dg, cc} ->
+    {dep_graph, convention_components, comp_id_map} =
+      Enum.reduce(defn.section_order, {%{}, %{}, %{}}, fn conv_name, {dg, cc, im} ->
         yaml_path = Path.join(defn.conventions_dir, "#{conv_name}.yaml")
 
         case YamlElixir.read_from_file(yaml_path) do
@@ -251,14 +263,45 @@ defmodule NoizuPromptLingua.NPL.Definition do
                 Map.put(acc, key, Map.get(c, "require", []))
               end)
 
-            {new_dg, Map.put(cc, conv_name, comp_names)}
+            new_im =
+              Enum.reduce(comps, Map.get(im, conv_name, %{}), fn c, acc ->
+                name = Map.get(c, "name", "")
+
+                acc =
+                  acc
+                  |> Map.put(name, name)
+                  |> Map.put(Map.get(c, "slug", name), name)
+
+                aliases =
+                  case Map.get(c, "aliases", []) do
+                    list when is_list(list) -> list
+                    _ -> []
+                  end
+
+                Enum.reduce(aliases, acc, fn a, inner -> Map.put(inner, a, name) end)
+              end)
+
+            {new_dg, Map.put(cc, conv_name, comp_names), Map.put(im, conv_name, new_im)}
 
           {:error, _} ->
-            {dg, cc}
+            {dg, cc, im}
         end
       end)
 
-    %{defn | dep_graph: dep_graph, convention_components: convention_components}
+    %{
+      defn
+      | dep_graph: dep_graph,
+        convention_components: convention_components,
+        comp_id_map: comp_id_map
+    }
+  end
+
+  # Component spec ids may be canonical names, slugs, or declared aliases;
+  # map them to the canonical name so dependency-graph keys line up.
+  # Unknown ids (e.g. instructional slugs, which carry no requires) pass
+  # through untouched.
+  defp canonical_comp(%__MODULE__{comp_id_map: im}, conv, id) do
+    im |> Map.get(conv, %{}) |> Map.get(id, id)
   end
 
   defp resolve_dependencies(defn, conv_map, rendered_keys) do
@@ -266,8 +309,20 @@ defmodule NoizuPromptLingua.NPL.Definition do
 
     expanded =
       Map.new(conv_map, fn {conv, {comps, cp, ep}} ->
-        actual = if comps == nil, do: Map.get(defn.convention_components, conv, []), else: comps
+        actual =
+          if comps == nil do
+            Map.get(defn.convention_components, conv, [])
+          else
+            Enum.map(comps, &canonical_comp(defn, conv, &1))
+          end
+
         {conv, {actual, cp, ep}}
+      end)
+
+    rendered_keys =
+      MapSet.new(rendered_keys, fn key ->
+        [conv, comp] = String.split(key, ".", parts: 2)
+        "#{conv}.#{canonical_comp(defn, conv, comp)}"
       end)
 
     {included, priorities} =
@@ -348,4 +403,12 @@ defmodule NoizuPromptLingua.NPL.Definition do
       {new_included, new_priorities}
     end
   end
+
+  defp normalize_section(conv, aliases), do: Map.get(aliases, conv, conv)
+
+  defp normalize_aliases(aliases) when is_map(aliases) do
+    Map.new(aliases, fn {k, v} -> {to_string(k), to_string(v)} end)
+  end
+
+  defp normalize_aliases(_), do: %{}
 end

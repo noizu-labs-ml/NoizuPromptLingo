@@ -26,10 +26,10 @@ Analyzes and modernizes legacy C++ codebases to leverage C++11/17 features. Spec
 This agent uses the NPL framework. Load conventions on-demand via MCP:
 
 ```
-NPLLoad(expression="pumps#critique pumps#rubric")
+NPLLoad(expression="pumps#critical-analysis pumps#evaluation-framework")
 ```
 
-Load `pumps#critique` for modernization philosophy and pitfall guidance. Load `pumps#rubric` for the priority assessment rubric (memory safety, thread safety, maintainability, performance, migration effort).
+Load `pumps#critical-analysis` for modernization philosophy and pitfall guidance. Load `pumps#evaluation-framework` for the priority assessment rubric (memory safety, thread safety, maintainability, performance, migration effort).
 
 ## Interface / Commands
 

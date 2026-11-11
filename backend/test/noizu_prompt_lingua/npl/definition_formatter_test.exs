@@ -299,22 +299,49 @@ defmodule NoizuPromptLingua.NPL.DefinitionFormatterTest do
     end
 
     test "specs for conventions outside section_order still render (extras appended)" do
-      {:ok, defn} = Definition.new(@real_dir)
+      dir =
+        fixture_dir(%{
+          "npl.yaml" =>
+            "/npl:\n  version: 1.0\n  section_order:\n    components:\n      - syntax\n",
+          "syntax.yaml" => "name: syntax\ncomponents: []\n",
+          "special-sections.yaml" => """
+          name: special
+          title: Special Sections
+          categories:
+            - name: c
+              title: C
+              description: d
+          components:
+            - name: sp-comp
+              category: c
+              brief: special component
+          """
+        })
 
-      # fences is a valid section that npl.yaml's section_order omits; with
-      # explicit comps it renders via the extras path (file absent -> error text).
-      text = Definition.format(defn, components: ["fences:fences-comp"])
-      assert text =~ "Error: File not found"
-      assert text =~ "fences"
+      {:ok, defn} = Definition.new(dir)
+
+      # special-sections is a valid section that this fixture's section_order
+      # omits; with explicit comps it renders via the extras path.
+      text = Definition.format(defn, components: ["special-sections:sp-comp"])
+      assert text =~ "Special Sections"
+      assert text =~ "special component"
     end
 
     test "conv:* spec for a convention outside section_order expands to nothing" do
-      {:ok, defn} = Definition.new(@real_dir)
+      dir =
+        fixture_dir(%{
+          "npl.yaml" =>
+            "/npl:\n  version: 1.0\n  section_order:\n    components:\n      - syntax\n",
+          "syntax.yaml" => "name: syntax\ncomponents: []\n",
+          "special-sections.yaml" => "name: special\ntitle: Special Sections\ncomponents: []\n"
+        })
+
+      {:ok, defn} = Definition.new(dir)
 
       # convention_components is only populated for section_order conventions,
       # so a nil-comps spec for an out-of-order convention drops out entirely.
-      text = Definition.format(defn, components: ["fences:*"])
-      refute text =~ "Error: File not found"
+      text = Definition.format(defn, components: ["special-sections:*"])
+      refute text =~ "Special Sections"
     end
   end
 

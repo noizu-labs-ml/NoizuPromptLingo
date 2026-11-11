@@ -109,7 +109,7 @@ defmodule NoizuPromptLingua.NPL.EngineTest do
       assert msg =~ "Unknown section: 'bogus'"
 
       assert msg =~
-               "declarations, directives, fences, prefixes, prompt-sections, pumps, " <>
+               "declarations, directives, prefixes, prompt-sections, pumps, " <>
                  "special-sections, syntax"
     end
 
@@ -346,8 +346,9 @@ defmodule NoizuPromptLingua.NPL.EngineTest do
     end
 
     test "missing section file surfaces the resolver error" do
-      assert {:error, msg} = Loader.load("fences", npl_dir: @real_dir)
-      assert msg =~ "Section file not found: fences.yaml"
+      dir = resolver_tmp_dir()
+      assert {:error, msg} = Loader.load("syntax", npl_dir: dir)
+      assert msg =~ "Section file not found: syntax.yaml"
     end
   end
 

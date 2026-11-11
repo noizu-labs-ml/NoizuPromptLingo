@@ -8,7 +8,7 @@ The NPL structured prompt-engineering syntax — placeholders, intuition pumps, 
 
 ## What
 
-- **Convention YAML** in `conventions/` — single source of truth for the NPL syntax sections (syntax, declarations, pumps, directives, prefixes, prompt-sections, special-sections, fences).
+- **Convention YAML** in `conventions/` — single source of truth for the NPL syntax sections (syntax, declarations, pumps, directives, prefixes, prompt-sections, special-sections).
 - **MCP** at `/mcp` — two tools only: `NPLLoad` (expression DSL) and `NPLSpec` (versioned spec generation). **No authentication required.**
 - **OAuth** is optional. Clients that insist on OAuth (Claude Code, Cursor, …) complete PKCE and receive a **site-approval** token (`sub=site:npl`). The token does not identify a user; it only means "approved for this site."
 - **REST** at `/api/v1/npl/*` (public) for browsing sections and generating the same spec the admin panel produces.
