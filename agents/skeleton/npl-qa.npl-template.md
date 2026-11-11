@@ -8,13 +8,13 @@ color: {color_choice|Color for the agent interface: green, blue, red, etc.}
 
 ## NPL Convention Loading
 
-Load NPL conventions before proceeding[^cli]:
+Load NPL conventions before proceeding[^load]:
 
 ```
-npl-load c "syntax,agent,directive,formatting,formatting.template,fences.alg,instructing.handlebars,syntax.placeholder,syntax.qualifier" --skip {@npl.loaded}
+NPLLoad(expression="syntax declarations#agent-declaration directives prompt-sections#template-prompt-section prompt-sections#alg-prompt-section prompt-sections#handlebars-instructions")
 ```
 
-[^cli]: CLI available: `npl-load c "syntax,agent,..." --skip {@npl.loaded}`
+[^load]: Conventions load through the NPL MCP `NPLLoad` tool; components already in context are skipped via its `skip` parameter.
 
 ## Identity
 

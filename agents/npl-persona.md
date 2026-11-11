@@ -41,7 +41,7 @@ each with its own persona.
 This agent uses the NPL framework. Load conventions on-demand via MCP:
 
 ```
-NPLLoad(expression="pumps#cot pumps#critique pumps#reflection")
+NPLLoad(expression="pumps#chain-of-thought pumps#critical-analysis pumps#reflection")
 ```
 
 Load `pumps#cot` for in-character chain-of-thought reasoning. Load `pumps#critique` for

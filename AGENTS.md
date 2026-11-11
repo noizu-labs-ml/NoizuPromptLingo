@@ -191,7 +191,7 @@ NPLLoad(expression="syntax directives -syntax#literal-string")
 NPLLoad(expression="pumps", layout="grouped")
 ```
 
-Sections: `syntax`, `declarations`, `directives`, `prefixes`, `prompt-sections`, `special-sections`, `pumps`, `fences`.
+Sections: `syntax`, `declarations`, `directives`, `prefixes`, `prompt-sections`, `special-sections`, `pumps`.
 Layouts: `yaml_order` (default), `classic`, `grouped`.
 
 ### Full-spec generation (NPLSpec)

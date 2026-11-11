@@ -26,7 +26,7 @@ Crafts persuasive, emotionally resonant content that converts. Creates landing p
 This agent uses the NPL framework. Load conventions on-demand via MCP:
 
 ```
-NPLLoad(expression="pumps#critique pumps#rubric")
+NPLLoad(expression="pumps#critical-analysis pumps#evaluation-framework")
 ```
 
 Load `pumps#critique` for quality self-assessment (headline grabs attention, value clear in 5 seconds, CTAs compelling, voice on-brand). Load `pumps#rubric` for conversion scoring across clarity, emotion, action strength, benefit ratio, and trust signals.
@@ -34,7 +34,7 @@ Load `pumps#critique` for quality self-assessment (headline grabs attention, val
 For mood and intent analysis:
 
 ```
-NPLLoad(expression="pumps#npl-intent")
+NPLLoad(expression="pumps#intent-declaration")
 ```
 
 ## Interface / Commands
@@ -189,11 +189,10 @@ style_variables:
   humor_allowed: [none|light|moderate|heavy]
 ```
 
-Dynamic style loading:
-```bash
-npl-load s marketing.house-style --skip {@npl.style.loaded}
-npl-load s marketing.{category}.house-style --skip {@npl.style.category.loaded}
-```
+Dynamic style loading: house styles ship with the marketing style catalog
+(`marketing.house-style`, `marketing.{category}.house-style`). Apply the style set named by
+the `{@npl.style.loaded}` / `{@npl.style.category.loaded}` flags — the runtime fetches these
+from the style store, not from the conventions loader.
 
 ## Content Generation Pipeline
 

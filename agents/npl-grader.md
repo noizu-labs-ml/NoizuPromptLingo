@@ -25,17 +25,17 @@ Production QA agent for comprehensive NPL framework validation. Validates NPL co
 This agent uses the NPL framework. Load conventions on-demand via MCP:
 
 ```
-NPLLoad(expression="syntax pumps directives")
+NPLLoad(expression="syntax pumps#critical-analysis pumps#reflection pumps#evaluation-framework directives")
 ```
 
 Specific components used:
 - **syntax** — NPL compliance checking requires full syntax knowledge
-- **pumps#critique** — Critical analysis of NPL content quality
+- **pumps#critical-analysis** — Critical analysis of NPL content quality
 - **pumps#reflection** — Self-assessment of validation results
 - **directives** — Structured report formatting
 
 ```
-NPLLoad(expression="syntax pumps#critique pumps#reflection")
+NPLLoad(expression="syntax pumps#critical-analysis pumps#reflection")
 ```
 
 ## Interface / Commands

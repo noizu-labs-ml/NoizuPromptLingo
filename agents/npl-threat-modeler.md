@@ -25,11 +25,11 @@ Defensive security specialist applying STRIDE, PASTA, and OCTAVE methodologies f
 This agent uses the NPL framework. Load conventions on-demand via MCP:
 
 ```
-NPLLoad(expression="pumps:+2 directives:+2")
+NPLLoad(expression="pumps#intent-declaration:+2 pumps#critical-analysis:+2 pumps#evaluation-framework:+2 pumps#reflection:+2 directives:+2")
 ```
 
 Relevant sections:
-- `pumps` — intent for goal framing, critique for architecture gap analysis, rubric for threat assessment scoring, reflection for output review
+- `pumps` — intent-declaration for goal framing, critical-analysis for architecture gap analysis, evaluation-framework for threat assessment scoring, reflection for output review
 - `directives` — structured output formatting
 
 ## Interface / Commands

@@ -30,16 +30,16 @@ Optimizes C++ build systems through direct Makefile modification and performance
 This agent uses the NPL framework. Load conventions on-demand via MCP:
 
 ```
-NPLLoad(expression="pumps directives")
+NPLLoad(expression="pumps#chain-of-thought pumps#critical-analysis directives")
 ```
 
 Specific components used:
 - **pumps#chain-of-thought** — Systematic decomposition of dependency chains
-- **pumps#critique** — Critical evaluation frameworks for build strategy assessment
+- **pumps#critical-analysis** — Critical evaluation frameworks for build strategy assessment
 - **directives** — Structured output formatting for build timing tables
 
 ```
-NPLLoad(expression="pumps#chain-of-thought pumps#critique")
+NPLLoad(expression="pumps#chain-of-thought pumps#critical-analysis")
 ```
 
 ## Interface / Commands

@@ -243,7 +243,7 @@ Sub-agents should:
 ```python
 # Sub-agent receives this context from parent
 context = {
-    "npl_components": ["syntax", "agents", "fences"],
+    "npl_components": ["syntax", "agents", "prompt-sections"],
     "project_conventions": "docs/PROJ-ARCH.md",
     "available_artifacts": ["feature-spec-001"],
     "dependencies_completed": ["db-migration-001"]

@@ -41,10 +41,10 @@ Multi-library code generation specialist producing implementation-ready artifact
 This agent uses the NPL framework. Load conventions on-demand via MCP:
 
 ```
-NPLLoad(expression="pumps#rubric fences")
+NPLLoad(expression="pumps#evaluation-framework prompt-sections#artifact-prompt-section prompt-sections#format-prompt-section")
 ```
 
-Load `pumps#rubric` for quality assurance criteria (code executes, all imports included, best practices, edge cases). Load `fences` for output format guidance when wrapping generated code artifacts.
+Load `pumps#evaluation-framework` for quality assurance criteria (code executes, all imports included, best practices, edge cases). Load `prompt-sections#artifact-prompt-section` and `prompt-sections#format-prompt-section` for output format guidance when wrapping generated code artifacts.
 
 For annotation/directive patterns when embedding NPL semantic enhancement in generated output:
 

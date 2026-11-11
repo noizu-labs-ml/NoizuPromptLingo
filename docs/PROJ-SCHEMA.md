@@ -266,4 +266,4 @@ Schema from `liquibase/changelogs/changeset-001…019, 089–090` (all tables pr
 
 ## Ecto migrations
 
-`backend/priv/repo/migrations/` — minimal, deliberately (Liquibase owns schema): oban tables, MCP scopes/toolsets/endpoint templates, SSO claim codes, oauth client toolsets, clients, org slug uniqueness. Full list in [schema/config-artifacts.md](schema/config-artifacts.md).
+`backend/priv/repo/migrations/` — minimal, deliberately (Liquibase owns schema): oban tables, MCP scopes/toolsets/endpoint templates/entities, SSO claim codes, oauth client toolsets, clients, org slug uniqueness, browser-capture resource types, prompt builder + prompt logs/showcase (2026-09). Full list in [schema/config-artifacts.md](schema/config-artifacts.md).

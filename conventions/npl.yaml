@@ -15,6 +15,11 @@
       - prompt-sections
       - special-sections
 
+  # Alias section names that resolve to canonical sections at load time.
+  # `fences` was never a served section file; it resolves to prompt-sections.
+  section_aliases:
+    fences: prompt-sections
+
   concepts:
     - name: npl-declaration
       description: |

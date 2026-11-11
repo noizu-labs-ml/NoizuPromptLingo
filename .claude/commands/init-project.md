@@ -11,7 +11,7 @@ Bootstrap project documentation including `CLAUDE.md`, `docs/PROJECT-ARCH.md`, a
 
 Initialize CLAUDE.md and load dependencies:
 
-- Use the `NPLLoad` MCP tool to load NPL syntax elements: `NPLLoad(expression="syntax fences directives")`
+- Use the `NPLLoad` MCP tool to load NPL syntax elements: `NPLLoad(expression="syntax prompt-sections directives")`
 - Use directory exploration tools (Glob, Bash `tree`) for directory structure exploration
 - Use Read/Grep tools for file contents retrieval
 

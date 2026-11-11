@@ -1,0 +1,84 @@
+name: Fixture Pumps
+slug: pumps
+title: Fixture Pumps
+brief: Fixture pump conventions for alias and instructional loader tests
+description: Longer fixture pump description used by non-concise rendering paths.
+purpose: Prove alias and instructional resolution in the NPL loader and NPLSpec.
+categories:
+- name: planning
+  title: Planning
+  description: Planning pumps
+- name: reasoning
+  title: Reasoning
+  description: Reasoning pumps
+components:
+- name: intent-declaration
+  priority: 0
+  friendly-name: Intent Declaration
+  category: planning
+  slug: intent-declaration
+  aliases:
+  - intent
+  - npl-intent
+  brief: Declare intent up front.
+  description: Full intent declaration guidance.
+  syntax:
+  - name: intent-block
+    syntax: |
+      <npl-intent>
+        <overview>{goal}</overview>
+      </npl-intent>
+    description: The intent block
+  examples:
+  - name: intent-example
+    priority: 0
+    example: |
+      <npl-intent>
+        <overview>Ship aliases</overview>
+      </npl-intent>
+- name: chain-of-thought
+  priority: 0
+  friendly-name: Chain of Thought
+  category: reasoning
+  slug: chain-of-thought
+  aliases:
+  - cot
+  brief: Step-by-step reasoning block.
+  description: Full chain-of-thought guidance.
+  require:
+  - pumps.mood
+  syntax:
+  - name: cot-block
+    syntax: "<npl-cot>{steps}</npl-cot>"
+    description: The chain-of-thought block
+  examples:
+  - name: cot-example
+    priority: 0
+    example: |
+      <npl-cot>1 + 1 = 2</npl-cot>
+- name: mood
+  priority: 0
+  friendly-name: Mood
+  category: reasoning
+  slug: mood
+  brief: Affective state block.
+  syntax:
+  - name: mood-block
+    syntax: "<npl-mood>{state}</npl-mood>"
+    description: The mood block
+instructional:
+- name: Pump Ordering
+  slug: pump-ordering
+  type: best-practice
+  friendly-name: Pump Ordering
+  brief: Order pumps thoughtfully.
+  description: Longer pump ordering guidance.
+  content: |
+    PUMP-ORDERING-FIXTURE-MARKER: declare intent first, then plan, then reason.
+- name: Reflection Emojis
+  slug: reflection-emojis
+  type: quick-reference
+  friendly-name: Reflection Emojis
+  brief: Emoji key for compact reflections.
+  content: |
+    REFLECTION-EMOJIS-FIXTURE-MARKER: one emoji per line, never prose.

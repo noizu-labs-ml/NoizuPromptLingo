@@ -119,7 +119,7 @@ categories:
 
         ⟪🆔: User Record⟫ Create UUID
 
-        ⟪⬜: Audit compliance| review all data handling⟫
+        ⟪⬜: Audit compliance | review all data handling⟫
 
         '
     - role: assistant
@@ -955,7 +955,7 @@ components:
   friendly-name: Todo Task
   title: Todo Task
   syntax:
-  - syntax: '⟪⬜: task| details⟫'
+  - syntax: '⟪⬜: task | details⟫'
   brief: Define tasks and action items
   description: Creates task items with descriptions and optional details. Used for
     tracking action items, requirements, and work to be completed within prompts or
@@ -990,10 +990,10 @@ components:
     purpose: Shows task directive with output
     labels:
     - ⟪⬜:⟫
-    - '⟪⬜: task| details⟫'
+    - '⟪⬜: task | details⟫'
     thread:
     - role: system
-      message: '⟪⬜: Fix auth bug| priority: high, blocking release⟫
+      message: '⟪⬜: Fix auth bug | priority: high, blocking release⟫
 
         '
     - role: assistant
@@ -1006,7 +1006,7 @@ components:
     purpose: Demonstrates task list patterns
     labels:
     - ⟪⬜:⟫
-    - '⟪⬜: task| details⟫'
+    - '⟪⬜: task | details⟫'
     - depends
     - subtasks
     thread:
@@ -1015,11 +1015,11 @@ components:
 
         '
     - role: user
-      message: '⟪⬜: Run tests| required before deploy⟫
+      message: '⟪⬜: Run tests | required before deploy⟫
 
-        ⟪⬜: Deploy to staging| depends: tests-pass⟫
+        ⟪⬜: Deploy to staging | depends: tests-pass⟫
 
-        ⟪⬜: Production deploy| subtasks: backup, migrate, verify⟫
+        ⟪⬜: Production deploy | subtasks: backup, migrate, verify⟫
 
         '
     - role: assistant

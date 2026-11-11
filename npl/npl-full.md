@@ -407,16 +407,16 @@ thread
   role: system
   message: |
     <npl-declaration type="npl-definition">
-    ⌜NPL@0.1⌝
+    ⌜NPL@1.0⌝
     # Core Framework Rules
     [___|Framework rules here]
-    ⌞NPL@0.1⌟
+    ⌞NPL@1.0⌟
     </npl-declaration>
     
     <npl-declaration type="npl-extension">
-    ⌜extend:NPL@0.1⌝
+    ⌜extend:NPL@1.0⌝
     Add custom domain qualifiers.
-    ⌞extend:NPL@0.1⌟
+    ⌞extend:NPL@1.0⌟
     </npl-declaration>
 ```
 
@@ -470,14 +470,14 @@ thread
   role: system
   message: |
     <npl-declaration type="agent-definition">
-    ⌜code-helper|tool|NPL@0.1⌝
+    ⌜code-helper|tool|NPL@1.0⌝
     # Code Helper
     Provides code analysis and suggestions.
     ⌞code-helper⌟
     </npl-declaration>
     
     <npl-declaration type="agent-extension">
-    ⌜extend:code-helper|tool|NPL@0.1⌝
+    ⌜extend:code-helper|tool|NPL@1.0⌝
     Adds debugging capabilities.
     ⌞extend:code-helper⌟
     </npl-declaration>
@@ -518,21 +518,21 @@ thread
   role: system
   message: |
     <npl-declaration type="agent-definition">
-    ⌜dev-expert|persona|NPL@0.1⌝
+    ⌜dev-expert|persona|NPL@1.0⌝
     # Dev Expert
     Senior developer persona.
     ⌞dev-expert⌟
     </npl-declaration>
     
     <npl-declaration type="agent-definition">
-    ⌜git-cli|tool|NPL@0.1⌝
+    ⌜git-cli|tool|NPL@1.0⌝
     # Git CLI
     Git command emulator.
     ⌞git-cli⌟
     </npl-declaration>
     
     <npl-declaration type="agent-definition">
-    ⌜api-gateway|service|NPL@0.1⌝
+    ⌜api-gateway|service|NPL@1.0⌝
     # API Gateway
     External API interface.
     ⌞api-gateway⌟
@@ -1361,7 +1361,7 @@ Creates task items with descriptions and optional details. Used for tracking act
 
 ###### Syntax
 
-"⟪⬜: task| details⟫"
+"⟪⬜: task | details⟫"
 
 
 ##### Guidance & Tracking Examples
@@ -1375,7 +1375,7 @@ thread
     ⟪📖: Ensure GDPR compliance⟫
     ⟪➤: Generate unique IDs for all records⟫
     ⟪🆔: User Record⟫ Create UUID
-    ⟪⬜: Audit compliance| review all data handling⟫
+    ⟪⬜: Audit compliance | review all data handling⟫
   role: assistant
   message: |
     Configuration applied:
@@ -1426,7 +1426,7 @@ Image, speech, and audio processing modes.
 
 ##### Text To Speech
 
-Directs the agent to convert written text into spoken audio format for accessibility features and audio content creation.
+Directs the agent to convert written text into spoken audio format for accessibility features and audio content creation. The model only emits the TTS request or spec - synthesizing audio requires a real TTS tool.
 
 ###### Syntax
 
@@ -1435,7 +1435,7 @@ Directs the agent to convert written text into spoken audio format for accessibi
 
 ##### Speech Recognition
 
-Directs the agent to transcribe audio recordings of speech into accurate written text for documentation and content analysis.
+Directs the agent to transcribe audio recordings of speech into accurate written text for documentation and content analysis. The model only emits the transcription request - transcribing requires a real speech-recognition tool.
 
 ###### Syntax
 
@@ -1444,7 +1444,7 @@ Directs the agent to transcribe audio recordings of speech into accurate written
 
 ##### Image Captioning
 
-Directs the agent to generate descriptive captions that capture the essence, content, and context of visual images for accessibility.
+Directs the agent to generate descriptive captions that capture the essence, content, and context of visual images for accessibility. Captioning requires a real vision tool - the agent emits the request or spec, never invents a caption for media it cannot see.
 
 ###### Syntax
 
@@ -1709,17 +1709,16 @@ Common uses:
 
 ##### Artifact Prompt Section
 
-Provides structured output requiring special handling, metadata attachment, or specific rendering contexts. Supports SVG, code, documents with type-specific parameters.
+Provides structured output requiring special handling, metadata attachment, or specific rendering contexts. Supports SVG, code, documents with type-specific parameters. The fenced form shown in the syntax and examples is canonical; a legacy XML wrapper (`<artifact type="…">…</artifact>`) predates it.
 
 ###### Syntax
 
-"<artifact type="{content-type}">
-<title><title></title>
-<content>
+"```artifact
+type: {content-type}
+language: {language} (optional, for code artifacts)
+title: "{title}"
 [___|artifact content]
-</content>
-</artifact>
-"
+```"
 
 
 ##### Content Sections Examples
@@ -2056,7 +2055,7 @@ Build upon and enhance existing NPL guidelines and rules for more specificity or
 
 "⌜extend:NPL@version⌝
 [___|modifications]
-⌞extend:NPL@version⌟"
+⌞extend:NPL@version⌟
 "
 
 
@@ -2089,7 +2088,7 @@ Agent definition syntax for creating simulated entities with specific behaviors,
 
 "⌜agent-name|type|NPL@version⌝
 [___|agent definition]
-⌞agent-name⌟"
+⌞agent-name⌟
 "
 
 

@@ -1,3 +1,4 @@
+# 〚📁:𓏬𔌋𓩯𓭏〛 docs_regen :: Regenerates npl/npl-full.md from conventions/*.yaml (npl-docs-regen console script).
 """NPL documentation regeneration.
 
 Generates the full NPL specification markdown by calling

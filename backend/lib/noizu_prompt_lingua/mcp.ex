@@ -1,5 +1,7 @@
 defmodule NoizuPromptLingua.MCP do
   @moduledoc """
+  〚📦:𓷞𔈨𓻺𓟨〛 NoizuPromptLingua.MCP :: Public NPL syntax MCP server: NPLLoad + NPLSpec tools, open (no auth required).
+
   Public NPL syntax MCP server.
 
   This host serves the Noizu Prompt Lingo convention tools only (`NPLLoad`,

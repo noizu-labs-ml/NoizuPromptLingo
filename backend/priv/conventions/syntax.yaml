@@ -552,8 +552,6 @@ components:
   labels:
   - inline
   - emphasis
-  require:
-  - syntax.placeholder
   examples:
   - name: basic-highlight
     brief: Single term emphasis
@@ -657,8 +655,6 @@ components:
   - inline
   - emphasis
   - critical
-  require:
-  - syntax.qualifier
   examples:
   - name: basic-attention
     brief: Single critical instruction
@@ -1758,32 +1754,32 @@ components:
     purpose: Demonstrates different section types working together
     labels:
     - <npl-format>
-    - <npl-{type}>
-    - <npl-{type}>
-    - <npl-{type}>
+    - <npl-syntax>
+    - <npl-example>
+    - <npl-note>
     thread:
     - role: system
-      message: '<npl-{type}>
+      message: '<npl-syntax>
 
         COMMAND := <action> <target> [--flag]
 
-        </npl-{type}>
+        </npl-syntax>
 
 
-        <npl-{type}>
+        <npl-example>
 
         move file.txt --force
 
         copy src/ dest/
 
-        </npl-{type}>
+        </npl-example>
 
 
-        <npl-{type}>
+        <npl-note>
 
         Flags are optional but recommended for destructive operations.
 
-        </npl-{type}>
+        </npl-note>
 
 
         Generate a delete command.
@@ -1803,12 +1799,12 @@ components:
     purpose: Demonstrates NPL syntax within sections
     labels:
     - <npl-format>
-    - <npl-{type}>
+    - <npl-format>
     - '{term}'
     - '[...]'
     thread:
     - role: system
-      message: '<npl-{type}>
+      message: '<npl-format>
 
         # Report: {report.title}
 
@@ -1826,7 +1822,7 @@ components:
 
         {{/foreach}}
 
-        </npl-{type}>
+        </npl-format>
 
 
         Generate a status report.
