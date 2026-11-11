@@ -1,5 +1,8 @@
 # Changelog
 
+## 2026-11-12
+- feat(tools): accords_compliance v1.1.0 — restructured Stop hook into TWO independent checks (Accords/Trinity + new reflection-tag check); each check owns its reason and cooldown sentinel (`accords-nudge-session-<sid>` / `reflect-nudge-session-<sid>`), one block joins whichever fired, neither can suppress the other; reflection check nudges long unreflected responses (≥2500 chars/≥40 lines + self-corrections / caveat-storm / length-ratio / user-correction signals) to append `<npl-intent>`/`<npl-thought>`/`<npl-reflection>` tags; mirrored in the trl-infra standalone hook at `~/.claude/hooks/accords-compliance.py`; calibration extended to 19 reflection/override/cooldown-independence cases
+
 ## 2026-11-11
 - feat(tools): Accords/Trinity compliance detector — `tools/accords_compliance/` (stdlib-only pure detection core + Claude Code Stop-hook wiring, recursion guard, per-session cooldown, optional env-gated decision-model confirmation); verbatim Accords/Trinity protocol reference at `docs/reference/protocols/`; 9-variant calibration harness ported to pytest (`tests/test_accords_compliance.py`, 44 tests) (#113)
 

@@ -42,6 +42,30 @@ honest uncertainty, terse structure-less, clarifying questions, prior-turn assum
 multi-message turn, trivial) — **only "terse structure-less" nudges**. The calibration
 is enforced by `tests/test_accords_compliance.py`.
 
+### Second check: reflection tags (independent)
+
+Since v1.1.0 the hook runs TWO independent checks over the same window and emits ONE
+block whose reason joins whichever fired — neither can suppress the other, and each has
+its own per-session cooldown sentinel (`accords-nudge-session-<sid>` /
+`reflect-nudge-session-<sid>`). The Accords early exits (trivial prompt, Trinity
+present, good-faith effort) gate ONLY the Accords check.
+
+The **reflection check** (`detector.reflection_judge`) nudges when the latest response
+is long (≥ 2500 cleaned chars or ≥ 40 raw lines), carries **no** NPL reflection tags
+(`<npl-reflection>` / `<npl-thought>` / `<npl-intent>`; `<npl-critique>` also
+satisfies — tag detection runs on the RAW text, since cleaning strips tags), and shows
+at least one over-complication / mistake signal (OR-ed, deliberately lenient):
+
+- `self-corrections` — ≥ 2 phrases like "actually", "turns out", "that didn't work".
+- `caveat-storm` — ≥ 6 caveat/branch words ("however", "depending on", "edge case", …).
+- `length-ratio` — ≥ 4000-char answer to a tiny request (≥ 25× the request length).
+- `user-correction` — correction/frustration markers in the last 1-2 user turns
+  ("too complicated", "simpler", "wrong", …); strong markers fire alone, weak ones
+  (no/stop/just/don't) need ≥ 2 hits.
+
+A long, confident answer with none of those passes (`lenient-pass`). The nudge asks
+the agent to APPEND a brief tag mix at the end of large responses — not to rewrite.
+
 ## Layout
 
 | File | Layer | Purpose |
