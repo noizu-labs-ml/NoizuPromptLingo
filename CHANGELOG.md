@@ -1,5 +1,8 @@
 # Changelog
 
+## 2026-11-11
+- feat(tools): Accords/Trinity compliance detector — `tools/accords_compliance/` (stdlib-only pure detection core + Claude Code Stop-hook wiring, recursion guard, per-session cooldown, optional env-gated decision-model confirmation); verbatim Accords/Trinity protocol reference at `docs/reference/protocols/`; 9-variant calibration harness ported to pytest (`tests/test_accords_compliance.py`, 44 tests) (#113)
+
 ## 2026-10-28
 - docs: add AGENT-README.md (agent orientation)
 
