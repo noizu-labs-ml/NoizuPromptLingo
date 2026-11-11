@@ -1,6 +1,7 @@
 # Changelog
 
 ## 2026-11-11
+- feat(npl): spec wave 1 — `conventions/*.yaml`: component `aliases:` on 12 pumps (cot/ref/rubric/… heal dead ids), `section_aliases: {fences: prompt-sections}` in npl.yaml, instructional entries confirmed slug-stable; catalog fixes (pumps `<npl-ref>` tag + runtime-flags `thread:` examples + `best-practice` type, syntax examples use real section types + bogus `require:` dropped on highlight/attention, special-sections stray `"` removed, declarations `specialist` regex + NPL@1.0 examples, artifact syntax fenced to match examples, todo-task ` | ` spacing, media prefixes reframed tool-backed); fences purged from CLAUDE/AGENTS/README/docs/agents, agents corpus repointed to canonical `NPLLoad` expressions (check-npl-ids 0 errors / 0 warnings), deployment surfaces synced to the repointed corpus (`.claude/agents/`, `.codex/agents/`, `commands/` + `.claude/commands/`, `.agents/skills/`), `scripts/check-conventions-parity.sh` added and `backend/priv/conventions/` re-synced
 - feat(tools): Accords/Trinity compliance detector — `tools/accords_compliance/` (stdlib-only pure detection core + Claude Code Stop-hook wiring, recursion guard, per-session cooldown, optional env-gated decision-model confirmation); verbatim Accords/Trinity protocol reference at `docs/reference/protocols/`; 9-variant calibration harness ported to pytest (`tests/test_accords_compliance.py`, 44 tests) (#113)
 
 ## 2026-10-28

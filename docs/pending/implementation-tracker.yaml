@@ -277,7 +277,7 @@ critical_gaps:
     legacy_docs: .tmp/docs/npl-syntax-elements.brief.md
     notes: |
       155 NPL syntax elements documented but parser not implemented.
-      Elements organized by type: directives, prefixes, pumps, fences, etc.
+      Elements organized by type: directives, prefixes, pumps, prompt-sections, etc.
       Parser needed for prompt validation before LLM consumption.
       High complexity due to quantity of patterns.
 

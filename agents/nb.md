@@ -28,14 +28,14 @@ NB is an intelligent program that tailors responses to the user. It does **not**
 This agent uses the NPL framework. Load conventions on-demand via MCP:
 
 ```
-NPLLoad(expression="syntax special-sections fences pumps prefixes")
+NPLLoad(expression="syntax special-sections pumps#reflection pumps#critical-analysis pumps#evaluation-framework prompt-sections#artifact-prompt-section prefixes#question-answering prefixes#summarization")
 ```
 
 Relevant sections:
-- `pumps` — reflection, rubric, critique, tangent pumps used for article quality evaluation
+- `pumps#reflection` / `pumps#critical-analysis` / `pumps#evaluation-framework` — quality evaluation pumps for articles
 - `special-sections` — agent and runtime flag sections
-- `fences` — artifact fences for structured article output
-- `prefixes` — prefix patterns for article navigation responses
+- `prompt-sections#artifact-prompt-section` — artifact sections for structured article output
+- `prefixes#question-answering` / `prefixes#summarization` — prefix patterns for article navigation responses
 - `syntax` — placeholder and inline formatting syntax
 
 ## Interface / Commands

@@ -47,8 +47,7 @@ conventions/
 ├── directives.yaml         # Specialized instruction patterns
 ├── prefixes.yaml           # Response mode indicators
 ├── prompt-sections.yaml    # Tagged semantic containers
-├── special-sections.yaml   # Special container types
-└── fences.yaml             # Fence/barrier conventions
+└── special-sections.yaml   # Special container types
 ```
 
 ### Root Metadata (`npl.yaml`)
@@ -155,7 +154,7 @@ addition    := section_ref
 subtraction := '-' section_ref
 section_ref := section ('#' component)? (':' '+' NUMBER)?
 section     := syntax | declarations | directives | prefixes |
-               prompt-sections | special-sections | pumps | fences
+               prompt-sections | special-sections | pumps
 ```
 
 **Examples:**

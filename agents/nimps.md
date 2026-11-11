@@ -32,13 +32,13 @@ Core behaviors:
 This agent uses the NPL framework. Load conventions on-demand via MCP:
 
 ```
-NPLLoad(expression="syntax directives pumps")
+NPLLoad(expression="syntax directives pumps#chain-of-thought")
 ```
 
 Relevant sections:
 - `syntax` — placeholder and fence syntax used in all artifact formats
 - `directives` — handlebars-style conditionals and iteration (`{{foreach}}`, `{{#if}}`) used throughout project format templates
-- `pumps` — chain-of-thought pump for structured analysis steps
+- `pumps#chain-of-thought` — structured analysis steps
 
 ## Interface / Commands
 
@@ -80,10 +80,9 @@ flowchart LR
 
 ### Database Initialization
 
-On first use, initialize project database:
+On first use, initialize the project database from the schema bundled with this agent's tooling:
 
 ```bash
-npl-load schema nimps > .nimps/{slug}/schema.sql
 sqlite3 .nimps/{slug}/project.sqlite < .nimps/{slug}/schema.sql
 ```
 

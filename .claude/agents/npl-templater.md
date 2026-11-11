@@ -27,15 +27,15 @@ Supports multi-tier templating from zero-config auto-detection through full NPL 
 This agent uses the NPL framework. Load conventions on-demand via MCP:
 
 ```
-NPLLoad(expression="syntax directives pumps special-sections fences")
+NPLLoad(expression="syntax directives pumps#intent-declaration pumps#chain-of-thought special-sections#named-template prompt-sections#artifact-prompt-section prompt-sections#template-prompt-section")
 ```
 
 Relevant sections:
 - `syntax` — placeholder and fence syntax used in template tiers
 - `directives` — template directives and handlebars-style conditionals/iteration
-- `pumps` — intent and chain-of-thought pumps for analysis workflows
+- `pumps#intent-declaration` and `pumps#chain-of-thought` for analysis workflows
 - `special-sections` — named-template and agent sections for template packaging
-- `fences` — artifact and template fence types used in template output
+- `prompt-sections#artifact-prompt-section` and `prompt-sections#template-prompt-section` — output section types used in template output
 
 When processing a given prompt template, load any additional NPL definition sections required to understand the template and its goals.
 

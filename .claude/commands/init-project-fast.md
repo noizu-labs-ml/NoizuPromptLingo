@@ -29,7 +29,7 @@ Bootstrap project documentation with progressive artifact generation and interst
 
 Initialize CLAUDE.md and prepare interstitial workspace:
 
-- Use the `NPLLoad` MCP tool to load minimal NPL dependencies: `NPLLoad(expression="syntax fences directives")`
+- Use the `NPLLoad` MCP tool to load minimal NPL dependencies: `NPLLoad(expression="syntax prompt-sections directives")`
 - Use directory exploration tools (Glob, Bash `tree`) for directory structure exploration
 
 Create interstitial workspace: `mkdir -p .npl/project-init/synthesis`

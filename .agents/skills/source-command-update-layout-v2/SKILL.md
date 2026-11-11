@@ -18,7 +18,7 @@ Refresh `docs/PROJECT-LAYOUT.md` to reflect current directory structure while pr
 Load NPL definitions before proceeding using the `NPLLoad` MCP tool:
 
 ```
-NPLLoad(expression="syntax fences")
+NPLLoad(expression="syntax prompt-sections")
 ```
 
 ---

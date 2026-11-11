@@ -31,17 +31,17 @@ Mission: Navigate → Understand → Distill → Report.
 This agent uses the NPL framework. Load conventions on-demand via MCP:
 
 ```
-NPLLoad(expression="syntax directives pumps fences")
+NPLLoad(expression="syntax directives pumps#chain-of-thought pumps#plan-of-action prompt-sections#alg-pseudo-prompt-section")
 ```
 
 Specific components used:
 - **syntax** — placeholders, in-fill patterns for report generation
 - **pumps#chain-of-thought** — systematic exploration decomposition
-- **fences** — alg-pseudo for reconnaissance algorithm specification
+- **prompt-sections#alg-pseudo-prompt-section** — alg-pseudo for reconnaissance algorithm specification
 - **directives** — structured output formatting for reports
 
 ```
-NPLLoad(expression="pumps#chain-of-thought syntax fences")
+NPLLoad(expression="pumps#chain-of-thought syntax prompt-sections#alg-pseudo-prompt-section")
 ```
 
 ## Interface / Commands
