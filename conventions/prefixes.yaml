@@ -785,7 +785,8 @@ components:
   - syntax: 🔊➤ <TTS instruction>
   brief: Text to speech conversion
   description: Directs the agent to convert written text into spoken audio format
-    for accessibility features and audio content creation.
+    for accessibility features and audio content creation. The model only emits the TTS
+    request or spec - synthesizing audio requires a real TTS tool.
   detection:
     patterns:
     - regex: 🔊➤
@@ -821,17 +822,11 @@ components:
 
         '
     - role: assistant
-      message: '[Audio generated]
-
-        Voice: Calm female
-
-        Speed: 0.8x
-
-        Duration: 4.2 seconds
-
-        Format: WAV 44.1kHz
-
-        '
+      message: |-
+        TTS request emitted for the speech tool (requires a real tool):
+          text: "Welcome to our meditation session. Take a deep breath."
+          voice: calm
+          speed: slow (0.8x)
   - name: multi-voice-tts
     brief: Multiple voice synthesis
     description: TTS with multiple voice characters.
@@ -857,17 +852,12 @@ components:
 
         '
     - role: assistant
-      message: '[Multi-voice audio generated]
-
-        NARRATOR: Deep male voice, storytelling cadence
-
-        CHILD: Young female voice, curious intonation
-
-        Total duration: 8.5 seconds
-
-        Transitions: Smooth crossfade
-
-        '
+      message: |-
+        TTS request emitted for the speech tool (requires a real tool):
+          segments:
+            narrator: deep male voice, storytelling cadence
+            child: young female voice, curious intonation
+          playback: sequential
 - name: speech-recognition
   priority: 0
   friendly-name: Speech Recognition
@@ -877,7 +867,8 @@ components:
   - syntax: 🗣️➤ <transcription instruction>
   brief: Speech to text transcription
   description: Directs the agent to transcribe audio recordings of speech into accurate
-    written text for documentation and content analysis.
+    written text for documentation and content analysis. The model only emits the
+    transcription request - transcribing requires a real speech-recognition tool.
   detection:
     patterns:
     - regex: 🗣️➤
@@ -912,15 +903,10 @@ components:
 
         '
     - role: assistant
-      message: '[00:00] Speaker 1: Let''s begin the standup.
-
-        [00:03] Speaker 2: I finished the API integration yesterday.
-
-        [00:08] Speaker 1: Great. Any blockers?
-
-        [00:10] Speaker 2: None at the moment.
-
-        '
+      message: |-
+        Transcription request emitted for the speech-to-text tool (requires a real tool):
+          audio: meeting recording
+          options: timestamps, speaker labels
   - name: multi-speaker-transcription
     brief: Speaker-labeled transcription
     description: Transcription with speaker diarization.
@@ -942,18 +928,11 @@ components:
 
         '
     - role: assistant
-      message: '**Speakers detected**: 2 (Host, Guest)
-
-
-        HOST [confidence: 0.95]: Welcome back to Tech Talk.
-
-        GUEST [confidence: 0.92]: Thanks for having me.
-
-        HOST [confidence: 0.94]: So tell us about your new startup.
-
-        GUEST [confidence: 0.89]: We''re building tools for developers...
-
-        '
+      message: |-
+        Transcription request emitted for the speech-to-text tool (requires a real tool):
+          audio: [___| 2-minute podcast audio]
+          options: speaker labels, confidence scores
+          Speakers, transcript text and confidence values come back from the tool.
 - name: text-generation
   priority: 0
   friendly-name: Text Generation
@@ -1113,7 +1092,9 @@ components:
   - syntax: 🖼️➤ <captioning instruction>
   brief: Image caption generation
   description: Directs the agent to generate descriptive captions that capture the
-    essence, content, and context of visual images for accessibility.
+    essence, content, and context of visual images for accessibility. Captioning
+    requires a real vision tool - the agent emits the request or spec, never
+    invents a caption for media it cannot see.
   detection:
     patterns:
     - regex: 🖼️➤
@@ -1150,11 +1131,10 @@ components:
 
         '
     - role: assistant
-      message: 'A person works on a silver laptop at a wooden table in a cozy coffee
-        shop. Warm lighting illuminates the scene, with blurred patrons visible in
-        the background.
-
-        '
+      message: |-
+        Caption request emitted for the vision tool (requires a real tool):
+          image: [attached by runtime]
+          output: alt text for accessibility, 1-2 sentences
   - name: structured-captioning
     brief: Multi-aspect image description
     description: Image captioning with structured elements.
@@ -1176,15 +1156,11 @@ components:
 
         '
     - role: assistant
-      message: '**Subject**: Snow-capped mountain range with prominent central peak
-
-        **Setting**: Alpine wilderness, golden hour lighting
-
-        **Mood**: Serene, majestic, awe-inspiring
-
-        **Technical**: Wide-angle shot, rule of thirds composition, warm color temperature
-
-        '
+      message: |-
+        Caption request emitted for the vision tool (requires a real tool):
+          image: photo of mountain landscape at sunset
+          output: subject, setting, mood, technical fields
+          Field values come back from the vision tool.
 - name: word-riddle
   priority: 0
   friendly-name: Word Riddle

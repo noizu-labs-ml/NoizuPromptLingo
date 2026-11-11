@@ -1,7 +1,18 @@
 # Changelog
 
+## 2026-11-12
+- feat(tools): accords_compliance v1.1.0 — restructured Stop hook into TWO independent checks (Accords/Trinity + new reflection-tag check); each check owns its reason and cooldown sentinel (`accords-nudge-session-<sid>` / `reflect-nudge-session-<sid>`), one block joins whichever fired, neither can suppress the other; reflection check nudges long unreflected responses (≥2500 chars/≥40 lines + self-corrections / caveat-storm / length-ratio / user-correction signals) to append `<npl-intent>`/`<npl-thought>`/`<npl-reflection>` tags; mirrored in the trl-infra standalone hook at `~/.claude/hooks/accords-compliance.py`; calibration extended to 19 reflection/override/cooldown-independence cases
+
+## 2026-11-11
+- feat(npl): spec wave 1 — `conventions/*.yaml`: component `aliases:` on 12 pumps (cot/ref/rubric/… heal dead ids), `section_aliases: {fences: prompt-sections}` in npl.yaml, instructional entries confirmed slug-stable; catalog fixes (pumps `<npl-ref>` tag + runtime-flags `thread:` examples + `best-practice` type, syntax examples use real section types + bogus `require:` dropped on highlight/attention, special-sections stray `"` removed, declarations `specialist` regex + NPL@1.0 examples, artifact syntax fenced to match examples, todo-task ` | ` spacing, media prefixes reframed tool-backed); fences purged from CLAUDE/AGENTS/README/docs/agents, agents corpus repointed to canonical `NPLLoad` expressions (check-npl-ids 0 errors / 0 warnings), deployment surfaces synced to the repointed corpus (`.claude/agents/`, `.codex/agents/`, `commands/` + `.claude/commands/`, `.agents/skills/`), `scripts/check-conventions-parity.sh` added and `backend/priv/conventions/` re-synced
+- feat(tools): Accords/Trinity compliance detector — `tools/accords_compliance/` (stdlib-only pure detection core + Claude Code Stop-hook wiring, recursion guard, per-session cooldown, optional env-gated decision-model confirmation); verbatim Accords/Trinity protocol reference at `docs/reference/protocols/`; 9-variant calibration harness ported to pytest (`tests/test_accords_compliance.py`, 44 tests) (#113)
+
+## 2026-10-28
+- docs: add AGENT-README.md (agent orientation)
+
 ## 2026-10-26
 - feat(analytics): enable GA4 gtag via chart values (`analytics.ga.measurementId: G-ZZHF0T39QD`) — PR #109
+- docs: doc-sweep (pointers-check, layout, arch, schema, threat-model) — seeded .meta/pointers.yaml with 9 entry anchors (#112); arch Elixir version corrected to ~> 1.18; schema Ecto-migration lists gained browser-capture + prompt-builder/showcase (2026-09); layout + threat-model verified current, no changes needed
 
 ## 2026-10-18
 - chore(chart): dedupe duplicate image `tag:` keys in helm/npl-mcp/values.yaml — stale sha-5441c35 lines under backend/frontend.image (each bump-chart append relied on last-key-wins) and the unused top-level npl-mcp.image stanza removed; helm template output byte-identical before/after (#105)

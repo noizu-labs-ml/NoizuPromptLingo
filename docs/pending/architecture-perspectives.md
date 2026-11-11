@@ -63,7 +63,7 @@ Exposes NPL definitions through multiple access patterns:
 
 Contains pure NPL syntax and agent specifications with no runtime code:
 
-- **NPL Syntax**: Core language definitions, directives, pumps, fences
+- **NPL Syntax**: Core language definitions, directives, pumps, prompt-sections
 - **Agent Specifications**: Behavioral definitions in markdown format
 - **Templates**: Reusable patterns for scaffolding and generation
 - **Directives**: Fine-grained behavior control instructions

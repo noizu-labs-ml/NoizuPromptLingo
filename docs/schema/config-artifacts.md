@@ -32,7 +32,7 @@ Secret layering (monorepo convention): `dc:` direnv-config → `override:` env v
 
 ## Ecto migrations (`backend/priv/repo/migrations/`)
 
-Minimal set only — schema is Liquibase-owned. Present: smart_token + seed helper setup (2024), oban tables + v14 upgrade, mcp_custom_scopes, SSO claim codes + scope packaging, mcp_account_default, mcp_endpoint_templates, mcp_key_toolsets, org_slug_uniqueness, oauth_client_toolsets, mcp_entities, clients. Also `priv/w8_export_definitions.exs` / `w8_import_definitions.exs` (TRP interop definitions).
+Minimal set only — schema is Liquibase-owned. Present: smart_token + seed helper setup (2024), oban tables + v14 upgrade, mcp_custom_scopes, SSO claim codes + scope packaging, mcp_account_default, mcp_endpoint_templates, mcp_key_toolsets, org_slug_uniqueness, oauth_client_toolsets, mcp_entities, clients, browser_capture_resource_types (2026-09), prompt_builder + prompt_logs_and_showcase (2026-09). Also `priv/w8_export_definitions.exs` / `w8_import_definitions.exs` (TRP interop definitions).
 
 ## Runtime state stores
 

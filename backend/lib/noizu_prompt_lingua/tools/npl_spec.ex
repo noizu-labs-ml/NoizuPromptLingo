@@ -14,12 +14,15 @@ defmodule NoizuPromptLingua.Tools.NPLSpec do
     field :components, {:array, :object},
       description:
         "List of component specs to include. Empty list includes all conventions. " <>
-          "Each object has: spec (string, e.g. \"syntax:*\" or \"pumps:npl-intent\"), " <>
+          "Each object has: spec (string, e.g. \"syntax:*\" or \"pumps:intent-declaration\"), " <>
           "component_priority (integer, default 0), example_priority (integer, default 0)." do
       field :spec, :string,
         required: true,
         description:
-          "Component spec string, e.g. \"syntax:*\" or \"pumps:npl-intent,chain-of-thought\""
+          "Component spec string, e.g. \"syntax:*\" or \"pumps:intent-declaration,chain-of-thought\". " <>
+            "Section names resolve through npl.yaml section_aliases; ids may be canonical names, " <>
+            "component aliases (pumps:cot), or instructional entry slugs (pumps:pump-ordering); " <>
+            "whole-section specs omit instructional entries."
 
       field :component_priority, :integer,
         default: 0,

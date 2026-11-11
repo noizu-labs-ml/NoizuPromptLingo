@@ -14,8 +14,7 @@ defmodule NoizuPromptLingua.NPL.Reader do
     "prefixes" => "prefixes.yaml",
     "prompt-sections" => "prompt-sections.yaml",
     "special-sections" => "special-sections.yaml",
-    "pumps" => "pumps.yaml",
-    "fences" => "fences.yaml"
+    "pumps" => "pumps.yaml"
   }
 
   @type component_summary :: %{

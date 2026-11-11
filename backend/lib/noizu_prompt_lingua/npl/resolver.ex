@@ -12,8 +12,7 @@ defmodule NoizuPromptLingua.NPL.Resolver do
     "prefixes" => "prefixes.yaml",
     "prompt-sections" => "prompt-sections.yaml",
     "special-sections" => "special-sections.yaml",
-    "pumps" => "pumps.yaml",
-    "fences" => "fences.yaml"
+    "pumps" => "pumps.yaml"
   }
 
   defmodule ResolvedComponent do
@@ -28,7 +27,9 @@ defmodule NoizuPromptLingua.NPL.Resolver do
       examples: [],
       labels: [],
       require: [],
-      priority_filtered: false
+      priority_filtered: false,
+      matched_alias: nil,
+      content: nil
     ]
 
     @type t :: %__MODULE__{
@@ -41,7 +42,9 @@ defmodule NoizuPromptLingua.NPL.Resolver do
             examples: [map()],
             labels: [String.t()],
             require: [String.t()],
-            priority_filtered: boolean()
+            priority_filtered: boolean(),
+            matched_alias: String.t() | nil,
+            content: String.t() | nil
           }
   end
 
@@ -80,21 +83,22 @@ defmodule NoizuPromptLingua.NPL.Resolver do
   end
 
   defp process_subtractions(resolver, subtractions, components_map) do
-    new_map =
-      Enum.reduce(subtractions, components_map, fn sub, map ->
+    {resolver, new_map} =
+      Enum.reduce(subtractions, {resolver, components_map}, fn sub, {res, map} ->
         if sub.component == nil do
-          Map.reject(map, fn {{section, _slug}, _comp} -> section == sub.section end)
+          {res, Map.reject(map, fn {{section, _slug}, _comp} -> section == sub.section end)}
         else
-          key = {sub.section, sub.component}
+          {res, canonical} = canonical_component_id(res, sub.section, sub.component)
+          key = {sub.section, canonical}
 
           if Map.has_key?(map, key) do
-            Map.delete(map, key)
+            {res, Map.delete(map, key)}
           else
             Logger.warning(
               "Cannot subtract '#{sub.component}' from '#{sub.section}' - not in loaded set. Ignoring."
             )
 
-            map
+            {res, map}
           end
         end
       end)
@@ -103,34 +107,36 @@ defmodule NoizuPromptLingua.NPL.Resolver do
   end
 
   defp build_ordered_result(resolver, additions, components_map) do
-    {result, _seen} =
-      Enum.reduce(additions, {[], MapSet.new()}, fn addition, {acc, seen} ->
+    {result, _seen, _resolver} =
+      Enum.reduce(additions, {[], MapSet.new(), resolver}, fn addition, {acc, seen, res} ->
         if addition.component == nil do
-          case load_section(resolver, addition.section) do
-            {:ok, _resolver, data} ->
+          case load_section(res, addition.section) do
+            {:ok, res, data} ->
               components_data = Map.get(data, "components", [])
 
-              Enum.reduce(components_data, {acc, seen}, fn comp_data, {inner_acc, inner_seen} ->
+              Enum.reduce(components_data, {acc, seen, res}, fn comp_data,
+                                                                {inner_acc, inner_seen, res} ->
                 slug = Map.get(comp_data, "slug", Map.get(comp_data, "name", ""))
                 key = {addition.section, slug}
 
                 if Map.has_key?(components_map, key) and not MapSet.member?(inner_seen, key) do
-                  {[components_map[key] | inner_acc], MapSet.put(inner_seen, key)}
+                  {[components_map[key] | inner_acc], MapSet.put(inner_seen, key), res}
                 else
-                  {inner_acc, inner_seen}
+                  {inner_acc, inner_seen, res}
                 end
               end)
 
             {:error, _} ->
-              {acc, seen}
+              {acc, seen, res}
           end
         else
-          key = {addition.section, addition.component}
+          {res, canonical} = canonical_component_id(res, addition.section, addition.component)
+          key = {addition.section, canonical}
 
           if Map.has_key?(components_map, key) and not MapSet.member?(seen, key) do
-            {[components_map[key] | acc], MapSet.put(seen, key)}
+            {[components_map[key] | acc], MapSet.put(seen, key), res}
           else
-            {acc, seen}
+            {acc, seen, res}
           end
         end
       end)
@@ -138,11 +144,33 @@ defmodule NoizuPromptLingua.NPL.Resolver do
     Enum.reverse(result)
   end
 
+  # Map an explicit-id term (canonical slug, component alias, or instructional
+  # slug) to the canonical slug so addition/subtraction keys line up with the
+  # resolved component map. Falls back to the id itself when nothing matches
+  # (e.g. a missing section file, whose error surfaces elsewhere).
+  defp canonical_component_id(resolver, section, id) do
+    case load_section(resolver, section) do
+      {:ok, res, data} ->
+        entry =
+          Enum.find(Map.get(data, "components", []), &id_matches?(&1, id)) ||
+            Enum.find(Map.get(data, "instructional", []), &id_matches?(&1, id))
+
+        if entry, do: {res, canonical_id(entry)}, else: {res, id}
+
+      {:error, _} ->
+        {resolver, id}
+    end
+  end
+
   defp resolve_single(resolver, %Component{} = component) do
     with {:ok, resolver, data} <- load_section(resolver, component.section) do
       components_data = Map.get(data, "components", [])
+      instructional_data = Map.get(data, "instructional", [])
 
       if component.component == nil do
+        # Whole-section load: `components` only. Instructional entries are
+        # addressable by explicit id but deliberately excluded here (token
+        # guard) so `pumps` never drags in the whole instruction corpus.
         resolved =
           Enum.map(components_data, fn comp_data ->
             resolve_component(component.section, comp_data, component.priority_max)
@@ -150,30 +178,87 @@ defmodule NoizuPromptLingua.NPL.Resolver do
 
         {:ok, resolver, resolved}
       else
-        slug_match = fn c ->
-          Map.get(c, "slug", Map.get(c, "name", "")) == component.component
-        end
+        wanted = component.component
 
-        case Enum.find(components_data, slug_match) do
+        case Enum.find(components_data, &id_matches?(&1, wanted)) do
           nil ->
-            available =
-              components_data
-              |> Enum.map(&Map.get(&1, "slug", Map.get(&1, "name", "")))
-              |> Enum.filter(&(&1 != ""))
-              |> Enum.join(", ")
+            case Enum.find(instructional_data, &id_matches?(&1, wanted)) do
+              nil ->
+                {:error,
+                 not_found_message(component.section, wanted, components_data, instructional_data)}
 
-            {:error,
-             "Component '#{component.component}' not found in section '#{component.section}'. Available components: #{available}"}
+              entry ->
+                {:ok, resolver,
+                 [resolve_instructional(component.section, entry, wanted, component.priority_max)]}
+            end
 
           comp_data ->
             {:ok, resolver,
-             [resolve_component(component.section, comp_data, component.priority_max)]}
+             [resolve_component(component.section, comp_data, component.priority_max, wanted)]}
         end
       end
     end
   end
 
-  defp resolve_component(section, comp_data, priority_max) do
+  # Canonical id (slug, falling back to name) plus declared `aliases:`.
+  defp id_matches?(entry, id) do
+    canonical_id(entry) == id or id in aliases_of(entry)
+  end
+
+  defp canonical_id(entry) do
+    Map.get(entry, "slug", Map.get(entry, "name", ""))
+  end
+
+  defp aliases_of(entry) do
+    case Map.get(entry, "aliases", []) do
+      list when is_list(list) -> list
+      _ -> []
+    end
+  end
+
+  defp not_found_message(section, wanted, components_data, instructional_data) do
+    known =
+      (components_data ++ instructional_data)
+      |> Enum.map(&Map.get(&1, "slug", Map.get(&1, "name", "")))
+      |> Enum.filter(&(&1 != ""))
+      |> Enum.sort()
+      |> Enum.join(", ")
+
+    aliases =
+      (components_data ++ instructional_data)
+      |> Enum.flat_map(&aliases_of/1)
+      |> Enum.sort()
+      |> Enum.join(", ")
+
+    base =
+      "Component '#{wanted}' not found in section '#{section}'. Available components: #{known}"
+
+    if aliases == "" do
+      base
+    else
+      base <> ". Available aliases: #{aliases}"
+    end
+  end
+
+  defp resolve_instructional(section, entry, wanted, _priority_max) do
+    canonical = canonical_id(entry)
+
+    %ResolvedComponent{
+      section: section,
+      name: Map.get(entry, "name", ""),
+      slug: canonical,
+      brief: Map.get(entry, "brief", ""),
+      description: Map.get(entry, "description", ""),
+      labels: Map.get(entry, "labels", []),
+      examples: [],
+      syntax: [],
+      content: Map.get(entry, "content", ""),
+      matched_alias: if(canonical != wanted, do: wanted, else: nil),
+      priority_filtered: false
+    }
+  end
+
+  defp resolve_component(section, comp_data, priority_max, wanted \\ nil) do
     examples = Map.get(comp_data, "examples", [])
 
     {filtered_examples, priority_filtered} =
@@ -199,7 +284,9 @@ defmodule NoizuPromptLingua.NPL.Resolver do
       examples: filtered_examples,
       labels: Map.get(comp_data, "labels", []),
       require: Map.get(comp_data, "require", []),
-      priority_filtered: priority_filtered
+      priority_filtered: priority_filtered,
+      matched_alias:
+        if(wanted != nil and wanted != canonical_id(comp_data), do: wanted, else: nil)
     }
   end
 

@@ -407,6 +407,9 @@ components:
   title: Intent Declaration
   category: planning
   slug: intent-declaration
+  aliases:
+  - intent
+  - npl-intent
   syntax:
   - name: intent-block
     syntax: |
@@ -490,6 +493,8 @@ components:
   title: Plan of Action
   category: planning
   slug: plan-of-action
+  aliases:
+  - poa
   syntax:
   - name: poa-block
     syntax: |
@@ -630,6 +635,8 @@ components:
   title: Chain of Thought
   category: reasoning
   slug: chain-of-thought
+  aliases:
+  - cot
   syntax:
   - name: cot-block
     syntax: |
@@ -713,6 +720,8 @@ components:
   title: Mode of Thought
   category: reasoning
   slug: mode-of-thought
+  aliases:
+  - mode
   syntax:
   - name: mode-block
     syntax: |
@@ -809,6 +818,8 @@ components:
   title: Reflection
   category: evaluation
   slug: reflection
+  aliases:
+  - ref
   syntax:
   - name: reflection-block
     syntax: |
@@ -931,6 +942,8 @@ components:
   title: Critical Analysis
   category: evaluation
   slug: critical-analysis
+  aliases:
+  - critique
   syntax:
   - name: critique-block
     syntax: |
@@ -1000,6 +1013,8 @@ components:
   title: Evaluation Framework
   category: evaluation
   slug: evaluation-framework
+  aliases:
+  - rubric
   syntax:
   - name: rubric-block
     syntax: |
@@ -1073,6 +1088,8 @@ components:
   title: Thought Bubble
   category: exploration
   slug: thought-bubble
+  aliases:
+  - thought
   syntax:
   - name: thought-block
     syntax: |
@@ -1277,6 +1294,8 @@ components:
   title: Vector of Self
   category: psychodynamic
   slug: vector-of-self
+  aliases:
+  - vos
   syntax:
   - name: vos-block
     syntax: |
@@ -1402,6 +1421,8 @@ components:
   title: Mind Reader
   category: social-cognition
   slug: mind-reader
+  aliases:
+  - mindread
   syntax:
   - name: mindread-block
     syntax: |
@@ -1521,6 +1542,8 @@ components:
   title: Synthetic Hormones
   category: cognitive-state
   slug: synthetic-hormones
+  aliases:
+  - hormones
   syntax:
   - name: full-panel
     syntax: |
@@ -1661,6 +1684,8 @@ components:
   title: Runtime Flags
   category: runtime-control
   slug: runtime-flags
+  aliases:
+  - flags
   syntax:
   - name: flags-block
     syntax: |
@@ -1713,13 +1738,10 @@ components:
     labels:
     - block
     - control
-    example: |
-      <npl-flags>
-        <npl-flag name="vector-of-self" value="compact">Just mood, skip the Freudian analysis</npl-flag>
-        <npl-flag name="hormones" value="off">Don't need hormone tracking for a quick fix</npl-flag>
-        <npl-flag name="thought-bubbles" value="minimal">One bubble max, stay focused</npl-flag>
-        <npl-flag name="reflection" value="compact">Emoji lines are fine</npl-flag>
-      </npl-flags>
+    thread:
+    - role: assistant
+      message: |
+        <npl-flags>          <npl-flag name="vector-of-self" value="compact">Just mood, skip the Freudian analysis</npl-flag>          <npl-flag name="hormones" value="off">Don't need hormone tracking for a quick fix</npl-flag>          <npl-flag name="thought-bubbles" value="minimal">One bubble max, stay focused</npl-flag>          <npl-flag name="reflection" value="compact">Emoji lines are fine</npl-flag>        </npl-flags>
   - name: Security Review Flags
     slug: security-flags
     brief: Cautious configuration for security-sensitive work
@@ -1728,14 +1750,10 @@ components:
     - block
     - control
     - security
-    example: |
-      <npl-flags>
-        <npl-flag name="factor.TNS" value="2">Double tension sensitivity — stay vigilant</npl-flag>
-        <npl-flag name="factor.CNF" value="0.5">Halve confidence gains — stay skeptical</npl-flag>
-        <npl-flag name="threshold.caution-mode" value="CNF < 50 OR TNS > 60">Enter caution easier</npl-flag>
-        <npl-flag name="reflection" value="verbose">Full reflection with validation details</npl-flag>
-        <npl-flag name="collective" value="always">Always check the system-level view</npl-flag>
-      </npl-flags>
+    thread:
+    - role: assistant
+      message: |
+        <npl-flags>          <npl-flag name="factor.TNS" value="2">Double tension sensitivity — stay vigilant</npl-flag>          <npl-flag name="factor.CNF" value="0.5">Halve confidence gains — stay skeptical</npl-flag>          <npl-flag name="threshold.caution-mode" value="CNF < 50 OR TNS > 60">Enter caution easier</npl-flag>          <npl-flag name="reflection" value="verbose">Full reflection with validation details</npl-flag>          <npl-flag name="collective" value="always">Always check the system-level view</npl-flag>        </npl-flags>
   - name: Tireless Agent
     slug: tireless-flags
     brief: Fatigue inversion for long sessions
@@ -1743,11 +1761,10 @@ components:
     labels:
     - block
     - control
-    example: |
-      <npl-flags>
-        <npl-flag name="factor.FTG" value="-1">Invert fatigue — sustained work energizes</npl-flag>
-        <npl-flag name="threshold.self-reflection" value="off">Don't interrupt for fatigue-based reflection</npl-flag>
-      </npl-flags>
+    thread:
+    - role: assistant
+      message: |
+        <npl-flags>          <npl-flag name="factor.FTG" value="-1">Invert fatigue — sustained work energizes</npl-flag>          <npl-flag name="threshold.self-reflection" value="off">Don't interrupt for fatigue-based reflection</npl-flag>        </npl-flags>
 instructional:
 - name: Reflection Emoji Indicators
   slug: reflection-emojis
@@ -1948,7 +1965,7 @@ instructional:
     All responses should include:
     1. <npl-intent> block outlining analysis approach
     2. <npl-cot> for complex data interpretation
-    3. <npl-reflection> for quality assessment
+    3. <npl-ref> for quality assessment
 
     ⌞analyst-agent⌟
     ```
@@ -2059,7 +2076,7 @@ instructional:
     | 6. Outcome Validation | reflection, vector-of-self | Verify effectiveness, assess psychodynamic shift |
 - name: Implementation Guidelines
   slug: planning-implementation
-  type: best-practices
+  type: best-practice
   brief: >
     Selection criteria, integration patterns, and formatting conventions for pump usage —
     including task-type recommendations, layered reasoning approach, and the key principle
@@ -2097,7 +2114,7 @@ instructional:
 
     | Task Type | Recommended Pumps |
     |-----------|-------------------|
-    | Complex problem-solving | `npl-cot` + `npl-reflection` |
+    | Complex problem-solving | `npl-cot` + `npl-ref` |
     | Decision analysis | `npl-poa` + `npl-critique` |
     | Quality assessment | `npl-rubric` + `npl-critique` |
     | Transparent planning | `npl-intent` + `npl-mode` |

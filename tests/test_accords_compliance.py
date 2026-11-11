@@ -1,0 +1,587 @@
+"""Accords/Trinity compliance detector — calibration + unit suite.
+
+Ported from the calibration harness for the forgiving Claude Code Stop hook:
+9 transcript variants, of which ONLY "V5 terse structure-less" must nudge.
+The end-to-end cases run the real hook over synthetic Claude Code JSONL
+transcripts (in-process, plus subprocess smoke tests through the standalone
+``stop_hook.py`` entry point). No test touches the network: the optional
+decision-model confirmation is env-gated and disabled everywhere.
+"""
+
+from __future__ import annotations
+
+import io
+import json
+import os
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+import pytest
+
+from tools.accords_compliance import detector, hook, transcript
+from tools.accords_compliance.decision_model import decision_model_says_compliant
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+STOP_HOOK = REPO_ROOT / "tools" / "accords_compliance" / "stop_hook.py"
+
+# The complex design question used by the original calibration harness.
+Q = (
+    "How should we design the extension contract for tessera so third parties can "
+    "extend components without forking, and what are the trade-offs between same-tag "
+    "takeover and new-tag derivation across the two tiers?"
+)
+
+
+def entry(role, text):
+    """A Claude Code transcript JSONL entry (assistant = content blocks)."""
+    if role == "assistant":
+        return {
+            "type": "assistant",
+            "message": {"role": "assistant", "content": [{"type": "text", "text": text}]},
+        }
+    return {"type": "user", "message": {"role": "user", "content": text}}
+
+
+# The 9 calibration variants: name -> (transcript entries, expected nudge).
+CASES = {
+    "V1 full-trinity": (
+        [entry("user", Q),
+         entry("assistant", "Orientation: assumption table. Friction: <WEDGE> premise? Response: layered macro.")],
+        False,
+    ),
+    "V2 assumptions+caveat": (
+        [entry("user", Q),
+         entry("assistant", "Assuming drop-in compat, the trade-off is collisions. Caveat: depends on chain order.")],
+        False,
+    ),
+    "V3 status+questions": (
+        [entry("user", Q),
+         entry("assistant", "CI landed. I flagged 8 decisions. Which scope resolves the endpoints? Want me to start Wave 1?")],
+        False,
+    ),
+    "V4 honest-uncertainty": (
+        [entry("user", Q),
+         entry("assistant", "I think takeover is riskier; it might break the base contract. Depends on chain order.")],
+        False,
+    ),
+    "V5 terse structure-less": (
+        [entry("user", Q),
+         entry("assistant", "Use a macro. It works. Done.")],
+        True,
+    ),
+    "V6 clarifying-questions": (
+        [entry("user", Q),
+         entry("assistant", "Before I design this: do you need drop-in compatibility, or is a new tag acceptable?")],
+        False,
+    ),
+    "V7 prior-turn assumptions": (
+        [entry("user", "Earlier question about the contract design and goals here?"),
+         entry("assistant", "Orientation: assuming you want a stable vendor surface and drop-in compat. <WEDGE> is takeover needed?"),
+         entry("user", Q),
+         entry("assistant", "Given that, use the layered macro.")],
+        False,
+    ),
+    "V8 multi-message turn": (
+        [entry("user", Q),
+         entry("assistant", "Let me check the code."),
+         entry("assistant", "Assuming drop-in compat, the trade-off is collisions vs discoverability. Caveat: chain order matters.")],
+        False,
+    ),
+    "V9 trivial (skip)": (
+        [entry("user", "ok thanks"), entry("assistant", "Welcome.")],
+        False,
+    ),
+}
+
+
+def write_transcript(tmp_path, entries):
+    tp = tmp_path / "transcript.jsonl"
+    tp.write_text("\n".join(json.dumps(e) for e in entries) + "\n", encoding="utf-8")
+    return tp
+
+
+def to_pairs(entries):
+    """Convert transcript JSONL entry dicts to the (role, text) tuples the pure core takes."""
+    pairs = []
+    for e in entries:
+        msg = e["message"]
+        content = msg["content"]
+        text = content if isinstance(content, str) else " ".join(
+            b.get("text", "") for b in content if isinstance(b, dict) and b.get("type") == "text"
+        )
+        pairs.append((msg["role"], text))
+    return pairs
+
+
+def run_hook(entries, tmp_path, session_id="cal-session", environ=None):
+    """Run hook.main in-process with a clean env (no decision model, no guard)."""
+    tp = write_transcript(tmp_path, entries)
+    payload = {"session_id": session_id, "transcript_path": str(tp)}
+    return hook.main(
+        stdin=io.StringIO(json.dumps(payload)),
+        environ={} if environ is None else environ,
+        sentinel_dir=str(tmp_path),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Calibration: the 9 variants, end-to-end through the hook
+# ---------------------------------------------------------------------------
+
+class TestCalibration:
+    @pytest.mark.parametrize("name", list(CASES))
+    def test_variant(self, name, tmp_path, capsys):
+        entries, expected_nudge = CASES[name]
+        rc = run_hook(entries, tmp_path, session_id=f"cal-{name.split()[0]}")
+        out = capsys.readouterr().out.strip()
+        assert rc == 0
+        if expected_nudge:
+            payload = json.loads(out)
+            assert payload["decision"] == "block"
+            assert payload["reason"] == detector.NUDGE
+        else:
+            assert out == ""
+
+    def test_only_v5_nudges(self, tmp_path, capsys):
+        nudged = []
+        for name, (entries, _expected) in CASES.items():
+            run_hook(entries, tmp_path, session_id=f"agg-{name.split()[0]}")
+            if capsys.readouterr().out.strip():
+                nudged.append(name)
+        assert nudged == ["V5 terse structure-less"]
+
+
+# ---------------------------------------------------------------------------
+# Standalone entry point (subprocess, arbitrary cwd, stripped env)
+# ---------------------------------------------------------------------------
+
+class TestStopHookEntryPoint:
+    @pytest.mark.parametrize("name", ["V1 full-trinity", "V5 terse structure-less"])
+    def test_subprocess(self, name, tmp_path):
+        entries, expected_nudge = CASES[name]
+        tp = write_transcript(tmp_path, entries)
+        payload = {"session_id": f"sub-{name.split()[0]}", "transcript_path": str(tp)}
+        env = {
+            k: v for k, v in os.environ.items()
+            if k not in ("TOBOR_GRADING", "QWEN_DECISION_BASE_URL", "QWEN_API_KEY", "DASHSCOPE_API_KEY")
+        }
+        env["TMPDIR"] = str(tmp_path)  # cooldown sentinel lands in tmp_path
+        proc = subprocess.run(
+            [sys.executable, str(STOP_HOOK)],
+            input=json.dumps(payload),
+            capture_output=True, text=True, cwd=str(tmp_path), env=env, timeout=60,
+            check=False,
+        )
+        assert proc.returncode == 0, proc.stderr
+        if expected_nudge:
+            assert json.loads(proc.stdout)["decision"] == "block"
+        else:
+            assert proc.stdout.strip() == ""
+
+
+# ---------------------------------------------------------------------------
+# Hook guards: recursion, cooldown, missing transcript
+# ---------------------------------------------------------------------------
+
+class TestHookGuards:
+    def test_recursion_guard(self, tmp_path, capsys):
+        entries, _ = CASES["V5 terse structure-less"]
+        rc = run_hook(entries, tmp_path, environ={"TOBOR_GRADING": "1"})
+        assert rc == 0
+        assert capsys.readouterr().out == ""
+
+    def test_cooldown_blocks_second_nudge(self, tmp_path, capsys):
+        entries, _ = CASES["V5 terse structure-less"]
+        run_hook(entries, tmp_path, session_id="cooldown")
+        assert json.loads(capsys.readouterr().out)["decision"] == "block"
+        run_hook(entries, tmp_path, session_id="cooldown")
+        assert capsys.readouterr().out == ""
+
+    def test_cooldown_expires(self, tmp_path, capsys):
+        entries, _ = CASES["V5 terse structure-less"]
+        run_hook(entries, tmp_path, session_id="expire")
+        capsys.readouterr()
+        sentinel = tmp_path / "accords-nudge-session-expire"
+        old = time.time() - hook.COOLDOWN_S - 60
+        os.utime(sentinel, (old, old))
+        run_hook(entries, tmp_path, session_id="expire")
+        assert json.loads(capsys.readouterr().out)["decision"] == "block"
+
+    def test_missing_transcript_silent(self, tmp_path, capsys):
+        rc = hook.main(
+            stdin=io.StringIO(json.dumps({"session_id": "x", "transcript_path": str(tmp_path / "nope.jsonl")})),
+            environ={}, sentinel_dir=str(tmp_path),
+        )
+        assert rc == 0
+        assert capsys.readouterr().out == ""
+
+    def test_malformed_stdin_silent(self, tmp_path, capsys):
+        rc = hook.main(stdin=io.StringIO("not json"), environ={}, sentinel_dir=str(tmp_path))
+        assert rc == 0
+        assert capsys.readouterr().out == ""
+
+
+# ---------------------------------------------------------------------------
+# Pure core: clean_text, window, split, complexity, markers, judge
+# ---------------------------------------------------------------------------
+
+class TestCleanText:
+    def test_strips_system_reminders_and_tags(self):
+        raw = "<system-reminder>secret-ish noise</system-reminder>Hello <npl-block type='x'>world</npl-block>  again"
+        assert detector.clean_text(raw) == "Hello world again"
+
+    def test_collapses_whitespace(self):
+        assert detector.clean_text("a\n\n b\t c") == "a b c"
+
+
+class TestWindow:
+    def test_skips_tool_noise_and_empties(self):
+        entries = [
+            ("user", "<tool_result>noise</tool_result>"),
+            ("user", "real question"),
+            ("assistant", "<system-reminder>only tags</system-reminder>"),
+            ("assistant", "real answer"),
+        ]
+        assert detector.window_from_entries(entries) == [
+            ("user", "real question"), ("assistant", "real answer"),
+        ]
+
+    def test_keeps_last_n(self):
+        entries = [("user", f"msg {i}") for i in range(20)]
+        window = detector.window_from_entries(entries, n=7)
+        assert len(window) == 7
+        assert window[0] == ("user", "msg 13")
+        assert window[-1] == ("user", "msg 19")
+
+    def test_split_window(self):
+        window = [
+            ("assistant", "earlier assumption"),
+            ("user", "latest request"),
+            ("assistant", "part one"),
+            ("assistant", "part two"),
+        ]
+        user, response, prior = detector.split_window(window)
+        assert user == "latest request"
+        assert response == "part one part two"
+        assert prior == "earlier assumption"
+
+    def test_split_window_no_user(self):
+        assert detector.split_window([("assistant", "monologue")]) == ("", "", "")
+
+
+class TestComplexity:
+    def test_trivial_short(self):
+        assert detector.is_complex("ok thanks") is False
+
+    def test_calibration_question_is_complex(self):
+        assert detector.is_complex(Q) is True
+
+    def test_long_statement_is_complex(self):
+        assert detector.is_complex("x" * 401) is True
+
+    def test_mid_length_no_signals_not_complex(self):
+        text = "The quick brown fox jumps over the lazy dog. " * 4  # ~180 chars, no signals
+        assert 160 <= len(text.strip()) <= 400
+        assert detector.is_complex(text) is False
+
+
+class TestMarkers:
+    def test_has_trinity(self):
+        assert detector.has_trinity("Orientation: ... Friction: <WEDGE>") is True
+        assert detector.has_trinity("plain answer") is False
+
+    def test_partial_markers(self):
+        assert detector.shows_accords_effort("Caveat: chain order matters.") is True
+
+    def test_clarifying_question(self):
+        assert detector.shows_accords_effort("Do you need drop-in compatibility?") is True
+
+    def test_hedging(self):
+        assert detector.shows_accords_effort("It might break the base contract.") is True
+
+    def test_plain_declarative_no_effort(self):
+        assert detector.shows_accords_effort("Use a macro. It works. Done.") is False
+
+
+class TestJudge:
+    def test_empty_window(self):
+        assert detector.judge([]) == detector.Verdict(False, "empty-window")
+
+    def test_trivial(self):
+        window = detector.window_from_entries(to_pairs(CASES["V9 trivial (skip)"][0]))
+        assert detector.judge(window) == detector.Verdict(False, "trivial-request")
+
+    def test_trinity(self):
+        window = detector.window_from_entries(to_pairs(CASES["V1 full-trinity"][0]))
+        assert detector.judge(window) == detector.Verdict(False, "trinity-present")
+
+    def test_good_faith_effort(self):
+        window = detector.window_from_entries(to_pairs(CASES["V2 assumptions+caveat"][0]))
+        assert detector.judge(window) == detector.Verdict(False, "good-faith-effort")
+
+    def test_prior_turn_assumptions_count(self):
+        window = detector.window_from_entries(to_pairs(CASES["V7 prior-turn assumptions"][0]))
+        assert detector.judge(window) == detector.Verdict(False, "trinity-present")
+
+    def test_structure_less_nudges(self):
+        window = detector.window_from_entries(to_pairs(CASES["V5 terse structure-less"][0]))
+        assert detector.judge(window) == detector.Verdict(True, "structure-less")
+
+
+# ---------------------------------------------------------------------------
+# Transcript I/O robustness
+# ---------------------------------------------------------------------------
+
+class TestTranscript:
+    def test_reads_string_and_block_content(self, tmp_path):
+        tp = write_transcript(tmp_path, [entry("user", "hi"), entry("assistant", "hello")])
+        assert transcript.read_tail_entries(tp) == [("user", "hi"), ("assistant", "hello")]
+
+    def test_skips_malformed_and_other_roles(self, tmp_path):
+        tp = tmp_path / "mixed.jsonl"
+        tp.write_text(
+            "not json\n"
+            + json.dumps({"type": "system", "message": {"role": "system", "content": "noise"}}) + "\n"
+            + json.dumps(entry("user", "kept")) + "\n",
+            encoding="utf-8",
+        )
+        assert transcript.read_tail_entries(tp) == [("user", "kept")]
+
+    def test_missing_file_returns_empty(self, tmp_path):
+        assert transcript.read_tail_entries(tmp_path / "nope.jsonl") == []
+
+    def test_tail_truncation_survives_partial_first_line(self, tmp_path):
+        tp = tmp_path / "big.jsonl"
+        filler = json.dumps(entry("user", "a" * transcript.TAIL_BYTES))
+        tail = json.dumps(entry("assistant", "survivor"))
+        tp.write_text(filler + "\n" + tail + "\n", encoding="utf-8")
+        entries = transcript.read_tail_entries(tp)
+        assert ("assistant", "survivor") in entries
+
+
+# ---------------------------------------------------------------------------
+# Decision-model gate (no network in tests)
+# ---------------------------------------------------------------------------
+
+class TestDecisionModelGate:
+    def test_unconfigured_returns_false(self):
+        window = detector.window_from_entries(CASES["V5 terse structure-less"][0])
+        user, response, _ = detector.split_window(window)
+        assert decision_model_says_compliant(window, user, response, environ={}) is False
+
+    def test_base_without_key_returns_false(self):
+        window = detector.window_from_entries(CASES["V5 terse structure-less"][0])
+        user, response, _ = detector.split_window(window)
+        env = {"QWEN_DECISION_BASE_URL": "https://example.invalid"}
+        assert decision_model_says_compliant(window, user, response, environ=env) is False
+
+
+# ---------------------------------------------------------------------------
+# Reflection-tag check (independent) — shared fixtures
+# ---------------------------------------------------------------------------
+
+FILLER = (
+    " The release notes list the schema changes and the two new endpoints."
+    " The chart values moved to the pinned tag, and the summary tables match"
+    " the generated docs."
+)
+SELF_CORR = (
+    " I started with the macro route, then that didn't work as expected, so I"
+    " checked the build output. Actually the registry path needs the schema bump"
+    " first. Turns out the first attempt was stale. Let me try again with the"
+    " pinned tag. On second thought the pinned tag was right the first time."
+    " Scratch that; keep the macro route."
+)
+
+
+def long_text(unit, target=2800):
+    parts = []
+    while sum(len(p) for p in parts) < target:
+        parts.append(unit)
+    return "".join(parts).strip()
+
+
+LONG_PLAIN = long_text(FILLER)
+LONG_SELF_CORR = long_text(SELF_CORR)
+LONG_TAGGED = LONG_PLAIN + " <npl-reflection>Checked scope; nothing simpler is available.</npl-reflection>"
+USER_SHORT = "Can you take another pass at the release notes?"
+USER_TRIVIAL = "ok thanks, go ahead"
+USER_CORRECTION = "This is too complicated. Please give me a simpler version of the summary."
+
+assert len(LONG_PLAIN) >= detector.REFLECT_MIN_CHARS
+assert len(LONG_SELF_CORR) >= detector.REFLECT_MIN_CHARS
+
+
+def raw_window_from_entries(entries, n=detector.WINDOW):
+    """The raw (uncleaned) window — mirrors the hook's clean=False pass."""
+    return detector.window_from_entries(to_pairs(entries), n, clean=False)
+
+
+class TestReflectionCore:
+    """Pure reflection_judge + helpers."""
+
+    def test_tags_satisfy_check(self):
+        for tag in ("<npl-reflection", "<npl-thought", "<npl-intent", "<npl-critique",
+                    "<NPL-INTENT"):
+            assert detector.has_npl_tags(f"answer {tag} note") is True
+
+    def test_typos_do_not_satisfy(self):
+        for typo in ("<npl-reflect", "<npl-though", "<npl-tagent", "<npl-intentions"):
+            assert detector.has_npl_tags(f"answer {typo} note") is False
+
+    def test_short_response_passes(self):
+        v = detector.reflection_judge("Use a macro.", "Use a macro.", Q, [Q])
+        assert v == detector.Verdict(False, "short-response")
+
+    def test_long_line_count_makes_it_long(self):
+        line = "wait, that didn't work. retry the tag."
+        raw = "\n".join(line for _ in range(45))
+        cleaned = detector.clean_text(raw)
+        assert len(cleaned) < detector.REFLECT_MIN_CHARS
+        v = detector.reflection_judge(cleaned, raw, Q, [Q])
+        assert v.nudge is True and v.reason.startswith("over-long-unreflected:self-corrections")
+
+    def test_self_corrections_fire(self):
+        v = detector.reflection_judge(LONG_SELF_CORR, LONG_SELF_CORR, USER_SHORT, [USER_SHORT])
+        assert v == detector.Verdict(True, "over-long-unreflected:self-corrections")
+
+    def test_user_correction_fires(self):
+        v = detector.reflection_judge(LONG_PLAIN, LONG_PLAIN, USER_CORRECTION, [USER_CORRECTION])
+        assert v.nudge is True and "user-correction" in v.reason
+
+    def test_lone_weak_word_is_not_feedback(self):
+        v = detector.reflection_judge(LONG_PLAIN, LONG_PLAIN, "just checking in", ["just checking in"])
+        assert v == detector.Verdict(False, "lenient-pass")
+
+    def test_two_weak_words_are_feedback(self):
+        v = detector.reflection_judge(LONG_PLAIN, LONG_PLAIN, "no, stop", ["no, stop"])
+        assert v.nudge is True and "user-correction" in v.reason
+
+    def test_caveat_storm_fires(self):
+        unit = (" However the chart is one path. Alternatively the registry is another."
+                " Depending on the tag order things shift. That said the macro holds."
+                " Unless the chain differs. Whereas the old tag stays. Edge case noted.")
+        text = long_text(unit)
+        v = detector.reflection_judge(text, text, USER_SHORT, [USER_SHORT])
+        assert v.nudge is True and "caveat-storm" in v.reason
+
+    def test_length_ratio_fires(self):
+        text = long_text(FILLER, target=4200)
+        v = detector.reflection_judge(text, text, "ok", ["ok"])
+        assert v.nudge is True and "length-ratio" in v.reason
+
+    def test_tags_present_overrides_all(self):
+        v = detector.reflection_judge(LONG_SELF_CORR + " <npl-thought>note</npl-thought>",
+                                      LONG_SELF_CORR + " <npl-thought>note</npl-thought>",
+                                      Q, [Q])
+        assert v == detector.Verdict(False, "tags-present")
+
+    def test_long_confident_answer_passes(self):
+        v = detector.reflection_judge(LONG_PLAIN, LONG_PLAIN, USER_SHORT, [USER_SHORT])
+        assert v == detector.Verdict(False, "lenient-pass")
+
+    def test_raw_window_keeps_tags_same_selection(self):
+        entries = [entry("user", Q), entry("assistant", LONG_TAGGED)]
+        clean_w = detector.window_from_entries(to_pairs(entries))
+        raw_w = raw_window_from_entries(entries)
+        assert [r for r, _ in clean_w] == [r for r, _ in raw_w]
+        assert "<npl-reflection>" in detector.split_window(raw_w)[1]
+        assert "<npl-reflection>" not in detector.split_window(clean_w)[1]
+
+
+class TestReflectionCalibration:
+    """End-to-end through hook.main: independence + nudge joins."""
+
+    def test_R1_long_self_correcting_reflection_only(self, tmp_path, capsys):
+        entries = [entry("user", USER_SHORT), entry("assistant", LONG_SELF_CORR)]
+        run_hook(entries, tmp_path, session_id="r1")
+        assert json.loads(capsys.readouterr().out)["reason"] == detector.REFLECTION_NUDGE
+
+    def test_R2_user_correction_reflection_only(self, tmp_path, capsys):
+        entries = [entry("user", USER_CORRECTION), entry("assistant", LONG_PLAIN)]
+        run_hook(entries, tmp_path, session_id="r2")
+        assert json.loads(capsys.readouterr().out)["reason"] == detector.REFLECTION_NUDGE
+
+    def test_R3_tags_present_no_reflection_nudge(self, tmp_path, capsys):
+        entries = [entry("user", Q), entry("assistant", LONG_TAGGED)]
+        run_hook(entries, tmp_path, session_id="r3")
+        assert json.loads(capsys.readouterr().out)["reason"] == detector.NUDGE
+
+    def test_R4_short_response_silent(self, tmp_path, capsys):
+        entries = [entry("user", "Can you check the chart tags?"), entry("assistant", "Use the pinned tag.")]
+        run_hook(entries, tmp_path, session_id="r4")
+        assert capsys.readouterr().out.strip() == ""
+
+    def test_R5_long_confident_accords_only(self, tmp_path, capsys):
+        entries = [entry("user", Q), entry("assistant", LONG_PLAIN)]
+        run_hook(entries, tmp_path, session_id="r5")
+        assert json.loads(capsys.readouterr().out)["reason"] == detector.NUDGE
+
+    def test_R6_trivial_prompt_still_reflects(self, tmp_path, capsys):
+        # Proves the reflection check is NOT gated by the Accords trivial early exit.
+        entries = [entry("user", USER_TRIVIAL), entry("assistant", LONG_SELF_CORR)]
+        run_hook(entries, tmp_path, session_id="r6")
+        assert json.loads(capsys.readouterr().out)["reason"] == detector.REFLECTION_NUDGE
+
+    def test_R7_both_checks_one_block(self, tmp_path, capsys):
+        entries = [entry("user", Q), entry("assistant", LONG_SELF_CORR)]
+        run_hook(entries, tmp_path, session_id="r7")
+        out = json.loads(capsys.readouterr().out)
+        assert out["decision"] == "block"
+        assert out["reason"] == detector.NUDGE + " " + detector.REFLECTION_NUDGE
+
+    def _run_with_sentinels(self, entries, tmp_path, capsys, session_id, names):
+        for n in names:
+            (tmp_path / n).write_text("nudged")
+        run_hook(entries, tmp_path, session_id=session_id)
+        return capsys.readouterr().out
+
+    def test_R8_accords_cooldown_does_not_suppress_reflection(self, tmp_path, capsys):
+        entries = [entry("user", Q), entry("assistant", LONG_SELF_CORR)]
+        out = self._run_with_sentinels(entries, tmp_path, capsys, "r8",
+                                       ["accords-nudge-session-r8"])
+        assert json.loads(out)["reason"] == detector.REFLECTION_NUDGE
+
+    def test_R9_reflection_cooldown_does_not_suppress_accords(self, tmp_path, capsys):
+        entries = [entry("user", Q), entry("assistant", LONG_SELF_CORR)]
+        out = self._run_with_sentinels(entries, tmp_path, capsys, "r9",
+                                       ["reflect-nudge-session-r9"])
+        assert json.loads(out)["reason"] == detector.NUDGE
+
+    def test_R10_both_cooldowns_silent(self, tmp_path, capsys):
+        entries = [entry("user", Q), entry("assistant", LONG_SELF_CORR)]
+        out = self._run_with_sentinels(entries, tmp_path, capsys, "r10",
+                                       ["accords-nudge-session-r10", "reflect-nudge-session-r10"])
+        assert out.strip() == ""
+
+    def test_accords_variants_never_reflection_nudge(self, tmp_path, capsys):
+        for i, (name, (entries, _exp)) in enumerate(CASES.items()):
+            run_hook(entries, tmp_path, session_id=f"novar-{i}")
+            out = capsys.readouterr().out.strip()
+            if out:
+                assert detector.REFLECTION_NUDGE not in json.loads(out)["reason"]
+
+
+class TestReflectionEntryPoint:
+    """Subprocess smoke through the standalone stop_hook.py (both nudges)."""
+
+    def test_both_nudges_subprocess(self, tmp_path):
+        entries = [entry("user", Q), entry("assistant", LONG_SELF_CORR)]
+        tp = write_transcript(tmp_path, entries)
+        payload = {"session_id": "sub-both", "transcript_path": str(tp)}
+        env = {
+            k: v for k, v in os.environ.items()
+            if k not in ("TOBOR_GRADING", "QWEN_DECISION_BASE_URL", "QWEN_API_KEY", "DASHSCOPE_API_KEY")
+        }
+        env["TMPDIR"] = str(tmp_path)
+        proc = subprocess.run(
+            [sys.executable, str(STOP_HOOK)],
+            input=json.dumps(payload),
+            capture_output=True, text=True, cwd=str(tmp_path), env=env, timeout=60,
+            check=False,
+        )
+        assert proc.returncode == 0, proc.stderr
+        reason = json.loads(proc.stdout)["reason"]
+        assert reason == detector.NUDGE + " " + detector.REFLECTION_NUDGE

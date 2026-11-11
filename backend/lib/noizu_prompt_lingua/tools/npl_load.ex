@@ -7,7 +7,9 @@ defmodule NoizuPromptLingua.Tools.NPLLoad do
       "Load NPL components by expression DSL — agent-friendly alternative to NPLSpec. " <>
         "Expression is space-separated terms of the form section[#component][:+priority]. " <>
         "Prefix '-' to subtract. Sections: syntax, declarations, directives, prefixes, " <>
-        "prompt-sections, special-sections, pumps, fences. " <>
+        "prompt-sections, special-sections, pumps. #ids resolve canonical slugs, declared " <>
+        "component aliases (pumps#cot), and instructional entry slugs (pumps#pump-ordering); " <>
+        "whole-section loads exclude instructional entries. " <>
         "Examples: \"syntax\", \"syntax#placeholder:+2\", \"syntax directives -syntax#literal-string\".",
     category: "NPL",
     annotations: [read_only_hint: true]
@@ -17,8 +19,10 @@ defmodule NoizuPromptLingua.Tools.NPLLoad do
       required: true,
       description:
         "NPL loading expression. Space-separated terms of the form section[#component][:+priority]. " <>
-          "Prefix '-' to subtract. Sections: syntax, declarations, directives, prefixes, prompt-sections, " <>
-          "special-sections, pumps, fences. Examples: \"syntax\", \"syntax#placeholder:+2\", " <>
+          "Prefix '-' to subtract. Sections: syntax, declarations, directives, prefixes, " <>
+          "prompt-sections, special-sections, pumps. #ids resolve canonical slugs, component " <>
+          "aliases (pumps#cot), and instructional ids (pumps#pump-ordering); whole-section loads " <>
+          "omit instructional entries. Examples: \"syntax\", \"syntax#placeholder:+2\", " <>
           "\"syntax directives -syntax#literal-string\""
 
     field :layout, :enum,

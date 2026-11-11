@@ -1,3 +1,4 @@
+# 〚📁:𓷊𓥇𓣞𓮆〛 Makefile :: Build/task automation: compose stack lifecycle, init/build/run/migrate/regen/sandbox targets.
 # ── Project identity ─────────────────────────────────────────────
 # When running from projects/{domain}/app/, derive PROJECT_DIR from the parent.
 # When running from start-app/ or projects/{domain}/ directly, use current dir.

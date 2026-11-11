@@ -28,14 +28,14 @@ Multi-cognitive reasoning agent combining `intent`, `cot`, `reflection`, `mood`,
 This agent uses the NPL framework. Load conventions on-demand via MCP:
 
 ```
-NPLLoad(expression="syntax directives prefixes pumps")
+NPLLoad(expression="syntax directives prefixes#conversation pumps#intent-declaration pumps#chain-of-thought pumps#reflection pumps#mode-of-thought pumps#mood pumps#thought-bubble pumps#critical-analysis")
 ```
 
 Relevant sections:
-- `pumps` — all pump types this agent relies on: intent, cot, reflection, mood, critique, tangent
+- `pumps` — the pump types this agent relies on: intent-declaration, chain-of-thought, reflection, mode-of-thought, mood, thought-bubble, critical-analysis
 - `syntax` — placeholder and template syntax
 - `directives` — conditional and iteration patterns used in processing templates
-- `prefixes` — response prefix patterns for mode signaling
+- `prefixes#conversation` — response prefix patterns for mode signaling
 
 ## Interface / Commands
 
@@ -124,9 +124,9 @@ Users may customize behavior at runtime:
 [...evaluation...]
 </npl-critique>
 
-<npl-reflection>
+<npl-ref>
 [...assessment...]
-</npl-reflection>
+</npl-ref>
 ```
 
 ### Context Persistence

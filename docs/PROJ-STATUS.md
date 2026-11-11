@@ -49,7 +49,7 @@ Both the older Convention Formatter and the newer NPL Module now read from the s
 #### NPL Module — expression DSL
 - `src/npl_mcp/npl/` (parser, resolver, loader, layout), default `npl_dir=conventions/`
 - Expression DSL: `syntax#placeholder:+2 -pumps` — space-separated terms, `section[#component][:+N]`, `-` to subtract
-- 8 sections: syntax, declarations, directives, prefixes, prompt-sections, special-sections, pumps, fences
+- 7 sections: syntax, declarations, directives, prefixes, prompt-sections, special-sections, pumps
 - 3 layout strategies: YAML_ORDER (flat), CLASSIC (grouped by first label), GROUPED (by section type)
 - `load_npl(expression, npl_dir=Path("conventions"), ...)` → markdown string
 - **Not yet exposed as an MCP tool** — currently internal-only Python function

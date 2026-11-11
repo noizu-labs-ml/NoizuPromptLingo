@@ -32,24 +32,24 @@ categories:
     - role: system
       message: '<npl-declaration type="npl-definition">
 
-        ⌜NPL@0.1⌝
+        ⌜NPL@1.0⌝
 
         # Core Framework Rules
 
         [___|Framework rules here]
 
-        ⌞NPL@0.1⌟
+        ⌞NPL@1.0⌟
 
         </npl-declaration>
 
 
         <npl-declaration type="npl-extension">
 
-        ⌜extend:NPL@0.1⌝
+        ⌜extend:NPL@1.0⌝
 
         Add custom domain qualifiers.
 
-        ⌞extend:NPL@0.1⌟
+        ⌞extend:NPL@1.0⌟
 
         </npl-declaration>
 
@@ -67,7 +67,7 @@ categories:
     - role: system
       message: '<npl-declaration type="agent-definition">
 
-        ⌜code-helper|tool|NPL@0.1⌝
+        ⌜code-helper|tool|NPL@1.0⌝
 
         # Code Helper
 
@@ -80,7 +80,7 @@ categories:
 
         <npl-declaration type="agent-extension">
 
-        ⌜extend:code-helper|tool|NPL@0.1⌝
+        ⌜extend:code-helper|tool|NPL@1.0⌝
 
         Adds debugging capabilities.
 
@@ -103,7 +103,7 @@ categories:
     - role: system
       message: '<npl-declaration type="agent-definition">
 
-        ⌜dev-expert|persona|NPL@0.1⌝
+        ⌜dev-expert|persona|NPL@1.0⌝
 
         # Dev Expert
 
@@ -116,7 +116,7 @@ categories:
 
         <npl-declaration type="agent-definition">
 
-        ⌜git-cli|tool|NPL@0.1⌝
+        ⌜git-cli|tool|NPL@1.0⌝
 
         # Git CLI
 
@@ -129,7 +129,7 @@ categories:
 
         <npl-declaration type="agent-definition">
 
-        ⌜api-gateway|service|NPL@0.1⌝
+        ⌜api-gateway|service|NPL@1.0⌝
 
         # API Gateway
 
@@ -207,13 +207,13 @@ components:
     - version-control
     example: '<npl-declaration type="npl-definition">
 
-      ⌜NPL@0.1⌝
+      ⌜NPL@1.0⌝
 
       # Core NPL Framework Rules
 
       [___|Framework‑specific rules and guidelines.]
 
-      ⌞NPL@0.1⌟
+      ⌞NPL@1.0⌟
 
       </npl-declaration>
 
@@ -283,13 +283,13 @@ components:
     - version-control
     example: '<npl-declaration type="npl-extension">
 
-      ⌜extend:NPL@0.1⌝
+      ⌜extend:NPL@1.0⌝
 
       # New qualifier `tone`
 
       [___|qualifier: `tone` – forces formal / informal tone.]
 
-      ⌞extend:NPL@0.1⌟
+      ⌞extend:NPL@1.0⌟
 
       </npl-declaration>
 
@@ -351,7 +351,7 @@ components:
     - extension
     example: '<npl-declaration type="agent-extension">
 
-      ⌜extend:sports-news-agent|service|NPL@0.1⌝
+      ⌜extend:sports-news-agent|service|NPL@1.0⌝
 
       Enhances the agent''s capability to provide historical sports facts.
 
@@ -408,7 +408,7 @@ components:
     \ memory store, etc.\n"
   detection:
     patterns:
-    - regex: ⌜[a-z][a-z0-9\-]*\|(persona|tool|service)\|NPL@[\d.]+⌝
+    - regex: ⌜[a-z][a-z0-9\-]*\|(persona|tool|service|specialist)\|NPL@[\d.]+⌝
       description: Agent declaration opening
     - regex: ⌞[a-z][a-z0-9\-]*⌟
       description: Agent declaration closing
@@ -430,7 +430,7 @@ components:
     - conditional
     example: '<npl-declaration type="agent-definition">
 
-      ⌜pirate‑bot|persona|NPL@0.1⌝
+      ⌜pirate‑bot|persona|NPL@1.0⌝
 
       # Pirate Bot
 
@@ -480,7 +480,7 @@ components:
     - persona
     example: '<npl-declaration type="agent-definition">
 
-      ⌜mikiulus|persona|NPL@0.1⌝
+      ⌜mikiulus|persona|NPL@1.0⌝
 
       # Mikiulus
 
@@ -537,7 +537,7 @@ components:
     - tool
     example: '<npl-declaration type="agent-definition">
 
-      ⌜git-cli|tool|NPL@0.1⌝
+      ⌜git-cli|tool|NPL@1.0⌝
 
       # Git CLI Emulator
 
@@ -589,7 +589,7 @@ components:
     - service
     example: '<npl-declaration type="agent-definition">
 
-      ⌜github|service|NPL@0.1⌝
+      ⌜github|service|NPL@1.0⌝
 
       # GitHub Service
 
@@ -617,7 +617,7 @@ components:
     - service
     example: '<npl-declaration type="agent-definition">
 
-      ⌜vecdb|service|NPL@0.1⌝
+      ⌜vecdb|service|NPL@1.0⌝
 
       # Vector DB Service
 

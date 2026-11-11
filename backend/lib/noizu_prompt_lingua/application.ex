@@ -1,5 +1,9 @@
 defmodule NoizuPromptLingua.Application do
-  @moduledoc false
+  @moduledoc """
+  〚📦:𓺐𓷼𓺆𓭆〛 NoizuPromptLingua.Application :: OTP application entry: supervision tree, OpenTelemetry setup, OAuth elevation table.
+
+  Boots the Phoenix API supervision tree and runtime instrumentation.
+  """
   use Application
   require Logger
 

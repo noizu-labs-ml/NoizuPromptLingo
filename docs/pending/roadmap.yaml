@@ -236,7 +236,7 @@ features:
         - Regex pattern library
         - Parser and validator
         - AST builder
-    notes: 155 NPL syntax elements documented (agents, directives, prefixes, pumps, fences)
+    notes: 155 NPL syntax elements documented (agents, directives, prefixes, pumps, prompt-sections)
 
   - id: F-007
     name: CLI Utilities Implementation

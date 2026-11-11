@@ -12,8 +12,6 @@ defmodule NoizuPromptLingua.NPL.ReaderTest do
 
   alias NoizuPromptLingua.NPL.Reader
 
-  @real_dir Path.join(:code.priv_dir(:noizu_prompt_lingua), "conventions")
-
   setup do
     Application.delete_env(:noizu_prompt_lingua, :npl_conventions_dir)
 
@@ -67,10 +65,9 @@ defmodule NoizuPromptLingua.NPL.ReaderTest do
       assert NoizuPromptLingua.NPL.description() != ""
     end
 
-    test "valid_sections/0 lists all eight sections" do
+    test "valid_sections/0 lists the seven real sections" do
       assert NoizuPromptLingua.NPL.valid_sections() ==
-               ~w(syntax declarations directives prefixes prompt-sections special-sections
-                  pumps fences)
+               ~w(syntax declarations directives prefixes prompt-sections special-sections pumps)
     end
   end
 

@@ -1,3 +1,4 @@
+// 〚📁:𓰀𓛼𓜦𓒼〛 layout :: Next.js app-router root layout: providers, navbar, global + branding CSS generation.
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/context/auth";

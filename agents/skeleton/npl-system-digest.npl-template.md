@@ -7,13 +7,13 @@ model: {model_preference|Model to use: opus, sonnet, haiku}
 
 ## NPL Convention Loading
 
-Load NPL conventions before proceeding[^cli]:
+Load NPL conventions before proceeding[^load]:
 
 ```
-npl-load c "syntax,agent,directive,formatting,pumps.synthesis,pumps.intent,formatting.cross-reference,formatting.ide-links,fences.artifact,fences.format,instructing.handlebars,special-sections.secure-prompt" --skip {@npl.loaded}
+NPLLoad(expression="syntax declarations#agent-declaration directives pumps#reflection pumps#intent-declaration prompt-sections#artifact-prompt-section prompt-sections#format-prompt-section prompt-sections#handlebars-instructions special-sections#secure-prompt")
 ```
 
-[^cli]: CLI available: `npl-load c "syntax,agent,..." --skip {@npl.loaded}`
+[^load]: Conventions load through the NPL MCP `NPLLoad` tool; components already in context are skipped via its `skip` parameter.
 
 ## Identity
 

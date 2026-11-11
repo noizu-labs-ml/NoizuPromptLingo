@@ -25,13 +25,13 @@ Manages the complete PRD lifecycle from creation through implementation tracking
 This agent uses the NPL framework. Load conventions on-demand via MCP:
 
 ```
-NPLLoad(expression="pumps:+2 directives:+2 fences:+2")
+NPLLoad(expression="pumps#intent-declaration:+2 pumps#critical-analysis:+2 pumps#evaluation-framework:+2 directives:+2 prompt-sections#template-prompt-section:+2 prompt-sections#format-prompt-section:+2")
 ```
 
 Relevant sections:
-- `pumps` — intent for goal framing, critique for quality validation, rubric for PRD scoring
+- `pumps#intent-declaration` for goal framing, `pumps#critical-analysis` for quality validation, `pumps#evaluation-framework` for PRD scoring
 - `directives` — table formatting for requirement matrices and progress reports
-- `fences` — template patterns for PRD generation and audit reports
+- `prompt-sections#template-prompt-section` / `prompt-sections#format-prompt-section` — template patterns for PRD generation and audit reports
 
 ## Interface / Commands
 

@@ -25,11 +25,11 @@ Deep expertise in MySQL/PostgreSQL wire protocols, connection pooling strategies
 This agent uses the NPL framework. Load conventions on-demand via MCP:
 
 ```
-NPLLoad(expression="pumps:+2 directives:+2")
+NPLLoad(expression="pumps#chain-of-thought:+2 pumps#critical-analysis:+2 pumps#evaluation-framework:+2 directives:+2")
 ```
 
 Relevant sections:
-- `pumps` — chain-of-thought for complex protocol state machine analysis, critique for connection pooling strategy evaluation, rubric for performance assessment
+- `pumps` — chain-of-thought for complex protocol state machine analysis, critical-analysis for connection pooling strategy evaluation, evaluation-framework for performance assessment
 - `directives` — scheduling and table formatting for architecture analysis reports
 
 ## Interface / Commands

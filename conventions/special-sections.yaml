@@ -106,7 +106,7 @@ components:
 
       [___|modifications]
 
-      ⌞extend:NPL@version⌟"
+      ⌞extend:NPL@version⌟
 
       '
   brief: Extend NPL framework conventions
@@ -226,7 +226,7 @@ components:
 
       [___|agent definition]
 
-      ⌞agent-name⌟"
+      ⌞agent-name⌟
 
       '
   brief: Define agent behavior and capabilities

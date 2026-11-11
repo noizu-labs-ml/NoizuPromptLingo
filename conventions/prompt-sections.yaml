@@ -1133,23 +1133,22 @@ components:
   title: artifact prompt section
   category: content-sections
   syntax:
-  - syntax: '<artifact type="{content-type}">
+  - syntax: '```artifact
 
-      <title><title></title>
+      type: {content-type}
 
-      <content>
+      language: {language} (optional, for code artifacts)
+
+      title: "{title}"
 
       [___|artifact content]
 
-      </content>
-
-      </artifact>
-
-      '
+      ```'
   brief: Structured output with metadata
   description: Provides structured output requiring special handling, metadata attachment,
     or specific rendering contexts. Supports SVG, code, documents with type-specific
-    parameters.
+    parameters. The fenced form shown in the syntax and examples is canonical; a
+    legacy XML wrapper (`<artifact type="…">…</artifact>`) predates it.
   labels:
   - special
   - metadata

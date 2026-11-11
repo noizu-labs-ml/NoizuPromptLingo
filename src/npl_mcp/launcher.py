@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# 〚📁:𓕿𔇿𔃰𓥸〛 launcher :: Legacy standalone Python MCP entry: FastMCP + FastAPI/uvicorn server on :8765.
 """Launcher for the NPL MCP server.
 
 This is a minimal launcher that starts the FastMCP server directly with a Next.js frontend.

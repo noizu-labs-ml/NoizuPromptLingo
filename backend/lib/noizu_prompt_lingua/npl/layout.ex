@@ -50,15 +50,26 @@ defmodule NoizuPromptLingua.NPL.Layout do
   defp format_component(%ResolvedComponent{} = comp) do
     parts = []
 
+    # Heading always shows the canonical id; when the term matched through a
+    # declared alias, note it so authors see what they asked for.
+    alias_note = if comp.matched_alias, do: " (alias: #{comp.matched_alias})", else: ""
+
     parts =
       if comp.slug != "" do
-        ["### #{comp.name} (`#{comp.slug}`)" | parts]
+        ["### #{comp.name} (`#{comp.slug}`)#{alias_note}" | parts]
       else
-        ["### #{comp.name}" | parts]
+        ["### #{comp.name}#{alias_note}" | parts]
       end
 
     parts = if comp.brief != "", do: ["*#{comp.brief}*" | parts], else: parts
     parts = if comp.description != "", do: [comp.description | parts], else: parts
+
+    parts =
+      if is_binary(comp.content) and comp.content != "" do
+        [String.trim(comp.content) | parts]
+      else
+        parts
+      end
 
     parts =
       if comp.syntax != [] do
