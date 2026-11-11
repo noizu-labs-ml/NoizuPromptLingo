@@ -376,3 +376,212 @@ class TestDecisionModelGate:
         user, response, _ = detector.split_window(window)
         env = {"QWEN_DECISION_BASE_URL": "https://example.invalid"}
         assert decision_model_says_compliant(window, user, response, environ=env) is False
+
+
+# ---------------------------------------------------------------------------
+# Reflection-tag check (independent) — shared fixtures
+# ---------------------------------------------------------------------------
+
+FILLER = (
+    " The release notes list the schema changes and the two new endpoints."
+    " The chart values moved to the pinned tag, and the summary tables match"
+    " the generated docs."
+)
+SELF_CORR = (
+    " I started with the macro route, then that didn't work as expected, so I"
+    " checked the build output. Actually the registry path needs the schema bump"
+    " first. Turns out the first attempt was stale. Let me try again with the"
+    " pinned tag. On second thought the pinned tag was right the first time."
+    " Scratch that; keep the macro route."
+)
+
+
+def long_text(unit, target=2800):
+    parts = []
+    while sum(len(p) for p in parts) < target:
+        parts.append(unit)
+    return "".join(parts).strip()
+
+
+LONG_PLAIN = long_text(FILLER)
+LONG_SELF_CORR = long_text(SELF_CORR)
+LONG_TAGGED = LONG_PLAIN + " <npl-reflection>Checked scope; nothing simpler is available.</npl-reflection>"
+USER_SHORT = "Can you take another pass at the release notes?"
+USER_TRIVIAL = "ok thanks, go ahead"
+USER_CORRECTION = "This is too complicated. Please give me a simpler version of the summary."
+
+assert len(LONG_PLAIN) >= detector.REFLECT_MIN_CHARS
+assert len(LONG_SELF_CORR) >= detector.REFLECT_MIN_CHARS
+
+
+def raw_window_from_entries(entries, n=detector.WINDOW):
+    """The raw (uncleaned) window — mirrors the hook's clean=False pass."""
+    return detector.window_from_entries(to_pairs(entries), n, clean=False)
+
+
+class TestReflectionCore:
+    """Pure reflection_judge + helpers."""
+
+    def test_tags_satisfy_check(self):
+        for tag in ("<npl-reflection", "<npl-thought", "<npl-intent", "<npl-critique",
+                    "<NPL-INTENT"):
+            assert detector.has_npl_tags(f"answer {tag} note") is True
+
+    def test_typos_do_not_satisfy(self):
+        for typo in ("<npl-reflect", "<npl-though", "<npl-tagent", "<npl-intentions"):
+            assert detector.has_npl_tags(f"answer {typo} note") is False
+
+    def test_short_response_passes(self):
+        v = detector.reflection_judge("Use a macro.", "Use a macro.", Q, [Q])
+        assert v == detector.Verdict(False, "short-response")
+
+    def test_long_line_count_makes_it_long(self):
+        line = "wait, that didn't work. retry the tag."
+        raw = "\n".join(line for _ in range(45))
+        cleaned = detector.clean_text(raw)
+        assert len(cleaned) < detector.REFLECT_MIN_CHARS
+        v = detector.reflection_judge(cleaned, raw, Q, [Q])
+        assert v.nudge is True and v.reason.startswith("over-long-unreflected:self-corrections")
+
+    def test_self_corrections_fire(self):
+        v = detector.reflection_judge(LONG_SELF_CORR, LONG_SELF_CORR, USER_SHORT, [USER_SHORT])
+        assert v == detector.Verdict(True, "over-long-unreflected:self-corrections")
+
+    def test_user_correction_fires(self):
+        v = detector.reflection_judge(LONG_PLAIN, LONG_PLAIN, USER_CORRECTION, [USER_CORRECTION])
+        assert v.nudge is True and "user-correction" in v.reason
+
+    def test_lone_weak_word_is_not_feedback(self):
+        v = detector.reflection_judge(LONG_PLAIN, LONG_PLAIN, "just checking in", ["just checking in"])
+        assert v == detector.Verdict(False, "lenient-pass")
+
+    def test_two_weak_words_are_feedback(self):
+        v = detector.reflection_judge(LONG_PLAIN, LONG_PLAIN, "no, stop", ["no, stop"])
+        assert v.nudge is True and "user-correction" in v.reason
+
+    def test_caveat_storm_fires(self):
+        unit = (" However the chart is one path. Alternatively the registry is another."
+                " Depending on the tag order things shift. That said the macro holds."
+                " Unless the chain differs. Whereas the old tag stays. Edge case noted.")
+        text = long_text(unit)
+        v = detector.reflection_judge(text, text, USER_SHORT, [USER_SHORT])
+        assert v.nudge is True and "caveat-storm" in v.reason
+
+    def test_length_ratio_fires(self):
+        text = long_text(FILLER, target=4200)
+        v = detector.reflection_judge(text, text, "ok", ["ok"])
+        assert v.nudge is True and "length-ratio" in v.reason
+
+    def test_tags_present_overrides_all(self):
+        v = detector.reflection_judge(LONG_SELF_CORR + " <npl-thought>note</npl-thought>",
+                                      LONG_SELF_CORR + " <npl-thought>note</npl-thought>",
+                                      Q, [Q])
+        assert v == detector.Verdict(False, "tags-present")
+
+    def test_long_confident_answer_passes(self):
+        v = detector.reflection_judge(LONG_PLAIN, LONG_PLAIN, USER_SHORT, [USER_SHORT])
+        assert v == detector.Verdict(False, "lenient-pass")
+
+    def test_raw_window_keeps_tags_same_selection(self):
+        entries = [entry("user", Q), entry("assistant", LONG_TAGGED)]
+        clean_w = detector.window_from_entries(to_pairs(entries))
+        raw_w = raw_window_from_entries(entries)
+        assert [r for r, _ in clean_w] == [r for r, _ in raw_w]
+        assert "<npl-reflection>" in detector.split_window(raw_w)[1]
+        assert "<npl-reflection>" not in detector.split_window(clean_w)[1]
+
+
+class TestReflectionCalibration:
+    """End-to-end through hook.main: independence + nudge joins."""
+
+    def test_R1_long_self_correcting_reflection_only(self, tmp_path, capsys):
+        entries = [entry("user", USER_SHORT), entry("assistant", LONG_SELF_CORR)]
+        run_hook(entries, tmp_path, session_id="r1")
+        assert json.loads(capsys.readouterr().out)["reason"] == detector.REFLECTION_NUDGE
+
+    def test_R2_user_correction_reflection_only(self, tmp_path, capsys):
+        entries = [entry("user", USER_CORRECTION), entry("assistant", LONG_PLAIN)]
+        run_hook(entries, tmp_path, session_id="r2")
+        assert json.loads(capsys.readouterr().out)["reason"] == detector.REFLECTION_NUDGE
+
+    def test_R3_tags_present_no_reflection_nudge(self, tmp_path, capsys):
+        entries = [entry("user", Q), entry("assistant", LONG_TAGGED)]
+        run_hook(entries, tmp_path, session_id="r3")
+        assert json.loads(capsys.readouterr().out)["reason"] == detector.NUDGE
+
+    def test_R4_short_response_silent(self, tmp_path, capsys):
+        entries = [entry("user", "Can you check the chart tags?"), entry("assistant", "Use the pinned tag.")]
+        run_hook(entries, tmp_path, session_id="r4")
+        assert capsys.readouterr().out.strip() == ""
+
+    def test_R5_long_confident_accords_only(self, tmp_path, capsys):
+        entries = [entry("user", Q), entry("assistant", LONG_PLAIN)]
+        run_hook(entries, tmp_path, session_id="r5")
+        assert json.loads(capsys.readouterr().out)["reason"] == detector.NUDGE
+
+    def test_R6_trivial_prompt_still_reflects(self, tmp_path, capsys):
+        # Proves the reflection check is NOT gated by the Accords trivial early exit.
+        entries = [entry("user", USER_TRIVIAL), entry("assistant", LONG_SELF_CORR)]
+        run_hook(entries, tmp_path, session_id="r6")
+        assert json.loads(capsys.readouterr().out)["reason"] == detector.REFLECTION_NUDGE
+
+    def test_R7_both_checks_one_block(self, tmp_path, capsys):
+        entries = [entry("user", Q), entry("assistant", LONG_SELF_CORR)]
+        run_hook(entries, tmp_path, session_id="r7")
+        out = json.loads(capsys.readouterr().out)
+        assert out["decision"] == "block"
+        assert out["reason"] == detector.NUDGE + " " + detector.REFLECTION_NUDGE
+
+    def _run_with_sentinels(self, entries, tmp_path, capsys, session_id, names):
+        for n in names:
+            (tmp_path / n).write_text("nudged")
+        run_hook(entries, tmp_path, session_id=session_id)
+        return capsys.readouterr().out
+
+    def test_R8_accords_cooldown_does_not_suppress_reflection(self, tmp_path, capsys):
+        entries = [entry("user", Q), entry("assistant", LONG_SELF_CORR)]
+        out = self._run_with_sentinels(entries, tmp_path, capsys, "r8",
+                                       ["accords-nudge-session-r8"])
+        assert json.loads(out)["reason"] == detector.REFLECTION_NUDGE
+
+    def test_R9_reflection_cooldown_does_not_suppress_accords(self, tmp_path, capsys):
+        entries = [entry("user", Q), entry("assistant", LONG_SELF_CORR)]
+        out = self._run_with_sentinels(entries, tmp_path, capsys, "r9",
+                                       ["reflect-nudge-session-r9"])
+        assert json.loads(out)["reason"] == detector.NUDGE
+
+    def test_R10_both_cooldowns_silent(self, tmp_path, capsys):
+        entries = [entry("user", Q), entry("assistant", LONG_SELF_CORR)]
+        out = self._run_with_sentinels(entries, tmp_path, capsys, "r10",
+                                       ["accords-nudge-session-r10", "reflect-nudge-session-r10"])
+        assert out.strip() == ""
+
+    def test_accords_variants_never_reflection_nudge(self, tmp_path, capsys):
+        for i, (name, (entries, _exp)) in enumerate(CASES.items()):
+            run_hook(entries, tmp_path, session_id=f"novar-{i}")
+            out = capsys.readouterr().out.strip()
+            if out:
+                assert detector.REFLECTION_NUDGE not in json.loads(out)["reason"]
+
+
+class TestReflectionEntryPoint:
+    """Subprocess smoke through the standalone stop_hook.py (both nudges)."""
+
+    def test_both_nudges_subprocess(self, tmp_path):
+        entries = [entry("user", Q), entry("assistant", LONG_SELF_CORR)]
+        tp = write_transcript(tmp_path, entries)
+        payload = {"session_id": "sub-both", "transcript_path": str(tp)}
+        env = {
+            k: v for k, v in os.environ.items()
+            if k not in ("TOBOR_GRADING", "QWEN_DECISION_BASE_URL", "QWEN_API_KEY", "DASHSCOPE_API_KEY")
+        }
+        env["TMPDIR"] = str(tmp_path)
+        proc = subprocess.run(
+            [sys.executable, str(STOP_HOOK)],
+            input=json.dumps(payload),
+            capture_output=True, text=True, cwd=str(tmp_path), env=env, timeout=60,
+            check=False,
+        )
+        assert proc.returncode == 0, proc.stderr
+        reason = json.loads(proc.stdout)["reason"]
+        assert reason == detector.NUDGE + " " + detector.REFLECTION_NUDGE

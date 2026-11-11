@@ -19,33 +19,43 @@ Quick start (pure API)::
 from .detector import (
     NUDGE,
     PARTIAL_MARKERS,
+    REFLECTION_NUDGE,
     TRINITY_MARKERS,
     WINDOW,
     Verdict,
     clean_text,
     format_chat,
+    has_npl_tags,
     has_trinity,
     is_complex,
     judge,
+    reflection_judge,
     shows_accords_effort,
     split_window,
+    user_feedback_signal,
+    user_texts,
     window_from_entries,
 )
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 __all__ = [
     "NUDGE",
     "PARTIAL_MARKERS",
+    "REFLECTION_NUDGE",
     "TRINITY_MARKERS",
     "WINDOW",
     "Verdict",
     "clean_text",
     "format_chat",
+    "has_npl_tags",
     "has_trinity",
     "is_complex",
     "judge",
+    "reflection_judge",
     "shows_accords_effort",
     "split_window",
+    "user_feedback_signal",
+    "user_texts",
     "window_from_entries",
 ]
