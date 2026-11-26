@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import io
 import json
+import logging
 import os
 import subprocess
 import sys
@@ -21,6 +22,7 @@ from pathlib import Path
 import pytest
 
 from tools.accords_compliance import detector, hook, transcript
+from tools.accords_compliance import decision_model as dm
 from tools.accords_compliance.decision_model import decision_model_says_compliant
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -376,6 +378,99 @@ class TestDecisionModelGate:
         user, response, _ = detector.split_window(window)
         env = {"QWEN_DECISION_BASE_URL": "https://example.invalid"}
         assert decision_model_says_compliant(window, user, response, environ=env) is False
+
+    def _capture(self, monkeypatch):
+        captured = {}
+
+        class FakeRes:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+
+            def read(self):
+                return json.dumps({"choices": [{"message": {"content": "COMPLIANT"}}]}).encode()
+
+        def fake_urlopen(req, timeout=None):
+            captured["body"] = json.loads(req.data.decode())
+            return FakeRes()
+
+        import urllib.request
+        monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+        return captured
+
+    def _env(self):
+        return {
+            "QWEN_DECISION_BASE_URL": "https://example.invalid",
+            "QWEN_API_KEY": "test-key-not-real",
+        }
+
+    def test_model_id_is_ga_and_request_is_capped(self, monkeypatch):
+        captured = self._capture(monkeypatch)
+        window = [("user", "x" * 5000), ("assistant", "y" * 5000)]
+        user, response = "u" * 5000, "r" * 5000
+        decision_model_says_compliant(window, user, response, environ=self._env())
+        assert captured["body"]["model"] == dm.DECISION_MODEL == "decision-model"
+        prompt = captured["body"]["messages"][0]["content"]
+        # Bounded by the named caps plus the skeleton itself — never literal
+        # offsets into the prompt layout, so wording changes stay free.
+        skeleton = dm.build_prompt([], "", "")
+        assert len(prompt) <= (
+            len(skeleton) + dm.WINDOW_CAP_CHARS + dm.USER_CAP_CHARS + dm.RESPONSE_CAP_CHARS
+        )
+        assert prompt == dm.build_prompt(window, user, response)
+        assert "x" * 100 in prompt  # head of the window survives
+        assert "y" * 100 in prompt  # tail of the window survives (head + tail cut)
+
+    def test_window_cap_never_splits_multibyte(self, monkeypatch):
+        captured = self._capture(monkeypatch)
+        window = [("user", "é" * 5000), ("assistant", "Ω" * 5000)]
+        decision_model_says_compliant(window, "u", "r", environ=self._env())
+        prompt = captured["body"]["messages"][0]["content"]
+        section = prompt.split("CHAT WINDOW:\n", 1)[1].split("\n\nLATEST USER REQUEST:", 1)[0]
+        assert len(section) <= dm.WINDOW_CAP_CHARS
+        assert "é" * 50 in section and "Ω" * 50 in section  # head + tail intact
+        assert "�" not in section  # no split codepoint
+
+    def test_user_cap_never_splits_multibyte(self, monkeypatch):
+        captured = self._capture(monkeypatch)
+        decision_model_says_compliant(
+            [("user", "hi")], "ü" * 5000, "r", environ=self._env()
+        )
+        prompt = captured["body"]["messages"][0]["content"]
+        section = prompt.split("LATEST USER REQUEST:\n", 1)[1].split("\n\nLATEST RESPONSE:", 1)[0]
+        assert len(section) <= dm.USER_CAP_CHARS
+        assert "ü" * 50 in section  # head intact
+        assert "�" not in section  # no split codepoint
+
+    def test_response_cap_never_splits_multibyte(self, monkeypatch):
+        captured = self._capture(monkeypatch)
+        decision_model_says_compliant(
+            [("user", "hi")], "u", "日" * 5000, environ=self._env()
+        )
+        prompt = captured["body"]["messages"][0]["content"]
+        section = prompt.split("LATEST RESPONSE:\n", 1)[1]
+        assert len(section) <= dm.RESPONSE_CAP_CHARS
+        assert "日" * 50 in section  # head intact
+        assert "�" not in section  # no split codepoint
+
+    def test_cap_window_tiny_cap_shrinks_head_and_tail_proportionally(self):
+        # Small but viable cap: marker plus room for >= 1 char on each side.
+        cap = len(dm.WINDOW_CUT_MARKER) + 4
+        out = dm.cap_window("x" * 100, cap)
+        assert len(out) == cap  # head + marker + tail fit the cap exactly
+        assert dm.WINDOW_CUT_MARKER in out  # cut still recorded in-band
+        assert out.startswith("xx") and out.endswith("xx")  # both sides survive
+
+    def test_cap_window_too_small_for_marker_keeps_head_and_warns(self, caplog):
+        with caplog.at_level(logging.WARNING, logger="tools.accords_compliance.decision_model"):
+            out = dm.cap_window("abcdefgh", 5)  # 5 < len(marker) + 2
+        assert out == "abcde"  # documented head-only fallback
+        warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
+        assert len(warnings) == 1  # exactly one warning line
+        assert "head only" in warnings[0].getMessage()
+        assert "abcdefgh" not in warnings[0].getMessage()  # never window content
 
 
 # ---------------------------------------------------------------------------

@@ -116,7 +116,7 @@ Names only — never commit or print values:
 | `QWEN_DECISION_BASE_URL` | workspace base URL; the hook POSTs to `<base>/systemone` |
 | `QWEN_API_KEY` or `DASHSCOPE_API_KEY` | bearer auth (first non-empty wins) |
 
-When both are set, the hook asks `decision-model-preview` to confirm compliance given
+When both are set, the hook asks the GA default `decision-model` (the legacy `decision-model-preview` id is still recognised on the same endpoint) to confirm compliance given
 the clean chat window (partial compliance counts as COMPLIANT). It is a **second
 chance, never a stricter gate**: any error, timeout, or ambiguous answer falls back to
 the lenient heuristic. With either var unset, no network call is made.
