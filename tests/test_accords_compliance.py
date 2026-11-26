@@ -399,21 +399,60 @@ class TestDecisionModelGate:
         monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
         return captured
 
-    def test_model_id_is_ga_and_request_is_capped(self, monkeypatch):
-        captured = self._capture(monkeypatch)
-        env = {
+    def _env(self):
+        return {
             "QWEN_DECISION_BASE_URL": "https://example.invalid",
             "QWEN_API_KEY": "test-key-not-real",
         }
+
+    def test_model_id_is_ga_and_request_is_capped(self, monkeypatch):
+        captured = self._capture(monkeypatch)
         window = [("user", "x" * 5000), ("assistant", "y" * 5000)]
-        decision_model_says_compliant(window, "u" * 5000, "r" * 5000, environ=env)
+        user, response = "u" * 5000, "r" * 5000
+        decision_model_says_compliant(window, user, response, environ=self._env())
         assert captured["body"]["model"] == dm.DECISION_MODEL == "decision-model"
         prompt = captured["body"]["messages"][0]["content"]
+        # Bounded by the named caps plus the skeleton itself — never literal
+        # offsets into the prompt layout, so wording changes stay free.
+        skeleton = dm.build_prompt([], "", "")
         assert len(prompt) <= (
-            len("CHAT WINDOW:\n\n\n\nLATEST USER REQUEST:\n\n\n\nLATEST RESPONSE:\n")
-            + dm.WINDOW_CAP_CHARS + dm.USER_CAP_CHARS + dm.RESPONSE_CAP_CHARS
+            len(skeleton) + dm.WINDOW_CAP_CHARS + dm.USER_CAP_CHARS + dm.RESPONSE_CAP_CHARS
         )
-        assert "x" * 100 in prompt  # head of the window survives (head truncation)
+        assert prompt == dm.build_prompt(window, user, response)
+        assert "x" * 100 in prompt  # head of the window survives
+        assert "y" * 100 in prompt  # tail of the window survives (head + tail cut)
+
+    def test_window_cap_never_splits_multibyte(self, monkeypatch):
+        captured = self._capture(monkeypatch)
+        window = [("user", "é" * 5000), ("assistant", "Ω" * 5000)]
+        decision_model_says_compliant(window, "u", "r", environ=self._env())
+        prompt = captured["body"]["messages"][0]["content"]
+        section = prompt.split("CHAT WINDOW:\n", 1)[1].split("\n\nLATEST USER REQUEST:", 1)[0]
+        assert len(section) <= dm.WINDOW_CAP_CHARS
+        assert "é" * 50 in section and "Ω" * 50 in section  # head + tail intact
+        assert "�" not in section  # no split codepoint
+
+    def test_user_cap_never_splits_multibyte(self, monkeypatch):
+        captured = self._capture(monkeypatch)
+        decision_model_says_compliant(
+            [("user", "hi")], "ü" * 5000, "r", environ=self._env()
+        )
+        prompt = captured["body"]["messages"][0]["content"]
+        section = prompt.split("LATEST USER REQUEST:\n", 1)[1].split("\n\nLATEST RESPONSE:", 1)[0]
+        assert len(section) <= dm.USER_CAP_CHARS
+        assert "ü" * 50 in section  # head intact
+        assert "�" not in section  # no split codepoint
+
+    def test_response_cap_never_splits_multibyte(self, monkeypatch):
+        captured = self._capture(monkeypatch)
+        decision_model_says_compliant(
+            [("user", "hi")], "u", "日" * 5000, environ=self._env()
+        )
+        prompt = captured["body"]["messages"][0]["content"]
+        section = prompt.split("LATEST RESPONSE:\n", 1)[1]
+        assert len(section) <= dm.RESPONSE_CAP_CHARS
+        assert "日" * 50 in section  # head intact
+        assert "�" not in section  # no split codepoint
 
 
 # ---------------------------------------------------------------------------
