@@ -2,7 +2,7 @@
 
 When ``QWEN_DECISION_BASE_URL`` and an API key (``QWEN_API_KEY`` or
 ``DASHSCOPE_API_KEY``) are configured, the hook asks the Alibaba decision model
-(``decision-model-preview`` via the workspace ``/systemone`` endpoint) to
+(``decision-model`` via the workspace ``/systemone`` endpoint) to
 confirm whether the latest response honors the Accords/Trinity spirit, given
 the clean chat window. PARTIAL compliance counts as COMPLIANT.
 
@@ -17,6 +17,14 @@ import json
 import os
 
 from .detector import format_chat
+
+# GA model id (owner word 2026-11-26: the preview id still answers on the same
+# endpoint, but every default sends the GA id).
+DECISION_MODEL = "decision-model"
+# Named caps on what the request may contain (deterministic head truncation).
+USER_CAP_CHARS = 1500
+RESPONSE_CAP_CHARS = 3000
+WINDOW_CAP_CHARS = 3000
 
 
 def decision_model_says_compliant(window, user: str, response: str, environ=None) -> bool:
@@ -44,11 +52,12 @@ def decision_model_says_compliant(window, user: str, response: str, environ=None
             "NONCOMPLIANT if it clearly ignores the user's intent and surfaces no "
             "assumptions, uncertainty, or trade-offs anywhere in the window. "
             "Answer with a single word: COMPLIANT or NONCOMPLIANT.\n\n"
-            f"CHAT WINDOW:\n{format_chat(window)}\n\n"
-            f"LATEST USER REQUEST:\n{user[:1500]}\n\nLATEST RESPONSE:\n{response[:3000]}"
+            f"CHAT WINDOW:\n{format_chat(window)[:WINDOW_CAP_CHARS]}\n\n"
+            f"LATEST USER REQUEST:\n{user[:USER_CAP_CHARS]}\n\n"
+            f"LATEST RESPONSE:\n{response[:RESPONSE_CAP_CHARS]}"
         )
         body = json.dumps({
-            "model": "decision-model-preview",
+            "model": DECISION_MODEL,
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": 8,
         }).encode()

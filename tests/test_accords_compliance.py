@@ -21,6 +21,7 @@ from pathlib import Path
 import pytest
 
 from tools.accords_compliance import detector, hook, transcript
+from tools.accords_compliance import decision_model as dm
 from tools.accords_compliance.decision_model import decision_model_says_compliant
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -376,6 +377,43 @@ class TestDecisionModelGate:
         user, response, _ = detector.split_window(window)
         env = {"QWEN_DECISION_BASE_URL": "https://example.invalid"}
         assert decision_model_says_compliant(window, user, response, environ=env) is False
+
+    def _capture(self, monkeypatch):
+        captured = {}
+
+        class FakeRes:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+
+            def read(self):
+                return json.dumps({"choices": [{"message": {"content": "COMPLIANT"}}]}).encode()
+
+        def fake_urlopen(req, timeout=None):
+            captured["body"] = json.loads(req.data.decode())
+            return FakeRes()
+
+        import urllib.request
+        monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+        return captured
+
+    def test_model_id_is_ga_and_request_is_capped(self, monkeypatch):
+        captured = self._capture(monkeypatch)
+        env = {
+            "QWEN_DECISION_BASE_URL": "https://example.invalid",
+            "QWEN_API_KEY": "test-key-not-real",
+        }
+        window = [("user", "x" * 5000), ("assistant", "y" * 5000)]
+        decision_model_says_compliant(window, "u" * 5000, "r" * 5000, environ=env)
+        assert captured["body"]["model"] == dm.DECISION_MODEL == "decision-model"
+        prompt = captured["body"]["messages"][0]["content"]
+        assert len(prompt) <= (
+            len("CHAT WINDOW:\n\n\n\nLATEST USER REQUEST:\n\n\n\nLATEST RESPONSE:\n")
+            + dm.WINDOW_CAP_CHARS + dm.USER_CAP_CHARS + dm.RESPONSE_CAP_CHARS
+        )
+        assert "x" * 100 in prompt  # head of the window survives (head truncation)
 
 
 # ---------------------------------------------------------------------------
