@@ -14,7 +14,7 @@ The NPL MCP server exposes a JSON REST API under `/api/*` via FastAPI. All endpo
 | Method | Path | Purpose |
 |--------|------|---------|
 | `GET` | `/health/ping` | Liveness probe — returns `{status, ts}` |
-| `GET` | `/health` | Full subsystem report: server uptime, database latency, LiteLLM status, catalog counts, frontend build |
+| `GET` | `/health` | Full subsystem report: server uptime, database latency, LLM API status, catalog counts, frontend build |
 
 ---
 

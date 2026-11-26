@@ -195,11 +195,17 @@ Meta tools call a model provider's OpenAI-compatible API directly (owner rule
 | `NPL_LLM_EMBED_MODEL` | `text-embedding-v4` | Default embedding model |
 | `NPL_LLM_VISION_MODEL` | `qwen3-vl-plus` | Multimodal model for image descriptions |
 
-Compatibility: the legacy `NPL_LITELLM_URL`, `NPL_LITELLM_KEY`, `NPL_LITELLM_MODEL`
-and `NPL_LITELLM_EMBED_MODEL` variables are still honoured when their new
-counterparts are unset, so existing set-ups keep working. Image descriptions
-use a separate multimodal model parameter (`NPL_LLM_VISION_MODEL` or the
-per-call `model` argument).
+Model ids verified live on 2026-11-26 against the workspace endpoint:
+`qwen3.8-flash` answers on `/chat/completions`, `text-embedding-v4` answers on
+`/embeddings` (1024 dimensions), and `/models` lists `qwen3-vl-plus`.
+
+The legacy `NPL_LITELLM_URL`, `NPL_LITELLM_KEY`, `NPL_LITELLM_MODEL` and
+`NPL_LITELLM_EMBED_MODEL` proxy variables are **no longer read anywhere** — a
+key is never taken from a proxy-era variable. With no key configured the
+client raises one clear local error naming `NPL_LLM_API_KEY` /
+`QWEN_API_KEY` / `DASHSCOPE_API_KEY` before any request is sent. Image
+descriptions use a separate multimodal model parameter (`NPL_LLM_VISION_MODEL`
+or the per-call `model` argument).
 
 ## FastMCP 3.x Integration
 
