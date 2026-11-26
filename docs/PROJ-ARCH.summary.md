@@ -28,6 +28,6 @@ Next.js 16/React 19/Tailwind v4 · Phoenix 1.8/Elixir/Bandit/Guardian/Oban · Fa
 
 ## Running
 
-`make init` → `make build` → `make run` (prod-like, nginx 8080/8095) · `make run-dev` (hot reload) · `uv run npl-mcp` (Python server :8765, LiteLLM :4111) · sandbox image · `helm/npl-mcp` (tobor.locker) · Postgres :5111
+`make init` → `make build` → `make run` (prod-like, nginx 8080/8095) · `make run-dev` (hot reload) · `uv run npl-mcp` (Python server :8765, LLM API via `NPL_LLM_*`) · sandbox image · `helm/npl-mcp` (tobor.locker) · Postgres :5111
 
 → Detail: [arch/mcp-tools.md](arch/mcp-tools.md) · [arch/rest-api.md](arch/rest-api.md) · [arch/agent-orchestration.md](arch/agent-orchestration.md) · [arch/agent-pipes.md](arch/agent-pipes.md) · [arch/npl-conventions.md](arch/npl-conventions.md) · [PROJ-SCHEMA.md](PROJ-SCHEMA.md) · [PROJ-LAYOUT.md](PROJ-LAYOUT.md)

@@ -72,33 +72,33 @@ async def health_check() -> dict:
     except Exception as exc:
         report["database"] = {"status": "unavailable", "message": str(exc)}
 
-    # ── litellm ──────────────────────────────────────────────────────────
-    litellm_url = os.environ.get("NPL_LITELLM_URL", "").strip()
-    if not litellm_url:
+    # ── llm api (report key `litellm` kept for the frontend contract) ────
+    llm_url = os.environ.get("NPL_LLM_BASE_URL", "").strip()
+    if not llm_url:
         report["litellm"] = {"status": "not_configured"}
     else:
         try:
             import httpx
             t0 = time.monotonic()
             async with httpx.AsyncClient(timeout=2.0) as client:
-                resp = await client.get(f"{litellm_url}/models")
+                resp = await client.get(f"{llm_url}/models")
             latency_ms = round((time.monotonic() - t0) * 1000, 2)
             if resp.status_code < 500:
                 report["litellm"] = {
                     "status": "ok",
-                    "url": litellm_url,
+                    "url": llm_url,
                     "latency_ms": latency_ms,
                 }
             else:
                 report["litellm"] = {
                     "status": "unavailable",
-                    "url": litellm_url,
+                    "url": llm_url,
                     "message": f"HTTP {resp.status_code}",
                 }
         except Exception as exc:
             report["litellm"] = {
                 "status": "unavailable",
-                "url": litellm_url,
+                "url": llm_url,
                 "message": str(exc),
             }
 

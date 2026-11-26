@@ -25,7 +25,7 @@ The server backbone is fully operational:
 - Meta-tool discovery: 5 tools (ToolSummary, ToolSearch, ToolDefinition, ToolHelp, ToolCall) with static catalog merging MCP-registered, hidden, and stub tools
 - SSE transport via FastMCP 2.x, FastAPI middleware for frontend serving
 - PostgreSQL async pool (asyncpg, localhost:5111), Liquibase migrations (8 changesets)
-- LiteLLM proxy integration for intent search and image descriptions
+- Direct LLM API inference (DashScope default) for intent search and image descriptions
 
 **Tests**: `test_mcp_server.py` (6), `test_meta_tools.py` (87), `test_tool_registry.py` (21) = **114 tests**
 
@@ -346,7 +346,7 @@ PRDs 002–005 and 008–009 claim coverage for modules that have no source file
 | Service | Port | Status |
 |---------|------|--------|
 | NPL MCP Server | 8765 | Working |
-| LiteLLM Proxy | 4111 | Required for intent search + image descriptions |
+| LLM API (DashScope) | remote | `NPL_LLM_*` vars; required for intent search + image descriptions |
 | PostgreSQL | 5111 | Working, 8 Liquibase changesets applied |
 
 Database schema covers: sessions, tool sessions, projects, personas, stories, instructions, instruction embeddings, secrets. All managed via Liquibase YAML changelogs.

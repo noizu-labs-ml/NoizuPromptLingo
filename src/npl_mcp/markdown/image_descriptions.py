@@ -13,7 +13,7 @@ from urllib.parse import urljoin
 
 import yaml
 
-from npl_mcp.meta_tools.llm_client import describe_image
+from npl_mcp.meta_tools.llm_client import describe_image, get_vision_model
 
 # Default cache location (project convention: .tmp/ for persistent temp files)
 DEFAULT_CACHE_FILE = Path(".tmp/cache/image_descriptions.yaml")
@@ -75,7 +75,7 @@ def _resolve_image_uri(uri: str, base_url: Optional[str] = None) -> str:
 
 async def inject_image_descriptions(
     markdown: str,
-    model: str = "openai/gpt-5-mini",
+    model: str | None = None,
     cache_file: Optional[Path] = None,
     base_url: Optional[str] = None,
 ) -> str:
@@ -85,13 +85,14 @@ async def inject_image_descriptions(
 
     Args:
         markdown: Input markdown text with ``![alt](uri)`` references.
-        model: Multi-modal LLM model name for descriptions.
+        model: Multi-modal LLM model name for descriptions (default from env).
         cache_file: Override cache file path (default .tmp/cache/image_descriptions.yaml).
         base_url: Base URL for resolving relative image URIs (e.g. source page URL).
 
     Returns:
         Markdown with descriptions injected after each image reference.
     """
+    model = model or get_vision_model()
     cache = ImageDescriptionCache(cache_file or DEFAULT_CACHE_FILE)
 
     # Collect all image matches with resolved URIs

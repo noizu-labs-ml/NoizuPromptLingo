@@ -1,4 +1,10 @@
-"""Async LiteLLM proxy client for intent search and image descriptions."""
+"""Async LLM API client for intent search and image descriptions.
+
+Calls a model provider's OpenAI-compatible API directly (owner rule
+2026-11-26: services use API inference — never the local run-claude/litellm
+proxy, never groq). Default endpoint is DashScope; the legacy
+``NPL_LITELLM_*`` proxy variables are no longer read.
+"""
 
 import base64
 import mimetypes
@@ -9,10 +15,71 @@ from urllib.parse import urlparse
 
 import httpx
 
-LITELLM_BASE_URL = os.environ.get("NPL_LITELLM_URL", "http://localhost:4111/v1")
-LITELLM_API_KEY = os.environ.get("NPL_LITELLM_KEY", "sk-litellm-master-key-12345")
-LITELLM_MODEL = os.environ.get("NPL_LITELLM_MODEL", "groq/openai/gpt-oss-120b")
-LITELLM_EMBED_MODEL = os.environ.get("NPL_LITELLM_EMBED_MODEL", "openai/text-embedding-3-small")
+# DashScope (Alibaba Cloud Model Studio) OpenAI-compatible endpoint.
+# All three default ids verified live on 2026-11-26 against the workspace
+# endpoint: qwen3.8-flash answers 200 on /chat/completions,
+# text-embedding-v4 answers 200 on /embeddings (1024 dimensions), and
+# /models lists qwen3-vl-plus.
+DEFAULT_BASE_URL = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
+DEFAULT_CHAT_MODEL = "qwen3.8-flash"
+DEFAULT_EMBED_MODEL = "text-embedding-v4"
+DEFAULT_VISION_MODEL = "qwen3-vl-plus"
+
+
+def _env(name: str) -> str:
+    """Read an env var, trimmed; unset/blank counts as not set."""
+    return os.environ.get(name, "").strip()
+
+
+def get_base_url() -> str:
+    """Resolve the OpenAI-compatible base URL.
+
+    ``NPL_LLM_BASE_URL`` when set, else the DashScope default. The legacy
+    proxy variable ``NPL_LITELLM_URL`` is deliberately not read.
+    """
+    return _env("NPL_LLM_BASE_URL") or DEFAULT_BASE_URL
+
+
+def get_api_key() -> str:
+    """Resolve the API key.
+
+    Precedence: ``NPL_LLM_API_KEY``, ``QWEN_API_KEY``, ``DASHSCOPE_API_KEY``;
+    empty string when none is set. Proxy-era key variables are never read.
+    """
+    return _env("NPL_LLM_API_KEY") or _env("QWEN_API_KEY") or _env("DASHSCOPE_API_KEY")
+
+
+def get_chat_model() -> str:
+    """Default chat model (``NPL_LLM_MODEL``)."""
+    return _env("NPL_LLM_MODEL") or DEFAULT_CHAT_MODEL
+
+
+def get_embed_model() -> str:
+    """Default embedding model (``NPL_LLM_EMBED_MODEL``)."""
+    return _env("NPL_LLM_EMBED_MODEL") or DEFAULT_EMBED_MODEL
+
+
+def get_vision_model() -> str:
+    """Default multimodal model for image descriptions (``NPL_LLM_VISION_MODEL``)."""
+    return _env("NPL_LLM_VISION_MODEL") or DEFAULT_VISION_MODEL
+
+
+def _require_api_key() -> str:
+    """Return the resolved API key, or raise before any request is sent."""
+    key = get_api_key()
+    if not key:
+        raise ValueError(
+            "No LLM API key configured for meta tools: set NPL_LLM_API_KEY "
+            "(or QWEN_API_KEY / DASHSCOPE_API_KEY) before calling the LLM API"
+        )
+    return key
+
+
+def _auth_headers(api_key: str) -> dict[str, str]:
+    return {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
 
 
 async def embed_texts(
@@ -20,7 +87,7 @@ async def embed_texts(
     model: str | None = None,
     timeout: float = 30.0,
 ) -> list[list[float]]:
-    """Call LiteLLM-compatible embeddings endpoint.
+    """Call the OpenAI-compatible embeddings endpoint.
 
     Args:
         texts: List of strings to embed.
@@ -35,14 +102,12 @@ async def embed_texts(
         httpx.HTTPStatusError: On non-2xx response.
         httpx.TimeoutException: On timeout.
     """
-    use_model = model or LITELLM_EMBED_MODEL
+    api_key = _require_api_key()
+    use_model = model or get_embed_model()
     async with httpx.AsyncClient(timeout=timeout) as client:
         response = await client.post(
-            f"{LITELLM_BASE_URL}/embeddings",
-            headers={
-                "Authorization": f"Bearer {LITELLM_API_KEY}",
-                "Content-Type": "application/json",
-            },
+            f"{get_base_url()}/embeddings",
+            headers=_auth_headers(api_key),
             json={
                 "model": use_model,
                 "input": texts,
@@ -60,7 +125,7 @@ async def chat_completion(
     max_tokens: int = 2000,
     timeout: float = 30.0,
 ) -> dict[str, Any]:
-    """Call LiteLLM-compatible chat completions endpoint.
+    """Call the OpenAI-compatible chat completions endpoint.
 
     Args:
         messages: Chat messages in OpenAI format.
@@ -75,15 +140,13 @@ async def chat_completion(
         httpx.HTTPStatusError: On non-2xx response.
         httpx.TimeoutException: On timeout.
     """
+    api_key = _require_api_key()
     async with httpx.AsyncClient(timeout=timeout) as client:
         response = await client.post(
-            f"{LITELLM_BASE_URL}/chat/completions",
-            headers={
-                "Authorization": f"Bearer {LITELLM_API_KEY}",
-                "Content-Type": "application/json",
-            },
+            f"{get_base_url()}/chat/completions",
+            headers=_auth_headers(api_key),
             json={
-                "model": LITELLM_MODEL,
+                "model": get_chat_model(),
                 "messages": messages,
                 "temperature": temperature,
                 "max_tokens": max_tokens,
@@ -143,7 +206,7 @@ def _image_uri_to_content(image_uri: str) -> dict:
 
 async def describe_image(
     image_uri: str,
-    model: str = "openai/gpt-5-mini",
+    model: str | None = None,
     timeout: float = 30.0,
 ) -> str:
     """Describe an image using a multi-modal LLM.
@@ -152,12 +215,14 @@ async def describe_image(
 
     Args:
         image_uri: URL, local file path, or data URI of the image.
-        model: Multi-modal model name routed through LiteLLM.
+        model: Multi-modal model name (default from env).
         timeout: Request timeout in seconds.
 
     Returns:
         Text description of the image.
     """
+    api_key = _require_api_key()
+    use_model = model or get_vision_model()
     # SVGs must be rasterized — LLMs can't process XML vector graphics
     if _is_svg(image_uri):
         image_uri = await _rasterize_svg(image_uri)
@@ -180,13 +245,10 @@ async def describe_image(
 
     async with httpx.AsyncClient(timeout=timeout) as client:
         response = await client.post(
-            f"{LITELLM_BASE_URL}/chat/completions",
-            headers={
-                "Authorization": f"Bearer {LITELLM_API_KEY}",
-                "Content-Type": "application/json",
-            },
+            f"{get_base_url()}/chat/completions",
+            headers=_auth_headers(api_key),
             json={
-                "model": model,
+                "model": use_model,
                 "messages": messages,
                 "max_tokens": 500,
             },
