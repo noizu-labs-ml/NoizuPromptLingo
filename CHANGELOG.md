@@ -1,5 +1,8 @@
 # Changelog
 
+## 2026-11-26
+- fix(meta-tools): meta tools moved to direct API inference (owner rule 2026-11-26: services call the provider API, never the local litellm proxy or groq) — `llm_client.py` defaults to the DashScope OpenAI-compatible endpoint with chat `qwen3.8-flash` / embeddings `text-embedding-v4` / image descriptions `qwen3-vl-plus` (genai library id), new `NPL_LLM_BASE_URL/API_KEY/MODEL/EMBED_MODEL/VISION_MODEL` vars (key fallbacks `QWEN_API_KEY`, `DASHSCOPE_API_KEY`) with legacy `NPL_LITELLM_*` honoured, source placeholder key replaced by empty default, `inject_image_descriptions` `openai/gpt-5-mini` hard default removed; 21 new no-network tests + docs/config table updated (#120)
+
 ## 2026-11-12
 - feat(tools): accords_compliance v1.1.0 — restructured Stop hook into TWO independent checks (Accords/Trinity + new reflection-tag check); each check owns its reason and cooldown sentinel (`accords-nudge-session-<sid>` / `reflect-nudge-session-<sid>`), one block joins whichever fired, neither can suppress the other; reflection check nudges long unreflected responses (≥2500 chars/≥40 lines + self-corrections / caveat-storm / length-ratio / user-correction signals) to append `<npl-intent>`/`<npl-thought>`/`<npl-reflection>` tags; mirrored in the trl-infra standalone hook at `~/.claude/hooks/accords-compliance.py`; calibration extended to 19 reflection/override/cooldown-independence cases
 
