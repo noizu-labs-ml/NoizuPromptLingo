@@ -83,7 +83,7 @@ src/npl_mcp/
 │   ├── definition.py              # tool_definition() implementation
 │   ├── help.py                    # tool_help() implementation
 │   ├── inference_cache.py         # In-memory LLM response cache
-│   └── llm_client.py              # LiteLLM proxy: chat_completion(), describe_image()
+│   └── llm_client.py              # LLM API client: chat_completion(), describe_image()
 └── markdown/
     └── image_descriptions.py      # ImageDescriptionCache + inject_image_descriptions()
 ```
@@ -163,7 +163,7 @@ Returns all non-Discovery tools grouped by category:
 Case-insensitive substring matching against tool names and descriptions. Priority: exact name > partial name > description match.
 
 ### Intent mode
-LLM-powered semantic search through LiteLLM proxy. Sends the full catalog to an LLM with the user's natural language query. Returns relevance-ranked results with explanations of how each tool helps. Falls back to text search on LLM timeout/error.
+LLM-powered semantic search through a direct OpenAI-compatible API call (DashScope by default). Sends the full catalog to an LLM with the user's natural language query. Returns relevance-ranked results with explanations of how each tool helps. Falls back to text search on LLM timeout/error.
 
 ## Image Description System
 
@@ -178,19 +178,28 @@ LLM-powered semantic search through LiteLLM proxy. Sends the full catalog to an 
 ### Flow
 1. Parse markdown for `![alt](uri)` patterns
 2. Check YAML cache for each image+model pair
-3. Cache miss: call `describe_image()` via LiteLLM (multimodal LLM)
+3. Cache miss: call `describe_image()` via the LLM API (multimodal model)
 4. Inject: `![alt](uri)\n\n> **Image**: {description}\n`
 5. Graceful degradation: LLM failures skip description (don't break the document)
 
-## LiteLLM Configuration
+## LLM API Configuration
+
+Meta tools call a model provider's OpenAI-compatible API directly (owner rule
+2026-11-26: services use API inference, never the local litellm proxy).
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `NPL_LITELLM_URL` | `http://localhost:4111/v1` | LiteLLM proxy base URL |
-| `NPL_LITELLM_KEY` | `sk-litellm-master-key-12345` | API key |
-| `NPL_LITELLM_MODEL` | `groq/openai/gpt-oss-120b` | Default model for intent search |
+| `NPL_LLM_BASE_URL` | `https://dashscope-intl.aliyuncs.com/compatible-mode/v1` | OpenAI-compatible base URL (DashScope) |
+| `NPL_LLM_API_KEY` | *(empty)* | API key; falls back to `QWEN_API_KEY`, then `DASHSCOPE_API_KEY` |
+| `NPL_LLM_MODEL` | `qwen3.8-flash` | Default model for intent search |
+| `NPL_LLM_EMBED_MODEL` | `text-embedding-v4` | Default embedding model |
+| `NPL_LLM_VISION_MODEL` | `qwen3-vl-plus` | Multimodal model for image descriptions |
 
-Image descriptions use a separate multimodal model parameter passed through the same LiteLLM proxy.
+Compatibility: the legacy `NPL_LITELLM_URL`, `NPL_LITELLM_KEY`, `NPL_LITELLM_MODEL`
+and `NPL_LITELLM_EMBED_MODEL` variables are still honoured when their new
+counterparts are unset, so existing set-ups keep working. Image descriptions
+use a separate multimodal model parameter (`NPL_LLM_VISION_MODEL` or the
+per-call `model` argument).
 
 ## FastMCP 3.x Integration
 

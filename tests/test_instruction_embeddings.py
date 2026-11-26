@@ -232,7 +232,7 @@ class TestEmbedTexts:
 
     @patch("npl_mcp.meta_tools.llm_client.httpx.AsyncClient")
     async def test_calls_embeddings_endpoint(self, mock_client_cls):
-        from npl_mcp.meta_tools.llm_client import embed_texts, LITELLM_BASE_URL
+        from npl_mcp.meta_tools.llm_client import embed_texts, get_base_url
 
         mock_response = MagicMock()
         mock_response.json.return_value = {
@@ -248,7 +248,7 @@ class TestEmbedTexts:
 
         await embed_texts(["test"])
         call_args = mock_client.post.call_args
-        assert call_args[0][0] == f"{LITELLM_BASE_URL}/embeddings"
+        assert call_args[0][0] == f"{get_base_url()}/embeddings"
 
     @patch("npl_mcp.meta_tools.llm_client.httpx.AsyncClient")
     async def test_uses_custom_model(self, mock_client_cls):

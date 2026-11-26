@@ -32,7 +32,7 @@ src/
 │   │   ├── discoverable_tools.py   #     Dynamic tool discovery and registration
 │   │   ├── stub_catalog.py         #     Stub catalog for testing/fallback
 │   │   ├── inference_cache.py      #     In-memory LLM cache (MD5-keyed)
-│   │   └── llm_client.py           #     LiteLLM client (chat_completion, describe_image)
+│   │   └── llm_client.py           #     LLM API client (chat_completion, describe_image)
 │   │
 │   ├── orchestration/              #   Multi-agent orchestration
 │   │   ├── __init__.py

@@ -179,7 +179,7 @@ Liquibase is canonical (`backend/db/changelog/`); the Python fleet has its own L
 |------|-----|
 | Local prod-like | `make init` → `make build` → `make run` (nginx host port; NPL mapped 8095 in Makefile) |
 | Local dev | `make run-dev` — source mounts, Phoenix reloader, Next HMR, Liquibase service first |
-| Python MCP server | `uv run npl-mcp` (port 8765, `--status`, `--no-frontend`, `--reload` flags; LiteLLM via `NPL_LITELLM_URL/KEY/MODEL`) |
+| Python MCP server | `uv run npl-mcp` (port 8765, `--status`, `--no-frontend`, `--reload` flags; LLM API via `NPL_LLM_BASE_URL`/`NPL_LLM_API_KEY`/`NPL_LLM_MODEL`, legacy `NPL_LITELLM_*` honoured) |
 | Sandbox | Single container (Node + Elixir + Samba) for remote edit mounts — `make sandbox` |
 | Kubernetes | `helm/npl-mcp` (tobor.locker): path/host routing for `/mcp`, subdomains, frontend; secrets via Infisical |
 
