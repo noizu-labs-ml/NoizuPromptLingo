@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import io
 import json
+import logging
 import os
 import subprocess
 import sys
@@ -453,6 +454,23 @@ class TestDecisionModelGate:
         assert len(section) <= dm.RESPONSE_CAP_CHARS
         assert "日" * 50 in section  # head intact
         assert "�" not in section  # no split codepoint
+
+    def test_cap_window_tiny_cap_shrinks_head_and_tail_proportionally(self):
+        # Small but viable cap: marker plus room for >= 1 char on each side.
+        cap = len(dm.WINDOW_CUT_MARKER) + 4
+        out = dm.cap_window("x" * 100, cap)
+        assert len(out) == cap  # head + marker + tail fit the cap exactly
+        assert dm.WINDOW_CUT_MARKER in out  # cut still recorded in-band
+        assert out.startswith("xx") and out.endswith("xx")  # both sides survive
+
+    def test_cap_window_too_small_for_marker_keeps_head_and_warns(self, caplog):
+        with caplog.at_level(logging.WARNING, logger="tools.accords_compliance.decision_model"):
+            out = dm.cap_window("abcdefgh", 5)  # 5 < len(marker) + 2
+        assert out == "abcde"  # documented head-only fallback
+        warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
+        assert len(warnings) == 1  # exactly one warning line
+        assert "head only" in warnings[0].getMessage()
+        assert "abcdefgh" not in warnings[0].getMessage()  # never window content
 
 
 # ---------------------------------------------------------------------------

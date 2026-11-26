@@ -1,7 +1,7 @@
 # Changelog
 
 ## 2026-11-26
-- fix(tools): accords_compliance hook targets the GA model id `decision-model` (owner word 2026-11-26; `decision-model-preview` still answers on the same `/systemone` endpoint); the request prompt is now capped by named constants (window 3000 / user 1500 / response 3000 chars; window keeps head + tail, single utterances keep the head) with tests asserting the bounds (#119)
+- fix(tools): accords_compliance hook targets the GA model id `decision-model` (owner word 2026-11-26; `decision-model-preview` still answers on the same `/systemone` endpoint); the request prompt is now capped by named constants (window 3000 / user 1500 / response 3000 chars; window keeps head + tail, single utterances keep the head) with tests asserting the bounds (#119); re-review: `cap_window` no longer falls back silently — tiny caps shrink head + tail proportionally, a cap too small for the marker keeps the head with one warning line
 
 ## 2026-11-12
 - feat(tools): accords_compliance v1.1.0 — restructured Stop hook into TWO independent checks (Accords/Trinity + new reflection-tag check); each check owns its reason and cooldown sentinel (`accords-nudge-session-<sid>` / `reflect-nudge-session-<sid>`), one block joins whichever fired, neither can suppress the other; reflection check nudges long unreflected responses (≥2500 chars/≥40 lines + self-corrections / caveat-storm / length-ratio / user-correction signals) to append `<npl-intent>`/`<npl-thought>`/`<npl-reflection>` tags; mirrored in the trl-infra standalone hook at `~/.claude/hooks/accords-compliance.py`; calibration extended to 19 reflection/override/cooldown-independence cases

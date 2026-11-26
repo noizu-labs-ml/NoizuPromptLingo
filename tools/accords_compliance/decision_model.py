@@ -14,6 +14,7 @@ Secret values are never logged or printed — only env var names are referenced.
 from __future__ import annotations
 
 import json
+import logging
 import os
 
 from .detector import format_chat
@@ -30,6 +31,8 @@ RESPONSE_CAP_CHARS = 3000
 WINDOW_CAP_CHARS = 3000
 # In-band marker recording that the window was cut (result type has room).
 WINDOW_CUT_MARKER = "\n\n[… chat window truncated …]\n\n"
+
+_log = logging.getLogger(__name__)
 
 
 def cap_head(text: str, cap_chars: int) -> str:
@@ -49,12 +52,24 @@ def cap_window(text: str, cap_chars: int = WINDOW_CAP_CHARS) -> str:
 
     Cuts by characters, so no UTF-8 codepoint is ever split. A cut is
     recorded in-band: ``WINDOW_CUT_MARKER`` sits between the kept head and
-    the kept tail.
+    the kept tail, and the two sides shrink proportionally (split evenly)
+    so both fit with the marker under ``cap_chars`` — the tail always gets
+    at least as much as the head, so recent turns are never shortchanged.
+
+    The one documented exception: if ``cap_chars`` is too small for the
+    marker plus at least one character on each side, no head+tail cut fits,
+    so the window is cut to its head only and a single warning line (counts
+    only, never window content) is logged.
     """
     if len(text) <= cap_chars:
         return text
     keep = cap_chars - len(WINDOW_CUT_MARKER)
-    if keep <= 0:
+    if keep < 2:  # marker + >= 1 char per side does not fit
+        _log.warning(
+            "cap_window: cap_chars=%d is too small for a head+tail cut "
+            "(marker needs %d chars); cut the chat window to head only",
+            cap_chars, len(WINDOW_CUT_MARKER),
+        )
         return text[:cap_chars]
     head = keep // 2
     tail = keep - head
